@@ -447,7 +447,7 @@ class Plotter:
     # ------------------------------------------------------------------
     def summary_document(self, iteration=None, qc_params=None, stats=None,
                          warnings=True):
-        func_name = display_func(self.params, 'summary_document', __NAME__,
+        func_name = display_func('summary_document', __NAME__,
                                  'Plotter')
         # deal with iteration set
         if iteration is not None:
@@ -905,7 +905,7 @@ class Plotter:
         :rtype: Graph
         """
         # set function name
-        func_name = display_func(self.params, '_get_func', __NAME__, 'Plotter')
+        func_name = display_func('_get_func', __NAME__, 'Plotter')
         # check if name is in plot names
         if name.upper() in self.names:
             return self.names[name].copy()

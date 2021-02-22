@@ -91,7 +91,7 @@ class DrsRecipe(object):
         :returns: None
         """
         # set function name (cannot
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        _ = display_func('__init__', __NAME__, self.class_name)
         # get instrument
         self.instrument = instrument
         # deal with name
@@ -190,7 +190,7 @@ class DrsRecipe(object):
         :return:
         """
         # set function name
-        _ = display_func(None, '__getstate__', __NAME__, self.class_name)
+        _ = display_func('__getstate__', __NAME__, self.class_name)
         # exclude keys
         exclude = ['pconst', 'filemod']
         # set state to __dict__
@@ -209,7 +209,7 @@ class DrsRecipe(object):
         :return:
         """
         # set function name
-        _ = display_func(None, '__setstate__', __NAME__, self.class_name)
+        _ = display_func('__setstate__', __NAME__, self.class_name)
         # update dict with state
         self.__dict__.update(state)
         # get pconst
@@ -224,7 +224,7 @@ class DrsRecipe(object):
                      i.e. DrsRecipe[name]
         """
         # set function name
-        _ = display_func(self.params, '__str__', __NAME__,
+        _ = display_func('__str__', __NAME__,
                          self.class_name)
         # return string representation
         return self.__str__()
@@ -236,7 +236,7 @@ class DrsRecipe(object):
                      i.e. DrsRecipe[name]
         """
         # set function name
-        _ = display_func(self.params, '__repr__', __NAME__,
+        _ = display_func('__repr__', __NAME__,
                          self.class_name)
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.name)
@@ -252,7 +252,7 @@ class DrsRecipe(object):
                  DrsRecipe.textdict, DrsRecipe.helptext
         """
         # set function name
-        func_name = display_func(None, 'get_drs_params', __NAME__,
+        func_name = display_func('get_drs_params', __NAME__,
                                  self.class_name)
         # Get config parameters from primary file
         self.params = constants.load()
@@ -294,7 +294,7 @@ class DrsRecipe(object):
                          values to be used for this recipe
         """
         # set function name
-        func_name = display_func(self.params, 'recipe_setup', __NAME__,
+        func_name = display_func('recipe_setup', __NAME__,
                                  self.class_name)
         # set up storage for arguments
         fmt_class = argparse.RawDescriptionHelpFormatter
@@ -384,7 +384,7 @@ class DrsRecipe(object):
         :return None:
         """
         # set function name
-        func_name = display_func(self.params, 'option_manager', __NAME__,
+        func_name = display_func('option_manager', __NAME__,
                                  self.class_name)
         # get drs params
         params = self.params
@@ -533,7 +533,7 @@ class DrsRecipe(object):
         :returns: None, updates DrsRecipe.args
         """
         # set function name
-        _ = display_func(self.params, 'set_arg', __NAME__, self.class_name)
+        _ = display_func('set_arg', __NAME__, self.class_name)
         # set name
         if name is None:
             name = 'Arg{0}'.format(len(self.args) + 1)
@@ -636,7 +636,7 @@ class DrsRecipe(object):
         :returns: None - updates DrsRecipe.kwargs
         """
         # set function name
-        _ = display_func(self.params, 'set_kwarg', __NAME__,
+        _ = display_func('set_kwarg', __NAME__,
                          self.class_name)
         # deal with no name
         if name is None:
@@ -673,7 +673,7 @@ class DrsRecipe(object):
         :return: None - updates DrsRecipe.outputs
         """
         # set function name
-        _ = display_func(self.params, 'set_outputs', __NAME__,
+        _ = display_func('set_outputs', __NAME__,
                          self.class_name)
         # loop around kwargs
         for kwarg in kwargs:
@@ -690,7 +690,7 @@ class DrsRecipe(object):
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'set_inputs', __NAME__,
+        _ = drs_misc.display_func('set_inputs', __NAME__,
                                   self.class_name)
         # deal with not having inputs
         if 'INPUTS' not in self.params:
@@ -734,7 +734,7 @@ class DrsRecipe(object):
         :return: None - updates DrsRecipe.debug_plots
         """
         # set function name
-        _ = display_func(self.params, 'set_debug_plots', __NAME__,
+        _ = display_func('set_debug_plots', __NAME__,
                          self.class_name)
         # loop around all arguments
         for arg in args:
@@ -752,7 +752,7 @@ class DrsRecipe(object):
         :return: None - updates DrsRecipe.summary_plots
         """
         # set function name
-        _ = display_func(self.params, 'set_summary_plots', __NAME__,
+        _ = display_func('set_summary_plots', __NAME__,
                          self.class_name)
         # loop around all arguments
         for arg in args:
@@ -769,7 +769,7 @@ class DrsRecipe(object):
         :return: None - updates DrsRecipe.output_files
         """
         # set function name
-        func_name = display_func(self.params, 'add_output_file', __NAME__,
+        func_name = display_func('add_output_file', __NAME__,
                                  self.class_name)
         # get the name of the outfile
         key = outfile.basename
@@ -791,7 +791,7 @@ class DrsRecipe(object):
         :return: dictionary, a drs recipe main functions dictionary
         """
         # set function name
-        func_name = display_func(self.params, 'main', __NAME__,
+        func_name = display_func('main', __NAME__,
                                  self.class_name)
         # ------------------------------------------------------------------
         # next check in parameters for path to module
@@ -838,7 +838,7 @@ class DrsRecipe(object):
         :return input_dir: string, the input directory
         """
         # set function name
-        _ = display_func(self.params, 'get_input_dir', __NAME__,
+        _ = display_func('get_input_dir', __NAME__,
                          self.class_name)
         # return input directory
         path, _ = drs_file.get_dir(self.params, self.inputtype,
@@ -859,7 +859,7 @@ class DrsRecipe(object):
         :return input_dir: string, the input directory
         """
         # set function name
-        _ = display_func(self.params, 'get_output_dir', __NAME__,
+        _ = display_func('get_output_dir', __NAME__,
                          self.class_name)
         # return input directory
         path, _ = drs_file.get_dir(self.params, self.outputtype, self.outputdir,
@@ -989,7 +989,7 @@ class DrsRecipe(object):
         :return: None - updates DrsRecipe.extras (for later use)
         """
         # set function name
-        func_name = display_func(self.params, 'add_extra', __NAME__,
+        func_name = display_func('add_extra', __NAME__,
                                  self.class_name)
         # get parameters
         params = self.params
@@ -1071,7 +1071,7 @@ class DrsRecipe(object):
         :return: the imported module instance
         """
         # set function name
-        func_name = display_func(self.params, '_import_module', __NAME__,
+        func_name = display_func('_import_module', __NAME__,
                                  self.class_name)
         # deal with no name
         if name is None:
@@ -1101,7 +1101,7 @@ class DrsRecipe(object):
         :return: None- updates DrsRecipe.str_arg_list
         """
         # set function name
-        _ = display_func(self.params, '_parse_args', __NAME__, self.class_name)
+        _ = display_func('_parse_args', __NAME__, self.class_name)
         # set up storage
         self.str_arg_list = []
         # deal with no dictionary set
@@ -1154,7 +1154,7 @@ class DrsRecipe(object):
         :return: None - updates DrsRecipe.str_arg_list (appends to list)
         """
         # set function name
-        _ = display_func(self.params, '_parse_arg', __NAME__, self.class_name)
+        _ = display_func('_parse_arg', __NAME__, self.class_name)
         # check that value is not None
         if values is None:
             return
@@ -1202,7 +1202,7 @@ class DrsRecipe(object):
                       (via DrsRecipe._make_special)
         """
         # set function name
-        _ = display_func(self.params, '_make_specials', __NAME__,
+        _ = display_func('_make_specials', __NAME__,
                          self.class_name)
         # ---------------------------------------------------------------------
         # make debug functionality
@@ -1258,7 +1258,7 @@ class DrsRecipe(object):
         :return: None - updates DrsRecipe.specialargs
         """
         # set function name
-        _ = display_func(self.params, '_make_special', __NAME__,
+        _ = display_func('_make_special', __NAME__,
                          self.class_name)
         # make debug functionality
         props = function(self.params)
@@ -1284,7 +1284,7 @@ class DrsRecipe(object):
         :return: str, the usage string (for use in --help --info etc)
         """
         # set function name
-        _ = display_func(self.params, '_drs_usage', __NAME__, self.class_name)
+        _ = display_func('_drs_usage', __NAME__, self.class_name)
         # reset required args
         self.required_args = []
         self.optional_args = []
@@ -1347,7 +1347,7 @@ class DrsRecipe(object):
         :return: str, the recreated input string as would be typed by the user
         """
         # set function name
-        _ = drs_misc.display_func(None, '_input_str', __NAME__, self.class_name)
+        _ = drs_misc.display_func('_input_str', __NAME__, self.class_name)
         # setup input str
         inputstr = ''
         # deal with kind
@@ -1420,7 +1420,7 @@ class DrsRunSequence:
         :param instrument: str, the instrument this sequence belongs to
         """
         # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        _ = display_func('__init__', __NAME__, self.class_name)
         # set the name of the sequence
         self.name = name
         # set the instrument this sequence belongs to
@@ -1441,7 +1441,7 @@ class DrsRunSequence:
         :return:
         """
         # set function name
-        _ = display_func(None, '__getstate__', __NAME__, self.class_name)
+        _ = display_func('__getstate__', __NAME__, self.class_name)
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state (for pickle)
@@ -1455,7 +1455,7 @@ class DrsRunSequence:
         :return:
         """
         # set function name
-        _ = display_func(None, '__setstate__', __NAME__, self.class_name)
+        _ = display_func('__setstate__', __NAME__, self.class_name)
         # update dict with state
         self.__dict__.update(state)
 
@@ -1465,7 +1465,7 @@ class DrsRunSequence:
         :return:
         """
         # set function name
-        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        _ = display_func('__str__', __NAME__, self.class_name)
         # return string representation
         return self.__repr__()
 
@@ -1475,7 +1475,7 @@ class DrsRunSequence:
         :return:
         """
         # set function name
-        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        _ = display_func('__str__', __NAME__, self.class_name)
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.name)
 
@@ -1541,7 +1541,7 @@ class DrsRunSequence:
         :return: None - updates DrsRunSequence.adds
         """
         # set function name
-        _ = display_func(recipe.params, 'add', __NAME__, self.class_name)
+        _ = display_func('add', __NAME__, self.class_name)
         # add these parameters to keyword args
         add_set = dict()
         add_set['recipe'] = recipe
@@ -1584,7 +1584,7 @@ class DrsRunSequence:
         :return: None - updates DrsRunSequence.sequence
         """
         # set function name
-        _ = display_func(params, 'process_adds', __NAME__, self.class_name)
+        _ = display_func('process_adds', __NAME__, self.class_name)
         # set telluric stars (may be needed)
         self.tstars = tstars
         # set other stars
@@ -1649,7 +1649,7 @@ class DrsRunSequence:
         :return: DrsRecipe, the Drs recipe with updated DrsRecipe.filters
         """
         # set function name
-        _ = display_func(None, 'add_filters', __NAME__, self.class_name)
+        _ = display_func('add_filters', __NAME__, self.class_name)
         # add filters
         filters = dict()
         # loop around in filters and add them (if they start with KW_)
@@ -1709,7 +1709,7 @@ class DrsRunSequence:
         :return: DrsRecipe, the updated drs recipe
         """
         # set function name
-        _ = display_func(None, 'update_args', __NAME__, self.class_name)
+        _ = display_func('update_args', __NAME__, self.class_name)
         # deal with arguments overwrite
         if arguments is not None:
             frecipe.add_extra(arguments, tstars=self.tstars,
@@ -1744,7 +1744,7 @@ class DrsRunSequence:
         :return: dictionary of args (args or kwargs) - updated correctly
         """
         # set function name
-        _ = display_func(None, '_update_arg', __NAME__, self.class_name)
+        _ = display_func('_update_arg', __NAME__, self.class_name)
         # loop around each argument
         for argname in arguments:
             # if argument is found in fargs then we need to update the

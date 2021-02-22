@@ -1784,7 +1784,7 @@ def generate_runs(params: ParamDict, recipe: DrsRecipe,
              line
     """
     # set function name
-    _ = display_func(params, 'generate_runs', __NAME__)
+    _ = display_func('generate_runs', __NAME__)
     # need to find files in index database that match each argument
     #    filedict is a dictionary of arguments each for
     #    each drsfile (if filelogic=exclusive)
@@ -2416,7 +2416,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
              table matching this argument/drsfile combination
     """
     # set function name
-    func_name = display_func(params, 'find_run_files', __NAME__)
+    func_name = display_func('find_run_files', __NAME__)
     # storage for valid files for each argument
     filedict = OrderedDict()
     # copy condition
@@ -2696,7 +2696,7 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
              specific argument should have
     """
     # set function name
-    func_name = display_func(params, 'group_run_files', __NAME__)
+    func_name = display_func('group_run_files', __NAME__)
     # get parameters from params
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', func=func_name,
                        override=night_col)
@@ -2902,7 +2902,7 @@ def convert_to_command(params: ParamDict, recipe: DrsRecipe,
              on the command line
     """
     # set function name
-    _ = display_func(params, 'convert_to_command', __NAME__)
+    _ = display_func('convert_to_command', __NAME__)
     # get args/kwargs from recipe
     args = recipe.args
     kwargs = recipe.kwargs
@@ -2949,7 +2949,7 @@ def vstack_cols(params: ParamDict, tablelist: List[Table]
     :return: the stacked astropy.table
     """
     # set function name
-    _ = display_func(params, 'vstack_cols', __NAME__)
+    _ = display_func('vstack_cols', __NAME__)
     # deal with empty list
     if len(tablelist) == 0:
         # append a None
@@ -3437,7 +3437,7 @@ def _group_drs_files(params: ParamDict, drstable: Table,
     """
 
     # set function name
-    func_name = display_func(params, '_group_drs_files', __NAME__)
+    func_name = display_func('_group_drs_files', __NAME__)
     # get properties from params
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', func=func_name,
                        override=night_col)
@@ -3569,7 +3569,7 @@ def _get_argposorder(recipe: DrsRecipe, argdict: Dict[str, ArgDictType],
                 files associated with this [argument][drsfile]
     """
     # set function name
-    _ = display_func(recipe.params, '_get_argposorder', __NAME__)
+    _ = display_func('_get_argposorder', __NAME__)
     # set up storage
     runorder = OrderedDict()
     # get args/kwargs from recipe
@@ -3669,7 +3669,7 @@ def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
              that argument can take
     """
     # set function name
-    _ = display_func(params, '_gen_run', __NAME__)
+    _ = display_func('_gen_run', __NAME__)
     # deal with unset values (not used)
     if arg0 is None:
         arg0 = ''
@@ -3759,7 +3759,7 @@ def _find_first_filearg(params: ParamDict, runorder: List[str],
              2. the dictionary of drs file tables for this argument
     """
     # set function name
-    _ = display_func(params, '_find_first_filearg', __NAME__)
+    _ = display_func('_find_first_filearg', __NAME__)
     # loop around the run order
     for argname in runorder:
         # if argument is a positional argument return the argdict dictionary
@@ -3804,7 +3804,7 @@ def _find_next_group(argname: str, drstable: Table,
              list of group names that belong to that argument
     """
     # set function name
-    _ = display_func(None, '_find_next_group', __NAME__)
+    _ = display_func('_find_next_group', __NAME__)
     # make sure argname is in usedgroups
     if argname not in usedgroups:
         usedgroups[argname] = []
@@ -3854,7 +3854,7 @@ def _match_group(params: ParamDict, argname: str,
              nightname and meantime
     """
     # set function name
-    func_name = display_func(params, '_match_groups', __NAME__)
+    func_name = display_func('_match_groups', __NAME__)
     # get parmaeters from params/kwargs
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', func=func_name,
                        override=nightcol)

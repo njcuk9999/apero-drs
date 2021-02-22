@@ -74,7 +74,8 @@ class Const:
                  group: Union[str, None] = None, user: bool = False,
                  active: bool = False, description: Union[str, None] = None,
                  author: Union[str, List[str], None] = None,
-                 parent: Union[str, None] = None):
+                 parent: Union[str, None] = None,
+                 output: bool = True):
         """
         Construct the constant instance
 
@@ -100,11 +101,12 @@ class Const:
         :param author: str, the author of this constant (i.e. who to contact)
         :param parent: str, the parent of this constant (if a constant is
                        related to or comes from another constant)
+        :param output: bool if False does not put in parameter output table
 
         :returns: None (constructor)
         """
         # set function name
-        func_name = display_func(None, '__init__', __NAME__, self.class_name)
+        func_name = display_func('__init__', __NAME__, self.class_name)
         # set the name of the constant
         self.name = name
         # set the value of the constant
@@ -119,6 +121,8 @@ class Const:
         self.maximum, self.minimum = maximum, minimum
         # set the kind (Const or Keyword)
         self.kind = 'Const'
+        # set the output parameter table
+        self.output = output
         # set the source file of the constant
         if source is None:
             eargs = [self.class_name, self.name]
@@ -205,7 +209,7 @@ class Const:
         :raises DrsCodedError: if value is not valid
         """
         # set function name
-        _ = display_func(None, 'validate', __NAME__, self.class_name)
+        _ = display_func('validate', __NAME__, self.class_name)
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -244,7 +248,7 @@ class Const:
         :raises DrsCodedException: if source is None
         """
         # set function name
-        func_name = display_func(None, 'copy', __NAME__, self.class_name)
+        func_name = display_func('copy', __NAME__, self.class_name)
         # check that source is valid
         if source is None:
             raise DrsCodedException('00-003-00007', 'error', targs=[func_name],
@@ -257,7 +261,7 @@ class Const:
                      datatype=self.datatype, dataformat=self.dataformat,
                      group=self.group, user=self.user, active=self.active,
                      description=self.description, author=self.author,
-                     parent=self.parent)
+                     parent=self.parent, output=self.output)
 
     def write_line(self, value: Any = None) -> List[str]:
         """
@@ -279,7 +283,7 @@ class Const:
         :rtype: list[str]
         """
         # set function name
-        _ = display_func(None, 'write_line', __NAME__, self.class_name)
+        _ = display_func('write_line', __NAME__, self.class_name)
         # set up line list
         lines = ['']
         # deal with value
@@ -411,7 +415,7 @@ class Keyword(Const):
         :returns: None (constructor)
         """
         # set function name
-        func_name = display_func(None, '__init__', __NAME__, self.class_name)
+        func_name = display_func('__init__', __NAME__, self.class_name)
         # set the name
         self.name = name
         # set the source file of the Keyword
@@ -425,7 +429,8 @@ class Keyword(Const):
         Const.__init__(self, name, value, dtype, None, options, maximum,
                        minimum, source, unit, default, datatype, dataformat,
                        group, user=False, active=False,
-                       description=description, author=author, parent=parent)
+                       description=description, author=author, parent=parent,
+                       output=False)
         # set the header key associated with this keyword (8 characters only)
         self.key = key
         # set the header comment associated with this keyword
@@ -523,7 +528,7 @@ class Keyword(Const):
         :returns: None
         """
         # set function name
-        _ = display_func(None, 'set', __NAME__, self.class_name)
+        _ = display_func('set', __NAME__, self.class_name)
         # set the header key associated with this keyword
         if key is not None:
             self.key = key
@@ -611,7 +616,7 @@ class Keyword(Const):
         :raises DrsCodedException: if value is not valid
         """
         # set function name
-        func_name = display_func(None, 'validate', __NAME__, self.class_name)
+        func_name = display_func('validate', __NAME__, self.class_name)
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -655,7 +660,7 @@ class Keyword(Const):
         :raises DrsCodedException: if source is None
         """
         # set function name
-        func_name = display_func(None, 'copy', __NAME__, self.class_name)
+        func_name = display_func('copy', __NAME__, self.class_name)
         # check that source is valid
         if source is None:
             raise DrsCodedException('00-003-00008', 'error', targs=[func_name],
@@ -682,7 +687,7 @@ class CKCaseINSDict(base_class.CaseInsensitiveDict):
         # set class name
         self.class_name = 'CKCaseINSDict'
         # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        _ = display_func('__init__', __NAME__, self.class_name)
         # super from dict
         super(CKCaseINSDict, self).__init__(*arg, **kw)
 
@@ -699,7 +704,7 @@ class CKCaseINSDict(base_class.CaseInsensitiveDict):
         :return value: list, the value stored at position "key"
         """
         # set function name
-        _ = display_func(None, '__getitem__', __NAME__, self.class_name)
+        _ = display_func('__getitem__', __NAME__, self.class_name)
         # return from supers dictionary storage
         # noinspection PyTypeChecker
         return super(CKCaseINSDict, self).__getitem__(key)
@@ -717,7 +722,7 @@ class CKCaseINSDict(base_class.CaseInsensitiveDict):
         :return: None
         """
         # set function name
-        _ = display_func(None, '__setitem__', __NAME__, self.class_name)
+        _ = display_func('__setitem__', __NAME__, self.class_name)
         # then do the normal dictionary setting
         super(CKCaseINSDict, self).__setitem__(key, value)
 
@@ -759,7 +764,7 @@ def generate_consts(modulepath: str) -> GenConsts:
     :raises DrsCodedException: if module name is not valid
     """
     # set function name
-    func_name = display_func(None, 'generate_consts', __NAME__)
+    func_name = display_func('generate_consts', __NAME__)
     # get the import module class
     module = import_module(func_name, modulepath)
     # get the correct module for this class
@@ -809,7 +814,7 @@ def import_module(func: str, modulepath: str, full: bool = False,
     # set function name (cannot break here --> no access to inputs)
     if func is None:
         # set function name
-        func_name = display_func(None, 'import_module', __NAME__)
+        func_name = display_func('import_module', __NAME__)
     else:
         func_name = str(func)
     # deal with getting module
@@ -864,7 +869,7 @@ def get_constants_from_file(filename: str) -> Tuple[List[str], List[str]]:
     :raises DrsCodedException: if there is a profile read constants from file
     """
     # set function name (cannot break here --> no access to inputs)
-    _ = display_func(None, 'get_constants_from_file', __NAME__)
+    _ = display_func('get_constants_from_file', __NAME__)
     # first try to reformat text file to avoid weird characters
     #   (like mac smart quotes)
     _validate_text_file(filename)

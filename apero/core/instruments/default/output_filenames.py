@@ -68,7 +68,7 @@ def general_file(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func(params, 'general_file', __NAME__)
+    func_name = display_func('general_file', __NAME__)
     # not used
     _ = filename
     # set function name from args
@@ -167,7 +167,7 @@ def npy_file(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func(params, 'npy_file', __NAME__)
+    func_name = display_func('npy_file', __NAME__)
     # deal with unused
     _ = fiber, path, remove_insuffix, prefix, suffix, filename
     # set function name from args
@@ -212,7 +212,7 @@ def debug_file(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func(params, 'npy_file', __NAME__)
+    func_name = display_func('npy_file', __NAME__)
     # deal with not used
     _ = fiber, path, remove_insuffix, suffix, filename
     # set function name from args
@@ -254,7 +254,7 @@ def blank(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func(params, 'blank', __NAME__)
+    func_name = display_func('blank', __NAME__)
     # deal with not used
     _ = fiber, path, remove_insuffix, prefix, suffix, filename
     # set function name from args
@@ -296,7 +296,7 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func(params, 'set_file', __NAME__)
+    func_name = display_func('set_file', __NAME__)
     # deal with not used
     _ = fiber, remove_insuffix, prefix
     # set function name from args
@@ -370,7 +370,7 @@ def get_outfilename(params: ParamDict, infilename: str,
     :return: str, the filename correct for prefix/suffix/fiber etc
     """
     # set function name
-    func_name = display_func(params, 'get_outfilename', __NAME__)
+    func_name = display_func('get_outfilename', __NAME__)
     # make surte infilename is a basename not a path
     infilename = os.path.basename(infilename)
     # deal with fiber
@@ -414,7 +414,7 @@ def make_night_name(params: ParamDict, nightname: Union[str, None],
     :return: str, the path with the night name added (if set)
     """
     # set function name
-    func_name = display_func(params, 'get_outfilename', __NAME__)
+    func_name = display_func('get_outfilename', __NAME__)
     # deal with no night name set
     if nightname is None:
         return path

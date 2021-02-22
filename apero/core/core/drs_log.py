@@ -80,7 +80,7 @@ class Logger:
         # set class name
         self.class_name = 'Logger'
         # set function name
-        _ = drs_misc.display_func(None, '__init__', __NAME__, self.class_name)
+        _ = drs_misc.display_func('__init__', __NAME__, self.class_name)
         # ---------------------------------------------------------------------
         # save the parameter dictionary for access to constants
         if paramdict is not None:
@@ -187,7 +187,7 @@ class Logger:
         :return None:
         """
         # set function name
-        func_name = drs_misc.display_func(None, '__call__', __NAME__,
+        func_name = drs_misc.display_func('__call__', __NAME__,
                                           self.class_name)
         # ---------------------------------------------------------------------
         # deal with debug mode. If DRS_DEBUG is zero do not print these
@@ -413,12 +413,12 @@ class Logger:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(paramdict, 'update_param_dict', __NAME__,
+        _ = drs_misc.display_func('update_param_dict', __NAME__,
                                   self.class_name)
         # update the parameter dictionary
         for key in paramdict:
             # set pin value from paramdict
-            self.pin[key] = paramdict[key]
+            self.pin.data[key] = paramdict.data[key]
             # set source from paramdict (or set to None)
             self.pin.set_source(key, paramdict.sources.get(key, None))
         # update these if "instrument" or "language" have changed
@@ -445,8 +445,8 @@ class Logger:
         :return:
         """
         # set function name
-        func_name = drs_misc.display_func(paramdict, 'output_param_dict',
-                                          __NAME__, self.class_name)
+        func_name = drs_misc.display_func('output_param_dict', __NAME__,
+                                          self.class_name)
         # get the process id from paramdict
         pid = paramdict['PID']
         # deal with new switch
@@ -491,7 +491,7 @@ class Logger:
         :return: None
         """
         # set function name
-        func_name = drs_misc.display_func(params, 'logger_storage',
+        func_name = drs_misc.display_func('logger_storage',
                                           __NAME__, self.class_name)
         # if we are printing only just return
         if printonly:
@@ -529,8 +529,8 @@ class Logger:
         :return:
         """
         # set function name
-        func_name = drs_misc.display_func(self.pin, 'clean_log',
-                                          __NAME__, self.class_name)
+        func_name = drs_misc.display_func('clean_log', __NAME__,
+                                          self.class_name)
         # get log storage keys
         storekey = self.pconstant.LOG_STORAGE_KEYS()
         # clean out for this ID
@@ -601,7 +601,7 @@ class Printer:
         # set class name
         self.class_name = 'Printer'
         # set function name
-        _ = drs_misc.display_func(None, '__init__', __NAME__, self.class_name)
+        _ = drs_misc.display_func('__init__', __NAME__, self.class_name)
         # set params and level
         self.params = params
         self.level = level
@@ -654,7 +654,7 @@ class RecipeLog:
         # set class name
         self.class_name = 'RecipeLog'
         # set function name
-        _ = drs_misc.display_func(None, '__init__', __NAME__, self.class_name)
+        _ = drs_misc.display_func('__init__', __NAME__, self.class_name)
         # get the recipe name
         self.name = str(name)
         # the kind of recipe ("recipe", "tool", "processing") from recipe.kind
@@ -750,7 +750,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, '__str__', __NAME__, self.class_name)
+        _ = drs_misc.display_func('__str__', __NAME__, self.class_name)
         # return string representation of RecipeLOg
         return 'RecipeLog[{0}]'.format(self.name)
 
@@ -762,7 +762,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'copy', __NAME__, self.class_name)
+        _ = drs_misc.display_func('copy', __NAME__, self.class_name)
         # copy parameters
         self.name = str(rlog.name)
         self.kind = str(rlog.kind)
@@ -791,7 +791,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'set_log_file', __NAME__,
+        _ = drs_misc.display_func('set_log_file', __NAME__,
                                   self.class_name)
         # set the log file
         self.log_file = str(logfile)
@@ -808,7 +808,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'set_plot_dir', __NAME__,
+        _ = drs_misc.display_func('set_plot_dir', __NAME__,
                                   self.class_name)
         # deal with location being set
         if location is not None:
@@ -831,7 +831,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'set_lock_func', __NAME__,
+        _ = drs_misc.display_func('set_lock_func', __NAME__,
                                   self.class_name)
         # set the lock function
         self.lfunc = func
@@ -858,7 +858,7 @@ class RecipeLog:
                  all children are stored inside a parent
         """
         # set function name
-        _ = drs_misc.display_func(None, 'add_level', __NAME__, self.class_name)
+        _ = drs_misc.display_func('add_level', __NAME__, self.class_name)
         # get new level
         level = self.level + 1
         # create new log
@@ -897,7 +897,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'add_qc', __NAME__, self.class_name)
+        _ = drs_misc.display_func('add_qc', __NAME__, self.class_name)
         # update passed
         if passed in [1, True, '1']:
             self.passed_qc = True
@@ -936,7 +936,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'no_qc', __NAME__, self.class_name)
+        _ = drs_misc.display_func('no_qc', __NAME__, self.class_name)
         # set passed_qc to True (no qc means automatic pass)
         self.passed_qc = True
         # whether to write (update) recipe log file
@@ -959,7 +959,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'add_error', __NAME__, self.class_name)
+        _ = drs_misc.display_func('add_error', __NAME__, self.class_name)
         # add errors in form ErrorType: ErrorMessage ||
         self.errors += '"{0}":"{1}"||'.format(errortype, errormsg)
         # whether to write (update) recipe log file
@@ -975,7 +975,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'end', __NAME__, self.class_name)
+        _ = drs_misc.display_func('end', __NAME__, self.class_name)
         # set the ended parameter to True
         self.ended = True
         # whether to write (update) recipe log file
@@ -992,7 +992,7 @@ class RecipeLog:
         :return: None
         """
         # set function name
-        _ = drs_misc.display_func(None, 'end', __NAME__, self.class_name)
+        _ = drs_misc.display_func('end', __NAME__, self.class_name)
         # do not write the lock file is a lock file is not present
         if self.lfunc is None:
             return
@@ -1011,7 +1011,7 @@ class RecipeLog:
         :raises: drs_exceptions.LogExit if path is not valid
         """
         # set function name
-        _ = drs_misc.display_func(None, '_get_write_dir', __NAME__,
+        _ = drs_misc.display_func('_get_write_dir', __NAME__,
                                   self.class_name)
         # ------------------------------------------------------------------
         # get log path
@@ -1042,7 +1042,7 @@ class RecipeLog:
         :return: OrderedDict the row entry where each key is a column name
         """
         # set function name
-        _ = drs_misc.display_func(None, '_make_row', __NAME__, self.class_name)
+        _ = drs_misc.display_func('_make_row', __NAME__, self.class_name)
         # set rows
         row = OrderedDict()
         row['RECIPE'] = self.name
@@ -1088,7 +1088,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, '_get_rows', __NAME__, self.class_name)
+        _ = drs_misc.display_func('_get_rows', __NAME__, self.class_name)
         # set rows storage
         rows = []
         # case where we have no sets
@@ -1108,7 +1108,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        func_name = drs_misc.display_func(None, '_writer', __NAME__,
+        func_name = drs_misc.display_func('_writer', __NAME__,
                                           self.class_name)
         # get write path
         writepath = self.logfitspath
@@ -1331,15 +1331,12 @@ def debug_start(logobj: Logger, params: ParamDict,
             logobj.pconstant.EXIT(params)()
 
 
-def display_func(params: Union[ParamDict, None] = None,
-                 name: Union[str, None] = None,
+def display_func(name: Union[str, None] = None,
                  program: Union[str, None] = None,
                  class_name: Union[str, None] = None) -> str:
     """
     Alias to display function (but always with wlog set from Logger()
 
-    :param params: None or ParamDict (containing "INPUTS" for breakfunc/
-                   breakpoint)
     :param name: str or None - if set is the name of the function
                  (i.e. def myfunction   name = "myfunction")
                  if unset, set to "Unknown"
@@ -1352,15 +1349,9 @@ def display_func(params: Union[ParamDict, None] = None,
               function is.
     """
     # set function name (obviously can't use display func here)
-    func_name = __NAME__ + 'display_func()'
-    # check display_func (must be ParamDict or None)
-    if params is not None and not isinstance(params, ParamDict):
-        # log error
-        eargs = [type(params), str(params)[:20], func_name]
-        raise DrsCodedException('00-001-00050', targs=eargs, level='error',
-                                func_name=func_name)
+    _ = __NAME__ + 'display_func()'
     # run the display function
-    return drs_misc.display_func(params, name, program, class_name, wlog=wlog)
+    return drs_misc.display_func(name, program, class_name)
 
 
 def warninglogger(params: ParamDict, warnlist: Any,

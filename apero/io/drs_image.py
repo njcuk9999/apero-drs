@@ -78,7 +78,7 @@ def rotate_image(image: np.ndarray, rotnum: int) -> np.ndarray:
     :return newimage:  numpy array (2D), the rotated image
     """
     # set function name
-    _ = display_func(None, 'rotate_image', __NAME__)
+    _ = display_func('rotate_image', __NAME__)
     # return math functino to rotate
     return mp.rot8(image, rotnum)
 
@@ -112,7 +112,7 @@ def resize(params: ParamDict, image: np.ndarray,
     :return newimage: numpy array (2D), the new resized image
     """
     # set function name
-    func_name = display_func(params, 'resize', __NAME__)
+    func_name = display_func('resize', __NAME__)
     # Deal with no low/high values
     if xhigh is None:
         xhigh = image.shape[1]
@@ -170,7 +170,7 @@ def flip_image(params: ParamDict, image: np.ndarray, fliprows: bool = True,
     :return newimage: numpy array (2D), the flipped image
     """
     # set function name
-    func_name = display_func(params, 'flip_image', __NAME__)
+    func_name = display_func('flip_image', __NAME__)
     # raise error if image is not 2D
     if len(image.shape) < 2:
         eargs = [image.shape, func_name]
@@ -209,7 +209,7 @@ def convert_to_e(params: ParamDict, image: np.ndarray,
     :return newimage: numpy array (2D), the image in e-
     """
     # set function name
-    func_name = display_func(params, 'convert_to_e', __NAME__)
+    func_name = display_func('convert_to_e', __NAME__)
     # get constants from params / kwargs
     _gain = pcheck(params, 'GAIN', func=func_name, override=gain)
     _exptime = pcheck(params, 'EXPTIME', func=func_name, override=exptime)
@@ -234,7 +234,7 @@ def convert_to_adu(params: ParamDict, image: np.ndarray,
     :return newimage: numpy array (2D), the image in e-
     """
     # set function name
-    func_name = display_func(params, 'convert_to_adu', __NAME__)
+    func_name = display_func('convert_to_adu', __NAME__)
     # get constants from params / kwargs
     _exptime = pcheck(params, 'EXPTIME', func=func_name, override=exptime)
     # correct image
@@ -276,7 +276,7 @@ def clean_hotpix(image: np.ndarray, badpix: np.ndarray) -> np.ndarray:
     :return: np.array the image corrected for hot pixels
     """
     # set function name
-    _ = display_func(None, 'clean_hotpix', __NAME__)
+    _ = display_func('clean_hotpix', __NAME__)
     # copy the image
     image_rms_measurement = np.array(image)
     # make shifted cubes from +/- 2 pixels
@@ -404,7 +404,7 @@ def get_fiber_types(params: ParamDict,
     :return: list of strings, the fibers allowed
     """
     # set function name
-    func_name = display_func(params, 'get_fiber_types', __NAME__)
+    func_name = display_func('get_fiber_types', __NAME__)
     # get parameter list from params/kwargs
     validfibertypes = params.listp('FIBER_TYPES', dtype=str)
     # if fiber types is defined then return it (assuming user knows best)
@@ -456,7 +456,7 @@ def npy_filelist(params: ParamDict, name: str, index: int,
              to store npy filename
     """
     # set function name
-    _ = display_func(params, 'npy_filelist', __NAME__)
+    _ = display_func('npy_filelist', __NAME__)
     # deal with no filenames
     if filenames is None:
         filenames = []
@@ -504,7 +504,7 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
     :return: None - removes npy files and subdir
     """
     # set function name
-    _ = display_func(params, 'npy_fileclean', __NAME__)
+    _ = display_func('npy_fileclean', __NAME__)
     # deal with not outdir
     if outdir is None:
         outdir = ''
@@ -556,7 +556,7 @@ def large_image_combine(params: ParamDict, files: List[str],
     :rtype: np.ndarray
     """
     # set function name
-    func_name = display_func(params, 'large_image_combine', __NAME__)
+    func_name = display_func('large_image_combine', __NAME__)
     # deal with math mode
     if math == 'median':
         cfunc = mp.nanmedian

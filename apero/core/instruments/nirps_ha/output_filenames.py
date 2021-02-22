@@ -66,7 +66,7 @@ def general_file(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func(params, 'general_file', __NAME__)
+    func_name = display_func('general_file', __NAME__)
     # set function name from args
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)
@@ -99,7 +99,7 @@ def npy_file(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func(params, 'npy_file', __NAME__)
+    func_name = display_func('npy_file', __NAME__)
     # set function name from args
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)
@@ -134,7 +134,7 @@ def debug_file(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func(params, 'npy_file', __NAME__)
+    func_name = display_func('npy_file', __NAME__)
     # set function name from args
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)
@@ -170,7 +170,7 @@ def calib_file(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func(params, 'general_file', __NAME__)
+    func_name = display_func('general_file', __NAME__)
     # set function name from args
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)
@@ -210,7 +210,7 @@ def blank(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func(params, 'blank', __NAME__)
+    func_name = display_func('blank', __NAME__)
     # set function name from args
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)
@@ -247,7 +247,7 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func(params, 'blank', __NAME__)
+    func_name = display_func('blank', __NAME__)
     # set function name from args
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)

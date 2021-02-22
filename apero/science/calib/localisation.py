@@ -594,7 +594,7 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
                         mean_rms_cent, mean_rms_wid, rorder_num, cent_fits):
 
     # set function name
-    func_name = display_func(params, 'localisation_quality_control', __NAME__)
+    func_name = display_func('localisation_quality_control', __NAME__)
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # get qc parameters
@@ -716,7 +716,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
                              rorder_num, max_signal, cent_coeffs, wid_coeffs,
                              center_fits, width_fits, qc_params):
     # set function name
-    func_name = display_func(params, 'write_localisation_files', __NAME__)
+    func_name = display_func('write_localisation_files', __NAME__)
     # get qc parameters
     max_removed_cent = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_CTR',
                               func=func_name)
@@ -851,10 +851,18 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     WLOG(params, '', textentry('40-013-00019', args=[loco1file.filename]))
+    # define multi lists
+    data_list = [cent_table, wid_table],
+    name_list = ['CENT_TABLE', 'WIDTH_TABLE'],
+    datatype_list = ['table', 'table']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write image to file
-    loco1file.write_multi(data_list=[cent_table, wid_table],
-                          name_list=['CENT_TABLE', 'WIDTH_TABLE'],
-                          datatype_list=['table', 'table'],
+    loco1file.write_multi(data_list=data_list, name_list=name_list,
+                          datatype_list=datatype_list,
                           kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(loco1file)

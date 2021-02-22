@@ -11,6 +11,7 @@ Created on 2019-01-17 at 15:24
 
 @author: cook
 """
+from astropy.table import Table
 from collections import OrderedDict
 import copy
 import numpy as np
@@ -58,6 +59,8 @@ SCRIPTS = base.SCRIPTS
 USCRIPTS = base.USCRIPTS
 PSEUDO_CONST_FILE = base.PSEUDO_CONST_FILE
 PSEUDO_CONST_CLASS = base.PSEUDO_CONST_CLASS
+# Get base classes
+CaseInDict = base_class.CaseInsensitiveDict
 # Get the text types
 textentry = lang.textentry
 # get display func
@@ -76,7 +79,7 @@ ModLoads = Tuple[List[str], List[Any], List[str], List[Union[Const, Keyword]]]
 # =============================================================================
 # Define Custom classes
 # =============================================================================
-class ParamDict(base_class.CaseInsensitiveDict):
+class ParamDict(CaseInDict):
     """
     Custom dictionary to retain source of a parameter (added via setSource,
     retreived via getSource). String keys are case insensitive.
@@ -92,15 +95,15 @@ class ParamDict(base_class.CaseInsensitiveDict):
         # set class name
         self.class_name = 'ParamDict'
         # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        _ = display_func('__init__', __NAME__, self.class_name)
         # storage for the sources
-        self.sources = base_class.CaseInsensitiveDict()
+        self.sources = CaseInDict()
         # storage for the source history
         self.source_history = base_class.ListCaseINSDict()
         # storage for the Const/Keyword instances
         self.instances = constant_functions.CKCaseINSDict()
         # storage for used constants (get or set)
-        self.used = base_class.CaseInsensitiveDict()
+        self.used = CaseInDict()
         # the print format
         self.pfmt = '\t{0:30s}{1:45s} # {2}'
         # the print format for list items
@@ -143,9 +146,9 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :raises DrsCodedException: if key not found
         """
         # set function name
-        func_name = display_func(None, '__getitem__', __NAME__, self.class_name)
+        func_name = display_func('__getitem__', __NAME__, self.class_name)
         # store:
-        if key in self.keys():
+        if key in self.data.keys():
             if key not in self.used:
                 self.used[key] = 0
             else:
@@ -177,7 +180,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         """
         global SETTINGS_CACHE
         # set function name
-        func_name = display_func(None, '__setitem__', __NAME__, self.class_name)
+        func_name = display_func('__setitem__', __NAME__, self.class_name)
         # deal with parameter dictionary being locked
         if self.locked:
             # log that parameter dictionary is locked so we cannot set key
@@ -208,7 +211,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return bool: True if ParamDict instance has a key "key", else False
         """
         # set function name
-        _ = display_func(None, '__contains__', __NAME__, self.class_name)
+        _ = display_func('__contains__', __NAME__, self.class_name)
         # run contains command from super
         return super(ParamDict, self).__contains__(key)
 
@@ -222,7 +225,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return None:
         """
         # set function name
-        _ = display_func(None, '__delitem__', __NAME__, self.class_name)
+        _ = display_func('__delitem__', __NAME__, self.class_name)
         # delete item using super
         super(ParamDict, self).__delitem__(key)
 
@@ -234,7 +237,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :rtype: str
         """
         # set function name
-        _ = display_func(None, '__repr__', __NAME__, self.class_name)
+        _ = display_func('__repr__', __NAME__, self.class_name)
         # get string from string print
         return self._string_print()
 
@@ -246,7 +249,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :rtype: str
         """
         # set function name
-        _ = display_func(None, '__repr__', __NAME__, self.class_name)
+        _ = display_func('__repr__', __NAME__, self.class_name)
         # get string from string print
         return self._string_print()
 
@@ -270,9 +273,9 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return: None
         """
         # set function name
-        _ = display_func(None, 'set', __NAME__, self.class_name)
+        _ = display_func('set', __NAME__, self.class_name)
         # update used
-        if key in self.keys() and used:
+        if key in self.data.keys() and record_use:
             if key not in self.used:
                 self.used[key] = 0
             else:
@@ -295,7 +298,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return:
         """
         # set function name
-        _ = display_func(None, 'lock', __NAME__, self.class_name)
+        _ = display_func('lock', __NAME__, self.class_name)
         # set locked to True
         self.locked = True
 
@@ -306,7 +309,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return:
         """
         # set function name
-        _ = display_func(None, 'unlock', __NAME__, self.class_name)
+        _ = display_func('unlock', __NAME__, self.class_name)
         # set locked to False
         self.locked = False
 
@@ -328,9 +331,9 @@ class ParamDict(base_class.CaseInsensitiveDict):
                        the default value is returned (None if undefined)
         """
         # set function name
-        _ = display_func(None, 'get', __NAME__, self.class_name)
+        _ = display_func('get', __NAME__, self.class_name)
         # if we have the key return the value
-        if key in self.keys():
+        if key in self.data.keys():
             return self.__getitem__(key)
         # else return the default key (None if not defined)
         else:
@@ -353,13 +356,13 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :raises DrsCodedException: if key not found
         """
         # set function name
-        func_name = display_func(None, 'set_source', __NAME__, self.class_name)
+        func_name = display_func('set_source', __NAME__, self.class_name)
         # capitalise
         key = drs_text.capitalise_key(key)
         # don't put full path for sources in package
         source = _check_mod_source(source)
         # only add if key is in main dictionary
-        if key in self.keys():
+        if key in self.data.keys():
             self.sources[key] = source
             # add to history
             if key in self.source_history:
@@ -387,12 +390,12 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :raises DrsCodedException: if key not found
         """
         # set function name
-        func_name = display_func(None, 'set_instance', __NAME__,
+        func_name = display_func('set_instance', __NAME__,
                                  self.class_name)
         # capitalise
         key = drs_text.capitalise_key(key)
         # only add if key is in main dictionary
-        if key in self.keys():
+        if key in self.data.keys():
             self.instances[key] = instance
         else:
             # log error: instance cannot be added for key
@@ -413,11 +416,11 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return None:
         """
         # set function name
-        _ = display_func(None, 'append_source', __NAME__, self.class_name)
+        _ = display_func('append_source', __NAME__, self.class_name)
         # capitalise
         key = drs_text.capitalise_key(key)
         # if key exists append source to it
-        if key in self.keys() and key in list(self.sources.keys()):
+        if key in self.data.keys() and key in list(self.sources.keys()):
             self.sources[key] += ' {0}'.format(source)
         else:
             self.set_source(key, source)
@@ -442,7 +445,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return None:
         """
         # set function name
-        _ = display_func(None, 'set_sources', __NAME__, self.class_name)
+        _ = display_func('set_sources', __NAME__, self.class_name)
         # loop around each key in keys
         for k_it in range(len(keys)):
             # assign the key from k_it
@@ -479,7 +482,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return None:
         """
         # set function name
-        _ = display_func(None, 'set_instances', __NAME__, self.class_name)
+        _ = display_func('set_instances', __NAME__, self.class_name)
         # loop around each key in keys
         for k_it in range(len(keys)):
             # assign the key from k_it
@@ -515,7 +518,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return None:
         """
         # set function name
-        _ = display_func(None, 'append_sources', __NAME__, self.class_name)
+        _ = display_func('append_sources', __NAME__, self.class_name)
         # loop around each key in keys
         for k_it in range(len(keys)):
             # assign the key from k_it
@@ -543,9 +546,9 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return None:
         """
         # set function name
-        _ = display_func(None, 'set_all_sources', __NAME__, self.class_name)
+        _ = display_func('set_all_sources', __NAME__, self.class_name)
         # loop around each key in keys
-        for key in self.keys():
+        for key in self.data.keys():
             # capitalise
             key = drs_text.capitalise_key(key)
             # set key
@@ -562,9 +565,9 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return None:
         """
         # set function name
-        _ = display_func(None, 'append_all_sources', __NAME__, self.class_name)
+        _ = display_func('append_all_sources', __NAME__, self.class_name)
         # loop around each key in keys
-        for key in self.keys():
+        for key in self.data.keys():
             # capitalise
             key = drs_text.capitalise_key(key)
             # set key
@@ -581,11 +584,11 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return source: string, the source of the parameter
         """
         # set function name
-        func_name = display_func(None, 'get_source', __NAME__, self.class_name)
+        func_name = display_func('get_source', __NAME__, self.class_name)
         # capitalise
         key = drs_text.capitalise_key(key)
         # if key in keys and sources then return source
-        if key in self.keys() and key in self.sources.keys():
+        if key in self.data.keys() and key in self.sources.keys():
             return str(self.sources[key])
         # else raise a Config Error
         else:
@@ -604,12 +607,12 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return source: string, the source of the parameter
         """
         # set function name
-        func_name = display_func(None, 'get_instance', __NAME__,
+        func_name = display_func('get_instance', __NAME__,
                                  self.class_name)
         # capitalise
         key = drs_text.capitalise_key(key)
         # if key in keys and sources then return source
-        if key in self.keys() and key in self.instances.keys():
+        if key in self.data.keys() and key in self.instances.keys():
             return self.instances[key]
         # else raise a Config Error
         else:
@@ -624,7 +627,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return sources: values of sources dictionary
         """
         # set function name
-        _ = display_func(None, 'source_keys', __NAME__, self.class_name)
+        _ = display_func('source_keys', __NAME__, self.class_name)
         # return all keys in source dictionary
         return list(self.sources.keys())
 
@@ -636,7 +639,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return sources: values of sources dictionary
         """
         # set function name
-        _ = display_func(None, 'source_values', __NAME__, self.class_name)
+        _ = display_func('source_values', __NAME__, self.class_name)
         # return all values in source dictionary
         return list(self.sources.values())
 
@@ -651,11 +654,11 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return keys: list of strings, the keys with this substring at the start
         """
         # set function name
-        _ = display_func(None, 'startswith', __NAME__, self.class_name)
+        _ = display_func('startswith', __NAME__, self.class_name)
         # define return list
         return_keys = []
         # loop around keys
-        for key in self.keys():
+        for key in self.data.keys():
             # make sure key is string
             if type(key) != str:
                 continue
@@ -676,11 +679,11 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return keys: list of strings, the keys which contain this substring
         """
         # set function name
-        _ = display_func(None, 'contains', __NAME__, self.class_name)
+        _ = display_func('contains', __NAME__, self.class_name)
         # define return list
         return_keys = []
         # loop around keys
-        for key in self.keys():
+        for key in self.data.keys():
             # make sure key is string
             if type(key) != str:
                 continue
@@ -701,11 +704,11 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return keys: list of strings, the keys with this substring at the end
         """
         # set function name
-        _ = display_func(None, 'endswith', __NAME__, self.class_name)
+        _ = display_func('endswith', __NAME__, self.class_name)
         # define return list
         return_keys = []
         # loop around keys
-        for key in self.keys():
+        for key in self.data.keys():
             # make sure key is string
             if type(key) != str:
                 continue
@@ -723,11 +726,11 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :rtype: ParamDict
         """
         # set function name
-        _ = display_func(None, 'copy', __NAME__, self.class_name)
+        _ = display_func('copy', __NAME__, self.class_name)
         # make new copy of param dict
         pp = ParamDict()
-        keys = list(self.keys())
-        values = list(self.values())
+        keys = list(self.data.keys())
+        values = list(self.data.values())
         # loop around keys and add to new copy
         for k_it, key in enumerate(keys):
             value = values[k_it]
@@ -755,9 +758,9 @@ class ParamDict(base_class.CaseInsensitiveDict):
                 pp.set_instance(key, self.instances[key])
             else:
                 pp.set_instance(key, None)
-            # copy used (but take off the one above for accessing it here)
+            # copy used
             if key in self.used:
-                pp.used[key] = int(self.used[key]) - 1
+                pp.used[key] = self.used[key]
         # return new param dict filled
         return pp
 
@@ -776,11 +779,11 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return: None
         """
         # set function name
-        _ = display_func(None, 'merge', __NAME__, self.class_name)
+        _ = display_func('merge', __NAME__, self.class_name)
         # add param dict to self
         for key in paramdict:
             # deal with no overwriting
-            if not overwrite and key in self.keys:
+            if not overwrite and key in self.data.keys:
                 continue
             # copy source
             if key in paramdict.sources:
@@ -804,10 +807,10 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :rtype: str
         """
         # set function name
-        _ = display_func(None, '_string_print', __NAME__, self.class_name)
+        _ = display_func('_string_print', __NAME__, self.class_name)
         # get keys and values
-        keys = list(self.keys())
-        values = list(self.values())
+        keys = list(self.data.keys())
+        values = list(self.data.values())
         # string storage
         return_string = 'ParamDict:\n'
         strvalues = []
@@ -858,9 +861,9 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :raises DrsCodedException: when item is not correct type
         """
         # set function name
-        func_name = display_func(None, 'listp', __NAME__, self.class_name)
+        func_name = display_func('listp', __NAME__, self.class_name)
         # if key is present attempt str-->list
-        if key in self.keys():
+        if key in self.data.keys():
             item = self.__getitem__(key)
         else:
             # log error: parameter not found in parameter dict (via listp)
@@ -869,7 +872,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         if item is None:
             return []
         # convert string
-        if key in self.keys() and isinstance(item, str):
+        if key in self.data.keys() and isinstance(item, str):
             return _map_listparameter(str(item), separator=separator,
                                       dtype=dtype)
         elif isinstance(item, list):
@@ -901,9 +904,9 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :raises DrsCodedException: when key is missing or item is incorrect
         """
         # set function name
-        func_name = display_func(None, 'dictp', __NAME__, self.class_name)
+        func_name = display_func('dictp', __NAME__, self.class_name)
         # if key is present attempt str-->dict
-        if key in self.keys():
+        if key in self.data.keys():
             item = self.__getitem__(key)
         else:
             # log error message: parameter not found in param dict (via dictp)
@@ -937,7 +940,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :rtype: dict
         """
         # set function name
-        _ = display_func(None, 'get_instanceof', __NAME__, self.class_name)
+        _ = display_func('get_instanceof', __NAME__, self.class_name)
         # output storage
         keydict = dict()
         # loop around all keys
@@ -968,9 +971,9 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return: None
         """
         # set function name
-        _ = display_func(None, 'info', __NAME__, self.class_name)
+        _ = display_func('info', __NAME__, self.class_name)
         # deal with key not existing
-        if key not in self.keys():
+        if key not in self.data.keys():
             print(textentry('40-000-00001', args=[key]))
             return
         # print key title
@@ -1015,7 +1018,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :return: None
         """
         # set function name
-        _ = display_func(None, 'history', __NAME__, self.class_name)
+        _ = display_func('history', __NAME__, self.class_name)
         # if history found then print it
         if key in self.source_history:
             # print title: History for key
@@ -1026,6 +1029,138 @@ class ParamDict(base_class.CaseInsensitiveDict):
         # else display that there was not history found
         else:
             print(textentry('40-000-00010', args=[key]))
+
+    def keys(self):
+        return list(self.data.keys())
+
+    def values(self):
+        return list(self.data.values())
+
+    def snapshot_table(self, names: Union[list, None] = None,
+                       kinds: Union[list, None] = None,
+                       values: Union[list, None] = None,
+                       sources: Union[list, None] = None,
+                       descs: Union[list, None] = None) -> Table:
+        """
+        Takes a snapshot of the current configuration (for reproducibility)
+
+        :param names: list of strings, the name of each constant (can be
+                      none to not add extra keys)
+        :param kinds: list of kinds, the kind of each constant (can be
+                      none to not add extra keys) must be same length as names
+        :param values: list of values, the value of each constant (can be
+                       none to not add extra keys) must be same length as names
+        :param sources: list of source, the source of each constant (can be
+                       none to not add extra keys) must be same length as names
+        :param descs: list of desc, the description of each constant (can be
+                     none to not add extra keys) must be same length as names
+
+        :return:
+        """
+        # tabledict
+        tabledict = dict()
+        # ---------------------------------------------------------------------
+        # set columns for table
+        columns = ['NAME', 'KIND', 'VALUE', 'SOURCE', 'DESCRIPTION', 'COUNT']
+        # ---------------------------------------------------------------------
+        # make columns empty lists
+        for key in columns:
+            tabledict[key] = []
+        # ---------------------------------------------------------------------
+        # add install params
+        # ---------------------------------------------------------------------
+        # get yaml keys and values
+        ikeys, ivalues = _yaml_walk(base.IPARAMS)
+        # loop around input parameters
+        for it, ikey in enumerate(ikeys):
+            # add install key name
+            tabledict['NAME'].append(ikey)
+            # add install kind
+            tabledict['KIND'].append('install')
+            # add install value
+            tabledict['VALUE'].append(str(ivalues[it]))
+            # add install source (the install yaml)
+            tabledict['SOURCE'].append(os.path.join(base.IPARAMS['DRS_UCONFIG'],
+                                                    base.INSTALL_YAML))
+            # add install description (default)
+            tabledict['DESCRIPTION'].append('Install parameter')
+            # add install key count (always 1)
+            tabledict['COUNT'].append(1)
+        # ---------------------------------------------------------------------
+        # add database parameters
+        # ---------------------------------------------------------------------
+        # get yaml keys and values
+        dkeys, dvalues = _yaml_walk(base.DPARAMS)
+        # loop around database parameters
+        for it, dkey in enumerate(dkeys):
+            # skip password keys
+            if 'pass' in dkey.lower():
+                continue
+            # add database key name
+            tabledict['NAME'].append(dkey)
+            # add database key kind
+            tabledict['KIND'].append('database')
+            # add database key value
+            tabledict['VALUE'].append(str(dvalues[it]))
+            # add database key source (database yaml file)
+            tabledict['SOURCE'].append(os.path.join(base.IPARAMS['DRS_UCONFIG'],
+                                                    base.DATABASE_YAML))
+            # add database description (default)
+            tabledict['DESCRIPTION'].append('Database parameter')
+            # add database count (always 1)
+            tabledict['COUNT'].append(1)
+        # ---------------------------------------------------------------------
+        # get parameters from param dict
+        # ---------------------------------------------------------------------
+        # loop around parameter keys
+        for key in self.data.keys():
+            # do not continue if we have not used this key (not in dict)
+            if key not in self.used:
+                continue
+            # do not continue if we have not used this key (set to zero)
+            if self.used[key] < 1:
+                continue
+            # add param_dict entry (or entries)
+            tabledict = _add_param_dict_to_tabledict(tabledict, self.data,
+                                                     key, self.instances,
+                                                     self.sources, self.used,
+                                                     None)
+        # ---------------------------------------------------------------------
+        # deal with
+        # ---------------------------------------------------------------------
+        # loop around arguments
+        if names is not None:
+            for it, name in enumerate(names):
+                tabledict['NAME'].append(name)
+                # add kind
+                if kinds[it] is not None:
+                    tabledict['KIND'].append(kinds[it])
+                else:
+                    tabledict['KIND'].append('custom')
+                # add value
+                if values[it] is not None:
+                    tabledict['VALUE'].append(str(values[it]))
+                else:
+                    tabledict['VALUE'].append('None')
+                # add source
+                if sources[it] is not None:
+                    tabledict['SOURCE'].append(sources[it])
+                else:
+                    tabledict['SOURCE'].append('None')
+                # add description
+                if descs[it] is not None:
+                    tabledict['DESCRIPTION'].append(descs[it])
+                else:
+                    tabledict['DESCRIPTION'].append('custom')
+                # add count
+                tabledict['COUNT'].append(1)
+        # ---------------------------------------------------------------------
+        # convert dictionary to table
+        table = Table()
+        for col in columns:
+            table[col] = np.array(tabledict[col], dtype=str)
+        # return table
+        return table
 
 
 class PCheck:
@@ -1040,7 +1175,7 @@ class PCheck:
         # set class name
         self.class_name = 'PCheck'
         # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        _ = display_func('__init__', __NAME__, self.class_name)
         # set wlog from inputs
         self.wlog = wlog
 
@@ -1070,7 +1205,7 @@ class PCheck:
         :return: str, the string representation
         """
         # set function name
-        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        _ = display_func('__str__', __NAME__, self.class_name)
         # return string representation
         return '{0}[CaseInsensitiveDict]'.format(self.class_name)
 
@@ -1080,7 +1215,7 @@ class PCheck:
         :return: str, the string representation
         """
         # set function name
-        _ = display_func(None, '__repr__', __NAME__, self.class_name)
+        _ = display_func('__repr__', __NAME__, self.class_name)
         # return string representation
         return self.__str__()
 
@@ -1140,7 +1275,7 @@ class PCheck:
          :return: returns the object or list/dict (if mapf='list'/'dict')
          """
         # set function name
-        func_name = display_func(params, 'find_param', __NAME__,
+        func_name = display_func('find_param', __NAME__,
                                  self.class_name)
         # deal with override value
         if override is not None:
@@ -1235,7 +1370,7 @@ def update_paramdicts(*args: List[ParamDict], key: str,
     :return:
     """
     # set function name
-    _ = display_func(None, 'update_paramdicts', __NAME__)
+    _ = display_func('update_paramdicts', __NAME__)
     # loop through param dicts
     for arg in args:
         if isinstance(arg, ParamDict):
@@ -1257,7 +1392,7 @@ def load_config(instrument: Union[str, None] = None,
     """
     global CONFIG_CACHE
     # set function name (cannot break here --> no access to inputs)
-    _ = display_func(None, 'load_config', __NAME__)
+    _ = display_func('load_config', __NAME__)
     # deal with no instrument
     if instrument is None:
         if 'INSTRUMENT' in base.IPARAMS:
@@ -1313,7 +1448,7 @@ def load_pconfig(instrument: Union[str, None] = None
     """
     global PCONFIG_CACHE
     # set function name (cannot break here --> no access to inputs)
-    func_name = display_func(None, 'load_pconfig', __NAME__)
+    func_name = display_func('load_pconfig', __NAME__)
     # deal with no instrument
     if instrument is None:
         instrument = base.IPARAMS['INSTRUMENT']
@@ -1348,7 +1483,7 @@ def get_config_all():
     :return:
     """
     # set function name
-    _ = display_func(None, 'get_config_all', __NAME__)
+    _ = display_func('get_config_all', __NAME__)
     # get module names
     modules = get_module_names('None')
     # loop around modules and print our __all__ statement
@@ -1389,7 +1524,7 @@ def get_module_names(instrument: str = 'None',
     :raises DrsCodedException: on exceptions
     """
     # set function name
-    func_name = display_func(None, '_get_module_names', __NAME__)
+    func_name = display_func('_get_module_names', __NAME__)
     # deal with no module list
     if mod_list is None:
         mod_list = SCRIPTS
@@ -1472,7 +1607,7 @@ def print_error(error: DrsCodedException):
     :return:
     """
     # set function name
-    _ = display_func(None, 'print_error', __NAME__)
+    _ = display_func('print_error', __NAME__)
     # print the configuration file
     print('\n')
     print('=' * 70)
@@ -1503,7 +1638,7 @@ def catch_sigint(signal: Any, frame: Any):
     :return:
     """
     # set function name (cannot break here --> no access to inputs)
-    _ = display_func(None, 'catch_sigint', __NAME__)
+    _ = display_func('catch_sigint', __NAME__)
     # raise Keyboard Interrupt
     raise KeyboardInterrupt('\nSIGINT or CTRL-C detected. Exiting\n')
 
@@ -1517,7 +1652,7 @@ def window_size(drows: int = 80, dcols: int = 80) -> Tuple[int, int]:
     :return:
     """
     # set function name (cannot break here --> no access to inputs)
-    _ = display_func(None, 'window_size', __NAME__)
+    _ = display_func('window_size', __NAME__)
     # only works on unix operating systems
     if os.name == 'posix':
         # see if we have stty commnad
@@ -1572,7 +1707,7 @@ def _get_file_names(params: ParamDict,
     :return: list of strings - the config /constant files found
     """
     # set function name (cannot break here --> no access to inputs)
-    func_name = display_func(params, '_get_file_names', __NAME__)
+    func_name = display_func('_get_file_names', __NAME__)
     # deal with no instrument
     if drs_text.null_text(instrument, ['None', '']):
         return []
@@ -1627,7 +1762,7 @@ def _load_from_module(modules: List[str], quiet: bool = False) -> ModLoads:
              list of instances (either Const or Keyword instances)
     """
     # set function name (cannot break here --> no access to inputs)
-    func_name = display_func(None, '_load_from_module', __NAME__)
+    func_name = display_func('_load_from_module', __NAME__)
     # storage for returned values
     keys, values, sources, instances = [], [], [], []
     # loop around modules
@@ -1669,7 +1804,7 @@ def _load_from_file(files: List[str], modules: List[str]) -> ModLoads:
              list of instances (either Const or Keyword instances)
     """
     # set function name (cannot break here --> no access to inputs)
-    func_name = display_func(None, '_load_from_file', __NAME__)
+    func_name = display_func('_load_from_file', __NAME__)
     # -------------------------------------------------------------------------
     # load constants from file
     # -------------------------------------------------------------------------
@@ -1729,7 +1864,7 @@ def _save_config_params(params: ParamDict) -> ParamDict:
     :return:
     """
     # set function name (cannot break here --> no access to inputs)
-    func_name = display_func(params, '_save_config_params', __NAME__)
+    func_name = display_func('_save_config_params', __NAME__)
     # get sources from paramater dictionary
     sources = params.sources.values()
     # get unique sources
@@ -1754,7 +1889,7 @@ def _check_mod_source(source: str) -> Union[None, str]:
     :return: str, the cleaned source i.e. path1.path2.filename
     """
     # set function name (cannot break here --> no access to inputs)
-    _ = display_func(None, '_check_mod_source', __NAME__)
+    _ = display_func('_check_mod_source', __NAME__)
     # deal with source is None
     if source is None:
         return source
@@ -1780,8 +1915,6 @@ def _check_mod_source(source: str) -> Union[None, str]:
 # =============================================================================
 # Other private functions
 # =============================================================================
-
-
 def _string_repr_list(key: str, values: Union[list, np.ndarray], source: str,
                       fmt: str) -> List[str]:
     """
@@ -1795,7 +1928,7 @@ def _string_repr_list(key: str, values: Union[list, np.ndarray], source: str,
     :return:
     """
     # set function name (cannot break here --> no access to inputs)
-    _ = display_func(None, '_load_from_file', __NAME__)
+    _ = display_func('_load_from_file', __NAME__)
     # get the list as a string
     str_value = list(values).__repr__()
     # if the string is longer than 40 characters cut down and add ...
@@ -1816,7 +1949,7 @@ def _map_listparameter(value: Union[str, list], separator: str = ',',
     :return:
     """
     # set function name (cannot break here --> no access to inputs)
-    func_name = display_func(None, '_map_listparameter', __NAME__)
+    func_name = display_func('_map_listparameter', __NAME__)
     # return list if already a list
     if isinstance(value, (list, np.ndarray)):
         return list(value)
@@ -1860,7 +1993,7 @@ def _map_dictparameter(value: str, dtype: Union[None, Type] = None) -> dict:
     :return:
     """
     # set function name (cannot break here --> no access to inputs)
-    func_name = display_func(None, '_map_dictparameter', __NAME__)
+    func_name = display_func('_map_dictparameter', __NAME__)
     # deal with an empty value i.e. ''
     if value == '':
         return dict()
@@ -1879,6 +2012,137 @@ def _map_dictparameter(value: str, dtype: Union[None, Type] = None) -> dict:
         eargs = [value, type(e), e, func_name]
         raise DrsCodedException('00-003-00003', targs=eargs, level='error',
                                 func_name=func_name)
+
+
+def _yaml_walk(yaml_dict) -> Tuple[list, list]:
+    """
+    Turn a yaml dictionary into a list of keys and a list of values
+
+    :param yaml_dict: dict, the yaml nested dictionary
+
+    :return: tuple 1. list of keys, 2. list of values
+    """
+    chains, values = [], []
+    for key in yaml_dict:
+        if isinstance(yaml_dict[key], dict):
+            links, link_values = _yaml_walk(yaml_dict[key])
+            for it, link in enumerate(links):
+                chain = '{0}.{1}'.format(key, link)
+                chains.append(chain)
+                values.append(link_values[it])
+        else:
+            chains.append(key)
+            values.append(yaml_dict[key])
+    return chains, values
+
+
+def _add_param_dict_to_tabledict(tabledict: dict, data: Union[dict, list],
+                                 key: Union[str, int],
+                                 instances: Union[CaseInDict, None] = None,
+                                 sources: Union[CaseInDict, None] = None,
+                                 used: Union[CaseInDict, None] = None,
+                                 it: Union[int, None] = None,
+                                 pkey: Union[str, None] = None):
+    # -------------------------------------------------------------------------
+    # deal with pkay not set
+    if pkey is None:
+        pkey = str(key)
+    # -------------------------------------------------------------------------
+    # get the instance
+    if instances is None:
+        instance = None
+    else:
+        instance = instances[pkey]
+        # if we have a constant check that we want to output it
+        if isinstance(instance, (Const, Keyword)):
+            # attribute output = False means we don't add
+            if not instance.output:
+                return tabledict
+    # -------------------------------------------------------------------------
+    # get the source
+    if sources is None:
+        source = None
+    else:
+        source = sources[pkey]
+    # -------------------------------------------------------------------------
+    # deal with data being list
+    if isinstance(data, list):
+        value = data[it]
+    else:
+        # add value (if list)
+        value = data[pkey]
+    # -------------------------------------------------------------------------
+    # deal with value being a parameter dictionary itself
+    if isinstance(value, ParamDict):
+        # loop around keys in parameter dictionary
+        for jt, skey in enumerate(value.keys()):
+            # key to go into function
+            rkey = '{0}[{1}]'.format(key, skey)
+            # try to add sub-level to table dict
+            tabledict = _add_param_dict_to_tabledict(tabledict, value.data,
+                                                     rkey, value.instances,
+                                                     value.sources, value.used,
+                                                     None, pkey=skey)
+        # stop here
+        return tabledict
+    # -------------------------------------------------------------------------
+    # deal with a value being a dictionary
+    elif isinstance(value, dict):
+        # loop around keys in dictionary
+        for jt, skey in enumerate(value.keys()):
+            # key to go into function
+            rkey = '{0}[{1}]'.format(key, skey)
+            # try to add sub-level to table dict
+            tabledict = _add_param_dict_to_tabledict(tabledict, value,
+                                                     rkey, instances, sources,
+                                                     used, None, pkey=skey)
+        # stop here
+        return tabledict
+    # -------------------------------------------------------------------------
+    # deal with a value being a list (but not keyword stores)
+    elif isinstance(value, list) and not key.startswith('KW_'):
+        # loop around elements in list
+        for jt in range(len(value)):
+            # try to add sub-level to table dict
+            tabledict = _add_param_dict_to_tabledict(tabledict, value, key,
+                                                     instances, sources,
+                                                     used, jt, pkey=pkey)
+        # stop here
+        return tabledict
+    # -------------------------------------------------------------------------
+    # deal with keyword stores
+    elif isinstance(value, list) and key.startswith('KW_'):
+        # keywords will be added manually
+        return tabledict
+    # -------------------------------------------------------------------------
+    # deal with other simple types
+    elif isinstance(value, (str, int, float, bool)):
+        # add skip if not used
+        if pkey not in used:
+            return tabledict
+        # add to count
+        tabledict['COUNT'].append(used[pkey])
+        # fill in value
+        tabledict['VALUE'].append(str(value))
+        # fill in row
+        if it is not None:
+            tabledict['NAME'].append('{0}[{1}]'.format(key, it))
+        else:
+            tabledict['NAME'].append(key)
+        tabledict['KIND'].append('parameter')
+        # add description
+        if instance is not None:
+            tabledict['DESCRIPTION'].append(instance.description)
+        else:
+            tabledict['DESCRIPTION'].append('Parameter in parameter '
+                                            'dictionary')
+        # add source
+        if source is not None:
+            tabledict['SOURCE'].append(source)
+        else:
+            tabledict['SOURCE'].append('None')
+    # return table dictionary
+    return tabledict
 
 
 # =============================================================================

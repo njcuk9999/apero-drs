@@ -82,7 +82,7 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     :return: the corrected image
     """
     # set function name
-    func_name = display_func(params, 'correct_cosmics', __NAME__)
+    func_name = display_func('correct_cosmics', __NAME__)
     # get parameters from params
     tamp = params['PP_TOTAL_AMP_NUM']
     ntop = params['PP_NUM_REF_TOP']
@@ -532,7 +532,7 @@ def get_pp_mask(params: ParamDict, header: drs_fits.Header,
 
     :return: tuple, 1. the loaded mask as a np.array, 2. the Path to the mask
     """
-    _ = display_func(params, '.get_pp_mask', __NAME__)
+    _ = display_func('.get_pp_mask', __NAME__)
     # get file instance
     ppmstr = drs_startup.get_file_definition('PPMSTR', params['INSTRUMENT'],
                                              kind='red')

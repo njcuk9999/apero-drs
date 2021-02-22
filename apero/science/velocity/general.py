@@ -602,7 +602,7 @@ def fill_e2ds_nans(params, image, **kwargs):
 
 def locate_reference_file(params, recipe, infile):
     # set function name
-    func_name = display_func(params, 'locate_reference_file', __NAME__)
+    func_name = display_func('locate_reference_file', __NAME__)
     # get pp file name
     # TODO: fix how we get pp file
     pp_filename = infile.filename.split('_pp')[0] + '_pp.fits'
@@ -977,7 +977,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
                     ccfstep, mask_centers, mask_weights, fit_type, fiber,
                     ccfnormmode, **kwargs):
     # set function name
-    func_name = display_func(params, 'calculate_ccf', __NAME__)
+    func_name = display_func('calculate_ccf', __NAME__)
     # get properties from params
     blaze_norm_percentile = pcheck(params, 'CCF_BLAZE_NORM_PERCENTILE',
                                    'blaze_norm_percentile', kwargs, func_name)
@@ -1389,7 +1389,6 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     ccf_file.add_hkey('KW_CCF_RV_WAVETIME', value=props['RV_WAVETIME'])
     ccf_file.add_hkey('KW_CCF_RV_TIMEDIFF', value=props['RV_TIMEDIFF'])
     ccf_file.add_hkey('KW_CCF_RV_WAVESRCE', value=props['RV_WAVESRCE'])
-
     # ----------------------------------------------------------------------
     # add qc parameters
     ccf_file.add_qckeys(qc_params)
@@ -1401,9 +1400,18 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     # log that we are saving rotated image
     wargs = [fiber, ccf_file.filename]
     WLOG(params, '', textentry('40-020-00006', args=wargs))
+    # define multi lists
+    data_list = [table2]
+    datatype_list = ['table']
+    name_list = ['RV_TABLE', 'ORDER_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write multi
-    ccf_file.write_multi(data_list=[table2], datatype_list=['table'],
-                         name_list=['RV_TABLE', 'ORDER_TABLE'],
+    ccf_file.write_multi(data_list=data_list, name_list=name_list,
+                         datatype_list=datatype_list,
                          kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(ccf_file)

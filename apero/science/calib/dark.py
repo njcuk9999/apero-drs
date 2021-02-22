@@ -377,11 +377,17 @@ def write_master_files(params, recipe, reffile, master_dark, dark_table,
     outfile.data = master_dark
     # log that we are saving master dark to file
     WLOG(params, '', textentry('40-011-10006', args=[outfile.filename]))
+    # define multi lists
+    data_list, name_list = [dark_table], ['DARK_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list =['PARAM_TABLE']
+    else:
+        data_list, name_list = [], []
     # write data and header list to file
-    outfile.write_multi(kind=recipe.outputtype,
-                        name_list=['DARK_TABLE'],
-                        data_list=[dark_table],
-                        runstring=recipe.runstring)
+    outfile.write_multi(kind=recipe.outputtype, name_list=name_list,
+                        data_list=data_list, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile)
     # return out file

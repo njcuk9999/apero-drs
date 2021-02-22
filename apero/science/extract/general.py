@@ -952,7 +952,7 @@ def save_uncorrected_ext_fp(params, extractdict):
 def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
                 **kwargs):
     # set up function name
-    func_name = display_func(params, 'ref_fplines', __NAME__)
+    func_name = display_func('ref_fplines', __NAME__)
     # get constant from params
     allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', 'fptypes', kwargs, func_name,
                         mapf='list')
@@ -1354,11 +1354,19 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # log that we are saving rotated image
     wargs = [e2dsllfile.filename]
     WLOG(params, '', textentry('40-016-00007', args=wargs))
+    # define multi lists
+    data_list = [eprops['E2DSCC']],
+    name_list = ['E2DSLL', 'E2DSCC'],
+    datatype_list = ['image']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write image to file
-    e2dsllfile.write_multi(data_list=[eprops['E2DSCC']],
-                           name_list=['E2DSLL', 'E2DSCC'],
-                           datatype_list=['image'], kind=recipe.outputtype,
-                           runstring=recipe.runstring)
+    e2dsllfile.write_multi(data_list=data_list, name_list=name_list,
+                           datatype_list=datatype_list,
+                           kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsllfile)
     # ----------------------------------------------------------------------

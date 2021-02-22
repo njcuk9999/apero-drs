@@ -386,8 +386,17 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     WLOG(params, '', textentry('40-012-00013', args=[badpixfile.filename]))
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        ptable = params.snapshot_table()
+        data_list, name_list = [ptable], ['PARAM_TABLE']
+    else:
+        data_list, name_list = [], []
     # write image to file
-    badpixfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    badpixfile.write_multi(data_list=data_list, name_list=name_list,
+                           kind=recipe.outputtype,
+                           runstring=recipe.runstring)
+
     # add to output files (for indexing)
     recipe.add_output_file(badpixfile)
     # ----------------------------------------------------------------------
@@ -409,7 +418,8 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     # log that we are saving rotated image
     WLOG(params, '', textentry('40-012-00014', args=[backmapfile.filename]))
     # write image to file
-    backmapfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    backmapfile.write_multi(data_list=[ptable], name_list=['PARAM_TABLE'],
+                            kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(backmapfile)
     # return output files

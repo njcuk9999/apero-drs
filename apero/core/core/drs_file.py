@@ -206,7 +206,7 @@ class DrsInputFile:
         # set class name
         self.class_name = 'DrsInputFile'
         # set function name
-        _ = display_func(params, '__init__', __NAME__, self.class_name)
+        _ = display_func('__init__', __NAME__, self.class_name)
         # define a name
         self.name = name
         # define the extension
@@ -292,7 +292,7 @@ class DrsInputFile:
                      i.e. DrsInputFile[name]
         """
         # set function name
-        _ = display_func(self.params, '__str__', __NAME__, self.class_name)
+        _ = display_func('__str__', __NAME__, self.class_name)
         # return the string representation of DrsInputFile
         return '{0}[{1}]'.format(self.class_name, self.name)
 
@@ -303,7 +303,7 @@ class DrsInputFile:
                      i.e. DrsInputFile[name]
         """
         # set function name
-        _ = display_func(self.params, '__repr__', __NAME__, self.class_name)
+        _ = display_func('__repr__', __NAME__, self.class_name)
         # return the string representation of DrsInputFile
         return 'DrsInputFile[{0}]'.format(self.name)
 
@@ -316,7 +316,7 @@ class DrsInputFile:
         :return None:
         """
         # set function name
-        _ = display_func(self.params, 'set_filename', __NAME__, self.class_name)
+        _ = display_func('set_filename', __NAME__, self.class_name)
         # skip if filename is None
         if filename is None:
             return
@@ -334,7 +334,7 @@ class DrsInputFile:
         :return:
         """
         # set function name
-        _ = display_func(self.params, 'check_filename', __NAME__, self.class_name)
+        _ = display_func('check_filename', __NAME__, self.class_name)
         # check that filename isn't None
         if self.filename is None:
             func = self.__repr__()
@@ -348,7 +348,7 @@ class DrsInputFile:
         :return: True if file exists
         """
         # set function name
-        _ = display_func(self.params, 'set_filename', __NAME__, self.class_name)
+        _ = display_func('set_filename', __NAME__, self.class_name)
         # assume file does not exist
         found = False
         # if filename is set check filename exists
@@ -368,7 +368,7 @@ class DrsInputFile:
         :return: None
         """
         # set function name
-        _ = display_func(self.params, 'set_params', __NAME__, self.class_name)
+        _ = display_func('set_params', __NAME__, self.class_name)
         # set the params
         self.params = params
 
@@ -477,7 +477,7 @@ class DrsInputFile:
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
         # set function name
-        _ = display_func(self.params, 'newcopy', __NAME__, self.class_name)
+        _ = display_func('newcopy', __NAME__, self.class_name)
         # copy this instances values (if not overwritten)
         return _copydrsfile(DrsInputFile, self, None, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
@@ -496,7 +496,7 @@ class DrsInputFile:
         if func is not None:
             func_name = func
         else:
-            func_name = display_func(self.params, 'check_params', __NAME__,
+            func_name = display_func('check_params', __NAME__,
                                      self.class_name)
         # ---------------------------------------------------------------------
         # check that params isn't None
@@ -512,7 +512,7 @@ class DrsInputFile:
         :return: None
         """
         # set function name
-        _ = display_func(self.params, '__error__', __NAME__, self.class_name)
+        _ = display_func('__error__', __NAME__, self.class_name)
         # run the log method: error mode
         self.__log__(messages, 'error')
 
@@ -523,7 +523,7 @@ class DrsInputFile:
         :return: None
         """
         # set function name
-        _ = display_func(self.params, '__warning__', __NAME__, self.class_name)
+        _ = display_func('__warning__', __NAME__, self.class_name)
         # run the log method: warning mode
         self.__log__(messages, 'warning')
 
@@ -534,7 +534,7 @@ class DrsInputFile:
         :return:
         """
         # set function name
-        _ = display_func(self.params, '__message__', __NAME__, self.class_name)
+        _ = display_func('__message__', __NAME__, self.class_name)
         # print and log via wlogger
         WLOG(self.params, '', messages)
 
@@ -546,7 +546,7 @@ class DrsInputFile:
         :return:
         """
         # set function name
-        _ = display_func(self.params, '__log__', __NAME__, self.class_name)
+        _ = display_func('__log__', __NAME__, self.class_name)
         # format initial error message
         m0args = [kind.capitalize(), self.__repr__()]
         message0 = textentry('{0}: {1}'.format(*m0args))
@@ -566,7 +566,7 @@ class DrsInputFile:
         :return:
         """
         # set function name
-        _ = display_func(self.params, 'addset', __NAME__, self.class_name)
+        _ = display_func('addset', __NAME__, self.class_name)
         # append drs file to file set
         self.fileset.append(drsfile)
         # apeend drs file name to file set name list
@@ -676,7 +676,7 @@ class DrsInputFile:
                        [not used in DrsInputFile]
         """
         # set function name
-        _ = display_func(self.params, 'copyother', __NAME__, self.class_name)
+        _ = display_func('copyother', __NAME__, self.class_name)
         # copy this instances values (if not overwritten)
         return _copydrsfile(DrsInputFile, self, drsfile, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
@@ -791,7 +791,7 @@ class DrsInputFile:
                        [not used in DrsInputFile]
         """
         # set function name
-        _ = display_func(self.params, 'completecopy', __NAME__, self.class_name)
+        _ = display_func('completecopy', __NAME__, self.class_name)
         # copy this instances values (if not overwritten)
         return _copydrsfile(DrsInputFile, drsfile, None, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
@@ -813,7 +813,7 @@ class DrsInputFile:
         :returns: True or False and the reason why (if False)
         """
         # set function name
-        _ = display_func(self.params, 'check_another_file', __NAME__,
+        _ = display_func('check_another_file', __NAME__,
                          self.class_name)
         # 1. check extension
         cond1, msg1 = self.has_correct_extension(input_file.inext)
@@ -837,7 +837,7 @@ class DrsInputFile:
         :returns: True or False and the reason why (if False)
         """
         # set function name
-        _ = display_func(self.params, 'check_file', __NAME__, self.class_name)
+        _ = display_func('check_file', __NAME__, self.class_name)
         # 1. check extension
         cond1, msg1 = self.has_correct_extension()
         if not cond1:
@@ -870,7 +870,7 @@ class DrsInputFile:
         :return: True and no reason (None)
         """
         # set function name
-        _ = display_func(self.params, 'has_correct_extension', __NAME__,
+        _ = display_func('has_correct_extension', __NAME__,
                          self.class_name)
         # do nothing
         _ = filename
@@ -896,7 +896,7 @@ class DrsInputFile:
         :return: True and no reason (None)
         """
         # set function name
-        _ = display_func(self.params, 'hkeys_exist', __NAME__, self.class_name)
+        _ = display_func('hkeys_exist', __NAME__, self.class_name)
         # do nothing
         _ = filename
         _ = header
@@ -922,7 +922,7 @@ class DrsInputFile:
         :return: True and no reason (None)
         """
         # set function name
-        _ = display_func(self.params, 'has_correct_hkeys', __NAME__, self.class_name)
+        _ = display_func('has_correct_hkeys', __NAME__, self.class_name)
         # do nothing
         _ = filename
         _ = header
@@ -948,7 +948,7 @@ class DrsInputFile:
         :return None:
         """
         # set function name
-        _ = display_func(self.params, 'read_file', __NAME__, self.class_name)
+        _ = display_func('read_file', __NAME__, self.class_name)
         # do nothing else (no current read option for generic input files)
         _ = ext
         _ = check
@@ -962,7 +962,7 @@ class DrsInputFile:
         :return: None
         """
         # set function name
-        _ = display_func(self.params, 'write_file', __NAME__, self.class_name)
+        _ = display_func('write_file', __NAME__, self.class_name)
         # do nothing else (no current write option for generic input files)
         _ = kind, runstring
 
@@ -1006,7 +1006,7 @@ class DrsInputFile:
                        correct values
         """
         # set function name
-        func_name = display_func(self.params, 'construct_filename', __NAME__,
+        func_name = display_func('construct_filename', __NAME__,
                                  self.class_name)
         # get parameters
         self.check_params(func_name)
@@ -1054,7 +1054,7 @@ class DrsInputFile:
         :rtype list:
         """
         # set function name
-        _ = display_func(self.params, 'generate_reqfiles', __NAME__,
+        _ = display_func('generate_reqfiles', __NAME__,
                          self.class_name)
         # deal with intype being unset
         if self.intype is None:
@@ -1111,7 +1111,7 @@ class DrsInputFile:
                  DrsInputFile.inext
         """
         # set function name
-        func_name = display_func(self.params, 'reconstruct_filename', __NAME__,
+        func_name = display_func('reconstruct_filename', __NAME__,
                                  self.class_name)
         # get parameters
         self.check_params(func_name)
@@ -1171,7 +1171,7 @@ class DrsInputFile:
         :return None:
         """
         # set function name
-        func_name = display_func(self.params, 'output_dictionary', __NAME__,
+        func_name = display_func('output_dictionary', __NAME__,
                                  self.class_name)
         # check that params is set
         self.check_params(func_name)
@@ -1314,7 +1314,7 @@ class DrsFitsFile(DrsInputFile):
         # set class name
         self.class_name = 'DrsFitsFile'
         # set function name
-        _ = display_func(params, '__init__', __NAME__, self.class_name)
+        _ = display_func('__init__', __NAME__, self.class_name)
         # define a name
         self.name = name
         # get super init
@@ -1433,7 +1433,7 @@ class DrsFitsFile(DrsInputFile):
                      i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
         """
         # set function name
-        _ = display_func(self.params, '__str__', __NAME__, self.class_name)
+        _ = display_func('__str__', __NAME__, self.class_name)
         # return the string output
         return self.string_output()
 
@@ -1444,7 +1444,7 @@ class DrsFitsFile(DrsInputFile):
                      i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
         """
         # set function name
-        _ = display_func(self.params, '__repr__', __NAME__, self.class_name)
+        _ = display_func('__repr__', __NAME__, self.class_name)
         # return the string output
         return self.string_output()
 
@@ -1461,7 +1461,7 @@ class DrsFitsFile(DrsInputFile):
         :return: None
         """
         # set function name
-        _ = display_func(self.params, 'get_header_keys', __NAME__,
+        _ = display_func('get_header_keys', __NAME__,
                          self.class_name)
         # deal with no hkeys
         if hkeys is None:
@@ -1576,7 +1576,7 @@ class DrsFitsFile(DrsInputFile):
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
         # set function name
-        _ = display_func(self.params, 'newcopy', __NAME__, self.class_name)
+        _ = display_func('newcopy', __NAME__, self.class_name)
         # copy this instances values (if not overwritten)
         return _copydrsfile(DrsFitsFile, self, None, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
@@ -1595,7 +1595,7 @@ class DrsFitsFile(DrsInputFile):
         :return string: str, the string to print
         """
         # set function name
-        _ = display_func(self.params, 'string_output', __NAME__, self.class_name)
+        _ = display_func('string_output', __NAME__, self.class_name)
         # if we don't have the fiber print the drs fits file string
         if self.fiber is None:
             return '{0}[{1}]'.format(self.class_name, self.name)
@@ -1612,7 +1612,7 @@ class DrsFitsFile(DrsInputFile):
         :return:
         """
         # set function name
-        _ = display_func(self.params, 'set_required_key', __NAME__,
+        _ = display_func('set_required_key', __NAME__,
                          self.class_name)
         # if we have a keyword (prefix 'KW_')
         if 'KW_' in key:
@@ -1723,7 +1723,7 @@ class DrsFitsFile(DrsInputFile):
                        [not used in DrsInputFile]
         """
         # set function name
-        func_name = display_func(self.params, 'copyother', __NAME__,
+        func_name = display_func('copyother', __NAME__,
                                  self.class_name)
         # check params has been set
         self.check_params(func_name)
@@ -1841,7 +1841,7 @@ class DrsFitsFile(DrsInputFile):
                        [not used in DrsInputFile]
         """
         # set function name
-        _ = display_func(self.params, 'completecopy', __NAME__, self.class_name)
+        _ = display_func('completecopy', __NAME__, self.class_name)
         # copy this instances values (if not overwritten)
         return _copydrsfile(DrsFitsFile, drsfile, None, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
@@ -1861,7 +1861,7 @@ class DrsFitsFile(DrsInputFile):
         :returns: True or False and the reason why (if False)
         """
         # set function name
-        _ = display_func(self.params, 'check_file', __NAME__, self.class_name)
+        _ = display_func('check_file', __NAME__, self.class_name)
         # 1. check extension
         cond1, msg1 = self.has_correct_extension()
         if not cond1:
@@ -1896,7 +1896,7 @@ class DrsFitsFile(DrsInputFile):
         :return: True or False for correct extension and the reason why if False
         """
         # set function name
-        func_name = display_func(self.params, 'has_correct_extension', __NAME__,
+        func_name = display_func('has_correct_extension', __NAME__,
                                  self.class_name)
         # deal with no input extension
         if filetype is None:
@@ -1955,7 +1955,7 @@ class DrsFitsFile(DrsInputFile):
                  if False
         """
         # set function name
-        func_name = display_func(self.params, 'hkeys_exist', __NAME__,
+        func_name = display_func('hkeys_exist', __NAME__,
                                  self.class_name)
         # deal with no input header
         if header is None:
@@ -2040,7 +2040,7 @@ class DrsFitsFile(DrsInputFile):
                  - value is value in the header
         """
         # set function name
-        func_name = display_func(self.params, 'has_correct_hkeys', __NAME__,
+        func_name = display_func('has_correct_hkeys', __NAME__,
                                  self.class_name)
         # -----------------------------------------------------------------
         # check params has been set
@@ -2109,7 +2109,7 @@ class DrsFitsFile(DrsInputFile):
         :return: None
         """
         # set function name
-        func_name = display_func(self.params, 'has_fiber', __NAME__,
+        func_name = display_func('has_fiber', __NAME__,
                                  self.class_name)
         # -----------------------------------------------------------------
         # check whether fiber already set (in which case ignore)
@@ -2164,7 +2164,7 @@ class DrsFitsFile(DrsInputFile):
                   filename generated (also in output DrsFitsFile.filename)
         """
         # set function name
-        func_name = display_func(self.params, 'get_infile_outfilename',
+        func_name = display_func('get_infile_outfilename',
                                  __NAME__, self.class_name)
         # get parameters
         self.check_params(func_name)
@@ -2255,7 +2255,7 @@ class DrsFitsFile(DrsInputFile):
                  the output path of the infile (if infile is valid else None)
         """
         # set function name
-        func_name = display_func(self.params, 'check_table_filename', __NAME__,
+        func_name = display_func('check_table_filename', __NAME__,
                                  'DrsFitsFile')
         # get parameters
         self.check_params(func_name)
@@ -2350,7 +2350,7 @@ class DrsFitsFile(DrsInputFile):
         :return: bool, True if dictionary of keys is valid for DrsFitsFile.rkeys
         """
         # set function name
-        func_name = display_func(self.params, 'check_table_keys', __NAME__,
+        func_name = display_func('check_table_keys', __NAME__,
                                  self.class_name)
         # get parameters
         self.check_params(func_name)
@@ -2425,7 +2425,7 @@ class DrsFitsFile(DrsInputFile):
         :return None:
         """
         # set function name
-        _ = display_func(self.params, 'read_file', __NAME__, self.class_name)
+        _ = display_func('read_file', __NAME__, self.class_name)
         # check if we have data set
         if check:
             cond1 = self.data is not None
@@ -2489,7 +2489,7 @@ class DrsFitsFile(DrsInputFile):
         :return: None or [np.ndarray/Table] if return_data = True
         """
         # set function name
-        _ = display_func(self.params, 'read_data', __NAME__, self.class_name)
+        _ = display_func('read_data', __NAME__, self.class_name)
         # check that filename is set
         self.check_filename()
         # get params
@@ -2529,7 +2529,7 @@ class DrsFitsFile(DrsInputFile):
         :return: None
         """
         # set function name
-        _ = display_func(self.params, 'read_header', __NAME__, self.class_name)
+        _ = display_func('read_header', __NAME__, self.class_name)
         # check that filename is set
         self.check_filename()
         # deal with no extension
@@ -2566,7 +2566,7 @@ class DrsFitsFile(DrsInputFile):
         :return: None
         """
         # set function name
-        _ = display_func(self.params, 'check_read', __NAME__, self.class_name)
+        _ = display_func('check_read', __NAME__, self.class_name)
         # ---------------------------------------------------------------------
         # deal with header only
         # ---------------------------------------------------------------------
@@ -2626,7 +2626,7 @@ class DrsFitsFile(DrsInputFile):
                  extension
         """
         # set function name
-        _ = display_func(self.params, 'get_data', __NAME__, self.class_name)
+        _ = display_func('get_data', __NAME__, self.class_name)
         # check whether extensions is populated
         if extensions is not None:
             # storage of incoming data
@@ -2660,7 +2660,7 @@ class DrsFitsFile(DrsInputFile):
         :return: the header (drs_fits.Header)
         """
         # set function name
-        _ = display_func(self.params, 'get_header', __NAME__, self.class_name)
+        _ = display_func('get_header', __NAME__, self.class_name)
         # check header exists
         if self.header is None:
             self.check_read(header_only=True)
@@ -2686,7 +2686,7 @@ class DrsFitsFile(DrsInputFile):
                  returns bool, True if data/header are set, False otherwise
         """
         # set function name
-        _ = display_func(self.params, 'read_multi', __NAME__, self.class_name)
+        _ = display_func('read_multi', __NAME__, self.class_name)
         # check if we have data set
         if check:
             cond1 = self.data is not None
@@ -2735,7 +2735,7 @@ class DrsFitsFile(DrsInputFile):
         """
 
         # set function name
-        _ = display_func(self.params, 'update_header_with_hdict', __NAME__,
+        _ = display_func('update_header_with_hdict', __NAME__,
                          self.class_name)
         # deal with unset header
         if self.header is None:
@@ -2768,7 +2768,7 @@ class DrsFitsFile(DrsInputFile):
         :return: None
         """
         # set function name
-        func_name = display_func(self.params, 'write_file', __NAME__,
+        func_name = display_func('write_file', __NAME__,
                                  self.class_name)
         # get params
         params = self.params
@@ -2788,7 +2788,8 @@ class DrsFitsFile(DrsInputFile):
         # write output dictionary
         self.output_dictionary(kind, runstring)
 
-    def write_multi(self, kind: str, data_list: List[Union[Table, np.ndarray]],
+    def write_multi(self, kind: str,
+                    data_list: List[Union[Table, np.ndarray]],
                     header_list: Union[List[drs_fits.Header], None] = None,
                     name_list: Union[List[str], None] = None,
                     datatype_list: Union[List[str], None] = None,
@@ -2825,7 +2826,7 @@ class DrsFitsFile(DrsInputFile):
         :return: None
         """
         # set function name
-        func_name = display_func(self.params, 'write_multi', __NAME__,
+        func_name = display_func('write_multi', __NAME__,
                                  self.class_name)
         # get params
         params = self.params
@@ -2891,7 +2892,7 @@ class DrsFitsFile(DrsInputFile):
                  returns None
         """
         # set function name
-        _ = display_func(self.params, 'get_fiber', __NAME__, self.class_name)
+        _ = display_func('get_fiber', __NAME__, self.class_name)
         # get params
         params = self.params
         # must have fibers defined to be able to get a fiber
@@ -2925,7 +2926,7 @@ class DrsFitsFile(DrsInputFile):
         :return None:
         """
         # set function name
-        func_name = display_func(self.params, 'output_dictionary', __NAME__,
+        func_name = display_func('output_dictionary', __NAME__,
                                  self.class_name)
         # check that params is set
         self.check_params(func_name)
@@ -3011,7 +3012,7 @@ class DrsFitsFile(DrsInputFile):
                  2. the combined table
         """
         # set function name
-        func_name = display_func(self.params, 'combine', __NAME__,
+        func_name = display_func('combine', __NAME__,
                                  self.class_name)
         # define usable math
         available_math = ['sum', 'average', 'mean', 'median', 'med',
@@ -3222,7 +3223,7 @@ class DrsFitsFile(DrsInputFile):
         :return: the value from the header for key
         """
         # set function name
-        func_name = display_func(self.params, 'read_header_key', __NAME__,
+        func_name = display_func('read_header_key', __NAME__,
                                  self.class_name)
         # check that params is set
         self.check_params(func_name)
@@ -3297,7 +3298,7 @@ class DrsFitsFile(DrsInputFile):
                        has_default=True)
         """
         # set function name
-        func_name = display_func(self.params, 'read_header_keys', __NAME__,
+        func_name = display_func('read_header_keys', __NAME__,
                                  self.class_name)
         # check that params is set
         self.check_params(func_name)
@@ -3357,7 +3358,7 @@ class DrsFitsFile(DrsInputFile):
         :return values: numpy array (1D), the values force to type = dtype
         """
         # set function name
-        func_name = display_func(self.params, 'get_hkey_1d', __NAME__,
+        func_name = display_func('get_hkey_1d', __NAME__,
                                  self.class_name)
         # check that data is read
         self.check_read(header_only=True)
@@ -3416,7 +3417,7 @@ class DrsFitsFile(DrsInputFile):
         :return values: numpy array (2D), the values force to type = dtype
         """
         # set function name
-        func_name = display_func(self.params, 'get_hkey_2d', __NAME__,
+        func_name = display_func('get_hkey_2d', __NAME__,
                                  self.class_name)
         # check that data is read
         self.check_read(header_only=True)
@@ -3453,7 +3454,7 @@ class DrsFitsFile(DrsInputFile):
         :return: str, either the key, params[key], key[0], params[key][0]
         """
         # set function name
-        _ = display_func(self.params, '_check_key', __NAME__, self.class_name)
+        _ = display_func('_check_key', __NAME__, self.class_name)
         # get drs parameters
         drs_params = self.params
         # need to check drs_params for key (if key is not in header)
@@ -3513,7 +3514,7 @@ class DrsFitsFile(DrsInputFile):
         :return None:
         """
         # set function name
-        _ = display_func(self.params, 'copy_original_keys', __NAME__,
+        _ = display_func('copy_original_keys', __NAME__,
                          self.class_name)
         # deal with exclude groups
         if exclude_groups is not None:
@@ -3563,7 +3564,7 @@ class DrsFitsFile(DrsInputFile):
         :return: astropy.io.fits.header.Cards instance - updated
         """
         # set function name
-        func_name = display_func(self.params, 'copy_cards', __NAME__,
+        func_name = display_func('copy_cards', __NAME__,
                                  self.class_name)
         # get parameters
         self.check_params(func_name)
@@ -3675,7 +3676,7 @@ class DrsFitsFile(DrsInputFile):
         :return: None (but updates DrsFitsFile.hdict)
         """
         # set function name
-        func_name = display_func(self.params, 'add_hkey', __NAME__,
+        func_name = display_func('add_hkey', __NAME__,
                                  self.class_name)
         # deal with mapf
         if mapf is not None:
@@ -3745,7 +3746,7 @@ class DrsFitsFile(DrsInputFile):
         :return None:
         """
         # set function name
-        func_name = display_func(self.params, 'add_hkeys', __NAME__,
+        func_name = display_func('add_hkeys', __NAME__,
                                  self.class_name)
         # deal with no keywordstore
         if (kwstores is None) and (keys is None or comments is None):
@@ -3804,7 +3805,7 @@ class DrsFitsFile(DrsInputFile):
         :return None: updates DrsFitsFile.hdict
         """
         # set function name
-        func_name = display_func(self.params, 'add_hkey_1d', __NAME__,
+        func_name = display_func('add_hkey_1d', __NAME__,
                                  self.class_name)
         # deal with no keywordstore
         if (key is None) and (keyword is None or comment is None):
@@ -3898,7 +3899,7 @@ class DrsFitsFile(DrsInputFile):
         :return None: updates DrsFitsFile.hdict
         """
         # set function name
-        func_name = display_func(self.params, 'add_hkey_2d', __NAME__,
+        func_name = display_func('add_hkey_2d', __NAME__,
                                  self.class_name)
         # deal with no dim names
         if dim1name is None:
@@ -3964,7 +3965,7 @@ class DrsFitsFile(DrsInputFile):
         :return: None, updates DrsFitsFile.hdict
         """
         # set function name
-        func_name = display_func(self.params, 'add_qckeys', __NAME__,
+        func_name = display_func('add_qckeys', __NAME__,
                                  self.class_name)
         # get parameters
         qc_kws = ['KW_DRS_QC_NAME', 'KW_DRS_QC_VAL', 'KW_DRS_QC_LOGIC',
@@ -4019,7 +4020,7 @@ class DrsFitsFile(DrsInputFile):
                              quality control pass/fail]
         """
         # set function name
-        func_name = display_func(self.params, 'get_qckeys', __NAME__,
+        func_name = display_func('get_qckeys', __NAME__,
                                  self.class_name)
         # check for kwstore in params
         self.check_params(func_name)
@@ -4063,7 +4064,7 @@ class DrsFitsFile(DrsInputFile):
         # deal with no func_name
         if func_name is None:
             # set function name
-            func_name = display_func(self.params, 'get_keywordstore', __NAME__,
+            func_name = display_func('get_keywordstore', __NAME__,
                                      self.class_name)
         # extract keyword, value and comment and put it into hdict
         # noinspection PyBroadException
@@ -4084,7 +4085,7 @@ class DrsFitsFile(DrsInputFile):
         :return: None, updates DrsFitsFile.hdict
         """
         # set function name
-        _ = display_func(self.params, 'copy_hdict', __NAME__, self.class_name)
+        _ = display_func('copy_hdict', __NAME__, self.class_name)
         # set this instance to the hdict instance of another drs fits file
         self.hdict = drsfile.hdict.copy()
 
@@ -4095,7 +4096,7 @@ class DrsFitsFile(DrsInputFile):
         :return: None, updates DrsFitsFile.header
         """
         # set function name
-        _ = display_func(self.params, 'copy_header', __NAME__, self.class_name)
+        _ = display_func('copy_header', __NAME__, self.class_name)
         # set this instance to the header instance of another drs fits file
         self.header = drsfile.header.copy()
 
@@ -4110,7 +4111,7 @@ class DrsFitsFile(DrsInputFile):
                  key
         """
         # set function name
-        _ = display_func(self.params, 'get_dbkey', __NAME__, self.class_name)
+        _ = display_func('get_dbkey', __NAME__, self.class_name)
         # deal with dbkey not set
         if self.raw_dbkey is None or self.dbkey is None:
             return None
@@ -4205,7 +4206,7 @@ class DrsNpyFile(DrsInputFile):
         # set class name
         self.class_name = 'DrsNpyFile'
         # set function name
-        _ = display_func(params, '__init__', __NAME__, self.class_name)
+        _ = display_func('__init__', __NAME__, self.class_name)
         # define a name
         self.name = name
         # get super init
@@ -4252,7 +4253,7 @@ class DrsNpyFile(DrsInputFile):
                      i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
         """
         # set function name
-        _ = display_func(self.params, '__str__', __NAME__, self.class_name)
+        _ = display_func('__str__', __NAME__, self.class_name)
         # return string output
         return self.string_output()
 
@@ -4263,7 +4264,7 @@ class DrsNpyFile(DrsInputFile):
                      i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
         """
         # set function name
-        _ = display_func(self.params, '__repr__', __NAME__, self.class_name)
+        _ = display_func('__repr__', __NAME__, self.class_name)
         # return string output
         return self.string_output()
 
@@ -4282,7 +4283,7 @@ class DrsNpyFile(DrsInputFile):
         _ = check
         _ = copy
         # set function name
-        func_name = display_func(self.params, 'read_file', __NAME__,
+        func_name = display_func('read_file', __NAME__,
                                  self.class_name)
         # get parameters
         self.check_params(func_name)
@@ -4314,7 +4315,7 @@ class DrsNpyFile(DrsInputFile):
         :return: None
         """
         # set function name
-        _ = display_func(self.params, 'check_read', __NAME__, self.class_name)
+        _ = display_func('check_read', __NAME__, self.class_name)
         # header only is not used
         _ = header_only
         # ---------------------------------------------------------------------
@@ -4349,7 +4350,7 @@ class DrsNpyFile(DrsInputFile):
         :return: the data (numpy array)
         """
         # set function name
-        _ = display_func(self.params, 'get_data', __NAME__, self.class_name)
+        _ = display_func('get_data', __NAME__, self.class_name)
         # we don't use extensions
         _ = extensions
         # check data exists
@@ -4370,7 +4371,7 @@ class DrsNpyFile(DrsInputFile):
         :return: None
         """
         # set function name
-        func_name = display_func(self.params, 'write_file', __NAME__,
+        func_name = display_func('write_file', __NAME__,
                                  self.class_name)
         # get parameters
         self.check_params(func_name)
@@ -4400,7 +4401,7 @@ class DrsNpyFile(DrsInputFile):
         :return string: str, the string to print
         """
         # set function name
-        _ = display_func(self.params, 'string_output', __NAME__,
+        _ = display_func('string_output', __NAME__,
                          self.class_name)
         # if we do not have a fiber print the string representation of drs npy
         if self.fiber is None:
@@ -4490,7 +4491,7 @@ class DrsNpyFile(DrsInputFile):
         :param hkeys: NOT USED FOR NPY FILE CLASS
         """
         # set function name
-        _ = display_func(self.params, 'newcopy', __NAME__, self.class_name)
+        _ = display_func('newcopy', __NAME__, self.class_name)
         # copy this instances values (if not overwritten)
         return _copydrsfile(DrsNpyFile, self, None, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
@@ -4584,7 +4585,7 @@ class DrsNpyFile(DrsInputFile):
         :param hkeys: NOT USED FOR NPY FILE CLASS
         """
         # set function name
-        _ = display_func(self.params, 'completecopy', __NAME__, self.class_name)
+        _ = display_func('completecopy', __NAME__, self.class_name)
         # copy this instances values (if not overwritten)
         return _copydrsfile(DrsNpyFile, drsfile, None, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
@@ -4605,7 +4606,7 @@ class DrsNpyFile(DrsInputFile):
                  key
         """
         # set function name
-        _ = display_func(self.params, 'get_dbkey', __NAME__, self.class_name)
+        _ = display_func('get_dbkey', __NAME__, self.class_name)
         # deal with dbkey not set
         if self.raw_dbkey is None or self.dbkey is None:
             return None
@@ -4716,7 +4717,7 @@ class DrsOutFileExtension:
                      i.e. DrsInputFile[name]
         """
         # set function name
-        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        _ = display_func('__str__', __NAME__, self.class_name)
         # return the string representation of DrsInputFile
         return '{0}[{1}]'.format(self.class_name, self.name)
 
@@ -4727,7 +4728,7 @@ class DrsOutFileExtension:
                      i.e. DrsInputFile[name]
         """
         # set function name
-        _ = display_func(None, '__repr__', __NAME__, self.class_name)
+        _ = display_func('__repr__', __NAME__, self.class_name)
         # return the string representation of DrsInputFile
         return 'DrsOutExt[{0}]'.format(self.name)
 
@@ -5013,7 +5014,7 @@ class DrsOutFile(DrsInputFile):
                          error
         """
         # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        _ = display_func('__init__', __NAME__, self.class_name)
         # define a name
         self.name = name
         # get super init
@@ -5056,7 +5057,7 @@ class DrsOutFile(DrsInputFile):
                      i.e. DrsInputFile[name]
         """
         # set function name
-        _ = display_func(self.params, '__str__', __NAME__, self.class_name)
+        _ = display_func('__str__', __NAME__, self.class_name)
         # return the string representation of DrsInputFile
         return '{0}[{1}]'.format(self.class_name, self.name)
 
@@ -5067,7 +5068,7 @@ class DrsOutFile(DrsInputFile):
                      i.e. DrsInputFile[name]
         """
         # set function name
-        _ = display_func(self.params, '__repr__', __NAME__, self.class_name)
+        _ = display_func('__repr__', __NAME__, self.class_name)
         # return the string representation of DrsInputFile
         return 'DrsOutFile[{0}]'.format(self.name)
 
@@ -5105,7 +5106,7 @@ class DrsOutFile(DrsInputFile):
         :return:
         """
         # set function name
-        func_name = display_func(self.params, '__str__', __NAME__,
+        func_name = display_func('__str__', __NAME__,
                                  self.class_name)
         # position must be an integer
         if not isinstance(pos, int):
@@ -5201,7 +5202,7 @@ class DrsOutFile(DrsInputFile):
 
     def copy(self):
         # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        _ = display_func('__init__', __NAME__, self.class_name)
         # get new copy of drs out file
         new = DrsOutFile(self.name, self.filetype, self.suffix, self.outfunc,
                          self.inext)
@@ -5685,7 +5686,7 @@ class DrsOutFile(DrsInputFile):
 
     def write_file(self, kind: str, runstring: Union[str, None] = None):
         # set function name
-        func_name = display_func(self.params, 'write_file', __NAME__,
+        func_name = display_func('write_file', __NAME__,
                                  self.class_name)
         # construct data list
         data_list = []
@@ -5756,7 +5757,7 @@ def combine(params: ParamDict, recipe: Any,
     :rtype: DrsFitsFile
     """
     # set function name
-    func_name = display_func(params, 'combine', __NAME__)
+    func_name = display_func('combine', __NAME__)
     # if we have a string assume we have 1 file and skip combine
     if isinstance(infiles, DrsFitsFile):
         return infiles
@@ -6037,7 +6038,7 @@ def fix_header(params: ParamDict, recipe: Any,
              else return hdict and header (both fits.Header instances)
     """
     # set function name
-    _ = display_func(params, 'fix_header', __NAME__)
+    _ = display_func('fix_header', __NAME__)
     # deal with no header
     if header is None:
         header = infile.get_header()
@@ -6104,7 +6105,7 @@ def id_drs_file(params: ParamDict, recipe: Any,
                        DrsFitsFile(s) matching i.e. List[DrsFitsFile]
     """
     # set function
-    func_name = display_func(params, 'id_drs_file', __NAME__)
+    func_name = display_func('id_drs_file', __NAME__)
     # ----------------------------------------------------------------------
     # deal with list vs no list for drs_file_sets
     if isinstance(drs_file_sets, list):
@@ -6246,7 +6247,7 @@ def get_mid_obs_time(params: ParamDict,
              [now always 'header' - calculated in preprocessing fix_header]
     """
     # set function name
-    func_name = display_func(params, 'get_mid_obs_time', __NAME__)
+    func_name = display_func('get_mid_obs_time', __NAME__)
     # get obs_time
     outkey = params['KW_MID_OBS_TIME'][0]
     # get format from params
@@ -6406,7 +6407,7 @@ def generate_arg_checksum(source: Union[List[str], str],
     :return: str, the hash
     """
     # set function name
-    _ = display_func(None, 'generate_arg_checksum', __NAME__)
+    _ = display_func('generate_arg_checksum', __NAME__)
     # flatten list into string
     if isinstance(source, list):
         source = ' '.join(source)
@@ -6465,7 +6466,7 @@ def test_for_formatting(key: str, number: Union[int, float]) -> str:
     :return: str, the ouput either modified (if with formatting) or "key"
     """
     # set function name
-    _ = display_func(None, 'test_for_formatting', __NAME__)
+    _ = display_func('test_for_formatting', __NAME__)
     # test the formatting by entering a number as format
     test_str = key.format(number)
     # if they are the same after test return key with the key and number in
@@ -6489,7 +6490,7 @@ def is_forbidden_prefix(pconstant: PseudoConstants, key: str) -> bool:
              False if it does
     """
     # set function name
-    _ = display_func(None, 'is_forbidden_prefix', __NAME__)
+    _ = display_func('is_forbidden_prefix', __NAME__)
     # assume key is not forbidden
     cond = False
     # if prefix is forbidden and key starts with this prefix -->
@@ -6525,7 +6526,7 @@ def _check_keyworddict(key: str,
     :return:
     """
     # set function name
-    _ = display_func(None, '_check_keyworddict', __NAME__)
+    _ = display_func('_check_keyworddict', __NAME__)
     # loop around keys in keyword dict
     for mkey in keyworddict:
         # check if we have not formatting (assuming int/float)

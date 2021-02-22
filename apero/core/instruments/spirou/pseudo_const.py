@@ -59,7 +59,7 @@ class PseudoConstants(DefaultConstants):
         :param instrument: str, the drs instrument name
         """
         # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        _ = display_func('__init__', __NAME__, self.class_name)
         # set instrument name
         self.instrument = instrument
 
@@ -69,7 +69,7 @@ class PseudoConstants(DefaultConstants):
         :return:
         """
         # set function name
-        _ = display_func(None, '__getstate__', __NAME__, self.class_name)
+        _ = display_func('__getstate__', __NAME__, self.class_name)
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state
@@ -83,7 +83,7 @@ class PseudoConstants(DefaultConstants):
         :return:
         """
         # set function name
-        _ = display_func(None, '__setstate__', __NAME__, self.class_name)
+        _ = display_func('__setstate__', __NAME__, self.class_name)
         # update dict with state
         self.__dict__.update(state)
 
@@ -93,7 +93,7 @@ class PseudoConstants(DefaultConstants):
         :return:
         """
         # set function name
-        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        _ = display_func('__str__', __NAME__, self.class_name)
         # return string representation
         return self.__repr__()
 
@@ -103,7 +103,7 @@ class PseudoConstants(DefaultConstants):
         :return:
         """
         # set function name
-        _ = display_func(None, '__repr__', __NAME__, self.class_name)
+        _ = display_func('__repr__', __NAME__, self.class_name)
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.instrument)
 
@@ -120,7 +120,7 @@ class PseudoConstants(DefaultConstants):
         :return: file_definitions
         """
         # set function name
-        func_name = display_func(None, 'FILEMOD', __NAME__, self.class_name)
+        func_name = display_func('FILEMOD', __NAME__, self.class_name)
         # set module name
         module_name = 'apero.core.instruments.spirou.file_definitions'
         # try to import module
@@ -141,7 +141,7 @@ class PseudoConstants(DefaultConstants):
         :return: file_definitions
         """
         # set function name
-        func_name = display_func(None, 'RECIPEMOD', __NAME__, self.class_name)
+        func_name = display_func('RECIPEMOD', __NAME__, self.class_name)
         # set module name
         module_name = 'apero.core.instruments.spirou.recipe_definitions'
         # try to import module
@@ -165,7 +165,7 @@ class PseudoConstants(DefaultConstants):
         :return: a list of strings of valid extensions
         """
         # set function name
-        _ = display_func(None, 'VALID_RAW_FILES', __NAME__, self.class_name)
+        _ = display_func('VALID_RAW_FILES', __NAME__, self.class_name)
         # set valid extentions
         valid = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
         return valid
@@ -175,7 +175,7 @@ class PseudoConstants(DefaultConstants):
         Post process do not check these duplicate keys
         """
         # set function name
-        _ = display_func(None, 'NON_CHECK_DUPLICATE_KEYS', __NAME__,
+        _ = display_func('NON_CHECK_DUPLICATE_KEYS', __NAME__,
                          self.class_name)
         # set forbidden keys
         keys = ['SIMPLE', 'EXTEND', 'NEXTEND']
@@ -187,7 +187,7 @@ class PseudoConstants(DefaultConstants):
         Post process primary extension should not have these keys
         """
         # set function name
-        _ = display_func(None, 'FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
+        _ = display_func('FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
         # set forbidden keys
         forbidden_keys = ['BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2']
         # return forbiiden keys
@@ -203,7 +203,7 @@ class PseudoConstants(DefaultConstants):
                                 to copy from and old fits file
         """
         # set function name
-        _ = display_func(None, 'FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
+        _ = display_func('FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
         # set forbidden keys
         forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
                           'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
@@ -236,7 +236,7 @@ class PseudoConstants(DefaultConstants):
         :return: the fixed header
         """
         # set function name
-        _ = display_func(params, 'HEADER_FIXES', __NAME__, self.class_name)
+        _ = display_func('HEADER_FIXES', __NAME__, self.class_name)
         # ------------------------------------------------------------------
         # Deal with cleaning object name
         # ------------------------------------------------------------------
@@ -274,7 +274,7 @@ class PseudoConstants(DefaultConstants):
         :return:
         """
         # set function name
-        _ = display_func(None, 'DRS_OBJ_NAME', __NAME__, self.class_name)
+        _ = display_func('DRS_OBJ_NAME', __NAME__, self.class_name)
         # clean object name
         return clean_obj_name(objname=objname)
 
@@ -392,7 +392,7 @@ class PseudoConstants(DefaultConstants):
         :return:
         """
         # set function name
-        _ = display_func(None, 'SPLASH', __NAME__, self.class_name)
+        _ = display_func('SPLASH', __NAME__, self.class_name)
         # set the logo
         logo = ['',
                 '      `-+syyyso:.   -/+oossssso+:-`   `.-:-`  `...------.``                                 ',
@@ -424,7 +424,7 @@ class PseudoConstants(DefaultConstants):
         :return:
         """
         # set function name
-        func_name = display_func(None, 'FIBER_SETTINGS', __NAME__,
+        func_name = display_func('FIBER_SETTINGS', __NAME__,
                                  self.class_name)
         # list fiber keys
         keys = ['FIBER_FIRST_ORDER_JUMP', 'FIBER_MAX_NUM_ORDERS',
@@ -457,7 +457,7 @@ class PseudoConstants(DefaultConstants):
         :return: str, the fiber to use for input fiber
         """
         # set function name
-        _ = display_func(None, 'FIBER_LOC_TYPES', __NAME__, self.class_name)
+        _ = display_func('FIBER_LOC_TYPES', __NAME__, self.class_name)
         # check fiber against list
         if fiber in ['AB', 'A', 'B']:
             return 'AB'
@@ -474,7 +474,7 @@ class PseudoConstants(DefaultConstants):
         :return: str, the fiber to use for input fiber
         """
         # set function name
-        _ = display_func(None, 'FIBER_WAVE_TYPES', __NAME__, self.class_name)
+        _ = display_func('FIBER_WAVE_TYPES', __NAME__, self.class_name)
         # check fiber against list
         if fiber in ['AB', 'A', 'B']:
             return 'AB'
@@ -492,7 +492,7 @@ class PseudoConstants(DefaultConstants):
         :return:
         """
         # set function name
-        _ = display_func(None, 'FIBER_DPR_POS', __NAME__, self.class_name)
+        _ = display_func('FIBER_DPR_POS', __NAME__, self.class_name)
         # split DPRTYPE
         dprtypes = dprtype.split('_')
         # check fiber type
@@ -516,7 +516,7 @@ class PseudoConstants(DefaultConstants):
         :returns: the update coefficients and the number of orders
         """
         # set function name
-        _ = display_func(None, 'FIBER_LOC_COEFF_EXT', __NAME__, self.class_name)
+        _ = display_func('FIBER_LOC_COEFF_EXT', __NAME__, self.class_name)
         # for AB we need to merge the A and B components
         if fiber == 'AB':
             # get shape
@@ -557,7 +557,7 @@ class PseudoConstants(DefaultConstants):
         :return:
         """
         # set function name
-        _ = display_func(None, 'FIBER_DATA_TYPE', __NAME__, self.class_name)
+        _ = display_func('FIBER_DATA_TYPE', __NAME__, self.class_name)
         # check fiber type
         if fiber in ['AB', 'A', 'B']:
             return dprtype.split('_')[0]
@@ -571,7 +571,7 @@ class PseudoConstants(DefaultConstants):
         :return: the science and reference fiber
         """
         # set function name
-        _ = display_func(None, 'FIBER_CCF', __NAME__, self.class_name)
+        _ = display_func('FIBER_CCF', __NAME__, self.class_name)
         # set the fibers and return
         science = 'AB'
         reference = 'C'
@@ -585,7 +585,7 @@ class PseudoConstants(DefaultConstants):
         :return: list of science fibers and the reference fiber
         """
         # set function name
-        _ = display_func(None, 'FIBER_KINDS', __NAME__, self.class_name)
+        _ = display_func('FIBER_KINDS', __NAME__, self.class_name)
         # can be multiple science channels
         science = ['AB', 'A', 'B']
         # can only be one reference
@@ -614,7 +614,7 @@ class PseudoConstants(DefaultConstants):
         :return: list of strings, the individual fiber names
         """
         # set function name
-        _ = display_func(None, 'INDIVIDUAL_FIBERS', __NAME__, self.class_name)
+        _ = display_func('INDIVIDUAL_FIBERS', __NAME__, self.class_name)
         # list the individual fiber names
         return ['A', 'B', 'C']
 
@@ -638,7 +638,7 @@ class PseudoConstants(DefaultConstants):
         :return: dictionary of list with above format
         """
         # set function name
-        _ = display_func(None, 'BERV_INKEYS', __NAME__, self.class_name)
+        _ = display_func('BERV_INKEYS', __NAME__, self.class_name)
         # set up storage
         #     [in_key, out_key, kind, default]
         inputs = base_class.ListDict()
@@ -687,7 +687,7 @@ class PseudoConstants(DefaultConstants):
         :return: dictionary of list with above format
         """
         # set function name
-        _ = display_func(None, 'BERV_OUTKEYS', __NAME__, self.class_name)
+        _ = display_func('BERV_OUTKEYS', __NAME__, self.class_name)
         # set up storage
         #     [in_key, out_key, kind, default]
         outputs = base_class.ListDict()
@@ -733,7 +733,7 @@ class PseudoConstants(DefaultConstants):
         :return: list of columns (strings)
         """
         # set function name
-        _ = display_func(None, 'INDEX_DB_COLUMNS', __NAME__,
+        _ = display_func('INDEX_DB_COLUMNS', __NAME__,
                          self.class_name)
         # get header keys
         hkeys, htypes = self.INDEX_HEADER_KEYS()
@@ -779,7 +779,7 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
     :return: if objname set return str, else return the updated header and hdict
     """
     # set function name
-    func_name = display_func(params, 'clean_obj_name', __NAME__)
+    func_name = display_func('clean_obj_name', __NAME__)
     # deal with no objname --> header mode
     if objname is None:
         return_header = True
@@ -838,7 +838,7 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     :return: the updated header and hdict
     """
     # set function name
-    func_name = display_func(params, 'get_trg_type', __NAME__)
+    func_name = display_func('get_trg_type', __NAME__)
     # get keys from params
     kwobjname = params['KW_OBJNAME'][0]
     kwobstype = params['KW_OBSTYPE'][0]
@@ -893,7 +893,7 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     :return: the updated header and hdict
     """
     # set function name
-    func_name = display_func(params, 'get_mid_obs_time', __NAME__)
+    func_name = display_func('get_mid_obs_time', __NAME__)
     # get keys from params
     kwmidobstime = params['KW_MID_OBS_TIME'][0]
     kwmidcomment = params['KW_MID_OBS_TIME'][2]
@@ -967,7 +967,7 @@ def get_header_end_time(params: ParamDict, header: Any,
     :return: astropy.Time instance for the header time
     """
     # set function name
-    func_name = display_func(params, 'get_header_end_time', __NAME__)
+    func_name = display_func('get_header_end_time', __NAME__)
     # get acqtime
     time_key = params['KW_ACQTIME'][0]
     timefmt = params.instances['KW_ACQTIME'].datatype
@@ -1075,7 +1075,7 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     :return: the updated header and hdict
     """
     # set function name
-    _ = display_func(params, 'get_dprtype', __NAME__)
+    _ = display_func('get_dprtype', __NAME__)
     # set key
     kwdprtype = params['KW_DPRTYPE'][0]
     kwdprcomment = params['KW_DPRTYPE'][1]
