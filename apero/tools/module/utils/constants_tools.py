@@ -19,7 +19,7 @@ from apero.core import constants
 from apero.core.constants import constant_functions as cf
 from apero.core.core import drs_log
 from apero.core.core import drs_text
-from apero.core.core import drs_break
+from apero.core.core import drs_misc
 from apero.tools.module.setup import drs_installation as install
 
 
@@ -128,7 +128,7 @@ def deal_with_clean(params) -> bool:
     # Adding descriptions from comments
     # -------------------------------------------------------------------------
     # get a list of base config / constants scripts
-    const_dir = drs_break.get_relative_folder(__PACKAGE__, base.CORE_PATH)
+    const_dir = drs_misc.get_relative_folder(__PACKAGE__, base.CORE_PATH)
 
     # loop around all types
     for filename in base.SCRIPTS:
@@ -330,7 +330,7 @@ def create_glossary(params):
     # Adding descriptions from comments
     # -------------------------------------------------------------------------
     # get a list of base config / constants scripts
-    const_dir = drs_break.get_relative_folder(__PACKAGE__, base.CORE_PATH)
+    const_dir = drs_misc.get_relative_folder(__PACKAGE__, base.CORE_PATH)
     # ---------------------------------------------------------------------
     # store instances without descriptions
     constants, keywords = dict(), dict()

@@ -11,6 +11,7 @@ Created on 2019-01-17 at 15:24
 
 @author: cook
 """
+from astropy.io import fits
 from astropy.table import Table
 from collections import OrderedDict
 import copy
@@ -22,7 +23,6 @@ from pathlib import Path
 
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_break
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
@@ -1040,7 +1040,8 @@ class ParamDict(CaseInDict):
                        kinds: Union[list, None] = None,
                        values: Union[list, None] = None,
                        sources: Union[list, None] = None,
-                       descs: Union[list, None] = None) -> Table:
+                       descs: Union[list, None] = None,
+                       drsfitsfile: Any = None) -> Table:
         """
         Takes a snapshot of the current configuration (for reproducibility)
 
@@ -1054,11 +1055,44 @@ class ParamDict(CaseInDict):
                        none to not add extra keys) must be same length as names
         :param descs: list of desc, the description of each constant (can be
                      none to not add extra keys) must be same length as names
+        :param drsfitsfile: if set is the drsfile that we assume will add to
+                            names/kinds/values/sources/descs (header keys
+                            added to constants)
 
         :return:
         """
+        # set function name
+        func_name = display_func('snapshot_table', __NAME__)
         # tabledict
         tabledict = dict()
+        # ---------------------------------------------------------------------
+        # make sure names/kinds/values/sources/descs conform to each other
+        # if names is None we assume kinds/values/sources/descs is None
+        if names is None:
+            kinds, values, sources, descs = None, None, None, None
+        # if names is set kinds/values/sources/desc must be a list and must be
+        #    the same length as names
+        else:
+            length = len(names)
+            inputs = [kinds, values, sources, descs]
+            inames = ['kinds', 'values', 'sources', 'descs']
+            # loop around inputs to check
+            for it in range(len(inputs)):
+                # deal with input not being a list
+                if not isinstance(kinds, list):
+                    eargs = [inames[it], func_name]
+                    DrsCodedException('00-001-00056', 'error', targs=eargs,
+                                      func_name=func_name)
+                # deal with length of input
+                if len(inputs[it]) != length:
+                    eargs = [inames[it], len(inputs[it]), length, func_name]
+                    DrsCodedException('00-001-00055', 'error', targs=eargs,
+                                      func_name=func_name)
+        # ---------------------------------------------------------------------
+        # extract out hdict values
+        names, kinds, values, sources, descs = _add_hdict(drsfitsfile, names,
+                                                          kinds, values,
+                                                          sources, descs)
         # ---------------------------------------------------------------------
         # set columns for table
         columns = ['NAME', 'KIND', 'VALUE', 'SOURCE', 'DESCRIPTION', 'COUNT']
@@ -1534,8 +1568,8 @@ def get_module_names(instrument: str = 'None',
     if default_path is None:
         default_path = CORE_PATH
     # get constants package path
-    const_path = drs_break.get_relative_folder(__PACKAGE__, instrument_path)
-    core_path = drs_break.get_relative_folder(__PACKAGE__, default_path)
+    const_path = drs_misc.get_relative_folder(__PACKAGE__, instrument_path)
+    core_path = drs_misc.get_relative_folder(__PACKAGE__, default_path)
     # get the directories within const_path
     filelist = np.sort(os.listdir(const_path))
     directories = []
@@ -1897,7 +1931,7 @@ def _check_mod_source(source: str) -> Union[None, str]:
     if not os.path.exists(source):
         return source
     # get package path
-    package_path = drs_break.get_relative_folder(__PACKAGE__, '')
+    package_path = drs_misc.get_relative_folder(__PACKAGE__, '')
     # if package path not in source then skip
     if package_path not in source:
         return source
@@ -2036,13 +2070,33 @@ def _yaml_walk(yaml_dict) -> Tuple[list, list]:
     return chains, values
 
 
-def _add_param_dict_to_tabledict(tabledict: dict, data: Union[dict, list],
+def _add_param_dict_to_tabledict(tabledict: dict,
+                                 data: Union[ParamDict, dict, list],
                                  key: Union[str, int],
                                  instances: Union[CaseInDict, None] = None,
                                  sources: Union[CaseInDict, None] = None,
                                  used: Union[CaseInDict, None] = None,
                                  it: Union[int, None] = None,
-                                 pkey: Union[str, None] = None):
+                                 pkey: Union[str, None] = None) -> dict:
+    """
+    Add a parameter dictionary, dictionary or list to the tabledict
+
+    :param tabledict: dict, the table dict with each column as a list
+    :param data: paramdict, dict or list to add to the tabledict
+    :param key: str, the name to give in the tabledict
+    :param instances: dict of instances (Const or Keyword), this is accessed
+                      by pkey and sets the description i.e. instances must have
+                      the "description" method
+    :param sources: dict of strings, the source of each parameter (accessed by
+                    pkey)
+    :param used: dict of ints, the number of times a parameter was used
+                 (accessed by pkey)
+    :param it: int, an iterator either added to the key (for the name) or used
+               when data is a list
+    :param pkey: key, the key to find variables in input dictionaries
+
+    :return: dict, the table dictionary
+    """
     # -------------------------------------------------------------------------
     # deal with pkay not set
     if pkey is None:
@@ -2131,7 +2185,7 @@ def _add_param_dict_to_tabledict(tabledict: dict, data: Union[dict, list],
             tabledict['NAME'].append(key)
         tabledict['KIND'].append('parameter')
         # add description
-        if instance is not None:
+        if instance is not None and hasattr(instance, 'description'):
             tabledict['DESCRIPTION'].append(instance.description)
         else:
             tabledict['DESCRIPTION'].append('Parameter in parameter '
@@ -2143,6 +2197,62 @@ def _add_param_dict_to_tabledict(tabledict: dict, data: Union[dict, list],
             tabledict['SOURCE'].append('None')
     # return table dictionary
     return tabledict
+
+
+AddHdictReturn = Tuple[List[str], List[str], List[Any], List[str], List[str]]
+
+
+def _add_hdict(drsfitsfile: Any, names: Union[List[str], None] = None,
+               kinds: Union[List[str], None] = None,
+               values: Union[List[Any], None] = None,
+               sources: Union[List[str], None] = None,
+               descs: Union[List[str], None] = None) -> AddHdictReturn:
+    """
+    Extract out of drs fits file the hdict and push it into
+    names, values, sources, desc (for insertion into tabledict)
+
+    :param drsfitsfile: DrsFitsFile
+    :param name: list of strings or None - the names currently set to add to
+                 tabledict
+    :param kinds: list of strings or None - the kinds currently set to add to
+                  tabledict
+    :param values: list of strings or None - the values currently set to
+                   add to tabledict
+    :param sources: list of strings or None - the sources currently set to add
+                    to tabledict
+    :param descs: list of strings or None - the descriptions currently set to
+                  add to tabledict
+
+    :return: tuple containing the names/values/sources/descriptions
+    """
+    # deal with drsfitsfile not being correct (just skip this step)
+    if not hasattr(drsfitsfile, 'hdict'):
+        return names, kinds, values, sources, descs
+    else:
+        # get hdict
+        hdict = drsfitsfile.hdict
+        # set filename (for source)
+        filename = drsfitsfile.filename
+        # make sure hdict is correct
+        if not isinstance(hdict, fits.Header):
+            return names, kinds, values, sources, descs
+    # if any are None just set them all to empty lists
+    if names is None:
+        names, kinds, values, sources, descs = [], [], [], [], []
+    # loop around keys
+    for key in hdict.keys():
+        # add header key as name
+        names.append(key)
+        # add kind set to header
+        kinds.append('header')
+        # set the value to the header value
+        values.append(hdict[key])
+        # set the source to the header of a filename
+        sources.append('HEADER: {0}'.format(filename))
+        # set the description from the header comment
+        descs.append(hdict.comments[key])
+    # return the lists for insertion into table dict
+    return names, kinds, values, sources, descs
 
 
 # =============================================================================

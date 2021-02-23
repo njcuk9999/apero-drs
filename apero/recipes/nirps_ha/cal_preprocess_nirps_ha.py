@@ -269,9 +269,15 @@ def __main__(recipe, params):
         # log that we are saving rotated image
         wargs = [outfile.filename]
         WLOG(params, '', textentry('40-010-00009', args=wargs))
-        # ------------------------------------------------------------------
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(drsfitsfile=outfile)]
+            name_list += ['PARAM_TABLE']
         # writefits image to file
-        outfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+        outfile.write_multi(data_list=data_list, name_list=name_list,
+                            kind=recipe.outputtype, runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(outfile)
         # index this file

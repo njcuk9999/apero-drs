@@ -20,7 +20,6 @@ from typing import Any, Dict, List, Tuple, Union
 
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_break
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
@@ -492,8 +491,6 @@ def return_locals(params: ParamDict, ll: Dict[str, Any]) -> Dict[str, Any]:
     """
     # set function name
     _ = display_func('return_locals', __NAME__)
-    # deal with a ipython return
-    drs_break.break_point(params, allow=params['IPYTHON_RETURN'])
     # else return ll
     return ll
 

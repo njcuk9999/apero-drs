@@ -1743,7 +1743,7 @@ def write_wave_sol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     name_list = ['COEFF_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table()]
+        data_list += [params.snapshot_table(drsfitsfile=wavefile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write image to file
@@ -1831,8 +1831,15 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # log that we are saving rotated image
     wargs = [fiber, hcfile.filename]
     WLOG(params, '', textentry('40-017-00039', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=hcfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    hcfile.write_file()
+    hcfile.write_multi(data_list=data_list, name_list=name_list,
+                       kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(hcfile)
     # ------------------------------------------------------------------
@@ -1860,9 +1867,15 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
         path = fpfile.filename.split(fpfile.basename)[0]
         fpfile.basename = '{0}_{1}'.format(kind, fpfile.basename)
         fpfile.filename = os.path.join(path, fpfile.basename)
-
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=fpfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    fpfile.write_file()
+    fpfile.write_multi(data_list=data_list, name_list=name_list,
+                       kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(fpfile)
     # ------------------------------------------------------------------
@@ -1905,8 +1918,15 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     # log that we are saving rotated image
     wargs = [cavfile.filename]
     WLOG(params, '', textentry('40-017-00054', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=cavfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    cavfile.write_file()
+    cavfile.write_multi(data_list=data_list, name_list=name_list,
+                        kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(cavfile)
     # ------------------------------------------------------------------

@@ -4362,7 +4362,7 @@ class DrsNpyFile(DrsInputFile):
         else:
             return self.data
 
-    def write_file(self, kind: str, runstring: Union[str, None] = None):
+    def write_npy(self, kind: str, runstring: Union[str, None] = None):
         """
         Write a npy file (using np.save)
 
@@ -5799,10 +5799,19 @@ def combine(params: ParamDict, recipe: Any,
     outfile.params = params
     # update the number of files
     outfile.numfiles = len(infiles)
+    # define multi lists
+    data_list = [outtable]
+    datatype_list = ['table']
+    name_list = ['COMBINE_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=outfile)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write to disk
     WLOG(params, '', textentry('40-001-00025', args=[outfile.filename]))
-    outfile.write_multi(data_list=[outtable], datatype_list=['table'],
-                        name_list=['COMBINE_TABLE'],
+    outfile.write_multi(data_list=data_list, name_list=name_list,
+                        datatype_list=datatype_list,
                         kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile)

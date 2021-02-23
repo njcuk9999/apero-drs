@@ -143,3 +143,7 @@ Date: 2020-12-21
         - primary hdu empty and only with main header
         - all other hdu headers are minimal / extension specific
         - all extensions have names (EXTNAME)
+    - all reduced outputs now have a PARAM_TABLE extension (127 Kb)
+        - this contains all instrument, database, param, header constants
+          as they were at the time of writing the file - it can be turned
+          off by setting PARAMETER_SNAPSHOT = False

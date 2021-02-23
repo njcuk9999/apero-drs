@@ -17,7 +17,6 @@ import tkinter as tk
 from tkinter import messagebox
 
 from apero.base import base
-from apero.core.core import drs_break
 from apero.base import drs_db
 from apero.core.core import drs_text
 from apero.core import constants
@@ -544,7 +543,7 @@ class DatabaseExplorer(tk.Frame):
         # construct relative path
         relpath = 'tools/resources/images/spirou_logo.png'
         # get abspath
-        abspath = drs_break.get_relative_folder(package, relpath)
+        abspath = drs_misc.get_relative_folder(package, relpath)
         # load image
         imgicon = tk.PhotoImage(file=abspath)
         # set icon

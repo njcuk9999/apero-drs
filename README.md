@@ -747,7 +747,7 @@ cal_preprocess_spirou.py [DIRECTORY] [RAW_FILES]
 ##### *Optional Arguments*: 
 ```
     --skip, --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```      
 ##### *Output Dir*: 
 ```
@@ -779,7 +779,7 @@ cal_dark_master_spirou.py
 ```
     --filetype, --database, --plot,
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -821,7 +821,7 @@ cal_badpix_spirou.py [DIRECTORY] -flatfiles [FLAT_FLAT] -darkfiles [DARK_DARK_IN
 ```
     --database, --combine, --flipimage, --fluxunits, --plot, --resize,
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -866,7 +866,7 @@ cal_loc_spirou.py [DIRECTORY] [DARK_FLAT]
     --database, --badpixfile, --badcorr, --backsub, --combine, 
     --darkfile, --darkcorr,  --flipimage, --fluxunits, --plot, --resize,
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -915,7 +915,7 @@ cal_shape_master_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
     --darkfile, --darkcorr,  --flipimage, --fluxunits, --locofile,
     --plot, --resize,
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -968,7 +968,7 @@ cal_shape_spirou.py [DIRECTORY] [FP_FP]
     --darkfile, --darkcorr,  --flipimage, --fluxunits, --fpmaster,
     --plot, --resize, --shapex, --shapey, 
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -1014,7 +1014,7 @@ cal_flat_spirou.py [DIRECTORY] [FLAT_FLAT]
     --locofile, --orderpfile, --plot, --resize,
     --shapex, --shapey, --shapel,
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -1064,7 +1064,7 @@ cal_thermal_spirou.py [DIRECTORY] [DARK_DARK_TEL]
     --locofile, --orderpfile, --plot, --resize,
     --shapex, --shapey, --shapel, --wavefile,
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -1109,7 +1109,7 @@ cal_leak_master.py [DIRECTORY]
 ```
     --filetype, --database, --plot
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -1146,7 +1146,7 @@ cal_wave_master_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
     --shapex, --shapey, --shapel, --wavefile, -hcmode, -fpmode,
     --forceext,
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -1210,7 +1210,7 @@ cal_wave_night_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
     --shapex, --shapey, --shapel, --wavefile, -hcmode, -fpmode,
     --forceext
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -1264,7 +1264,7 @@ cal_extract_spirou.py [DIRECTORY] [PP_FILE]
     --locofile, --orderpfile, --plot, --resize,
     --shapex, --shapey, --shapel, --thermal, --thermalfile, --wavefile,
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -1308,7 +1308,7 @@ cal_leak_spirou.py [DIRECTORY] [PP_FILE]
 ```
     --database, --plot, --leakfile
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -1349,7 +1349,7 @@ obj_mk_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
 ```
     --database, --blazefile, --plot, --wavefile
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -1395,7 +1395,7 @@ obj_fit_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
 ```
     --database, --blazefile, --plot, --wavefile
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 #### *Output Dir*: 
 ```
@@ -1448,7 +1448,7 @@ obj_mk_template_spirou.py [OBJNAME]
     --filetype, -fiber,
     --database, --blazefile, --plot, --wavefile
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 #### *Output Dir*: 
 ```
@@ -1503,7 +1503,7 @@ cal_ccf_spirou.py [DIRECTORY] [E2DSFF_CORR & OBJ_DARK]
     --mask, --rv, --width, --step
     --database, --blazefile, --plot
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```
@@ -1541,7 +1541,7 @@ pol_spirou.py [DIRECTORY] [E2DSFF_CORR]
 ```
     --blazefile, --plot, --wavefile,
     --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --breakpoints, --quiet, --help 
+    --program, --idebug, --quiet, --help 
 ```
 ##### *Output Dir*: 
 ```

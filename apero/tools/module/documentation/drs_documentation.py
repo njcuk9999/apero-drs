@@ -13,7 +13,7 @@ import os
 import shutil
 
 from apero.base import base
-from apero.core.core import drs_break
+from apero.core.core import drs_misc
 from apero import lang
 from apero.core.core import drs_log
 from apero.io import drs_path
@@ -56,8 +56,8 @@ def compile_docs(params):
     # get package
     package = params['DRS_PACKAGE']
     # get paths
-    doc_dir = drs_break.get_relative_folder(package, DOC_DIR)
-    out_dir = drs_break.get_relative_folder(package, OUT_DIR)
+    doc_dir = drs_misc.get_relative_folder(package, DOC_DIR)
+    out_dir = drs_misc.get_relative_folder(package, OUT_DIR)
     # get pdflatex
     pdflatex = params['DRS_PDFLATEX_PATH']
     if pdflatex in ['None', None, '']:
@@ -86,7 +86,7 @@ def compile_docs(params):
         # make html using sphinx
         os.system('make html')
         # construct html directory
-        html_dir = drs_break.get_relative_folder(package, HTML_DIR)
+        html_dir = drs_misc.get_relative_folder(package, HTML_DIR)
         # ------------------------------------------------------------------
         # build latex
         # ------------------------------------------------------------------
@@ -97,7 +97,7 @@ def compile_docs(params):
         # make latex using sphinx
         os.system('make latexpdf')
         # construct latex directory
-        latex_dir = drs_break.get_relative_folder(package, LATEX_DIR)
+        latex_dir = drs_misc.get_relative_folder(package, LATEX_DIR)
         # compile latex
         if pdflatex not in ['None', None, '']:
             # change to latex dir
@@ -157,7 +157,7 @@ def upload(params):
     # get package
     package = params['DRS_PACKAGE']
     # get paths
-    out_dir = drs_break.get_relative_folder(package, OUT_DIR)
+    out_dir = drs_misc.get_relative_folder(package, OUT_DIR)
     # make sure we copy contents not directory
     if not out_dir.endswith(os.sep):
         out_dir += os.sep

@@ -1414,7 +1414,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     name_list = ['FP_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        ptable = params.snapshot_table()
+        ptable = params.snapshot_table(drsfitsfile=outfile1)
         data_list += [ptable]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -1442,7 +1442,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     name_list = ['FP_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table()]
+        data_list += [params.snapshot_table(drsfitsfile=outfile2)]
         name_list += ['PARAM_TABLE']
     # write image to file
     outfile2.write_multi(data_list=data_list, name_list=name_list,
@@ -1469,7 +1469,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     name_list = ['FP_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table()]
+        data_list += [params.snapshot_table(drsfitsfile=outfile3)]
         name_list += ['PARAM_TABLE']
     # write image to file
     outfile3.write_multi(data_list=data_list, name_list=name_list,
@@ -1482,13 +1482,6 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     if params['SHAPE_DEBUG_OUTPUTS']:
         # log progress (writing debug outputs)
         WLOG(params, '', textentry('40-014-00029'))
-        # define multi lists
-        data_list = [fp_table]
-        name_list = ['FP_TABLE']
-        # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table()]
-            name_list += ['PARAM_TABLE']
         # ------------------------------------------------------------------
         # deal with the unstraighted dxmap
         # ------------------------------------------------------------------
@@ -1497,6 +1490,14 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile0.copy_hdict(outfile1)
         debugfile0.add_hkey('KW_OUTPUT', value=debugfile0.name)
         debugfile0.data = dxmap0
+        # define multi lists
+        data_list = [fp_table]
+        name_list = ['FP_TABLE']
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(drsfitsfile=debugfile0)]
+            name_list += ['PARAM_TABLE']
+        # write file
         debugfile0.write_multi(data_list=data_list, name_list=name_list,
                                kind=recipe.outputtype,
                                runstring=recipe.runstring)
@@ -1511,6 +1512,14 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile1.copy_hdict(outfile1)
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = fpimage
+        # define multi lists
+        data_list = [fp_table]
+        name_list = ['FP_TABLE']
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(drsfitsfile=debugfile1)]
+            name_list += ['PARAM_TABLE']
+        # write file
         debugfile1.write_multi(data_list=data_list, name_list=name_list,
                                kind=recipe.outputtype,
                                runstring=recipe.runstring)
@@ -1522,6 +1531,14 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile2.copy_hdict(outfile1)
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
         debugfile2.data = fpimage2
+        # define multi lists
+        data_list = [fp_table]
+        name_list = ['FP_TABLE']
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(drsfitsfile=debugfile2)]
+            name_list += ['PARAM_TABLE']
+        # write file
         debugfile2.write_multi(data_list=data_list, name_list=name_list,
                                kind=recipe.outputtype,
                                runstring=recipe.runstring)
@@ -1556,6 +1573,14 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
             debugfile3.add_qckeys(qc_params)
             # add data
             debugfile3.data = hcimage
+            # define multi lists
+            data_list = [fp_table]
+            name_list = ['FP_TABLE']
+            # snapshot of parameters
+            if params['PARAMETER_SNAPSHOT']:
+                data_list += [params.snapshot_table(drsfitsfile=debugfile3)]
+                name_list += ['PARAM_TABLE']
+            # write file
             debugfile3.write_multi(data_list=data_list, name_list=name_list,
                                    kind=recipe.outputtype,
                                    runstring=recipe.runstring)
@@ -1569,6 +1594,14 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
                 debugfile4.copy_hdict(debugfile3)
                 debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
                 debugfile4.data = hcimage2
+                # define multi lists
+                data_list = [fp_table]
+                name_list = ['FP_TABLE']
+                # snapshot of parameters
+                if params['PARAMETER_SNAPSHOT']:
+                    data_list += [params.snapshot_table(drsfitsfile=debugfile4)]
+                    name_list += ['PARAM_TABLE']
+                # write file
                 debugfile4.write_multi(data_list=data_list, name_list=name_list,
                                        kind=recipe.outputtype,
                                        runstring=recipe.runstring)
@@ -1733,8 +1766,15 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     # ------------------------------------------------------------------
     # log that we are saving dxmap to file
     WLOG(params, '', textentry('40-014-00037', args=[outfile.filename]))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=outfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    outfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    outfile.write_multi(data_list=data_list, name_list=name_list,
+                        kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile)
     # ----------------------------------------------------------------------
@@ -1750,8 +1790,16 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         debugfile1.copy_hdict(outfile)
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = image
-        debugfile1.write_file(kind=recipe.outputtype,
-                              runstring=recipe.runstring)
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(drsfitsfile=debugfile1)]
+            name_list += ['PARAM_TABLE']
+        # write file
+        debugfile1.write_multi(data_list=data_list, name_list=name_list,
+                               kind=recipe.outputtype,
+                               runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile1)
         # out file
@@ -1761,8 +1809,16 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         debugfile2.copy_hdict(outfile)
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
         debugfile2.data = image2
-        debugfile2.write_file(kind=recipe.outputtype,
-                              runstring=recipe.runstring)
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(drsfitsfile=debugfile2)]
+            name_list += ['PARAM_TABLE']
+        # write file
+        debugfile2.write_multi(data_list=data_list, name_list=name_list,
+                               kind=recipe.outputtype,
+                               runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile2)
     # return outfile

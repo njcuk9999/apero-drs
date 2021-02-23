@@ -25,6 +25,7 @@ from typing import Any, Union, Tuple
 
 from apero import lang
 from apero.base import base
+from apero.base import drs_base
 
 
 # =============================================================================
@@ -326,6 +327,24 @@ def unix_char_code() -> Tuple[float, str, str]:
     rval = ''.join(np.random.choice(list(CHARS), size=4))
     return unixtime, humantime, rval
 
+
+def get_relative_folder(package: Union[None, str],
+                        folder: Union[str, Path]) -> str:
+    """
+    Get the absolute path of folder defined at relative path
+    folder from package
+
+    :param package: string, the python package name
+    :param folder: string, the relative path of the config folder
+
+    :return data: string, the absolute path and filename of the default config
+                  file
+    """
+    # set function name
+    func_name = str(__NAME__) + '.get_relative_folder()'
+    # try base function
+    return drs_base.base_func(drs_base.base_get_relative_folder, func_name,
+                              package, folder)
 
 # =============================================================================
 # Start of code

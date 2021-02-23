@@ -1232,12 +1232,6 @@ class DrsRecipe(object):
         # set is_master functionality
         self._make_special(drs_argument.is_master, skip=False)
         # ---------------------------------------------------------------------
-        # set breakpoint functionality
-        self._make_special(drs_argument.breakpoints, skip=False)
-        # ---------------------------------------------------------------------
-        # set breakfunc functionality
-        self._make_special(drs_argument.make_breakfunc, skip=False)
-        # ---------------------------------------------------------------------
         # set quiet functionality
         self._make_special(drs_argument.set_quiet, skip=False)
         # ---------------------------------------------------------------------

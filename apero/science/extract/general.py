@@ -164,8 +164,8 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             wargs = [orderpsfile.filename]
             WLOG(params, '', textentry('40-013-00024', args=wargs))
             # save for use later (as .npy)
-            orderpsfile.write_file(kind=recipe.outputtype,
-                                   runstring=recipe.runstring)
+            orderpsfile.write_npy(kind=recipe.outputtype,
+                                  runstring=recipe.runstring)
         # store in storage dictionary
         orderprofiles[fiber] = orderp
         orderprofilefiles[fiber] = orderpfilename
@@ -1308,8 +1308,15 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # log that we are saving rotated image
     wargs = [e2dsfile.filename]
     WLOG(params, '', textentry('40-016-00005', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=e2dsfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    e2dsfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    e2dsfile.write_multi(data_list=data_list, name_list=name_list,
+                         kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfile)
     # ----------------------------------------------------------------------
@@ -1332,8 +1339,16 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # log that we are saving rotated image
     wargs = [e2dsfffile.filename]
     WLOG(params, '', textentry('40-016-00006', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=e2dsfffile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    e2dsfffile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    e2dsfffile.write_multi(data_list=data_list, name_list=name_list,
+                           kind=recipe.outputtype,
+                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfffile)
     # ----------------------------------------------------------------------
@@ -1360,7 +1375,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     datatype_list = ['image']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table()]
+        data_list += [params.snapshot_table(drsfitsfile=e2dsllfile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write image to file
@@ -1391,8 +1406,16 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # log that we are saving rotated image
     wargs = ['wave', s1dwfile.filename]
     WLOG(params, '', textentry('40-016-00010', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=e2dsfffile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    s1dwfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    s1dwfile.write_multi(data_list=data_list, name_list=name_list,
+                         kind=recipe.outputtype,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(s1dwfile)
     # ----------------------------------------------------------------------
@@ -1417,8 +1440,16 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # log that we are saving rotated image
     wargs = ['velocity', s1dvfile.filename]
     WLOG(params, '', textentry('40-016-00010', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=s1dvfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    s1dvfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    s1dvfile.write_multi(data_list=data_list, name_list=name_list,
+                         kind=recipe.outputtype,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(s1dvfile)
     # ----------------------------------------------------------------------
@@ -1511,8 +1542,16 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # log that we are saving rotated image
     wargs = [e2dsfile.filename]
     WLOG(params, '', textentry('40-016-00005', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=e2dsfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    e2dsfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    e2dsfile.write_multi(data_list=data_list, name_list=name_list,
+                         kind=recipe.outputtype,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfile)
     # ----------------------------------------------------------------------
@@ -1535,8 +1574,16 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # log that we are saving rotated image
     wargs = [e2dsfffile.filename]
     WLOG(params, '', textentry('40-016-00006', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=e2dsfffile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    e2dsfffile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    e2dsfffile.write_multi(data_list=data_list, name_list=name_list,
+                           kind=recipe.outputtype,
+                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfffile)
     # ----------------------------------------------------------------------
@@ -1696,8 +1743,16 @@ def write_leak_master(params, recipe, rawfiles, medcubes, qc_params, props):
         # log that we are saving rotated image
         wargs = [fiber, outfile.filename]
         WLOG(params, '', textentry('40-016-00025', args=wargs))
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(drsfitsfile=outfile)]
+            name_list += ['PARAM_TABLE']
         # write image to file
-        outfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+        outfile.write_multi(data_list=data_list, name_list=name_list,
+                            kind=recipe.outputtype,
+                            runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(outfile)
         # update med cubes (as it was shallow copied this is just for sanity
@@ -1740,9 +1795,16 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
             # log that we are saving file
             wargs = [fiber, extname, extfile.filename]
             WLOG(params, '', textentry('40-016-00030', args=wargs))
+            # define multi lists
+            data_list, name_list = [], []
+            # snapshot of parameters
+            if params['PARAMETER_SNAPSHOT']:
+                data_list += [params.snapshot_table(drsfitsfile=extfile)]
+                name_list += ['PARAM_TABLE']
             # write image to file
-            extfile.write_file(kind=recipe.outputtype,
-                               runstring=recipe.runstring)
+            extfile.write_multi(data_list=data_list, name_list=name_list,
+                                kind=recipe.outputtype,
+                                runstring=recipe.runstring)
             # add back to outputs (used for s1d)
             outputs[fiber][extname] = extfile
             # add to output files (for indexing)
@@ -1781,8 +1843,16 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         # log that we are saving rotated image
         wargs = [fiber, 'wave', s1dwfile.filename]
         WLOG(params, '', textentry('40-016-00031', args=wargs))
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(drsfitsfile=s1dwfile)]
+            name_list += ['PARAM_TABLE']
         # write image to file
-        s1dwfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+        s1dwfile.write_multi(data_list=data_list, name_list=name_list,
+                             kind=recipe.outputtype,
+                             runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(s1dwfile)
         # ------------------------------------------------------------------
@@ -1802,8 +1872,16 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         # log that we are saving rotated image
         wargs = [fiber, 'velocity', s1dvfile.filename]
         WLOG(params, '', textentry('40-016-00031', args=wargs))
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(drsfitsfile=s1dvfile)]
+            name_list += ['PARAM_TABLE']
         # write image to file
-        s1dvfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+        s1dvfile.write_multi(data_list=data_list, name_list=name_list,
+                             kind=recipe.outputtype,
+                             runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(s1dvfile)
         # ------------------------------------------------------------------

@@ -437,8 +437,16 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     WLOG(params, '', textentry('40-019-00011', args=[transfile.filename]))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=transfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    transfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    transfile.write_multi(data_list=data_list, name_list=name_list,
+                          kind=recipe.outputtype,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(transfile)
     # ------------------------------------------------------------------

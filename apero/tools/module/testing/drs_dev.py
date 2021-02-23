@@ -12,9 +12,8 @@ Created on 2020-02-04 at 13:37
 import sys
 
 from apero.base import base
-from apero.core.core import drs_break
+from apero.core.core import drs_misc
 from apero.core import constants
-from apero import lang
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_recipe
 
@@ -164,9 +163,9 @@ class Demo:
 
     def get_lang_db_loc(self):
         # get language database relative path
-        relpath = lang.core.drs_lang_text.DEFAULT_PATH
+        relpath = base.LANG_DEFAULT_PATH
         # return absolute language database path
-        return drs_break.get_relative_folder(self.package, relpath)
+        return drs_misc.get_relative_folder(self.package, relpath)
 
     def change_lang(self, params, language):
         # update the language

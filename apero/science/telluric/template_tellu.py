@@ -818,7 +818,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     name_list = ['TEMPLATE_TABLE', 'BERV_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table()]
+        data_list += [params.snapshot_table(drsfitsfile=template_file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write multi
@@ -845,6 +845,15 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     bigcubefile.data = cprops['BIG_CUBE']
     # log that we are saving s1d table
     WLOG(params, '', textentry('40-019-00030', args=[bigcubefile.filename]))
+    # define multi lists
+    data_list = [bigtable, berv_cov_table]
+    datatype_list = ['table', 'table']
+    name_list = ['TEMPLATE_TABLE', 'BERV_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=bigcubefile)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write multi
     bigcubefile.write_multi(data_list=data_list, name_list=name_list,
                             datatype_list=datatype_list,
@@ -868,6 +877,15 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     bigcubefile0.data = cprops['BIG_CUBE0']
     # log that we are saving s1d table
     WLOG(params, '', textentry('40-019-00031', args=[bigcubefile0.filename]))
+    # define multi lists
+    data_list = [bigtable, berv_cov_table]
+    datatype_list = ['table', 'table']
+    name_list = ['TEMPLATE_TABLE', 'BERV_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=bigcubefile0)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write multi
     bigcubefile0.write_multi(data_list=data_list, name_list=name_list,
                              datatype_list=datatype_list,
@@ -939,7 +957,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     name_list = ['TEMPLATE_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table()]
+        data_list += [params.snapshot_table(drsfitsfile=template_file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write multi
@@ -966,6 +984,15 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     bigcubefile.data = props['S1D_BIG_CUBE']
     # log that we are saving s1d table
     WLOG(params, '', textentry('40-019-00037', args=[bigcubefile.filename]))
+    # define multi lists
+    data_list = [bigtable]
+    datatype_list = ['table'],
+    name_list = ['TEMPLATE_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=bigcubefile)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write multi
     bigcubefile.write_multi(data_list=data_list, name_list=name_list,
                             datatype_list=datatype_list,

@@ -381,7 +381,7 @@ def write_master_files(params, recipe, reffile, master_dark, dark_table,
     data_list, name_list = [dark_table], ['DARK_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table()]
+        data_list += [params.snapshot_table(drsfitsfile=outfile)]
         name_list =['PARAM_TABLE']
     else:
         data_list, name_list = [], []

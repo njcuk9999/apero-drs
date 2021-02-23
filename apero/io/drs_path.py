@@ -26,7 +26,6 @@ from pathlib import Path
 from typing import Any, List, Union
 
 from apero.base import base
-from apero.core.core import drs_break
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core import constants
@@ -78,7 +77,7 @@ def get_relative_folder(params: ParamDict, package: str, folder: str) -> str:
     _ = display_func('get_relative_folder', __NAME__)
     # try to get relative directory
     try:
-        data_folder = drs_break.get_relative_folder(package, folder)
+        data_folder = drs_misc.get_relative_folder(package, folder)
     except DrsCodedException as e:
         WLOG(params, e.level, textentry(e.codeid, args=e.targs))
         data_folder = None
