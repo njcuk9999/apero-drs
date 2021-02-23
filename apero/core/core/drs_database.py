@@ -346,6 +346,7 @@ class CalibrationDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time, used]
+        # are allowed duplicate columns --> don't check for unique
         self.database.add_row(values, table=self.database.tname, commit=True)
 
     def get_calib_entry(self, columns: str, key: str,
@@ -709,6 +710,7 @@ class TelluricDatabase(DatabaseManager):
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time,
                   objname, airmass, tau_water, tau_others, used]
+        # are allowed duplicate rows --> just add (don't check for unique)
         self.database.add_row(values, table=self.database.tname, commit=True)
 
     def get_tellu_entry(self, columns: str, key: str,
@@ -1313,6 +1315,8 @@ class IndexDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # get allowed header keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
+        # get unique columns
+        _, _, ucols = self.pconst.INDEX_DB_COLUMNS()
         # store values in correct order for database.add_row
         hvalues = []
         # deal with no hkeys
@@ -1340,31 +1344,27 @@ class IndexDatabase(DatabaseManager):
         # make absolute path
         path = Path(path).joinpath(directory, filename)
         # ------------------------------------------------------------------
-        # get current list of paths for
-        currentpath = self.get_entries('ABSPATH', directory=directory,
-                                       filename=basename, nentries=1)
-        # ------------------------------------------------------------------
-        # deal with updating entry
-        if currentpath is not None and str(currentpath) == str(path):
-            # add new entry to database
-            values = [str(path), str(directory), str(basename), str(kind),
-                      float(last_modified), str(runstring)]
-            values += hvalues + [used, rawfix]
-            # set up condition
-            condition = 'FILENAME = "{0}"'.format(filename)
-            condition += ' AND DIRNAME = "{0}"'.format(directory)
-            condition += ' AND ABSPATH = "{0}"'.format(path)
-            # update row in database
-            self.database.set('*', values=values, condition=condition,
-                              table=self.database.tname,
-                              commit=commit)
-        else:
+        try:
             # add new entry to database
             values = [str(path), str(directory), str(basename), str(kind),
                       float(last_modified), str(runstring)]
             values += hvalues + [used, rawfix]
             self.database.add_row(values, table=self.database.tname,
-                                  commit=commit)
+                                  commit=commit, unique_cols=ucols)
+        # if this is called we need to set instead of adding
+        except drs_db.UniqueEntryException:
+            # add new entry to database
+            values = [str(path), str(directory), str(basename), str(kind),
+                      float(last_modified), str(runstring)]
+            values += hvalues + [used, rawfix]
+            # set up condition (on unique columns)
+            condition = 'ABSPATH = "{0}"'.format(path)
+            # condition = 'DIRECTORY = "{0}"'.format(directory)
+            # condition += ' AND FILENAME = "{0}"'.format(str(basename))
+            # update row in database
+            self.database.set('*', values=values, condition=condition,
+                              table=self.database.tname,
+                              commit=commit, unique_cols=ucols)
 
     def remove_entries(self, condition):
         # set function
@@ -1578,11 +1578,11 @@ class IndexDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         # deal with files we don't need (already have)
         etable = self.get_entries('ABSPATH, LAST_MODIFIED', kind=kind)
-        exclude_files = np.array(etable['ABSPATH'])
+        exclude_files = list(etable['ABSPATH'])
         # only check last modified for raw files (we assume that any other
         #   file has been correctly updated by the drs)
         if kind == 'raw':
-            last_mod = np.array(etable['LAST_MODIFIED'])
+            last_mod = list(etable['LAST_MODIFIED'])
         else:
             last_mod = None
         # ---------------------------------------------------------------------
@@ -1593,7 +1593,7 @@ class IndexDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         # get a list of keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
-        ikeys, itypes = self.pconst.INDEX_DB_COLUMNS()
+        ikeys, itypes, iunique = self.pconst.INDEX_DB_COLUMNS()
         # ---------------------------------------------------------------------
         # deal with database having wrong columns (if we have added / remove a
         #  column and are updating because of this)
@@ -1609,7 +1609,8 @@ class IndexDatabase(DatabaseManager):
                 # remove table
                 self.database.delete_table(self.database.tname)
                 # add new empty table
-                self.database.add_table(self.database.tname, ikeys, itypes)
+                self.database.add_table(self.database.tname, ikeys, itypes,
+                                        unique_cols=iunique)
                 # reload database
                 self.load_db()
                 # update all entries for raw index entries
@@ -1893,23 +1894,23 @@ def _get_files(path: Union[Path, str], kind: str,
     if kind in ['raw', 'tmp', 'red']:
         # ---------------------------------------------------------------------
         # get directory path
-        raw_subdirs = path.glob('*')
+        all_items = path.rglob('*')
         # loop around directories
         subdirs = []
-        for subdir in raw_subdirs:
+        for item in all_items:
             # skip non-directories
-            if not subdir.is_dir():
+            if not item.is_dir():
                 continue
             # skip directories not in included directories
             if incdirs is not None:
-                if subdir not in incdirs:
+                if item not in incdirs:
                     continue
             # skip directories in excluded directories
             if excdirs is not None:
-                if subdir in excdirs:
+                if item in excdirs:
                     continue
             # if we have reached here then append subdirs
-            subdirs.append(subdir)
+            subdirs.append(item)
     # else we do not use subdirs
     else:
         subdirs = None
@@ -1917,7 +1918,7 @@ def _get_files(path: Union[Path, str], kind: str,
     # deal with no subdirs
     if subdirs is None:
         # get all files in path
-        allfiles = list(path.glob('*{0}'.format(suffix)))
+        allfiles = list(path.rglob('*{0}'.format(suffix)))
     # -------------------------------------------------------------------------
     # else we have subdirs
     else:
@@ -2413,6 +2414,8 @@ class ObjectDatabase(DatabaseManager):
                   pmra, pmra_s, pmde, pmde_s, plx, plx_s, rv, rv_s, gmag,
                   gmag_s, bpmag, bpmag_s, rpmag, rpmag_s, epoch, epoch_s,
                   teff, teff_s]
+        # get unique columns
+        _, _, ucols = self.pconst.OBJECT_DB_COLUMNS()
         # deal with null values
         for it, value in enumerate(values):
             if value is None:
@@ -2429,34 +2432,21 @@ class ObjectDatabase(DatabaseManager):
             values.append(aliases_s)
         # add used
         values.append(used)
-        # add row
-        self.set_row(gaia_id, objname, '*', values, commit)
-
-    def set_row(self, gaia_id: str, objname: str,
-                columns: Union[str, List[str]], values: list,
-                commit: bool = True):
-        # need to see if we already have gaia id
-        condition1 = '{0}="{1}"'.format(GAIA_COL_NAME, gaia_id)
-        gaiaids = self.database.unique(GAIA_COL_NAME, condition=condition1,
-                                       table=self.database.tname)
-        condition2 = '{0}="{1}"'.format('OBJNAME', objname)
-        objnames = self.database.unique('OBJNAME', condition=condition2,
-                                        table=self.database.tname)
-        # ------------------------------------------------------------------
-        # deal with updating entry
-        if (gaiaids is not None) and (len(gaiaids) > 0):
-            # update row in database
-            self.database.set(columns, values=values, condition=condition1,
-                              table=self.database.tname, commit=commit)
-        # else we update based on object name
-        elif (objnames is not None) and (len(objnames) > 0):
-            # update row in database
-            self.database.set(columns, values=values, condition=condition2,
-                              table=self.database.tname, commit=commit)
-        # else add row to database (as new row)
-        else:
+        # try to add a new row
+        try:
             self.database.add_row(values, table=self.database.tname,
-                                  columns=columns, commit=commit)
+                                  columns='*', commit=commit, unique_cols=ucols)
+        # if row already exists then update that row (based on Gaia ID and
+        #   objname)
+        except drs_db.UniqueEntryException:
+            # need to see if we already have gaia id
+            condition = '{0}="{1}"'.format(GAIA_COL_NAME, gaia_id)
+            condition += ' AND {0}="{1}"'.format('OBJNAME', objname)
+            # update row in database
+            self.database.set('*', values=values, condition=condition,
+                              table=self.database.tname, commit=commit,
+                              unique_cols=ucols)
+
 
 # =============================================================================
 # Start of code

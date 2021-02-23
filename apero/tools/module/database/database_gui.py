@@ -18,6 +18,7 @@ from tkinter import messagebox
 
 from apero.base import base
 from apero.base import drs_db
+from apero.core.core import drs_misc
 from apero.core.core import drs_text
 from apero.core import constants
 from apero.tools.module.database import manage_databases
@@ -59,6 +60,7 @@ class DatabaseHolder:
         self.kind = kind
         self.path = path
         self.params = params
+        self.pconst = constants.pload()
         self.df = df
         self.empty = False
         self.changed = False
@@ -84,6 +86,10 @@ class DatabaseHolder:
             try:
                 dataframe = database.get('*', table=database.tname,
                                          return_pandas=True)
+                # remove uhash column if it exists
+                if drs_db.UHASH_COL in dataframe:
+                    del dataframe[drs_db.UHASH_COL]
+
             except drs_db.DatabaseError as _:
                 dataframe = []
             if len(dataframe) == 0:
@@ -101,10 +107,17 @@ class DatabaseHolder:
             return
         # start database
         database = drs_db.database_wrapper(self.kind, self.path)
+        # get unique columns
+        if 'INDEX' in database.tname:
+            _, _, ucols = self.pconst.INDEX_DB_COLUMNS()
+        elif 'OBJECT' in database.tname:
+            _, _, ucols = self.pconst.OBJECT_DB_COLUMNS()
+        else:
+            ucols = None
         # push dataframe to replace SQL table
         database.add_from_pandas(df, table=database.tname,
                                  if_exists='replace', index=False,
-                                 commit=True)
+                                 commit=True, unique_cols=ucols)
         # print we are saving database
         print('Saving database {0}'.format(self.name))
 

@@ -186,7 +186,7 @@ def create_index_database(pconst: PseudoConst,
     :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
-    columns, ctypes = pconst.INDEX_DB_COLUMNS()
+    columns, ctypes, cuniques = pconst.INDEX_DB_COLUMNS()
     # -------------------------------------------------------------------------
     # construct directory
     indexdbm = databases['index']
@@ -198,7 +198,7 @@ def create_index_database(pconst: PseudoConst,
     if indexdb.tname in indexdb.tables:
         indexdb.delete_table(indexdb.tname)
     # add main table
-    indexdb.add_table(indexdb.tname, columns, ctypes)
+    indexdb.add_table(indexdb.tname, columns, ctypes, unique_cols=cuniques)
     # -------------------------------------------------------------------------
     return indexdb
 
@@ -246,7 +246,7 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     asset_dir = params['DRS_DATA_ASSETS']
     reset_path = params['DATABASE_DIR']
     # get columns and ctypes from pconst
-    columns, ctypes = pconst.OBJECT_DB_COLUMNS()
+    columns, ctypes, cuniques = pconst.OBJECT_DB_COLUMNS()
     # -------------------------------------------------------------------------
     # construct directory
     objectdbm = databases['object']
@@ -258,14 +258,15 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     if objectdb.tname in objectdb.tables:
         objectdb.delete_table(objectdb.tname)
     # add main table
-    objectdb.add_table(objectdb.tname, columns, ctypes)
+    objectdb.add_table(objectdb.tname, columns, ctypes, unique_cols=cuniques)
     # ---------------------------------------------------------------------
     # construct reset file
     reset_abspath = os.path.join(asset_dir, reset_path, objectdbm.dbreset)
     # get rows from reset file
     reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
     # add rows from reset text file
-    objectdb.add_from_pandas(reset_entries, table=objectdb.tname)
+    objectdb.add_from_pandas(reset_entries, table=objectdb.tname,
+                             unique_cols=cuniques)
     # -------------------------------------------------------------------------
     return objectdb
 
@@ -293,9 +294,10 @@ def make_object_reset(params: ParamDict):
     if objdbm.database.tname in objdbm.database.tables:
         objdbm.database.delete_table(objdbm.database.tname)
     # get columns and ctypes from pconst
-    columns, ctypes = pconst.OBJECT_DB_COLUMNS()
+    columns, ctypes, cuniques = pconst.OBJECT_DB_COLUMNS()
     # add main table
-    objdbm.database.add_table(objdbm.database.tname, columns, ctypes)
+    objdbm.database.add_table(objdbm.database.tname, columns, ctypes,
+                              unique_cols=cuniques)
     # get google sheets
     gtable = gen_pp.get_google_sheet(params['OBJ_LIST_GOOGLE_SHEET_URL'],
                                      params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
@@ -479,6 +481,8 @@ def import_database(params: ParamDict, database_name: str,
 
     :return: None, writes to database
     """
+    # get pconst
+    pconst = constants.pload()
     # ----------------------------------------------------------------------
     # get database list
     databases = list_databases(params)
@@ -521,6 +525,14 @@ def import_database(params: ParamDict, database_name: str,
     # load csv file into pandas table
     df = pd.read_csv(infilename)
     # -------------------------------------------------------------------
+    # get unique columns
+    if 'INDEX' in db.database.tname:
+        _, _, ucols = pconst.INDEX_DB_COLUMNS()
+    elif 'OBJECT' in db.database.tname:
+        _, _, ucols = pconst.OBJECT_DB_COLUMNS()
+    else:
+        ucols = None
+    # -------------------------------------------------------------------
     # Push into database
     # -------------------------------------------------------------------
     # print log
@@ -531,7 +543,8 @@ def import_database(params: ParamDict, database_name: str,
     # log
     WLOG(params, '', wmsg)
     # add pandas table to database
-    db.database.add_from_pandas(df, db.database.tname, if_exists=joinmode)
+    db.database.add_from_pandas(df, db.database.tname, if_exists=joinmode,
+                                unique_cols=ucols)
 
 
 # =============================================================================

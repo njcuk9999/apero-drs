@@ -9,13 +9,13 @@ Created on 2020-07-2020-07-15 17:58
 """
 from astropy.table import Table
 from collections import OrderedDict
-from hashlib import blake2b
 import numpy as np
 import os
 from typing import Tuple, Union
 
 from apero import lang
 from apero.base import base
+from apero.base import drs_base
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_database
@@ -740,14 +740,8 @@ def mk_template_summary(recipe, params, cprops, template_file, qc_params):
 # Write functions
 # =============================================================================
 def gen_template_hash(string_text: str) -> str:
-    # need to encode string
-    encoded = string_text.encode('utf')
-    # we want a hash of 10 characters
-    digest = blake2b(encoded, digest_size=10)
-    # create hash
-    hash = digest.hexdigest()
     # return hash
-    return str(hash)
+    return str(drs_base.generate_hash(string_text, 10))
 
 
 def mk_template_write(params, recipe, infile, cprops, filetype,

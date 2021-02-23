@@ -17,12 +17,11 @@ only from:
 from astropy.table import Table
 from contextlib import closing
 import numpy as np
-import os
 import pandas as pd
 from pathlib import Path
 import sqlite3
 import time
-from typing import Any, Dict, List, Type, Union
+from typing import Any, Dict, List, Tuple, Type, Union
 
 from apero.base import base
 from apero.base import drs_base
@@ -49,12 +48,18 @@ Time = base.AstropyTime
 # timeout parameter in seconds
 TIMEOUT = 20.0
 MAXWAIT = 1000
+# unique hash column
+UHASH_COL = 'UHASH'
 
 
 # =============================================================================
 # Define classes
 # =============================================================================
 class DatabaseException(Exception):
+    pass
+
+
+class UniqueEntryException(Exception):
     pass
 
 
@@ -199,6 +204,9 @@ class Database:
             # try to execute SQL command
             try:
                 result = self._execute(cursor, command, fetch=fetch)
+            # pass unique exception upwards
+            except UniqueEntryException as e:
+                raise UniqueEntryException(str(e))
             # catch all errors and pipe to database error
             except Exception as e:
                 # log error: Error Type: Error message \n\t Command:
@@ -441,7 +449,8 @@ class Database:
 
     def set(self, columns: Union[str, List[str]], table: Union[str, None],
             values: Union[str, List[str]], condition: Union[str, None] = None,
-            commit: bool = True):
+            commit: bool = True,
+            unique_cols: Union[List[str], None] = None):
         """
         Changes the data in existing rows.
 
@@ -461,6 +470,9 @@ class Database:
                    retrieve data from.  If there is only one table to pick
                    from, this may be left as None to use it automatically.
         :param commit: boolean, if True will commit changes to sql database
+        :param unique_cols: list of strings or None, if set this is columns that
+                            are used to form the unique hash for specifying
+                            unique rows
 
         Examples:
             # Sets the mass of a particular row identified by name.
@@ -477,13 +489,15 @@ class Database:
         # deal with columns = '*'
         if columns == '*':
             columns = self.colnames('*', table=table)
-
         # we expect columns to be a list but if it is a string we can just make
         #   it a one item list
         if isinstance(columns, str):
             columns = [columns]
             if not isinstance(values, list):
                 values = [values]
+        # add the hash column
+        if unique_cols is not None:
+            columns, values = _hash_col(columns, values, unique_cols)
         # storage for set string
         set_str = []
         # make sure columns and values have the same length
@@ -538,7 +552,8 @@ class Database:
 
     def add_row(self, values: List[object], table: Union[None, str],
                 columns: Union[str, List[str]] = "*",
-                commit: bool = True):
+                commit: bool = True,
+                unique_cols: Union[List[str], None] = None):
         """
         Adds a row to the specified tables with the given values.
 
@@ -551,6 +566,11 @@ class Database:
                         you may list them here.  Otherwise, '*' indicates that
                         all columns will be initialized.
         :param commit: boolean, if True will commit changes to sql database
+        :param unique_cols: list of strings or None, if set this is columns that
+                            are used to form the unique hash for specifying
+                            unique rows
+
+        :return: None
         """
         # set function name
         _ = __NAME__ + '.Database.add_row()'
@@ -558,6 +578,13 @@ class Database:
         table = self._infer_table_(table)
         # push values into strings
         _values = list(map(_decode_value, values))
+        # add the hash column
+        if unique_cols is not None:
+            # get the columns
+            if columns == '*':
+                columns = self.colnames('*', table=table)
+            # add to the values
+            columns, values = _hash_col(columns, _values, unique_cols)
         # deal with columns being all columns
         if columns == '*':
             columns = ''
@@ -612,7 +639,8 @@ class Database:
 
     # table methods
     def add_table(self, name: str, field_names: List[str],
-                  field_types: List[Union[str, type]]):
+                  field_types: List[Union[str, type]],
+                  unique_cols: Union[List[str], None] = None):
         """
         Adds a table to the database file.
 
@@ -623,6 +651,7 @@ class Database:
         :param field_types: The data types of the fields as a list. The list
                             can contain either SQL type specifiers or the
                             python int, str, and float types.
+        :param unique_cols: list of str, the field_names that should be unique
 
         Examples:
             # "REAL" does the same thing as float
@@ -686,9 +715,17 @@ class Database:
                                            exception=exception)
             # set type
             fields.append('{0} {1}'.format(fname, ftype))
+        # ---------------------------------------------------------------------
+        # unique columns become a 255 hash
+        if unique_cols is not None:
+            unique_str = ', {0} VARCHAR(64), UNIQUE({0})'.format(UHASH_COL)
+        else:
+            unique_str = ''
+        # ---------------------------------------------------------------------
         # now create sql command
-        cargs = [name, ", ".join(fields)]
+        cargs = [name, ", ".join(fields) + unique_str]
         command = "CREATE TABLE IF NOT EXISTS {}({});".format(*cargs)
+        # ---------------------------------------------------------------------
         # execute command
         self.execute(command, fetch=False)
         # update the table list and commit
@@ -888,7 +925,8 @@ class Database:
 
     def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,
-                        commit: bool = True):
+                        commit: bool = True,
+                        unique_cols: Union[List[str], None] = None):
         """
         Use pandas to add rows to database
 
@@ -905,6 +943,10 @@ class Database:
         :param index: whether to include an index column in database
         :param commit: whether to commit changes to SQL database after adding
                        (or wait to another commit event)
+        :param unique_cols: list of strings or None, if set this is columns that
+                            are used to form the unique hash for specifying
+                            unique rows
+
         :return:
         """
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
@@ -1009,8 +1051,8 @@ class SQLiteDatabase(Database):
     def _execute(self, cursor: sqlite3.Cursor, command: str,
                  fetch: bool = True):
         """
-        Dummy function to try to catch database locked errors
-        (up to a max wait time)
+        Dummy function to try to catch database UNIQUE(col) error and
+        catch locked errors (up to a max wait time)
 
         :param cursor: sqlite cursor (self._conn_.cursor())
         :param command: str, The SQL command to be run.
@@ -1036,13 +1078,23 @@ class SQLiteDatabase(Database):
                     time.sleep(1)
                 else:
                     raise e
+            # deal with unique error on INSERT
+            except sqlite3.IntegrityError as e:
+                # look for word 'unique' in exception
+                if 'UNIQUE' in str(e):
+                    raise UniqueEntryException(str(e))
+                # else raise exception
+                else:
+                    raise sqlite3.IntegrityError(str(e))
+
         # if we get to this point raise operational error
         emsg = 'database locked for > {0} s'.format(MAXWAIT)
         raise sqlite3.OperationalError(emsg)
 
     def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,
-                        commit: bool = True):
+                        commit: bool = True,
+                        unique_cols: Union[List[str], None] = None):
         """
         Use pandas to add rows to database
 
@@ -1059,12 +1111,19 @@ class SQLiteDatabase(Database):
         :param index: whether to include an index column in database
         :param commit: whether to commit changes to SQL database after adding
                        (or wait to another commit event)
+        :param unique_cols: list of strings or None, if set this is columns that
+                            are used to form the unique hash for specifying
+                            unique rows
+
         :return:
         """
         # set function name
         func_name = __NAME__ + '.Database.add_from_pandas()'
         # infer table name
         table = self._infer_table_(table)
+        # need to add uhash column
+        if unique_cols is not None:
+            df = _hash_df(df, unique_cols)
         # check if_exists criteria
         if if_exists not in ['fail', 'replace', 'append']:
             # log error: Pandas.to_sql
@@ -1316,10 +1375,36 @@ class MySQLDatabase(Database):
                                         exceptionname='DatabaseError',
                                         exception=exception)
 
+    def _execute(self, cursor: Any, command: str,
+                 fetch: bool = True):
+        """
+        Dummy function to try to catch database UNIQUE(col) error
+
+        :param cursor: sqlite cursor (self._conn_.cursor())
+        :param command: str, The SQL command to be run.
+        :return:
+        """
+        # while counter is less than maximum wait time
+        try:
+            cursor.execute(command)
+            if fetch:
+                result = cursor.fetchall()
+                return result
+            else:
+                return None
+        # deal with unique error on INSERT
+        except mysql.IntegrityError as e:
+            # look for word 'unique' in exception
+            if 'duplicate' in str(e):
+                raise UniqueEntryException(str(e))
+            # else raise exception
+            else:
+                raise sqlite3.IntegrityError(str(e))
 
     def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,
-                        commit: bool = True):
+                        commit: bool = True,
+                        unique_cols: Union[List[str], None] = None):
         """
         Use pandas to add rows to database
 
@@ -1336,12 +1421,19 @@ class MySQLDatabase(Database):
         :param index: whether to include an index column in database
         :param commit: whether to commit changes to SQL database after adding
                        (or wait to another commit event)
+        :param unique_cols: list of strings or None, if set this is columns that
+                            are used to form the unique hash for specifying
+                            unique rows
+
         :return:
         """
         # set function name
         func_name = __NAME__ + '.Database.add_from_pandas()'
         # infer table name
         table = self._infer_table_(table)
+        # need to add uhash column
+        if unique_cols is not None:
+            df = _hash_df(df, unique_cols)
         # need a sqlalchmy connection here
         import sqlalchemy
         dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
@@ -1544,6 +1636,87 @@ def _proxy_table(tablename: str) -> str:
         return tablename
     else:
         return tablename + '_DB'
+
+
+def _hash_df(df: pd.DataFrame, unique_cols: List[str]) -> pd.DataFrame:
+    """
+    Produce a hash for a data frame (if hash column not present)
+
+    :param df: pandas dataframe (to be added to the database)
+    :param unique_cols: list of strings, the unique columns to add
+
+    :return: the update dataframe (only if hash column was not found)
+    """
+    # check if hash column present
+    if UHASH_COL in df:
+        return df
+    # get column names from pandas table
+    columns = list(np.array(df.columns).astype(str))
+    # store hash strings
+    hash_strings = []
+    # loop around all rows
+    for row in range(len(df)):
+        # get values for this row
+        values = list(df.iloc[row].values)
+        # generate hash string for this row
+        hash_string = _hash_col(columns, values, unique_cols,
+                                return_string=True)
+        # append to storage
+        hash_strings.append(hash_string)
+    # push column into dataframe
+    df[UHASH_COL] = hash_strings
+    # return dataframe
+    return df
+
+
+def _hash_col(columns: List[str], values: List[Any],
+              unique_cols: List[str], return_string: bool = False
+              ) -> Union[str, Tuple[List[str], List[Any]]]:
+    """
+    Generate a hash from a list of unique columns
+
+    :param columns: list of column names
+    :param values: list of values (without the hash column)
+    :param unique_cols: list of column names to construct the hash
+
+    :return: either a str (if return_string is True) or a tuple, the
+             updated columns and values
+    """
+
+    # store the positions in values of unique columns
+    hash_value = ''
+    used_cols = []
+    # loop around unique columns
+    for unique_col in unique_cols:
+        # they may be lists
+        cols = unique_col.split(',')
+        # loop around these
+        for col in cols:
+            # don't add the column twice
+            if col in used_cols:
+                continue
+            # find the col in columns
+            if col in columns:
+                # get the position in columns where the value is
+                pos = np.where(np.array(columns) == col)[0][0]
+                # generate the hash value
+                hash_value += str(values[pos])
+                # add column to used columns
+                used_cols.append(col)
+
+    # generate hash from string combination of values
+    hash_string = drs_base.generate_hash(hash_value, 32)
+
+    # if return string return hash
+    if return_string:
+        return hash_string
+    # add to the values
+    values.append('"{0}"'.format(hash_string))
+    # only add to columns if not already there
+    if UHASH_COL not in columns:
+        columns.append(UHASH_COL)
+    # return the hash string and column
+    return columns, values
 
 
 # =============================================================================
