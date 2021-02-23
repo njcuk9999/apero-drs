@@ -2976,7 +2976,6 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
     assert isinstance(indexdb.database, drs_db.Database)
     # set up condition
     condition = 'KIND="{0}"'.format(kind)
-    condition += ' AND DIRNAME="{0}"'.format(os.path.basename(directory))
     # deal with wildcards
     if '*' in filename:
         # make filename sql-like

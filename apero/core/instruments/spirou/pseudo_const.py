@@ -713,7 +713,7 @@ class PseudoConstants(DefaultConstants):
     # DATABASE SETTINGS
     # =========================================================================
     # noinspection PyPep8Naming
-    def INDEX_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+    def INDEX_DB_COLUMNS(self) -> Tuple[List[str], List[type], List[str]]:
         """
         Define the columns used in the index database
 
@@ -730,7 +730,8 @@ class PseudoConstants(DefaultConstants):
             - USED: int, whether entry should be used or ignored
             - RAW: int, whether raw data has been fixed for the header
 
-        :return: list of columns (strings)
+        :return: tuple, list of columns (strings), list of types, list of
+                 columns (strings) that should be unique
         """
         # set function name
         _ = display_func('INDEX_DB_COLUMNS', __NAME__,
@@ -754,8 +755,10 @@ class PseudoConstants(DefaultConstants):
         extra_columns['RAWFIX'] = int
         columns += list(extra_columns.keys())
         ctypes += list(extra_columns.values())
+        # define columns that should be unique
+        unique_cols = ['ABSPATH']
         # return columns and column types
-        return columns, ctypes
+        return columns, ctypes, unique_cols
 
 
 # =============================================================================

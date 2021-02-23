@@ -17,6 +17,7 @@ Import rules:
 - only from apero.base.base.py
 
 """
+from hashlib import blake2b
 import os
 import pandas as pd
 from pathlib import Path
@@ -90,6 +91,17 @@ def _rel_folder(package, folder):
     os.chdir(current)
     # return the absfolder
     return absfolder
+
+
+def generate_hash(string_text: str, size: int = 10) -> str:
+    # need to encode string
+    encoded = string_text.encode('utf')
+    # we want a hash of 10 characters
+    digest = blake2b(encoded, digest_size=size)
+    # create hash
+    hash = digest.hexdigest()
+    # return hash
+    return str(hash)
 
 
 # =============================================================================
@@ -363,6 +375,8 @@ def base_null_text(variable: Any, nulls: Union[None, List[str]] = None) -> bool:
                     return True
     # else in all other cases return False
     return False
+
+
 
 
 # =============================================================================

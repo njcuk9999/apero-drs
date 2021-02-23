@@ -1054,7 +1054,7 @@ class PseudoConstants:
         return columns, ctypes
 
     # noinspection PyPep8Naming
-    def INDEX_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+    def INDEX_DB_COLUMNS(self) -> Tuple[List[str], List[type], List[str]]:
         """
         Define the columns used in the index database
 
@@ -1070,7 +1070,8 @@ class PseudoConstants:
             - {HKEYS}: see INDEX_HEADER_KEYS()
             - USED: int, whether entry should be used or ignored
 
-        :return: list of columns (strings)
+        :return: tuple, list of columns (strings), list of types, list of
+                 columns that should be unique
         """
         # set function name
         _ = display_func('INDEX_DB_COLUMNS', __NAME__,
@@ -1094,8 +1095,11 @@ class PseudoConstants:
         extra_columns['RAWFIX'] = int
         columns += list(extra_columns.keys())
         ctypes += list(extra_columns.values())
+        # define columns that should be unique
+        # unique_cols = ['DIRECTORY,FILENAME']
+        unique_cols = ['ABSPATH']
         # return columns and column types
-        return columns, ctypes
+        return columns, ctypes, unique_cols
 
     # noinspection PyPep8Naming
     def LOG_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
@@ -1145,7 +1149,7 @@ class PseudoConstants:
         return columns, ctypes
 
     # noinspection PyPep8Naming
-    def OBJECT_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+    def OBJECT_DB_COLUMNS(self) -> Tuple[List[str], List[type], List[str]]:
         """
         Define the columns use in the object database
         :return: list of columns (strings)
@@ -1187,8 +1191,10 @@ class PseudoConstants:
         # get break down
         columns = list(obj_columns.keys())
         ctypes = list(obj_columns.values())
+        # define unique columns
+        unique_cols = ['OBJNAME', 'GAIADR2ID']
         # return columns and ctypes
-        return columns, ctypes
+        return columns, ctypes, unique_cols
 
 
 # =============================================================================
