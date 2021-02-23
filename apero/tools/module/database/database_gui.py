@@ -55,7 +55,8 @@ DATABASE2['USE'] = np.ones_like(DATABASE2['X']).astype(bool)
 # Define classes
 # =============================================================================
 class DatabaseHolder:
-    def __init__(self, params, name, kind, path=None, df=None):
+    def __init__(self, params, name, kind, path=None, df=None,
+                 hash_col: bool = False):
         self.name = name
         self.kind = kind
         self.path = path
@@ -64,6 +65,7 @@ class DatabaseHolder:
         self.df = df
         self.empty = False
         self.changed = False
+        self.hash_col = hash_col
 
     def load_dataframe(self, reload=False):
         # if we already have the dataframe don't load it
@@ -86,9 +88,10 @@ class DatabaseHolder:
             try:
                 dataframe = database.get('*', table=database.tname,
                                          return_pandas=True)
-                # remove uhash column if it exists
-                if drs_db.UHASH_COL in dataframe:
-                    del dataframe[drs_db.UHASH_COL]
+                # remove uhash column if it exists (if hash_col is False)
+                if not self.hash_col:
+                    if drs_db.UHASH_COL in dataframe:
+                        del dataframe[drs_db.UHASH_COL]
 
             except drs_db.DatabaseError as _:
                 dataframe = []

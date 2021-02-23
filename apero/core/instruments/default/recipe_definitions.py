@@ -36,7 +36,6 @@ drs_recipe = drs_recipe.DrsRecipe
 changelog = drs_recipe(__INSTRUMENT__)
 explorer = drs_recipe(__INSTRUMENT__)
 database_mgr = drs_recipe(__INSTRUMENT__)
-go_recipe = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
 logstats = drs_recipe(__INSTRUMENT__)
 processing = drs_recipe(__INSTRUMENT__)
@@ -47,7 +46,7 @@ reset = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [changelog, database_mgr, explorer, go_recipe,
+recipes = [changelog, database_mgr, explorer,
            processing, listing, logstats, remake_db, remake_doc,
            req_check, reset, validate]
 
@@ -141,24 +140,9 @@ explorer.name = 'apero_explorer.py'
 explorer.instrument = __INSTRUMENT__
 explorer.description = textentry('EXPLORER_DESCRIPTION')
 explorer.kind = 'tool'
-
-# -----------------------------------------------------------------------------
-# apero_changelog.py
-# ----------------------------------------------------------------------------
-# TODO: Move strings to language db
-go_recipe.name = 'apero_go.py'
-go_recipe.instrument = __INSTRUMENT__
-go_recipe.description = 'Recipe to go to directories defined by APERO'
-go_recipe.kind = 'tool'
-# TODO: Add help
-go_recipe.set_kwarg(name='--data', default=False, dtype='switch')
-go_recipe.set_kwarg(name='--raw', default=False, dtype='switch')
-go_recipe.set_kwarg(name='--tmp', default=False, dtype='switch')
-go_recipe.set_kwarg(name='--red', default=False, dtype='switch')
-go_recipe.set_kwarg(name='--calib', default=False, dtype='switch')
-go_recipe.set_kwarg(name='--tellu', default=False, dtype='switch')
-go_recipe.set_kwarg(name='--msg', default=False, dtype='switch')
-go_recipe.set_kwarg(name='--plot', default=False, dtype='switch')
+# TODO: move helpstr to language database
+explorer.set_kwarg(name='--hash', default=False, dtype='switch',
+                   helpstr=textentry('EXPLORER_HASH'))
 
 # -----------------------------------------------------------------------------
 # apero_listing.py
