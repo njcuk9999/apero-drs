@@ -167,9 +167,16 @@ def __main__(recipe, params):
             # add output tag
             thermal_file.add_hkey('KW_OUTPUT', value=thermal_file.name)
             thermal_file.add_hkey('KW_FIBER', value=fiber)
+            # define multi lists
+            data_list, name_list = [], []
+            # snapshot of parameters
+            if params['PARAMETER_SNAPSHOT']:
+                data_list += [params.snapshot_table(drsfitsfile=thermal_file)]
+                name_list += ['PARAM_TABLE']
             # write thermal files
-            thermal_file.write_file(kind=recipe.outputtype,
-                                    runstring=recipe.runstring)
+            thermal_file.write_multi(data_list=data_list, name_list=name_list,
+                                     kind=recipe.outputtype,
+                                     runstring=recipe.runstring)
             # add to output files (for indexing)
             recipe.add_output_file(thermal_file)
         # ------------------------------------------------------------------

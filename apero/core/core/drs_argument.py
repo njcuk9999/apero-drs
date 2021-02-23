@@ -34,7 +34,6 @@ from apero import lang
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
-from apero.core.core import drs_break
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
@@ -2155,193 +2154,6 @@ class _SetIPythonReturn(DrsAction):
         setattr(namespace, self.dest, value)
 
 
-class _Breakpoints(DrsAction):
-    def __init__(self, *args, **kwargs):
-        """
-        Construct the Breakpoints action (for activating break points with
-        argument)
-
-        :param args: arguments passed to argparse.Action.__init__
-        :param kwargs: keyword arguments passed to argparse.Action.__init__
-        """
-        # set class name
-        self.class_name = '_Breakpoints'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
-        # define recipe as None (overwritten in __call__)
-        self.recipe = None
-        # force super initialisation
-        DrsAction.__init__(self, *args, **kwargs)
-
-    def __getstate__(self) -> dict:
-        """
-        For when we have to pickle the class
-        :return:
-        """
-        # set state to __dict__
-        state = dict(self.__dict__)
-        # return dictionary state
-        return state
-
-    def __setstate__(self, state: dict):
-        """
-        For when we have to unpickle the class
-
-        :param state: dictionary from pickle
-        :return:
-        """
-        # update dict with state
-        self.__dict__.update(state)
-
-    def __str__(self) -> str:
-        """
-        String representation of this class
-        :return:
-        """
-        return '_Breakpoints[DrsAction]'
-
-    def _set_return(self) -> True:
-        """
-        Set the ALLOW_BREAKPOINTS value to True if argument is present
-
-        :return: True and params['ALLOW_BREAKPOINTS'] = True
-        """
-        # set function name (cannot break here --> no access to inputs)
-        func_name = display_func('_set_return',
-                                 __NAME__, self.class_name)
-        # debug message: setting program to: "strvalue"
-        dmsg = textentry('90-001-00033')
-        WLOG(self.recipe.params, 'debug', dmsg)
-        # set DRS_DEBUG (must use the self version)
-        self.recipe.params['ALLOW_BREAKPOINTS'] = True
-        self.recipe.params.set_source('ALLOW_BREAKPOINTS', func_name)
-        self.recipe.params.set_instance('ALLOW_BREAKPOINTS', None)
-        # return strvalue
-        return True
-
-    def __call__(self, parser: DrsArgumentParser,
-                 namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
-        """
-        Call the action _Breakpoints() - sets the _Breakpoints.dest
-        to True if argument is present
-
-        :param parser: DrsArgumentParser instance
-        :param namespace: argparse.Namespace instance
-        :param values: Any, the values to check directory argument
-        :param option_string: None in most cases but used to get options
-                              for testing the value if required
-        :return: None
-        """
-        # get recipe from parser
-        self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         '_Breakpoints')
-        # check for help
-        # noinspection PyProtectedMember
-        parser._has_special()
-        # display version
-        value = self._set_return()
-        # Add the attribute
-        setattr(namespace, self.dest, value)
-
-
-class _Breakfunc(DrsAction):
-    def __init__(self, *args, **kwargs):
-        """
-        Construct the Break at Function action (for breaking at a display
-        function)
-
-        :param args: arguments passed to argparse.Action.__init__
-        :param kwargs: keyword arguments passed to argparse.Action.__init__
-        """
-        # set class name
-        self.class_name = '_Breakfunc'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, '_Breakfunc')
-        # set recipe as None (overwritten in __call__)
-        self.recipe = None
-        # force super initialisation
-        DrsAction.__init__(self, *args, **kwargs)
-
-    def __getstate__(self) -> dict:
-        """
-        For when we have to pickle the class
-        :return:
-        """
-        # set state to __dict__
-        state = dict(self.__dict__)
-        # return dictionary state
-        return state
-
-    def __setstate__(self, state: dict):
-        """
-        For when we have to unpickle the class
-
-        :param state: dictionary from pickle
-        :return:
-        """
-        # update dict with state
-        self.__dict__.update(state)
-
-    def __str__(self) -> str:
-        """
-        String representation of this class
-        :return:
-        """
-        return '_Breakfunc[DrsAction]'
-
-    def _set_breakfunc(self, value: Any) -> Union[None, str]:
-        """
-        Set the breakfunction value to the string representation of "value"
-
-        :param value: Any, value to turn to string representation of value
-
-        :return: str: the valid directory (raises exception if invalid)
-        :raises: drs_exceptions.LogExit
-        """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_set_breakfunc',
-                         __NAME__, self.class_name)
-        # deal with unset value
-        if value is None:
-            return None
-        else:
-            return str(value)
-
-    def __call__(self, parser: DrsArgumentParser,
-                 namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
-        """
-        Call the action _Breakfunc() - sets the _Breakfunc.dest
-        to value if valid else raises exception
-
-        :param parser: DrsArgumentParser instance
-        :param namespace: argparse.Namespace instance
-        :param values: Any, the values to check directory argument
-        :param option_string: None in most cases but used to get options
-                              for testing the value if required
-        :return: None
-        :raises: drs_exceptions.LogExit
-        """
-        # get drs parameters
-        self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
-        # display listing
-        if type(values) == list:
-            value = list(map(self._set_breakfunc, values))
-        else:
-            value = self._set_breakfunc(values)
-        # make sure value is not a list
-        if isinstance(value, list):
-            value = value[0]
-        # Add the attribute
-        setattr(namespace, self.dest, value)
-
-
 class _IsMaster(DrsAction):
     def __init__(self, *args, **kwargs):
         """
@@ -3655,7 +3467,7 @@ def _check_arg_path(params: ParamDict, arg: DrsArgument,
         # get package name
         package = params['DRS_PACKAGE']
         # get absolute path
-        path = drs_break.get_relative_folder(package, path)
+        path = drs_misc.get_relative_folder(package, path)
     # make path absolute
     path = os.path.abspath(path)
     # now check that path is valid
@@ -3946,33 +3758,6 @@ def set_ipython_return(params: ParamDict) -> OrderedDict:
     return props
 
 
-def breakpoints(params: ParamDict) -> OrderedDict:
-    """
-    Make a custom special argument: Set the use of break_point
-
-    :param params: ParamDict, Parameter Dictionary of constants
-
-    :return: an ordered dictionary with argument parameters
-    :rtype: OrderedDict
-    """
-    # set function name
-    _ = display_func('breakpoints', __NAME__)
-    # set up an output storage dictionary
-    props = OrderedDict()
-    # set the argument name
-    props['name'] = '--breakpoints'
-    # set any argument alternative names
-    props['altnames'] = ['--break']
-    # set the argument action function
-    props['action'] = _Breakpoints
-    # set the number of argument to expect
-    props['nargs'] = 0
-    # set the help message
-    props['help'] = textentry('BREAKPOINTS_HELP')
-    # return the argument dictionary
-    return props
-
-
 def is_master(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Set the use of break_point
@@ -3996,33 +3781,6 @@ def is_master(params: ParamDict) -> OrderedDict:
     props['nargs'] = 1
     # set the help message
     props['help'] = textentry('IS_MASTER_HELP')
-    # return the argument dictionary
-    return props
-
-
-def make_breakfunc(params: ParamDict) -> OrderedDict:
-    """
-    Make a custom special argument: Set a break function
-
-    :param params: ParamDict, Parameter Dictionary of constants
-
-    :return: an ordered dictionary with argument parameters
-    :rtype: OrderedDict
-    """
-    # set function name
-    _ = display_func('make_breakfunc', __NAME__)
-    # set up an output storage dictionary
-    props = OrderedDict()
-    # set the argument name
-    props['name'] = '--breakfunc'
-    # set any argument alternative names
-    props['altnames'] = ['--bf']
-    # set the argument action function
-    props['action'] = _Breakfunc
-    # set the number of argument to expect
-    props['nargs'] = 1
-    # set the help message
-    props['help'] = textentry('BREAKFUNC_HELP')
     # return the argument dictionary
     return props
 

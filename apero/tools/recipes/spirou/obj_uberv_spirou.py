@@ -258,8 +258,15 @@ def __main__(recipe, params):
             infile1.copy_original_keys(infile1, forbid_keys=False,
                                        allkeys=True)
             extract.add_berv_keys(params, infile1, bprops)
+            # define multi lists
+            data_list, name_list = [], []
+            # snapshot of parameters
+            if params['PARAMETER_SNAPSHOT']:
+                data_list += [params.snapshot_table(drsfitsfile=infile1)]
+                name_list += ['PARAM_TABLE']
             # write data to file
-            infile1.write_file(kind=recipe.outputtype,
+            infile1.write_multi(data_list=data_list, name_list=name_list,
+                               kind=recipe.outputtype,
                                runstring=recipe.runstring)
 
     # ----------------------------------------------------------------------

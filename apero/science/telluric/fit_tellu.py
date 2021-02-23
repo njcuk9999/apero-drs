@@ -156,9 +156,9 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
         _remove_absonpy_files(params, params['DRS_TELLU_DB'], 'tellu_save1_')
         # write to npy file
         abso_npy.data = abso
-        abso_npy.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+        abso_npy.write_npy(kind=recipe.outputtype, runstring=recipe.runstring)
         abso1_npy.data = abso1
-        abso1_npy.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+        abso1_npy.write_npy(kind=recipe.outputtype, runstring=recipe.runstring)
     # ----------------------------------------------------------------------
     # use abso1 (water/others exponent) to create a mask for abso
     # ----------------------------------------------------------------------
@@ -1042,7 +1042,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     name_list = ['TRANS_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table()]
+        data_list += [params.snapshot_table(drsfitsfile=corrfile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write image to file
@@ -1077,8 +1077,16 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     # log that we are saving s1d table
     wargs = ['wave', sc1dwfile.filename]
     WLOG(params, '', textentry('40-019-00024', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=sc1dwfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    sc1dwfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    sc1dwfile.write_multi(data_list=data_list, name_list=name_list,
+                          kind=recipe.outputtype,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(sc1dwfile)
     # ------------------------------------------------------------------
@@ -1100,8 +1108,16 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     # log that we are saving s1d table
     wargs = ['velocity', sc1dvfile.filename]
     WLOG(params, '', textentry('40-019-00024', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=sc1dvfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    sc1dvfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    sc1dvfile.write_multi(data_list=data_list, name_list=name_list,
+                          kind=recipe.outputtype,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(sc1dvfile)
 
@@ -1122,8 +1138,16 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     reconfile.data = cprops['RECON_ABSO']
     # log that we are saving recon e2ds file
     WLOG(params, '', textentry('40-019-00025', args=[reconfile.filename]))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=reconfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    reconfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    reconfile.write_multi(data_list=data_list, name_list=name_list,
+                          kind=recipe.outputtype,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(reconfile)
     # ------------------------------------------------------------------
@@ -1145,8 +1169,16 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     # log that we are saving s1d table
     wargs = ['wave', rc1dwfile.filename]
     WLOG(params, '', textentry('40-019-00026', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=rc1dwfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    rc1dwfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    rc1dwfile.write_multi(data_list=data_list, name_list=name_list,
+                          kind=recipe.outputtype,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(rc1dwfile)
     # ------------------------------------------------------------------
@@ -1168,8 +1200,16 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     # log that we are saving s1d table
     wargs = ['velocity', rc1dvfile.filename]
     WLOG(params, '', textentry('40-019-00026', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=rc1dvfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    rc1dvfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    rc1dvfile.write_multi(data_list=data_list, name_list=name_list,
+                          kind=recipe.outputtype,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(rc1dvfile)
     # ------------------------------------------------------------------

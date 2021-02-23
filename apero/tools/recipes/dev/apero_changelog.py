@@ -14,7 +14,7 @@ import shutil
 
 import apero
 from apero.base import base
-from apero.core.core import drs_break
+from apero.core.core import drs_misc
 from apero import lang
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
@@ -93,11 +93,11 @@ def __main__(recipe, params):
     # get package
     package = params['DRS_PACKAGE']
     # get filename
-    filename = drs_break.get_relative_folder(package, CLOGFILENAME)
+    filename = drs_misc.get_relative_folder(package, CLOGFILENAME)
     # get version file path
-    versionfile = drs_break.get_relative_folder(package, VERSIONFILE)
+    versionfile = drs_misc.get_relative_folder(package, VERSIONFILE)
     # get const file path
-    constfile = drs_break.get_relative_folder(package, CONSTFILE)
+    constfile = drs_misc.get_relative_folder(package, CONSTFILE)
     # ----------------------------------------------------------------------
     # if in preview mode tell user
     if params['INPUTS']['PREVIEW']:
@@ -155,9 +155,9 @@ def __main__(recipe, params):
             os.remove('tmp.txt')
     # ----------------------------------------------------------------------
     # get doc paths
-    doc_confpath = drs_break.get_relative_folder(package, DOC_CONFPATH)
-    doc_clogpath = drs_break.get_relative_folder(package, DOC_CHANGELOGPATH)
-    doc_indxpath = drs_break.get_relative_folder(package, DOC_INDEXPATH)
+    doc_confpath = drs_misc.get_relative_folder(package, DOC_CONFPATH)
+    doc_clogpath = drs_misc.get_relative_folder(package, DOC_CHANGELOGPATH)
+    doc_indxpath = drs_misc.get_relative_folder(package, DOC_INDEXPATH)
     # update documentation (conf.py)
     strversion = '\'{0}\'\n'.format(version)
     drs_changelog.update_file(doc_confpath, DOC_CONF_PREFIX, strversion)

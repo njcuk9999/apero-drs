@@ -794,8 +794,15 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     orderpfile.data = order_profile
     # log that we are saving rotated image
     WLOG(params, '', textentry('40-013-00002', args=[orderpfile.filename]))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=orderpfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    orderpfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    orderpfile.write_multi(data_list=data_list, name_list=name_list,
+                           kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(orderpfile)
     # ------------------------------------------------------------------
@@ -857,7 +864,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     datatype_list = ['table', 'table']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table()]
+        data_list += [params.snapshot_table(drsfitsfile=loco1file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write image to file
@@ -884,8 +891,15 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     WLOG(params, '', textentry('40-013-00020', args=[loco2file.filename]))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=loco2file)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    loco2file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    loco2file.write_multi(data_list=data_list, name_list=name_list,
+                          kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(loco2file)
     # ------------------------------------------------------------------
@@ -912,8 +926,15 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
         # log that we are saving rotated image
         wargs = [loco3file.filename]
         WLOG(params, '', textentry('40-013-00021', args=wargs))
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(drsfitsfile=loco3file)]
+            name_list += ['PARAM_TABLE']
         # write image to file
-        loco3file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+        loco3file.write_multi(data_list=data_list, name_list=name_list,
+                              kind=recipe.outputtype, runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(loco3file)
     # ------------------------------------------------------------------

@@ -215,6 +215,7 @@ def __main__(recipe, params):
                 msg = 'Writing to file: {0}'
                 margs = [filepostfile.filename]
                 WLOG(params, '', msg.format(*margs))
+                # write file
                 filepostfile.write_file(recipe.outputtype, recipe.runstring)
             else:
                 WLOG(params, 'warning', '\tSkipping - files not found')

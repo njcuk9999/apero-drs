@@ -17,7 +17,7 @@ import re
 
 from apero.base import base
 from apero.base import drs_db
-from apero.core.core import drs_break
+from apero.core.core import drs_misc
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_dev
@@ -874,7 +874,7 @@ class LoadData:
         # get package (from drs_text)
         package = __PACKAGE__
         # get level above package
-        modpath = drs_break.get_relative_folder(package, '..')
+        modpath = drs_misc.get_relative_folder(package, '..')
         # get python scripts in modpath
         pyfiles = find_all_py_files(modpath)
         # open and combine in to single list of lines
@@ -936,7 +936,7 @@ def open_all_py_files(files):
     """
     # get package and relative path to database (basaed on drs_text values)
     package = __PACKAGE__
-    path = drs_break.get_relative_folder(package, '..')
+    path = drs_misc.get_relative_folder(package, '..')
     # set up storage
     all_entries = []
     all_line_numbers = []

@@ -354,8 +354,16 @@ def __main__(recipe, params):
     out_pp_file.data = maskpp
     # save to file
     WLOG(params, '', 'Saving pp file: {0}'.format(out_pp_file.filename))
-    out_pp_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
-
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=out_pp_file)]
+        name_list += ['PARAM_TABLE']
+    # write file
+    out_pp_file.write_multi(data_list=data_list, name_list=name_list,
+                               kind=recipe.outputtype,
+                               runstring=recipe.runstring)
     # ----------------------------------------------------------------------
     # write raw out file
     # ----------------------------------------------------------------------
@@ -376,7 +384,16 @@ def __main__(recipe, params):
     out_raw_file.data = np.array(maskraw).astype(int)
     # save to file
     WLOG(params, '', 'Saving raw file: {0}'.format(out_raw_file.filename))
-    out_raw_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=out_raw_file)]
+        name_list += ['PARAM_TABLE']
+    # write file
+    out_raw_file.write_multi(data_list=data_list, name_list=name_list,
+                             kind=recipe.outputtype,
+                             runstring=recipe.runstring)
 
     # ----------------------------------------------------------------------
     # End of main code

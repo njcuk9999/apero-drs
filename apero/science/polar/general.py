@@ -521,7 +521,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     name_list = ['POL_ERR']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table()]
+        data_list += [params.snapshot_table(drsfitsfile=polfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     polfile.write_multi(data_list=data_list, name_list=name_list,
@@ -544,8 +544,16 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     null1file.data = pprops['NULL1']
     # log that we are saving null1 file
     WLOG(params, '', textentry('40-021-00006', args=[null1file.filename]))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=null1file)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    null1file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    null1file.write_multi(data_list=data_list, name_list=name_list,
+                          kind=recipe.outputtype,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(null1file)
 
@@ -564,8 +572,16 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     null2file.data = pprops['NULL2']
     # log that we are saving null1 file
     WLOG(params, '', textentry('40-021-00007', args=[null2file.filename]))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=null2file)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    null2file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    null2file.write_multi(data_list=data_list, name_list=name_list,
+                          kind=recipe.outputtype,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(null2file)
 
@@ -591,7 +607,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     name_list = ['STOKES_I_ERR']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table()]
+        data_list += [params.snapshot_table(drsfitsfile=stokesfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     stokesfile.write_multi(data_list=data_list, name_list=name_list,
@@ -618,8 +634,16 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
         # log that we are saving s1d table
         wargs = [s1dkey, s1dfile.filename]
         WLOG(params, '', textentry('40-021-00010', args=wargs))
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(drsfitsfile=s1dfile)]
+            name_list += ['PARAM_TABLE']
         # write image to file
-        s1dfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+        s1dfile.write_multi(data_list=data_list, name_list=name_list,
+                            kind=recipe.outputtype,
+                            runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(s1dfile)
 
@@ -698,8 +722,16 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
         lsd_file.datatype = 'table'
         # log that we are saving lsd file
         WLOG(params, '', textentry('40-021-00009', args=[lsd_file.filename]))
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(drsfitsfile=lsd_file)]
+            name_list += ['PARAM_TABLE']
         # write image to file
-        lsd_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+        lsd_file.write_multi(data_list=data_list, name_list=name_list,
+                             kind=recipe.outputtype,
+                             runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(lsd_file)
 
