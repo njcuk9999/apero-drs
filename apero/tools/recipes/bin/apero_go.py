@@ -13,7 +13,6 @@ import os
 import sys
 
 from apero.base import base
-from apero import lang
 from apero.core import constants
 from apero.core.utils import drs_startup
 
@@ -39,7 +38,7 @@ __release__ = base.__release__
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(**kwargs):
+def main():
     """
     Main function for apero_listing.py
 
@@ -53,6 +52,7 @@ def main(**kwargs):
     :returns: dictionary of the local space
     :rtype: dict
     """
+    # TODO: use argparse here
     # get args from sys.argv
     args = sys.argv
     # get parameters for this instrument

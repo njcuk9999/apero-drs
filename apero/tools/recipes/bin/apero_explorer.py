@@ -86,7 +86,8 @@ def __main__(recipe, params):
     """
     # get instrument
     instrument = str(recipe.instrument)
-
+    # get hash col argument from inputs
+    hash_col = params['INPUTS']['hash']
     # get databases
     dbs = manage_databases.list_databases(params)
     # push into database holder
@@ -94,7 +95,8 @@ def __main__(recipe, params):
     for key in dbs:
         databases[key] = database_gui.DatabaseHolder(params, name=key,
                                                      kind=dbs[key].kind,
-                                                     path=Path(dbs[key].path))
+                                                     path=Path(dbs[key].path),
+                                                     hash_col=hash_col)
     # construct app
     app = database_gui.DatabaseExplorer(databases=databases)
     # set icon?
