@@ -1594,6 +1594,9 @@ class IndexDatabase(DatabaseManager):
         # get a list of keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
         ikeys, itypes, iunique = self.pconst.INDEX_DB_COLUMNS()
+        # need to add hash key if required
+        if iunique is not None:
+            ikeys += [drs_db.UHASH_COL]
         # ---------------------------------------------------------------------
         # deal with database having wrong columns (if we have added / remove a
         #  column and are updating because of this)
@@ -1601,6 +1604,7 @@ class IndexDatabase(DatabaseManager):
         # check if columns and rkeys agree
         if len(columns) != len(ikeys):
             # prompt user and warn
+            # TODO: move to language DB
             wmsg = 'Index database has wrong number of columns'
             WLOG(self.params, 'warning', wmsg)
             userinput = input('Reset database [Y]es or [N]o?\t')
@@ -1614,12 +1618,15 @@ class IndexDatabase(DatabaseManager):
                 # reload database
                 self.load_db()
                 # update all entries for raw index entries
+                # TODO: move to language DB
                 WLOG(self.params, 'info', 'Rebuilding raw index entries')
                 self.update_entries('raw', force_update=True)
                 # update all entries for tmp index entries
+                # TODO: move to language DB
                 WLOG(self.params, 'info', 'Rebuilding tmp index entries')
                 self.update_entries('tmp', force_update=True)
                 # update all entries for reduced index entries
+                # TODO: move to language DB
                 WLOG(self.params, 'info', 'Rebuilding reduced index entries')
                 self.update_entries('red', force_update=True)
                 return
