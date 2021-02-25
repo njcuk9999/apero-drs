@@ -275,7 +275,8 @@ __all__ = [
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
-    'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL',
+    'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
+    'DRIFT_DPR_FIBER_TYPE'
 ]
 
 # set name
@@ -3162,6 +3163,14 @@ EXPMETER_MAX_LAMBDA = Const('EXPMETER_MAX_LAMBDA', value=None, dtype=float,
 
 # Define exposure meter telluric threshold (minimum tapas transmission)
 EXPMETER_TELLU_THRES = Const('EXPMETER_TELLU_THRES', value=None, dtype=float,
+                             source=__NAME__, group=cgroup)
+
+# Define the types of file allowed for drift measurement
+DRIFT_DPRTYPES = Const('DRIFT_DPRTYPES', value=None, dtype=str,
+                       source=__NAME__, group=cgroup)
+
+# Define the fiber dprtype allowed for drift measurement (only FP)
+DRIFT_DPR_FIBER_TYPE = Const('DRIFT_DPR_FIBER_TYPE', value=None, dtype=str,
                              source=__NAME__, group=cgroup)
 
 # =============================================================================

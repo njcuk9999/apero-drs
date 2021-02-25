@@ -1434,7 +1434,7 @@ def unix_char_code():
     #  -- happens a lot in multiprocessing
     rint = np.random.randint(1000, 9999, 1) / 1e7
     # wait a fraction of time (between 1us and 1ms)
-    time.sleep(rint)
+    time.sleep(float(rint))
     # get the time now from astropy
     timenow = Time.now()
     # get unix and human time from astropy time now
@@ -1443,7 +1443,6 @@ def unix_char_code():
     # generate random four characters to make sure pid is unique
     rval = ''.join(np.random.choice(list(CHARS), size=4))
     return unixtime, humantime, rval
-
 
 
 def find_recipe(name='None', instrument='None', mod=None):

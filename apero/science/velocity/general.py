@@ -709,10 +709,11 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # Check we are using correct fiber
     # ----------------------------------------------------------------------
     pconst = constants.pload(params['INSTRUMENT'])
-    sfiber, rfiber = pconst.FIBER_CCF()
-    if fiber != sfiber:
+    sfiber, rfiber = pconst.FIBER_KINDS()
+    if fiber not in sfiber:
         # log that the science fiber was not correct
-        eargs = [fiber, sfiber, infile.name, infile.filename]
+        eargs = [fiber, ' or '.join(sfiber), infile.name, infile.filename,
+                 func_name]
         WLOG(params, 'error', TextEntry('09-020-00001', args=eargs))
 
     # ----------------------------------------------------------------------

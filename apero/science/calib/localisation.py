@@ -654,8 +654,7 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     # add to qc header lists
     qc_values.append(sum_cent_max_rmpts)
     qc_names.append('sum(MAX_RMPTS_POS)')
-    qc_logic.append('sum(MAX_RMPTS_POS) < {0:.2f}'
-                    ''.format(sum_cent_max_rmpts))
+    qc_logic.append('sum(MAX_RMPTS_POS) < {0:.2f}'.format(max_removed_cent))
     # ----------------------------------------------------------------------
     # check that  max number of points rejected in width fit is below
     #   threshold
@@ -670,8 +669,7 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     # add to qc header lists
     qc_values.append(sum_wid_max_rmpts)
     qc_names.append('sum(MAX_RMPTS_WID)')
-    qc_logic.append('sum(MAX_RMPTS_WID) < {0:.2f}'
-                    ''.format(sum_wid_max_rmpts))
+    qc_logic.append('sum(MAX_RMPTS_WID) < {0:.2f}'.format(max_removed_wid))
     # ------------------------------------------------------------------
     if mean_rms_cent > rmsmax_cent:
         # add failed message to fail message list
@@ -811,6 +809,11 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     loco1file.copy_original_keys(infile)
     # add version
     loco1file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    loco1file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    loco1file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    loco1file.add_hkey('KW_PID', value=params['PID'])
     # add output tag
     loco1file.add_hkey('KW_OUTPUT', value=loco1file.name)
     loco1file.add_hkey('KW_FIBER', value=fiber)
