@@ -154,10 +154,11 @@ def __main__(recipe, params):
         # Check we are using correct fiber
         # ----------------------------------------------------------------------
         pconst = constants.pload(params['INSTRUMENT'])
-        sfiber, rfiber = pconst.FIBER_CCF()
-        if fiber != sfiber:
+        sfiber, rfiber = pconst.FIBER_KINDS()
+        if fiber not in sfiber:
             # log that the science fiber was not correct
-            eargs = [fiber, sfiber, infile.name, infile.filename]
+            eargs = [fiber, ' or '.join(sfiber), infile.name,
+                     infile.filename, mainname]
             WLOG(params, 'error', TextEntry('09-020-00001', args=eargs))
 
         # ------------------------------------------------------------------
@@ -178,10 +179,13 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         outtype = infile.get_key('KW_OUTPUT', dtype=str)
 
+        # get ccf fibers
+        recon_sfiber, recon_rfiber = pconst.FIBER_CCF()
+
         if outtype in params['CCF_CORRECT_TELLU_TYPES']:
             # remove telluric domain below a defined threshold
             #    and return the infile (with infile.data updated)
-            targs = [infile, fiber]
+            targs = [infile, recon_sfiber]
             image = velocity.remove_telluric_domain(params, recipe, *targs)
         else:
             image = np.array(infile.data)
