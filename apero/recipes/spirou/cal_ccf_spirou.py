@@ -156,10 +156,11 @@ def __main__(recipe, params):
         # Check we are using correct fiber
         # ----------------------------------------------------------------------
         pconst = constants.pload()
-        sfiber, rfiber = pconst.FIBER_CCF()
-        if fiber != sfiber:
+        sfiber, rfiber = pconst.FIBER_KINDS()
+        if fiber not in sfiber:
             # log that the science fiber was not correct
-            eargs = [fiber, sfiber, infile.name, infile.filename]
+            eargs = [fiber, ' or '.join(sfiber), infile.name,
+                     infile.filename, mainname]
             WLOG(params, 'error', textentry('09-020-00001', args=eargs))
 
         # ------------------------------------------------------------------
@@ -179,7 +180,9 @@ def __main__(recipe, params):
         #   Remove domain with telluric > 50%
         # ------------------------------------------------------------------
         outtype = infile.get_hkey('KW_OUTPUT', dtype=str)
-
+        # get ccf fibers
+        recon_sfiber, recon_rfiber = pconst.FIBER_CCF()
+        # correct tellurics
         if outtype in params['CCF_CORRECT_TELLU_TYPES']:
             # remove telluric domain below a defined threshold
             #    and return the infile (with infile.data updated)
