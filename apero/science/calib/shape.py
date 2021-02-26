@@ -606,7 +606,7 @@ def ea_transform(params, image, lin_transform_vect=None,
     image = np.array(image)
     # transforming an image with the 6 linear transform terms
     # Be careful with NaN values, there should be none
-    dx, dy, A, B, C, D = lin_transform_vect
+    dx, dy, A, B, C, D = list(lin_transform_vect)
     # get the pixel locations for the image
     yy, xx = np.indices(image.shape, dtype=float)
     # get the shifted x pixel locations
@@ -1357,7 +1357,7 @@ def get_shapelocal(params, header, filename=None, database=None):
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-014-00039', args=[shapel_file]))
     # return the master image
-    return shapel_file, shapel
+    return shapel_file, shapel.flatten()
 
 
 # =============================================================================
