@@ -102,6 +102,10 @@ database_mgr.name = 'apero_database.py'
 database_mgr.instrument = __INSTRUMENT__
 database_mgr.description = 'APERO database manager'
 database_mgr.kind = 'tool'
+
+database_mgr.set_kwarg(name='--kill', dtype='switch', default=False,
+                       helpstr='Use this when database is stuck and you have'
+                               'no other opens (mysql only)')
 database_mgr.set_kwarg(name='--csv', dtype=str, default='None',
                        helpstr='Path to csv file. For --importdb this is the'
                                'csv file you wish to add. For --exportdb this'

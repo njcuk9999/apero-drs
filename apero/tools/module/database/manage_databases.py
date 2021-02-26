@@ -49,6 +49,29 @@ textentry = lang.textentry
 # =============================================================================
 # Define functions
 # =============================================================================
+def kill():
+
+    # TODO: get database parameters from base
+
+    # TODO: get database connection
+    drs_db.Database()
+
+    # TODO: add path
+
+    # TODO: use the following command to kill all active connections
+
+    """
+    select
+    concat('kill ', id, ';')
+    sleeping_connections
+    FROM
+    information_schema.processlist
+    isp
+    WHERE
+    Command = 'Sleep' and time > 60
+    """
+
+
 def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     # set up storage
     databases = dict()
