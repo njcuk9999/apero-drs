@@ -859,8 +859,8 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # log that we are saving rotated image
     WLOG(params, '', textentry('40-013-00019', args=[loco1file.filename]))
     # define multi lists
-    data_list = [cent_table, wid_table],
-    name_list = ['CENT_TABLE', 'WIDTH_TABLE'],
+    data_list = [cent_table, wid_table]
+    name_list = ['CENT_TABLE', 'WIDTH_TABLE']
     datatype_list = ['table', 'table']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:

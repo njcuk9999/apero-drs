@@ -947,7 +947,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     WLOG(params, '', textentry('40-019-00036', args=[template_file.filename]))
     # define multi lists
     data_list = [bigtable]
-    datatype_list = ['table'],
+    datatype_list = ['table']
     name_list = ['TEMPLATE_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
@@ -980,7 +980,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     WLOG(params, '', textentry('40-019-00037', args=[bigcubefile.filename]))
     # define multi lists
     data_list = [bigtable]
-    datatype_list = ['table'],
+    datatype_list = ['table']
     name_list = ['TEMPLATE_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:

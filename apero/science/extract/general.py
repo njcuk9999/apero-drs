@@ -1370,8 +1370,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsllfile.filename]
     WLOG(params, '', textentry('40-016-00007', args=wargs))
     # define multi lists
-    data_list = [eprops['E2DSCC']],
-    name_list = ['E2DSLL', 'E2DSCC'],
+    data_list = [eprops['E2DSCC']]
+    name_list = ['E2DSLL', 'E2DSCC']
     datatype_list = ['image']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
