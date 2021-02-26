@@ -2473,8 +2473,7 @@ class DrsFitsFile(DrsInputFile):
         elif self.data is not None:
             self.shape = [len(self.data)]
 
-    # TODO: when we change to default ext=1 this needs updating
-    def read_data(self, ext: int = 0, log: bool = True,
+    def read_data(self, ext: Union[int, None] = None, log: bool = True,
                   copy: bool = False,
                   return_data: bool = False) -> Union[None, np.ndarray, Table]:
         """
@@ -2710,19 +2709,19 @@ class DrsFitsFile(DrsInputFile):
         # need to deal with no data in primary (should be default)
         if dout[0] is None:
             self.data = dout[1]
+            self.data_array = dout[1:]
         else:
             self.data = dout[0]
+            self.data_array = dout
         self.header = drs_fits.Header.from_fits_header(hout[0])
         # update fiber parameter from header
         if self.header is not None:
             self.fiber = self.get_hkey('KW_FIBER', dtype=str, required=False)
-
-        self.data_array = out[0]
         # set number of data sets to 1
         self.numfiles = 1
         # append headers (as copy)
         self.header_array = []
-        for header in out[1]:
+        for header in hout:
             self.header_array.append(drs_fits.Header.from_fits_header(header))
         # set the shape
         if self.data is not None:
@@ -2840,10 +2839,7 @@ class DrsFitsFile(DrsInputFile):
         if header_list is None:
             header_list = []
             for it in range(len(data_list)):
-                if self.header is not None:
-                    header_list.append(self.header.to_fits_header())
-                else:
-                    header_list.append(None)
+                header_list.append(None)
         # ---------------------------------------------------------------------
         # deal with datatype_list being empty
         if datatype_list is None:
