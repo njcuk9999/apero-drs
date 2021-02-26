@@ -1700,7 +1700,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         # ------------------------------------------------------------------
         # deal with setting 1 night
         # ------------------------------------------------------------------
-        if not drs_text.null_text(params['NIGHTNAME'], ['', 'All', 'None']):
+        elif not drs_text.null_text(params['NIGHTNAME'], ['', 'All', 'None']):
             # get nightnames
             nightname = params['NIGHTNAME']
             # mask table by nightname
