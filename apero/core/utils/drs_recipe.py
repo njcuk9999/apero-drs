@@ -1359,8 +1359,20 @@ class DrsRecipe(object):
             iarg = inputs[argname.strip(prefix)]
             # add prefix (add prefix whether it had one or not)
             argname = prefix + argname
+
+            # deal with directory argument (difficult)
+            if arg.name == 'directory':
+                # get expected input directory
+                inputdir, _ = drs_file.get_dir(self.params, self.inputtype)
+                # get uncommon path
+                dirname = drs_misc.get_uncommon_path(iarg, inputdir)
+                # construct input string
+                inputstr += '{0}={1} || '.format(argname, dirname)
+                # add to runstring
+                self.runstring += '{0} '.format(dirname)
+
             # deal with file arguments
-            if arg.dtype in ['file', 'files']:
+            elif arg.dtype in ['file', 'files']:
                 if not isinstance(iarg, list):
                     continue
                 # get string and drsfile
@@ -1391,8 +1403,6 @@ class DrsRecipe(object):
                 if iarg in ['None', None, '']:
                     continue
                 # add to run string
-                if isinstance(iarg, str):
-                    iarg = Path(iarg).name
                 if kind != 'arg':
                     self.runstring += '{0}={1} '.format(argname, iarg)
                 else:
