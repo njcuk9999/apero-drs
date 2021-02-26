@@ -340,8 +340,7 @@ def debug_file(recipe, params, infile, dlist):
                  'GLOB_BINNED']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        ptable = params.snapshot_table(drsfitsfile=debug_back)
-        dlist += [ptable]
+        dlist += [params.snapshot_table(drsfitsfile=debug_back)]
         name_list += ['PARAM_TABLE']
     # write multiple to file
     debug_back.write_multi(kind=recipe.outputtype, name_list=name_list,

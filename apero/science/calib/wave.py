@@ -6375,7 +6375,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
         name_list += ['PARAM_TABLE']
     # write file
     e2ds_file.write_multi(data_list=data_list, name_list=name_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                          kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2ds_file)
     # ----------------------------------------------------------------------
