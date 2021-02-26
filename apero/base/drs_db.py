@@ -498,6 +498,8 @@ class Database:
         # add the hash column
         if unique_cols is not None:
             columns, values = _hash_col(columns, values, unique_cols)
+            # condition based on only on unique_col
+            condition = '{0}={1}'.format(columns[-1], values[-1])
         # storage for set string
         set_str = []
         # make sure columns and values have the same length
@@ -1081,7 +1083,7 @@ class SQLiteDatabase(Database):
             # deal with unique error on INSERT
             except sqlite3.IntegrityError as e:
                 # look for word 'unique' in exception
-                if 'UNIQUE' in str(e):
+                if 'unique' in str(e).lower():
                     raise UniqueEntryException(str(e))
                 # else raise exception
                 else:
@@ -1395,11 +1397,11 @@ class MySQLDatabase(Database):
         # deal with unique error on INSERT
         except mysql.IntegrityError as e:
             # look for word 'unique' in exception
-            if 'duplicate' in str(e):
+            if 'duplicate' in str(e).lower():
                 raise UniqueEntryException(str(e))
             # else raise exception
             else:
-                raise sqlite3.IntegrityError(str(e))
+                raise mysql.IntegrityError(str(e))
 
     def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,
@@ -1604,6 +1606,12 @@ def _decode_value(value: Any) -> str:
         return str(value)
     # else push it in as a string
     else:
+        # need to remove speechmarks at this point
+        if '\'' in value:
+            value = value.replace('\'', '')
+        if '\"' in value:
+            value = value.replace('\"', '')
+        # return formatted value
         return '"{0}"'.format(value)
 
 
