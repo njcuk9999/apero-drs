@@ -49,27 +49,62 @@ textentry = lang.textentry
 # =============================================================================
 # Define functions
 # =============================================================================
-def kill():
-
-    # TODO: get database parameters from base
-
-    # TODO: get database connection
-    drs_db.Database()
-
-    # TODO: add path
-
-    # TODO: use the following command to kill all active connections
-
+def kill(params: ParamDict, timeout: int = 60):
     """
-    select
-    concat('kill ', id, ';')
-    sleeping_connections
-    FROM
-    information_schema.processlist
-    isp
-    WHERE
-    Command = 'Sleep' and time > 60
+    Kill all processes that are in the database yaml database from the specified
+    user that are greater than timeout
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param timeout: time in seconds, the minimum time a sql process has been
+                    running to kill it (if this is too low it will try to kill
+                    itself which isn't recommended)
+    :return:
     """
+    # get database parameters from base
+    dparams = base.DPARAMS
+    # deal with mysql
+    if dparams['USE_MYSQL']:
+        # get hostname / user / password
+        host = dparams['MYSQL']['HOST']
+        user = dparams['MYSQL']['USER']
+        passwd = dparams['MYSQL']['PASSWD']
+        databasename = 'information_schema'
+        tablename = 'processlist'
+        # wrap in a try (this may not always work
+        try:
+            # get database connection
+            infodb = drs_db.MySQLDatabase(host=host, user=user, passwd=passwd,
+                                          database=databasename,
+                                          tablename=tablename,
+                                          absolute_table_name=True)
+            # set up condition: only this users processes and only from the
+            #   required database and that have been active for more than
+            #   60 seconds
+            cargs = [user, databasename, timeout]
+            condition = 'USER="{0}" AND DB="{1}" AND TIME > {2}'.format(*cargs)
+            # get all processes that were started by user
+            table = infodb.get('*', table=tablename, condition=condition,
+                               return_pandas=True)
+            # get ids from table
+            ids = list(table['ID'].values)
+            # log how many ids found
+            WLOG(params, '', 'Found {0} processes'.format(len(ids)))
+            # try to kill processes
+            for _id in ids:
+                # set up command
+                command = 'kill {0}'.format(_id)
+                # execute command
+                try:
+                    infodb.execute(command, False)
+                    # log killing
+                    WLOG(params, '', command)
+                except Exception:
+                    continue
+            # close the connection
+            infodb._conn_.close()
+        # just return if there is an exception
+        except Exception:
+            return
 
 
 def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:

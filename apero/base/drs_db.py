@@ -1227,7 +1227,8 @@ class SQLiteDatabase(Database):
 class MySQLDatabase(Database):
     # A wrapper for an SQLite database.
     def __init__(self, host: str, user: str, passwd: str,
-                 database: str, tablename: str, verbose: bool = False):
+                 database: str, tablename: str, verbose: bool = False,
+                 absolute_table_name: bool = False):
         """
         Create an object for reading and writing to a SQLite database.
 
@@ -1238,6 +1239,9 @@ class MySQLDatabase(Database):
         :param tablename: str, the table name
         :param verbose: bool, whether to verbosely print out database
                         functionality
+        :param absolute_table_name: bool, if True does not change the tablename
+                                    used when you need to specific a specific
+                                    table
         """
         # set class name
         self.classname = 'MySQLDatabase'
@@ -1263,7 +1267,12 @@ class MySQLDatabase(Database):
         self.user = user
         self.passwd = passwd
         self.dbname = database
-        self.tname = _proxy_table(tablename)
+        # deal with setting table name (we only have one per manager hence
+        #   why this is set)
+        if absolute_table_name:
+            self.tname = tablename
+        else:
+            self.tname = _proxy_table(tablename)
         # re-set path after call to super
         self.path = '{0}@{1}'.format(self.user, self.host)
         # deal with database for sql
