@@ -78,6 +78,12 @@ def __main__(recipe, params):
     :return: returns the local namespace as a dictionary
     :rtype: dict
     """
+
+    # deal with killing sleeping processes
+    if params['INPUTS']['KILL']:
+
+        manage_databases.kill()
+
     # ----------------------------------------------------------------------
     # get csv file path
     # ----------------------------------------------------------------------
