@@ -1357,10 +1357,8 @@ class IndexDatabase(DatabaseManager):
             values = [str(path), str(directory), str(basename), str(kind),
                       float(last_modified), str(runstring)]
             values += hvalues + [used, rawfix]
-            # set up condition (on unique columns)
-            condition = 'ABSPATH = "{0}"'.format(path)
-            # condition = 'DIRECTORY = "{0}"'.format(directory)
-            # condition += ' AND FILENAME = "{0}"'.format(str(basename))
+            # condition comes from uhash - so set to None here (to remember)
+            condition = None
             # update row in database
             self.database.set('*', values=values, condition=condition,
                               table=self.database.tname,
@@ -1951,7 +1949,7 @@ def _get_files(path: Union[Path, str], kind: str,
             if str(filename) in excfiles:
                 if last_modified is not None:
                     # get position in excfiles
-                    pos = np.where(excfiles == str(filename))[0][0]
+                    pos = np.where(np.array(excfiles) == str(filename))[0][0]
                     # get last modified time
                     ftime = filename.stat().st_mtime
                     # only continue if ftime is equal to the one given
@@ -2446,9 +2444,8 @@ class ObjectDatabase(DatabaseManager):
         # if row already exists then update that row (based on Gaia ID and
         #   objname)
         except drs_db.UniqueEntryException:
-            # need to see if we already have gaia id
-            condition = '{0}="{1}"'.format(GAIA_COL_NAME, gaia_id)
-            condition += ' AND {0}="{1}"'.format('OBJNAME', objname)
+            # condition comes from uhash - so set to None here (to remember)
+            condition = None
             # update row in database
             self.database.set('*', values=values, condition=condition,
                               table=self.database.tname, commit=commit,
