@@ -81,9 +81,12 @@ def __main__(recipe, params):
 
     # deal with killing sleeping processes
     if params['INPUTS']['KILL']:
-
-        manage_databases.kill()
-
+        # kill all user processes in the database that have been running for
+        manage_databases.kill(params, timeout=60)
+        # ------------------------------------------------------------------
+        # End of main code
+        # ------------------------------------------------------------------
+        return drs_startup.return_locals(params, locals())
     # ----------------------------------------------------------------------
     # get csv file path
     # ----------------------------------------------------------------------
