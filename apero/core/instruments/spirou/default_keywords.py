@@ -864,7 +864,8 @@ KW_BERV.set(key='BERV', comment='Barycentric Velocity calc. in BERVSRCE [km/s]',
 
 # the Barycenter Julian date calculate with KW_BERVSOURCE
 KW_BJD = KW_BJD.copy(__NAME__)
-KW_BJD.set(key='BJD', comment='Barycentric Julian data calc. in BERVSRCE',
+KW_BJD.set(key='BJD',
+           comment='Barycentric Julian data at mid exp calc. in BERVSRCE',
            datatype=float)
 
 # the maximum BERV found across 1 year (with KW_BERVSOURCE)
