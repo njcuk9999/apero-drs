@@ -26,6 +26,7 @@ import numpy as np
 import os
 import shutil
 from typing import List, Tuple, Type, Union
+import warnings
 
 from apero.base import base
 from apero.core.core import drs_text
@@ -346,7 +347,8 @@ def read_table(params: ParamDict, filename: str, fmt: str,
 
     # try to load file using astropy table
     try:
-        table = Table.read(filename, format=fmt, **kwargs)
+        with warnings.catch_warnings(record=True) as _:
+            table = Table.read(filename, format=fmt, **kwargs)
     except Exception as e:
         eargs = [type(e), e, filename, func_name]
         WLOG(params, 'error', textentry('01-002-00012', args=eargs))
@@ -450,7 +452,8 @@ def read_fits_table(params: ParamDict, filename: str,
         WLOG(params, 'error', textentry('01-002-00014', args=eargs))
     # read data
     try:
-        astropy_table = Table.read(filename)
+        with warnings.catch_warnings(record=True) as _:
+            astropy_table = Table.read(filename)
     except OSError as e:
         # try to deal with missing card issue
         astropy_table = deal_with_missing_end_card(params, filename, e,

@@ -581,7 +581,8 @@ class TableSection:
             # plot s1d
             if plotid == 's1d':
                 # load table
-                table = Table.read(abspath)
+                with warnings.catch_warnings(record=True) as _:
+                    table = Table.read(abspath)
                 header = fits.getheader(abspath, ext=1)
                 # get data
                 x = table['wavelength']
@@ -862,7 +863,8 @@ class LoadData:
         # loop around file names
         for it, filename in enumerate(self.index_files):
             # get data from table
-            data = Table.read(filename)
+            with warnings.catch_warnings(record=True) as _:
+                data = Table.read(filename)
             # loop around columns and add to storage
             for col in data.colnames:
                 if col not in storage:

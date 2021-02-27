@@ -1112,7 +1112,8 @@ def get_google_sheet(sheet_id: str, worksheet: int = 0,
     # get data using a request
     rawdata = requests.get(url)
     # convert rawdata input table
-    table = Table.read(rawdata.text, format='ascii')
+    with warnings.catch_warnings(record=True) as _:
+        table = Table.read(rawdata.text, format='ascii')
     # add to cached storage
     GOOGLE_TABLES[url] = table
     # return table

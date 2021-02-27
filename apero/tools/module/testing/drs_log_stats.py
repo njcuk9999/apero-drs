@@ -12,14 +12,14 @@ Created on 2019-12-13 at 15:30
 from astropy.table import Table
 from astropy.time import Time, TimeDelta
 from astropy import units as uu
+from collections import OrderedDict
+import glob
 import numpy as np
 import os
-import glob
-from collections import OrderedDict
+import warnings
 
 from apero.base import base
 from apero.core import constants
-from apero import lang
 from apero.core.core import drs_log
 
 
@@ -185,7 +185,8 @@ def make_log_table(params, logfiles, nightnames, recipename, since=None,
         # print progress
         WLOG(params, '', '\t - Loading {0}'.format(logfile))
         # open file
-        table = Table.read(logfile, format='fits')
+        with warnings.catch_warnings(record=True) as _:
+            table = Table.read(logfile, format='fits')
 
         # filter by recipe name if provided
         if recipename is not None:
