@@ -75,6 +75,7 @@ Header = drs_fits.Header
 FitsHeader = drs_fits.fits.Header
 # Get the text types
 textentry = lang.textentry
+Text = lang.Text
 # get Keyword instance
 Keyword = constants.constant_functions.Keyword
 # get exceptions
@@ -505,7 +506,7 @@ class DrsInputFile:
             eargs = [func, self.filename, func_name]
             self.__error__(textentry('00-001-00003', args=eargs))
 
-    def __error__(self, messages: str):
+    def __error__(self, messages: Union[Text, str]):
         """
         Raise an Logger message (level = error)
         :param messages: string of the messages to add
@@ -516,7 +517,7 @@ class DrsInputFile:
         # run the log method: error mode
         self.__log__(messages, 'error')
 
-    def __warning__(self, messages: str):
+    def __warning__(self, messages: Union[Text, str]):
         """
         Log a Logger message (level = warning)
         :param messages:  string of the messages to add
@@ -527,7 +528,7 @@ class DrsInputFile:
         # run the log method: warning mode
         self.__log__(messages, 'warning')
 
-    def __message__(self, messages: str):
+    def __message__(self, messages: Union[Text, str]):
         """
         Log a Logger message (level = '')
         :param messages:  string of the messages to add
@@ -538,7 +539,7 @@ class DrsInputFile:
         # print and log via wlogger
         WLOG(self.params, '', messages)
 
-    def __log__(self, messages: str, kind: str):
+    def __log__(self, messages: Union[Text, str], kind: str):
         """
         Generate a logger message for level = kind
         :param messages: string of the messages to add
@@ -549,7 +550,7 @@ class DrsInputFile:
         _ = display_func('__log__', __NAME__, self.class_name)
         # format initial error message
         m0args = [kind.capitalize(), self.__repr__()]
-        message0 = textentry('{0}: {1}'.format(*m0args))
+        message0 = '{0}: {1} '.format(*m0args)
         # append initial error message to messages
         messages = message0 + messages
         # print and log via wlogger
@@ -2432,11 +2433,6 @@ class DrsFitsFile(DrsInputFile):
             cond2 = self.header is not None
             if cond1 and cond2:
                 return True
-        # deal with no extension
-        if (ext is None) and (self.datatype == 'image'):
-            ext = 0
-        elif ext is None:
-            ext = 1
         # get params
         params = self.params
         # check that filename is set
@@ -2531,11 +2527,6 @@ class DrsFitsFile(DrsInputFile):
         _ = display_func('read_header', __NAME__, self.class_name)
         # check that filename is set
         self.check_filename()
-        # deal with no extension
-        if (ext is None) and (self.datatype == 'image'):
-            ext = 0
-        elif ext is None:
-            ext = 1
         # get params
         params = self.params
         # get header
@@ -3246,7 +3237,7 @@ class DrsFitsFile(DrsInputFile):
                         emsg = textentry('09-000-00006', args=eargs)
                     else:
                         eargs = [drskey, self.filename, key, func_name]
-                        emsg = textentry('09-000-00006', args=eargs)
+                        emsg = textentry('09-000-00007', args=eargs)
                     self.__error__(emsg)
                     value = None
         # deal with booleans
