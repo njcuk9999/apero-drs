@@ -34,7 +34,6 @@ from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
 from apero import lang
-from apero.io import drs_lock
 
 
 # =============================================================================
@@ -450,7 +449,7 @@ def readfits(params: ParamDict, filename: Union[str, Path],
         return None
 
 
-def read_header(params: ParamDict, filename: str, ext: int = 0,
+def read_header(params: ParamDict, filename: str, ext: Union[int, None] = None,
                 log: bool = True) -> fits.Header:
     """
     Read the header from a fits file located at 'filename' with extension
@@ -458,7 +457,8 @@ def read_header(params: ParamDict, filename: str, ext: int = 0,
 
     :param params: ParamDict, parameter dictionary of constants
     :param filename: str, the filename to read the fits hdu from
-    :param ext: int, the hdu extension to read the header from (defaults to 0)
+    :param ext: int, the hdu extension to read the header from (defaults to
+                first extension)
     :param log: bool, if True logs on error, else raises astropy.io.fits
                 exception that generated the error
 
@@ -644,7 +644,8 @@ def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
     # deal with getting data
     if getdata:
         try:
-            data = Table.read(filename, format='fits')
+            with warnings.catch_warnings(record=True) as _:
+                data = Table.read(filename, format='fits')
         except Exception as e:
             if log:
                 string_trackback = traceback.format_exc()

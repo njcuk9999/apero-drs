@@ -408,7 +408,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         # set filename
         infile.set_filename(filename)
         # read header only
-        infile.read_header(ext=1)
+        infile.read_header()
         # get number of orders
         nbo = infile.get_hkey('KW_WAVE_NBO', dtype=int)
         # get snr
