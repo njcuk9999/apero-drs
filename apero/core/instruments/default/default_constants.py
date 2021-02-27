@@ -304,6 +304,7 @@ __all__ = [
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
+    'REPROCESS_OBJ_DPRTYPES',
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
     'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE',
@@ -4658,6 +4659,13 @@ REPROCESS_TIMECOL = Const('REPROCESS_TIMECOL', value=None, dtype=str,
                           source=__NAME__, group=cgroup, 
                           description=('define the time col for raw file '
                                        'table'))
+
+
+# define the dprtypes for objects (for getting non telluric stars)
+REPROCESS_OBJ_DPRTYPES = Const('REPROCESS_OBJ_DPRTYPES', value=None, dtype=str,
+                               source=__NAME__, group=cgroup,
+                               description=('define the dprtypes for objects '
+                                            '(for getting non telluric stars)'))
 
 # define the default database to remake
 REMAKE_DATABASE_DEFAULT = Const('REMAKE_DATABASE_DEFAULT', value='calibration',
