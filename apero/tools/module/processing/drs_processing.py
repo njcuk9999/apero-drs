@@ -3003,8 +3003,13 @@ def _get_non_telluric_stars(params, indexdb: IndexDatabase,
     if drs_text.null_text(tstars, ['None', '']):
         tstars = []
     # define the conditions for objects
-    dprtypes = ['OBJ_FP', 'OBJ_DARK']
-    condition = '(KW_DPRTYPE="{0}" OR KW_DPRTYPE="{1}")'.format(*dprtypes)
+    dprtypes = params.listp('REPROCESS_OBJ_DPRTYPES', dtype=str)
+    # get the dprtype condition
+    subcond = []
+    for dprtype in dprtypes:
+        subcond.append('KW_DPRTYPE="{0}"'.format(dprtype))
+    condition = '({0})'.format(' OR '.join(subcond))
+    # obstype must be OBJECT
     condition += ' AND KW_OBSTYPE="OBJECT"'
     # get columns from index database
     raw_objects = indexdb.get_entries(OBJNAMECOL, kind='raw',
