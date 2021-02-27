@@ -6364,6 +6364,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     wargs = [e2ds_file.name, e2ds_file.filename]
     WLOG(params, '', textentry('40-017-00038', args=wargs))
     # update the e2ds file
+    # TODO: Need to worry about reading all extensions
     e2ds_file.read_file()
     e2ds_file.read_header()
     e2ds_file = add_wave_keys(params, e2ds_file, wprops)
@@ -6383,6 +6384,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     wargs = [e2dsff_file.name, e2dsff_file.filename]
     WLOG(params, '', textentry('40-017-00038', args=wargs))
     # update the e2ds file
+    # TODO: Need to worry about reading all extensions
     e2dsff_file.read_file()
     e2dsff_file = add_wave_keys(params, e2dsff_file, wprops)
     # define multi lists
@@ -6401,10 +6403,11 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     wargs = [e2dsll_file.name, e2dsll_file.filename]
     WLOG(params, '', textentry('40-017-00038', args=wargs))
     # update the e2ds file
-    e2dsll_file.read_file()
+    # TODO: Need to worry about reading all extensions
+    e2dsll_file.read_multi()
     e2dsll_file = add_wave_keys(params, e2dsll_file, wprops)
     # define multi lists
-    data_list, name_list = [], []
+    data_list, name_list = e2dsll_file.data_array, []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
         data_list += [params.snapshot_table(drsfitsfile=e2dsll_file)]
