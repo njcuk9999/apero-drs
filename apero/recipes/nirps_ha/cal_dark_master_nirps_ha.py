@@ -110,7 +110,7 @@ def __main__(recipe, params):
             WLOG(params, 'error', emsg)
         # get all "filetype" filenames
         files = drs_utils.find_files(params, kind='tmp',
-                                    filters=dict(KW_DPRTYPE=filetype))
+                                     filters=dict(KW_DPRTYPE=filetype))
         # append to filenames
         filenames += list(files)
     # convert to numpy array
@@ -135,7 +135,7 @@ def __main__(recipe, params):
     nightname = drs_path.get_nightname(params, reffile.filename)
     # Have to update nightname while locked for all param dicts (do not copy)
     #     Note: do not use 'uparamdicts' unless you know what you are doing.
-    ukwargs = dict(key='NIGHTNAME', value=nightname, source=mainname)
+    ukwargs = dict(key='OBS_DIR', value=nightname, source=mainname)
     constants.uparamdicts(params, recipe.params, WLOG.pin, **ukwargs)
 
     # ------------------------------------------------------------------

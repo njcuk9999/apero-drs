@@ -192,7 +192,7 @@ def construct_dark_table(params, filenames, **kwargs):
                         func_name)
     # define storage for table columns
     dark_time, dark_exp, dark_pp_version = [], [], []
-    basenames, nightnames, dprtypes = [], [], []
+    basenames, obs_dirs, dprtypes = [], [], []
     dark_wt_temp, dark_cass_temp, dark_humidity = [], [], []
     # log that we are reading all dark files
     WLOG(params, '', textentry('40-011-10001'))
@@ -201,7 +201,7 @@ def construct_dark_table(params, filenames, **kwargs):
         # get the basename from filenames
         basename = os.path.basename(filenames[it])
         # get the night name
-        nightname = drs_path.get_nightname(params, filenames[it])
+        obs_dir = drs_path.get_nightname(params, filenames[it])
         # read the header
         hdr = drs_fits.read_header(params, filenames[it])
         # get keys from hdr
@@ -218,7 +218,7 @@ def construct_dark_table(params, filenames, **kwargs):
         dark_exp.append(float(exptime))
         dark_pp_version.append(ppversion)
         basenames.append(basename)
-        nightnames.append(nightname)
+        obs_dirs.append(obs_dir)
         dark_wt_temp.append(float(wt_temp))
         dark_cass_temp.append(float(cass_temp))
         dark_humidity.append(float(humidity))
@@ -238,10 +238,10 @@ def construct_dark_table(params, filenames, **kwargs):
     # Make table
     # ----------------------------------------------------------------------
     # convert lists to table
-    columns = ['NIGHTNAME', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
+    columns = ['OBS_DIR', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
                'PPVERSION', 'WT_TEMP', 'CASS_TEMP', 'HUMIDITY', 'DPRTYPE',
                'GROUP']
-    values = [nightnames, basenames, filenames, dark_time, dark_exp,
+    values = [obs_dirs, basenames, filenames, dark_time, dark_exp,
               dark_pp_version, dark_wt_temp, dark_cass_temp, dark_humidity,
               dprtypes, matched_id]
     # make table using columns and values

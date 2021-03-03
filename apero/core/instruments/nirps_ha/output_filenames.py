@@ -52,8 +52,7 @@ def general_file(params: ParamDict, infile: Any, outfile: Any,
     :param infile: DrsFitsFile, input file - must be defined
     :param outfile: DrsFitsFile, output file - must be defined
     :param fiber: str, the fiber - must be set if infile.fibers is populated
-    :param path: str, the path the file should have (if not set, set to
-                 params['OUTPATH']  with params['NIGHTNAME'] if set)
+    :param path: str, the path the file should have
     :param func: str, the function name if set (for errors)
     :param remove_insuffix: bool if set removes input suffix if not set
                             defaults to the outfile.remove_insuffix
@@ -157,8 +156,7 @@ def calib_file(params: ParamDict, infile: Any, outfile: Any,
     :param infile: DrsFitsFile, input file - must be defined
     :param outfile: DrsFitsFile, output file - must be defined
     :param fiber: str, the fiber - must be set if infile.fibers is populated
-    :param path: str, the path the file should have (if not set, set to
-                 params['OUTPATH']  with params['NIGHTNAME'] if set)
+    :param path: str, the path
     :param func: str, the function name if set (for errors)
     :param remove_insuffix: bool if set removes input suffix if not set
                             defaults to the outfile.remove_insuffix
@@ -234,8 +232,7 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
     :param params: ParamDict, paremeter dictionary of constants
     :param infile: DrsFitsFile, input file - must be defined
     :param outfile: DrsFitsFile, output file - must be defined
-    :param path: str, the path the file should have (if not set, set to
-                 params['OUTPATH']  with params['NIGHTNAME'] if set)
+    :param path: str, the path
     :param func: str, the function name if set (for errors)
     :param suffix: str, if set the suffix of the file (defaults to
                    outfile.suffix)
@@ -261,25 +258,25 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
 # Define worker functions
 # =============================================================================
 def _calibration_prefix(params: ParamDict,
-                        nightname: Union[str, None] = None) -> str:
+                        obs_dir: Union[str, None] = None) -> str:
     """
     Define the calibration database file prefix (using arg_night_name)
 
     :param params: parameter dictionary, ParamDict containing constants
         Must contain at least:
-                NIGHTNAME: string, the folder within data raw directory
+                OBS_DIR: string, the folder within data raw directory
                            containing files (also reduced directory) i.e.
                            /data/raw/20170710 would be "20170710"
-    :param nightname: str, sets the night name (if None set from
-                      params['NIGHTNAME']
+    :param obs_dir: str, sets the observation directory (if None set from
+                      params['OBS_DIR']
 
     :return calib_prefix: string the calibration database prefix to add to all
                           calibration database files
     """
-    if nightname is None:
-        nightname = params['NIGHTNAME']
+    if obs_dir is None:
+        obs_dir = params['OBS_DIR']
     # remove separators
-    calib_prefix = nightname.replace(os.sep, '_')
+    calib_prefix = obs_dir.replace(os.sep, '_')
     # return calib_prefix
     return calib_prefix + '_'
 

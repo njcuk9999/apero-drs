@@ -301,7 +301,7 @@ __all__ = [
     # post processing settings
     'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
-    'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
+    'REPROCESS_RUN_KEY', 'REPROCESS_OBSDIR_COL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
     'REPROCESS_OBJ_DPRTYPES',
@@ -4612,10 +4612,10 @@ REPROCESS_RUN_KEY = Const('REPROCESS_RUN_KEY', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
                           description='Key for use in run files')
 
-# Define the night name column name for raw file table
-REPROCESS_NIGHTCOL = Const('REPROCESS_NIGHTCOL', value=None, dtype=str,
+# Define the obs_dir column name for raw file table
+REPROCESS_OBSDIR_COL = Const('REPROCESS_OBSDIR_COL', value=None, dtype=str,
                            source=__NAME__, group=cgroup, 
-                           description=('Define the night name column name '
+                           description=('Define the obs_dir column name '
                                         'for raw file table'))
 
 # Define the pi name column name for raw file table

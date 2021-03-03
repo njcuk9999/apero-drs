@@ -296,8 +296,8 @@ One can turn on specific nights to process in several ways
 
 <ol type='a'>
    <li> setting the `NIGHT_NAME` in the selected `{RUN_FILE}` </li>
-   <li> adding a night to the `BNIGHTNAMES` (blacklist = reject) or `WNIGHTNAMES` (whitelist = keep) </li>
-   <li> adding an extra argument to `apero_processing.py` (`--nightname`, `--bnightnames`, `--wnightnames`) </li>
+   <li> adding a night to the `EXCLUDE_OBS_DIRS` (blacklist = reject) or `INCLUDE_OBS_DIRS` (whitelist = keep) </li>
+   <li> adding an extra argument to `apero_processing.py` (`--obs_dir`, `--exclude_obs_dirs`, `--include_obs_dirs`) </li>
 </ol>
 
 One can also just process a single file by adding an extra argument to `apero_processing.py` (`--filename`)

@@ -67,9 +67,9 @@ cal_drift.set_kwarg(name='--dprtype', dtype=str, default='None',
                     helpstr='DPRTYPE of file to use (e.g. FP_FP)')
 cal_drift.set_kwarg(name='--filetype', dtype=str, default='None',
                     helpstr='file type of file to use (e.g. EXT_E2DS_FF)')
-cal_drift.set_kwarg(name='--nights', dtype=str, default='None',
-                    helpstr='List of night(s) to process'
-                            '(comma separated no spaces) i.e. NIGHT1,NIGHT2')
+cal_drift.set_kwarg(name='--obs_dirs', dtype=str, default='None',
+                    helpstr='List of observation directories to process'
+                            '(comma separated no spaces) i.e. DIR1,DIR2')
 # add recipe to recipe definition
 RMOD.add(cal_drift)
 # -----------------------------------------------------------------------------
@@ -162,15 +162,15 @@ def __main__(recipe, params):
     allnights = os.listdir(params['DRS_DATA_REDUC'])
     # get nights from user (or set to None)
     nights = [None]
-    if 'nights' in params['INPUTS']:
+    if 'obs_dirs' in params['INPUTS']:
         if not drs_text.null_text(params['INPUTS']['nights'], ['None', '']):
-            nights = params['INPUTS']['nights'].split(',')
+            nights = params['INPUTS']['obs_dirs'].split(',')
             # set night name to the last night
-            params.set(key='NIGHTNAME', value=nights[-1], source=mainname)
+            params.set(key='OBS_DIR', value=nights[-1], source=mainname)
     # deal with no night name set
-    if params['NIGHTNAME'] == '':
+    if params['OBS_DIR'] == '':
         # set night name (we have no info about filename)
-        params.set(key='NIGHTNAME', value='other', source=mainname)
+        params.set(key='OBS_DIR', value='other', source=mainname)
     # ------------------------------------------------------------------------
     # get the DPRTYPE
     dprtype = str(DEFAULT_DPRTYPE)
@@ -297,7 +297,7 @@ def __main__(recipe, params):
         table = drs_table.make_table(params, columnnames, columnvalues)
         # ---------------------------------------------------------------------
         # construct filename
-        cargs = [params['DRS_DATA_REDUC'], params['NIGHTNAME'],
+        cargs = [params['DRS_DATA_REDUC'], params['OBS_DIR'],
                  OUTPUT_FILENAME.format(dprtype, fiber)]
         out_filename = os.path.join(*cargs)
         # log that we are saving file

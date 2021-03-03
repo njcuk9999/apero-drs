@@ -182,7 +182,7 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
         # load index database
         indexdb.load_db()
     # set up condition
-    condition = 'KIND="tmp"'
+    condition = 'BLOCK_KIND="tmp"'
     # remove entries
     indexdb.remove_entries(condition=condition)
     # -------------------------------------------------------------------------
@@ -248,7 +248,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
         # load index database
         indexdb.load_db()
     # set up condition
-    condition = 'KIND="red"'
+    condition = 'BLOCK_KIND="red"'
     # remove entries
     indexdb.remove_entries(condition=condition)
     # -------------------------------------------------------------------------

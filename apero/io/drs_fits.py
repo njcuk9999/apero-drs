@@ -354,14 +354,19 @@ class Header(fits.Header):
 # TODO: Got to here with the python typing
 
 # define complex typing for readfits
-DataHdrType = Tuple[np.ndarray, fits.Header]
+DataHdrType = Union[Tuple[np.ndarray, fits.Header], np.ndarray, None,
+                    Tuple[np.ndarray, fits.Header, str], Tuple[np.ndarray, str],
+                    Tuple[List[Union[np.ndarray, Table]], List[fits.Header]],
+                    Tuple[List[Union[np.ndarray, Table]], List[fits.Header],
+                          List[str]]]
 
 
 def readfits(params: ParamDict, filename: Union[str, Path],
              getdata: bool = True, gethdr: bool = False,
              fmt: str = 'fits-image',
              ext: Union[int, None] = None, func: Union[str, None] = None,
-             log: bool = True, copy: bool = False
+             log: bool = True, copy: bool = False,
+             return_names: bool = False
              ) -> Union[DataHdrType, np.ndarray, fits.Header, None]:
     """
     The drs fits file read function
@@ -414,6 +419,7 @@ def readfits(params: ParamDict, filename: Union[str, Path],
     if fmt == 'fits-image':
         data, header = _read_fitsimage(params, filename, getdata, gethdr, ext,
                                        log=log)
+        name = None
         # deal with copying
         if copy:
             data = np.array(data)
@@ -421,13 +427,14 @@ def readfits(params: ParamDict, filename: Union[str, Path],
     elif fmt == 'fits-table':
         data, header = _read_fitstable(params, filename, getdata, gethdr, ext,
                                        log=log)
+        name = None
         # deal with copying
         if copy:
             data = Table(data)
             header = fits.Header(header)
     elif fmt == 'fits-multi':
-        data, header = _read_fitsmulti(params, filename, getdata, gethdr,
-                                       log=log)
+        data, header, name = _read_fitsmulti(params, filename, getdata, gethdr,
+                                             log=log)
         # deal with copying
         if copy:
             data = deepcopy(data)
@@ -436,17 +443,27 @@ def readfits(params: ParamDict, filename: Union[str, Path],
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
         WLOG(params, 'error', textentry('00-008-00019', args=eargs))
-        data, header = None, None
+        return None
     # -------------------------------------------------------------------------
     # deal with return
-    if getdata and gethdr:
-        return data, header
-    elif getdata:
-        return data
-    elif gethdr:
-        return header
+    if return_names:
+        if getdata and gethdr:
+            return data, header, name
+        elif getdata:
+            return data, name
+        elif gethdr:
+            return header, name
+        else:
+            return None
     else:
-        return None
+        if getdata and gethdr:
+            return data, header
+        elif getdata:
+            return data
+        elif gethdr:
+            return header
+        else:
+            return None
 
 
 def read_header(params: ParamDict, filename: str, ext: Union[int, None] = None,
@@ -481,8 +498,9 @@ def read_header(params: ParamDict, filename: str, ext: Union[int, None] = None,
 
 
 # define complex typing for _read_fitsmulti
-DataHdrListType = Union[Tuple[List[np.ndarray], List[fits.Header]],
-                        List[np.ndarray], List[fits.Header]]
+DataHdrListType = Union[Tuple[List[np.ndarray], List[fits.Header], List[str]],
+                        Tuple[List[np.ndarray], List[str]],
+                        Tuple[List[fits.Header], List[str]]]
 
 
 def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
@@ -518,12 +536,23 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
         n_ext = None
     # deal with unknown number of extensions
     if n_ext is None:
-        data, header = deal_with_bad_header(params, hdulist, filename)
+        bout = deal_with_bad_header(params, hdulist, filename)
+        dataarr, headerarr, names = bout
     # -------------------------------------------------------------------------
     # else get the data and header based on how many extnesions there are
     else:
-        dataarr, headerarr = [], []
+        dataarr, headerarr, names = [], [], []
         for it in range(n_ext):
+            # get name
+            if hdulist[it].name is not None:
+                names.append(str(hdulist[it].name))
+            else:
+                names.append('Unknown')
+            # get xtension type
+            if hdulist[it].header is not None:
+                xtension = hdulist[it].header.get('XTENSION', None)
+            else:
+                xtension = None
             # append header
             try:
                 headerarr.append(hdulist[it].header)
@@ -537,7 +566,9 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
             # append data
             try:
                 if isinstance(hdulist[it].data, fits.BinTableHDU):
-                    dataarr.append(Table.read(hdulist[it].data))
+                    dataarr.append(Table(hdulist[it].data))
+                elif xtension is not None and xtension == 'BINTABLE':
+                    dataarr.append(Table(hdulist[it].data))
                 else:
                     dataarr.append(hdulist[it].data)
             except Exception as e:
@@ -547,16 +578,14 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
                     WLOG(params, 'error', textentry('01-001-00007', args=eargs))
                 else:
                     raise e
-        data = list(dataarr)
-        header = list(headerarr)
     # -------------------------------------------------------------------------
     # return data and/or header
     if getdata and gethdr:
-        return data, header
+        return dataarr, headerarr, names
     elif getdata:
-        return data
+        return dataarr, names
     else:
-        return header
+        return headerarr, names
 
 
 # define complex typing for _read_fitsimage
@@ -929,7 +958,7 @@ def _write_fits(params: ParamDict, filename: str,
 # Worker functions
 # =============================================================================
 # complex typing return for deal_with_bad_header
-BadHdrType = Tuple[List[np.ndarray], List[fits.Header]]
+BadHdrType = Tuple[List[np.ndarray], List[fits.Header], List[str]]
 
 
 def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
@@ -954,12 +983,14 @@ def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
     # define storage
     datastore = []
     headerstore = []
+    names = []
     # loop through HDU's until we cannot open them
     while cond:
         # noinspection PyBroadException
         try:
             datastore.append(hdu[it].data)
             headerstore.append(hdu[it].header)
+            names.append(hdu[it].name)
         except Exception as _:
             cond = False
         # iterate
@@ -977,7 +1008,7 @@ def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
     if len(valid) == 0:
         WLOG(params, 'error', textentry('01-001-00001', args=[filename]))
     # return valid data
-    return datastore, headerstore
+    return datastore, headerstore, names
 
 
 def check_dtype_for_header(value: Any) -> Any:

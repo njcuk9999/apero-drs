@@ -169,6 +169,11 @@ def setup(name: str = 'None', instrument: str = 'None',
     recipe.recipemod = recipemod
     # quietly load DRS parameters (for setup)
     recipe.get_drs_params(quiet=True, pid=pid, date_now=htime)
+    # set input and output blocks
+    recipe.input_block = drs_file.DrsPath(recipe.params,
+                                          block_kind=recipe.in_block_str)
+    recipe.output_block = drs_file.DrsPath(recipe.params,
+                                           block_kind=recipe.out_block_str)
     # -------------------------------------------------------------------------
     # need to deal with drs group
     if 'DRS_GROUP' in fkwargs:
@@ -185,7 +190,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     # need to set debug mode now
     recipe = _set_debug_from_input(recipe, fkwargs)
     # -------------------------------------------------------------------------
-    # need to see if we are forcing directories
+    # need to see if we are forcing input and output block directories
     recipe = _set_force_dirs(recipe, fkwargs)
     # -------------------------------------------------------------------------
     # do not need to display if we have special keywords
@@ -212,47 +217,6 @@ def setup(name: str = 'None', instrument: str = 'None',
     # clear loading message
     TLOG(recipe.params, '', '')
     # -------------------------------------------------------------------------
-    # need to deal with instrument set in input arguments
-    # if 'INSTRUMENT' in recipe.params['INPUTS']:
-    #     # set instrumet
-    #     instrument = recipe.params['INPUTS']['INSTRUMENT']
-    #     # update the instrument
-    #     recipe.instrument = instrument
-    #     # quietly load DRS parameters (for setup)
-    #     recipe.get_drs_params(quiet=True, pid=pid, date_now=htime)
-    #     # update filemod and recipemod
-    #     pconst = constants.pload(recipe.instrument)
-    #     recipe.filemod = pconst.FILEMOD()
-    #     recipe.recipemod = pconst.RECIPEMOD()
-    #     # set DRS_GROUP
-    #     recipe.params.set('DRS_GROUP', drsgroup, source=func_name)
-    #     recipe.params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
-    #     # need to set debug mode now
-    #     recipe = _set_debug_from_input(recipe, fkwargs)
-    #     # need to see if we are forcing directories
-    #     recipe = _set_force_dirs(recipe, fkwargs)
-    #     # do not need to display if we have special keywords
-    #     quiet = _quiet_keys_present(recipe, quiet, fkwargs)
-    #     # ---------------------------------------------------------------------
-    #     # display
-    #     if not quiet:
-    #         # display title
-    #         _display_drs_title(recipe.params, printonly=True)
-    #     # ---------------------------------------------------------------------
-    #     # display loading message
-    #     TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
-    #     # ---------------------------------------------------------------------
-    #     # re-load index database manager
-    #     indexdb = drs_database.IndexDatabase(recipe.params, check=False)
-    #     # interface between "recipe", "fkwargs" and command line (via argparse)
-    #     recipe.recipe_setup(indexdb, fkwargs)
-    #     # ---------------------------------------------------------------------
-    #     # deal with options from input_parameters
-    #     recipe.option_manager()
-    #     # ---------------------------------------------------------------------
-    #     # clear loading message
-    #     TLOG(recipe.params, '', '')
-    # -------------------------------------------------------------------------
     # create runstring and log args/kwargs/skwargs (must be done after
     #    option_manager)
     recipe.set_inputs()
@@ -278,15 +242,23 @@ def setup(name: str = 'None', instrument: str = 'None',
     # copy params
     params = recipe.params.copy()
     # -------------------------------------------------------------------------
-    # deal with setting night name, inputdir and outputdir
-    params['INPATH'] = recipe.get_input_dir()
-    params['OUTPATH'] = recipe.get_output_dir()
-    if 'DIRECTORY' in params['INPUTS']:
-        gargs = [params['INPATH'], params['INPUTS']['DIRECTORY']]
-        params['NIGHTNAME'] = drs_path.get_uncommon_path(*gargs)
+    # deal with setting obs_dir, inputdir and outputdir
+    if recipe.input_block is not None:
+        params['INPATH'] = recipe.input_block.abspath
     else:
-        params['NIGHTNAME'] = ''
-    params.set_sources(['INPATH', 'OUTPATH', 'NIGHTNAME'], func_name)
+        params['INPATH'] = ''
+    if recipe.output_block is not None:
+        params['OUTPATH'] = recipe.output_block.abspath
+    else:
+        params['OUTPATH'] = ''
+    # deal with having a obs_dir set
+    params['OBS_DIR'] = ''
+    if 'OBS_DIR' in params['INPUTS']:
+        # assume this is the input obs dir
+        if recipe.obs_dir is not None:
+            params['OBS_DIR'] = recipe.obs_dir.obs_dir
+
+    params.set_sources(['INPATH', 'OUTPATH', 'OBS_DIR'], func_name)
     # set outfiles storage
     params['OUTFILES'] = OrderedDict()
     params.set_source('OUTFILES', func_name)
@@ -294,14 +266,14 @@ def setup(name: str = 'None', instrument: str = 'None',
     cond1 = not drs_text.null_text(instrument, ['None', ''])
     cond2 = params['INPATH'] is not None
     cond3 = params['OUTPATH'] is not None
-    cond4 = params['NIGHTNAME'] is not None
+    cond4 = params['OBS_DIR'] is not None
     if cond1 and cond2 and cond4:
         inpath = str(params['INPATH'])
-        nightname = str(params['NIGHTNAME'])
+        nightname = str(params['OBS_DIR'])
         _make_dirs(params, os.path.join(inpath, nightname))
     if cond1 and cond3 and cond4:
         outpath = str(params['OUTPATH'])
-        nightname = str(params['NIGHTNAME'])
+        nightname = str(params['OBS_DIR'])
         _make_dirs(params, os.path.join(outpath, nightname))
     # -------------------------------------------------------------------------
     # deal with data passed from call to main function
@@ -563,11 +535,14 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
         for okey in recipe.output_files:
             # get output dict for okey
             output = recipe.output_files[okey]
-            # get parmaeters for add entry
-            fullpath = str(output['ABSPATH'])
-            directory = str(output['DIRNAME'])
-            filename = str(output['FILENAME'])
-            kind = str(output['KIND'])
+            # set up drs path
+            outfile = recipe.output_block.copy()
+            # update parameters
+            outfile.abspath = str(output['ABSPATH'])
+            outfile.obs_dir = str(output['OBS_DIR'])
+            outfile.basename = str(output['FILENAME'])
+            # get parameters for add entry
+            block_kind = str(output['BLOCK_KIND'])
             runstring = str(output['RUNSTRING'])
             used = int(output['USED'])
             rawfix = int(output['RAWFIX'])
@@ -584,8 +559,8 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
                 else:
                     hkeys[rkey] = 'Null'
             # finally add to database
-            indexdb.add_entry(directory, filename, kind, runstring, hkeys,
-                              fullpath, used, rawfix)
+            indexdb.add_entry(outfile, block_kind, runstring, hkeys, used,
+                              rawfix)
     # -------------------------------------------------------------------------
     # log end message
     if end:
@@ -1319,221 +1294,6 @@ def _display_python_modules() -> str:
 
 
 # =============================================================================
-# Indexing functions
-# =============================================================================
-def _index_pp(params: ParamDict, recipe: DrsRecipe):
-    """
-    Index the pre-processed files (into p["TMP"] directory)
-
-    :param params: ParamDict, the constants parameter dictionary
-
-    :type params: ParamDict
-
-    :returns: None
-    """
-    # set function name
-    _ = display_func('_index_pp', __NAME__)
-    # get pconstant from p
-    pconstant = constants.pload()
-    # get index filename
-    filename = pconstant.INDEX_OUTPUT_FILENAME()
-    # get night name
-    path = os.path.join(params['OUTPATH'], params['NIGHTNAME'])
-    # get absolute path
-    abspath = os.path.join(path, filename)
-    # get the outputs
-    outputs = recipe.output_files
-    # check that outputs is not empty
-    if len(outputs) == 0:
-        WLOG(params, '', textentry('40-004-00001'))
-        return
-    # get the index columns
-    icolumns = pconstant.OUTPUT_FILE_HEADER_KEYS()
-    # ------------------------------------------------------------------------
-    # index files
-    istore = indexing(params, outputs, icolumns, abspath)
-    # ------------------------------------------------------------------------
-    # sort and save
-    save_index_file(params, istore, abspath)
-
-
-def _index_outputs(params: ParamDict, recipe: DrsRecipe):
-    """
-    Index the reduced files (into p["REDUCED_DIR"] directory)
-
-    :param params: ParamDict, the constants parameter dictionary
-    :param recipe: DrsRecipe, the recipe instance for this recipe
-
-    :type params: ParamDict
-    :type recipe: DrsRecipe
-
-    :exception SystemExit: on caught errors
-
-    :returns: None
-    """
-    # set function name
-    _ = display_func('_index_outputs', __NAME__)
-    # get pconstant from p
-    pconstant = constants.pload()
-    # get index filename
-    filename = pconstant.INDEX_OUTPUT_FILENAME()
-    # deal with outpath being unset
-    if params['OUTPATH'] is None:
-        return
-    # get night name
-    path = os.path.join(params['OUTPATH'], params['NIGHTNAME'])
-    # get absolute path
-    abspath = os.path.join(path, filename)
-    # get the outputs
-    outputs = recipe.output_files
-    # check that outputs is not empty
-    if len(outputs) == 0:
-        WLOG(params, '', textentry('40-004-00001'))
-        return
-    # get the index columns
-    icolumns = pconstant.OUTPUT_FILE_HEADER_KEYS()
-    # ------------------------------------------------------------------------
-    # index files
-    istore = indexing(params, outputs, icolumns, abspath)
-    # ------------------------------------------------------------------------
-    # sort and save
-    save_index_file(params, istore, abspath)
-
-
-def indexing(params: ParamDict, outputs: Dict[str, Dict[str, Any]],
-             icolumns: List[str], abspath: str) -> Dict[str, List[Any]]:
-    """
-    Adds the "outputs" to index file at "abspath"
-
-    :param params: ParamDict, the constants parameter dictionary
-    :param outputs: dictionary of dictionaries, the primary key it the
-                    filename of each output, the inner dictionary contains
-                    the columns to add to the index
-    :param icolumns: list of strings, the output columns (should all be in
-                     each output dictionary from outputs[{filename}]
-    :param abspath: string, the absolute path to the index file
-
-    :type params: ParamDict
-    :type outputs: Dict[str, Dict[str, Any]]
-    :type icolumns: List[str]
-    :type abspath: str
-
-    :exception SystemExit: on caught errors
-
-    :returns: An ordered dict with the index columns of all outputs (new from
-              "outputs" and old from "abspath")
-    :rtype: OrderedDict
-    """
-    # set function name
-    _ = display_func('indexing', __NAME__)
-    # ------------------------------------------------------------------------
-    # log indexing
-    WLOG(params, '', textentry('40-004-00002', args=[abspath]))
-    # construct a dictionary from outputs and icolumns
-    istore = OrderedDict()
-    # get output path
-    opath = os.path.dirname(abspath)
-    # get directory from params
-    if 'NIGHTNAME' in params:
-        nightname = str(params['NIGHTNAME'])
-    else:
-        nightname = '--'
-    # looop around outputs
-    for output in outputs:
-        # get absfilename
-        absoutput = os.path.join(opath, output)
-
-        if not os.path.exists(absoutput):
-            mtime = np.nan
-        else:
-            mtime = os.path.getmtime(absoutput)
-
-        # get filename
-        if 'FILENAME' not in istore:
-            istore['FILENAME'] = [output]
-            istore['NIGHTNAME'] = [nightname]
-            istore['LAST_MODIFIED'] = [mtime]
-        else:
-            istore['FILENAME'].append(output)
-            istore['NIGHTNAME'].append(nightname)
-            istore['LAST_MODIFIED'].append(mtime)
-
-        # loop around index columns and add outputs to istore
-        for icol in icolumns:
-            # get value from outputs
-            if icol not in outputs[output]:
-                value = 'None'
-            else:
-                value = outputs[output][icol]
-            # push in to istore
-            if icol not in istore:
-                istore[icol] = [value]
-            else:
-                istore[icol].append(value)
-    # ------------------------------------------------------------------------
-    # deal with file existing (add existing rows)
-    if os.path.exists(abspath):
-        # get the current index fits file
-        idict = drs_table.read_fits_table(params, abspath, return_dict=True)
-        # check that all keys are in idict
-        for key in icolumns:
-            if key not in list(idict.keys()):
-                wargs = [key, 'off_listing recipe']
-                wmsg = textentry('10-004-00001', args=wargs)
-                WLOG(params, 'warning', wmsg)
-        # loop around rows in idict
-        for row in range(len(idict['FILENAME'])):
-            # skip if we already have this file
-            if idict['FILENAME'][row] in istore['FILENAME']:
-                continue
-            # else add filename
-            istore['FILENAME'].append(idict['FILENAME'][row])
-            istore['NIGHTNAME'].append(idict['NIGHTNAME'][row])
-            istore['LAST_MODIFIED'].append(idict['LAST_MODIFIED'][row])
-            # loop around columns
-            for icol in icolumns:
-                # if column not in index deal with it
-                if icol not in idict.keys():
-                    istore[icol].append('None')
-                else:
-                    # add to the istore
-                    istore[icol].append(idict[icol][row])
-    # ------------------------------------------------------------------------
-    return istore
-
-
-def save_index_file(params: ParamDict, istore: Dict[str, List[Any]],
-                    abspath: str):
-    """
-    Saves the index file (from input "istore") at location "abspath"
-
-    :param params: ParamDict, the constants parameter dictionary
-    :param istore: An ordered dict with the index columns of all outputs
-                   (new from "outputs" and old from "abspath")
-                   - generated by _indexing() function
-    :param abspath: string, the absolute path to save the index file to
-
-    :type params: ParamDict
-    :type istore: Dict[str, List[Any]]
-    :type abspath: str
-
-    :returns: None
-    """
-    # set function name
-    _ = display_func('save_index_file', __NAME__)
-    # ------------------------------------------------------------------------
-    # sort the istore by column name and add to table
-    sortmask = np.argsort(istore['LAST_MODIFIED'])
-    # loop around columns and apply sort
-    for icol in istore:
-        istore[icol] = np.array(istore[icol])[sortmask]
-    # ------------------------------------------------------------------------
-    # Make fits table and write fits table
-    itable = drs_table.make_fits_table(istore)
-    drs_table.write_fits_table(params, itable, abspath)
-
-
-# =============================================================================
 # Exit functions
 # =============================================================================
 def _find_interactive() -> bool:
@@ -1973,7 +1733,6 @@ def _set_force_dirs(recipe: DrsRecipe,
         dargs = ['recipe.inputdir', indir, dirkey, 'white-space']
         dmsg = textentry('90-008-00013', args=dargs)
         WLOG(recipe.params, 'debug', dmsg)
-
     # check fkwargs
     for kwarg in fkwargs:
         if 'force_indir' in kwarg:
@@ -1982,17 +1741,14 @@ def _set_force_dirs(recipe: DrsRecipe,
             dargs = ['recipe.inputdir', indir, kwarg]
             dmsg = textentry('90-008-00014', args=dargs)
             WLOG(recipe.params, 'debug', dmsg)
-
     # set recipe.inputdir
     if indir is not None:
         if os.path.exists(os.path.abspath(indir)):
             indir = os.path.abspath(indir)
         # set the input dir
-        recipe.inputdir = indir
-        # set the input type
-        recipe.inputtype = drs_file.determine_dirtype(recipe.params,
-                                                      recipe.inputtype,
-                                                      recipe.inputdir)
+        recipe.inputdir = drs_file.DrsPath(recipe.params, block_path=indir)
+        # update the in block kind str
+        recipe.in_block_str = recipe.inputdir.block_kind
     # ----------------------------------------------------------------------
     # set debug key
     dirkey = '--force_outdir'
@@ -2033,12 +1789,10 @@ def _set_force_dirs(recipe: DrsRecipe,
     if outdir is not None:
         if os.path.exists(os.path.abspath(outdir)):
             outdir = os.path.abspath(outdir)
-        # set the input dir
-        recipe.outputdir = outdir
-        # set the input type
-        recipe.outputtype = drs_file.determine_dirtype(recipe.params,
-                                                       recipe.outputtype,
-                                                       recipe.outputdir)
+        # set the output dir instance
+        recipe.outputdir = drs_file.DrsPath(recipe.params, block_path=outdir)
+        # update the out block kind str
+        recipe.out_block_str = recipe.outputdir.block_kind
     # ----------------------------------------------------------------------
     # return recipe
     return recipe

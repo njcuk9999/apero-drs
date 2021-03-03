@@ -1558,10 +1558,10 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
     props['QC_PARAMS'] = [qc_names, qc_values, qc_logic, qc_pass]
     # ----------------------------------------------------------------------
     # push arrays into parameter dictionary
-    props['CORRECTED_E2DS'] = tpclfile.data_array[0]
-    props['TRANS_MASK'] = tpclfile.data_array[1].astype(bool)
-    props['ABSO_E2DS'] = tpclfile.data_array[2]
-    props['SKY_MODEL'] = tpclfile.data_array[3]
+    props['CORRECTED_E2DS'] = tpclfile.data
+    props['TRANS_MASK'] = tpclfile.data_array[0].astype(bool)
+    props['ABSO_E2DS'] = tpclfile.data_array[1]
+    props['SKY_MODEL'] = tpclfile.data_array[2]
     # ----------------------------------------------------------------------
     # push into props
     props['EXPO_WATER'] = tpclfile.get_hkey('KW_TELLUP_EXPO_WATER', dtype=float)

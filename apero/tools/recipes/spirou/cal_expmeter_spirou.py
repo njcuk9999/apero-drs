@@ -182,7 +182,7 @@ def __main__(recipe, params):
                                                   kind='red')
         # get all "filetype" filenames
         filters = dict(KW_OUTPUT=filetype, KW_FIBER=fiber,
-                       DIRECTORY=params['NIGHTNAME'])
+                       OBS_DIR=params['OBS_DIR'])
         files = drs_utils.find_files(params, kind='red', filters=filters)
         # deal with no files found
         if len(files) == 0:

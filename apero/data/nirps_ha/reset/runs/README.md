@@ -26,7 +26,7 @@ These are located in the `{DRS_DATA_RUNS}` (default=`/data/runs/`) directory. Th
 By default it processes every night and every file that can be found in the `{DRS_DATA_RAW}` (default=`/data/raw/`)  directory.
 One can turn on specific nights to process in several ways 
 (a) setting the `NIGHT_NAME` in the selected `{RUN_FILE}`
-(b) adding a night to the `BNIGHTNAMES` (blacklist = reject) or `WNIGHTNAMES` (whitelist = keep)
+(b) adding a night to the `EXCLUDE_OBS_DIRS` (exclude list = reject) or `INCLUDE_OBS_DIRS` (include list = keep)
 (c) adding an extra argument to `apero_processing.py` (`--nightname`, `--bnightnames`, `--wnightnames`) 
 
 One can also just process a single file by adding an extra argument to `apero_processing.py` (`--filename`)
@@ -85,15 +85,15 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | --------------------------------------------------------------- | ---------- | 
 | cal_preprocessing                                               | PP         |
 | cal_dark_master                                                 | DARKM      |
-| cal_badpix [master night]                                       | BADM       |
-| cal_loc [DARK_FLAT; master night]                               | LOCM       |
-| cal_loc [FLAT_DARK; master night]                               | LOCM       |
+| cal_badpix [master obs dir]                                     | BADM       |
+| cal_loc [DARK_FLAT; master obs dir]                             | LOCM       |
+| cal_loc [FLAT_DARK; master obs dir]                             | LOCM       |
 | cal_shape_master                                                | SHAPEM     |
-| cal_shape [master night]                                        | SHAPELM    |
-| cal_ff [master night]                                           | FLATM      |
+| cal_shape [master obs dir]                                      | SHAPELM    |
+| cal_ff [master obs dir]                                         | FLATM      |
 | cal_leak_master [master_night]                                  | LEAKM      |
-| cal_thermal [DARK_DARK_INT; master night]                       | THIM       |
-| cal_thermal [DARK_DARK_TEL; master night]                       | THTM       |
+| cal_thermal [DARK_DARK_INT; master obs dir]                     | THIM       |
+| cal_thermal [DARK_DARK_TEL; master obs dir]                     | THTM       |
 | cal_wave_master                                                 | WAVEM      |
 |                                                                 |            |
 | cal_badpix [every night]                                        | BAD        |
@@ -123,15 +123,15 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | ------------------------------------------------------------------- | ---------- | 
 | cal_preprocessing                                                   | PP         |
 | cal_dark_master                                                     | DARKM      |
-| cal_badpix [master night]                                           | BADM       |
-| cal_loc [DARK_FLAT; master night]                                   | LOCM       |
-| cal_loc [FLAT_DARK; master night]                                   | LOCM       |
+| cal_badpix [master obs dir]                                         | BADM       |
+| cal_loc [DARK_FLAT; master obs dir]                                 | LOCM       |
+| cal_loc [FLAT_DARK; master obs dir]                                 | LOCM       |
 | cal_shape_master                                                    | SHAPEM     |
-| cal_shape [master night]                                            | SHAPELM    |
-| cal_ff [master night]                                               | FLATM      |
+| cal_shape [master obs dir]                                          | SHAPELM    |
+| cal_ff [master obs dir]                                             | FLATM      |
 | cal_leak_master [master_night]                                      | LEAKM      |
-| cal_thermal [DARK_DARK_INT; master night]                           | THIM       |
-| cal_thermal [DARK_DARK_TEL; master night]                           | THTM       |
+| cal_thermal [DARK_DARK_INT; master obs dir]                         | THIM       |
+| cal_thermal [DARK_DARK_TEL; master obs dir]                         | THTM       |
 | cal_wave_master                                                     | WAVEM      |
 |                                                                     |            |
 | cal_badpix [every night]                                            | BAD        |
@@ -195,15 +195,15 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
 | cal_dark_master                                                     | DARKM      |
-| cal_badpix [master night]                                           | BADM       |
-| cal_loc [DARK_FLAT; master night]                                   | LOCM       |
-| cal_loc [FLAT_DARK; master night]                                   | LOCM       |
+| cal_badpix [master obs dir]                                         | BADM       |
+| cal_loc [DARK_FLAT; master obs dir]                                 | LOCM       |
+| cal_loc [FLAT_DARK; master obs dir]                                 | LOCM       |
 | cal_shape_master                                                    | SHAPEM     |
-| cal_shape [master night]                                            | SHAPELM    |
-| cal_ff [master night]                                               | FLATM      |
+| cal_shape [master obs dir]                                          | SHAPELM    |
+| cal_ff [master obs dir]                                             | FLATM      |
 | cal_leak_master [master_night]                                      | LEAKM      |
-| cal_thermal [DARK_DARK_INT; master night]                           | THIM       |
-| cal_thermal [DARK_DARK_TEL; master night]                           | THTM       |
+| cal_thermal [DARK_DARK_INT; master obs dir]                         | THIM       |
+| cal_thermal [DARK_DARK_TEL; master obs dir]                         | THTM       |
 | cal_wave_master                                                     | WAVEM      |
 
 
@@ -288,15 +288,16 @@ This is full of engineering sequences that probably will only be used with most 
 As mentioned above this depends on what sequence you wish to use but as
 an overview the steps are as follows
 
-## 1) Choose a master night
+## 1) Choose a master observation directory
 
 (i.e. 2018-09-25)
 
 If using the processing script one must set this in that file else
-when choosing arguments one must use them from the master night choosen.
+when choosing arguments one must use them from the master observation directory
+choosen.
 
-Note one has to run `cal_badpix` and `cal_loc` calibrations for the master night
-in order to run the shape master recipe.
+Note one has to run `cal_badpix` and `cal_loc` calibrations for the master 
+observation directory in order to run the shape master recipe.
 
 2) Run all the preprocessing
 
@@ -310,15 +311,15 @@ preprocessed data (i.e. use sequence `pp_seq`)
 i.e. 
 ```
 cal_dark_master
-cal_badpix [master night]
-cal_loc [DARK_FLAT; master night]
-cal_loc [FLAT_DARK; master night]
+cal_badpix [master observation directory]
+cal_loc [DARK_FLAT; master observation directory]
+cal_loc [FLAT_DARK; master observation directory]
 cal_shape_master
-cal_shape [master night]
-cal_ff [master night]
+cal_shape [master observation directory
+cal_ff [master observation directory]
 cal_leak_master
-cal_thermal [DARK_DARK_INT; master night]
-cal_thermal [DARK_DARK_TEL; master night]
+cal_thermal [DARK_DARK_INT; master observation directory]
+cal_thermal [DARK_DARK_TEL; master observation directory]
 cal_wave_master
 ```
 

@@ -134,7 +134,7 @@ def __main__(recipe, params):
     master_dark, reffile = dark.construct_master_dark(*cargs)
     # Have to update nightname while locked for all param dicts (do not copy)
     #     Note: do not use 'uparamdicts' unless you know what you are doing.
-    ukwargs = dict(key='NIGHTNAME', value='other', source=mainname)
+    ukwargs = dict(key='OBS_DIR', value='other', source=mainname)
     constants.uparamdicts(params, recipe.params, WLOG.pin, **ukwargs)
 
     # ------------------------------------------------------------------

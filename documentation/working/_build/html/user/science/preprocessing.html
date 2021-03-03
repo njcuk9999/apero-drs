@@ -3,20 +3,21 @@
 
 <!doctype html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>Preprocessing functionality &#8212; APERO 0.7.053 documentation</title>
-    <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Preprocessing functionality &#8212; APERO 0.7.073 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
-    <script type="text/javascript" src="../../_static/bizstyle.js"></script>
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="General Tools" href="../general/tools_default.html" />
@@ -27,9 +28,9 @@
 
 
 
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
-    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <script src="_static/css3-mediaqueries.js"></script>
     <![endif]-->
     <style type="text/css">
       table.right { float: left; margin-left: 20px; }
@@ -100,9 +101,10 @@
         <li class="right" >
           <a href="calib.html" title="Preprocessing functionality"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.053 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.073 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../general_guide.html" >General User documentation</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="../deep.html" accesskey="U">APERO in depth</a> &#187;</li> 
+          <li class="nav-item nav-item-2"><a href="../deep.html" accesskey="U">APERO in depth</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Preprocessing functionality</a></li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -139,7 +141,7 @@
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
 
@@ -153,7 +155,7 @@
 <div class="section" id="raw-file-header-fixing">
 <span id="science-preprocessing-header-fixes"></span><h2>Raw file header fixing<a class="headerlink" href="#raw-file-header-fixing" title="Permalink to this headline">¶</a></h2>
 <p>The header fixes are controlled via <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.core.drs_file.fix_header()</span></code>
-which in turn uses the <a class="reference internal" href="../../misc/glossary.html#term-pseudoconst"><span class="xref std std-term">PseudoConst</span></a> method <code class="xref py py-meth docutils literal notranslate"><span class="pre">HEADER_FIXES()</span></code>.
+which in turn uses the <a class="reference internal" href="../../misc/glossary.html#term-PseudoConst"><span class="xref std std-term">PseudoConst</span></a> method <code class="xref py py-meth docutils literal notranslate"><span class="pre">HEADER_FIXES()</span></code>.
 This is defined for each instrument
 (e.g. <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.instruments.spirou.pseduo_const.HEADER_FIXES()</span></code>)</p>
 <p>For SPIRou the current header fixes are as follows:</p>
@@ -172,7 +174,7 @@ matched as a specific drs file type.</p>
 <p>This is done via <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.science.preprocessing.identification.drs_infile_id()</span></code>
 which in turn calls <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.core.drs_file.id_drs_file()</span></code> and returns
 a tuple - whether the file was found in the instruments definition and the
-drs file type (<a class="reference internal" href="../../misc/glossary.html#term-drsinputfile"><span class="xref std std-term">DrsInputFile</span></a> instance)</p>
+drs file type (<a class="reference internal" href="../../misc/glossary.html#term-DrsInputFile"><span class="xref std std-term">DrsInputFile</span></a> instance)</p>
 </div>
 <div class="section" id="gaia-id-and-object-finding">
 <span id="science-preprocessing-object-finding"></span><h2>Gaia ID and object finding<a class="headerlink" href="#gaia-id-and-object-finding" title="Permalink to this headline">¶</a></h2>
@@ -181,22 +183,22 @@ or a valid object name (defined by the <a class="reference internal" href="../..
 <p>We then attempt to resolve parameters in the following order</p>
 <ol class="arabic simple">
 <li><dl class="simple">
-<dt>If <a class="reference internal" href="../../misc/glossary.html#term-obj-list-resolve-from-database"><span class="xref std std-term">OBJ_LIST_RESOLVE_FROM_DATABASE</span></a> From a local database</dt><dd><ol class="loweralpha simple">
+<dt>If <a class="reference internal" href="../../misc/glossary.html#term-OBJ_LIST_RESOLVE_FROM_DATABASE"><span class="xref std std-term">OBJ_LIST_RESOLVE_FROM_DATABASE</span></a> From a local database</dt><dd><ol class="loweralpha simple">
 <li><p>based on Gaia ID</p></li>
 <li><p>if Gaia ID is not found based on object name (from a list of aliases)</p></li>
 </ol>
 </dd>
 </dl>
 </li>
-<li><p>If <a class="reference internal" href="../../misc/glossary.html#term-obj-list-resolve-from-coords"><span class="xref std std-term">OBJ_LIST_RESOLVE_FROM_COORDS</span></a> and if object was not found in local database but we have a Gaia ID then we
+<li><p>If <a class="reference internal" href="../../misc/glossary.html#term-OBJ_LIST_RESOLVE_FROM_COORDS"><span class="xref std std-term">OBJ_LIST_RESOLVE_FROM_COORDS</span></a> and if object was not found in local database but we have a Gaia ID then we
 get the Gaia parameters from the online Gaia catalog - if an object if found
 the local database is updated.</p></li>
-<li><p>If <a class="reference internal" href="../../misc/glossary.html#term-obj-list-resolve-from-glist"><span class="xref std std-term">OBJ_LIST_RESOLVE_FROM_GLIST</span></a> and if we did not have a Gaia id
+<li><p>If <a class="reference internal" href="../../misc/glossary.html#term-OBJ_LIST_RESOLVE_FROM_GLIST"><span class="xref std std-term">OBJ_LIST_RESOLVE_FROM_GLIST</span></a> and if we did not have a Gaia id
 we then use a google sheet of known objects to match object names and Gaia
 ids (we can also add extra aliases here). If a Gaia ID/object name
 combination is found we then cross-match against the online Gaia catalog to
 get the Gaia parameters and again update the local database.</p></li>
-<li><p>If <a class="reference internal" href="../../misc/glossary.html#term-obj-list-resolve-from-coords"><span class="xref std std-term">OBJ_LIST_RESOLVE_FROM_COORDS</span></a> is True we then use the coordinates
+<li><p>If <a class="reference internal" href="../../misc/glossary.html#term-OBJ_LIST_RESOLVE_FROM_COORDS"><span class="xref std std-term">OBJ_LIST_RESOLVE_FROM_COORDS</span></a> is True we then use the coordinates
 from the file header to cross-match with Gaia directly and again the local
 database is updated.</p></li>
 <li><p>If the Gaia id is still unknown we default to the astrophysical parameters
@@ -212,6 +214,7 @@ may lead to inconsistent data sets.</p>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -229,14 +232,15 @@ may lead to inconsistent data sets.</p>
         <li class="right" >
           <a href="calib.html" title="Preprocessing functionality"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.053 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.073 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../general_guide.html" >General User documentation</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="../deep.html" >APERO in depth</a> &#187;</li> 
+          <li class="nav-item nav-item-2"><a href="../deep.html" >APERO in depth</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Preprocessing functionality</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.3.1.
     </div>
   </body>
 </html>

@@ -3,20 +3,21 @@
 
 <!doctype html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>TODO &#8212; APERO 0.7.053 documentation</title>
-    <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TODO &#8212; APERO 0.7.073 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
-    <script type="text/javascript" src="../../_static/bizstyle.js"></script>
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="APERO in depth" href="../deep.html" />
@@ -27,9 +28,9 @@
 
 
 
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
-    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <script src="_static/css3-mediaqueries.js"></script>
     <![endif]-->
     <style type="text/css">
       table.right { float: left; margin-left: 20px; }
@@ -100,8 +101,9 @@
         <li class="right" >
           <a href="known_issues.html" title="Known Issues"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.053 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../general_guide.html" accesskey="U">General User documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.073 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../general_guide.html" accesskey="U">General User documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">TODO</a></li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -139,7 +141,7 @@
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
 
@@ -159,6 +161,24 @@ Last updated: 2020-11-30 (NJC).</p>
 <div class="section" id="apero">
 <h2>APERO<a class="headerlink" href="#apero" title="Permalink to this headline">¶</a></h2>
 <p>For all instruments / in general.</p>
+<p>Current known Issues/ small immediate tasks:</p>
+<ul class="simple">
+<li><p>0.6.132 log.fits flat get A,B,C,AB,A,B,C entries (PLOTDIR different)?? not seen in 0.7</p></li>
+<li><p>need to check databases exist when resseting tmp/red etc - may not exist and then crashes [Neil]</p></li>
+<li><p>need to deal with installing mysql-connector-python and sqlalchemy [Neil]</p></li>
+<li><p>processing - need to id polar files (distinguish from spectro files) [Neil/Chris]</p></li>
+<li><dl class="simple">
+<dt>file outputs - need to check all files [Neil]</dt><dd><ul>
+<li><p>primary header only - other headers should be minimal [Neil]</p></li>
+<li><p>no image / table in primary extension (affects reading/writing) [Neil]</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>EA pre-processing code for cosmics [Etienne/Neil]</p></li>
+<li><p>review comsic extraction code changes by EA [Etienne/Neil]</p></li>
+<li><p>raw index should check last modified and update if new</p></li>
+</ul>
 <p>High priority:</p>
 <ul class="simple">
 <li><p>polar code update  [Neil/Eder/Chris]</p></li>
@@ -224,6 +244,14 @@ Last updated: 2020-11-30 (NJC).</p>
 <p>High priority:</p>
 <ul class="simple">
 <li><p>convert/adapt cal_wave / cal_wave_master [Etienne/Neil]</p></li>
+<li><p>push 0.6 code to 0.7 [Neil]</p></li>
+<li><dl class="simple">
+<dt>cut at Y=2880 norders=46</dt><dd><ul>
+<li><p>problem with localisation (coefficient consistency) [Etienne/Neil]</p></li>
+</ul>
+</dd>
+</dl>
+</li>
 </ul>
 <p>Low priority:</p>
 <ul class="simple">
@@ -277,6 +305,7 @@ Last updated: 2020-11-25 (NJC).</p>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -294,13 +323,14 @@ Last updated: 2020-11-25 (NJC).</p>
         <li class="right" >
           <a href="known_issues.html" title="Known Issues"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.053 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../general_guide.html" >General User documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.073 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../general_guide.html" >General User documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">TODO</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.3.1.
     </div>
   </body>
 </html>

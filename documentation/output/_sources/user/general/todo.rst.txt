@@ -16,6 +16,20 @@ APERO
 
 For all instruments / in general.
 
+Current known Issues/ small immediate tasks:
+
+* 0.6.132 log.fits flat get A,B,C,AB,A,B,C entries (PLOTDIR different)?? not seen in 0.7
+* need to check databases exist when resseting tmp/red etc - may not exist and then crashes [Neil]
+* need to deal with installing mysql-connector-python and sqlalchemy [Neil]
+* processing - need to id polar files (distinguish from spectro files) [Neil/Chris]
+* file outputs - need to check all files [Neil]
+    * primary header only - other headers should be minimal [Neil]
+    * no image / table in primary extension (affects reading/writing) [Neil]
+* EA pre-processing code for cosmics [Etienne/Neil]
+* review comsic extraction code changes by EA [Etienne/Neil]
+* raw index should check last modified and update if new
+
+
 High priority:
 
 * polar code update  [Neil/Eder/Chris]
@@ -81,6 +95,9 @@ NIRPS specific
 High priority:
 
 * convert/adapt cal_wave / cal_wave_master [Etienne/Neil]
+* push 0.6 code to 0.7 [Neil]
+* cut at Y=2880 norders=46
+    * problem with localisation (coefficient consistency) [Etienne/Neil]
 
 Low priority:
 

@@ -121,8 +121,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # get all "filetype" filenames
         files = drs_utils.find_files(params, kind='tmp',
-                                    filters=dict(KW_DPRTYPE=filetype,
-                                                 DIRECTORY=params['NIGHTNAME']))
+                                     filters=dict(KW_DPRTYPE=filetype,
+                                                  OBS_DIR=params['OBS_DIR']))
         # create infiles
         for filename in files:
             infile = darkfpfile.newcopy(filename=filename, params=params)
@@ -135,7 +135,7 @@ def __main__(recipe, params):
     # Deal with no files found (use master)
     if num_files == 0:
         # log that no dark fp were found for this night
-        wargs = [params['NIGHTNAME']]
+        wargs = [params['OBS_DIR']]
         WLOG(params, 'warning', textentry('10-016-00025', args=wargs))
         # update recipe log file
         recipe.log.end(params)

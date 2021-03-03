@@ -61,7 +61,7 @@ pcheck = constants.PCheck(wlog=WLOG)
 def construct_fp_table(params, filenames):
     # define storage for table columns
     fp_time, fp_exp, fp_pp_version = [], [], []
-    basenames, nightnames = [], []
+    basenames, obs_dirs = [], []
     valid_files = []
     # log that we are reading all dark files
     WLOG(params, '', textentry('40-014-00003'))
@@ -70,7 +70,7 @@ def construct_fp_table(params, filenames):
         # get the basename from filenames
         basename = os.path.basename(filenames[it])
         # get the night name
-        nightname = drs_path.get_nightname(params, filenames[it])
+        obs_dir = drs_path.get_nightname(params, filenames[it])
         # read the header
         hdr = drs_fits.read_header(params, filenames[it])
         # must load file here to check if fp is valid
@@ -91,11 +91,11 @@ def construct_fp_table(params, filenames):
         fp_exp.append(float(exptime))
         fp_pp_version.append(ppversion)
         basenames.append(basename)
-        nightnames.append(nightname)
+        obs_dirs.append(obs_dir)
     # convert lists to table
-    columns = ['NIGHTNAME', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
+    columns = ['OBS_DIR', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
                'PPVERSION']
-    values = [nightnames, basenames, valid_files, fp_time, fp_exp,
+    values = [obs_dirs, basenames, valid_files, fp_time, fp_exp,
               fp_pp_version]
     # make table using columns and values
     fp_table = drs_table.make_table(params, columns, values)
@@ -260,7 +260,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     min_num = pcheck(params, 'SHAPE_FP_MASTER_MIN_IN_GROUP', 'min_num', kwargs,
                      func_name)
     # get temporary output dir
-    outdir = params['INPUTS']['DIRECTORY']
+    out_obs_dir = params['INPUTS']['OBS_DIR']
     # get col data from dark_table
     filenames = fp_table['FILENAME']
     fp_times = fp_table['MJDATE']
@@ -302,7 +302,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             # perform a large image median on FP files in this group
             groupfp = drs_image.large_image_combine(params, fp_ids,
                                                     math='median',
-                                                    outdir=outdir, fmt='fits')
+                                                    outdir=out_obs_dir,
+                                                    fmt='fits')
             # -------------------------------------------------------------
             # get first file header
             # construct new infile instance

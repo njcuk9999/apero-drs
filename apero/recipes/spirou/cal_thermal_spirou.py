@@ -91,8 +91,6 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
-    # get nightname
-    nightname = params['INPUTS']['DIRECTORY']
     # get files
     infiles = params['INPUTS']['FILES'][1]
     # get list of filenames (for output)

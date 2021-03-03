@@ -782,8 +782,9 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         # Once we have a cavity length, we find the integer FP peak number.
         # This will be compiled in the table later and used for nightly
         # wavelength solutions by changing the achromatic part of the cavity
-        # length relative to the master night. By construction, this is
-        # always an integer. The factor 2 comes from the FP equation.
+        # length relative to the master observation directory.
+        # By construction, this is always an integer. The factor 2 comes
+        # from the FP equation.
         # It arrises from the back-and-forth within the FP cavity
         cavfit = np.polyval(cavity_length_poly, list_waves)
         peak_number = np.array(cavfit * 2 / list_waves, dtype=int)
@@ -5241,7 +5242,7 @@ def fp_write_results_table(params, recipe, llprops, hcfile, fiber):
     # iterate through Littrow test cut values
     lit_it = 2
     # get from params
-    nightname = params['NIGHTNAME']
+    obs_dir = params['OBS_DIR']
     # calculate stats for table
     final_mean = 1000 * llprops['X_MEAN_2']
     final_var = 1000 * llprops['X_VAR_2']
@@ -5256,13 +5257,13 @@ def fp_write_results_table(params, recipe, llprops, hcfile, fiber):
     wavefile.construct_filename(infile=hcfile)
     # ------------------------------------------------------------------
     # construct and write table
-    columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
+    columnnames = ['obs_dir', 'file_name', 'fiber', 'mean', 'rms',
                    'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
                    'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
     columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
                      '{:3d}', '{:6.3f}', '{:6.2f}', '{:6.2f}', '{:6.2f}',
                      '{:6.2f}', '{:6.2f}', '{:6.2f}', '{:6.2f}']
-    columnvalues = [[nightname], [hcfile.basename],
+    columnvalues = [[obs_dir], [hcfile.basename],
                     [fiber], [final_mean], [final_var],
                     [num_lines], [err], [sig_littrow[0]],
                     [sig_littrow[1]], [sig_littrow[2]], [sig_littrow[3]],
@@ -5517,7 +5518,7 @@ def fpm_write_results_table(params, recipe, llprops, hcfile, fiber):
     # iterate through Littrow test cut values
     lit_it = 2
     # get from params
-    nightname = params['NIGHTNAME']
+    obs_dir = params['OBS_DIR']
     # calculate stats for table
     final_mean = 1000 * llprops['X_MEAN_2']
     final_var = 1000 * llprops['X_VAR_2']
@@ -5532,13 +5533,13 @@ def fpm_write_results_table(params, recipe, llprops, hcfile, fiber):
     wavefile.construct_filename(infile=hcfile)
     # ------------------------------------------------------------------
     # construct and write table
-    columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
+    columnnames = ['obs_dir', 'file_name', 'fiber', 'mean', 'rms',
                    'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
                    'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
     columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
                      '{:3d}', '{:6.3f}', '{:6.2f}', '{:6.2f}', '{:6.2f}',
                      '{:6.2f}', '{:6.2f}', '{:6.2f}', '{:6.2f}']
-    columnvalues = [[nightname], [hcfile.basename],
+    columnvalues = [[obs_dir], [hcfile.basename],
                     [fiber], [final_mean], [final_var],
                     [num_lines], [err], [sig_littrow[0]],
                     [sig_littrow[1]], [sig_littrow[2]], [sig_littrow[3]],
@@ -6403,15 +6404,20 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     wargs = [e2dsll_file.name, e2dsll_file.filename]
     WLOG(params, '', textentry('40-017-00038', args=wargs))
     # update the e2ds file
-    # TODO: Need to worry about reading all extensions
     e2dsll_file.read_multi()
     e2dsll_file = add_wave_keys(params, e2dsll_file, wprops)
     # define multi lists
-    data_list, name_list = e2dsll_file.data_array, []
+    data_list, name_list = e2dsll_file.data_array, e2dsll_file.name_array
+    if data_list is None:
+        data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
         data_list += [params.snapshot_table(drsfitsfile=e2dsll_file)]
-        name_list += ['PARAM_TABLE']
+        # there should be a param_table from extraction
+        if 'PARAM_TABLE' in name_list:
+            name_list += ['PARAM_UPDATE']
+        else:
+            name_list += ['PARAM_TABLE']
     # write file
     e2dsll_file.write_multi(data_list=data_list, name_list=name_list,
                             kind=recipe.outputtype, runstring=recipe.runstring)

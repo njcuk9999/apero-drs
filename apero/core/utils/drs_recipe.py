@@ -70,7 +70,7 @@ SPECIAL_LIST_KEYS = ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']
 # =============================================================================
 class DrsRecipe(object):
     # define typing for attributes
-    filemod: base_class.ImportModule
+    filemod: Union[base_class.ImportModule, None]
     # set class name
     class_name = 'DrsRecipe'
 
@@ -131,20 +131,24 @@ class DrsRecipe(object):
         # shortname set to name initially
         self.shortname = str(self.name)
         # recipe kind (for logging)
-        self.kind = None
+        self.kind: Union[str, None] = None
         # save recipe module
         self.recipemod = None
         # import module as ImportClass (pickle-able)
         self.module = self._import_module()
-        # input/output directory
-        self.inputdir = None
-        self.outputdir = None
-        # input type ('raw', 'tmp', 'red') - used to get path when input/
-        #    outputdir is None (default way to get these paths)
-        self.inputtype = 'raw'
-        self.outputtype = 'red'
+        # input/output DrsPath (unset until dealing with a specific set of
+        #    arguments)
+        self.input_block: Union[drs_file.DrsPath, None] = None
+        self.output_block: Union[drs_file.DrsPath, None] = None
+        # set the observation directory linked to this recipe run (unset until
+        #    dealing with a specific set of arguments)
+        self.obs_dir: Union[drs_file.DrsPath, None] = None
+        # input/output block str ('raw', 'tmp', 'red') - used to keep track of
+        #    input and output paths (equivalent to block_kind in DrsPath)
+        self.in_block_str = 'raw'
+        self.out_block_str = 'red'
         # run string (i.e. {recipe} arg1 arg2 --kwarg1 --kwarg2)
-        self.runstring = None
+        self.runstring: Union[str, None] = None
         # recipe description/epilog
         self.description = 'No description defined'
         self.epilog = ''
@@ -162,7 +166,7 @@ class DrsRecipe(object):
         self.extras = OrderedDict()
         # define arg list
         self.arg_list = []
-        self.str_arg_list = None
+        self.str_arg_list: Union[List[str], None] = None
         self.used_command = []
         self.drs_pconstant = None
         self.input_params = ParamDict()
@@ -824,48 +828,6 @@ class DrsRecipe(object):
             emsg = textentry('00-000-00004', args=eargs)
             WLOG(self.params, 'error', emsg)
 
-    def get_input_dir(self) -> str:
-        """
-        Alias to drs_argument.get_input_dir
-
-        Get the input directory for this recipe based on what was set in
-        initialisation (construction)
-
-        if RAW uses DRS_DATA_RAW from drs_params
-        if TMP uses DRS_DATA_WORKING from drs_params
-        if REDUCED uses DRS_DATA_REDUC from drs_params
-
-        :return input_dir: string, the input directory
-        """
-        # set function name
-        _ = display_func('get_input_dir', __NAME__,
-                         self.class_name)
-        # return input directory
-        path, _ = drs_file.get_dir(self.params, self.inputtype,
-                                      self.inputdir, kind='input')
-        return path
-
-    def get_output_dir(self) -> str:
-        """
-        Alias to drs_argument.get_output_dir
-
-        Get the input directory for this recipe based on what was set in
-        initialisation (construction)
-
-        if RAW uses DRS_DATA_RAW from drs_params
-        if TMP uses DRS_DATA_WORKING from drs_params
-        if REDUCED uses DRS_DATA_REDUC from drs_params
-
-        :return input_dir: string, the input directory
-        """
-        # set function name
-        _ = display_func('get_output_dir', __NAME__,
-                         self.class_name)
-        # return input directory
-        path, _ = drs_file.get_dir(self.params, self.outputtype, self.outputdir,
-                                   kind='output')
-        return path
-
     def copy(self, recipe: 'DrsRecipe'):
         """
         Copy a "recipe" (DrsRecipe instance) over the current DrsRecipe instance
@@ -896,14 +858,24 @@ class DrsRecipe(object):
         self.kind = copy.deepcopy(recipe.kind)
         # import module
         self.module = self.module
-        # output directory
-        self.outputdir = copy.deepcopy(recipe.outputdir)
         # input directory
-        self.inputdir = copy.deepcopy(recipe.inputdir)
-        # input type (raw/tmp/red)
-        self.inputtype = str(recipe.inputtype)
-        # output type (raw/tmp/red)
-        self.outputtype = str(recipe.outputtype)
+        if self.input_block is not None:
+            self.input_block = recipe.input_block.copy()
+        else:
+            self.input_block = None
+        # output directory
+        if recipe.output_block is not None:
+            self.output_block = recipe.output_block.copy()
+        else:
+            self.output_block = None
+        # observation directory
+        if recipe.obs_dir is not None:
+            self.obs_dir = recipe.obs_dir.copy()
+        else:
+            self.obs_dir = None
+        # copy input and output block strings
+        self.in_block_str = copy.deepcopy(recipe.in_block_str)
+        self.out_block_str = copy.deepcopy(recipe.out_block_str)
         # recipe description/epilog
         self.description = recipe.description
         self.epilog = recipe.epilog

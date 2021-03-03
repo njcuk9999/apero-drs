@@ -3,20 +3,21 @@
 
 <!doctype html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>Thermal Correction Recipe &#8212; APERO 0.7.053 documentation</title>
-    <link rel="stylesheet" href="../../../_static/bizstyle.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thermal Correction Recipe &#8212; APERO 0.7.073 documentation</title>
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../_static/language_data.js"></script>
-    <script type="text/javascript" src="../../../_static/bizstyle.js"></script>
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
     <link rel="next" title="Master leak correction recipe" href="leak_master.html" />
@@ -27,9 +28,9 @@
 
 
 
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
-    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <script src="_static/css3-mediaqueries.js"></script>
     <![endif]-->
     <style type="text/css">
       table.right { float: left; margin-left: 20px; }
@@ -100,9 +101,10 @@
         <li class="right" >
           <a href="flat_blaze.html" title="Flat/Blaze Correction Recipe"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.053 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.073 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../spirou.html" >SPIRou documentation</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="../recipes_spirou.html" accesskey="U">SPIRou Recipes</a> &#187;</li> 
+          <li class="nav-item nav-item-2"><a href="../recipes_spirou.html" accesskey="U">SPIRou Recipes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Thermal Correction Recipe</a></li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -110,6 +112,7 @@
   <h3><a href="../../../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Thermal Correction Recipe</a><ul>
+<li><a class="reference internal" href="#schematic">Schematic</a></li>
 <li><a class="reference internal" href="#run">Run</a></li>
 <li><a class="reference internal" href="#optional-arguments">Optional Arguments</a></li>
 <li><a class="reference internal" href="#output-dir">Output Dir</a></li>
@@ -142,7 +145,7 @@
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
 
@@ -155,6 +158,10 @@
 <span id="recipes-spirou-thermal"></span><h1>Thermal Correction Recipe<a class="headerlink" href="#thermal-correction-recipe" title="Permalink to this headline">¶</a></h1>
 <p>Extracts dark frames in order to provide correction for the thermal background
 after extraction of science / calibration frames.</p>
+<div class="section" id="schematic">
+<h2>Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<img alt="../../../_images/cal_thermal_spirou_schematic.jpg" src="../../../_images/cal_thermal_spirou_schematic.jpg" />
+</div>
 <div class="section" id="run">
 <h2>Run<a class="headerlink" href="#run" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cal_thermal_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> <span class="o">[</span>DARK_DARK_INT<span class="o">]</span>
@@ -208,6 +215,7 @@ DEBUG_<span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_backgroun
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -225,14 +233,15 @@ DEBUG_<span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_backgroun
         <li class="right" >
           <a href="flat_blaze.html" title="Flat/Blaze Correction Recipe"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.053 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.073 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../spirou.html" >SPIRou documentation</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="../recipes_spirou.html" >SPIRou Recipes</a> &#187;</li> 
+          <li class="nav-item nav-item-2"><a href="../recipes_spirou.html" >SPIRou Recipes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Thermal Correction Recipe</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.3.1.
     </div>
   </body>
 </html>

@@ -101,7 +101,7 @@ def __main__(recipe, params):
     indexdbm.load_db()
     # ---------------------------------------------------------------------
     # get directory name
-    nightname = params['NIGHTNAME']
+    obs_dir = params['OBS_DIR']
     # get identifier
     identifier = infile.get_hkey('KW_IDENTIFIER')
     # get the list of post files
@@ -118,8 +118,7 @@ def __main__(recipe, params):
         outfunc = postfile.outfunc
         # -----------------------------------------------------------------
         # generate out file name
-        outfile, outdir = outfunc(params, postfile, identifier,
-                                  nightname)
+        outfile, outdir = outfunc(params, postfile, identifier, obs_dir)
         # skip existing files
         if (not overwrite) and os.path.exists(outfile):
             continue

@@ -129,7 +129,7 @@ def __main__(recipe, params):
         # get all "filetype" filenames
         files = drs_utils.find_files(params, kind='raw',
                                     filters=dict(KW_DPRTYPE=filetype,
-                                                 DIRECTORY=params['NIGHTNAME']))
+                                                 OBS_DIR=params['OBS_DIR']))
         # create infiles
         for filename in files:
             infile = rawfile.newcopy(filename=filename, params=params)
