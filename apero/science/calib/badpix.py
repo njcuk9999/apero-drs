@@ -394,7 +394,7 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
         data_list, name_list = [], []
     # write image to file
     badpixfile.write_multi(data_list=data_list, name_list=name_list,
-                           kind=recipe.outputtype,
+                           block_kind=recipe.out_block_str,
                            runstring=recipe.runstring)
 
     # add to output files (for indexing)
@@ -425,7 +425,8 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
         data_list, name_list = [], []
     # write image to file
     backmapfile.write_multi(data_list=data_list, name_list=name_list,
-                            kind=recipe.outputtype, runstring=recipe.runstring)
+                            block_kind=recipe.out_block_str,
+                            runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(backmapfile)
     # return output files

@@ -105,10 +105,11 @@ DRS_ROOT = Const('DRS_ROOT', dtype='path', source=__NAME__, user=True,
                  active=True, group=cgroup, value='./',
                  description='Define the root installation directory')
 
-#   Define the folder with the raw data files in
+#   Define the directory with the raw data files in  (block directory)
 DRS_DATA_RAW = Const('DRS_DATA_RAW', dtype='path', source=__NAME__, user=True,
                      active=True, group=cgroup, value='./apero-data/raw',
-                     description='Define the folder with the raw data files in')
+                     description='Define the directory with the raw data '
+                                 'files in  (block directory)')
 
 #   Define the directory that the reduced data should be saved to/read from
 DRS_DATA_REDUC = Const('DRS_DATA_REDUC', dtype='path', source=__NAME__,

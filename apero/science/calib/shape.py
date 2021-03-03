@@ -69,8 +69,10 @@ def construct_fp_table(params, filenames):
     for it in range(len(filenames)):
         # get the basename from filenames
         basename = os.path.basename(filenames[it])
-        # get the night name
-        obs_dir = drs_path.get_nightname(params, filenames[it])
+        # get the path inst
+        path_inst = drs_file.DrsPath(params, filenames[it])
+        # get the observation directory
+        obs_dir = path_inst.obs_dir
         # read the header
         hdr = drs_fits.read_header(params, filenames[it])
         # must load file here to check if fp is valid
@@ -1420,7 +1422,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         name_list += ['PARAM_TABLE']
     # write image to file
     outfile1.write_multi(data_list=data_list, name_list=name_list,
-                         kind = recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile1)
     # ----------------------------------------------------------------------
@@ -1447,7 +1450,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         name_list += ['PARAM_TABLE']
     # write image to file
     outfile2.write_multi(data_list=data_list, name_list=name_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile2)
     # ----------------------------------------------------------------------
@@ -1474,7 +1478,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         name_list += ['PARAM_TABLE']
     # write image to file
     outfile3.write_multi(data_list=data_list, name_list=name_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile3)
     # ----------------------------------------------------------------------
@@ -1500,7 +1505,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
             name_list += ['PARAM_TABLE']
         # write file
         debugfile0.write_multi(data_list=data_list, name_list=name_list,
-                               kind=recipe.outputtype,
+                               block_kind=recipe.out_block_str,
                                runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile0)
@@ -1522,7 +1527,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
             name_list += ['PARAM_TABLE']
         # write file
         debugfile1.write_multi(data_list=data_list, name_list=name_list,
-                               kind=recipe.outputtype,
+                               block_kind=recipe.out_block_str,
                                runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile1)
@@ -1541,7 +1546,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
             name_list += ['PARAM_TABLE']
         # write file
         debugfile2.write_multi(data_list=data_list, name_list=name_list,
-                               kind=recipe.outputtype,
+                               block_kind=recipe.out_block_str,
                                runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile2)
@@ -1583,7 +1588,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
                 name_list += ['PARAM_TABLE']
             # write file
             debugfile3.write_multi(data_list=data_list, name_list=name_list,
-                                   kind=recipe.outputtype,
+                                   block_kind=recipe.out_block_str,
                                    runstring=recipe.runstring)
             # add to output files (for indexing)
             recipe.add_output_file(debugfile3)
@@ -1604,7 +1609,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
                     name_list += ['PARAM_TABLE']
                 # write file
                 debugfile4.write_multi(data_list=data_list, name_list=name_list,
-                                       kind=recipe.outputtype,
+                                       block_kind=recipe.out_block_str,
                                        runstring=recipe.runstring)
                 # add to output files (for indexing)
                 recipe.add_output_file(debugfile4)
@@ -1775,7 +1780,8 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         name_list += ['PARAM_TABLE']
     # write image to file
     outfile.write_multi(data_list=data_list, name_list=name_list,
-                        kind=recipe.outputtype, runstring=recipe.runstring)
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile)
     # ----------------------------------------------------------------------
@@ -1799,7 +1805,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
             name_list += ['PARAM_TABLE']
         # write file
         debugfile1.write_multi(data_list=data_list, name_list=name_list,
-                               kind=recipe.outputtype,
+                               block_kind=recipe.out_block_str,
                                runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile1)
@@ -1818,7 +1824,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
             name_list += ['PARAM_TABLE']
         # write file
         debugfile2.write_multi(data_list=data_list, name_list=name_list,
-                               kind=recipe.outputtype,
+                               block_kind=recipe.out_block_str,
                                runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile2)

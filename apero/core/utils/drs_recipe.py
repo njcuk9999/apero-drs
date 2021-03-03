@@ -1333,15 +1333,13 @@ class DrsRecipe(object):
             argname = prefix + argname
 
             # deal with directory argument (difficult)
-            if arg.name == 'directory':
-                # get expected input directory
-                inputdir, _ = drs_file.get_dir(self.params, self.inputtype)
-                # get uncommon path
-                dirname = drs_misc.get_uncommon_path(iarg, inputdir)
+            if arg.name == 'obs_dir':
+                # get from recipe definition
+                obs_dir = self.input_block.obs_dir
                 # construct input string
-                inputstr += '{0}={1} || '.format(argname, dirname)
+                inputstr += '{0}={1} || '.format(argname, obs_dir)
                 # add to runstring
-                self.runstring += '{0} '.format(dirname)
+                self.runstring += '{0} '.format(obs_dir)
 
             # deal with file arguments
             elif arg.dtype in ['file', 'files']:

@@ -818,7 +818,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # write multi
     template_file.write_multi(data_list=data_list, name_list=name_list,
                               datatype_list=datatype_list,
-                              kind=recipe.outputtype,
+                              block_kind=recipe.out_block_str,
                               runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(template_file)
@@ -851,7 +851,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # write multi
     bigcubefile.write_multi(data_list=data_list, name_list=name_list,
                             datatype_list=datatype_list,
-                            kind=recipe.outputtype, runstring=recipe.runstring)
+                            block_kind=recipe.out_block_str,
+                            runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile)
 
@@ -883,7 +884,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # write multi
     bigcubefile0.write_multi(data_list=data_list, name_list=name_list,
                              datatype_list=datatype_list,
-                             kind=recipe.outputtype, runstring=recipe.runstring)
+                             block_kind=recipe.out_block_str,
+                             runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile0)
 
@@ -957,7 +959,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # write multi
     template_file.write_multi(data_list=data_list, name_list=name_list,
                               datatype_list=datatype_list,
-                              kind=recipe.outputtype,
+                              block_kind=recipe.out_block_str,
                               runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(template_file)
@@ -990,7 +992,8 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # write multi
     bigcubefile.write_multi(data_list=data_list, name_list=name_list,
                             datatype_list=datatype_list,
-                            kind=recipe.outputtype, runstring=recipe.runstring)
+                            block_kind=recipe.out_block_str,
+                            runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile)
 

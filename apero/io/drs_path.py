@@ -106,43 +106,6 @@ def get_uncommon_path(path1: str, path2: str) -> str:
     return drs_misc.get_uncommon_path(path1, path2)
 
 
-def get_nightname(params: ParamDict, filepath: str,
-                  root: Union[str, None] = None) -> str:
-    """
-    Get the night name from a absolute filepath
-        structure of filepath should be:
-        filepath = root/night_name/filename
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param filepath: str, the absolute filepath
-    :param root: str, the root directory (above night name) if None uses
-                 params['INPATH']
-
-    :type filepath: str
-    :type root: str
-
-    :return: str, the night name
-    :rtype: str
-    """
-    # set function
-    _ = display_func('get_nightname', __NAME__)
-    # deal with no root
-    if root is None:
-        root = params['INPATH']
-    # get the dirname
-    if os.path.isdir(filepath):
-        dirname = str(filepath)
-    else:
-        dirname = os.path.dirname(filepath)
-    # get the night name by splitting from the root dir
-    night_name = dirname.split(root)[-1]
-    # remove any leading separators
-    while night_name.startswith(os.sep):
-        night_name = night_name[len(os.sep):]
-    # get the night_name
-    return night_name
-
-
 def group_files_by_time(params: ParamDict, times: np.ndarray,
                         time_thres: Union[uu.Quantity, float],
                         time_unit: Union[uu.Unit, str] = 'hours') -> np.ndarray:
@@ -351,6 +314,54 @@ def numpy_load(filename: str) -> Any:
     eargs = [filename, func_name]
     emsg = 'NumpyLoad: Cannot load filename={0} \n\t Funcion = {1}'
     raise ValueError(emsg.format(*eargs))
+
+
+def get_all_non_empty_subdirs(path: Union[Path, str],
+                              relative: bool = True) -> List[str]:
+    """
+    Get all non-empty sub directories to "path" if relative is True only
+    return the relative path to "path" else returns the full path for each
+    subdirs are only returned if a file is found
+
+    :param path: Path or str, the root path to check
+    :param relative: bool, if True only returns the path relative to root "path"
+
+    :return: List of strings, the paths (absolute or relative) of subdirectories
+             that have files
+    """
+    # make sure path is a Path instance
+    if isinstance(path, str):
+        path = Path(path)
+    # get all dirs in path
+    all_dirs = list(path.rglob('**'))
+    # storage of outputs
+    subdirs = []
+    # loop around all dirs
+    for _dir in all_dirs:
+        # we only want directories
+        if _dir.is_dir():
+            # get uncommon path
+            if relative:
+                save_path = get_uncommon_path(str(_dir), path)
+            else:
+                save_path = str(_dir)
+            # flag to keep dir
+            keep_dir = False
+            # list contents of dir
+            contents = list(_dir.glob('*'))
+            # loop around contents and look for files
+            for item in contents:
+                if item.is_file():
+                    keep_dir = True
+                    break
+
+            # if we are keeping dir add it to subdirs
+            if keep_dir and save_path not in subdirs:
+                subdirs.append(save_path)
+    # return all valid subdirs
+    return subdirs
+
+
 
 
 # =============================================================================

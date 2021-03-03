@@ -67,21 +67,6 @@ def get_all_files(params, path):
     return np.sort(fits_files)
 
 
-def get_nightnames(params, path):
-    night_names = []
-    # walk through directories
-    for root, dirs, files in os.walk(path, followlinks=True):
-        # do not search directories with no files
-        if len(files) == 0:
-            continue
-        # get night name
-        ucpath = drs_path.get_uncommon_path(path, root)
-        # append to night names
-        night_names.append(ucpath)
-    # return night names
-    return np.sort(night_names)
-
-
 def get_outputs(params, files):
     # log progress: Reading headers for indexing
     WLOG(params, 'info', textentry('40-504-00003'))

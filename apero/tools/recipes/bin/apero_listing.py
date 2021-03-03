@@ -109,24 +109,24 @@ def __main__(recipe, params):
     # deal with kind
     if kind.lower() == 'raw':
         # update the index database (taking into account include/exclude lists)
-        indexdbm = drs_utils.update_index_db(params, kind='raw',
+        indexdbm = drs_utils.update_index_db(params, block_kind='raw',
                                              includelist=include_list,
                                              excludelist=exclude_list)
     elif kind.lower() == 'tmp':
         # update the index database (taking into account include/exclude lists)
-        indexdbm = drs_utils.update_index_db(params, kind='tmp',
+        indexdbm = drs_utils.update_index_db(params, block_kind='tmp',
                                              includelist=include_list,
                                              excludelist=exclude_list)
     elif kind.lower() == 'red':
         # update the index database (taking into account include/exclude lists)
-        indexdbm = drs_utils.update_index_db(params, kind='red',
+        indexdbm = drs_utils.update_index_db(params, block_kind='red',
                                              includelist=include_list,
                                              excludelist=exclude_list)
     else:
         for data_kind in ['raw', 'tmp', 'red']:
             # update the index database (taking into account include/exclude
             #    lists)
-            indexdbm = drs_utils.update_index_db(params, kind=data_kind,
+            indexdbm = drs_utils.update_index_db(params, block_kind=data_kind,
                                                  includelist=include_list,
                                                  excludelist=exclude_list)
 

@@ -1380,9 +1380,9 @@ class IndexDatabase(DatabaseManager):
                                   condition=condition)
 
     def get_entries(self, columns: str = '*',
-                    directory: Union[str, None] = None,
+                    obs_dir: Union[str, None] = None,
                     filename: Union[Path, str, None] = None,
-                    kind: Union[str, None] = None,
+                    block_kind: Union[str, None] = None,
                     hkeys: Union[Dict[str, str], None] = None,
                     nentries: Union[int, None] = None,
                     condition: Union[str, None] = None,
@@ -1392,7 +1392,7 @@ class IndexDatabase(DatabaseManager):
         filter by specific columns)
 
         :param columns: str, the columns to return ('*' for all)
-        :param directory: str or None, if set filters results by directory name
+        :param obs_dir: str or None, if set filters results by directory name
         :param filename: str or None, if set filters results by filename
         :param kind: str or None, if set filters results by kind
         :param hkeys: dict or None, if set is a dictionary of strings
@@ -1432,12 +1432,12 @@ class IndexDatabase(DatabaseManager):
             sql['condition'] += ' AND {0}'.format(condition)
         # ------------------------------------------------------------------
         # deal with kind set
-        if kind is not None:
-            sql['condition'] += ' AND KIND = "{0}"'.format(kind)
+        if block_kind is not None:
+            sql['condition'] += ' AND BLOCK_KIND = "{0}"'.format(block_kind)
         # ------------------------------------------------------------------
         # deal with directory set
-        if directory is not None:
-            sql['condition'] += ' AND DIRNAME = "{0}"'.format(directory)
+        if obs_dir is not None:
+            sql['condition'] += ' AND OBS_DIR = "{0}"'.format(obs_dir)
         # ------------------------------------------------------------------
         # deal with filename set
         if filename is not None:
@@ -1574,7 +1574,8 @@ class IndexDatabase(DatabaseManager):
             include_files = []
         # ---------------------------------------------------------------------
         # deal with files we don't need (already have)
-        etable = self.get_entries('ABSPATH, LAST_MODIFIED', kind=block_kind)
+        etable = self.get_entries('ABSPATH, LAST_MODIFIED',
+                                  block_kind=block_kind)
         exclude_files = list(etable['ABSPATH'])
         # only check last modified for raw files (we assume that any other
         #   file has been correctly updated by the drs)
@@ -1584,7 +1585,7 @@ class IndexDatabase(DatabaseManager):
             last_mod = None
         # ---------------------------------------------------------------------
         # locate all files within path
-        reqfiles = _get_files(block_inst.abspath, block_kind,
+        reqfiles = _get_files(self.params, block_inst.abspath, block_kind,
                               include_directories, exclude_directories,
                               include_files, exclude_files, suffix, last_mod)
         # ---------------------------------------------------------------------
@@ -1667,7 +1668,7 @@ class IndexDatabase(DatabaseManager):
         # get columns
         columns = ['ABSPATH', 'RAWFIX'] + rkeys
         # get data for columns
-        table = self.get_entries(', '.join(columns), kind='raw')
+        table = self.get_entries(', '.join(columns), block_kind='raw')
         # if all rows have rawfix == 1 then just return now
         if np.sum(table['RAWFIX']) == len(table):
             return
@@ -1741,7 +1742,7 @@ class IndexDatabase(DatabaseManager):
         return update
 
 
-def _get_files(path: Union[Path, str], kind: str,
+def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
                incdirs: Union[List[Union[str, Path]], None] = None,
                excdirs: Union[List[Union[str, Path]], None] = None,
                incfiles: Union[List[Union[str, Path]], None] = None,
@@ -1754,7 +1755,7 @@ def _get_files(path: Union[Path, str], kind: str,
     directories
 
     :param path: Path or str, the path to the directory to find files for
-    :param kind: str, the kind of files to kind (raw/tmp/red/calib/tellu etc)
+    :param block_kind: str, the kind of files to kind (raw/tmp/red/calib/tellu etc)
     :param incdirs: list of strings or None, if set list the only directories
                     to include in the file list
     :param excdirs: list of strings or None, if set list any directories the
@@ -1776,8 +1777,12 @@ def _get_files(path: Union[Path, str], kind: str,
     # fix path as string
     if isinstance(path, str):
         path = Path(path)
+    # get path instance
+    path_inst = drs_file.DrsPath(params, _update=False)
+    # get blocks with obs_dirs
+    block_names = path_inst.blocks_with_obs_dirs()
     # only use sub-directories for the following kinds
-    if kind.lower() in ['raw', 'tmp', 'red']:
+    if block_kind.lower() in block_names:
         # ---------------------------------------------------------------------
         # get directory path
         all_items = path.rglob('*')
@@ -1886,7 +1891,7 @@ class LogDatabase(DatabaseManager):
 
     def add_entries(self, recipe: Union[str, None] = None,
                     sname: Union[str, None] = None,
-                    rkind: Union[str, None] = None,
+                    block_kind: Union[str, None] = None,
                     rtype: Union[str, None] = None,
                     pid: Union[str, None] = None,
                     htime: Union[str, None] = None,
@@ -1897,7 +1902,7 @@ class LogDatabase(DatabaseManager):
                     levelcrit: Union[str, None] = None,
                     inpath: Union[str, None] = None,
                     outpath: Union[str, None] = None,
-                    directory: Union[str, None] = None,
+                    obs_dir: Union[str, None] = None,
                     logfile: Union[str, None] = None,
                     plotdir: Union[str, None] = None,
                     runstring: Union[str, None] = None,
@@ -1919,7 +1924,7 @@ class LogDatabase(DatabaseManager):
         Add a log entry to database
 
         :param recipe: str, the recipe name
-        :param rkind: str, the recipe kind ('recipe', 'tool', 'processing')
+        :param block_kind: str, the recipe kind ('recipe', 'tool', 'processing')
         :param pid: str, the unique process identifier for this run
         :param htime: str, the human time (related to pid creation)
         :param unixtime: float, the unix time (related to pid creation)
@@ -1930,7 +1935,7 @@ class LogDatabase(DatabaseManager):
                           level and sublevel)
         :param inpath: str, the input directory used for this recipe run
         :param outpath: str, the output directory used for this recipe run
-        :param directory: str, the directory that set for this recipe run
+        :param obs_dir: str, the directory that set for this recipe run
         :param logfile: str, where the log file is saved for this recipe run
         :param plotdir: str, where the plot files are saved for this recipe run
         :param runstring: str, the command that can be used to re-run this
@@ -1967,8 +1972,8 @@ class LogDatabase(DatabaseManager):
         # need to clean error to put into database
         clean_error = _clean_error(errors)
         # get correct order
-        keys = [recipe, sname, rkind, rtype, pid, htime, unixtime, group,
-                level, sublevel, levelcrit, inpath, outpath, directory,
+        keys = [recipe, sname, block_kind, rtype, pid, htime, unixtime, group,
+                level, sublevel, levelcrit, inpath, outpath, obs_dir,
                 logfile, plotdir, runstring, args, kwargs, skwargs, started,
                 passed_all_qc, qc_string, qc_names, qc_values, qc_logic,
                 qc_pass, clean_error, ended, used]
@@ -1994,8 +1999,8 @@ class LogDatabase(DatabaseManager):
         self.database.add_row(values, table=self.database.tname, commit=commit)
 
     def get_entries(self, columns: str = '*',
-                    include_dirs: Union[List[str], None] = None,
-                    exclude_dirs: Union[List[str], None] = None,
+                    include_obs_dirs: Union[List[str], None] = None,
+                    exclude_obs_dirs: Union[List[str], None] = None,
                     nentries: Union[int, None] = None,
                     condition: Union[str, None] = None,
                     ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
@@ -2004,10 +2009,10 @@ class LogDatabase(DatabaseManager):
         filter by specific columns)
 
         :param columns: str, the columns to return ('*' for all)
-        :param include_dirs: list of strings - if set a list of allowed
-                             directories
-        :param exclude_dirs: list of strings - if set a list of disallowed
-                             directories
+        :param include_obs_dirs: list of strings - if set a list of allowed
+                                 directories
+        :param exclude_obs_dirs: list of strings - if set a list of disallowed
+                                 directories
         :param nentries: int or None, if set limits the number of entries to get
                          back - sorted newest to oldest
         :param condition: str or None, if set the SQL query to add
@@ -2041,22 +2046,22 @@ class LogDatabase(DatabaseManager):
             sql['condition'] += ' AND {0}'.format(condition)
         # ------------------------------------------------------------------
         # deal with whitelist directory set
-        if include_dirs is not None:
+        if include_obs_dirs is not None:
             # define a subcondition
             subconditions = []
             # loop around white listed nights and only keep these
-            for directory in include_dirs:
+            for obs_dir in include_obs_dirs:
                 # add subcondition
-                subcondition = 'OBS_DIR="{0}"'.format(directory)
+                subcondition = 'OBS_DIR="{0}"'.format(obs_dir)
                 subconditions.append(subcondition)
             # add to conditions
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
         # ------------------------------------------------------------------
         # deal with blacklist directory set
-        if exclude_dirs is not None:
-            for directory in exclude_dirs:
+        if exclude_obs_dirs is not None:
+            for obs_dir in exclude_obs_dirs:
                 # add to condition
-                condition += ' AND (OBS_DIR!="{0}")'.format(directory)
+                condition += ' AND (OBS_DIR!="{0}")'.format(obs_dir)
         # ------------------------------------------------------------------
         # add the number of entries to get
         if isinstance(nentries, int):

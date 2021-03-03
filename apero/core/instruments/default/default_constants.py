@@ -3162,10 +3162,10 @@ TELLU_CUT_BLAZE_NORM = Const('TELLU_CUT_BLAZE_NORM', value=None, dtype=float,
                                           'is high enough to accurately '
                                           'measure telluric'))
 
-# Define telluric black/white list directory
+# Define telluric include/exclude list directory
 TELLU_LIST_DIRECTORY = Const('TELLU_LIST_DIRECTORY', value=None, dtype=str,
                              source=__NAME__, group=cgroup, 
-                             description=('Define telluric black/white list '
+                             description=('Define telluric include/exclude list '
                                           'directory'))
 
 # Define telluric white list name

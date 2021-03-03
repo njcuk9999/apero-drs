@@ -49,15 +49,15 @@ pcheck = constants.PCheck(wlog=WLOG)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(directory=None, files=None, **kwargs):
+def main(obs_dir=None, files=None, **kwargs):
     """
     Main function for cal_loc_spirou.py
 
-    :param directory: string, the night name sub-directory
+    :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
 
-    :type directory: str
+    :type obs_dir: str
     :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
@@ -66,7 +66,7 @@ def main(directory=None, files=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, files=files, **kwargs)
+    fkwargs = dict(obs_dir=obs_dir, files=files, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)

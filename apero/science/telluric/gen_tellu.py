@@ -66,18 +66,23 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_whitelist(params: ParamDict, **kwargs) -> List[str]:
+def get_tellu_include_list(params: ParamDict,
+                           assets_dir: Union[str, None] = None,
+                           tellu_dir: Union[str, None] = None,
+                           tellu_include_file: Union[str, None] = None
+                           ) -> List[str]:
     func_name = __NAME__ + '.get_whitelist()'
     # get pseudo constants
     pconst = constants.pload()
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
-    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
-                       func_name)
-    filename = pcheck(params, 'TELLU_WHITELIST_NAME', 'filename', kwargs,
-                      func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', func=func_name,
+                      override=assets_dir)
+    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
+                      override=tellu_dir)
+    tfilename = pcheck(params, 'TELLU_WHITELIST_NAME', func=func_name,
+                       override=tellu_include_file)
     # get absolulte filename
-    whitelistfile = os.path.join(assetdir, relfolder, filename)
+    whitelistfile = os.path.join(assetdir, relfolder, tfilename)
     # load the white list
     whitelist = drs_data.load_text_file(params, whitelistfile, func_name,
                                         dtype=str)
@@ -87,18 +92,23 @@ def get_whitelist(params: ParamDict, **kwargs) -> List[str]:
     return whitelist
 
 
-def get_blacklist(params, **kwargs):
+def get_tellu_exclude_list(params: ParamDict,
+                           assets_dir: Union[str, None] = None,
+                           tellu_dir: Union[str, None] = None,
+                           tellu_exclude_file: Union[str, None] = None
+                           ) -> Tuple[List[str], str]:
     func_name = __NAME__ + '.get_blacklist()'
     # get pseudo constants
     pconst = constants.pload()
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
-    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
-                       func_name)
-    filename = pcheck(params, 'TELLU_BLACKLIST_NAME', 'filename', kwargs,
-                      func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', func=func_name,
+                      override=assets_dir)
+    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
+                      override=tellu_dir)
+    tfilename = pcheck(params, 'TELLU_BLACKLIST_NAME', func=func_name,
+                       override=tellu_exclude_file)
     # get absolulte filename
-    blacklistfile = os.path.join(assetdir, relfolder, filename)
+    blacklistfile = os.path.join(assetdir, relfolder, tfilename)
     # load the white list
     blacklist = drs_data.load_text_file(params, blacklistfile, func_name,
                                         dtype=str)
@@ -176,7 +186,7 @@ def get_non_tellu_objs(params: ParamDict, recipe, fiber, filetype=None,
     :return:
     """
     # get the telluric star names (we don't want to process these)
-    objnames = get_whitelist(params)
+    objnames = get_tellu_include_list(params)
     objnames = list(objnames)
     # deal with filetype being string
     if isinstance(filetype, str):
@@ -195,7 +205,7 @@ def get_non_tellu_objs(params: ParamDict, recipe, fiber, filetype=None,
     if fiber is not None:
         fkwargs['KW_FIBER'] = fiber
     # find files (and return pandas dataframe of all columns
-    dataframe = drs_utils.find_files(params, kind='red', filters=fkwargs,
+    dataframe = drs_utils.find_files(params, block_kind='red', filters=fkwargs,
                                      columns='*', indexdbm=indexdbm)
     # convert data frame to table
     obj_table = Table.from_pandas(dataframe)
@@ -291,9 +301,9 @@ def get_sp_linelists(params, **kwargs):
     waterfile = pcheck(params, 'TELLUP_H2O_CCF_FILE', 'filename', kwargs,
                        func_name)
     # load the others file list
-    mask_others, _ = drs_data.load_ccf_mask(params, directory=relfolder,
+    mask_others, _ = drs_data.load_ccf_mask(params, mask_dir=relfolder,
                                             filename=othersfile)
-    mask_water, _ = drs_data.load_ccf_mask(params, directory=relfolder,
+    mask_water, _ = drs_data.load_ccf_mask(params, mask_dir=relfolder,
                                            filename=waterfile)
     # return masks
     return mask_others, mask_water
@@ -1454,7 +1464,8 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     # write to file
     tpclfile.data = dimages[0]
     tpclfile.write_multi(data_list=data_list, name_list=name_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(tpclfile)
     # ----------------------------------------------------------------------

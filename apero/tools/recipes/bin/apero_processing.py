@@ -115,7 +115,7 @@ def __main__(recipe, params):
     # find all raw files via index database
     # ----------------------------------------------------------------------
     # update the index database (taking into account include/exclude lists)
-    indexdbm = drs_utils.update_index_db(params, kind='raw',
+    indexdbm = drs_utils.update_index_db(params, block_kind='raw',
                                          includelist=params['INCLUDE_OBS_DIRS'],
                                          excludelist=params['EXCLUDE_OBS_DIRS'])
     # fix the header data (object name, dprtype, mjdmid and trg_type etc)

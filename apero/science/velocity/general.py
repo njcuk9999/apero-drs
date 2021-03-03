@@ -1413,7 +1413,8 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     # write multi
     ccf_file.write_multi(data_list=data_list, name_list=name_list,
                          datatype_list=datatype_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(ccf_file)
 

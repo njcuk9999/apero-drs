@@ -421,10 +421,10 @@ class _CheckObsDir(DrsAction):
             print('')
         WLOG(params, 'debug', textentry('90-001-00018', args=[argname]))
         # check whether we have a valid directory
-        directory = valid_obs_dir(params, self.indexdb, argname, value,
-                                  block_kind=self.recipe.inputtype)
+        obs_dir = valid_obs_dir(params, self.indexdb, argname, value,
+                                block_kind=self.recipe.in_block_str)
         # if we have found directory return directory
-        return directory
+        return obs_dir
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -476,7 +476,7 @@ class _CheckFiles(DrsAction):
         self.recipe = kwargs.get('recipe', None)
         self.indexdb = kwargs.get('indexdb', None)
         self.namespace = kwargs.get('namespace', None)
-        self.directory = kwargs.get('directory', None)
+        self.obs_dir = kwargs.get('obs_dir', None)
         self.parser = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
@@ -544,8 +544,8 @@ class _CheckFiles(DrsAction):
         # get observation directory
         if self.recipe.obs_dir is not None:
             obs_dir = self.recipe.obs_dir
-        elif self.directory is not None:
-            obs_dir = drs_file.DrsPath(self.recipe.params, self.directory)
+        elif self.obs_dir is not None:
+            obs_dir = drs_file.DrsPath(self.recipe.params, self.obs_dir)
         else:
             dirname = getattr(self.namespace, 'obs_dir', '')
             obs_dir = drs_file.DrsPath(self.recipe.params, dirname)
@@ -2437,7 +2437,7 @@ class DrsArgument(object):
         self.propkeys = ['action', 'nargs', 'type', 'choices', 'default',
                          'help']
         # define allowed dtypes
-        self.allowed_dtypes = ['files', 'file', 'directory', 'bool',
+        self.allowed_dtypes = ['files', 'file', 'obs_dir', 'bool',
                                'options', 'switch', int, float, str, list]
         # ------------------------------------------------------------------
         # deal with no name or kind (placeholder for copy)
@@ -2648,7 +2648,7 @@ class DrsArgument(object):
             self.props['nargs'] = 1
             self.props['type'] = str
             self.options = ['FILENAME']
-        elif self.dtype == 'obsdir':
+        elif self.dtype == 'obs_dir':
             self.props['action'] = _CheckObsDir
             self.props['nargs'] = 1
             self.props['type'] = str
@@ -2861,7 +2861,7 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
              if passed)
     """
     # set function name
-    func_name = display_func('valid_directory', __NAME__)
+    func_name = display_func('valid_obs_dir', __NAME__)
 
     # get block directory
     block_inst = drs_file.DrsPath(params, block_kind=block_kind)
@@ -3009,11 +3009,11 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     # ---------------------------------------------------------------------
     # get file instance
     file_inst = obs_dir.copy()
-    file_inst.basename = filename
+    file_inst.update(basename=filename)
     # get absolute path
     abspath = file_inst.abspath
     # check for filename in paths
-    condition1 = condition + 'AND ' + pathcond.format(abspath)
+    condition1 = condition + ' AND ' + pathcond.format(abspath)
     # count number of paths that meet this condition
     if indexdb.database.count(indexdb.database.tname, condition=condition1) > 0:
         # now check fits keys (or pass if not fits)
@@ -3090,7 +3090,7 @@ def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
             file_in = drsfile.newcopy(filename=filename_it, params=params)
             file_in.get_header()
             # set the observation sub-directory
-            file_in.directory = obs_dir.obs_dir
+            file_in.obs_dir = obs_dir.obs_dir
             # -------------------------------------------------------------
             # Step 1: Check extension
             # -------------------------------------------------------------
@@ -3384,12 +3384,12 @@ def _get_file_list(limit: int, path: str, ext: Union[str, None] = None,
         if not dir_only:
             # add root to file list (minus path)
             if root != path:
-                directory = drs_misc.get_uncommon_path(root, path) + os.sep
+                obs_dir = drs_misc.get_uncommon_path(root, path) + os.sep
                 # count number of separators in directory
-                num = directory.count(os.sep)
+                num = obs_dir.count(os.sep)
                 level = levelsep * num
                 # append to list
-                file_list.append(level + directory)
+                file_list.append(level + obs_dir)
             # add root to file list (minus path)
             for filename in files:
                 filelevel = level + levelsep
@@ -3409,9 +3409,9 @@ def _get_file_list(limit: int, path: str, ext: Union[str, None] = None,
         elif len(files) > 0:
             # add root to file list (minus path)
             if root != path:
-                directory = drs_misc.get_uncommon_path(root, path) + os.sep
+                obs_dir = drs_misc.get_uncommon_path(root, path) + os.sep
                 # append to list
-                file_list.append(level + levelsep + directory)
+                file_list.append(level + levelsep + obs_dir)
 
     # if empty list add none found
     if len(file_list) == 0:
@@ -3576,6 +3576,10 @@ def set_inputdir(params: ParamDict) -> OrderedDict:
     props['action'] = _ForceInputDir
     # set the number of argument to expect
     props['nargs'] = 1
+    # can only have a limited number of choices
+    path_inst = drs_file.DrsPath(params, _update=False)
+    # choices are the name of the blocks in path_inst
+    props['choices'] = path_inst.block_names()
     # set the help message
     props['help'] = textentry('SET_INPUT_DIR_HELP')
     # return the argument dictionary
@@ -3603,6 +3607,10 @@ def set_outputdir(params: ParamDict) -> OrderedDict:
     props['action'] = _ForceOutputDir
     # set the number of argument to expect
     props['nargs'] = 1
+    # can only have a limited number of choices
+    path_inst = drs_file.DrsPath(params, _update=False)
+    # choices are the name of the blocks in path_inst
+    props['choices'] = path_inst.block_names()
     # set the help message
     props['help'] = textentry('SET_OUTPUT_DIR_HELP')
     # return the argument dictionary

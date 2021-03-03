@@ -172,11 +172,11 @@ def calib_file(params: ParamDict, infile: Any, outfile: Any,
     # set function name from args
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)
-    # get nightname
-    # nightname = kwargs.get('nightname', None)
+    # get obs_dir
+    # obs_dir = kwargs.get('obs_dir', None)
     # get prefix
     if outfile is not None:
-        # prefix = _calibration_prefix(params, nightname) + outfile.prefix
+        # prefix = _calibration_prefix(params, obs_dir) + outfile.prefix
         prefix = outfile.prefix
     # return general file with prefix updated
     return output_filenames.general_file(params, infile, outfile, fiber,

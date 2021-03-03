@@ -124,57 +124,62 @@ class LogObj:
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_log_files(params, recipe, path, nightname=None):
+def get_log_files(params, recipe, path, obs_dir=None):
     # ----------------------------------------------------------------------
     # load night names
     files = np.sort(glob.glob(os.path.join(path, '*')))
     # ----------------------------------------------------------------------
     # log progress
-    WLOG(params, 'info', 'Finding night directories for {0}'.format(path))
+    # TODO: move to language database
+    WLOG(params, 'info', 'Finding observation directories for {0}'.format(path))
     # find directories
-    nights = []
+    obs_dirs = []
     # loop around files
     for filepath in files:
         # get basename
         basename = os.path.basename(filepath)
-        # deal with having a night name set
-        if nightname not in [None, 'None', '']:
-            if basename == nightname:
-                nights.append(filepath)
+        # deal with having a obs_dir set
+        if obs_dir not in [None, 'None', '']:
+            if basename == obs_dir:
+                obs_dirs.append(filepath)
         elif os.path.isdir(filepath):
-            nights.append(filepath)
+            obs_dirs.append(filepath)
     # log how many nights found
-    if len(nights) > 0:
-        WLOG(params, '', 'Found {0} night directories'.format(len(nights)))
+    if len(obs_dirs) > 0:
+        # TODO: move to language database
+        msg = 'Found {0} observation directories'.format(len(obs_dirs))
+        WLOG(params, '', msg)
     else:
-        WLOG(params, 'error', 'No night directories found.')
+        # TODO: move to language database
+        WLOG(params, 'error', 'No observation directories found.')
 
     # any recipes without a night name will be saved above the night directories
     #    level so we must add the input path to the list of nights
-    nights += [path]
+    obs_dirs += [path]
     # ----------------------------------------------------------------------
     # locate log files
     logfitsfile = params['DRS_LOG_FITS_NAME']
     # log files
-    logfiles, nightnames = [], []
+    logfiles, out_obs_dirs = [], []
     # loop around nights
-    for night in nights:
+    for _obs_dir in obs_dirs:
         # get absolute path
-        abspath = os.path.join(night, logfitsfile)
+        abspath = os.path.join(_obs_dir, logfitsfile)
         # see if file exists
         if os.path.exists(abspath):
             logfiles.append(abspath)
-            nightnames.append(os.path.basename(night))
+            out_obs_dirs.append(os.path.basename(_obs_dir))
     # log how many log files found
     if len(logfiles) > 0:
-        WLOG(params, '', 'Found {0} night directories'.format(len(logfiles)))
+        msg = 'Found {0} observation directories'.format(len(logfiles))
+        WLOG(params, '', msg)
     else:
-        WLOG(params, 'error', 'No night directories found.')
+        WLOG(params, 'error', 'No observation directories found.')
     # return the log files and night names
-    return logfiles, nightnames
+    return logfiles, out_obs_dirs
 
 
-def make_log_table(params, logfiles, nightnames, recipename, since=None,
+def make_log_table(params, logfiles, obs_dirs, recipename, since=None,
                    before=None):
     # log progress
     WLOG(params, '', 'Loading log files')
@@ -224,10 +229,10 @@ def make_log_table(params, logfiles, nightnames, recipename, since=None,
                 continue
 
         # add a night column to masterdict
-        if 'NIGHT' not in masterdict:
-            masterdict['NIGHT'] = [nightnames[l_it]] * len(table)
+        if 'OBS_DIR' not in masterdict:
+            masterdict['OBS_DIR'] = [obs_dirs[l_it]] * len(table)
         else:
-            masterdict['NIGHT'] += [nightnames[l_it]] * len(table)
+            masterdict['OBS_DIR'] += [obs_dirs[l_it]] * len(table)
         # now add columsn from table
         for col in table.colnames:
             if col not in masterdict:

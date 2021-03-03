@@ -53,7 +53,7 @@ get_ext_fplines.outputtype = 'red'
 get_ext_fplines.extension = 'fits'
 get_ext_fplines.description = 'Produces an FPLINES file for an e2ds/e2dsff file'
 get_ext_fplines.kind = 'misc'
-get_ext_fplines.set_arg(pos=0, **RMOD.mod.directory)
+get_ext_fplines.set_arg(pos=0, **RMOD.mod.obs_dir)
 get_ext_fplines.set_arg(name='files', dtype='files', pos='1+',
                         files=[FMOD.files.out_ext_e2ds,
                                FMOD.files.out_ext_e2dsff],
@@ -73,11 +73,11 @@ RMOD.add(get_ext_fplines)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(directory=None, files=None, **kwargs):
+def main(obs_dir=None, files=None, **kwargs):
     """
     Main function for exposuremeter_spirou.py
 
-    :param directory: str or None the directory
+    :param obs_dir: str or None the directory
     :param files: str or None, the list of files
     :param kwargs: additional keyword arguments
 
@@ -89,7 +89,7 @@ def main(directory=None, files=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, files=files, **kwargs)
+    fkwargs = dict(obs_dir=obs_dir, files=files, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,

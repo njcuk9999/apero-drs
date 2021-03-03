@@ -1749,7 +1749,8 @@ def write_wave_sol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     # write image to file
     wavefile.write_multi(data_list=data_list, name_list=name_list,
                          datatype_list=datatype_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -1839,7 +1840,8 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
         name_list += ['PARAM_TABLE']
     # write image to file
     hcfile.write_multi(data_list=data_list, name_list=name_list,
-                       kind=recipe.outputtype, runstring=recipe.runstring)
+                       block_kind=recipe.out_block_str,
+                       runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(hcfile)
     # ------------------------------------------------------------------
@@ -1875,7 +1877,8 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
         name_list += ['PARAM_TABLE']
     # write image to file
     fpfile.write_multi(data_list=data_list, name_list=name_list,
-                       kind=recipe.outputtype, runstring=recipe.runstring)
+                       block_kind=recipe.out_block_str,
+                       runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(fpfile)
     # ------------------------------------------------------------------
@@ -1926,7 +1929,8 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
         name_list += ['PARAM_TABLE']
     # write image to file
     cavfile.write_multi(data_list=data_list, name_list=name_list,
-                        kind=recipe.outputtype, runstring=recipe.runstring)
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(cavfile)
     # ------------------------------------------------------------------

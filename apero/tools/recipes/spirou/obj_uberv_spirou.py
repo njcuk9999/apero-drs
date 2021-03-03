@@ -156,7 +156,8 @@ def __main__(recipe, params):
         if skip_objects is not None:
             fkwargs['KW_OBJNAME'] = skip_objects
         WLOG(params, '', 'Finding files...')
-        filenames1 = drs_utils.find_files(params, kind='red', filters=fkwargs)
+        filenames1 = drs_utils.find_files(params, block_kind='red',
+                                          filters=fkwargs)
         # group files
         for filename in filenames1:
             odocode = os.path.basename(filename).split('_pp')[0]
@@ -266,8 +267,8 @@ def __main__(recipe, params):
                 name_list += ['PARAM_TABLE']
             # write data to file
             infile1.write_multi(data_list=data_list, name_list=name_list,
-                               kind=recipe.outputtype,
-                               runstring=recipe.runstring)
+                                block_kind=recipe.out_block_str,
+                                runstring=recipe.runstring)
 
     # ----------------------------------------------------------------------
     # End of main code

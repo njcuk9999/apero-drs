@@ -35,6 +35,7 @@ from apero import lang
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.io import drs_path
@@ -130,7 +131,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get objects that match this object name
     if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
-        object_filenames = drs_utils.find_files(params, kind='red',
+        object_filenames = drs_utils.find_files(params, block_kind='red',
                                                 filters=dict(KW_OBJNAME=objname,
                                                              KW_OUTPUT=filetype,
                                                              KW_FIBER=fiber))
@@ -164,19 +165,21 @@ def __main__(recipe, params):
     infile.set_filename(object_filenames[-1])
     # read data
     infile.read_file()
-    # Need to deal with how we set the night name (depending on location)
+    # Need to deal with how we set the observation directory
+    #     (depending on location)
     if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
-        # get night name
-        nightname = drs_path.get_nightname(params, infile.filename)
-        params.set(key='OBS_DIR', value=nightname, source=mainname)
+        # set observation directory
+        infile_inst = drs_file.DrsPath(params, infile.filename)
+        obs_dir = infile_inst.obs_dir
+        params.set(key='OBS_DIR', value=obs_dir, source=mainname)
     else:
-        # set night name (we have no info about filename)
-        nightname = 'other'
+        # set observation directory (we have no info about filename)
+        obs_dir = 'other'
         params.set(key='OBS_DIR', value='other', source=mainname)
-        # make night directory (if it doesn't exist)
-        absnightpath = os.path.join(params['OUTPATH'], nightname)
-        if not os.path.exists(absnightpath):
-            os.makedirs(absnightpath)
+        # make obs directory (if it doesn't exist)
+        abspath = os.path.join(params['OUTPATH'], obs_dir)
+        if not os.path.exists(abspath):
+            os.makedirs(abspath)
 
     # set up plotting (no plotting before this) -- must be after setting
     #   night name
@@ -224,7 +227,8 @@ def __main__(recipe, params):
         # get s1d filenames
         filters = dict(KW_OBJNAME=objname, KW_OUTPUT=s1d_filetype,
                        KW_FIBER=fiber)
-        s1d_filenames = drs_utils.find_files(params, 'red', filters=filters)
+        s1d_filenames = drs_utils.find_files(params, block_kind='red',
+                                             filters=filters)
         # make s1d cube
         margs = [s1d_filenames, s1d_file, fiber]
         s1d_props = telluric.make_1d_template_cube(params, recipe, *margs)
@@ -256,7 +260,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     if passed:
         # copy the big cube median to the calibDB
-        telludbm.add_tellu_file(template_file)    # , night=nightname)
+        telludbm.add_tellu_file(template_file)
 
     # ----------------------------------------------------------------------
     # plots

@@ -269,12 +269,12 @@ def setup(name: str = 'None', instrument: str = 'None',
     cond4 = params['OBS_DIR'] is not None
     if cond1 and cond2 and cond4:
         inpath = str(params['INPATH'])
-        nightname = str(params['OBS_DIR'])
-        _make_dirs(params, os.path.join(inpath, nightname))
+        obs_dir = str(params['OBS_DIR'])
+        _make_dirs(params, os.path.join(inpath, obs_dir))
     if cond1 and cond3 and cond4:
         outpath = str(params['OUTPATH'])
-        nightname = str(params['OBS_DIR'])
-        _make_dirs(params, os.path.join(outpath, nightname))
+        obs_dir = str(params['OBS_DIR'])
+        _make_dirs(params, os.path.join(outpath, obs_dir))
     # -------------------------------------------------------------------------
     # deal with data passed from call to main function
     if 'DATA_DICT' in fkwargs:
@@ -320,13 +320,13 @@ def setup(name: str = 'None', instrument: str = 'None',
         # add log file to log (only used to save where the log is)
         logfile = drs_log.get_logfilepath(WLOG, params)
         recipe.log.set_log_file(logfile)
-        recipe.log.rtype = str(recipe.outputtype)
+        recipe.log.rtype = str(recipe.out_block_str)
         # add user input parameters to log
         recipe.log.runstring = recipe.runstring
         recipe.log.args = recipe.largs
         recipe.log.kwargs = recipe.lkwargs
         recipe.log.skwargs = recipe.lskwargs
-        # set lock function (lock file is NIGHTNAME + _log
+        # set lock function (lock file is OBS_DIR + _log
         # recipe.log.set_lock_func(drs_lock.locker)
         # write recipe log
         recipe.log.write_logfile(params)
@@ -1707,90 +1707,93 @@ def _set_force_dirs(recipe: DrsRecipe,
     _ = display_func('_set_force_dirs', __NAME__)
     # ----------------------------------------------------------------------
     # set debug key
-    dirkey = '--force_indir'
+    in_block_key = '--force_indir'
     # assume debug is not there
-    indir = None
+    in_block_str = None
     pos = None
     # check sys.argv
     for it, arg in enumerate(sys.argv):
-        if dirkey in arg:
+        if in_block_key in arg:
             if '=' in arg:
                 pos = None
-                indir = arg.split('=')[-1]
+                in_block_str = arg.split('=')[-1]
                 # Setting {0}={1} from sys.argv[{2}] ({3})
-                dargs = ['recipe.inputdir', indir, dirkey, '=']
+                dargs = ['recipe.inputdir', in_block_str, in_block_key, '=']
                 dmsg = textentry('90-008-00013', args=dargs)
                 WLOG(recipe.params, 'debug', dmsg)
             else:
                 pos = it
-                indir = None
+                in_block_str = None
     # deal with position
     if pos is None:
         pass
     elif pos is not None:
-        indir = sys.argv[pos + 1]
+        in_block_str = sys.argv[pos + 1]
         # Setting {0}={1} from sys.argv[{2}] ({3})
-        dargs = ['recipe.inputdir', indir, dirkey, 'white-space']
+        dargs = ['recipe.inputdir', in_block_str, in_block_key, 'white-space']
         dmsg = textentry('90-008-00013', args=dargs)
         WLOG(recipe.params, 'debug', dmsg)
     # check fkwargs
     for kwarg in fkwargs:
         if 'force_indir' in kwarg:
-            indir = fkwargs[kwarg]
+            in_block_str = fkwargs[kwarg]
             # Setting {0}={1} from fkwargs[{2}]
-            dargs = ['recipe.inputdir', indir, kwarg]
+            dargs = ['recipe.inputdir', in_block_str, kwarg]
             dmsg = textentry('90-008-00014', args=dargs)
             WLOG(recipe.params, 'debug', dmsg)
     # set recipe.inputdir
-    if indir is not None:
-        if os.path.exists(os.path.abspath(indir)):
-            indir = os.path.abspath(indir)
+    if in_block_str is not None:
+        if os.path.exists(os.path.abspath(in_block_str)):
+            in_block_str = os.path.abspath(in_block_str)
         # set the input dir
-        recipe.inputdir = drs_file.DrsPath(recipe.params, block_path=indir)
+        recipe.inputdir = drs_file.DrsPath(recipe.params,
+                                           block_kind=in_block_str)
         # update the in block kind str
         recipe.in_block_str = recipe.inputdir.block_kind
     # ----------------------------------------------------------------------
     # set debug key
-    dirkey = '--force_outdir'
+    out_block_key = '--force_outdir'
     # assume debug is not there
-    outdir = None
+    out_block_str = None
     pos = None
     # check sys.argv
     for it, arg in enumerate(sys.argv):
-        if dirkey in arg:
+        if out_block_key in arg:
             if '=' in arg:
                 pos = None
-                outdir = arg.split('=')[-1]
+                out_block_str = arg.split('=')[-1]
                 # Setting {0}={1} from sys.argv[{2}] ({3})
-                dargs = ['recipe.outputdir', indir, dirkey, '=']
+                dargs = ['recipe.outputdir', out_block_str, out_block_key, '=']
                 dmsg = textentry('90-008-00013', args=dargs)
                 WLOG(recipe.params, 'debug', dmsg)
             else:
                 pos = it
-                outdir = None
+                out_block_str = None
     # deal with position
     if pos is None:
         pass
     elif pos is not None:
-        outdir = sys.argv[pos + 1]
+        out_block_str = sys.argv[pos + 1]
         # Setting {0}={1} from sys.argv[{2}] ({3})
-        dargs = ['recipe.outputdir', indir, dirkey, 'white-space']
+        dargs = ['recipe.outputdir', out_block_str, out_block_key,
+                 'white-space']
         dmsg = textentry('90-008-00013', args=dargs)
         WLOG(recipe.params, 'debug', dmsg)
     # check fkwargs
     for kwarg in fkwargs:
         if 'force_outdir' in kwarg:
-            outdir = fkwargs[kwarg]
+            out_block_str = fkwargs[kwarg]
             # Setting {0}={1} from fkwargs[{2}]
-            dargs = ['recipe.outputdir', indir, kwarg]
+            dargs = ['recipe.outputdir', out_block_str, kwarg]
             dmsg = textentry('90-008-00014', args=dargs)
             WLOG(recipe.params, 'debug', dmsg)
     # set recipe.outputdir
-    if outdir is not None:
-        if os.path.exists(os.path.abspath(outdir)):
-            outdir = os.path.abspath(outdir)
+    if out_block_str is not None:
+        if os.path.exists(os.path.abspath(out_block_str)):
+            out_block_str = os.path.abspath(out_block_str)
         # set the output dir instance
-        recipe.outputdir = drs_file.DrsPath(recipe.params, block_path=outdir)
+        recipe.outputdir = drs_file.DrsPath(recipe.params,
+                                            block_kind=out_block_str)
         # update the out block kind str
         recipe.out_block_str = recipe.outputdir.block_kind
     # ----------------------------------------------------------------------

@@ -30,9 +30,8 @@ sf = base_class.ImportModule('nirps_ha.file_definitions',
 # =============================================================================
 # Commonly used arguments
 # =============================================================================
-directory = dict(name='directory', dtype='directory',
-                 helpstr=textentry('DIRECTORY_HELP'))
-
+obs_dir = dict(name='obs_dir', dtype='obs_dir',
+               helpstr=textentry('OBS_DIR_HELP'))
 # =============================================================================
 # Option definitions
 # =============================================================================
@@ -146,8 +145,8 @@ recipes = []
 #    recipe = drs_recipe()  [DEFINED ABOVE]
 #
 #    recipe.name            the full name of the python script file
-#    recipe.inputtype        the input directory [raw/tmp/reduced]
-#    recipe.outputtype       the output directory [raw/tmp/reduced]
+#    recipe.in_block_str        the input directory [raw/tmp/reduced]
+#    recipe.out_block_str       the output directory [raw/tmp/reduced]
 #    recipe.description     the description (for help file)
 #
 #    arguments:
@@ -180,14 +179,14 @@ cal_pp_master = DrsRecipe(__INSTRUMENT__)
 cal_pp_master.name = 'cal_pp_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_pp_master.shortname = 'PPM'
 cal_pp_master.instrument = __INSTRUMENT__
-cal_pp_master.inputtype = 'raw'
-cal_pp_master.outputtype = 'red'
+cal_pp_master.in_block_str = 'raw'
+cal_pp_master.out_block_str = 'red'
 cal_pp_master.extension = 'fits'
 cal_pp_master.description = textentry('PPMASTER_DESC')
 cal_pp_master.epilog = textentry('PPMASTER_EXAMPLE')
 cal_pp_master.kind = 'recipe'
 cal_pp_master.set_outputs(PP_MASTER=files.out_pp_master)
-cal_pp_master.set_arg(pos=0, **directory)
+cal_pp_master.set_arg(pos=0, **obs_dir)
 cal_pp_master.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
                         helpstr=textentry('PPMASTER_FILETYPE_HELP'))
 # add to recipe
@@ -200,14 +199,14 @@ cal_pp = DrsRecipe(__INSTRUMENT__)
 cal_pp.name = 'cal_preprocess_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_pp.shortname = 'PP'
 cal_pp.instrument = __INSTRUMENT__
-cal_pp.inputtype = 'raw'
-cal_pp.outputtype = 'tmp'
+cal_pp.in_block_str = 'raw'
+cal_pp.out_block_str = 'tmp'
 cal_pp.extension = 'fits'
 cal_pp.description = textentry('PREPROCESS_DESC')
 cal_pp.epilog = textentry('PREPROCESS_EXAMPLE')
 cal_pp.kind = 'recipe'
 cal_pp.set_outputs(PP_FILE=files.pp_file)
-cal_pp.set_arg(pos=0, **directory)
+cal_pp.set_arg(pos=0, **obs_dir)
 cal_pp.set_arg(name='files', dtype='files', pos='1+', files=[files.raw_file],
                helpstr=textentry('PREPROCESS_UFILES_HELP'), limit=1)
 cal_pp.set_kwarg(name='--skip', dtype='bool', default=False,
@@ -224,8 +223,8 @@ cal_badpix = DrsRecipe(__INSTRUMENT__)
 cal_badpix.name = 'cal_badpix_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_badpix.shortname = 'BAD'
 cal_badpix.instrument = __INSTRUMENT__
-cal_badpix.inputtype = 'tmp'
-cal_badpix.outputtype = 'red'
+cal_badpix.in_block_str = 'tmp'
+cal_badpix.out_block_str = 'red'
 cal_badpix.extension = 'fits'
 cal_badpix.description = textentry('BADPIX_DESC')
 cal_badpix.epilog = textentry('BADPIX_EXAMPLE')
@@ -233,7 +232,7 @@ cal_badpix.kind = 'recipe'
 cal_badpix.set_outputs(BADPIX=files.out_badpix, BACKMAP=files.out_backmap)
 cal_badpix.set_debug_plots('BADPIX_MAP')
 cal_badpix.set_summary_plots('SUM_BADPIX_MAP')
-cal_badpix.set_arg(pos=0, **directory)
+cal_badpix.set_arg(pos=0, **obs_dir)
 cal_badpix.set_kwarg(name='--flatfiles', dtype='files',
                      files=[files.pp_flat_flat],
                      filelogic='exclusive', required=True,
@@ -260,8 +259,8 @@ cal_dark = DrsRecipe(__INSTRUMENT__)
 cal_dark.name = 'cal_dark_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_dark.shortname = 'DARK'
 cal_dark.instrument = __INSTRUMENT__
-cal_dark.inputtype = 'tmp'
-cal_dark.outputtype = 'red'
+cal_dark.in_block_str = 'tmp'
+cal_dark.out_block_str = 'red'
 cal_dark.extension = 'fits'
 cal_dark.description = textentry('DARK_DESC')
 cal_dark.epilog = textentry('DARK_EXAMPLE')
@@ -271,7 +270,7 @@ cal_dark.set_outputs(DARK_INT_FILE=files.out_dark_int,
                      DARK_SKY_FILE=files.out_dark_sky)
 cal_dark.set_debug_plots('DARK_IMAGE_REGIONS', 'DARK_HISTOGRAM')
 cal_dark.set_summary_plots('SUM_DARK_IMAGE_REGIONS', 'SUM_DARK_HISTOGRAM')
-cal_dark.set_arg(pos=0, **directory)
+cal_dark.set_arg(pos=0, **obs_dir)
 cal_dark.set_arg(name='files', dtype='files',
                  files=[files.pp_dark_dark_int, files.pp_dark_dark_tel,
                         files.pp_dark_dark_sky],
@@ -293,8 +292,8 @@ cal_dark_master.name = 'cal_dark_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_dark_master.shortname = 'DARKM'
 cal_dark_master.master = True
 cal_dark_master.instrument = __INSTRUMENT__
-cal_dark_master.inputtype = 'tmp'
-cal_dark_master.outputtype = 'red'
+cal_dark_master.in_block_str = 'tmp'
+cal_dark_master.out_block_str = 'red'
 cal_dark_master.extension = 'fits'
 cal_dark_master.description = textentry('DARK_MASTER_DESC')
 cal_dark_master.epilog = textentry('DARK_MASTER_EXAMPLE')
@@ -317,8 +316,8 @@ cal_loc = DrsRecipe(__INSTRUMENT__)
 cal_loc.name = 'cal_loc_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_loc.shortname = 'LOC'
 cal_loc.instrument = __INSTRUMENT__
-cal_loc.inputtype = 'tmp'
-cal_loc.outputtype = 'red'
+cal_loc.in_block_str = 'tmp'
+cal_loc.out_block_str = 'red'
 cal_loc.extension = 'fits'
 cal_loc.description = textentry('LOC_DESC')
 cal_loc.epilog = textentry('LOC_EXAMPLE')
@@ -333,7 +332,7 @@ cal_loc.set_debug_plots('LOC_MINMAX_CENTS', 'LOC_MIN_CENTS_THRES',
                         'LOC_ORD_VS_RMS', 'LOC_CHECK_COEFFS',
                         'LOC_FIT_RESIDUALS')
 cal_loc.set_summary_plots('SUM_LOC_IM_THRES', 'SUM_LOC_IM_CORNER')
-cal_loc.set_arg(pos=0, **directory)
+cal_loc.set_arg(pos=0, **obs_dir)
 cal_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
                 files=[files.pp_dark_flat, files.pp_flat_dark], pos='1+',
                 helpstr=textentry('FILES_HELP') + textentry('LOC_FILES_HELP'))
@@ -361,8 +360,8 @@ cal_shape_master.name = 'cal_shape_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_shape_master.shortname = 'SHAPEM'
 cal_shape_master.master = True
 cal_shape_master.instrument = __INSTRUMENT__
-cal_shape_master.inputtype = 'tmp'
-cal_shape_master.outputtype = 'red'
+cal_shape_master.in_block_str = 'tmp'
+cal_shape_master.out_block_str = 'red'
 cal_shape_master.extension = 'fits'
 cal_shape_master.description = textentry('SHAPE_DESC')
 cal_shape_master.epilog = textentry('SHAPEMASTER_EXAMPLE')
@@ -377,7 +376,7 @@ cal_shape_master.set_outputs(FPMASTER_FILE=files.out_shape_fpmaster,
 cal_shape_master.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
                                  'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
 cal_shape_master.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
-cal_shape_master.set_arg(pos=0, **directory)
+cal_shape_master.set_arg(pos=0, **obs_dir)
 cal_shape_master.set_kwarg(name='--fpfiles', dtype='files',
                            files=[files.pp_fp_fp],
                            filelogic='exclusive', required=True,
@@ -409,8 +408,8 @@ cal_shape = DrsRecipe(__INSTRUMENT__)
 cal_shape.name = 'cal_shape_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_shape.shortname = 'SHAPE'
 cal_shape.instrument = __INSTRUMENT__
-cal_shape.inputtype = 'tmp'
-cal_shape.outputtype = 'red'
+cal_shape.in_block_str = 'tmp'
+cal_shape.out_block_str = 'red'
 cal_shape.extension = 'fits'
 cal_shape.description = textentry('SHAPE_DESC')
 cal_shape.epilog = textentry('SHAPE_EXAMPLE')
@@ -421,7 +420,7 @@ cal_shape.set_outputs(LOCAL_SHAPE_FILE=files.out_shape_local,
                       DEBUG_BACK=files.debug_back)
 cal_shape.set_debug_plots('SHAPEL_ZOOM_SHIFT', 'SHAPE_LINEAR_TPARAMS')
 cal_shape.set_summary_plots('SUM_SHAPEL_ZOOM_SHIFT')
-cal_shape.set_arg(pos=0, **directory)
+cal_shape.set_arg(pos=0, **obs_dir)
 cal_shape.set_arg(name='files', dtype='files', files=[files.pp_fp_fp], pos='1+',
                   helpstr=textentry('SHAPE_FPFILES_HELP'))
 cal_shape.set_kwarg(**add_db)
@@ -450,8 +449,8 @@ cal_ff = DrsRecipe(__INSTRUMENT__)
 cal_ff.name = 'cal_flat_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_ff.shortname = 'FF'
 cal_ff.instrument = __INSTRUMENT__
-cal_ff.inputtype = 'tmp'
-cal_ff.outputtype = 'red'
+cal_ff.in_block_str = 'tmp'
+cal_ff.out_block_str = 'red'
 cal_ff.extension = 'fits'
 cal_ff.description = textentry('FLAT_DESC')
 cal_ff.epilog = textentry('FLAT_EXAMPLE')
@@ -464,7 +463,7 @@ cal_ff.set_outputs(FLAT_FILE=files.out_ff_flat,
 cal_ff.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                        'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2')
 cal_ff.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES', 'SUM_FLAT_BLAZE_ORDER')
-cal_ff.set_arg(pos=0, **directory)
+cal_ff.set_arg(pos=0, **obs_dir)
 cal_ff.set_arg(name='files', dtype='files', filelogic='exclusive',
                files=[files.pp_flat_flat], pos='1+',
                helpstr=textentry('FILES_HELP') + textentry('FLAT_FILES_HELP'))
@@ -497,8 +496,8 @@ cal_thermal = DrsRecipe(__INSTRUMENT__)
 cal_thermal.name = 'cal_thermal_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_thermal.shortname = 'THERM'
 cal_thermal.instrument = __INSTRUMENT__
-cal_thermal.inputtype = 'tmp'
-cal_thermal.outputtype = 'red'
+cal_thermal.in_block_str = 'tmp'
+cal_thermal.out_block_str = 'red'
 cal_thermal.extension = 'fits'
 cal_thermal.description = textentry('EXTRACT_DESC')
 cal_thermal.epilog = textentry('EXTRACT_EXAMPLE')
@@ -507,7 +506,7 @@ cal_thermal.kind = 'recipe'
 cal_thermal.set_outputs(THERMAL_E2DS_FILE=files.out_ext_e2dsff,
                         THERMALI_FILE=files.out_thermal_e2ds_int,
                         THERMALT_FILE=files.out_thermal_e2ds_tel)
-cal_thermal.set_arg(pos=0, **directory)
+cal_thermal.set_arg(pos=0, **obs_dir)
 # TODO: Need to add files.pp_dark_dark_sky
 cal_thermal.set_arg(name='files', dtype='files', pos='1+',
                     files=[files.pp_dark_dark_int, files.pp_dark_dark_tel],
@@ -549,15 +548,15 @@ cal_leak_master.name = 'cal_leak_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_leak_master.shortname = 'LEAKM'
 cal_leak_master.master = True
 cal_leak_master.instrument = __INSTRUMENT__
-cal_leak_master.inputtype = 'tmp'
-cal_leak_master.outputtype = 'red'
+cal_leak_master.in_block_str = 'tmp'
+cal_leak_master.out_block_str = 'red'
 cal_leak_master.extension = 'fits'
 cal_leak_master.description = textentry('LEAKM_DESC')
 cal_leak_master.epilog = textentry('LEAKM_EXAMPLE')
 cal_leak_master.kind = 'recipe'
 cal_leak_master.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2dsff,
                             LEAK_MASTER=files.out_leak_master)
-cal_leak_master.set_arg(pos=0, **directory)
+cal_leak_master.set_arg(pos=0, **obs_dir)
 cal_leak_master.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
                           helpstr=textentry('LEAKM_HELP_FILETYPE'))
 cal_leak_master.set_kwarg(**add_db)
@@ -574,8 +573,8 @@ cal_leak = DrsRecipe(__INSTRUMENT__)
 cal_leak.name = 'cal_leak_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_leak.shortname = 'LEAK'
 cal_leak.instrument = __INSTRUMENT__
-cal_leak.inputtype = 'red'
-cal_leak.outputtype = 'red'
+cal_leak.in_block_str = 'red'
+cal_leak.out_block_str = 'red'
 cal_leak.extension = 'fits'
 cal_leak.description = textentry('LEAK_DESC')
 cal_leak.epilog = textentry('LEAK_EXAMPLE')
@@ -585,7 +584,7 @@ cal_leak.set_outputs(E2DS_FILE=files.out_ext_e2ds,
                      E2DSLL_FILE=files.out_ext_e2dsll,
                      S1D_W_FILE=files.out_ext_s1d_w,
                      S1D_V_FILE=files.out_ext_s1d_v)
-cal_leak.set_arg(pos=0, **directory)
+cal_leak.set_arg(pos=0, **obs_dir)
 cal_leak.set_arg(name='files', dtype='files', pos='1+',
                  files=[files.out_ext_e2dsff],
                  helpstr=textentry('FILES_HELP') + textentry('LEAK_FILES_HELP'),
@@ -607,8 +606,8 @@ cal_extract = DrsRecipe(__INSTRUMENT__)
 cal_extract.name = 'cal_extract_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_extract.shortname = 'EXT'
 cal_extract.instrument = __INSTRUMENT__
-cal_extract.inputtype = 'tmp'
-cal_extract.outputtype = 'red'
+cal_extract.in_block_str = 'tmp'
+cal_extract.out_block_str = 'red'
 cal_extract.extension = 'fits'
 cal_extract.description = textentry('EXTRACT_DESC')
 cal_extract.epilog = textentry('EXTRACT_EXAMPLE')
@@ -630,7 +629,7 @@ cal_extract.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                             'EXTRACT_S1D_WEIGHT')
 cal_extract.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES',
                               'SUM_EXTRACT_SP_ORDER', 'SUM_EXTRACT_S1D')
-cal_extract.set_arg(pos=0, **directory)
+cal_extract.set_arg(pos=0, **obs_dir)
 cal_extract.set_arg(name='files', dtype='files', pos='1+',
                     files=[files.pp_file],
                     helpstr=(textentry('FILES_HELP') +
@@ -676,8 +675,8 @@ cal_wave_master = DrsRecipe(__INSTRUMENT__)
 cal_wave_master.name = 'cal_wave_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_wave_master.shortname = 'WAVEM'
 cal_wave_master.instrument = __INSTRUMENT__
-cal_wave_master.inputtype = 'tmp'
-cal_wave_master.outputtype = 'red'
+cal_wave_master.in_block_str = 'tmp'
+cal_wave_master.out_block_str = 'red'
 cal_wave_master.extension = 'fits'
 cal_wave_master.description = textentry('WAVE_DESC')
 cal_wave_master.epilog = textentry('WAVE_EXAMPLE')
@@ -713,7 +712,7 @@ cal_wave_master.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
                                   'SUM_CCF_RV_FIT', 'SUM_WAVE_FIBER_COMP',
                                   'SUM_WAVENIGHT_ITERPLOT',
                                   'SUM_WAVENIGHT_HISTPLOT', )
-cal_wave_master.set_arg(pos=0, **directory)
+cal_wave_master.set_arg(pos=0, **obs_dir)
 cal_wave_master.set_kwarg(name='--hcfiles', dtype='files',
                           files=[files.pp_hc1_hc1],
                           filelogic='exclusive', required=True,
@@ -762,8 +761,8 @@ cal_wave_night = DrsRecipe(__INSTRUMENT__)
 cal_wave_night.name = 'cal_wave_night_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_wave_night.shortname = 'WAVE'
 cal_wave_night.instrument = __INSTRUMENT__
-cal_wave_night.inputtype = 'tmp'
-cal_wave_night.outputtype = 'red'
+cal_wave_night.in_block_str = 'tmp'
+cal_wave_night.out_block_str = 'red'
 cal_wave_night.extension = 'fits'
 cal_wave_night.description = textentry('WAVE_DESC')
 cal_wave_night.epilog = textentry('WAVE_EXAMPLE')
@@ -780,7 +779,7 @@ cal_wave_night.set_debug_plots('WAVENIGHT_ITERPLOT', 'WAVENIGHT_HISTPLOT',
 cal_wave_night.set_summary_plots('SUM_WAVENIGHT_ITERPLOT',
                                  'SUM_WAVENIGHT_HISTPLOT',
                                  'SUM_CCF_RV_FIT')
-cal_wave_night.set_arg(pos=0, **directory)
+cal_wave_night.set_arg(pos=0, **obs_dir)
 cal_wave_night.set_kwarg(name='--hcfiles', dtype='files',
                          files=[files.pp_hc1_hc1],
                          filelogic='exclusive', required=True,
@@ -823,8 +822,8 @@ cal_ccf = DrsRecipe(__INSTRUMENT__)
 cal_ccf.name = 'cal_ccf_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_ccf.shortname = 'CCF'
 cal_ccf.instrument = __INSTRUMENT__
-cal_ccf.inputtype = 'red'
-cal_ccf.outputtype = 'red'
+cal_ccf.in_block_str = 'red'
+cal_ccf.out_block_str = 'red'
 cal_ccf.extension = 'fits'
 cal_ccf.description = textentry('CCF_DESC')
 cal_ccf.epilog = textentry('CCF_EXAMPLE')
@@ -833,7 +832,7 @@ cal_ccf.set_outputs(CCF_RV=files.out_ccf_fits)
 cal_ccf.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP', 'CCF_SWAVE_REF',
                         'CCF_PHOTON_UNCERT')
 cal_ccf.set_summary_plots('SUM_CCF_PHOTON_UNCERT', 'SUM_CCF_RV_FIT')
-cal_ccf.set_arg(pos=0, **directory)
+cal_ccf.set_arg(pos=0, **obs_dir)
 cal_ccf.set_arg(name='files', dtype='files', pos='1+',
                 files=[files.out_ext_e2ds, files.out_ext_e2dsff,
                        files.out_tellu_obj], filelogic='exclusive',
@@ -867,8 +866,8 @@ obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu.name = 'obj_mk_tellu_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_mk_tellu.shortname = 'MKTELL'
 obj_mk_tellu.instrument = __INSTRUMENT__
-obj_mk_tellu.inputtype = 'red'
-obj_mk_tellu.outputtype = 'red'
+obj_mk_tellu.in_block_str = 'red'
+obj_mk_tellu.out_block_str = 'red'
 obj_mk_tellu.extension = 'fits'
 obj_mk_tellu.description = textentry('MKTELL_DESC')
 obj_mk_tellu.epilog = textentry('MKTELL_EXAMPLE')
@@ -880,7 +879,7 @@ obj_mk_tellu.set_debug_plots('MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2',
                              'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC')
 obj_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX',
                                'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
-obj_mk_tellu.set_arg(pos=0, **directory)
+obj_mk_tellu.set_arg(pos=0, **obs_dir)
 obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                      files=[files.out_ext_e2ds, files.out_ext_e2dsff],
                      filelogic='exclusive',
@@ -909,8 +908,8 @@ obj_mk_tellu_db.name = 'obj_mk_tellu_db_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_mk_tellu_db.shortname = 'MKTELLDB'
 obj_mk_tellu_db.master = False
 obj_mk_tellu_db.instrument = __INSTRUMENT__
-obj_mk_tellu_db.inputtype = 'red'
-obj_mk_tellu_db.outputtype = 'red'
+obj_mk_tellu_db.in_block_str = 'red'
+obj_mk_tellu_db.out_block_str = 'red'
 obj_mk_tellu_db.extension = 'fits'
 obj_mk_tellu_db.kind = 'recipe'
 obj_mk_tellu_db.description = textentry('MKTELLDB_DESC')
@@ -945,8 +944,8 @@ obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu.name = 'obj_fit_tellu_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_fit_tellu.shortname = 'FTELLU'
 obj_fit_tellu.instrument = __INSTRUMENT__
-obj_fit_tellu.inputtype = 'red'
-obj_fit_tellu.outputtype = 'red'
+obj_fit_tellu.in_block_str = 'red'
+obj_fit_tellu.out_block_str = 'red'
 obj_fit_tellu.extension = 'fits'
 obj_fit_tellu.description = textentry('FTELLU_DESC')
 obj_fit_tellu.epilog = textentry('FTELLU_EXAMPLE')
@@ -968,7 +967,7 @@ obj_fit_tellu.set_debug_plots('EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT',
                               'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC')
 obj_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO',
                                 'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
-obj_fit_tellu.set_arg(pos=0, **directory)
+obj_fit_tellu.set_arg(pos=0, **obs_dir)
 obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       files=[files.out_ext_e2ds, files.out_ext_e2dsff],
                       filelogic='exclusive',
@@ -997,8 +996,8 @@ obj_fit_tellu_db.name = 'obj_fit_tellu_db_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_fit_tellu_db.shortname = 'FTELLDB'
 obj_fit_tellu_db.master = False
 obj_fit_tellu_db.instrument = __INSTRUMENT__
-obj_fit_tellu_db.inputtype = 'red'
-obj_fit_tellu_db.outputtype = 'red'
+obj_fit_tellu_db.in_block_str = 'red'
+obj_fit_tellu_db.out_block_str = 'red'
 obj_fit_tellu_db.extension = 'fits'
 obj_fit_tellu_db.description = textentry('FTELLUDB_DESC')
 obj_fit_tellu_db.epilog = textentry('FTELLUDB_EXAMPLE')
@@ -1036,8 +1035,8 @@ obj_mk_template = DrsRecipe(__INSTRUMENT__)
 obj_mk_template.name = 'obj_mk_template_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_mk_template.shortname = 'MKTEMP'
 obj_mk_template.instrument = __INSTRUMENT__
-obj_mk_template.inputtype = 'red'
-obj_mk_template.outputtype = 'red'
+obj_mk_template.in_block_str = 'red'
+obj_mk_template.out_block_str = 'red'
 obj_mk_template.extension = 'fits'
 obj_mk_template.description = textentry('MKTEMP_DESC')
 obj_mk_template.epilog = textentry('MKTEMP_EXAMPLE')
@@ -1075,13 +1074,13 @@ obj_spec = DrsRecipe(__INSTRUMENT__)
 obj_spec.name = 'obj_spec_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_spec.shortname = 'OBJ_SPEC'
 obj_spec.instrument = __INSTRUMENT__
-obj_spec.inputtype = 'red'
-obj_spec.outputtype = 'red'
+obj_spec.in_block_str = 'red'
+obj_spec.out_block_str = 'red'
 obj_spec.extension = 'fits'
 obj_spec.description = ''
 obj_spec.epilog = ''
 obj_spec.kind = 'recipe'
-obj_spec.set_arg(pos=0, **directory)
+obj_spec.set_arg(pos=0, **obs_dir)
 obj_spec.set_arg(name='files', dtype='files', pos='1+',
                  files=[files.pp_file],
                  helpstr=(textentry('FILES_HELP')
@@ -1102,8 +1101,8 @@ out_recipe = DrsRecipe(__INSTRUMENT__)
 out_recipe.name = 'out_postprocess_{0}.py'.format(INSTRUMENT_ALIAS)
 out_recipe.shortname = 'POST'
 out_recipe.instrument = __INSTRUMENT__
-out_recipe.inputtype = 'red'
-out_recipe.outputtype = 'out'
+out_recipe.in_block_str = 'red'
+out_recipe.out_block_str = 'out'
 out_recipe.extension = 'fits'
 out_recipe.description = textentry('OUT_DESC_HELP')
 out_recipe.epilog = ''

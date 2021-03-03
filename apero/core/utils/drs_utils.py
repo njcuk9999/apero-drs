@@ -85,7 +85,7 @@ class RecipeLog:
         self.name = str(name)
         self.sname = str(sname)
         # the kind of recipe ("recipe", "tool", "processing") from recipe.kind
-        self.kind = str(params['DRS_RECIPE_KIND'])
+        self.block_kind = str(params['DRS_RECIPE_KIND'])
         self.rtype = 'None'
         # the default logging absolute path
         self.defaultpath = str(params['DRS_DATA_MSG_FULL'])
@@ -188,13 +188,13 @@ class RecipeLog:
         # copy parameters
         self.name = str(rlog.name)
         self.sname = str(rlog.sname)
-        self.kind = str(rlog.kind)
+        self.block_kind = str(rlog.block_kind)
         self.rtype = str(rlog.rtype)
         self.pid = str(rlog.pid)
         self.htime = str(rlog.htime)
         self.utime = str(rlog.utime)
         self.group = str(rlog.group)
-        self.directory = str(rlog.directory)
+        self.obs_dir = str(rlog.obs_dir)
         self.defaultpath = str(rlog.defaultpath)
         self.inputdir = str(rlog.inputdir)
         self.outputdir = str(rlog.outputdir)
@@ -422,7 +422,8 @@ class RecipeLog:
 
             # add entries
             self.logdbm.add_entries(recipe=inst.name, sname=inst.sname,
-                                    rkind=inst.kind, rtype=inst.rtype,
+                                    block_kind=inst.block_kind,
+                                    rtype=inst.rtype,
                                     pid=inst.pid, htime=inst.htime,
                                     unixtime=utime, group=inst.group,
                                     level=inst.level,
@@ -430,7 +431,7 @@ class RecipeLog:
                                     levelcrit=inst.level_criteria,
                                     inpath=inst.inputdir,
                                     outpath=inst.outputdir,
-                                    directory=inst.directory,
+                                    obs_dir=inst.obs_dir,
                                     logfile=inst.log_file,
                                     plotdir=inst.plot_dir,
                                     runstring=inst.runstring,
@@ -457,7 +458,7 @@ class RecipeLog:
         # set rows
         row = OrderedDict()
         row['RECIPE'] = self.name
-        row['KIND'] = self.kind
+        row['BLOCK_KIND'] = self.block_kind
         row['RTYPE'] = self.rtype
         row['PID'] = self.pid
         row['HTIME'] = self.htime
@@ -467,7 +468,7 @@ class RecipeLog:
         row['LEVEL_CRIT'] = self.level_criteria
         row['INPATH'] = self.inputdir
         row['OUTPATH'] = self.outputdir
-        row['DIRNAME'] = self.directory
+        row['OBS_DIR'] = self.obs_dir
         row['LOGFILE'] = self.log_file
         row['PLOTDIR'] = self.plot_dir
         row['RUNSTRING'] = self.runstring
@@ -521,7 +522,7 @@ class RecipeLog:
 FileType = Union[List[Path], Path, List[str], str, None]
 
 
-def update_index_db(params: ParamDict, kind: str,
+def update_index_db(params: ParamDict, block_kind: str,
                     includelist: Union[List[str], None] = None,
                     excludelist: Union[List[str], None] = None,
                     filename: FileType = None,
@@ -543,22 +544,23 @@ def update_index_db(params: ParamDict, kind: str,
     indexdbm.load_db()
     # get white
     # update index database with raw files
-    indexdbm.update_entries(block_kind=kind, exclude_directories=exclude_dirs,
+    indexdbm.update_entries(block_kind=block_kind,
+                            exclude_directories=exclude_dirs,
                             include_directories=include_dirs,
                             filename=filename, suffix=suffix)
     # return the database
     return indexdbm
 
 
-def find_files(params: ParamDict, kind: str, filters: Dict[str, str],
+def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
                columns='ABSPATH', indexdbm: Union[IndexDatabase, None] = None
                ) -> Union[np.ndarray, pd.DataFrame]:
     # update database
-    indexdbm = update_index_db(params, kind=kind, indexdbm=indexdbm)
+    indexdbm = update_index_db(params, block_kind=block_kind, indexdbm=indexdbm)
     # get columns
     colnames = indexdbm.database.colnames('*', table=indexdbm.database.tname)
     # get file list using filters
-    condition = 'BLOCK_KIND="{0}"'.format(kind)
+    condition = 'BLOCK_KIND="{0}"'.format(block_kind)
     # loop around filters
     for fkey in filters:
         if fkey in colnames:
@@ -576,7 +578,8 @@ def find_files(params: ParamDict, kind: str, filters: Dict[str, str],
             # add subconditions to condition
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
     # get columns for this condition
-    return indexdbm.get_entries(columns, kind=kind, condition=condition)
+    return indexdbm.get_entries(columns, block_kind=block_kind,
+                                condition=condition)
 
 
 # =============================================================================

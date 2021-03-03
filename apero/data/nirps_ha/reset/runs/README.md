@@ -27,7 +27,7 @@ By default it processes every night and every file that can be found in the `{DR
 One can turn on specific nights to process in several ways 
 (a) setting the `NIGHT_NAME` in the selected `{RUN_FILE}`
 (b) adding a night to the `EXCLUDE_OBS_DIRS` (exclude list = reject) or `INCLUDE_OBS_DIRS` (include list = keep)
-(c) adding an extra argument to `apero_processing.py` (`--nightname`, `--bnightnames`, `--wnightnames`) 
+(c) adding an extra argument to `apero_processing.py` (`--obs_dir`, `--exclude_obs_dirs`, `--inculde_obs_dirs`) 
 
 One can also just process a single file by adding an extra argument to `apero_processing.py` (`--filename`)
 

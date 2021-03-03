@@ -47,7 +47,7 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(directory=None, flatfiles=None, darkfiles=None, **kwargs):
+def main(obs_dir=None, flatfiles=None, darkfiles=None, **kwargs):
     """
     Main function for cal_badpix_spirou.py
 
@@ -66,7 +66,7 @@ def main(directory=None, flatfiles=None, darkfiles=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, flatfiles=flatfiles,
+    fkwargs = dict(obs_dir=obs_dir, flatfiles=flatfiles,
                    darkfiles=darkfiles, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs

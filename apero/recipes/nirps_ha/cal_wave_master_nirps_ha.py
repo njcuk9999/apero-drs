@@ -52,16 +52,16 @@ EXTRACT_NAME = 'cal_extract_nirps_ha.py'
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(directory=None, hcfiles=None, fpfiles=None, **kwargs):
+def main(obs_dir=None, hcfiles=None, fpfiles=None, **kwargs):
     """
     Main function for cal_wave_master_spirou.py
 
-    :param directory: string, the night name sub-directory
+    :param obs_dir: string, the night name sub-directory
     :param hcfiles: list of strings or string, the list of hc files
     :param fpfiles: list of strings or string, the list of fp files
     :param kwargs: any additional keywords
 
-    :type directory: str
+    :type obs_dir: str
     :type hcfiles: list[str]
     :type fpfiles: list[str]
 
@@ -72,8 +72,7 @@ def main(directory=None, hcfiles=None, fpfiles=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, hcfiles=hcfiles, fpfiles=fpfiles,
-                   **kwargs)
+    fkwargs = dict(obs_dir=obs_dir, hcfiles=hcfiles, fpfiles=fpfiles, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
