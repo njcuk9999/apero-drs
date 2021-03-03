@@ -258,22 +258,34 @@ def extract_files(params, recipe, infile, outfile, always_extract,
             llout = dict()
             llout['params'] = dict()
             llout['params']['LOGGER_ERROR'] = [['', str(e)]]
-            llout['params']['LOGGER_ERROR'] = [[]]
+            llout['params']['LOGGER_WARNING'] = [[]]
+            llout['success'] = False
+            llout['passed'] = False
+        except SystemExit as e:
+            llout = dict()
+            llout['params'] = dict()
+            llout['params']['LOGGER_ERROR'] = [['', str(e)]]
+            llout['params']['LOGGER_WARNING'] = [[]]
             llout['success'] = False
             llout['passed'] = False
         # pipe errors and warnings
         for error in llout['params']['LOGGER_ERROR']:
-            # error should show it was from extraction recipe
-            errormsg = '[FROM {0}] '.format(extrecipe.name.upper())
-            errormsg += error[1]
-            # append to logger error storage for this PID
-            WLOG.logger_storage(params, 'error', ttime=error[0], mess=errormsg)
+            # make sure we have an error listed
+            if len(error) > 0:
+                # error should show it was from extraction recipe
+                errormsg = '[FROM {0}] '.format(extrecipe.name.upper())
+                errormsg += error[1]
+                # append to logger error storage for this PID
+                WLOG.logger_storage(params, 'error', ttime=error[0],
+                                    mess=errormsg)
         for warn in llout['params']['LOGGER_WARNING']:
-            # warning should show it was from extraction recipe
-            warnmsg = '[FROM {0}] '.format(extrecipe.name.upper())
-            warnmsg += warn[1]
-            # append to logger warning storage for this PID
-            WLOG.logger_storage(params, 'warning', ttime=warn[0], mess=warnmsg)
+            # make sure we have an warning listed
+            if len(warn) > 0:
+                # warning should show it was from extraction recipe
+                warnmsg = '[FROM {0}] '.format(extrecipe.name.upper())
+                warnmsg += warn[1]
+                # append to logger warning storage for this PID
+                WLOG.logger_storage(params, 'warning', ttime=warn[0], mess=warnmsg)
         # check success
         if not llout['success']:
             eargs = [recipe.name, func_name]

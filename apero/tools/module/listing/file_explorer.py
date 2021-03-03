@@ -882,7 +882,7 @@ class LoadData:
             storage['SOURCE'] += [outdir] * len(data)
 
         # deal with having a night name column (source column)
-        nightcols = ['NIGHTNAME', '__NIGHTNAME']
+        nightcols = ['OBS_DIR', '__NIGHTNAME']
         for nightcol in nightcols:
             if nightcol in storage:
                 storage['SOURCE'] = np.array(storage[nightcol])

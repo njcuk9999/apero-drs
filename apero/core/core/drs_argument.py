@@ -348,7 +348,10 @@ class DrsAction(argparse.Action):
         raise NotImplementedError('{0} not defined'.format(func_name))
 
 
-class _CheckDirectory(DrsAction):
+class _CheckObsDir(DrsAction):
+    # set the class name
+    class_name: str = '_CheckObsDir'
+
     def __init__(self, *args, **kwargs):
         """
         Construct the Check Directory action (for checking a directory argument)
@@ -356,8 +359,6 @@ class _CheckDirectory(DrsAction):
         :param args: arguments passed to argparse.Action.__init__
         :param kwargs: keyword arguments passed to argparse.Action.__init__
         """
-        # set the class name
-        self.class_name = '_CheckDirectory'
         # set function name (cannot break here --> no access to inputs)
         _ = display_func('__init__', __NAME__, self.class_name)
         # set the recipe and parser to None
@@ -391,9 +392,9 @@ class _CheckDirectory(DrsAction):
         String representation of this class
         :return:
         """
-        return '_CheckDirectory[DrsAction]'
+        return '{0}[DrsAction]'.format(self.class_name)
 
-    def _check_directory(self, value: Any) -> str:
+    def _check_obs_dir(self, value: Any) -> drs_file.DrsPath:
         """
         Check the value of the directory is valid - raise exception if not
         valid, else return the value
@@ -405,8 +406,7 @@ class _CheckDirectory(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_check_directory', __NAME__,
-                         self.class_name)
+        _ = display_func('_check_obs_dir', __NAME__, self.class_name)
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -416,14 +416,13 @@ class _CheckDirectory(DrsAction):
         argname = self.dest
         # get the params from recipe
         params = self.recipe.params
-        # debug checking output
+        # debug checking output (with new line)
         if params['DRS_DEBUG'] > 0:
             print('')
         WLOG(params, 'debug', textentry('90-001-00018', args=[argname]))
         # check whether we have a valid directory
-        directory = valid_directory(params, self.indexdb, argname, value,
-                                    kind=self.recipe.inputtype,
-                                    forced_dir=self.recipe.inputdir)
+        directory = valid_obs_dir(params, self.indexdb, argname, value,
+                                  block_kind=self.recipe.inputtype)
         # if we have found directory return directory
         return directory
 
@@ -452,11 +451,13 @@ class _CheckDirectory(DrsAction):
         # noinspection PyProtectedMember
         parser._has_special()
         if type(values) == list:
-            value = list(map(self._check_directory, values))[0]
+            value = list(map(self._check_obs_dir, values))[0]
         else:
-            value = self._check_directory(values)
+            value = self._check_obs_dir(values)
+        # set the recipe directory
+        self.recipe.obs_dir = value.copy()
         # Add the attribute
-        setattr(namespace, self.dest, value)
+        setattr(namespace, self.dest, value.abspath)
 
 
 class _CheckFiles(DrsAction):
@@ -540,11 +541,14 @@ class _CheckFiles(DrsAction):
         if not self.recipe.input_validation:
             return values, [None] * len(values)
         # ---------------------------------------------------------------------
-        # check if "directory" is in namespace
-        if self.directory is not None:
-            directory = self.directory
+        # get observation directory
+        if self.recipe.obs_dir is not None:
+            obs_dir = self.recipe.obs_dir
+        elif self.directory is not None:
+            obs_dir = drs_file.DrsPath(self.recipe.params, self.directory)
         else:
-            directory = getattr(self.namespace, 'directory', '')
+            dirname = getattr(self.namespace, 'obs_dir', '')
+            obs_dir = drs_file.DrsPath(self.recipe.params, dirname)
         # get the argument name
         argname = self.dest
         # get the params from recipe
@@ -554,16 +558,14 @@ class _CheckFiles(DrsAction):
         # get recipe args and kwargs
         rargs = self.recipe.args
         rkwargs = self.recipe.kwargs
-        input_type = self.recipe.inputtype
-        input_dir = self.recipe.inputdir
         # ---------------------------------------------------------------------
         # storage of files and types
         files, types = [], []
         # loop around files
         for _value in values:
             # get the filename if valid (else crash)
-            out = valid_file(params, self.indexdb, input_type, argname, _value,
-                             rargs, rkwargs, directory, types, input_dir)
+            out = valid_file(params, self.indexdb, argname, _value,
+                             rargs, rkwargs, obs_dir, types)
             # append to storage
             files += out[0]
             types += out[1]
@@ -1148,18 +1150,18 @@ class _MakeListing(DrsAction):
                          self.class_name)
         # get input dir
         # noinspection PyProtectedMember
-        input_dir = self.recipe.get_input_dir()
-        # check if "directory" is in namespace
-        directory = getattr(namespace, 'directory', None)
+        input_dir = self.recipe.input_block.abspath
+        # check if "obs_dir" is in namespace
+        obs_dir = getattr(namespace, 'obs_dir', None)
         # deal with non set directory
-        if directory is None:
+        if obs_dir is None:
             # path is just the input directory
             fulldir = input_dir
             # whether to list only directories
             dircond = True
         else:
             # create full dir path
-            fulldir = os.path.join(input_dir, directory)
+            fulldir = os.path.join(input_dir, obs_dir)
             # whether to list only directories
             dircond = False
         # ---------------------------------------------------------------------
@@ -1267,18 +1269,18 @@ class _MakeAllListing(DrsAction):
                          self.class_name)
         # get input dir
         # noinspection PyProtectedMember
-        input_dir = self.recipe.get_input_dir()
+        input_dir = self.recipe.input_block.abspath
         # check if "directory" is in namespace
-        directory = getattr(namespace, 'directory', None)
+        obs_dir = getattr(namespace, 'obs_dir', None)
         # deal with non set directory
-        if directory is None:
+        if obs_dir is None:
             # path is just the input directory
             fulldir = input_dir
             # whether to list only directories
             dircond = True
         else:
             # create full dir path
-            fulldir = os.path.join(input_dir, directory)
+            fulldir = os.path.join(input_dir, obs_dir)
             # whether to list only directories
             dircond = False
         # ---------------------------------------------------------------------
@@ -2646,11 +2648,11 @@ class DrsArgument(object):
             self.props['nargs'] = 1
             self.props['type'] = str
             self.options = ['FILENAME']
-        elif self.dtype == 'directory':
-            self.props['action'] = _CheckDirectory
+        elif self.dtype == 'obsdir':
+            self.props['action'] = _CheckObsDir
             self.props['nargs'] = 1
             self.props['type'] = str
-            self.options = ['DIRECTORY']
+            self.options = ['OBS_DIR']
         elif self.dtype == 'bool':
             self.props['action'] = _CheckBool
             self.props['type'] = str
@@ -2838,11 +2840,11 @@ class DrsArgument(object):
 # =============================================================================
 # Check functions
 # =============================================================================
-def valid_directory(params: ParamDict, indexdb: IndexDatabase,
-                    argname: str, directory: Any, kind: str,
-                    forced_dir: Union[str, None] = None) -> str:
+def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
+                  argname: str, input_value: Any,
+                  block_kind: str) -> drs_file.DrsPath:
     """
-    Find out whether we have a valid directory
+    Find out whether we have a valid obs directory
 
     :param params: ParamDict, the parameter dictionary of constants
     :param indexdb: IndexDatabase, the index database instance
@@ -2861,20 +2863,19 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
     # set function name
     func_name = display_func('valid_directory', __NAME__)
 
-    # get input directory
-    input_dir, kind = drs_file.get_dir(params, kind, dirpath=forced_dir)
+    # get block directory
+    block_inst = drs_file.DrsPath(params, block_kind=block_kind)
 
     # -------------------------------------------------------------------------
     # 1. check directory is a valid string
     # -------------------------------------------------------------------------
     try:
-        directory = str(directory)
+        input_value = str(input_value)
     except Exception as _:
-        eargs = [argname, directory, type(directory)]
+        eargs = [argname, input_value, type(input_value)]
         WLOG(params, 'error', textentry('09-001-00003', args=eargs))
-
     # clean up
-    directory = directory.strip()
+    input_value = input_value.strip()
 
     # -------------------------------------------------------------------------
     # deal with database
@@ -2887,55 +2888,57 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
         # try to load database
         indexdb.load_db()
     # update database with entries
-    indexdb.update_entries(kind=kind, force_dir=forced_dir)
+    indexdb.update_entries(block_kind=block_inst.block_kind)
     # assert database is in indexdb
     assert isinstance(indexdb.database, drs_db.Database)
     # set up condition
-    condition = 'KIND="{0}"'.format(kind)
+    condition = 'BLOCK_KIND="{0}"'.format(block_inst.block_kind)
     # load directory names
-    directories = indexdb.database.unique('DIRNAME', condition=condition,
-                                          table=indexdb.database.tname)
+    obs_dirs = indexdb.database.unique('OBS_DIR', condition=condition,
+                                       table=indexdb.database.tname)
 
     # -------------------------------------------------------------------------
     # 2. check for directory in database
     # -------------------------------------------------------------------------
     # may need to remove input_path from directory
-    if input_dir in directory:
+    if block_inst.block_path in input_value:
         # remove input dir from directory
-        directory = directory.split(input_dir)[-1]
+        input_value = input_value.split(block_inst.block_path)[-1]
         # remove os separator from directory (at start)
-        while directory.startswith(os.sep):
-            directory = directory[len(os.sep):]
+        while input_value.startswith(os.sep):
+            input_value = input_value[len(os.sep):]
 
     # return if found
-    if directory in directories:
+    if input_value in obs_dirs:
+        # copy drs path
+        obs_dir = drs_file.DrsPath(params, block_path=block_inst.block_path,
+                                   block_kind=block_inst.block_kind,
+                                   obs_dir=input_value)
         # need full path of directory
-        return os.path.realpath(os.path.join(input_dir, directory))
+        return obs_dir
 
     # -------------------------------------------------------------------------
     # 3. directory is not correct - raise error
     # -------------------------------------------------------------------------
-    abspath = indexdb.deal_with_filename(kind=kind, force_dir=forced_dir)
-    eargs = [argname, directory, str(abspath)]
+    abspath = os.path.join(block_inst.block_path, input_value)
+    eargs = [argname, input_value, input_value, str(abspath)]
     WLOG(params, 'error', textentry('09-001-00004', args=eargs))
 
 
-def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
+def valid_file(params: ParamDict, indexdb: IndexDatabase,
                argname: str, filename: str, rargs: Dict[str, DrsArgument],
-               rkwargs: Dict[str, DrsArgument], directory,
-               types: List[DrsInputFile],
-               forced_dir: Union[str, None] = None) -> ValidFileType:
+               rkwargs: Dict[str, DrsArgument], obs_dir: drs_file.DrsPath,
+               types: List[DrsInputFile]) -> ValidFileType:
     """
     Test for whether a file is valid
 
     :param params: ParamDict - parameter dictionary of constants
     :param indexdb: IndexDatabase instance, the index database
-    :param kind: str, the input directory kind: 'raw', 'tmp', 'red'
     :param argname: str, the name of the argument we are testing
     :param filename: string, the filename to test
     :param rargs: dictionary of DrsArguments - the positional arguments
     :param rkwargs: dictionary of DrsArguments - the optional arguments
-    :param directory: str, the directory for this recipe run
+    :param obs_dir: DrsPath instance, the observation directory instance
     :param types: List[DrsInputFile] - the drs file types for all files
                   currently found
     :param forced_dir: str, if set the path to use for files, else uses
@@ -2949,7 +2952,7 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
     # get the drs logic
     drs_logic = arg.filelogic
     # deal with arg.path set
-    directory = _check_arg_path(params, arg, directory)
+    obs_dir = _check_arg_path(params, arg, obs_dir)
     # ---------------------------------------------------------------------
     # Step 1: Check filename is a valid string
     # ---------------------------------------------------------------------
@@ -2971,11 +2974,11 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
         # try to load database
         indexdb.load_db()
     # update database with entries
-    indexdb.update_entries(kind=kind, force_dir=forced_dir)
+    indexdb.update_entries(block_kind=obs_dir.block_kind)
     # assert database is in indexdb
     assert isinstance(indexdb.database, drs_db.Database)
     # set up condition
-    condition = 'KIND="{0}"'.format(kind)
+    condition = 'BLOCK_KIND="{0}"'.format(obs_dir.block_kind)
     # deal with wildcards
     if '*' in filename:
         # make filename sql-like
@@ -2993,9 +2996,9 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
     # count number of paths that meet this condition
     if indexdb.database.count(indexdb.database.tname, condition=condition1) > 0:
         # now check fits keys (or pass if not fits)
-        filenames, filetypes = _check_fits_keys(params, drsfiles, indexdb,
-                                                condition1, argname, kind,
-                                                directory, forced_dir)
+        filenames, filetypes = _fits_database_query(params, drsfiles, indexdb,
+                                                    condition1, argname,
+                                                    obs_dir)
         # now check drs logic [if exclusive must be same file type]
         _check_file_logic(params, argname, drs_logic, filetypes, types)
         # return filename and filetype
@@ -3004,16 +3007,19 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
     # ---------------------------------------------------------------------
     # Step 3: Check whether directory + filename is in database
     # ---------------------------------------------------------------------
+    # get file instance
+    file_inst = obs_dir.copy()
+    file_inst.basename = filename
     # get absolute path
-    abspath = os.path.join(directory, filename)
+    abspath = file_inst.abspath
     # check for filename in paths
     condition1 = condition + 'AND ' + pathcond.format(abspath)
     # count number of paths that meet this condition
     if indexdb.database.count(indexdb.database.tname, condition=condition1) > 0:
         # now check fits keys (or pass if not fits)
-        filenames, filetypes = _check_fits_keys(params, drsfiles, indexdb,
-                                                condition1, argname, kind,
-                                                directory, forced_dir)
+        filenames, filetypes = _fits_database_query(params, drsfiles, indexdb,
+                                                    condition1, argname,
+                                                    file_inst)
         # now check drs logic [if exclusive must be same file type]
         _check_file_logic(params, argname, drs_logic, filetypes, types)
         # return filename and filetype
@@ -3027,18 +3033,20 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
     WLOG(params, 'error', textentry('09-001-00005', args=eargs))
 
 
-def _check_fits_keys(params: ParamDict, drsfiles: List[DrsInputFile],
-                     indexdb: IndexDatabase, condition: str,
-                     argname: str, kind: str, directory: str,
-                     forced_dir: Union[str, None] = None
-                     ) -> Tuple[List[str], List[DrsInputFile]]:
+def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
+                         indexdb: IndexDatabase, condition: str,
+                         argname: str, obs_dir: drs_file.DrsPath,
+                         ) -> Tuple[List[str], List[DrsInputFile]]:
     """
+    Check that a fits file is in the database and matches the header keys
+    and return the filenames and file types that match input query
 
-    :param params:
-    :param drsfiles:
-    :param indexdb:
-    :param condition:
-    :param forced_dir:
+    :param params: ParamDict, parameter dictionary of constants
+    :param drsfiles: list of drs files allowed (adds to fits header conditions)
+    :param indexdb: index database, the database to check against
+    :param condition: str, the conditions to add to the database query
+    :param argname: str, the argument name (required for error repoting)
+    :param direcory: str, the aboslute path to the observation sub directory
     :return:
     """
     # set function name
@@ -3066,8 +3074,6 @@ def _check_fits_keys(params: ParamDict, drsfiles: List[DrsInputFile],
         # ---------------------------------------------------------------------
         # get filename
         filename_it = table['ABSPATH'].iloc[row]
-        # make instance of the DrsFile
-        input_dir, kind = drs_file.get_dir(params, kind, dirpath=forced_dir)
         # ---------------------------------------------------------------------
         # find file in possible file types
         # ---------------------------------------------------------------------
@@ -3083,8 +3089,8 @@ def _check_fits_keys(params: ParamDict, drsfiles: List[DrsInputFile],
             # create an instance of this drs_file with the filename set
             file_in = drsfile.newcopy(filename=filename_it, params=params)
             file_in.get_header()
-            # set the directory
-            file_in.directory = drs_misc.get_uncommon_path(directory, input_dir)
+            # set the observation sub-directory
+            file_in.directory = obs_dir.obs_dir
             # -------------------------------------------------------------
             # Step 1: Check extension
             # -------------------------------------------------------------
@@ -3439,7 +3445,7 @@ def _get_arg(rargs: Dict[str, DrsArgument],
 
 
 def _check_arg_path(params: ParamDict, arg: DrsArgument,
-                    directory: str) -> str:
+                    obs_dir: drs_file.DrsPath) -> drs_file.DrsPath:
     """
     Check if an override path is set (via DrsArgument.path) if it isn't
     then we stick with "directory" as our path to the file
@@ -3447,35 +3453,19 @@ def _check_arg_path(params: ParamDict, arg: DrsArgument,
 
     :param params: Paramdict
     :param arg:
-    :param directory:
+    :param obs_dir:
     :return:
     """
     # set function name
     func_name = display_func('_check_arg_path', __NAME__)
     # set the path as directory if arg.path is None
     if arg.path is None:
-        return os.path.abspath(directory)
-    # deal with arg.path being a link to a constant
+        return obs_dir
+    # deal with arg.path being a block kind
     if arg.path in params:
-        path = params[arg.path]
-    # else assume arg.path is a path
+        return drs_file.DrsPath(params, block_kind=arg.path)
     else:
-        path = arg.path
-    # path may be relative to main drs package to get full path
-    if not os.path.exists(path):
-        # get package name
-        package = params['DRS_PACKAGE']
-        # get absolute path
-        path = drs_misc.get_relative_folder(package, path)
-    # make path absolute
-    path = os.path.abspath(path)
-    # now check that path is valid
-    if not os.path.exists(path):
-        # log that arg path was wrong
-        eargs = [arg.name, arg.path, func_name]
-        WLOG(params, 'error', textentry('00-006-00018', args=eargs))
-    else:
-        return path
+        return drs_file.DrsPath(params, arg.path)
 
 
 # =============================================================================

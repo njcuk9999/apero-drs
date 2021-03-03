@@ -72,11 +72,11 @@ RUN_KEYS = dict()
 RUN_KEYS['RUN_NAME'] = 'Run Unknown'
 RUN_KEYS['SEND_EMAIL'] = False
 RUN_KEYS['EMAIL_ADDRESS'] = None
-RUN_KEYS['NIGHTNAME'] = None
-RUN_KEYS['BNIGHTNAMES'] = None
-RUN_KEYS['WNIGHTNAMES'] = None
+RUN_KEYS['OBS_DIR'] = None
+RUN_KEYS['EXCLUDE_OBS_DIRS'] = None
+RUN_KEYS['INCLUDE_OBS_DIRS'] = None
 RUN_KEYS['PI_NAMES'] = None
-RUN_KEYS['MASTER_NIGHT'] = None
+RUN_KEYS['MASTER_OBS_DIR'] = None
 RUN_KEYS['UPDATE_OBJ_DATABASE'] = False
 RUN_KEYS['CORES'] = 1
 RUN_KEYS['STOP_AT_EXCEPTION'] = False
@@ -96,7 +96,7 @@ RUN_KEYS['RESET_RUN'] = False
 RUN_KEYS['TELLURIC_TARGETS'] = None
 RUN_KEYS['SCIENCE_TARGETS'] = None
 # storage for reporting removed engineering directories
-REMOVE_ENG_NIGHTS = []
+REMOVE_ENG_DIRS = []
 # get special list from recipes
 SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
 # get list of obj name cols
@@ -135,7 +135,7 @@ class Run:
         self.required_args = []
         # set parameters
         self.kind = None
-        self.nightname = None
+        self.obs_dir = None
         # update parameters given runstring
         self.update()
 
@@ -236,9 +236,9 @@ class Run:
             # get directory position
             pos = int(self.recipe.args['directory'].pos) + 1
             # set
-            self.nightname = self.args[pos]
+            self.obs_dir = self.args[pos]
         else:
-            self.nightname = ''
+            self.obs_dir = ''
 
     def update(self):
         # get args
@@ -302,7 +302,7 @@ class Run:
         params, recipe = self.params, self.recipe
         # ------------------------------------------------------------------
         # get the input directory
-        input_dir = recipe.get_input_dir()
+        input_dir = recipe.input_block.abs_path
         # check whether input directory exists
         if not os.path.exists(input_dir):
             wargs = [input_dir]
@@ -505,31 +505,33 @@ def read_runfile(params, runfile, **kwargs):
     # deal with arguments from command line (params['INPUTS'])
     # ----------------------------------------------------------------------
     # nightname
-    if 'NIGHTNAME' in params['INPUTS']:
+    if 'OBS_DIR' in params['INPUTS']:
         # get night name
-        _nightname = params['INPUTS']['NIGHTNAME']
+        _obs_dir = params['INPUTS']['OBS_DIR']
         # deal with none nulls
-        if not drs_text.null_text(_nightname, ['None', '', 'All']):
-            params['NIGHTNAME'] = _nightname
+        if not drs_text.null_text(_obs_dir, ['None', '', 'All']):
+            params['OBS_DIR'] = _obs_dir
     # make sure nightname is str or None
-    if drs_text.null_text(params['NIGHTNAME'], ['None', '', 'All']):
-        params['NIGHTNAME'] = None
+    if drs_text.null_text(params['OBS_DIR'], ['None', '', 'All']):
+        params['OBS_DIR'] = None
     # ----------------------------------------------------------------------
-    # nightname blacklist
-    if 'BNIGHTNAMES' in params['INPUTS']:
+    # exclude observation directories
+    if 'EXCLUDE_OBS_DIRS' in params['INPUTS']:
         # get night name blacklist
-        _bnightnames = params['INPUTS']['BNIGHTNAMES']
+        _ex_obs_dirs = params['INPUTS']['EXCLUDE_OBS_DIRS']
         # deal with non-null value
-        if not drs_text.null_text(_bnightnames, ['None', '', 'All']):
-            params['BNIGHTNAMES'] = params['INPUTS'].listp('BNIGHTNAMES')
+        if not drs_text.null_text(_ex_obs_dirs, ['None', '', 'All']):
+            exclude = params['INPUTS'].listp('EXCLUDE_OBS_DIRS')
+            params['EXCLUDE_OBS_DIRS'] = exclude
     # ----------------------------------------------------------------------
-    # nightname whitelist
-    if 'WNIGHTNAMES' in params['INPUTS']:
+    # include observation directories
+    if 'INCLUDE_OBS_DIRS' in params['INPUTS']:
         # get night name whitelist
-        _wnightnames = params['INPUTS']['WNIGHTNAMES']
+        _inc_obs_dirs = params['INPUTS']['INCLUDE_OBS_DIRS']
         # deal with non-null value
-        if not drs_text.null_text(_wnightnames, ['None', '', 'All']):
-            params['WNIGHTNAMES'] = params['INPUTS'].listp('WNIGHTNAMES')
+        if not drs_text.null_text(_inc_obs_dirs, ['None', '', 'All']):
+            include = params['INPUTS'].listp('INCLUDE_OBS_DIRS')
+            params['INCLUDE_OBS_DIRS'] = include
     # ----------------------------------------------------------------------
     # add pi name list
     if 'PI_NAMES' in params['INPUTS']:
@@ -573,8 +575,8 @@ def read_runfile(params, runfile, **kwargs):
             params['TRIGGER_RUN'] = drs_text.true_text(_trigger)
 
         # if trigger if defined night name must be as well
-        if params['NIGHTNAME'] is None and params['TRIGGER_RUN']:
-            # cause an error if nightname not set
+        if params['OBS_DIR'] is None and params['TRIGGER_RUN']:
+            # cause an error if obs_dir not set
             WLOG(params, 'error', textentry('09-503-00010'))
     # ----------------------------------------------------------------------
     # switch for setting science targets (from user inputs)
@@ -633,23 +635,23 @@ def generate_skip_table(params):
     logdbm = drs_database.LogDatabase(params)
     logdbm.load_db()
     # deal with white list for directories
-    if drs_text.null_text(params['WNIGHTNAMES'], ['', 'All', 'None']):
-        whitelist = None
+    if drs_text.null_text(params['INCLUDE_OBS_DIRS'], ['', 'All', 'None']):
+        include_list = None
     else:
-        whitelist = params['WNIGHTNAMES']
+        include_list = params['INCLUDE_OBS_DIRS']
     # deal with black list for directories
-    if drs_text.null_text(params['BNIGHTNAMES'], ['', 'All', 'None']):
-        blacklist = None
+    if drs_text.null_text(params['EXCLUDE_OBS_DIRS'], ['', 'All', 'None']):
+        exclude_list = None
     else:
-        blacklist = params['BNIGHTNAMES']
-    # deal with nightname set (take precedences over white list)
-    if not drs_text.null_text(params['NIGHTNAME'], ['', 'None', 'All']):
-        whitelist = [params['NIGHTNAME']]
+        exclude_list = params['EXCLUDE_OBS_DIRS']
+    # deal with obs_dir set (take precedences over white list)
+    if not drs_text.null_text(params['OBS_DIR'], ['', 'None', 'All']):
+        include_list = [params['OBS_DIR']]
     # need to remove those that didn't end
     condition = 'ENDED = 1'
     # get runstrings
-    table = logdbm.get_entries('RECIPE, RUNSTRING', wdirs=whitelist,
-                               bdirs=blacklist, condition=condition)
+    table = logdbm.get_entries('RECIPE, RUNSTRING', wdirs=include_list,
+                               bdirs=exclude_list, condition=condition)
     recipes = np.array(table['RECIPE'])
     runstrings = np.array(table['RUNSTRING'])
     arguments = []
@@ -1097,7 +1099,7 @@ def save_stats(params, outlist):
     priorities = []
     runlists = []
     recipenames = []
-    nightnames = []
+    obs_dirs = []
     coresused = []
     corestot = []
     groups = []
@@ -1113,8 +1115,8 @@ def save_stats(params, outlist):
         runlists.append(rdict['RUNSTRING'])
         # append recipes to list
         recipenames.append(rdict['RECIPE'])
-        # append night name to list
-        nightnames.append(rdict['NIGHTNAME'])
+        # append obs_dir to list
+        obs_dirs.append(rdict['OBS_DIR'])
         # append cores used to list
         coresused.append(rdict['COREUSED'])
         # append cores total
@@ -1122,8 +1124,8 @@ def save_stats(params, outlist):
         # append group
         groups.append(rdict['GROUP'])
     # make into a table
-    columns = ['ID', 'RECIPE', 'NIGHT', 'CORE_NUM', 'CORE_TOT', 'RUNSTRING']
-    values = [priorities, recipenames, nightnames, coresused, corestot,
+    columns = ['ID', 'RECIPE', 'OBS_DIR', 'CORE_NUM', 'CORE_TOT', 'RUNSTRING']
+    values = [priorities, recipenames, obs_dirs, coresused, corestot,
               runlists]
     out_fits_table = drs_table.make_table(params, columns, values)
     # write table
@@ -1328,200 +1330,6 @@ def skip_run_object(params, runobj, skiptable, skip_storage):
         return False, '{0} not present'.format(runobj.skipname)
 
 
-# TODO: remove later
-def skip_run_object_old(params, runobj):
-    # get recipe and runstring
-    recipe = runobj.recipe
-    runstring = runobj.runstring
-
-    # debug log giving info on name/runname/skipname
-    dargs = [recipe.name, recipe.shortname, runobj.runname, runobj.skipname]
-    WLOG(params, 'debug', textentry('90-503-00010', args=dargs))
-    # ----------------------------------------------------------------------
-    # check if the user wants to run this runobj (in run list)
-    if runobj.runname in params:
-        # if user has set the runname to False then we want to skip
-        if not params[runobj.runname]:
-            return True, textentry('40-503-00007')
-    # ----------------------------------------------------------------------
-    # check if the user wants to skip
-    if runobj.skipname in params:
-        # if master in skipname do not skip
-        if runobj.master:
-            # debug log
-            dargs = [runobj.skipname]
-            WLOG(params, 'debug', textentry('90-503-00003', args=dargs))
-            # return False and no reason
-            return False, None
-        # else if user wants to skip
-        elif params[runobj.skipname]:
-            # deal with adding skip to recipes
-            if 'skip' in recipe.kwargs:
-                if '--skip' in runstring:
-                    # debug log
-                    WLOG(params, 'debug', textentry('90-503-00007'))
-                    return False, None
-
-            # look for fits files in args
-            return _check_for_files(params, runobj)
-        else:
-            # debug log
-            dargs = [runobj.skipname]
-            WLOG(params, 'debug', textentry('90-503-00004', args=dargs))
-            # return False and no reason
-            return False, None
-    # ----------------------------------------------------------------------
-    else:
-        # debug log
-        dargs = [runobj.skipname]
-        WLOG(params, 'debug', textentry('90-503-00005', args=dargs))
-        # return False and no reason
-        return False, None
-
-
-def _get_paths(params, runobj, directory):
-    func_name = __NAME__ + '.get_paths()'
-
-    recipe = runobj.recipe
-    # ----------------------------------------------------------------------
-    # get the night name from directory position
-    nightname = runobj.args[int(directory.pos) + 1]
-    # ----------------------------------------------------------------------
-    # get the input directory
-    inpath = recipe.get_input_dir()
-    inpath = os.path.join(inpath, nightname)
-    # ----------------------------------------------------------------------
-    # check that path exist
-    if not os.path.exists(inpath):
-        try:
-            os.makedirs(inpath)
-        except Exception as e:
-            eargs = [recipe.name, runobj.runstring, inpath, type(e), e,
-                     func_name]
-            WLOG(params, 'error', textentry('09-503-00008', args=eargs))
-    # ----------------------------------------------------------------------
-    # get the output directory
-    outpath = recipe.get_output_dir()
-    outpath = os.path.join(outpath, nightname)
-    # ----------------------------------------------------------------------
-    # check that path exist
-    if not os.path.exists(outpath):
-        try:
-            os.makedirs(outpath)
-        except Exception as e:
-            eargs = [recipe.name, runobj.runstring, outpath, type(e), e,
-                     func_name]
-            WLOG(params, 'error', textentry('09-503-00006', args=eargs))
-    # ----------------------------------------------------------------------
-    # return inpath and outpath
-    return inpath, outpath, nightname
-
-
-# TODO: no longer used?
-def _check_for_files(params, runobj):
-    # get fits files from args
-    files = []
-    for arg in runobj.args:
-        if arg.endswith('.fits'):
-            files.append(arg)
-    # set recipe
-    recipe = runobj.recipe
-    # get args and keyword args for recipe
-    args, kwargs = recipe.args, recipe.kwargs
-    # ----------------------------------------------------------------------
-    # if we don't have a directory argument we skip this test
-    if 'directory' not in args and 'directory' not in kwargs:
-        WLOG(params, 'debug', textentry('90-503-00002'))
-        return False, None
-    elif 'directory' in args:
-        directory = args['directory']
-    else:
-        directory = kwargs['directory']
-    # ----------------------------------------------------------------------
-    # get input and output paths
-    inpath, outpath, nightname = _get_paths(params, runobj, directory)
-    # ----------------------------------------------------------------------
-    # store outfiles (for debug)
-    outfiles = []
-    # ----------------------------------------------------------------------
-    # get in files
-    infiles = []
-    # loop around file names
-    for filename in files:
-        # ------------------------------------------------------------------
-        # make sure filename is a base filename
-        basename = os.path.basename(filename)
-        # make infile
-        if runobj.kind == 0:
-            infiledef = recipe.filemod.get().raw_file
-        elif runobj.kind == 1:
-            infiledef = recipe.filemod.get().pp_file
-        else:
-            infiledef = recipe.filemod.get().out_file
-        # ------------------------------------------------------------------
-        # add required properties to infile
-        infile = infiledef.newcopy(params=params)
-        infile.filename = os.path.join(inpath, filename)
-        infile.basename = basename
-        # append to infiles
-        infiles.append(infile)
-
-    # ----------------------------------------------------------------------
-    # for each file see if we have a file that exists
-    #   (if we do we skip and assume this recipe was completed)
-    for infile in infiles:
-        # ------------------------------------------------------------------
-        # loop around output files
-        for outputkey in recipe.outputs:
-            # get output
-            output = recipe.outputs[outputkey]
-            # add the infile type from output
-            if output.intype is None:
-                continue
-            elif isinstance(output.intype, list):
-                infile.filetype = output.intype[0].filetype
-            else:
-                infile.filetype = output.intype.filetype
-            # define outfile
-            outfile = output.newcopy(params=params)
-            # --------------------------------------------------------------
-            # check whether we need to add fibers
-            if output.fibers is not None:
-                # loop around fibers
-                for fiber in output.fibers:
-                    # construct file name
-                    outfile.construct_filename(infile=infile,
-                                               fiber=fiber, path=outpath,
-                                               nightname=nightname, check=False)
-                    # get outfilename absolute path
-                    outfilename = outfile.filename
-                    # if file is found return True
-                    if os.path.exists(outfilename):
-                        reason = textentry('40-503-00008', args=[outfilename])
-                        return True, reason
-                    else:
-                        outfiles.append(outfilename)
-            else:
-                # construct file name
-                outfile.construct_filename(infile=infile, path=outpath,
-                                           nightname=nightname, check=False)
-                # get outfilename absolute path
-                outfilename = outfile.filename
-                # if file is found return True
-                if os.path.exists(outfilename):
-                    reason = textentry('40-503-00008', args=[outfilename])
-                    return True, reason
-                else:
-                    outfiles.append(outfilename)
-    # ----------------------------------------------------------------------
-    # debug print
-    for outfile in outfiles:
-        WLOG(params, 'debug', textentry('90-503-00001', args=[outfile]))
-    # ----------------------------------------------------------------------
-    # if all tests are passed return False
-    return False, None
-
-
 def _remove_py(innames):
     if isinstance(innames, str):
         names = [innames]
@@ -1675,19 +1483,20 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                 # add to global condition (in reverse - we don't want these)
                 condition += ' AND NOT ({0})'.format(subcondition)
         # ------------------------------------------------------------------
-        # deal with directory filters (master night and nightname filter)
+        # deal with directory filters (master observation directory and
+        # obs_dir filter)
         # ------------------------------------------------------------------
-        # master night
+        # master observation directory
         # ------------------------------------------------------------------
         if srecipe.master:
-            # get master nightnames
-            nightname = params['MASTER_NIGHT']
+            # get master observation directory
+            obs_dir = params['MASTER_OBS_DIR']
             # get nightnames
-            nightnames = indexdb.database.unique('DIRNAME', condition=condition,
-                                                 table=indexdb.database.tname)
-            # check if master night name is valid (in table)
-            if nightname not in nightnames:
-                wargs = [nightname]
+            obs_dirs = indexdb.database.unique('OBS_DIR', condition=condition,
+                                               table=indexdb.database.tname)
+            # check if master observation directory is valid (in table)
+            if obs_dir not in obs_dirs:
+                wargs = [obs_dir]
                 WLOG(params, 'warning', textentry('10-503-00004', args=wargs))
                 # get response for how to continue (skip or exit)
                 response = prompt(params)
@@ -1696,24 +1505,24 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                 else:
                     sys.exit()
             # mask table by nightname
-            condition += ' AND DIRNAME="{0}"'.format(nightname)
+            condition += ' AND OBS_DIR="{0}"'.format(obs_dir)
         # ------------------------------------------------------------------
         # deal with setting 1 night
         # ------------------------------------------------------------------
-        elif not drs_text.null_text(params['NIGHTNAME'], ['', 'All', 'None']):
+        elif not drs_text.null_text(params['OBS_DIR'], ['', 'All', 'None']):
             # get nightnames
-            nightname = params['NIGHTNAME']
+            obs_dir = params['OBS_DIR']
             # mask table by nightname
-            condition += ' AND DIRNAME="{0}"'.format(nightname)
+            condition += ' AND OBS_DIR="{0}"'.format(obs_dir)
         else:
-            nightname = 'all'
+            obs_dir = 'all'
         # ------------------------------------------------------------------
         # get length of database at this point
         idb_len = indexdb.database.count(indexdb.database.tname,
                                          condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
-            wargs = [nightname]
+            wargs = [obs_dir]
             WLOG(params, 'warning', textentry('10-503-00003', args=wargs))
             # get response for how to continue (skip or exit)
             response = prompt(params)
@@ -1874,7 +1683,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
     :return: str, the sql global condition to apply to all recipes
     """
     # set up an sql condition that will get more complex as we go down
-    condition = 'KIND="raw"'
+    condition = 'BLOCK_KIND="raw"'
     # ------------------------------------------------------------------
     # filer out engineering directories
     # ------------------------------------------------------------------
@@ -1901,15 +1710,15 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
     # deal with black lists
     # ------------------------------------------------------------------
     # black list
-    if not drs_text.null_text(params['BNIGHTNAMES'], ['', 'All', 'None']):
+    if not drs_text.null_text(params['EXCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         # get black list from params
-        blacklist_nights = params.listp('BNIGHTNAMES', dtype=str)
+        exclude_obs_dirs = params.listp('EXCLUDE_OBS_DIRS', dtype=str)
         # loop around blacklist
-        for blacklist_night in blacklist_nights:
+        for exclude_obs_dir in exclude_obs_dirs:
             # add to condition
-            condition += ' AND (DIRECTORY!="{0}")'.format(blacklist_night)
+            condition += ' AND (DIRECTORY!="{0}")'.format(exclude_obs_dir)
         # log blacklist
-        wargs = [' ,'.join(blacklist_nights)]
+        wargs = [' ,'.join(exclude_obs_dirs)]
         WLOG(params, '', textentry('40-503-00026', args=wargs))
         # get length of database at this point
         idb_len = indexdb.database.count(indexdb.database.tname,
@@ -1926,15 +1735,15 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
     # ------------------------------------------------------------------
     # deal with white list
     # ------------------------------------------------------------------
-    if not drs_text.null_text(params['WNIGHTNAMES'], ['', 'All', 'None']):
+    if not drs_text.null_text(params['INCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         # get white list from params
-        whitelist_nights = params.listp('WNIGHTNAMES', dtype=str)
+        whitelist_nights = params.listp('INCLUDE_OBS_DIRS', dtype=str)
         # define a subcondition
         subconditions = []
         # loop around white listed nights and set them to False
         for whitelist_night in whitelist_nights:
             # add subcondition
-            subcondition = 'DIRNAME="{0}"'.format(whitelist_night)
+            subcondition = 'OBS_DIR="{0}"'.format(whitelist_night)
             subconditions.append(subcondition)
         # add to conditions
         condition += ' AND ({0})'.format(' OR '.join(subconditions))
@@ -2034,7 +1843,7 @@ def _linear_process(params, runlist, number=0, cores=1, event=None,
         # parameters to save
         pp = dict()
         pp['RECIPE'] = str(run_item.recipename)
-        pp['NIGHTNAME'] = str(run_item.nightname)
+        pp['OBS_DIR'] = str(run_item.obs_dir)
         pp['ARGS'] = kwargs
         pp['RUNSTRING'] = str(run_item.runstring)
         pp['COREUSED'] = number
@@ -2596,10 +2405,11 @@ def add_non_file_args(params: ParamDict, recipe: DrsRecipe,
 
     Currently this includes:
 
-    - directory (when recipe is a master) - muset set to master night
-    - wnightlist / wnightnames - must push through from processing
-    - bnightlist / bnightnmaes - must push through from processing
-    - night / nightname  - must push through from processing
+    - directory (when recipe is a master) - muset set to master observation
+      directory
+    - include_obs_dirs - must push through from processing
+    - exclude_obs_dirs - must push through from processing
+    - obs_dir - must push through from processing
 
     - all other arguments user their default value
 
@@ -2612,48 +2422,48 @@ def add_non_file_args(params: ParamDict, recipe: DrsRecipe,
     :return: OrderedDict, the updated filedict
     """
     # deal with directory (special argument) - if we have a
-    #   master night use the master night as the directory name
+    #   master observation directory use as the directory name
     if arg.dtype == 'directory' and recipe.master:
-        filedict[argname] = params['MASTER_NIGHT']
+        filedict[argname] = params['MASTER_OBS_DIR']
     # need to add directory and set it to None
     elif arg.dtype == 'directory':
         filedict[argname] = None
     # -------------------------------------------------------------------------
-    # deal with wnightlist
-    if argname in ['wnightlist', 'wnightnames']:
-        if 'WNIGHTNAMES' in params['INPUTS']:
+    # deal with include observation directory list
+    if argname in ['include_obs_dirs']:
+        if 'INCLUDE_OBS_DIRS' in params['INPUTS']:
             # get white night list as a string
-            wnightnames = params['INPUTS']['WNIGHTNAMES']
+            include_obs_dirs = params['INPUTS']['INCLUDE_OBS_DIRS']
             # test for null values
-            if not drs_text.null_text(wnightnames, ['None', 'All', '']):
+            if not drs_text.null_text(include_obs_dirs, ['None', 'All', '']):
                 # get white night list as a list
-                wnightnames = params['INPUTS'].listp('WNIGHTNAMES')
+                include_obs_dirs = params['INPUTS'].listp('INCLUDE_OBS_DIRS')
                 # add to file dict
-                filedict[argname] = wnightnames
+                filedict[argname] = include_obs_dirs
     # -------------------------------------------------------------------------
-    # deal with wnightlist
-    if argname in ['bnightlist', 'bnightnames']:
-        if 'BNIGHTNAMES' in params['INPUTS']:
+    # deal with exclude observation directory list
+    if argname in ['exclude_obs_dirs']:
+        if 'EXCLUDE_OBS_DIRS' in params['INPUTS']:
             # get black night list as a string
-            bnightnames = params['INPUTS']['BNIGHTNAMES']
+            exclude_obs_dirs = params['INPUTS']['EXCLUDE_OBS_DIRS']
             # test for null values
-            if not drs_text.null_text(bnightnames, ['None', 'All', '']):
+            if not drs_text.null_text(exclude_obs_dirs, ['None', 'All', '']):
                 # get white night list as a list
-                bnightnames = params['INPUTS'].listp('BNIGHTNAMES')
+                exclude_obs_dirs = params['INPUTS'].listp('EXCLUDE_OBS_DIRS')
                 # add to file dict
-                filedict[argname] = bnightnames
+                filedict[argname] = exclude_obs_dirs
     # -------------------------------------------------------------------------
-    # deal with nightname
-    if argname in ['night', 'nightname']:
-        if 'NIGHTNAME' in params['INPUTS']:
+    # deal with obs directory
+    if argname in ['obs_dir']:
+        if 'OBS_DIR' in params['INPUTS']:
             # get black night list as a string
-            nightname = params['INPUTS']['NIGHTNAME']
+            obs_dir = params['INPUTS']['OBS_DIR']
             # test for null values
-            if not drs_text.null_text(nightname, ['None', 'All', '']):
+            if not drs_text.null_text(obs_dir, ['None', 'All', '']):
                 # get white night list as a list
-                nightname = params['INPUTS'].listp('NIGHTNAME')
+                obs_dir = params['INPUTS'].listp('OBS_DIR')
                 # add to file dict
-                filedict[argname] = nightname
+                filedict[argname] = obs_dir
     # -------------------------------------------------------------------------
     # else set the file dict value to the default value
     # TODO: Need a better option for this!!
@@ -2667,7 +2477,7 @@ def add_non_file_args(params: ParamDict, recipe: DrsRecipe,
 def group_run_files(params: ParamDict, recipe: DrsRecipe,
                     argdict: Dict[str, ArgDictType],
                     kwargdict: Dict[str, ArgDictType],
-                    night_col: Union[str, None] = None,
+                    obs_dir_col: Union[str, None] = None,
                     ) -> List[Dict[str, Any]]:
     """
     Take the arg and kwarg dictionary of tables (argdict and kwargdict) and
@@ -2689,7 +2499,8 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
                     files each - top level key is an optional argument for this
                     recipe and sub-dict key is a DrsFitsFile instance i.e.:
                     kwargdict[argument][drsfile] = Table
-    :param night_col: str or None, if set overrides params['REPROCESS_NIGHTCOL']
+    :param obs_dir_col: str or None, if set overrides
+                         params['REPROCESS_OBSDIR_COL']
 
     :return: a list of dictionaries, each dictionary is a different run.
              each 'run' is a dictionary of arguments each with the values that
@@ -2698,8 +2509,8 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
     # set function name
     func_name = display_func('group_run_files', __NAME__)
     # get parameters from params
-    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', func=func_name,
-                       override=night_col)
+    night_col = pcheck(params, 'REPROCESS_OBSDIR_COL', func=func_name,
+                       override=obs_dir_col)
     # flag for having no file arguments
     has_file_args = False
     # ----------------------------------------------------------------------
@@ -2865,7 +2676,7 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
     group_function = recipe.group_func
     # deal with master
     if recipe.master:
-        master = params['MASTER_NIGHT']
+        master = params['MASTER_OBS_DIR']
     else:
         master = None
     # get grouping column
@@ -3361,7 +3172,7 @@ def _group_tasks2(runlist, cores):
 
 
 def _remove_engineering(params, indexdb, condition):
-    global REMOVE_ENG_NIGHTS
+    global REMOVE_ENG_DIRS
 
     # if we are dealing with the trigger run do not do this -- user has
     #   specified a night
@@ -3369,39 +3180,40 @@ def _remove_engineering(params, indexdb, condition):
         return ''
 
     # get nightnames
-    itable = indexdb.get_entries('DIRNAME, KW_OBSTYPE', condition=condition)
+    itable = indexdb.get_entries('OBS_DIR, KW_OBSTYPE', condition=condition)
     # get nightnames and obstypes
-    nightnames = itable['DIRNAME']
+    obs_dirs = itable['OBS_DIR']
     obstypes = itable['KW_OBSTYPE']
     # get unique nights
-    u_nights = np.unique(nightnames)
+    u_obs_dirs = np.unique(obs_dirs)
     # get the object mask (i.e. we want to know that we have objects for this
     #   night
     objmask = obstypes == 'OBJECT'
     # define empty keep mask
-    reject_nights = ''
+    reject_obs_dirs = ''
     # loop around nights
-    for night in u_nights:
+    for obs_dir in u_obs_dirs:
         # get night mask
-        nightmask = nightnames == night
+        nightmask = u_obs_dirs == obs_dir
         # joint mask
         nightobjmask = nightmask & objmask
         # if we find objects then keep all files from this night
         if np.sum(nightobjmask) == 0:
             # add to keep mask
-            reject_nights += ' AND DIRNAME != "{0}"'.format(night)
+            reject_obs_dirs += ' AND OBS_DIR != "{0}"'.format(obs_dir)
             # add to global variable
-            if night not in REMOVE_ENG_NIGHTS:
+            if obs_dir not in REMOVE_ENG_DIRS:
                 # log message
-                WLOG(params, 'warning', textentry('10-503-00014', args=[night]))
+                wmsg = textentry('10-503-00014', args=[obs_dir])
+                WLOG(params, 'warning', wmsg)
                 # add to remove eng nights (so log message not produced again)
-                REMOVE_ENG_NIGHTS.append(night)
+                REMOVE_ENG_DIRS.append(obs_dir)
     # return condition
-    return reject_nights
+    return reject_obs_dirs
 
 
 def _group_drs_files(params: ParamDict, drstable: Table,
-                     night_col: Union[str, None] = None,
+                     obs_dir_col: Union[str, None] = None,
                      seq_col: Union[str, None] = None,
                      time_col: Union[str, None] = None,
                      limit: Union[int, None] = None) -> Table:
@@ -3419,8 +3231,9 @@ def _group_drs_files(params: ParamDict, drstable: Table,
     :param drstable: astropy.table.Table - the table of files where all
                      rows should be files of the same DrsFitsFile type
                      i.e. all FLAT_FLAT
-    :param night_col: str or None, if set overrides params['REPROCESS_NIGHTCOL']
-                      - which sets which column in drstable has the night
+    :param obs_dir_col: str or None, if set overrides
+                      params['REPROCESS_OBSDIR_COL']
+                      - which sets which column in drstable has the obs_dir
                       sub-directory information
     :param seq_col: str or None, if set overrides params['REPROCESS_SEQCOL']
                     - which sets the sequence number column i.e.
@@ -3444,8 +3257,8 @@ def _group_drs_files(params: ParamDict, drstable: Table,
     # set function name
     func_name = display_func('_group_drs_files', __NAME__)
     # get properties from params
-    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', func=func_name,
-                       override=night_col)
+    night_col = pcheck(params, 'REPROCESS_OBSDIR_COL', func=func_name,
+                       override=obs_dir_col)
     seq_colname = pcheck(params, 'REPROCESS_SEQCOL', func=func_name,
                          override=seq_col)
     time_colname = pcheck(params, 'REPROCESS_TIMECOL', func=func_name,
@@ -3637,10 +3450,10 @@ def _get_argposorder(recipe: DrsRecipe, argdict: Dict[str, ArgDictType],
 
 
 def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
-             runorder: List[str], nightname: Union[str, None] = None,
+             runorder: List[str], obs_dir: Union[str, None] = None,
              meantime: Union[float, None] = None,
              arg0: Union[str, None] = None, gtable0: Union[Table, None] = None,
-             masternight: bool = False) -> List[Dict[str, Any]]:
+             master_obs_dir: bool = False) -> List[Dict[str, Any]]:
     """
     Generate a recipe run dictionary of arguments based on the argument position
     order and if a secondary argument has a list of files match appriopriately
@@ -3654,7 +3467,7 @@ def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
                     of these are astropy.table.Tables containing the
                     files associated with this [argument][drsfile]
     :param runorder: list of strings, the argument names in the correct order
-    :param nightname: str or None, sets the night name (i.e. directory) for
+    :param obs_dir: str or None, sets the night name (i.e. directory) for
                       this recipe run (if None set from params['NIGHTNAME']
     :param meantime: float or None, sets the mean time (as MJD) for this
                      argument (associated to a set of files) - used when we have
@@ -3665,9 +3478,10 @@ def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
     :param gtable0: astropy.table.Table or None, if set this is the the case
                     where argname=arg0, and thus the file set should come from
                     a list of files
-    :param masternight: bool, if True this is a master recipe, and therefore
-                        the nightname should be the master night, master night
-                        is obtained from params['MASTER_NIGHT']
+    :param master_obs_dir: bool, if True this is a master recipe, and therefore
+                        the obs_dir should be the master observation directory,
+                        master observation directory is obtained from
+                        params['MASTER_OBS_DIR']
 
     :return: a list of runs of this recipe where each entry is a dictionary
              where the key is the argument name and the value is the value(s)
@@ -3680,10 +3494,10 @@ def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
         arg0 = ''
     if gtable0 is None:
         gtable0 = dict(filecol=None)
-    if nightname is None:
-        nightname = params['NIGHTNAME']
-    if masternight:
-        nightname = params['MASTER_NIGHT']
+    if obs_dir is None:
+        obs_dir = params['OBS_DIR']
+    if master_obs_dir:
+        obs_dir = params['MASTER_OBS_DIR']
     if meantime is None:
         meantime = 0.0
 
@@ -3724,17 +3538,17 @@ def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
             #   groups files (gtable0)
             if argname == arg0:
                 new_run[argname] = list(gtable0['OUT'])
-            # if we are dealing with 'directory' set it from nightname
+            # if we are dealing with 'directory' set it from obs_dir
             elif argname == 'directory':
-                new_run[argname] = nightname
+                new_run[argname] = obs_dir
             # if we are not dealing with a list of files just set value
             elif not isinstance(value, OrderedDict):
                 new_run[argname] = value
             # else we are dealing with another list and must find the
-            #   best files (closeest in time) to add that match this
+            #   best files (closest in time) to add that match this
             #   group
             else:
-                margs = [params, argname, rundict, nightname, meantime]
+                margs = [params, argname, rundict, obs_dir, meantime]
                 new_run[argname] = _match_group(*margs)
         # append new run to new runs
         new_runs.append(new_run)
@@ -3832,12 +3646,12 @@ def _find_next_group(argname: str, drstable: Table,
 
 def _match_group(params: ParamDict, argname: str,
                  rundict: Dict[str, ArgDictType],
-                 nightname: Union[str, None], meantime: float,
+                 obs_dir: Union[str, None], meantime: float,
                  nightcol: Union[str, None] = None) -> List[str]:
     """
     Find the best group  of files from 'argname' (table of files taken from
-    rundict) to a specific nightname + mean time (night name matched on
-    column night_col or params['REPROCESS_NIGHTCOL'], mean time matched on
+    rundict) to a specific obs_dir + mean time (night name matched on
+    column night_col or params['REPROCESS_OBSDIR_COL'], mean time matched on
     MEANDATE column)
 
     :param params: ParamDict, parameter dictionary of constnats
@@ -3847,21 +3661,21 @@ def _match_group(params: ParamDict, argname: str,
                     value are a dictionary of DrsFitFile names and the values
                     of these are astropy.table.Tables containing the
                     files associated with this [argument][drsfile]
-    :param nightname: str or None, if set the night name to match to
+    :param obs_dir: str or None, if set the night name to match to
                      (do not consider any files not from the night name) -
-                     nightname controlled by table in rundict[argname][*] column
-                     'nightcol' or params['REPROCESS_NIGHTCOL']
+                     obs_dir controlled by table in rundict[argname][*] column
+                     'nightcol' or params['REPROCESS_OBSDIR_COL']
     :param meantime: float, the time to match (with time in column 'MEANDATE'
                      from table in rundict[argname][*])
     :param nightcol: str or None, if set the column name in rundict[argname][*]
-                     table, if not set uses params['REPROCES_NIGHTCOL']
+                     table, if not set uses params['REPROCESS_OBSDIR_COL']
     :return: list of strings, the filenames that match the argument with
-             nightname and meantime
+             obs_dir and meantime
     """
     # set function name
     func_name = display_func('_match_groups', __NAME__)
     # get parmaeters from params/kwargs
-    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', func=func_name,
+    night_col = pcheck(params, 'REPROCESS_OBSDIR_COL', func=func_name,
                        override=nightcol)
     # get drsfiles
     drsfiles1 = list(rundict[argname].keys())
@@ -3872,11 +3686,11 @@ def _match_group(params: ParamDict, argname: str,
         # get table
         ftable1 = rundict[argname][drsfile]
         # mask by night name
-        if nightname is not None:
-            mask = ftable1[night_col] == nightname
+        if obs_dir is not None:
+            mask = ftable1[night_col] == obs_dir
         else:
             mask = np.ones(len(ftable1)).astype(bool)
-        # check that we have some files with this nightname
+        # check that we have some files with this obs_dir
         if np.sum(mask) == 0:
             continue
         # mask table

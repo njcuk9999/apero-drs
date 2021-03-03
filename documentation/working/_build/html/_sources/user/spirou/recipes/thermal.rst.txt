@@ -9,6 +9,18 @@ Extracts dark frames in order to provide correction for the thermal background
 after extraction of science / calibration frames.
 
 ===========================================
+Schematic
+===========================================
+
+.. only:: html
+
+    .. image:: ../../../_static/yed/spirou/cal_thermal_spirou_schematic.jpg
+
+.. only:: latex
+
+    This section can only currently be viewed in the html documentation.
+
+===========================================
 Run
 ===========================================
 

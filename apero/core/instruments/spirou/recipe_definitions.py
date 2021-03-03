@@ -193,7 +193,7 @@ cal_pp.set_arg(name='files', dtype='files', pos='1+', files=[files.raw_file],
 cal_pp.set_kwarg(name='--skip', dtype='bool', default=False,
                  helpstr=textentry('PPSKIP_HELP'), default_ref='SKIP_DONE_PP')
 cal_pp.group_func = grouping.group_individually
-cal_pp.group_column = 'REPROCESS_NIGHTCOL'
+cal_pp.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_pp)
 
@@ -229,7 +229,7 @@ cal_badpix.set_kwarg(**fluxunits)
 cal_badpix.set_kwarg(**plot)
 cal_badpix.set_kwarg(**resize)
 cal_badpix.group_func = grouping.group_by_dirname
-cal_badpix.group_column = 'REPROCESS_NIGHTCOL'
+cal_badpix.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_badpix)
 
@@ -261,7 +261,7 @@ cal_dark.set_kwarg(**add_db)
 cal_dark.set_kwarg(default=True, **combine)
 cal_dark.set_kwarg(**plot)
 cal_dark.group_func = grouping.group_by_dirname
-cal_dark.group_column = 'REPROCESS_NIGHTCOL'
+cal_dark.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_dark)
 
@@ -329,7 +329,7 @@ cal_loc.set_kwarg(**fluxunits)
 cal_loc.set_kwarg(**plot)
 cal_loc.set_kwarg(**resize)
 cal_loc.group_func = grouping.group_by_dirname
-cal_loc.group_column = 'REPROCESS_NIGHTCOL'
+cal_loc.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_loc)
 
@@ -384,7 +384,7 @@ cal_shape_master.set_kwarg(name='--fpmaster', dtype='files',
                            files=[files.out_shape_fpmaster], default='None',
                            helpstr=textentry('SHAPE_FPMASTER_HELP'))
 cal_shape_master.group_func = grouping.group_by_dirname
-cal_shape_master.group_column = 'REPROCESS_NIGHTCOL'
+cal_shape_master.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_shape_master)
 
@@ -425,7 +425,7 @@ cal_shape.set_kwarg(**resize)
 cal_shape.set_kwarg(**shapexfile)
 cal_shape.set_kwarg(**shapeyfile)
 cal_shape.group_func = grouping.group_by_dirname
-cal_shape.group_column = 'REPROCESS_NIGHTCOL'
+cal_shape.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_shape)
 
@@ -472,7 +472,7 @@ cal_ff.set_kwarg(**shapexfile)
 cal_ff.set_kwarg(**shapeyfile)
 cal_ff.set_kwarg(**shapelfile)
 cal_ff.group_func = grouping.group_by_dirname
-cal_ff.group_column = 'REPROCESS_NIGHTCOL'
+cal_ff.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_ff)
 
@@ -523,7 +523,7 @@ cal_thermal.set_kwarg(name='--forceext', dtype='bool', default=False,
                       default_ref='THERMAL_ALWAYS_EXTRACT',
                       helpstr='THERMAL_EXTRACT_HELP')
 cal_thermal.group_func = grouping.group_by_dirname
-cal_thermal.group_column = 'REPROCESS_NIGHTCOL'
+cal_thermal.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_thermal)
 
@@ -582,7 +582,7 @@ cal_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
                    files=[files.out_leak_master],
                    helpstr=textentry('LEAK_LEAKFILE_HELP'))
 cal_leak.group_func = grouping.group_individually
-cal_leak.group_column = 'REPROCESS_NIGHTCOL'
+cal_leak.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_leak)
 
@@ -651,7 +651,7 @@ cal_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
 cal_extract.set_kwarg(**thermalfile)
 cal_extract.set_kwarg(**wavefile)
 cal_extract.group_func = grouping.group_individually
-cal_extract.group_column = 'REPROCESS_NIGHTCOL'
+cal_extract.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_extract)
 
@@ -737,7 +737,7 @@ cal_wave_master.set_kwarg(name='--fpmode', dtype='options',
                           helpstr=textentry('FPMODE_HELP'), options=['0', '1'],
                           default_ref='WAVE_MODE_FP')
 cal_wave_master.group_func = grouping.group_by_dirname
-cal_wave_master.group_column = 'REPROCESS_NIGHTCOL'
+cal_wave_master.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_wave_master)
 
@@ -802,7 +802,7 @@ cal_wave_master_ea.set_kwarg(name='--cavityfile', dtype='file', default='None',
                             files=[files.out_wavem_cavity],
                             helpstr='Wave cavity file')
 cal_wave_master_ea.group_func = grouping.group_by_dirname
-cal_wave_master_ea.group_column = 'REPROCESS_NIGHTCOL'
+cal_wave_master_ea.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_wave_master_ea)
 
@@ -863,7 +863,7 @@ cal_wave_night.set_kwarg(name='--forceext', dtype='bool',
                          default_ref='WAVE_ALWAYS_EXTRACT',
                          helpstr='WAVE_EXTRACT_HELP')
 cal_wave_night.group_func = grouping.group_by_dirname
-cal_wave_night.group_column = 'REPROCESS_NIGHTCOL'
+cal_wave_night.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_wave_night)
 
@@ -907,7 +907,7 @@ cal_ccf.set_kwarg(**add_db)
 cal_ccf.set_kwarg(**blazefile)
 cal_ccf.set_kwarg(**plot)
 cal_ccf.group_func = grouping.group_individually
-cal_ccf.group_column = 'REPROCESS_NIGHTCOL'
+cal_ccf.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_ccf)
 
@@ -949,7 +949,7 @@ obj_mk_tellu.set_kwarg(name='--template', dtype='file', default='None',
                        files=[files.out_tellu_template],
                        helpstr=textentry('TEMPLATE_FILE_HELP'))
 obj_mk_tellu.group_func = grouping.group_individually
-obj_mk_tellu.group_column = 'REPROCESS_NIGHTCOL'
+obj_mk_tellu.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(obj_mk_tellu)
 
@@ -1038,7 +1038,7 @@ obj_fit_tellu.set_kwarg(**blazefile)
 obj_fit_tellu.set_kwarg(**plot)
 obj_fit_tellu.set_kwarg(**wavefile)
 obj_fit_tellu.group_func = grouping.group_individually
-obj_fit_tellu.group_column = 'REPROCESS_NIGHTCOL'
+obj_fit_tellu.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(obj_fit_tellu)
 
@@ -1288,7 +1288,7 @@ obj_spec.set_kwarg(**plot)
 obj_spec.set_kwarg(name='--cores', dtype=int, default=1,
                    helpstr='')
 obj_spec.group_func = grouping.group_individually
-obj_spec.group_column = 'REPROCESS_NIGHTCOL'
+obj_spec.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(obj_spec)
 
@@ -1323,7 +1323,7 @@ obj_pp_recipe.set_kwarg(name='--clear', dtype='switch',
                         default_ref='POST_CLEAR_REDUCED',
                         helpstr=textentry('OUT_CLEAR_HELP'))
 obj_pp_recipe.group_func = grouping.group_individually
-obj_pp_recipe.group_column = 'REPROCESS_NIGHTCOL'
+obj_pp_recipe.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(obj_pp_recipe)
 
@@ -1333,7 +1333,7 @@ recipes.append(obj_pp_recipe)
 # -----------------------------------------------------------------------------
 out_recipe = DrsRecipe(__INSTRUMENT__)
 out_recipe.name = 'out_postprocess_{0}.py'.format(INSTRUMENT_ALIAS)
-out_recipe.shortname = 'POST'
+out_recipe.shortname = 'POST_PROCESS'
 out_recipe.instrument = __INSTRUMENT__
 out_recipe.inputtype = 'red'
 out_recipe.outputtype = 'out'
@@ -1349,9 +1349,9 @@ out_recipe.set_kwarg(name='--overwrite', dtype='switch',
                      helpstr=textentry('OUT_OVERWRITE_HELP'))
 out_recipe.set_kwarg(name='--night', dtype=str, default='None',
                      helpstr=textentry('OUT_NIGHT_HELP'), reprocess=True)
-out_recipe.set_kwarg(name='--wnightlist', dtype=str, default='None',
+out_recipe.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
                      helpstr=textentry('OUT_WNIGHTLIST_HELP'), reprocess=True)
-out_recipe.set_kwarg(name='--bnightlist', dtype=str, default='None',
+out_recipe.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
                      helpstr=textentry('OUT_BNIGHTLIST_HELP'), reprocess=True)
 
 out_recipe.group_func = grouping.no_group
@@ -1373,7 +1373,7 @@ recipes.append(out_recipe)
 #           recipes can be customised by:
 #           - name (shortname)
 #           - allowed files (the name of the file argument)
-#           - whether a file is in the master sequence (use master night only
+#           - whether a file is in the master sequence (use master obs dir only
 #             in cases where normally a recipe would use any night)
 #           - any header keyword reference (value must be set in run file)
 #             i.e. those starting with "KW_"
@@ -1387,7 +1387,7 @@ recipes.append(out_recipe)
 #           # the below example creates a run called 'run'
 #           # it just extracts OBJ_FP files with OBJECT NAME listed in
 #           #  'SCIENCE_TARGETS' in the runfile
-#           # note as master=True it will only extract from the master night
+#           # note as master=True it will only extract from the master obs dir
 #
 #           run = drs_recipe.DrsRunSequence('run', __INSTRUMENT__)
 #           run.add(cal_extract, master=True, files=[files.pp_obj_fp],

@@ -107,12 +107,12 @@ class RecipeLog:
         # set the group name
         self.group = str(params['DRS_GROUP'])
         # set the night name directory (and deal with no value)
-        if 'NIGHTNAME' not in params:
-            self.directory = 'other'
-        elif params['NIGHTNAME'] in [None, 'None', '']:
-            self.directory = 'other'
+        if 'OBS_DIR' not in params:
+            self.obs_dir = 'other'
+        elif params['OBS_DIR'] in [None, 'None', '']:
+            self.obs_dir = 'other'
         else:
-            self.directory = str(params['NIGHTNAME'])
+            self.obs_dir = str(params['OBS_DIR'])
         # set the log file name (just used to save log directory)
         #  for log table entry
         self.log_file = 'Not Set'
@@ -522,19 +522,19 @@ FileType = Union[List[Path], Path, List[str], str, None]
 
 
 def update_index_db(params: ParamDict, kind: str,
-                    whitelist: Union[List[str], None] = None,
-                    blacklist: Union[List[str], None] = None,
+                    includelist: Union[List[str], None] = None,
+                    excludelist: Union[List[str], None] = None,
                     filename: FileType = None,
                     suffix: str = '',
                     indexdbm: Union[IndexDatabase, None] = None
                     ) -> IndexDatabase:
     # deal with white list and black list
-    if not drs_text.null_text(whitelist, ['None', 'All', '']):
-        include_dirs = list(whitelist)
+    if not drs_text.null_text(includelist, ['None', 'All', '']):
+        include_dirs = list(includelist)
     else:
         include_dirs = None
-    if not drs_text.null_text(blacklist, ['None', 'All', '']):
-        exclude_dirs = list(blacklist)
+    if not drs_text.null_text(excludelist, ['None', 'All', '']):
+        exclude_dirs = list(excludelist)
     else:
         exclude_dirs = None
     # load the index database
@@ -543,7 +543,7 @@ def update_index_db(params: ParamDict, kind: str,
     indexdbm.load_db()
     # get white
     # update index database with raw files
-    indexdbm.update_entries(kind=kind, exclude_directories=exclude_dirs,
+    indexdbm.update_entries(block_kind=kind, exclude_directories=exclude_dirs,
                             include_directories=include_dirs,
                             filename=filename, suffix=suffix)
     # return the database
@@ -558,7 +558,7 @@ def find_files(params: ParamDict, kind: str, filters: Dict[str, str],
     # get columns
     colnames = indexdbm.database.colnames('*', table=indexdbm.database.tname)
     # get file list using filters
-    condition = 'KIND="{0}"'.format(kind)
+    condition = 'BLOCK_KIND="{0}"'.format(kind)
     # loop around filters
     for fkey in filters:
         if fkey in colnames:

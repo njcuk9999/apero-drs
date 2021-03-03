@@ -741,9 +741,9 @@ class PseudoConstants(DefaultConstants):
         # set columns
         index_columns = dict()
         index_columns['ABSPATH'] = str
-        index_columns['DIRNAME'] = str
+        index_columns['OBS_DIR'] = str
         index_columns['FILENAME'] = str
-        index_columns['KIND'] = str
+        index_columns['BLOCK_KIND'] = str
         index_columns['LAST_MODIFIED'] = float
         index_columns['RUNSTRING'] = str
         # split names and types and add header keys

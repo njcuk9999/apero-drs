@@ -87,47 +87,48 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
     # get the night name from inputs
-    nightname = params['INPUTS']['NIGHTNAME']
+    obs_dir = params['INPUTS']['OBS_DIR']
     # get the kidn from inputs
     kind = params['INPUTS']['KIND']
     # get the white list of nights from inputs
-    whitelist = params['INPUTS']['WNIGHTNAMES']
-    if drs_text.null_text(whitelist, ['None', '', 'All']):
-        whitelist = None
+    include_list = params['INPUTS']['INCLUDE_OBS_DIRS']
+    if drs_text.null_text(include_list, ['None', '', 'All']):
+        include_list = None
     else:
-        whitelist = params['INPUTS'].listp('WNIGHTNAMES')
+        include_list = params['INPUTS'].listp('INCLUDE_OBS_DIRS')
     # get the black list of nights from inputs
-    blacklist = params['INPUTS']['BNIGHTNAMES']
-    if drs_text.null_text(blacklist, ['None', '', 'All']):
-        blacklist = None
+    exclude_list = params['INPUTS']['EXCLUDE_OBS_DIRS']
+    if drs_text.null_text(exclude_list, ['None', '', 'All']):
+        exclude_list = None
     else:
-        blacklist = params['INPUTS'].listp('BNIGHTNAMES')
+        exclude_list = params['INPUTS'].listp('EXCLUDE_OBS_DIRS')
 
     # ----------------------------------------------------------------------
     # Deal with kind
     # ----------------------------------------------------------------------
     # deal with kind
     if kind.lower() == 'raw':
-        # update the index database (taking into account whitelist/blacklist)
+        # update the index database (taking into account include/exclude lists)
         indexdbm = drs_utils.update_index_db(params, kind='raw',
-                                             whitelist=whitelist,
-                                             blacklist=blacklist)
+                                             includelist=include_list,
+                                             excludelist=exclude_list)
     elif kind.lower() == 'tmp':
-        # update the index database (taking into account whitelist/blacklist)
+        # update the index database (taking into account include/exclude lists)
         indexdbm = drs_utils.update_index_db(params, kind='tmp',
-                                             whitelist=whitelist,
-                                             blacklist=blacklist)
+                                             includelist=include_list,
+                                             excludelist=exclude_list)
     elif kind.lower() == 'red':
-        # update the index database (taking into account whitelist/blacklist)
+        # update the index database (taking into account include/exclude lists)
         indexdbm = drs_utils.update_index_db(params, kind='red',
-                                             whitelist=whitelist,
-                                             blacklist=blacklist)
+                                             includelist=include_list,
+                                             excludelist=exclude_list)
     else:
         for data_kind in ['raw', 'tmp', 'red']:
-            # update the index database (taking into account whitelist/blacklist)
+            # update the index database (taking into account include/exclude
+            #    lists)
             indexdbm = drs_utils.update_index_db(params, kind=data_kind,
-                                                 whitelist=whitelist,
-                                                 blacklist=blacklist)
+                                                 includelist=include_list,
+                                                 excludelist=exclude_list)
 
     # ----------------------------------------------------------------------
     # End of main code

@@ -72,6 +72,8 @@ pcheck = constants.PCheck(wlog=WLOG)
 OBJNAMECOLS = ['KW_OBJNAME']
 # gaia col name
 GAIA_COL_NAME = 'GAIADR2ID'
+# complex return
+DealFilenameReturn = Union[Tuple[str, str], Tuple[Path, str, str, str]]
 
 
 # =============================================================================
@@ -1245,25 +1247,23 @@ class IndexDatabase(DatabaseManager):
         # store whether an update has been done
         self.update_entries_params = []
 
-    def add_entry(self, directory: str, filename: Union[Path, str], kind: str,
+    def add_entry(self, basefile: drs_file.DrsPath,
+                  block_kind: str,
                   runstring: Union[str, None] = None,
                   hkeys: Union[Dict[str, str], None] = None,
-                  fullpath: Union[Path, str, None] = None,
                   used: Union[int, None] = None,
                   rawfix: Union[int, None] = None,
-                  force_dir: Union[str, None] = None, commit: bool = True):
+                  commit: bool = True):
         """
         Add an entry to the index database
 
-        :param directory: str, the sub-directory name (under the raw/reduced/
-                          tmp directory)
-        :param filename: str or Path, the filename to add (can be absolute file
-                         or basename, but must exist on disk)
-        :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
-                     this determines the path of the file i.e.
-                     path/directory/filename (unless filename is an absolute
-                     path) - note in this case directory should still be
-                     filled correctly (for database)
+        :param basefile: str, the sub-directory name (under the raw/reduced/
+                         tmp directory)
+        :param block_kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu',
+                           'asset' this determines the path of the file i.e.
+                            path/directory/filename (unless filename is an
+                            absolute path) - note in this case directory should
+                            still be filled correctly (for database)
         :param runstring: str, the command line arg representation of this
                           indexs recipe run
         :param hkeys: dictionary of strings, for each instrument a set
@@ -1276,7 +1276,6 @@ class IndexDatabase(DatabaseManager):
         :param used: int or None, if set overrides the default "used" parameter
         :param rawfix: int or None, if set overrides the default "rawfix"
                        parameter
-        :param force_dir: str or None, if set overrides our "kind" path
         :param commit: bool, if True commitrs
 
         :return: None - adds entry to index database
@@ -1290,25 +1289,19 @@ class IndexDatabase(DatabaseManager):
         # deal with no database loaded
         if self.database is None:
             self.load_db()
-        # deal with filename/basename/path
-        out = self.deal_with_filename(kind, directory, filename,
-                                      fullpath=fullpath, func=func_name,
-                                      force_dir=force_dir)
-        filename, basename, path = out
-
         # set used to 1
         if used is None:
             used = 1
         # this is a flag to test whether raw data has been fixed (so we don't
         #   do it again when not required)
         if rawfix is None:
-            if kind == 'raw':
+            if block_kind.lower() == 'raw':
                 rawfix = 0
             else:
                 rawfix = 1
         # ------------------------------------------------------------------
         # get last modified time for file (need absolute path)
-        last_modified = filename.stat().st_mtime
+        last_modified = basefile.to_path().stat().st_mtime
         # get run string
         if runstring is None:
             runstring = 'None'
@@ -1330,8 +1323,14 @@ class IndexDatabase(DatabaseManager):
                 try:
                     # get data type
                     dtype = rtypes[h_it]
-                    # try to case and append
-                    hvalues.append(dtype(hkeys[hkey]))
+                    # get value
+                    value = hkeys[hkey]
+                    # deal with a null value
+                    if isinstance(value, str) and hkey.lower() == 'null':
+                        hvalues.append('NULL')
+                    else:
+                        # try to case and append
+                        hvalues.append(dtype(value))
                 except Exception as _:
                     wargs = [self.name, hkey, hkeys[hkey],
                              rtypes[h_it], func_name]
@@ -1341,21 +1340,23 @@ class IndexDatabase(DatabaseManager):
             else:
                 hvalues.append('NULL')
         # ------------------------------------------------------------------
-        # make absolute path
-        path = Path(path).joinpath(directory, filename)
+        # get values for database
+        path = str(basefile.abspath)
+        obs_dir = str(basefile.obs_dir)
+        basename = str(basefile.basename)
         # ------------------------------------------------------------------
         try:
             # add new entry to database
-            values = [str(path), str(directory), str(basename), str(kind),
-                      float(last_modified), str(runstring)]
+            values = [path, obs_dir, basename, block_kind, float(last_modified),
+                      str(runstring)]
             values += hvalues + [used, rawfix]
             self.database.add_row(values, table=self.database.tname,
                                   commit=commit, unique_cols=ucols)
         # if this is called we need to set instead of adding
         except drs_db.UniqueEntryException:
             # add new entry to database
-            values = [str(path), str(directory), str(basename), str(kind),
-                      float(last_modified), str(runstring)]
+            values = [path, obs_dir, basename, block_kind, float(last_modified),
+                      str(runstring)]
             values += hvalues + [used, rawfix]
             # condition comes from uhash - so set to None here (to remember)
             condition = None
@@ -1508,32 +1509,30 @@ class IndexDatabase(DatabaseManager):
     # complex typing for filename(s) in update_entries
     FileTypes = Union[List[Union[Path, str]], Path, str, None]
 
-    def update_entries(self, kind,
+    def update_entries(self, block_kind,
                        include_directories: Union[List[str], None] = None,
                        exclude_directories: Union[List[str], None] = None,
                        filename: FileTypes = None, suffix: str = '',
-                       force_dir: Union[str, None] = None,
                        force_update: bool = False):
         """
         Update the index database for files of 'kind', deal with including
         and excluding directories for files with 'suffix'
 
-        :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
-                     this determines the path of the file i.e.
-                     path/directory/filename (unless filename is an absolute
-                     path) - note in this case directory should still be
-                     filled correctly (for database)
+        :param block_kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu',
+                           'asset' this determines the path of the file i.e.
+                            path/directory/filename (unless filename is
+                            an absolute path) - note in this case directory
+                            should still be filled correctly (for database)
         :param include_directories: list of strings or None, if set only
-                                    include these directories to update
-                                    index database
+                                    include these observation directories to
+                                    update index database
         :param exclude_directories: list of strings or None, if set exclude
-                                    these directories from being updated
-                                    in the index database
+                                    these observation directories from being
+                                    updated in the index database
         :param filename: str, Path, list of strs/Paths or None, if set we only
                          include this filename or these filenames
         :param suffix: str, the suffix (i.e. extension of filenames) - filters
                        to only set these files
-        :param force_dir: str or None, if set overrides our "kind" path
         :param force_update: bool, if True forces the update even if database
                              thinks it is up-to-date
 
@@ -1551,10 +1550,10 @@ class IndexDatabase(DatabaseManager):
         if not force_update:
             # if the exact same inputs have been used we can skip update
             #   (Again unless "force_update" was used)
-            cond = self._update_params(kind=kind,
+            cond = self._update_params(block_kind=block_kind,
                                        include_directories=include_directories,
                                        exclude_directories=exclude_directories,
-                                       filename=filename, force_dir=force_dir)
+                                       filename=filename)
             # if we are not updating return here
             if not cond:
                 return None
@@ -1562,8 +1561,8 @@ class IndexDatabase(DatabaseManager):
         # deal with no database loaded
         if self.database is None:
             self.load_db()
-        # get the path for kind
-        path = self.deal_with_filename(kind, None, None, force_dir=force_dir)
+        # get the block instance
+        block_inst = drs_file.DrsPath(self.params, block_kind=block_kind)
         # ---------------------------------------------------------------------
         # deal with a predefined file list (or single file)
         if filename is not None:
@@ -1575,19 +1574,19 @@ class IndexDatabase(DatabaseManager):
             include_files = []
         # ---------------------------------------------------------------------
         # deal with files we don't need (already have)
-        etable = self.get_entries('ABSPATH, LAST_MODIFIED', kind=kind)
+        etable = self.get_entries('ABSPATH, LAST_MODIFIED', kind=block_kind)
         exclude_files = list(etable['ABSPATH'])
         # only check last modified for raw files (we assume that any other
         #   file has been correctly updated by the drs)
-        if kind == 'raw':
+        if block_kind.lower() == 'raw':
             last_mod = list(etable['LAST_MODIFIED'])
         else:
             last_mod = None
         # ---------------------------------------------------------------------
         # locate all files within path
-        reqfiles = _get_files(path, kind, include_directories,
-                              exclude_directories, include_files,
-                              exclude_files, suffix, last_mod)
+        reqfiles = _get_files(block_inst.abspath, block_kind,
+                              include_directories, exclude_directories,
+                              include_files, exclude_files, suffix, last_mod)
         # ---------------------------------------------------------------------
         # get a list of keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
@@ -1635,12 +1634,8 @@ class IndexDatabase(DatabaseManager):
             return
         # add required files to the database
         for reqfile in tqdm(reqfiles):
-            # set directory
-            uncommonpath = drs_misc.get_uncommon_path(path, reqfile)
-            # get the directory name
-            directory = Path(uncommonpath).parent
-            # get the basename
-            basename = Path(uncommonpath).name
+            # get a drs path for required file
+            req_inst = drs_file.DrsPath(self.params, reqfile)
             # get header keys
             hkeys = dict()
             # load missing files
@@ -1655,7 +1650,7 @@ class IndexDatabase(DatabaseManager):
                     if drs_key in header:
                         hkeys[rkey] = header[drs_key]
             # add to database
-            self.add_entry(directory, basename, kind, hkeys=hkeys, commit=True)
+            self.add_entry(req_inst, block_kind, hkeys=hkeys, commit=True)
 
     def update_header_fix(self, recipe):
         # set function name
@@ -1710,40 +1705,6 @@ class IndexDatabase(DatabaseManager):
             self.database.set(columns, values=values, condition=condition,
                               table=self.database.tname)
 
-    def deal_with_filename(self, kind: str, directory: Union[str, None] = None,
-                           filename: Union[str, None] = None,
-                           fullpath: Union[str, None] = None,
-                           force_dir: Union[str, None] = None,
-                           func: Union[str, None] = None
-                           ) -> Union[str, Tuple[Path, str, str]]:
-        """
-        Wrapper around _deal_with_filename
-
-        Takes a filename (either str or Path) and a kind and directory and
-        checks that file exists and returns basename/filename/path in correct
-        format for database
-
-        :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
-                 this determines the path of the file i.e.
-                 path/directory/filename (unless filename is an absolute
-                 path) - note in this case directory should still be
-                 filled correctly (for database)
-        :param directory: str, the sub-directory name (under the raw/reduced/
-                          tmp directory)
-        :param filename: str or Path, the filename to add (can be absolute file
-                         or basename, but must exist on disk)
-        :param fullpath: str or None, if set overrides all other path getting
-                         and is used for return
-        :param force_dir: str or None, if set overrides our "kind" path
-        :param func: str, the function name where this func was called
-                     (for error logging)
-        :return: if directory and filename are None returns just the path
-                 (based on kind, else returns a tuple, 1. the filename (Path),
-                 2. the basename and the path
-        """
-        return _deal_with_filename(self.params, self.name, kind, directory,
-                                   filename, fullpath, force_dir, func)
-
     def _update_params(self, **kwargs) -> bool:
         """
         Update the parameters for update_entries (so we don't update twice)
@@ -1778,86 +1739,6 @@ class IndexDatabase(DatabaseManager):
             self.update_entries_params.append(kwargs)
         # return whether to update or not
         return update
-
-
-def _deal_with_filename(params: ParamDict, name: str, kind: str,
-                        directory: Union[str, None] = None,
-                        filename: Union[str, None] = None,
-                        fullpath: Union[str, None] = None,
-                        force_dir: Union[str, None] = None,
-                        func: Union[str, None] = None
-                        ) -> Union[str, Tuple[Path, str, str]]:
-    """
-    Takes a filename (either str or Path) and a kind and directory and
-    checks that file exists and returns basename/filename/path in correct
-    format for database
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param name: str, the name of the database used in
-    :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
-             this determines the path of the file i.e.
-             path/directory/filename (unless filename is an absolute
-             path) - note in this case directory should still be
-             filled correctly (for database)
-    :param directory: str, the sub-directory name (under the raw/reduced/
-                      tmp directory)
-    :param filename: str or Path, the filename to add (can be absolute file
-                     or basename, but must exist on disk)
-    :param fullpath: str or None, if set overrides all other path getting and
-                     is used for return
-    :param force_dir: str or None, if set overrides our "kind" path
-    :param func: str, the function name where this func was called (for error
-                 logging)
-    :return: if directory and filename are None returns just the path (based on
-             kind, else returns a tuple, 1. the filename (Path),
-             2. the basename and the path
-    """
-    # ------------------------------------------------------------------
-    # deal with function name
-    if func is None:
-        func_name = display_func('_deal_with_filename', __NAME__)
-    else:
-        func_name = str(func)
-    # ------------------------------------------------------------------
-    # deal with kind
-    if force_dir is not None:
-        path, kind = drs_file.get_dir(params, kind, force_dir,
-                                kind='database (forced)')
-    else:
-        path, kind = drs_file.get_dir(params, kind, None, kind='database')
-    # deal with having full path
-    if fullpath is not None:
-        if isinstance(fullpath, str):
-            fullpath = Path(fullpath)
-        # return forced paths (from path input)
-        return fullpath, fullpath.name, path
-
-    # deal with no directory and/or no filename (just want the path)
-    if directory is None or filename is None:
-        return path
-    # ------------------------------------------------------------------
-    # make filename a Path
-    if isinstance(filename, str):
-        filename = Path(filename)
-
-    # get absolute path for file if not given
-    if isinstance(filename, Path):
-        if filename.exists():
-            filename = filename.absolute()
-        elif Path(path).joinpath(directory, filename).exists():
-            filename = Path(path).joinpath(directory, filename)
-            filename = filename.absolute()
-        else:
-            eargs = [name, filename, func_name]
-            emsg = textentry('00-002-00023', args=eargs)
-            WLOG(params, 'error', emsg)
-            raise DrsCodedException('00-002-00023', targs=eargs,
-                                    func_name=func_name)
-    # get basename
-    basename = str(filename.name)
-
-    # return the filename as Path object (absolute), basename and path
-    return filename, basename, path
 
 
 def _get_files(path: Union[Path, str], kind: str,
@@ -1896,7 +1777,7 @@ def _get_files(path: Union[Path, str], kind: str,
     if isinstance(path, str):
         path = Path(path)
     # only use sub-directories for the following kinds
-    if kind in ['raw', 'tmp', 'red']:
+    if kind.lower() in ['raw', 'tmp', 'red']:
         # ---------------------------------------------------------------------
         # get directory path
         all_items = path.rglob('*')
@@ -2113,8 +1994,8 @@ class LogDatabase(DatabaseManager):
         self.database.add_row(values, table=self.database.tname, commit=commit)
 
     def get_entries(self, columns: str = '*',
-                    wdirs: Union[List[str], None] = None,
-                    bdirs: Union[List[str], None] = None,
+                    include_dirs: Union[List[str], None] = None,
+                    exclude_dirs: Union[List[str], None] = None,
                     nentries: Union[int, None] = None,
                     condition: Union[str, None] = None,
                     ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
@@ -2123,8 +2004,10 @@ class LogDatabase(DatabaseManager):
         filter by specific columns)
 
         :param columns: str, the columns to return ('*' for all)
-        :param wdirs: list of strings - if set a list of allowed directories
-        :param bdirs: list of strings - if set a list of disallowed directories
+        :param include_dirs: list of strings - if set a list of allowed
+                             directories
+        :param exclude_dirs: list of strings - if set a list of disallowed
+                             directories
         :param nentries: int or None, if set limits the number of entries to get
                          back - sorted newest to oldest
         :param condition: str or None, if set the SQL query to add
@@ -2158,22 +2041,22 @@ class LogDatabase(DatabaseManager):
             sql['condition'] += ' AND {0}'.format(condition)
         # ------------------------------------------------------------------
         # deal with whitelist directory set
-        if wdirs is not None:
+        if include_dirs is not None:
             # define a subcondition
             subconditions = []
             # loop around white listed nights and only keep these
-            for directory in wdirs:
+            for directory in include_dirs:
                 # add subcondition
-                subcondition = 'DIRNAME="{0}"'.format(directory)
+                subcondition = 'OBS_DIR="{0}"'.format(directory)
                 subconditions.append(subcondition)
             # add to conditions
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
         # ------------------------------------------------------------------
         # deal with blacklist directory set
-        if bdirs is not None:
-            for directory in bdirs:
+        if exclude_dirs is not None:
+            for directory in exclude_dirs:
                 # add to condition
-                condition += ' AND (DIRNAME!="{0}")'.format(directory)
+                condition += ' AND (OBS_DIR!="{0}")'.format(directory)
         # ------------------------------------------------------------------
         # add the number of entries to get
         if isinstance(nentries, int):

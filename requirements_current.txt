@@ -1,7 +1,7 @@
 # pip
 astropy==4.1
 astroquery==0.4.1
-barycorrpy==0.3.4
+barycorrpy==0.3.7
 bottleneck==1.3.2
 matplotlib==3.3.3
 numba==0.51.2

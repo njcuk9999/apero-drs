@@ -43,6 +43,7 @@ from apero.core import math as mp
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
 from apero.core.core import drs_text
+from apero.core.core import drs_misc
 from apero.core.instruments.default import output_filenames as outf
 from apero.core.instruments.default import pseudo_const
 from apero.io import drs_fits
@@ -95,6 +96,383 @@ MaskedConstant = np.ma.core.MaskedConstant
 # -----------------------------------------------------------------------------
 # define complex typing
 QCParamList = Tuple[List[str], List[Any], List[str], List[int]]
+
+
+# =============================================================================
+# Define Path classes
+# =============================================================================
+class BlockPath:
+    def __init__(self, params, name, key):
+        self.path = params[key]
+        self.name = name
+        self.has_obs_dirs = False
+
+    def __str__(self) -> str:
+        return 'BlockPath[{0}]'.format(self.name)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+
+class RawPath(BlockPath):
+    def __init__(self, params):
+        super().__init__(params, 'raw', 'DRS_DATA_RAW')
+        self.has_obs_dirs = True
+
+
+class TmpPath(BlockPath):
+    def __init__(self, params):
+        super().__init__(params, 'tmp', 'DRS_DATA_WORKING')
+        self.has_obs_dirs = True
+
+
+class ReducedPath(BlockPath):
+    def __init__(self, params):
+        super().__init__(params, 'red', 'DRS_DATA_REDUC')
+        self.has_obs_dirs = True
+
+
+class AssetPath(BlockPath):
+    def __init__(self, params):
+        super().__init__(params, 'asset', 'DRS_DATA_ASSETS')
+        self.has_obs_dirs = False
+
+
+class CalibPath(BlockPath):
+    def __init__(self, params):
+        super().__init__(params, 'calib', 'DRS_CALIB_DB')
+        self.has_obs_dirs = False
+
+
+class TelluPath(BlockPath):
+    def __init__(self, params):
+        super().__init__(params, 'tellu', 'DRS_TELLU_DB')
+        self.has_obs_dirs = False
+
+
+class OutPath(BlockPath):
+    def __init__(self, params):
+        super().__init__(params, 'out', 'DRS_DATA_OUT')
+        self.has_obs_dirs = True
+
+
+class DrsPath:
+    def __init__(self, params: ParamDict,
+                 abspath: Union[Path, str, None] = None,
+                 block_kind: Union[str, None] = None,
+                 block_path: Union[str, None] = None,
+                 obs_dir: Union[str, None] = None,
+                 basename: Union[str, None] = None):
+        """
+        Class for controlling paths in the drs (and sorting them into raw,
+        tmp, reduced etc)
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param abspath:
+        :param datakind:
+        :param datapath:
+        :param obspath:
+        """
+        self.params = params
+        # aboslute path must be a real path (not a symbolic link)
+        if abspath is not None:
+            self.abspath = os.path.realpath(abspath)
+        else:
+            self.abspath = None
+        self.block_kind = block_kind
+        self.block_path = block_path
+        self.block_has_obs = False
+        self.obs_dir = obs_dir
+        self.basename = basename
+        # tell the user what kind of path this is
+        #  1. block: abspath = block_path
+        #            block_kind set
+        #            obs_dir, basename not set
+        #  2. obs:   abspath = block_path + obs_dir
+        #            block_kind, obs_dir set
+        #            basename not set
+        #  3. base:  abspath = block_path + obs_dir + filename
+        #            block_kind, obs_dir, basename set
+        self.path_kind = None
+        # set up the directories
+        self.blocks = [RawPath(params), TmpPath(params), ReducedPath(params),
+                       AssetPath(params), CalibPath(params),
+                       TelluPath(params), OutPath(params)]
+        # update kind dir and sub dir
+        self.update()
+
+    def __str__(self) -> str:
+        """
+        String representation of DrsPath
+
+        :return:
+        """
+        # get the basic name
+        _str = 'DrsPath'
+        # add the block kind (if set)
+        if self.block_kind is not None:
+            _str += '[{0}]'.format(self.block_kind.upper())
+        else:
+            _str += '[]'
+        # add the path kind (if set)
+        if self.path_kind is not None:
+            _str += '[{0}]'.format(self.path_kind.upper())
+        return _str
+
+    def __repr__(self) -> str:
+        """
+        String representation of DrsPath
+
+        :return:
+        """
+        return self.__str__()
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def copy(self) -> 'DrsPath':
+        """
+        Copy the DrsPath
+        :return:
+        """
+        new = DrsPath(self.params, self.abspath, self.block_kind,
+                      self.block_path, self.obs_dir, self.basename)
+        return new
+
+    def update(self):
+        """
+        Update values (if one changes others may change)
+        :return:
+        """
+        # if we have absolute path use it
+        if self.abspath is not None:
+            self._from_abspath()
+        # if we have block path use it
+        elif self.block_path is not None:
+            self._from_block_path()
+        # if we have block kind use it
+        elif self.block_kind is not None:
+            self._from_block_kind()
+        # else we have a problem
+        else:
+            # TODO: move to language database
+            emsg = ('DrsPath requires at least abspath or block_kind or '
+                    'block_name')
+            WLOG(self.params, 'error', emsg)
+            return
+
+    def to_path(self) -> Path:
+        """
+        Get the path instance for the absolute path
+        :return:
+        """
+        if self.abspath is not None:
+            return Path(self.abspath)
+        else:
+            # TODO: add to language database
+            emsg = 'DrsPath does not have absolute path set'
+            WLOG(self.params, 'error', emsg)
+            return Path('')
+
+    def _from_abspath(self):
+        """
+        Scans through our directories and see's if abspath belongs to one of
+        the block directories (defined in self.blocks)
+
+        :return:
+        """
+        # deal with abspath not set
+        if self.abspath is None:
+            return
+        # assume we haven't found directory
+        found = False
+        # loop around directories and see if absolute path belongs to one
+        for block in self.blocks:
+            # look for directory path in absolute path
+            if block.path in self.abspath:
+                # set dirkind
+                self.block_kind = str(block.name)
+                # set dirpath
+                self.block_path = str(block.path)
+                # set has_obs
+                self.block_has_obs = block.has_obs_dirs
+                # flag that we have found directory
+                found = True
+                # break here (we don't need to continue)
+                break
+        # if we have found the directory look for sub-directory
+        if found:
+            # deal with abspath and dirpath being the same
+            if self.abspath == self.block_path:
+                self.path_kind = 'block'
+                return
+            # look for uncommon path
+            rest = drs_misc.get_uncommon_path(self.abspath, self.block_path)
+            # if we don't require obs then the rest is the basename
+            if not self.block_has_obs:
+                self.basename = rest
+                self.path_kind = 'base'
+            # else if the rest is a file we need to split between basename and
+            #   obs_dir
+            elif os.path.isfile(rest):
+                self.obs_dir = os.path.dirname(rest)
+                self.basename = os.path.basename(rest)
+                self.path_kind = 'base'
+                return
+            # else we just have obs_dir
+            else:
+                self.obs_dir = rest
+                self.path_kind = 'obs'
+                return
+        else:
+            # TODO: move to language database
+            emsg = ('DrsPath abspath = {0} must be related to a valid block.'
+                    '\n\t Valid blocks are:')
+            eargs = [self.abspath]
+            # add block error
+            emsg, eargs = self._blocks_error(emsg, eargs)
+            # log error
+            WLOG(self.params, 'error', emsg.format(*eargs))
+
+    def _blocks_error(self, emsg, eargs):
+        # add the possible block types
+        count = 1
+        for block in self.blocks:
+            emsg += '\n\t\t{{{0}}}: {{{1}}}'.format(count, count + 1)
+            eargs += [block.name, block.path]
+            count += 2
+        return emsg, eargs
+
+    def _from_block_path(self):
+        """
+        Set abspath and block_kind from block_path
+        :return:
+        """
+        # deal with abspath not set
+        if self.block_path is None:
+            return
+        # assume we haven't found directory
+        found = False
+        # loop around directories and see if absolute path belongs to one
+        for block in self.blocks:
+            if block.path == self.block_path:
+                # set dirkind
+                self.block_kind = str(block.name)
+                # flag that we have found directory
+                found = True
+                # break here (we don't need to continue)
+                break
+        # now we want to set absolute path
+        if found:
+            # if we have an obs_dir and no basename add the obs_dir to the
+            #     absolute path
+            if self.obs_dir is not None and self.basename is None:
+                self.abspath = os.path.join(str(self.block_path), self.obs_dir)
+                self.path_kind = 'obs'
+            # if we have a basename and a obs_dir add it to abspath
+            elif self.basename is not None:
+                # if we have not got a obs dir assume we don't need one
+                if self.obs_dir is None:
+                    self.obs_dir = ''
+                self.abspath = os.path.join(str(self.block_path), self.obs_dir,
+                                            self.basename)
+                self.path_kind = 'base'
+            # else we just have a block
+            else:
+                self.abspath = str(self.block_path)
+                self.path_kind = 'block'
+        else:
+            # TODO: move to langauge database
+            emsg = 'DrsPath: {0} is not a valid block path'
+            eargs = [self.block_path]
+            # add block error
+            emsg, eargs = self._blocks_error(emsg, eargs)
+            # log error
+            WLOG(self.params, 'error', emsg.format(*eargs))
+
+    def _from_block_kind(self):
+        """
+        Set abspath and block_path from block_kind
+        :return:
+        """
+        # deal with abspath not set
+        if self.block_kind is None:
+            return
+        # assume we haven't found directory
+        found = False
+        # loop around directories and see if absolute path belongs to one
+        for block in self.blocks:
+            if block.name.upper() == self.block_kind.upper():
+                # set dirkind
+                self.block_path = str(block.path)
+                # flag that we have found directory
+                found = True
+                # break here (we don't need to continue)
+                break
+        # now we want to set absolute path
+        if found:
+            # if we have an obs_dir and no basename add the obs_dir to the
+            #     absolute path
+            if self.obs_dir is not None and self.basename is None:
+                self.abspath = os.path.join(str(self.block_path), self.obs_dir)
+                self.path_kind = 'obs'
+            # if we have a basename and a obs_dir add it to abspath
+            elif self.basename is not None:
+                # if we have not got a obs dir assume we don't need one
+                if self.obs_dir is None:
+                    self.obs_dir = ''
+                self.abspath = os.path.join(str(self.block_path), self.obs_dir,
+                                            self.basename)
+                self.path_kind = 'base'
+            # else we just have a block
+            else:
+                self.abspath = str(self.block_path)
+                self.path_kind = 'block'
+        else:
+            # TODO: move to langauge database
+            emsg = 'DrsPath: {0} is not a valid block kind'
+            eargs = [self.block_kind]
+            # add block error
+            emsg, eargs = self._blocks_error(emsg, eargs)
+            # log error
+            WLOG(self.params, 'error', emsg.format(*eargs))
 
 
 # =============================================================================
@@ -989,8 +1367,7 @@ class DrsInputFile:
         :param infile: Drsfile, the input DrsFile
         :param outfile: DrsFitsFile, output file - must be defined
         :param fiber: str, the fiber - must be set if infile.fibers is populated
-        :param path: str, the path the file should have (if not set, set to
-                     params['OUTPATH']  with params['NIGHTNAME'] if set)
+        :param path: str, the path the file should have
         :param func: str, the function name if set (for errors)
         :param remove_insuffix: bool if set removes input suffix if not set
                                 defaults to the outfile.remove_insuffix
@@ -1183,7 +1560,7 @@ class DrsInputFile:
         # deal with absolute path of file
         self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file
-        self.output_dict['DIRNAME'] = str(self.params['NIGHTNAME'])
+        self.output_dict['OBS_DIR'] = str(self.params['OBS_DIR'])
         # deal with basename of file
         self.output_dict['FILENAME'] = str(self.basename)
         # deal with kind
@@ -1393,6 +1770,8 @@ class DrsFitsFile(DrsInputFile):
         self.dtype = None
         # get the data array (for multi-extension fits)
         self.data_array = None
+        # get the name array (for multi-extension fits)
+        self.name_array = None
         # get the header array (fro multi-extnesion fits)
         self.header_array = None
         # flag whether file is a combined file
@@ -2691,19 +3070,25 @@ class DrsFitsFile(DrsInputFile):
         self.check_filename()
         # get data format
         if ext is not None:
-            dout, hout = drs_fits.readfits(params, self.filename, getdata=True,
-                                           ext=ext, gethdr=True,
-                                           fmt='fits-image')
+            rout = drs_fits.readfits(params, self.filename, getdata=True,
+                                     ext=ext, gethdr=True, fmt='fits-image')
+            dout, hout = rout
+            names = None
         else:
-            dout, hout = drs_fits.readfits(params, self.filename, getdata=True,
-                                           gethdr=True, fmt='fits-multi')
+            rout = drs_fits.readfits(params, self.filename, getdata=True,
+                                           gethdr=True, fmt='fits-multi',
+                                           return_names=True)
+            dout, hout, names = rout
         # need to deal with no data in primary (should be default)
         if dout[0] is None:
             self.data = dout[1]
-            self.data_array = dout[1:]
+            self.data_array = dout[2:]
+            self.name_array = names[1:]
         else:
             self.data = dout[0]
-            self.data_array = dout
+            self.data_array = dout[1:]
+            self.name_array = names
+        # set primary header
         self.header = drs_fits.Header.from_fits_header(hout[0])
         # update fiber parameter from header
         if self.header is not None:
@@ -2924,7 +3309,7 @@ class DrsFitsFile(DrsInputFile):
         # deal with absolute path of file
         self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file
-        self.output_dict['DIRNAME'] = str(self.params['NIGHTNAME'])
+        self.output_dict['OBS_DIR'] = str(self.params['OBS_DIR'])
         # deal with basename of file
         self.output_dict['FILENAME'] = str(self.basename)
         # deal with kind
@@ -5770,10 +6155,10 @@ def combine(params: ParamDict, recipe: Any,
         WLOG(params, 'error', textentry('01-001-00023', args=[func_name]))
         return None
     # get the absolute path (for combined output)
-    if params['NIGHTNAME'] is None:
+    if params['OBS_DIR'] is None:
         outdirectory = ''
     else:
-        outdirectory = params['NIGHTNAME']
+        outdirectory = params['OBS_DIR']
     # combine outpath and out directory
     abspath = os.path.join(outpath, outdirectory)
     # read all infiles (must be done before combine)
@@ -6360,6 +6745,7 @@ def determine_dirtype(params: ParamDict, dirtype: str,
     # the type that was set in setup - any custom paths must be of this
     # kind
     return dirtype
+
 
 
 # =============================================================================

@@ -732,8 +732,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # Once we have a cavity length, we find the integer FP peak number.
         # This will be compiled in the table later and used for nightly
         # wavelength solutions by changing the achromatic part of the cavity
-        # length relative to the master night. By construction, this is
-        # always an integer.
+        # length relative to the master observation directory. By construction,
+        # this is always an integer.
         cavfit = np.polyval(cavity_length_poly, list_waves)
         peak_number = np.array(cavfit / list_waves, dtype=int)
     # ----------------------------------------------------------------------

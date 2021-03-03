@@ -128,13 +128,13 @@ def __main__(recipe, params):
     # ---------------------------------------------------------------------
     # deal with night
     if night is not None:
-        mastercondition = 'DIRNAME={0}'.format(night)
+        mastercondition = 'OBS_DIR={0}'.format(night)
     # deal with white night list
     elif wnightlist is not None:
         # loop around all nights in wnightlist
         subcondition = []
         for wnight in wnightlist:
-            subcondition.append('DIRNAME="{0}"'.format(wnight))
+            subcondition.append('OBS_DIR="{0}"'.format(wnight))
         # add to master condition
         mastercondition = '({0})'.format(' OR '.join(subcondition))
     # deal with black night list
@@ -142,7 +142,7 @@ def __main__(recipe, params):
         # loop around all nights in bnightlist
         subcondition = []
         for bnight in bnightlist:
-            subcondition.append('DIRNAME!="{0}"'.format(bnight))
+            subcondition.append('OBS_DIR!="{0}"'.format(bnight))
         # add to master condition
         mastercondition = '({0})'.format(' AND '.join(subcondition))
     else:

@@ -168,11 +168,11 @@ def __main__(recipe, params):
     if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
         # get night name
         nightname = drs_path.get_nightname(params, infile.filename)
-        params.set(key='NIGHTNAME', value=nightname, source=mainname)
+        params.set(key='OBS_DIR', value=nightname, source=mainname)
     else:
         # set night name (we have no info about filename)
         nightname = 'other'
-        params.set(key='NIGHTNAME', value='other', source=mainname)
+        params.set(key='OBS_DIR', value='other', source=mainname)
         # make night directory (if it doesn't exist)
         absnightpath = os.path.join(params['OUTPATH'], nightname)
         if not os.path.exists(absnightpath):

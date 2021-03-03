@@ -85,7 +85,6 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     # get arguments
-    nightname = params['INPUTS']['NIGHTNAME']
     kind = params['INPUTS']['kind']
     recipename = params['INPUTS']['recipe']
     since = params['INPUTS']['since']

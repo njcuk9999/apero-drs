@@ -126,11 +126,11 @@ class Plotter:
         # get root plot path
         plot_path = self.params['DRS_DATA_PLOT']
         # get night name (and deal with unset/other)
-        nightname = self.params['NIGHTNAME']
-        if nightname is None or nightname == '':
-            nightname = 'other'
+        obs_dir = self.params['OBS_DIR']
+        if obs_dir is None or obs_dir == '':
+            obs_dir = 'other'
         # construct summary pdf
-        path = os.path.join(plot_path, nightname, self.pid_dir)
+        path = os.path.join(plot_path, obs_dir, self.pid_dir)
         # create folder it if doesn't exist
         drs_path.makedirs(self.params, path)
         # create the summary plot name

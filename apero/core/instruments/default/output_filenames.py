@@ -54,8 +54,7 @@ def general_file(params: ParamDict, infile: Any, outfile: Any,
     :param infile: DrsFitsFile, input file - must be defined
     :param outfile: DrsFitsFile, output file - must be defined
     :param fiber: str, the fiber - must be set if infile.fibers is populated
-    :param path: str, the path the file should have (if not set, set to
-                 params['OUTPATH']  with params['NIGHTNAME'] if set)
+    :param path: str, the path the file should have
     :param func: str, the function name if set (for errors)
     :param remove_insuffix: bool if set removes input suffix if not set
                             defaults to the outfile.remove_insuffix
@@ -129,10 +128,10 @@ def general_file(params: ParamDict, infile: Any, outfile: Any,
             raise DrsCodedException('00-001-00023', level='error',
                                     targs=[func_name], func_name=func_name)
         # get output night name from params
-        if params['NIGHTNAME'] is None:
+        if params['OBS_DIR'] is None:
             outdirectory = ''
         else:
-            outdirectory = params['NIGHTNAME']
+            outdirectory = params['OBS_DIR']
         # make sure night name folder exists (create it if not)
         make_night_name(params, outdirectory, outpath)
         # construct absolute path
@@ -283,8 +282,7 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
     :param params: ParamDict, paremeter dictionary of constants
     :param infile: DrsFitsFile, input file - must be defined
     :param outfile: DrsFitsFile, output file - must be defined
-    :param path: str, the path the file should have (if not set, set to
-                 params['OUTPATH']  with params['NIGHTNAME'] if set)
+    :param path: str, the path the file should have
     :param func: str, the function name if set (for errors)
     :param suffix: str, if set the suffix of the file (defaults to
                    outfile.suffix)
@@ -335,7 +333,7 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
             raise DrsCodedException('00-001-00023', level='error',
                                     targs=[func_name], func_name=func_name)
         # get output night name from params
-        outdirectory = params['NIGHTNAME']
+        outdirectory = params['OBS_DIR']
         # make sure night name folder exists (create it if not)
         make_night_name(params, outdirectory, outpath)
         # construct absolute path

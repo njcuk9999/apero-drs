@@ -38,7 +38,7 @@ Calibration database entry
 
 .. code-block:: bash
 
-    WAVE_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+    LEAKM_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 
 ===========================================
 Output files

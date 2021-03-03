@@ -114,10 +114,10 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # find all raw files via index database
     # ----------------------------------------------------------------------
-    # update the index database (taking into account whitelist/blacklist)
+    # update the index database (taking into account include/exclude lists)
     indexdbm = drs_utils.update_index_db(params, kind='raw',
-                                         whitelist=params['WNIGHTNAMES'],
-                                         blacklist=params['BNIGHTNAMES'])
+                                         includelist=params['INCLUDE_OBS_DIRS'],
+                                         excludelist=params['EXCLUDE_OBS_DIRS'])
     # fix the header data (object name, dprtype, mjdmid and trg_type etc)
     WLOG(params, '', 'Updating database with header fixes')
     indexdbm.update_header_fix(recipe)

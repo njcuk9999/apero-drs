@@ -2677,9 +2677,9 @@ REPROCESS_MP_TYPE.value = 'process'
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)
 REPROCESS_RUN_KEY.value = 'ID'
 
-# Define the night name column name for raw file table
-REPROCESS_NIGHTCOL = REPROCESS_NIGHTCOL.copy(__NAME__)
-REPROCESS_NIGHTCOL.value = 'DIRNAME'
+# Define the obs_dir column name for raw file table
+REPROCESS_OBSDIR_COL = REPROCESS_OBSDIR_COL.copy(__NAME__)
+REPROCESS_OBSDIR_COL.value = 'OBS_DIR'
 
 # Define the pi name column name for raw file table
 REPROCESS_PINAMECOL = REPROCESS_PINAMECOL.copy(__NAME__)

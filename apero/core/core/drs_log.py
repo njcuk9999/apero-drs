@@ -678,17 +678,17 @@ class RecipeLog:
         # set the group name
         self.group = str(params['DRS_GROUP'])
         # set the night name directory (and deal with no value)
-        if 'NIGHTNAME' not in params:
-            self.directory = 'other'
-        elif params['NIGHTNAME'] in [None, 'None', '']:
-            self.directory = 'other'
+        if 'OBS_DIR' not in params:
+            self.obs_dir = 'other'
+        elif params['OBS_DIR'] in [None, 'None', '']:
+            self.obs_dir = 'other'
         else:
-            self.directory = str(params['NIGHTNAME'])
+            self.obs_dir = str(params['OBS_DIR'])
         # get log fits path
         self.logfitspath = self._get_write_dir()
         # define lockfile (we need to lock the directory while this is
         #   being done)
-        self.lockfile = self.directory + self.logfitsfile.replace('.', '_')
+        self.lockfile = self.obs_dir + self.logfitsfile.replace('.', '_')
         # set the log file name (just used to save log directory)
         #  for log table entry
         self.log_file = 'None'
@@ -1055,7 +1055,7 @@ class RecipeLog:
         row['LEVEL_CRIT'] = self.level_criteria
         row['INPATH'] = self.inputdir
         row['OUTPATH'] = self.outputdir
-        row['DIRECTORY'] = self.directory
+        row['OBS_DIR'] = self.directory
         row['LOGFILE'] = self.log_file
         row['PLOTDIR'] = self.plot_dir
         row['RUNSTRING'] = self.runstring
@@ -1760,9 +1760,9 @@ def get_drs_data_msg(params: ParamDict, group: Union[str, None] = None,
         dir_data_msg = os.path.join(dir_data_msg, group)
     # ----------------------------------------------------------------------
     # add night name dir (if available) - put into sub-directory
-    if ('NIGHTNAME' in params) and (dir_data_msg is not None):
-        if params['NIGHTNAME'] not in [None, 'None', '']:
-            dir_data_msg = os.path.join(dir_data_msg, params['NIGHTNAME'])
+    if ('OBS_DIR' in params) and (dir_data_msg is not None):
+        if params['OBS_DIR'] not in [None, 'None', '']:
+            dir_data_msg = os.path.join(dir_data_msg, params['OBS_DIR'])
     # ----------------------------------------------------------------------
     # try to create directory
     if not os.path.exists(dir_data_msg):

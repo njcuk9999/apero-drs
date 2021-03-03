@@ -349,16 +349,16 @@ class PseudoConstants:
         _ = display_func('INDEX_LOCK_FILENAME', __NAME__,
                          self.class_name)
         # set night name to unknown initially (change after)
-        night_name = 'UNKNOWN'
-        # get the night name directory
-        if 'NIGHTNAME' in params:
-            if params['NIGHTNAME'] is not None:
-                night_name = params['NIGHTNAME'].replace(os.sep, '_')
-                night_name = night_name.replace(' ', '_')
+        obs_dir = 'UNKNOWN'
+        # get the obs_dir directory
+        if 'OBS_DIR' in params:
+            if params['OSB_DIR'] is not None:
+                obs_dir = params['OBS_DIR'].replace(os.sep, '_')
+                obs_dir = obs_dir.replace(' ', '_')
         # get the index file
         index_file = self.INDEX_OUTPUT_FILENAME()
         # construct the index lock file name
-        oargs = [night_name, index_file]
+        oargs = [obs_dir, index_file]
         # get msg path
         msgpath = params['DRS_DATA_MSG_FULL']
         opath = os.path.join(msgpath, '{0}_{1}'.format(*oargs))

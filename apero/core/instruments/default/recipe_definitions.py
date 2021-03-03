@@ -155,15 +155,15 @@ listing.name = 'apero_listing.py'
 listing.instrument = __INSTRUMENT__
 listing.description = textentry('LISTING_DESC')
 listing.kind = 'tool'
-listing.set_kwarg(name='--nightname', dtype=str, default='',
+listing.set_kwarg(name='--obs_dir', dtype=str, default='',
                   helpstr=textentry('LISTING_HELP_NIGHTNAME'))
 listing.set_kwarg(name='--kind', dtype=str, default='raw',
                   options=['raw', 'tmp', 'red'],
                   helpstr=textentry('LISTING_HELP_KIND'))
-listing.set_kwarg(name='--bnightnames', dtype=str, default='None',
-                  helpstr=textentry('PROCESS_BNIGHTNAMES_HELP'))
-listing.set_kwarg(name='--wnightnames', dtype=str, default='None',
-                  helpstr=textentry('PROCESS_WNIGHTNAMES_HELP'))
+listing.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
+                  helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))
+listing.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
+                  helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_log_stats.py
@@ -174,7 +174,7 @@ logstats.description = textentry('LOGSTAT_DESC')
 logstats.kind = 'tool'
 logstats.set_debug_plots('LOGSTATS_BAR')
 logstats.set_summary_plots()
-logstats.set_kwarg(name='--nightname', dtype=str, default='',
+logstats.set_kwarg(name='--obs_dir', dtype=str, default='',
                    helpstr=textentry('LOGSTAT_HELP_NIGHTNAME'))
 logstats.set_kwarg(name='--kind', dtype=str, default='red',
                    options=['tmp', 'red'],
@@ -223,14 +223,14 @@ processing.description = textentry('PROCESS_DESCRIPTION')
 processing.kind = 'processing'
 processing.set_arg(pos=0, name='runfile', dtype=str,
                    helpstr=textentry('PROCESS_RUNFILE_HELP'))
-processing.set_kwarg(name='--nightname', dtype=str, default='None',
+processing.set_kwarg(name='--obs_dir', dtype=str, default='None',
                      helpstr=textentry('PROCESS_NIGHTNAME_HELP'))
 processing.set_kwarg(name='--filename', dtype=str, default='None',
                      helpstr=textentry('PROCESS_FILENAME_HELP'))
-processing.set_kwarg(name='--bnightnames', dtype=str, default='None',
-                     helpstr=textentry('PROCESS_BNIGHTNAMES_HELP'))
-processing.set_kwarg(name='--wnightnames', dtype=str, default='None',
-                     helpstr=textentry('PROCESS_WNIGHTNAMES_HELP'))
+processing.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
+                     helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))
+processing.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
+                     helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
 processing.set_kwarg(name='--cores', dtype=str, default='None',
                      helpstr=textentry('PROCESS_CORES_HELP'))
 processing.set_kwarg(name='--test', dtype=str, default='None',

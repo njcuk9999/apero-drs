@@ -883,7 +883,7 @@ def get_extraction_files(params, recipe, infile, extname):
     # get the preprocessed file
     ppfile = infile.intype.newcopy(params=params)
     # get the preprocessed file path
-    pppath = os.path.join(params['DRS_DATA_WORKING'], params['NIGHTNAME'])
+    pppath = os.path.join(params['DRS_DATA_WORKING'], params['OBS_DIR'])
     # get the pp filename
     ppfile.set_filename(os.path.join(pppath, rawfiles[0]))
     # ------------------------------------------------------------------
