@@ -182,7 +182,8 @@ class DrsPath:
                  block_kind: Union[str, None] = None,
                  block_path: Union[str, None] = None,
                  obs_dir: Union[str, None] = None,
-                 basename: Union[str, None] = None):
+                 basename: Union[str, None] = None,
+                 _update: bool = True):
         """
         Class for controlling paths in the drs (and sorting them into raw,
         tmp, reduced etc)
@@ -219,7 +220,8 @@ class DrsPath:
                        AssetPath(params), CalibPath(params),
                        TelluPath(params), OutPath(params)]
         # update kind dir and sub dir
-        self.update()
+        if _update:
+            self.update()
 
     def __str__(self) -> str:
         """
@@ -276,11 +278,26 @@ class DrsPath:
                       self.block_path, self.obs_dir, self.basename)
         return new
 
-    def update(self):
+    def update(self, obs_dir: Union[str, None] = None,
+               basename: Union[str, None] = None):
         """
         Update values (if one changes others may change)
         :return:
         """
+        # deal with updating parameters
+        if obs_dir is not None:
+            self.obs_dir = obs_dir
+        if basename is not None:
+            self.basename = basename
+        # update absolute path
+        if obs_dir is not None or basename is not None:
+            if self.obs_dir is None:
+                pass
+            elif self.basename is None:
+                self.abspath = os.path.join(self.block_path, self.obs_dir)
+            else:
+                self.abspath = os.path.join(self.block_path, self.obs_dir,
+                                            self.basename)
         # if we have absolute path use it
         if self.abspath is not None:
             self._from_abspath()
@@ -297,6 +314,28 @@ class DrsPath:
                     'block_name')
             WLOG(self.params, 'error', emsg)
             return
+
+
+    def block_names(self) -> List[str]:
+        """
+        Get a list of block names
+        :return:
+        """
+        names = []
+        for block in self.blocks:
+            names.append(block.name)
+        return names
+
+    def blocks_with_obs_dirs(self) -> List[str]:
+        """
+        Get all block names that have obs_dirs
+        :return:
+        """
+        names = []
+        for block in self.blocks:
+            if block.has_obs_dirs:
+                names.append(block.name)
+        return names
 
     def to_path(self) -> Path:
         """
@@ -351,7 +390,7 @@ class DrsPath:
                 self.path_kind = 'base'
             # else if the rest is a file we need to split between basename and
             #   obs_dir
-            elif os.path.isfile(rest):
+            elif os.path.isfile(self.abspath):
                 self.obs_dir = os.path.dirname(rest)
                 self.basename = os.path.basename(rest)
                 self.path_kind = 'base'
@@ -491,7 +530,7 @@ class DrsInputFile:
                  path: Union[str, None] = None,
                  basename: Union[str, None] = None,
                  inputdir: Union[str, None] = None,
-                 directory: Union[str, None] = None,
+                 obs_dir: Union[str, None] = None,
                  data: Union[np.ndarray, None] = None,
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
@@ -605,7 +644,7 @@ class DrsInputFile:
         self.path = path
         self.basename = basename
         self.inputdir = inputdir
-        self.directory = directory
+        self.obs_dir = obs_dir
         self.data = data
         self.header = header
         if fileset is None:
@@ -764,7 +803,7 @@ class DrsInputFile:
                 path: Union[str, None] = None,
                 basename: Union[str, None] = None,
                 inputdir: Union[str, None] = None,
-                directory: Union[str, None] = None,
+                obs_dir: Union[str, None] = None,
                 data: Union[np.ndarray, None] = None,
                 header: Union[drs_fits.Header, None] = None,
                 fileset: Union[list, None] = None,
@@ -861,7 +900,7 @@ class DrsInputFile:
         return _copydrsfile(DrsInputFile, self, None, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
-                            directory, data, header, fileset, filesetnames,
+                            obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys)
@@ -964,7 +1003,7 @@ class DrsInputFile:
                   path: Union[str, None] = None,
                   basename: Union[str, None] = None,
                   inputdir: Union[str, None] = None,
-                  directory: Union[str, None] = None,
+                  obs_dir: Union[str, None] = None,
                   data: Union[np.ndarray, None] = None,
                   header: Union[drs_fits.Header, None] = None,
                   fileset: Union[list, None] = None,
@@ -1060,7 +1099,7 @@ class DrsInputFile:
         return _copydrsfile(DrsInputFile, self, drsfile, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
-                            directory, data, header, fileset, filesetnames,
+                            obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys)
@@ -1079,7 +1118,7 @@ class DrsInputFile:
                      path: Union[str, None] = None,
                      basename: Union[str, None] = None,
                      inputdir: Union[str, None] = None,
-                     directory: Union[str, None] = None,
+                     obs_dir: Union[str, None] = None,
                      data: Union[np.ndarray, None] = None,
                      header: Union[drs_fits.Header, None] = None,
                      fileset: Union[list, None] = None,
@@ -1175,7 +1214,7 @@ class DrsInputFile:
         return _copydrsfile(DrsInputFile, drsfile, None, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
-                            directory, data, header, fileset, filesetnames,
+                            obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys)
@@ -1538,7 +1577,8 @@ class DrsInputFile:
         self.filename = os.path.join(currentpath, outfilename)
         self.basename = outfilename
 
-    def output_dictionary(self, kind: str, runstring: Union[str, None] = None):
+    def output_dictionary(self, block_kind: str,
+                          runstring: Union[str, None] = None):
         """
         Generate the output dictionary (for use while writing)
         Uses OUTPUT_FILE_HEADER_KEYS and DrsFile.hdict to generate an
@@ -1564,7 +1604,7 @@ class DrsInputFile:
         # deal with basename of file
         self.output_dict['FILENAME'] = str(self.basename)
         # deal with kind
-        self.output_dict['KIND'] = str(kind)
+        self.output_dict['BLOCK_KIND'] = str(block_kind)
         # deal with last modified time for file
         if Path(self.filename).exists():
             last_mod = Path(self.filename).lstat().st_mtime
@@ -1604,7 +1644,7 @@ class DrsFitsFile(DrsInputFile):
                  path: Union[str, None] = None,
                  basename: Union[str, None] = None,
                  inputdir: Union[str, None] = None,
-                 directory: Union[str, None] = None,
+                 obs_dir: Union[str, None] = None,
                  data: Union[np.ndarray, None] = None,
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
@@ -1698,7 +1738,7 @@ class DrsFitsFile(DrsInputFile):
         # get super init
         DrsInputFile.__init__(self, name, filetype, suffix, remove_insuffix,
                               prefix, fibers, fiber, params, filename, intype,
-                              path, basename, inputdir, directory, data, header,
+                              path, basename, inputdir, obs_dir, data, header,
                               fileset, filesetnames, outfunc, inext, dbname,
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
@@ -1864,7 +1904,7 @@ class DrsFitsFile(DrsInputFile):
                 path: Union[str, None] = None,
                 basename: Union[str, None] = None,
                 inputdir: Union[str, None] = None,
-                directory: Union[str, None] = None,
+                obs_dir: Union[str, None] = None,
                 data: Union[np.ndarray, None] = None,
                 header: Union[drs_fits.Header, None] = None,
                 fileset: Union[list, None] = None,
@@ -1961,7 +2001,7 @@ class DrsFitsFile(DrsInputFile):
         return _copydrsfile(DrsFitsFile, self, None, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
-                            directory, data, header, fileset, filesetnames,
+                            obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys)
@@ -2012,7 +2052,7 @@ class DrsFitsFile(DrsInputFile):
                   path: Union[str, None] = None,
                   basename: Union[str, None] = None,
                   inputdir: Union[str, None] = None,
-                  directory: Union[str, None] = None,
+                  obs_dir: Union[str, None] = None,
                   data: Union[np.ndarray, None] = None,
                   header: Union[drs_fits.Header, None] = None,
                   fileset: Union[list, None] = None,
@@ -2111,7 +2151,7 @@ class DrsFitsFile(DrsInputFile):
         return _copydrsfile(DrsFitsFile, self, drsfile, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
-                            directory, data, header, fileset, filesetnames,
+                            obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys)
@@ -2130,7 +2170,7 @@ class DrsFitsFile(DrsInputFile):
                      path: Union[str, None] = None,
                      basename: Union[str, None] = None,
                      inputdir: Union[str, None] = None,
-                     directory: Union[str, None] = None,
+                     obs_dir: Union[str, None] = None,
                      data: Union[np.ndarray, None] = None,
                      header: Union[drs_fits.Header, None] = None,
                      fileset: Union[list, None] = None,
@@ -2226,7 +2266,7 @@ class DrsFitsFile(DrsInputFile):
         return _copydrsfile(DrsFitsFile, drsfile, None, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
-                            directory, data, header, fileset, filesetnames,
+                            obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys)
@@ -3128,7 +3168,7 @@ class DrsFitsFile(DrsInputFile):
             else:
                 self.header[key] = (self.hdict[key], self.hdict.comments[key])
 
-    def write_file(self, kind: str,
+    def write_file(self, block_kind: str,
                    runstring: Union[str, None] = None):
         """
         Write a single Table/numpy array to disk useing DrsFitsFile.data,
@@ -3136,7 +3176,7 @@ class DrsFitsFile(DrsInputFile):
 
         also used to update output_dictionary for index database
 
-        :param kind: str, the kind of file (raw, tmp, red)
+        :param block_kind: str, the kind of file (raw, tmp, red)
         :param runstring: str or None, if set sets the input run string that
                           can be used to re-run the recipe to get this output
 
@@ -3161,9 +3201,9 @@ class DrsFitsFile(DrsInputFile):
                            names, self.datatype, self.dtype, func=func_name)
         # ---------------------------------------------------------------------
         # write output dictionary
-        self.output_dictionary(kind, runstring)
+        self.output_dictionary(block_kind, runstring)
 
-    def write_multi(self, kind: str,
+    def write_multi(self, block_kind: str,
                     data_list: List[Union[Table, np.ndarray]],
                     header_list: Union[List[drs_fits.Header], None] = None,
                     name_list: Union[List[str], None] = None,
@@ -3179,7 +3219,7 @@ class DrsFitsFile(DrsInputFile):
 
         also used to update output_dictionary for index database
 
-        :param kind: str, the kind of file (raw, tmp, red)
+        :param block_kind: str, the kind of file (raw, tmp, red)
         :param data_list: list of numpy arrays or astropy Tables - MUST NOT
                           INCLUDE first entry (set by DrsFitsFile.data)
                           if all are numpy arrays do not need to set
@@ -3250,7 +3290,7 @@ class DrsFitsFile(DrsInputFile):
                            names, datatype_list, dtype_list, func=func_name)
         # ---------------------------------------------------------------------
         # write output dictionary
-        self.output_dictionary(kind, runstring)
+        self.output_dictionary(block_kind, runstring)
 
     def get_fiber(self, header: Union[drs_fits.Header, None] = None
                   ) -> Union[str, None]:
@@ -3287,7 +3327,8 @@ class DrsFitsFile(DrsInputFile):
         # if we still don't have fiber then return None
         return None
 
-    def output_dictionary(self, kind: str, runstring: Union[str, None] = None):
+    def output_dictionary(self, block_kind: str,
+                          runstring: Union[str, None] = None):
         """
         Generate the output dictionary (for use while writing)
         Uses OUTPUT_FILE_HEADER_KEYS and DrsFile.hdict to generate an
@@ -3313,7 +3354,7 @@ class DrsFitsFile(DrsInputFile):
         # deal with basename of file
         self.output_dict['FILENAME'] = str(self.basename)
         # deal with kind
-        self.output_dict['KIND'] = str(kind)
+        self.output_dict['BLOCK_KIND'] = str(block_kind)
         # deal with last modified time for file
         if Path(self.filename).exists():
             last_mod = Path(self.filename).lstat().st_mtime
@@ -3556,7 +3597,7 @@ class DrsFitsFile(DrsInputFile):
         newinfile = DrsFitsFile(self.name, self.filetype, self.suffix,
                                 self.remove_insuffix, self.prefix, self.fibers,
                                 self.fiber, self.params, filename, self.intype,
-                                path, basename, self.inputdir, self.directory,
+                                path, basename, self.inputdir, self.obs_dir,
                                 data, self.header, self.fileset,
                                 self.filesetnames, self.outfunc, self.inext,
                                 self.dbname, self.dbkey,
@@ -4509,7 +4550,7 @@ class DrsNpyFile(DrsInputFile):
                  path: Union[str, None] = None,
                  basename: Union[str, None] = None,
                  inputdir: Union[str, None] = None,
-                 directory: Union[str, None] = None,
+                 obs_dir: Union[str, None] = None,
                  data: Union[np.ndarray, None] = None,
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
@@ -4584,7 +4625,7 @@ class DrsNpyFile(DrsInputFile):
         # get super init
         DrsInputFile.__init__(self, name, filetype, suffix, remove_insuffix,
                               prefix, fibers, fiber, params, filename, intype,
-                              path, basename, inputdir, directory, data, header,
+                              path, basename, inputdir, obs_dir, data, header,
                               fileset, filesetnames, outfunc, inext, dbname,
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
@@ -4734,7 +4775,7 @@ class DrsNpyFile(DrsInputFile):
         else:
             return self.data
 
-    def write_npy(self, kind: str, runstring: Union[str, None] = None):
+    def write_npy(self, block_kind: str, runstring: Union[str, None] = None):
         """
         Write a npy file (using np.save)
 
@@ -4762,7 +4803,7 @@ class DrsNpyFile(DrsInputFile):
             eargs = [self.filename, func_name]
             WLOG(params, 'error', textentry('00-008-00014', args=eargs))
         # write output dictionary
-        self.output_dictionary(kind, runstring)
+        self.output_dictionary(block_kind, runstring)
 
     def string_output(self) -> str:
         """
@@ -4795,7 +4836,7 @@ class DrsNpyFile(DrsInputFile):
                 path: Union[str, None] = None,
                 basename: Union[str, None] = None,
                 inputdir: Union[str, None] = None,
-                directory: Union[str, None] = None,
+                obs_dir: Union[str, None] = None,
                 data: Union[np.ndarray, None] = None,
                 header: Union[drs_fits.Header, None] = None,
                 fileset: Union[list, None] = None,
@@ -4868,7 +4909,7 @@ class DrsNpyFile(DrsInputFile):
         return _copydrsfile(DrsNpyFile, self, None, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
-                            directory, data, header, fileset, filesetnames,
+                            obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys)
@@ -4887,7 +4928,7 @@ class DrsNpyFile(DrsInputFile):
                      path: Union[str, None] = None,
                      basename: Union[str, None] = None,
                      inputdir: Union[str, None] = None,
-                     directory: Union[str, None] = None,
+                     obs_dir: Union[str, None] = None,
                      data: Union[np.ndarray, None] = None,
                      header: Union[drs_fits.Header, None] = None,
                      fileset: Union[list, None] = None,
@@ -4962,7 +5003,7 @@ class DrsNpyFile(DrsInputFile):
         return _copydrsfile(DrsNpyFile, drsfile, None, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
-                            directory, data, header, fileset, filesetnames,
+                            obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys)
@@ -5566,7 +5607,7 @@ class DrsOutFile(DrsInputFile):
         # get extension 0
         extension = self.extensions[pos]
         # get the index table for first extension
-        table0 = indexdbm.get_entries('*', kind=extension.kind,
+        table0 = indexdbm.get_entries('*', block_kind=extension.kind,
                                       hkeys=extension.hkeys,
                                       condition=mastercond)
         # return table
@@ -6056,7 +6097,7 @@ class DrsOutFile(DrsInputFile):
                 if filename not in self.clear_files:
                     self.clear_files.append(filename)
 
-    def write_file(self, kind: str, runstring: Union[str, None] = None):
+    def write_file(self, block_kind: str, runstring: Union[str, None] = None):
         # set function name
         func_name = display_func('write_file', __NAME__,
                                  self.class_name)
@@ -6086,7 +6127,7 @@ class DrsOutFile(DrsInputFile):
         drs_fits.writefits(self.params, self.out_filename, data_list,
                            header_list, names, datatype_list, func=func_name)
         # write output dictionary
-        self.output_dictionary(kind, runstring)
+        self.output_dictionary(block_kind, runstring)
 
 
 # =============================================================================
@@ -6156,11 +6197,11 @@ def combine(params: ParamDict, recipe: Any,
         return None
     # get the absolute path (for combined output)
     if params['OBS_DIR'] is None:
-        outdirectory = ''
+        obs_dir = ''
     else:
-        outdirectory = params['OBS_DIR']
+        obs_dir = params['OBS_DIR']
     # combine outpath and out directory
-    abspath = os.path.join(outpath, outdirectory)
+    abspath = os.path.join(outpath, obs_dir)
     # read all infiles (must be done before combine)
     for infile in infiles:
         infile.read_file()
@@ -6184,7 +6225,8 @@ def combine(params: ParamDict, recipe: Any,
     WLOG(params, '', textentry('40-001-00025', args=[outfile.filename]))
     outfile.write_multi(data_list=data_list, name_list=name_list,
                         datatype_list=datatype_list,
-                        kind=recipe.outputtype, runstring=recipe.runstring)
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile)
     # return combined infile
@@ -6668,86 +6710,6 @@ def get_mid_obs_time(params: ParamDict,
         WLOG(params, 'error', textentry('00-001-00030', args=eargs))
 
 
-def get_dir(params: ParamDict, dirkind: str, dirpath: Union[str, None] = None,
-            kind: str = 'input') -> Tuple[str, str]:
-    """
-    Get the directory based on "dir_string" (either RAW, TMP, REDUCED)
-    obtained via params
-
-    Note if dir_string is full path we do not use path from params
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param dir_string: str, either 'RAW', 'TMP' or 'REDUCED' (case insensitive)
-    :param kind: str, type of dir for logging (either 'input' or 'output')
-
-    :return: str, the directory path
-    """
-    # deal with a ddir set
-    if dirpath is not None:
-        # check if path has been set to an absolute path (that exists)
-        if os.path.exists(os.path.abspath(dirpath)):
-            # get absolute path
-            path = os.path.abspath(dirpath)
-            # update kind
-            dirkind = determine_dirtype(params, dirkind, path)
-            # return path and kind
-            return path, dirkind
-    # get the input directory from recipe.inputdir keyword
-    if dirkind.upper() == 'RAW':
-        dirpath = params['DRS_DATA_RAW']
-    elif dirkind.upper() == 'TMP':
-        dirpath = params['DRS_DATA_WORKING']
-    elif dirkind.upper() == 'RED':
-        dirpath = params['DRS_DATA_REDUC']
-    elif dirkind.upper() == 'ASSET':
-        dirpath = params['DRS_DATA_ASSETS']
-    elif dirkind.upper() == 'CALIB':
-        dirpath = params['DRS_CALIB_DB']
-    elif dirkind.upper() == 'TELLU':
-        dirpath = params['DRS_TELLU_DB']
-    elif dirkind.upper() == 'OUT':
-        dirpath = params['DRS_DATA_OUT']
-    # if not found produce error
-    else:
-        emsg = textentry('00-007-00002', args=[kind, dirpath])
-        WLOG(params, 'error', emsg)
-        dirpath = None
-    # return path and kind
-    return os.path.realpath(os.path.abspath(dirpath)), dirkind
-
-
-def determine_dirtype(params: ParamDict, dirtype: str,
-                       directory: Union[str, None]) -> str:
-    # if we have no directory we cannot guess
-    if directory is None:
-        return dirtype
-    # make sure directory is a real path (not symbolic link)
-    directory = os.path.realpath(directory)
-    # check directory against raw directory
-    if directory == os.path.realpath(params['DRS_DATA_RAW']):
-        return 'raw'
-    # check directory against tmp directory
-    if directory == os.path.realpath(params['DRS_DATA_WORKING']):
-        return 'tmp'
-    # check directory against reduced directory
-    if directory == os.path.realpath(params['DRS_DATA_REDUC']):
-        return 'red'
-    # check directory against asset directory
-    if directory == os.path.realpath(params['DRS_DATA_ASSETS']):
-        return 'asset'
-    # check directory against calib directory
-    if directory == os.path.realpath(params['DRS_CALIB_DB']):
-        return 'calib'
-    # check directory against tellu directory
-    if directory == os.path.realpath(params['DRS_TELLU_DB']):
-        return 'tellu'
-    # if we have reached this point we cannot guess - so we have to return
-    # the type that was set in setup - any custom paths must be of this
-    # kind
-    return dirtype
-
-
-
 # =============================================================================
 # Worker functions
 # =============================================================================
@@ -6950,7 +6912,7 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
                  path: Union[str, None] = None,
                  basename: Union[str, None] = None,
                  inputdir: Union[str, None] = None,
-                 directory: Union[str, None] = None,
+                 obs_dir: Union[str, None] = None,
                  data: Union[np.ndarray, None] = None,
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
@@ -7093,8 +7055,8 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
     if inputdir is None:
         inputdir = deepcopy(instance2.basename)
     # set directory
-    if directory is None:
-        directory = deepcopy(instance2.directory)
+    if obs_dir is None:
+        obs_dir = deepcopy(instance2.obs_dir)
     # set data
     if data is None:
         data = deepcopy(instance2.data)
@@ -7183,7 +7145,7 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
     # return new instance
     return drsfileclass(name, filetype, suffix, remove_insuffix, prefix,
                         fibers, fiber, params, filename, intype, path,
-                        basename, inputdir, directory, data, header,
+                        basename, inputdir, obs_dir, data, header,
                         fileset, filesetnames, outfunc, inext, dbname,
                         dbkey, rkeys, numfiles, shape, hdict,
                         output_dict, datatype, dtype, is_combined,

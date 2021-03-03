@@ -63,10 +63,10 @@ c_hotpix.extension = 'fits'
 c_hotpix.description = ('Create the hotpix table for an instrument (required '
                         'for preprocessing)')
 c_hotpix.kind = 'misc'
-c_hotpix.set_arg(pos=0, name='directory', dtype='directory',
-                 helpstr=textentry('DIRECTORY_HELP'))
+c_hotpix.set_arg(pos=0, **RMOD.mod.obs_dir)
 c_hotpix.set_arg(pos=1, name='darkfile', dtype='file',
-                 helpstr='[STRING] The night name (directory name)',
+                 helpstr='[STRING] The dark file name [DARK_DARK_INT] or '
+                         '[DARK_DARK_TEL]',
                  files=[FMOD.files.raw_dark_dark_int,
                         FMOD.files.raw_dark_dark_tel])
 c_hotpix.set_kwarg(name='--debugfile', dtype='switch', default=False,
@@ -84,7 +84,7 @@ RMOD.add(c_hotpix)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(instrument=None, directory=None, darkfile=None, **kwargs):
+def main(obs_dir=None, darkfile=None, **kwargs):
     """
     Main function for exposuremeter_spirou.py
 
@@ -98,8 +98,7 @@ def main(instrument=None, directory=None, darkfile=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(instrument=instrument, directory=directory,
-                   darkfile=darkfile, **kwargs)
+    fkwargs = dict(obs_dir=obs_dir, darkfile=darkfile, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,

@@ -1751,7 +1751,7 @@ def _get_file_names(params: ParamDict,
     if user_env is None:
         return []
     # set empty directory
-    directory = None
+    config_dir = None
     # -------------------------------------------------------------------------
     # User environmental path
     # -------------------------------------------------------------------------
@@ -1762,28 +1762,28 @@ def _get_file_names(params: ParamDict,
         # check that directory linked exists
         if os.path.exists(path):
             # set directory
-            directory = path
+            config_dir = path
     # -------------------------------------------------------------------------
     # if directory is still empty return empty list
-    if directory is None:
+    if config_dir is None:
         return []
     # -------------------------------------------------------------------------
     # look for user configurations within instrument sub-folder
     # -------------------------------------------------------------------------
-    files = []
+    config_files = []
     for script in USCRIPTS:
         # construct path
-        path = os.path.join(directory, script)
+        config_path = os.path.join(config_dir, script)
         # check that it exists
-        if os.path.exists(path):
-            files.append(path)
+        if os.path.exists(config_path):
+            config_files.append(config_path)
     # deal with no files found
-    if len(files) == 0:
-        wargs = [directory, ','.join(USCRIPTS)]
+    if len(config_files) == 0:
+        wargs = [config_dir, ','.join(USCRIPTS)]
         DrsCodedWarning('00-003-00036', 'warning', targs=wargs,
                         func_name=func_name)
     # return files
-    return files
+    return config_files
 
 
 def _load_from_module(modules: List[str], quiet: bool = False) -> ModLoads:

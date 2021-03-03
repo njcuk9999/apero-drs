@@ -802,7 +802,8 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
         name_list += ['PARAM_TABLE']
     # write image to file
     orderpfile.write_multi(data_list=data_list, name_list=name_list,
-                           kind=recipe.outputtype, runstring=recipe.runstring)
+                           block_kind=recipe.out_block_str,
+                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(orderpfile)
     # ------------------------------------------------------------------
@@ -870,7 +871,8 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # write image to file
     loco1file.write_multi(data_list=data_list, name_list=name_list,
                           datatype_list=datatype_list,
-                          kind=recipe.outputtype, runstring=recipe.runstring)
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(loco1file)
     # ------------------------------------------------------------------
@@ -899,7 +901,8 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
         name_list += ['PARAM_TABLE']
     # write image to file
     loco2file.write_multi(data_list=data_list, name_list=name_list,
-                          kind=recipe.outputtype, runstring=recipe.runstring)
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(loco2file)
     # ------------------------------------------------------------------
@@ -934,7 +937,8 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
             name_list += ['PARAM_TABLE']
         # write image to file
         loco3file.write_multi(data_list=data_list, name_list=name_list,
-                              kind=recipe.outputtype, runstring=recipe.runstring)
+                              block_kind=recipe.out_block_str,
+                              runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(loco3file)
     # ------------------------------------------------------------------

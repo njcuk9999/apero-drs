@@ -129,13 +129,13 @@ def general_file(params: ParamDict, infile: Any, outfile: Any,
                                     targs=[func_name], func_name=func_name)
         # get output night name from params
         if params['OBS_DIR'] is None:
-            outdirectory = ''
+            obs_dir = ''
         else:
-            outdirectory = params['OBS_DIR']
+            obs_dir = params['OBS_DIR']
         # make sure night name folder exists (create it if not)
-        make_night_name(params, outdirectory, outpath)
+        make_obs_dir(params, obs_dir, outpath)
         # construct absolute path
-        abspath = os.path.join(outpath, outdirectory, outfilename)
+        abspath = os.path.join(outpath, obs_dir, outfilename)
     else:
         abspath = os.path.join(path, outfilename)
     # return absolute path
@@ -333,11 +333,11 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
             raise DrsCodedException('00-001-00023', level='error',
                                     targs=[func_name], func_name=func_name)
         # get output night name from params
-        outdirectory = params['OBS_DIR']
+        obs_dir = params['OBS_DIR']
         # make sure night name folder exists (create it if not)
-        make_night_name(params, outdirectory, outpath)
+        make_obs_dir(params, obs_dir, outpath)
         # construct absolute path
-        abspath = os.path.join(outpath, outdirectory, outfilename)
+        abspath = os.path.join(outpath, obs_dir, outfilename)
     else:
         abspath = os.path.join(path, outfilename)
     # return absolute path
@@ -399,27 +399,27 @@ def get_outfilename(params: ParamDict, infilename: str,
     return outfilename
 
 
-def make_night_name(params: ParamDict, nightname: Union[str, None],
-                    path: str) -> str:
+def make_obs_dir(params: ParamDict, obs_dir: Union[str, None],
+                 path: str) -> str:
     """
     Make a directory with a night directory given - and also add the directory
     if needed
 
     :param params: ParamDict, parameter dictionary constants dictionary
-    :param nightname: str or None, if set add this to the directory path
-    :param path: str, the absolute path (above nightname level)
+    :param obs_dir: str or None, if set add this to the directory path
+    :param path: str, the absolute path (above obs_dir level)
 
     :return: str, the path with the night name added (if set)
     """
     # set function name
     func_name = display_func('get_outfilename', __NAME__)
     # deal with no night name set
-    if nightname is None:
+    if obs_dir is None:
         return path
     # make full path
-    full_path = os.path.join(path, nightname)
+    full_path = os.path.join(path, obs_dir)
 
-    rel_path = os.path.join(os.path.curdir, nightname)
+    rel_path = os.path.join(os.path.curdir, obs_dir)
 
     # if full path exists then just return
     if os.path.exists(full_path):

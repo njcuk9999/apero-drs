@@ -15,11 +15,6 @@ from apero.tools.module.listing import general
 # =============================================================================
 # Define functions
 # =============================================================================
-get_all_files = general.get_all_files
-
-get_nightnames = general.get_nightnames
-
-get_outputs = general.get_outputs
 
 
 # =============================================================================

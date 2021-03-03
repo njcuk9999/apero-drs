@@ -224,16 +224,16 @@ def extract_files(params, recipe, infile, outfile, always_extract,
     outputs = dict()
     # only extract if required
     if always_extract or (not exists):
-        # need to get nightname and dir name (above night name)
-        nightname = os.path.dirname(infile.filename)
-        dirname = os.path.dirname(nightname)
+        # need to get obs_dir and block dir (above obs_dir)
+        path_ins = drs_file.DrsPath(params, infile.filename)
+        obs_dir = path_ins.obs_dir
         # need to handle passing keywords from main
-        kwargs = drs_startup.copy_kwargs(params, extrecipe, directory=nightname,
+        kwargs = drs_startup.copy_kwargs(params, extrecipe, obs_dir=obs_dir,
                                          files=[infile.basename])
         # set the program name (shouldn't be cal_extract)
         kwargs['program'] = '{0}_extract'.format(kind)
         # force the input directory (combined files go to reduced dir)
-        kwargs['force_indir'] = dirname
+        kwargs['force_indir'] = path_ins.block_kind
         # push data to extractiong code
         data_dict = ParamDict()
         data_dict['files'] = [infile]

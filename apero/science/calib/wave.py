@@ -957,7 +957,8 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
         name_list += ['PARAM_TABLE']
     # write image to file
     hcfile.write_multi(data_list=data_list, name_list=name_list,
-                       kind=recipe.outputtype, runstring=recipe.runstring)
+                       block_kind=recipe.out_block_str,
+                       runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(hcfile)
     # ------------------------------------------------------------------
@@ -988,7 +989,8 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
         name_list += ['PARAM_TABLE']
     # write image to file
     fpfile.write_multi(data_list=data_list, name_list=name_list,
-                       kind=recipe.outputtype, runstring=recipe.runstring)
+                       block_kind=recipe.out_block_str,
+                       runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(fpfile)
     # ------------------------------------------------------------------
@@ -1901,7 +1903,8 @@ def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
         name_list += ['PARAM_TABLE']
     # write image to file
     wavefile.write_multi(data_list=data_list, name_list=name_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -1943,7 +1946,8 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
     # write image to file
     resfile.write_multi(data_list=datalist, header_list=headerlist,
                         name_list=namelist,
-                        kind=recipe.outputtype, runstring=recipe.runstring)
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(resfile)
 
@@ -2058,7 +2062,8 @@ def hc_write_wavesol_master(params, recipe, llprops, infile, fiber, combine,
         name_list += ['PARAM_TABLE']
     # write image to file
     wavefile.write_multi(data_list=data_list, name_list=name_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -2099,7 +2104,8 @@ def hc_write_resmap_master(params, recipe, llprops, infile, wavefile, fiber):
     # write image to file
     resfile.write_multi(data_list=datalist, header_list=headerlist,
                         name_list=namelist,
-                        kind=recipe.outputtype, runstring=recipe.runstring)
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(resfile)
 
@@ -5229,7 +5235,8 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
         name_list += ['PARAM_TABLE']
     # write image to file
     wavefile.write_multi(data_list=data_list, name_list=name_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -5506,7 +5513,8 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
     # write image to file
     wavefile.write_multi(data_list=data_list, name_list=name_list,
                          datatype_list=datatype_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -6245,10 +6253,19 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     # log that we are saving rotated image
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', textentry('40-017-00037', args=wargs))
+    # define multi lists
+    data_list, name_list = [wave_table], ['COEFF_TABLE']
+    dtype_list = ['table']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(drsfitsfile=wavefile)]
+        name_list += ['PARAM_TABLE']
+        dtype_list += ['table']
     # write image to file
-    wavefile.write_multi(data_list=[wave_table], dtype_list=['table'],
-                         name_list=['COEFF_TABLE'],
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+    wavefile.write_multi(data_list=data_list, dtype_list=dtype_list,
+                         name_list=name_list,
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -6278,7 +6295,8 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
         name_list += ['PARAM_TABLE']
     # write image to file
     hclfile.write_multi(data_list=data_list, name_list=name_list,
-                        kind=recipe.outputtype, runstring=recipe.runstring)
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(hclfile)
     # ------------------------------------------------------------------
@@ -6318,7 +6336,8 @@ def write_fplines(params, recipe, rfpl, infile, hfile, fiber, kind=None):
         name_list += ['PARAM_TABLE']
     # write image to file
     fplfile.write_multi(data_list=data_list, name_list=name_list,
-                        kind=recipe.outputtype, runstring=recipe.runstring)
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(fplfile)
 
@@ -6377,7 +6396,8 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
         name_list += ['PARAM_TABLE']
     # write file
     e2ds_file.write_multi(data_list=data_list, name_list=name_list,
-                          kind=recipe.outputtype, runstring=recipe.runstring)
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2ds_file)
     # ----------------------------------------------------------------------
@@ -6396,7 +6416,8 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
         name_list += ['PARAM_TABLE']
     # write file
     e2dsff_file.write_multi(data_list=data_list, name_list=name_list,
-                            kind=recipe.outputtype, runstring=recipe.runstring)
+                            block_kind=recipe.out_block_str,
+                            runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsff_file)
     # ----------------------------------------------------------------------
@@ -6420,7 +6441,8 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
             name_list += ['PARAM_TABLE']
     # write file
     e2dsll_file.write_multi(data_list=data_list, name_list=name_list,
-                            kind=recipe.outputtype, runstring=recipe.runstring)
+                            block_kind=recipe.out_block_str,
+                            runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsll_file)
     # ----------------------------------------------------------------------
@@ -6466,7 +6488,8 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
         name_list += ['PARAM_TABLE']
     # write image to file
     s1dw_file.write_multi(data_list=data_list, name_list=name_list,
-                          kind=recipe.outputtype, runstring=recipe.runstring)
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(s1dw_file)
     # ----------------------------------------------------------------------
@@ -6495,7 +6518,8 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
         name_list += ['PARAM_TABLE']
     # write image to file
     s1dv_file.write_multi(data_list=data_list, name_list=name_list,
-                          kind=recipe.outputtype, runstring=recipe.runstring)
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(s1dv_file)
     # return e2dsff file

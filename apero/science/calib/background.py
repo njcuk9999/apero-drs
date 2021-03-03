@@ -343,7 +343,7 @@ def debug_file(recipe, params, infile, dlist):
         dlist += [params.snapshot_table(drsfitsfile=debug_back)]
         name_list += ['PARAM_TABLE']
     # write multiple to file
-    debug_back.write_multi(kind=recipe.outputtype, name_list=name_list,
+    debug_back.write_multi(block_kind=recipe.out_block_str, name_list=name_list,
                            data_list=dlist[1:], runstring=recipe.runstring)
 
 

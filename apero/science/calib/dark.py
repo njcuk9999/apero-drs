@@ -200,8 +200,10 @@ def construct_dark_table(params, filenames, **kwargs):
     for it in range(len(filenames)):
         # get the basename from filenames
         basename = os.path.basename(filenames[it])
-        # get the night name
-        obs_dir = drs_path.get_nightname(params, filenames[it])
+        # get the path inst
+        path_inst = drs_file.DrsPath(params, filenames[it])
+        # get the observation directory
+        obs_dir = path_inst.obs_dir
         # read the header
         hdr = drs_fits.read_header(params, filenames[it])
         # get keys from hdr
@@ -223,7 +225,6 @@ def construct_dark_table(params, filenames, **kwargs):
         dark_cass_temp.append(float(cass_temp))
         dark_humidity.append(float(humidity))
         dprtypes.append(str(dprtype))
-
 
     # ----------------------------------------------------------------------
     # match files by date
@@ -386,7 +387,7 @@ def write_master_files(params, recipe, reffile, master_dark, dark_table,
     else:
         data_list, name_list = [], []
     # write data and header list to file
-    outfile.write_multi(kind=recipe.outputtype, name_list=name_list,
+    outfile.write_multi(block_kind=recipe.out_block_str, name_list=name_list,
                         data_list=data_list, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile)

@@ -1048,7 +1048,8 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     # write image to file
     corrfile.write_multi(data_list=data_list, name_list=name_list,
                          datatype_list=datatype_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(corrfile)
     # ------------------------------------------------------------------
@@ -1085,7 +1086,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
         name_list += ['PARAM_TABLE']
     # write image to file
     sc1dwfile.write_multi(data_list=data_list, name_list=name_list,
-                          kind=recipe.outputtype,
+                          block_kind=recipe.out_block_str,
                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(sc1dwfile)
@@ -1116,7 +1117,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
         name_list += ['PARAM_TABLE']
     # write image to file
     sc1dvfile.write_multi(data_list=data_list, name_list=name_list,
-                          kind=recipe.outputtype,
+                          block_kind=recipe.out_block_str,
                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(sc1dvfile)
@@ -1146,7 +1147,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
         name_list += ['PARAM_TABLE']
     # write image to file
     reconfile.write_multi(data_list=data_list, name_list=name_list,
-                          kind=recipe.outputtype,
+                          block_kind=recipe.out_block_str,
                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(reconfile)
@@ -1177,7 +1178,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
         name_list += ['PARAM_TABLE']
     # write image to file
     rc1dwfile.write_multi(data_list=data_list, name_list=name_list,
-                          kind=recipe.outputtype,
+                          block_kind=recipe.out_block_str,
                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(rc1dwfile)
@@ -1208,7 +1209,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
         name_list += ['PARAM_TABLE']
     # write image to file
     rc1dvfile.write_multi(data_list=data_list, name_list=name_list,
-                          kind=recipe.outputtype,
+                          block_kind=recipe.out_block_str,
                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(rc1dvfile)

@@ -53,7 +53,7 @@ def general_file(params: ParamDict, infile: Any, outfile: Any,
     :param outfile: DrsFitsFile, output file - must be defined
     :param fiber: str, the fiber - must be set if infile.fibers is populated
     :param path: str, the path the file should have (if not set, set to
-                 params['OUTPATH']  with params['NIGHTNAME'] if set)
+                 params['OUTPATH']  with params['OBS_DIR'] if set)
     :param func: str, the function name if set (for errors)
     :param remove_insuffix: bool if set removes input suffix if not set
                             defaults to the outfile.remove_insuffix
@@ -158,7 +158,7 @@ def calib_file(params: ParamDict, infile: Any, outfile: Any,
     :param outfile: DrsFitsFile, output file - must be defined
     :param fiber: str, the fiber - must be set if infile.fibers is populated
     :param path: str, the path the file should have (if not set, set to
-                 params['OUTPATH']  with params['NIGHTNAME'] if set)
+                 params['OUTPATH']  with params['OBS_DIR'] if set)
     :param func: str, the function name if set (for errors)
     :param remove_insuffix: bool if set removes input suffix if not set
                             defaults to the outfile.remove_insuffix
@@ -174,11 +174,11 @@ def calib_file(params: ParamDict, infile: Any, outfile: Any,
     # set function name from args
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)
-    # get nightname
-    # nightname = kwargs.get('nightname', None)
+    # get observation directory
+    # obs_dir = kwargs.get('obs_dir', None)
     # get prefix
     if outfile is not None:
-        # prefix = _calibration_prefix(params, nightname) + outfile.prefix
+        # prefix = _calibration_prefix(params, obs_dir) + outfile.prefix
         prefix = outfile.prefix
     # return general file with prefix updated
     return output_filenames.general_file(params, infile, outfile, fiber,
@@ -235,7 +235,7 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
     :param infile: DrsFitsFile, input file - must be defined
     :param outfile: DrsFitsFile, output file - must be defined
     :param path: str, the path the file should have (if not set, set to
-                 params['OUTPATH']  with params['NIGHTNAME'] if set)
+                 params['OUTPATH']  with params['OBS_DIR'] if set)
     :param func: str, the function name if set (for errors)
     :param suffix: str, if set the suffix of the file (defaults to
                    outfile.suffix)
@@ -258,7 +258,7 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
 
 
 def post_file(params: ParamDict, drsfile: Any, identifier: str,
-              directory: str) -> Tuple[str, str]:
+              obs_dir: Union[str, None] = None) -> Tuple[str, str]:
     """
     Generate a post processed filename
 
@@ -266,6 +266,7 @@ def post_file(params: ParamDict, drsfile: Any, identifier: str,
     :param drsfile: DrsOutFile instance, the drs out file associated with this
                     post processed file
     :param identifier: str, an identifier to the required output filename
+    :param obs_dir: str, the observation directory
     :return:
     """
     # set function name
@@ -282,10 +283,10 @@ def post_file(params: ParamDict, drsfile: Any, identifier: str,
     # add output suffix
     filename = filename + drsfile.suffix
     # -------------------------------------------------------------------------
-    if directory is None:
-        directory = ''
+    if obs_dir is None:
+        obs_dir = ''
     # construct path
-    path = os.path.join(params['DRS_DATA_OUT'], directory)
+    path = os.path.join(params['DRS_DATA_OUT'], obs_dir)
     # add path to filename
     filename = os.path.join(path, filename)
     # -------------------------------------------------------------------------
@@ -306,8 +307,8 @@ def _calibration_prefix(params: ParamDict,
                 OBS_DIR: string, the folder within data raw directory
                            containing files (also reduced directory) i.e.
                            /data/raw/20170710 would be "20170710"
-    :param obs_dir: str, sets the night name (if None set from
-                      params['NIGHTNAME']
+    :param obs_dir: str, sets the observation directory (if None set from
+                      params['OBS_DIR']
 
     :return calib_prefix: string the calibration database prefix to add to all
                           calibration database files

@@ -394,7 +394,7 @@ class Database:
         # infer table name
         table = self._infer_table_(table)
         # construct basic command SELECT {COLUMNS} FROM {TABLE}
-        command = "SELECT {} FROM {}".format(columns, table)
+        command = 'SELECT {} FROM {}'.format(columns, table)
         # add WHERE statement if condition is set
         if condition is not None:
             # make sure condition is a string

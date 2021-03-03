@@ -17,10 +17,10 @@ from apero.core.core import drs_text
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_file
 from apero.core.instruments.spirou import recipe_definitions as rd
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-from apero.io import drs_path
 from apero.science import telluric
 from apero.tools.module.processing import drs_processing
 
@@ -111,25 +111,27 @@ def __main__(recipe, params):
         if drs_text.true_text(params['INPUTS']['TEST']):
             params.set('TEST_RUN', True)
     # get the telluric star names
-    objnames = telluric.get_whitelist(params)
-    objnames = list(objnames)
+    tellu_names = telluric.get_tellu_include_list(params)
+    tellu_names = list(tellu_names)
     # ----------------------------------------------------------------------
     # load index database
     indexdbm = drs_database.IndexDatabase(params)
     indexdbm.load_db()
     # ----------------------------------------------------------------------
     # get objects that match this object name
-    tellu_stars = drs_utils.find_files(params, kind='red',
-                                       filters=dict(KW_OBJNAME=objnames,
+    tellu_stars = drs_utils.find_files(params, block_kind='red',
+                                       filters=dict(KW_OBJNAME=tellu_names,
                                                     KW_OUTPUT=filetype,
                                                     KW_FIBER=fiber),
                                        indexdbm=indexdbm)
     # ----------------------------------------------------------------------
     # get night names for each object
-    night_names, tellu_basenames = [], []
+    obs_dirs, tellu_basenames = [], []
     for filename in tellu_stars:
+        # get the path inst
+        path_inst = drs_file.DrsPath(params, filename)
         # append night names
-        night_names.append(drs_path.get_nightname(params, filename))
+        obs_dirs.append(path_inst.obs_dir)
         # append base names
         tellu_basenames.append(os.path.basename(filename))
 
@@ -142,7 +144,7 @@ def __main__(recipe, params):
     # Step 1: Run mk_tellu on all telluric stars
     # -------------------------------------------------------------------------
     # arguments are: directory and telluric files
-    gargs = [night_names, tellu_basenames]
+    gargs = [obs_dirs, tellu_basenames]
     gkwargs = dict()
     gkwargs['--program'] = 'DBMKTELLU1'
     gkwargs['terminate'] = False
@@ -156,7 +158,7 @@ def __main__(recipe, params):
     # Step 2: Run fit tellu on all telluric stars
     # -------------------------------------------------------------------------
     # arguments are: directory and telluric files
-    gargs = [night_names, tellu_basenames]
+    gargs = [obs_dirs, tellu_basenames]
     gkwargs = dict()
     gkwargs['--program'] = 'DBFTELLU'
     gkwargs['terminate'] = False
@@ -170,7 +172,7 @@ def __main__(recipe, params):
     # step 3: Run mk_obj_template on each telluric star obj name
     # -------------------------------------------------------------------------
     # arguments are: object names
-    gargs = [objnames]
+    gargs = [tellu_names]
     gkwargs = dict()
     gkwargs['--program'] = 'DBMKTEMP'
     gkwargs['terminate'] = False
@@ -184,7 +186,7 @@ def __main__(recipe, params):
     # step 4: Run mk_tellu on all telluric stars
     # -------------------------------------------------------------------------
     # arguments are: directory and telluric files
-    gargs = [night_names, tellu_basenames]
+    gargs = [obs_dirs, tellu_basenames]
     gkwargs = dict()
     gkwargs['--program'] = 'DBMKTELLU2'
     gkwargs['terminate'] = False

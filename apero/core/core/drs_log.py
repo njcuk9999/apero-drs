@@ -772,7 +772,7 @@ class RecipeLog:
         self.pid = str(rlog.pid)
         self.htime = str(rlog.htime)
         self.group = str(rlog.group)
-        self.directory = str(rlog.directory)
+        self.obs_dir = str(rlog.obs_dir)
         self.logfitspath = str(rlog.logfitspath)
         self.lockfile = str(rlog.lockfile)
         self.log_file = str(rlog.log_file)
@@ -1016,7 +1016,7 @@ class RecipeLog:
         # ------------------------------------------------------------------
         # get log path
         if self.outputdir not in ['None', '', None]:
-            path = os.path.join(self.outputdir, self.directory)
+            path = os.path.join(self.outputdir, self.obs_dir)
         # else use the default path
         else:
             path = self.defaultpath
@@ -1055,7 +1055,7 @@ class RecipeLog:
         row['LEVEL_CRIT'] = self.level_criteria
         row['INPATH'] = self.inputdir
         row['OUTPATH'] = self.outputdir
-        row['OBS_DIR'] = self.directory
+        row['OBS_DIR'] = self.obs_dir
         row['LOGFILE'] = self.log_file
         row['PLOTDIR'] = self.plot_dir
         row['RUNSTRING'] = self.runstring

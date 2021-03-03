@@ -1725,7 +1725,7 @@ TELLURIC_FIBER_TYPE.value = 'AB'
 TELLU_CUT_BLAZE_NORM = TELLU_CUT_BLAZE_NORM.copy(__NAME__)
 TELLU_CUT_BLAZE_NORM.value = 0.2
 
-# Define telluric black/white list directory
+# Define telluric include/exclude list directory
 TELLU_LIST_DIRECTORY = TELLU_LIST_DIRECTORY.copy(__NAME__)
 TELLU_LIST_DIRECTORY.value = 'telluric/'
 

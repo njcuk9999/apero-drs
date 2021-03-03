@@ -18,7 +18,7 @@ from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_database
 from apero.core.utils import drs_startup
-from apero.io import drs_path
+from apero.core.core import drs_file
 from apero.science import telluric
 from apero.tools.module.processing import drs_processing
 from apero.core.instruments.spirou import recipe_definitions as rd
@@ -128,11 +128,13 @@ def __main__(recipe, params):
                                                        indexdbm=indexdbm)
     # ----------------------------------------------------------------------
     # get night names for each object
-    night_names, obj_basenames = [], []
+    obs_dirs, obj_basenames = [], []
     # loop around objects
     for filename in obj_stars:
+        # get the path inst
+        path_inst = drs_file.DrsPath(params, filename)
         # append night names
-        night_names.append(drs_path.get_nightname(params, filename))
+        obs_dirs.append(path_inst.obs_dir)
         # append base names
         obj_basenames.append(os.path.basename(filename))
 
@@ -145,7 +147,7 @@ def __main__(recipe, params):
     # Step 1: Run fit tellu on obj_stars
     # -------------------------------------------------------------------------
     # arguments are: directory and telluric files
-    gargs = [night_names, obj_basenames]
+    gargs = [obs_dirs, obj_basenames]
     gkwargs = dict()
     gkwargs['--program'] = 'DBFTELLU'
     gkwargs['terminate'] = False
@@ -173,7 +175,7 @@ def __main__(recipe, params):
     # step 3: Run fit tellu on obj_stars
     # -------------------------------------------------------------------------
     # arguments are: directory and telluric files
-    gargs = [night_names, obj_basenames]
+    gargs = [obs_dirs, obj_basenames]
     gkwargs = dict()
     gkwargs['--program'] = 'DBFTELLU'
     gkwargs['terminate'] = False

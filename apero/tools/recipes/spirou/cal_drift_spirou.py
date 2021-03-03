@@ -19,6 +19,7 @@ from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.io import drs_table
+from apero.io import drs_path
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import velocity
@@ -159,14 +160,14 @@ def __main__(recipe, params):
     # deal with other user inputs
     # -------------------------------------------------------------------------
     # get all nights
-    allnights = os.listdir(params['DRS_DATA_REDUC'])
+    all_obs_dirs = drs_path.get_all_non_empty_subdirs(params['DRS_DATA_REDUC'])
     # get nights from user (or set to None)
-    nights = [None]
+    obs_dirs = [None]
     if 'obs_dirs' in params['INPUTS']:
         if not drs_text.null_text(params['INPUTS']['nights'], ['None', '']):
-            nights = params['INPUTS']['obs_dirs'].split(',')
+            obs_dirs = params['INPUTS']['obs_dirs'].split(',')
             # set night name to the last night
-            params.set(key='OBS_DIR', value=nights[-1], source=mainname)
+            params.set(key='OBS_DIR', value=obs_dirs[-1], source=mainname)
     # deal with no night name set
     if params['OBS_DIR'] == '':
         # set night name (we have no info about filename)
@@ -211,19 +212,23 @@ def __main__(recipe, params):
         # ---------------------------------------------------------------------
         # get all "filetype" filenames
         filenames = []
-        for night in nights:
+        for obs_dir in obs_dirs:
             # check night names are value
-            if night is not None:
+            if obs_dir is not None:
                 # print progress
-                WLOG(params, 'info', 'Searching night = {0}'.format(night))
+                # TODO: move to language db
+                WLOG(params, 'info', 'Searching night = {0}'.format(obs_dir))
                 # deal with invalid night
-                if night not in allnights:
-                    emsg = 'Night = "{0}" is not a valid reduced sub-directory'
-                    WLOG(params, 'error', emsg.format(night))
+                if obs_dir not in all_obs_dirs:
+                    # TODO: move to language db
+                    emsg = ('Observation directory = "{0}" is not a valid '
+                            'reduced sub-directory')
+                    WLOG(params, 'error', emsg.format(obs_dir))
             # find files for this night (or None)
             filters = dict(KW_DPRTYPE=dprtype, KW_OUTPUT=filetype,
-                           KW_FIBER=fiber, DIRECTORY=night)
-            files = drs_utils.find_files(params, kind='red', filters=filters)
+                           KW_FIBER=fiber, OBS_DIR=obs_dir)
+            files = drs_utils.find_files(params, block_kind='red',
+                                         filters=filters)
             # append to list of files
             filenames += list(files)
         # convert to numpy array

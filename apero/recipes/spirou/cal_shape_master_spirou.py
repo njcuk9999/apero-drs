@@ -53,16 +53,16 @@ pcheck = constants.PCheck(wlog=WLOG)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(directory=None, hcfiles=None, fpfiles=None, **kwargs):
+def main(obs_dir=None, hcfiles=None, fpfiles=None, **kwargs):
     """
     Main function for cal_shape_master_spirou.py
 
-    :param directory: string, the night name sub-directory
+    :param obs_dir: string, the night name sub-directory
     :param hcfiles: list of strings or string, the list of hc files
     :param fpfiles: list of strings or string, the list of fp files
     :param kwargs: any additional keywords
 
-    :type directory: str
+    :type obs_dir: str
     :type hcfiles: list[str]
     :type fpfiles: list[str]
 
@@ -72,7 +72,7 @@ def main(directory=None, hcfiles=None, fpfiles=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, hcfiles=hcfiles,
+    fkwargs = dict(obs_dir=obs_dir, hcfiles=hcfiles,
                    fpfiles=fpfiles, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
@@ -172,7 +172,7 @@ def __main__(recipe, params):
             emsg += '\n\t - "{0}"'.format(allowedtype)
         WLOG(params, 'error', emsg)
     # get all "filetype" filenames
-    filenames = drs_utils.find_files(params, kind='tmp',
+    filenames = drs_utils.find_files(params, block_kind='tmp',
                                      filters=dict(KW_DPRTYPE=filetype))
     # convert to numpy array
     filenames = np.array(filenames)

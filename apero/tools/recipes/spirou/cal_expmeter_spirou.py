@@ -57,8 +57,7 @@ exposuremeter.outputtype = 'red'
 exposuremeter.extension = 'fits'
 exposuremeter.description = 'Produces an exposuremeter map'
 exposuremeter.kind = 'misc'
-exposuremeter.set_arg(pos=0, name='directory', dtype='directory',
-                      helpstr=textentry('DIRECTORY_HELP'))
+exposuremeter.set_arg(pos=0, **RMOD.mod.obs_dir)
 exposuremeter.set_kwarg(name='--fibers', dtype=str, default='None',
                         helpstr='Choose the fibers to populate in the mask')
 
@@ -95,7 +94,7 @@ EM_KIND = ['EM_KIND', '', 'Exposure meter image kind (PP or RAW)']
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(directory=None, **kwargs):
+def main(obs_dir=None, **kwargs):
     """
     Main function for exposuremeter_spirou.py
 
@@ -109,7 +108,7 @@ def main(directory=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, **kwargs)
+    fkwargs = dict(obs_dir=obs_dir, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,
@@ -183,7 +182,7 @@ def __main__(recipe, params):
         # get all "filetype" filenames
         filters = dict(KW_OUTPUT=filetype, KW_FIBER=fiber,
                        OBS_DIR=params['OBS_DIR'])
-        files = drs_utils.find_files(params, kind='red', filters=filters)
+        files = drs_utils.find_files(params, block_kind='red', filters=filters)
         # deal with no files found
         if len(files) == 0:
             eargs = [filetype, fiber, mainname]
@@ -362,8 +361,8 @@ def __main__(recipe, params):
         name_list += ['PARAM_TABLE']
     # write file
     out_pp_file.write_multi(data_list=data_list, name_list=name_list,
-                               kind=recipe.outputtype,
-                               runstring=recipe.runstring)
+                            block_kind=recipe.out_block_str,
+                            runstring=recipe.runstring)
     # ----------------------------------------------------------------------
     # write raw out file
     # ----------------------------------------------------------------------
@@ -392,7 +391,7 @@ def __main__(recipe, params):
         name_list += ['PARAM_TABLE']
     # write file
     out_raw_file.write_multi(data_list=data_list, name_list=name_list,
-                             kind=recipe.outputtype,
+                             block_kind=recipe.out_block_str,
                              runstring=recipe.runstring)
 
     # ----------------------------------------------------------------------

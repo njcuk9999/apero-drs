@@ -21,8 +21,8 @@ textentry = lang.textentry
 # =============================================================================
 # Commonly used arguments
 # =============================================================================
-directory = dict(name='directory', dtype='directory',
-                 helpstr=textentry('DIRECTORY_HELP'))
+obs_dir = dict(name='obs_dir', dtype='obs_dir',
+               helpstr=textentry('OBS_DIR_HELP'))
 # -----------------------------------------------------------------------------
 plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
             default_ref='DRS_PLOT', minimum=0, maximum=2)
@@ -56,10 +56,10 @@ recipes = [changelog, database_mgr, explorer,
 # Each recipe requires the following:
 #    recipe = drs_recipe()  [DEFINED ABOVE]
 #
-#    recipe.name            the full name of the python script file
-#    recipe.inputtype        the input directory [raw/tmp/reduced]
-#    recipe.outputtype       the output directory [raw/tmp/reduced]
-#    recipe.description     the description (for help file)
+#    recipe.name                the full name of the python script file
+#    recipe.in_block_str        the input directory [raw/tmp/reduced]
+#    recipe.out_block_str       the output directory [raw/tmp/reduced]
+#    recipe.description         the description (for help file)
 #
 #    arguments:
 #         recipe.arg(name=[STRING],             the name for the argument
@@ -156,7 +156,7 @@ listing.instrument = __INSTRUMENT__
 listing.description = textentry('LISTING_DESC')
 listing.kind = 'tool'
 listing.set_kwarg(name='--obs_dir', dtype=str, default='',
-                  helpstr=textentry('LISTING_HELP_NIGHTNAME'))
+                  helpstr=textentry('LISTING_HELP_OBS_DIR'))
 listing.set_kwarg(name='--kind', dtype=str, default='raw',
                   options=['raw', 'tmp', 'red'],
                   helpstr=textentry('LISTING_HELP_KIND'))
@@ -175,7 +175,7 @@ logstats.kind = 'tool'
 logstats.set_debug_plots('LOGSTATS_BAR')
 logstats.set_summary_plots()
 logstats.set_kwarg(name='--obs_dir', dtype=str, default='',
-                   helpstr=textentry('LOGSTAT_HELP_NIGHTNAME'))
+                   helpstr=textentry('LOGSTAT_HELP_OBS_DIR'))
 logstats.set_kwarg(name='--kind', dtype=str, default='red',
                    options=['tmp', 'red'],
                    helpstr=textentry('LOGSTAT_HELP_KIND'))
@@ -224,7 +224,7 @@ processing.kind = 'processing'
 processing.set_arg(pos=0, name='runfile', dtype=str,
                    helpstr=textentry('PROCESS_RUNFILE_HELP'))
 processing.set_kwarg(name='--obs_dir', dtype=str, default='None',
-                     helpstr=textentry('PROCESS_NIGHTNAME_HELP'))
+                     helpstr=textentry('PROCESS_OBS_DIR_HELP'))
 processing.set_kwarg(name='--filename', dtype=str, default='None',
                      helpstr=textentry('PROCESS_FILENAME_HELP'))
 processing.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',

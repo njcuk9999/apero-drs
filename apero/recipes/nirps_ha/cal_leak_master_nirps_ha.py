@@ -46,7 +46,7 @@ EXTRACT_NAME = 'cal_extract_nirps_ha.py'
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(directory=None, **kwargs):
+def main(obs_dir=None, **kwargs):
     """
     Main function for cal_leak_master_spirou.py
 
@@ -58,7 +58,7 @@ def main(directory=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, **kwargs)
+    fkwargs = dict(obs_dir=obs_dir, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
@@ -120,7 +120,7 @@ def __main__(recipe, params):
             WLOG(params, 'error', textentry('09-010-00001', args=eargs))
         # ------------------------------------------------------------------
         # get all "filetype" filenames
-        files = drs_utils.find_files(params, kind='tmp',
+        files = drs_utils.find_files(params, block_kind='tmp',
                                      filters=dict(KW_DPRTYPE=filetype,
                                                   OBS_DIR=params['OBS_DIR']))
         # create infiles

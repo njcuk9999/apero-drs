@@ -255,7 +255,7 @@ def get_non_file_args(non_file_args: List[str],
             # loop around all argument names
             for argname in non_file_args:
                 # if key is directory set if from group name
-                if argname == 'directory':
+                if argname == 'obs_dir':
                     value = run_inst2.group
                 # if key is in our set of combinations get the value from
                 #  combinations

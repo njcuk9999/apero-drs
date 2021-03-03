@@ -1316,7 +1316,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
         name_list += ['PARAM_TABLE']
     # write image to file
     e2dsfile.write_multi(data_list=data_list, name_list=name_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfile)
     # ----------------------------------------------------------------------
@@ -1347,7 +1348,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
         name_list += ['PARAM_TABLE']
     # write image to file
     e2dsfffile.write_multi(data_list=data_list, name_list=name_list,
-                           kind=recipe.outputtype,
+                           block_kind=recipe.out_block_str,
                            runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfffile)
@@ -1381,7 +1382,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # write image to file
     e2dsllfile.write_multi(data_list=data_list, name_list=name_list,
                            datatype_list=datatype_list,
-                           kind=recipe.outputtype, runstring=recipe.runstring)
+                           block_kind=recipe.out_block_str,
+                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsllfile)
     # ----------------------------------------------------------------------
@@ -1414,7 +1416,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
         name_list += ['PARAM_TABLE']
     # write image to file
     s1dwfile.write_multi(data_list=data_list, name_list=name_list,
-                         kind=recipe.outputtype,
+                         block_kind=recipe.out_block_str,
                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(s1dwfile)
@@ -1448,7 +1450,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
         name_list += ['PARAM_TABLE']
     # write image to file
     s1dvfile.write_multi(data_list=data_list, name_list=name_list,
-                         kind=recipe.outputtype,
+                         block_kind=recipe.out_block_str,
                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(s1dvfile)
@@ -1550,7 +1552,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
         name_list += ['PARAM_TABLE']
     # write image to file
     e2dsfile.write_multi(data_list=data_list, name_list=name_list,
-                         kind=recipe.outputtype,
+                         block_kind=recipe.out_block_str,
                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfile)
@@ -1582,7 +1584,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
         name_list += ['PARAM_TABLE']
     # write image to file
     e2dsfffile.write_multi(data_list=data_list, name_list=name_list,
-                           kind=recipe.outputtype,
+                           block_kind=recipe.out_block_str,
                            runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfffile)
@@ -1751,7 +1753,7 @@ def write_leak_master(params, recipe, rawfiles, medcubes, qc_params, props):
             name_list += ['PARAM_TABLE']
         # write image to file
         outfile.write_multi(data_list=data_list, name_list=name_list,
-                            kind=recipe.outputtype,
+                            block_kind=recipe.out_block_str,
                             runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(outfile)
@@ -1803,7 +1805,7 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
                 name_list += ['PARAM_TABLE']
             # write image to file
             extfile.write_multi(data_list=data_list, name_list=name_list,
-                                kind=recipe.outputtype,
+                                block_kind=recipe.out_block_str,
                                 runstring=recipe.runstring)
             # add back to outputs (used for s1d)
             outputs[fiber][extname] = extfile
@@ -1851,7 +1853,7 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
             name_list += ['PARAM_TABLE']
         # write image to file
         s1dwfile.write_multi(data_list=data_list, name_list=name_list,
-                             kind=recipe.outputtype,
+                             block_kind=recipe.out_block_str,
                              runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(s1dwfile)
@@ -1880,7 +1882,7 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
             name_list += ['PARAM_TABLE']
         # write image to file
         s1dvfile.write_multi(data_list=data_list, name_list=name_list,
-                             kind=recipe.outputtype,
+                             block_kind=recipe.out_block_str,
                              runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(s1dvfile)

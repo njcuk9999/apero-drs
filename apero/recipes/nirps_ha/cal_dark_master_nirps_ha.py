@@ -18,7 +18,7 @@ from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.core.core import drs_database
-from apero.io import drs_path
+from apero.core.core import drs_file
 from apero.science.calib import dark
 
 
@@ -109,7 +109,7 @@ def __main__(recipe, params):
                 emsg += '\n\t - "{0}"'.format(allowedtype)
             WLOG(params, 'error', emsg)
         # get all "filetype" filenames
-        files = drs_utils.find_files(params, kind='tmp',
+        files = drs_utils.find_files(params, block_kind='tmp',
                                      filters=dict(KW_DPRTYPE=filetype))
         # append to filenames
         filenames += list(files)
@@ -132,10 +132,11 @@ def __main__(recipe, params):
     cargs = [params, recipe, dark_table]
     master_dark, reffile = dark.construct_master_dark(*cargs)
     # get reference file night name
-    nightname = drs_path.get_nightname(params, reffile.filename)
-    # Have to update nightname while locked for all param dicts (do not copy)
+    ref_inst = drs_file.DrsPath(params, reffile.filename)
+    obs_dir = ref_inst.obs_dir
+    # Have to update obs_dir while locked for all param dicts (do not copy)
     #     Note: do not use 'uparamdicts' unless you know what you are doing.
-    ukwargs = dict(key='OBS_DIR', value=nightname, source=mainname)
+    ukwargs = dict(key='OBS_DIR', value=obs_dir, source=mainname)
     constants.uparamdicts(params, recipe.params, WLOG.pin, **ukwargs)
 
     # ------------------------------------------------------------------

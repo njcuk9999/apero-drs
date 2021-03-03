@@ -417,7 +417,8 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
         name_list += ['PARAM_TABLE']
     # write image to file
     blazefile.write_multi(data_list=data_list, name_list=name_list,
-                          kind=recipe.outputtype, runstring=recipe.runstring)
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(blazefile)
     # --------------------------------------------------------------
@@ -445,7 +446,8 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
         name_list += ['PARAM_TABLE']
     # write image to file
     flatfile.write_multi(data_list=data_list, name_list=name_list,
-                         kind=recipe.outputtype, runstring=recipe.runstring)
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(flatfile)
     # --------------------------------------------------------------
@@ -477,7 +479,8 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     # write image to file
     e2dsllfile.write_multi(data_list=data_list, name_list=name_list,
                            datatype_list=datatype_list,
-                           kind=recipe.outputtype, runstring=recipe.runstring)
+                           block_kind=recipe.out_block_str,
+                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsllfile)
     # return out file

@@ -49,15 +49,15 @@ RAW_PREFIX = file_definitions.raw_prefix
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(directory=None, **kwargs):
+def main(obs_dir=None, **kwargs):
     """
     Main function for cal_preprocess_spirou.py
 
-    :param directory: string, the night name sub-directory
+    :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
 
-    :type directory: str
+    :type obs_dir: str
     :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
@@ -66,7 +66,7 @@ def main(directory=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, **kwargs)
+    fkwargs = dict(obs_dir=obs_dir, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
@@ -127,7 +127,7 @@ def __main__(recipe, params):
             WLOG(params, 'error', textentry('09-010-00001', args=eargs))
         # ------------------------------------------------------------------
         # get all "filetype" filenames
-        files = drs_utils.find_files(params, kind='raw',
+        files = drs_utils.find_files(params, block_kind='raw',
                                     filters=dict(KW_DPRTYPE=filetype,
                                                  OBS_DIR=params['OBS_DIR']))
         # create infiles
@@ -200,7 +200,8 @@ def __main__(recipe, params):
             name_list += ['PARAM_TABLE']
         # write image to file
         outfile.write_multi(data_list=data_list, name_list=name_list,
-                            kind=recipe.outputtype, runstring=recipe.runstring)
+                            block_kind=recipe.out_block_str,
+                            runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(outfile)
         # ------------------------------------------------------------------

@@ -525,7 +525,8 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
         name_list += ['PARAM_TABLE']
     # write image to file
     polfile.write_multi(data_list=data_list, name_list=name_list,
-                        kind=recipe.outputtype, runstring=recipe.runstring)
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(polfile)
 
@@ -552,7 +553,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
         name_list += ['PARAM_TABLE']
     # write image to file
     null1file.write_multi(data_list=data_list, name_list=name_list,
-                          kind=recipe.outputtype,
+                          block_kind=recipe.out_block_str,
                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(null1file)
@@ -580,7 +581,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
         name_list += ['PARAM_TABLE']
     # write image to file
     null2file.write_multi(data_list=data_list, name_list=name_list,
-                          kind=recipe.outputtype,
+                          block_kind=recipe.out_block_str,
                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(null2file)
@@ -611,7 +612,8 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
         name_list += ['PARAM_TABLE']
     # write image to file
     stokesfile.write_multi(data_list=data_list, name_list=name_list,
-                           kind=recipe.outputtype, runstring=recipe.runstring)
+                           block_kind=recipe.out_block_str,
+                           runstring=recipe.runstring)
     # add to output files (for indexing)STOKES_I
     recipe.add_output_file(stokesfile)
 
@@ -642,7 +644,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
             name_list += ['PARAM_TABLE']
         # write image to file
         s1dfile.write_multi(data_list=data_list, name_list=name_list,
-                            kind=recipe.outputtype,
+                            block_kind=recipe.out_block_str,
                             runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(s1dfile)
@@ -730,7 +732,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
             name_list += ['PARAM_TABLE']
         # write image to file
         lsd_file.write_multi(data_list=data_list, name_list=name_list,
-                             kind=recipe.outputtype,
+                             block_kind=recipe.out_block_str,
                              runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(lsd_file)
