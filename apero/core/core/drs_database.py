@@ -1326,7 +1326,7 @@ class IndexDatabase(DatabaseManager):
                     # get value
                     value = hkeys[hkey]
                     # deal with a null value
-                    if isinstance(value, str) and hkey.lower() == 'null':
+                    if isinstance(value, str) and value.lower() == 'null':
                         hvalues.append('NULL')
                     else:
                         # try to case and append
