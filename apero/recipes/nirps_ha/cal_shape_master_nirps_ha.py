@@ -20,7 +20,7 @@ from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.io import drs_table
-from apero.science.calib import general
+from apero.science.calib import gen_calib
 from apero.science.calib import localisation
 from apero.science.calib import shape
 
@@ -127,8 +127,8 @@ def __main__(recipe, params):
     # log process
     WLOG(params, 'info', textentry('40-014-00001'))
     # calibrate file
-    fpprops, fpimage = general.calibrate_ppfile(params, recipe, fpfile,
-                                                correctback=False)
+    fpprops, fpimage = gen_calib.calibrate_ppfile(params, recipe, fpfile,
+                                                  correctback=False)
 
     # ----------------------------------------------------------------------
     # Get all preprocessed fp files

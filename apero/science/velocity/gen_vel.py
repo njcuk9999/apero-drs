@@ -28,7 +28,7 @@ from apero.core.utils import drs_data
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'science.rv.general.py'
+__NAME__ = 'science.rv.gen_vel.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

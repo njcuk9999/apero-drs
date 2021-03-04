@@ -30,7 +30,7 @@ from apero.science.calib import background
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'science.calib.general.py'
+__NAME__ = 'science.calib.gen_calib.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

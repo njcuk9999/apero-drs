@@ -16,7 +16,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
-from apero.science.calib import general
+from apero.science.calib import gen_calib
 from apero.science.calib import shape
 
 # =============================================================================
@@ -133,7 +133,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Correction of file
         # ------------------------------------------------------------------
-        props, image = general.calibrate_ppfile(params, recipe, infile)
+        props, image = gen_calib.calibrate_ppfile(params, recipe, infile)
         # ------------------------------------------------------------------
         # Load master fp, shape dxmap and dymap
         # ------------------------------------------------------------------

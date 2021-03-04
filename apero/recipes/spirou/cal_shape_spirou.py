@@ -16,7 +16,7 @@ from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
-from apero.science.calib import general
+from apero.science.calib import gen_calib
 from apero.science.calib import shape
 
 # =============================================================================
@@ -94,7 +94,7 @@ def __main__(recipe, params):
     # get files
     infiles = params['INPUTS']['FILES'][1]
     # must check fp files pass quality control
-    infiles = general.check_fp_files(params, infiles)
+    infiles = gen_calib.check_fp_files(params, infiles)
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
@@ -135,7 +135,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Correction of file
         # ------------------------------------------------------------------
-        props, image = general.calibrate_ppfile(params, recipe, infile)
+        props, image = gen_calib.calibrate_ppfile(params, recipe, infile)
         # ------------------------------------------------------------------
         # Load master fp, shape dxmap and dymap
         # ------------------------------------------------------------------

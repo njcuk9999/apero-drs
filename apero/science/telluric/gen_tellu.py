@@ -35,7 +35,7 @@ from apero.science.calib import flat_blaze
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'science.telluric.general.py'
+__NAME__ = 'science.telluric.gen_calib.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -2126,7 +2126,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, database=None,
         wargs = [out_tellu_conv.filename]
         WLOG(params, '', textentry('40-019-00002', args=wargs))
         # save
-        out_tellu_conv.write_npy(kind=recipe.outputtype,
+        out_tellu_conv.write_npy(block_kind=recipe.out_block_str,
                                  runstring=recipe.runstring)
         # ------------------------------------------------------------------
         # Move to telluDB and update telluDB
@@ -2210,7 +2210,7 @@ def load_tapas_spl(params, recipe, header, database=None):
         WLOG(params, '', textentry('40-019-00047', args=[args]))
         # save to disk
         out_tellu_tapas.data = tmp_tapas
-        out_tellu_tapas.write_npy(kind=recipe.outputtype,
+        out_tellu_tapas.write_npy(block_kind=recipe.out_block_str,
                                   runstring=recipe.runstring)
         # ------------------------------------------------------------------
         # Move to telluDB and update telluDB

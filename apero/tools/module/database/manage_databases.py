@@ -67,6 +67,7 @@ def kill(params: ParamDict, timeout: int = 60):
         # get hostname / user / password
         host = dparams['MYSQL']['HOST']
         user = dparams['MYSQL']['USER']
+        userdb = dparams['MYSQL']['DATABASE']
         passwd = dparams['MYSQL']['PASSWD']
         databasename = 'information_schema'
         tablename = 'processlist'
@@ -80,8 +81,11 @@ def kill(params: ParamDict, timeout: int = 60):
             # set up condition: only this users processes and only from the
             #   required database and that have been active for more than
             #   60 seconds
-            cargs = [user, databasename, timeout]
+            cargs = [user, userdb, timeout]
             condition = 'USER="{0}" AND DB="{1}" AND TIME > {2}'.format(*cargs)
+            # log condition
+            WLOG(params, '', 'Condition')
+            WLOG(params, '', '\t' + condition)
             # get all processes that were started by user
             table = infodb.get('*', table=tablename, condition=condition,
                                return_pandas=True)
@@ -97,7 +101,7 @@ def kill(params: ParamDict, timeout: int = 60):
                 try:
                     infodb.execute(command, False)
                     # log killing
-                    WLOG(params, '', command)
+                    WLOG(params, '', '\t' + command)
                 except Exception:
                     continue
             # close the connection

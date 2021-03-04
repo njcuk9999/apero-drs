@@ -30,7 +30,7 @@ from apero.io import drs_path
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.io import drs_table
-from apero.science.calib import general
+from apero.science.calib import gen_calib
 from apero.science.calib import localisation
 
 
@@ -78,7 +78,7 @@ def construct_fp_table(params, filenames):
         # must load file here to check if fp is valid
         image = drs_fits.readfits(params, filenames[it], log=False)
         # if image is not valid skip
-        if not general.check_fp(params, image):
+        if not gen_calib.check_fp(params, image):
             continue
         # delete image we'll get it again later in more memory efficient manner
         del image
@@ -323,7 +323,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             # get and correct file
             cargs = [params, recipe, groupfile]
             ckwargs = dict(n_percentile=percent_thres, correctback=False)
-            props, groupfp = general.calibrate_ppfile(*cargs, **ckwargs)
+            props, groupfp = gen_calib.calibrate_ppfile(*cargs, **ckwargs)
             # --------------------------------------------------------------
             # shift group to master
             targs = [image_ref, groupfp]
@@ -347,7 +347,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                                    lin_transform_vect=transforms)
             # save files for medianing later
             nargs = ['fp_master_cube', row, groupfp, fp_cube_files, fpsubdir,
-                     outdir]
+                     out_obs_dir]
             fp_cube_files, fpsubdir = drs_image.npy_filelist(params, *nargs)
             # delete groupfp
             del groupfp
@@ -371,9 +371,9 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     with warnings.catch_warnings(record=True) as _:
         fp_master = drs_image.large_image_combine(params, fp_cube_files,
                                                   math='mean',
-                                                  outdir=outdir, fmt='npy')
+                                                  outdir=out_obs_dir, fmt='npy')
     # clean up npy dir
-    drs_image.npy_fileclean(params, fp_cube_files, fpsubdir, outdir)
+    drs_image.npy_fileclean(params, fp_cube_files, fpsubdir, out_obs_dir)
     # ----------------------------------------------------------------------
     # convert transform_list to array
     tarrary = np.array(transforms_list)
@@ -1277,8 +1277,8 @@ def get_master_fp(params, header, filename=None, database=None):
         calibdbm = database
     # ----------------------------------------------------------------------
     # load master fp
-    cout = general.load_calib_file(params, key, header, filename=filename,
-                                   userinputkey='FPMASTER', database=calibdbm)
+    cout = gen_calib.load_calib_file(params, key, header, filename=filename,
+                                     userinputkey='FPMASTER', database=calibdbm)
     fpmaster, _, fpmaster_file = cout
     # ----------------------------------------------------------------------
     # log which fpmaster file we are using
@@ -1302,8 +1302,8 @@ def get_shapex(params, header, filename=None, database=None):
         calibdbm = database
     # ----------------------------------------------------------------------
     # load shape x file
-    cout = general.load_calib_file(params, key, header, filename=filename,
-                                   userinputkey='SHAPEX', database=calibdbm)
+    cout = gen_calib.load_calib_file(params, key, header, filename=filename,
+                                     userinputkey='SHAPEX', database=calibdbm)
     dxmap, fhdr, shapex_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
@@ -1327,8 +1327,8 @@ def get_shapey(params, header, filename=None, database=None):
         calibdbm = database
     # ----------------------------------------------------------------------
     # load shape x file
-    cout = general.load_calib_file(params, key, header, filename=filename,
-                                   userinputkey='SHAPEY', database=calibdbm)
+    cout = gen_calib.load_calib_file(params, key, header, filename=filename,
+                                     userinputkey='SHAPEY', database=calibdbm)
     dymap, fhdr, shapey_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
@@ -1353,8 +1353,8 @@ def get_shapelocal(params, header, filename=None, database=None):
         calibdbm = database
     # ----------------------------------------------------------------------
     # load shape x file
-    cout = general.load_calib_file(params, key, header, filename=filename,
-                                   userinputkey='SHAPEL', database=calibdbm)
+    cout = gen_calib.load_calib_file(params, key, header, filename=filename,
+                                     userinputkey='SHAPEL', database=calibdbm)
     shapel, fhdr, shapel_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
@@ -1404,7 +1404,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         outfile1.add_hkey_1d('KW_INFILE2', values=rawfpfiles,
                              dim1name='fpfiles')
     # add the calibration files use
-    outfile1 = general.add_calibs_to_header(outfile1, fpprops)
+    outfile1 = gen_calib.add_calibs_to_header(outfile1, fpprops)
     # add qc parameters
     outfile1.add_qckeys(qc_params)
     # copy data
@@ -1574,7 +1574,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
             debugfile3.add_hkey_1d('KW_INFILE2', values=rawfpfiles,
                                    dim1name='fpfiles')
             # add the calibration files use
-            debugfile3 = general.add_calibs_to_header(debugfile3, fpprops)
+            debugfile3 = gen_calib.add_calibs_to_header(debugfile3, fpprops)
             # add qc parameters
             debugfile3.add_qckeys(qc_params)
             # add data
@@ -1757,7 +1757,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     outfile.add_hkey_1d('KW_INFILE1', values=hfiles,
                         dim1name='hcfiles')
     # add the calibration files use
-    outfile = general.add_calibs_to_header(outfile, props)
+    outfile = gen_calib.add_calibs_to_header(outfile, props)
     # add qc parameters
     outfile.add_qckeys(qc_params)
     # add shape transform parameters

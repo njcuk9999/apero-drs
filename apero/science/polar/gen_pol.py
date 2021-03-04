@@ -24,7 +24,7 @@ from apero.science import extract
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'polar.general.py'
+__NAME__ = 'polar.gen_calib.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

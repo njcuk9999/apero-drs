@@ -20,7 +20,7 @@ from apero.core import math as mp
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
-from apero.science.calib import general
+from apero.science.calib import gen_calib
 
 # =============================================================================
 # Define variables
@@ -248,8 +248,8 @@ def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
         calibdbm = database
     # ------------------------------------------------------------------------
     # load flat file
-    cout = general.load_calib_file(params, key, header, filename=filename,
-                                   userinputkey='FLATFILE', database=calibdbm)
+    cout = gen_calib.load_calib_file(params, key, header, filename=filename,
+                                     userinputkey='FLATFILE', database=calibdbm)
     flat, _, flat_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
@@ -274,9 +274,9 @@ def get_blaze(params, header, fiber, filename=None, database=None):
         calibdbm = database
     # ------------------------------------------------------------------------
     # load blaze file
-    cout = general.load_calib_file(params, key, header, filename=filename,
-                                   userinputkey='BLAZEFILE', database=calibdbm,
-                                   fiber=fiber)
+    cout = gen_calib.load_calib_file(params, key, header, filename=filename,
+                                     userinputkey='BLAZEFILE', database=calibdbm,
+                                     fiber=fiber)
     blaze, _, blaze_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
@@ -363,7 +363,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     # add qc parameters
     blazefile.add_qckeys(qc_params)
     # add the calibration files use
-    blazefile = general.add_calibs_to_header(blazefile, props)
+    blazefile = gen_calib.add_calibs_to_header(blazefile, props)
     # --------------------------------------------------------------
     # add the other calibration files used
     blazefile.add_hkey('KW_CDBORDP', value=orderpfile)

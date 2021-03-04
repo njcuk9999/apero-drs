@@ -407,15 +407,20 @@ class _CheckObsDir(DrsAction):
         """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func('_check_obs_dir', __NAME__, self.class_name)
-        # ---------------------------------------------------------------------
-        # deal with no check
-        if not self.recipe.input_validation:
-            return value
-        # ---------------------------------------------------------------------
         # get the argument name
         argname = self.dest
         # get the params from recipe
         params = self.recipe.params
+        # ---------------------------------------------------------------------
+        # deal with no check
+        if not self.recipe.input_validation:
+            # we assume here that value is correct and is a valid obs_dir str
+            obs_dir = drs_file.DrsPath(params,
+                                       block_kind=self.recipe.in_block_str,
+                                       obs_dir=value)
+            # return the DrsPath
+            return obs_dir
+        # ---------------------------------------------------------------------
         # debug checking output (with new line)
         if params['DRS_DEBUG'] > 0:
             print('')

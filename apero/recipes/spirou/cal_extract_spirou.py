@@ -18,7 +18,7 @@ from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.io import drs_image
 from apero.science.calib import flat_blaze
-from apero.science.calib import general
+from apero.science.calib import gen_calib
 from apero.science.calib import localisation
 from apero.science.calib import shape
 from apero.science.calib import wave
@@ -140,7 +140,7 @@ def __main__(recipe, params):
 
         # ------------------------------------------------------------------
         # deal with skipping files defined by inputs OBJNAME and DPRTYPE
-        skip, skip_conditions = general.check_files(params, infile)
+        skip, skip_conditions = gen_calib.check_files(params, infile)
         if skip:
             if 'DPRTYPE' in skip_conditions[0]:
                 wargs = skip_conditions[1]
@@ -168,8 +168,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Correction of file
         # ------------------------------------------------------------------
-        props, image = general.calibrate_ppfile(params, recipe, infile,
-                                                database=calibdbm)
+        props, image = gen_calib.calibrate_ppfile(params, recipe, infile,
+                                                  database=calibdbm)
 
         # ------------------------------------------------------------------
         # Load and straighten order profiles

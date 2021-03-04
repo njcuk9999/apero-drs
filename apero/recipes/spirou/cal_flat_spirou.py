@@ -16,7 +16,7 @@ from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.io import drs_image
-from apero.science.calib import general
+from apero.science.calib import gen_calib
 from apero.science.calib import localisation
 from apero.science.calib import shape
 from apero.science.calib import flat_blaze
@@ -145,8 +145,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Correction of file
         # ------------------------------------------------------------------
-        props, image = general.calibrate_ppfile(params, recipe, infile,
-                                                database=calibdbm)
+        props, image = gen_calib.calibrate_ppfile(params, recipe, infile,
+                                                  database=calibdbm)
 
         # ------------------------------------------------------------------
         # Load and straighten order profiles

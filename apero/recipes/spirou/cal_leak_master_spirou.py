@@ -16,7 +16,7 @@ from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.science.extract import other as extother
-from apero.science.extract import general as extgen
+from apero.science.extract import gen_ext as extgen
 
 
 # =============================================================================

@@ -21,7 +21,7 @@ from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.io import drs_table
-from apero.science.calib import general
+from apero.science.calib import gen_calib
 
 
 # =============================================================================
@@ -540,11 +540,11 @@ def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
     else:
         calibdbm = database
     # load loco file
-    locofilepath = general.load_calib_file(params, key, header,
-                                           filename=filename,
-                                           userinputkey='LOCOFILE',
-                                           database=calibdbm, fiber=usefiber,
-                                           return_filename=True)
+    locofilepath = gen_calib.load_calib_file(params, key, header,
+                                             filename=filename,
+                                             userinputkey='LOCOFILE',
+                                             database=calibdbm, fiber=usefiber,
+                                             return_filename=True)
     # ------------------------------------------------------------------------
     # construct new infile instance and read data/header
     locofile = locofile.newcopy(filename=locofilepath, params=params,
@@ -787,7 +787,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
         hfiles = [infile.basename]
     orderpfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
     # add the calibration files use
-    orderpfile = general.add_calibs_to_header(orderpfile, props)
+    orderpfile = gen_calib.add_calibs_to_header(orderpfile, props)
     # add qc parameters
     orderpfile.add_qckeys(qc_params)
     # copy data
@@ -835,7 +835,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
         hfiles = [infile.basename]
     loco1file.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
     # add the calibration files use
-    loco1file = general.add_calibs_to_header(loco1file, props)
+    loco1file = gen_calib.add_calibs_to_header(loco1file, props)
     # add localisation parameters
     loco1file.add_hkey('KW_LOC_BCKGRD', value=mean_backgrd)
     loco1file.add_hkey('KW_LOC_NBO', value=rorder_num)

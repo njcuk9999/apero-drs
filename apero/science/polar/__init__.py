@@ -9,7 +9,7 @@ Created on 2019-01-17 at 14:31
 
 @author: cook
 """
-from apero.science.polar import general
+from apero.science.polar import gen_pol
 from apero.science.polar import lsd
 
 __all__ = ['validate_polar_files']
@@ -17,21 +17,21 @@ __all__ = ['validate_polar_files']
 # =============================================================================
 # Define functions
 # =============================================================================
-calculate_polarimetry = general.calculate_polarimetry
+calculate_polarimetry = gen_pol.calculate_polarimetry
 
-calculate_stokes_i = general.calculate_stokes_i
+calculate_stokes_i = gen_pol.calculate_stokes_i
 
-calculate_continuum = general.calculate_continuum
+calculate_continuum = gen_pol.calculate_continuum
 
-generate_statistics = general.generate_statistics
+generate_statistics = gen_pol.generate_statistics
 
 lsd_analysis_wrapper = lsd.lsd_analysis_wrapper
 
-validate_polar_files = general.validate_polar_files
+validate_polar_files = gen_pol.validate_polar_files
 
-quality_control = general.quality_control
+quality_control = gen_pol.quality_control
 
-write_files = general.write_files
+write_files = gen_pol.write_files
 
 # =============================================================================
 # End of code

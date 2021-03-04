@@ -17,7 +17,7 @@ import warnings
 
 from apero.base import base
 from apero.core.core import drs_misc
-from apero.core.math import general
+from apero.core.math import gen_math
 from apero.core.math import fast
 
 # =============================================================================
@@ -215,7 +215,7 @@ def gauss_fit_nn(xpix: np.ndarray, ypix: np.ndarray,
     func_name = display_func('gauss_fit_slope', __NAME__)
     # we guess that the Gaussian is close to Nyquist and has a
     # 2 PIX FWHM and therefore 2/2.54 e-width
-    ew_guess = 2 * fast.nanmedian(np.gradient(xpix)) / general.fwhm()
+    ew_guess = 2 * fast.nanmedian(np.gradient(xpix)) / gen_math.fwhm()
 
     if nn == 3:
         # only amp, cen and ew
@@ -251,7 +251,7 @@ def gauss_fit_nn(xpix: np.ndarray, ypix: np.ndarray,
         # work out residuals
         residu = ypix - gfit
         # work out amplitudes and residual fit
-        amps, fit = general.linear_minimization(residu, pder)
+        amps, fit = gen_math.linear_minimization(residu, pder)
 
         # add to the amplitudes
         a0 += amps

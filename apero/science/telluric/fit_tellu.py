@@ -156,9 +156,11 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
         _remove_absonpy_files(params, params['DRS_TELLU_DB'], 'tellu_save1_')
         # write to npy file
         abso_npy.data = abso
-        abso_npy.write_npy(kind=recipe.outputtype, runstring=recipe.runstring)
+        abso_npy.write_npy(block_kind=recipe.out_block_str,
+                           runstring=recipe.runstring)
         abso1_npy.data = abso1
-        abso1_npy.write_npy(kind=recipe.outputtype, runstring=recipe.runstring)
+        abso1_npy.write_npy(block_kind=recipe.out_block_str,
+                            runstring=recipe.runstring)
     # ----------------------------------------------------------------------
     # use abso1 (water/others exponent) to create a mask for abso
     # ----------------------------------------------------------------------
