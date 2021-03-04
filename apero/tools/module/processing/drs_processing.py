@@ -301,7 +301,8 @@ class Run:
         params, recipe = self.params, self.recipe
         # ------------------------------------------------------------------
         # get the input directory
-        input_dir = recipe.input_block.abs_path
+        path_inst = drs_file.DrsPath(params, block_kind=recipe.in_block_str)
+        input_dir = path_inst.abspath
         # check whether input directory exists
         if not os.path.exists(input_dir):
             wargs = [input_dir]
@@ -649,8 +650,10 @@ def generate_skip_table(params):
     # need to remove those that didn't end
     condition = 'ENDED = 1'
     # get runstrings
-    table = logdbm.get_entries('RECIPE, RUNSTRING', wdirs=include_list,
-                               bdirs=exclude_list, condition=condition)
+    table = logdbm.get_entries('RECIPE, RUNSTRING',
+                               include_obs_dirs=include_list,
+                               exclude_obs_dirs=exclude_list,
+                               condition=condition)
     recipes = np.array(table['RECIPE'])
     runstrings = np.array(table['RUNSTRING'])
     arguments = []
@@ -3180,8 +3183,8 @@ def _remove_engineering(params, indexdb, condition):
     # get observation directory
     itable = indexdb.get_entries('OBS_DIR, KW_OBSTYPE', condition=condition)
     # get observation directory and observation types
-    obs_dirs = itable['OBS_DIR']
-    obstypes = itable['KW_OBSTYPE']
+    obs_dirs = np.array(itable['OBS_DIR'])
+    obstypes = np.array(itable['KW_OBSTYPE'])
     # get unique nights
     u_obs_dirs = np.unique(obs_dirs)
     # get the object mask (i.e. we want to know that we have objects for this
@@ -3192,7 +3195,7 @@ def _remove_engineering(params, indexdb, condition):
     # loop around nights
     for obs_dir in u_obs_dirs:
         # get night mask
-        nightmask = u_obs_dirs == obs_dir
+        nightmask = obs_dirs == obs_dir
         # joint mask
         nightobjmask = nightmask & objmask
         # if we find objects then keep all files from this night

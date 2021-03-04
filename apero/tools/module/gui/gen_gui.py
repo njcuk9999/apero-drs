@@ -30,7 +30,7 @@ from apero.tools.module.gui import widgets
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'gui.general.py'
+__NAME__ = 'gui.gen_gui.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

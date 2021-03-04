@@ -29,14 +29,14 @@ from apero.io import drs_path
 from apero.io import drs_fits
 from apero.science.calib import shape
 from apero.science.calib import wave
-from apero.science.calib import general
+from apero.science.calib import gen_calib
 from apero.science.calib import flat_blaze
 from apero.science.extract import berv
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'science.extraction.general.py'
+__NAME__ = 'science.extraction.gen_ext.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -146,12 +146,12 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             # get fiber to use for ORDERPFILE (i.e. AB,A,B --> AB  and C-->C)
             usefiber = pconst.FIBER_LOC_TYPES(fiber)
             # get the order profile filename
-            filename = general.load_calib_file(params, key, header,
-                                               filename=filename,
-                                               userinputkey='ORDERPFILE',
-                                               database=calibdbm,
-                                               fiber=usefiber,
-                                               return_filename=True)
+            filename = gen_calib.load_calib_file(params, key, header,
+                                                 filename=filename,
+                                                 userinputkey='ORDERPFILE',
+                                                 database=calibdbm,
+                                                 fiber=usefiber,
+                                                 return_filename=True)
             # load order profile
             orderp = drs_fits.readfits(params, filename)
             orderpfilename = filename
@@ -164,7 +164,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             wargs = [orderpsfile.filename]
             WLOG(params, '', textentry('40-013-00024', args=wargs))
             # save for use later (as .npy)
-            orderpsfile.write_npy(kind=recipe.outputtype,
+            orderpsfile.write_npy(block_kind=recipe.out_block_str,
                                   runstring=recipe.runstring)
         # store in storage dictionary
         orderprofiles[fiber] = orderp
@@ -312,7 +312,7 @@ def get_thermal(params, header, fiber, kind, filename=None,
     # load calib file
     ckwargs = dict(key=key, userinputkey='THERMALFILE', filename=filename,
                    inheader=header, database=calibdbm, fiber=fiber)
-    thermal, thdr, thermal_file = general.load_calib_file(params, **ckwargs)
+    thermal, thdr, thermal_file = gen_calib.load_calib_file(params, **ckwargs)
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-016-00027', args=[thermal_file]))
     # return the master image
@@ -825,7 +825,7 @@ def get_leak_master(params, header, fiber, kind, filename=None,
     # load calib file
     ckwargs = dict(key=key, inheader=header, filename=filename, fiber=fiber,
                    userinputkey='LEAKFILE', database=calibdbm)
-    leak, _, leak_file = general.load_calib_file(params, **ckwargs)
+    leak, _, leak_file = gen_calib.load_calib_file(params, **ckwargs)
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-016-00028', args=[leak_file]))
@@ -1240,7 +1240,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
         hfiles = [infile.basename]
     e2dsfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
     # add the calibration files use
-    e2dsfile = general.add_calibs_to_header(e2dsfile, props)
+    e2dsfile = gen_calib.add_calibs_to_header(e2dsfile, props)
     # ----------------------------------------------------------------------
     # add the other calibration files used
     e2dsfile.add_hkey('KW_CDBORDP', value=orderpfile)
@@ -1491,7 +1491,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
         hfiles = [infile.basename]
     e2dsfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
     # add the calibration files use
-    e2dsfile = general.add_calibs_to_header(e2dsfile, props)
+    e2dsfile = gen_calib.add_calibs_to_header(e2dsfile, props)
     # ----------------------------------------------------------------------
     # add the other calibration files used
     e2dsfile.add_hkey('KW_CDBORDP', value=orderpfile)

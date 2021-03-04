@@ -29,7 +29,7 @@ from apero.core.utils import drs_startup
 from apero.io import drs_image
 from apero.io import drs_fits
 from apero.io import drs_table
-from apero.science.calib import general
+from apero.science.calib import gen_calib
 from apero.science import velocity
 
 # =============================================================================
@@ -183,7 +183,7 @@ def get_wave_solution_from_wavefile(params: ParamDict,
                        inheader=header, filename=inwavefile, fiber=usefiber,
                        return_filename=True, required=False, return_source=True)
         # load wave fp file
-        fout = general.load_calib_file(params, **lkwargs)
+        fout = gen_calib.load_calib_file(params, **lkwargs)
         # get filename and source from outputs
         inwavefile, source = fout
         if isinstance(source, str):
@@ -195,7 +195,7 @@ def get_wave_solution_from_wavefile(params: ParamDict,
             lkwargs['filename'] = inwavefile
             lkwargs['key'] = key_hc
             # load wave hc file
-            fout = general.load_calib_file(params, **lkwargs)
+            fout = gen_calib.load_calib_file(params, **lkwargs)
             # get filename and source from outputs
             filename, source = fout
             if isinstance(source, str):
@@ -528,7 +528,7 @@ def get_cavity_file(params: ParamDict, recipe: DrsRecipe,
                    inheader=header, filename=filename, return_source=True,
                    required=False)
     # load wave fp file
-    cout = general.load_calib_file(params, **lkwargs)
+    cout = gen_calib.load_calib_file(params, **lkwargs)
     if cout is None:
         return None
     else:

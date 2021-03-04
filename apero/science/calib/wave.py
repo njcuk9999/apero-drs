@@ -30,7 +30,7 @@ from apero.core.core import drs_database
 from apero.io import drs_table
 from apero.io import drs_image
 from apero.science import velocity
-from apero.science.calib import general
+from apero.science.calib import gen_calib
 from apero.science import extract
 from apero.science.calib import flat_blaze
 
@@ -158,7 +158,7 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
                        inheader=header, filename=inwavefile, fiber=usefiber,
                        return_filename=True, required=False, return_source=True)
         # load wave fp file
-        fout = general.load_calib_file(params, **lkwargs)
+        fout = gen_calib.load_calib_file(params, **lkwargs)
         # get filename and source from outputs
         inwavefile, source = fout
         if isinstance(source, str):
@@ -170,7 +170,7 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
             lkwargs['filename'] = inwavefile
             lkwargs['key'] = key_hc
             # load wave hc file
-            fout = general.load_calib_file(params, **lkwargs)
+            fout = gen_calib.load_calib_file(params, **lkwargs)
             # get filename and source from outputs
             filename, source = fout
             if isinstance(source, str):
@@ -497,8 +497,8 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
     lkwargs = dict(database=calibdbm, fiber=usefiber, return_filename=True,
                    inheader=header)
 
-    hclinefile = general.load_calib_file(params, key_hc,  filename=hclinefile,
-                                         userinputkey='HCLINEFILE', **lkwargs)
+    hclinefile = gen_calib.load_calib_file(params, key_hc, filename=hclinefile,
+                                           userinputkey='HCLINEFILE', **lkwargs)
     # construct new infile instance
     hclfile = out_wave_fp.newcopy(filename=hclinefile, params=params,
                                   fiber=usefiber)
@@ -511,8 +511,8 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
     # ------------------------------------------------------------------------
     # get fp lines
     # ------------------------------------------------------------------------
-    fplinefile = general.load_calib_file(params, key_fp,  filename=fplinefile,
-                                         userinputkey='FPLINEFILE', **lkwargs)
+    fplinefile = gen_calib.load_calib_file(params, key_fp, filename=fplinefile,
+                                           userinputkey='FPLINEFILE', **lkwargs)
     # construct new infile instance
     fplfile = out_wave_fp.newcopy(filename=fplinefile, params=params,
                                   fiber=usefiber)

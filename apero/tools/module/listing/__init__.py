@@ -9,7 +9,7 @@ Created on 2019-02-13 at 16:37
 
 @author: cook
 """
-from apero.tools.module.listing import general
+from apero.tools.module.listing import gen_list
 
 
 # =============================================================================

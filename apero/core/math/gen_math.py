@@ -29,7 +29,7 @@ from apero.core.math import fast
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'core.math.general.py'
+__NAME__ = 'core.math.gen_math.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

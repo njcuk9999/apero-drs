@@ -315,7 +315,6 @@ class DrsPath:
             WLOG(self.params, 'error', emsg)
             return
 
-
     def block_names(self) -> List[str]:
         """
         Get a list of block names

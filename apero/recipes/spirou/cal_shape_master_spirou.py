@@ -20,7 +20,7 @@ from apero.core.core import drs_database
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.io import drs_table
-from apero.science.calib import general
+from apero.science.calib import gen_calib
 from apero.science.calib import localisation
 from apero.science.calib import wave
 from apero.science.calib import shape
@@ -107,7 +107,7 @@ def __main__(recipe, params):
     hcfiles = params['INPUTS']['HCFILES'][1]
     fpfiles = params['INPUTS']['FPFILES'][1]
     # must check fp files pass quality control
-    fpfiles = general.check_fp_files(params, fpfiles)
+    fpfiles = gen_calib.check_fp_files(params, fpfiles)
     # get list of filenames (for output)
     rawhcfiles, rawfpfiles = [], []
     for infile in hcfiles:
@@ -149,8 +149,8 @@ def __main__(recipe, params):
     # log process
     WLOG(params, 'info', textentry('40-014-00001'))
     # calibrate file
-    fpprops, fpimage = general.calibrate_ppfile(params, recipe, fpfile,
-                                                correctback=False)
+    fpprops, fpimage = gen_calib.calibrate_ppfile(params, recipe, fpfile,
+                                                  correctback=False)
 
     # ------------------------------------------------------------------
     # Correction of hc file
@@ -158,8 +158,8 @@ def __main__(recipe, params):
     # log process
     WLOG(params, 'info', textentry('40-014-00002'))
     # calibrate file
-    hcprops, hcimage = general.calibrate_ppfile(params, recipe, hcfile,
-                                                correctback=False)
+    hcprops, hcimage = gen_calib.calibrate_ppfile(params, recipe, hcfile,
+                                                  correctback=False)
 
     # ----------------------------------------------------------------------
     # Get all preprocessed fp files

@@ -9,7 +9,7 @@ Created on 2019-01-18 at 15:53
 
 @author: cook
 """
-from apero.core.math import general
+from apero.core.math import gen_math
 from apero.core.math import gauss
 from apero.core.math import nan
 from apero.core.math import fast
@@ -17,21 +17,21 @@ from apero.core.math import fast
 # =============================================================================
 # Define functions
 # =============================================================================
-continuum = general.continuum
+continuum = gen_math.continuum
 
-calculate_polyvals = general.calculate_polyvals
+calculate_polyvals = gen_math.calculate_polyvals
 
-ea_airy_function = general.ea_airy_function
+ea_airy_function = gen_math.ea_airy_function
 
-estimate_sigma = general.estimate_sigma
+estimate_sigma = gen_math.estimate_sigma
 
 fit_gauss_with_slope = gauss.fit_gauss_with_slope
 
-fit2dpoly = general.fit2dpoly
+fit2dpoly = gen_math.fit2dpoly
 
 fitgaussian = gauss.fitgaussian
 
-fwhm = general.fwhm
+fwhm = gen_math.fwhm
 
 gauss_fit_nn = gauss.gauss_fit_nn
 
@@ -45,21 +45,21 @@ gauss_beta_function = gauss.gauss_beta_function
 
 gauss_fit_s = gauss.gauss_fit_s
 
-get_dll_from_coefficients = general.get_dll_from_coefficients
+get_dll_from_coefficients = gen_math.get_dll_from_coefficients
 
-get_ll_from_coefficients = general.get_ll_from_coefficients
+get_ll_from_coefficients = gen_math.get_ll_from_coefficients
 
-get_ll_from_coefficients_cheb = general.get_ll_from_coefficients_cheb
+get_ll_from_coefficients_cheb = gen_math.get_ll_from_coefficients_cheb
 
-iuv_spline = general.iuv_spline
+iuv_spline = gen_math.iuv_spline
 
 killnan = nan.killnan
 
-lowpassfilter = general.lowpassfilter
+lowpassfilter = gen_math.lowpassfilter
 
-measure_box_min_max = general.measure_box_min_max
+measure_box_min_max = gen_math.measure_box_min_max
 
-medbin = general.medbin
+medbin = gen_math.medbin
 
 medfilt_1d = fast.medfilt_1d
 
@@ -85,25 +85,25 @@ nanstd = fast.nanstd
 
 nansum = fast.nansum
 
-normal_fraction = general.normal_fraction
+normal_fraction = gen_math.normal_fraction
 
 odd_ratio_mean = fast.odd_ratio_mean
 
-linear_minimization = general.linear_minimization
+linear_minimization = gen_math.linear_minimization
 
-relativistic_waveshift = general.relativistic_waveshift
+relativistic_waveshift = gen_math.relativistic_waveshift
 
-robust_nanstd = general.robust_nanstd
+robust_nanstd = gen_math.robust_nanstd
 
-robust_polyfit = general.robust_polyfit
+robust_polyfit = gen_math.robust_polyfit
 
-rot8 = general.rot8
+rot8 = gen_math.rot8
 
-sinc = general.sinc
+sinc = gen_math.sinc
 
-sigfig = general.sigfig
+sigfig = gen_math.sigfig
 
-xpand_mask = general.xpand_mask
+xpand_mask = gen_math.xpand_mask
 
 # =============================================================================
 # End of code

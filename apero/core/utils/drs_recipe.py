@@ -1331,16 +1331,17 @@ class DrsRecipe(object):
             iarg = inputs[argname.strip(prefix)]
             # add prefix (add prefix whether it had one or not)
             argname = prefix + argname
-
             # deal with directory argument (difficult)
             if arg.name == 'obs_dir':
-                # get from recipe definition
-                obs_dir = self.input_block.obs_dir
+                # skip Nones
+                if iarg in ['None', None, '']:
+                    continue
+                # get obs_dir
+                obs_dir = drs_file.DrsPath(self.params, iarg)
                 # construct input string
-                inputstr += '{0}={1} || '.format(argname, obs_dir)
+                inputstr += '{0}={1} || '.format(argname, obs_dir.obs_dir)
                 # add to runstring
-                self.runstring += '{0} '.format(obs_dir)
-
+                self.runstring += '{0} '.format(obs_dir.obs_dir)
             # deal with file arguments
             elif arg.dtype in ['file', 'files']:
                 if not isinstance(iarg, list):

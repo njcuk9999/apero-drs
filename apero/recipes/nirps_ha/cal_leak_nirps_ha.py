@@ -16,7 +16,7 @@ from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core import constants
 from apero.core.core import drs_database
-from apero.science.extract import general as extgen
+from apero.science.extract import gen_ext as extgen
 
 
 # =============================================================================
