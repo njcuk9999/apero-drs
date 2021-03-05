@@ -234,7 +234,7 @@ FIBER_SET_NUM_FIBERS_C.value = 1
 # =============================================================================
 # Define object dpr types
 PP_OBJ_DPRTYPES = PP_OBJ_DPRTYPES.copy(__NAME__)
-PP_OBJ_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
+PP_OBJ_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, POLAR_DARK, POLAR_FP'
 
 # Defines the box size surrounding hot pixels to use
 PP_HOTPIX_BOXSIZE = PP_HOTPIX_BOXSIZE.copy(__NAME__)
@@ -1033,7 +1033,7 @@ EXT_S1D_EDGE_SMOOTH_SIZE.value = 20
 
 #    Define dprtypes to calculate berv for (should be a string list)
 EXT_ALLOWED_BERV_DPRTYPES = EXT_ALLOWED_BERV_DPRTYPES.copy(__NAME__)
-EXT_ALLOWED_BERV_DPRTYPES.value = 'OBJ_FP, OBJ_DARK'
+EXT_ALLOWED_BERV_DPRTYPES.value = 'OBJ_FP, OBJ_DARK, POLAR_FP, POLAR_DARK'
 
 #    Define which BERV calculation to use ('barycorrpy' or 'estimate' or 'None')
 EXT_BERV_KIND = EXT_BERV_KIND.copy(__NAME__)
@@ -1097,7 +1097,7 @@ THERMAL_EXTRACT_TYPE.value = 'E2DSFF'
 # define DPRTYPEs we need to correct thermal background using
 #    telluric absorption (TAPAS)  (must be a string list separated by a comma)
 THERMAL_CORRETION_TYPE1 = THERMAL_CORRETION_TYPE1.copy(__NAME__)
-THERMAL_CORRETION_TYPE1.value = 'OBJ'
+THERMAL_CORRETION_TYPE1.value = 'OBJ, POLAR'
 
 # define DPRTYPEs we need to correct thermal background using
 #     method 2 (must be a string list separated by a comma)
@@ -1803,7 +1803,7 @@ TAPAS_FILE_FMT.value = 'fits'
 
 # The allowed input DPRTYPES for input telluric files
 TELLU_ALLOWED_DPRTYPES = TELLU_ALLOWED_DPRTYPES.copy(__NAME__)
-TELLU_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
+TELLU_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, POLAR_FP, POLAR_DARK'
 
 # the INPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input telluric files
@@ -2189,7 +2189,7 @@ CCF_N_ORD_MAX.value = 48
 
 # Allowed input DPRTYPES for input  for CCF recipe
 CCF_ALLOWED_DPRTYPES = CCF_ALLOWED_DPRTYPES.copy(__NAME__)
-CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
+CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, POLAR_DARK, POLAR_FP'
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
 CCF_CORRECT_TELLU_TYPES = CCF_CORRECT_TELLU_TYPES.copy(__NAME__)
