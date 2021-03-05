@@ -44,8 +44,8 @@ apero_constants = drs_dev.TmpRecipe()
 apero_constants.name = __NAME__
 apero_constants.shortname = 'APERO_CONST'
 apero_constants.instrument = __INSTRUMENT__
-apero_constants.inputtype = 'red'
-apero_constants.outputtype = 'red'
+apero_constants.in_block_str = 'red'
+apero_constants.out_block_str = 'red'
 apero_constants.extension = 'fits'
 apero_constants.description = ('Developer functionality dealing with the'
                                'constant file')
