@@ -75,7 +75,8 @@ class AstroObject(object):
     aliases: List[str]
     used: int
 
-    def __init__(self, params: ParamDict, pconst, gaia_id: Union[str, None],
+    def __init__(self, params: ParamDict, pconst,
+                 gaia_id: Union[str, None], gaia_dr: Union[str, None],
                  ra: Union[str, float], dec: Union[str, float],
                  database, objname: Union[str, None], pmra: float = np.nan,
                  pmde: float = np.nan, plx: float = np.nan,
@@ -90,6 +91,7 @@ class AstroObject(object):
         """
         # properties from input
         self.input_gaiaid = gaia_id
+        self.input_gaiadr = gaia_dr
         self.input_ra = ra
         self.input_dec = dec
         self.database = database
@@ -901,6 +903,7 @@ def resolve_target(params: ParamDict, pconst,
         objname = header[params['KW_OBJNAME'][0]]
         # set gaia id
         gaia_id = header.get(params['KW_GAIA_ID'][0], None)
+        gaia_dr = header.get(params['KW_GAIA_DR'][0], None)
         # set ra [in degrees]
         ra = header.get(params['KW_OBJRA'][0], np.nan)
         ra = (ra * params.instances['KW_OBJRA'].unit).to(uu.deg).value
@@ -927,6 +930,7 @@ def resolve_target(params: ParamDict, pconst,
     else:
         # set gaia id
         gaia_id = None
+        gaia_dr = None
         # set ra and dec [in degrees]
         ra, dec = np.nan, np.nan
         # set pmra/pmde [in mas/yr]
@@ -941,7 +945,7 @@ def resolve_target(params: ParamDict, pconst,
     # Print that we are resolving object
     WLOG(params, 'info', 'Resolving OBJECT = {0}'.format(cobjname))
     # set up an astro object instance
-    astro_obj = AstroObject(params, pconst, gaia_id, ra, dec,
+    astro_obj = AstroObject(params, pconst, gaia_id, gaia_dr, ra, dec,
                             database, cobjname, pmra, pmde, plx, rv, teff)
     # resolve target
     astro_obj.resolve_target(mjd=mjd)

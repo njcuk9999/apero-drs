@@ -13,7 +13,7 @@ __all__ = [  # input keys
     'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND',
     'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
     'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
-    'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_INPUTRV', 'KW_OBJ_TEMP',
+    'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_GAIA_DR', 'KW_INPUTRV', 'KW_OBJ_TEMP',
     'KW_POLAR_KEY_1', 'KW_POLAR_KEY_2',
     'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME', 'KW_IDENTIFIER',
     # object resolution keys
@@ -313,6 +313,10 @@ KW_OBJECTNAME = Keyword('KW_OBJECTNAME', key='', dtype=str, source=__NAME__,
 # define the gaia id
 KW_GAIA_ID = Keyword('KW_GAIA_ID', key='', dtype=str, source=__NAME__,
                      description='define the gaia id')
+
+# define the gaia data release key
+KW_GAIA_DR = Keyword('KW_GAIA_DR', key='', dtype=str, source=__NAME__,
+                     description='define the gaia data release key')
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = Keyword('KW_OBJEQUIN', key='', dtype=float, source=__NAME__,
