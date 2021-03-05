@@ -179,7 +179,7 @@ def __main__(recipe, params):
             # generate out file name
             outfile, outdir = outfunc(params, postfile,
                                       table0['KW_IDENTIFIER'][row],
-                                      table0['DIRNAME'][row])
+                                      table0['OBS_DIR'][row])
             # skip existing files
             if (not overwrite) and os.path.exists(outfile):
                 continue
@@ -216,7 +216,8 @@ def __main__(recipe, params):
                 msg = 'Writing to file: {0}'
                 margs = [filepostfile.filename]
                 WLOG(params, '', msg.format(*margs))
-                filepostfile.write_file(recipe.outputtype, recipe.runstring)
+                filepostfile.write_file(block_kind=recipe.out_block_str,
+                                        runstring=recipe.runstring)
                 # if user wants to clear - clear this data
                 if clear:
                     for filename in filepostfile.clear_files:

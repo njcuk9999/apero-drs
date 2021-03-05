@@ -155,7 +155,8 @@ def __main__(recipe, params):
             msg = 'Writing to file: {0}'
             margs = [filepostfile.filename]
             WLOG(params, '', msg.format(*margs))
-            filepostfile.write_file(recipe.outputtype, recipe.runstring)
+            filepostfile.write_file(block_kind=recipe.out_block_str,
+                                    runstring=recipe.runstring)
             # if user wants to clear - clear this data
             if clear:
                 for filename in filepostfile.clear_files:
