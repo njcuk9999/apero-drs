@@ -1081,9 +1081,9 @@ class PseudoConstants:
         # set columns
         index_columns = dict()
         index_columns['ABSPATH'] = str
-        index_columns['DIRNAME'] = str
+        index_columns['OBS_DIR'] = str
         index_columns['FILENAME'] = str
-        index_columns['KIND'] = str
+        index_columns['BLOCK_KIND'] = str
         index_columns['LAST_MODIFIED'] = float
         index_columns['RUNSTRING'] = str
         # split names and types and add header keys
@@ -1114,7 +1114,7 @@ class PseudoConstants:
         log_columns = dict()
         log_columns['RECIPE'] = str
         log_columns['SHORTNAME'] = str
-        log_columns['RKIND'] = str
+        log_columns['BLOCK_KIND'] = str
         log_columns['RTYPE'] = str
         log_columns['PID'] = str
         log_columns['HUMANTIME'] = str
@@ -1125,7 +1125,7 @@ class PseudoConstants:
         log_columns['LEVELCRIT'] = str
         log_columns['INPATH'] = str
         log_columns['OUTPATH'] = str
-        log_columns['DIRNAME'] = str
+        log_columns['OBS_DIR'] = str
         log_columns['LOGFILE'] = str
         log_columns['PLOTDIR'] = str
         log_columns['RUNSTRING'] = str
