@@ -5296,7 +5296,7 @@ class DrsOutFileExtension:
             condition = '{0}="{1}"'.format(linkkind, criteria)
             # set up index database condition
             # add kind (raw/tmp/red/out)
-            condition += ' AND kind="{0}"'.format(kinds[col])
+            condition += ' AND BLOCK_KIND="{0}"'.format(kinds[col])
             # -----------------------------------------------------------------
             # get hkeys for this drsfile
             hkeys = drsfiles[col].required_header_keys
@@ -5742,7 +5742,7 @@ class DrsOutFile(DrsInputFile):
             # add the hlink criteria
             condition = '{0}="{1}"'.format(linkkind, criteria)
             # add kind condition
-            condition += ' AND kind="{0}"'.format(ext.kind)
+            condition += ' AND BLOCK_KIND="{0}"'.format(ext.kind)
             # add hkey conditions
             if hkeys is not None and isinstance(hkeys, dict):
                 # loop around each valid header key in index database
