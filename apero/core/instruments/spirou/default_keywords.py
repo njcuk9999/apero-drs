@@ -190,7 +190,11 @@ KW_POLAR_KEY_2.set(key='SBRHB2_P')
 # -----------------------------------------------------------------------------
 # define the gaia id
 KW_GAIA_ID = KW_GAIA_ID.copy(__NAME__)
-KW_GAIA_ID.set(key='GAIA_ID')
+KW_GAIA_ID.set(key='GAIAID', comment='Gaia catalog target identifier')
+
+# define the gaia data release key
+KW_GAIA_DR = KW_GAIA_DR.copy(__NAME__)
+KW_GAIA_DR.set(key='GAIADR', comment='Gaia catalog data release')
 
 # define the parallax HEADER key
 KW_PLX = KW_PLX.copy(__NAME__)
