@@ -403,14 +403,17 @@ def update_object_database(params: ParamDict):
         # get object name and gaia id
         objname = gtable[gl_obj_colname][row]
         gaiaid = gtable[gl_gaia_colname][row]
+        # TODO: Need column in database / reset / google sheet or some way
+        # TODO: to switch between
+        gaiadr = 'Gaia DR2'
         # clean up object name
         cobjname = pconst.DRS_OBJ_NAME(objname)
         # log progress ( as debug )
         WLOG(params, 'debug', textentry('40-503-00040', args=[objname, gaiaid]))
         # get astro object (current settings)
-        astro_obj = gen_pp.AstroObject(params, pconst, gaiaid, np.nan, np.nan,
-                                       objdbm, cobjname, np.nan, np.nan, np.nan,
-                                       np.nan, np.nan)
+        astro_obj = gen_pp.AstroObject(params, pconst, gaiaid, gaiadr, np.nan,
+                                       np.nan, objdbm, cobjname, np.nan, np.nan,
+                                       np.nan, np.nan, np.nan)
         # resolve target (with current properties)
         astro_obj.update_target(gtable)
         # write to database
