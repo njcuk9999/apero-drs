@@ -4524,7 +4524,7 @@ def sigclip_polyfit(params, xx, yy, degree, weight=None, **kwargs):
     # initialise the while loop
     sigmax = sigclip + 1
     # initialise mask
-    mask = np.ones_like(xx, dtype='Bool')
+    mask = np.ones_like(xx, dtype=bool)
     # set up coeffs
     coeff = np.zeros(degree)
     # while we are above sigclip
