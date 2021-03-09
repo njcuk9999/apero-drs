@@ -1459,7 +1459,7 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     name_list = names
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=tpclfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=tpclfile)]
         name_list += ['PARAM_TABLE']
     # write to file
     tpclfile.data = dimages[0]

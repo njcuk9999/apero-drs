@@ -1743,7 +1743,7 @@ def write_wave_sol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     name_list = ['COEFF_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=wavefile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=wavefile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write image to file
@@ -1836,7 +1836,7 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=hcfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=hcfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     hcfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1873,7 +1873,7 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=fpfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=fpfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     fpfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1925,7 +1925,7 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=cavfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=cavfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     cavfile.write_multi(data_list=data_list, name_list=name_list,

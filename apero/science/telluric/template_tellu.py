@@ -812,7 +812,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     name_list = ['TEMPLATE_TABLE', 'BERV_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=template_file)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=template_file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write multi
@@ -845,7 +845,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     name_list = ['TEMPLATE_TABLE', 'BERV_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=bigcubefile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=bigcubefile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write multi
@@ -878,7 +878,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     name_list = ['TEMPLATE_TABLE', 'BERV_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=bigcubefile0)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=bigcubefile0)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write multi
@@ -953,7 +953,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     name_list = ['TEMPLATE_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=template_file)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=template_file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write multi
@@ -986,7 +986,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     name_list = ['TEMPLATE_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=bigcubefile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=bigcubefile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write multi

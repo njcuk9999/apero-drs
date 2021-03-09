@@ -1312,7 +1312,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=e2dsfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     e2dsfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1344,7 +1344,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=e2dsfffile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfffile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     e2dsfffile.write_multi(data_list=data_list, name_list=name_list,
@@ -1376,7 +1376,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     datatype_list = ['image']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=e2dsllfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsllfile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write image to file
@@ -1412,7 +1412,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=e2dsfffile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfffile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     s1dwfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1446,7 +1446,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=s1dvfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=s1dvfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     s1dvfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1548,7 +1548,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=e2dsfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     e2dsfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1580,7 +1580,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=e2dsfffile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfffile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     e2dsfffile.write_multi(data_list=data_list, name_list=name_list,
@@ -1749,7 +1749,7 @@ def write_leak_master(params, recipe, rawfiles, medcubes, qc_params, props):
         data_list, name_list = [], []
         # snapshot of parameters
         if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(drsfitsfile=outfile)]
+            data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
             name_list += ['PARAM_TABLE']
         # write image to file
         outfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1801,7 +1801,8 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
             data_list, name_list = [], []
             # snapshot of parameters
             if params['PARAMETER_SNAPSHOT']:
-                data_list += [params.snapshot_table(drsfitsfile=extfile)]
+                data_list += [params.snapshot_table(recipe,
+                                                    drsfitsfile=extfile)]
                 name_list += ['PARAM_TABLE']
             # write image to file
             extfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1849,7 +1850,7 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         data_list, name_list = [], []
         # snapshot of parameters
         if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(drsfitsfile=s1dwfile)]
+            data_list += [params.snapshot_table(recipe, drsfitsfile=s1dwfile)]
             name_list += ['PARAM_TABLE']
         # write image to file
         s1dwfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1878,7 +1879,7 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         data_list, name_list = [], []
         # snapshot of parameters
         if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(drsfitsfile=s1dvfile)]
+            data_list += [params.snapshot_table(recipe, drsfitsfile=s1dvfile)]
             name_list += ['PARAM_TABLE']
         # write image to file
         s1dvfile.write_multi(data_list=data_list, name_list=name_list,

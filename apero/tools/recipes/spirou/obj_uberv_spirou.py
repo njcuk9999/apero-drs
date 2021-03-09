@@ -263,7 +263,8 @@ def __main__(recipe, params):
             data_list, name_list = [], []
             # snapshot of parameters
             if params['PARAMETER_SNAPSHOT']:
-                data_list += [params.snapshot_table(drsfitsfile=infile1)]
+                data_list += [params.snapshot_table(recipe,
+                                                    drsfitsfile=infile1)]
                 name_list += ['PARAM_TABLE']
             # write data to file
             infile1.write_multi(data_list=data_list, name_list=name_list,

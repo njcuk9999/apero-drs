@@ -204,9 +204,9 @@ def __main__(recipe, params):
     # update recipe log file
     # ------------------------------------------------------------------
     # no quality control --> so set passed qc to True
-    recipe.log.no_qc(params)
+    recipe.log.no_qc()
     # update log
-    recipe.log.end(params)
+    recipe.log.end()
 
     # ----------------------------------------------------------------------
     # End of main code

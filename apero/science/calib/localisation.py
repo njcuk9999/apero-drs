@@ -798,7 +798,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=orderpfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=orderpfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     orderpfile.write_multi(data_list=data_list, name_list=name_list,
@@ -865,7 +865,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     datatype_list = ['table', 'table']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=loco1file)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=loco1file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write image to file
@@ -897,7 +897,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=loco2file)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=loco2file)]
         name_list += ['PARAM_TABLE']
     # write image to file
     loco2file.write_multi(data_list=data_list, name_list=name_list,
@@ -933,7 +933,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
         data_list, name_list = [], []
         # snapshot of parameters
         if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(drsfitsfile=loco3file)]
+            data_list += [params.snapshot_table(recipe, drsfitsfile=loco3file)]
             name_list += ['PARAM_TABLE']
         # write image to file
         loco3file.write_multi(data_list=data_list, name_list=name_list,

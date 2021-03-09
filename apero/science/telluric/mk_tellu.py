@@ -441,7 +441,7 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=transfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=transfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     transfile.write_multi(data_list=data_list, name_list=name_list,

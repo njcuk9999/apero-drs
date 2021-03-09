@@ -388,7 +388,7 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     WLOG(params, '', textentry('40-012-00013', args=[badpixfile.filename]))
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list = [params.snapshot_table(drsfitsfile=badpixfile)]
+        data_list = [params.snapshot_table(recipe, drsfitsfile=badpixfile)]
         name_list = ['PARAM_TABLE']
     else:
         data_list, name_list = [], []
@@ -419,7 +419,7 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     WLOG(params, '', textentry('40-012-00014', args=[backmapfile.filename]))
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list = [params.snapshot_table(drsfitsfile=backmapfile)]
+        data_list = [params.snapshot_table(recipe, drsfitsfile=backmapfile)]
         name_list = ['PARAM_TABLE']
     else:
         data_list, name_list = [], []
