@@ -22,7 +22,7 @@ Import rules:
     do not import from core.utils.drs_recipe
     do not import from core.core.drs_argument
 """
-from astropy.table import Table
+from astropy.table import Table, vstack
 from astropy import version as av
 from collections import OrderedDict
 from copy import deepcopy
@@ -4536,6 +4536,50 @@ class DrsFitsFile(DrsInputFile):
         # return dbkey
         return self.dbkey
 
+    def update_param_table(self, name: str, param_kind: str,
+                           values: Union[str, list]):
+        """
+        Tries to add a string representation of "values" to any param table
+        in the file
+
+        :param name:  str, variable name (for param table)
+        :param param_kind: str, the param kind (calib/tellu/index/log)
+        :param values: either a string with values separated by commas or a list
+                       that will be converted to strings separated by commas
+
+        :return: None, updates self.filename (last extension(s))
+        """
+        # set function name
+        func_name = display_func('update_param_table', self.class_name)
+        # deal with values as list
+        if isinstance(values, list):
+            input_string = ','.join(list(map(lambda x: str(x), values)))
+        else:
+            input_string = str(values)
+        # make a description
+        desc = '{0} database entry (for reproduction)'.format(param_kind)
+        # new table row
+        newrow = Table()
+        newrow['NAME'] = [str(name)]
+        newrow['KIND'] = [str(param_kind)]
+        newrow['VALUE'] = [str(input_string)]
+        newrow['SOURCE'] = [str(func_name)]
+        newrow['DESCRIPTION'] = [str(desc)]
+        newrow['COUNT'] = [str(1)]
+        # find all extensions with a param table in
+        exts = drs_fits.find_named_extensions(self.filename,
+                                              startswith='PARAM_')
+        # loop around each extension and add to table
+        for ext in exts:
+            # read table
+            table = drs_fits.readfits(self.params, self.filename,
+                                      fmt='fits-table', ext=ext, log=False)
+            # add row to table
+            newtable = vstack([table, newrow])
+            # update file
+            drs_fits.update_extension(self.params, self.filename, ext,
+                                      data=newtable, fmt='fits-table')
+
 
 class DrsNpyFile(DrsInputFile):
     def __init__(self, name, filetype: str = '.npy',
@@ -6234,7 +6278,7 @@ def combine(params: ParamDict, recipe: Any,
     name_list = ['COMBINE_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=outfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write to disk
