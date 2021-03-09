@@ -219,6 +219,8 @@ def display_func(name: Union[str, None] = None,
     # deal with no file name
     if name is None:
         name = 'Unknown'
+    elif not isinstance(name, str):
+        raise ValueError('display func "name" not string')
     # ----------------------------------------------------------------------
     # add the program
     if program is not None:
