@@ -33,6 +33,7 @@ import pandas as pd
 from pathlib import Path
 from scipy.stats import pearsonr
 import textwrap
+import time
 from typing import Any, Dict, List, Union, Tuple, Type
 import warnings
 
@@ -4691,9 +4692,7 @@ class DrsNpyFile(DrsInputFile):
         :return None:
         """
         # not used
-        _ = ext
-        _ = check
-        _ = copy
+        _ = ext, check, copy
         # set function name
         func_name = display_func('read_file', __NAME__,
                                  self.class_name)
@@ -4702,12 +4701,30 @@ class DrsNpyFile(DrsInputFile):
         params = self.params
         # if filename is set
         if self.filename is not None:
-            try:
-                # read file
-                self.data = drs_path.numpy_load(self.filename)
-            except Exception as e:
-                eargs = [type(e), e, self.filename, func_name]
-                WLOG(params, 'error', textentry('00-008-00018', args=eargs))
+            # set up attempts
+            attempts = 0
+            # loop 10 times - simple lock to wait to be able to load file
+            while attempts < 10:
+                try:
+                    # read file
+                    self.data = drs_path.numpy_load(self.filename)
+                    # if successful break while loop
+                    break
+                except Exception as e:
+                    # if we have tried a few times don't continue and
+                    #   raise error
+                    if attempts == 9:
+                        eargs = [type(e), e, self.filename, func_name]
+                        emsg = textentry('00-008-00018', args=eargs)
+                        WLOG(params, 'error', emsg)
+                    # some time file is locked by other process
+                    else:
+                        wmsg = '{0} locked'.format(self.filename)
+                        WLOG(params, 'warning', wmsg)
+                        # sleep 5 seconds and then try again
+                        time.sleep(5)
+                        # add to the attempts and loop again
+                        attempts += 1
         # cause error if file name is not set
         else:
             WLOG(params, 'error', textentry('00-008-00013', args=[func_name]))
