@@ -61,6 +61,7 @@ DrsHeader = drs_file.Header
 FitsHeader = drs_file.FitsHeader
 # get file types
 DrsInputFile = drs_file.DrsInputFile
+DrsFitsFile = drs_file.DrsFitsFile
 # Get the text types
 textentry = lang.textentry
 # define drs files
@@ -288,7 +289,7 @@ class CalibrationDatabase(DatabaseManager):
         # set database directory
         self.filedir = Path(str(self.params['DRS_CALIB_DB']))
 
-    def add_calib_file(self, drsfile, verbose: bool = True,
+    def add_calib_file(self, drsfile: DrsInputFile, verbose: bool = True,
                        copy_files=True):
         """
         Add DrsFile to the calibration database
@@ -350,6 +351,11 @@ class CalibrationDatabase(DatabaseManager):
         values = [key, fiber, is_super, filename, human_time, unix_time, used]
         # are allowed duplicate columns --> don't check for unique
         self.database.add_row(values, table=self.database.tname, commit=True)
+        # update parameter table (if fits file)
+        if isinstance(drsfile, DrsFitsFile):
+            drsfile.update_param_table('CALIB_DB_ENTRY',
+                                       param_kind='calib', values=values)
+
 
     def get_calib_entry(self, columns: str, key: str,
                         fiber: Union[str, None] = None,
@@ -714,6 +720,10 @@ class TelluricDatabase(DatabaseManager):
                   objname, airmass, tau_water, tau_others, used]
         # are allowed duplicate rows --> just add (don't check for unique)
         self.database.add_row(values, table=self.database.tname, commit=True)
+        # update parameter table (if fits file)
+        if isinstance(drsfile, DrsFitsFile):
+            drsfile.update_param_table('TELLU_DB_ENTRY',
+                                       param_kind='tellu', values=values)
 
     def get_tellu_entry(self, columns: str, key: str,
                         fiber: Union[str, None] = None,
