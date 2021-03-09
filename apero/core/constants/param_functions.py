@@ -1036,7 +1036,8 @@ class ParamDict(CaseInDict):
     def values(self):
         return list(self.data.values())
 
-    def snapshot_table(self, names: Union[list, None] = None,
+    def snapshot_table(self, recipe: Union[Any, None] = None,
+                       names: Union[list, None] = None,
                        kinds: Union[list, None] = None,
                        values: Union[list, None] = None,
                        sources: Union[list, None] = None,
@@ -1143,6 +1144,13 @@ class ParamDict(CaseInDict):
             tabledict['DESCRIPTION'].append('Database parameter')
             # add database count (always 1)
             tabledict['COUNT'].append(1)
+        # ---------------------------------------------------------------------
+        # get recipe parameters (from recipe)
+        # ---------------------------------------------------------------------
+        if recipe is not None:
+            # add recipe parameters
+            tabledict = _add_recipe_params_to_table_dict(tabledict, recipe)
+
         # ---------------------------------------------------------------------
         # get parameters from param dict
         # ---------------------------------------------------------------------
@@ -2068,6 +2076,49 @@ def _yaml_walk(yaml_dict) -> Tuple[list, list]:
             chains.append(key)
             values.append(yaml_dict[key])
     return chains, values
+
+
+def _add_recipe_params_to_table_dict(tabledict: dict, recipe: Any) -> dict:
+    """
+    Add parameters from the recipe (and recipe log) if present
+
+    :param tabledict: dict, the table dict with each column as a list
+    :param recipe: DrsRecipe instance that called this function
+
+    :return: dict, the updated table dictionary
+    """
+    # deal with no recipe
+    if recipe is None:
+        return tabledict
+    # deal with no log
+    if recipe.log is None:
+        return tabledict
+    if len(recipe.log.set) == 0:
+        instances = [recipe.log]
+    else:
+        instances = recipe.log.set
+    # loop
+    inst = instances[-1]
+    # get the param table
+    out = inst.get_param_table()
+    # extract list from get_param_table return
+    names, param_kinds, values, sources, descriptions, counts = out
+    # loop around and add to table dict
+    for row in range(len(names)):
+        # add database key name
+        tabledict['NAME'].append(names[row])
+        # add database key kind
+        tabledict['KIND'].append(param_kinds[row])
+        # add database key value
+        tabledict['VALUE'].append(values[row])
+        # add database key source (database yaml file)
+        tabledict['SOURCE'].append(sources[row])
+        # add database description (default)
+        tabledict['DESCRIPTION'].append(descriptions[row])
+        # add database count (always 1)
+        tabledict['COUNT'].append(counts[row])
+    # return updated table dict
+    return tabledict
 
 
 def _add_param_dict_to_tabledict(tabledict: dict,
