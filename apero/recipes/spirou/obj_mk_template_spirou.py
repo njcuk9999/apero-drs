@@ -148,9 +148,9 @@ def __main__(recipe, params):
         # no object files --> qc failure
         qc_params = [['HAS_OBJ'], ['False'], ['HAS_OBJ==False'], [0]]
         # update recipe log
-        recipe.log.add_qc(params, qc_params, True)
+        recipe.log.add_qc(qc_params, True)
         # update recipe log file
-        recipe.log.end(params)
+        recipe.log.end()
         # end this run
         return drs_startup.return_locals(params, locals())
     else:
@@ -206,9 +206,9 @@ def __main__(recipe, params):
         # print qc failure
         telluric.mk_template_qc(params, qc_params, cprops['FAIL_MSG'])
         # update recipe log
-        recipe.log.add_qc(params, cprops['QC_PARAMS'] , True)
+        recipe.log.add_qc(cprops['QC_PARAMS'] , True)
         # update recipe log file
-        recipe.log.end(params)
+        recipe.log.end()
         # end here
         return drs_startup.return_locals(params, locals())
     # ----------------------------------------------------------------------
@@ -240,7 +240,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     qc_params, passed = telluric.mk_template_qc(params, qc_params)
     # update recipe log
-    recipe.log.add_qc(params, qc_params, passed)
+    recipe.log.add_qc(qc_params, passed)
 
     # ----------------------------------------------------------------------
     # Write cubes and median to file
@@ -280,7 +280,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # update recipe log file
     # ------------------------------------------------------------------
-    recipe.log.end(params)
+    recipe.log.end()
 
     # ----------------------------------------------------------------------
     # End of main code

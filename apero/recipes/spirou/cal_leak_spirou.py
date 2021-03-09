@@ -148,7 +148,7 @@ def __main__(recipe, params):
             wargs = [dprtype, ', '.join(allowed_filetypes), infile.filename]
             WLOG(params, 'warning', textentry('10-016-00021', args=wargs))
             # update recipe log file
-            log1.end(params)
+            log1.end()
             # continue to next file
             continue
         # ------------------------------------------------------------------
@@ -162,7 +162,7 @@ def __main__(recipe, params):
             wargs = [fiber, ', '.join(sci_fibers), infile.filename]
             WLOG(params, 'warning', textentry('10-016-00022', args=wargs))
             # update recipe log file
-            log1.end(params)
+            log1.end()
             # continue to next file
             continue
         # ------------------------------------------------------------------
@@ -176,7 +176,7 @@ def __main__(recipe, params):
                 wargs = [infile.filename]
                 WLOG(params, 'warning', textentry('10-016-00023', args=wargs))
                 # update recipe log file
-                log1.end(params)
+                log1.end()
                 # continue to next file
                 continue
 
@@ -206,7 +206,7 @@ def __main__(recipe, params):
         # Quality control
         # ------------------------------------------------------------------
         qc_params, passed = extgen.qc_leak(params, cprops)
-        log1.add_qc(params, qc_params[fiber], passed)
+        log1.add_qc(qc_params[fiber], passed)
 
         # ------------------------------------------------------------------
         # Write updated extracted files
@@ -216,7 +216,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
-        log1.end(params)
+        log1.end()
 
     # ----------------------------------------------------------------------
     # End of main code

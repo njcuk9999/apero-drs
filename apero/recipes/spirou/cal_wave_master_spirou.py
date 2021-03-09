@@ -222,7 +222,7 @@ def __main__(recipe, params):
         # passed if all qc passed
         passed = np.all(qc_params[-1])
         # update recipe log
-        log_hc.add_qc(params, qc_params, passed)
+        log_hc.add_qc(qc_params, passed)
         # --------------------------------------------------------------
         # log the global stats
         # --------------------------------------------------------------
@@ -241,7 +241,7 @@ def __main__(recipe, params):
         # --------------------------------------------------------------
         # update recipe log file for hc fiber
         # --------------------------------------------------------------
-        log_hc.end(params)
+        log_hc.end()
         # if not passed end here
         if not passed:
             WLOG(params, 'error', textentry('10-017-00006'))
@@ -344,7 +344,7 @@ def __main__(recipe, params):
         # passed if all qc passed
         passed = np.all(qc_params[-1])
         # update recipe log
-        log_fp.add_qc(params, qc_params, passed)
+        log_fp.add_qc(qc_params, passed)
 
         # ==================================================================
         # WRITE FILES (AFTER FP MASTER FIBER + OTHER FIBERS)
@@ -424,7 +424,7 @@ def __main__(recipe, params):
         # ----------------------------------------------------------
         # update recipe log file for fp fiber
         # ----------------------------------------------------------
-        log_fp.end(params)
+        log_fp.end()
 
         # --------------------------------------------------------------
         # Construct summary document
@@ -438,7 +438,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
-        log1.end(params)
+        log1.end()
 
     # ----------------------------------------------------------------------
     # End of main code

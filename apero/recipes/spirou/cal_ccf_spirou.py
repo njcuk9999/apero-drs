@@ -326,7 +326,7 @@ def __main__(recipe, params):
         # store in qc_params
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # update recipe log
-        log1.add_qc(params, qc_params, passed)
+        log1.add_qc(qc_params, passed)
 
         # ------------------------------------------------------------------
         # archive ccf from science fiber
@@ -343,7 +343,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
-        log1.end(params)
+        log1.end()
 
     # ----------------------------------------------------------------------
     # End of main code

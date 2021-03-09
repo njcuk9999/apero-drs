@@ -162,7 +162,7 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         qc_params, passed = shape.shape_local_qc(params, transform, xres, yres)
         # update recipe log
-        log1.add_qc(params, qc_params, passed)
+        log1.add_qc(qc_params, passed)
 
         # ------------------------------------------------------------------
         # Writing shape to file
@@ -192,7 +192,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
-        log1.end(params)
+        log1.end()
 
     # ----------------------------------------------------------------------
     # End of main code

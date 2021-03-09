@@ -347,7 +347,7 @@ def __main__(recipe, params):
         # passed if all qc passed
         passed = np.all(qc_params[-1])
         # update recipe log
-        log1.add_qc(params, qc_params, passed)
+        log1.add_qc(qc_params, passed)
 
         # =================================================================
         # Write all files to disk
@@ -434,7 +434,7 @@ def __main__(recipe, params):
         # -----------------------------------------------------------------
         # update recipe log file
         # -----------------------------------------------------------------
-        log1.end(params)
+        log1.end()
 
     # ---------------------------------------------------------------------
     # End of main code

@@ -211,10 +211,10 @@ def __main__(recipe, params):
         qargs = [snr_hotpix, infile, rms_list]
         qc_params, passed = prep.quality_control(params, *qargs, log=True)
         # update recipe log
-        log1.add_qc(params, qc_params, passed)
+        log1.add_qc(qc_params, passed)
         if not passed:
             # end log here
-            log1.end(params)
+            log1.end()
             # go to next iteration
             continue
 
@@ -291,7 +291,7 @@ def __main__(recipe, params):
         data_list, name_list = [], []
         # snapshot of parameters
         if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(drsfitsfile=outfile)]
+            data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
             name_list += ['PARAM_TABLE']
         # ------------------------------------------------------------------
         # writefits image to file
@@ -310,7 +310,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
-        log1.end(params)
+        log1.end()
 
     # ----------------------------------------------------------------------
     # End of main code

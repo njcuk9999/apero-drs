@@ -218,7 +218,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     qc_params, passed = shape.shape_master_qc(params)
     # update recipe log
-    recipe.log.add_qc(params, qc_params, passed)
+    recipe.log.add_qc(qc_params, passed)
 
     # ------------------------------------------------------------------
     # write files
@@ -246,7 +246,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # update recipe log file
     # ------------------------------------------------------------------
-    recipe.log.end(params)
+    recipe.log.end()
 
     # ----------------------------------------------------------------------
     # End of main code

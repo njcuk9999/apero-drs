@@ -194,7 +194,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     qc_params, passed = polar.quality_control(params)
     # update recipe log
-    recipe.log.add_qc(params, qc_params, passed)
+    recipe.log.add_qc(qc_params, passed)
 
     # ------------------------------------------------------------------
     # Store polarimetry in files
@@ -211,7 +211,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # update recipe log file
     # ------------------------------------------------------------------
-    recipe.log.end(params)
+    recipe.log.end()
 
     # ----------------------------------------------------------------------
     # End of main code

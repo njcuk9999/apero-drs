@@ -138,7 +138,7 @@ def __main__(recipe, params):
         wargs = [params['OBS_DIR']]
         WLOG(params, 'warning', textentry('10-016-00025', args=wargs))
         # update recipe log file
-        recipe.log.end(params)
+        recipe.log.end()
         # End of main code
         return drs_startup.return_locals(params, locals())
     # ----------------------------------------------------------------------
@@ -212,7 +212,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # update recipe log file
     # ------------------------------------------------------------------
-    recipe.log.end(params)
+    recipe.log.end()
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
