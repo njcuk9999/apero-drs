@@ -413,7 +413,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=blazefile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=blazefile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     blazefile.write_multi(data_list=data_list, name_list=name_list,
@@ -442,7 +442,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=blazefile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=blazefile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     flatfile.write_multi(data_list=data_list, name_list=name_list,
@@ -473,7 +473,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     datatype_list = ['image']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=e2dsllfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsllfile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write image to file

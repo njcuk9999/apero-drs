@@ -1044,7 +1044,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     name_list = ['TRANS_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=corrfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=corrfile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write image to file
@@ -1084,7 +1084,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=sc1dwfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=sc1dwfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     sc1dwfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1115,7 +1115,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=sc1dvfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=sc1dvfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     sc1dvfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1145,7 +1145,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=reconfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=reconfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     reconfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1176,7 +1176,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=rc1dwfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=rc1dwfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     rc1dwfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1207,7 +1207,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=rc1dvfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=rc1dvfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     rc1dvfile.write_multi(data_list=data_list, name_list=name_list,

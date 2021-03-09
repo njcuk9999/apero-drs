@@ -1407,7 +1407,7 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     name_list = ['RV_TABLE', 'ORDER_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=ccf_file)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=ccf_file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write multi

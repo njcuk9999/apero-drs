@@ -1417,7 +1417,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     name_list = ['FP_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        ptable = params.snapshot_table(drsfitsfile=outfile1)
+        ptable = params.snapshot_table(recipe, drsfitsfile=outfile1)
         data_list += [ptable]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -1446,7 +1446,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     name_list = ['FP_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=outfile2)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=outfile2)]
         name_list += ['PARAM_TABLE']
     # write image to file
     outfile2.write_multi(data_list=data_list, name_list=name_list,
@@ -1474,7 +1474,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     name_list = ['FP_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=outfile3)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=outfile3)]
         name_list += ['PARAM_TABLE']
     # write image to file
     outfile3.write_multi(data_list=data_list, name_list=name_list,
@@ -1501,7 +1501,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         name_list = ['FP_TABLE']
         # snapshot of parameters
         if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(drsfitsfile=debugfile0)]
+            data_list += [params.snapshot_table(recipe, drsfitsfile=debugfile0)]
             name_list += ['PARAM_TABLE']
         # write file
         debugfile0.write_multi(data_list=data_list, name_list=name_list,
@@ -1523,7 +1523,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         name_list = ['FP_TABLE']
         # snapshot of parameters
         if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(drsfitsfile=debugfile1)]
+            data_list += [params.snapshot_table(recipe, drsfitsfile=debugfile1)]
             name_list += ['PARAM_TABLE']
         # write file
         debugfile1.write_multi(data_list=data_list, name_list=name_list,
@@ -1542,7 +1542,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         name_list = ['FP_TABLE']
         # snapshot of parameters
         if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(drsfitsfile=debugfile2)]
+            data_list += [params.snapshot_table(recipe, drsfitsfile=debugfile2)]
             name_list += ['PARAM_TABLE']
         # write file
         debugfile2.write_multi(data_list=data_list, name_list=name_list,
@@ -1584,7 +1584,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
             name_list = ['FP_TABLE']
             # snapshot of parameters
             if params['PARAMETER_SNAPSHOT']:
-                data_list += [params.snapshot_table(drsfitsfile=debugfile3)]
+                data_list += [params.snapshot_table(recipe, drsfitsfile=debugfile3)]
                 name_list += ['PARAM_TABLE']
             # write file
             debugfile3.write_multi(data_list=data_list, name_list=name_list,
@@ -1605,7 +1605,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
                 name_list = ['FP_TABLE']
                 # snapshot of parameters
                 if params['PARAMETER_SNAPSHOT']:
-                    data_list += [params.snapshot_table(drsfitsfile=debugfile4)]
+                    data_list += [params.snapshot_table(recipe,
+                                                        drsfitsfile=debugfile4)]
                     name_list += ['PARAM_TABLE']
                 # write file
                 debugfile4.write_multi(data_list=data_list, name_list=name_list,
@@ -1776,7 +1777,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=outfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     outfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1801,7 +1802,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         data_list, name_list = [], []
         # snapshot of parameters
         if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(drsfitsfile=debugfile1)]
+            data_list += [params.snapshot_table(recipe, drsfitsfile=debugfile1)]
             name_list += ['PARAM_TABLE']
         # write file
         debugfile1.write_multi(data_list=data_list, name_list=name_list,
@@ -1820,7 +1821,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         data_list, name_list = [], []
         # snapshot of parameters
         if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(drsfitsfile=debugfile2)]
+            data_list += [params.snapshot_table(recipe, drsfitsfile=debugfile2)]
             name_list += ['PARAM_TABLE']
         # write file
         debugfile2.write_multi(data_list=data_list, name_list=name_list,

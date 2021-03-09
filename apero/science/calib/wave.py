@@ -953,7 +953,7 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=hcfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=hcfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     hcfile.write_multi(data_list=data_list, name_list=name_list,
@@ -985,7 +985,7 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=fpfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=fpfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     fpfile.write_multi(data_list=data_list, name_list=name_list,
@@ -1899,7 +1899,7 @@ def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=wavefile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=wavefile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     wavefile.write_multi(data_list=data_list, name_list=name_list,
@@ -1940,7 +1940,7 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
     WLOG(params, '', textentry('40-017-00020', args=wargs))
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        datalist += [params.snapshot_table(drsfitsfile=resfile)]
+        datalist += [params.snapshot_table(recipe, drsfitsfile=resfile)]
         namelist += ['PARAM_TABLE']
         headerlist += [None]
     # write image to file
@@ -2058,7 +2058,7 @@ def hc_write_wavesol_master(params, recipe, llprops, infile, fiber, combine,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=wavefile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=wavefile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     wavefile.write_multi(data_list=data_list, name_list=name_list,
@@ -2098,7 +2098,7 @@ def hc_write_resmap_master(params, recipe, llprops, infile, wavefile, fiber):
     WLOG(params, '', textentry('40-017-00020', args=wargs))
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        datalist += [params.snapshot_table(drsfitsfile=resfile)]
+        datalist += [params.snapshot_table(recipe, drsfitsfile=resfile)]
         namelist += ['PARAM_TABLE']
         headerlist += [None]
     # write image to file
@@ -5231,7 +5231,7 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=wavefile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=wavefile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     wavefile.write_multi(data_list=data_list, name_list=name_list,
@@ -5507,7 +5507,7 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
     name_list = ['COEFF_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=wavefile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=wavefile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
     # write image to file
@@ -6258,7 +6258,7 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     dtype_list = ['table']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=wavefile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=wavefile)]
         name_list += ['PARAM_TABLE']
         dtype_list += ['table']
     # write image to file
@@ -6291,7 +6291,7 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=hclfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=hclfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     hclfile.write_multi(data_list=data_list, name_list=name_list,
@@ -6332,7 +6332,7 @@ def write_fplines(params, recipe, rfpl, infile, hfile, fiber, kind=None):
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=fplfile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=fplfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
     fplfile.write_multi(data_list=data_list, name_list=name_list,
@@ -6392,7 +6392,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=e2ds_file)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2ds_file)]
         name_list += ['PARAM_TABLE']
     # write file
     e2ds_file.write_multi(data_list=data_list, name_list=name_list,
@@ -6412,7 +6412,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=e2dsff_file)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsff_file)]
         name_list += ['PARAM_TABLE']
     # write file
     e2dsff_file.write_multi(data_list=data_list, name_list=name_list,
@@ -6433,7 +6433,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
         data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=e2dsll_file)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsll_file)]
         # there should be a param_table from extraction
         if 'PARAM_TABLE' in name_list:
             name_list += ['PARAM_UPDATE']
@@ -6484,7 +6484,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=s1dw_file)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=s1dw_file)]
         name_list += ['PARAM_TABLE']
     # write image to file
     s1dw_file.write_multi(data_list=data_list, name_list=name_list,
@@ -6514,7 +6514,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     data_list, name_list = [], []
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(drsfitsfile=s1dv_file)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=s1dv_file)]
         name_list += ['PARAM_TABLE']
     # write image to file
     s1dv_file.write_multi(data_list=data_list, name_list=name_list,
