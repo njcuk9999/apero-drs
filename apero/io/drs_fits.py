@@ -707,6 +707,41 @@ def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
     return data, header
 
 
+def find_named_extensions(filename: str, name: Union[str, None] = None,
+                          startswith: Union[str, None] = None) -> List[int]:
+    """
+    Find named extensions (either matching "name" or starting with "startswith")
+    returns a list of matched extensions (integers)
+
+    :param filename: str, the filename to try and open
+    :param name: str or None, if set EXTNAME much match this for extension to
+                 be returned
+    :param startswith: str or None, if set and name not set EXTNAME must start
+                       with this for extension to be returned
+
+    :return: a list of matched extensions (integers)
+    """
+    # valid extensions
+    valid_ext = []
+    # open file
+    with fits.open(filename) as hdulist:
+        # loop around extensions
+        for it in range(len(hdulist)):
+            # deal with None and non string names
+            if not isinstance(hdulist[it].name, str):
+                continue
+            # deal with full name being set
+            if name is not None:
+                if hdulist[it].name == name:
+                    valid_ext.append(it)
+            # deal with starts with being set
+            elif startswith is not None:
+                if hdulist[it].name.startswith(startswith):
+                    valid_ext.append(it)
+    # return valid extensions
+    return valid_ext
+
+
 # =============================================================================
 # Define write functions
 # =============================================================================
@@ -952,6 +987,82 @@ def _write_fits(params: ParamDict, filename: str,
             w1.append(warning)
     # add warnings to the warning logger and log if we have them
     drs_log.warninglogger(params, w1)
+
+
+def update_extension(params: ParamDict, filename: str, extension: int,
+                      data: Union[np.ndarray, Table, None] = None,
+                      header: Union[Header, None] = None, fmt: str = 'image'):
+    """
+    Update the extension of an existing file
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param filename: str, the filename to save to
+    :param extension: int, the extension to update
+    :param data: numpy array or astropy Table, the data to update
+    :param header: Header, if set updates the header
+    :param fmt: str, the data format (image or table)
+
+    :return: None, updates filename hdu extension="extension"
+    """
+    # set function name
+    func_name = display_func('_update_extension', __NAME__)
+    # deal with fits type
+    if fmt in ['image', 'fits-image']:
+        fitstype = fits.ImageHDU
+    elif fmt in ['table', 'fits-table']:
+        fitstype = fits.BinTableHDU
+    else:
+        # TODO: move to language database
+        emsg = 'fmt must be image or table'
+        # log error
+        WLOG(params, 'error', emsg)
+        return
+    # open hdulist
+    with fits.open(filename) as hdulist:
+        # only update if we have enough extensions
+        if len(hdulist) >= extension:
+            # set up new hdu
+            new_hdu_list = []
+            # loop around all extensions
+            for ext in range(len(hdulist)):
+                # if we are not changing the extension add it here
+                if ext != extension:
+                    new_hdu_list.append(hdulist[ext].copy())
+                # else update data / header
+                else:
+                    # update header if not None (and Header instance)
+                    if header is not None:
+                        if isinstance(header, Header):
+                            header = header.to_fits_header()
+                        else:
+                            header = header.copy()
+                    if data is None and header is None:
+                        new_hdu_list.append(hdulist[ext].copy())
+                    elif data is None:
+                        new_hdu = hdulist[ext].copy()
+                        new_hdu.header = header
+                        new_hdu_list.append(new_hdu)
+                    elif header is None:
+                        new_hdu_list.append(fitstype(data))
+                    else:
+                        new_hdu_list.append(fitstype(data, header=header))
+        # else raise error
+        else:
+            # TODO: move to language database
+            emsg = 'Extension {0} not in {1}'
+            eargs = [extension, filename]
+            # log error
+            WLOG(params, 'error', emsg.format(*eargs))
+            # return
+        # write to file
+        with warnings.catch_warnings(record=True) as w:
+            try:
+                nhdulist = fits.HDUList(new_hdu_list)
+                nhdulist.writeto(filename, overwrite=True)
+                nhdulist.close()
+            except Exception as e:
+                eargs = [os.path.basename(filename), type(e), e, func_name]
+                WLOG(params, 'error', textentry('01-001-00005', args=eargs))
 
 
 # =============================================================================
