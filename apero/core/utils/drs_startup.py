@@ -320,7 +320,7 @@ def setup(name: str = 'None', instrument: str = 'None',
         # add log file to log (only used to save where the log is)
         logfile = drs_log.get_logfilepath(WLOG, params)
         recipe.log.set_log_file(logfile)
-        recipe.log.rtype = str(recipe.out_block_str)
+        recipe.log.block_kind = str(recipe.out_block_str)
         # add user input parameters to log
         recipe.log.runstring = recipe.runstring
         recipe.log.args = recipe.largs
@@ -329,7 +329,7 @@ def setup(name: str = 'None', instrument: str = 'None',
         # set lock function (lock file is OBS_DIR + _log
         # recipe.log.set_lock_func(drs_lock.locker)
         # write recipe log
-        recipe.log.write_logfile(params)
+        recipe.log.write_logfile()
     # -------------------------------------------------------------------------
     # return arguments
     return recipe, params
@@ -375,7 +375,7 @@ def run(func: Any, recipe: DrsRecipe,
             llmain = dict(e=e, tb='', params=params, recipe=recipe)
             # add error to log file
             if params['DRS_RECIPE_KIND'] == 'recipe':
-                recipe.log.add_error(params, 'Debug Exit', '')
+                recipe.log.add_error('Debug Exit', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
         except KeyboardInterrupt as e:
@@ -394,7 +394,7 @@ def run(func: Any, recipe: DrsRecipe,
                           recipe=recipe)
             # add error to log file
             if params['DRS_RECIPE_KIND'] == 'recipe':
-                recipe.log.add_error(params, 'KeyboardInterrupt', '')
+                recipe.log.add_error('KeyboardInterrupt', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
         except drs_exceptions.LogExit as e:
@@ -410,7 +410,7 @@ def run(func: Any, recipe: DrsRecipe,
                           recipe=recipe)
             # add error to log file
             if params['DRS_RECIPE_KIND'] == 'recipe':
-                recipe.log.add_error(params, type(e), str(e))
+                recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
         except Exception as e:
@@ -427,7 +427,7 @@ def run(func: Any, recipe: DrsRecipe,
                           recipe=recipe)
             # add error to log file
             if params['DRS_RECIPE_KIND'] == 'recipe':
-                recipe.log.add_error(params, type(e), str(e))
+                recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
         except SystemExit as e:
@@ -444,7 +444,7 @@ def run(func: Any, recipe: DrsRecipe,
                           recipe=recipe)
             # add error to log file
             if params['DRS_RECIPE_KIND'] == 'recipe':
-                recipe.log.add_error(params, type(e), str(e))
+                recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
     # return llmain and success
