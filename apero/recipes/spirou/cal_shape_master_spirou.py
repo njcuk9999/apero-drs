@@ -232,11 +232,11 @@ def __main__(recipe, params):
         # store in qc_params
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # update recipe log
-        recipe.log.add_qc(params, qc_params, False)
+        recipe.log.add_qc(qc_params, False)
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
-        recipe.log.end(params)
+        recipe.log.end()
 
         # return a copy of locally defined variables in the memory
         return drs_startup.return_locals(params, locals())
@@ -276,7 +276,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     qc_params, passed = shape.shape_master_qc(params, dxrms, qc_params)
     # update recipe log
-    recipe.log.add_qc(params, qc_params, passed)
+    recipe.log.add_qc(qc_params, passed)
 
     # ------------------------------------------------------------------
     # write files
@@ -304,7 +304,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # update recipe log file
     # ------------------------------------------------------------------
-    recipe.log.end(params)
+    recipe.log.end()
 
     # ----------------------------------------------------------------------
     # End of main code

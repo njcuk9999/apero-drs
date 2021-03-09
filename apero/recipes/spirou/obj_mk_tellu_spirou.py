@@ -173,7 +173,7 @@ def __main__(recipe, params):
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
             WLOG(params, 'warning', textentry('10-019-00001', args=wargs))
             # end log correctly
-            log1.end(params)
+            log1.end()
             # continue
             continue
         # ------------------------------------------------------------------
@@ -189,7 +189,7 @@ def __main__(recipe, params):
             wargs = [infile.basename, params['KW_OBJNAME'][0], objname]
             WLOG(params, 'warning', textentry('10-019-00002', args=wargs))
             # end log correctly
-            log1.end(params)
+            log1.end()
             # continue
             continue
         elif objname not in tellu_include_list:
@@ -197,7 +197,7 @@ def __main__(recipe, params):
             args = [objname]
             WLOG(params, 'warning', textentry('10-019-00009', args=args))
             # end log correctly
-            log1.end(params)
+            log1.end()
             # continue
             continue
         else:
@@ -256,7 +256,7 @@ def __main__(recipe, params):
         pargs = [tellu_props, infile, tpreprops]
         qc_params, passed = telluric.mk_tellu_quality_control(params, *pargs)
         # update recipe log
-        log1.add_qc(params, qc_params, passed)
+        log1.add_qc(qc_params, passed)
 
         # ------------------------------------------------------------------
         # Save transmission map to file
@@ -278,7 +278,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
-        log1.end(params)
+        log1.end()
 
     # ----------------------------------------------------------------------
     # End of main code

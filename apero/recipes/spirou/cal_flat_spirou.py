@@ -218,7 +218,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             qc_params, passed = flat_blaze.flat_blaze_qc(params, eprops, fiber)
             # update recipe log
-            log2.add_qc(params, qc_params, passed)
+            log2.add_qc(qc_params, passed)
             # --------------------------------------------------------------
             # write files
             # --------------------------------------------------------------
@@ -255,7 +255,7 @@ def __main__(recipe, params):
             # ------------------------------------------------------------------
             # update recipe log file
             # ------------------------------------------------------------------
-            log2.end(params)
+            log2.end()
 
         # construct summary (outside fiber loop)
         recipe.plot.summary_document(it)
@@ -263,7 +263,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
-        log1.end(params)
+        log1.end()
 
     # ----------------------------------------------------------------------
     # End of main code

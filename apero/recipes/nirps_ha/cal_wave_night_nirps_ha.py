@@ -260,7 +260,7 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             qc_params, passed = wave.night_quality_control(params, nprops)
             # update recipe log
-            log2.add_qc(params, qc_params, passed)
+            log2.add_qc(qc_params, passed)
 
             # ----------------------------------------------------------
             # write wave solution to file
@@ -306,7 +306,7 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             # update recipe log file for fp fiber
             # ----------------------------------------------------------
-            log2.end(params)
+            log2.end()
 
     # ----------------------------------------------------------------------
     # End of main code

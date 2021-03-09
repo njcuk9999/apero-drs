@@ -196,7 +196,7 @@ def __main__(recipe, params):
         data_list, name_list = [], []
         # snapshot of parameters
         if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(drsfitsfile=outfile)]
+            data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
             name_list += ['PARAM_TABLE']
         # write image to file
         outfile.write_multi(data_list=data_list, name_list=name_list,
@@ -212,7 +212,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
-        log1.end(params)
+        log1.end()
 
     # ----------------------------------------------------------------------
     # End of main code

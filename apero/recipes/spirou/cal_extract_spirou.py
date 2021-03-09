@@ -149,7 +149,7 @@ def __main__(recipe, params):
                 wargs = skip_conditions[2]
                 WLOG(params, 'warning', textentry('10-016-00013', args=wargs))
             # write log here
-            log1.write_logfile(params)
+            log1.write_logfile()
             # skip this file
             continue
         # ------------------------------------------------------------------
@@ -294,7 +294,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             qc_params, passed = extract.qc_extraction(params, eprops)
             # update recipe log
-            log2.add_qc(params, qc_params, passed)
+            log2.add_qc(qc_params, passed)
 
             # --------------------------------------------------------------
             # write files
@@ -364,7 +364,7 @@ def __main__(recipe, params):
             # ------------------------------------------------------------------
             # update recipe log file
             # ------------------------------------------------------------------
-            log2.end(params)
+            log2.end()
 
         # construct summary (outside fiber loop)
         if not quicklook:
@@ -373,7 +373,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
-        log1.end(params)
+        log1.end()
 
     # ----------------------------------------------------------------------
     # End of main code

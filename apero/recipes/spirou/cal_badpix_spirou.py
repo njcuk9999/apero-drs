@@ -214,7 +214,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         qc_params, passed = badpix.quality_control(params)
         # update recipe log
-        log1.add_qc(params, qc_params, passed)
+        log1.add_qc(qc_params, passed)
 
         # ----------------------------------------------------------------------
         # Save bad pixel mask
@@ -245,7 +245,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
-        log1.end(params)
+        log1.end()
 
     # ----------------------------------------------------------------------
     # End of main code
