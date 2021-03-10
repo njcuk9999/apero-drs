@@ -106,6 +106,8 @@ def __main__(recipe, params):
     identifier = infile.get_hkey('KW_IDENTIFIER')
     # get the list of post files
     post_files = fd.post_file.fileset
+    # has skipped
+    has_skipped = False
     # loop around post files
     for post_file in post_files:
         # ---------------------------------------------------------------------
@@ -166,6 +168,18 @@ def __main__(recipe, params):
                     os.remove(filename)
         else:
             WLOG(params, 'warning', '\tSkipping - files not found')
+            # flag we have skipped some files
+            has_skipped = True
+
+    # add the QC (there are none)
+    qc_names, qc_values = ['None'], ['None']
+    qc_logic, qc_pass = ['None'], ['None']
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    recipe.log.add_qc(qc_params, True)
+
+    # end the log (only successful if no skips
+    if not has_skipped:
+        recipe.log.end()
 
     # ----------------------------------------------------------------------
     # End of main code

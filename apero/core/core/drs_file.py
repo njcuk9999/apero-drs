@@ -7073,7 +7073,7 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
     if instance2 is None:
         instance2 = instance1
     # set function name
-    _ = display_func(instance1.params, 'newcopy', __NAME__)
+    _ = display_func('newcopy', __NAME__)
     # copy this instances values (if not overwritten)
     # set name if not set
     if name is None:

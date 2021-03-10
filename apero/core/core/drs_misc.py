@@ -220,7 +220,8 @@ def display_func(name: Union[str, None] = None,
     if name is None:
         name = 'Unknown'
     elif not isinstance(name, str):
-        raise ValueError('display func "name" not string')
+        emsg = 'display func "name" not string. \n\tValue = {0}\n\tType = {1}'
+        raise ValueError(emsg.format(name, type(name)))
     # ----------------------------------------------------------------------
     # add the program
     if program is not None:

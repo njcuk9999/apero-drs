@@ -483,7 +483,7 @@ def read_runfile(params, runfile, **kwargs):
             # log if we are overwriting value
             if key in params:
                 # only log if value was not null before
-                if not drs_text.null_text(params[key], ['None']):
+                if not drs_text.null_text(params[key], ['', 'None']):
                     wargs = [key, params[key], value]
                     wmsg = textentry('10-503-00002', args=wargs)
                     WLOG(params, 'warning', wmsg)

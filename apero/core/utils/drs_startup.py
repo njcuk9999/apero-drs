@@ -564,6 +564,7 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
     # -------------------------------------------------------------------------
     # log end message
     if end:
+        # log the success (or failure)
         if success and (not quiet):
             iargs = [str(params['RECIPE'])]
             WLOG(params, 'info', params['DRS_HEADER'])
