@@ -477,7 +477,7 @@ def synchronized(lock: Lock, name: str):
             :return: the returns of 'func' for args, kwargs
             """
             # set function
-            _ = display_func(lock.params, 'wrapperfunc', __NAME__)
+            _ = display_func('wrapperfunc', __NAME__)
             # add to the queue
             lock.enqueue(name)
             # timer
