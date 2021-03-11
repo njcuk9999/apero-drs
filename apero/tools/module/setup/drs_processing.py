@@ -2231,7 +2231,7 @@ def _split_string_list(string, allow_whitespace=False):
     elif ',' in string:
         return string.split(',')
     elif allow_whitespace:
-        return string
+        return [string]
     else:
         return string.split(' ')
 
