@@ -2950,7 +2950,7 @@ def _get_filters(params, srecipe):
             # else assume we have a special list that is a string list
             #   (i.e. SCIENCE_TARGETS = "target1, target2, target3"
             elif isinstance(user_filter, str):
-                objlist = _split_string_list(user_filter)
+                objlist = _split_string_list(user_filter, allow_whitespace=True)
                 # note we need to update this list to match
                 # the cleaning that is done in preprocessing
                 clist = list(map(pconst.DRS_OBJ_NAME, objlist))
@@ -2974,11 +2974,27 @@ def _get_filters(params, srecipe):
     return filters
 
 
-def _split_string_list(string):
+def _split_string_list(string: str, allow_whitespace: bool = True):
+    """
+    Split a string based on whether it has ";" or "," by default if a string
+    has neither of these it will split based on space
+    To stop this (and just return the string, set allow_whitespace = True)
+
+    :param string: str, the string the split by ";" or "," or " "
+    :param allow_whitespace: if True splits by white space (only if ";" and ","
+                             not found)
+    :return:
+    """
+    # split based on semi-colon
     if ';' in string:
         return string.split(';')
+    # split based on comma
     elif ',' in string:
         return string.split(',')
+    # do not split (if allow whitespace is True)
+    elif allow_whitespace:
+        return [string]
+    # split based on white space (could be unwanted)
     else:
         return string.split(' ')
 
