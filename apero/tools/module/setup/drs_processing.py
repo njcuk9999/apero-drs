@@ -2201,7 +2201,7 @@ def _get_filters(params, srecipe):
             # else assume we have a special list that is a string list
             #   (i.e. SCIENCE_TARGETS = "target1, target2, target3"
             elif isinstance(user_filter, str):
-                wlist =  _split_string_list(user_filter)
+                wlist =  _split_string_list(user_filter, allow_whitespace=True)
                 # note we need to update this list to match
                 # the cleaning that is done in preprocessing
                 cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
@@ -2225,11 +2225,13 @@ def _get_filters(params, srecipe):
     return filters
 
 
-def _split_string_list(string):
+def _split_string_list(string, allow_whitespace=False):
     if ';' in string:
         return string.split(';')
     elif ',' in string:
         return string.split(',')
+    elif allow_whitespace:
+        return string
     else:
         return string.split(' ')
 
