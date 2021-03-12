@@ -1719,6 +1719,12 @@ quick_seq.add(cal_extract, name='EXTOBJ',
                                          'POLAR_FP']))
 
 # -----------------------------------------------------------------------------
+# blank sequence (for trigger)
+# -----------------------------------------------------------------------------
+# TODO: TEST THIS
+blank_seq = drs_recipe.DrsRunSequence('blank_seq', __INSTRUMENT__)
+
+# -----------------------------------------------------------------------------
 # engineering sequences
 # -----------------------------------------------------------------------------
 eng_seq = drs_recipe.DrsRunSequence('eng_seq', __INSTRUMENT__)
@@ -1735,4 +1741,4 @@ eng_seq.add(cal_extract, name='EXT_FPD', files=[files.pp_fp_dark])
 # sequences list
 # -----------------------------------------------------------------------------
 sequences = [pp_seq, pp_seq_opt, full_seq, limited_seq, master_seq, calib_seq,
-             tellu_seq, science_seq, quick_seq, eng_seq]
+             tellu_seq, science_seq, quick_seq, blank_seq, eng_seq]
