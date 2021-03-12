@@ -494,9 +494,9 @@ def read_runfile(params, runfile, **kwargs):
     # push default values (in case we don't have values in run file
     for key in RUN_KEYS:
         if key not in params:
-            # warning that we are using default settings
+            # print that we are using default settings (not a warning)
             wargs = [key, RUN_KEYS[key]]
-            WLOG(params, 'warning', textentry('10-503-00005', args=wargs))
+            WLOG(params, '', textentry('10-503-00005', args=wargs))
             # push keys to params
             params[key] = RUN_KEYS[key]
             params.set_source(key, __NAME__ + '.RUN_KEYS')
