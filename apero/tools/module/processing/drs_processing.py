@@ -62,6 +62,7 @@ DrsRecipe = drs_recipe.DrsRecipe
 DrsRecipeException = drs_recipe.DrsRecipeException
 # get drs argument
 DrsArgument = drs_argument.DrsArgument
+DrsInputFile = drs_file.DrsInputFile
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
@@ -2916,13 +2917,25 @@ def _check_runtable(params, runtable, recipemod):
             WLOG(params, 'error', textentry('00-503-00011', args=eargs))
 
 
-def _get_filters(params, srecipe):
+def _get_filters(params: ParamDict, srecipe: DrsRecipe) -> Dict[str, Any]:
+    """
+    Using srecipe (the input recipe) create a list of filters to apply to the
+    database
+    1. looks in srecipe.filter (from sequences) and add these
+    2. looks for file arguments and adds DPRTYPES for these
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param srecipe: DrsRecipe, the recipe instance to filter for
+
+    :return: dictionary of filters to add (keys are strings)
+    """
     # set up function name
     func_name = __NAME__ + '._get_filters()'
     # get pseudo constatns
     pconst = constants.pload()
     # set up filter storage
     filters = dict()
+    # -------------------------------------------------------------------------
     # loop around recipe filters
     for key in srecipe.filters:
         # get value
@@ -2970,8 +2983,121 @@ def _get_filters(params, srecipe):
             # log error
             eargs = [key, value, srecipe.name, func_name]
             WLOG(params, 'error', textentry('00-503-00017', args=eargs))
+    # -------------------------------------------------------------------------
+    # add basic drprtpye filters (from args/kwargs with file arguments)
+    # add these as "OR" statements - as we have multiple arguments that may
+    # need to be filled
+
+    # only do this if we don't have a current dprtype constraint
+    if 'KW_DPRTYPE' not in filters:
+        # storage for all dprtypes
+        dprtype_allowed = []
+        # loop around args
+        for argname in srecipe.args:
+            # get arg
+            arg = srecipe.args[argname]
+            # only consider required arguments
+            if not arg.required:
+                continue
+            # only consider file arguments
+            if arg.dtype in ['file', 'files']:
+                dprtypes = _get_dprtype_from_drsfile(arg)
+                if dprtypes is not None:
+                    dprtype_allowed += dprtypes
+        # loop around args
+        for kwargname in srecipe.kwargs:
+            # get arg
+            kwarg = srecipe.kwargs[kwargname]
+            # only consider required arguments
+            if not kwarg.required:
+                continue
+            # only consider file arguments
+            if kwarg.dtype in ['file', 'files']:
+                dprtypes = _get_dprtype_from_drsfile(kwarg)
+                if dprtypes is not None:
+                    dprtype_allowed += dprtypes
+        # add filter
+        if len(dprtype_allowed) > 0:
+            filters['KW_DPRTYPE'] = dprtype_allowed
+    # -------------------------------------------------------------------------
     # return filters
     return filters
+
+
+def _get_dprtype_from_drsfile(arg: DrsArgument) -> Union[List[str], None]:
+    """
+    Take an argument (that is a file argument) and extract out any possible
+    requires based on DPRTYPE - this may be from the file itself or files it
+    inherits from
+
+    :param arg: DrsArgument, the argument to check
+    :return:
+    """
+    # make sure argument type is correct
+    if arg.dtype not in ['file', 'files']:
+        return None
+    # make sure we have DrsFiles defined
+    if arg.files is None:
+        return None
+    # make sure we have files (could be empty in weird situations)
+    if len(arg.files) == 0:
+        return None
+    # -------------------------------------------------------------------------
+    # get all DrsFile instances
+    drsfiles = []
+    # we must copy them to this list first (to avoid changing arg.files)
+    for drsfile in arg.files:
+        drsfiles.append(drsfile.newcopy())
+    # counter around files
+    count = 0
+    # loop around drsfiles (note length of drsfiles will change during loop)
+    while count < len(drsfiles):
+        # get the current file
+        drsfile = drsfiles[count]
+        # get the intype for this drsfile
+        intype = drsfile.intype
+        # if its None continue to next file
+        if intype is None:
+            count += 1
+            continue
+        # if it is a list add the list
+        if isinstance(intype, list):
+            drsfiles += intype
+        # else just add the file
+        else:
+            drsfiles.append(intype)
+        # move to the next file
+        count += 1
+    # -------------------------------------------------------------------------
+    # storage of output return dprtypes
+    dprtypes = []
+    # loop around files
+    for drsfile in drsfiles:
+        # we only care about fits files - these are the only files to have
+        #   headers - i.e. the only ones that can have DPRTYPE
+        if not isinstance(drsfile, DrsInputFile):
+            continue
+        # need to loop around intypes
+        if drsfile is not None:
+            # get required header keys
+            rhkeys = drsfile.required_header_keys
+            # deal with DPRTYPE in rkeys
+            if 'KW_DPRTYPE' in rhkeys:
+                # deal with string entry
+                if isinstance(rhkeys['KW_DPRTYPE'], str):
+                    dprtypes += [rhkeys['KW_DPRTYPE']]
+                # else assume list
+                elif isinstance(rhkeys['KW_DPRTYPE'], list):
+                    dprtypes += rhkeys['KW_DPRTYPE']
+    # -------------------------------------------------------------------------
+    # only keep unique dprtypes
+    dprtypes = list(np.unique(dprtypes))
+    # -------------------------------------------------------------------------
+    # return dprtypes
+    return dprtypes
+
+
+
 
 
 def _split_string_list(string: str, allow_whitespace: bool = True):
