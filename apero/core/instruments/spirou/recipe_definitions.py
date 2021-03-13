@@ -220,7 +220,7 @@ cal_badpix.set_kwarg(name='--flatfiles', dtype='files',
                      helpstr=textentry('BADPIX_FLATFILE_HELP'), default=[])
 cal_badpix.set_kwarg(name='--darkfiles', dtype='files',
                      files=[files.pp_dark_dark_tel, files.pp_dark_dark_int],
-                     filelogic='exclusive', required=True,
+                     filelogic='inclusive', required=True,
                      helpstr=textentry('BADPIX_DARKFILE_HELP'), default=[])
 cal_badpix.set_kwarg(**add_db)
 cal_badpix.set_kwarg(default=True, **combine)
