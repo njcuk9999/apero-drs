@@ -149,6 +149,25 @@ def normal_fraction(sigma=1.0):
     return erf(sigma / np.sqrt(2.0))
 
 
+def estimate_sigma(tmp: np.ndarray, sigma=1.0) -> float:
+    """
+    Return a robust estimate of N sigma away from the mean
+
+    :param tmp: np.array (1D) - the data to estimate N sigma of
+
+    :return: the 1 sigma value
+    """
+    # get formal definition of N sigma
+    sig1 = normal_fraction(sigma)
+    # get the 1 sigma as a percentile
+    p1 = (1 - (1-sig1)/2) * 100
+    # work out the lower and upper percentiles for 1 sigma
+    upper = np.nanpercentile(tmp, p1)
+    lower = np.nanpercentile(tmp, 100 - p1)
+    # return the mean of these two bounds
+    return (upper - lower) / 2.0
+
+
 def fwhm(sigma=1.0):
     """
     Get the Full-width-half-maximum value from the sigma value (~2.3548)
@@ -642,7 +661,7 @@ def rot8(image, nrotation, invert=False):
                         rot8(invert=True) --> image
 
     :type image: np.ndarray
-    :type rotnum: int
+    :type nrotation: int
 
     :return: rotated and/or flipped image
     """
