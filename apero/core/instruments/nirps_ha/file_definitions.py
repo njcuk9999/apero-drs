@@ -88,13 +88,13 @@ raw_file.addset(raw_dark_fp_sky)
 # -----------------------------------------------------------------------------
 # raw flat files
 raw_dark_flat = drs_finput('RAW_DARK_FLAT',
-                           KW_RAW_DPRTYPE='ORDERDEF,DARK,LAMP',
+                           KW_RAW_DPRTYPE='FLAT,DARK,LAMP',
                            outfunc=out.blank,
                            filetype='.fits', suffix='')
 raw_file.addset(raw_dark_flat)
 
 raw_flat_dark = drs_finput('RAW_FLAT_DARK',
-                           KW_RAW_DPRTYPE='ORDERDEF,LAMP,DARK',
+                           KW_RAW_DPRTYPE='FLAT,LAMP,DARK',
                            outfunc=out.blank,
                            filetype='.fits', suffix='')
 raw_file.addset(raw_flat_dark)
