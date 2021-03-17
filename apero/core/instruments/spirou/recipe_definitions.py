@@ -1580,6 +1580,8 @@ pp_seq_opt.add(cal_pp, name='PP_FPFP', files=[files.raw_fp_fp])
 pp_seq_opt.add(cal_pp, name='PP_DFP', files=[files.raw_dark_fp])
 pp_seq_opt.add(cal_pp, name='PP_SKY', files=[files.raw_dark_dark_sky])
 pp_seq_opt.add(cal_pp, name='PP_LFC', files=[files.raw_lfc_lfc])
+pp_seq_opt.add(cal_pp, name='PP_LFCFP', files=[files.raw_lfc_fp])
+pp_seq_opt.add(cal_pp, name='PP_FPLFC', files=[files.raw_fp_lfc])
 
 # -----------------------------------------------------------------------------
 # master sequence (for trigger)
@@ -1736,6 +1738,8 @@ eng_seq.add(cal_extract, name='EXT_DFP', files=[files.pp_dark_fp])
 eng_seq.add(cal_extract, name='EXT_SKY', files=[files.pp_dark_dark_sky])
 eng_seq.add(cal_extract, name='EXT_LFC', files=[files.pp_lfc_lfc])
 eng_seq.add(cal_extract, name='EXT_FPD', files=[files.pp_fp_dark])
+eng_seq.add(cal_extract, name='EXT_LFCFP', files=[files.pp_lfc_fp])
+eng_seq.add(cal_extract, name='EXT_FPLFC', files=[files.pp_fp_lfc])
 
 # -----------------------------------------------------------------------------
 # sequences list
