@@ -327,7 +327,7 @@ pp_lfc_fp = drs_finput('LFC_FP', KW_DPRTYPE='LFC_FP',
 pp_file.addset(pp_lfc_fp)
 
 pp_fp_lfc = drs_finput('FP_LHC', KW_DPRTYPE='FP_LHC',
-                       filetype='.fits', suffix='_pp', intype=raw_lfc_fp,
+                       filetype='.fits', suffix='_pp', intype=raw_fp_lfc,
                        inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_fp_lfc)
 
