@@ -151,6 +151,12 @@ raw_lfc_fp = drs_finput('RAW_LFC_FP',
                                    KW_OBSTYPE='ALIGN'))
 raw_file.addset(raw_lfc_fp)
 
+raw_fp_lfc = drs_finput('RAW_FP_LFC',
+                        filetype='.fits', suffix='',
+                        hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_rs',
+                                   KW_OBSTYPE='ALIGN'))
+raw_file.addset(raw_fp_lfc)
+
 # -----------------------------------------------------------------------------
 # raw object files
 raw_obj_dark = drs_finput('RAW_OBJ_DARK', outfunc=out.blank,
@@ -358,6 +364,11 @@ pp_lfc_fp = drs_finput('LFC_FP', hkeys=dict(KW_DPRTYPE='LFC_FP'),
                        filetype='.fits', suffix='_pp', intype=raw_lfc_fp,
                        inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_lfc_fp)
+
+pp_fp_lfc = drs_finput('FP_LFC', hkeys=dict(KW_DPRTYPE='FP_LFC'),
+                       filetype='.fits', suffix='_pp', intype=raw_fp_lfc,
+                       inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_fp_lfc)
 
 # -----------------------------------------------------------------------------
 #  object
