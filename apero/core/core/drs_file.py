@@ -3812,8 +3812,8 @@ class DrsFitsFile(DrsInputFile):
         # return values
         return np.array(values)
 
-    def get_hkey_2d(self, key: str, dim1: Union[str, None],
-                    dim2: Union[str, None], dtype: Type = float) -> np.ndarray:
+    def get_hkey_2d(self, key: str, dim1: int, dim2: int,
+                    dtype: Type = float) -> np.ndarray:
         """
         Read a set of header keys that were created from a 2D list
 
