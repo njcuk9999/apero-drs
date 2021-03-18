@@ -1252,7 +1252,7 @@ class MySQLDatabase(Database):
         self.path = '{0}@{1}'.format(user, host)
         # deal with mysql not being imported
         if mysql is None:
-            # log error: Cannot import mysql.connector
+            # log error: Cannot import mysql connector
             ecode = '00-002-00044'
             emsg = drs_base.BETEXT[ecode]
             exception = DatabaseError(emsg, path=self.path,
@@ -1279,8 +1279,8 @@ class MySQLDatabase(Database):
         self.add_database()
         # try to connect the the SQL3 database
         try:
-            self._conn_ = mysql.connect(host=self.host, user=self.user,
-                                        passwd=passwd, database=database)
+            self._conn_ = self.connect(self.host, self.user, self.passwd,
+                                       self.dbname)
         except Exception as e:
             # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
             ecode = '00-002-00045'
@@ -1293,6 +1293,29 @@ class MySQLDatabase(Database):
                                 exception=exception)
         # update table list
         self._update_table_list_()
+
+    @staticmethod
+    def connect(host: str, user: str, passwd: str,
+                dbname: Union[str, None] = None, connect_kind='mysql.connect'):
+        """
+        Connect to the mysql database
+
+        :param host: str, the host name
+        :param user: str, the user name
+        :param passwd: str, the password
+        :param dbname: str, the database name (can be None)
+
+        :return: return the mysql connection
+        """
+        if connect_kind == 'mysql.connect':
+            return mysql.connect(host=host, user=user, passwd=passwd,
+                                 database=dbname, connection_timeout=3600)
+        else:
+            import sqlalchemy
+            dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
+            dargs = [user, passwd, host, dbname]
+            return sqlalchemy.create_engine(dpath.format(*dargs),
+                                            pool_pre_ping=True)
 
     def __str__(self):
         """
@@ -1329,9 +1352,8 @@ class MySQLDatabase(Database):
         self.__dict__.update(state)
         # try to connect the the SQL3 database
         try:
-            self._conn_ = mysql.connect(host=self.host, user=self.user,
-                                        passwd=self.passwd,
-                                        database=self.dbname)
+            self._conn_ = self.connect(self.host, self.user, self.passwd,
+                                       self.dbname)
         except Exception as e:
             # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
             ecode = '00-002-00045'
@@ -1356,8 +1378,7 @@ class MySQLDatabase(Database):
         func_name = '{0}.{1}.{2}'.format(__NAME__, self.classname,
                                          'add_database')
         # create a temporary connection to mysql
-        tmpconn = mysql.connect(host=self.host, user=self.user,
-                                passwd=self.passwd)
+        tmpconn = self.connect(self.host, self.user, self.passwd)
         # get the cursor
         with closing(tmpconn.cursor()) as cursor:
             # Get the new list of tables
@@ -1446,10 +1467,8 @@ class MySQLDatabase(Database):
         if unique_cols is not None:
             df = _hash_df(df, unique_cols)
         # need a sqlalchmy connection here
-        import sqlalchemy
-        dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
-        dargs = [self.user, self.passwd, self.host, self.dbname]
-        dconn = sqlalchemy.create_engine(dpath.format(*dargs))
+        dconn = self.connect(self.host, self.user, self.passwd, self.dbname,
+                             connect_kind='sqlalchemy')
         # check if_exists criteria
         if if_exists not in ['fail', 'replace', 'append']:
             # log error: Pandas.to_sql
@@ -1485,10 +1504,8 @@ class MySQLDatabase(Database):
         :return:
         """
         # need a sqlalchmy connection here
-        import sqlalchemy
-        dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
-        dargs = [self.user, self.passwd, self.host, self.dbname]
-        dconn = sqlalchemy.create_engine(dpath.format(*dargs))
+        dconn = self.connect(self.host, self.user, self.passwd, self.dbname,
+                             connect_kind='sqlalchemy')
         # set function name
         func_name = __NAME__ + '.Database._to_pandas()'
         # try to read sql using pandas
