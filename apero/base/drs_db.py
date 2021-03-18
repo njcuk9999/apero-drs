@@ -1295,13 +1295,14 @@ class MySQLDatabase(Database):
         self._update_table_list_()
 
     @staticmethod
-    def connect(user, passwd, host, dbname=None):
+    def connect(host, user, passwd, dbname=None):
         return mysql.connect(host=host, user=user, passwd=passwd,
                              database=dbname, connection_timeout=3600)
         # import sqlalchemy
         # dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
         # dargs = [user, passwd, host, dbname]
-        # return sqlalchemy.create_engine(dpath.format(*dargs))
+        # return sqlalchemy.create_engine(dpath.format(*dargs),
+        #                                 pool_pre_ping=True)
 
     def __str__(self):
         """
@@ -1456,7 +1457,8 @@ class MySQLDatabase(Database):
         import sqlalchemy
         dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
         dargs = [self.user, self.passwd, self.host, self.dbname]
-        dconn = sqlalchemy.create_engine(dpath.format(*dargs))
+        dconn = sqlalchemy.create_engine(dpath.format(*dargs),
+                                         pool_pre_ping=True)
         # check if_exists criteria
         if if_exists not in ['fail', 'replace', 'append']:
             # log error: Pandas.to_sql
@@ -1495,7 +1497,8 @@ class MySQLDatabase(Database):
         import sqlalchemy
         dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
         dargs = [self.user, self.passwd, self.host, self.dbname]
-        dconn = sqlalchemy.create_engine(dpath.format(*dargs))
+        dconn = sqlalchemy.create_engine(dpath.format(*dargs),
+                                         pool_pre_ping=True)
         # set function name
         func_name = __NAME__ + '.Database._to_pandas()'
         # try to read sql using pandas
