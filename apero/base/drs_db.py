@@ -183,6 +183,23 @@ class Database:
         """
         return self.__str__()
 
+    def connect(self):
+        """
+        This method should be overridden to connect to the database
+        and update the current connection with the result
+
+        :return: The database connection
+        """
+        return self._conn_
+
+    def cursor(self):
+        """
+        Attempt to retrieve a database cursor
+
+        :return: The cursor
+        """
+        return self._conn_.cursor()
+
     # get / set / execute / add methods
     def execute(self, command: str, fetch: bool) -> Any:
         """
@@ -200,7 +217,7 @@ class Database:
         if self._verbose_:
             print("SQL INPUT: ", command)
         # get cursor
-        with closing(self._conn_.cursor()) as cursor:
+        with closing(self.cursor()) as cursor:
             # try to execute SQL command
             try:
                 result = self._execute(cursor, command, fetch=fetch)
@@ -232,7 +249,7 @@ class Database:
         Dummy function to try to catch database locked errors
         (up to a max wait time)
 
-        :param cursor: sqlite cursor (self._conn_.cursor())
+        :param cursor: sqlite cursor (self.cursor())
         :param command: str, The SQL command to be run.
         :return:
         """
@@ -827,7 +844,7 @@ class Database:
         # set up command
         command = "SELECT {} from {}".format(columns, table)
         # get cursor
-        with closing(self._conn_.cursor()) as cursor:
+        with closing(self.cursor()) as cursor:
             # try to execute SQL command
             try:
                 # try to execute SQL command
@@ -974,8 +991,6 @@ class SQLiteDatabase(Database):
                      This may be :memory: to create a temporary in-memory
                      database which will not be saved when the program closes.
         """
-        # set function name
-        func_name = __NAME__ + 'SQLiteDatabase.__init__()'
         # call to super class
         super().__init__(verbose=verbose)
         # storage for database path
@@ -986,18 +1001,7 @@ class SQLiteDatabase(Database):
         self.dbname = None
         self.tname = 'MAIN'
         # try to connect the the SQL3 database
-        try:
-            self._conn_ = sqlite3.connect(self.path, timeout=TIMEOUT)
-        except Exception as e:
-            # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
-            ecode = '00-002-00043'
-            emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e), func_name]
-            exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                      func_name=func_name)
-            drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                exceptionname='DatabaseError',
-                                exception=exception)
+        self.connect()
         # update table list
         self._update_table_list_()
 
@@ -1030,11 +1034,22 @@ class SQLiteDatabase(Database):
         :param state: dictionary from pickle
         :return:
         """
-        # set function name
-        func_name = __NAME__ + 'Database.__setstate__()'
         # update dict with state
         self.__dict__.update(state)
         # try to connect the the SQL3 database
+        self.connect()
+        # update table list
+        self._update_table_list_()
+
+    def connect(self):
+        """
+        Connect to the sqlite database with the existing connection properties
+        and update the current connection with the result
+
+        :return: The sqlite connection
+        """
+        # set function name
+        func_name = __NAME__ + 'Database.connect()'
         try:
             self._conn_ = sqlite3.connect(self.path, timeout=TIMEOUT)
         except Exception as e:
@@ -1047,8 +1062,7 @@ class SQLiteDatabase(Database):
             drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                 exceptionname='DatabaseError',
                                 exception=exception)
-        # update table list
-        self._update_table_list_()
+        return self._conn_
 
     def _execute(self, cursor: sqlite3.Cursor, command: str,
                  fetch: bool = True):
@@ -1056,7 +1070,7 @@ class SQLiteDatabase(Database):
         Dummy function to try to catch database UNIQUE(col) error and
         catch locked errors (up to a max wait time)
 
-        :param cursor: sqlite cursor (self._conn_.cursor())
+        :param cursor: sqlite cursor (self.cursor())
         :param command: str, The SQL command to be run.
         :return:
         """
@@ -1225,7 +1239,7 @@ class SQLiteDatabase(Database):
 
 
 class MySQLDatabase(Database):
-    # A wrapper for an SQLite database.
+    # A wrapper for a MySQL database.
     def __init__(self, host: str, user: str, passwd: str,
                  database: str, tablename: str, verbose: bool = False,
                  absolute_table_name: bool = False):
@@ -1278,9 +1292,22 @@ class MySQLDatabase(Database):
         # deal with database for sql
         self.add_database()
         # try to connect the the SQL3 database
+        self.connect()
+        # update table list
+        self._update_table_list_()
+
+    def connect(self):
+        """
+        Connect to the mysql database with the existing connection properties
+        and update the current connection with the result
+
+        :return: The mysql connection
+        """
+        # set function name
+        func_name = __NAME__ + 'Database.connect()'
         try:
-            self._conn_ = self.connect(self.host, self.user, self.passwd,
-                                       self.dbname)
+            self._conn_ = self.new_connection(self.host, self.user,
+                                              self.passwd, self.dbname)
         except Exception as e:
             # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
             ecode = '00-002-00045'
@@ -1291,14 +1318,14 @@ class MySQLDatabase(Database):
             drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                 exceptionname='DatabaseError',
                                 exception=exception)
-        # update table list
-        self._update_table_list_()
+        return self._conn_
 
     @staticmethod
-    def connect(host: str, user: str, passwd: str,
-                dbname: Union[str, None] = None, connect_kind='mysql.connect'):
+    def new_connection(host: str, user: str, passwd: str,
+                       dbname: Union[str, None] = None,
+                       connect_kind='mysql.connect'):
         """
-        Connect to the mysql database
+        Create a new connection to the mysql database
 
         :param host: str, the host name
         :param user: str, the user name
@@ -1316,6 +1343,18 @@ class MySQLDatabase(Database):
             dargs = [user, passwd, host, dbname]
             return sqlalchemy.create_engine(dpath.format(*dargs),
                                             pool_pre_ping=True)
+
+    def cursor(self):
+        """
+        Attempt to retrieve a database cursor and reconnect on failure
+
+        :return: The cursor
+        """
+        try:
+            return self._conn_.cursor()
+        except mysql.OperationalError:
+            self.connect()
+            return self._conn_.cursor()
 
     def __str__(self):
         """
@@ -1346,24 +1385,10 @@ class MySQLDatabase(Database):
         :param state: dictionary from pickle
         :return:
         """
-        # set function name
-        func_name = __NAME__ + 'Database.__setstate__()'
         # update dict with state
         self.__dict__.update(state)
         # try to connect the the SQL3 database
-        try:
-            self._conn_ = self.connect(self.host, self.user, self.passwd,
-                                       self.dbname)
-        except Exception as e:
-            # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
-            ecode = '00-002-00045'
-            emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e), func_name]
-            exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                      func_name=func_name)
-            drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                exceptionname='DatabaseError',
-                                exception=exception)
+        self.connect()
         # update table list
         self._update_table_list_()
 
@@ -1378,7 +1403,7 @@ class MySQLDatabase(Database):
         func_name = '{0}.{1}.{2}'.format(__NAME__, self.classname,
                                          'add_database')
         # create a temporary connection to mysql
-        tmpconn = self.connect(self.host, self.user, self.passwd)
+        tmpconn = self.new_connection(self.host, self.user, self.passwd)
         # get the cursor
         with closing(tmpconn.cursor()) as cursor:
             # Get the new list of tables
@@ -1412,7 +1437,7 @@ class MySQLDatabase(Database):
         """
         Dummy function to try to catch database UNIQUE(col) error
 
-        :param cursor: sqlite cursor (self._conn_.cursor())
+        :param cursor: mysql cursor (self.cursor())
         :param command: str, The SQL command to be run.
         :return:
         """
@@ -1467,8 +1492,8 @@ class MySQLDatabase(Database):
         if unique_cols is not None:
             df = _hash_df(df, unique_cols)
         # need a sqlalchmy connection here
-        dconn = self.connect(self.host, self.user, self.passwd, self.dbname,
-                             connect_kind='sqlalchemy')
+        dconn = self.new_connection(self.host, self.user, self.passwd,
+                                    self.dbname, connect_kind='sqlalchemy')
         # check if_exists criteria
         if if_exists not in ['fail', 'replace', 'append']:
             # log error: Pandas.to_sql
@@ -1504,8 +1529,8 @@ class MySQLDatabase(Database):
         :return:
         """
         # need a sqlalchmy connection here
-        dconn = self.connect(self.host, self.user, self.passwd, self.dbname,
-                             connect_kind='sqlalchemy')
+        dconn = self.new_connection(self.host, self.user, self.passwd,
+                                    self.dbname, connect_kind='sqlalchemy')
         # set function name
         func_name = __NAME__ + '.Database._to_pandas()'
         # try to read sql using pandas
