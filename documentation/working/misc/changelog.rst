@@ -2,6 +2,81 @@ Changelog
 =========
 
 
+0.7.095 (2021-03-24)
+--------------------
+- Merge branch 'v0.7.090-test-stable' into v0.7.090-work. [Neil Cook]
+- Merge pull request #662 from njcuk9999/v0.7.090-sql-reconnect. [Neil
+  Cook]
+
+  Update `drs_db` to reconnect upon cursor creation failure
+- Add `KW_OUTPUT` for pp files + `KW_PID` for combined files + recipe in
+  index database. [Neil Cook]
+- Merge branch 'v0.7.090-test-stable' into v0.7.090-work. [Neil Cook]
+- `Apero.base.drs_db.py` - add doc string for connect class and move all
+  connections here. [Neil Cook]
+
+
+0.7.094 (2021-03-19)
+--------------------
+- Undo unnecessary changes. [cusher]
+- Update `drs_db` to reconnect upon cursor creation failure. [cusher]
+- `Apero.base.drs_db.py` - add doc string for connect class and move all
+  connections here. [Neil Cook]
+- `Apero.base.drs_db.py` - add connection timeout for mwsql connection.
+  [Neil Cook]
+- `Apero.base.drs_db.py` - add connection timeout for mwsql connection.
+  [Neil Cook]
+
+
+0.7.093 (2021-03-17)
+--------------------
+- `Apero.core.core.drs_file.py` - `get_hkey_2d` dim1/dim2 should be
+  integers. [Neil Cook]
+- `Apero.data.spirou.reset.runs.other_run.ini` - add LFCFP and FPLFC to
+  other run.ini file. [Neil Cook]
+- `Apero.core.instruments.spirou.file_definitions.py` +
+  `recipe_definitions.py` - add LFCFP and FPLFC to sequences. [Neil Cook]
+
+
+0.7.092 (2021-03-13)
+--------------------
+- `Apero.tools.module.processing.drs_processing.py` - fix duplicate
+  entries (pp + raw) and make badpix `dark_dark` inclusive (int + tel)
+  [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - change using
+  defaults from warning to normal message. [Neil Cook]
+- `Apero.core.instruments.spirou.recipe_defintiions.py` + `blank_run.ini` -
+  add a blank sequence (for apero testing and maybe loading raw files to
+  index database) [Neil Cook]
+- `Apero.tools.module.setup.drs_processing.py` - `_split_string_list` should
+  not split by white space unless directly told to (allows spaces in
+  filenames) [Neil Cook]
+
+
+0.7.091 (2021-03-11)
+--------------------
+- Update `spirou_map_sections.graphml`. [Neil Cook]
+- Fix `display_func` + processing `obs_dir`. [Neil Cook]
+- Add spirou map sections (for documenation and paper) [Neil Cook]
+- `Params.snapshot_table` --> add recipe to args. [Neil Cook]
+- Recipes - remove params from log functions. [Neil Cook]
+- `Apero.io.drs_fits.py` - add `find_named_extensions` + `update_extension`.
+  [Neil Cook]
+- `Apero.core.utils.drs_utils.py` - rtype <--> `block_kind`. [Neil Cook]
+- `Apero.core.utils.drs_startup.py` - change rtype and `block_kind` for
+  recipe.log. [Neil Cook]
+- `Apero.core.core.drs_misc.py` - raise value error for non-string name in
+  `display_func`. [Neil Cook]
+- Remove RecipeLog from `drs_log.py`. [Neil Cook]
+- `Apero.core.core.drs_file.py` - add `update_param_table` function. [Neil
+  Cook]
+- `Apero.core.core.drs_database.py` - add update param table to
+  calib/tellu file update. [Neil Cook]
+- `Apero.core.constants.param_functions.py` - update `snapshot_table` to
+  have recipe.log parameters. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.7.090 (2021-03-09)
 --------------------
 - `Apero.core.core.drs_file.py` - catch `numpy_load` failure. [Neil Cook]
