@@ -1258,7 +1258,7 @@ class IndexDatabase(DatabaseManager):
         self.update_entries_params = []
 
     def add_entry(self, basefile: drs_file.DrsPath,
-                  block_kind: str,
+                  block_kind: str, recipe: Union[str, None] = None,
                   runstring: Union[str, None] = None,
                   hkeys: Union[Dict[str, str], None] = None,
                   used: Union[int, None] = None,
@@ -1274,6 +1274,7 @@ class IndexDatabase(DatabaseManager):
                             path/directory/filename (unless filename is an
                             absolute path) - note in this case directory should
                             still be filled correctly (for database)
+        :param recipe: str, the recipe name
         :param runstring: str, the command line arg representation of this
                           indexs recipe run
         :param hkeys: dictionary of strings, for each instrument a set
@@ -1312,6 +1313,9 @@ class IndexDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # get last modified time for file (need absolute path)
         last_modified = basefile.to_path().stat().st_mtime
+        # get recipe
+        if recipe is None:
+            recipe = 'Unknown'
         # get run string
         if runstring is None:
             runstring = 'None'
@@ -1358,7 +1362,7 @@ class IndexDatabase(DatabaseManager):
         try:
             # add new entry to database
             values = [path, obs_dir, basename, block_kind, float(last_modified),
-                      str(runstring)]
+                      str(recipe), str(runstring)]
             values += hvalues + [used, rawfix]
             self.database.add_row(values, table=self.database.tname,
                                   commit=commit, unique_cols=ucols)
@@ -1366,7 +1370,7 @@ class IndexDatabase(DatabaseManager):
         except drs_db.UniqueEntryException:
             # add new entry to database
             values = [path, obs_dir, basename, block_kind, float(last_modified),
-                      str(runstring)]
+                      str(recipe), str(runstring)]
             values += hvalues + [used, rawfix]
             # condition comes from uhash - so set to None here (to remember)
             condition = None

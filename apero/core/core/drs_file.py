@@ -3336,6 +3336,9 @@ class DrsFitsFile(DrsInputFile):
 
         Requires DrsFile.filename and DrsFile.params to be set
 
+        :params block_kind: str, the block kind (raw/tmp/red)
+        :params runstring: str, the run string that created this recipe run
+
         :return None:
         """
         # set function name
@@ -3367,13 +3370,16 @@ class DrsFitsFile(DrsInputFile):
         #     recipe to reproduce this file)
         if runstring is None:
             self.output_dict['RUNSTRING'] = 'None'
+            # deal with recipe
+            self.output_dict['RECIPE'] = 'Unknown'
         else:
             self.output_dict['RUNSTRING'] = str(runstring)
+            # deal with recipe
+            self.output_dict['RECIPE'] = str(runstring).split()[0]
         # add whether this row should be used be default (always 1)
         self.output_dict['USED'] = used
         # add the raw fix (all files here should be raw fixed)
         self.output_dict['RAWFIX'] = 1
-
         # loop around the keys and find them in hdict (or add null character if
         #     not found)
         for it, key in enumerate(hkeys):
@@ -6276,6 +6282,13 @@ def combine(params: ParamDict, recipe: Any,
     data_list = [outtable]
     datatype_list = ['table']
     name_list = ['COMBINE_TABLE']
+    # add version
+    outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    outfile.add_hkey('KW_PID', value=params['PID'])
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
