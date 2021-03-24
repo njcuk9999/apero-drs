@@ -183,6 +183,14 @@ class Database:
         """
         return self.__str__()
 
+    def cursor(self):
+        """
+        Attempt to retrieve a database cursor
+
+        :return: The cursor
+        """
+        return self._conn_.cursor()
+
     # get / set / execute / add methods
     def execute(self, command: str, fetch: bool) -> Any:
         """
@@ -200,7 +208,7 @@ class Database:
         if self._verbose_:
             print("SQL INPUT: ", command)
         # get cursor
-        with closing(self._conn_.cursor()) as cursor:
+        with closing(self.cursor()) as cursor:
             # try to execute SQL command
             try:
                 result = self._execute(cursor, command, fetch=fetch)
@@ -232,7 +240,7 @@ class Database:
         Dummy function to try to catch database locked errors
         (up to a max wait time)
 
-        :param cursor: sqlite cursor (self._conn_.cursor())
+        :param cursor: sqlite cursor (self.cursor())
         :param command: str, The SQL command to be run.
         :return:
         """
@@ -827,7 +835,7 @@ class Database:
         # set up command
         command = "SELECT {} from {}".format(columns, table)
         # get cursor
-        with closing(self._conn_.cursor()) as cursor:
+        with closing(self.cursor()) as cursor:
             # try to execute SQL command
             try:
                 # try to execute SQL command
@@ -1056,7 +1064,7 @@ class SQLiteDatabase(Database):
         Dummy function to try to catch database UNIQUE(col) error and
         catch locked errors (up to a max wait time)
 
-        :param cursor: sqlite cursor (self._conn_.cursor())
+        :param cursor: sqlite cursor (self.cursor())
         :param command: str, The SQL command to be run.
         :return:
         """
@@ -1225,7 +1233,7 @@ class SQLiteDatabase(Database):
 
 
 class MySQLDatabase(Database):
-    # A wrapper for an SQLite database.
+    # A wrapper for a MySQL database.
     def __init__(self, host: str, user: str, passwd: str,
                  database: str, tablename: str, verbose: bool = False,
                  absolute_table_name: bool = False):
@@ -1407,12 +1415,25 @@ class MySQLDatabase(Database):
                                         exceptionname='DatabaseError',
                                         exception=exception)
 
+    def cursor(self):
+        """
+        Attempt to retrieve a database cursor and reconnect on failure
+
+        :return: The cursor
+        """
+        try:
+            return self._conn_.cursor()
+        except mysql.OperationalError:
+            self._conn_ = self.connect(self.host, self.user, self.passwd,
+                                       self.dbname)
+            return self._conn_.cursor()
+
     def _execute(self, cursor: Any, command: str,
                  fetch: bool = True):
         """
         Dummy function to try to catch database UNIQUE(col) error
 
-        :param cursor: sqlite cursor (self._conn_.cursor())
+        :param cursor: mysql cursor (self.cursor())
         :param command: str, The SQL command to be run.
         :return:
         """
