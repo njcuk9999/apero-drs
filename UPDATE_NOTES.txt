@@ -1,4 +1,4 @@
-# Update Note Summary - Version 0.7.073
+# Update Note Summary - Version 0.7.095
 
 Date: 2020-12-21
 
@@ -35,6 +35,7 @@ Date: 2020-12-21
       object database with the information from the object googlesheet
     - raw files are updated in index database if last modified time is inconsistent
       (before only new files were added)
+    - added to other_run.ini the LFCFP and FPLFC (PP, EXT) sequences
 
 - preprocessing
     - object resolution added to preprocessing (see object resolution section)
@@ -144,6 +145,6 @@ Date: 2020-12-21
         - all other hdu headers are minimal / extension specific
         - all extensions have names (EXTNAME)
     - all reduced outputs now have a PARAM_TABLE extension (127 Kb)
-        - this contains all instrument, database, param, header constants
-          as they were at the time of writing the file - it can be turned
-          off by setting PARAMETER_SNAPSHOT = False
+        - this contains all instrument, database, param, recipe, header
+          constants as they were at the time of writing the file - it can be
+          turned off by setting PARAMETER_SNAPSHOT = False
