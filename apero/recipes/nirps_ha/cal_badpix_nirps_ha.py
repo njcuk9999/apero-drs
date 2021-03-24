@@ -113,10 +113,11 @@ def __main__(recipe, params):
         combine = params['DATA_DICT']['combine']
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
-        # get combined file
+        # get combined FLAT_FLAT file
         flatfiles = [drs_file.combine(params, recipe, flatfiles, math='median')]
-        # get combined file
-        darkfiles = [drs_file.combine(params, recipe, darkfiles, math='median')]
+        # get combined DARK_DARK file (can be DARK_DARK_TEL or DARK_DARK_INT)
+        darkfiles = [drs_file.combine(params, recipe, darkfiles, math='median',
+                                      same_type=False)]
         combine = True
     else:
         combine = False

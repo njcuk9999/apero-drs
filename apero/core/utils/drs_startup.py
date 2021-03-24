@@ -543,7 +543,7 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
             outfile.basename = str(output['FILENAME'])
             # get parameters for add entry
             block_kind = str(output['BLOCK_KIND'])
-            recipe = str(output['RECIPE'])
+            recipename = str(output['RECIPE'])
             runstring = str(output['RUNSTRING'])
             used = int(output['USED'])
             rawfix = int(output['RAWFIX'])
@@ -560,7 +560,7 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
                 else:
                     hkeys[rkey] = 'Null'
             # finally add to database
-            indexdb.add_entry(outfile, block_kind, recipe, runstring,
+            indexdb.add_entry(outfile, block_kind, recipename, runstring,
                               hkeys, used, rawfix)
     # -------------------------------------------------------------------------
     # log end message
