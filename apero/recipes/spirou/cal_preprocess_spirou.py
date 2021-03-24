@@ -270,6 +270,7 @@ def __main__(recipe, params):
         outfile.add_qckeys(qc_params)
         # add dprtype
         outfile.add_hkey('KW_DPRTYPE', value=outfile.name)
+        outfile.add_hkey('KW_OUTPUT', value=recipe.outputs['PP_FILE'].name)
         # add the shift that was used to correct the image
         outfile.add_hkey('KW_PPSHIFTX', value=shiftdx)
         outfile.add_hkey('KW_PPSHIFTY', value=shiftdy)

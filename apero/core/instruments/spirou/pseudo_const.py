@@ -745,6 +745,7 @@ class PseudoConstants(DefaultConstants):
         index_columns['FILENAME'] = str
         index_columns['BLOCK_KIND'] = str
         index_columns['LAST_MODIFIED'] = float
+        index_columns['RECIPE'] = str
         index_columns['RUNSTRING'] = str
         # split names and types and add header keys
         columns = list(index_columns.keys()) + hkeys
