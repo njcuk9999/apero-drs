@@ -27,6 +27,7 @@ from copy import deepcopy
 import os
 from pathlib import Path
 import warnings
+import time
 import traceback
 from typing import Any, List, Tuple, Union
 
@@ -854,12 +855,40 @@ def _write_fits(params: ParamDict, filename: str,
         func_name = '{0} (via {1})'.format(func, func_name)
     # ----------------------------------------------------------------------
     # check if file exists and remove it if it does
-    if os.path.exists(filename):
-        try:
-            os.remove(filename)
-        except Exception as e:
-            eargs = [os.path.basename(filename), type(e), e, func_name]
-            WLOG(params, 'error', textentry('01-001-00003', args=eargs))
+    # done in a while loop
+    tries, success, store_error = 0, False, None
+    while tries <= 5:
+        # test if file exists
+        if os.path.exists(filename):
+            # if it does try to remove it
+            try:
+                # remove file
+                os.remove(filename)
+                # success is True we don't need to report an error
+                success = True
+                # break out of while loop
+                break
+            # removing file may fail if removed by another process (very rare)
+            # so sleep for 0.1 s and then try to see if the file exists again
+            except Exception as e:
+                # add to tries (we don't want to try too many times)
+                tries += 1
+                # sleep zzz
+                time.sleep(0.1)
+                # store the error for eventual reporting (if fails more than
+                #   5 times)
+                store_error = (type(e), str(e))
+        # if file does not exist we can break out of loop
+        else:
+            # success is True we don't need to report an error
+            success = True
+            # break out of while loop
+            break
+    # deal with not being able to remove file
+    if not success:
+        eargs = [os.path.basename(filename), store_error[0], store_error[1],
+                 func_name]
+        WLOG(params, 'error', textentry('01-001-00003', args=eargs))
     # ----------------------------------------------------------------------
     # make sure we are dealing with lists of data and headers
     if not isinstance(data, list):
