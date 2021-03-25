@@ -120,7 +120,7 @@ class DatabaseHolder:
         # push dataframe to replace SQL table
         database.add_from_pandas(df, table=database.tname,
                                  if_exists='replace', index=False,
-                                 commit=True, unique_cols=ucols)
+                                 unique_cols=ucols)
         # print we are saving database
         print('Saving database {0}'.format(self.name))
 

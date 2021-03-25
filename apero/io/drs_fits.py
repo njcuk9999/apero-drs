@@ -36,7 +36,6 @@ from apero.core import constants
 from apero.core.core import drs_log
 from apero import lang
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -210,7 +209,7 @@ class Header(fits.Header):
         else:
             return super().__contains__(key)
 
-    def set_key(self, params: ParamDict, key: str , value: Any):
+    def set_key(self, params: ParamDict, key: str, value: Any):
         """
         Set a key (maybe from params with a keywordstore)
 
@@ -345,8 +344,6 @@ class Header(fits.Header):
         # else return original value
         else:
             return value
-
-
 
 
 # =============================================================================
@@ -1019,8 +1016,8 @@ def _write_fits(params: ParamDict, filename: str,
 
 
 def update_extension(params: ParamDict, filename: str, extension: int,
-                      data: Union[np.ndarray, Table, None] = None,
-                      header: Union[Header, None] = None, fmt: str = 'image'):
+                     data: Union[np.ndarray, Table, None] = None,
+                     header: Union[Header, None] = None, fmt: str = 'image'):
     """
     Update the extension of an existing file
 
@@ -1200,7 +1197,6 @@ def check_dtype_for_header(value: Any) -> Any:
         newvalue = str(value)
     # return new value
     return newvalue
-
 
 
 # =============================================================================

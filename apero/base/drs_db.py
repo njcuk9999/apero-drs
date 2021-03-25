@@ -478,7 +478,6 @@ class Database:
 
     def set(self, columns: Union[str, List[str]], table: Union[str, None],
             values: Union[str, List[str]], condition: Union[str, None] = None,
-            commit: bool = True,
             unique_cols: Union[List[str], None] = None):
         """
         Changes the data in existing rows.
@@ -498,7 +497,6 @@ class Database:
         :param table: A str which specifies which table within the database to
                    retrieve data from.  If there is only one table to pick
                    from, this may be left as None to use it automatically.
-        :param commit: boolean, if True will commit changes to sql database
         :param unique_cols: list of strings or None, if set this is columns that
                             are used to form the unique hash for specifying
                             unique rows
@@ -577,9 +575,6 @@ class Database:
             command += " WHERE {}".format(condition)
         # execute sql command
         self.execute(command, fetch=False)
-        # commit changes to the database (if requested)
-        if commit:
-            self.commit()
 
     def add_row(self, values: List[object], table: Union[None, str],
                 columns: Union[str, List[str]] = "*",
@@ -632,8 +627,7 @@ class Database:
         self.execute(command, fetch=False)
 
     def delete_rows(self, table: Union[None, str],
-                    condition: Union[str, None] = None,
-                    commit: bool = True):
+                    condition: Union[str, None] = None):
         """
         Delete a row from the table
 
@@ -644,7 +638,6 @@ class Database:
         :param condition: An SQL condition string to identify the rows to be
                           modified.  This may be set to None to apply the
                           modification to all rows.
-        :param commit: boolean, if True will commit changes to sql database
 
         :return: None removes row(s) from table
         """
@@ -751,7 +744,7 @@ class Database:
         # ---------------------------------------------------------------------
         # execute command
         self.execute(command, fetch=False)
-        # update the table list and commit
+        # update the table list
         self._update_table_list_()
 
     def delete_table(self, name: str):
@@ -775,7 +768,7 @@ class Database:
                                        exception=exception)
         # execute a sql drop table
         self.execute("DROP TABLE {}".format(name), fetch=False)
-        # update the table list and commit
+        # update the table list
         self._update_table_list_()
 
     def rename_table(self, old_name: str, new_name: str):
@@ -816,7 +809,7 @@ class Database:
 
     def lock(self):
         """
-        Lock the database (until unlock or a commit is done)
+        Lock the database (until unlock is done)
         :return:
         """
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
@@ -938,7 +931,6 @@ class Database:
 
     def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,
-                        commit: bool = True,
                         unique_cols: Union[List[str], None] = None):
         """
         Use pandas to add rows to database
@@ -954,8 +946,6 @@ class Database:
                           * replace: Drop the table before inserting new values.
                           * append: Insert new values to the existing table.
         :param index: whether to include an index column in database
-        :param commit: whether to commit changes to SQL database after adding
-                       (or wait to another commit event)
         :param unique_cols: list of strings or None, if set this is columns that
                             are used to form the unique hash for specifying
                             unique rows
@@ -1116,7 +1106,6 @@ class SQLiteDatabase(Database):
 
     def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,
-                        commit: bool = True,
                         unique_cols: Union[List[str], None] = None):
         """
         Use pandas to add rows to database
@@ -1132,8 +1121,6 @@ class SQLiteDatabase(Database):
                           * replace: Drop the table before inserting new values.
                           * append: Insert new values to the existing table.
         :param index: whether to include an index column in database
-        :param commit: whether to commit changes to SQL database after adding
-                       (or wait to another commit event)
         :param unique_cols: list of strings or None, if set this is columns that
                             are used to form the unique hash for specifying
                             unique rows
@@ -1171,9 +1158,6 @@ class SQLiteDatabase(Database):
             return drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                        exceptionname='DatabaseError',
                                        exception=exception)
-        # commit change to database if requested
-        if commit:
-            self.commit()
 
     def _to_pandas(self, command: str) -> pd.DataFrame:
         """
@@ -1218,7 +1202,7 @@ class SQLiteDatabase(Database):
 
     def lock(self):
         """
-        Lock the database (until unlock or a commit is done)
+        Lock the database (until unlock is done)
         :return:
         """
         self.execute('BEGIN EXCLUSIVE;', fetch=False)
@@ -1302,7 +1286,6 @@ class MySQLDatabase(Database):
         self.add_database()
         # try to connect the the SQL3 database
 
-
         # update table list
         self._update_table_list_()
 
@@ -1344,8 +1327,9 @@ class MySQLDatabase(Database):
                 import sqlalchemy
                 dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
                 dargs = [user, passwd, host, dbname]
-                return sqlalchemy.create_engine(dpath.format(*dargs),
-                                                       pool_pre_ping=True)
+                db = sqlalchemy.create_engine(dpath.format(*dargs),
+                                              pool_pre_ping=True)
+                return db.connect()
         except Exception as e:
             # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
             ecode = '00-002-00045'
@@ -1405,7 +1389,7 @@ class MySQLDatabase(Database):
                                          'add_database')
         # get the cursor
         with closing(self.connection()) as tmpconn:
-            with closing(tmpconn.cursor) as cursor:
+            with closing(tmpconn.cursor()) as cursor:
                 # Get the new list of tables
                 command = 'SHOW DATABASES'
                 # execute command
@@ -1472,7 +1456,6 @@ class MySQLDatabase(Database):
 
     def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,
-                        commit: bool = True,
                         unique_cols: Union[List[str], None] = None):
         """
         Use pandas to add rows to database
@@ -1488,8 +1471,6 @@ class MySQLDatabase(Database):
                           * replace: Drop the table before inserting new values.
                           * append: Insert new values to the existing table.
         :param index: whether to include an index column in database
-        :param commit: whether to commit changes to SQL database after adding
-                       (or wait to another commit event)
         :param unique_cols: list of strings or None, if set this is columns that
                             are used to form the unique hash for specifying
                             unique rows
@@ -1503,9 +1484,6 @@ class MySQLDatabase(Database):
         # need to add uhash column
         if unique_cols is not None:
             df = _hash_df(df, unique_cols)
-        # need a sqlalchmy connection here
-        dconn = self.connect(self.host, self.user, self.passwd, self.dbname,
-                             connect_kind='sqlalchemy')
         # check if_exists criteria
         if if_exists not in ['fail', 'replace', 'append']:
             # log error: Pandas.to_sql
@@ -1518,7 +1496,8 @@ class MySQLDatabase(Database):
                                        exception=exception)
         # try to add pandas dataframe to table
         try:
-            df.to_sql(table, dconn, if_exists=if_exists, index=index)
+            with closing(self.connection(connect_kind='sqlalchemy')) as dconn:
+                df.to_sql(table, dconn, if_exists=if_exists, index=index)
         except Exception as e:
             # log error: Pandas.to_sql
             ecode = '00-002-00047'
@@ -1530,25 +1509,19 @@ class MySQLDatabase(Database):
                                        exceptionname='DatabaseError',
                                        exception=exception)
 
-        # commit change to database if requested
-        if commit:
-            self.commit()
-
     def _to_pandas(self, command: str) -> pd.DataFrame:
         """
         Use pandas to get sql command
         :param command:
         :return:
         """
-        # need a sqlalchmy connection here
-        dconn = self.connect(self.host, self.user, self.passwd, self.dbname,
-                             connect_kind='sqlalchemy')
         # set function name
         func_name = __NAME__ + '.Database._to_pandas()'
         # try to read sql using pandas
         # noinspection PyBroadException
         try:
-            df = pd.read_sql(command, con=dconn)
+            with closing(self.connection(connect_kind='sqlalchemy')) as dconn:
+                df = pd.read_sql(command, con=dconn)
         except Exception as _:
             # log error: Could not read SQL command as pandas table
             ecode = '00-002-00048'
@@ -1982,8 +1955,7 @@ class LanguageDatabase(BaseDatabaseManager):
 
     def add_entry(self, key: str, kind: str, comment: str,
                   arguments: Union[str, None] = None,
-                  textdict: Union[Dict[str, str], None] = None,
-                  commit: bool = True):
+                  textdict: Union[Dict[str, str], None] = None):
         """
         Add a language entry
 
@@ -1993,7 +1965,7 @@ class LanguageDatabase(BaseDatabaseManager):
         :param comment: a description of this key (in english)
         :param arguments: None or argument
         :param textdict:
-        :param commit:
+
         :return:
         """
         # set function
@@ -2046,11 +2018,10 @@ class LanguageDatabase(BaseDatabaseManager):
             condition = 'KEYNAME="{0}"'.format(key)
             # update row in database
             self.database.set('*', values=values, condition=condition,
-                              table=self.database.tname, commit=commit)
+                              table=self.database.tname)
         # if we don't have the key add a new row
         else:
-            self.database.add_row(values, table=self.database.tname,
-                                  commit=commit)
+            self.database.add_row(values, table=self.database.tname)
 
     def get_dict(self, language: str) -> dict:
         """

@@ -440,7 +440,7 @@ class RecipeLog:
                                     qc_logic=inst.qc_logic,
                                     qc_pass=inst.qc_pass,
                                     errors=inst.errors,
-                                    ended=inst.ended, used=1, commit=True)
+                                    ended=inst.ended, used=1)
 
     def _make_row(self) -> OrderedDict:
         """

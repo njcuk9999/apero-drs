@@ -748,7 +748,7 @@ class AstroObject(object):
         # set used
         self.used = 1
 
-    def write_obj(self, database: ObjectDatabase, commit: bool = True):
+    def write_obj(self, database: ObjectDatabase):
         # do not update if we found via database
         if not self.update_database:
             return
@@ -766,8 +766,7 @@ class AstroObject(object):
                            rpmag=self.rpmag, rpmag_s=self.rpmag_source,
                            epoch=self.epoch, epoch_s=self.epoch_source,
                            teff=self.teff, teff_s=self.teff_source,
-                           aliases=self.aliases, aliases_s=self.aliases_source,
-                           commit=commit)
+                           aliases=self.aliases, aliases_s=self.aliases_source)
 
     def write_table(self, outdict: dict):
         """
@@ -870,8 +869,8 @@ class AstroObject(object):
 def resolve_target(params: ParamDict, pconst,
                    objname: Union[str, None] = None,
                    database: Union[ObjectDatabase, None] = None,
-                   header: Union[drs_fits.Header, None] = None,
-                   commit: bool = True) -> Union[drs_fits.Header, None]:
+                   header: Union[drs_fits.Header, None] = None
+                   ) -> Union[drs_fits.Header, None]:
     """
     Resolve a list of object names via gaia ids (from GoogleSheet/Gaia/Simbad
     crossmatch)
@@ -885,8 +884,6 @@ def resolve_target(params: ParamDict, pconst,
     :param header: if objname is not set get parameters via fits header
                    (recommended over objname as fills in ra/dec/pmra/pmde for
                    targets that are not found)
-    :param commit: bool, if True writes to database - else a database commit
-                   is needed later
 
     :return: None - updates object database
     """
@@ -952,7 +949,7 @@ def resolve_target(params: ParamDict, pconst,
     # get simbad aliases for this object
     astro_obj.get_simbad_aliases()
     # write to database
-    astro_obj.write_obj(database, commit=commit)
+    astro_obj.write_obj(database)
     # update header
     if header is not None:
         return astro_obj.update_header(params, header)
@@ -983,7 +980,7 @@ def resolve_targets(params: ParamDict, objnames: Union[str, List[str]],
         database.load_db()
     # loop around objects
     for objname in objnames:
-        resolve_target(params, pconst, objname, database, commit=True)
+        resolve_target(params, pconst, objname, database)
 
 
 def query_gaia(params: ParamDict, url: str,
