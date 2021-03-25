@@ -135,10 +135,31 @@ class Database:
         self.tables = []
         # storage for database path
         self.path = None
-        # have the conn
-        self._conn_ = None
         # have a main table name
         self.tname = 'MAIN'
+
+    def connection(self, host: Union[str, None] = None,
+                   user: Union[str, None] = None,
+                   passwd: Union[str, None] = None,
+                   dbname: Union[str, None] = None,
+                   connect_kind: str = 'None'):
+        """
+        Connect to the database
+        Only use within with statement (so connection is closed afterwards)
+
+        :param host: str, the host name
+        :param user: str, the user name
+        :param passwd: str, the password
+        :param dbname: str, the database name (can be None)
+
+        :return: return the connection
+        """
+        # we don't use this if connection is not implemented
+        _ = host, user, passwd, dbname, connect_kind
+        # log that this function must be implemented in child database
+        # TODO: move to database
+        emsg = 'Must implement "Database.connection" in child database class'
+        raise NotImplementedError(emsg)
 
     def __getstate__(self) -> dict:
         """
@@ -146,7 +167,7 @@ class Database:
         :return:
         """
         # what to exclude from state
-        exclude = ['_conn_']
+        exclude = []
         # need a dictionary for pickle
         state = dict()
         for key, item in self.__dict__.items():
@@ -166,8 +187,6 @@ class Database:
         _ = __NAME__ + 'Database.__setstate__()'
         # update dict with state
         self.__dict__.update(state)
-        # need to reset _conn_
-        self._conn = None
 
     def __str__(self):
         """
@@ -183,13 +202,13 @@ class Database:
         """
         return self.__str__()
 
-    def cursor(self):
+    def cursor(self, conn):
         """
         Attempt to retrieve a database cursor
 
         :return: The cursor
         """
-        return self._conn_.cursor()
+        return conn.cursor()
 
     # get / set / execute / add methods
     def execute(self, command: str, fetch: bool) -> Any:
@@ -208,26 +227,28 @@ class Database:
         if self._verbose_:
             print("SQL INPUT: ", command)
         # get cursor
-        with closing(self.cursor()) as cursor:
-            # try to execute SQL command
-            try:
-                result = self._execute(cursor, command, fetch=fetch)
-            # pass unique exception upwards
-            except UniqueEntryException as e:
-                raise UniqueEntryException(str(e))
-            # catch all errors and pipe to database error
-            except Exception as e:
-                # log error: Error Type: Error message \n\t Command:
-                ecode = '00-002-00032'
-                emsg = drs_base.BETEXT[ecode]
-                eargs = [type(e), str(e), command]
-                exception = DatabaseError(message=emsg.format(*eargs),
-                                          errorobj=e,
-                                          path=self.path, func_name=func_name)
-                return drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                           exceptionname='DatabaseError',
-                                           exception=exception)
-
+        with closing(self.connection()) as conn:
+            with closing(self.cursor(conn)) as cursor:
+                # try to execute SQL command
+                try:
+                    result = self._execute(cursor, command, fetch=fetch)
+                # pass unique exception upwards
+                except UniqueEntryException as e:
+                    raise UniqueEntryException(str(e))
+                # catch all errors and pipe to database error
+                except Exception as e:
+                    # log error: Error Type: Error message \n\t Command:
+                    ecode = '00-002-00032'
+                    emsg = drs_base.BETEXT[ecode]
+                    eargs = [type(e), str(e), command]
+                    exception = DatabaseError(message=emsg.format(*eargs),
+                                              errorobj=e,
+                                              path=self.path,
+                                              func_name=func_name)
+                    return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                               exceptionname='DatabaseError',
+                                               exception=exception)
+            conn.commit()
         # print output of sql command if verbose
         if self._verbose_:
             print("SQL OUTPUT:", result)
@@ -562,7 +583,6 @@ class Database:
 
     def add_row(self, values: List[object], table: Union[None, str],
                 columns: Union[str, List[str]] = "*",
-                commit: bool = True,
                 unique_cols: Union[List[str], None] = None):
         """
         Adds a row to the specified tables with the given values.
@@ -575,7 +595,6 @@ class Database:
         :param columns: If you only want to initialize some of the columns,
                         you may list them here.  Otherwise, '*' indicates that
                         all columns will be initialized.
-        :param commit: boolean, if True will commit changes to sql database
         :param unique_cols: list of strings or None, if set this is columns that
                             are used to form the unique hash for specifying
                             unique rows
@@ -611,9 +630,6 @@ class Database:
         command = "INSERT INTO {}{} VALUES({})".format(*cargs)
         # execute the sql command
         self.execute(command, fetch=False)
-        # if commit is request commit changes to SQL database
-        if commit:
-            self.commit()
 
     def delete_rows(self, table: Union[None, str],
                     condition: Union[str, None] = None,
@@ -643,9 +659,6 @@ class Database:
         command = "DELETE FROM {} WHERE {}".format(table, condition)
         # execute the sql command
         self.execute(command, fetch=False)
-        # if commit is request commit changes to SQL database
-        if commit:
-            self.commit()
 
     # table methods
     def add_table(self, name: str, field_names: List[str],
@@ -779,7 +792,6 @@ class Database:
         # execute a change in table name
         self.execute("ALTER TABLE {} RENAME TO {}".format(old_name, new_name),
                      fetch=False)
-        self.commit()
 
     def tname_in_db(self) -> bool:
         """
@@ -835,24 +847,26 @@ class Database:
         # set up command
         command = "SELECT {} from {}".format(columns, table)
         # get cursor
-        with closing(self.cursor()) as cursor:
-            # try to execute SQL command
-            try:
+        with closing(self.connection()) as conn:
+            with closing(self.cursor(conn)) as cursor:
                 # try to execute SQL command
-                self._execute(cursor, command, fetch=True)
-                # get columns
-                colnames = list(map(lambda x: x[0], cursor.description))
-            # catch all errors and pipe to database error
-            except Exception as e:
-                # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
-                ecode = '00-002-00040'
-                emsg = drs_base.BETEXT[ecode]
-                eargs = [type(e), str(e)]
-                exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                          func_name=func_name)
-                return drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                           exceptionname='DatabaseError',
-                                           exception=exception)
+                try:
+                    # try to execute SQL command
+                    self._execute(cursor, command, fetch=True)
+                    # get columns
+                    colnames = list(map(lambda x: x[0], cursor.description))
+                # catch all errors and pipe to database error
+                except Exception as e:
+                    # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
+                    ecode = '00-002-00040'
+                    emsg = drs_base.BETEXT[ecode]
+                    eargs = [type(e), str(e)]
+                    exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                              func_name=func_name)
+                    return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                               exceptionname='DatabaseError',
+                                               exception=exception)
+            conn.commit()
         # return a list of columns
         return colnames
 
@@ -889,17 +903,6 @@ class Database:
         """
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
-
-    def commit(self):
-        """
-        Commit to the SQL database
-        :return:
-        """
-        # if verbose then print the commit statement
-        if self._verbose_:
-            print('SQL: COMMIT')
-        # commit
-        self._conn_.commit()
 
     def _to_astropy_table(self, result, table=None) -> Table:
         """
@@ -993,9 +996,34 @@ class SQLiteDatabase(Database):
         self.passwd = None
         self.dbname = None
         self.tname = 'MAIN'
-        # try to connect the the SQL3 database
+        # update table list
+        self._update_table_list_()
+
+    def connection(self, host: Union[str, None] = None,
+                   user: Union[str, None] = None,
+                   passwd: Union[str, None] = None,
+                   dbname: Union[str, None] = None,
+                   connect_kind: str = 'sqlite'):
+        """
+        Connect to the sqlite database
+        Only use within with statement (so connection is closed afterwards)
+
+        :param host: str, the host name
+        :param user: str, the user name
+        :param passwd: str, the password
+        :param dbname: str, the database name (can be None)
+
+        :return: return the sqlite connection
+        """
+        # set function name
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+                                           'connection')
+        # deal with no host / user / password / database name
+        _ = host, user, passwd, dbname
+        # try to connect
         try:
-            self._conn_ = sqlite3.connect(self.path, timeout=TIMEOUT)
+            if connect_kind == 'sqlite':
+                return sqlite3.connect(self.path, timeout=TIMEOUT)
         except Exception as e:
             # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
             ecode = '00-002-00043'
@@ -1006,8 +1034,6 @@ class SQLiteDatabase(Database):
             drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                 exceptionname='DatabaseError',
                                 exception=exception)
-        # update table list
-        self._update_table_list_()
 
     def __str__(self):
         """
@@ -1022,7 +1048,7 @@ class SQLiteDatabase(Database):
         :return:
         """
         # what to exclude from state
-        exclude = ['_conn_']
+        exclude = []
         # need a dictionary for pickle
         state = dict()
         for key, item in self.__dict__.items():
@@ -1042,19 +1068,6 @@ class SQLiteDatabase(Database):
         func_name = __NAME__ + 'Database.__setstate__()'
         # update dict with state
         self.__dict__.update(state)
-        # try to connect the the SQL3 database
-        try:
-            self._conn_ = sqlite3.connect(self.path, timeout=TIMEOUT)
-        except Exception as e:
-            # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
-            ecode = '00-002-00043'
-            emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e), func_name]
-            exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                      func_name=func_name)
-            drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                exceptionname='DatabaseError',
-                                exception=exception)
         # update table list
         self._update_table_list_()
 
@@ -1146,7 +1159,8 @@ class SQLiteDatabase(Database):
                                        exception=exception)
         # try to add pandas dataframe to table
         try:
-            df.to_sql(table, self._conn_, if_exists=if_exists, index=index)
+            with closing(self.connection()) as conn:
+                df.to_sql(table, conn, if_exists=if_exists, index=index)
         except Exception as e:
             # log error: Pandas.to_sql
             ecode = '00-002-00047'
@@ -1172,7 +1186,8 @@ class SQLiteDatabase(Database):
         # try to read sql using pandas
         # noinspection PyBroadException
         try:
-            df = pd.read_sql(command, self._conn_)
+            with closing(self.connection()) as conn:
+                df = pd.read_sql(command, conn)
         except Exception as _:
             # log error: Could not read SQL command as pandas table
             ecode = '00-002-00048'
@@ -1196,10 +1211,10 @@ class SQLiteDatabase(Database):
         # construct backup path
         backup_path = str(self.path).replace('.db', 'backup.db')
         # make backup database
-        backup_conn = sqlite3.connect(backup_path)
-        # copy main into backup database
-        with backup_conn:
-            self._conn_.backup(backup_conn)
+        with closing(self.connection()) as conn:
+            with closing(sqlite3.connect(backup_path)) as backup_conn:
+                # copy main into backup database
+                conn.backup(backup_conn)
 
     def lock(self):
         """
@@ -1286,9 +1301,51 @@ class MySQLDatabase(Database):
         # deal with database for sql
         self.add_database()
         # try to connect the the SQL3 database
+
+
+        # update table list
+        self._update_table_list_()
+
+    def connection(self, host: Union[str, None] = None,
+                   user: Union[str, None] = None,
+                   passwd: Union[str, None] = None,
+                   dbname: Union[str, None] = None,
+                   connect_kind: str = 'mysql.connect'):
+        """
+        Connect to the mysql database
+        Only use within with statement (so connection is closed afterwards)
+
+        :param host: str, the host name
+        :param user: str, the user name
+        :param passwd: str, the password
+        :param dbname: str, the database name (can be None)
+
+        :return: return the mysql connection
+        """
+
+        # set function name
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+                                           'connection')
+        # deal with no host / user / password / database name
+        if host is None:
+            host = self.host
+        if user is None:
+            user = self.user
+        if passwd is None:
+            passwd = self.passwd
+        if dbname is None:
+            dbname = self.dbname
+        # try to connect
         try:
-            self._conn_ = self.connect(self.host, self.user, self.passwd,
-                                       self.dbname)
+            if connect_kind == 'mysql.connect':
+                return mysql.connect(host=host, user=user, passwd=passwd,
+                                     database=dbname, connection_timeout=3600)
+            else:
+                import sqlalchemy
+                dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
+                dargs = [user, passwd, host, dbname]
+                return sqlalchemy.create_engine(dpath.format(*dargs),
+                                                       pool_pre_ping=True)
         except Exception as e:
             # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
             ecode = '00-002-00045'
@@ -1299,31 +1356,6 @@ class MySQLDatabase(Database):
             drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                 exceptionname='DatabaseError',
                                 exception=exception)
-        # update table list
-        self._update_table_list_()
-
-    @staticmethod
-    def connect(host: str, user: str, passwd: str,
-                dbname: Union[str, None] = None, connect_kind='mysql.connect'):
-        """
-        Connect to the mysql database
-
-        :param host: str, the host name
-        :param user: str, the user name
-        :param passwd: str, the password
-        :param dbname: str, the database name (can be None)
-
-        :return: return the mysql connection
-        """
-        if connect_kind == 'mysql.connect':
-            return mysql.connect(host=host, user=user, passwd=passwd,
-                                 database=dbname, connection_timeout=3600)
-        else:
-            import sqlalchemy
-            dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
-            dargs = [user, passwd, host, dbname]
-            return sqlalchemy.create_engine(dpath.format(*dargs),
-                                            pool_pre_ping=True)
 
     def __str__(self):
         """
@@ -1338,7 +1370,7 @@ class MySQLDatabase(Database):
         :return:
         """
         # what to exclude from state
-        exclude = ['_conn_']
+        exclude = []
         # need a dictionary for pickle
         state = dict()
         for key, item in self.__dict__.items():
@@ -1358,20 +1390,6 @@ class MySQLDatabase(Database):
         func_name = __NAME__ + 'Database.__setstate__()'
         # update dict with state
         self.__dict__.update(state)
-        # try to connect the the SQL3 database
-        try:
-            self._conn_ = self.connect(self.host, self.user, self.passwd,
-                                       self.dbname)
-        except Exception as e:
-            # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
-            ecode = '00-002-00045'
-            emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e), func_name]
-            exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                      func_name=func_name)
-            drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                exceptionname='DatabaseError',
-                                exception=exception)
         # update table list
         self._update_table_list_()
 
@@ -1385,48 +1403,46 @@ class MySQLDatabase(Database):
         # set function name
         func_name = '{0}.{1}.{2}'.format(__NAME__, self.classname,
                                          'add_database')
-        # create a temporary connection to mysql
-        tmpconn = self.connect(self.host, self.user, self.passwd)
         # get the cursor
-        with closing(tmpconn.cursor()) as cursor:
-            # Get the new list of tables
-            command = 'SHOW DATABASES'
-            # execute command
-            cursor.execute(command)
-            _databases = cursor.fetchall()
-            # the table names are the first entry in each row so get the table
-            #  names from these (and update self.tables)
-            databases = []
-            for _database in _databases:
-                # append table name
-                databases.append(_database[0])
-            # check for database in databases (and add it if not there)
-            if self.dbname not in databases:
-                try:
-                    cursor.execute('CREATE DATABASE {0}'.format(self.dbname))
-                except Exception as e:
-                    ecode = '00-002-00050'
-                    emsg = drs_base.BETEXT[ecode]
-                    eargs = [self.dbname, type(e), str(e)]
-                    exception = DatabaseError(emsg.format(*eargs),
-                                              path=self.path,
-                                              func_name=func_name)
-                    drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                        exceptionname='DatabaseError',
-                                        exception=exception)
+        with closing(self.connection()) as tmpconn:
+            with closing(tmpconn.cursor) as cursor:
+                # Get the new list of tables
+                command = 'SHOW DATABASES'
+                # execute command
+                cursor.execute(command)
+                _databases = cursor.fetchall()
+                # the table names are the first entry in each row so get the table
+                #  names from these (and update self.tables)
+                databases = []
+                for _database in _databases:
+                    # append table name
+                    databases.append(_database[0])
+                # check for database in databases (and add it if not there)
+                if self.dbname not in databases:
+                    try:
+                        cursor.execute('CREATE DATABASE {0}'.format(self.dbname))
+                    except Exception as e:
+                        ecode = '00-002-00050'
+                        emsg = drs_base.BETEXT[ecode]
+                        eargs = [self.dbname, type(e), str(e)]
+                        exception = DatabaseError(emsg.format(*eargs),
+                                                  path=self.path,
+                                                  func_name=func_name)
+                        drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                            exceptionname='DatabaseError',
+                                            exception=exception)
 
-    def cursor(self):
+    def cursor(self, conn):
         """
         Attempt to retrieve a database cursor and reconnect on failure
 
         :return: The cursor
         """
         try:
-            return self._conn_.cursor()
+            return conn.cursor()
         except mysql.OperationalError:
-            self._conn_ = self.connect(self.host, self.user, self.passwd,
-                                       self.dbname)
-            return self._conn_.cursor()
+            conn = self.connection()
+            return conn.cursor()
 
     def _execute(self, cursor: Any, command: str,
                  fetch: bool = True):
