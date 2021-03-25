@@ -350,7 +350,7 @@ class CalibrationDatabase(DatabaseManager):
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time, used]
         # are allowed duplicate columns --> don't check for unique
-        self.database.add_row(values, table=self.database.tname, commit=True)
+        self.database.add_row(values, table=self.database.tname)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('CALIB_DB_ENTRY',
@@ -719,7 +719,7 @@ class TelluricDatabase(DatabaseManager):
         values = [key, fiber, is_super, filename, human_time, unix_time,
                   objname, airmass, tau_water, tau_others, used]
         # are allowed duplicate rows --> just add (don't check for unique)
-        self.database.add_row(values, table=self.database.tname, commit=True)
+        self.database.add_row(values, table=self.database.tname)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('TELLU_DB_ENTRY',
@@ -1262,8 +1262,7 @@ class IndexDatabase(DatabaseManager):
                   runstring: Union[str, None] = None,
                   hkeys: Union[Dict[str, str], None] = None,
                   used: Union[int, None] = None,
-                  rawfix: Union[int, None] = None,
-                  commit: bool = True):
+                  rawfix: Union[int, None] = None):
         """
         Add an entry to the index database
 
@@ -1287,7 +1286,6 @@ class IndexDatabase(DatabaseManager):
         :param used: int or None, if set overrides the default "used" parameter
         :param rawfix: int or None, if set overrides the default "rawfix"
                        parameter
-        :param commit: bool, if True commitrs
 
         :return: None - adds entry to index database
         """
@@ -1365,7 +1363,7 @@ class IndexDatabase(DatabaseManager):
                       str(recipe), str(runstring)]
             values += hvalues + [used, rawfix]
             self.database.add_row(values, table=self.database.tname,
-                                  commit=commit, unique_cols=ucols)
+                                  unique_cols=ucols)
         # if this is called we need to set instead of adding
         except drs_db.UniqueEntryException:
             # add new entry to database
@@ -1376,8 +1374,7 @@ class IndexDatabase(DatabaseManager):
             condition = None
             # update row in database
             self.database.set('*', values=values, condition=condition,
-                              table=self.database.tname,
-                              commit=commit, unique_cols=ucols)
+                              table=self.database.tname, unique_cols=ucols)
 
     def remove_entries(self, condition):
         # set function
@@ -1665,7 +1662,7 @@ class IndexDatabase(DatabaseManager):
                     if drs_key in header:
                         hkeys[rkey] = header[drs_key]
             # add to database
-            self.add_entry(req_inst, block_kind, hkeys=hkeys, commit=True)
+            self.add_entry(req_inst, block_kind, hkeys=hkeys)
 
     def update_header_fix(self, recipe):
         # set function name
@@ -1932,8 +1929,7 @@ class LogDatabase(DatabaseManager):
                     qc_pass: Union[str, None] = None,
                     errors: Union[str, None] = None,
                     ended: Union[bool, int, None] = None,
-                    used: Union[int, None] = None,
-                    commit: bool = True):
+                    used: Union[int, None] = None):
         """
         Add a log entry to database
 
@@ -1977,8 +1973,6 @@ class LogDatabase(DatabaseManager):
         :param ended: bool or int, whether a recipe run ended - 1 for ended
                       0 if did not end (default)
         :param used: int, if entry should be used - always 1 for use internally
-        :param commit: bool, if True commit, if False need to commit later
-                       (i.e. commit a batch of executions)
 
         :return: None - updates database
         """
@@ -2010,7 +2004,7 @@ class LogDatabase(DatabaseManager):
                 except Exception as _:
                     values.append('None')
         # add row to database
-        self.database.add_row(values, table=self.database.tname, commit=commit)
+        self.database.add_row(values, table=self.database.tname)
 
     def get_entries(self, columns: str = '*',
                     include_obs_dirs: Union[List[str], None] = None,
@@ -2277,7 +2271,7 @@ class ObjectDatabase(DatabaseManager):
                   epoch: Union[float, None] = None, epoch_s: str = 'None',
                   teff: Union[float, None] = None, teff_s: str = 'None',
                   aliases: Union[List[str], str, None] = None,
-                  aliases_s: str = 'None', used: int = 1, commit: bool = True):
+                  aliases_s: str = 'None', used: int = 1):
         """
         Add an object to the object database
 
@@ -2311,8 +2305,6 @@ class ObjectDatabase(DatabaseManager):
                         target can have
         :param aliases_s: str, the source of aliases
         :param used: int, whether to use entries or not (normally ste manually)
-        :param commit: bool, if True commit, if False need to commit later
-                       (i.e. commit a batch of executions)
 
         :return: None - updates database
         """
@@ -2342,7 +2334,7 @@ class ObjectDatabase(DatabaseManager):
         # try to add a new row
         try:
             self.database.add_row(values, table=self.database.tname,
-                                  columns='*', commit=commit, unique_cols=ucols)
+                                  columns='*', unique_cols=ucols)
         # if row already exists then update that row (based on Gaia ID and
         #   objname)
         except drs_db.UniqueEntryException:
@@ -2350,8 +2342,7 @@ class ObjectDatabase(DatabaseManager):
             condition = None
             # update row in database
             self.database.set('*', values=values, condition=condition,
-                              table=self.database.tname, commit=commit,
-                              unique_cols=ucols)
+                              table=self.database.tname, unique_cols=ucols)
 
 
 # =============================================================================
