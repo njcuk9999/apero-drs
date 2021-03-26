@@ -189,7 +189,7 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     # if we are still here must use pyasl BERV estimate
     # -------------------------------------------------------------------------
     # calculate berv/bjd
-    bervs, bjds = use_pyasl(params, bprops['OBS_TIMES'], **bprops)
+    bervs, bjds = use_pyasl(params, bprops['OBS_TIMES'], props=bprops)
     # --------------------------------------------------------------
     # calculate max berv
     bervmax = mp.nanmax(np.abs(bervs))
