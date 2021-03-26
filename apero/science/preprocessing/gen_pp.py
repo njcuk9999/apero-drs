@@ -585,7 +585,8 @@ class AstroObject(object):
                              self.gl_alias_colname, self.pconst)
         # set some properties from gtable
         if gtable is not None:
-            self.input_gaiaid = gtable[self.gl_gaia_colname]
+            if str(gtable[self.gl_gaia_colname]) not in ['None', '--', '']:
+                self.input_gaiaid = gtable[self.gl_gaia_colname]
         #  try (again) gaia id against gaia query (only if gaia_id is still
         #  None)
         if self.input_gaiaid is not None:

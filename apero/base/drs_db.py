@@ -598,6 +598,8 @@ class Database:
         """
         # set function name
         _ = __NAME__ + '.Database.add_row()'
+        # copy values
+        values = list(values)
         # infer table name
         table = self._infer_table_(table)
         # add the hash column
