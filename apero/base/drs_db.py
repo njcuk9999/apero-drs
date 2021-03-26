@@ -600,15 +600,15 @@ class Database:
         _ = __NAME__ + '.Database.add_row()'
         # infer table name
         table = self._infer_table_(table)
-        # push values into strings
-        _values = list(map(_decode_value, values))
         # add the hash column
         if unique_cols is not None:
             # get the columns
             if columns == '*':
                 columns = self.colnames('*', table=table)
             # add to the values
-            columns, values = _hash_col(columns, _values, unique_cols)
+            columns, values = _hash_col(columns, values, unique_cols)
+        # push values into strings
+        _values = list(map(_decode_value, values))
         # deal with columns being all columns
         if columns == '*':
             columns = ''
@@ -747,6 +747,27 @@ class Database:
         # update the table list
         self._update_table_list_()
 
+    def add_unique_uhash_col(self, table: Union[str, None]):
+        """
+        Need a way to update the unique column (uhash) if set -
+        this is because pandas removes uniqueness from the column
+
+        :param table: str or None, the table name
+        :return:
+        """
+        # QUESTION: Does this work with sqlite and mysql?
+        # infer table name
+        table = self._infer_table_(table)
+        # need to make sure UHASH is a VARCHAR(64)
+        command = 'ALTER TABLE {0} MODIFY COLUMN {1} VARCHAR(64);'
+        command = command.format(table, UHASH_COL)
+        self.execute(command, fetch=False)
+        # now create sql command
+        command = "ALTER TABLE {0} ADD UNIQUE ({1});"
+        command = command.format(table, UHASH_COL)
+        # execute command
+        self.execute(command, fetch=False)
+
     def delete_table(self, name: str):
         """
         Deletes a table from the database, erasing all contained data
@@ -875,6 +896,10 @@ class Database:
         # set function name
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            '_infer_table_')
+        # infer table name from tname
+        if self.tname is not None:
+            if self.tname in self.tables:
+                return str(self.tname)
         # deal with no table
         if table is None:
             if len(self.tables) != 1:
@@ -1148,6 +1173,11 @@ class SQLiteDatabase(Database):
         try:
             with closing(self.connection()) as conn:
                 df.to_sql(table, conn, if_exists=if_exists, index=index)
+            # pandas removes uniqueness of columns - need to readd this
+            #   constraint if unique_cols is not None
+            if unique_cols is not None:
+                self.add_unique_uhash_col(table)
+
         except Exception as e:
             # log error: Pandas.to_sql
             ecode = '00-002-00047'
@@ -1498,6 +1528,11 @@ class MySQLDatabase(Database):
         try:
             with closing(self.connection(connect_kind='sqlalchemy')) as dconn:
                 df.to_sql(table, dconn, if_exists=if_exists, index=index)
+                # pandas removes uniqueness of columns - need to readd this
+                #   constraint if unique_cols is not None
+                if unique_cols is not None:
+                    self.add_unique_uhash_col(table)
+
         except Exception as e:
             # log error: Pandas.to_sql
             ecode = '00-002-00047'

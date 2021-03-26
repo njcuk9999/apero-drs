@@ -1617,8 +1617,12 @@ class DrsInputFile:
         #     recipe to reproduce this file)
         if runstring is None:
             self.output_dict['RUNSTRING'] = 'None'
+            # deal with recipe
+            self.output_dict['RECIPE'] = 'Unknown'
         else:
             self.output_dict['RUNSTRING'] = str(runstring)
+            # deal with recipe
+            self.output_dict['RECIPE'] = str(runstring).split()[0]
         # add whether this row should be used be default (always 1)
         #    if file does not exist we do set this to zero though (as a flag)
         self.output_dict['USED'] = used
@@ -5902,7 +5906,6 @@ class DrsOutFile(DrsInputFile):
         # add extension names as comments
         self._add_extensions_names_to_primary(params)
 
-
     def _add_header_keys(self, params: ParamDict):
         """
         Add header keys from one extension to another
@@ -6194,6 +6197,94 @@ class DrsOutFile(DrsInputFile):
                            header_list, names, datatype_list, func=func_name)
         # write output dictionary
         self.output_dictionary(block_kind, runstring)
+
+    def output_dictionary(self, block_kind: str,
+                          runstring: Union[str, None] = None,
+                          recipe: Union[Any, None] = None):
+        """
+        Generate the output dictionary (for use while writing)
+        Uses OUTPUT_FILE_HEADER_KEYS and DrsFile.hdict to generate an
+        output dictionary for this file (for use in indexing)
+
+        Requires DrsFile.filename and DrsFile.params to be set
+
+        :params block_kind: str, the block kind (raw/tmp/red)
+        :params runstring: str, the run string that created this recipe run
+
+        :return None:
+        """
+        # set function name
+        func_name = display_func('output_dictionary', __NAME__,
+                                 self.class_name)
+        # check that params is set
+        self.check_params(func_name)
+        params = self.params
+        pconst = constants.pload()
+        # get required keys for index database
+        hkeys, htypes = pconst.INDEX_HEADER_KEYS()
+        # deal with absolute path of file
+        self.output_dict['ABSPATH'] = str(self.filename)
+        # deal with night name of file
+        self.output_dict['OBS_DIR'] = str(self.params['OBS_DIR'])
+        # deal with basename of file
+        self.output_dict['FILENAME'] = str(self.basename)
+        # deal with kind
+        self.output_dict['BLOCK_KIND'] = str(block_kind)
+        # deal with last modified time for file
+        if Path(self.filename).exists():
+            last_mod = Path(self.filename).lstat().st_mtime
+            used = 1
+        else:
+            last_mod = np.nan
+            used = 0
+        self.output_dict['LAST_MODIFIED'] = last_mod
+        # deal with the run string (string that can be used to re-run the
+        #     recipe to reproduce this file)
+        if runstring is None:
+            self.output_dict['RUNSTRING'] = 'None'
+            # deal with recipe
+            self.output_dict['RECIPE'] = 'Unknown'
+        else:
+            self.output_dict['RUNSTRING'] = str(runstring)
+            # deal with recipe
+            self.output_dict['RECIPE'] = str(runstring).split()[0]
+        # add whether this row should be used be default (always 1)
+        self.output_dict['USED'] = used
+        # add the raw fix (all files here should be raw fixed)
+        self.output_dict['RAWFIX'] = 1
+        # get primary header
+        header = self.extensions[0].header
+        # some keys have to be set manually
+        manual_keys = dict()
+        manual_keys['KW_PID'] = params['PID']
+        manual_keys['KW_VERSION'] = params['DRS_VERSION']
+        manual_keys['KW_FIBER'] = 'None'
+        manual_keys['KW_OUTPUT'] = self.name
+        # loop around the keys and find them in hdict (or add null character if
+        #     not found)
+        for it, key in enumerate(hkeys):
+            # deal with header key stores
+            if key in params:
+                dkey = params[key][0]
+            else:
+                dkey = str(key)
+            # get dtype
+            dtype = htypes[it]
+            # set found
+            found = False
+            # add key if in hdict (priority)
+            if dkey in header:
+                # noinspection PyBroadException
+                try:
+                    self.output_dict[key] = dtype(header[dkey])
+                    found = True
+                except Exception as _:
+                    self.output_dict[key] = 'None'
+            if not found:
+                self.output_dict[key] = 'None'
+        # copy over the manual keys
+        for manual_key in manual_keys:
+            self.output_dict[manual_key] = manual_keys[manual_key]
 
 
 # =============================================================================

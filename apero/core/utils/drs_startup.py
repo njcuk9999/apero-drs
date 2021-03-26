@@ -487,6 +487,7 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
         - 'raw'
         - 'tmp'
         - 'red'
+        - 'out'
     :param end: bool, if we should run full end routines
     :param quiet: bool, if we should not print out standard output
     :param keys: list of string, any variable in main function can be named here
