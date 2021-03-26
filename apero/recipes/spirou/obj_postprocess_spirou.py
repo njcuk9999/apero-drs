@@ -159,6 +159,7 @@ def __main__(recipe, params):
             WLOG(params, '', msg.format(*margs))
             filepostfile.write_file(block_kind=recipe.out_block_str,
                                     runstring=recipe.runstring)
+            recipe.add_output_file(filepostfile)
             # if user wants to clear - clear this data
             if clear:
                 for filename in filepostfile.clear_files:

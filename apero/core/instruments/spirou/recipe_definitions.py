@@ -1296,37 +1296,6 @@ obj_pp_recipe.group_column = 'REPROCESS_OBSDIR_COL'
 recipes.append(obj_pp_recipe)
 
 
-# -----------------------------------------------------------------------------
-# out_postprocess
-# -----------------------------------------------------------------------------
-out_recipe = DrsRecipe(__INSTRUMENT__)
-out_recipe.name = 'out_postprocess_{0}.py'.format(INSTRUMENT_ALIAS)
-out_recipe.shortname = 'POST_PROCESS'
-out_recipe.instrument = __INSTRUMENT__
-out_recipe.in_block_str = 'red'
-out_recipe.out_block_str = 'out'
-out_recipe.extension = 'fits'
-out_recipe.description = textentry('OUT_DESC_HELP')
-out_recipe.epilog = ''
-out_recipe.kind = 'recipe'
-out_recipe.set_kwarg(name='--clear', dtype='switch',
-                     default_ref='POST_CLEAR_REDUCED',
-                     helpstr=textentry('OUT_CLEAR_HELP'))
-out_recipe.set_kwarg(name='--overwrite', dtype='switch',
-                     default_ref='POST_OVERWRITE',
-                     helpstr=textentry('OUT_OVERWRITE_HELP'))
-out_recipe.set_kwarg(name='--night', dtype=str, default='None',
-                     helpstr=textentry('OUT_NIGHT_HELP'), reprocess=True)
-out_recipe.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
-                     helpstr=textentry('OUT_WNIGHTLIST_HELP'), reprocess=True)
-out_recipe.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
-                     helpstr=textentry('OUT_BNIGHTLIST_HELP'), reprocess=True)
-
-out_recipe.group_func = grouping.no_group
-out_recipe.group_column = None
-# add to recipe
-recipes.append(out_recipe)
-
 # =============================================================================
 # Run order
 # =============================================================================
