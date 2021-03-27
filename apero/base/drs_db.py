@@ -1366,7 +1366,8 @@ class MySQLDatabase(Database):
             # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
             ecode = '00-002-00045'
             emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e), func_name]
+            connkind = 'CONNECT: {0}'.format(connect_kind)
+            eargs = [type(e), str(e), connkind, func_name]
             exception = DatabaseError(emsg.format(*eargs), path=self.path,
                                       func_name=func_name)
             drs_base.base_error(ecode, emsg, 'error', args=eargs,

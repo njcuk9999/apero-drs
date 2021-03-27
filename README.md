@@ -123,8 +123,12 @@ Make sure pre-installation is done first!
 
 #### 3.1 run the installation script
 ```bash
-python setup/install.py
+python setup/install.py --name={PROFILE}
 ```
+
+You should choose a memorable profile name - this will be used in several places
+note that it should not contain spaces or punctuation characters (other than 
+the underscore `_`)
 
 ---
 
@@ -134,28 +138,46 @@ A. `User config path`: This is the path where your configuration will be saved.
 If it doesn't exist you will be prompted to create it. 
 (This will be referred to as `DRS_UCONFIG` from now on (default is `/home/user/apero/`)
 
-B. `Settings for {INSTRUMENT}`: Install {INSTRUMENT}. If yes it will install the 
-instrument if not then it will not install the instrument. Currently only 
-SPIRou is supported.
+B. `Choose an instrument`: Install {INSTRUMENT}. If yes it will install the 
+instrument if not then it will not install the instrument. Use must select a number. 
+Currently only SPIRou is supported. Note to use multiple instruments install multiple times.
 
-C. `Set up paths individually`. If [Y]es it will allow you to set each path separately
+C. `Choose a database`: Either (1) use sqlite (recommended for single machine use) - 
+no setup required OR (2) use mysql (required for multiple machine use) - setup required
+note it is probably worth reading the "multiple machine" section of this read me
+before continuing! 
+
+Choosing MySQL will prompt you for:
+- the hostname (i.e. localhost)
+- a username (the mysql username)
+- a password (the mysql password), note this will be stored in plain text format 
+  so don't use personal or sensitive passwords here,
+- a database name (i.e. the MySQL database you wish tables to be created in)
+- a profile to use (in general this can be left blank) but if you want to share 
+  tables between setups this is the place to add another {PROFILE} name. Note these
+  profile names are used to keep the mysql database tables separate.
+
+D. `Set up paths individually`. If [Y]es it will allow you to set each path separately
 (i.e. for raw, tmp, reduced, calibDB etc). If no you will just set one path and
 all folders (raw, tmp, reduced, calibDB etc)) will be created under this directory.
 
-D. `Setting the directories` (either one directory or each of the sub-directories
+`Setting the directories` (either one directory or each of the sub-directories
 required - i.e. raw, tmp, reduced, calibDB etc)
 
-E. `Clean install?` __WARNING__: If you type [Y]es you will be prompted (later) to reset
+E. `Plot mode required`: this is the plotting mode - you can change this later
+in the user config files
+
+F. `Clean install?` Do you want a clean install. If this is your first installing
+to these data directories your answer will be [Y]es.
+
+__WARNING__: If you type [Y]es you will be prompted (later) to reset
 the directories this means any previous data in these directories will be removed.
 Note you can always say later to individual cases.
 
 Note if you have given empty directories you MUST run a clean install to copy
 the required files to the given directories.
 
-
-F. This process will then repeat for all instruments. __NOTE: Currently only SPIRou is supported__
-
-G. In the `Copying files` step if you asked for a clean install if directories 
+In the `Copying files` step if you asked for a clean install if directories 
 are not empty you will be prompted to reset them one-by-one 
 (__NOTE: THIS WILL REMOVE ALL DATA FROM THIS SPECIFIC DIRECTORY)__
 
@@ -1574,6 +1596,33 @@ EXTRACT_S1D, EXTRACT_S1D_WEIGHT
 
 
 
+[Back to top](#apero---a-pipeline-to-reduce-observations)
+
+---
+
+# 9 Processing on multiple cores / nodes / computers
+
+
+One of the most important things if running on multiple nodes or computers
+is to make sure the database mode is set to MySQL. Sqlite mode is not supported
+for complicated setups.
+
+Currently you can run on multiple cores on one machine using apero_processing
+directly
+
+## Notes on number of cores
+
+Note that you should allow between 3-5 Gb per core to run the apero_processing
+script
+
+Note you should make sure MySQL has at least a maximum number of connections
+equal to the number of cores + 1.
+
+
+
 
 
 [Back to top](#apero---a-pipeline-to-reduce-observations)
+
+
+
