@@ -1435,7 +1435,10 @@ class MySQLDatabase(Database):
             user = self.user
         if passwd is None:
             passwd = self.passwd
-        if dbname is None:
+        # deal with database name
+        if dbname == 'NULL':
+            dbname = None
+        elif dbname is None:
             dbname = self.dbname
         # try to connect
         try:
@@ -1515,7 +1518,7 @@ class MySQLDatabase(Database):
         func_name = '{0}.{1}.{2}'.format(__NAME__, self.classname,
                                          'add_database')
         # get the cursor
-        with closing(self.connection()) as tmpconn:
+        with closing(self.connection(dbname='NULL')) as tmpconn:
             with closing(tmpconn.cursor()) as cursor:
                 # Get the new list of tables
                 command = 'SHOW DATABASES'
