@@ -142,7 +142,9 @@ class Database:
                    user: Union[str, None] = None,
                    passwd: Union[str, None] = None,
                    dbname: Union[str, None] = None,
-                   connect_kind: str = 'None'):
+                   connect_kind: str = 'None',
+                   func: Union[str, None] = None,
+                   kind: Union[str, None] = None):
         """
         Connect to the database
         Only use within with statement (so connection is closed afterwards)
@@ -227,7 +229,8 @@ class Database:
         if self._verbose_:
             print("SQL INPUT: ", command)
         # get cursor
-        with closing(self.connection()) as conn:
+        conargs = dict(func=func_name, kind='execute:_execute')
+        with closing(self.connection(**conargs)) as conn:
             with closing(self.cursor(conn)) as cursor:
                 # try to execute SQL command
                 try:
@@ -912,7 +915,8 @@ class Database:
         # set up command
         command = "SELECT {} from {}".format(columns, table)
         # get cursor
-        with closing(self.connection()) as conn:
+        conargs = dict(func=func_name, kind='_execute:colnames')
+        with closing(self.connection(**conargs)) as conn:
             with closing(self.cursor(conn)) as cursor:
                 # try to execute SQL command
                 try:
@@ -1087,7 +1091,9 @@ class SQLiteDatabase(Database):
                    user: Union[str, None] = None,
                    passwd: Union[str, None] = None,
                    dbname: Union[str, None] = None,
-                   connect_kind: str = 'sqlite'):
+                   connect_kind: str = 'sqlite',
+                   func: Union[str, None] = None,
+                   kind: Union[str, None] = None):
         """
         Connect to the sqlite database
         Only use within with statement (so connection is closed afterwards)
@@ -1100,7 +1106,7 @@ class SQLiteDatabase(Database):
         :return: return the sqlite connection
         """
         # set function name
-        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, 'SQLiteDatabase',
                                            'connection')
         # deal with no host / user / password / database name
         _ = host, user, passwd, dbname
@@ -1152,7 +1158,7 @@ class SQLiteDatabase(Database):
         :return:
         """
         # set function name
-        func_name = __NAME__ + 'Database.__setstate__()'
+        func_name = __NAME__ + 'SQLiteDatabase.__setstate__()'
         # update dict with state
         self.__dict__.update(state)
         # update table list
@@ -1225,7 +1231,7 @@ class SQLiteDatabase(Database):
         :return:
         """
         # set function name
-        func_name = __NAME__ + '.Database.add_from_pandas()'
+        func_name = __NAME__ + '.SQLiteDatabase.add_from_pandas()'
         # infer table name
         table = self._infer_table_(table)
         # need to add uhash column
@@ -1246,7 +1252,8 @@ class SQLiteDatabase(Database):
                                        exception=exception)
         # try to add pandas dataframe to table
         try:
-            with closing(self.connection()) as tmpconn:
+            conargs = dict(func=func_name, kind='_TO_SQL:SQLiteDatabase')
+            with closing(self.connection(**conargs)) as tmpconn:
                 df.to_sql(table, tmpconn, if_exists=if_exists, index=index)
                 tmpconn.close()
             # pandas removes uniqueness of columns - need to readd this
@@ -1275,11 +1282,12 @@ class SQLiteDatabase(Database):
         :return:
         """
         # set function name
-        func_name = __NAME__ + '.Database._to_pandas()'
+        func_name = __NAME__ + '.SQLiteDatabase._to_pandas()'
         # try to read sql using pandas
         # noinspection PyBroadException
         try:
-            with closing(self.connection()) as tmpconn:
+            conargs = dict(func=func_name, kind='_READ_SQL:sqlite3')
+            with closing(self.connection(**conargs)) as tmpconn:
                 df = pd.read_sql(command, tmpconn)
                 tmpconn.close()
         except Exception as _:
@@ -1289,8 +1297,6 @@ class SQLiteDatabase(Database):
             eargs = [command, func_name]
             exception = DatabaseError(emsg.format(*eargs), path=self.path,
                                       func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
             # log base error
             return drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                        exceptionname='DatabaseError',
@@ -1305,10 +1311,12 @@ class SQLiteDatabase(Database):
 
         :return:
         """
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname, 'backup')
         # construct backup path
         backup_path = str(self.path).replace('.db', 'backup.db')
         # make backup database
-        with closing(self.connection()) as conn:
+        conargs = dict(func=func_name, kind='backup')
+        with closing(self.connection(**conargs)) as conn:
             with closing(sqlite3.connect(backup_path)) as backup_conn:
                 # copy main into backup database
                 conn.backup(backup_conn)
@@ -1403,8 +1411,6 @@ class MySQLDatabase(Database):
         self.path = '{0}@{1}'.format(self.user, self.host)
         # deal with database for sql
         self.add_database()
-        # try to connect the the SQL3 database
-
         # update table list
         self._update_table_list_()
 
@@ -1412,7 +1418,9 @@ class MySQLDatabase(Database):
                    user: Union[str, None] = None,
                    passwd: Union[str, None] = None,
                    dbname: Union[str, None] = None,
-                   connect_kind: str = 'mysql.connect'):
+                   connect_kind: str = 'mysql.connect',
+                   func: Union[str, None] = None,
+                   kind: Union[str, None] = None):
         """
         Connect to the mysql database
         Only use within with statement (so connection is closed afterwards)
@@ -1460,8 +1468,10 @@ class MySQLDatabase(Database):
                 tname = 'NONE'
             else:
                 tname = self.tname
-            connkind = 'CONNECT: {0}    MySQL {1}@{2}:{3}.{4}'
-            connkind = connkind.format(connect_kind, host, user, dbname, tname)
+            # extra error info
+            connkind = 'CONNECT: {0}    MySQL {1}@{2}:{3}.{4}    {5}:{6}'
+            connkind = connkind.format(connect_kind, host, user, dbname, tname,
+                                       func, kind)
             eargs = [type(e), str(e), connkind, func_name]
             exception = DatabaseError(emsg.format(*eargs), path=self.path,
                                       func_name=func_name)
@@ -1517,22 +1527,48 @@ class MySQLDatabase(Database):
         # set function name
         func_name = '{0}.{1}.{2}'.format(__NAME__, self.classname,
                                          'add_database')
+        # ---------------------------------------------------------------------
         # get the cursor
-        with closing(self.connection(dbname='NULL')) as tmpconn:
+        conargs = dict(func=func_name, kind='SHOW')
+        with closing(self.connection(dbname='NULL', **conargs)) as tmpconn:
             with closing(tmpconn.cursor()) as cursor:
                 # Get the new list of tables
                 command = 'SHOW DATABASES'
                 # execute command
-                cursor.execute(command)
-                _databases = cursor.fetchall()
-                # the table names are the first entry in each row so get the table
-                #  names from these (and update self.tables)
+                try:
+                    cursor.execute(command)
+                    _databases = cursor.fetchall()
+                except Exception as e:
+                    # close
+                    cursor.close()
+                    tmpconn.close()
+                    # log error
+                    ecode = '00-002-00050'
+                    emsg = drs_base.BETEXT[ecode]
+                    eargs = [self.dbname, type(e), str(e)]
+                    exception = DatabaseError(emsg,
+                                              path=self.path,
+                                              func_name=func_name)
+                    # log base error
+                    drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                        exceptionname='DatabaseError',
+                                        exception=exception)
+
+                # the table names are the first entry in each row so get the
+                #  table names from these (and update self.tables)
                 databases = []
                 for _database in _databases:
                     # append table name
                     databases.append(_database[0])
-                # check for database in databases (and add it if not there)
-                if self.dbname not in databases:
+                # close
+                cursor.close()
+                tmpconn.close()
+        # ---------------------------------------------------------------------
+        # check for database in databases (and add it if not there)
+        if self.dbname not in databases:
+            conargs = dict(func=func_name, kind='CREATE')
+            with closing(self.connection(dbname='NULL', **conargs)) as tmpconn:
+                with closing(tmpconn.cursor()) as cursor:
                     try:
                         command = 'CREATE DATABASE {0}'.format(self.dbname)
                         cursor.execute(command)
@@ -1550,16 +1586,11 @@ class MySQLDatabase(Database):
                         exception = DatabaseError(emsg.format(*eargs),
                                                   path=self.path,
                                                   func_name=func_name)
-                        # add code to database message
-                        emsg = 'E[0]: {1}'.format(ecode, emsg)
                         # log base error
                         drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                             exceptionname='DatabaseError',
                                             exception=exception)
-                else:
-                    # close
-                    cursor.close()
-                    tmpconn.close()
+
 
     def cursor(self, conn):
         """
@@ -1640,7 +1671,8 @@ class MySQLDatabase(Database):
                                        exception=exception)
         # try to add pandas dataframe to table
         try:
-            with closing(self.connection(connect_kind='sqlalchemy')) as dconn:
+            conargs = dict(func=func_name, kind='TO_SQL:SQLALCHEMY')
+            with closing(self.connection(connect_kind='sqlalchemy', **conargs)) as dconn:
                 df.to_sql(table, dconn, if_exists=if_exists, index=index)
                 dconn.close()
                 # pandas removes uniqueness of columns - need to readd this
@@ -1655,8 +1687,6 @@ class MySQLDatabase(Database):
             eargs = [type(e), str(e), func_name]
             exception = DatabaseError(emsg.format(*eargs), path=self.path,
                                       func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
             # log base error
             return drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                        exceptionname='DatabaseError',
@@ -1673,6 +1703,7 @@ class MySQLDatabase(Database):
         # try to read sql using pandas
         # noinspection PyBroadException
         try:
+            conargs = dict(func=func_name, kind='READ_SQL:SQLALCHEMY')
             with closing(self.connection(connect_kind='sqlalchemy')) as dconn:
                 df = pd.read_sql(command, con=dconn)
                 dconn.close()
@@ -1683,8 +1714,6 @@ class MySQLDatabase(Database):
             eargs = [command, func_name]
             exception = DatabaseError(emsg.format(*eargs), path=self.path,
                                       func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
             # log base error
             return drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                        exceptionname='DatabaseError',
