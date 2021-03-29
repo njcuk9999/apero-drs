@@ -564,8 +564,13 @@ def remove_files(params, path, log=True, skipfiles=None):
         WLOG(params, '', '\t\tRemoved {0}'.format(path))
     # else remove file
     else:
-        os.remove(path)
-
+        try:
+            os.remove(path)
+        except Exception as e:
+            # TODO: move to database
+            wmsg = 'Cannot remove path: {0} \n\t {1}: {2}'
+            wargs = [path, type(e), str(e)]
+            WLOG(params, 'warning', wmsg.format(*wargs))
 
 # =============================================================================
 # Start of code
