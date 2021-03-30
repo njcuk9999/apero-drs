@@ -9,6 +9,7 @@ Created on 2020-07-2020-07-15 17:55
 """
 import numpy as np
 import os
+import time
 import warnings
 
 from apero.base import base
@@ -151,16 +152,39 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
         abso_source = '[database] trans_file'
         # log that we are saving the abso to file
         WLOG(params, '', textentry('40-019-00013', args=[abso_npy.filename]))
-        # remove all other abso npy files
-        _remove_absonpy_files(params, params['DRS_TELLU_DB'], 'tellu_save_')
-        _remove_absonpy_files(params, params['DRS_TELLU_DB'], 'tellu_save1_')
-        # write to npy file
-        abso_npy.data = abso
-        abso_npy.write_npy(block_kind=recipe.out_block_str,
-                           runstring=recipe.runstring)
-        abso1_npy.data = abso1
-        abso1_npy.write_npy(block_kind=recipe.out_block_str,
-                            runstring=recipe.runstring)
+        # may need to re-try this if more than one process hit at the same time
+        count = 0
+        while count < 10:
+            # need to catch errors - two possible errors: 1. two or more
+            #    processes hit the "remove" at the same time, 2. one process
+            #    tries writing a file while other removes it
+            #    We just try again as as long as one writes we are good
+            try:
+                # remove all other abso npy files
+                _remove_absonpy_files(params, params['DRS_TELLU_DB'],
+                                      'tellu_save_')
+                _remove_absonpy_files(params, params['DRS_TELLU_DB'],
+                                      'tellu_save1_')
+                # write to npy file
+                abso_npy.data = abso
+                abso_npy.write_npy(block_kind=recipe.out_block_str,
+                                   runstring=recipe.runstring)
+                abso1_npy.data = abso1
+                abso1_npy.write_npy(block_kind=recipe.out_block_str,
+                                    runstring=recipe.runstring)
+                # break out of while
+                break
+            except Exception as e:
+                # add to count
+                count += 1
+                # sleep a little time (to possibly clear back log)
+                time.sleep(0.1)
+                # TODO: Move to language database
+                emsg = 'Removing/Writing abso npy file failed. Trying again'
+                emsg += '\n\tFunction = {0} \n\t{1}: {2}'
+                eargs = [func_name, type(e), str(e)]
+                WLOG(params, 'warning', emsg.format(*eargs))
+
     # ----------------------------------------------------------------------
     # use abso1 (water/others exponent) to create a mask for abso
     # ----------------------------------------------------------------------
