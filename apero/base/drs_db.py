@@ -1448,19 +1448,27 @@ class MySQLDatabase(Database):
             dbname = None
         elif dbname is None:
             dbname = self.dbname
-        # try to connect
-        try:
-            if connect_kind == 'mysql.connect':
-                return mysql.connect(host=host, user=user, passwd=passwd,
-                                     database=dbname, connection_timeout=3600)
-            else:
-                import sqlalchemy
-                dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
-                dargs = [user, passwd, host, dbname]
-                db = sqlalchemy.create_engine(dpath.format(*dargs),
-                                              pool_pre_ping=True)
-                return db.connect()
-        except Exception as e:
+        # delay processes
+        count = 0
+        while count <= 10:
+            # try to connect
+            try:
+                if connect_kind == 'mysql.connect':
+                    return mysql.connect(host=host, user=user, passwd=passwd,
+                                         database=dbname,
+                                         connection_timeout=3600)
+                else:
+                    import sqlalchemy
+                    dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
+                    dargs = [user, passwd, host, dbname]
+                    db = sqlalchemy.create_engine(dpath.format(*dargs),
+                                                  pool_pre_ping=True)
+                    return db.connect()
+            except Exception as e:
+                time.sleep(0.1 + np.random.uniform() * 0.1)
+                count += 1
+        # if over 10 crash
+        if count == 10:
             # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
             ecode = '00-002-00045'
             emsg = drs_base.BETEXT[ecode]
