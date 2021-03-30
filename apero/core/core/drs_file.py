@@ -4872,8 +4872,6 @@ class DrsNpyFile(DrsInputFile):
         else:
             eargs = [self.filename, func_name]
             WLOG(params, 'error', textentry('00-008-00014', args=eargs))
-        # write output dictionary
-        self.output_dictionary(block_kind, runstring)
 
     def string_output(self) -> str:
         """
