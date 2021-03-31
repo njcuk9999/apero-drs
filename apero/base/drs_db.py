@@ -1453,7 +1453,7 @@ class MySQLDatabase(Database):
         # delay processes
         count = 0
         error = None
-        while count <= 10:
+        while count <= 20:
             # try to connect
             try:
                 if connect_kind == 'mysql.connect':
@@ -1476,7 +1476,7 @@ class MySQLDatabase(Database):
 
             except Exception as e:
                 error = e
-                time.sleep(10 + np.random.uniform()*2)
+                time.sleep(5 + np.random.uniform()*1)
                 count += 1
         # if we get to this point log an error
         # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
