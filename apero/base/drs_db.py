@@ -1452,6 +1452,7 @@ class MySQLDatabase(Database):
         start = time.time()
         # delay processes
         count = 0
+        error = None
         while count <= 10:
             # try to connect
             try:
@@ -1474,6 +1475,7 @@ class MySQLDatabase(Database):
                     return conn
 
             except Exception as e:
+                error = e
                 time.sleep(0.1 + np.random.uniform() * 0.1)
                 count += 1
         # if we get to this point log an error
@@ -1489,7 +1491,7 @@ class MySQLDatabase(Database):
                     '|| Tries {7}')
         connkind = connkind.format(connect_kind, host, user, dbname, tname,
                                    func, kind, count)
-        eargs = [type(e), str(e), connkind, func_name]
+        eargs = [type(error), str(error), connkind, func_name]
         exception = DatabaseError(emsg.format(*eargs), path=self.path,
                                   func_name=func_name)
         # add code to database message
