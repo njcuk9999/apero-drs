@@ -1448,46 +1448,55 @@ class MySQLDatabase(Database):
             dbname = None
         elif dbname is None:
             dbname = self.dbname
+        # time
+        start = time.time()
         # delay processes
         count = 0
         while count <= 10:
             # try to connect
             try:
                 if connect_kind == 'mysql.connect':
-                    return mysql.connect(host=host, user=user, passwd=passwd,
+                    conn = mysql.connect(host=host, user=user, passwd=passwd,
                                          database=dbname,
                                          connection_timeout=3600)
+
+                    print('CONNECTION TIME MYSQL:CONNECT: {0}'.format(time.time() - start))
+                    return conn
+
                 else:
                     import sqlalchemy
                     dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
                     dargs = [user, passwd, host, dbname]
                     db = sqlalchemy.create_engine(dpath.format(*dargs),
                                                   pool_pre_ping=True)
-                    return db.connect()
+                    conn = db.connect()
+                    print('CONNECTION TIME: MYSQL:SQLALCHEMY: {0}'.format(time.time() - start))
+                    return conn
+
             except Exception as e:
                 time.sleep(0.1 + np.random.uniform() * 0.1)
                 count += 1
-        # if over 10 crash
-        if count == 10:
-            # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
-            ecode = '00-002-00045'
-            emsg = drs_base.BETEXT[ecode]
-            if self.tname is None:
-                tname = 'NONE'
-            else:
-                tname = self.tname
-            # extra error info
-            connkind = 'CONNECT: {0}    MySQL {1}@{2}:{3}.{4}    {5}:{6}'
-            connkind = connkind.format(connect_kind, host, user, dbname, tname,
-                                       func, kind)
-            eargs = [type(e), str(e), connkind, func_name]
-            exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
-            drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                exceptionname='DatabaseError',
-                                exception=exception)
+        # if we get to this point log an error
+        # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
+        ecode = '00-002-00045'
+        emsg = drs_base.BETEXT[ecode]
+        if self.tname is None:
+            tname = 'NONE'
+        else:
+            tname = self.tname
+        # extra error info
+        connkind = ('CONNECT: {0} || MySQL {1}@{2}:{3}.{4} || {5}:{6} '
+                    '|| Tries {7}')
+        connkind = connkind.format(connect_kind, host, user, dbname, tname,
+                                   func, kind, count)
+        eargs = [type(e), str(e), connkind, func_name]
+        exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                  func_name=func_name)
+        # add code to database message
+        emsg = 'E[0]: {1}'.format(ecode, emsg)
+        drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                            exceptionname='DatabaseError',
+                            exception=exception)
 
     def __str__(self):
         """
@@ -1598,7 +1607,6 @@ class MySQLDatabase(Database):
                         drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                             exceptionname='DatabaseError',
                                             exception=exception)
-
 
     def cursor(self, conn):
         """
