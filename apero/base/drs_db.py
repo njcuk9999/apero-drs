@@ -1476,7 +1476,7 @@ class MySQLDatabase(Database):
 
             except Exception as e:
                 error = e
-                time.sleep(0.1 + np.random.uniform() * 0.1)
+                time.sleep(2 + np.random.uniform())
                 count += 1
         # if we get to this point log an error
         # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
