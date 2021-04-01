@@ -1460,8 +1460,7 @@ class MySQLDatabase(Database):
                     conn = mysql.connect(host=host, user=user, passwd=passwd,
                                          database=dbname,
                                          connection_timeout=3600)
-
-                    print('CONNECTION TIME MYSQL:CONNECT: {0}'.format(time.time() - start))
+                    # print('CONNECTION TIME MYSQL:CONNECT: {0}'.format(time.time() - start))
                     return conn
 
                 else:
@@ -1471,13 +1470,14 @@ class MySQLDatabase(Database):
                     db = sqlalchemy.create_engine(dpath.format(*dargs),
                                                   pool_pre_ping=True)
                     conn = db.connect()
-                    print('CONNECTION TIME: MYSQL:SQLALCHEMY: {0}'.format(time.time() - start))
+                    # print('CONNECTION TIME: MYSQL:SQLALCHEMY: {0}'.format(time.time() - start))
                     return conn
 
             except Exception as e:
                 error = e
                 time.sleep(5 + np.random.uniform()*1)
                 count += 1
+
         # if we get to this point log an error
         # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
         ecode = '00-002-00045'
