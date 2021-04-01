@@ -89,11 +89,11 @@ badfile = dict(name='--badpixfile', dtype='file', default='None',
                files=[files.out_badpix], helpstr=textentry('BADFILE_HELP'))
 # -----------------------------------------------------------------------------
 blazefile = dict(name='--blazefile', dtype='file', default='None',
-                 files=[files.out_ff_blaze], 
+                 files=[files.out_ff_blaze],
                  helpstr=textentry('BLAZEFILE_HELP'))
 # -----------------------------------------------------------------------------
 darkfile = dict(name='--darkfile', dtype='file', default='None',
-                files=[files.out_dark_master], 
+                files=[files.out_dark_master],
                 helpstr=textentry('DARKFILE_HELP'))
 # -----------------------------------------------------------------------------
 flatfile = dict(name='--flatfile', dtype='file', default='None',
@@ -107,7 +107,7 @@ locofile = dict(name='--locofile', dtype='file', default='None',
                 files=[files.out_loc_loco], helpstr=textentry('LOCOFILE_HELP'))
 # -----------------------------------------------------------------------------
 orderpfile = dict(name='--orderpfile', dtype='file', default='None',
-                  files=[files.out_loc_orderp], 
+                  files=[files.out_loc_orderp],
                   helpstr=textentry('ORDERPFILE_HELP'))
 # -----------------------------------------------------------------------------
 shapexfile = dict(name='--shapex', dtype='file', default='None',
@@ -768,13 +768,13 @@ cal_wave_master_ea.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
 cal_wave_master_ea.set_summary_plots('SUM_WAVE_FIBER_COMP')
 cal_wave_master_ea.set_arg(pos=0, **obs_dir)
 cal_wave_master_ea.set_kwarg(name='--hcfiles', dtype='files',
-                            files=[files.pp_hc1_hc1],
-                            filelogic='exclusive', required=True,
-                            helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
+                             files=[files.pp_hc1_hc1],
+                             filelogic='exclusive', required=True,
+                             helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
 cal_wave_master_ea.set_kwarg(name='--fpfiles', dtype='files',
-                            files=[files.pp_fp_fp],
-                            filelogic='exclusive', required=True,
-                            helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
+                             files=[files.pp_fp_fp],
+                             filelogic='exclusive', required=True,
+                             helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
 cal_wave_master_ea.set_kwarg(**add_db)
 cal_wave_master_ea.set_kwarg(**badfile)
 cal_wave_master_ea.set_kwarg(**dobad)
@@ -795,12 +795,12 @@ cal_wave_master_ea.set_kwarg(**shapeyfile)
 cal_wave_master_ea.set_kwarg(**shapelfile)
 cal_wave_master_ea.set_kwarg(**wavefile)
 cal_wave_master_ea.set_kwarg(name='--forceext', dtype='bool',
-                          default_ref='WAVE_ALWAYS_EXTRACT',
-                          helpstr='WAVE_EXTRACT_HELP')
+                             default_ref='WAVE_ALWAYS_EXTRACT',
+                             helpstr='WAVE_EXTRACT_HELP')
 # TODO: move helpstr to language database
 cal_wave_master_ea.set_kwarg(name='--cavityfile', dtype='file', default='None',
-                            files=[files.out_wavem_cavity],
-                            helpstr='Wave cavity file')
+                             files=[files.out_wavem_cavity],
+                             helpstr='Wave cavity file')
 cal_wave_master_ea.group_func = grouping.group_by_dirname
 cal_wave_master_ea.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -1154,116 +1154,76 @@ recipes.append(obj_mk_template)
 
 
 # -----------------------------------------------------------------------------
-# pol
-# -----------------------------------------------------------------------------
-pol_spirou = DrsRecipe(__INSTRUMENT__)
-pol_spirou.name = 'pol_{0}.py'.format(INSTRUMENT_ALIAS)
-pol_spirou.shortname = 'POLAR'
-pol_spirou.instrument = __INSTRUMENT__
-pol_spirou.in_block_str = 'red'
-pol_spirou.out_block_str = 'red'
-pol_spirou.extension = 'fits'
-pol_spirou.description = textentry('FTELLU_DESC')
-pol_spirou.epilog = textentry('FTELLU_EXAMPLE')
-pol_spirou.kind = 'recipe'
-pol_spirou.set_outputs(POL_DEG_FILE=files.out_pol_deg,
-                       POL_NULL1=files.out_pol_null1,
-                       POL_NULL2=files.out_pol_null2,
-                       POL_STOKESI=files.out_pol_stokesi,
-                       POL_LSD=files.out_pol_lsd,
-                       S1DW_POL=files.out_pol_s1dw,
-                       S1DV_POL=files.out_pol_s1dv,
-                       S1DW_NULL1=files.out_null1_s1dw,
-                       S1DV_NULL1=files.out_null1_s1dv,
-                       S1DW_NULL2=files.out_null2_s1dw,
-                       S1DV_NULL2=files.out_null2_s1dv,
-                       S1DW_STOKESI=files.out_stokesi_s1dw,
-                       S1DV_STOKESI=files.out_stokesi_s1dv)
-pol_spirou.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
-                           'POLAR_STOKES_I', 'POLAR_LSD',
-                           'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
-pol_spirou.set_summary_plots('SUM_EXTRACT_S1D')
-pol_spirou.set_arg(pos=0, **obs_dir)
-pol_spirou.set_arg(name='files', dtype='files', pos='1+',
-                   files=[files.out_ext_e2ds, files.out_ext_e2dsff],
-                   filelogic='exclusive',
-                   helpstr=(textentry('FILES_HELP')
-                            + textentry('FTELLU_FILES_HELP')),
-                   limit=1)
-pol_spirou.set_kwarg(**blazefile)
-pol_spirou.set_kwarg(**plot)
-pol_spirou.set_kwarg(**wavefile)
-# TODO: Will need custom group function
-pol_spirou.group_func = None
-pol_spirou.group_column = None
-# add to recipe
-recipes.append(pol_spirou)
-
-# -----------------------------------------------------------------------------
 # pol_new
 # -----------------------------------------------------------------------------
-pol_spirou_new = DrsRecipe(__INSTRUMENT__)
-pol_spirou_new.name = 'pol_{0}_new.py'.format(INSTRUMENT_ALIAS)
-pol_spirou_new.shortname = 'POLAR'
-pol_spirou_new.instrument = __INSTRUMENT__
-pol_spirou_new.in_block_str = 'red'
-pol_spirou_new.out_block_str = 'red'
-pol_spirou_new.extension = 'fits'
-pol_spirou_new.description = textentry('FTELLU_DESC')
-pol_spirou_new.epilog = textentry('FTELLU_EXAMPLE')
-pol_spirou_new.kind = 'recipe'
-pol_spirou_new.set_outputs(POL_DEG_FILE=files.out_pol_deg,
-                           POL_NULL1=files.out_pol_null1,
-                           POL_NULL2=files.out_pol_null2,
-                           POL_STOKESI=files.out_pol_stokesi,
-                           POL_LSD=files.out_pol_lsd,
-                           S1DW_POL=files.out_pol_s1dw,
-                           S1DV_POL=files.out_pol_s1dv,
-                           S1DW_NULL1=files.out_null1_s1dw,
-                           S1DV_NULL1=files.out_null1_s1dv,
-                           S1DW_NULL2=files.out_null2_s1dw,
-                           S1DV_NULL2=files.out_null2_s1dv,
-                           S1DW_STOKESI=files.out_stokesi_s1dw,
-                           S1DV_STOKESI=files.out_stokesi_s1dv)
-pol_spirou_new.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
-                               'POLAR_STOKES_I', 'POLAR_LSD',
-                               'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
-pol_spirou_new.set_summary_plots('SUM_EXTRACT_S1D')
-pol_spirou_new.set_arg(pos=0, **obs_dir)
-pol_spirou_new.set_kwarg(name='--exp1', altnames=['-1'], dtype='file',
-                         files=[files.out_ext_e2dsff, files.out_tellu_obj],
-                         filelogic='exclusive', required=True,
-                         default=[], helpstr='Input exposure 1')
-pol_spirou_new.set_kwarg(name='--exp2', altnames=['-2'], dtype='file',
-                         files=[files.out_ext_e2dsff, files.out_tellu_obj],
-                         filelogic='exclusive', required=True,
-                         default=[], helpstr='Input exposure 2')
-pol_spirou_new.set_kwarg(name='--exp3', altnames=['-3'], dtype='file',
-                         files=[files.out_ext_e2dsff, files.out_tellu_obj],
-                         filelogic='exclusive', required=True,
-                         default=[], helpstr='Input exposure 3')
-pol_spirou_new.set_kwarg(name='--exp4', altnames=['-4'], dtype='file',
-                         files=[files.out_ext_e2dsff, files.out_tellu_obj],
-                         filelogic='exclusive', required=True,
-                         default=[], helpstr='Input exposure 4')
+obj_pol = DrsRecipe(__INSTRUMENT__)
+obj_pol.name = 'obj_pol_{0}.py'.format(INSTRUMENT_ALIAS)
+obj_pol.shortname = 'POLAR'
+obj_pol.instrument = __INSTRUMENT__
+obj_pol.in_block_str = 'red'
+obj_pol.out_block_str = 'red'
+obj_pol.extension = 'fits'
+obj_pol.description = textentry('FTELLU_DESC')
+obj_pol.epilog = textentry('FTELLU_EXAMPLE')
+obj_pol.kind = 'recipe'
+obj_pol.set_outputs(POL_DEG_FILE=files.out_pol_deg,
+                    POL_NULL1=files.out_pol_null1,
+                    POL_NULL2=files.out_pol_null2,
+                    POL_STOKESI=files.out_pol_stokesi,
+                    POL_LSD=files.out_pol_lsd,
+                    S1DW_POL=files.out_pol_s1dw,
+                    S1DV_POL=files.out_pol_s1dv,
+                    S1DW_NULL1=files.out_null1_s1dw,
+                    S1DV_NULL1=files.out_null1_s1dv,
+                    S1DW_NULL2=files.out_null2_s1dw,
+                    S1DV_NULL2=files.out_null2_s1dv,
+                    S1DW_STOKESI=files.out_stokesi_s1dw,
+                    S1DV_STOKESI=files.out_stokesi_s1dv)
+obj_pol.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
+                        'POLAR_STOKES_I', 'POLAR_LSD',
+                        'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
+obj_pol.set_summary_plots('SUM_EXTRACT_S1D')
+obj_pol.set_arg(pos=0, **obs_dir)
+obj_pol.set_kwarg(name='--exposures', dtype='files',
+                  files=[files.out_ext_e2dsff, files.out_tellu_obj],
+                  filelogic='exclusive', default='None',
+                  helpstr='List of exposures to add (order determined by '
+                          'recipe)', reprocess=True)
+obj_pol.set_kwarg(name='--exp1', altnames=['-1'], dtype='file',
+                  files=[files.out_ext_e2dsff, files.out_tellu_obj],
+                  filelogic='exclusive', default='None',
+                  helpstr='Override input exposure 1')
+obj_pol.set_kwarg(name='--exp2', altnames=['-2'], dtype='file',
+                  files=[files.out_ext_e2dsff, files.out_tellu_obj],
+                  filelogic='exclusive', default='None',
+                  helpstr='Override input exposure 2')
+obj_pol.set_kwarg(name='--exp3', altnames=['-3'], dtype='file',
+                  files=[files.out_ext_e2dsff, files.out_tellu_obj],
+                  filelogic='exclusive', default='None',
+                  helpstr='Override input exposure 3')
+obj_pol.set_kwarg(name='--exp4', altnames=['-4'], dtype='file',
+                  files=[files.out_ext_e2dsff, files.out_tellu_obj],
+                  filelogic='exclusive', default='None',
+                  helpstr='Override input exposure 4')
+obj_pol.set_kwarg(name='--objrv', dtype=float, default=0.0,
+                  helpstr='Object radial velocity [km/s]')
+obj_pol.set_kwarg(name='--lsdmask', altnames=['-m'], dtype=str,
+                  helpstr='LSD mask', default='None')
+obj_pol.set_kwarg(name='--output', altnames=['-o'], dtype=str,
+                  helpstr='Output file', default='None')
+obj_pol.set_kwarg(name='--output_lsd', altnames=['-l'], dtype=str,
+                  helpstr='Output LSD file', default='None')
+obj_pol.set_kwarg(name='--lsd', altnames=['-L'], dtype='switch',
+                  default=False, helpstr='Run LSD analysis')
 
-pol_spirou_new.set_kwarg(name='--lsdmask', altnames=['-m'], dtype=str,
-                         helpstr='LSD mask', default='None')
-pol_spirou_new.set_kwarg(name='--output', altnames=['-o'], dtype=str,
-                         helpstr='Output file', default='None')
-pol_spirou_new.set_kwarg(name='--output_lsd', altnames=['-l'], dtype=str,
-                         helpstr='Output LSD file', default='None')
-pol_spirou_new.set_kwarg(name='--lsd', altnames=['-L'], dtype='bool',
-                         default=False, helpstr='Run LSD analysis')
-
-pol_spirou_new.set_kwarg(**blazefile)
-pol_spirou_new.set_kwarg(**plot)
-pol_spirou_new.set_kwarg(**wavefile)
+obj_pol.set_kwarg(**blazefile)
+obj_pol.set_kwarg(**plot)
+obj_pol.set_kwarg(**wavefile)
 # TODO: Will need custom group function
-pol_spirou_new.group_func = None
-pol_spirou_new.group_column = None
+obj_pol.group_func = None
+obj_pol.group_column = None
 # add to recipe
-recipes.append(pol_spirou_new)
+recipes.append(obj_pol)
 
 # -----------------------------------------------------------------------------
 # obj_postprocess
@@ -1294,7 +1254,6 @@ obj_pp_recipe.group_func = grouping.group_individually
 obj_pp_recipe.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(obj_pp_recipe)
-
 
 # =============================================================================
 # Run order
@@ -1371,51 +1330,51 @@ full_seq.add(cal_leak, name='LEAKALL', files=[files.out_ext_e2dsff],
              fiber='AB', filters=dict(KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
 # telluric recipes
 full_seq.add(obj_mk_tellu, name='MKTELLU1',
-                files=[files.out_ext_e2dsff], fiber='AB',
-                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                         'POLAR_DARK']))
+             files=[files.out_ext_e2dsff], fiber='AB',
+             filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                      'POLAR_DARK']))
 full_seq.add(obj_fit_tellu, name='MKTELLU2',
-                files=[files.out_ext_e2dsff], fiber='AB',
-                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                         'POLAR_DARK']))
+             files=[files.out_ext_e2dsff], fiber='AB',
+             filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                      'POLAR_DARK']))
 full_seq.add(obj_mk_template, name='MKTELLU3',
-                fiber='AB',
-                arguments=dict(objname='TELLURIC_TARGETS'),
-                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                         'POLAR_DARK']),
-                template_required=True)
+             fiber='AB',
+             arguments=dict(objname='TELLURIC_TARGETS'),
+             filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                      'POLAR_DARK']),
+             template_required=True)
 full_seq.add(obj_mk_tellu, name='MKTELLU4',
-                files=[files.out_ext_e2dsff], fiber='AB',
-                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                         'POLAR_DARK']),
-                template_required=True)
+             files=[files.out_ext_e2dsff], fiber='AB',
+             filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                      'POLAR_DARK']),
+             template_required=True)
 full_seq.add(obj_fit_tellu, name='FTELLU1',
-                files=[files.out_ext_e2dsff], fiber='AB',
-                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                         'POLAR_DARK']))
+             files=[files.out_ext_e2dsff], fiber='AB',
+             filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                      'POLAR_DARK']))
 full_seq.add(obj_mk_template, name='FTELLU2',
-                fiber='AB',
-                arguments=dict(objname='SCIENCE_TARGETS'),
-                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                         'POLAR_DARK']),
-                template_required=True)
+             fiber='AB',
+             arguments=dict(objname='SCIENCE_TARGETS'),
+             filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                      'POLAR_DARK']),
+             template_required=True)
 full_seq.add(obj_fit_tellu, name='FTELLU3',
-                files=[files.out_ext_e2dsff], fiber='AB',
-                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                         'POLAR_DARK']),
-                template_required=True)
+             files=[files.out_ext_e2dsff], fiber='AB',
+             filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                      'POLAR_DARK']),
+             template_required=True)
 
 # ccf on all OBJ_DARK / OBJ_FP
 full_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
              filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                         'POLAR_DARK']))
+                                      'POLAR_DARK']))
 
 # post processing
 full_seq.add(obj_pp_recipe, files=[files.pp_file],
@@ -1596,7 +1555,7 @@ tellu_seq.add(cal_extract, name='EXTTELL',
                      files.pp_polar_fp],
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
-                                         'POLAR_FP']))
+                                       'POLAR_FP']))
 # correct leakage for any telluric targets that are OBJ_FP
 tellu_seq.add(cal_leak, name='LEAKTELL',
               files=[files.out_ext_e2dsff], fiber='AB',
@@ -1621,13 +1580,13 @@ tellu_seq.add(obj_mk_template, name='MKTELLU3',
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                        'POLAR_FP']),
-                template_required=True)
+              template_required=True)
 tellu_seq.add(obj_mk_tellu, name='MKTELLU4',
               fiber='AB', files=[files.out_ext_e2dsff],
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                        'POLAR_FP']),
-                template_required=True)
+              template_required=True)
 
 # -----------------------------------------------------------------------------
 # science sequence (for trigger)
@@ -1682,12 +1641,12 @@ science_seq.add(obj_pp_recipe, files=[files.pp_file],
 quick_seq = drs_recipe.DrsRunSequence('quick_seq', __INSTRUMENT__)
 # extract science
 quick_seq.add(cal_extract, name='EXTOBJ',
-                files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
-                       files.pp_polar_fp],
-                fiber='AB', arguments=dict(quicklook=True),
-                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
-                                         'POLAR_FP']))
+              files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
+                     files.pp_polar_fp],
+              fiber='AB', arguments=dict(quicklook=True),
+              filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                           KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
+                                       'POLAR_FP']))
 
 # -----------------------------------------------------------------------------
 # blank sequence (for trigger)

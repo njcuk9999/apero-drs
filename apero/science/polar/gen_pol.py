@@ -18,7 +18,9 @@ from apero.core import math as mp
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_misc
 from apero.core.utils import drs_startup
+from apero.core.core import drs_text
 from apero.io import drs_table
 from apero.science import extract
 
@@ -53,11 +55,154 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Define misc functions
 # =============================================================================
-def set_polar_exposures(params: ParamDict):
+def set_polar_exposures(params: ParamDict) -> List[DrsFitsFile]:
+    """
+    Function to figure out order of exposures based on the
+    rhomb positions in the header
+
+    Stokes I (spectroscopic mode)
+    P16 P16 1/2/3/4
+
+    Stokes U
+    P16 P2 1
+    P16 P14 2
+    P4 P2 3
+    P4 P14 4
+
+    Stokes Q
+    P2 P14 1
+    P2 P2 2
+    P14 P14 3
+    P14 P2 4
+
+    Stokes V
+    P14 P16 1
+    P2 P16 2
+    P2 P4 3
+    P14 P4 4
+
+    :param params: ParamDict, the parameter dictionary
+
+    :return: list of DrsFitsFile instances - one for each of the 4 exposures
+    """
     # set function name
     display_func('set_polar_exposures', __NAME__)
+    # check input exposures
+    if drs_text.null_text(params['INPUTS']['EXPOSURES'], ['None', '']):
+        input_exposures = []
+    else:
+        input_exposures = params['INPUTS']['EXPOSURES'][1]
+    # -------------------------------------------------------------------------
+    # set up storage for the exposures
+    exposures = [None, None, None, None]
+    exp_pos = 0
+    # loop around exposures
+    for exp in input_exposures:
+        # get the rhomb positions for this exposure
+        rhomb1 = exp.get_hkey('KW_POLAR_KEY_1')
+        rhomb2 = exp.get_hkey('KW_POLAR_KEY_2')
+        # ---------------------------------------------------------------------
+        # spectroscopy mode
+        cond0 = rhomb1 == 'P16' and rhomb2 == 'P16'
+        # exposure 1 identifiers
+        cond1a = rhomb1 == 'P16' and rhomb2 == 'P2'
+        cond1b = rhomb1 == 'P2' and rhomb2 == 'P14'
+        cond1c = rhomb1 == 'P14' and rhomb2 == 'P16'
+        # exposure 2 identifiers
+        cond2a = rhomb1 == 'P16' and rhomb2 == 'P14'
+        cond2b = rhomb1 == 'P2' and rhomb2 == 'P2'
+        cond2c = rhomb1 == 'P2' and rhomb2 == 'P16'
+        # exposure 3 identifiers
+        cond3a = rhomb1 == 'P4' and rhomb2 == 'P2'
+        cond3b = rhomb1 == 'P14' and rhomb2 == 'P14'
+        cond3c = rhomb1 == 'P2' and rhomb2 == 'P4'
+        # exposure 4 identifiers
+        cond4a = rhomb1 == 'P4' and rhomb2 == 'P14'
+        cond4b = rhomb1 == 'P14' and rhomb2 == 'P2'
+        cond4c = rhomb1 == 'P14' and rhomb2 == 'P4'
+        # ---------------------------------------------------------------------
+        # normal message
+        msg = 'Exposure {0} in polarimetric mode, set exposure number {1}'
+        # spectroscopic mode
+        if cond0:
+            # add to position
+            exposures[exp_pos] = exp
+            # update the position
+            exp_pos += 1
+            # TODO: move to language database
+            wmsg = ('Exposure {0} in spectroscopic mode, set exposure '
+                    'number = {1}')
+            wargs = [exp.basename, exp_pos]
+            WLOG(params, 'warning', wmsg.format(*wargs))
+        # exposure 1
+        elif cond1a or cond1b or cond1c:
+            # add to position 1
+            exposures[0] = exp
+            # TODO: move to language database
+            WLOG(params, '', msg.format(exp.basename, 1))
+        # exposure 2
+        elif cond2a or cond2b or cond2c:
+            # add to position 1
+            exposures[1] = exp
+            # TODO: move to language database
+            WLOG(params, '', msg.format(exp.basename, 2))
+        # exposure 3
+        elif cond3a or cond3b or cond3c:
+            # add to position 1
+            exposures[2] = exp
+            # TODO: move to language database
+            WLOG(params, '', msg.format(exp.basename, 3))
+        # exposure 3
+        elif cond4a or cond4b or cond4c:
+            # add to position 1
+            exposures[3] = exp
+            # TODO: move to language database
+            WLOG(params, '', msg.format(exp.basename, 4))
+        # else unknown mode - raise error
+        else:
+            # TODO: move to language database
+            emsg = 'Exposure {0} must have keys {1} and {2}'
+            eargs = [exp_pos, params['KW_POLAR_KEY_1'][0],
+                     params['KW_POLAR_KEY_2'][1]]
+            WLOG(params, 'error', emsg.format(*eargs))
+        # stop if we already have 4 exposures
+        if exp_pos > 3:
+            break
+    # -------------------------------------------------------------------------
+    # Get each individual exposure from input arguments exps
+    # loop around the EXP keys
+    for it in range(1, 5):
+        # get the EXP1, EXP2, EXP3, EXP4 key from inmputs
+        exp_input = params['INPUTS']['EXP{0}'.format(it)]
+        # only override if we have a value
+        if not drs_text.null_text(exp_input, ['None', '']):
+            # get drs instance
+            exp = exp_input[1][0]
+            # TODO: move to language database
+            msg = 'Setting exposure 1 in polarimetry sequence to {0}'
+            margs = [exp.basename]
+            WLOG(params, '', msg.format(*margs))
+    # -------------------------------------------------------------------------
+    # lets make sure out full list is populated with DrsFitsFiles
+    for it, exp in enumerate(exposures):
+        if not isinstance(exp, DrsFitsFile):
+            # TODO: move to language database
+            emsg = 'Exposure {0} has not been set correctly'
+            WLOG(params, 'error', emsg.format(it + 1))
+    # -------------------------------------------------------------------------
+    # return the list of exposures
+    return exposures
 
-    # TODO: Fill this out
+
+def apero_load_data(params: ParamDict, inputs: List[DrsFitsFile]):
+
+    # loop around exposures
+
+        # need A and B
+
+        # load blaze for file
+
+        # load wave for file
 
 
 # =============================================================================
@@ -485,56 +630,65 @@ def calculate_stokes_i(params: ParamDict, props: ParamDict,
     # log start of Stokes I calculations
     wmsg = 'Running function {0} to calculate Stokes I total flux'
     WLOG(params, '', wmsg.format(name))
-
     # get parameters from params
     polar_interpolate_flux = pcheck(params, 'POLAR_INTERPOLATE_FLUX',
-                                    func=func_name, overwrite=interp_flux)
-
-
+                                    func=func_name, override=interp_flux)
     # get parameters from props
-    if p['IC_POLAR_INTERPOLATE_FLUX']:
-        data, errdata = loc['FLUXDATA'], loc['FLUXERRDATA']
+    if polar_interpolate_flux:
+        data, errdata = props['FLUXDATA'], props['FLUXERRDATA']
     else:
-        data, errdata = loc['RAWFLUXDATA'], loc['RAWFLUXERRDATA']
-    nexp = float(loc['NEXPOSURES'])
+        data, errdata = props['RAWFLUXDATA'], props['RAWFLUXERRDATA']
+    # get the number of exposures
+    nexp = float(props['NEXPOSURES'])
     # ---------------------------------------------------------------------
     # set up storage
     # ---------------------------------------------------------------------
     # store Stokes I variables in loc
-    data_shape = loc['FLUXDATA']['A_1'].shape
+    data_shape = props['FLUXDATA']['A_1'].shape
     # initialize arrays to zeroes
-    loc['STOKESI'] = np.zeros(data_shape)
-    loc['STOKESIERR'] = np.zeros(data_shape)
-
+    stokesi_arr = np.zeros(data_shape)
+    stokesierr_arr = np.zeros(data_shape)
+    # storage for flux and variance
     flux, var = [], []
-    for i in range(1, int(nexp) + 1):
+    # loop around exposure
+    for exp in range(1, int(nexp) + 1):
+        # get exposure names
+        a_exp = 'A_{0}'.format(exp)
+        b_exp = 'B_{0}'.format(exp)
+
         # Calculate sum of fluxes from fibers A and B
-        flux_ab = data['A_{0}'.format(i)] + data['B_{0}'.format(i)]
+        flux_ab = data[a_exp] + data[b_exp]
         # Save A+B flux for each exposure
         flux.append(flux_ab)
-
-        # Calculate the variances for fiber A+B -> varA+B = sigA * sigA + sigB * sigB
-        var_ab = errdata['A_{0}'.format(i)] * errdata['A_{0}'.format(i)] + errdata['B_{0}'.format(i)] * errdata[
-            'B_{0}'.format(i)]
+        # Calculate the variances for fiber A+B
+        #    -> varA+B = sigA * sigA + sigB * sigB
+        var_ab = errdata[a_exp] ** 2 + errdata[b_exp]**2
         # Save varAB = sigA^2 + sigB^2, ignoring cross-correlated terms
         var.append(var_ab)
-
     # Sum fluxes and variances from different exposures
     for i in range(len(flux)):
-        loc['STOKESI'] += flux[i]
-        loc['STOKESIERR'] += var[i]
+        stokesi_arr += flux[i]
+        stokesierr_arr += var[i]
+
+    stokesi_arr = np.sum(flux, axis=1)
+    stokesierr_arr = np.sum(var, axis=1)
 
     # Calcualte errors -> sigma = sqrt(variance)
-    loc['STOKESIERR'] = np.sqrt(loc['STOKESIERR'])
+    stokesierr_arr = np.sqrt(stokesierr_arr)
+
+    # add to output
+    props['STOKESI'] = stokesi_arr
+    props['STOKESIERR'] = stokesierr_arr
+    # set sources
+    keys = ['STOKESI', 'STOKESIERR']
+    props.set_sources(keys, func_name)
 
     # log end of Stokes I intensity calculations
     wmsg = 'Routine {0} run successfully'
-    if p['IC_POLAR_APERO']:
-        WLOG(p, 'info', wmsg.format(name))
-    else:
-        print('info', wmsg.format(name))
+    WLOG(params, '', wmsg.format(name))
+
     # return loc
-    return loc
+    return props
 
 # =============================================================================
 # Define quality control and writing functions
