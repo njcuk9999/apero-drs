@@ -78,6 +78,10 @@ FitsHeader = drs_fits.fits.Header
 # Get the text types
 textentry = lang.textentry
 Text = lang.Text
+# recipe control path
+INSTRUMENT_PATH = base.CONST_PATH
+CORE_PATH = base.CORE_PATH
+PDB_RC_FILE = base.PDB_RC_FILE
 # get Keyword instance
 Keyword = constants.constant_functions.Keyword
 # get exceptions
@@ -107,6 +111,7 @@ class BlockPath:
         self.path = params[key]
         self.name = name
         self.has_obs_dirs = False
+        self.fileset = None
 
     def __str__(self) -> str:
         return 'BlockPath[{0}]'.format(self.name)
@@ -138,12 +143,14 @@ class BlockPath:
 class RawPath(BlockPath):
     def __init__(self, params):
         super().__init__(params, 'raw', 'DRS_DATA_RAW')
+        self.fileset = 'raw_file'
         self.has_obs_dirs = True
 
 
 class TmpPath(BlockPath):
     def __init__(self, params):
         super().__init__(params, 'tmp', 'DRS_DATA_WORKING')
+        self.fileset = 'pp_file'
         self.has_obs_dirs = True
 
 
@@ -151,7 +158,7 @@ class ReducedPath(BlockPath):
     def __init__(self, params):
         super().__init__(params, 'red', 'DRS_DATA_REDUC')
         self.has_obs_dirs = True
-
+        self.fileset = 'red_file'
 
 class AssetPath(BlockPath):
     def __init__(self, params):
@@ -163,18 +170,21 @@ class CalibPath(BlockPath):
     def __init__(self, params):
         super().__init__(params, 'calib', 'DRS_CALIB_DB')
         self.has_obs_dirs = False
+        self.fileset = 'calib_file'
 
 
 class TelluPath(BlockPath):
     def __init__(self, params):
         super().__init__(params, 'tellu', 'DRS_TELLU_DB')
         self.has_obs_dirs = False
+        self.fileset = 'tellu_file'
 
 
 class OutPath(BlockPath):
     def __init__(self, params):
         super().__init__(params, 'out', 'DRS_DATA_OUT')
         self.has_obs_dirs = True
+        self.fileset = 'out_file'
 
 
 class DrsPath:
@@ -196,6 +206,10 @@ class DrsPath:
         :param obspath:
         """
         self.params = params
+
+        # define properties once block kind is set
+        self.block_name = None
+        self.block_fileset = None
         # aboslute path must be a real path (not a symbolic link)
         if abspath is not None:
             self.abspath = os.path.realpath(abspath)
@@ -315,6 +329,13 @@ class DrsPath:
                     'block_name')
             WLOG(self.params, 'error', emsg)
             return
+        # now we have block kind we can set other properties
+        for block in self.blocks:
+            if self.block_kind.lower() == block.name.lower():
+                # set the block name
+                self.block_name = block.name.lower()
+                # set the block file set
+                self.block_fileset = block.fileset
 
     def block_names(self) -> List[str]:
         """
@@ -2658,6 +2679,42 @@ class DrsFitsFile(DrsInputFile):
         # ------------------------------------------------------------------
         # return infile
         return infile, valid, outfilename
+
+    def get_infile_infilename(self, filename: Union[str, None]):
+
+        # set function name
+        func_name = display_func('get_infile_infilename', __NAME__,
+                                 self.class_name)
+        # deal with no filename
+        if filename is None:
+            if self.filename is not None:
+                filename = self.filename
+            else:
+                # TODO: move to language database
+                emsg = 'Filename must be set or given \n\tFunction = {0}'
+                eargs = [func_name]
+                WLOG(self.params, 'error', emsg.format(*eargs))
+        # get base name
+        basename = os.path.basename(filename)
+        # if we have an intype we can remove a suffix
+        if self.intype is not None:
+            # get suffix
+            suffix = self.intype.suffix
+            # get extension
+            if self.inext is not None:
+                inext = self.inext
+            else:
+                inext = '.' + basename.split('.')[-1]
+            # create new filename
+            nargs = [basename.split(suffix)[0], suffix, inext]
+            newfile = '{0}{1}{2}'.format(*nargs)
+            # return new filename
+            return newfile
+        else:
+            # else return the original filename
+            return basename
+
+
 
     def check_table_filename(self, recipename: str,
                              infile: 'DrsFitsFile',
@@ -6288,6 +6345,161 @@ class DrsOutFile(DrsInputFile):
 # =============================================================================
 # User DrsFile functions
 # =============================================================================
+def get_file_definition(params: ParamDict, name: str,
+                        block_kind: str = 'raw',
+                        instrument: Union[str, None] = None,
+                        return_all: bool = False,
+                        fiber: Union[str, None] = None, required: bool = True
+                        ) -> Union[DrsFitsFile, List[DrsFitsFile], None]:
+    """
+    Finds a given recipe in the instruments definitions
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param name: string, the recipe name
+    :param instrument: string, the instrument name
+    :param kind: string, the typoe of file to look for ('raw', 'tmp', 'red')
+    :param return_all: bool, whether to return all instances of this file or
+                       just the last entry (if False)
+    :param fiber: string, some files require a fiber to choose the correct file
+                  (i.e. to add a suffix)
+    :param required: bool, if False then does not throw error when no files
+                     found (only use if checking for return = None)
+
+    :type name: str
+    :type instrument: str
+    :type kind: str
+    :type return_all: bool
+    :type fiber: str
+
+    :exception SystemExit: on caught errors
+
+    :returns: if found the DrsRecipe, else raises SystemExit if required = True
+              else returns None
+    :rtype: Union[DrsFitsFile, List[DrsFitsFile], None]
+    """
+    # set function name
+    func_name = display_func('get_file_definition', __NAME__)
+    # deal with instrument
+    if instrument is None:
+        if 'INSTRUMENT' in base.IPARAMS:
+            instrument = base.IPARAMS['INSTRUMENT']
+            ipath = INSTRUMENT_PATH
+        else:
+            ipath = CORE_PATH
+            instrument = None
+    elif instrument == 'None':
+        ipath = CORE_PATH
+        instrument = None
+    else:
+        ipath = INSTRUMENT_PATH
+    # deal with no name or no instrument
+    if name == 'None' or name is None:
+        if required:
+            eargs = [name, 'unknown', func_name]
+            WLOG(params, 'error', textentry('00-008-00011', args=eargs))
+        return None
+    # deal with fiber (needs removing)
+    if fiber is not None:
+        suffix = '_{0}'.format(fiber)
+        if name.endswith(suffix):
+            name = name[:-(len(suffix))]
+    # else we have a name and an instrument
+    margs = [instrument, ['file_definitions.py'], ipath, CORE_PATH]
+    modules = constants.getmodnames(*margs, return_paths=False)
+    # load module
+    mod = constants.import_module(func_name, modules[0], full=True)
+    # get a list of all recipes from modules
+    block = DrsPath(params, block_kind=block_kind)
+    # get the file set for this block kind
+    all_files = getattr(mod.get(), block.block_fileset).fileset
+    # try to locate this recipe
+    found_files = []
+    for filet in all_files:
+        if name.upper() in filet.name and return_all:
+            found_files.append(filet)
+        elif name == filet.name:
+            found_files.append(filet)
+
+    if instrument is None and len(found_files) == 0:
+        empty = DrsFitsFile('Empty')
+        return empty
+
+    if (len(found_files) == 0) and (not required):
+        return None
+    elif len(found_files) == 0:
+        eargs = [name, modules[0], func_name]
+        WLOG(None, 'error', textentry('00-008-00011', args=eargs))
+
+    if return_all:
+        return found_files
+    else:
+        return found_files[-1]
+
+
+def get_another_fiber_file(params: ParamDict, outfile: DrsFitsFile,
+                           fiber: str, in_block_kind: str = 'tmp',
+                           out_block_kind: str = 'red',
+                           getdata: bool = False,
+                           gethdr: bool = False) -> DrsFitsFile:
+    """
+    Using an "outfile" with a specific fiber get another fibers DrsFitsFile
+    instance, we need to set the "in_block_kind" to the input block kind of the
+    "outfile" and need to set the "out_block_kind" to the block kind of the
+    "outfile", we also need to set the fiber we need
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param outfile: DrsFitsFile, the original fits file
+    :param fiber: str, the fiber to find
+    :param in_block_kind: str, the outfiles input file block kind
+                          i.e. for _e2dsff its input is _pp  block kind='tmp'
+    :param out_block_kind: str, the outfiles block kind
+                          i.e. for _e2dsff its block kind='red'
+    :param getdata: bool, if True loads the data
+    :param gethdr: bool, if True loads the header
+
+    :return: DrsFitsFile, like outfile but with the fiber "fiber"
+    """
+    # need a fresh copy of the outfile
+    fresh_outfile = get_file_definition(params, outfile.name,
+                                                 block_kind=out_block_kind)
+    # get the infile for the input of outfile
+    inbasename = fresh_outfile.get_infile_infilename(filename=outfile.filename)
+    # get block for outfile
+    outblock = DrsPath(params, abspath=outfile.filename)
+    # get in block
+    inblock = DrsPath(params, block_kind=in_block_kind)
+    # get full path (base on in_block_kind)
+    infilename = os.path.join(inblock.block_path, outblock.obs_dir, inbasename)
+    # see whether we need fiber for intype
+    if fresh_outfile.intype.fibers is not None:
+        infiber = fiber
+    else:
+        infiber = None
+    # get a new copy of the infile
+    infile = fresh_outfile.intype.newcopy(params=params, fiber=infiber)
+    infile.set_filename(infilename)
+    # make a new copy of this instance
+    outfile2 = fresh_outfile.newcopy(params=params, fiber=fiber)
+    # construct filename
+    outfile2.construct_filename(infile=infile)
+    # load data if required
+    if getdata:
+        # TODO: move to language database
+        msg = 'Reading data for file: {0}'
+        margs = [outfile2.filename]
+        WLOG(params, '', msg.format(*margs))
+        outfile2.read_data()
+    # load header if required
+    if gethdr:
+        # TODO: move to language database
+        msg = 'Reading header for file: {0}'
+        margs = [outfile2.filename]
+        WLOG(params, '', msg.format(*margs))
+        outfile2.read_header()
+    # return outfile
+    return outfile2
+
+
 def combine(params: ParamDict, recipe: Any,
             infiles: List[DrsFitsFile], math: str = 'average',
             same_type: bool = True) -> Union[DrsFitsFile, None]:
