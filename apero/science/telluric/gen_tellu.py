@@ -1499,9 +1499,8 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
     # ------------------------------------------------------------------
     # get the tellu preclean map key
     # ----------------------------------------------------------------------
-    out_pclean = drs_startup.get_file_definition('TELLU_PCLEAN',
-                                                 params['INSTRUMENT'],
-                                                 kind='red', fiber=fiber)
+    out_pclean = drs_file.get_file_definition(params, 'TELLU_PCLEAN',
+                                              block_kind='red', fiber=fiber)
     # get key
     pclean_key = out_pclean.get_dbkey()
     # load tellu file, header and abspaths
@@ -1943,9 +1942,8 @@ def load_templates(params: ParamDict,
     # set function name
     func_name = display_func('load_templates', __NAME__)
     # get file definition
-    out_temp = drs_startup.get_file_definition('TELLU_TEMP',
-                                               params['INSTRUMENT'],
-                                               kind='red', fiber=fiber)
+    out_temp = drs_file.get_file_definition(params, 'TELLU_TEMP',
+                                            block_kind='red', fiber=fiber)
     # -------------------------------------------------------------------------
     # deal with user not using template
     if 'USE_TEMPLATE' in params['INPUTS']:
@@ -2030,9 +2028,8 @@ def load_templates(params: ParamDict,
 
 def get_transmission_files(params, header, fiber, database=None):
     # get file definition
-    out_trans = drs_startup.get_file_definition('TELLU_TRANS',
-                                                params['INSTRUMENT'],
-                                                kind='red', fiber=fiber)
+    out_trans = drs_file.get_file_definition(params, 'TELLU_TRANS',
+                                             block_kind='red', fiber=fiber)
     # get key
     trans_key = out_trans.get_dbkey()
     # log status
@@ -2077,10 +2074,9 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, database=None,
         conv_key = out_tellu_conv.get_dbkey()
     else:
         # get file definition
-        out_tellu_conv = drs_startup.get_file_definition('TELLU_CONV',
-                                                         params['INSTRUMENT'],
-                                                         kind='red',
-                                                         fiber=fiber)
+        out_tellu_conv = drs_file.get_file_definition(params, 'TELLU_CONV',
+                                                      block_kind='red',
+                                                      fiber=fiber)
         out_tellu_conv.params = params
         # get key
         conv_key = out_tellu_conv.get_dbkey()
@@ -2163,9 +2159,8 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, database=None,
 
 def load_tapas_spl(params, recipe, header, database=None):
     # get file definition
-    tellu_tapas = drs_startup.get_file_definition('TELLU_TAPAS',
-                                                  params['INSTRUMENT'],
-                                                  kind='red')
+    tellu_tapas = drs_file.get_file_definition(params, 'TELLU_TAPAS',
+                                               block_kind='red')
     # make new copy of the file definition
     out_tellu_tapas = tellu_tapas.newcopy(params=params)
     # get key

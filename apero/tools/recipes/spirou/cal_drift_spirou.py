@@ -16,6 +16,7 @@ from apero import lang
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.io import drs_table
@@ -235,9 +236,8 @@ def __main__(recipe, params):
         filenames = np.array(filenames)
         # ---------------------------------------------------------------------
         # find file instance in set (verify user input)
-        drsfile = drs_startup.get_file_definition(filetype,
-                                                  params['INSTRUMENT'],
-                                                  kind='red')
+        drsfile = drs_file.get_file_definition(params, filetype,
+                                               block_kind='red')
         # ---------------------------------------------------------------------
         # storage for table
         basenames, mjdmids, mean_rvs, mean_contrasts = [], [], [], []

@@ -315,8 +315,7 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     # get file type of last file
     filetype = filetypes[lastpos]
     # get infile from filetype
-    infile = drs_startup.get_file_definition(filetype, params['INSTRUMENT'],
-                                             kind='tmp')
+    infile = drs_file.get_file_definition(params, filetype, block_kind='tmp')
     # construct new infile instance and read data
     infile = infile.newcopy(filename=filenames[lastpos], params=params)
     infile.read_file()

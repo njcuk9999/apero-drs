@@ -16,7 +16,7 @@ from apero.base import base
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
-from apero.core.utils import drs_startup
+from apero.core.core import drs_file
 from apero.core.core import drs_database
 from apero.core.utils import drs_data
 from apero.io import drs_fits
@@ -140,13 +140,10 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
 
     # -------------------------------------------------------------------------
     # get loco file instance
-    darkinst = drs_startup.get_file_definition('DARKM', params['INSTRUMENT'],
-                                               kind='red')
-    badinst = drs_startup.get_file_definition('BADPIX', params['INSTRUMENT'],
-                                              kind='red')
-    backinst = drs_startup.get_file_definition('BKGRD_MAP',
-                                               params['INSTRUMENT'],
-                                               kind='red')
+    darkinst = drs_file.get_file_definition(params, 'DARKM', block_ind='red')
+    badinst = drs_file.get_file_definition(params, 'BADPIX', block_kind='red')
+    backinst = drs_file.get_file_definition(params, 'BKGRD_MAP',
+                                            block_kind='red')
     # get calibration key
     darkkey = darkinst.get_dbkey()
     badkey = badinst.get_dbkey()

@@ -13,9 +13,9 @@ import itertools
 import os
 
 from apero.base import base
-from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.science import extract
@@ -145,9 +145,8 @@ def __main__(recipe, params):
         WLOG(params, 'info', msg.format(*wargs))
         WLOG(params, 'info', params['DRS_HEADER'])
         # get the in file type
-        infiletype = drs_startup.get_file_definition(intype,
-                                                     params['INSTRUMENT'],
-                                                     kind='red')
+        infiletype = drs_file.get_file_definition(params, intype,
+                                                  block_kind='red')
         # get the files for this filetype
         fkwargs = dict()
         fkwargs['KW_OUTPUT'] = intype

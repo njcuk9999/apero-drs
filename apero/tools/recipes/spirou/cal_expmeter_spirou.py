@@ -18,6 +18,7 @@ from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.science.calib import shape
@@ -176,9 +177,8 @@ def __main__(recipe, params):
         # print fibers
         WLOG(params, '', '\tFiber {0}'.format(fiber))
         # find file instance in set (verify user input)
-        drsfile = drs_startup.get_file_definition(filetype,
-                                                  params['INSTRUMENT'],
-                                                  kind='red')
+        drsfile = drs_file.get_file_definition(params, filetype,
+                                               block_kind='red')
         # get all "filetype" filenames
         filters = dict(KW_OUTPUT=filetype, KW_FIBER=fiber,
                        OBS_DIR=params['OBS_DIR'])

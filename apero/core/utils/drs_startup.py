@@ -31,8 +31,6 @@ from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
 from apero.core.core import drs_database
-from apero.io import drs_table
-from apero.io import drs_path
 from apero.io import drs_lock
 from apero import plotting
 
@@ -631,92 +629,6 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
                     outdict[key] = llmain[key]
         # return outdict
         return outdict
-
-
-def get_file_definition(name: str, instrument: str, kind: str = 'raw',
-                        return_all: bool = False,
-                        fiber: Union[str, None] = None, required: bool = True
-                        ) -> Union[DrsFitsFile, List[DrsFitsFile], None]:
-    """
-    Finds a given recipe in the instruments definitions
-
-    :param name: string, the recipe name
-    :param instrument: string, the instrument name
-    :param kind: string, the typoe of file to look for ('raw', 'tmp', 'red')
-    :param return_all: bool, whether to return all instances of this file or
-                       just the last entry (if False)
-    :param fiber: string, some files require a fiber to choose the correct file
-                  (i.e. to add a suffix)
-    :param required: bool, if False then does not throw error when no files
-                     found (only use if checking for return = None)
-
-    :type name: str
-    :type instrument: str
-    :type kind: str
-    :type return_all: bool
-    :type fiber: str
-
-    :exception SystemExit: on caught errors
-
-    :returns: if found the DrsRecipe, else raises SystemExit if required = True
-              else returns None
-    :rtype: Union[DrsFitsFile, List[DrsFitsFile], None]
-    """
-    # set function name
-    func_name = display_func('get_file_definition', __NAME__)
-    # deal with no instrument
-    if instrument == 'None' or instrument is None:
-        ipath = CORE_PATH
-        instrument = None
-    else:
-        ipath = INSTRUMENT_PATH
-    # deal with no name or no instrument
-    if name == 'None' or name is None:
-        if required:
-            eargs = [name, 'unknown', func_name]
-            WLOG(None, 'error', textentry('00-008-00011', args=eargs))
-        return None
-    # deal with fiber (needs removing)
-    if fiber is not None:
-        suffix = '_{0}'.format(fiber)
-        if name.endswith(suffix):
-            name = name[:-(len(suffix))]
-    # else we have a name and an instrument
-    margs = [instrument, ['file_definitions.py'], ipath, CORE_PATH]
-    modules = constants.getmodnames(*margs, return_paths=False)
-    # load module
-    mod = constants.import_module(func_name, modules[0], full=True)
-    # get a list of all recipes from modules
-    if kind == 'raw':
-        all_files = mod.get().raw_file.fileset
-    elif kind == 'tmp':
-        all_files = mod.get().pp_file.fileset
-    elif kind.startswith('red'):
-        all_files = mod.get().out_file.fileset
-    else:
-        all_files = []
-    # try to locate this recipe
-    found_files = []
-    for filet in all_files:
-        if name.upper() in filet.name and return_all:
-            found_files.append(filet)
-        elif name == filet.name:
-            found_files.append(filet)
-
-    if instrument is None and len(found_files) == 0:
-        empty = drs_file.DrsFitsFile('Empty')
-        return empty
-
-    if (len(found_files) == 0) and (not required):
-        return None
-    elif len(found_files) == 0:
-        eargs = [name, modules[0], func_name]
-        WLOG(None, 'error', textentry('00-008-00011', args=eargs))
-
-    if return_all:
-        return found_files
-    else:
-        return found_files[-1]
 
 
 def copy_kwargs(params: ParamDict, recipe: Union[DrsRecipe, None] = None,

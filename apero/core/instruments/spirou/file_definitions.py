@@ -460,7 +460,7 @@ pp_file.addset(pp_hc2_dark)
 # Reduced Files
 # =============================================================================
 # generic out file
-out_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
+red_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
                       intype=pp_file)
 # calib out file
 calib_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
@@ -504,10 +504,10 @@ out_dark_master = drs_finput('DARKM', hkeys=dict(KW_OUTPUT='DARKM'),
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='DARKM')
 # add dark outputs to output fileset
-out_file.addset(out_dark_int)
-out_file.addset(out_dark_tel)
-out_file.addset(out_dark_sky)
-out_file.addset(out_dark_master)
+red_file.addset(out_dark_int)
+red_file.addset(out_dark_tel)
+red_file.addset(out_dark_sky)
+red_file.addset(out_dark_master)
 calib_file.addset(out_dark_int)
 calib_file.addset(out_dark_tel)
 calib_file.addset(out_dark_sky)
@@ -534,9 +534,9 @@ debug_back = drs_finput('DEBUG_BACK', hkeys=dict(KW_OUTPUT='DEBUG_BACK'),
                         suffix='_background.fits', outfunc=out.debug_file)
 
 # add badpix outputs to output fileset
-out_file.addset(out_badpix)
-out_file.addset(out_backmap)
-out_file.addset(debug_back)
+red_file.addset(out_badpix)
+red_file.addset(out_backmap)
+red_file.addset(debug_back)
 calib_file.addset(out_badpix)
 calib_file.addset(out_backmap)
 
@@ -568,10 +568,10 @@ out_loc_sup = drs_finput('LOC_SUP', hkeys=dict(KW_OUTPUT='LOC_SUP'),
                          suffix='_with-order',
                          outfunc=out.calib_file)
 # add localisation outputs to output fileset
-out_file.addset(out_loc_orderp)
-out_file.addset(out_loc_loco)
-out_file.addset(out_loc_fwhm)
-out_file.addset(out_loc_sup)
+red_file.addset(out_loc_orderp)
+red_file.addset(out_loc_loco)
+red_file.addset(out_loc_fwhm)
+red_file.addset(out_loc_sup)
 calib_file.addset(out_loc_orderp)
 calib_file.addset(out_loc_loco)
 
@@ -619,14 +619,14 @@ out_shape_debug_bdx = drs_finput('SHAPE_BDX', hkeys=dict(KW_OUTPUT='SHAPE_BDX'),
                                  suffix='_shape_out_bdx',
                                  outfunc=out.debug_file)
 # add shape master outputs to output fileset
-out_file.addset(out_shape_dxmap)
-out_file.addset(out_shape_dymap)
-out_file.addset(out_shape_fpmaster)
-out_file.addset(out_shape_debug_ifp)
-out_file.addset(out_shape_debug_ofp)
-out_file.addset(out_shape_debug_ihc)
-out_file.addset(out_shape_debug_ohc)
-out_file.addset(out_shape_debug_bdx)
+red_file.addset(out_shape_dxmap)
+red_file.addset(out_shape_dymap)
+red_file.addset(out_shape_fpmaster)
+red_file.addset(out_shape_debug_ifp)
+red_file.addset(out_shape_debug_ofp)
+red_file.addset(out_shape_debug_ihc)
+red_file.addset(out_shape_debug_ohc)
+red_file.addset(out_shape_debug_bdx)
 
 calib_file.addset(out_shape_dxmap)
 calib_file.addset(out_shape_dymap)
@@ -653,9 +653,9 @@ out_shapel_debug_ofp = drs_finput('SHAPEL_OUT_FP',
                                   suffix='_shapel_out_fp.fits',
                                   outfunc=out.debug_file)
 # add shape local outputs to output fileset
-out_file.addset(out_shape_local)
-out_file.addset(out_shapel_debug_ifp)
-out_file.addset(out_shapel_debug_ofp)
+red_file.addset(out_shape_local)
+red_file.addset(out_shapel_debug_ifp)
+red_file.addset(out_shapel_debug_ofp)
 calib_file.addset(out_shape_local)
 
 # -----------------------------------------------------------------------------
@@ -683,9 +683,9 @@ out_orderp_straight = drs_ninput('ORDERP_STRAIGHT',
                                  outfunc=out.npy_file)
 
 # add flat outputs to output fileset
-out_file.addset(out_ff_blaze)
-out_file.addset(out_ff_flat)
-out_file.addset(out_orderp_straight)
+red_file.addset(out_ff_blaze)
+red_file.addset(out_ff_flat)
+red_file.addset(out_orderp_straight)
 calib_file.addset(out_ff_blaze)
 calib_file.addset(out_ff_flat)
 
@@ -748,13 +748,13 @@ out_ext_fplines = drs_finput('EXT_FPLIST', hkeys=dict(KW_OUTPUT='EXT_FPLIST'),
                              outfunc=out.general_file)
 
 # add extract outputs to output fileset
-out_file.addset(out_ext_e2ds)
-out_file.addset(out_ext_e2dsff)
-out_file.addset(out_ext_e2dsll)
-out_file.addset(out_ext_loco)
-out_file.addset(out_ext_s1d_w)
-out_file.addset(out_ext_s1d_v)
-out_file.addset(out_ext_fplines)
+red_file.addset(out_ext_e2ds)
+red_file.addset(out_ext_e2dsff)
+red_file.addset(out_ext_e2dsll)
+red_file.addset(out_ext_loco)
+red_file.addset(out_ext_s1d_w)
+red_file.addset(out_ext_s1d_v)
+red_file.addset(out_ext_fplines)
 
 # -----------------------------------------------------------------------------
 # thermal files
@@ -778,8 +778,8 @@ out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS',
                                   outfunc=out.general_file)
 
 # add thermal outputs to output fileset
-out_file.addset(out_thermal_e2ds_int)
-out_file.addset(out_thermal_e2ds_tel)
+red_file.addset(out_thermal_e2ds_int)
+red_file.addset(out_thermal_e2ds_tel)
 calib_file.addset(out_thermal_e2ds_int)
 calib_file.addset(out_thermal_e2ds_tel)
 
@@ -794,7 +794,7 @@ out_leak_master = drs_finput('LEAKM_E2DS', hkeys=dict(KW_OUTPUT='LEAKM_E2DS'),
                              suffix='_leak_master',
                              dbname='calibration', dbkey='LEAKM',
                              outfunc=out.general_file)
-out_file.addset(out_leak_master)
+red_file.addset(out_leak_master)
 calib_file.addset(out_leak_master)
 
 
@@ -851,11 +851,11 @@ out_wave_master = drs_finput('WAVEM_D', hkeys=dict(KW_OUTPUT='WAVEM_SOL'),
                              outfunc=out.calib_file)
 
 # add wave outputs to output fileset
-out_file.addset(out_wavem_sol)
-out_file.addset(out_wave_hclist_master)
-out_file.addset(out_wave_fplist_master)
-out_file.addset(out_wavem_cavity)
-out_file.addset(out_wave_master)
+red_file.addset(out_wavem_sol)
+red_file.addset(out_wave_hclist_master)
+red_file.addset(out_wave_fplist_master)
+red_file.addset(out_wavem_cavity)
+red_file.addset(out_wave_master)
 calib_file.addset(out_wavem_sol)
 calib_file.addset(out_wave_hclist_master)
 calib_file.addset(out_wave_fplist_master)
@@ -916,11 +916,11 @@ out_wavem_ll_table = drs_input('WAVE_FPLLTABL',
 
 
 # add wave outputs to output fileset
-out_file.addset(out_wavem_fp)
-out_file.addset(out_wavem_hc)
-out_file.addset(out_wavem_hcres)
-out_file.addset(out_wavem_res_table)
-out_file.addset(out_wavem_ll_table)
+red_file.addset(out_wavem_fp)
+red_file.addset(out_wavem_hc)
+red_file.addset(out_wavem_hcres)
+red_file.addset(out_wavem_res_table)
+red_file.addset(out_wavem_ll_table)
 calib_file.addset(out_wavem_fp)
 calib_file.addset(out_wavem_hc)
 
@@ -1005,15 +1005,15 @@ out_wave_fplist = drs_finput('WAVE_FPLIST', hkeys=dict(KW_OUTPUT='WAVE_FPLIST'),
                              outfunc=out.calib_file)
 
 # add wave outputs to output fileset
-out_file.addset(out_wave_hc)
-out_file.addset(out_wave_fp)
-out_file.addset(out_wave_night)
-out_file.addset(out_wave_hcline)
-out_file.addset(out_wave_hcres)
-out_file.addset(out_wave_res_table)
-out_file.addset(out_wave_ll_table)
-out_file.addset(out_wave_hclist)
-out_file.addset(out_wave_fplist)
+red_file.addset(out_wave_hc)
+red_file.addset(out_wave_fp)
+red_file.addset(out_wave_night)
+red_file.addset(out_wave_hcline)
+red_file.addset(out_wave_hcres)
+red_file.addset(out_wave_res_table)
+red_file.addset(out_wave_ll_table)
+red_file.addset(out_wave_hclist)
+red_file.addset(out_wave_fplist)
 calib_file.addset(out_wave_hc)
 calib_file.addset(out_wave_fp)
 calib_file.addset(out_wave_night)
@@ -1066,10 +1066,10 @@ out_tellu_trans = drs_finput('TELLU_TRANS', hkeys=dict(KW_OUTPUT='TELLU_TRANS'),
                              outfunc=out.general_file)
 
 # add make_telluric outputs to output fileset
-out_file.addset(out_tellu_pclean)
-out_file.addset(out_tellu_conv)
-out_file.addset(out_tellu_trans)
-out_file.addset(out_tellu_spl_npy)
+red_file.addset(out_tellu_pclean)
+red_file.addset(out_tellu_conv)
+red_file.addset(out_tellu_trans)
+red_file.addset(out_tellu_spl_npy)
 tellu_file.addset(out_tellu_pclean)
 tellu_file.addset(out_tellu_conv)
 tellu_file.addset(out_tellu_trans)
@@ -1135,13 +1135,13 @@ out_tellu_rc1d_v = drs_finput('RC1D_V_FILE',
                               outfunc=out.general_file, datatype='table')
 
 # add fit telluric outputs to output fileset
-out_file.addset(out_tellu_abso_npy)
-out_file.addset(out_tellu_obj)
-out_file.addset(out_tellu_sc1d_w)
-out_file.addset(out_tellu_sc1d_v)
-out_file.addset(out_tellu_recon)
-out_file.addset(out_tellu_rc1d_w)
-out_file.addset(out_tellu_rc1d_v)
+red_file.addset(out_tellu_abso_npy)
+red_file.addset(out_tellu_obj)
+red_file.addset(out_tellu_sc1d_w)
+red_file.addset(out_tellu_sc1d_v)
+red_file.addset(out_tellu_recon)
+red_file.addset(out_tellu_rc1d_w)
+red_file.addset(out_tellu_rc1d_v)
 tellu_file.addset(out_tellu_obj)
 tellu_file.addset(out_tellu_recon)
 
@@ -1195,11 +1195,11 @@ out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
                                    outfunc=out.set_file)
 
 # add make template outputs to output fileset
-out_file.addset(out_tellu_template)
-out_file.addset(out_tellu_bigcube)
-out_file.addset(out_tellu_bigcube0)
-out_file.addset(out_tellu_s1d_template)
-out_file.addset(out_tellu_s1d_bigcube)
+red_file.addset(out_tellu_template)
+red_file.addset(out_tellu_bigcube)
+red_file.addset(out_tellu_bigcube0)
+red_file.addset(out_tellu_s1d_template)
+red_file.addset(out_tellu_s1d_bigcube)
 tellu_file.addset(out_tellu_template)
 
 # -----------------------------------------------------------------------------
@@ -1214,7 +1214,7 @@ out_ccf_fits = drs_finput('CCF_RV', hkeys=dict(KW_OUTPUT='CCF_RV'),
                           datatype='table',
                           outfunc=out.general_file)
 
-out_file.addset(out_ccf_fits)
+red_file.addset(out_ccf_fits)
 
 # -----------------------------------------------------------------------------
 # polarisation
@@ -1305,19 +1305,19 @@ out_stokesi_s1dv = drs_finput('S1DV_STOKESI',
                               intype=[out_ext_e2dsff, out_tellu_obj],
                               outfunc=out.general_file)
 
-out_file.addset(out_pol_deg)
-out_file.addset(out_pol_stokesi)
-out_file.addset(out_pol_null1)
-out_file.addset(out_pol_null2)
-out_file.addset(out_pol_lsd)
-out_file.addset(out_pol_s1dw)
-out_file.addset(out_pol_s1dv)
-out_file.addset(out_null1_s1dw)
-out_file.addset(out_null1_s1dv)
-out_file.addset(out_null2_s1dw)
-out_file.addset(out_null2_s1dv)
-out_file.addset(out_stokesi_s1dw)
-out_file.addset(out_stokesi_s1dv)
+red_file.addset(out_pol_deg)
+red_file.addset(out_pol_stokesi)
+red_file.addset(out_pol_null1)
+red_file.addset(out_pol_null2)
+red_file.addset(out_pol_lsd)
+red_file.addset(out_pol_s1dw)
+red_file.addset(out_pol_s1dv)
+red_file.addset(out_null1_s1dw)
+red_file.addset(out_null1_s1dv)
+red_file.addset(out_null2_s1dw)
+red_file.addset(out_null2_s1dv)
+red_file.addset(out_stokesi_s1dw)
+red_file.addset(out_stokesi_s1dv)
 
 # =============================================================================
 # Post processed Files

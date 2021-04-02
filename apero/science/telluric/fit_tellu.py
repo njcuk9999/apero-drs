@@ -72,9 +72,8 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     # ------------------------------------------------------------------
     # get the transmission map key
     # ----------------------------------------------------------------------
-    out_trans = drs_startup.get_file_definition('TELLU_TRANS',
-                                                params['INSTRUMENT'],
-                                                kind='red', fiber=fiber)
+    out_trans = drs_file.get_file_definition(params, 'TELLU_TRANS',
+                                             block_kind='red', fiber=fiber)
     # get key
     trans_key = out_trans.get_dbkey() + '[{0}]'.format(fiber)
     # ----------------------------------------------------------------------

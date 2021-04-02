@@ -529,8 +529,8 @@ def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
     usefiber = pconst.FIBER_LOC_TYPES(fiber)
     # -------------------------------------------------------------------------
     # get loco file instance
-    locofile = drs_startup.get_file_definition('LOC_LOCO', params['INSTRUMENT'],
-                                               kind='red')
+    locofile = drs_file.get_file_definition(params, 'LOC_LOCO',
+                                            block_kind='red')
     # get calibration key
     key = locofile.get_dbkey()
     # load database
