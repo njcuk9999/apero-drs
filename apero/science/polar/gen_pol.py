@@ -10,6 +10,8 @@ Created on 2019-10-25 at 13:25
 @author: cook
 """
 import numpy as np
+import os
+from scipy import interpolate
 import warnings
 from typing import Tuple, List, Union
 
@@ -18,10 +20,11 @@ from apero.core import math as mp
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log, drs_file
-from apero.core.core import drs_misc
-from apero.core.utils import drs_startup
 from apero.core.core import drs_text
+from apero.core.utils import drs_recipe
 from apero.io import drs_table
+from apero.science.calib import flat_blaze
+from apero.science.calib import wave
 from apero.science import extract
 
 # =============================================================================
@@ -36,6 +39,7 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
@@ -50,6 +54,62 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Define class
 # =============================================================================
+class PolarDict():
+    def __init__(self):
+        # exposure that we are keeping (these keys are used in the dictionaries)
+        self.exposures = []
+        self.n_exposures = 0
+        # wave solution common to all non-raw data
+        self.global_wave = None
+        self.global_wave_file = None
+        self.global_wave_time = None
+        # the inputs in dictionary form
+        self.inputs = dict()
+        # raw flux and flux error
+        self.raw_wave = dict()
+        self.raw_wave_file = dict()
+        self.raw_wave_time = dict()
+        self.raw_flux = dict()
+        self.raw_fluxerr = dict()
+        # flux and flux error on common wave solution grid
+        self.flux = dict()
+        self.fluxerr = dict()
+        # stokes parameters for each exposure
+        self.stokes = dict()
+        # exposure number for each exposure
+        self.exposure_numbers = dict()
+
+    def verify(self, params: ParamDict):
+            """
+            Verify that polar dictionary is good to use
+
+            :return: None, raises exception if poalr dictionary is bad (with reason)
+            """
+            # global wave file set
+            if self.global_wave is None:
+                WLOG(params, 'error', 'Global wave map not set')
+            if self.global_wave_file is None:
+                WLOG(params, 'error', 'Global wave file not set')
+            if self.global_wave_time is None:
+                WLOG(params, 'error', 'Global wave time not set')
+            # dictionary to check against exposure keys
+            dicts = [self.raw_flux, self.raw_fluxerr,
+                     self.raw_wave, self.raw_wave_file, self.raw_wave_time,
+                     self.flux, self.fluxerr,
+                     self.stokes, self.exposure_numbers]
+            names = ['RAWFLUX', 'RAWFLUXERR',
+                     'RAWWAVE', 'RAWWAVEFILE', 'RAWWAVETIME',
+                     'FLUX', 'FLUXERR',
+                     'STOKES', 'EXPOSURE_NUMBERS']
+            # loop around exposure keys
+            for key in self.exposures:
+                # loop around vectors
+                for it, _dict in enumerate(dicts):
+                    # test for key in dictionary
+                    if key not in _dict:
+                        emsg = '{0}[{1}] not set'
+                        eargs = [names[it], key]
+                        WLOG(params, 'error', emsg.format(*eargs))
 
 
 # =============================================================================
@@ -194,15 +254,209 @@ def set_polar_exposures(params: ParamDict) -> List[DrsFitsFile]:
     return exposures
 
 
-def apero_load_data(params: ParamDict, inputs: List[DrsFitsFile]):
+def apero_load_data(params: ParamDict, recipe: DrsRecipe,
+                    inputs: List[DrsFitsFile]) -> PolarDict:
+    """
+    Load the data for the inputted exposures
 
-    # loop around exposures
+    data to save per exposure
 
-        # need A and B
+    A_{N}  B_{N}  where N = 1,2,3,4
 
-        # load blaze for file
+    1. "WAVE"           = wave solution of AB fiber
+    2. "RAWFLUXDATA"    = flux / blaze
+    3. "RAWFLUXERRDATA" = np.sqrt(flux) / blaze
+    4. "FLUXDATA"       = interp flux / interp blaze onto same wave as exp1
+    5. "FLUXERRDATA"    = np.sqrt(interp flux ) / interp blaze onto same wave
+                          as exp1
 
-        # load wave for file
+    # other things to save
+    # - STOKES:   CMMTSEQ.split(' ')[0]
+    # - EXPOSURE:  CMMTSEQ.split(' ')[1]  or UNDEF
+    # - NEXPOSURES:   4
+
+    # data to save once
+    # OBJNAME:   from header of exp 1:  OBJECT (should be DRSOBJN)
+    # OBJTEMP:   from header of exp 1:  OBJ_TEMP -> deal with no key = 0.0
+
+    returns a class storing these
+
+
+    :param params:
+    :param recipe:
+    :param inputs:
+    :return:
+    """
+    # set function name
+    func_name = display_func('apero_load_data', __NAME__)
+    # -------------------------------------------------------------------------
+    # TODO: get from params?
+    polar_fibers = params['POLAR_FIBERS']
+    stokesparams = params['POLAR_STOKES_PARAMS']
+    berv_correct = params['POLAR_BERV_CORRECT']
+    source_rv_correct = params['POLAR_SOURCE_RV_CORRECT']
+    # -------------------------------------------------------------------------
+    # storage
+    polar_dict = PolarDict()
+    # -------------------------------------------------------------------------
+    # TODO: What about from a CCF file?
+    # set source rv
+    if source_rv_correct:
+        source_rv = float(params['INPUTS']['OBJRV'])
+    else:
+        source_rv = 0.0
+    # -------------------------------------------------------------------------
+    # determine the number of this exposure
+    # -------------------------------------------------------------------------
+    # set a counter (for exposure number when not given in header)
+    count, stoke = 1, 'UNDEF'
+    # store stokes for each fiber and exposure numbers
+    stokes, exp_nums, basenames = [], [], []
+    # loop around exposures and work out stokes parameters
+    for expfile in inputs:
+        # get the stokes type and exposure number from headaer
+        if params['KW_CMMTSEQ'][0] in expfile.header:
+            stoke, exp_num  = expfile.get_hkey('KW_CMMTSEQ').split()
+            stoke = stoke.upper()
+        else:
+            exp_num = int(count)
+            count += 1
+        # make sure stokes fiber is valid (or set to UNDEF elsewise)
+        if stoke not in stokesparams:
+            stoke = 'UNDEF'
+        # add to storage
+        stokes.append(str(stoke))
+        exp_nums.append(int(exp_num))
+        basenames.append(expfile.basename)
+    # deal with multiple stokes parameters
+    if np.unique(stokes) != 1:
+        emsg = 'Identified more than one stokes parameters in input data.'
+        for it in range(len(stokes)):
+            emsg += '\n\tFile {0}\tExp {1}\tStokes:{2}'
+            emsg = emsg.format(basenames[it], exp_nums[it], stokes[it])
+    # -------------------------------------------------------------------------
+    # Deal with setting global wave solution
+    # -------------------------------------------------------------------------
+    # loop around exposures and load fibers
+    for it, expfile in enumerate(inputs):
+        # ---------------------------------------------------------------------
+        # store the wave solution for exposure 1
+        if exp_nums[it] == 1:
+            # get the exposure 1 wave solution (will be the global solution)
+            wprops = wave.get_wavesolution(params, recipe, fiber=expfile.fiber,
+                                           infile=expfile)
+            # -----------------------------------------------------------------
+            # apply a berv correction if requested
+            if berv_correct:
+                # get all berv properties from expfile
+                bprops = extract.get_berv(params, expfile)
+                # get BERV (need to use both types of BERV measurement)
+                berv = bprops['USE_BERV']
+                # need the source RV
+                dv = berv - source_rv
+                # calculate proper wave shift
+                dvshift = mp.relativistic_waveshift(dv, units='km/s')
+                # apply to wave solution
+                wavemap = np.array(wprops['WAVEMAP']) * dvshift
+            else:
+                wavemap = np.array(wprops['WAVEMAP'])
+            # -----------------------------------------------------------------
+            # add the global wave solution to polar dict
+            polar_dict.global_wave = wavemap
+            # add the global wave filename solution to polar dict
+            polar_dict.global_wave_file = str(wprops['WAVEFILE'])
+            # add the global wave time solution to polar dict
+            polar_dict.global_wave_time = str(wprops['WAVETIME'])
+    # -------------------------------------------------------------------------
+    # Load all exposures for each polar fiber
+    # -------------------------------------------------------------------------
+    # loop around exposures and load fibers
+    for it, expfile in enumerate(inputs):
+        # ---------------------------------------------------------------------
+        # loop around fibers
+        # ---------------------------------------------------------------------
+        for fiber in polar_fibers:
+            # -----------------------------------------------------------------
+            # work out key
+            key_str = '{0}_{1}'.format(fiber, exp_nums[it])
+            # -----------------------------------------------------------------
+            # add key to polar dict list
+            polar_dict.exposures.append(key_str)
+            # add exposure numbers to polar dict
+            polar_dict.exposure_numbers[key_str] = exp_nums[it]
+            # add the stokes parameter for this exposure
+            polar_dict.stokes[key_str] = stokes[it]
+            # -----------------------------------------------------------------
+            # need to deal with telluric files differently than e2ds files
+            if expfile.name == 'TELLU_OBJ':
+                gkwargs = dict(outfile=expfile, fiber=fiber,
+                               in_block_kind='red', out_block_kind='red',
+                               getdata=True, gethdr=True)
+            else:
+                gkwargs = dict(outfile=expfile, fiber=fiber,
+                               in_block_kind='tmp', out_block_kind='red',
+                               getdata=True, gethdr=True)
+            # -----------------------------------------------------------------
+            # need to locate the correct file for this fiber
+            infile = drs_file.get_another_fiber_file(params, **gkwargs)
+            # -----------------------------------------------------------------
+            # load the blaze file
+            _, blaze = flat_blaze.get_blaze(params, infile.header, fiber)
+            # -----------------------------------------------------------------
+            # load wave for file
+            wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
+                                           infile=infile)
+            # -----------------------------------------------------------------
+            # apply a berv correction if requested
+            if berv_correct:
+                # get all berv properties from expfile
+                bprops = extract.get_berv(params, expfile)
+                # get BERV (need to use both types of BERV measurement)
+                berv = bprops['USE_BERV']
+                # need the source RV
+                dv = berv - source_rv
+                # calculate proper wave shift
+                dvshift = mp.relativistic_waveshift(dv, units='km/s')
+                # apply to wave solution
+                wavemap = np.array(wprops['WAVEMAP']) * dvshift
+            else:
+                wavemap = np.array(wprops['WAVEMAP'])
+            # -----------------------------------------------------------------
+            # add the global wave solution to polar dict
+            polar_dict.raw_wave[key_str] = wavemap
+            # add the global wave filename solution to polar dict
+            polar_dict.raw_wave_file[key_str] = str(wprops['WAVEFILE'])
+            # add the global wave time solution to polar dict
+            polar_dict.raw_wave_time[key_str] = str(wprops['WAVETIME'])
+            # -----------------------------------------------------------------
+            # get the raw data
+            raw_flux = np.array(infile.data / blaze)
+            # get the raw data errors
+            raw_fluxerr = np.sqrt(infile.data)
+            # -----------------------------------------------------------------
+            # get interpolated data
+            flux, fluxerr = get_interp_flux(wavemap0=wavemap, flux0=raw_flux,
+                                            blaze0=blaze,
+                                            wavemap1=polar_dict.global_wave)
+            # -----------------------------------------------------------------
+            # add rawflux, rawfluxerr, flux, fluxerror to polar dict
+            polar_dict.raw_flux[key_str] = raw_flux
+            polar_dict.raw_fluxerr[key_str] = raw_fluxerr
+            polar_dict.flux[key_str] = flux
+            polar_dict.fluxerr[key_str] = fluxerr
+        # ---------------------------------------------------------------------
+        # make sure we have the correct number of exposures
+        if len(polar_dict.exposures) == 8:
+            polar_dict.n_exposures = 4
+        else:
+            emsg = ('Number of exposures in input data is not sufficient for'
+                    ' polarimetry calculations')
+            WLOG(params, 'error', emsg)
+        # ---------------------------------------------------------------------
+        # verify data is good in polar dictionary
+        polar_dict.verify(params)
+        # return the polar dictionary
+        return polar_dict
 
 
 # =============================================================================
@@ -689,6 +943,51 @@ def calculate_stokes_i(params: ParamDict, props: ParamDict,
 
     # return loc
     return props
+
+
+def get_interp_flux(wavemap0: np.ndarray, flux0: np.ndarray,
+                    blaze0: np.ndarray, wavemap1: np.ndarray
+                    ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Work out the interpolated flux from grid "wavemap0" to a grid "wavemap1"
+
+    :param wavemap0: np.array, the initial wave grid of the flux data
+    :param flux0: np.array, the initial flux values
+    :param blaze0: np.array, the initial blaze values
+    :param wavemap1: np.array, the final wave grid to interpolate to
+
+    :return: tuple, 1. the flux on wavemap1, 2. the flux error on wavemap1
+    """
+
+    # output flux and flux error maps
+    flux1 = np.full_like(flux0, np.nan)
+    fluxerr1 = np.full_like(flux0, np.nan)
+    # loop around each order (per order spline)
+    for order_num in range(wavemap0.shape[0]):
+        # only keep clean data
+        clean = np.isfinite(flux0[order_num])
+        # get order values
+        ordwave0 = wavemap0[order_num][clean]
+        ordflux0 = flux0[order_num][clean]
+        ordblaze0 = blaze0[order_num][clean]
+        ordwave1 = wavemap1[order_num]
+        # get spline of flux and blaze in original positions
+        flux_tck = interpolate.splrep(ordwave0, ordflux0, s=0)
+        blaze_tck = interpolate.splrep(ordwave0, ordblaze0, s=0)
+        # mask the global wavemap (1) so it lies within the bounds of the
+        #  the local wavemap (0)
+        wlmask = wavemap1 > np.min(ordwave0)
+        wlmask &= wavemap1 < np.max(ordwave0)
+        # apply the spline to the output wave grid (masked)
+        ordblaze1 = interpolate.splev(ordwave1[wlmask], blaze_tck, der=0)
+        ordflux1 = interpolate.splev(ordwave1[wlmask], flux_tck, der=0)
+        # push into flux1 array
+        flux1[order_num][wlmask] = ordflux1 / ordblaze1
+        # calculate fluxerr1 and push into array
+        fluxerr1[order_num][wlmask] = np.sqrt(ordflux1 / ordblaze1)
+    # ---------------------------------------------------------------------
+    return flux1, fluxerr1
+
 
 # =============================================================================
 # Define quality control and writing functions

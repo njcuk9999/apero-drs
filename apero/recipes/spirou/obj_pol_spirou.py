@@ -97,7 +97,7 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # TODO: move text to language database
     WLOG(params, 'info', 'Part 1: loading input data')
-    pprops = gen_pol.apero_load_data(params, inputs)
+    polardict = gen_pol.apero_load_data(params, inputs)
 
     # -------------------------------------------------------------------------
     # part2: run polarimetry analysis
