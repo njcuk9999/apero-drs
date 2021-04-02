@@ -122,7 +122,10 @@ def general_file(params: ParamDict, infile: Any, outfile: Any,
     # deal with no given path (default)
     if path is None:
         # get output path from params
-        outpath = params['OUTPATH']
+        if 'OUTPATH' in params:
+            outpath = params['OUTPATH']
+        else:
+            outpath = None
         # check if outpath is set
         if outpath is None:
             raise DrsCodedException('00-001-00023', level='error',

@@ -157,8 +157,8 @@ def __main__(recipe, params):
         qc_params = [['HAS_OBJ'], ['True'], ['HAS_OBJ==False'], [1]]
     # ----------------------------------------------------------------------
     # Get filetype definition
-    infiletype = drs_startup.get_file_definition(filetype, params['INSTRUMENT'],
-                                                 kind='red')
+    infiletype = drs_file.get_file_definition(params, filetype,
+                                              block_kind='red')
     # get new copy of file definition
     infile = infiletype.newcopy(params=params, fiber=fiber)
     # set reference filename
@@ -220,8 +220,8 @@ def __main__(recipe, params):
         # log progress
         WLOG(params, 'info', textentry('40-019-00038', args=[s1d_filetype]))
         # Get filetype definition
-        dkwargs = dict(instrument=params['INSTRUMENT'], kind='red')
-        s1d_inst = drs_startup.get_file_definition(s1d_filetype, **dkwargs)
+        dkwargs = dict(block_kind='red')
+        s1d_inst = drs_file.get_file_definition(params, s1d_filetype, **dkwargs)
         # get new copy of file definition
         s1d_file = s1d_inst.newcopy(params=params, fiber=fiber)
         # get s1d filenames

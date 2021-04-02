@@ -12,6 +12,7 @@ Created on 2020-03-02 at 17:26
 from apero.base import base
 from apero import lang
 from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.core.core import drs_database
@@ -111,9 +112,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # check whether filetype is allowed for instrument
         # get definition
-        fdkwargs = dict(instrument=params['INSTRUMENT'], kind='tmp',
-                        required=False)
-        darkfpfile = drs_startup.get_file_definition(filetype, **fdkwargs)
+        fdkwargs = dict(block_kind='tmp', required=False)
+        darkfpfile = drs_file.get_file_definition(params, filetype, **fdkwargs)
         # deal with defintion not found
         if darkfpfile is None:
             eargs = [filetype, recipe.name, mainname]

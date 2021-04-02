@@ -236,8 +236,7 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
 
 def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
     # get file definition
-    out_flat = drs_startup.get_file_definition('FF_FLAT', params['INSTRUMENT'],
-                                               kind='red')
+    out_flat = drs_file.get_file_definition(params, 'FF_FLAT', block_kind='red')
     # get key
     key = out_flat.get_dbkey()
     # load database
@@ -261,9 +260,8 @@ def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
 
 def get_blaze(params, header, fiber, filename=None, database=None):
     # get file definition
-    out_blaze = drs_startup.get_file_definition('FF_BLAZE',
-                                                params['INSTRUMENT'],
-                                                kind='red')
+    out_blaze = drs_file.get_file_definition(params, 'FF_BLAZE',
+                                             block_kind='red')
     # get key
     key = out_blaze.get_dbkey()
     # load database

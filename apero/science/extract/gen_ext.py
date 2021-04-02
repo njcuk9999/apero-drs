@@ -76,12 +76,12 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             filenames[fiber] = 'None'
     # ------------------------------------------------------------------------
     # get generic drs file types required
-    opfile = drs_startup.get_file_definition('LOC_ORDERP',
-                                             params['INSTRUMENT'], kind='red')
-    ospfile = drs_startup.get_file_definition('ORDERP_STRAIGHT',
-                                              params['INSTRUMENT'], kind='red')
-    slocalfile = drs_startup.get_file_definition('SHAPEL', params['INSTRUMENT'],
-                                                 kind='red')
+    opfile = drs_file.get_file_definition(params, 'LOC_ORDERP',
+                                          block_kind='red')
+    ospfile = drs_file.get_file_definition(params, 'ORDERP_STRAIGHT',
+                                           block_kind='red')
+    slocalfile = drs_file.get_file_definition(params, 'SHAPEL',
+                                              block_kind='red')
     # ------------------------------------------------------------------------
     # get header from infile
     header = infile.get_header()
@@ -297,8 +297,7 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
 def get_thermal(params, header, fiber, kind, filename=None,
                 database=None):
     # get file definition
-    out_thermal = drs_startup.get_file_definition(kind, params['INSTRUMENT'],
-                                                  kind='red')
+    out_thermal = drs_file.get_file_definition(params, kind, block_kind='red')
     # get key
     key = out_thermal.get_dbkey()
     # ----------------------------------------------------------------------
@@ -810,8 +809,7 @@ def dark_fp_regen_s1d(params, recipe, props, database=None, **kwargs):
 def get_leak_master(params, header, fiber, kind, filename=None,
                     database=None):
     # get file definition
-    out_leak = drs_startup.get_file_definition(kind, params['INSTRUMENT'],
-                                               kind='red')
+    out_leak = drs_file.get_file_definition(params, kind, block_kind='red')
     # get key
     key = out_leak.get_dbkey()
     # ----------------------------------------------------------------------

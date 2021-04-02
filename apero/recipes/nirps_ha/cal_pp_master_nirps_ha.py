@@ -118,9 +118,8 @@ def __main__(recipe, params):
         # check whether filetype is allowed for instrument
         rawfiletype = 'RAW_{0}'.format(filetype)
         # get definition
-        fdkwargs = dict(instrument=params['INSTRUMENT'], kind='raw',
-                        required=False)
-        rawfile = drs_startup.get_file_definition(rawfiletype, **fdkwargs)
+        fdkwargs = dict(block_kind='raw', required=False)
+        rawfile = drs_file.get_file_definition(params, rawfiletype, **fdkwargs)
         # deal with defintion not found
         if rawfile is None:
             eargs = [filetype, recipe.name, mainname]

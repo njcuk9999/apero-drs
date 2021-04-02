@@ -19,7 +19,7 @@ from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
-from apero.core.utils import drs_startup
+from apero.core.core import drs_file
 from apero.core.utils import drs_data
 from apero.core.core import drs_database
 from apero.io import drs_fits
@@ -534,8 +534,7 @@ def get_pp_mask(params: ParamDict, header: drs_fits.Header,
     """
     _ = display_func('.get_pp_mask', __NAME__)
     # get file instance
-    ppmstr = drs_startup.get_file_definition('PPMSTR', params['INSTRUMENT'],
-                                             kind='red')
+    ppmstr = drs_file.get_file_definition(params, 'PPMSTR', block_kind='red')
     # get calibration key
     ppkey = ppmstr.get_dbkey()
     # ---------------------------------------------------------------------

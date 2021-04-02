@@ -532,15 +532,13 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
         eargs = [infile.filename, ext_type, e2dsabsfilename]
         WLOG(params, 'error', textentry('09-020-00003', args=eargs))
     # get infile
-    e2dsinst = drs_startup.get_file_definition(ext_type, params['INSTRUMENT'],
-                                               kind='red')
+    e2dsinst = drs_file.get_file_definition(params, ext_type, block_kind='red')
     # construct e2ds file
     e2dsfile = e2dsinst.newcopy(params=params, fiber=fiber)
     e2dsfile.set_filename(e2dsfilename)
     # get recon file
-    reconinst = drs_startup.get_file_definition('TELLU_RECON',
-                                                params['INSTRUMENT'],
-                                                kind='red')
+    reconinst = drs_file.get_file_definition(params, 'TELLU_RECON',
+                                             block_kind='red')
     # construct recon file
     reconfile = reconinst.newcopy(params=params, fiber=fiber)
     reconfile.construct_filename(infile=e2dsfile)
@@ -602,34 +600,18 @@ def fill_e2ds_nans(params, image, **kwargs):
 
 def locate_reference_file(params, recipe, infile):
     # set function name
-    func_name = display_func('locate_reference_file', __NAME__)
-    # get pp file name
-    # TODO: fix how we get pp file
-    pp_filename = infile.filename.split('_pp')[0] + '_pp.fits'
-    # get pseudo const
-    pconst = constants.pload()
-    # get reference fiber
-    _, reffiber = pconst.FIBER_KINDS()
+    _ = display_func('locate_reference_file', __NAME__)
     # deal with infile being telluric file (we do not have reference file
     #   for telluric files) --> must use the telluric files "intype file"
     if infile.name == 'TELLU_OBJ':
         instance = infile.intype
     else:
         instance = infile
-    # get pp file
-    ppfile = instance.intype.newcopy(params=params)
-    ppfile.set_filename(pp_filename)
-    # check that ppfile is a ppfile
-    if ppfile.suffix != '_pp':
-        # log that we could not locate reference file for file
-        eargs = [infile.name, ppfile.name, infile.filename, func_name]
-        WLOG(params, 'error', textentry('00-020-00003', args=eargs))
-    # make a new copy of this instance
-    outfile = instance.newcopy(params=params, fiber=reffiber)
-    # construct filename
-    outfile.construct_filename(infile=ppfile)
-    # read outfile
-    outfile.read_file()
+    # switch fiber and read file
+    outfile = drs_file.get_another_fiber_file(params, instance, fiber='C',
+                                              in_block_kind='tmp',
+                                              out_block_kind='red',
+                                              getdata=True, gethdr=True)
     # return outfile
     return outfile
 
