@@ -6,8 +6,8 @@ Last updated: 2020-07-04
 
 1) [Latest version](#1-latest-version)
 2) [Pre-Installation](#2-pre-installation)
-3) [Installation](#3-installation) 
-4) [To Do and Known Issues](#4-todo-and-currently-known-issues) 
+3) [Installation](#3-installation)
+4) [To Do and Known Issues](#4-todo-and-currently-known-issues)
 5) [Using APERO](#5-using-apero)
     - [Using apero individually](#51-using-apero-individually)
     - [Using APERO processing recipe](#52-using-apero-processing-recipe)
@@ -45,7 +45,7 @@ Last updated: 2020-07-04
 - developer (tested) V0.6.131 (2020-09-10)
     ```
     Note the developer version should have been tested and semi-stable but not
-    ready for full sets of processing and defintely not for release for 
+    ready for full sets of processing and defintely not for release for
     non-developers or for data put on archives. Some changes may not be
     in this version that are in the working version.
     ```
@@ -92,7 +92,7 @@ cd ./apero-drs
 
 #### 2.3 checkout the correct branch
 
-- For Master version: 
+- For Master version:
 ```
 git checkout master
 ```
@@ -112,7 +112,7 @@ git checkout working
 ---
 ---
 
-## 3 Installation 
+## 3 Installation
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
 (Currently only for `developer` and `working` versions)
@@ -127,7 +127,7 @@ python setup/install.py --name={PROFILE}
 ```
 
 You should choose a memorable profile name - this will be used in several places
-note that it should not contain spaces or punctuation characters (other than 
+note that it should not contain spaces or punctuation characters (other than
 the underscore `_`)
 
 ---
@@ -135,25 +135,25 @@ the underscore `_`)
 #### 3.2 Follow the step-by-step guide:
 
 A. `User config path`: This is the path where your configuration will be saved.
-If it doesn't exist you will be prompted to create it. 
+If it doesn't exist you will be prompted to create it.
 (This will be referred to as `DRS_UCONFIG` from now on (default is `/home/user/apero/`)
 
-B. `Choose an instrument`: Install {INSTRUMENT}. If yes it will install the 
-instrument if not then it will not install the instrument. Use must select a number. 
+B. `Choose an instrument`: Install {INSTRUMENT}. If yes it will install the
+instrument if not then it will not install the instrument. Use must select a number.
 Currently only SPIRou is supported. Note to use multiple instruments install multiple times.
 
-C. `Choose a database`: Either (1) use sqlite (recommended for single machine use) - 
+C. `Choose a database`: Either (1) use sqlite (recommended for single machine use) -
 no setup required OR (2) use mysql (required for multiple machine use) - setup required
 note it is probably worth reading the "multiple machine" section of this read me
-before continuing! 
+before continuing!
 
 Choosing MySQL will prompt you for:
 - the hostname (i.e. localhost)
 - a username (the mysql username)
-- a password (the mysql password), note this will be stored in plain text format 
+- a password (the mysql password), note this will be stored in plain text format
   so don't use personal or sensitive passwords here,
 - a database name (i.e. the MySQL database you wish tables to be created in)
-- a profile to use (in general this can be left blank) but if you want to share 
+- a profile to use (in general this can be left blank) but if you want to share
   tables between setups this is the place to add another {PROFILE} name. Note these
   profile names are used to keep the mysql database tables separate.
 
@@ -177,8 +177,8 @@ Note you can always say later to individual cases.
 Note if you have given empty directories you MUST run a clean install to copy
 the required files to the given directories.
 
-In the `Copying files` step if you asked for a clean install if directories 
-are not empty you will be prompted to reset them one-by-one 
+In the `Copying files` step if you asked for a clean install if directories
+are not empty you will be prompted to reset them one-by-one
 (__NOTE: THIS WILL REMOVE ALL DATA FROM THIS SPECIFIC DIRECTORY)__
 
 ---
@@ -195,14 +195,14 @@ __NOTE__: these three are equivalent only do __one__
 
 
 ##### i) alias to apero to your startup script (RECOMMENDED)
-For example 
+For example
 
 `alias apero "source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup"`  (tcsh/csh)
-`alias apero="source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup"`  (bash)
+`alias apero="source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup"`  (bash/zsh)
 
-to `~/.bashrc` or `~/.bash_profile` or  `~/.tcshrc` or `~/.profile`
+to `~/.bashrc` or `~/.bash_profile` or  `~/.tcshrc` or `~/.profile`, `~/.zshrc` or `~/.zprofile`
 
-and type `apero` every time you open a new terminal 
+and type `apero` every time you open a new terminal
 
 
 ##### ii) source environmental variables directly
@@ -210,14 +210,14 @@ and type `apero` every time you open a new terminal
  `source {DRS_UCONFIG}/config/apero.{SYSTEM}.setup`
  and type this command every time you open a new terminal
 
-where: 
+where:
  - `{DRS_UCONFIG}` is the config path set up in step __2A__
  - `{SYSTEM}` is either `bash` or `sh` depending on your shell
 
 
 ##### iii) add the contents of `{DRS_UCONFIG}/config/apero.{SYSTEM}.setup` to your startup script
 
-i.e. one of the following `~/.bashrc`, `~/.bash_profile`, `~/.tcshrc`, `~/.profile`
+i.e. one of the following `~/.bashrc`, `~/.bash_profile`, `~/.tcshrc`, `~/.profile`, `~/.zshrc`, `~/.zprofile`
 (apero will be ready to use in every new terminal).
 
 For example adding to `~/.bashrc`:
@@ -265,7 +265,7 @@ You can use apero to individually run recipes or process a set of files
 ### 5.1 Using apero individually
 
 Recipes (the scripts to run) are stored in the `./apero/recipes/{instrument}` path
-once installed these recipes are linked to the `./bin/` directory and can be used 
+once installed these recipes are linked to the `./bin/` directory and can be used
 from the command line or in python or in ipython (recommended).
 
 i.e. from the shell
@@ -324,18 +324,18 @@ One can turn on specific nights to process in several ways
 
 One can also just process a single file by adding an extra argument to `apero_processing.py` (`--filename`)
 
-One can also tell the recipe to only process specific targets (targets here are defined as `OBJ_FP` or `OBJ_DARK`) 
-when (and only when) the recipes can accept targets -- i.e. extraction, telluric fitting, CCF etc 
-by changing the `TELLURIC_TARGETS` key for tellurics or the `SCIENCE_TARGETS` key for science objects in the `{RUN_FILE}`. 
-Note that setting either of these to `All` or `None` will remove this as a filter and in most cases should result in 
+One can also tell the recipe to only process specific targets (targets here are defined as `OBJ_FP` or `OBJ_DARK`)
+when (and only when) the recipes can accept targets -- i.e. extraction, telluric fitting, CCF etc
+by changing the `TELLURIC_TARGETS` key for tellurics or the `SCIENCE_TARGETS` key for science objects in the `{RUN_FILE}`.
+Note that setting either of these to `All` or `None` will remove this as a filter and in most cases should result in
 all targets being reduced. For `TELLURIC_TARGETS = "All"` this will use the provided list of all telluric hot stars.
-For `SCIENCE_TARGETS = "All"` this should find all targets defined by the header key `OBJECT` that are not 
+For `SCIENCE_TARGETS = "All"` this should find all targets defined by the header key `OBJECT` that are not
 telluric hot stars - this depends heavily on what is in the `OBJECT` header key for all files.
 
-For processing automatically `id00000` should be set to one of the sequence names (see [below](#522-The-available-sequences) 
+For processing automatically `id00000` should be set to one of the sequence names (see [below](#522-The-available-sequences)
 -- note that the id number should always be unique.
 
-Note one can turn on/off recipes in a sequence by setting `RUN_{RECIPE}` to False, or skip files that already exist by 
+Note one can turn on/off recipes in a sequence by setting `RUN_{RECIPE}` to False, or skip files that already exist by
 setting `SKIP_{RECIPE}` to False - these will only be affected if `{RECIPE}` is in the sequence.
 
 Note that all found filenames will be processed in parallel if `CORES` set to a number greater than 1.
@@ -347,7 +347,7 @@ One can also define a specific set of instructions (similar to just running reci
 and parallize them (if `CORES` set to a number greater than 1). They will be processed in the order given by the id number
 -- note that the id number should always be unique.
 
-i.e. 
+i.e.
 ```
 id00001 = cal_ccf_spirou.py 2018-08-05 2295651o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
 id00002 = cal_ccf_spirou.py 2018-08-05 2295652o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
@@ -361,7 +361,7 @@ Sequences are defined in the `apero/core/instruments/{INSTRUMENT}/recipe_definit
 These enable the user to quickly process sets of data in specific orders based on their needs.
 
 Note these can be combined in any order the user wants but some assume others have been completed first (in terms of files needed).
-i.e. 
+i.e.
 
 ```
 id00001 = master_seq
@@ -380,7 +380,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 Note: these default to True - set to False if not needed.
 
 | recipe                                                          | SHORT_NAME | COMMENT |
-| --------------------------------------------------------------- | ---------- | ------- | 
+| --------------------------------------------------------------- | ---------- | ------- |
 | cal_preprocessing                                               | PP         |         |
 | cal_dark_master                                                 | DARKM      |         |
 | cal_badpix [master night]                                       | BADM       |         |
@@ -413,12 +413,12 @@ Note: these default to True - set to False if not needed.
 ###### Comments
 
 - 1 Note you don't need to use `obj_fit_tellu_db` (FTELLUDB) AND `obj_fit_tellu` (FTELLU) at the same time.
-    - Use `obj_fit_tellu_db` (FTELLUDB) when you want to generate new templates (i.e. use with `obj_mk_tellu_db`) 
+    - Use `obj_fit_tellu_db` (FTELLUDB) when you want to generate new templates (i.e. use with `obj_mk_tellu_db`)
     - Use `obj_fit_tellu` (FTELLU) to just correct tellurics (Should turn off `obj_mk_tellu_db` (MKTELLUDB) and `obj_fit_tellu_db` (FTELLUDB))
 
 ##### 2. `limited_seq`
 
-Similar to `full_seq` but uses the `{TELLURIC_TARGETS}` and `{SCIENCE_TARGETS}` 
+Similar to `full_seq` but uses the `{TELLURIC_TARGETS}` and `{SCIENCE_TARGETS}`
 to filter the objects processed (in `cal_extract`, `obj_mk_tellu`, `obj_fit_tellu`, `obj_mk_template`, `cal_ccf`)
 
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
@@ -428,7 +428,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 Note: these default to True - set to False if not needed.
 
 | recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- | 
+| ------------------------------------------------------------------- | ---------- |
 | cal_preprocessing                                                   | PP         |
 | cal_dark_master                                                     | DARKM      |
 | cal_badpix [master night]                                           | BADM       |
@@ -457,7 +457,7 @@ Note: these default to True - set to False if not needed.
 | obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU1   |
 | obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]    | MKTELLU2   |
 | obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]  | MKTELLU3   |
-| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU4   | 
+| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU4   |
 | obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU1    |
 | obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]   | FTELLU2    |
 | obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU3    |
@@ -475,7 +475,7 @@ where `recipe` is the recipe run and `short_name` is the name used in the `RUN_I
 i.e. for RUN_XXXX and SKIP_XXXX.
 
 | recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- | 
+| ------------------------------------------------------------------- | ---------- |
 | cal_preprocessing                                                   | PP         |
 
 
@@ -489,7 +489,7 @@ Note: there are overlaps - `PP_CAL` overlaps with `PP_HC1HC1`, `PP_FPFP` etc so 
 only the ones you need to True - otherwise you will process the same files twice.
 
 | recipe                                                                   | SHORT_NAME |
-| ------------------------------------------------------------------------ | ---------- | 
+| ------------------------------------------------------------------------ | ---------- |
 | cal_preprocessing [every night; OBJECT="Calibration"]                    | PP_CAL     |
 | cal_preprocessing [every night; SCIENCE_TARGETS]                         | PP_SCI     |
 | cal_preprocessing [every night; TELLURIC_TARGETS]                        | PP_TEL     |
@@ -511,7 +511,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 Note: these default to True - set to False if not needed.
 
 | recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- | 
+| ------------------------------------------------------------------- | ---------- |
 | cal_dark_master                                                     | DARKM      |
 | cal_badpix [master night]                                           | BADM       |
 | cal_loc [DARK_FLAT; master night]                                   | LOCM       |
@@ -537,7 +537,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 Note: these default to True - set to False if not needed.
 
 | recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- | 
+| ------------------------------------------------------------------- | ---------- |
 | cal_badpix [every night]                                            | BAD        |
 | cal_loc [DARK_FLAT; every night]                                    | LOC        |
 | cal_loc [FLAT_DARK; every night]                                    | LOC        |
@@ -560,19 +560,19 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 Note: these default to True - set to False if not needed.
 
 | recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- | 
+| ------------------------------------------------------------------- | ---------- |
 | cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]      | EXTTELL    |
 | cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]                    | LEAKTELL   |
 | obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU1   |
 | obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]    | MKTELLU2   |
 | obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]  | MKTELLU3   |
-| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU4   | 
+| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU4   |
 
 
 
 ##### 6. `science_seq`
 
-Only run the steps required to process `{SCIENCE_TARGETS}` 
+Only run the steps required to process `{SCIENCE_TARGETS}`
 (assumes that calibrations and tellurics have been done i.e. `calib_seq` and `tellu_seq`)
 
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
@@ -581,7 +581,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 Note: these default to True - set to False if not needed.
 
 | recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- | 
+| ------------------------------------------------------------------- | ---------- |
 | cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]       | EXTOBJ     |
 | cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]                     | LEAKOBJ    |
 | obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU1    |
@@ -598,7 +598,7 @@ Note: these default to True - set to False if not needed.
 
 
 | recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- | 
+| ------------------------------------------------------------------- | ---------- |
 | cal_extract [HC1_HC1]                                               | EXT_HC1HC1 |
 | cal_extract [FP_FP]                                                 | EXT_FPFP   |
 | cal_extract [DARK_FP]                                               | EXT_DFP    |
@@ -629,14 +629,14 @@ in order to run the shape master recipe.
 
 <li> Run all the preprocessing
 
-Note one must preprocess ALL nights for the master to work) - it will only 
-combine darks(for the master dark) and fps (for the master shape) from 
+Note one must preprocess ALL nights for the master to work) - it will only
+combine darks(for the master dark) and fps (for the master shape) from
 preprocessed data (i.e. use sequence `pp_seq`)
 </li>
 
 
 <li> Run the master sequence (i.e. use sequence `master_seq`)
-i.e. 
+i.e.
 ```
 cal_dark_master
 cal_badpix [master night]
@@ -660,7 +660,7 @@ night runs.
 These must be in this order but could be night-by-night or
 all of one then all of the other). If all badpix are run first
 then the loc will have the best chance at having bad pixel correction from a
-night close to it. If one runs night by night then the next step will only 
+night close to it. If one runs night by night then the next step will only
 have access to calibrations from nights already processed.
 
 Note again one should extract all telluric stars and run the telluric sequence
@@ -705,7 +705,7 @@ cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
 </li>
 </ol>
 
---- 
+---
 ---
 
 # 7 APERO Inputs
@@ -717,7 +717,7 @@ cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
 
 Also known as raw files
 
-- `4096 x 4096` 
+- `4096 x 4096`
 - PP files use `DPRTYPE` to identify files
 
 | DPRTYPE       | SBCCAS_P	| SBCREF_P	| SBCALI_P | OBSTYPE    |	TRG_TYPE	| EXT.    |
@@ -744,7 +744,7 @@ Also known as raw files
 | HCONE_HCONE	| pos_hc1	| pos_hc1	| ?	       | COMPARISON	| CALIBRATION	| c.fits  |
 | HCTWO_HCTWO	| pos_hc2	| pos_hc2	| ?	       | COMPARISON	| CALIBRATION	| c.fits  |
 
---- 
+---
 ---
 
 # 8 APERO Recipes
@@ -762,20 +762,20 @@ See [APERO run order](#APERO-run-order) for the correct order.
 
 Cleans file of detector effects.
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_preprocess_spirou.py [DIRECTORY] [RAW_FILES]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
-    --skip, --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
-```      
-##### *Output Dir*: 
+    --skip, --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
+```
+##### *Output Dir*:
 ```
 DRS_DATA_WORKING   \\ default: "tmp" directory
 ```
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp.fits  \\ preprocessed files (4096x4096)
 ```
@@ -793,17 +793,17 @@ None
 
 Collects all dark files and creates a master dark image to use for correction.
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_dark_master_spirou.py
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
     --filetype, --database, --plot,
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -811,7 +811,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
 DARKM {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_dark_master.fits  \\ dark master file (4096x4096) + FITS-TABLE
 ```
@@ -834,18 +834,18 @@ Does not require a master night choice - finds darks from all preprocessed night
 
 Creates a bad pixel mask for identifying and deal with bad pixels.
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_badpix_spirou.py [DIRECTORY] -flatfiles [FLAT_FLAT] -darkfiles [DARK_DARK_TEL]
 cal_badpix_spirou.py [DIRECTORY] -flatfiles [FLAT_FLAT] -darkfiles [DARK_DARK_INT]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
     --database, --combine, --flipimage, --fluxunits, --plot, --resize,
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -854,7 +854,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 BADPIX {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 BKGRDMAP {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_badpixel.fits  \\ bad pixel map file (3100x4088)
 {ODOMETER_CODE}_pp_bmap.fits      \\ background mask file (3100x4088)
@@ -878,19 +878,19 @@ BADPIX_MAP
 
 Finds the orders on the image.
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_loc_spirou.py [DIRECTORY] [FLAT_DARK]
 cal_loc_spirou.py [DIRECTORY] [DARK_FLAT]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
-    --database, --badpixfile, --badcorr, --backsub, --combine, 
+    --database, --badpixfile, --badcorr, --backsub, --combine,
     --darkfile, --darkcorr,  --flipimage, --fluxunits, --plot, --resize,
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -899,7 +899,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 ORDER_PROFILE_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 LOC_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_order_profile_C.fits  \\ order profile file (3100x4088)
 {ODOMETER_CODE}_pp_loco_C.fits           \\ localisation centers map file (49x4088)
@@ -927,19 +927,19 @@ Creates a master FP image from all FPs processed. Uses this to work out the
 required shifts due to the FP master image, slicer pupil geometry and the
 bending of the orders (found in localisation).
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_shape_master_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
-    --database, --badpixfile, --badcorr, --backsub, --combine, 
+    --database, --badpixfile, --badcorr, --backsub, --combine,
     --darkfile, --darkcorr,  --flipimage, --fluxunits, --locofile,
     --plot, --resize,
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -949,7 +949,7 @@ SHAPEX {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 SHAPEY {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 FPMASTER {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_shapex.fits            \\ dx shape map (3100x4088)
 {ODOMETER_CODE}_pp_shapey.fits            \\ dy shape map (3100x4088)
@@ -980,19 +980,19 @@ Takes the shape master outputs (shapex, shapey and fpmaster) and applies
 these transformations to shift the image to the master fp frame, unbend images
 and shift to correct for slicer pupil geometry.
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_shape_spirou.py [DIRECTORY] [FP_FP]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
-    --database, --badpixfile, --badcorr, --backsub, --combine, 
+    --database, --badpixfile, --badcorr, --backsub, --combine,
     --darkfile, --darkcorr,  --flipimage, --fluxunits, --fpmaster,
-    --plot, --resize, --shapex, --shapey, 
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --plot, --resize, --shapex, --shapey,
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -1000,7 +1000,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
 SHAPEL {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_shapel.fits            \\ local shape map (3100x4088)
 DEBUG_{ODOMETER_CODE}_shape_in_fp.fits    \\ input fp before shape corr (3100x4088)
@@ -1025,20 +1025,20 @@ SHAPE_DX, SHAPE_ANGLE_OFFSET_ALL, SHAPE_ANGLE_OFFSET, SHAPE_LINEAR_TPARAMS
 Extracts out flat images in order to measure the blaze and produced blaze
 correction and flat correction images.
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_flat_spirou.py [DIRECTORY] [FLAT_FLAT]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
-    --database, --badpixfile, --badcorr, --backsub, --combine, 
-    --darkfile, --darkcorr,  --fiber, --flipimage, --fluxunits, 
+    --database, --badpixfile, --badcorr, --backsub, --combine,
+    --darkfile, --darkcorr,  --fiber, --flipimage, --fluxunits,
     --locofile, --orderpfile, --plot, --resize,
     --shapex, --shapey, --shapel,
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -1047,7 +1047,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 FLAT_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 BLAZE_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_blaze_{FIBER}.fits          \\ blaze correction file (49x4088)
 {ODOMETER_CODE}_pp_flat_{FIBER}.fits           \\ blaze correction file (49x4088)
@@ -1074,21 +1074,21 @@ FLAT_BLAZE_ORDER2
 Extracts dark frames in order to provide correction for the thermal background
 after extraction of science / calibration frames.
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_thermal_spirou.py [DIRECTORY] [DARK_DARK_INT]
 cal_thermal_spirou.py [DIRECTORY] [DARK_DARK_TEL]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
-    --database, --badpixfile, --badcorr, --backsub, --combine, 
-    --darkfile, --darkcorr,  --fiber, --flipimage, --fluxunits, 
+    --database, --badpixfile, --badcorr, --backsub, --combine,
+    --darkfile, --darkcorr,  --fiber, --flipimage, --fluxunits,
     --locofile, --orderpfile, --plot, --resize,
     --shapex, --shapey, --shapel, --wavefile,
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -1097,7 +1097,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 THERMALT_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 THERMALI_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_e2ds_{FIBER}.fits              \\ extracted + flat field file (49x4088)
 {ODOMETER_CODE}_pp_e2dsff_{FIBER}.fits            \\ extracted + flat field file (49x4088)
@@ -1123,17 +1123,17 @@ None
 
 Extracts all DARK_FP files and creates a model for later leak correction.
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_leak_master.py [DIRECTORY]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
     --filetype, --database, --plot
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -1141,7 +1141,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
 LEAKM_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_e2dsff_{FIBER}.fits            \\ extracted + flat field file (49x4088)
 {ODOMETER_CODE}_pp_leak_master_{FIBER}.fits        \\ leak correction maste rfile (49x4088)
@@ -1153,24 +1153,24 @@ None
 
 ### 8.10 Master wavelength solution Recipe
 
-Creates a wavelength solution and measures drifts (via CCF) of the FP relative 
+Creates a wavelength solution and measures drifts (via CCF) of the FP relative
 to the FP master
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_wave_master_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
-    --database, --badpixfile, --badcorr, --backsub, --blazefile, 
-    --combine, --darkfile, --darkcorr,  --fiber, --flipimage, 
+    --database, --badpixfile, --badcorr, --backsub, --blazefile,
+    --combine, --darkfile, --darkcorr,  --fiber, --flipimage,
     --fluxunits,  --locofile, --orderpfile, --plot, --resize,
     --shapex, --shapey, --shapel, --wavefile, -hcmode, -fpmode,
     --forceext,
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -1180,7 +1180,7 @@ WAVEM_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 WAVEHCL_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 WAVEFPL_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_e2ds_{FIBER}.fits              \\ extracted + flat field file (49x4088)
 {ODOMETER_CODE}_pp_e2dsff_{FIBER}.fits            \\ extracted + flat field file (49x4088)
@@ -1203,10 +1203,10 @@ cal_wave_results.tbl                                \\ wave res table (ASCII-tab
 ##### *Plots*:
 
 ```
-WAVE_HC_GUESS, WAVE_HC_BRIGHTEST_LINES, WAVE_HC_TFIT_GRID, WAVE_HC_RESMAP, WAVE_LITTROW_CHECK1, 
-WAVE_LITTROW_EXTRAP1, WAVE_LITTROW_CHECK2, WAVE_LITTROW_EXTRAP2, WAVE_FP_FINAL_ORDER, 
-WAVE_FP_LWID_OFFSET, WAVE_FP_WAVE_RES, WAVE_FP_M_X_RES, WAVE_FP_IPT_CWID_1MHC, WAVE_FP_IPT_CWID_LLHC, 
-WAVE_FP_LL_DIFF, WAVE_FP_MULTI_ORDER, WAVE_FP_SINGLE_ORDER, CCF_RV_FIT, CCF_RV_FIT_LOOP, WAVEREF_EXPECTED, 
+WAVE_HC_GUESS, WAVE_HC_BRIGHTEST_LINES, WAVE_HC_TFIT_GRID, WAVE_HC_RESMAP, WAVE_LITTROW_CHECK1,
+WAVE_LITTROW_EXTRAP1, WAVE_LITTROW_CHECK2, WAVE_LITTROW_EXTRAP2, WAVE_FP_FINAL_ORDER,
+WAVE_FP_LWID_OFFSET, WAVE_FP_WAVE_RES, WAVE_FP_M_X_RES, WAVE_FP_IPT_CWID_1MHC, WAVE_FP_IPT_CWID_LLHC,
+WAVE_FP_LL_DIFF, WAVE_FP_MULTI_ORDER, WAVE_FP_SINGLE_ORDER, CCF_RV_FIT, CCF_RV_FIT_LOOP, WAVEREF_EXPECTED,
 EXTRACT_S1D, EXTRACT_S1D_WEIGHT, WAVE_FIBER_COMPARISON, WAVE_FIBER_COMP, WAVENIGHT_ITERPLOT, WAVENIGHT_HISTPLOT
 ```
 
@@ -1220,21 +1220,21 @@ EXTRACT_S1D, EXTRACT_S1D_WEIGHT, WAVE_FIBER_COMPARISON, WAVE_FIBER_COMP, WAVENIG
 Calculates corrections to the master wavelength solution as a nightly wavelength
 solution and measures drifts (via CCF) of the FP relative to the FP master
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_wave_night_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
-    --database, --badpixfile, --badcorr, --backsub, --blazefile, 
-    --combine, --darkfile, --darkcorr,  --fiber, --flipimage, 
+    --database, --badpixfile, --badcorr, --backsub, --blazefile,
+    --combine, --darkfile, --darkcorr,  --fiber, --flipimage,
     --fluxunits,  --locofile, --orderpfile, --plot, --resize,
     --shapex, --shapey, --shapel, --wavefile, -hcmode, -fpmode,
     --forceext
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -1242,7 +1242,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
 WAVE_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_e2ds_{FIBER}.fits              \\ extracted + flat field file (49x4088)
 {ODOMETER_CODE}_pp_e2dsff_{FIBER}.fits            \\ extracted + flat field file (49x4088)
@@ -1260,7 +1260,7 @@ DEBUG_{ODOMETER_CODE}_pp_background.fits          \\ debug background file (7x31
 ##### *Plots*:
 
 ```
-WAVENIGHT_ITERPLOT WAVENIGHT_HISTPLOT WAVEREF_EXPECTED 
+WAVENIGHT_ITERPLOT WAVENIGHT_HISTPLOT WAVEREF_EXPECTED
 CCF_RV_FIT CCF_RV_FIT_LOOP EXTRACT_S1D EXTRACT_S1D_WEIGHT
 ```
 
@@ -1273,27 +1273,27 @@ CCF_RV_FIT CCF_RV_FIT_LOOP EXTRACT_S1D EXTRACT_S1D_WEIGHT
 
 Extracts any preprocessed image using all the calibrations required.
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_extract_spirou.py [DIRECTORY] [PP_FILE]
 
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
-    --badpixfile, --badcorr, --backsub, --blazefile, 
-    --combine, --objname, --dprtype, --darkfile, --darkcorr,  
-    --fiber, --flipimage, --fluxunits, --flatfile, 
+    --badpixfile, --badcorr, --backsub, --blazefile,
+    --combine, --objname, --dprtype, --darkfile, --darkcorr,
+    --fiber, --flipimage, --fluxunits, --flatfile,
     --locofile, --orderpfile, --plot, --resize,
     --shapex, --shapey, --shapel, --thermal, --thermalfile, --wavefile,
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
 
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_e2ds_{FIBER}.fits              \\ extracted + flat field file (49x4088)
 {ODOMETER_CODE}_pp_e2dsff_{FIBER}.fits            \\ extracted + flat field file (49x4088)
@@ -1308,7 +1308,7 @@ DEBUG_{ODOMETER_CODE}_pp_background.fits          \\ debug background file (7x31
 
 ```
 FLAT_ORDER_FIT_EDGES1, FLAT_ORDER_FIT_EDGES2, FLAT_BLAZE_ORDER1,
-FLAT_BLAZE_ORDER2, THERMAL_BACKGROUND, EXTRACT_SPECTRAL_ORDER1, 
+FLAT_BLAZE_ORDER2, THERMAL_BACKGROUND, EXTRACT_SPECTRAL_ORDER1,
 EXTRACT_SPECTRAL_ORDER2, EXTRACT_S1D, EXTRACT_S1D_WEIGHT
 ```
 
@@ -1321,23 +1321,23 @@ EXTRACT_SPECTRAL_ORDER2, EXTRACT_S1D, EXTRACT_S1D_WEIGHT
 
 Corrects extracted files for leakage coming from a FP (for OBJ_FP files only)
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_leak_spirou.py [DIRECTORY] [PP_FILE]
 
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
     --database, --plot, --leakfile
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
 
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_e2ds_{FIBER}.fits              \\ extracted + flat field file (49x4088)
 {ODOMETER_CODE}_pp_e2dsff_{FIBER}.fits            \\ extracted + flat field file (49x4088)
@@ -1360,20 +1360,20 @@ None
 
 Takes a hot star and calculates telluric transmission
 
-##### *Run*: 
+##### *Run*:
 ```
 obj_mk_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_DARK]
 obj_mk_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_DARK]
 obj_mk_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_FP]
 obj_mk_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
     --database, --blazefile, --plot, --wavefile
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -1382,7 +1382,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 TELLU_CONV_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 TELLU_TRANS_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_tellu_trans_{FIBER}.fits    \\ telluric transmission file (49x4088)
 {WAVEFILE}_tellu_conv_{FIBER}.npy              \\ tapas convolved with wave file (49x4088)
@@ -1406,20 +1406,20 @@ MKTELLU_WAVE_FLUX1, MKTELLU_WAVE_FLUX2
 Using the telluric tramission calculates principle components (PCA) to
 correct input images of atmospheric absorption.
 
-#### *Run*: 
+#### *Run*:
 ```
 obj_fit_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_DARK]
 obj_fit_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_DARK]
 obj_fit_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_FP]
 obj_fit_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
 ```
-#### *Optional Arguments*: 
+#### *Optional Arguments*:
 ```
     --database, --blazefile, --plot, --wavefile
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-#### *Output Dir*: 
+#### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -1428,7 +1428,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 TELLU_CONV_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 TELLU_TRANS_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-#### *Output files*: 
+#### *Output files*:
 ```
 {ODOMETER_CODE}_pp_e2dsff_tcorr_{FIBER}.fits    \\ telluric corrected e2dsff file (49x4088)
 {ODOMETER_CODE}_pp_s1d_w_tcorr_{FIBER}.fits     \\ telluric corrected s1d constant in pixel space (FITS-TABLE)
@@ -1455,24 +1455,24 @@ FTELLU_WAVE_SHIFT2, FTELLU_RECON_ABSO1, FTELLU_RECON_ABSO2
 ### 8.16 Make Template Recipe
 
 Uses all telluric corrected images of a certain object name to create
-and BERV and wavelength corrected template in order to server as a better 
-model SED for telluric correction. 
+and BERV and wavelength corrected template in order to server as a better
+model SED for telluric correction.
 
 `obj_mk_tellu_spirou.py` and `obj_fit_tellu_spirou.py` need to be rerun after
 template generation.
 
-#### *Run*: 
+#### *Run*:
 ```
 obj_mk_template_spirou.py [OBJNAME]
 ```
-#### *Optional Arguments*: 
+#### *Optional Arguments*:
 ```
     --filetype, -fiber,
     --database, --blazefile, --plot, --wavefile
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-#### *Output Dir*: 
+#### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
@@ -1481,7 +1481,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 TELLU_CONV_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 TELLU_TRANS_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
-#### *Output files*: 
+#### *Output files*:
 ```
 Template_{OBJNAME}_{filetype}_{FIBER}.fits  \\ Template for object (3100x4088) + FITS TABLE
 Template_s1d_{OBJNAME}_sc1d_w_{FIBER}.fits  \\ Template s1d constant in pixel space for object FITS TABLE + FITS TABLE
@@ -1509,7 +1509,7 @@ per order, and combines to give an over all radial velocity measurement.
 Also (where possible) takes into account the FP drift measured by a CCF in the
 wave solution (when wave solution used a FP)
 
-##### *Run*: 
+##### *Run*:
 ```
 cal_ccf_spirou.py [DIRECTORY] [E2DS & OBJ_FP]
 cal_ccf_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
@@ -1520,19 +1520,19 @@ cal_ccf_spirou.py [DIRECTORY] [E2DSFF & OBJ_DARK]
 cal_ccf_spirou.py [DIRECTORY] [E2DS_CORR & OBJ_DARK]
 cal_ccf_spirou.py [DIRECTORY] [E2DSFF_CORR & OBJ_DARK]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
     --mask, --rv, --width, --step
     --database, --blazefile, --plot
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
 
-##### *Output files*: 
+##### *Output files*:
 ```
 {ODOMETER_CODE}_pp_{INTYPE}_{FIBER}_ccf_{mask}_{FIBER}.fits  \\ CCF for science channel file (FITS-TABLE)
 {ODOMETER_CODE}_pp_{INTYPE}_{FIBER}_ccf_fp_{FIBER}.fits      \\ CCF for reference channel file (FITS-TABLE)
@@ -1554,36 +1554,36 @@ CCF_RV_FIT, CCF_RV_FIT_LOOP, CCF_SWAVE_REF, CCF_PHOTON_UNCERT
 
 Produces all polarimetry outputs.
 
-##### *Run*: 
+##### *Run*:
 ```
 pol_spirou.py [DIRECTORY] [E2DSFF]
 pol_spirou.py [DIRECTORY] [E2DSFF_CORR]
 ```
-##### *Optional Arguments*: 
+##### *Optional Arguments*:
 ```
     --blazefile, --plot, --wavefile,
-    --debug, --listing, --listingall, --version, --info, 
-    --program, --idebug, --quiet, --help 
+    --debug, --listing, --listingall, --version, --info,
+    --program, --idebug, --quiet, --help
 ```
-##### *Output Dir*: 
+##### *Output Dir*:
 ```
 DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
 
-##### *Output files*: 
+##### *Output files*:
 ```
-{ODOMETER_CODE}_pp_{INTYPE}_pol.fits               // polar file 
+{ODOMETER_CODE}_pp_{INTYPE}_pol.fits               // polar file
 {ODOMETER_CODE}_pp_{INTYPE}_StokesI.fits           // stokes file
 {ODOMETER_CODE}_pp_{INTYPE}_null1_pol.fits         // null 1 file
 {ODOMETER_CODE}_pp_{INTYPE}_null2_pol.fits         // null 2 file
 {ODOMETER_CODE}_pp_{INTYPE}_lsd_pol.fits           // lsd file
-{ODOMETER_CODE}_pp_{INTYPE}_s1d_w_pol.fits         // s1d polar file constant in pixel space for object 
+{ODOMETER_CODE}_pp_{INTYPE}_s1d_w_pol.fits         // s1d polar file constant in pixel space for object
 {ODOMETER_CODE}_pp_{INTYPE}_s1d_v_pol.fits         // s1d polar file constant in velocity space
-{ODOMETER_CODE}_pp_{INTYPE}_s1d_w_null1.fits       // s1d null 1 file constant in pixel space for object 
+{ODOMETER_CODE}_pp_{INTYPE}_s1d_w_null1.fits       // s1d null 1 file constant in pixel space for object
 {ODOMETER_CODE}_pp_{INTYPE}_s1d_v_null1.fits       // s1d null 1 file constant in velocity space
-{ODOMETER_CODE}_pp_{INTYPE}_s1d_w_null2.fits       // s1d null 2 file constant in pixel space for object 
+{ODOMETER_CODE}_pp_{INTYPE}_s1d_w_null2.fits       // s1d null 2 file constant in pixel space for object
 {ODOMETER_CODE}_pp_{INTYPE}_s1d_v_null2.fits       // s1d null 2 file constant in velocity space
-{ODOMETER_CODE}_pp_{INTYPE}_s1d_w_stokesi.fits     // s1d stokes file constant in pixel space for object 
+{ODOMETER_CODE}_pp_{INTYPE}_s1d_w_stokesi.fits     // s1d stokes file constant in pixel space for object
 {ODOMETER_CODE}_pp_{INTYPE}_s1d_v_stokesi.fits     // s1d stokes file constant in velocity space
 ```
 
