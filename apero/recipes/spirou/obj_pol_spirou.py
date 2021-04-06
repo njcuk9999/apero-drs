@@ -89,31 +89,116 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
 
+    # TODO --------------------------------------------------------------------
+    # TODO: Move to constants
+    # TODO --------------------------------------------------------------------
+
+
+    # -------------------------------------------------------------------------
+    # GENERAL POLAR SETTINGS
+    # -------------------------------------------------------------------------
+    # Define all possible fibers used for polarimetry
+    params.set('POLAR_FIBERS', value='A,B', source=mainname)
+    #  Define all possible stokes parameters
+    params.set('POLAR_STOKES_PARAMS', value='V,Q,U', source=mainname)
+    # Whether or not to correct for BERV shift before calculate polarimetry
+    params.set('POLAR_BERV_CORRECT', value=True, source=mainname)
+    # Whether or not to correct for SOURCE RV shift before calculate polarimetry
+    params.set('POLAR_SOURCE_RV_CORRECT', value=False, source=mainname)
+    #  Define the polarimetry method
+    #    currently must be either:
+    #         - Ratio
+    #         - Difference
+    params.set('POLAR_METHOD', value='Ratio', source=mainname)
+    # Wheter or not to inerpolate flux values to correct for wavelength
+    #   shifts between exposures
+    params.set('POLAR_INTERPOLATE_FLUX', value=True, source=mainname)
+
+    # Select stokes I continuum detection algorithm:
+    #     'IRAF' or 'MOVING_MEDIAN'
+    params.set('STOKESI_CONTINUUM_DETECTION_ALGORITHM',
+               value='MOVING_MEDIAN', source=mainname)
+    # Select stokes I continuum detection algorithm:
+    #     'IRAF' or 'MOVING_MEDIAN'
+    params.set('POLAR_CONTINUUM_DETECTION_ALGORITHM',
+               value='MOVING_MEDIAN', source=mainname)
+
+    # Normalize Stokes I (True or False)
+    params.set('POLAR_NORMALIZE_STOKES_I', value=True, source=mainname)
+    # Remove continuum polarization
+    params.set('POLAR_REMOVE_CONTINUUM', value=True, source=mainname)
+
+    # -------------------------------------------------------------------------
+    # POLAR 'MOVING_MEDIAN' ALGORITHM SETTINGS
+    # -------------------------------------------------------------------------
+    #  Define the polarimetry continuum bin size
+    params.set('POLAR_CONT_BINSIZE', value=900, source=mainname)
+    #  Define the polarimetry continuum overlap size
+    params.set('POLAR_CONT_OVERLAP', value=200, source=mainname)
+    #  Fit polynomial to continuum polarization?
+    # If False it will use a cubic interpolation instead of polynomial fit
+    params.set('POLAR_CONT_POLYNOMIAL_FIT', value=True, source=mainname)
+    #  Define degree of polynomial to fit continuum polarization
+    params.set('POLAR_CONT_DEG_POLYNOMIAL', value=3, source=mainname)
+    # -------------------------------------------------------------------------
+    # POLAR 'IRAF' ALGORITHM SETTINGS
+    # -------------------------------------------------------------------------
+    # function to fit to the stokes I continuum: must be 'polynomial' or
+    #    'spline3'
+    params.set('STOKESI_IRAF_CONT_FIT_FUNCTION', value="polynomial",
+               source=mainname)
+    # function to fit to the polar continuum: must be 'polynomial' or 'spline3'
+    params.set('POLAR_IRAF_CONT_FIT_FUNCTION', value="polynomial",
+               source=mainname)
+    # polar continuum fit function order: 'polynomial': degree or 'spline3':
+    #    number of knots
+    params.set('STOKESI_IRAF_CONT_FUNCTION_ORDER', value=5, source=mainname)
+    # polar continuum fit function order: 'polynomial': degree or 'spline3':
+    #    number of knots
+    params.set('POLAR_IRAF_CONT_FUNCTION_ORDER', value=3, source=mainname)
+
+
+    # TODO --------------------------------------------------------------------
+    # TODO: End of constants
+    # TODO --------------------------------------------------------------------
+
     # set polar exposures
     inputs = gen_pol.set_polar_exposures(params)
 
     # -------------------------------------------------------------------------
-    # part1: deal with input files and load data
+    # part 1: deal with input files and load data
     # -------------------------------------------------------------------------
     # TODO: move text to language database
+    WLOG(params, 'info', params['DRS_HEADER'])
     WLOG(params, 'info', 'Part 1: loading input data')
-    polardict = gen_pol.apero_load_data(params, inputs)
+    WLOG(params, 'info', params['DRS_HEADER'])
+    # TODO: decide here (or inside) which products to load from
+    # TODO:   - add e.fits + t.fits + v.fits instead of reduced products
+    pprops = gen_pol.apero_load_data(params, recipe, inputs)
 
     # -------------------------------------------------------------------------
-    # part2: run polarimetry analysis
+    # part 2: run polarimetry analysis
     # -------------------------------------------------------------------------
     # TODO: move text to language database
+    WLOG(params, 'info', params['DRS_HEADER'])
     WLOG(params, 'info', 'Part 2: Run polar analysis')
+    WLOG(params, 'info', params['DRS_HEADER'])
     pprops = gen_pol.calculate_polarimetry(params, pprops)
     pprops = gen_pol.calculate_stokes_i(params, pprops)
 
     # -------------------------------------------------------------------------
-    # part3: run analysis for continuum detection and removal
+    # part 3: run analysis for continuum detection and removal
     # -------------------------------------------------------------------------
     # TODO: move text to language database
+    WLOG(params, 'info', params['DRS_HEADER'])
     WLOG(params, 'info', 'Part 3: Run continuum analysis')
+    WLOG(params, 'info', params['DRS_HEADER'])
+    # calculate the continuum
+    pprops = gen_pol.calculate_continuum(params, recipe, pprops)
 
-    pprops = gen_pol.calculate_continuum(params, pprops)
+    # TODO: -------------------------------------------------------------------
+    # TODO: Got to here
+    # TODO: -------------------------------------------------------------------
 
     if params['POLAR_REMOVE_CONTINUUM']:
         pprops = gen_pol.remove_continuum_polarization(pprops)
@@ -135,7 +220,9 @@ def __main__(recipe, params):
     # part4: run lsd analysis
     # -------------------------------------------------------------------------
     # TODO: move text to language database
+    WLOG(params, 'info', params['DRS_HEADER'])
     WLOG(params, 'info', 'Part 4: Run LSD Analysis')
+    WLOG(params, 'info', params['DRS_HEADER'])
 
     if params['INPUTS']['LSD']:
 
@@ -172,13 +259,17 @@ def __main__(recipe, params):
     # part5: quality control
     # -------------------------------------------------------------------------
     # TODO: move text to language database
+    WLOG(params, 'info', params['DRS_HEADER'])
     WLOG(params, 'info', 'Part 5: Quality Control')
+    WLOG(params, 'info', params['DRS_HEADER'])
 
     # -------------------------------------------------------------------------
     # part6: writing files
     # -------------------------------------------------------------------------
     # TODO: move text to language database
+    WLOG(params, 'info', params['DRS_HEADER'])
     WLOG(params, 'info', 'Part 6: Writing files')
+    WLOG(params, 'info', params['DRS_HEADER'])
 
     if params['INPUTS']['OUTPUT']:
         gen_pol.apero_create_pol_product(params['INPUTS']['OUTPUT'], params,
@@ -187,7 +278,9 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # part7: summary plots
     # -------------------------------------------------------------------------
+    WLOG(params, 'info', params['DRS_HEADER'])
     WLOG(params, 'info', 'Part 7: Summary plots')
+    WLOG(params, 'info', params['DRS_HEADER'])
 
     # plot continuum plots
     recipe.plot.polar_continuum_plot(params, pprops)

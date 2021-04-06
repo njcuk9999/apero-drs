@@ -3643,190 +3643,73 @@ definitions += [ccf_rv_fit, ccf_rv_fit_loop, ccf_swave_ref,
 # =============================================================================
 # Define polarisation plotting functions
 # =============================================================================
-def plot_polar_continuum(plotter, graph, kwargs):
+def plot_polar_fit_cont(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    props = kwargs['props']
-    # get data from props
-    wl = props['FLAT_X']
-    pol = 100 * props['FLAT_POL']
-    contpol = 100.0 * props['CONT_POL']
-    contxbin = np.array(props['CONT_XBIN'])
-    contybin = 100. * np.array(props['CONT_YBIN'])
-    stokes = props['STOKES']
-    method = props['METHOD']
-    nexp = props['NEXPOSURES']
+    wavemap = kwargs['wavemap']
+    mask = kwargs['mask']
+    spec = kwargs['spec']
+    fspec = kwargs['fspec']
+    med_filt = kwargs['med_filt']
+    cont = kwargs['cont']
+    niter = kwargs['niter']
+    rej_low = kwargs['rej_low']
+    rej_high = kwargs['rej_high']
+    sigm = kwargs['sigm']
+    res = kwargs['res']
+    ores = kwargs['ores']
     # ------------------------------------------------------------------
     # set up plot
-    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    if niter > 0:
+        fig, frames = graph.set_figure(plotter, ncols=1, nrows=2)
+        frame0 = frames[0]
+        frame1 = frames[1]
+    else:
+        fig, frames = graph.set_figure(plotter, ncols=1, nrows=1)
+        frame0 = frames[0]
+        frame1 = None
     # ------------------------------------------------------------------
-    # set up title
-    title = 'Polarimetry: Stokes {0}, Method={1}, for {2} exposures'
-    titleargs = [stokes, method, nexp]
+    # frame 0
     # ------------------------------------------------------------------
-    # plot polarimetry data
-    frame.plot(wl, pol, linestyle='None', marker='.',
-               label='Degree of Polarization')
-    # plot continuum sample points
-    frame.plot(contxbin, contybin, linestyle='None', marker='o',
-               label='Continuum Sampling')
-    # plot continuum fit
-    frame.plot(wl, contpol, label='Continuum Polarization')
-    # ---------------------------------------------------------------------
-    # set title and labels
-    xlabel = 'wavelength [nm]'
-    ylabel = 'Degree of polarization for Stokes {0} [%]'.format(stokes)
-    frame.set(title=title.format(*titleargs), xlabel=xlabel, ylabel=ylabel)
-    # ---------------------------------------------------------------------
-    # plot legend
-    frame.legend(loc=0)
+    # plot the valid points of the original data
+    frame0.plot(wavemap[mask], spec[mask], color='b', lw=1.0)
+    # plot the median filtered points
+    if med_filt > 0:
+        frame0.plot(wavemap[mask], fspec[mask], s=20.0, marker='d',
+                    edgecolors='0.5', facecolors='None', lw=0.5)
+    # plot the continuum
+    frame0.plot(wavemap, cont, ls='--', color='orange')
+    # ------------------------------------------------------------------
+    # frame 2 - only plot for nit > 0
+    # ------------------------------------------------------------------
+    if niter > 0:
+        # plot some horizontal lines at limits
+        frame1.axhline(0.0, ls='--', color='orange', lw=1.0)
+        frame1.axhline(-rej_low * sigm, ls=':')
+        frame1.axhline(rej_high * sigm, ls=':')
+        # plot the points
+        frame1.scatter(wavemap[~mask], res[~mask], s=20.0, marker='d',
+                       edgecolors='0.5', facecolors='None', lw=0.5)
+        frame1.scatter(wavemap[mask], ores[mask], s=10.0, marker='o',
+                       edgecolors='b', facecolors='None', lw=0.5)
+        # overplot median filtered spectrum
+        if med_filt > 0:
+            frame1.scatter(wavemap[mask], res[mask], s=5.0, marker='s',
+                           edgecolors='c', facecolors='None', lw=0.2)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
 
-def plot_polar_results(plotter, graph, kwargs):
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    props = kwargs['props']
-    # get data from props
-    wl = props['FLAT_X']
-    pol = 100 * props['FLAT_POL']
-    null1 = 100.0 * props['FLAT_NULL1']
-    null2 = 100.0 * props['FLAT_NULL2']
-    stokes = props['STOKES']
-    method = props['METHOD']
-    nexp = props['NEXPOSURES']
-    # ------------------------------------------------------------------
-    # set up plot
-    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
-    # ------------------------------------------------------------------
-    # set up title
-    title = 'Polarimetry: Stokes {0}, Method={1}, for {2} exposures'
-    titleargs = [stokes, method, nexp]
-    # ---------------------------------------------------------------------
-    # plot polarimetry data
-    frame.plot(wl, pol, label='Degree of Polarization')
-    # plot null1 data
-    frame.plot(wl, null1, label='Null Polarization 1')
-    # plot null2 data
-    frame.plot(wl, null2, label='Null Polarization 2')
-    # ---------------------------------------------------------------------
-    # set title and labels
-    xlabel = 'wavelength [nm]'
-    ylabel = 'Degree of polarization for Stokes {0} [%]'.format(stokes)
-    frame.set(title=title.format(*titleargs), xlabel=xlabel, ylabel=ylabel)
-    # ---------------------------------------------------------------------
-    # plot legend
-    frame.legend(loc=0)
-    # ------------------------------------------------------------------
-    # wrap up using plotter
-    plotter.plotend(graph)
 
-
-def plot_polar_stoke_i(plotter, graph, kwargs):
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    props = kwargs['props']
-    # get data from props
-    wl = props['FLAT_X']
-    stokes_i = props['FLAT_STOKES_I']
-    stokes_ierr = props['FLAT_STOKES_I_ERR']
-    stokes = props['STOKES']
-    method = props['METHOD']
-    nexp = props['NEXPOSURES']
-    # ------------------------------------------------------------------
-    # set up plot
-    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
-    # ------------------------------------------------------------------
-    # set up title
-    title = 'Polarimetry: Stokes {0}, Method={1}, for {2} exposures'
-    titleargs = [stokes, method, nexp]
-    # ---------------------------------------------------------------------
-    # plot polarimetry data
-    frame.errorbar(wl, stokes_i, yerr=stokes_ierr, fmt='-', label='Stokes I',
-                   alpha=0.5)
-    # ---------------------------------------------------------------------
-    # set title and labels
-    xlabel = 'wavelength [nm]'
-    ylabel = 'Stokes {0} total flux (ADU)'.format(stokes)
-    frame.set(title=title.format(*titleargs), xlabel=xlabel, ylabel=ylabel)
-    # ---------------------------------------------------------------------
-    # plot legend
-    frame.legend(loc=0)
-    # ------------------------------------------------------------------
-    # wrap up using plotter
-    plotter.plotend(graph)
-
-
-def plot_polar_lsd(plotter, graph, kwargs):
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    pprops = kwargs['pprops']
-    lprops = kwargs['lprops']
-    # get data from props
-    vels = lprops['LSD_VELOCITIES']
-    zz = lprops['LSD_STOKES_I']
-    zgauss = lprops['LSD_STOKES_I_MODEL']
-    z_p = lprops['LSD_STOKES_VQU']
-    z_np = lprops['LSD_NULL']
-    stokes = pprops['STOKES']
-    # ------------------------------------------------------------------
-    # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=1, ncols=3)
-    # ------------------------------------------------------------------
-    frame = frames[0]
-    frame.plot(vels, zz, '-')
-    frame.plot(vels, zgauss, '-')
-    title = 'LSD Analysis'
-    ylabel = 'Stokes I profile'
-    xlabel = ''
-    # set title and labels
-    frame.set(title=title, xlabel=xlabel, ylabel=ylabel)
-    # ---------------------------------------------------------------------
-    frame = frames[1]
-    title = ''
-    frame.plot(vels, z_p, '-')
-    ylabel = 'Stokes {0} profile'.format(stokes)
-    xlabel = ''
-    # set title and labels
-    frame.set(title=title, xlabel=xlabel, ylabel=ylabel)
-    # ---------------------------------------------------------------------
-    frame = frames[2]
-    frame.plot(vels, z_np, '-')
-    xlabel = 'velocity (km/s)'
-    ylabel = 'Null profile'
-    # set title and labels
-    frame.set(title=title, xlabel=xlabel, ylabel=ylabel)
-    # ------------------------------------------------------------------
-    # wrap up using plotter
-    plotter.plotend(graph)
-
-
-polar_continuum = Graph('POLAR_CONTINUUM', kind='debug',
-                        func=plot_polar_continuum)
-polar_results = Graph('POLAR_RESULTS', kind='debug', func=plot_polar_results)
-polar_stokes_i = Graph('POLAR_STOKES_I', kind='debug', func=plot_polar_stoke_i)
-polar_lsd = Graph('POLAR_LSD', kind='debug', func=plot_polar_lsd)
+polar_fit_cont = Graph('POLAR_FIT_CONT', kind='debug', func=plot_polar_fit_cont)
 
 # add to definitions
-definitions += [polar_continuum, polar_results, polar_stokes_i, polar_lsd]
+definitions += []
 
 
 # =============================================================================

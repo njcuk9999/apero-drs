@@ -2227,138 +2227,7 @@ CCF_BLAZE_NORM_PERCENTILE.value = 90
 # =============================================================================
 # OBJECT: POLARISATION SETTINGS
 # =============================================================================
-#  Define all possible fibers used for polarimetry
-#     (define as a string list)
-POLAR_VALID_FIBERS = POLAR_VALID_FIBERS.copy(__NAME__)
-POLAR_VALID_FIBERS.value = 'A, B'
 
-#  Define all possible stokes parameters  used for polarimetry
-#      (define as a string list)
-POLAR_VALID_STOKES = POLAR_VALID_STOKES.copy(__NAME__)
-POLAR_VALID_STOKES.value = 'V, Q, U'
-
-#  Define the polarimetry calculation method
-#    currently must be either:
-#         - Ratio
-#         - Difference
-POLAR_METHOD = POLAR_METHOD.copy(__NAME__)
-POLAR_METHOD.value = 'Ratio'
-
-#  Define the telluric mask for calculation of continnum lower limits
-#    (string list)
-POLAR_CONT_TELLMASK_LOWER = POLAR_CONT_TELLMASK_LOWER.copy(__NAME__)
-POLAR_CONT_TELLMASK_LOWER.value = '930, 1109, 1326, 1782, 1997, 2047'
-
-#  Define the telluric mask for calculation of continnum upper limits
-#    (string list)
-POLAR_CONT_TELLMASK_UPPER = POLAR_CONT_TELLMASK_UPPER.copy(__NAME__)
-POLAR_CONT_TELLMASK_UPPER.value = '967, 1167, 1491, 1979, 2027, 2076'
-
-#  Perform LSD analysis
-POLAR_LSD_ANALYSIS = POLAR_LSD_ANALYSIS.copy(__NAME__)
-POLAR_LSD_ANALYSIS.value = True
-
-#  Define the spectral lsd mask directory for lsd polar calculations
-POLAR_LSD_PATH = POLAR_LSD_PATH.copy(__NAME__)
-POLAR_LSD_PATH.value = 'lsd/'
-
-#  Define the file regular expression key to lsd mask files
-POLAR_LSD_FILE_KEY = POLAR_LSD_FILE_KEY.copy(__NAME__)
-POLAR_LSD_FILE_KEY.value = 'marcs_t*g50_all'
-
-#  Define mask for selecting lines to be used in the LSD analysis
-#      lower bounds (string list)
-POLAR_LSD_WL_LOWER = POLAR_LSD_WL_LOWER.copy(__NAME__)
-POLAR_LSD_WL_LOWER.value = '983, 1163, 1280, 1490, 1975, 2030'
-
-#  Define mask for selecting lines to be used in the LSD analysis
-#      upper bounds (string list)
-POLAR_LSD_WL_UPPER = POLAR_LSD_WL_UPPER.copy(__NAME__)
-POLAR_LSD_WL_UPPER.value = '1116, 1260, 1331, 1790, 1995, 2047.5'
-
-# Define minimum line depth to be used in the LSD analyis
-POLAR_LSD_MIN_LINEDEPTH = POLAR_LSD_MIN_LINEDEPTH.copy(__NAME__)
-POLAR_LSD_MIN_LINEDEPTH.value = 0.175
-
-#  Define initial velocity (km/s) for output LSD profile
-POLAR_LSD_VINIT = POLAR_LSD_VINIT.copy(__NAME__)
-POLAR_LSD_VINIT.value = -150.0
-
-#  Define final velocity (km/s) for output LSD profile
-POLAR_LSD_VFINAL = POLAR_LSD_VFINAL.copy(__NAME__)
-POLAR_LSD_VFINAL.value = 150.0
-
-#  Define the order wavelength mask filename
-POLAR_LSD_ORDER_MASK = POLAR_LSD_ORDER_MASK.copy(__NAME__)
-POLAR_LSD_ORDER_MASK.value = 'lsd_order_mask.dat'
-
-#  Define whether to normalise by stokei by the continuum in lsd process
-POLAR_LSD_NORM = POLAR_LSD_NORM.copy(__NAME__)
-POLAR_LSD_NORM.value = True
-
-#  Define the normalise by continuum lsd binsize
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NBIN1 = POLAR_LSD_NBIN1.copy(__NAME__)
-POLAR_LSD_NBIN1.value = 30
-
-#  Define the normalise by continuum lsd overlap with adjacent bins
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NOVERLAP1 = POLAR_LSD_NOVERLAP1.copy(__NAME__)
-POLAR_LSD_NOVERLAP1.value = 15
-
-#  Define the normalise by continuum lsd sigma clip value
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NSIGCLIP1 = POLAR_LSD_NSIGCLIP1.copy(__NAME__)
-POLAR_LSD_NSIGCLIP1.value = 3
-
-#  Define the normalise by continuum lsd window size (local fit size)
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NWINDOW1 = POLAR_LSD_NWINDOW1.copy(__NAME__)
-POLAR_LSD_NWINDOW1.value = 2
-
-#  Define the normalise by continuum lsd mode (mean/median/max)
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NMODE1 = POLAR_LSD_NMODE1.copy(__NAME__)
-POLAR_LSD_NMODE1.value = 'median'
-
-#  Define whether to use a linear fit in the normalise by continuum lsd calc
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NLFIT1 = POLAR_LSD_NLFIT1.copy(__NAME__)
-POLAR_LSD_NLFIT1.value = True
-
-#  Define number of points for output LSD profile
-POLAR_LSD_NPOINTS = POLAR_LSD_NPOINTS.copy(__NAME__)
-POLAR_LSD_NPOINTS.value = 201
-
-#  Define the normalise by continuum lsd binsize
-#    used in the profile calculation
-POLAR_LSD_NBIN2 = POLAR_LSD_NBIN2.copy(__NAME__)
-POLAR_LSD_NBIN2.value = 20
-
-#  Define the normalise by continuum lsd overlap with adjacent bins
-#    used in the profile calculation
-POLAR_LSD_NOVERLAP2 = POLAR_LSD_NOVERLAP2.copy(__NAME__)
-POLAR_LSD_NOVERLAP2.value = 5
-
-#  Define the normalise by continuum lsd sigma clip value
-#    used in the profile calculation
-POLAR_LSD_NSIGCLIP2 = POLAR_LSD_NSIGCLIP2.copy(__NAME__)
-POLAR_LSD_NSIGCLIP2.value = 3
-
-#  Define the normalise by continuum lsd window size (local fit size)
-#    used in the profile calculation
-POLAR_LSD_NWINDOW2 = POLAR_LSD_NWINDOW2.copy(__NAME__)
-POLAR_LSD_NWINDOW2.value = 2
-
-#  Define the normalise by continuum lsd mode (mean/median/max)
-#    used in the profile calculation
-POLAR_LSD_NMODE2 = POLAR_LSD_NMODE2.copy(__NAME__)
-POLAR_LSD_NMODE2.value = 'median'
-
-#  Define whether to use a linear fit in the normalise by continuum lsd calc
-#    used in the profile calculation
-POLAR_LSD_NLFIT2 = POLAR_LSD_NLFIT2.copy(__NAME__)
-POLAR_LSD_NLFIT2.value = False
 
 
 # =============================================================================
@@ -2635,21 +2504,9 @@ PLOT_CCF_SWAVE_REF.value = False
 PLOT_CCF_PHOTON_UNCERT = PLOT_CCF_PHOTON_UNCERT.copy(__NAME__)
 PLOT_CCF_PHOTON_UNCERT.value = True
 
-# turn on the polar continuum debug plot
-PLOT_POLAR_CONTINUUM = PLOT_POLAR_CONTINUUM.copy(__NAME__)
-PLOT_POLAR_CONTINUUM.value = True
-
-# turn on the polar results debug plot
-PLOT_POLAR_RESULTS = PLOT_POLAR_RESULTS.copy(__NAME__)
-PLOT_POLAR_RESULTS.value = True
-
-# turn on the polar stokes i debug plot
-PLOT_POLAR_STOKES_I = PLOT_POLAR_STOKES_I.copy(__NAME__)
-PLOT_POLAR_STOKES_I.value = True
-
-# turn on the polar lsd debug plot
-PLOT_POLAR_LSD = PLOT_POLAR_LSD.copy(__NAME__)
-PLOT_POLAR_LSD.value = True
+# turn on the polar fit continuum plot
+PLOT_POLAR_FIT_CONT = PLOT_POLAR_FIT_CONT.copy(__NAME__)
+PLOT_POLAR_FIT_CONT.value = True
 
 # =============================================================================
 # POST PROCESS SETTINGS
