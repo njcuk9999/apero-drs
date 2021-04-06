@@ -40,7 +40,7 @@ CONSTANTS_PATH = 'core.constants'
 # define the place where the installation recipes are
 INSTALL_PATH = 'tools.module.setup.drs_installation'
 # define files to change the name of
-SUFFICES = ['.bash.setup', '.sh.setup']
+SUFFICES = ['.bash.setup', '.sh.setup', '.zsh.setup']
 # text replace
 OLDTEXT = '" ${YELLOW}}'
 
@@ -253,4 +253,3 @@ if __name__ == '__main__':
     install.cprint('New profile setup complete', 'm')
     install.cprint(install.printheader(), 'm')
     print('\n')
-

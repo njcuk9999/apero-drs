@@ -95,30 +95,30 @@ APERO profile name:
 
     This is the profile name to associate with this installation
     Do not include spaces or wildcards (alpha-numeric only)
-    
+
     Note you can create multiple profiles for different instruments
-    so the name should be logical and unique 
+    so the name should be logical and unique
 
 """
 
 message1 = """
-User config path: 
+User config path:
 
     This is the path where your user configuration will be saved.
-    If it doesn't exist you will be prompted to create it. 
-        
+    If it doesn't exist you will be prompted to create it.
+
     Note please make sure directory is EMPTY.
-    
+
     Note the "profile name" sub-directory will be created under this path.
 """
 
 message2 = """
 Setup paths invidiually? [Y]es or [N]o
-    
+
     If [Y]es it will allow you to set each path separately
-    (i.e. for raw, tmp, reduced, calibDB etc). 
-    If [N]o you will just set one path and all folders 
-    (raw, tmp, reduced, calibDB etc) will be created under this 
+    (i.e. for raw, tmp, reduced, calibDB etc).
+    If [N]o you will just set one path and all folders
+    (raw, tmp, reduced, calibDB etc) will be created under this
     directory.
 """
 
@@ -126,9 +126,9 @@ message3 = """
 Clean install? [Y]es or [N]o
 
     WARNING: If you type [Y]es you will be prompted (later) to reset
-    the directories this means any previous data in these directories 
+    the directories this means any previous data in these directories
     will be removed.
-    
+
 Note you can always say later to individual cases.
 
 Note if you have given empty directories you MUST run a clean install to copy
@@ -137,35 +137,40 @@ the required files to the given directories.
 
 message4 = """
 
-    i) Add an alias in your ~/.bashrc or ~/.bash_profile or 
-       ~/.tcshrc or ~/.profile 
+    i) Add an alias in your ~/.bashrc or ~/.bash_profile or
+       ~/.tcshrc or ~/.profile or ~/.zshrc or ~/.zprofile
        and then type "{NAME}" every time you wish to run apero.
        i.e. for bash
             alias {NAME}="source {DRS_UCONFIG}{NAME}.bash.setup"
        i.e. for sh
             alias {NAME} "source {DRS_UCONFIG}{NAME}.sh.setup"
-    
-    
-    ii) Add the contents of {DRS_UCONFIG}{NAME}.{SYSTEM}.setup 
-        to your ~/.bashrc or ~/.bash_profile or ~/.tcshrc or ~/.profile
-    
+       i.e. for zsh
+            alias {NAME} "source {DRS_UCONFIG}{NAME}.zsh.setup"
 
-    iii) type "source {DRS_UCONFIG}{NAME}.{SYSTEM}.setup" every 
+
+    ii) Add the contents of {DRS_UCONFIG}{NAME}.{SYSTEM}.setup
+        to your ~/.bashrc or ~/.bash_profile or ~/.tcshrc or ~/.profile
+        or ~/.zshrc or ~/.zprofile
+
+
+    iii) type "source {DRS_UCONFIG}{NAME}.{SYSTEM}.setup" every
          time you wish to run apero.
            i.e. for bash
                 source {DRS_UCONFIG}{NAME}.bash.setup
            i.e. for sh
                 source {DRS_UCONFIG}{NAME}.sh.setup
+           i.e. for zsh
+                source {DRS_UCONFIG}{NAME}.zsh.setup
 
 
-Note: here {SYSTEM} is "bash" or "sh" or "win" depending on your system.
+Note: here {SYSTEM} is "bash" or "sh" or "zsh" or "win" depending on your system.
 
 
 """
 
 message5 = """
 
-ds9 not found (optional). 
+ds9 not found (optional).
 
 Please enter path to ds9 or leave blank to skip
 
@@ -173,7 +178,7 @@ Please enter path to ds9 or leave blank to skip
 
 message6 = """
 
-pdflatex not found (optional). 
+pdflatex not found (optional).
 
 Please enter path to pdflatex or leave blank to skip
 
