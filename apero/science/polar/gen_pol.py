@@ -1166,6 +1166,278 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     return props
 
 
+def remove_continuum_polarization(props: ParamDict) -> ParamDict:
+    """
+        Function to remove the continuum polarization
+
+        :param params: parameter dictionary, ParamDict containing data
+
+        Must contain at least:
+            WAVE: numpy array (2D), e2ds wavelength data
+            POL: numpy array (2D), e2ds degree of polarization data
+            POLERR: numpy array (2D), e2ds errors of degree of polarization
+            FLAT_X: numpy array (1D), flatten polarimetric x data
+            CONT_POL: numpy array (1D), e2ds continuum polarization data
+
+        :return props: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                POL: numpy array (2D), e2ds degree of polarization data
+                ORDER_CONT_POL: numpy array (2D), e2ds degree of continuum
+                polarization data
+    """
+    # set function name
+    func_name = display_func('remove_continuum_polarization', __NAME__)
+    # get arrays
+    xdata = props['FLAT_X']
+    pol = props['POL']
+    wavemap = props['GLOBAL_WAVEMAP']
+    cont_pol = props['CONT_POL']
+    # get the shape of pol
+    ydim, xdim = props['POL'].shape
+    # initialize continuum empty array
+    order_cont_pol = np.full((ydim, xdim), np.nan)
+    # ---------------------------------------------------------------------
+    # interpolate and remove continuum (across orders)
+    # loop around order data
+    for order_num in range(ydim):
+        # get wavelengths for current order
+        ordwave = wavemap[order_num]
+        # get polarimetry for current order
+        ordpol = pol[order_num]
+        # get wavelength at edges of order
+        wl0, wlf = ordwave[0], ordwave[-1]
+        # create mask to get only continuum data within wavelength range
+        # TODO: Question - this doesn't work with in_wavelength = False
+        wlmask = (xdata >= wl0) & (xdata < wlf)
+        # get continuum data within order range
+        wl_cont = xdata[wlmask]
+        pol_cont = cont_pol[wlmask]
+        # interpolate points applying a cubic spline to the continuum data
+        pol_interp = interpolate.interp1d(wl_cont, pol_cont, kind='cubic')
+        # create continuum vector at same wavelength sampling as polar data
+        continuum = pol_interp(ordwave)
+        # save continuum with the same shape as input pol
+        order_cont_pol[order_num] = continuum
+        # remove continuum from data
+        ordpol = ordpol - continuum
+        # update pol array
+        pol[order_num] = ordpol
+    # -------------------------------------------------------------------------
+    # update POL
+    props['POL'] = pol
+    props.append_source('POL', func_name)
+    # Add ORDER_CONT_POL
+    props.set('ORDER_CONT_POL', value=order_cont_pol, source=func_name)
+    # -------------------------------------------------------------------------
+    return props
+
+
+def normalize_stokes_i(props: ParamDict) -> ParamDict:
+    """
+        Function to normalize Stokes I by the continuum flux
+
+        :param props: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                WAVE: numpy array (2D), e2ds wavelength data
+                STOKESI: numpy array (2D), e2ds degree of polarization data
+                POLERR: numpy array (2D), e2ds errors of degree of polarization
+                FLAT_X: numpy array (1D), flatten polarimetric x data
+                CONT_POL: numpy array (1D), e2ds continuum polarization data
+
+        :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                STOKESI: numpy array (2D), e2ds Stokes I data
+                STOKESIERR: numpy array (2D), e2ds Stokes I error data
+                ORDER_CONT_FLUX: numpy array (2D), e2ds flux continuum data
+        """
+    # set function name
+    func_name = display_func('normalize_stokes_i', __NAME__)
+    # get arrays
+    xdata = props['FLAT_X']
+    stokesi = props['STOKESI']
+    stokesierr = props['STOKESIERR']
+    wavemap = props['GLOBAL_WAVEMAP']
+    cont_flux = props['CONT_FLUX']
+    # get the shape of pol
+    ydim, xdim = stokesi.shape
+    # initialize continuum empty array
+    order_cont_flux = np.full(stokesi.shape, np.nan)
+    # ---------------------------------------------------------------------
+    # interpolate and remove continuum (across orders)
+    # loop around order data
+    for order_num in range(ydim):
+        # get wavelengths for current order
+        ordwave = wavemap[order_num]
+        # get wavelength at edges of order
+        wl0, wlf = ordwave[0], ordwave[-1]
+        # get polarimetry for current order
+        flux = stokesi[order_num]
+        fluxerr = stokesierr[order_num]
+        # create mask to get only continuum data within wavelength range
+        # TODO: Question - this doesn't work with in_wavelength = False
+        wlmask = (xdata >= wl0) & (xdata <= wlf)
+        # get continuum data within order range
+        wl_cont = xdata[wlmask]
+        flux_cont = cont_flux[wlmask]
+        # interpolate points applying a cubic spline to the continuum data
+        flux_interp = interpolate.interp1d(wl_cont, flux_cont, kind='cubic')
+        # create continuum vector at same wavelength sampling as polar data
+        continuum = flux_interp(ordwave)
+        # save continuum with the same shape as input pol
+        order_cont_flux[order_num] = continuum
+        # normalize stokes I by the continuum
+        stokesi[order_num] = flux / continuum
+        # normalize stokes I by the continuum
+        stokesierr[order_num] = fluxerr / continuum
+    # -------------------------------------------------------------------------
+    # update stokesi and stokesierr
+    props['STOKESI'] = stokesi
+    props['STOKESIERR'] = stokesierr
+    # add to sources
+    props.append_source('STOKESI', func_name)
+    props.append_source('STOKESIERR', func_name)
+    # -------------------------------------------------------------------------
+    # add order cont flux
+    props.set('ORDER_CONT_FLUX', order_cont_flux, source=func_name)
+    # -------------------------------------------------------------------------
+    # return props
+    return props
+
+
+def clean_polarimetry_data(props: ParamDict, sigclip: bool = False,
+                           nsig: int = 3, overwrite: bool = False) -> ParamDict:
+    """
+    Function to clean polarimetry data.
+
+    :param props: parameter dictionary, ParamDict to store data
+        Must contain at least:
+            GLOBAL_WAVEMAP: numpy array (2D), wavelength data
+            STOKESI: numpy array (2D), Stokes I data
+            STOKESIERR: numpy array (2D), errors of Stokes I
+            POL: numpy array (2D), degree of polarization data
+            POLERR: numpy array (2D), errors of degree of polarization
+            NULL1 :numpy array (2D), 1st null polarization
+            NULL2 :numpy array (2D), 2nd null polarization
+            CONT_FLUX:
+            CONT_POL:
+
+    :return loc: parameter dictionaries,
+        The updated parameter dictionary adds/updates the following:
+            CLEAN_GLOBAL_WAVEMAP: numpy array (1D), wavelength data
+            CLEAN_STOKESI: numpy array (1D), Stokes I data
+            CLEAN_STOKESIERR: numpy array (1D), errors of Stokes I
+            CLEAN_POL: numpy array (1D), degree of polarization data
+            CLEAN_POLERR: numpy array (1D), errors of polarization
+            CLEAN_NULL1: numpy array (1D), 1st null polarization
+            CLEAN_NULL2: numpy array (1D), 2nd null polarization
+
+            if overwrite is True, updates:
+                GLOBAL_WAVEMAP: numpy array (1D), wavelength data
+                STOKESI: numpy array (1D), Stokes I data
+                STOKESIERR: numpy array (1D), errors of Stokes I
+                POL: numpy array (1D), degree of polarization data
+                POLERR: numpy array (1D), errors of polarization
+                NULL1: numpy array (1D), 1st null polarization
+                NULL2: numpy array (1D), 2nd null polarization
+
+
+    """
+    # set function name
+    func_name = display_func('clean_polarimetry_data', __NAME__)
+    # -------------------------------------------------------------------------
+    # get input arrays
+    wavemap = props['GLOBAL_WAVE_MAP']
+    stokesi, stokesierr = props['STOKESI'], props['STOKESIERR']
+    pol, polerr = props['POL'], props['POLERR']
+    null1, null2 = props['NULL1'], props['NULL2']
+    cont_pol, cont_flux = props['CONT_POL'], props['CONT_FLUX']
+    # -------------------------------------------------------------------------
+    # get shape
+    ydim, xdim = pol.shape
+    # -------------------------------------------------------------------------
+    # store clean data
+    clean_wavemap = []
+    clean_stokesi, clean_stokesierr = [], []
+    clean_pol, clean_polerr = [], []
+    clean_null1, clean_null2 = [], []
+    clean_cont_pol, clean_cont_flux = [], []
+    # -------------------------------------------------------------------------
+    # loop over each order
+    for order_num in range(ydim):
+        # mask NaN values
+        mask = np.isfinite(stokesi[order_num])
+        mask &= np.isfinite(stokesierr[order_num])
+        mask &= np.isfinite(pol[order_num]) & np.isfinite(polerr[order_num])
+        mask &= np.isfinite(null1[order_num]) & np.isfinite(null2[order_num])
+        # make values where stokes I is positive
+        mask &= stokesi[order_num] > 0
+        # ---------------------------------------------------------------------
+        # if user wants to sigma clip do add the sigma clip to mask
+        if sigclip:
+            # calcualte meidan of the polar array
+            median_pol = np.median(pol[order_num][mask])
+            # calculate the median sigma
+            # TODO: Question: where does 0.67499 come from?
+            medsig_pol = np.median(pol[order_num][mask] - median_pol) / 0.67499
+            # add this to mask
+            mask &= pol[order_num] > (median_pol - (nsig * medsig_pol))
+            mask &= pol[order_num] < (median_pol + (nsig * medsig_pol))
+        # ---------------------------------------------------------------------
+        # append this cleaned data on to our clean storage
+        # do this as lists (more efficent than numpy)
+        clean_wavemap += list(wavemap[order_num][mask])
+        clean_stokesi += list(stokesi[order_num][mask])
+        clean_stokesierr += list(stokesierr[order_num][mask])
+        clean_pol += list(pol[order_num][mask])
+        clean_polerr += list(polerr[order_num][mask])
+        clean_null1 += list(null1[order_num][mask])
+        clean_null2 += list(null2[order_num][mask])
+        clean_cont_pol += list(cont_pol[order_num][mask])
+        clean_cont_flux += list(cont_flux[order_num][mask])
+        # deal with updating original arrays
+        if overwrite:
+            wavemap[order_num][~mask] = np.nan
+            pol[order_num][~mask] = np.nan
+            polerr[order_num][~mask] = np.nan
+            stokesi[order_num][~mask] = np.nan
+            stokesierr[order_num][~mask] = np.nan
+            null1[order_num][~mask] = np.nan
+            null2[order_num][~mask] = np.nan
+    # -------------------------------------------------------------------------
+    # sort by wavelength (or pixel number)
+    sortmask = np.argsort(clean_wavemap)
+    # save FLAT_X back to props
+    props['FLAT_X'] = np.array(clean_wavemap)[sortmask]
+    props.append_source('FLAT_X', func_name)
+    # save FLAT_POL back to props
+    props['FLAT_POL'] = np.array(clean_pol)[sortmask]
+    props.append_source('FLAT_POL', func_name)
+    # save FLAT_POLERR back to props
+    props['FLAT_POLERR'] = np.array(clean_polerr)[sortmask]
+    props.append_source('FLAT_POLERR', func_name)
+    # save FLAT_STOKESI back to props
+    props['FLAT_STOKESI'] = np.array(clean_stokesi)[sortmask]
+    props.append_source('FLAT_STOKESI', func_name)
+    # save FLAT_STOKESIERR back to props
+    props['FLAT_STOKESIERR'] = np.array(clean_stokesierr)[sortmask]
+    props.append_source('FLAT_STOKESIERR', func_name)
+    # save FLAT_NULL1 back to props
+    props['FLAT_NULL1'] = np.array(clean_null1)[sortmask]
+    props.append_source('FLAT_NULL1', func_name)
+    # save FLAT_NULL2 back to props
+    props['FLAT_NULL2'] = np.array(clean_null2)[sortmask]
+    props.append_source('FLAT_NULL2', func_name)
+    # save CONT_POL back to props
+    props['CONT_POL'] = np.array(clean_cont_pol)[sortmask]
+    props.append_source('CONT_POL', func_name)
+    # save CONT_FLUX back to props
+    props['CONT_FLUX'] = np.array(clean_cont_flux)[sortmask]
+    props.append_source('CONT_FLUX', func_name)
+    # -------------------------------------------------------------------------
+    # return props
+    return props
+
+
 # =============================================================================
 # Define quality control and writing functions
 # =============================================================================

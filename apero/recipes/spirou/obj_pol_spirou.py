@@ -122,11 +122,15 @@ def __main__(recipe, params):
     #     'IRAF' or 'MOVING_MEDIAN'
     params.set('POLAR_CONTINUUM_DETECTION_ALGORITHM',
                value='MOVING_MEDIAN', source=mainname)
-
     # Normalize Stokes I (True or False)
     params.set('POLAR_NORMALIZE_STOKES_I', value=True, source=mainname)
     # Remove continuum polarization
     params.set('POLAR_REMOVE_CONTINUUM', value=True, source=mainname)
+    # Apply polarimetric sigma-clip cleanning (Works better if continuum
+    #     is removed)
+    params.set('POLAR_CLEAN_BY_SIGMA_CLIPPING', value=True, source=mainname)
+    # Define number of sigmas within which apply clipping
+    params.set('POLAR_NSIGMA_CLIPPING', value=4, source=mainname)
 
     # -------------------------------------------------------------------------
     # POLAR 'MOVING_MEDIAN' ALGORITHM SETTINGS
@@ -195,14 +199,10 @@ def __main__(recipe, params):
     WLOG(params, 'info', params['DRS_HEADER'])
     # calculate the continuum
     pprops = gen_pol.calculate_continuum(params, recipe, pprops)
-
-    # TODO: -------------------------------------------------------------------
-    # TODO: Got to here
-    # TODO: -------------------------------------------------------------------
-
+    # if we are removing polar continuum
     if params['POLAR_REMOVE_CONTINUUM']:
         pprops = gen_pol.remove_continuum_polarization(pprops)
-
+    # if we are
     if params['POLAR_NORMALIZE_STOKES_I']:
         pprops = gen_pol.normalize_stokes_i(pprops)
 
@@ -213,8 +213,8 @@ def __main__(recipe, params):
         # get the sigma criteria
         nsig = params['POLAR_NSIGMA_CLIPPING']
         # run the cleaning
-        pprops = gen_pol.clean_polarimetry_data(pprops, sigclip=True, nsig=nsig,
-                                                overwrite=True)
+        pprops = gen_pol.clean_polarimetry_data(pprops, sigclip=True,
+                                                nsig=nsig, overwrite=True)
 
     # -------------------------------------------------------------------------
     # part4: run lsd analysis
