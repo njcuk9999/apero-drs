@@ -160,7 +160,26 @@ def __main__(recipe, params):
     # polar continuum fit function order: 'polynomial': degree or 'spline3':
     #    number of knots
     params.set('POLAR_IRAF_CONT_FUNCTION_ORDER', value=3, source=mainname)
-
+    # -------------------------------------------------------------------------
+    # POLAR LSD SETTINGS
+    # -------------------------------------------------------------------------
+    #  Define the spectral lsd mask directory for lsd polar calculations
+    params.set('POLAR_LSD_PATH', value='./data/spirou/lsd/', source=mainname)
+    #  Define the file regular expression key to lsd mask files
+    #  for "marcs_t3000g50_all" this should be:
+    #     - filekey = 'marcs_t*g
+    #  for "t4000_g4.0_m0.00" it should be:
+    #     - filekey = 't*_g'
+    params.set('POLAR_LSD_FILE_KEY', value='marcs_t*g', source=mainname)
+    #  Define minimum lande of lines to be used in the LSD analyis
+    params.set('POLAR_LSD_MIN_LANDE', value=0.0, source=mainname)
+    #  Define maximum lande of lines to be used in the LSD analyis
+    params.set('POLAR_LSD_MAX_LANDE', value=10.0, source=mainname)
+    #  If mask lines are in air-wavelength then they will have to be
+    #     converted from air to vacuum
+    params.set('POLAR_LSD_CCFLINES_AIR_WAVE', value=False, source=mainname)
+    #  Define minimum line depth to be used in the LSD analyis
+    params.set('POLAR_LSD_MIN_LINEDEPTH', value=0.005, source=mainname)
 
     # TODO --------------------------------------------------------------------
     # TODO: End of constants
@@ -225,35 +244,9 @@ def __main__(recipe, params):
     WLOG(params, 'info', params['DRS_HEADER'])
 
     if params['INPUTS']['LSD']:
-
-        # Load LSD mask
-        if params['INPUTS']['LSDMASK'] != 'None':
-            # set lsd mask file from input
-            lsd_mask_file = params['INPUTS']['LSDMASK']
-            # TODO: move text to language database
-            msg = 'Selected input LSD mask: '
-            margs = [lsd_mask_file]
-            WLOG(params, 'info', msg.format(*margs))
-        else:
-            # select an lsd mask file from repositories
-            lsd_mask_file = lsd.select_lsd_mask(params, pprops)
-            # TODO: move text to language database
-            msg = 'Selected repository LSD mask: '
-            margs = [lsd_mask_file]
-            WLOG(params, 'info', msg.format(*margs))
         # run LSD analysis
         pprops = lsd.lsd_analysis_wrapper(params, pprops)
 
-        # save LSD data to fits
-        if params['INPUTS']['OUTPUT_LSD'] != 'None':
-            # get output filename
-            output_lsd = params['INPUTS']['OUTPUT_LSD']
-
-            # TODO: move text to language database
-            msg = 'Saving LSD analysis to file: {0}'
-            margs = [params['INPUTS']['OUTPUT_LSD']]
-            WLOG(params, 'info', msg.format(*margs))
-            lsd.save_lsd_fits(output_lsd, pprops, params)
 
     # -------------------------------------------------------------------------
     # part5: quality control
@@ -264,6 +257,11 @@ def __main__(recipe, params):
     WLOG(params, 'info', params['DRS_HEADER'])
 
     # -------------------------------------------------------------------------
+    # part6: Make S1D files
+    # -------------------------------------------------------------------------
+    # TODO: Add from 0.6 version
+
+    # -------------------------------------------------------------------------
     # part6: writing files
     # -------------------------------------------------------------------------
     # TODO: move text to language database
@@ -271,15 +269,28 @@ def __main__(recipe, params):
     WLOG(params, 'info', 'Part 6: Writing files')
     WLOG(params, 'info', params['DRS_HEADER'])
 
+    # TODO: Write as individual products - don't do p.fits here
+    # TODO:   p.fits should be done in the output post processing script
     if params['INPUTS']['OUTPUT']:
         gen_pol.apero_create_pol_product(params['INPUTS']['OUTPUT'], params,
                                          pprops)
+
+    # save LSD data to fits
+    if params['INPUTS']['OUTPUT_LSD'] != 'None':
+        # get output filename
+        output_lsd = params['INPUTS']['OUTPUT_LSD']
+
+        # TODO: move text to language database
+        msg = 'Saving LSD analysis to file: {0}'
+        margs = [params['INPUTS']['OUTPUT_LSD']]
+        WLOG(params, 'info', msg.format(*margs))
+        lsd.save_lsd_fits(output_lsd, pprops, params)
 
     # -------------------------------------------------------------------------
     # part7: summary plots
     # -------------------------------------------------------------------------
     WLOG(params, 'info', params['DRS_HEADER'])
-    WLOG(params, 'info', 'Part 7: Summary plots')
+    WLOG(params, 'info', 'Part 7: plots')
     WLOG(params, 'info', params['DRS_HEADER'])
 
     # plot continuum plots

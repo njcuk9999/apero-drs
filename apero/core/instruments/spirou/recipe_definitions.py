@@ -1179,7 +1179,8 @@ obj_pol.set_outputs(POL_DEG_FILE=files.out_pol_deg,
                     S1DV_NULL2=files.out_null2_s1dv,
                     S1DW_STOKESI=files.out_stokesi_s1dw,
                     S1DV_STOKESI=files.out_stokesi_s1dv)
-obj_pol.set_debug_plots('PLOT_POLAR_FIT_CONT')
+obj_pol.set_debug_plots('PLOT_POLAR_FIT_CONT', 'POLAR_CONTINUUM',
+                        'POLAR_RESULTS', 'POLAR_STOKES_I', 'POLAR_LSD')
 obj_pol.set_summary_plots()
 obj_pol.set_arg(pos=0, **obs_dir)
 obj_pol.set_kwarg(name='--exposures', dtype='files',

@@ -219,8 +219,8 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     # - NEXPOSURES:   4
 
     # data to save once
-    # OBJNAME:   from header of exp 1:  OBJECT (should be DRSOBJN)
-    # OBJTEMP:   from header of exp 1:  OBJ_TEMP -> deal with no key = 0.0
+    # - OBJNAME:   from header of exp 1:  OBJECT (should be DRSOBJN)
+    # - OBJTEMP:   from header of exp 1:  OBJ_TEMP -> deal with no key = 0.0
 
     returns a class storing these
 
@@ -278,7 +278,6 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
         source_rv = float(params['INPUTS']['OBJRV'])
     else:
         source_rv = 0.0
-
     # -------------------------------------------------------------------------
     # Load calibration database
     # -------------------------------------------------------------------------
@@ -291,11 +290,18 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     count, stoke = 1, 'UNDEF'
     # store stokes for each fiber and exposure numbers
     stokes, exp_nums, basenames = [], [], []
+    objnames, objtemps = [], []
     # loop around exposures and work out stokes parameters
     for expfile in inputs:
         # get the stokes type and exposure number from header
         stoke, exp_num = pconst.GET_STOKES_FROM_HEADER(params, expfile.header,
                                                        WLOG)
+        # get the objname
+        objname = expfile.get_hkey('KW_OBJNAME', dtype=str)
+        # get the obj temperatures
+        objtemp = expfile.get_hkey('KW_OBJ_TEMP', dtype=float, required=False)
+        if objtemp is None:
+            objtemp = 0.0
         # deal with being unable to get stokes from header
         if stoke is None:
             exp_num = int(count)
@@ -307,12 +313,47 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
         stokes.append(str(stoke))
         exp_nums.append(int(exp_num))
         basenames.append(expfile.basename)
+        objnames.append(objname)
+        objtemps.append(objtemp)
+    # -------------------------------------------------------------------------
     # deal with multiple stokes parameters
     if len(np.unique(stokes)) != 1:
-        emsg = 'Identified more than one stokes parameters in input data.'
+        # TODO: move to language database
+        emsgs = 'Identified more than one stokes parameters in input data.'
         for it in range(len(stokes)):
-            emsg += '\n\tFile {0}\tExp {1}\tStokes:{2}'
+            emsg = '\n\tFile {0}\tExp {1}\tStokes:{2}'
             emsg = emsg.format(basenames[it], exp_nums[it], stokes[it])
+            emsgs += emsg
+        WLOG(params, 'error', emsgs)
+    # -------------------------------------------------------------------------
+    # deal with multiple object names
+    if len(np.unique(objnames)) != 1:
+        # TODO: move to language database
+        emsgs = 'Object name from header ({0}) not consistent between files'
+        emsgs = emsgs.format(params['KW_OBJNAME'][0])
+        for it in range(len(objnames)):
+            emsg += '\n\tFile {0}\t{1}={2}'
+            eargs = [basenames[it], params['KW_OBJNAME'][0], objnames[it]]
+            emsg = emsg.format(*eargs)
+            emsgs += emsg
+        WLOG(params, 'error', emsgs)
+    # set object name
+    object_name = objnames[0]
+    # -------------------------------------------------------------------------
+    # deal with multiple temperatures
+    if len(np.unique(objtemps)) != 1:
+        wmsgs = 'Object temperatures do not match - taking finite median'
+        for it in range(len(objtemps)):
+            wmsg = '\n\tFile {0}\t{1}={2}'
+            wargs = [basenames[it], params['KW_OBJ_TEMP'][0], objtemps[it]]
+            wmsg = wmsg.format(*wargs)
+            wmsgs += wmsg
+        WLOG(params, 'warning', wmsgs)
+        # set the object temperature
+        object_temperature = np.nanmedian(objtemps)
+    else:
+        # set the object temperature
+        object_temperature = objtemps[0]
     # -------------------------------------------------------------------------
     # Deal with setting global wave solution
     # -------------------------------------------------------------------------
@@ -437,6 +478,12 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
         emsg = ('Number of exposures in input data is not sufficient for'
                 ' polarimetry calculations')
         WLOG(params, 'error', emsg)
+    # -------------------------------------------------------------------------
+    # add object name and temperature to polar dictionary
+    polar_dict['OBJECT_NAME'] = object_name
+    polar_dict['OBJECT_TEMPERATURE'] = object_temperature
+    # set source
+    polar_dict.set_sources(['OBJECT_NAME', 'OBJECT_TEMPERATURE'], func_name)
     # -------------------------------------------------------------------------
     # return the polar dictionary
     return polar_dict

@@ -353,6 +353,15 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('GET_POLAR_TELLURIC_BANDS')
 
+    def GET_LSD_LINE_REGIONS(self):
+        """
+        Define regions to select lines in the LSD analysis
+
+        :return: list of regions each element is a list of a minimum wavelength
+                 and a maximum wavelength of that band
+        """
+        # raise implementation error
+        self._not_implemented('GET_LSD_LINE_REGIONS')
 
     # =========================================================================
     # INDEXING SETTINGS

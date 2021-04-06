@@ -287,7 +287,8 @@ __all__ = [
     'PLOT_CCF_RV_FIT_LOOP', 'PLOT_CCF_RV_FIT', 'PLOT_CCF_SWAVE_REF',
     'PLOT_CCF_PHOTON_UNCERT',
     # debug polar plot settings
-    'PLOT_POLAR_FIT_CONT',
+    'PLOT_POLAR_FIT_CONT', 'PLOT_POLAR_CONTINUUM', 'PLOT_POLAR_RESULTS',
+    'PLOT_POLAR_STOKES_I', 'PLOT_POLAR_LSD',
     # post processing settings
     'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
@@ -4338,6 +4339,31 @@ PLOT_POLAR_FIT_CONT = Const('PLOT_POLAR_FIT_CONT', value=False,
                             active=False, group=cgroup,
                             description='turn on the polar fit continuum '
                                         'plot')
+
+# turn on the polar continuum debug plot
+PLOT_POLAR_CONTINUUM = Const('PLOT_POLAR_CONTINUUM', value=False,
+                             dtype=bool, source=__NAME__, user=True,
+                             active=False, group=cgroup,
+                             description='turn on the polar continuum '
+                                         'debug plot')
+
+# turn on the polar results debug plot
+PLOT_POLAR_RESULTS = Const('PLOT_POLAR_RESULTS', value=False,
+                           dtype=bool, source=__NAME__, user=True, active=False,
+                           group=cgroup,
+                           description='turn on the polar results debug plot')
+
+# turn on the polar stokes i debug plot
+PLOT_POLAR_STOKES_I = Const('PLOT_POLAR_STOKES_I', value=False,
+                            dtype=bool, source=__NAME__, user=True,
+                            active=False, group=cgroup,
+                            description='turn on the polar stokes i debug plot')
+
+# turn on the polar lsd debug plot
+PLOT_POLAR_LSD = Const('PLOT_POLAR_LSD', value=False,
+                       dtype=bool, source=__NAME__, user=True, active=False,
+                       group=cgroup,
+                       description='turn on the polar lsd debug plot')
 
 # =============================================================================
 # POST PROCESS SETTINGS

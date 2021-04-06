@@ -2508,6 +2508,22 @@ PLOT_CCF_PHOTON_UNCERT.value = True
 PLOT_POLAR_FIT_CONT = PLOT_POLAR_FIT_CONT.copy(__NAME__)
 PLOT_POLAR_FIT_CONT.value = True
 
+# turn on the polar continuum debug plot
+PLOT_POLAR_CONTINUUM = PLOT_POLAR_CONTINUUM.copy(__NAME__)
+PLOT_POLAR_CONTINUUM.value = True
+
+# turn on the polar results debug plot
+PLOT_POLAR_RESULTS = PLOT_POLAR_RESULTS.copy(__NAME__)
+PLOT_POLAR_RESULTS.value = True
+
+# turn on the polar stokes i debug plot
+PLOT_POLAR_STOKES_I = PLOT_POLAR_STOKES_I.copy(__NAME__)
+PLOT_POLAR_STOKES_I.value = True
+
+# turn on the polar lsd debug plot
+PLOT_POLAR_LSD = PLOT_POLAR_LSD.copy(__NAME__)
+PLOT_POLAR_LSD.value = True
+
 # =============================================================================
 # POST PROCESS SETTINGS
 # =============================================================================

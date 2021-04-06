@@ -497,6 +497,18 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
     :param filekey: str, Define the file regular expression key to lsd mask
                     files wildcard key used in form filekey={prefix}*{suffix}
                     -- overrides params['POLAR_LSD_FILE_KEY']
+
+                    i.e.
+                    -   for "marcs_t3000g50_all" this should be:
+                        prefix="marcs_t"
+                        suffix = "g"
+                        filekey = 'marcs_t*g
+
+                    -   for "t4000_g4.0_m0.00" it should be:
+                        prefix="t"
+                        suffix = "_g"
+                        filekey = t*_g
+
     :param return_filename: bool, if True returns filename else returns image
 
     :return: either the filename (return_filename=True) or np.ndarray the
@@ -549,8 +561,12 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
         # get filename from this
         filename = basenames[pos]
     # ----------------------------------------------------------------------
+    # deal with full path being given
+    if os.path.exists(filename):
+        absfilename = str(filename)
+    else:
+        absfilename = os.path.join(assetdir, relfolder, filename)
     # deal with return_filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
     if return_filename:
         return absfilename
     # ----------------------------------------------------------------------
