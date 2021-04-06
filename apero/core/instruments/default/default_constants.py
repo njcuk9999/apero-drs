@@ -239,18 +239,9 @@ __all__ = [
     'CCF_MAX_CCF_WID_STEP_RATIO', 'CCF_BLAZE_NORM_PERCENTILE',
     'CCF_OBJRV_NULL_VAL', 'CCF_MASK_NORMALIZATION',
     # polar constants
-    'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES', 'POLAR_METHOD',
-    'POLAR_CONT_TELLMASK_LOWER',
-    'POLAR_CONT_TELLMASK_UPPER',
+
     # polar lsd constants
-    'POLAR_LSD_ANALYSIS', 'POLAR_LSD_PATH', 'POLAR_LSD_FILE_KEY',
-    'POLAR_LSD_WL_LOWER', 'POLAR_LSD_WL_UPPER', 'POLAR_LSD_VINIT',
-    'POLAR_LSD_VFINAL', 'POLAR_LSD_ORDER_MASK', 'POLAR_LSD_NORM',
-    'POLAR_LSD_NBIN1', 'POLAR_LSD_NOVERLAP1', 'POLAR_LSD_NSIGCLIP1',
-    'POLAR_LSD_NWINDOW1', 'POLAR_LSD_NMODE1', 'POLAR_LSD_NLFIT1',
-    'POLAR_LSD_NBIN2', 'POLAR_LSD_NOVERLAP2', 'POLAR_LSD_NSIGCLIP2',
-    'POLAR_LSD_NWINDOW2', 'POLAR_LSD_NMODE2', 'POLAR_LSD_NLFIT2',
-    'POLAR_LSD_MIN_LINEDEPTH', 'POLAR_LSD_NPOINTS',
+
     # debug dark plot settings
     'PLOT_DARK_IMAGE_REGIONS', 'PLOT_DARK_HISTOGRAM',
     # debug badpix plot settings
@@ -295,9 +286,8 @@ __all__ = [
     # debug ccf plot settings
     'PLOT_CCF_RV_FIT_LOOP', 'PLOT_CCF_RV_FIT', 'PLOT_CCF_SWAVE_REF',
     'PLOT_CCF_PHOTON_UNCERT',
-    # debug plar plot settings
-    'PLOT_POLAR_CONTINUUM', 'PLOT_POLAR_RESULTS', 'PLOT_POLAR_STOKES_I',
-    'PLOT_POLAR_LSD',
+    # debug polar plot settings
+    'PLOT_POLAR_FIT_CONT',
     # post processing settings
     'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
@@ -3862,209 +3852,7 @@ CCF_BLAZE_NORM_PERCENTILE = Const('CCF_BLAZE_NORM_PERCENTILE', value=None,
 # OBJECT: POLARISATION SETTINGS
 # =============================================================================
 cgroup = 'OBJECT: POLARISATION SETTINGS'
-#  Define all possible fibers used for polarimetry
-#     (define as a string list)
-POLAR_VALID_FIBERS = Const('POLAR_VALID_FIBERS', value=None, dtype=str,
-                           source=__NAME__, group=cgroup, 
-                           description=('Define all possible fibers used for '
-                                        'polarimetry (define as a string '
-                                        'list)'))
 
-#  Define all possible stokes parameters  used for polarimetry
-#      (define as a string list)
-POLAR_VALID_STOKES = Const('POLAR_VALID_STOKES', value=None, dtype=str,
-                           source=__NAME__, group=cgroup, 
-                           description=('Define all possible stokes parameters '
-                                        'used for polarimetry (define as a '
-                                        'string list)'))
-
-#  Define the polarimetry calculation method
-#    currently must be either:
-#         - Ratio
-#         - Difference
-POLAR_METHOD = Const('POLAR_METHOD', value=None, dtype=str, source=__NAME__,
-                     user=True, active=False, group=cgroup,
-                     description='Define the polarimetry calculation method')
-
-#  Define the telluric mask for calculation of continnum lower limits
-#    (string list)
-POLAR_CONT_TELLMASK_LOWER = Const('POLAR_CONT_TELLMASK_LOWER', value=None,
-                                  dtype=float, source=__NAME__, group=cgroup, 
-                                  description=('Define the telluric mask for '
-                                               'calculation of continnum lower '
-                                               'limits (string list)'))
-
-#  Define the telluric mask for calculation of continnum upper limits
-#    (string list)
-POLAR_CONT_TELLMASK_UPPER = Const('POLAR_CONT_TELLMASK_UPPER', value=None,
-                                  dtype=float, source=__NAME__, group=cgroup, 
-                                  description=('Define the telluric mask for '
-                                               'calculation of continnum upper '
-                                               'limits (string list)'))
-
-#  Perform LSD analysis
-POLAR_LSD_ANALYSIS = Const('POLAR_LSD_ANALYSIS', value=None, dtype=str,
-                           source=__NAME__, user=True, active=False,
-                           group=cgroup, description='Perform LSD analysis')
-
-#  Define the spectral lsd mask directory for lsd polar calculations
-POLAR_LSD_PATH = Const('POLAR_LSD_PATH', value=None, dtype=str, source=__NAME__,
-                       group=cgroup, 
-                       description=('Define the spectral lsd mask directory '
-                                    'for lsd polar calculations'))
-
-#  Define the file regular expression key to lsd mask files
-POLAR_LSD_FILE_KEY = Const('POLAR_LSD_FILE_KEY', value=None,
-                           dtype=str, source=__NAME__, group=cgroup, 
-                           description=('Define the file regular expression '
-                                        'key to lsd mask files'))
-
-#  Define mask for selecting lines to be used in the LSD analysis
-#      lower bounds (string list)
-POLAR_LSD_WL_LOWER = Const('POLAR_LSD_WL_LOWER', value=None,
-                           dtype=str, source=__NAME__, group=cgroup, 
-                           description=('Define mask for selecting lines to be '
-                                        'used in the LSD analysis lower bounds '
-                                        '(string list)'))
-
-#  Define mask for selecting lines to be used in the LSD analysis
-#      upper bounds (string list)
-POLAR_LSD_WL_UPPER = Const('POLAR_LSD_WL_UPPER', value=None,
-                           dtype=str, source=__NAME__, group=cgroup, 
-                           description=('Define mask for selecting lines to be '
-                                        'used in the LSD analysis upper bounds '
-                                        '(string list)'))
-
-# Define minimum line depth to be used in the LSD analyis
-POLAR_LSD_MIN_LINEDEPTH = Const('POLAR_LSD_MIN_LINEDEPTH', value=None,
-                                dtype=float, source=__NAME__, group=cgroup, 
-                                description=('Define minimum line depth to be '
-                                             'used in the LSD analyis'))
-
-#  Define initial velocity (km/s) for output LSD profile
-POLAR_LSD_VINIT = Const('POLAR_LSD_VINIT', value=None, dtype=float,
-                        source=__NAME__, group=cgroup, 
-                        description=('Define initial velocity (km/s) for '
-                                     'output LSD profile'))
-
-#  Define final velocity (km/s) for output LSD profile
-POLAR_LSD_VFINAL = Const('POLAR_LSD_VFINAL', value=None, dtype=float,
-                         source=__NAME__, group=cgroup, 
-                         description=('Define final velocity (km/s) for output '
-                                      'LSD profile'))
-
-#  Define the order wavelength mask filename
-POLAR_LSD_ORDER_MASK = Const('POLAR_LSD_ORDER_MASK', value=None, dtype=str,
-                             source=__NAME__, group=cgroup, 
-                             description=('Define the order wavelength mask '
-                                          'filename'))
-
-#  Define whether to normalise by stokei by the continuum in lsd process
-POLAR_LSD_NORM = Const('POLAR_LSD_NORM', value=None, dtype=bool,
-                       source=__NAME__, group=cgroup, 
-                       description=('Define whether to normalise by stokei '
-                                    'by the continuum in lsd process'))
-
-#  Define the normalise by continuum lsd binsize
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NBIN1 = Const('POLAR_LSD_NBIN1', value=None, dtype=int,
-                        source=__NAME__, minimum=1, group=cgroup, 
-                        description=('Define the normalise by continuum lsd '
-                                     'binsize used in the normalization with '
-                                     'POLAR_LSD_NORM = True'))
-
-#  Define the normalise by continuum lsd overlap with adjacent bins
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NOVERLAP1 = Const('POLAR_LSD_NOVERLAP1', value=None, dtype=int,
-                            source=__NAME__, minimum=0, group=cgroup, 
-                            description=('Define the normalise by continuum '
-                                         'lsd overlap with adjacent bins used '
-                                         'in the normalization with '
-                                         'POLAR_LSD_NORM = True'))
-
-#  Define the normalise by continuum lsd sigma clip value
-#    used in the profile calculation
-POLAR_LSD_NSIGCLIP1 = Const('POLAR_LSD_NSIGCLIP1', value=None, dtype=float,
-                            source=__NAME__, minimum=0, group=cgroup, 
-                            description=('Define the normalise by continuum '
-                                         'lsd sigma clip value used in the '
-                                         'profile calculation'))
-
-#  Define the normalise by continuum lsd window size (local fit size)
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NWINDOW1 = Const('POLAR_LSD_NWINDOW1', value=None, dtype=int,
-                           source=__NAME__, minimum=1, group=cgroup,
-                           description=('Define the normalise by continuum '
-                                        'lsd window size (local fit size) '
-                                        'used in the normalization with '
-                                        'POLAR_LSD_NORM = True'))
-
-#  Define the normalise by continuum lsd mode (mean/median/max)
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NMODE1 = Const('POLAR_LSD_NWINDOW1', value=None, dtype=str,
-                         source=__NAME__, options=['mean', 'median', 'max'],
-                         group=cgroup)
-
-#  Define whether to use a linear fit in the normalise by continuum lsd calc
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NLFIT1 = Const('POLAR_LSD_NLFIT1', value=None, dtype=bool,
-                         source=__NAME__, group=cgroup, 
-                         description=('Define whether to use a linear fit in '
-                                      'the normalise by continuum lsd calc '
-                                      'used in the normalization with '
-                                      'POLAR_LSD_NORM = True'))
-
-#  Define number of points for output LSD profile
-POLAR_LSD_NPOINTS = Const('POLAR_LSD_NPOINTS', value=None, dtype=int,
-                          source=__NAME__, group=cgroup, 
-                          description=('Define number of points for '
-                                       'output LSD profile'))
-
-#  Define the normalise by continuum lsd binsize
-#    used in the profile calculation
-POLAR_LSD_NBIN2 = Const('POLAR_LSD_NBIN2', value=None, dtype=int,
-                        source=__NAME__, minimum=1, group=cgroup, 
-                        description=('Define the normalise by continuum lsd '
-                                     'binsize used in the profile '
-                                     'calculation'))
-
-#  Define the normalise by continuum lsd overlap with adjacent bins
-#    used in the profile calculation
-POLAR_LSD_NOVERLAP2 = Const('POLAR_LSD_NOVERLAP2', value=None, dtype=int,
-                            source=__NAME__, minimum=0, group=cgroup, 
-                            description=('Define the normalise by continuum '
-                                         'lsd overlap with adjacent bins '
-                                         'used in the profile calculation'))
-
-#  Define the normalise by continuum lsd sigma clip value
-#    used in the profile calculation
-POLAR_LSD_NSIGCLIP2 = Const('POLAR_LSD_NSIGCLIP2', value=None, dtype=float,
-                            source=__NAME__, minimum=0, group=cgroup, 
-                            description=('Define the normalise by continuum '
-                                         'lsd sigma clip value used in the '
-                                         'profile calculation'))
-
-#  Define the normalise by continuum lsd window size (local fit size)
-#    used in the profile calculation
-POLAR_LSD_NWINDOW2 = Const('POLAR_LSD_NWINDOW2', value=None, dtype=int,
-                           source=__NAME__, minimum=1, group=cgroup,
-                           description=('Define the normalise by continuum lsd '
-                                        'window size (local fit size) used in '
-                                        'the profile calculation'))
-
-#  Define the normalise by continuum lsd mode (mean/median/max)
-#    used in the profile calculation
-POLAR_LSD_NMODE2 = Const('POLAR_LSD_NWINDOW2', value=None, dtype=str,
-                         source=__NAME__, options=['mean', 'median', 'max'],
-                         group=cgroup)
-
-#  Define whether to use a linear fit in the normalise by continuum lsd calc
-#    used in the profile calculation
-POLAR_LSD_NLFIT2 = Const('POLAR_LSD_NLFIT2', value=None, dtype=bool,
-                         source=__NAME__, group=cgroup, 
-                         description=('Define whether to use a linear fit in '
-                                      'the normalise by continuum lsd calc '
-                                      'used in the profile calculation'))
 
 # =============================================================================
 # DEBUG PLOT SETTINGS
@@ -4543,31 +4331,13 @@ PLOT_CCF_PHOTON_UNCERT = Const('PLOT_CCF_PHOTON_UNCERT', value=False,
                                description='turn on the ccf photon uncertainty '
                                            'debug plot')
 
-# turn on the polar continuum debug plot
-PLOT_POLAR_CONTINUUM = Const('PLOT_POLAR_CONTINUUM', value=False,
-                             dtype=bool, source=__NAME__, user=True,
-                             active=False, group=cgroup,
-                             description='turn on the polar continuum '
-                                         'debug plot')
 
-# turn on the polar results debug plot
-PLOT_POLAR_RESULTS = Const('PLOT_POLAR_RESULTS', value=False,
-                           dtype=bool, source=__NAME__, user=True, active=False,
-                           group=cgroup,
-                           description='turn on the polar results debug plot')
-
-# turn on the polar stokes i debug plot
-PLOT_POLAR_STOKES_I = Const('PLOT_POLAR_STOKES_I', value=False,
+# turn on the polar fit continuum plot
+PLOT_POLAR_FIT_CONT = Const('PLOT_POLAR_FIT_CONT', value=False,
                             dtype=bool, source=__NAME__, user=True,
                             active=False, group=cgroup,
-                            description='turn on the polar stokes i debug plot')
-
-# turn on the polar lsd debug plot
-PLOT_POLAR_LSD = Const('PLOT_POLAR_LSD', value=False,
-                       dtype=bool, source=__NAME__, user=True, active=False,
-                       group=cgroup,
-                       description='turn on the polar lsd debug plot')
-
+                            description='turn on the polar fit continuum '
+                                        'plot')
 
 # =============================================================================
 # POST PROCESS SETTINGS

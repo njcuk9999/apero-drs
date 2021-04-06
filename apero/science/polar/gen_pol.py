@@ -10,8 +10,10 @@ Created on 2019-10-25 at 13:25
 @author: cook
 """
 import numpy as np
-import os
 from scipy import interpolate
+from scipy import stats
+from scipy import signal
+from scipy.interpolate import UnivariateSpline
 import warnings
 from typing import Tuple, List, Union
 
@@ -19,7 +21,9 @@ from apero.base import base
 from apero.core import math as mp
 from apero import lang
 from apero.core import constants
-from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_database
+from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.io import drs_table
@@ -49,67 +53,6 @@ display_func = drs_log.display_func
 textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
-
-
-# =============================================================================
-# Define class
-# =============================================================================
-class PolarDict():
-    def __init__(self):
-        # exposure that we are keeping (these keys are used in the dictionaries)
-        self.exposures = []
-        self.n_exposures = 0
-        # wave solution common to all non-raw data
-        self.global_wave = None
-        self.global_wave_file = None
-        self.global_wave_time = None
-        # the inputs in dictionary form
-        self.inputs = dict()
-        # raw flux and flux error
-        self.raw_wave = dict()
-        self.raw_wave_file = dict()
-        self.raw_wave_time = dict()
-        self.raw_flux = dict()
-        self.raw_fluxerr = dict()
-        # flux and flux error on common wave solution grid
-        self.flux = dict()
-        self.fluxerr = dict()
-        # stokes parameters for each exposure
-        self.stokes = dict()
-        # exposure number for each exposure
-        self.exposure_numbers = dict()
-
-    def verify(self, params: ParamDict):
-            """
-            Verify that polar dictionary is good to use
-
-            :return: None, raises exception if poalr dictionary is bad (with reason)
-            """
-            # global wave file set
-            if self.global_wave is None:
-                WLOG(params, 'error', 'Global wave map not set')
-            if self.global_wave_file is None:
-                WLOG(params, 'error', 'Global wave file not set')
-            if self.global_wave_time is None:
-                WLOG(params, 'error', 'Global wave time not set')
-            # dictionary to check against exposure keys
-            dicts = [self.raw_flux, self.raw_fluxerr,
-                     self.raw_wave, self.raw_wave_file, self.raw_wave_time,
-                     self.flux, self.fluxerr,
-                     self.stokes, self.exposure_numbers]
-            names = ['RAWFLUX', 'RAWFLUXERR',
-                     'RAWWAVE', 'RAWWAVEFILE', 'RAWWAVETIME',
-                     'FLUX', 'FLUXERR',
-                     'STOKES', 'EXPOSURE_NUMBERS']
-            # loop around exposure keys
-            for key in self.exposures:
-                # loop around vectors
-                for it, _dict in enumerate(dicts):
-                    # test for key in dictionary
-                    if key not in _dict:
-                        emsg = '{0}[{1}] not set'
-                        eargs = [names[it], key]
-                        WLOG(params, 'error', emsg.format(*eargs))
 
 
 # =============================================================================
@@ -255,7 +198,7 @@ def set_polar_exposures(params: ParamDict) -> List[DrsFitsFile]:
 
 
 def apero_load_data(params: ParamDict, recipe: DrsRecipe,
-                    inputs: List[DrsFitsFile]) -> PolarDict:
+                    inputs: List[DrsFitsFile]) -> ParamDict:
     """
     Load the data for the inputted exposures
 
@@ -289,15 +232,45 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     """
     # set function name
     func_name = display_func('apero_load_data', __NAME__)
+    # load pseudo constants
+    pconst = constants.pload()
     # -------------------------------------------------------------------------
-    # TODO: get from params?
-    polar_fibers = params['POLAR_FIBERS']
-    stokesparams = params['POLAR_STOKES_PARAMS']
+    # get from parameters
+    polar_fibers = params.listp('POLAR_FIBERS', dtype=str)
+    stokesparams = params.listp('POLAR_STOKES_PARAMS', dtype=str)
     berv_correct = params['POLAR_BERV_CORRECT']
     source_rv_correct = params['POLAR_SOURCE_RV_CORRECT']
     # -------------------------------------------------------------------------
-    # storage
-    polar_dict = PolarDict()
+    # set up storage
+    polar_dict = ParamDict()
+    # exposure that we are keeping (these keys are used in the dictionaries)
+    polar_dict['EXPOSURES'] = []
+    polar_dict['N_EXPOSURES'] = 0
+    # stokes parameters for each exposure
+    polar_dict['STOKES'] = dict()
+    # exposure number for each exposure
+    polar_dict['EXPOSURE_NUMBERS'] = dict()
+    # wave solution common to all non-raw data
+    polar_dict['GLOBAL_WAVEMAP'] = None
+    polar_dict['GLOBAL_WAVEFILE'] = None
+    polar_dict['GLOBAL_WAVETIME'] = None
+    # the inputs in dictionary form
+    polar_dict['INPUTS'] = dict()
+    # raw flux and flux error
+    polar_dict['RAW_WAVEMAP'] = dict()
+    polar_dict['RAW_WAVEFILE'] = dict()
+    polar_dict['RAW_WAVETIME'] = dict()
+    polar_dict['RAW_FLUX'] = dict()
+    polar_dict['RAW_FLUXERR'] = dict()
+    # flux and flux error on common wave solution grid
+    polar_dict['FLUX'] = dict()
+    polar_dict['FLUXERR'] = dict()
+    # set sources
+    keys = ['EXPOSURES', 'N_EXPOSURES', 'EXPOSURE_NUMBERS', 'STOKES', 'INPUTS',
+            'GLOBAL_WAVEMAP', 'GLOBAL_WAVEFILE', 'GLOBAL_WAVETIME',
+            'RAW_WAVEMAP', 'RAW_WAVEFILE', 'RAW_WAVETIME',
+            'RAW_FLUX', 'RAW_FLUXERR', 'FLUX', 'FLUXERR']
+    polar_dict.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # TODO: What about from a CCF file?
     # set source rv
@@ -305,6 +278,12 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
         source_rv = float(params['INPUTS']['OBJRV'])
     else:
         source_rv = 0.0
+
+    # -------------------------------------------------------------------------
+    # Load calibration database
+    # -------------------------------------------------------------------------
+    calibdb = drs_database.CalibrationDatabase(params)
+    calibdb.load_db()
     # -------------------------------------------------------------------------
     # determine the number of this exposure
     # -------------------------------------------------------------------------
@@ -314,11 +293,11 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     stokes, exp_nums, basenames = [], [], []
     # loop around exposures and work out stokes parameters
     for expfile in inputs:
-        # get the stokes type and exposure number from headaer
-        if params['KW_CMMTSEQ'][0] in expfile.header:
-            stoke, exp_num  = expfile.get_hkey('KW_CMMTSEQ').split()
-            stoke = stoke.upper()
-        else:
+        # get the stokes type and exposure number from header
+        stoke, exp_num = pconst.GET_STOKES_FROM_HEADER(params, expfile.header,
+                                                       WLOG)
+        # deal with being unable to get stokes from header
+        if stoke is None:
             exp_num = int(count)
             count += 1
         # make sure stokes fiber is valid (or set to UNDEF elsewise)
@@ -329,7 +308,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
         exp_nums.append(int(exp_num))
         basenames.append(expfile.basename)
     # deal with multiple stokes parameters
-    if np.unique(stokes) != 1:
+    if len(np.unique(stokes)) != 1:
         emsg = 'Identified more than one stokes parameters in input data.'
         for it in range(len(stokes)):
             emsg += '\n\tFile {0}\tExp {1}\tStokes:{2}'
@@ -344,12 +323,12 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
         if exp_nums[it] == 1:
             # get the exposure 1 wave solution (will be the global solution)
             wprops = wave.get_wavesolution(params, recipe, fiber=expfile.fiber,
-                                           infile=expfile)
+                                           infile=expfile, database=calibdb)
             # -----------------------------------------------------------------
             # apply a berv correction if requested
             if berv_correct:
                 # get all berv properties from expfile
-                bprops = extract.get_berv(params, expfile)
+                bprops = extract.get_berv(params, expfile, log=False)
                 # get BERV (need to use both types of BERV measurement)
                 berv = bprops['USE_BERV']
                 # need the source RV
@@ -362,11 +341,11 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
                 wavemap = np.array(wprops['WAVEMAP'])
             # -----------------------------------------------------------------
             # add the global wave solution to polar dict
-            polar_dict.global_wave = wavemap
+            polar_dict['GLOBAL_WAVEMAP'] = wavemap
             # add the global wave filename solution to polar dict
-            polar_dict.global_wave_file = str(wprops['WAVEFILE'])
+            polar_dict['GLOBAL_WAVEFILE'] = str(wprops['WAVEFILE'])
             # add the global wave time solution to polar dict
-            polar_dict.global_wave_time = str(wprops['WAVETIME'])
+            polar_dict['GLOBAL_WAVETIME'] = str(wprops['WAVETIME'])
     # -------------------------------------------------------------------------
     # Load all exposures for each polar fiber
     # -------------------------------------------------------------------------
@@ -379,13 +358,16 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # -----------------------------------------------------------------
             # work out key
             key_str = '{0}_{1}'.format(fiber, exp_nums[it])
+            # log that we are loading data for this key
+            # TODO: move to language database
+            WLOG(params, 'info', 'Loading data for {0}'.format(key_str))
             # -----------------------------------------------------------------
             # add key to polar dict list
-            polar_dict.exposures.append(key_str)
+            polar_dict['EXPOSURES'].append(key_str)
             # add exposure numbers to polar dict
-            polar_dict.exposure_numbers[key_str] = exp_nums[it]
+            polar_dict['EXPOSURE_NUMBERS'][key_str] = exp_nums[it]
             # add the stokes parameter for this exposure
-            polar_dict.stokes[key_str] = stokes[it]
+            polar_dict['STOKES'][key_str] = stokes[it]
             # -----------------------------------------------------------------
             # need to deal with telluric files differently than e2ds files
             if expfile.name == 'TELLU_OBJ':
@@ -401,16 +383,17 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             infile = drs_file.get_another_fiber_file(params, **gkwargs)
             # -----------------------------------------------------------------
             # load the blaze file
-            _, blaze = flat_blaze.get_blaze(params, infile.header, fiber)
+            _, blaze = flat_blaze.get_blaze(params, infile.header, fiber,
+                                            database=calibdb)
             # -----------------------------------------------------------------
             # load wave for file
             wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
-                                           infile=infile)
+                                           infile=infile, database=calibdb)
             # -----------------------------------------------------------------
             # apply a berv correction if requested
             if berv_correct:
                 # get all berv properties from expfile
-                bprops = extract.get_berv(params, expfile)
+                bprops = extract.get_berv(params, expfile, log=False)
                 # get BERV (need to use both types of BERV measurement)
                 berv = bprops['USE_BERV']
                 # need the source RV
@@ -423,40 +406,40 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
                 wavemap = np.array(wprops['WAVEMAP'])
             # -----------------------------------------------------------------
             # add the global wave solution to polar dict
-            polar_dict.raw_wave[key_str] = wavemap
+            polar_dict['RAW_WAVEMAP'][key_str] = wavemap
             # add the global wave filename solution to polar dict
-            polar_dict.raw_wave_file[key_str] = str(wprops['WAVEFILE'])
+            polar_dict['RAW_WAVEFILE'][key_str] = str(wprops['WAVEFILE'])
             # add the global wave time solution to polar dict
-            polar_dict.raw_wave_time[key_str] = str(wprops['WAVETIME'])
+            polar_dict['RAW_WAVETIME'][key_str] = str(wprops['WAVETIME'])
             # -----------------------------------------------------------------
             # get the raw data
             raw_flux = np.array(infile.data / blaze)
             # get the raw data errors
-            raw_fluxerr = np.sqrt(infile.data)
+            with warnings.catch_warnings(record=True) as _:
+                raw_fluxerr = np.sqrt(infile.data)
             # -----------------------------------------------------------------
+            # get global wave
+            gwavemap = polar_dict['GLOBAL_WAVEMAP']
             # get interpolated data
             flux, fluxerr = get_interp_flux(wavemap0=wavemap, flux0=raw_flux,
-                                            blaze0=blaze,
-                                            wavemap1=polar_dict.global_wave)
+                                            blaze0=blaze, wavemap1=gwavemap)
             # -----------------------------------------------------------------
             # add rawflux, rawfluxerr, flux, fluxerror to polar dict
-            polar_dict.raw_flux[key_str] = raw_flux
-            polar_dict.raw_fluxerr[key_str] = raw_fluxerr
-            polar_dict.flux[key_str] = flux
-            polar_dict.fluxerr[key_str] = fluxerr
-        # ---------------------------------------------------------------------
-        # make sure we have the correct number of exposures
-        if len(polar_dict.exposures) == 8:
-            polar_dict.n_exposures = 4
-        else:
-            emsg = ('Number of exposures in input data is not sufficient for'
-                    ' polarimetry calculations')
-            WLOG(params, 'error', emsg)
-        # ---------------------------------------------------------------------
-        # verify data is good in polar dictionary
-        polar_dict.verify(params)
-        # return the polar dictionary
-        return polar_dict
+            polar_dict['RAW_FLUX'][key_str] = raw_flux
+            polar_dict['RAW_FLUXERR'][key_str] = raw_fluxerr
+            polar_dict['FLUX'][key_str] = flux
+            polar_dict['FLUXERR'][key_str] = fluxerr
+    # -------------------------------------------------------------------------
+    # make sure we have the correct number of exposures
+    if len(polar_dict['EXPOSURES']) == 8:
+        polar_dict['N_EXPOSURES'] = 4
+    else:
+        emsg = ('Number of exposures in input data is not sufficient for'
+                ' polarimetry calculations')
+        WLOG(params, 'error', emsg)
+    # -------------------------------------------------------------------------
+    # return the polar dictionary
+    return polar_dict
 
 
 # =============================================================================
@@ -533,11 +516,11 @@ def polarimetry_diff_method(params: ParamDict, props: ParamDict,
                                     func=func_name, override=interp_flux)
     # get parameters from loc
     if polar_interpolate_flux:
-        data, errdata = props['FLUXDATA'], props['FLUXERRDATA']
+        data, errdata = props['FLUX'], props['FLUXERR']
     else:
-        data, errdata = props['RAWFLUXDATA'], props['RAWFLUXERRDATA']
+        data, errdata = props['RAW_FLUX'], props['RAW_FLUXERR']
     # get the number of exposures
-    nexp = float(props['NEXPOSURES'])
+    nexp = float(props['N_EXPOSURES'])
     # log start of polarimetry calculations
     # TODO: move to language database
     wmsg = 'Running function {0} to calculate polarization'
@@ -546,7 +529,7 @@ def polarimetry_diff_method(params: ParamDict, props: ParamDict,
     # set up storage
     # ---------------------------------------------------------------------
     # store polarimetry variables in loc
-    data_shape = props['RAWFLUXDATA']['A_1'].shape
+    data_shape = props['RAW_FLUX']['A_1'].shape
     # initialize arrays to zeroes
     pol_arr = np.zeros(data_shape)
     pol_err_arr = np.zeros(data_shape)
@@ -709,16 +692,16 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
     WLOG(params, '', wmsg.format(name))
     # get parameters from loc
     if polar_interpolate_flux:
-        data, errdata = props['FLUXDATA'], props['FLUXERRDATA']
+        data, errdata = props['FLUX'], props['FLUXERR']
     else:
-        data, errdata = props['RAWFLUXDATA'], props['RAWFLUXERRDATA']
+        data, errdata = props['RAW_FLUX'], props['RAW_FLUXERR']
     # get the number of exposures
-    nexp = float(props['NEXPOSURES'])
+    nexp = float(props['N_EXPOSURES'])
     # ---------------------------------------------------------------------
     # set up storage
     # ---------------------------------------------------------------------
     # store polarimetry variables in loc
-    data_shape = props['RAWFLUXDATA']['A_1'].shape
+    data_shape = props['RAW_FLUX']['A_1'].shape
     # initialize arrays to zeroes
     pol_arr = np.zeros(data_shape)
     pol_err_arr = np.zeros(data_shape)
@@ -765,7 +748,8 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
         # STEP 4 - calculate the quantity R
         #          (Part of Eq #24 on page 998 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
-        rr = (r1 * r2) ** (1.0 / (2 * nexp))
+        with warnings.catch_warnings(record=True) as _:
+            rr = (r1 * r2) ** (1.0 / (2 * nexp))
         # -----------------------------------------------------------------
         # STEP 5 - calculate the degree of polarization
         #          (Eq #24 on page 998 of Bagnulo et al. 2009)
@@ -775,7 +759,8 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
         # STEP 6 - calculate the quantity RN1
         #          (Part of Eq #25-26 on page 998 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
-        rn1 = (r1 / r2) ** (1.0 / (2 * nexp))
+        with warnings.catch_warnings(record=True) as _:
+            rn1 = (r1 / r2) ** (1.0 / (2 * nexp))
         # -----------------------------------------------------------------
         # STEP 7 - calculate the first NULL spectrum
         #          (Eq #25-26 on page 998 of Bagnulo et al. 2009)
@@ -786,7 +771,8 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
         #          (Part of Eq #25-26 on page 998 of Bagnulo et al. 2009),
         #          with exposure 2 and 4 swapped
         # -----------------------------------------------------------------
-        rn2 = (r1s / r2s) ** (1.0 / (2 * nexp))
+        with warnings.catch_warnings(record=True) as _:
+            rn2 = (r1s / r2s) ** (1.0 / (2 * nexp))
         # -----------------------------------------------------------------
         # STEP 9 - calculate the second NULL spectrum
         #          (Eq #25-26 on page 998 of Bagnulo et al. 2009),
@@ -797,8 +783,9 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
         # STEP 10 - calculate the polarimetry error (Eq #A10 on page 1014
         #           of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
-        numer_part1 = (r1 * r2) ** (1.0 / 2.0)
-        denom_part1 = ((r1 * r2) ** (1.0 / 4.0) + 1.0) ** 4.0
+        with warnings.catch_warnings(record=True) as _:
+            numer_part1 = (r1 * r2) ** (1.0 / 2.0)
+            denom_part1 = ((r1 * r2) ** (1.0 / 4.0) + 1.0) ** 4.0
         part1 = numer_part1 / (denom_part1 * 4.0)
         sumvar = var_term[0] + var_term[1] + var_term[2] + var_term[3]
         pol_err_arr = np.sqrt(part1 * sumvar)
@@ -889,16 +876,16 @@ def calculate_stokes_i(params: ParamDict, props: ParamDict,
                                     func=func_name, override=interp_flux)
     # get parameters from props
     if polar_interpolate_flux:
-        data, errdata = props['FLUXDATA'], props['FLUXERRDATA']
+        data, errdata = props['FLUX'], props['FLUXERR']
     else:
-        data, errdata = props['RAWFLUXDATA'], props['RAWFLUXERRDATA']
+        data, errdata = props['RAW_FLUX'], props['RAW_FLUXERR']
     # get the number of exposures
-    nexp = float(props['NEXPOSURES'])
+    nexp = float(props['N_EXPOSURES'])
     # ---------------------------------------------------------------------
     # set up storage
     # ---------------------------------------------------------------------
     # store Stokes I variables in loc
-    data_shape = props['FLUXDATA']['A_1'].shape
+    data_shape = props['RAW_FLUX']['A_1'].shape
     # initialize arrays to zeroes
     stokesi_arr = np.zeros(data_shape)
     stokesierr_arr = np.zeros(data_shape)
@@ -916,7 +903,7 @@ def calculate_stokes_i(params: ParamDict, props: ParamDict,
         flux.append(flux_ab)
         # Calculate the variances for fiber A+B
         #    -> varA+B = sigA * sigA + sigB * sigB
-        var_ab = errdata[a_exp] ** 2 + errdata[b_exp]**2
+        var_ab = errdata[a_exp] ** 2 + errdata[b_exp] ** 2
         # Save varAB = sigA^2 + sigB^2, ignoring cross-correlated terms
         var.append(var_ab)
     # Sum fluxes and variances from different exposures
@@ -958,7 +945,6 @@ def get_interp_flux(wavemap0: np.ndarray, flux0: np.ndarray,
 
     :return: tuple, 1. the flux on wavemap1, 2. the flux error on wavemap1
     """
-
     # output flux and flux error maps
     flux1 = np.full_like(flux0, np.nan)
     fluxerr1 = np.full_like(flux0, np.nan)
@@ -976,17 +962,208 @@ def get_interp_flux(wavemap0: np.ndarray, flux0: np.ndarray,
         blaze_tck = interpolate.splrep(ordwave0, ordblaze0, s=0)
         # mask the global wavemap (1) so it lies within the bounds of the
         #  the local wavemap (0)
-        wlmask = wavemap1 > np.min(ordwave0)
-        wlmask &= wavemap1 < np.max(ordwave0)
+        wlmask = ordwave1 > np.min(ordwave0)
+        wlmask &= ordwave1 < np.max(ordwave0)
         # apply the spline to the output wave grid (masked)
         ordblaze1 = interpolate.splev(ordwave1[wlmask], blaze_tck, der=0)
         ordflux1 = interpolate.splev(ordwave1[wlmask], flux_tck, der=0)
         # push into flux1 array
         flux1[order_num][wlmask] = ordflux1 / ordblaze1
         # calculate fluxerr1 and push into array
-        fluxerr1[order_num][wlmask] = np.sqrt(ordflux1 / ordblaze1)
+        with warnings.catch_warnings(record=True) as _:
+            fluxerr1[order_num][wlmask] = np.sqrt(ordflux1 / ordblaze1)
     # ---------------------------------------------------------------------
     return flux1, fluxerr1
+
+
+def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
+                        in_wavelength: bool = True) -> ParamDict:
+    """
+    Function to calculate the continuum flux and continuum polarization
+
+    :param params: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            POLAR_CONT_BINSIZE: int, number of points in each sample bin
+            POLAR_CONT_OVERLAP: int, number of points to overlap before and
+                                after each sample bin
+            POLAR_CONT_TELLMASK: list of float pairs, list of telluric bands,
+                                 i.e, a list of wavelength ranges ([wl0,wlf])
+                                 for telluric absorption
+
+    :param recipe: DrsRecipe, the recipe calling this function (use to access
+                   the plotting)
+
+    :param props: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            GLOBAL_WAVEMAP: numpy array (2D), e2ds wavelength data
+            POL: numpy array (2D), e2ds degree of polarization data
+            POLERR: numpy array (2D), e2ds errors of degree of polarization
+            NULL1: numpy array (2D), e2ds 1st null polarization
+            NULL2: numpy array (2D), e2ds 2nd null polarization
+            STOKESI: numpy array (2D), e2ds Stokes I data
+            STOKESIERR: numpy array (2D), e2ds errors of Stokes I
+
+    :param in_wavelength: bool, to indicate whether or not there is wave cal
+
+    :return props: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            FLAT_X: numpy array (1D), flatten polarimetric x data
+            FLAT_POL: numpy array (1D), flatten polarimetric pol data
+            FLAT_POLERR: numpy array (1D), flatten polarimetric pol error data
+            FLAT_STOKESI: numpy array (1D), flatten polarimetric stokes I data
+            FLAT_STOKESIERR: numpy array (1D), flatten polarimetric stokes I
+                             error data
+            FLAT_NULL1: numpy array (1D), flatten polarimetric null1 data
+            FLAT_NULL2: numpy array (1D), flatten polarimetric null2 data
+            CONT_FLUX: numpy array (1D), e2ds continuum flux data
+                       interpolated from xbin, ybin points, same shape as FLAT_STOKESI
+            CONT_FLUX_XBIN: numpy array (1D), continuum in x flux samples
+            CONT_FLUX_YBIN: numpy array (1D), continuum in y flux samples
+
+            CONT_POL: numpy array (1D), e2ds continuum polarization data
+                      interpolated from xbin, ybin points, same shape as
+                      FLAT_POL
+            CONT_POL_XBIN: numpy array (1D), continuum in x polarization samples
+            CONT_POL_YBIN: numpy array (1D), continuum in y polarization samples
+    """
+    # set the function name
+    func_name = __NAME__ + '.calculate_continuum()'
+    # -------------------------------------------------------------------------
+    # get constants from p
+    pol_binsize = params['POLAR_CONT_BINSIZE']
+    pol_overlap = params['POLAR_CONT_OVERLAP']
+    # stokes fit parameters
+    stokesi_detection_alg = params['STOKESI_CONTINUUM_DETECTION_ALGORITHM']
+    stokei_iraf_cont_fit_func = params['STOKESI_IRAF_CONT_FIT_FUNCTION']
+    stokes_iraf_cont_func_ord = params['STOKESI_IRAF_CONT_FUNCTION_ORDER']
+    # polar fit parameters
+    polar_detection_alg = params['POLAR_CONTINUUM_DETECTION_ALGORITHM']
+    polar_iraf_cont_fit_func = params['POLAR_IRAF_CONT_FIT_FUNCTION']
+    polar_iraf_cont_func_ord = params['POLAR_IRAF_CONT_FUNCTION_ORDER']
+    # other parameters
+    norm_stokes_i = params['POLAR_NORMALIZE_STOKES_I']
+    cont_poly_fit = params['POLAR_CONT_POLYNOMIAL_FIT']
+    cont_deg_poly = params['POLAR_CONT_DEG_POLYNOMIAL']
+    remove_continuum = params['POLAR_REMOVE_CONTINUUM']
+    # -------------------------------------------------------------------------
+    # get pconst
+    pconst = constants.pload()
+    telluric_bands = pconst.GET_POLAR_TELLURIC_BANDS()
+    # -------------------------------------------------------------------------
+    # get the shape of pol
+    ydim, xdim = props['POL'].shape
+    # get wavelength data if require
+    if in_wavelength:
+        xdata = props['GLOBAL_WAVEMAP'].ravel()
+    else:
+        xdata = np.arange(ydim * xdim)
+    # -------------------------------------------------------------------------
+    # flatten data (across orders)
+    pol = props['POL'].ravel()
+    polerr = props['POLERR'].ravel()
+    stokes_i = props['STOKESI'].ravel()
+    stokes_ierr = props['STOKESIERR'].ravel()
+    null1 = props['NULL1'].ravel()
+    null2 = props['NULL2'].ravel()
+    # -------------------------------------------------------------------------
+    # sort by wavelength (or pixel number)
+    sortmask = np.argsort(xdata)
+    # sort data
+    xdata = xdata[sortmask]
+    pol = pol[sortmask]
+    polerr = polerr[sortmask]
+    stokes_i = stokes_i[sortmask]
+    stokes_ierr = stokes_ierr[sortmask]
+    null1 = null1[sortmask]
+    null2 = null2[sortmask]
+    # set xbin and ybin for output (filled by moving median method)
+    flux_xbin, flux_ybin = None, None
+    pol_xbin, pol_ybin = None, None
+    # -------------------------------------------------------------------------
+    # calculate continuum flux using moving median
+    if stokesi_detection_alg == 'MOVING_MEDIAN':
+        # calculate continuum flux
+        cout = _continuum(params, xdata, stokes_i, binsize=pol_binsize,
+                          overlap=pol_overlap, window=6, mode="max",
+                          use_linear_fit=True, telluric_bands=telluric_bands)
+        contflux, flux_xbin, flux_ybin = cout
+        # calculate conntinuum flux using IRAF algorithm
+    elif stokesi_detection_alg == 'IRAF':
+        contflux = _fit_continuum(params, recipe, xdata, stokes_i,
+                                  function=stokei_iraf_cont_fit_func,
+                                  degree=stokes_iraf_cont_func_ord,
+                                  niter=5, rej_low=3.0, rej_high=3.0, grow=1,
+                                  med_filt=0, percentile_low=0.,
+                                  percentile_high=100.0,
+                                  min_points=10, verbose=False)
+    # else raise error
+    else:
+        # TODO: move to language database
+        emsg = 'Stokes I continuum detection algorithm invalid'
+        emsg += '\n\t Must be "MOVING_MEDIAN" or "IRAF"\n\tCurrent: {0}'
+        WLOG(params, 'error', emsg.format(stokesi_detection_alg))
+        contflux = None
+    # -------------------------------------------------------------------------
+    # normalize flux by continuum
+    if norm_stokes_i:
+        stokes_i = stokes_i / contflux
+        stokes_ierr = stokes_ierr / contflux
+    # -------------------------------------------------------------------------
+    # calculate polarization flux using moving median
+    if polar_detection_alg == 'MOVING_MEDIAN':
+        # calculate continuum polarization
+        cpout = _continuum_polarization(params, xdata, pol, binsize=pol_binsize,
+                                        overlap=pol_overlap, mode='median',
+                                        use_polynomail_fit=cont_poly_fit,
+                                        deg_poly_fit=cont_deg_poly,
+                                        telluric_bands=telluric_bands)
+        contpol, pol_xbin, pol_ybin = cpout
+    # calculate polarization flux using IRAF algorithm
+    elif polar_detection_alg == 'IRAF':
+        contpol = _fit_continuum(params, recipe, xdata, pol,
+                                 function=polar_iraf_cont_fit_func,
+                                 degree=polar_iraf_cont_func_ord, niter=5,
+                                 rej_low=3.0, rej_high=3.0, grow=1,
+                                 med_filt=0, percentile_low=0.0,
+                                 percentile_high=100.0, min_points=10,
+                                 verbose=False)
+    # else raise error
+    else:
+        # TODO: move to language database
+        emsg = 'Stokes I continuum detection algorithm invalid'
+        emsg += '\n\t Must be "MOVING_MEDIAN" or "IRAF"\n\tCurrent: {0}'
+        WLOG(params, 'error', emsg.format(polar_detection_alg))
+        contpol = None
+    # -------------------------------------------------------------------------
+    # remove continuum polarization
+    if remove_continuum:
+        pol = pol - contpol
+    # -------------------------------------------------------------------------
+    # save back to props
+    props['FLAT_X'] = xdata
+    props['FLAT_POL'] = pol
+    props['FLAT_POLERR'] = polerr
+    props['FLAT_STOKESI'] = stokes_i
+    props['FLAT_STOKESIERR'] = stokes_ierr
+    props['FLAT_NULL1'] = null1
+    props['FLAT_NULL2'] = null2
+    # save bin information
+    props['CONT_FLUX_XBIN'] = flux_xbin
+    props['CONT_FLUX_YBIN'] = flux_ybin
+    props['CONT_POL_XBIN'] = pol_xbin
+    props['CONT_POL_YBIN'] = pol_ybin
+    # save continuum data to loc
+    props['CONT_FLUX'] = contflux
+    props['CONT_POL'] = contpol
+    # key sources
+    keys = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKESI',
+            'FLAT_STOKESIERR', 'FLAT_NULL1', 'FLAT_NULL2',
+            'CONT_FLUX_XBIN', 'CONT_FLUX_YBIN', 'CONT_POL_XBIN',
+            'CONT_POL_YBIN', 'CONT_FLUX', 'CONT_POL']
+    props.set_sources(keys, func_name)
+    # -------------------------------------------------------------------------
+    # return udpated property param dict
+    return props
 
 
 # =============================================================================
@@ -1332,6 +1509,484 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
 # =============================================================================
 # Define worker functions
 # =============================================================================
+ContinuumReturn = Tuple[np.ndarray, np.ndarray, np.ndarray]
+
+
+def _continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
+               binsize: int = 200, overlap: int = 100,
+               sigmaclip: float = 3.0, window: int = 3,
+               mode: str = "median", use_linear_fit: bool = False,
+               telluric_bands: Union[List[float], None] = None,
+               outx: Union[np.ndarray, None] = None) -> ContinuumReturn:
+    """
+    Function to calculate continuum
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param xarr: numpy array (1D), input data x data
+    :param yarr: numpy array (1D), input data y data (x and y must be of the
+                 same size)
+    :param binsize: int, number of points in each bin
+    :param overlap: int, number of points to overlap with adjacent bins
+    :param sigmaclip: float, number of times sigma to cut-off points
+    :param window: int, number of bins to use in local fit
+    :param mode: string, set combine mode, where mode accepts "median", "mean",
+                 "max"
+    :param use_linear_fit: bool, whether to use the linar fit
+    :param telluric_bands: list of float pairs, list of IR telluric bands, i.e,
+                           a list of wavelength ranges ([wl0,wlf]) for telluric
+                           absorption
+    :param outx: numpy array (1D), the output grid to resample the points onto
+                 if None this is xarr
+
+    :return continuum, xbin, ybin
+        continuum: numpy array (1D) of the same size as input arrays containing
+                   the continuum data already interpolated to the same points
+                   as input data.
+        xbin,ybin: numpy arrays (1D) containing the bins used to interpolate
+                   data for obtaining the continuum
+    """
+    # set function name
+    func_name = display_func('_continuum', __NAME__)
+    # -------------------------------------------------------------------------
+    # deal with telluric bands
+    if telluric_bands is None:
+        telluric_bands = []
+    # -------------------------------------------------------------------------
+    # set output x array to input array (if output x array is None)
+    if outx is None:
+        outx = xarr
+    # -------------------------------------------------------------------------
+    # set number of bins given the input array length and the bin size
+    nbins = int(np.floor(len(xarr) / binsize)) + 1
+    # -------------------------------------------------------------------------
+    # initialize arrays to store binned data
+    xbin, ybin = [], []
+    # loop around bins
+    for ibin in range(nbins):
+        # get first and last index within the bin
+        idx0 = ibin * binsize - overlap
+        idxf = (ibin + 1) * binsize + overlap
+        # if it reaches the edges then reset indexes
+        if idx0 < 0:
+            idx0 = 0
+        if idxf >= len(xarr):
+            idxf = len(xarr) - 1
+        # get data within the bin
+        xbin_tmp = np.array(xarr[idx0:idxf])
+        ybin_tmp = np.array(yarr[idx0:idxf])
+        # create mask of telluric bands
+        telluric_mask = np.zeros_like(xbin_tmp).astype(bool)
+        # loop around each band in tellurics
+        for band in telluric_bands:
+            # just make sure each band entry is a list (it should be)
+            if isinstance(band, list):
+                telluric_mask += (xbin_tmp > band[0]) & (xbin_tmp < band[1])
+        # ---------------------------------------------------------------------
+        # mask data within telluric bands
+        xtmp = xbin_tmp[~telluric_mask]
+        ytmp = ybin_tmp[~telluric_mask]
+        # ---------------------------------------------------------------------
+        # create mask to get rid of NaNs
+        nanmask = np.isfinite(ytmp)
+        # first bin cannot use mean / median
+        if ibin == 0 and not use_linear_fit:
+            xbin.append(xarr[0] - np.abs(xarr[1] - xarr[0]))
+            # create mask to get rid of NaNs
+            ybin.append(np.nanmedian(yarr[:binsize]))
+        # ---------------------------------------------------------------------
+        # if we have more than 2 points we can use mean / median
+        if len(xtmp[nanmask]) > 2:
+            # calculate mean x within the bin
+            xmean = np.nanmean(xtmp)
+            # calculate median y within the bin
+            medy = np.nanmedian(ytmp)
+            # calculate median deviation
+            medydev = np.nanmedian(np.abs(ytmp - medy))
+            # create mask to filter data outside n*sigma range
+            filtermask = (ytmp[nanmask] > medy)
+            filtermask &= (ytmp[nanmask] < medy + sigmaclip * medydev)
+            # if we still have over 2 points we can use mean / median
+            if len(ytmp[nanmask][filtermask]) > 2:
+                # save mean x with in bin
+                xbin.append(xmean)
+                # do a median
+                if mode == 'max':
+                    # save maximum y of filtered data
+                    ybin.append(np.nanmax(ytmp[filtermask]))
+                elif mode == 'median':
+                    # save median y of filtered data
+                    ybin.append(np.nanmedian(ytmp[filtermask]))
+                elif mode == 'mean':
+                    # save mean y of filtered data
+                    ybin.append(np.nanmean(ytmp[filtermask]))
+                else:
+                    # TODO: move to language database
+                    emsg = 'Can not recognize selected mode="{0}"'
+                    emsg += '\n\tFunction = {1}'
+                    eargs = [mode, func_name]
+                    WLOG(params, 'error', emsg.format(*eargs))
+        # ---------------------------------------------------------------------
+        # if we are dealing with last bin
+        if ibin == nbins - 1 and not use_linear_fit:
+            xbin.append(xarr[-1] + np.abs(xarr[-1] - xarr[-2]))
+            # create mask to get rid of NaNs
+            ybin.append(np.nanmedian(yarr[-binsize:]))
+    # -------------------------------------------------------------------------
+    # Option to use a linearfit within a given window
+    if use_linear_fit:
+        # initialize arrays to store new bin data
+        newxbin, newybin = [], []
+        # loop around bins to obtain a linear fit within a given window size
+        for ibin in range(len(xbin)):
+            # set first and last index to select bins within window
+            idx0 = ibin - window
+            idxf = ibin + 1 + window
+            # make sure it doesnt go over the edges
+            if idx0 < 0: idx0 = 0
+            if idxf > nbins: idxf = nbins - 1
+
+            # perform linear fit to these data
+            lout = stats.linregress(xbin[idx0:idxf], ybin[idx0:idxf])
+            slope, intercept, r_value, p_value, std_err = lout
+            # if dealing with the first bin
+            if ibin == 0:
+                # append first point to avoid crazy behaviours in the edge
+                newxbin.append(xarr[0] - np.abs(xarr[1] - xarr[0]))
+                newybin.append(intercept + slope * newxbin[0])
+            # save data obtained from the fit
+            newxbin.append(xbin[ibin])
+            newybin.append(intercept + slope * xbin[ibin])
+            # if dealing with the last bin
+            if ibin == len(xbin) - 1:
+                # save data obtained from the fit
+                newxbin.append(xarr[-1] + np.abs(xarr[-1] - xarr[-2]))
+                newybin.append(intercept + slope * newxbin[-1])
+        # set x bin and y bin to the new bin values
+        xbin, ybin = newxbin, newybin
+    # -------------------------------------------------------------------------
+    # interpolate points applying an Spline to the bin data
+    sfit = UnivariateSpline(xbin, ybin, s=0)
+    # sfit.set_smoothing_factor(0.5)
+    # Resample interpolation to the original grid
+    cont = np.array(sfit(outx))
+    # convert xbin and ybin to arrays
+    xbin, ybin = np.array(xbin), np.array(ybin)
+    # return continuum and x and y bins
+    return cont, xbin, ybin
+
+
+def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
+                   spec: np.ndarray, function: str = 'polynomial',
+                   degree: int = 3, niter: int = 5, rej_low: float = 2.0,
+                   rej_high: float = 2.5, grow=1, med_filt: int = 0,
+                   percentile_low: float = 0.0, percentile_high: float = 100.0,
+                   min_points: int = 10, verbose: bool = False) -> np.ndarray:
+    """
+    Continuum fitting re-implemented from IRAF's 'continuum' function
+    in non-interactive mode only but with additional options.
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe used to call this function, used
+                   to push to plotting function
+    :param wavemap: np.array(float) abscissa values
+                    (wavelengths, velocities, ...)
+    :param spec: array(float) spectrum values
+    :param function: str function to fit to the continuum among 'polynomial',
+                     'spline3'
+    :param degree: int, fit function order:
+                   'polynomial': degree (not number of parameters as in IRAF)
+                   'spline3': number of knots
+    :param niter: int, number of iterations of non-continuum points
+                  see also 'min_points' parameter
+    :param rej_low: float, rejection threshold in unit of residual standard
+                    deviation for point below the continuum
+    :param rej_high: float, same as rej_low for point above the continuum
+    :param grow: int, number of neighboring points to reject
+    :param med_filt: int, median filter the spectrum on 'med_filt' pixels
+                     prior to fit improvement over IRAF function 'med_filt'
+                     must be an odd integer
+                     if value is zero this is not used
+    :param percentile_low: float,  reject point below below 'percentile_low'
+                           percentile prior to fit improvement over IRAF
+                           function  "percentile_low' must be a float between
+                           0.0 and 100.0
+    :param percentile_high: float  same as percentile_low but reject points in
+                            percentile above 'percentile_high'
+
+    :param min_points: int, stop rejection iterations when the number of points
+                       to fit is less than 'min_points'
+
+    :param verbose: bool, if true fit information is printed on STDOUT:
+                    * number of fit points
+                    * RMS residual
+
+    :returns: np.ndarray, the fitted continuum
+    """
+    # set function name
+    func_name = display_func('_fit_continuum', __NAME__)
+    # set up a mask - keep array
+    mspec = np.ones_like(spec).astype(bool)
+    # mask 1st and last point: avoid error when no point is masked [not in IRAF]
+    mspec[0] = False
+    mspec[-1] = False
+    # -------------------------------------------------------------------------
+    # mask pixels that are NaNs
+    mspec &= np.isfinite(spec)
+    # -------------------------------------------------------------------------
+    # apply median filtering prior to fit
+    # [opt] [not in IRAF]
+    if med_filt > 0:
+        fspec = signal.medfilt(spec, kernel_size=med_filt)
+    else:
+        fspec = np.array(spec)
+    # -------------------------------------------------------------------------
+    # consider only a fraction of the points within percentile range
+    # [opt] [not in IRAF]
+    lowmask = fspec > np.percentile(fspec, percentile_low)
+    highmask = fspec < np.percentile(fspec, percentile_high)
+    # add to mspec mask (False out of limits)
+    mspec &= lowmask & highmask
+    # -------------------------------------------------------------------------
+    # perform 1st fit as polynomial
+    if function == 'polynomial':
+        # calculate polynomial fit on valid points
+        coeff = np.polyfit(wavemap[mspec], spec[mspec], degree)
+        # get the continuum (from the fit) for all points
+        cont = np.polyval(coeff, wavemap)
+    # perform 1st fit as spline
+    elif function == 'spline3':
+        # calculate knots to use in spline
+        wavediff = wavemap[-1] - wavemap[0]
+        dwavemap = np.arange(degree + 1)[1:] * wavediff / (degree + 1)
+        knots = wavemap[0] + dwavemap
+        # calculate spline on valid points
+        spl = interpolate.splrep(wavemap[mspec], spec[mspec], k=3, t=knots)
+        # interpolate over all points
+        cont = interpolate.splev(wavemap, spl)
+    else:
+        # TODO: move to language database
+        emsg = 'Function = "{0}" not valid for {1}'
+        eargs = [function, func_name]
+        WLOG(params, 'error', emsg.format(*eargs))
+        cont = None
+    # -------------------------------------------------------------------------
+    # iteration loop: reject outliers and fit again
+    if niter > 0:
+        for it in range(niter):
+            res = fspec - cont
+            sigm = np.std(res[mspec])
+            # mask outliers
+            mspec1 = np.array(mspec)
+            mspec1 &= (res > -rej_low * sigm) & (res < rej_high * sigm)
+            # make masked array to do clumping
+            maspec1 = np.ma.masked_array(spec, mask=~mspec1)
+            # exclude neighbors cf IRAF's continuum parameter 'grow'
+            if grow > 0:
+                for maskslice in np.ma.clump_masked(maspec1):
+                    # get start and stop
+                    start = maskslice.start
+                    stop = maskslice.stop
+                    # loop around all pixels before start and reject these
+                    #    pixels too
+                    for ii in range(start - grow, start):
+                        if ii >= 0:
+                            mspec1[ii] = False
+                    # loop around all pixels after stop and reject these
+                    #                     #    pixels too
+                    for ii in range(stop + 1, stop + grow + 1):
+                        if ii < len(mspec1):
+                            mspec1[ii] = False
+            # stop rejection process when min_points is reached
+            # [opt] [not in IRAF]
+            if np.sum(~mspec1) < min_points:
+                if verbose:
+                    # TODO: move to language database
+                    wmsg = 'Minimum points {0} reached - stopping rejection.'
+                    WLOG(params, 'warning', wmsg.format(min_points))
+                break
+            # copy mask 1 back to primary mask
+            mspec = np.array(mspec1)
+            # fit again - using polynomial
+            if function == 'polynomial':
+                # calculate polynomial fit on valid points
+                coeff = np.polyfit(wavemap[mspec], spec[mspec], degree)
+                # get the continuum (from the fit) for all points
+                cont = np.polyval(coeff, wavemap)
+            # fit again - using spline
+            elif function == 'spline3':
+
+                # calculate knots to use in spline
+                wavediff = wavemap[-1] - wavemap[0]
+                dwavemap = np.arange(degree + 1)[1:] * wavediff / (degree + 1)
+                knots = wavemap[0] + dwavemap
+                # calculate spline on valid points
+                spl = interpolate.splrep(wavemap[mspec], spec[mspec], k=3,
+                                         t=knots)
+                # interpolate over all points
+                cont = interpolate.splev(wavemap, spl)
+            else:
+                # TODO: move to language database
+                emsg = 'Function = "{0}" not valid for {1}'
+                eargs = [function, func_name]
+                WLOG(params, 'error', emsg.format(*eargs))
+                cont = None
+    # compute residual and rms
+    res = fspec - cont
+    # compute the standard deviation of valid points
+    sigm = np.nanstd(res[mspec])
+    # print out if verbose
+    if verbose:
+        # TODO: move to language database
+        msg = '\tnfit={0}/{1}\n\tfit RMS={2:.3e}'
+        margs = [np.sum(~mspec), len(mspec), sigm]
+        WLOG(params, '', msg.format(*margs))
+    # compute residual and rms between original spectrum and model
+    # different from above when median filtering is applied
+    ores = spec - cont
+    # get the original spectrum standard deviation
+    osigm = np.nanstd(ores[mspec])
+    # print out the unfiltered RMS (if we use the median filter)
+    if med_filt > 0 and verbose:
+        # TODO: move to language database
+        msg = '\tUnfiltered RMS={0:.3e}'
+        WLOG(params, '', msg.format(osigm))
+    # -------------------------------------------------------------------------
+    # produce the debug plot for fit continuum
+    recipe.plot('POLAR_FIT_CONT', wavemap=wavemap, mask=mspec, spec=spec,
+                fspec=fspec, med_filt=med_filt, cont=cont, niter=niter,
+                rej_low=rej_low, rej_high=rej_high, sigm=sigm, res=res,
+                ores=ores)
+    # -------------------------------------------------------------------------
+    # return the continuum
+    return cont
+
+
+def _continuum_polarization(params: ParamDict, xarr: np.ndarray,
+                            yarr: np.ndarray, binsize: int = 200,
+                            overlap: int = 100, mode: str = "median",
+                            use_polynomail_fit: bool = True,
+                            deg_poly_fit: int = 3,
+                            telluric_bands: Union[List[float], None] = None
+                            ) -> ContinuumReturn:
+    """
+    Function to calculate continuum polarization
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param xarr: numpy array (1D), input data x data
+    :param yarr: numpy array (1D), input data y data (x and y must be of the
+                 same size)
+    :param binsize: int, number of points in each bin
+    :param overlap: int, number of points to overlap with adjacent bins
+    :param mode: string, set combine mode, where mode accepts "median", "mean",
+                 "max"
+    :param telluric_bands: list of float pairs, list of IR telluric bands, i.e,
+                           a list of wavelength ranges ([wl0,wlf]) for telluric
+                           absorption
+
+    :return continuum, xbin, ybin
+        continuum: numpy array (1D) of the same size as input arrays containing
+                   the continuum data already interpolated to the same points
+                   as input data.
+        xbin,ybin: numpy arrays (1D) containing the bins used to interpolate
+                   data for obtaining the continuum
+    """
+    # TODO: this function is almost identical to _continuum
+    # TODO:   Question: Can we combine?
+    # set function name
+    func_name = display_func('_continuum_polarization', __NAME__)
+    # -------------------------------------------------------------------------
+    # deal with no telluric bands
+    if telluric_bands is None:
+        telluric_bands = []
+    # -------------------------------------------------------------------------
+    # set number of bins given the input array length and the bin size
+    nbins = int(np.floor(len(xarr) / binsize)) + 1
+    # -------------------------------------------------------------------------
+    # initialize arrays to store binned data
+    xbin, ybin = [], []
+    # loop around bins
+    for ibin in range(nbins):
+        # get first and last index within the bin
+        idx0 = ibin * binsize - overlap
+        idxf = (ibin + 1) * binsize + overlap
+        # if it reaches the edges then reset indexes
+        if idx0 < 0:
+            idx0 = 0
+        if idxf >= len(xarr):
+            idxf = len(xarr) - 1
+        # ---------------------------------------------------------------------
+        # get data within the bin
+        xbin_tmp = np.array(xarr[idx0:idxf])
+        ybin_tmp = np.array(yarr[idx0:idxf])
+        # ---------------------------------------------------------------------
+        # create mask of telluric bands
+        telluric_mask = np.zeros_like(xbin_tmp).astype(bool)
+        # loop around each band in tellurics
+        for band in telluric_bands:
+            # just make sure each band entry is a list (it should be)
+            if isinstance(band, list):
+                telluric_mask += (xbin_tmp > band[0]) & (xbin_tmp < band[1])
+        # ---------------------------------------------------------------------
+        # mask data within telluric bands
+        xtmp = xbin_tmp[~telluric_mask]
+        ytmp = ybin_tmp[~telluric_mask]
+        # ---------------------------------------------------------------------
+        # create mask to get rid of NaNs
+        nanmask = np.isfinite(ytmp)
+        # deal with first bin
+        if ibin == 0:
+            # append to xbin
+            xbin.append(xarr[0] - np.abs(xarr[1] - xarr[0]))
+            # create mask to get rid of NaNs
+            ybin.append(np.nanmedian(yarr[:binsize]))
+        # ---------------------------------------------------------------------
+        # if we have over 2 points we can use mean / median
+        if len(xtmp[nanmask]) > 2:
+            # calculate mean x within the bin
+            xmean = np.nanmean(xtmp)
+            # save mean x with in bin
+            xbin.append(xmean)
+            # do a median
+            if mode == 'median':
+                # save median y of filtered data
+                ybin.append(np.nanmedian(ytmp))
+            elif mode == 'mean':
+                # save mean y of filtered data
+                ybin.append(np.nanmean(ytmp))
+            else:
+                # TODO: move to language database
+                emsg = 'Can not recognize selected mode="{0}"'
+                emsg += '\n\tFunction = {1}'
+                eargs = [mode, func_name]
+                WLOG(params, 'error', emsg.format(*eargs))
+        # ---------------------------------------------------------------------
+        if ibin == nbins - 1:
+            xbin.append(xarr[-1] + np.abs(xarr[-1] - xarr[-2]))
+            # create mask to get rid of NaNs
+            ybin.append(np.nanmedian(yarr[-binsize:]))
+    # -------------------------------------------------------------------------
+    # the continuum may be obtained either by polynomial fit or by cubic
+    # interpolation
+    if use_polynomail_fit:
+        # Option to use a polynomial fit
+        # Fit polynomial function to sample points
+        pfit = np.polyfit(xbin, ybin, deg_poly_fit)
+        # Evaluate polynomial in the original grid
+        cont = np.polyval(pfit, xarr)
+    else:
+        # option to interpolate points applying a cubic spline to the
+        # continuum data
+        sfit = interpolate.interp1d(xbin, ybin, kind='cubic')
+        # Resample interpolation to the original grid
+        cont = sfit(xarr)
+    # -------------------------------------------------------------------------
+    # make sure continuum return is an array
+    cont = np.array(cont)
+    # convert xbin and ybin to arrays
+    xbin, ybin = np.array(xbin), np.array(ybin)
+    # -------------------------------------------------------------------------
+    # return continuum polarization and x and y bins
+    return cont, xbin, ybin
 
 
 # =============================================================================

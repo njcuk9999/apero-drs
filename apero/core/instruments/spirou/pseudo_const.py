@@ -315,6 +315,87 @@ class PseudoConstants(DefaultConstants):
         header, _ = get_mid_obs_time(params, header, None, filename)
         return float(header[params['KW_MID_OBS_TIME']])
 
+    def GET_STOKES_FROM_HEADER(self, params: ParamDict, header: Any,
+                               wlog: Any = None) -> Tuple[Union[str, None], int]:
+        """
+        Get the stokes parameter and exposure number from the header
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header, the fits header to get keys from
+        :param wlog: logger for error reporting
+
+        :raises ValueError: if header key incorrect and wlog is None
+        :raises DrsLogError: if header key incorrect and wlog is logger
+        :return: tuple, 1. The stokes parameter, 2. the exposure number
+        """
+        # get cmmtseq from key from params
+        kw_cmmtseq = params['KW_CMMTSEQ'][0]
+        # ---------------------------------------------------------------------
+        # deal with no key in header
+        if kw_cmmtseq not in header:
+            return None, -1
+        # ---------------------------------------------------------------------
+        # get cmmtseq key
+        cmmtseq = header[kw_cmmtseq]
+        # key should read as follows:
+        #    {STOKE} exposure {exp_num}, sequence N of M
+        seqlist = cmmtseq.split()
+        # ---------------------------------------------------------------------
+        # check length is correct - raise error if incorrect
+        if len(seqlist) != 7:
+            # generate error message
+            emsg = 'CMMTSEQ key incorrect'
+            emsg += '\n\tExpected {STOKE} exposure {exp_num}, sequence N of M'
+            emsg += '\n\tGot: "{0}"'.format(cmmtseq)
+            # log or raise error
+            if wlog is not None:
+                # wlog error
+                wlog(params, 'error', emsg)
+                return None, -1
+            else:
+                raise ValueError(emsg)
+        # ---------------------------------------------------------------------
+        # get stokes and exposure number
+        stokes = seqlist[0]
+        # try to get exposure number
+        try:
+            exp_num = int(seqlist[2].replace(',', ''))
+        except Exception as e:
+            # generate error message
+            emsg = 'CMMTSEQ exp_num incorrect'
+            emsg += '\n\tExpected {STOKE} exposure {exp_num}, sequence N of M'
+            emsg += '\n\tGot: "{0}"'.format(cmmtseq)
+            # log or raise error
+            if wlog is not None:
+                # wlog error
+                wlog(params, 'error', emsg)
+                return None, -1
+            else:
+                raise ValueError(emsg)
+        # ---------------------------------------------------------------------
+        # return stokes and exposure number
+        return stokes, exp_num
+
+    def GET_POLAR_TELLURIC_BANDS(self) -> List[List[float]]:
+        """
+        Define regions where telluric absorption is high
+
+        :return: list of bands each element is a list of a minimum wavelength
+                 and a maximum wavelength of that band
+        """
+        # storage for bands
+        bands = []
+        # add bands (as tuples for low wave to high wave
+        bands.append([930, 967])
+        bands.append([1109, 1167])
+        bands.append([1326, 1491])
+        bands.append([1782, 1979])
+        bands.append([1997, 2027])
+        bands.append([2047, 2076])
+        # return bands
+        return bands
+
+
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================

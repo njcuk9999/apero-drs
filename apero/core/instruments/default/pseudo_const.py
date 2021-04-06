@@ -45,7 +45,6 @@ class PseudoConstants:
     # set class name
     class_name = 'PsuedoConstants'
 
-
     def __init__(self, instrument: Union[str, None] = None):
         """
         Pseudo Constants constructor
@@ -100,6 +99,20 @@ class PseudoConstants:
         _ = display_func('__repr__', __NAME__, self.class_name)
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.instrument)
+
+    def _not_implemented(self, method_name: str):
+        """
+        Raise a Not Implemented Error (for methods that are required to be
+        defined by PseudoConstants child class i.e. the instrument class)
+
+        :param method_name: str, the method name that needs overriding
+
+        :raises: NotImplementedError
+
+        :return: None
+        """
+        emsg = '{0} must be defined at instrument level'
+        raise NotImplementedError(emsg.format(method_name))
 
     # =========================================================================
     # File and Recipe definitions
@@ -187,7 +200,7 @@ class PseudoConstants:
         return forbidden_keys
 
     # noinspection PyPep8Naming
-    def FORBIDDEN_COPY_KEYS(self) -> List[str]:
+    def FORBIDDEN_COPY_KEYS(self):
         """
         Defines the keys in a HEADER file not to copy when copying over all
         HEADER keys to a new fits file
@@ -197,10 +210,8 @@ class PseudoConstants:
         """
         # set function name
         _ = display_func('FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
-        # set forbidden keys
-        forbidden_keys = []
-        # return keys
-        return forbidden_keys
+        # raise implementation error
+        self._not_implemented('FORBIDDEN_COPY_KEYS')
 
     # noinspection PyPep8Naming
     def FORBIDDEN_HEADER_PREFIXES(self) -> List[str]:
@@ -236,7 +247,7 @@ class PseudoConstants:
 
     # noinspection PyPep8Naming
     def HEADER_FIXES(self, params: Any, recipe: Any, header: Any,
-                     hdict: Any, filename: str) -> Any:
+                     hdict: Any, filename: str):
         """
         This should do nothing unless an instrument header needs fixing
 
@@ -254,11 +265,9 @@ class PseudoConstants:
         # set function name
         _ = display_func('HEADER_FIXES', __NAME__, self.class_name)
         # do nothing
-        _ = recipe
-        _ = hdict
-        _ = filename
-        # return header
-        return header
+        _ = params, recipe, header, hdict, filename
+        # raise implementation error
+        self._not_implemented('HEADER_FIXES')
 
     # noinspection PyPep8Naming
     def DRS_OBJ_NAME(self, objname: str) -> str:
@@ -284,7 +293,7 @@ class PseudoConstants:
         return objectname
 
     def DRS_DPRTYPE(self, params: Any, recipe: Any, header: Any,
-                    filename: str) -> str:
+                    filename: str):
         """
         Get the dprtype for a specific header
 
@@ -300,10 +309,10 @@ class PseudoConstants:
         """
         # cannot get dprtye without instrument
         _ = params, recipe, header, filename
-        # return dprtype
-        return 'None'
+        # raise implementation error
+        self._not_implemented('DRS_DPRTYPE')
 
-    def DRS_MIDMJD(self, params: Any, header: Any, filename: str) -> Any:
+    def DRS_MIDMJD(self, params: Any, header: Any, filename: str):
         """
         Get the midmjd for a specific header
 
@@ -317,54 +326,37 @@ class PseudoConstants:
         """
         # cannot get mid mjd without header definitions
         _ = params, header, filename
-        # return NOIne
-        return 'None'
+        # raise implementation error
+        self._not_implemented('DRS_MIDMJD')
+
+    def GET_STOKES_FROM_HEADER(self, params: Any, header: Any, wlog: Any):
+        """
+        Get the stokes parameter and exposure number from the header
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header, the fits header to get keys from
+        :param wlog: logger for error reporting
+
+        :return: tuple, 1. The stokes parameter, 2. the exposure number
+        """
+        _ = params, header, wlog
+        # raise implementation error
+        self._not_implemented('DRS_MIDMJD')
+
+    def GET_POLAR_TELLURIC_BANDS(self):
+        """
+        Define regions where telluric absorption is high
+
+        :return: list of bands each element is a list of a minimum wavelength
+                 and a maximum wavelength of that band
+        """
+        # raise implementation error
+        self._not_implemented('GET_POLAR_TELLURIC_BANDS')
+
 
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
-    # noinspection PyPep8Naming
-    def INDEX_OUTPUT_FILENAME(self) -> str:
-        """
-        Define the index output filename
-
-        :return: str, the index output filename
-        """
-        # set function name
-        _ = display_func('INDEX_OUTPUT_FILENAME', __NAME__,
-                         self.class_name)
-        # set index file name
-        filename = 'index.fits'
-        return filename
-
-    # noinspection PyPep8Naming
-    def INDEX_LOCK_FILENAME(self, params: Any) -> str:
-        """
-        Construct the index lock filename
-
-        :param params: ParamDict, parameter dictionary of constants
-        :return:
-        """
-        # set function name
-        _ = display_func('INDEX_LOCK_FILENAME', __NAME__,
-                         self.class_name)
-        # set night name to unknown initially (change after)
-        obs_dir = 'UNKNOWN'
-        # get the obs_dir directory
-        if 'OBS_DIR' in params:
-            if params['OSB_DIR'] is not None:
-                obs_dir = params['OBS_DIR'].replace(os.sep, '_')
-                obs_dir = obs_dir.replace(' ', '_')
-        # get the index file
-        index_file = self.INDEX_OUTPUT_FILENAME()
-        # construct the index lock file name
-        oargs = [obs_dir, index_file]
-        # get msg path
-        msgpath = params['DRS_DATA_MSG_FULL']
-        opath = os.path.join(msgpath, '{0}_{1}'.format(*oargs))
-        # return the index lock file name
-        return opath
-
     # noinspection PyPep8Naming
     def OUTPUT_FILE_HEADER_KEYS(self) -> List[str]:
         """
@@ -1023,7 +1015,6 @@ class PseudoConstants:
         ctypes = list(calib_columns.values())
         # return columns and ctypes
         return columns, ctypes
-
 
     # noinspection PyPep8Naming
     def TELLURIC_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
