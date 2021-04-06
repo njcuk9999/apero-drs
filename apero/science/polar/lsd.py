@@ -9,6 +9,7 @@ Created on 2019-10-25 at 13:25
 
 @author: cook
 """
+from astropy import constants as cc
 import numpy as np
 import warnings
 
@@ -43,6 +44,11 @@ display_func = drs_log.display_func
 textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
+# Speed of light
+# noinspection PyUnresolvedReferences
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
+# noinspection PyUnresolvedReferences
+speed_of_light = cc.c.to(uu.km / uu.s).value
 
 
 # =============================================================================
@@ -53,12 +59,12 @@ def lsd_analysis_wrapper(params: ParamDict, props: ParamDict) -> ParamDict:
     # select the correct lsd mask and load values into props
     props = load_lsd_mask(params, props)
 
+    # get wavelength ranges covering spectral lines in the ccf mask
+    props = get_wl_ranges(params, props)
+
     # TODO: --------------------------------------------------------------------
     # TODO: Got to here
     # TODO: --------------------------------------------------------------------
-
-    # get wavelength ranges covering spectral lines in the ccf mask
-    props = get_wl_ranges(params, props)
 
     # prepare polarimetry data
     props = prepare_polarimetry_data(params, props)
@@ -212,6 +218,79 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     props.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return the prop dictionary
+    return props
+
+
+def get_wl_ranges(params: ParamDict, props: ParamDict) -> ParamDict:
+    """
+    Function to generate a list of spectral ranges covering all spectral
+    lines in the CCF mask, where the width of each individual range is
+    defined by the LSD velocity vector
+
+    :param params: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_POLAR_LSD_V0: initial velocity for LSD profile
+            IC_POLAR_LSD_VF: final velocity for LSD profile
+
+    :param props: parameter dictionary, ParamDict to store data
+        LSD_LINES_WLC: numpy array (1D), central wavelengths
+
+    :return props: parameter dictionaries,
+        The updated parameter dictionary adds/updates the following:
+            LSD_LINES_WLRANGES: array of float pairs for wavelength ranges
+
+    """
+    # set function name
+    func_name = display_func('get_wl_ranges', __NAME__)
+    # -------------------------------------------------------------------------
+    # set initial and final velocity
+    vinit = params['POLAR_LSD_V0']
+    vfinal = params['POLAR_LSD_VF']
+    # get parameters from props
+    wavec = props['LSD_LINES_WLC']
+    # -------------------------------------------------------------------------
+    # define vector of spectral ranges covering only regions around lines
+    # work out the delta wavelength
+    dwl = wavec * (vfinal - vinit) / (2. * speed_of_light)
+    # get the initial and final wavelength of each line
+    wlrange_tmp_init = wavec - dwl
+    wlrange_tmp_final= wavec + dwl
+    # -------------------------------------------------------------------------
+    # initialize final vector of spectral ranges
+    wl_ranges_init = []
+    wl_ranges_final = []
+    # -------------------------------------------------------------------------
+    # initialize current wl0 and wlf
+    current_wl_init = float(wlrange_tmp_init[0],)
+    current_wl_final = float(wlrange_tmp_final[0])
+    # merge overlapping ranges
+    for it in range(len(wlrange_tmp_init)):
+        # get iteration initial and final values
+        iter_wl_init = wlrange_tmp_init[it]
+        iter_wl_final = wlrange_tmp_final[it]
+        # if the initial value is less than current final then we move
+        # the current final to the new final value
+        if iter_wl_init <= current_wl_final:
+            current_wl_final = iter_wl_final
+        else:
+            wl_ranges_init.append(current_wl_init)
+            wl_ranges_final.append(current_wl_final)
+            # update the current value
+            current_wl_init = float(iter_wl_init)
+            current_wl_final = float(iter_wl_final)
+    # append last range
+    wl_ranges_init.append(current_wl_init)
+    wl_ranges_final.append(current_wl_final)
+    # -------------------------------------------------------------------------
+    # add to the data props
+    props['LSD_LINES_WLRANGES_INIT'] = wl_ranges_init
+    props['LSD_LINES_WLRANGES_FINAL'] = wl_ranges_final
+    # -------------------------------------------------------------------------
+    # set source
+    props.set_sources(['LSD_LINES_WLRANGES_INIT', 'LSD_LINES_WLRANGES_FINAL'],
+                      func_name)
+    # -------------------------------------------------------------------------
+    # return data props
     return props
 
 
