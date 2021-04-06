@@ -180,6 +180,10 @@ def __main__(recipe, params):
     params.set('POLAR_LSD_CCFLINES_AIR_WAVE', value=False, source=mainname)
     #  Define minimum line depth to be used in the LSD analyis
     params.set('POLAR_LSD_MIN_LINEDEPTH', value=0.005, source=mainname)
+    #  Define initial velocity (km/s) for output LSD profile
+    params.set('POLAR_LSD_V0', value=-150., source=mainname)
+    #  Define final velocity (km/s) for output LSD profile
+    params.set('POLAR_LSD_VF', value=150., source=mainname)
 
     # TODO --------------------------------------------------------------------
     # TODO: End of constants
