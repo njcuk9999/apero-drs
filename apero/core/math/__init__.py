@@ -17,8 +17,6 @@ from apero.core.math import fast
 # =============================================================================
 # Define functions
 # =============================================================================
-continuum = gen_math.continuum
-
 calculate_polyvals = gen_math.calculate_polyvals
 
 ea_airy_function = gen_math.ea_airy_function

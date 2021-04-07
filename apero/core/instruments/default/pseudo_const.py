@@ -363,6 +363,15 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('GET_LSD_LINE_REGIONS')
 
+    def GET_LSD_ORDER_RANGES(self):
+        """
+        Define the valid wavelength ranges for each order in SPIrou.
+
+        :return orders: array of float pairs for wavelength ranges
+        """
+        # raise implementation error
+        self._not_implemented('GET_LSD_ORDER_RANGES')
+
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
