@@ -2255,10 +2255,6 @@ KW_POL_STOKES = Keyword('KW_POL_STOKES', key='', dtype=str, source=__NAME__,
                         description=('define the Stokes paremeter: '
                                      'Q, U, V, or I'))
 
-
-# -----------------------------------------------------------------------------
-
-
 # define Number of exposures for polarimetry
 KW_POL_NEXP = Keyword('KW_POL_NEXP', key='', dtype=int, source=__NAME__,
                       description=('define Number of exposures for '
@@ -2267,6 +2263,132 @@ KW_POL_NEXP = Keyword('KW_POL_NEXP', key='', dtype=int, source=__NAME__,
 # defines the Polarimetry method
 KW_POL_METHOD = Keyword('KW_POL_METHOD', key='', dtype=str, source=__NAME__,
                         description='defines the Polarimetry method')
+
+
+# define the Total exposure time (sec)
+KW_POL_EXPTIME = Keyword('KW_POL_EXPTIME', key='', dtype=float, source=__NAME__,
+                         description='define the Total exposure time (sec)')
+
+# define the MJD at flux-weighted center of 4 exposures
+KW_POL_MJD_FW_CEN = Keyword('KW_POL_MJD_FW_CEN', key='', dtype=float,
+                            source=__NAME__,
+                            description='define the MJD at flux-weighted '
+                                        'center of 4 exposures')
+
+# define the BJD at flux-weighted center of 4 exposures
+KW_POL_BJD_FW_CEN = Keyword('KW_POL_BJD_FW_CEN', key='', dtype=float,
+                            source=__NAME__,
+                            description='define the BJD at flux-weighted '
+                                        'center of 4 exposures')
+
+# define whether we corrected for BERV
+KW_POL_CORR_BERV = Keyword('KW_POL_CORR_BERV', key='', dtype=bool,
+                           source=__NAME__,
+                           description='define whether we corrected for BERV')
+
+# define whether we corrected for source RV
+KW_POL_CORR_SRV = Keyword('KW_POL_CORR_SRV', key='', dtype=bool,
+                          source=__NAME__,
+                          description='define whether we corrected for '
+                                      'source RV')
+
+# define whether we normalized stokes I by continuum
+KW_POL_NORM_STOKESI = Keyword('KW_POL_NORM_STOKESI', key='', dtype=bool,
+                              source=__NAME__,
+                              description='define whether we normalized stokes'
+                                          ' I by continuum')
+
+# define whether we normalized stokes I by continuum
+KW_POL_INTERP_FLUX = Keyword('KW_POL_INTERP_FLUX', key='', dtype=bool,
+                             source=__NAME__,
+                             description='define whether we normalized stokes '
+                                         'I by continuum')
+
+# define whether we apply polarimetric sigma-clip cleaning
+KW_POL_SIGCLIP = Keyword('KW_POL_SIGCLIP', key='', dtype=bool,
+                         source=__NAME__,
+                         description='define whether we apply polarimetric '
+                                     'sigma-clip cleaning')
+
+# define the number of sigma swithin which to apply sigma clipping
+KW_POL_NSIGMA = Keyword('KW_POL_NSIGMA', key='', dtype=int,
+                         source=__NAME__,
+                         description='define the number of sigma swithin which '
+                                     'to apply sigma clipping')
+
+# define whether we removed continuum polarization
+KW_POL_REMOVE_CONT = Keyword('KW_POL_REMOVE_CONT', key='', dtype=int,
+                             source=__NAME__,
+                             description='define whether we removed continuum '
+                                         'polarization')
+
+# define the stokes I continuum detection algorithm
+KW_POL_SCONT_DET_ALG = Keyword('KW_POL_SCONT_DET_ALG', key='', dtype=str,
+                               source=__NAME__,
+                               description='define the stokes I continuum '
+                                           'detection algorithm')
+
+# define the polar continuum detection algorithm
+KW_POL_PCONT_DET_ALG =  Keyword('KW_POL_PCONT_DET_ALG', key='', dtype=str,
+                               source=__NAME__,
+                               description='define the polar continuum '
+                                           'detection algorithm')
+
+# define whether we used polynomial fit for continuum polarization
+KW_POL_CONT_POLYFIT = Keyword('KW_POL_CONT_POLYFIT', key='', dtype=bool,
+                               source=__NAME__,
+                               description='define whether we used polynomial '
+                                           'fit for continuum polarization')
+
+# define polynomial degree of fit continuum polarization
+KW_POL_CONT_DEG_POLY = Keyword('KW_POL_CONT_DEG_POLY', key='', dtype=int,
+                               source=__NAME__,
+                               description='define polynomial degree of fit '
+                                           'continuum polarization')
+
+# define the iraf function that was used to fit stokes I continuum
+KW_POL_S_IRAF_FUNC = Keyword('KW_POL_S_IRAF_FUNC', key='', dtype=str,
+                             source=__NAME__,
+                             description='define the iraf function that '
+                                         'was used to fit stokes I continuum')
+
+# define the iraf function that was used to fit polar continuum
+KW_POL_P_IRAF_FUNC = Keyword('KW_POL_P_IRAF_FUNC', key='', dtype=str,
+                             source=__NAME__,
+                             description='define the iraf function that was '
+                                         'used to fit polar continuum')
+
+# define the degree of the polynomial used to fit stokes I continuum
+KW_POL_S_IRAF_DEGREE = Keyword('KW_POL_S_IRAF_DEGREE', key='', dtype=int,
+                               source=__NAME__,
+                               description='define the degree of the '
+                                           'polynomial used to fit stokes '
+                                           'I continuum')
+
+# define the degree of the polynomial used to fit polar continuum
+KW_POL_P_IRAF_DEGREE = Keyword('KW_POL_P_IRAF_DEGREE', key='', dtype=int,
+                               source=__NAME__,
+                               description='define the degree of the '
+                                           'polynomial used to fit polar '
+                                           'continuum')
+
+# define the polar continuum bin size used
+KW_POL_CONT_BINSIZE = Keyword('KW_POL_CONT_BINSIZE', key='', dtype=int,
+                              source=__NAME__,
+                              description='define the polar continuum bin '
+                                          'size used')
+
+# define the polar continuum overlap size used
+KW_POL_CONT_OVERLAP = Keyword('KW_POL_CONT_OVERLAP', key='', dtype=int,
+                              source=__NAME__,
+                               description='define the polar continuum overlap '
+                                           'size used')
+
+# -----------------------------------------------------------------------------
+
+
+
+
 
 # define the base file name exposure list
 KW_POL_FILES = Keyword('KW_POL_FILES', key='', dtype=str, source=__NAME__,
@@ -2296,9 +2418,7 @@ KW_POL_BJDS = Keyword('KW_POL_BJDS', key='', dtype=float, source=__NAME__,
 KW_POL_BERVS = Keyword('KW_POL_BERVS', key='', dtype=float, source=__NAME__,
                        description='define the bervs for exposure list')
 
-# define the Total exposure time (sec)
-KW_POL_EXPTIME = Keyword('KW_POL_EXPTIME', key='', dtype=float, source=__NAME__,
-                         description='define the Total exposure time (sec)')
+
 
 
 

@@ -2004,6 +2004,103 @@ KW_POL_EXPTIME.set(key='TOTETIME', comment='POLAR Total exposure time (sec)')
 KW_POL_METHOD = KW_POL_METHOD.copy(__NAME__)
 KW_POL_METHOD.set(key='POLMETHO', comment='POLAR Polarimetry method')
 
+# define the MJD at flux-weighted center of 4 exposures
+KW_POL_MJD_FW_CEN = KW_POL_MJD_FW_CEN.copy(__NAME__)
+KW_POL_MJD_FW_CEN.set(key='MJDFWCEN',
+                  comment='MJD at flux-weighted center of 4 exposures')
+
+# define the BJD at flux-weighted center of 4 exposures
+KW_POL_BJD_FW_CEN = KW_POL_BJD_FW_CEN.copy(__NAME__)
+KW_POL_BJD_FW_CEN.set(key='BJDFWCEN',
+                  comment='BJD at flux-weighted center of 4 exposures')
+
+# define whether we corrected for BERV
+KW_POL_CORR_BERV = KW_POL_CORR_BERV.copy(__NAME__)
+KW_POL_CORR_BERV.set(key='CORRBERV',
+                     comment='BERV corrected before polarimetry')
+
+# define whether we corrected for source RV
+KW_POL_CORR_SRV = KW_POL_CORR_SRV.copy(__NAME__)
+KW_POL_CORR_SRV.set(key='CORRSRV',
+                    comment='Source RV corrected before polarimetry')
+
+# define whether we normalized stokes I by continuum
+KW_POL_NORM_STOKESI = KW_POL_NORM_STOKESI.copy(__NAME__)
+KW_POL_NORM_STOKESI.set(key='NSTOKESI',
+                        comment='Normalize Stokes I by continuum')
+
+# define whether we normalized stokes I by continuum
+KW_POL_INTERP_FLUX = KW_POL_INTERP_FLUX.copy(__NAME__)
+KW_POL_INTERP_FLUX.set(key='PINTERPF',
+                       comment='Interp flux to correct for shifts between exps')
+
+# define whether we apply polarimetric sigma-clip cleaning
+KW_POL_SIGCLIP = KW_POL_SIGCLIP.copy(__NAME__)
+KW_POL_SIGCLIP.set(key='PSIGCLIP',
+                   comment='Apply polarimetric sigma-clip cleaning')
+
+# define the number of sigma swithin which to apply sigma clipping
+KW_POL_NSIGMA = KW_POL_NSIGMA.copy(__NAME__)
+KW_POL_NSIGMA.set(key='PNSIGMA',
+                  comment='Number of sigmas of sigma-clip cleaning')
+
+# define whether we removed continuum polarization
+KW_POL_REMOVE_CONT = KW_POL_REMOVE_CONT.copy(__NAME__)
+KW_POL_REMOVE_CONT.set(key='PREMCONT', comment='Remove continuum polarization')
+
+# define the stokes I continuum detection algorithm
+KW_POL_SCONT_DET_ALG = KW_POL_SCONT_DET_ALG.copy(__NAME__)
+KW_POL_SCONT_DET_ALG.set(key='SICONTAL',
+                         comment='Stokes I continuum detection algorithm')
+
+# define the polar continuum detection algorithm
+KW_POL_PCONT_DET_ALG = KW_POL_PCONT_DET_ALG.copy(__NAME__)
+KW_POL_PCONT_DET_ALG.set(key='PCONTAL',
+                         comment='Polarization continuum detection algorithm')
+
+# define whether we used polynomial fit for continuum polarization
+KW_POL_CONT_POLYFIT = KW_POL_CONT_POLYFIT.copy(__NAME__)
+KW_POL_CONT_POLYFIT.set(key='PCPOLFIT',
+                        comment='Use polynomial fit for continuum polarization')
+
+# define polynomial degree of fit continuum polarization
+KW_POL_CONT_DEG_POLY = KW_POL_CONT_DEG_POLY.copy(__NAME__)
+KW_POL_CONT_DEG_POLY.set(key='PCPOLDEG',
+                         comment='Polynomial degree to fit continuum polariz.')
+
+# define the iraf function that was used to fit stokes I continuum
+KW_POL_S_IRAF_FUNC = KW_POL_S_IRAF_FUNC.copy(__NAME__)
+KW_POL_S_IRAF_FUNC.set(key='SICFUNC',
+                       comment='Function to fit Stokes I continuum')
+
+# define the iraf function that was used to fit polar continuum
+KW_POL_P_IRAF_FUNC = KW_POL_P_IRAF_FUNC.copy(__NAME__)
+KW_POL_P_IRAF_FUNC.set(key='PICFUNC',
+                       comment='Function to fit polar continuum')
+
+# define the degree of the polynomial used to fit stokes I continuum
+KW_POL_S_IRAF_DEGREE = KW_POL_S_IRAF_DEGREE.copy(__NAME__)
+KW_POL_S_IRAF_DEGREE.set(key='SIPOLDEG',
+                         comment='POlynomial degree fit Stokes I continuum')
+
+# define the degree of the polynomial used to fit polar continuum
+KW_POL_P_IRAF_DEGREE = KW_POL_P_IRAF_DEGREE.copy(__NAME__)
+KW_POL_P_IRAF_DEGREE.set(key='PIPOLDEG',
+                         comment='POlynomial degree fit polar continuum')
+
+# define the polar continuum bin size used
+KW_POL_CONT_BINSIZE = KW_POL_CONT_BINSIZE.copy(__NAME__)
+KW_POL_CONT_BINSIZE.set(key='PCBINSIZ',
+                        comment='Polarimetry continuum bin size')
+
+# define the polar continuum overlap size used
+KW_POL_CONT_OVERLAP = KW_POL_CONT_OVERLAP.copy(__NAME__)
+KW_POL_CONT_OVERLAP.set(key='PCOVERLA',
+                        comment='Polarimetry continuum overlap size')
+
+
+
+
 # -----------------------------------------------------------------------------
 
 
@@ -2035,18 +2132,6 @@ KW_POL_BJDS.set(key='P_BJD{0:02d}', comment='POLAR BJD for ')
 # define the bervs for exposure list
 KW_POL_BERVS = KW_POL_BERVS.copy(__NAME__)
 KW_POL_BERVS.set(key='P_BERV{0:02d}', comment='POLAR BERV for')
-
-# define the Total exposure time (sec)
-KW_POL_EXPTIME = KW_POL_EXPTIME.copy(__NAME__)
-KW_POL_EXPTIME.set(key='POLTTIME', comment='POLAR Total exposure time (sec)')
-
-
-
-
-
-
-
-
 
 
 # define the minimum number of files used
