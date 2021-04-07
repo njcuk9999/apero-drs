@@ -259,6 +259,10 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     # save a blaze file
     polar_dict['GLOBAL_BLAZE'] = None
     polar_dict['GLOBAL_BLAZE_FILE'] = None
+    # save berv / bjd
+    polar_dict['BERVS'] = dict()
+    polar_dict['BJDS'] = dict()
+    polar_dict['BERV_USED_ESTIMATE'] = dict()
     # the inputs in dictionary form
     polar_dict['INPUTS'] = dict()
     # raw flux and flux error
@@ -271,7 +275,8 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     polar_dict['FLUX'] = dict()
     polar_dict['FLUXERR'] = dict()
     # set sources
-    keys = ['INPUTS', 'EXPOSURES', 'N_EXPOSURES', 'EXPOSURE_NUMBERS', 'STOKES',
+    keys = ['INPUTS', 'BERVS', 'BJDS', 'BERV_USED_ESTIMATE',
+            'EXPOSURES', 'N_EXPOSURES', 'EXPOSURE_NUMBERS', 'STOKES',
             'GLOBAL_WAVEMAP', 'GLOBAL_WAVEFILE', 'GLOBAL_WAVETIME',
             'GLOBAL_BLAZE', 'GLOBAL_BLAZEFILE', 'GLOBAL_STOKES',
             'RAW_WAVEMAP', 'RAW_WAVEFILE', 'RAW_WAVETIME',
@@ -450,10 +455,10 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
                                            infile=infile, database=calibdb)
             # -----------------------------------------------------------------
+            # get all berv properties from expfile
+            bprops = extract.get_berv(params, expfile, log=False)
             # apply a berv correction if requested
             if berv_correct:
-                # get all berv properties from expfile
-                bprops = extract.get_berv(params, expfile, log=False)
                 # get BERV (need to use both types of BERV measurement)
                 berv = bprops['USE_BERV']
                 # need the source RV
@@ -464,6 +469,10 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
                 wavemap = np.array(wprops['WAVEMAP']) * dvshift
             else:
                 wavemap = np.array(wprops['WAVEMAP'])
+
+            polar_dict['BERVS'][key_str] = bprops['USE_BERV']
+            polar_dict['BJDS'][key_str] = bprops['USE_BJD']
+            polar_dict['BERV_USED_ESTIMATE'][key_str] = bprops['USED_ESTIMATE']
             # -----------------------------------------------------------------
             # add the global wave solution to polar dict
             polar_dict['RAW_WAVEMAP'][key_str] = wavemap
@@ -1072,9 +1081,6 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
             POLAR_CONT_BINSIZE: int, number of points in each sample bin
             POLAR_CONT_OVERLAP: int, number of points to overlap before and
                                 after each sample bin
-            POLAR_CONT_TELLMASK: list of float pairs, list of telluric bands,
-                                 i.e, a list of wavelength ranges ([wl0,wlf])
-                                 for telluric absorption
 
     :param recipe: DrsRecipe, the recipe calling this function (use to access
                    the plotting)
@@ -1642,87 +1648,149 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # ----------------------------------------------------------------------
     # add polar header keys
     polfile = add_polar_keywords(params, props, polfile)
+    # ----------------------------------------------------------------------
+
 
 
 def add_polar_keywords(params: ParamDict, props: ParamDict,
-                       polfile: DrsFitsFile) -> DrsFitsFile:
+                       outfile: DrsFitsFile) -> DrsFitsFile:
+    """
+    Add polar header keys to "outfile"
 
+    :param params: ParamDict, the parameter dictionary of constants
+    :param props: ParamDict, the parameter dictionary of data
+    :param outfile: DrsFitsFile, the output DrsFitsFile instance
+
+    :return: outfile: DrsFitsFile, the updated DrsFitsFile (hdict updated)
+    """
+    # -------------------------------------------------------------------------
+    # get pconst
+    pconst = constants.pload()
+    # get the telluric bands
+    telluric_bands = pconst.GET_POLAR_TELLURIC_BANDS()
+    # load the telluric bands into a 1D list of strings '{LOW},{HIGH}
+    str_telluric_bands = []
+    for band in telluric_bands:
+        str_telluric_bands.append('{0},{1}'.format(*band))
+    # -------------------------------------------------------------------------
     # add elapsed time of observation (in seconds)
-    polfile.add_hkey('KW_POL_ELAPTIME', value=props['ELAPSED_TIME'])
+    outfile.add_hkey('KW_POL_ELAPTIME', value=props['ELAPSED_TIME'])
     # add MJD at center of observation
-    polfile.add_hkey('KW_POL_MJDCEN', value=props['MJDCEN'])
+    outfile.add_hkey('KW_POL_MJDCEN', value=props['MJDCEN'])
     # add BJD at center of observation
-    polfile.add_hkey('KW_POL_BJDCEN', value=props['BJDCEN'])
+    outfile.add_hkey('KW_POL_BJDCEN', value=props['BJDCEN'])
     # add BERV at center of observation
-    polfile.add_hkey('KW_POL_BERVCEN', value=props['BERVCEN'])
+    outfile.add_hkey('KW_POL_BERVCEN', value=props['BERVCEN'])
     # add mean BJD for polar sequence
-    polfile.add_hkey('KW_POL_MEANBJD', value=props['MEANBJD'])
+    outfile.add_hkey('KW_POL_MEANBJD', value=props['MEANBJD'])
     # add stokes parameter
-    polfile.add_hkey('KW_POL_STOKES', value=props['GLOBAL_STOKES'])
+    outfile.add_hkey('KW_POL_STOKES', value=props['GLOBAL_STOKES'])
     # add number of exposures for polarimetry
-    polfile.add_hkey('KW_POL_NEXP', value=props['N_EXPOSURES'])
+    outfile.add_hkey('KW_POL_NEXP', value=props['N_EXPOSURES'])
     # add the total exposure time (in seconds)
-    polfile.add_hkey('KW_POL_EXPTIME', value=props['TOTEXPTIME'])
+    outfile.add_hkey('KW_POL_EXPTIME', value=props['TOTEXPTIME'])
     # add the polarimetry method
-    polfile.add_hkey('KW_POL_METHOD', value=props['POLMETHO'])
+    outfile.add_hkey('KW_POL_METHOD', value=props['POLMETHO'])
     # add flux weighted MJD of 4 exposures'
-    polfile.add_hkey('KW_POL_MJD_FW_CEN', value=props['MJDFWCEN'])
+    outfile.add_hkey('KW_POL_MJD_FW_CEN', value=props['MJDFWCEN'])
     # add flux weighted BJD of 4 exposures'
-    polfile.add_hkey('KW_POL_BJD_FW_CEN', value=props['MJDFWCEN'])
+    outfile.add_hkey('KW_POL_BJD_FW_CEN', value=props['MJDFWCEN'])
     # add mean BERV of 4 exposures
-    polfile.add_hkey('KW_POL_MEAN_BERV', value=props['MEANBERV'])
+    outfile.add_hkey('KW_POL_MEAN_BERV', value=props['MEANBERV'])
     # -------------------------------------------------------------------------
     # add properties / switches from constants
     # -------------------------------------------------------------------------
     # define whether we corrected for BERV
-    polfile.add_hkey('KW_POL_CORR_BERV', value=params['POLAR_BERV_CORRECT'])
+    outfile.add_hkey('KW_POL_CORR_BERV', value=params['POLAR_BERV_CORRECT'])
     # define whether we corrected for source RV
-    polfile.add_hkey('KW_POL_CORR_SRV', value=params['POLAR_SOURCE_RV_CORRECT'])
+    outfile.add_hkey('KW_POL_CORR_SRV', value=params['POLAR_SOURCE_RV_CORRECT'])
     # define whether we normalized stokes I by continuum
-    polfile.add_hkey('KW_POL_NORM_STOKESI',
+    outfile.add_hkey('KW_POL_NORM_STOKESI',
                      value=params['POLAR_NORMALIZE_STOKES_I'])
     # define whether we interp flux to correct for shifts between exposures
-    polfile.add_hkey('KW_POL_INTERP_FLUX',
+    outfile.add_hkey('KW_POL_INTERP_FLUX',
                      value=params['POLAR_INTERPOLATE_FLUX'])
     # define whether we apply polarimetric sigma-clip cleaning
-    polfile.add_hkey('KW_POL_SIGCLIP',
+    outfile.add_hkey('KW_POL_SIGCLIP',
                      value=params['POLAR_CLEAN_BY_SIGMA_CLIPPING'])
     # define the number of sigma swithin which to apply sigma clipping
-    polfile.add_hkey('KW_POL_NSIGMA', value=params['POLAR_NSIGMA_CLIPPING'])
+    outfile.add_hkey('KW_POL_NSIGMA', value=params['POLAR_NSIGMA_CLIPPING'])
     # define whether we removed continuum polarization
-    polfile.add_hkey('KW_POL_REMOVE_CONT',
+    outfile.add_hkey('KW_POL_REMOVE_CONT',
                      value=params['POLAR_REMOVE_CONTINUUM'])
     # define the stokes I continuum detection algorithm
-    polfile.add_hkey('KW_POL_SCONT_DET_ALG',
+    outfile.add_hkey('KW_POL_SCONT_DET_ALG',
                      value=params['STOKESI_CONTINUUM_DETECTION_ALGORITHM'])
     # define the polar continuum detection algorithm
-    polfile.add_hkey('KW_POL_PCONT_DET_ALG',
+    outfile.add_hkey('KW_POL_PCONT_DET_ALG',
                      value=params['POLAR_CONTINUUM_DETECTION_ALGORITHM'])
     # define whether we used polynomial fit for continuum polarization
-    polfile.add_hkey('KW_POL_CONT_POLYFIT',
+    outfile.add_hkey('KW_POL_CONT_POLYFIT',
                      value=params['POLAR_CONT_POLYNOMIAL_FIT'])
     # define polynomial degree of fit continuum polarization
-    polfile.add_hkey('KW_POL_CONT_DEG_POLY',
+    outfile.add_hkey('KW_POL_CONT_DEG_POLY',
                      value=params['POLAR_CONT_DEG_POLYNOMIAL'])
     # define the iraf function that was used to fit stokes I continuum
-    polfile.add_hkey('KW_POL_S_IRAF_FUNC',
+    outfile.add_hkey('KW_POL_S_IRAF_FUNC',
                      value=params['STOKESI_IRAF_CONT_FIT_FUNCTION'])
     # define the iraf function that was used to fit polar continuum
-    polfile.add_hkey('KW_POL_P_IRAF_FUNC',
+    outfile.add_hkey('KW_POL_P_IRAF_FUNC',
                      value=params['POLAR_IRAF_CONT_FIT_FUNCTION'])
     # define the degree of the polynomial used to fit stokes I continuum
-    polfile.add_hkey('KW_POL_S_IRAF_DEGREE',
+    outfile.add_hkey('KW_POL_S_IRAF_DEGREE',
                      value=params['STOKESI_IRAF_CONT_FUNCTION_ORDER'])
     # define the degree of the polynomial used to fit polar continuum
-    polfile.add_hkey('KW_POL_P_IRAF_DEGREE',
+    outfile.add_hkey('KW_POL_P_IRAF_DEGREE',
                      value=params['POLAR_IRAF_CONT_FUNCTION_ORDER'])
     # define the polar continuum bin size used
-    polfile.add_hkey('KW_POL_CONT_BINSIZE', value=params['POLAR_CONT_BINSIZE'])
+    outfile.add_hkey('KW_POL_CONT_BINSIZE', value=params['POLAR_CONT_BINSIZE'])
     # define the polar continuum overlap size used
-    polfile.add_hkey('KW_POL_CONT_OVERLAP', value=params['POLAR_CONT_OVERLAP'])
+    outfile.add_hkey('KW_POL_CONT_OVERLAP', value=params['POLAR_CONT_OVERLAP'])
+    # define the telluric mask parameters (1D list)
+    outfile.add_hkey_1d('KW_POL_CONT_TELLMASK', values=str_telluric_bands,
+                        dim1name='wave range')
+    # -------------------------------------------------------------------------
+    # return polfile with hdict updated
+    return outfile
 
 
-    return polfile
+def make_polar_table(params: ParamDict, props: ParamDict) -> Table:
+
+
+    exposures = props['INPUTS']
+    # storage for table
+    key_strings, exposure_nums, filenames = [], [], []
+    exptimes, mjdates, mjdmids, mjdends = [], [], [], []
+    bjds, bervs, berv_used_ests = [], [], []
+    # for all exposures add to storage
+    for key_str in exposures:
+        # get expfile (DrsFitsFile)
+        expfile = exposures[key_str]
+        # add key string
+        key_strings.append(key_str)
+        # add exposure number
+        exposure_nums.append(key_str.split('_')[-1])
+        # add filename
+        filenames.append(expfile.basename)
+        # add exposure time
+        exptimes.append(expfile.get_hkey('KW_EXPTIME', dtype=float))
+        # add mjdate
+        mjdates.append(expfile.get_hkey('KW_MJDATE', dtype=float))
+        # add mid exposure time
+        mjdmids.append(expfile.get_hkey('KW_MID_OBS_TIME'), dtype=float)
+        # add mjend
+        mjdates.append(expfile.get_hkey('KW_MJDEND'), dtype=float)
+        # add bjd
+        bjds.append(props['BJDS'][key_str])
+        # add bervs
+        bervs.append(props['BERVS'][key_str])
+        # add berv used estimate
+        berv_used_ests.append(props['BERV_USED_ESTIMATE'][key_str])
+
+    # TODO: Make table
+
+    # TODO: return table
+
 
 # =============================================================================
 # Define worker functions
