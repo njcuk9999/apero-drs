@@ -10,6 +10,7 @@ Created on 2019-10-25 at 13:25
 @author: cook
 """
 from astropy import constants as cc
+from astropy import units as uu
 import numpy as np
 from scipy.optimize import curve_fit
 from typing import Tuple
@@ -193,7 +194,7 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     WLOG(params, '', msg.format(*margs))
     # -------------------------------------------------------------------------
     # get weight from masks
-    weight = maskdata['wavec'] * maskdata['depth'] * maskdata['lande']
+    weight = wavec * depth * lande
     # normalize weight
     weight = weight / np.max(weight)
     # -------------------------------------------------------------------------
@@ -302,7 +303,7 @@ def prepare_polarimetry_data(params: ParamDict, props: ParamDict) -> ParamDict:
 
     :param props: parameter dictionary, ParamDict to store data
         Must contain at least:
-            GLOBAL_WAVE_MAP: numpy array (2D), wavelength data
+            GLOBAL_WAVEMAP: numpy array (2D), wavelength data
             STOKESI: numpy array (2D), Stokes I data
             STOKESIERR: numpy array (2D), errors of Stokes I
             POL: numpy array (2D), degree of polarization data
@@ -324,7 +325,7 @@ def prepare_polarimetry_data(params: ParamDict, props: ParamDict) -> ParamDict:
     # get parameters from params
     normalize = params['POLAR_LSD_NORMALIZE']
     # get input arrays
-    wavemap = props['GLOBAL_WAVE_MAP']
+    wavemap = props['GLOBAL_WAVEMAP']
     stokesi, stokesierr = props['STOKESI'], props['STOKESIERR']
     pol, polerr = props['POL'], props['POLERR']
     null1, null2 = props['NULL1'], props['NULL2']
@@ -355,8 +356,8 @@ def prepare_polarimetry_data(params: ParamDict, props: ParamDict) -> ParamDict:
         # set order wavelength limits
         wl0, wlf = ordermask[order_num][0], ordermask[order_num][1]
         # create wavelength mask
-        mask &= wavemap[order_num][mask] > wl0
-        mask &= wavemap[order_num][mask] < wlf
+        mask &= wavemap[order_num] > wl0
+        mask &= wavemap[order_num] < wlf
         # ---------------------------------------------------------------------
         # test if order is not empty
         if np.sum(mask) > 0:
@@ -664,9 +665,9 @@ def line_pattern_matrix(wavemap: np.ndarray, wavec: np.ndarray,
     # set number of spectral points
     numpixels = len(wavemap)
     # initialize line pattern matrix for flux LSD
-    flux_lpm = np.zeros((numlines, numpixels))
+    flux_lpm = np.zeros((numpixels, numlines))
     # initialize line pattern matrix for polar LSD
-    pol_lpm = np.zeros((numlines, numpixels))
+    pol_lpm = np.zeros((numpixels, numlines))
     # -------------------------------------------------------------------------
     # set values of line pattern matrix M
     for line_it in range(len(wavec)):
@@ -704,8 +705,8 @@ def line_pattern_matrix(wavemap: np.ndarray, wavec: np.ndarray,
             flux_lpm_pix1 = depth[line_it] * (1.0 - velo_weight)
             flux_lpm_pix2 = depth[line_it] * velo_weight
             # add to polar line pattern matrix
-            flux_lpm[linepos[pix][jpos - 1]] = flux_lpm_pix1
-            flux_lpm[linepos[pix][jpos]] = flux_lpm_pix2
+            flux_lpm[linepos[pix]][jpos - 1] = flux_lpm_pix1
+            flux_lpm[linepos[pix]][jpos] = flux_lpm_pix2
     # ------------------------------------------------------------------------
     # return the
     return flux_lpm, pol_lpm
@@ -742,7 +743,7 @@ def calculate_lsd_profile(params: ParamDict, flux: np.ndarray,
     #   MT.S^2 = MT.(1/FLUXERR^2)
     # loop around each matrix element
     for it in range(lpmt.shape[0]):
-        lpmt_x_s2[it] = lpmt / (fluxerr ** 2)
+        lpmt_x_s2[it] = lpmt[it] / (fluxerr ** 2)
     # -------------------------------------------------------------------------
     # calculate autocorrelation
     #  MT.S^2.M

@@ -161,13 +161,13 @@ def __main__(recipe, params):
     # POLAR LSD SETTINGS
     # -------------------------------------------------------------------------
     #  Define the spectral lsd mask directory for lsd polar calculations
-    params.set('POLAR_LSD_PATH', value='./data/spirou/lsd/', source=mainname)
+    params.set('POLAR_LSD_DIR', value='lsd', source=mainname)
     #  Define the file regular expression key to lsd mask files
     #  for "marcs_t3000g50_all" this should be:
     #     - filekey = 'marcs_t*g
     #  for "t4000_g4.0_m0.00" it should be:
     #     - filekey = 't*_g'
-    params.set('POLAR_LSD_FILE_KEY', value='marcs_t*g', source=mainname)
+    params.set('POLAR_LSD_FILE_KEY', value='marcs_t*g50_all', source=mainname)
     #  Define minimum lande of lines to be used in the LSD analyis
     params.set('POLAR_LSD_MIN_LANDE', value=0.0, source=mainname)
     #  Define maximum lande of lines to be used in the LSD analyis
@@ -196,6 +196,8 @@ def __main__(recipe, params):
 
     # set polar exposures
     inputs = gen_pol.set_polar_exposures(params)
+
+
     # get constants from params
     remove_continuum = params['POLAR_REMOVE_CONTINUUM']
     normalize_stokesi = params['POLAR_NORMALIZE_STOKES_I']
@@ -267,11 +269,13 @@ def __main__(recipe, params):
     WLOG(params, 'info', drs_header)
     WLOG(params, 'info', 'Part 5: Quality Control')
     WLOG(params, 'info', drs_header)
+    # add quality control (currently empty)
+    qc_params, passed = gen_pol.quality_control(params)
 
     # -------------------------------------------------------------------------
     # part6: Make S1D files
     # -------------------------------------------------------------------------
-    # TODO: Add from 0.6 version
+    s1dprops = gen_pol.make_s1d(params, recipe, pprops)
 
     # -------------------------------------------------------------------------
     # part6: writing files
@@ -281,11 +285,12 @@ def __main__(recipe, params):
     WLOG(params, 'info', 'Part 6: Writing files')
     WLOG(params, 'info', drs_header)
 
-    # TODO: Write as individual products - don't do p.fits here
+    # write polar files
+    gen_pol.write_files(params, recipe, pprops, inputs, qc_params)
+
+
     # TODO:   p.fits should be done in the output post processing script
-    if params['INPUTS']['OUTPUT']:
-        gen_pol.apero_create_pol_product(params['INPUTS']['OUTPUT'], params,
-                                         pprops)
+
 
     # save LSD data to fits
     if params['INPUTS']['OUTPUT_LSD'] != 'None':

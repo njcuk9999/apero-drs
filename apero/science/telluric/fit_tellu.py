@@ -777,10 +777,10 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     scargs = [wprops['WAVEMAP'], scorr,blaze]
     scwprops = extract.e2ds_to_s1d(params, recipe, *scargs, wgrid='wave',
-                                   fiber=fiber, kind='corrected sp')
+                                   fiber=fiber, s1dkind='corrected sp')
     scvprops = extract.e2ds_to_s1d(params, recipe, *scargs,
                                    wgrid='velocity', fiber=fiber,
-                                   kind='corrected sp')
+                                   s1dkind='corrected sp')
     # ------------------------------------------------------------------
     # Save corrected E2DS to file
     # ------------------------------------------------------------------

@@ -14,6 +14,7 @@ from astropy.table import Table
 from astropy import constants as cc
 from astropy import units as uu
 import os
+from typing import Union
 import warnings
 
 from apero.base import base
@@ -23,6 +24,7 @@ from apero.core import math as mp
 from apero import lang
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_data
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.io import drs_path
@@ -47,6 +49,7 @@ __release__ = base.__release__
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsNpyFile = drs_file.DrsNpyFile
+DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -792,9 +795,9 @@ def dark_fp_regen_s1d(params, recipe, props, database=None, **kwargs):
         # create 1d spectra (s1d) of the e2ds file
         sargs = [wprops['WAVEMAP'], extfile.get_data(), blaze]
         swprops = e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
-                              fiber=fiber, kind=s1dextfile)
+                              fiber=fiber, s1dkind=s1dextfile)
         svprops = e2ds_to_s1d(params, recipe, *sargs, wgrid='velocity',
-                              fiber=fiber, kind=s1dextfile)
+                              fiber=fiber, s1dkind=s1dextfile)
         # add to outputs
         s1dw_outs[fiber] = swprops
         s1dv_outs[fiber] = svprops
@@ -991,8 +994,12 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
 # =============================================================================
 # Define s1d functions
 # =============================================================================
-def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber=None, wgrid='wave',
-                kind=None, **kwargs):
+def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,  wavemap: np.ndarray,
+                e2ds: np.ndarray,  blaze: np.ndarray,
+                fiber: Union[str, None] = None, wgrid: str = 'wave',
+                s1dkind: Union[str, None] = None,
+                e2dserr: Union[np.ndarray, None] = None,
+                **kwargs):
     func_name = __NAME__ + '.e2ds_to_s1d()'
     # get parameters from p
     wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
@@ -1010,7 +1017,11 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber=None, wgrid='wave',
 
     # get size from e2ds
     nord, npix = e2ds.shape
-
+    # -------------------------------------------------------------------------
+    # deal with no errors
+    if e2dserr is None:
+        e2dserr = np.zeros_like(e2ds)
+    # -------------------------------------------------------------------------
     # log progress: calculating s1d (wavegrid)
     WLOG(params, '', textentry('40-016-00009', args=[wgrid]))
 
@@ -1066,14 +1077,14 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber=None, wgrid='wave',
     # multiple the spectrum and blaze by the sloping vector
     sblaze = np.array(blaze) * slopevector
     se2ds = np.array(e2ds) * slopevector
-
+    se2dserr = np.array(e2dserr) * slopevector
     # -------------------------------------------------------------------------
     # Perform a weighted mean of overlapping orders
     # by performing a spline of both the blaze and the spectrum
     # -------------------------------------------------------------------------
     out_spec = np.zeros_like(wavegrid)
+    out_spec_err = np.zeros_like(wavegrid)
     weight = np.zeros_like(wavegrid)
-
     # loop around all orders
     for order_num in range(nord):
         # identify the valid pixels
@@ -1085,11 +1096,13 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber=None, wgrid='wave',
         # get this orders vectors
         owave = wavemap[order_num]
         oe2ds = se2ds[order_num, valid]
+        oe2dserr = se2dserr[order_num, valid]
         oblaze = sblaze[order_num]
         # create the splines for this order
         spline_sp = mp.iuv_spline(owave[valid], oe2ds, k=5, ext=1)
         spline_bl = mp.iuv_spline(owave, oblaze, k=1, ext=1)
-
+        spline_sperr = mp.iuv_spline(owave[valid], oe2dserr, k=5, ext=1)
+        # valid must be cast as float for splining
         valid_float = valid.astype(float)
         # we mask pixels that are neighbours to a NaN.
         valid_float = np.convolve(valid_float, np.ones(3) / 3.0, mode='same')
@@ -1106,7 +1119,7 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber=None, wgrid='wave',
         # get splines and add to outputs
         weight[useful_range] += spline_bl(wavegrid[useful_range])
         out_spec[useful_range] += spline_sp(wavegrid[useful_range])
-
+        out_spec_err[useful_range] += spline_sperr(wavegrid[useful_range])
     # need to deal with zero weight --> set them to NaNs
     zeroweights = weight == 0
     weight[zeroweights] = np.nan
@@ -1114,19 +1127,17 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber=None, wgrid='wave',
     # plot the s1d weight/before/after plot
     recipe.plot('EXTRACT_S1D_WEIGHT', params=params, wave=wavegrid,
                 flux=out_spec, weight=weight, kind=wgrid, fiber=fiber,
-                stype=kind)
+                stype=s1dkind)
     # work out the weighted spectrum
     with warnings.catch_warnings(record=True) as _:
         w_out_spec = out_spec / weight
-
-    # TODO: propagate errors
-    ew_out_spec = np.zeros_like(w_out_spec)
+        w_out_spec_err = out_spec_err / weight
 
     # construct the s1d table (for output)
     s1dtable = Table()
     s1dtable['wavelength'] = wavegrid
     s1dtable['flux'] = w_out_spec
-    s1dtable['eflux'] = ew_out_spec
+    s1dtable['eflux'] = w_out_spec_err
     s1dtable['weight'] = weight
 
     # set up return dictionary
@@ -1134,7 +1145,7 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber=None, wgrid='wave',
     # add data
     props['WAVEGRID'] = wavegrid
     props['S1D'] = w_out_spec
-    props['S1D_ERROR'] = ew_out_spec
+    props['S1D_ERROR'] = w_out_spec_err
     props['WEIGHT'] = weight
     # add astropy table
     props['S1DTABLE'] = s1dtable
