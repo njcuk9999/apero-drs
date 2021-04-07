@@ -1641,10 +1641,11 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     polfile.add_qckeys(qc_params)
     # ----------------------------------------------------------------------
     # add polar header keys
-    polfile = add_polar_keywords(polfile, props)
+    polfile = add_polar_keywords(params, props, polfile)
 
 
-def add_polar_keywords(polfile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
+def add_polar_keywords(params: ParamDict, props: ParamDict,
+                       polfile: DrsFitsFile) -> DrsFitsFile:
 
     # add elapsed time of observation (in seconds)
     polfile.add_hkey('KW_POL_ELAPTIME', value=props['ELAPSED_TIME'])
@@ -1664,7 +1665,61 @@ def add_polar_keywords(polfile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
     polfile.add_hkey('KW_POL_EXPTIME', value=props['TOTEXPTIME'])
     # add the polarimetry method
     polfile.add_hkey('KW_POL_METHOD', value=props['POLMETHO'])
-
+    # add flux weighted MJD of 4 exposures'
+    polfile.add_hkey('KW_POL_MJD_FW_CEN', value=props['MJDFWCEN'])
+    # add flux weighted BJD of 4 exposures'
+    polfile.add_hkey('KW_POL_BJD_FW_CEN', value=props['MJDFWCEN'])
+    # add mean BERV of 4 exposures
+    polfile.add_hkey('KW_POL_MEAN_BERV', value=props['MEANBERV'])
+    # -------------------------------------------------------------------------
+    # add properties / switches from constants
+    # -------------------------------------------------------------------------
+    # define whether we corrected for BERV
+    polfile.add_hkey('KW_POL_CORR_BERV', value=params['POLAR_BERV_CORRECT'])
+    # define whether we corrected for source RV
+    polfile.add_hkey('KW_POL_CORR_SRV', value=params['POLAR_SOURCE_RV_CORRECT'])
+    # define whether we normalized stokes I by continuum
+    polfile.add_hkey('KW_POL_NORM_STOKESI',
+                     value=params['POLAR_NORMALIZE_STOKES_I'])
+    # define whether we interp flux to correct for shifts between exposures
+    polfile.add_hkey('KW_POL_INTERP_FLUX',
+                     value=params['POLAR_INTERPOLATE_FLUX'])
+    # define whether we apply polarimetric sigma-clip cleaning
+    polfile.add_hkey('KW_POL_SIGCLIP',
+                     value=params['POLAR_CLEAN_BY_SIGMA_CLIPPING'])
+    # define the number of sigma swithin which to apply sigma clipping
+    polfile.add_hkey('KW_POL_NSIGMA', value=params['POLAR_NSIGMA_CLIPPING'])
+    # define whether we removed continuum polarization
+    polfile.add_hkey('KW_POL_REMOVE_CONT',
+                     value=params['POLAR_REMOVE_CONTINUUM'])
+    # define the stokes I continuum detection algorithm
+    polfile.add_hkey('KW_POL_SCONT_DET_ALG',
+                     value=params['STOKESI_CONTINUUM_DETECTION_ALGORITHM'])
+    # define the polar continuum detection algorithm
+    polfile.add_hkey('KW_POL_PCONT_DET_ALG',
+                     value=params['POLAR_CONTINUUM_DETECTION_ALGORITHM'])
+    # define whether we used polynomial fit for continuum polarization
+    polfile.add_hkey('KW_POL_CONT_POLYFIT',
+                     value=params['POLAR_CONT_POLYNOMIAL_FIT'])
+    # define polynomial degree of fit continuum polarization
+    polfile.add_hkey('KW_POL_CONT_DEG_POLY',
+                     value=params['POLAR_CONT_DEG_POLYNOMIAL'])
+    # define the iraf function that was used to fit stokes I continuum
+    polfile.add_hkey('KW_POL_S_IRAF_FUNC',
+                     value=params['STOKESI_IRAF_CONT_FIT_FUNCTION'])
+    # define the iraf function that was used to fit polar continuum
+    polfile.add_hkey('KW_POL_P_IRAF_FUNC',
+                     value=params['POLAR_IRAF_CONT_FIT_FUNCTION'])
+    # define the degree of the polynomial used to fit stokes I continuum
+    polfile.add_hkey('KW_POL_S_IRAF_DEGREE',
+                     value=params['STOKESI_IRAF_CONT_FUNCTION_ORDER'])
+    # define the degree of the polynomial used to fit polar continuum
+    polfile.add_hkey('KW_POL_P_IRAF_DEGREE',
+                     value=params['POLAR_IRAF_CONT_FUNCTION_ORDER'])
+    # define the polar continuum bin size used
+    polfile.add_hkey('KW_POL_CONT_BINSIZE', value=params['POLAR_CONT_BINSIZE'])
+    # define the polar continuum overlap size used
+    polfile.add_hkey('KW_POL_CONT_OVERLAP', value=params['POLAR_CONT_OVERLAP'])
 
 
     return polfile
