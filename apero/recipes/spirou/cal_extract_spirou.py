@@ -258,10 +258,10 @@ def __main__(recipe, params):
                 sargs = [wprops['WAVEMAP'], eprops[s1dextfile], eprops['BLAZE']]
                 swprops = extract.e2ds_to_s1d(params, recipe, *sargs,
                                               wgrid='wave', fiber=fiber,
-                                              kind=s1dextfile)
+                                              s1dkind=s1dextfile)
                 svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
                                               wgrid='velocity', fiber=fiber,
-                                              kind=s1dextfile)
+                                              s1dkind=s1dextfile)
             else:
                 swprops, svprops = None,  None
 

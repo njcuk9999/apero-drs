@@ -15,7 +15,7 @@ from scipy import stats
 from scipy import signal
 from scipy.interpolate import UnivariateSpline
 import warnings
-from typing import Tuple, List, Union
+from typing import Any, List, Tuple, Union
 
 from apero.base import base
 from apero.core import math as mp
@@ -250,10 +250,15 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     polar_dict['STOKES'] = dict()
     # exposure number for each exposure
     polar_dict['EXPOSURE_NUMBERS'] = dict()
+    # save global stokes value
+    polar_dict['GLOBAL_STOKES'] = None
     # wave solution common to all non-raw data
     polar_dict['GLOBAL_WAVEMAP'] = None
     polar_dict['GLOBAL_WAVEFILE'] = None
     polar_dict['GLOBAL_WAVETIME'] = None
+    # save a blaze file
+    polar_dict['GLOBAL_BLAZE'] = None
+    polar_dict['GLOBAL_BLAZE_FILE'] = None
     # the inputs in dictionary form
     polar_dict['INPUTS'] = dict()
     # raw flux and flux error
@@ -266,8 +271,9 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     polar_dict['FLUX'] = dict()
     polar_dict['FLUXERR'] = dict()
     # set sources
-    keys = ['EXPOSURES', 'N_EXPOSURES', 'EXPOSURE_NUMBERS', 'STOKES', 'INPUTS',
+    keys = ['INPUTS', 'EXPOSURES', 'N_EXPOSURES', 'EXPOSURE_NUMBERS', 'STOKES',
             'GLOBAL_WAVEMAP', 'GLOBAL_WAVEFILE', 'GLOBAL_WAVETIME',
+            'GLOBAL_BLAZE', 'GLOBAL_BLAZEFILE', 'GLOBAL_STOKES',
             'RAW_WAVEMAP', 'RAW_WAVEFILE', 'RAW_WAVETIME',
             'RAW_FLUX', 'RAW_FLUXERR', 'FLUX', 'FLUXERR']
     polar_dict.set_sources(keys, func_name)
@@ -325,6 +331,8 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             emsg = emsg.format(basenames[it], exp_nums[it], stokes[it])
             emsgs += emsg
         WLOG(params, 'error', emsgs)
+    else:
+        polar_dict['GLOBAL_STOKES'] = stokes[0]
     # -------------------------------------------------------------------------
     # deal with multiple object names
     if len(np.unique(objnames)) != 1:
@@ -387,6 +395,15 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             polar_dict['GLOBAL_WAVEFILE'] = str(wprops['WAVEFILE'])
             # add the global wave time solution to polar dict
             polar_dict['GLOBAL_WAVETIME'] = str(wprops['WAVETIME'])
+            # -----------------------------------------------------------------
+            # load the blaze file
+            bout = flat_blaze.get_blaze(params, expfile.header,
+                                            expfile.fiber, database=calibdb)
+            blazefile, blaze = bout
+            # add the global wave solution to polar dict
+            polar_dict['GLOBAL_BLAZE'] = blaze
+            polar_dict['GLOBAL_BLAZE_FILE'] = blazefile
+
     # -------------------------------------------------------------------------
     # Load all exposures for each polar fiber
     # -------------------------------------------------------------------------
@@ -422,6 +439,8 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # -----------------------------------------------------------------
             # need to locate the correct file for this fiber
             infile = drs_file.get_another_fiber_file(params, **gkwargs)
+            # add the input for this key
+            polar_dict['INPUTS'][key_str] = infile.newcopy()
             # -----------------------------------------------------------------
             # load the blaze file
             _, blaze = flat_blaze.get_blaze(params, infile.header, fiber,
@@ -488,6 +507,26 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     # return the polar dictionary
     return polar_dict
 
+
+def make_2d_data_uniform(props: ParamDict) -> ParamDict:
+
+
+    # get the arrays from props
+    wavemap = props['GLOBAL_WAVEMAP']
+    blaze = props['GLOBAL_BLAZE']
+    pol = props['POL']
+    polerr = props['POLERR']
+    stokesi = props['STOKESI']
+    stokesierr = props['STOKESIERR']
+    null1 = props['NULL1']
+    null2 = props['NULL2']
+
+
+    # TODO: fill this out
+
+
+
+    return props
 
 # =============================================================================
 # Define science functions
@@ -958,8 +997,8 @@ def calculate_stokes_i(params: ParamDict, props: ParamDict,
         stokesi_arr += flux[i]
         stokesierr_arr += var[i]
 
-    stokesi_arr = np.sum(flux, axis=1)
-    stokesierr_arr = np.sum(var, axis=1)
+    stokesi_arr = np.sum(flux, axis=0)
+    stokesierr_arr = np.sum(var, axis=0)
 
     # Calcualte errors -> sigma = sqrt(variance)
     stokesierr_arr = np.sqrt(stokesierr_arr)
@@ -1255,18 +1294,18 @@ def remove_continuum_polarization(props: ParamDict) -> ParamDict:
         wl0, wlf = ordwave[0], ordwave[-1]
         # create mask to get only continuum data within wavelength range
         # TODO: Question - this doesn't work with in_wavelength = False
-        wlmask = (xdata >= wl0) & (xdata < wlf)
+        wlmask = (xdata >= wl0) & (xdata <= wlf)
         # get continuum data within order range
         wl_cont = xdata[wlmask]
         pol_cont = cont_pol[wlmask]
         # interpolate points applying a cubic spline to the continuum data
         pol_interp = interpolate.interp1d(wl_cont, pol_cont, kind='cubic')
         # create continuum vector at same wavelength sampling as polar data
-        continuum = pol_interp(ordwave)
+        cont_vector = pol_interp(ordwave)
         # save continuum with the same shape as input pol
-        order_cont_pol[order_num] = continuum
+        order_cont_pol[order_num] = cont_vector
         # remove continuum from data
-        ordpol = ordpol - continuum
+        ordpol = ordpol - cont_vector
         # update pol array
         pol[order_num] = ordpol
     # -------------------------------------------------------------------------
@@ -1393,11 +1432,11 @@ def clean_polarimetry_data(props: ParamDict, sigclip: bool = False,
     func_name = display_func('clean_polarimetry_data', __NAME__)
     # -------------------------------------------------------------------------
     # get input arrays
-    wavemap = props['GLOBAL_WAVE_MAP']
+    wavemap = props['GLOBAL_WAVEMAP']
     stokesi, stokesierr = props['STOKESI'], props['STOKESIERR']
     pol, polerr = props['POL'], props['POLERR']
     null1, null2 = props['NULL1'], props['NULL2']
-    cont_pol, cont_flux = props['CONT_POL'], props['CONT_FLUX']
+    cont_pol, cont_flux = props['ORDER_CONT_POL'], props['ORDER_CONT_FLUX']
     # -------------------------------------------------------------------------
     # get shape
     ydim, xdim = pol.shape
@@ -1425,7 +1464,8 @@ def clean_polarimetry_data(props: ParamDict, sigclip: bool = False,
             median_pol = np.median(pol[order_num][mask])
             # calculate the median sigma
             # TODO: Question: where does 0.67499 come from?
-            medsig_pol = np.median(pol[order_num][mask] - median_pol) / 0.67499
+            meddiff = pol[order_num][mask] - median_pol
+            medsig_pol = np.median(np.abs(meddiff)) / 0.67499
             # add this to mask
             mask &= pol[order_num] > (median_pol - (nsig * medsig_pol))
             mask &= pol[order_num] < (median_pol + (nsig * medsig_pol))
@@ -1488,7 +1528,43 @@ def clean_polarimetry_data(props: ParamDict, sigclip: bool = False,
 # =============================================================================
 # Define quality control and writing functions
 # =============================================================================
-def quality_control(params):
+def make_s1d(params: ParamDict, recipe: DrsRecipe,
+             props: ParamDict) -> ParamDict:
+
+    # set function name
+    func_name = display_func('make_s1d', __NAME__)
+    # get wavemap and blaze from props
+    wavemap = props['GLOBAL_WAVEMAP']
+    blaze = props['GLOBAL_BLAZE']
+    # store s1d props
+    s1dprops = ParamDict()
+    # loop around the s1d files
+    for s1dfile in ['STOKESI', 'POL', 'NULL1', 'NULL2']:
+        # loop around s1d grids
+        for grid in ['wave', 'velocity']:
+            # compute s1d
+            sargs = [wavemap, props[s1dfile], blaze]
+            sprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid=grid,
+                                         s1dkind=s1dfile)
+            # store s1d
+            skey = 'S1D{0}_{1}'.format(grid[0].upper(), s1dfile)
+            s1dprops[skey] = sprops
+            s1dprops.set_source(skey, func_name)
+            # -----------------------------------------------------------------
+            # plot only for wave grid
+            if grid == 'wave':
+                # plot the debug plot
+                recipe.plot('EXTRACT_S1D', params=params, props=sprops,
+                            fiber=None, kind=s1dfile)
+                # plot the summary plot
+                recipe.plot('SUM_EXTRACT_S1D', params=params, props=sprops,
+                            fiber=None, kind=s1dfile)
+    # -------------------------------------------------------------------------
+    # return s1d props
+    return s1dprops
+
+
+def quality_control(params) -> Tuple[List[List[Any]], bool]:
     # ----------------------------------------------------------------------
     # set passed variable and fail message list
     fail_msg = []
@@ -1515,20 +1591,33 @@ def quality_control(params):
     return qc_params, passed
 
 
-def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
-                polstats, s1dprops, qc_params):
-    # use the first file as reference
-    pobj = pobjects['A_1']
-    # get the infile from pobj
-    infile = pobj.infile
+def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
+                inputs: List[DrsFitsFile], qc_params: List[List[Any]]):
+
+    # set the function name
+    func_name = display_func('write_files', __NAME__)
+    # set the first file as reference file
+    infile = props['INPUTS']['A_1']
+    # get the raw files inputted by user
+    rawfiles1 = []
+    for drsfile in inputs:
+        # extract the basename from raw file
+        rawfiles1.append(drsfile.basename)
+    # get the files used in polarimetry
+    rawfiles2 = []
+    for key_str in props['INPUTS']:
+        # get drs file for this input
+        drsfile = props['INPUTS'][key_str]
+        # extract the basename from raw file
+        rawfiles2.append(drsfile.basename)
 
     # ----------------------------------------------------------------------
-    # Store pol in file
+    # Write pol to file
     # ----------------------------------------------------------------------
     # get a new copy of the pol file
-    polfile = recipe.outputs['POL_DEG_FILE'].newcopy(params=params)
+    polfile = recipe.outputs['POL_DEG_FILE'].newcopy(recipe=recipe)
     # construct the filename from file instance
-    polfile.construct_filename(infile=infile)
+    polfile.construct_filename(params, infile=infile)
     # define header keys for output file
     # copy keys from input file
     polfile.copy_original_keys(infile)
@@ -1542,288 +1631,43 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # add output tag
     polfile.add_hkey('KW_OUTPUT', value=polfile.name)
     # add input files
-    polfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='file')
-    # ----------------------------------------------------------------------
-    # add the wavelength solution used
-    polfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
+    polfile.add_hkey_1d('KW_INFILE1', values=rawfiles1, dim1name='file')
+    polfile.add_hkey_1d('KW_INFILE2', values=rawfiles2, dim1name='file')
+    # add wave and blaze used
+    polfile.add_hkey('KW_CDBWAVE', value=props['GLOBAL_WAVEFILE'])
+    polfile.add_hkey('KW_CDBBLAZE', value=props['GLOBAL_BLAZEFILE'])
     # ----------------------------------------------------------------------
     # add qc parameters
     polfile.add_qckeys(qc_params)
     # ----------------------------------------------------------------------
-    # add the stokes parameters
-    polfile.add_hkey('KW_POL_STOKES', value=pprops['STOKES'])
-    polfile.add_hkey('KW_POL_NEXP', value=pprops['NEXPOSURES'])
-    polfile.add_hkey('KW_POL_METHOD', value=pprops['METHOD'])
-    # ----------------------------------------------------------------------
-    # add polar statistics
-    polfile.add_hkey_1d('KW_POL_FILES', values=polstats['FILES'],
-                        dim1name='exposure')
-    polfile.add_hkey_1d('KW_POL_EXPS', values=polstats['EXPS'],
-                        dim1name='exposure')
-    polfile.add_hkey_1d('KW_POL_MJDS', values=polstats['MJDS'],
-                        dim1name='exposure')
-    polfile.add_hkey_1d('KW_POL_MJDENDS', values=polstats['MJDENDS'],
-                        dim1name='exposure')
-    polfile.add_hkey_1d('KW_POL_BJDS', values=polstats['BJDS'],
-                        dim1name='exposure')
-    polfile.add_hkey_1d('KW_POL_BERVS', values=polstats['BERVS'],
-                        dim1name='exposure')
-    polfile.add_hkey('KW_POL_EXPTIME', value=polstats['TOTAL_EXPTIME'])
-    polfile.add_hkey('KW_POL_ELAPTIME', value=polstats['ELAPSED_TIME'])
-    polfile.add_hkey('KW_POL_MJDCEN', value=polstats['MJD_CEN'])
-    polfile.add_hkey('KW_POL_BJDCEN', value=polstats['BJD_CEN'])
-    polfile.add_hkey('KW_POL_BERVCEN', value=polstats['BERV_CEN'])
-    polfile.add_hkey('KW_POL_MEANBJD', value=polstats['MEAN_BJD'])
-    # update exposure time
-    polfile.add_hkey('KW_EXPTIME', value=polstats['TOTAL_EXPTIME'])
-    # update acqtime
-    # TODO: This should be MJD_MID?
-    polfile.add_hkey('KW_ACQTIME', value=polstats['MJD_CEN'])
-    # update bjd
-    # TODO: This should be either BJD or BJD_EST based on BERVSRCE
-    polfile.add_hkey('KW_BJD', value=polstats['BJD_CEN'])
-    # update berv
-    # TODO: this should be either BERV or BERV_EST based on BERVSRCE
-    polfile.add_hkey('KW_BERV', value=polstats['BERV_CEN'])
-    # update bervmax
-    # TODO: this should be either BERVMAX or BERVMAXEST based on BERVSRCE
-    polfile.add_hkey('KW_BERVMAX', value=polstats['BERVMAX'])
-    # ----------------------------------------------------------------------
-    # add constants
-    polfile.add_hkey('KW_USED_MIN_FILES', value=pprops['MIN_FILES'])
-    polfile.add_hkey_1d('KW_USED_VALID_FIBERS', values=pprops['VALID_FIBERS'],
-                        dim1name='entry')
-    polfile.add_hkey_1d('KW_USED_VALID_STOKES', values=pprops['VALID_STOKES'],
-                        dim1name='entry')
-    polfile.add_hkey('KW_USED_CONT_BINSIZE', value=pprops['CONT_BINSIZE'])
-    polfile.add_hkey('KW_USED_CONT_OVERLAP', value=pprops['CONT_OVERLAP'])
-    # ----------------------------------------------------------------------
-    # set data
-    polfile.data = pprops['POL']
-    # ----------------------------------------------------------------------
-    # log that we are saving pol file
-    WLOG(params, '', textentry('40-021-00005', args=[polfile.filename]))
-    # define multi lists
-    data_list = [pprops['POLERR']]
-    name_list = ['POL_ERR']
-    # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(recipe, drsfitsfile=polfile)]
-        name_list += ['PARAM_TABLE']
-    # write image to file
-    polfile.write_multi(data_list=data_list, name_list=name_list,
-                        block_kind=recipe.out_block_str,
-                        runstring=recipe.runstring)
-    # add to output files (for indexing)
-    recipe.add_output_file(polfile)
+    # add polar header keys
+    polfile = add_polar_keywords(polfile, props)
 
-    # ----------------------------------------------------------------------
-    # Store null1 in file
-    # ----------------------------------------------------------------------
-    # get a new copy of the pol file
-    null1file = recipe.outputs['POL_NULL1'].newcopy(params=params)
-    # construct the filename from file instance
-    null1file.construct_filename(infile=infile)
-    # copy header from corrected e2ds file
-    null1file.copy_hdict(polfile)
-    # add output tag
-    null1file.add_hkey('KW_OUTPUT', value=null1file.name)
-    # set data
-    null1file.data = pprops['NULL1']
-    # log that we are saving null1 file
-    WLOG(params, '', textentry('40-021-00006', args=[null1file.filename]))
-    # define multi lists
-    data_list, name_list = [], []
-    # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(recipe, drsfitsfile=null1file)]
-        name_list += ['PARAM_TABLE']
-    # write image to file
-    null1file.write_multi(data_list=data_list, name_list=name_list,
-                          block_kind=recipe.out_block_str,
-                          runstring=recipe.runstring)
-    # add to output files (for indexing)
-    recipe.add_output_file(null1file)
 
-    # ----------------------------------------------------------------------
-    # Store null2 in file
-    # ----------------------------------------------------------------------
-    # get a new copy of the pol file
-    null2file = recipe.outputs['POL_NULL2'].newcopy(params=params)
-    # construct the filename from file instance
-    null2file.construct_filename(infile=infile)
-    # copy header from corrected e2ds file
-    null2file.copy_hdict(polfile)
-    # add output tag
-    null2file.add_hkey('KW_OUTPUT', value=null2file.name)
-    # set data
-    null2file.data = pprops['NULL2']
-    # log that we are saving null1 file
-    WLOG(params, '', textentry('40-021-00007', args=[null2file.filename]))
-    # define multi lists
-    data_list, name_list = [], []
-    # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(recipe, drsfitsfile=null2file)]
-        name_list += ['PARAM_TABLE']
-    # write image to file
-    null2file.write_multi(data_list=data_list, name_list=name_list,
-                          block_kind=recipe.out_block_str,
-                          runstring=recipe.runstring)
-    # add to output files (for indexing)
-    recipe.add_output_file(null2file)
+def add_polar_keywords(polfile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
 
-    # ----------------------------------------------------------------------
-    # Store null2 in file
-    # ----------------------------------------------------------------------
-    # get a new copy of the pol file
-    stokesfile = recipe.outputs['POL_STOKESI'].newcopy(params=params)
-    # construct the filename from file instance
-    stokesfile.construct_filename(infile=infile)
-    # copy header from corrected e2ds file
-    stokesfile.copy_hdict(polfile)
-    # add output tag
-    stokesfile.add_hkey('KW_OUTPUT', value=stokesfile.name)
-    # add the stokes parameters
-    stokesfile.add_hkey('KW_POL_STOKES', value='I')
-    # set data
-    stokesfile.data = pprops['STOKESI']
-    # log that we are saving pol file
-    WLOG(params, '', textentry('40-021-00008', args=[stokesfile.filename]))
-    # define multi lists
-    data_list = [pprops['STOKESIERR']]
-    name_list = ['STOKES_I_ERR']
-    # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(recipe, drsfitsfile=stokesfile)]
-        name_list += ['PARAM_TABLE']
-    # write image to file
-    stokesfile.write_multi(data_list=data_list, name_list=name_list,
-                           block_kind=recipe.out_block_str,
-                           runstring=recipe.runstring)
-    # add to output files (for indexing)STOKES_I
-    recipe.add_output_file(stokesfile)
+    # add elapsed time of observation (in seconds)
+    polfile.add_hkey('KW_POL_ELAPTIME', value=props['ELAPSED_TIME'])
+    # add MJD at center of observation
+    polfile.add_hkey('KW_POL_MJDCEN', value=props['MJDCEN'])
+    # add BJD at center of observation
+    polfile.add_hkey('KW_POL_BJDCEN', value=props['BJDCEN'])
+    # add BERV at center of observation
+    polfile.add_hkey('KW_POL_BERVCEN', value=props['BERVCEN'])
+    # add mean BJD for polar sequence
+    polfile.add_hkey('KW_POL_MEANBJD', value=props['MEANBJD'])
+    # add stokes parameter
+    polfile.add_hkey('KW_POL_STOKES', value=props['GLOBAL_STOKES'])
+    # add number of exposures for polarimetry
+    polfile.add_hkey('KW_POL_NEXP', value=props['N_EXPOSURES'])
+    # add the total exposure time (in seconds)
+    polfile.add_hkey('KW_POL_EXPTIME', value=props['TOTEXPTIME'])
+    # add the polarimetry method
+    polfile.add_hkey('KW_POL_METHOD', value=props['POLMETHO'])
 
-    # ----------------------------------------------------------------------
-    # Store s1d files
-    # ----------------------------------------------------------------------
-    for s1dkey in s1dprops:
-        # get a new copy of the pol file
-        s1dfile = recipe.outputs[s1dkey].newcopy(params=params)
-        # construct the filename from file instance
-        s1dfile.construct_filename(infile=infile)
-        # copy header from corrected e2ds file
-        s1dfile.copy_hdict(polfile)
-        # add output tag
-        s1dfile.add_hkey('KW_OUTPUT', value=s1dfile.name)
-        # copy data
-        s1dfile.data = s1dprops[s1dkey]['S1DTABLE']
-        # must change the datatpye to 'table'
-        s1dfile.datatype = 'table'
-        # log that we are saving s1d table
-        wargs = [s1dkey, s1dfile.filename]
-        WLOG(params, '', textentry('40-021-00010', args=wargs))
-        # define multi lists
-        data_list, name_list = [], []
-        # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(recipe, drsfitsfile=s1dfile)]
-            name_list += ['PARAM_TABLE']
-        # write image to file
-        s1dfile.write_multi(data_list=data_list, name_list=name_list,
-                            block_kind=recipe.out_block_str,
-                            runstring=recipe.runstring)
-        # add to output files (for indexing)
-        recipe.add_output_file(s1dfile)
 
-    # ----------------------------------------------------------------------
-    # Store lsd file
-    # ----------------------------------------------------------------------
-    if lprops['LSD_ANALYSIS']:
-        # ------------------------------------------------------------------
-        # make lsd table
-        columns = ['velocities', 'stokesI', 'stokesI_model', 'stokesVQU',
-                   'Null']
-        values = [lprops['LSD_VELOCITIES'], lprops['LSD_STOKES_I'],
-                  lprops['LSD_STOKES_I_MODEL'], lprops['LSD_STOKES_VQU'],
-                  lprops['LSD_NULL']]
-        comments = ['LSD_VELOCITIES', 'LSD_STOKESI', 'LSD_STOKESI_MODEL',
-                    'LSD_STOKESVQU', 'LSD_NULL']
-        # construct table
-        lsd_table = drs_table.make_table(params, columns=columns, values=values)
-        # ------------------------------------------------------------------
-        # get a new copy of the pol file
-        lsd_file = recipe.outputs['POL_LSD'].newcopy(params=params)
-        # construct the filename from file instance
-        lsd_file.construct_filename(infile=infile)
-        # copy header from corrected e2ds file
-        lsd_file.copy_hdict(polfile)
-        # add output tag
-        lsd_file.add_hkey('KW_OUTPUT', value=lsd_file.name)
-        # ------------------------------------------------------------------
-        # add lsd data
-        lsd_file.add_hkey('KW_POLAR_LSD_MASK', value=lprops['LSD_MASK'])
-        lsd_file.add_hkey('KW_POLAR_LSD_FIT_RV',
-                          value=lprops['LSD_STOKES_I_FIT_RV'])
-        lsd_file.add_hkey('KW_POLAR_LSD_FIT_RESOL',
-                          value=lprops['LSD_STOKES_FIT_RESOL'])
-        lsd_file.add_hkey('KW_POLAR_LSD_MEANPOL', value=lprops['LSD_POL_MEAN'])
-        lsd_file.add_hkey('KW_POLAR_LSD_STDPOL', value=lprops['LSD_POL_STD'])
-        lsd_file.add_hkey('KW_POLAR_LSD_MEDPOL', value=lprops['LSD_POL_MEDIAN'])
-        lsd_file.add_hkey('KW_POLAR_LSD_MEDABSDEV',
-                          value=lprops['LSD_POL_MED_ABS_DEV'])
-        lsd_file.add_hkey('KW_POLAR_LSD_MEANSVQU',
-                          value=lprops['LSD_STOKES_VQU_MEAN'])
-        lsd_file.add_hkey('KW_POLAR_LSD_STDSVQU',
-                          value=lprops['LSD_STOKES_VQU_STD'])
-        lsd_file.add_hkey('KW_POLAR_LSD_MEANNULL',
-                          value=lprops['LSD_NULL_MEAN'])
-        lsd_file.add_hkey('KW_POLAR_LSD_STDNULL', value=lprops['LSD_NULL_STD'])
-        # add information about the meaning of the data columns
-        lsd_file.add_hkey('KW_POL_LSD_COL1', value=comments[0])
-        lsd_file.add_hkey('KW_POL_LSD_COL2', value=comments[1])
-        lsd_file.add_hkey('KW_POL_LSD_COL3', value=comments[2])
-        lsd_file.add_hkey('KW_POL_LSD_COL4', value=comments[3])
-        lsd_file.add_hkey('KW_POL_LSD_COL5', value=comments[4])
-        # add lsd constants
-        lsd_file.add_hkey('KW_POLAR_LSD_MLDEPTH',
-                          value=lprops['LSD_MIN_LINEDEPTH'])
-        lsd_file.add_hkey('KW_POLAR_LSD_VINIT', value=lprops['LSD_VINIT'])
-        lsd_file.add_hkey('KW_POLAR_LSD_VFINAL', value=lprops['LSD_VFINAL'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NORM', value=lprops['LSD_NORM'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NBIN1', value=lprops['LSD_NBIN1'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NLAP1', value=lprops['LSD_NOVERLAP1'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NSIG1', value=lprops['LSD_NSIGCLIP1'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NWIN1', value=lprops['LSD_NWINDOW1'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NMODE1', value=lprops['LSD_NMODE1'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NLFIT1', value=lprops['LSD_NLFIT1'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NPOINTS', value=lprops['LSD_NPOINTS'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NBIN2', value=lprops['LSD_NBIN2'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NLAP2', value=lprops['LSD_NOVERLAP2'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NSIG2', value=lprops['LSD_NSIGCLIP2'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NWIN2', value=lprops['LSD_NWINDOW2'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NMODE2', value=lprops['LSD_NMODE2'])
-        lsd_file.add_hkey('KW_POLAR_LSD_NLFIT2', value=lprops['LSD_NLFIT2'])
-        # ------------------------------------------------------------------
-        # set data
-        lsd_file.data = lsd_table
-        # update the data type
-        lsd_file.datatype = 'table'
-        # log that we are saving lsd file
-        WLOG(params, '', textentry('40-021-00009', args=[lsd_file.filename]))
-        # define multi lists
-        data_list, name_list = [], []
-        # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(recipe, drsfitsfile=lsd_file)]
-            name_list += ['PARAM_TABLE']
-        # write image to file
-        lsd_file.write_multi(data_list=data_list, name_list=name_list,
-                             block_kind=recipe.out_block_str,
-                             runstring=recipe.runstring)
-        # add to output files (for indexing)
-        recipe.add_output_file(lsd_file)
 
+    return polfile
 
 # =============================================================================
 # Define worker functions
@@ -1916,11 +1760,11 @@ def continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
         # if we have more than 2 points we can use mean / median
         if len(xtmp[nanmask]) > 2:
             # calculate mean x within the bin
-            xmean = np.nanmean(xtmp)
+            xmean = np.mean(xtmp[nanmask])
             # calculate median y within the bin
-            medy = np.nanmedian(ytmp)
+            medy = np.median(ytmp[nanmask])
             # calculate median deviation
-            medydev = np.nanmedian(np.abs(ytmp - medy))
+            medydev = np.median(np.abs(ytmp[nanmask] - medy))
             # create mask to filter data outside n*sigma range
             filtermask = (ytmp[nanmask] > medy)
             filtermask &= (ytmp[nanmask] < medy + sigmaclip * medydev)
@@ -1931,13 +1775,13 @@ def continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
                 # do a median
                 if mode == 'max':
                     # save maximum y of filtered data
-                    ybin.append(np.nanmax(ytmp[filtermask]))
+                    ybin.append(np.max(ytmp[nanmask][filtermask]))
                 elif mode == 'median':
                     # save median y of filtered data
-                    ybin.append(np.nanmedian(ytmp[filtermask]))
+                    ybin.append(np.median(ytmp[nanmask][filtermask]))
                 elif mode == 'mean':
                     # save mean y of filtered data
-                    ybin.append(np.nanmean(ytmp[filtermask]))
+                    ybin.append(np.mean(ytmp[nanmask][filtermask]))
                 else:
                     # TODO: move to language database
                     emsg = 'Can not recognize selected mode="{0}"'
@@ -2257,21 +2101,22 @@ def _continuum_polarization(params: ParamDict, xarr: np.ndarray,
             # append to xbin
             xbin.append(xarr[0] - np.abs(xarr[1] - xarr[0]))
             # create mask to get rid of NaNs
-            ybin.append(np.nanmedian(yarr[:binsize]))
+            localnanmask = np.isfinite(yarr)
+            ybin.append(np.nanmedian(yarr[localnanmask][:binsize]))
         # ---------------------------------------------------------------------
         # if we have over 2 points we can use mean / median
         if len(xtmp[nanmask]) > 2:
             # calculate mean x within the bin
-            xmean = np.nanmean(xtmp)
+            xmean = np.mean(xtmp[nanmask])
             # save mean x with in bin
             xbin.append(xmean)
             # do a median
             if mode == 'median':
                 # save median y of filtered data
-                ybin.append(np.nanmedian(ytmp))
+                ybin.append(np.median(ytmp[nanmask]))
             elif mode == 'mean':
                 # save mean y of filtered data
-                ybin.append(np.nanmean(ytmp))
+                ybin.append(np.mean(ytmp[nanmask]))
             else:
                 # TODO: move to language database
                 emsg = 'Can not recognize selected mode="{0}"'
@@ -2282,7 +2127,8 @@ def _continuum_polarization(params: ParamDict, xarr: np.ndarray,
         if ibin == nbins - 1:
             xbin.append(xarr[-1] + np.abs(xarr[-1] - xarr[-2]))
             # create mask to get rid of NaNs
-            ybin.append(np.nanmedian(yarr[-binsize:]))
+            localnanmask = np.isfinite(yarr)
+            ybin.append(np.nanmedian(yarr[localnanmask][-binsize:]))
     # -------------------------------------------------------------------------
     # the continuum may be obtained either by polynomial fit or by cubic
     # interpolation

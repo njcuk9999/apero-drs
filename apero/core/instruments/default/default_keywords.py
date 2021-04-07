@@ -2226,11 +2226,38 @@ KW_CCF_RV_WAVESRCE = Keyword('KW_CCF_RV_WAVESRCE', key='', dtype=str,
 # -----------------------------------------------------------------------------
 # Define polar variables
 # -----------------------------------------------------------------------------
+# define the Elapsed time of observation (sec)
+KW_POL_ELAPTIME = Keyword('KW_POL_ELAPTIME', key='', dtype=float,
+                          source=__NAME__,
+                          description=('define the Elapsed time of '
+                                       'observation (sec)'))
+
+# define the MJD at center of observation
+KW_POL_MJDCEN = Keyword('KW_POL_MJDCEN', key='', dtype=float, source=__NAME__,
+                        description='define the MJD at center of observation')
+
+# define the BJD at center of observation
+KW_POL_BJDCEN = Keyword('KW_POL_BJDCEN', key='', dtype=float, source=__NAME__,
+                        description='define the BJD at center of observation')
+
+# define the BERV at center of observation
+KW_POL_BERVCEN = Keyword('KW_POL_BERVCEN', key='', dtype=float, source=__NAME__,
+                         description=('define the BERV at center of '
+                                      'observation'))
+
+# define the Mean BJD for polar sequence
+KW_POL_MEANBJD = Keyword('KW_POL_MEANBJD', key='', dtype=float, source=__NAME__,
+                         description=('define the Mean BJD for polar '
+                                      'sequence'))
 
 # define the Stokes paremeter: Q, U, V, or I
 KW_POL_STOKES = Keyword('KW_POL_STOKES', key='', dtype=str, source=__NAME__,
                         description=('define the Stokes paremeter: '
                                      'Q, U, V, or I'))
+
+
+# -----------------------------------------------------------------------------
+
 
 # define Number of exposures for polarimetry
 KW_POL_NEXP = Keyword('KW_POL_NEXP', key='', dtype=int, source=__NAME__,
@@ -2273,29 +2300,10 @@ KW_POL_BERVS = Keyword('KW_POL_BERVS', key='', dtype=float, source=__NAME__,
 KW_POL_EXPTIME = Keyword('KW_POL_EXPTIME', key='', dtype=float, source=__NAME__,
                          description='define the Total exposure time (sec)')
 
-# define the Elapsed time of observation (sec)
-KW_POL_ELAPTIME = Keyword('KW_POL_ELAPTIME', key='', dtype=float,
-                          source=__NAME__,
-                          description=('define the Elapsed time of '
-                                       'observation (sec)'))
 
-# define the MJD at center of observation
-KW_POL_MJDCEN = Keyword('KW_POL_MJDCEN', key='', dtype=float, source=__NAME__,
-                        description='define the MJD at center of observation')
 
-# define the BJD at center of observation
-KW_POL_BJDCEN = Keyword('KW_POL_BJDCEN', key='', dtype=float, source=__NAME__,
-                        description='define the BJD at center of observation')
 
-# define the BERV at center of observation
-KW_POL_BERVCEN = Keyword('KW_POL_BERVCEN', key='', dtype=float, source=__NAME__,
-                         description=('define the BERV at center of '
-                                      'observation'))
 
-# define the Mean BJD for polar sequence
-KW_POL_MEANBJD = Keyword('KW_POL_MEANBJD', key='', dtype=float, source=__NAME__,
-                         description=('define the Mean BJD for polar '
-                                      'sequence'))
 
 # define the minimum number of files used
 KW_USED_MIN_FILES = Keyword('KW_USED_MIN_FILES', key='', dtype=int,

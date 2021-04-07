@@ -6448,10 +6448,10 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # calculate s1d file
     sargs = [wprops['WAVEMAP'], e2dsff_file.get_data(), blaze]
     swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
-                                  fiber=fiber, kind='E2DSFF')
+                                  fiber=fiber, s1dkind='E2DSFF')
     svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
                                   wgrid='velocity', fiber=fiber,
-                                  kind='E2DSFF')
+                                  s1dkind='E2DSFF')
     # ----------------------------------------------------------------------
     # plot the s1d plot
     recipe.plot('EXTRACT_S1D', params=params, props=svprops,

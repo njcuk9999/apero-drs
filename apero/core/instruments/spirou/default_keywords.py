@@ -1965,6 +1965,28 @@ KW_CCF_RV_WAVESRCE.set(key='RV_WAVSR',
 # -----------------------------------------------------------------------------
 # Define polar variables
 # -----------------------------------------------------------------------------
+# define the Elapsed time of observation (sec)
+KW_POL_ELAPTIME = KW_POL_ELAPTIME.copy(__NAME__)
+KW_POL_ELAPTIME.set(key='ELAPTIME',
+                    comment='POLAR Elapsed time of observation (sec)')
+
+# define the MJD at center of observation
+KW_POL_MJDCEN = KW_POL_MJDCEN.copy(__NAME__)
+KW_POL_MJDCEN.set(key='MJDCEN', comment='POLAR MJD at center of observation')
+
+# define the BJD at center of observation
+KW_POL_BJDCEN = KW_POL_BJDCEN.copy(__NAME__)
+KW_POL_BJDCEN.set(key='BJDCEN', comment='POLAR BJD at center of observation')
+
+# define the BERV at center of observation
+KW_POL_BERVCEN = KW_POL_BERVCEN.copy(__NAME__)
+KW_POL_BERVCEN.set(key='BERVCEN',
+                   comment='POLAR BERV at center of observation')
+
+# define the Mean BJD for polar sequence
+KW_POL_MEANBJD = KW_POL_MEANBJD.copy(__NAME__)
+KW_POL_MEANBJD.set(key='MEANBJD', comment='POLAR Mean BJD for polar sequence')
+
 # define the Stokes paremeter: Q, U, V, or I
 KW_POL_STOKES = KW_POL_STOKES.copy(__NAME__)
 KW_POL_STOKES.set(key='STOKES', comment='POLAR Stokes paremeter: Q, U, V, or I')
@@ -1974,9 +1996,21 @@ KW_POL_NEXP = KW_POL_NEXP.copy(__NAME__)
 KW_POL_NEXP.set(key='POLNEXP',
                 comment='POLAR Number of exposures for polarimetry')
 
+# define the Total exposure time (sec)
+KW_POL_EXPTIME = KW_POL_EXPTIME.copy(__NAME__)
+KW_POL_EXPTIME.set(key='TOTETIME', comment='POLAR Total exposure time (sec)')
+
 # defines the Polarimetry method
 KW_POL_METHOD = KW_POL_METHOD.copy(__NAME__)
 KW_POL_METHOD.set(key='POLMETHO', comment='POLAR Polarimetry method')
+
+# -----------------------------------------------------------------------------
+
+
+
+
+
+
 
 # define the base file name exposure list
 KW_POL_FILES = KW_POL_FILES.copy(__NAME__)
@@ -2006,27 +2040,14 @@ KW_POL_BERVS.set(key='P_BERV{0:02d}', comment='POLAR BERV for')
 KW_POL_EXPTIME = KW_POL_EXPTIME.copy(__NAME__)
 KW_POL_EXPTIME.set(key='POLTTIME', comment='POLAR Total exposure time (sec)')
 
-# define the Elapsed time of observation (sec)
-KW_POL_ELAPTIME = KW_POL_ELAPTIME.copy(__NAME__)
-KW_POL_ELAPTIME.set(key='POLETIME',
-                    comment='POLAR Elapsed time of observation (sec)')
 
-# define the MJD at center of observation
-KW_POL_MJDCEN = KW_POL_MJDCEN.copy(__NAME__)
-KW_POL_MJDCEN.set(key='POLMJDC', comment='POLAR MJD at center of observation')
 
-# define the BJD at center of observation
-KW_POL_BJDCEN = KW_POL_BJDCEN.copy(__NAME__)
-KW_POL_BJDCEN.set(key='POLBJDC', comment='POLAR BJD at center of observation')
 
-# define the BERV at center of observation
-KW_POL_BERVCEN = KW_POL_BERVCEN.copy(__NAME__)
-KW_POL_BERVCEN.set(key='POLBERVC',
-                   comment='POLAR BERV at center of observation')
 
-# define the Mean BJD for polar sequence
-KW_POL_MEANBJD = KW_POL_MEANBJD.copy(__NAME__)
-KW_POL_MEANBJD.set(key='POLMNBJD', comment='POLAR Mean BJD for polar sequence')
+
+
+
+
 
 # define the minimum number of files used
 KW_USED_MIN_FILES = KW_USED_MIN_FILES.copy(__NAME__)

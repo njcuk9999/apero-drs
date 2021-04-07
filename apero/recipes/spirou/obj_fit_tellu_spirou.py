@@ -269,20 +269,20 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         scargs = [wprops['WAVEMAP'], cprops['CORRECTED_SP'], nprops['BLAZE']]
         scwprops = extract.e2ds_to_s1d(params, recipe, *scargs, wgrid='wave',
-                                       fiber=fiber, kind='corrected sp')
+                                       fiber=fiber, s1dkind='corrected sp')
         scvprops = extract.e2ds_to_s1d(params, recipe, *scargs,
                                        wgrid='velocity', fiber=fiber,
-                                       kind='corrected sp')
+                                       s1dkind='corrected sp')
 
         # ------------------------------------------------------------------
         # Create 1d spectra (s1d) of the reconstructed absorption
         # ------------------------------------------------------------------
         rcargs = [wprops['WAVEMAP'], cprops['RECON_ABSO_SP'], nprops['BLAZE']]
         rcwprops = extract.e2ds_to_s1d(params, recipe, *rcargs, wgrid='wave',
-                                       fiber=fiber, kind='recon')
+                                       fiber=fiber, s1dkind='recon')
         rcvprops = extract.e2ds_to_s1d(params, recipe, *rcargs,
                                        wgrid='velocity', fiber=fiber,
-                                       kind='recon')
+                                       s1dkind='recon')
 
         # ------------------------------------------------------------------
         # s1d plots

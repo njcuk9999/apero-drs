@@ -522,7 +522,7 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'POLAR_LSD_PATH', func=func_name,
+    relfolder = pcheck(params, 'POLAR_LSD_DIR', func=func_name,
                        override=lsd_dir)
     filekey = pcheck(params, 'POLAR_LSD_FILE_KEY', func=func_name,
                      override=filekey)
@@ -532,7 +532,7 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
         # get path to directory
         fulldir = os.path.join(assetdir, relfolder)
         # get all files
-        allfiles = np.sort(glob.glob('{0}/{1}'.format(fulldir, filekey)))
+        allfiles = np.sort(glob.glob('{0}/{1}*'.format(fulldir, filekey)))
         # loop around files and get their temperatures
         file_temperatures, basenames = [], []
         for filename in allfiles:
@@ -550,17 +550,17 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
                 # log error
                 eargs = [filename, type(e), e]
                 WLOG(params, 'error', textentry('09-021-00009', args=eargs))
-        # ------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # now we have the temperatures find the closest to the input
         #     temperature
-        # ------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # find the temperature difference
         diff = temperature - np.array(file_temperatures)
         # find the position in our list of files closest in temperature
         pos = int(np.argmin(abs(diff)))
         # get filename from this
         filename = basenames[pos]
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # deal with full path being given
     if os.path.exists(filename):
         absfilename = str(filename)
@@ -569,14 +569,19 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
     # deal with return_filename
     if return_filename:
         return absfilename
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # define table column names
     colnames = ['wavec', 'znum', 'depth', 'excpotf', 'lande', 'flagf']
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # file currently must be an ascii file and must start on line 1
     table = load_table_file(params, absfilename, fmt='ascii', datastart=1,
                             func_name=func_name, colnames=colnames)
-    WLOG(params, '', textentry('40-020-00002', args=absfilename))
+    # -------------------------------------------------------------------------
+    # log message and return table and mask
+    # TODO: move to language database
+    msg = 'Mask used for LSD computation: {0}'
+    margs = [absfilename]
+    WLOG(params, '', msg.format(*margs))
     return table, absfilename
 
 
