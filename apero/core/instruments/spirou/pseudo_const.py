@@ -414,6 +414,67 @@ class PseudoConstants(DefaultConstants):
         # return bands
         return bands
 
+    def GET_LSD_ORDER_RANGES(self) -> List[List[float]]:
+        """
+        Define the valid wavelength ranges for each order in SPIrou.
+
+        :return orders: array of float pairs for wavelength ranges
+        """
+        # storage for order ranges
+        orders = []
+        # add ranges as pairs of wavelengths (low wave to high wave)
+        orders.append([963.6, 986.0])
+        orders.append([972.0, 998.4])
+        orders.append([986.3, 1011])
+        orders.append([1000.1, 1020])
+        orders.append([1015, 1035])
+        orders.append([1027.2, 1050])
+        orders.append([1042, 1065])
+        orders.append([1055, 1078])
+        orders.append([1070, 1096])
+        orders.append([1084, 1112.8])
+        orders.append([1098, 1128])
+        orders.append([1113, 1146])
+        orders.append([1131, 1162])
+        orders.append([1148, 1180])
+        orders.append([1166, 1198])
+        orders.append([1184, 1216])
+        orders.append([1202, 1235])
+        orders.append([1222, 1255])
+        orders.append([1243, 1275])
+        orders.append([1263, 1297])
+        orders.append([1284, 1320])
+        orders.append([1306, 1342])
+        orders.append([1328, 1365])
+        orders.append([1352, 1390])
+        orders.append([1377, 1415])
+        orders.append([1405, 1440])
+        orders.append([1429, 1470])
+        orders.append([1456, 1497])
+        orders.append([1485, 1526])
+        orders.append([1515, 1557])
+        orders.append([1545, 1590])
+        orders.append([1578, 1623])
+        orders.append([1609, 1657])
+        orders.append([1645, 1692])
+        orders.append([1681, 1731])
+        orders.append([1722, 1770])
+        orders.append([1760, 1810])
+        orders.append([1800, 1855])
+        orders.append([1848, 1900])
+        orders.append([1890, 1949])
+        orders.append([1939, 1999])
+        orders.append([1991, 2050])
+        orders.append([2044.5, 2105])
+        orders.append([2104, 2162])
+        orders.append([2161, 2226])
+        orders.append([2225, 2293])
+        orders.append([2291, 2362])
+        orders.append([2362, 2430])
+        orders.append([2440, 2510])
+        # return order ranges
+        return orders
+
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================

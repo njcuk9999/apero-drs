@@ -332,7 +332,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
         emsgs = 'Object name from header ({0}) not consistent between files'
         emsgs = emsgs.format(params['KW_OBJNAME'][0])
         for it in range(len(objnames)):
-            emsg += '\n\tFile {0}\t{1}={2}'
+            emsg = '\n\tFile {0}\t{1}={2}'
             eargs = [basenames[it], params['KW_OBJNAME'][0], objnames[it]]
             emsg = emsg.format(*eargs)
             emsgs += emsg
@@ -1130,9 +1130,9 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # calculate continuum flux using moving median
     if stokesi_detection_alg == 'MOVING_MEDIAN':
         # calculate continuum flux
-        cout = _continuum(params, xdata, stokes_i, binsize=pol_binsize,
-                          overlap=pol_overlap, window=6, mode="max",
-                          use_linear_fit=True, telluric_bands=telluric_bands)
+        cout = continuum(params, xdata, stokes_i, binsize=pol_binsize,
+                         overlap=pol_overlap, window=6, mode="max",
+                         use_linear_fit=True, telluric_bands=telluric_bands)
         contflux, flux_xbin, flux_ybin = cout
         # calculate conntinuum flux using IRAF algorithm
     elif stokesi_detection_alg == 'IRAF':
@@ -1217,7 +1217,7 @@ def remove_continuum_polarization(props: ParamDict) -> ParamDict:
     """
         Function to remove the continuum polarization
 
-        :param params: parameter dictionary, ParamDict containing data
+        :param props: parameter dictionary, ParamDict containing data
 
         Must contain at least:
             WAVE: numpy array (2D), e2ds wavelength data
@@ -1431,7 +1431,7 @@ def clean_polarimetry_data(props: ParamDict, sigclip: bool = False,
             mask &= pol[order_num] < (median_pol + (nsig * medsig_pol))
         # ---------------------------------------------------------------------
         # append this cleaned data on to our clean storage
-        # do this as lists (more efficent than numpy)
+        # do this as lists (more efficient than numpy)
         clean_wavemap += list(wavemap[order_num][mask])
         clean_stokesi += list(stokesi[order_num][mask])
         clean_stokesierr += list(stokesierr[order_num][mask])
@@ -1831,12 +1831,12 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
 ContinuumReturn = Tuple[np.ndarray, np.ndarray, np.ndarray]
 
 
-def _continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
-               binsize: int = 200, overlap: int = 100,
-               sigmaclip: float = 3.0, window: int = 3,
-               mode: str = "median", use_linear_fit: bool = False,
-               telluric_bands: Union[List[float], None] = None,
-               outx: Union[np.ndarray, None] = None) -> ContinuumReturn:
+def continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
+              binsize: int = 200, overlap: int = 100,
+              sigmaclip: float = 3.0, window: int = 3,
+              mode: str = "median", use_linear_fit: bool = False,
+              telluric_bands: Union[List[float], None] = None,
+              outx: Union[np.ndarray, None] = None) -> ContinuumReturn:
     """
     Function to calculate continuum
 
@@ -1865,7 +1865,7 @@ def _continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
                    data for obtaining the continuum
     """
     # set function name
-    func_name = display_func('_continuum', __NAME__)
+    func_name = display_func('continuum', __NAME__)
     # -------------------------------------------------------------------------
     # deal with telluric bands
     if telluric_bands is None:

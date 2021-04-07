@@ -10,11 +10,9 @@ Created on 2019-11-25 at 16:44
 @author: cook
 """
 from apero.base import base
-from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-
 from apero.science.polar import gen_pol
 from apero.science.polar import lsd
 
@@ -92,7 +90,6 @@ def __main__(recipe, params):
     # TODO --------------------------------------------------------------------
     # TODO: Move to constants
     # TODO --------------------------------------------------------------------
-
 
     # -------------------------------------------------------------------------
     # GENERAL POLAR SETTINGS
@@ -181,9 +178,17 @@ def __main__(recipe, params):
     #  Define minimum line depth to be used in the LSD analyis
     params.set('POLAR_LSD_MIN_LINEDEPTH', value=0.005, source=mainname)
     #  Define initial velocity (km/s) for output LSD profile
-    params.set('POLAR_LSD_V0', value=-150., source=mainname)
+    params.set('POLAR_LSD_V0', value=-150.0, source=mainname)
     #  Define final velocity (km/s) for output LSD profile
-    params.set('POLAR_LSD_VF', value=150., source=mainname)
+    params.set('POLAR_LSD_VF', value=150.0, source=mainname)
+    #  Define number of points for output LSD profile
+    params.set('POLAR_LSD_NP', value=151, source=mainname)
+    # Renormalize data before LSD analysis
+    params.set('POLAR_LSD_NORMALIZE', value=False, source=mainname)
+    #  Remove edges of LSD profile
+    params.set('POLAR_LSD_REMOVE_EDGES', value=True, source=mainname)
+    #  Define the guess at the resolving power for lsd profile fit
+    params.set('POLAR_LSD_RES_POWER_GUESS', value=50000.0, source=mainname)
 
     # TODO --------------------------------------------------------------------
     # TODO: End of constants
@@ -191,14 +196,20 @@ def __main__(recipe, params):
 
     # set polar exposures
     inputs = gen_pol.set_polar_exposures(params)
-
+    # get constants from params
+    remove_continuum = params['POLAR_REMOVE_CONTINUUM']
+    normalize_stokesi = params['POLAR_NORMALIZE_STOKES_I']
+    clean_by_sigmaclip = params['POLAR_CLEAN_BY_SIGMA_CLIPPING']
+    clean_nsig = params['POLAR_NSIGMA_CLIPPING']
+    do_lsd_analysis = params['INPUTS']['LSD']
+    drs_header = params['DRS_HEADER']
     # -------------------------------------------------------------------------
     # part 1: deal with input files and load data
     # -------------------------------------------------------------------------
     # TODO: move text to language database
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
     WLOG(params, 'info', 'Part 1: loading input data')
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
     # TODO: decide here (or inside) which products to load from
     # TODO:   - add e.fits + t.fits + v.fits instead of reduced products
     pprops = gen_pol.apero_load_data(params, recipe, inputs)
@@ -207,9 +218,9 @@ def __main__(recipe, params):
     # part 2: run polarimetry analysis
     # -------------------------------------------------------------------------
     # TODO: move text to language database
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
     WLOG(params, 'info', 'Part 2: Run polar analysis')
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
     pprops = gen_pol.calculate_polarimetry(params, pprops)
     pprops = gen_pol.calculate_stokes_i(params, pprops)
 
@@ -217,48 +228,45 @@ def __main__(recipe, params):
     # part 3: run analysis for continuum detection and removal
     # -------------------------------------------------------------------------
     # TODO: move text to language database
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
     WLOG(params, 'info', 'Part 3: Run continuum analysis')
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
     # calculate the continuum
     pprops = gen_pol.calculate_continuum(params, recipe, pprops)
     # if we are removing polar continuum
-    if params['POLAR_REMOVE_CONTINUUM']:
+    if remove_continuum:
         pprops = gen_pol.remove_continuum_polarization(pprops)
     # if we are
-    if params['POLAR_NORMALIZE_STOKES_I']:
+    if normalize_stokesi:
         pprops = gen_pol.normalize_stokes_i(pprops)
 
     # ----------------------------------------------------------------------
     # Apply sigma-clipping
     # ----------------------------------------------------------------------
-    if params['POLAR_CLEAN_BY_SIGMA_CLIPPING'] :
-        # get the sigma criteria
-        nsig = params['POLAR_NSIGMA_CLIPPING']
+    if clean_by_sigmaclip:
         # run the cleaning
         pprops = gen_pol.clean_polarimetry_data(pprops, sigclip=True,
-                                                nsig=nsig, overwrite=True)
+                                                nsig=clean_nsig, overwrite=True)
 
     # -------------------------------------------------------------------------
     # part4: run lsd analysis
     # -------------------------------------------------------------------------
     # TODO: move text to language database
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
     WLOG(params, 'info', 'Part 4: Run LSD Analysis')
-    WLOG(params, 'info', params['DRS_HEADER'])
-
-    if params['INPUTS']['LSD']:
+    WLOG(params, 'info', drs_header)
+    # run analysis
+    if do_lsd_analysis:
         # run LSD analysis
         pprops = lsd.lsd_analysis_wrapper(params, pprops)
-
 
     # -------------------------------------------------------------------------
     # part5: quality control
     # -------------------------------------------------------------------------
     # TODO: move text to language database
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
     WLOG(params, 'info', 'Part 5: Quality Control')
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
 
     # -------------------------------------------------------------------------
     # part6: Make S1D files
@@ -269,9 +277,9 @@ def __main__(recipe, params):
     # part6: writing files
     # -------------------------------------------------------------------------
     # TODO: move text to language database
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
     WLOG(params, 'info', 'Part 6: Writing files')
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
 
     # TODO: Write as individual products - don't do p.fits here
     # TODO:   p.fits should be done in the output post processing script
@@ -293,9 +301,9 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # part7: summary plots
     # -------------------------------------------------------------------------
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
     WLOG(params, 'info', 'Part 7: plots')
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', drs_header)
 
     # plot continuum plots
     recipe.plot.polar_continuum_plot(params, pprops)
@@ -303,8 +311,8 @@ def __main__(recipe, params):
     recipe.plot.polar_result_plot(params, pprops)
     # plot total flux (Stokes I)
     recipe.plot.polar_stokes_i_plot(params, pprops)
-
-    if params['INPUTS']['LSD'] :
+    # plot LSD analysis plot only if we did lsd analysis
+    if do_lsd_analysis:
         # plot LSD analysis
         recipe.plot.polar_lsd_plot(params, pprops)
 

@@ -11,17 +11,16 @@ Created on 2019-10-25 at 13:25
 """
 from astropy import constants as cc
 import numpy as np
-import warnings
+from scipy.optimize import curve_fit
+from typing import Tuple
 
 from apero.base import base
 from apero.core import math as mp
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log, drs_file
-from apero.core.utils import drs_startup
 from apero.core.utils import drs_data
-from apero.io import drs_table
-from apero.science import extract
+from apero.science.polar import gen_pol
 
 # =============================================================================
 # Define variables
@@ -55,7 +54,6 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # LSD wrapper function
 # =============================================================================
 def lsd_analysis_wrapper(params: ParamDict, props: ParamDict) -> ParamDict:
-
     # select the correct lsd mask and load values into props
     props = load_lsd_mask(params, props)
 
@@ -186,7 +184,7 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     # set some statistics
     num_lines_used = len(wavec)
     mean_wave_lines = np.nanmean(wavec)
-    mean_lande_lines =np.nanmean(lande)
+    mean_lande_lines = np.nanmean(lande)
     # -------------------------------------------------------------------------
     # log the number of valid lines after filtering
     # TODO: move teext to language database
@@ -211,7 +209,7 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     props['LSD_LINES_MEAN_WAVE'] = mean_wave_lines
     props['LSD_LINES_MEAN_LANDE'] = mean_lande_lines
     # set source
-    keys = ['LSD_LINES_WLC', 'LSD_LINES_ZNUMBER' ,'LSD_LINES_DEPTH',
+    keys = ['LSD_LINES_WLC', 'LSD_LINES_ZNUMBER', 'LSD_LINES_DEPTH',
             'LSD_LINES_POL_WEIGHT', 'LSD_LINES_LANDE',
             'LSD_LINES_POL_EXC_POTENTIAL', 'LSD_LINES_POL_FLAG',
             'LSD_LINES_NUM_USED', 'LSD_LINES_MEAN_WAVE', 'LSD_LINES_MEAN_LANDE']
@@ -254,14 +252,14 @@ def get_wl_ranges(params: ParamDict, props: ParamDict) -> ParamDict:
     dwl = wavec * (vfinal - vinit) / (2. * speed_of_light)
     # get the initial and final wavelength of each line
     wlrange_tmp_init = wavec - dwl
-    wlrange_tmp_final= wavec + dwl
+    wlrange_tmp_final = wavec + dwl
     # -------------------------------------------------------------------------
     # initialize final vector of spectral ranges
     wl_ranges_init = []
     wl_ranges_final = []
     # -------------------------------------------------------------------------
     # initialize current wl0 and wlf
-    current_wl_init = float(wlrange_tmp_init[0],)
+    current_wl_init = float(wlrange_tmp_init[0], )
     current_wl_final = float(wlrange_tmp_final[0])
     # merge overlapping ranges
     for it in range(len(wlrange_tmp_init)):
@@ -294,6 +292,263 @@ def get_wl_ranges(params: ParamDict, props: ParamDict) -> ParamDict:
     return props
 
 
+def prepare_polarimetry_data(params: ParamDict, props: ParamDict) -> ParamDict:
+    """
+    Function to prepare polarimetry data for LSD analysis.
+
+    :param params: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_POLAR_LSD_NORMALIZE: bool, normalize Stokes I data
+
+    :param props: parameter dictionary, ParamDict to store data
+        Must contain at least:
+            GLOBAL_WAVE_MAP: numpy array (2D), wavelength data
+            STOKESI: numpy array (2D), Stokes I data
+            STOKESIERR: numpy array (2D), errors of Stokes I
+            POL: numpy array (2D), degree of polarization data
+            POLERR' numpy array (2D), errors of degree of polarization
+            NULL2: numpy array (2D), 2nd null polarization
+
+    :return props: parameter dictionaries,
+        The updated parameter dictionary adds/updates the following:
+            LSD_WAVE: numpy array (1D), wavelength data
+            LSD_FLUX: numpy array (1D), Stokes I data
+            LSD_FLUXERR: numpy array (1D), errors of Stokes I
+            LSD_POL: numpy array (1D), degree of polarization data
+            LSD_POLERR: numpy array (1D), errors of polarization
+            LSD_NULL: numpy array (1D), 2nd null polarization
+
+    """
+    # set function name
+    func_name = display_func('prepare_polarimetry_data', __NAME__)
+    # get parameters from params
+    normalize = params['POLAR_LSD_NORMALIZE']
+    # get input arrays
+    wavemap = props['GLOBAL_WAVE_MAP']
+    stokesi, stokesierr = props['STOKESI'], props['STOKESIERR']
+    pol, polerr = props['POL'], props['POLERR']
+    null1, null2 = props['NULL1'], props['NULL2']
+    # -------------------------------------------------------------------------
+    # get pconst
+    pconst = constants.pload()
+    # -------------------------------------------------------------------------
+    # get the shape of pol
+    ydim, xdim = pol.shape
+    # -------------------------------------------------------------------------
+    # get wavelength ranges to be considered in each spectral order
+    ordermask = pconst.GET_LSD_ORDER_RANGES()
+    # -------------------------------------------------------------------------
+    # initialize output data vectors
+    lsd_wave, lsd_flux, lsd_fluxerr = [], [], []
+    lsd_pol, lsd_polerr, lsd_null = [], [], []
+    # -------------------------------------------------------------------------
+    # loop over each order
+    for order_num in range(ydim):
+        # mask NaN values
+        mask = np.isfinite(stokesi[order_num])
+        mask &= np.isfinite(stokesierr[order_num])
+        mask &= np.isfinite(pol[order_num]) & np.isfinite(polerr[order_num])
+        mask &= np.isfinite(null1[order_num]) & np.isfinite(null2[order_num])
+        # make values where stokes I is positive
+        mask &= stokesi[order_num] > 0
+        # ---------------------------------------------------------------------
+        # set order wavelength limits
+        wl0, wlf = ordermask[order_num][0], ordermask[order_num][1]
+        # create wavelength mask
+        mask &= wavemap[order_num][mask] > wl0
+        mask &= wavemap[order_num][mask] < wlf
+        # ---------------------------------------------------------------------
+        # test if order is not empty
+        if np.sum(mask) > 0:
+            # mask arrays for this order
+            ordwave = wavemap[order_num][mask]
+            ordflux = stokesi[order_num][mask]
+            ordfluxerr = stokesierr[order_num][mask]
+            ordpol = pol[order_num][mask]
+            ordpolerr = polerr[order_num][mask]
+            ordnull = null2[order_num][mask]
+            # -----------------------------------------------------------------
+            # deal with normalization by continuum
+            if normalize:
+                # measure continuum
+                # TODO: Should be in constant file
+                kwargs = dict(binsize=80, overlap=15, window=3,
+                              mode='max', use_linear_fit=True)
+                cont, xbin, ybin = gen_pol.continuum(params, ordwave, ordflux,
+                                                     **kwargs)
+                # normalize flux
+                ordflux = ordflux / cont
+                ordfluxerr = ordfluxerr / cont
+            # -----------------------------------------------------------------
+            # append data to output vector
+            lsd_wave += list(ordwave)
+            lsd_flux += list(ordflux)
+            lsd_fluxerr += list(ordfluxerr)
+            lsd_pol += list(ordpol)
+            lsd_polerr += list(ordpolerr)
+            lsd_null += list(ordnull)
+    # -------------------------------------------------------------------------
+    # add back to props
+    props['LSD_WAVE'] = np.array(lsd_wave)
+    props['LSD_FLUX'] = np.array(lsd_flux)
+    props['LSD_FLUXERR'] = np.array(lsd_fluxerr)
+    props['LSD_POL'] = np.array(lsd_pol)
+    props['LSD_POLERR'] = np.array(lsd_polerr)
+    props['LSD_NULL'] = np.array(lsd_null)
+    # set source
+    keys = ['LSD_WAVE', 'LSD_FLUX', 'LSD_FLUXERR', 'LSD_POL', 'LSD_POLERR',
+            'LSD_NULL']
+    props.set_sources(keys, func_name)
+    # return data parameter dictionary
+    return props
+
+
+def lsd_analysis(params: ParamDict, props: ParamDict) -> ParamDict:
+    """
+    Function to perform Least Squares Deconvolution (LSD) analysis.
+
+    :param params: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            POLAR_LSD_V0: initial velocity for LSD profile
+            POLAR_LSD_VF: final velocity for LSD profile
+            POLAR_LSD_NP: number of points in the LSD profile
+
+    :param props: parameter dictionary, ParamDict to store data
+        Must contain at least:
+            LSD_WAVE: numpy array (1D), wavelength data
+            LSD_STOKESI: numpy array (1D), Stokes I data
+            LSD_STOKESIERR: numpy array (1D), errors of Stokes I
+            LSD_POL: numpy array (1D), degree of polarization data
+            LSD_POLERR: numpy array (1D), errors of polarization
+            LSD_NULL: numpy array (1D), 2nd null polarization
+            LSD_LINES_WLC: numpy array (1D), central wavelengths
+            LSD_LINES_DEPTH: numpy array (1D), line depths
+            LSD_LINES_POL_WEIGHT: numpy array (1D),
+                                  line weights = depth * lande * wlc
+
+    :return loc: parameter dictionaries,
+        The updated parameter dictionary adds/updates the following:
+            LSD_VELOCITIES: numpy array (1D), LSD profile velocities
+            LSD_STOKESI: numpy array (1D), LSD profile for Stokes I
+            LSD_STOKESI_MODEL: numpy array (1D), LSD gaussian model
+                               profile for Stokes I
+            LSD_STOKESVQU: numpy array (1D), LSD profile for Stokes
+                           Q,U,V polarimetry spectrum
+            LSD_NULL: numpy array (1D), LSD profile for null
+                      polarization spectrum
+    """
+    # set function name
+    func_name = display_func('lsd_analysis', __NAME__)
+    # initialize variables to define velocity vector of output LSD profile
+    vinit = params['POLAR_LSD_V0']
+    vfinal = params['POLAR_LSD_VF']
+    npoints = params['POLAR_LSD_NP']
+    remove_edges = params['POLAR_LSD_REMOVE_EDGES']
+    # get parameters from props
+    lsd_wave = props['LSD_WAVE']
+    lsd_lines_wlc = props['LSD_LINES_WLC']
+    lsd_lines_depth = props['LSD_LINES_DEPTH']
+    lsd_lines_pol_weight = props['LSD_LINES_POL_WEIGHT']
+    lsd_flux = props['LSD_FLUX']
+    lsd_fluxerr = props['LSD_FLUXERR']
+    lsd_pol = props['LSD_POL']
+    lsd_polerr = props['LSD_POLERR']
+    lsd_null = props['LSD_NULL']
+    # -------------------------------------------------------------------------
+    # create velocity vector for output LSD profile
+    lsd_velocities = np.linspace(vinit, vfinal, npoints)
+    # -------------------------------------------------------------------------
+    # create line pattern matrix for flux LSD
+    lpout = line_pattern_matrix(lsd_wave, lsd_lines_wlc, lsd_lines_depth,
+                                lsd_lines_pol_weight, lsd_velocities)
+    flux_lpm, pol_lpm = lpout
+    # -------------------------------------------------------------------------
+    # calculate flux LSD profile
+    fluxres = 1.0 - lsd_flux
+    lprout = calculate_lsd_profile(params, fluxres, lsd_fluxerr,
+                                   lsd_velocities, flux_lpm, normalize=False)
+    lsd_stokesi, lsd_stokesi_err = lprout
+    # -------------------------------------------------------------------------
+    # calculate model Stokes I spectrum
+    # TODO: Question: This line isn't used??
+    lsd_stokesi_model = 1.0 - flux_lpm.dot(lsd_stokesi)
+    # -------------------------------------------------------------------------
+    # uncomment below to check model Stokes I spectrum
+    # plt.plot(loc['LSD_WAVE'],loc['LSD_FLUX'])
+    # plt.plot(loc['LSD_WAVE'],loc['LSD_STOKESI_MODEL'])
+    # plt.show()
+    # -------------------------------------------------------------------------
+    # return profile to standard natural shape (as absorption)
+    lsd_stokesi = 1.0 - lsd_stokesi
+    # -------------------------------------------------------------------------
+    # fit gaussian to the measured flux LSD profile
+    fout = fit_gaussian_to_lsd_profile(params, lsd_velocities, lsd_stokesi)
+    lsd_stokesi_model, lsd_fit_rv, lsd_fit_resol = fout
+    # -------------------------------------------------------------------------
+    # calculate polarimetry LSD profile
+    vquout = calculate_lsd_profile(params, lsd_pol, lsd_polerr,
+                                   lsd_velocities, pol_lpm)
+    lsd_stokesvqu, lsd_stokesvqu_err = vquout
+    # -------------------------------------------------------------------------
+    # calculate model Stokes VQU spectrum
+    lsd_pol_model = pol_lpm.dot(lsd_stokesvqu)
+    # -------------------------------------------------------------------------
+    # uncomment below to check model Stokes VQU spectrum
+    # plt.errorbar(loc['LSD_WAVE'], loc['LSD_POL'],
+    #              yerr=loc['LSD_POLERR'], fmt='.')
+    # plt.plot(loc['LSD_WAVE'], loc['LSD_POL_MODEL'], '-')
+    # plt.show()
+    # -------------------------------------------------------------------------
+    # calculate null polarimetry LSD profile
+    nullout = calculate_lsd_profile(params, lsd_null, lsd_polerr,
+                                    lsd_velocities, pol_lpm)
+    lsd_null, lsd_nullerr = nullout
+    # -------------------------------------------------------------------------
+    # make sure output arrays are numpy arrays and remove edges if required
+    lsd_velocities = _remove_edges(lsd_velocities, remove_edges)
+    lsd_stokesvqu = _remove_edges(lsd_stokesvqu, remove_edges)
+    lsd_stokesvqu_err = _remove_edges(lsd_stokesvqu_err, remove_edges)
+    lsd_stokesi = _remove_edges(lsd_stokesi, remove_edges)
+    lsd_stokesi_err = _remove_edges(lsd_stokesi_err, remove_edges)
+    lsd_null = _remove_edges(lsd_null, remove_edges)
+    lsd_nullerr = _remove_edges(lsd_nullerr, remove_edges)
+    lsd_stokesi_model = _remove_edges(lsd_stokesi_model, remove_edges)
+    # -------------------------------------------------------------------------
+    # calculate statistical quantities
+    lsd_pol_mean = np.nanmean(lsd_pol)
+    lsd_pol_stddev = np.nanstd(lsd_pol)
+    lsd_pol_median = np.nanmedian(lsd_pol)
+    lsd_pol_medabsdev = np.nanmedian(np.abs(lsd_pol - lsd_pol_median))
+    lsd_stokesvqu_mean = np.nanmean(lsd_stokesvqu)
+    lsd_stokesvqu_stddev = np.nanstd(lsd_stokesvqu)
+    lsd_null_mean = np.nanmean(lsd_null)
+    lsd_null_stddev = np.nanstd(lsd_null)
+    # -------------------------------------------------------------------------
+    # add to props data parameter dictionary
+    props.set('LSD_VELOCITIES', lsd_velocities, source=func_name)
+    props.set('LSD_STOKESI', lsd_stokesi, source=func_name)
+    props.set('LSD_STOKESI_ERR', lsd_stokesi_err, source=func_name)
+    props.set('LSD_STOKESI_MODEL', lsd_stokesi_model, source=func_name)
+    props.set('LSD_POL_MODEL', lsd_pol_model, source=func_name)
+    props.set('LSD_FIT_RV', lsd_fit_rv, source=func_name)
+    props.set('LSD_FIT_RESOL', lsd_fit_resol, source=func_name)
+    props.set('LSD_STOKESVQU', lsd_stokesvqu, source=func_name)
+    props.set('LSD_STOKESVQU_ERR', lsd_stokesvqu_err, source=func_name)
+    props.set('LSD_NULL', lsd_null, source=func_name)
+    props.set('LSD_NULL_ERR', lsd_nullerr, source=func_name)
+    props.set('LSD_POL_MEAN', lsd_pol_mean, source=func_name)
+    props.set('LSD_POL_STDDEV', lsd_pol_stddev, source=func_name)
+    props.set('LSD_POL_MEDIAN', lsd_pol_median, source=func_name)
+    props.set('LSD_POL_MEDABSDEV', lsd_pol_medabsdev, source=func_name)
+    props.set('LSD_STOKESVQU_MEAN', lsd_stokesvqu_mean, source=func_name)
+    props.set('LSD_STOKESVQU_STDDEV', lsd_stokesvqu_stddev, source=func_name)
+    props.set('LSD_NULL_MEAN', lsd_null_mean, source=func_name)
+    props.set('LSD_NULL_STDDEV', lsd_null_stddev, source=func_name)
+    # -------------------------------------------------------------------------
+    # return the props data parameter dictionary
+    return props
+
+
 # =============================================================================
 # Define quality control and writing functions
 # =============================================================================
@@ -318,8 +573,8 @@ def nrefrac(wavelength: np.ndarray, density: float = 1.0):
     # Angstroms, convert to air wavelength (AIR) via:
 
     #  AIR = VAC / (1.0 + 2.735182E-4 + 131.4182 / VAC^2 + 2.76249E8 / VAC^4)
-    wl2inv = (1.e3 / wavelength)**2
-    refracstp = 272.643 + 1.2288 * wl2inv + 3.555e-2 * wl2inv**2
+    wl2inv = (1.e3 / wavelength) ** 2
+    refracstp = 272.643 + 1.2288 * wl2inv + 3.555e-2 * wl2inv ** 2
     # return wavelengths in a vacuum
     return density * refracstp
 
@@ -337,7 +592,7 @@ def convert_vacuum_to_air_wl(vacuum_wavelength: np.ndarray,
     # get the refractive index
     nrefractive = nrefrac(vacuum_wavelength, density=air_density)
     # get the air wavelengths
-    air_wavelength = vacuum_wavelength / ( 1. + (1.e-6 * nrefractive))
+    air_wavelength = vacuum_wavelength / (1. + (1.e-6 * nrefractive))
     # return the air wavelengths
     return air_wavelength
 
@@ -355,9 +610,250 @@ def convert_air_to_vacuum_wl(air_wavelength: np.ndarray,
     # get the refractive index
     nrefractive = nrefrac(air_wavelength, density=air_density)
     # get the vacuum wavelengths
-    vacuum_wavelength = air_wavelength * ( 1. + 1.e-6 * nrefractive)
+    vacuum_wavelength = air_wavelength * (1. + 1.e-6 * nrefractive)
     # return the vacuum wavelengths
     return vacuum_wavelength
+
+
+def _remove_edges(vector: np.ndarray, remove_edges: bool = True,
+                  size: int = 1) -> np.ndarray:
+    """
+    Remove edges or just copy array
+
+    :param vector: np.ndarray, array to remove edges
+    :param remove_edges: bool, if True removes edges, else just copies
+    :param size: int, the size in pixels to remove from each side
+
+    :return: np.ndarray, the updated vector
+    """
+    # TODO: Question:  Why [1: -2]??? surely you want to remove equal from
+    #                  each side?
+    if remove_edges:
+        return np.array(vector[size:-(size + 1)])
+    else:
+        return np.array(vector)
+
+
+def line_pattern_matrix(wavemap: np.ndarray, wavec: np.ndarray,
+                        depth: np.ndarray, weight: np.ndarray,
+                        velocities: np.ndarray
+                        ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Function to calculate the line pattern matrix M given in Eq (4) of paper
+    Donati et al. (1997), MNRAS 291, 658-682
+
+    :param wavemap: numpy array (1D), input wavelength data
+                   (size n = spectrum size)
+    :param wavec: numpy array (1D), central wavelengths
+                  (size = number of lines)
+    :param depth: numpy array (1D), line depths (size = number of lines)
+    :param weight: numpy array (1D), line polar weights (size = number of lines)
+    :param velocities: numpy array (1D), , LSD profile velocity vector
+                       (size = m)
+
+    :return flux_lpm, pol_lpm
+            flux_lpm: numpy array (2D) of size n x m, line pattern matrix for
+                      flux LSD.
+            pol_lpm: numpy array (2D) of size n x m, line pattern matrix for
+                     polar LSD.
+    """
+    # set function name
+    _ = display_func('line_pattern_matrix', __NAME__)
+    # set number of points and velocity (km/s) limits in LSD profile
+    numlines, vinit, vfinal = len(velocities), velocities[0], velocities[-1]
+    # set number of spectral points
+    numpixels = len(wavemap)
+    # initialize line pattern matrix for flux LSD
+    flux_lpm = np.zeros((numlines, numpixels))
+    # initialize line pattern matrix for polar LSD
+    pol_lpm = np.zeros((numlines, numpixels))
+    # -------------------------------------------------------------------------
+    # set values of line pattern matrix M
+    for line_it in range(len(wavec)):
+        # get the wavelength profile
+        waveprofile = wavec[line_it] * (1 + velocities / speed_of_light)
+        # make a line mask
+        linemask = (wavemap >= waveprofile[0]) & (wavemap <= waveprofile[-1])
+        # get the positions of linesmask
+        linepos = np.where(linemask)[0]
+        # Calculate line velocities for the observed wavelength sampling:
+        #     v = c Δλ / λ
+        wavediff = wavemap[linemask] - wavec[line_it]
+        linevelo = speed_of_light * wavediff / wavec[line_it]
+        # loop around pixels and calculate the line pattern matrix for
+        #   flux and polar - for all valid positions
+        for pix in range(len(linepos)):
+            # linear interpolation
+            # -----------------------------------------------------------------
+            # find position in velocities where our velocity should be inserted
+            jpos = np.searchsorted(velocities, linevelo[pix], side='right')
+            # -----------------------------------------------------------------
+            # get the weight of the velocity
+            vpart1 = linevelo[pix] - velocities[jpos - 1]
+            vpart2 = velocities[jpos] - velocities[jpos - 1]
+            velo_weight = vpart1 / vpart2
+            # -----------------------------------------------------------------
+            # calculate the polar line pattern matrix element
+            pol_lpm_pix1 = weight[line_it] * (1.0 - velo_weight)
+            pol_lpm_pix2 = weight[line_it] * velo_weight
+            # add to polar line pattern matrix
+            pol_lpm[linepos[pix]][jpos - 1] = pol_lpm_pix1
+            pol_lpm[linepos[pix]][jpos] = pol_lpm_pix2
+            # -----------------------------------------------------------------
+            # calculate the flux line pattern matrix element
+            flux_lpm_pix1 = depth[line_it] * (1.0 - velo_weight)
+            flux_lpm_pix2 = depth[line_it] * velo_weight
+            # add to polar line pattern matrix
+            flux_lpm[linepos[pix][jpos - 1]] = flux_lpm_pix1
+            flux_lpm[linepos[pix][jpos]] = flux_lpm_pix2
+    # ------------------------------------------------------------------------
+    # return the
+    return flux_lpm, pol_lpm
+
+
+def calculate_lsd_profile(params: ParamDict, flux: np.ndarray,
+                          fluxerr: np.ndarray, velocities: np.ndarray,
+                          lpm: np.ndarray, normalize: bool = False
+                          ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Function to calculate the LSD profile Z given in Eq (4) of paper
+    Donati et al. (1997), MNRAS 291, 658-682
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param flux: numpy array (1D), input flux or polarimetry data (size = n)
+    :param fluxerr: numpy array (1D), input flux or polarimetry error data
+                    (size = n)
+    :param velocities: numpy array (1D), , LSD profile velocity vector
+                       (size = m)
+    :param lpm: numpy array (2D) of size n x m, line pattern matrix for LSD.
+    :param normalize: bool, to calculate a continuum and normalize profile
+
+    :return: tuple, velocity profile and velocity profile error, both are
+             numpy array (1D) of size lpm, LSD profile.
+    """
+    # -------------------------------------------------------------------------
+    # First calculate transpose of M
+    #   MT = M.T
+    lpmt = np.matrix.transpose(lpm)
+    # -------------------------------------------------------------------------
+    # Initialize matrix for dot product between MT . S^2
+    lpmt_x_s2 = np.zeros_like(lpmt)
+    # Then calculate dot product between MT . S^2, where S^2=covariance matrix
+    #   MT.S^2 = MT.(1/FLUXERR^2)
+    # loop around each matrix element
+    for it in range(lpmt.shape[0]):
+        lpmt_x_s2[it] = lpmt / (fluxerr ** 2)
+    # -------------------------------------------------------------------------
+    # calculate autocorrelation
+    #  MT.S^2.M
+    lpmt_x_s2_x_lpm = lpmt_x_s2.dot(lpm)
+    # -------------------------------------------------------------------------
+    # calculate the inverse of autocorrelation using numpy pinv method
+    #  INV(MT.S^2.M)
+    lpmt_x_s2_x_lpm_inv = np.linalg.pinv(lpmt_x_s2_x_lpm)
+    # -------------------------------------------------------------------------
+    # calculate cross correlation term
+    # MT.S^2.FLUX
+    x_corr_term = lpmt_x_s2.dot(flux)
+    # -------------------------------------------------------------------------
+    # calculate velocity profile
+    # INV(MT.S^2.M).(MT.S^2.FLUX)
+    velo_profile = lpmt_x_s2_x_lpm_inv.dot(x_corr_term)
+    # -------------------------------------------------------------------------
+    # calculate error of velocity profile
+    # SQRT(DIAG(INV(MT.S^2.M))
+    velo_profile_err = np.sqrt(np.diag(lpmt_x_s2_x_lpm_inv))
+    # -------------------------------------------------------------------------
+    # deal with continuum normalization
+    if normalize:
+        # calculate continuum of LSD profile to remove trend
+        velo_cont, _, _ = gen_pol.continuum(params, velocities, velo_profile,
+                                            binsize=20, overlap=5,
+                                            sigmaclip=3.0, window=2,
+                                            mode="median", use_linear_fit=False)
+        # calculate normalized and detrended LSD profile
+        velo_profile = velo_profile / velo_cont
+        velo_profile_err = velo_profile_err / velo_cont
+    # -------------------------------------------------------------------------
+    # make sure velo profile and uncertain are arrays
+    velo_profile = np.array(velo_profile)
+    velo_profile_err = np.array(velo_profile_err)
+    # -------------------------------------------------------------------------
+    # return the velocity of the profile and its uncertainty
+    return velo_profile, velo_profile_err
+
+
+def fit_gaussian_to_lsd_profile(params: ParamDict, velocities: np.ndarray,
+                                profile: np.ndarray
+                                ) -> Tuple[np.ndarray, float, float]:
+    """
+        Function to fit gaussian to LSD Stokes I profile.
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param velocities: numpy array (1D), input velocity data
+        :param profile: numpy array (1D), input LSD profile data
+
+        :return z_gauss, RV, resolving_power:
+            z_gauss: numpy array (1D), gaussian fit to LSD profile (same size
+                    as input vels and Z)
+            RV: float, velocity of minimum obtained from gaussian fit
+            resolving_power: float, spectral resolving power calculated from
+                            sigma of gaussian fit
+        """
+    # set function name
+    _ = display_func('fit_gaussian_to_lsd_profile', __NAME__)
+    # get guess at resolving power from params
+    resolving_power_guess = params['POLAR_LSD_RES_POWER_GUESS']
+    # get the position of minimum profile
+    pos = np.argmin(profile)
+    # obtain velocity at minimum
+    min_velo = velocities[pos]
+    # get median amplitude of velocity profile
+    med_profile = np.median(profile)
+    # get the amplitude (median - minimum)
+    amplitude = np.abs(med_profile - profile[pos])
+    # work out the sigma (c/(R*2.35482))
+    sigma = speed_of_light / (resolving_power_guess * mp.fwhm())
+    # get inverted profile
+    profile_inv = 1.0 - profile
+    # -------------------------------------------------------------------------
+    # guess for fitting gaussian profile
+    guess = [amplitude, min_velo, sigma, med_profile]
+    # guess = [0.1, 0.0, 1.0]
+    # -------------------------------------------------------------------------
+    # noinspection PyTypeChecker
+    try:
+        popt, pcov = curve_fit(mp.gauss_function, velocities, profile_inv,
+                               p0=guess)
+    except Exception as e:
+        # TODO: move to language database
+        wmsg = 'Failed to fit gaussian to LSD profile\n\t{0}: {1}'
+        wargs = [type(e), str(e)]
+        WLOG(params, 'warning', wmsg.format(*wargs))
+        # set coefficients to guess
+        popt = guess
+    # -------------------------------------------------------------------------
+    # initialize output profile vector
+    profile_gauss = np.zeros_like(velocities)
+    # loop around all velocities and populate gaussian fit to profile
+    for it in range(len(profile_gauss)):
+        profile_gauss[it] = mp.gauss_function(velocities[it], *popt)
+    # -------------------------------------------------------------------------
+    # invert fit profile
+    profile_gauss = 1.0 - profile_gauss
+    # -------------------------------------------------------------------------
+    # calculate full width at half maximum (fwhm)
+    fwhm = mp.fwhm() * popt[2]
+    # -------------------------------------------------------------------------
+    # calculate resolving power from mesasured fwhm
+    resolving_power = speed_of_light / fwhm
+    # -------------------------------------------------------------------------
+    # set radial velocity directly from fitted v_0
+    rv = popt[1]
+    # -------------------------------------------------------------------------
+    # return fitted profile, radial velocity and resolving power
+    return profile_gauss, rv, resolving_power
+
 
 # =============================================================================
 # Start of code
