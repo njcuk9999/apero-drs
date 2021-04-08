@@ -125,8 +125,10 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        hcfiles = [drs_file.combine(params, recipe, hcfiles, math='median')]
-        fpfiles = [drs_file.combine(params, recipe, fpfiles, math='median')]
+        cout1 = drs_file.combine(params, recipe, hcfiles, math='median')
+        hcfiles = [cout1[0]]
+        cout2 = drs_file.combine(params, recipe, fpfiles, math='median')
+        fpfiles = [cout2[0]]
         combine = True
     else:
         combine = False

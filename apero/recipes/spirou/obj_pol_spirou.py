@@ -196,8 +196,8 @@ def __main__(recipe, params):
 
     # set polar exposures
     inputs = gen_pol.set_polar_exposures(params)
-
-
+    # set up plotting (no plotting before this)
+    recipe.plot.set_location()
     # get constants from params
     remove_continuum = params['POLAR_REMOVE_CONTINUUM']
     normalize_stokesi = params['POLAR_NORMALIZE_STOKES_I']
@@ -215,6 +215,8 @@ def __main__(recipe, params):
     # TODO: decide here (or inside) which products to load from
     # TODO:   - add e.fits + t.fits + v.fits instead of reduced products
     pprops = gen_pol.apero_load_data(params, recipe, inputs)
+    # calculate polar times
+    pprops = gen_pol.calculate_polar_times(pprops)
 
     # -------------------------------------------------------------------------
     # part 2: run polarimetry analysis
@@ -275,6 +277,10 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # part6: Make S1D files
     # -------------------------------------------------------------------------
+    # TODO: move text to language database
+    WLOG(params, 'info', drs_header)
+    WLOG(params, 'info', 'Part 6: Making S1D tables')
+    WLOG(params, 'info', drs_header)
     s1dprops = gen_pol.make_s1d(params, recipe, pprops)
 
     # -------------------------------------------------------------------------
@@ -282,34 +288,27 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # TODO: move text to language database
     WLOG(params, 'info', drs_header)
-    WLOG(params, 'info', 'Part 6: Writing files')
+    WLOG(params, 'info', 'Part 7: Writing files')
     WLOG(params, 'info', drs_header)
 
     # write polar files
-    gen_pol.write_files(params, recipe, pprops, inputs, qc_params)
-
+    gen_pol.write_files(params, recipe, pprops, inputs, s1dprops, qc_params)
 
     # TODO:   p.fits should be done in the output post processing script
 
-
     # save LSD data to fits
-    if params['INPUTS']['OUTPUT_LSD'] != 'None':
-        # get output filename
-        output_lsd = params['INPUTS']['OUTPUT_LSD']
-
-        # TODO: move text to language database
-        msg = 'Saving LSD analysis to file: {0}'
-        margs = [params['INPUTS']['OUTPUT_LSD']]
-        WLOG(params, 'info', msg.format(*margs))
-        lsd.save_lsd_fits(output_lsd, pprops, params)
+    if do_lsd_analysis:
+        lsd.write_files(params, recipe, pprops, inputs, qc_params)
 
     # -------------------------------------------------------------------------
-    # part7: summary plots
+    # part7: plots
     # -------------------------------------------------------------------------
     WLOG(params, 'info', drs_header)
-    WLOG(params, 'info', 'Part 7: plots')
+    WLOG(params, 'info', 'Part 8: plots')
     WLOG(params, 'info', drs_header)
-
+    # -------------------------------------------------------------------------
+    # Debug plots:
+    # -------------------------------------------------------------------------
     # plot continuum plots
     recipe.plot.polar_continuum_plot(params, pprops)
     # plot polarimetry results
@@ -320,6 +319,14 @@ def __main__(recipe, params):
     if do_lsd_analysis:
         # plot LSD analysis
         recipe.plot.polar_lsd_plot(params, pprops)
+    # -------------------------------------------------------------------------
+    # Summary plots
+    # -------------------------------------------------------------------------
+    # TODO: Question: which plots should be summary plots?
+
+    # write summary plot to disk
+    # TODO: Add summary function
+    gen_pol.summary(params, recipe, qc_params, pprops)
 
     # ----------------------------------------------------------------------
     # End of main code

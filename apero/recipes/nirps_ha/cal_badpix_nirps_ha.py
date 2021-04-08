@@ -114,10 +114,12 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined FLAT_FLAT file
-        flatfiles = [drs_file.combine(params, recipe, flatfiles, math='median')]
+        cout1 = drs_file.combine(params, recipe, flatfiles, math='median')
+        flatfiles = [cout1[0]]
         # get combined DARK_DARK file (can be DARK_DARK_TEL or DARK_DARK_INT)
-        darkfiles = [drs_file.combine(params, recipe, darkfiles, math='median',
-                                      same_type=False)]
+        cout2 = drs_file.combine(params, recipe, darkfiles, math='median',
+                                 same_type=False)
+        darkfiles = [cout2[0]]
         combine = True
     else:
         combine = False

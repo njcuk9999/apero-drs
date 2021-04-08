@@ -1696,9 +1696,9 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
     zoom2 = params.listp('EXTRACT_S1D_PLOT_ZOOM2', dtype=float)
     # ------------------------------------------------------------------
     # correct data for plotting
-    flux1 = flux / np.nanmedian(flux)
-    weight = weight / np.nanmedian(weight)
     with warnings.catch_warnings(record=True) as _:
+        flux1 = flux / np.nanmedian(flux)
+        weight = weight / np.nanmedian(weight)
         flux2 = (flux / weight) / np.nanmedian(flux / weight)
     # ------------------------------------------------------------------
     # set up plot

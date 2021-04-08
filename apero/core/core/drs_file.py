@@ -3632,6 +3632,8 @@ class DrsFitsFile(DrsInputFile):
         elif math in ['median', 'med']:
             with warnings.catch_warnings(record=True) as _:
                 data = mp.nanmedian(datacube, axis=0)
+        elif math in ['None']:
+            data = np.zeros_like(datacube[0])
         # else we have an error in math
         else:
             eargs = [math, ', '.join(available_math), func_name]
@@ -6502,7 +6504,8 @@ def get_another_fiber_file(params: ParamDict, outfile: DrsFitsFile,
 
 def combine(params: ParamDict, recipe: Any,
             infiles: List[DrsFitsFile], math: str = 'average',
-            same_type: bool = True) -> Union[DrsFitsFile, None]:
+            same_type: bool = True, save: bool = True
+            ) -> Union[Tuple[DrsFitsFile, Table], Tuple[None, None]]:
     """
     Takes a list of infiles and combines them (infiles must be DrsFitsFiles)
     combines using the math given.
@@ -6526,6 +6529,7 @@ def combine(params: ParamDict, recipe: Any,
     :param math: str, the math allowed (see above)
     :param same_type: bool, if True all infiles must have the same DrsFitFile
                       dtype
+    :param save: bool, if True saves to disk otherwise returns DrsFitsFile
 
     :type params: ParamDict
     :type infiles: list[DrsFitsFile]
@@ -6540,15 +6544,16 @@ def combine(params: ParamDict, recipe: Any,
     func_name = display_func('combine', __NAME__)
     # if we have a string assume we have 1 file and skip combine
     if isinstance(infiles, DrsFitsFile):
-        return infiles
+        return infiles, Table()
     # make sure infiles is a list
     if not isinstance(infiles, list):
         WLOG(params, 'error', textentry('00-001-00020', args=[func_name]))
+        return None, None
     # if we have only one file (or none) skip combine
     if len(infiles) == 1:
-        return infiles[0]
+        return infiles[0], Table()
     elif len(infiles) == 0:
-        return None
+        return None, None
     # check that all infiles are the same DrsFileType
     if same_type:
         for it, infile in enumerate(infiles):
@@ -6561,7 +6566,7 @@ def combine(params: ParamDict, recipe: Any,
     # check if outpath is set
     if outpath is None:
         WLOG(params, 'error', textentry('01-001-00023', args=[func_name]))
-        return None
+        return None, None
     # get the absolute path (for combined output)
     if params['OBS_DIR'] is None:
         obs_dir = ''
@@ -6590,21 +6595,23 @@ def combine(params: ParamDict, recipe: Any,
     outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
     # add process id
     outfile.add_hkey('KW_PID', value=params['PID'])
-    # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
-        name_list += ['PARAM_TABLE']
-        datatype_list += ['table']
-    # write to disk
-    WLOG(params, '', textentry('40-001-00025', args=[outfile.filename]))
-    outfile.write_multi(data_list=data_list, name_list=name_list,
-                        datatype_list=datatype_list,
-                        block_kind=recipe.out_block_str,
-                        runstring=recipe.runstring)
-    # add to output files (for indexing)
-    recipe.add_output_file(outfile)
+    # deal with writing to disk (default)
+    if save:
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
+            name_list += ['PARAM_TABLE']
+            datatype_list += ['table']
+        # write to disk
+        WLOG(params, '', textentry('40-001-00025', args=[outfile.filename]))
+        outfile.write_multi(data_list=data_list, name_list=name_list,
+                            datatype_list=datatype_list,
+                            block_kind=recipe.out_block_str,
+                            runstring=recipe.runstring)
+        # add to output files (for indexing)
+        recipe.add_output_file(outfile)
     # return combined infile
-    return outfile
+    return outfile, outtable
 
 
 def combine_metric_1(params: ParamDict, row: int, image1: np.ndarray,
