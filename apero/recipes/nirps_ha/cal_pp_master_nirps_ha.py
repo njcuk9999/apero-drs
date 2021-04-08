@@ -136,7 +136,8 @@ def __main__(recipe, params):
             infiles.append(infile)
             rawfiles.append(infile.basename)
     # get combined file
-    infiles = [drs_file.combine(params, recipe, infiles, math='median')]
+    cout = drs_file.combine(params, recipe, infiles, math='median')
+    infiles = [cout[0]]
     # get the number of infiles
     num_files = len(infiles)
     # load the calibration database

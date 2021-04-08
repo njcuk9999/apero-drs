@@ -105,7 +105,8 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        infiles = [drs_file.combine(params, recipe, infiles, math='median')]
+        cout = drs_file.combine(params, recipe, infiles, math='median')
+        infiles = [cout[0]]
         combine = True
     else:
         combine = False
