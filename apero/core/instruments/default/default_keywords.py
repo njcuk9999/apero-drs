@@ -156,14 +156,16 @@ __all__ = [  # input keys
     'KW_MKTEMP_BERV_COV_SNR', 'KW_MKTEMP_BERV_COV_RES',
     # polar values
     'KW_POL_STOKES', 'KW_POL_NEXP', 'KW_POL_METHOD', 'KW_POL_ELAPTIME',
-    'KW_POL_MJDCEN', 'KW_POL_BJDCEN', 'KW_POL_BERVCEN', 'KW_POL_MEANBJD',
+    'KW_POL_MJDCEN', 'KW_POL_BJDCEN', 'KW_POL_BERVCEN',
+    'KW_POL_MEAN_MJD', 'KW_POL_MEAN_BJD', 'KW_POL_MEAN_BERV',
     'KW_POL_EXPTIME', 'KW_POL_MJD_FW_CEN', 'KW_POL_BJD_FW_CEN',
     'KW_POL_CORR_BERV', 'KW_POL_CORR_SRV', 'KW_POL_NORM_STOKESI',
     'KW_POL_INTERP_FLUX', 'KW_POL_SIGCLIP', 'KW_POL_NSIGMA',
     'KW_POL_REMOVE_CONT', 'KW_POL_SCONT_DET_ALG', 'KW_POL_PCONT_DET_ALG',
-    'KW_POL_CONT_POLYFIT', 'KW_POL_CONT_DEG_POLY', 'KW_POL_S_IRAF_FUNC',
-    'KW_POL_P_IRAF_FUNC', 'KW_POL_S_IRAF_DEGREE', 'KW_POL_P_IRAF_DEGREE',
-    'KW_POL_CONT_BINSIZE', 'KW_POL_CONT_OVERLAP', 'KW_POL_CONT_TELLMASK',
+    'KW_POL_CONT_POLYFIT', 'KW_POL_CONT_DEG_POLY',
+    'KW_POL_S_IRAF_FUNC', 'KW_POL_P_IRAF_FUNC', 'KW_POL_S_IRAF_DEGREE',
+    'KW_POL_P_IRAF_DEGREE', 'KW_POL_CONT_BINSIZE', 'KW_POL_CONT_OVERLAP',
+    'KW_POL_CONT_TELLMASK',
 ]
 
 # set name
@@ -2242,9 +2244,22 @@ KW_POL_BERVCEN = Keyword('KW_POL_BERVCEN', key='', dtype=float, source=__NAME__,
                                       'observation'))
 
 # define the Mean BJD for polar sequence
-KW_POL_MEANBJD = Keyword('KW_POL_MEANBJD', key='', dtype=float, source=__NAME__,
-                         description=('define the Mean BJD for polar '
-                                      'sequence'))
+KW_POL_MEAN_MJD = Keyword('KW_POL_MEAN_MJD', key='', dtype=float,
+                          source=__NAME__,
+                          description=('define the Mean MJD for polar '
+                                       'sequence'))
+
+# define the Mean BJD for polar sequence
+KW_POL_MEAN_BJD = Keyword('KW_POL_MEAN_BJD', key='', dtype=float,
+                          source=__NAME__,
+                          description=('define the Mean BJD for polar '
+                                       'sequence'))
+
+# define the mean BERV of the exposures
+KW_POL_MEAN_BERV = Keyword('KW_POL_MEAN_BERV', key='', dtype=float,
+                           source=__NAME__,
+                           description=('define the mean BERV of the '
+                                        'exposures'))
 
 # define the Stokes paremeter: Q, U, V, or I
 KW_POL_STOKES = Keyword('KW_POL_STOKES', key='', dtype=str, source=__NAME__,

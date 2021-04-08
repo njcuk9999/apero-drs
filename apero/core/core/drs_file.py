@@ -200,10 +200,10 @@ class DrsPath:
         tmp, reduced etc)
 
         :param params: ParamDict, parameter dictionary of constants
-        :param abspath:
-        :param datakind:
-        :param datapath:
-        :param obspath:
+        :param abspath: str, the absolute path
+        :param block_kind: str, the block kind (e.g. raw/tmp/red)
+        :param block_path: str, the path to the block kind
+        :param obs_dir: str, the observation directory
         """
         self.params = params
 
@@ -5165,7 +5165,7 @@ class DrsOutFileExtension:
 
     def __init__(self, name: str, drsfile: DrsFitsFile, pos: int,
                  fiber: Union[str, None] = None,
-                 kind: Union[str, None] = None,
+                 block_kind: Union[str, None] = None,
                  hkeys: Union[dict, None] = None,
                  link: Union[list, str, None] = None,
                  hlink: Union[str, None] = None,
@@ -5174,7 +5174,9 @@ class DrsOutFileExtension:
                  remove_drs_hkeys: bool = False,
                  remove_std_hkeys: bool = False,
                  clear_file: bool = False,
-                 tag: Union[str, None] = None):
+                 tag: Union[str, None] = None,
+                 extname: Union[str, None] = None,
+                 data_type: str = 'image'):
         """
         Properties for an extension of a POST PROCESS file
 
@@ -5182,6 +5184,7 @@ class DrsOutFileExtension:
         :param drsfile: DrsFitsFile, a fits file to add
         :param pos: position within the fits file
         :param fiber: str or None, if set defines the fiber to use
+        :param block_kind: str, the block kind (e.g. raw/tmp/raw)
         :param link: str, if set this must be a previously defined extension
                      name
         :param hlink: str, the header key from link extension to use for
@@ -5196,6 +5199,8 @@ class DrsOutFileExtension:
                            for removal (if user adds --clear)
         :param tag: str or None, if set this is the EXTNAME given to this
                     extension in the output fits file (if None uses "name")
+        :param extname: str, if set this is the extension name from the
+                        file to take the image/table from
 
         :return:
         """
@@ -5204,7 +5209,7 @@ class DrsOutFileExtension:
         self.drsfile = drsfile
         self.pos = pos
         self.fiber = fiber
-        self.kind = kind
+        self.block_kind = block_kind
         self.hkeys = hkeys
         self.link = link
         self.hlink = hlink
@@ -5214,11 +5219,12 @@ class DrsOutFileExtension:
         self.remove_std_hkeys = remove_std_hkeys
         self.clear_file = clear_file
         self.tag = tag
+        self.extname = extname
         # to be filled
         self.filename = None
         self.header = None
         self.data = None
-        self.datatype = 'image'
+        self.datatype = data_type
         # table parameters
         self.table_drsfiles = []
         self.table_in_colnames = []
@@ -5275,7 +5281,7 @@ class DrsOutFileExtension:
     def add_table_column(self, drsfile: DrsFitsFile,
                   incol: str, outcol: str, fiber: Union[str, None],
                   units: Union[str, None], required: bool = True,
-                  kind: str = 'red', clear_file: bool = False):
+                  block_kind: str = 'red', clear_file: bool = False):
         """
         Add a table column to an extension
 
@@ -5284,7 +5290,7 @@ class DrsOutFileExtension:
         :param outcol: str, the output column name
         :param fiber: str or None, if set set the fiber name
         :param required: bool, if False column is not required
-        :param kind: str, the kind (raw/tmp/red/out)
+        :param block_kind: str, the block kind (raw/tmp/red/out)
 
         :return:
         """
@@ -5294,7 +5300,7 @@ class DrsOutFileExtension:
         self.table_units.append(units)
         self.table_fibers.append(fiber)
         self.table_required.append(required)
-        self.table_kind.append(kind)
+        self.table_kind.append(block_kind)
         self.table_clears.append(clear_file)
 
     def copy(self):
@@ -5310,7 +5316,7 @@ class DrsOutFileExtension:
             kwargs['drsfile'] = deepcopy(self.drsfile)
         kwargs['pos'] = int(self.pos)
         kwargs['fiber'] = deepcopy(self.fiber)
-        kwargs['kind'] = deepcopy(self.kind)
+        kwargs['block_kind'] = deepcopy(self.block_kind)
         kwargs['hkeys'] = deepcopy(self.hkeys)
         kwargs['link'] = deepcopy(self.link)
         kwargs['hlink'] = deepcopy(self.hlink)
@@ -5320,6 +5326,8 @@ class DrsOutFileExtension:
         kwargs['remove_std_hkeys'] = bool(self.remove_std_hkeys)
         kwargs['clear_file'] = bool(self.clear_file)
         kwargs['tag'] = deepcopy(self.tag)
+        kwargs['extname'] = deepcopy(self.extname)
+        kwargs['datatype'] = deepcopy(self.datatype)
         # create new copy
         new = DrsOutFileExtension(**kwargs)
         # table parameters
@@ -5334,8 +5342,19 @@ class DrsOutFileExtension:
         # return new copy
         return new
 
-    def set_infile(self, row=None, table=None, filename=None):
+    def set_infile(self, row: Union[int, None] = None,
+                   table: Union[Table, None] = None,
+                   filename: Union[str, None] = None):
+        """
+        Set infile name from "filename" or from "row" in table (note table
+        must have column "ABSPATH"
 
+        :param row: int or None, the row in "table" to set the filename
+        :param table: Table or None, the table to get the row from
+        :param filename: str or None, the filename to set the filename from
+
+        :return: None - updates self.filename, self.datatype
+        """
         if filename is not None:
             self.filename = filename
         else:
@@ -5365,18 +5384,21 @@ class DrsOutFileExtension:
         # ---------------------------------------------------------------------
         # deal with data only / header only
         if self.data_only:
+            # want to read data from extname if set
             self.data = drs_fits.readfits(params, self.filename, True, False,
-                                             fmt, copy=True)
+                                          fmt, extname=self.extname, copy=True)
         elif self.header_only:
+            # don't want to read header from self.extname
             self.header = drs_fits.readfits(params, self.filename, False, True,
-                                             fmt, copy=True)
+                                            fmt, copy=True)
         else:
-            # load data/header via readfits
-            data, header = drs_fits.readfits(params, self.filename, True, True,
-                                             fmt, copy=True)
-            # push data and header into
-            self.data = data
-            self.header = header
+            # want to read data from extname if set
+            self.data = drs_fits.readfits(params, self.filename, True, False,
+                                          fmt, extname=self.extname, copy=True)
+            # don't want to read header from self.extname
+            self.header = drs_fits.readfits(params, self.filename, False, True,
+                                            fmt, copy=True)
+
 
     def make_table(self, params: ParamDict, indexdbm: Any, linkkind: str,
                    criteria: str):
@@ -5402,7 +5424,7 @@ class DrsOutFileExtension:
         units = self.table_units
         fibers = self.table_fibers
         col_required = self.table_required
-        kinds = self.table_kind
+        block_kinds = self.table_kind
         all_clears = self.table_clears
         # ---------------------------------------------------------------------
         # define storage for values
@@ -5424,7 +5446,7 @@ class DrsOutFileExtension:
             condition = '{0}="{1}"'.format(linkkind, criteria)
             # set up index database condition
             # add kind (raw/tmp/red/out)
-            condition += ' AND BLOCK_KIND="{0}"'.format(kinds[col])
+            condition += ' AND BLOCK_KIND="{0}"'.format(block_kinds[col])
             # -----------------------------------------------------------------
             # get hkeys for this drsfile
             hkeys = drsfiles[col].required_header_keys
@@ -5613,7 +5635,8 @@ class DrsOutFile(DrsInputFile):
         return 'DrsOutFile[{0}]'.format(self.name)
 
     def add_ext(self, name, drsfile: Union[DrsFitsFile, str], pos: int,
-                fiber: Union[str, None] = None, kind: Union[str, None] = None,
+                fiber: Union[str, None] = None,
+                block_kind: Union[str, None] = None,
                 hkeys: Union[dict, None] = None,
                 link: Union[list, str, None] = None,
                 hlink: Union[str, None] = None,
@@ -5621,7 +5644,9 @@ class DrsOutFile(DrsInputFile):
                 remove_drs_hkeys: bool = False,
                 remove_std_hkeys: bool = False,
                 clear_file: bool = False,
-                tag: Union[str, None] = None):
+                tag: Union[str, None] = None,
+                extname: Union[str, None] = None,
+                datatype: str = 'image'):
         """
         Add a fits extension
 
@@ -5630,6 +5655,8 @@ class DrsOutFile(DrsInputFile):
 
         :param name: str, the name of this extension
         :param drsfile: DrsFitsFile, a fits file to add
+        :param fiber: str, the fiber
+        :param block_kind: str, the block kind (i.e. (raw/tmp/red)
         :param pos: position within the fits file
         :param fiber: str or None, if set defines the fiber to use
         :param link: str, if set this must be a previously defined extension
@@ -5642,6 +5669,14 @@ class DrsOutFile(DrsInputFile):
                                  to be remove (else does not remove keys)
         :param remove_std_hkeys: bool, if True removes a list of standard keys
                                  from this extensions header
+        :param clear_file: bool, if True adds extension to list of files to
+                           remove from disk if we are clearing reduced directory
+                           after saving post process file
+        :param tag: str, the extension name tag to give this extension in the
+                    final post process file
+        :param extname: str, if set this is the extension name from the
+                        file to take the image/table from
+        :param datatype: str, image or table - the data type of the file
 
         :return:
         """
@@ -5654,16 +5689,18 @@ class DrsOutFile(DrsInputFile):
                                     targs=[pos, func_name])
         # add new extension instance
         self.extensions[pos] = DrsOutFileExtension(name, drsfile, pos, fiber,
-                                                   kind, hkeys, link, hlink,
-                                                   header_only, data_only,
+                                                   block_kind, hkeys, link,
+                                                   hlink,  header_only,
+                                                   data_only,
                                                    remove_drs_hkeys,
                                                    remove_std_hkeys,
-                                                   clear_file, tag)
+                                                   clear_file, tag,
+                                                   extname, datatype)
 
     def add_column(self, extname: str, drsfile: DrsFitsFile,
                    incol: str, outcol: str, fiber: Union[str, None],
                    units: Union[str, None] = None, required: bool = True,
-                   kind: str = 'red', clear_file: bool = False):
+                   block_kind: str = 'red', clear_file: bool = False):
         """
         If an extension is a table add a column from a table fits file
 
@@ -5673,7 +5710,7 @@ class DrsOutFile(DrsInputFile):
         :param outcol: str, the output column name
         :param fiber: str or None, if set set the fiber name
         :param required: bool, if False column is not required
-        :param kind: str, the kind (raw/tmp/red/out)
+        :param block_kind: str, the blcok kind (raw/tmp/red/out)
 
         :return:
         """
@@ -5686,7 +5723,7 @@ class DrsOutFile(DrsInputFile):
                 raise ValueError('Extension is not a table')
             # add the table
             extension.add_table_column(drsfile, incol, outcol, fiber, units,
-                                       required, kind, clear_file)
+                                       required, block_kind, clear_file)
 
     def add_hkey(self, key: str, inheader: str, outheader: str):
         """

@@ -292,13 +292,15 @@ def __main__(recipe, params):
     WLOG(params, 'info', drs_header)
 
     # write polar files
-    gen_pol.write_files(params, recipe, pprops, inputs, s1dprops, qc_params)
+    wout = gen_pol.write_files(params, recipe, pprops, inputs, s1dprops,
+                               qc_params)
+    polfile, cfile, ctable = wout
 
     # TODO:   p.fits should be done in the output post processing script
 
     # save LSD data to fits
-    if do_lsd_analysis:
-        lsd.write_files(params, recipe, pprops, inputs, qc_params)
+    #if do_lsd_analysis:
+    #    lsd.write_files(params, recipe, pprops, inputs, qc_params)
 
     # -------------------------------------------------------------------------
     # part7: plots
@@ -310,15 +312,15 @@ def __main__(recipe, params):
     # Debug plots:
     # -------------------------------------------------------------------------
     # plot continuum plots
-    recipe.plot.polar_continuum_plot(params, pprops)
+    recipe.plot('POLAR_CONTINUUM', props=pprops)
     # plot polarimetry results
-    recipe.plot.polar_result_plot(params, pprops)
+    recipe.plot('POLAR_RESULTS', props=pprops)
     # plot total flux (Stokes I)
-    recipe.plot.polar_stokes_i_plot(params, pprops)
+    recipe.plot('POLAR_STOKES_I', props=pprops)
     # plot LSD analysis plot only if we did lsd analysis
     if do_lsd_analysis:
         # plot LSD analysis
-        recipe.plot.polar_lsd_plot(params, pprops)
+        recipe.plot('POLAR_LSD', props=pprops)
     # -------------------------------------------------------------------------
     # Summary plots
     # -------------------------------------------------------------------------
@@ -326,7 +328,7 @@ def __main__(recipe, params):
 
     # write summary plot to disk
     # TODO: Add summary function
-    gen_pol.summary(params, recipe, qc_params, pprops)
+    # gen_pol.summary(params, recipe, qc_params, pprops)
 
     # ----------------------------------------------------------------------
     # End of main code

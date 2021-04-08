@@ -1989,8 +1989,16 @@ KW_POL_BERVCEN.set(key='BERVCEN',
                    comment='POLAR BERV at center of observation')
 
 # define the Mean BJD for polar sequence
-KW_POL_MEANBJD = KW_POL_MEANBJD.copy(__NAME__)
-KW_POL_MEANBJD.set(key='MEANBJD', comment='POLAR Mean BJD for polar sequence')
+KW_POL_MEAN_MJD = KW_POL_MEAN_MJD.copy(__NAME__)
+KW_POL_MEAN_MJD.set(key='MEANMJD', comment='POLAR Mean MJD for polar sequence')
+
+# define the Mean BJD for polar sequence
+KW_POL_MEAN_BJD = KW_POL_MEAN_BJD.copy(__NAME__)
+KW_POL_MEAN_BJD.set(key='MEANBJD', comment='POLAR Mean BJD for polar sequence')
+
+# define the mean BERV of the exposures
+KW_POL_MEAN_BERV = KW_POL_MEAN_BERV.copy(__NAME__)
+KW_POL_MEAN_BERV.set(key='MEANBERV', comment='POLAR Mean BERV of the exposures')
 
 # define the Stokes paremeter: Q, U, V, or I
 KW_POL_STOKES = KW_POL_STOKES.copy(__NAME__)
@@ -2012,12 +2020,12 @@ KW_POL_METHOD.set(key='POLMETHO', comment='POLAR Polarimetry method')
 # define the MJD at flux-weighted center of 4 exposures
 KW_POL_MJD_FW_CEN = KW_POL_MJD_FW_CEN.copy(__NAME__)
 KW_POL_MJD_FW_CEN.set(key='MJDFWCEN',
-                  comment='MJD at flux-weighted center of 4 exposures')
+                  comment='MJD at flux-weighted center of the exposures')
 
 # define the BJD at flux-weighted center of 4 exposures
 KW_POL_BJD_FW_CEN = KW_POL_BJD_FW_CEN.copy(__NAME__)
 KW_POL_BJD_FW_CEN.set(key='BJDFWCEN',
-                  comment='BJD at flux-weighted center of 4 exposures')
+                  comment='BJD at flux-weighted center of the exposures')
 
 # define whether we corrected for BERV
 KW_POL_CORR_BERV = KW_POL_CORR_BERV.copy(__NAME__)

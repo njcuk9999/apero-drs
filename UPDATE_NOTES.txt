@@ -148,3 +148,42 @@ Date: 2020-12-21
         - this contains all instrument, database, param, recipe, header
           constants as they were at the time of writing the file - it can be
           turned off by setting PARAMETER_SNAPSHOT = False
+
+- polar
+    - added polar code
+	- reduced output filename will be on of the following
+
+	- {HASH}_e2dsff_{extension}.fits    for input = e2dsff
+	- {HASH}_e2dsff_tcorr_{extension}.fits    for input = e2dsff_tcorr
+
+	- pol file (extension = "pol.fits")
+		- HDU[0]: Primary HDU
+		- HDU[1]: Image HDU     name=POL_DEG
+		- HDU[2]: Image HDU     name=POL_ERR
+		- HDU[3]: BinTable HDU  name=POL_TABLE
+		- HDU[4]: BinTable HDU  name=PARAM_TABLE    (standard reduced table output - snapshot of params)
+	- stokes i file (extension = "StokesI.fits")
+		- HDU[0]: Primary HDU
+		- HDU[1]: Image HDU     name=STOKESI_DEG
+		- HDU[2]: Image HDU     name=STOKESI_ERR
+		- HDU[3]: BinTable HDU  name=POL_TABLE
+		- HDU[4]: BinTable HDU  name=PARAM_TABLE    (standard reduced table output - snapshot of params)
+	- null 1 file (extension = "null1.fits")
+		- HDU[0]: Primary HDU
+		- HDU[1]: Image HDU     name=NULL_POL1
+		- HDU[2]: BinTable HDU  name=POL_TABLE
+		- HDU[3]: BinTable HDU  name=PARAM_TABLE    (standard reduced table output - snapshot of params)
+	- null 2 file (extension = "null2.fits")
+		- HDU[0]: Primary HDU
+		- HDU[1]: Image HDU     name=NULL_POL2
+		- HDU[2]: BinTable HDU  name=POL_TABLE
+		- HDU[3]: BinTable HDU  name=PARAM_TABLE    (standard reduced table output - snapshot of params)
+
+	- for FILE = [POL, STOKESI, NULL1, NULL2]  and for GRID = [W, V]
+
+		extension = "s1d_{GRID}_{FILE.lower()}.fits"
+
+		- HDU[0]: Primary HDU
+		- HDU[1]: BinTable HDU  name=S1D{GRID}_{FILE}
+		- HDU[2]: BinTable HDU  name=POL_TABLE
+		- HDU[3]: BinTable HDU  name=PARAM_TABLE    (standard reduced table output - snapshot of params)

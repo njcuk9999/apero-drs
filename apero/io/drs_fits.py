@@ -362,7 +362,9 @@ DataHdrType = Union[Tuple[np.ndarray, fits.Header], np.ndarray, None,
 def readfits(params: ParamDict, filename: Union[str, Path],
              getdata: bool = True, gethdr: bool = False,
              fmt: str = 'fits-image',
-             ext: Union[int, None] = None, func: Union[str, None] = None,
+             ext: Union[int, None] = None,
+             extname: Union[str, None] = None,
+             func: Union[str, None] = None,
              log: bool = True, copy: bool = False,
              return_names: bool = False
              ) -> Union[DataHdrType, np.ndarray, fits.Header, None]:
@@ -374,20 +376,12 @@ def readfits(params: ParamDict, filename: Union[str, Path],
     :param getdata: bool, whether to return data from "ext"
     :param gethdr: bool, whether to return header from "ext"
     :param fmt: str, format of data (either 'fits-image' or 'fits-table'
-    :param ext: int, the extension to open (unset by default means it goes
-                to the first valid extension)
+    :param ext: int or None, if set tries to read this extension (via position)
+    :param extname: str or None, if set tires to read this extension (via name)
     :param func: str, function name of calling function (input function)
     :param log: bool, if True logs that we read file
     :param copy: bool, if True copies the HDU[i].data and/or HDU[i].header so
                  HDU can be closed properly
-
-    :type params: ParamDict
-    :type filename: str
-    :type getdata: bool
-    :type gethdr: bool
-    :type fmt: str
-    :type ext: int
-    :type func: str
 
     :returns: if getdata and gethdr: returns data, header, if getdata return
               data, if gethdr returns header.
@@ -416,7 +410,7 @@ def readfits(params: ParamDict, filename: Union[str, Path],
     # deal with obtaining data
     if fmt == 'fits-image':
         data, header = _read_fitsimage(params, filename, getdata, gethdr, ext,
-                                       log=log)
+                                       extname, log=log)
         name = None
         # deal with copying
         if copy:
@@ -424,7 +418,7 @@ def readfits(params: ParamDict, filename: Union[str, Path],
             header = fits.Header(header)
     elif fmt == 'fits-table':
         data, header = _read_fitstable(params, filename, getdata, gethdr, ext,
-                                       log=log)
+                                       extname, log=log)
         name = None
         # deal with copying
         if copy:
@@ -592,6 +586,7 @@ ImageFitsType = Tuple[Union[np.ndarray, None], Union[fits.Header, None]]
 
 def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
                     gethdr: bool, ext: Union[int, None] = None,
+                    extname: Union[str, None] = None,
                     log: bool = True) -> ImageFitsType:
     """
     Read a fits image in extension 'ext' for fits file 'filename'
@@ -601,6 +596,8 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
     :param filename: str, the filename to read the fits hdu from
     :param getdata: bool, if True read the data from extension 'ext'
     :param gethdr: bool, if True read the headers from extension 'ext'
+    :param ext: int or None, if set tries to read this extension (via position)
+    :param extname: str or None, if set tires to read this extension (via name)
     :param log: bool, if True logs on error, else raises astropy.io.fits
                 exception that generated the error
 
@@ -612,7 +609,15 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
     # deal with getting data
     if getdata:
         try:
-            data = fits.getdata(filename, ext=ext)
+            # deal with ext being set
+            if ext is not None:
+                data = fits.getdata(filename, ext=ext)
+            # deal with extname being set
+            elif extname is not None:
+                data = fits.getdata(filename, extname=extname)
+            # just load first valid extension
+            else:
+                data = fits.getdata(filename)
         except Exception as e:
             if log:
                 string_trackback = traceback.format_exc()
@@ -631,8 +636,15 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
             header = fits.getheader(filename, ext=ext)
         except Exception as e:
             if log:
+                if ext is None and extname is None:
+                    strext = 'NO EXT'
+                elif extname is not None:
+                    strext = str(extname)
+                else:
+                    strext = str(ext)
                 string_trackback = traceback.format_exc()
-                emsg = textentry('01-001-00015', args=[filename, ext, type(e)])
+                eargs = [filename, strext, type(e)]
+                emsg = textentry('01-001-00015', args=eargs)
                 emsg += '\n\n' + textentry(string_trackback)
                 WLOG(params, 'error', emsg)
                 header = None
@@ -651,6 +663,7 @@ TableFitsType = Tuple[Union[Table, None], Union[fits.Header, None]]
 
 def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
                     gethdr: bool, ext: Union[int, None] = None,
+                    extname: Union[str, None] = None,
                     log: bool = True) -> TableFitsType:
     """
     Read a fits bin table in extension 'ext' for fits file 'filename'
@@ -660,6 +673,8 @@ def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
     :param filename: str, the filename to read the fits hdu from
     :param getdata: bool, if True read the table from extension 'ext'
     :param gethdr: bool, if True read the headers from extension 'ext'
+    :param ext: int or None, if set tries to read this extension (via position)
+    :param extname: str or None, if set tires to read this extension (via name)
     :param log: bool, if True logs on error, else raises astropy.io.fits
                 exception that generated the error
 
@@ -672,7 +687,12 @@ def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
     if getdata:
         try:
             with warnings.catch_warnings(record=True) as _:
-                data = Table.read(filename, format='fits')
+                if ext is not None:
+                    data = Table.read(filename, format='fits', hdu=ext)
+                elif extname is not None:
+                    data = Table.read(filename, format='fits', hdu=extname)
+                else:
+                    data = Table.read(filename, format='fits')
         except Exception as e:
             if log:
                 string_trackback = traceback.format_exc()

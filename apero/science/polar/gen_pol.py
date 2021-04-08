@@ -9,13 +9,15 @@ Created on 2019-10-25 at 13:25
 
 @author: cook
 """
+from astropy.table import Table
+from astropy import units as uu
 import numpy as np
 from scipy import interpolate
 from scipy import stats
 from scipy import signal
 from scipy.interpolate import UnivariateSpline
-import warnings
 from typing import Any, List, Tuple, Union
+import warnings
 
 from apero.base import base
 from apero.core import math as mp
@@ -207,10 +209,10 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     A_{N}  B_{N}  where N = 1,2,3,4
 
     1. "WAVE"           = wave solution of AB fiber
-    2. "RAWFLUXDATA"    = flux / blaze
-    3. "RAWFLUXERRDATA" = np.sqrt(flux) / blaze
-    4. "FLUXDATA"       = interp flux / interp blaze onto same wave as exp1
-    5. "FLUXERRDATA"    = np.sqrt(interp flux ) / interp blaze onto same wave
+    2. "RAW_FLUX"    = flux / blaze
+    3. "RAW_FLUXERR" = np.sqrt(flux) / blaze
+    4. "FLUX"       = interp flux / interp blaze onto same wave as exp1
+    5. "FLUXERR"    = np.sqrt(interp flux ) / interp blaze onto same wave
                           as exp1
 
     # other things to save
@@ -258,8 +260,12 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     polar_dict['GLOBAL_WAVETIME'] = None
     # save a blaze file
     polar_dict['GLOBAL_BLAZE'] = None
-    polar_dict['GLOBAL_BLAZE_FILE'] = None
-    # save berv / bjd
+    polar_dict['GLOBAL_BLAZEFILE'] = None
+    # save timing and berv information
+    polar_dict['EXPTIMES'] = dict()
+    polar_dict['MJDATES'] = dict()
+    polar_dict['MJDMIDS'] = dict()
+    polar_dict['MJDENDS'] = dict()
     polar_dict['BERVS'] = dict()
     polar_dict['BJDS'] = dict()
     polar_dict['BERV_USED_ESTIMATE'] = dict()
@@ -275,7 +281,8 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     polar_dict['FLUX'] = dict()
     polar_dict['FLUXERR'] = dict()
     # set sources
-    keys = ['INPUTS', 'BERVS', 'BJDS', 'BERV_USED_ESTIMATE',
+    keys = ['INPUTS', 'EXPTIMES', 'MJDATES', 'MJDMIDS', 'MJDENDS',
+            'BERVS', 'BJDS', 'BERV_USED_ESTIMATE',
             'EXPOSURES', 'N_EXPOSURES', 'EXPOSURE_NUMBERS', 'STOKES',
             'GLOBAL_WAVEMAP', 'GLOBAL_WAVEFILE', 'GLOBAL_WAVETIME',
             'GLOBAL_BLAZE', 'GLOBAL_BLAZEFILE', 'GLOBAL_STOKES',
@@ -407,7 +414,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             blazefile, blaze = bout
             # add the global wave solution to polar dict
             polar_dict['GLOBAL_BLAZE'] = blaze
-            polar_dict['GLOBAL_BLAZE_FILE'] = blazefile
+            polar_dict['GLOBAL_BLAZEFILE'] = blazefile
 
     # -------------------------------------------------------------------------
     # Load all exposures for each polar fiber
@@ -445,7 +452,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # need to locate the correct file for this fiber
             infile = drs_file.get_another_fiber_file(params, **gkwargs)
             # add the input for this key
-            polar_dict['INPUTS'][key_str] = infile.newcopy()
+            polar_dict['INPUTS'][key_str] = infile.newcopy(params=params)
             # -----------------------------------------------------------------
             # load the blaze file
             _, blaze = flat_blaze.get_blaze(params, infile.header, fiber,
@@ -454,6 +461,23 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # load wave for file
             wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
                                            infile=infile, database=calibdb)
+            # -----------------------------------------------------------------
+            # add timings to polar dictionary
+            # -----------------------------------------------------------------
+            # add exposure time
+            exptime = expfile.get_hkey('KW_EXPTIME', dtype=float)
+            polar_dict['EXPTIMES'][key_str] = exptime
+            # add mjdate
+            mjdate = expfile.get_hkey('KW_MJDATE', dtype=float)
+            polar_dict['MJDATES'][key_str] = mjdate
+            # add mid exposure time
+            mjdmid = expfile.get_hkey('KW_MID_OBS_TIME', dtype=float)
+            polar_dict['MJDMIDS'][key_str] = mjdmid
+            # add mjdend
+            mjdend = expfile.get_hkey('KW_MJDEND', dtype=float)
+            polar_dict['MJDENDS'][key_str] = mjdend
+            # -----------------------------------------------------------------
+            # deal with BERV and BJD
             # -----------------------------------------------------------------
             # get all berv properties from expfile
             bprops = extract.get_berv(params, expfile, log=False)
@@ -469,7 +493,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
                 wavemap = np.array(wprops['WAVEMAP']) * dvshift
             else:
                 wavemap = np.array(wprops['WAVEMAP'])
-
+            # add berv properties to polar dictionary
             polar_dict['BERVS'][key_str] = bprops['USE_BERV']
             polar_dict['BJDS'][key_str] = bprops['USE_BJD']
             polar_dict['BERV_USED_ESTIMATE'][key_str] = bprops['USED_ESTIMATE']
@@ -493,7 +517,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             flux, fluxerr = get_interp_flux(wavemap0=wavemap, flux0=raw_flux,
                                             blaze0=blaze, wavemap1=gwavemap)
             # -----------------------------------------------------------------
-            # add rawflux, rawfluxerr, flux, fluxerror to polar dict
+            # add raw_flux, raw_fluxerr, flux, fluxerror to polar dict
             polar_dict['RAW_FLUX'][key_str] = raw_flux
             polar_dict['RAW_FLUXERR'][key_str] = raw_fluxerr
             polar_dict['FLUX'][key_str] = flux
@@ -517,25 +541,113 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     return polar_dict
 
 
-def make_2d_data_uniform(props: ParamDict) -> ParamDict:
+def calculate_polar_times(props: ParamDict) -> ParamDict:
+    """
+    Calculate the mean times for the polar sequence
 
+    :param props: ParamDict, the parameter dictionary of data
 
-    # get the arrays from props
-    wavemap = props['GLOBAL_WAVEMAP']
-    blaze = props['GLOBAL_BLAZE']
-    pol = props['POL']
-    polerr = props['POLERR']
-    stokesi = props['STOKESI']
-    stokesierr = props['STOKESIERR']
-    null1 = props['NULL1']
-    null2 = props['NULL2']
-
-
-    # TODO: fill this out
-
-
-
+    :return: ParamDict, the updated "props" parameter dictionary of data
+    """
+    # set function name
+    func_name = display_func('calculate_polar_times', __NAME__)
+    # get exposures from props
+    exposures = props['INPUTS']
+    # storage for use
+    fluxes = dict()
+    exptimes, mjdates, mjdmids, mjdends, bjds, bervs = [], [], [], [], [], []
+    # -------------------------------------------------------------------------
+    # get the timings from props for all exposures add to storage
+    for key_str in exposures:
+        # get exposure number for this key string
+        exposure_num = key_str.split('_')[-1]
+        # get mean flux
+        if exposure_num in fluxes:
+            fluxes[exposure_num].append(props['RAW_FLUX'][key_str])
+            # the rest of the parameters are only added once per exposure
+            continue
+        else:
+            fluxes[exposure_num] = [props['RAW_FLUX'][key_str]]
+        # add exposure time
+        exptimes.append(props['EXPTIMES'][key_str])
+        # add mjdate
+        mjdates.append(props['MJDATES'][key_str])
+        # add mid exposure time
+        mjdmids.append(props['MJDMIDS'][key_str])
+        # add mjend
+        mjdends.append(props['MJDENDS'][key_str])
+        # add bjd
+        bjds.append(props['BJDS'][key_str])
+        # add bervs
+        bervs.append(props['BERVS'][key_str])
+    # -------------------------------------------------------------------------
+    # convert to arrays
+    exptimes, mjdates = np.array(exptimes), np.array(mjdates)
+    mjdmids, mjdends = np.array(mjdmids), np.array(mjdends)
+    bjds, bervs = np.array(bjds), np.array(bervs)
+    # -------------------------------------------------------------------------
+    # calculate mean flux for each exposure
+    mean_fluxes = []
+    for exp_num in fluxes:
+        mean_fluxes.append(np.nanmean(fluxes[exp_num]))
+    # -------------------------------------------------------------------------
+    # calculate total exposure time
+    total_time = np.nansum(exptimes)
+    # -------------------------------------------------------------------------
+    # calculate elapsed time (in days)
+    elapsed_time = (np.max(bjds) - np.min(bjds)) * uu.day
+    # convert to seconds
+    elapsed_time = elapsed_time.to(uu.s).value
+    # add half first exptime and half last exptime to get full elapsed time
+    elapsed_time += (exptimes[0] / 2) + (exptimes[-1] / 2)
+    # -------------------------------------------------------------------------
+    # MJDMID
+    # -------------------------------------------------------------------------
+    # calculate the flux-weighted MJDMID of polarimetric sequence
+    mjd_fw_cen = np.sum(mean_fluxes * mjdmids) / np.sum(mean_fluxes)
+    # calculate the MJD at center of polarimetric sequence
+    mjdstart = mjdmids[0] - (exptimes[0] * uu.day / 2).to(uu.s).value
+    mjdend = mjdmids[-1] + (exptimes[-1] * uu.day / 2).to(uu.s).value
+    mjdcen = mjdstart + (mjdend - mjdstart) / 2
+    # calculate the mean MJD
+    mean_mjd = np.mean(mjdmids)
+    # -------------------------------------------------------------------------
+    # BERV and BJD
+    # -------------------------------------------------------------------------
+    # calculate the flux-weighted bjd of polarimetric sequence
+    bjd_fw_cen = np.sum(mean_fluxes * bjds) / np.sum(mean_fluxes)
+    # calculate the BJD at center of polarmetric sequence
+    bjdstart = bjds[0] - (exptimes[0] * uu.day / 2).to(uu.s).value
+    bjdend = bjds[-1] + (exptimes[-1] * uu.day / 2).to(uu.s).value
+    bjdcen = bjdstart + (bjdend - bjdstart) / 2
+    # linear interpolation
+    berv_slope = (bervs[-1] - bervs[0]) / (bjds[-1] - bjds[0])
+    berv_intercept = bervs[0] - berv_slope * bjds[0]
+    bervcen = (berv_slope * bjdcen) + berv_intercept
+    # calculate mean berv
+    mean_berv = np.nanmean(bervs)
+    # calculate mean bjd
+    mean_bjd = np.nanmean(bjds)
+    # -------------------------------------------------------------------------
+    # add to props
+    props['ELAPSED_TIME'] = elapsed_time
+    props['MJDCEN'] = mjdcen
+    props['BJDCEN'] = bjdcen
+    props['BERVCEN'] = bervcen
+    props['MEANMJD'] = mean_mjd
+    props['MEANBJD'] = mean_bjd
+    props['TOTEXPTIME'] = total_time
+    props['MJDFWCEN'] = mjd_fw_cen
+    props['BJDFWCEN'] = bjd_fw_cen
+    props['MEANBERV'] = mean_berv
+    # set sources
+    keys = ['ELAPSED_TIME', 'MJDCEN', 'BJDCEN', 'BERVCEN', 'MEANBJD', 'MEANMJD',
+            'MEANBJD', 'TOTEXPTIME', 'MJDFWCEN', 'BJDFWCEN', 'MEANBERV']
+    props.set_sources(keys, func_name)
+    # -------------------------------------------------------------------------
+    # return update parameter dictionary of properties
     return props
+
 
 # =============================================================================
 # Define science functions
@@ -583,10 +695,10 @@ def polarimetry_diff_method(params: ParamDict, props: ParamDict,
 
     :param props: parameter dictionary, ParamDict containing data
         Must contain at least:
-            props['RAWFLUXDATA']: numpy array (2D) containing the e2ds flux
+            props['RAW_FLUX']: numpy array (2D) containing the e2ds flux
                                 data for all exposures {1,..,NEXPOSURES},
                                 and for all fibers {A,B}
-            props['RAWFLUXERRDATA']: numpy array (2D) containing the e2ds flux
+            props['RAW_FLUXERR']: numpy array (2D) containing the e2ds flux
                                    error data for all exposures
                                    {1,..,NEXPOSURES}, and for all fibers {A,B}
             props['NEXPOSURES']: number of polarimetry exposures
@@ -755,10 +867,10 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
 
     :param props: parameter dictionary, ParamDict containing data
         Must contain at least:
-        props['RAWFLUXDATA']: numpy array (2D) containing the e2ds flux data
+        props['RAW_FLUX']: numpy array (2D) containing the e2ds flux data
                               for all exposures {1,..,NEXPOSURES}, and for all
                               fibers {A,B}
-        props['RAWFLUXERRDATA']: numpy array (2D) containing the e2ds flux
+        props['RAW_FLUXERR']: numpy array (2D) containing the e2ds flux
                                  error data for all exposures {1,..,NEXPOSURES},
                                  and for all fibers {A,B}
         props['NEXPOSURES']: number of polarimetry exposures
@@ -1172,6 +1284,12 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     flux_xbin, flux_ybin = None, None
     pol_xbin, pol_ybin = None, None
     # -------------------------------------------------------------------------
+    # print progress
+    # TODO: move to language database
+    msg = 'Calculating Stokes I using {0}'
+    margs = [stokesi_detection_alg]
+    WLOG(params, '', msg.format(*margs))
+    # -------------------------------------------------------------------------
     # calculate continuum flux using moving median
     if stokesi_detection_alg == 'MOVING_MEDIAN':
         # calculate continuum flux
@@ -1200,6 +1318,12 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     if norm_stokes_i:
         stokes_i = stokes_i / contflux
         stokes_ierr = stokes_ierr / contflux
+    # -------------------------------------------------------------------------
+    # print progress
+    # TODO: move to language database
+    msg = 'Calculating polar using {0}'
+    margs = [polar_detection_alg]
+    WLOG(params, '', msg.format(*margs))
     # -------------------------------------------------------------------------
     # calculate polarization flux using moving median
     if polar_detection_alg == 'MOVING_MEDIAN':
@@ -1542,18 +1666,34 @@ def make_s1d(params: ParamDict, recipe: DrsRecipe,
     # get wavemap and blaze from props
     wavemap = props['GLOBAL_WAVEMAP']
     blaze = props['GLOBAL_BLAZE']
+    # define the s1d file types to produce
+    s1dtypes = ['STOKESI', 'POL', 'NULL1', 'NULL2']
+    # get error maps (for each s1d file type)
+    e2dserrs = dict(STOKESI=props['STOKESIERR'], POL=props['POLERR'],
+                    NULL1=None, NULL2=None)
     # store s1d props
     s1dprops = ParamDict()
     # loop around the s1d files
-    for s1dfile in ['STOKESI', 'POL', 'NULL1', 'NULL2']:
+    for s1dfile in s1dtypes:
         # loop around s1d grids
         for grid in ['wave', 'velocity']:
-            # compute s1d
-            sargs = [wavemap, props[s1dfile], blaze]
-            sprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid=grid,
-                                         s1dkind=s1dfile)
             # store s1d
             skey = 'S1D{0}_{1}'.format(grid[0].upper(), s1dfile)
+            # log progress
+            # TODO: Move to language database
+            msg = 'Creating {0} file'
+            margs = [skey]
+            WLOG(params, 'info', msg.format(*margs))
+            # get e2ds
+            e2ds = np.array(props[s1dfile])
+            # need to uncorrect for the blaze
+            # TODO: Question: why does the blaze need to be applied twice??
+            e2ds = e2ds * blaze ** 2
+            # compute s1d
+            sargs = [wavemap, e2ds, blaze]
+            sprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid=grid,
+                                         s1dkind=s1dfile,
+                                         e2dserr=e2dserrs[s1dfile])
             s1dprops[skey] = sprops
             s1dprops.set_source(skey, func_name)
             # -----------------------------------------------------------------
@@ -1597,13 +1737,33 @@ def quality_control(params) -> Tuple[List[List[Any]], bool]:
     return qc_params, passed
 
 
-def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
-                inputs: List[DrsFitsFile], qc_params: List[List[Any]]):
+WriteOut = Tuple[DrsFitsFile, DrsFitsFile, Table]
 
+
+def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
+                inputs: List[DrsFitsFile], s1dprops: ParamDict,
+                qc_params: List[List[Any]]) -> WriteOut:
+    """
+    Write the POL, STOKESI, NULL1, NULL2 data to disk
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the reicpe that called this function
+    :param props: ParamDict, the parameter dictionary of data
+    :param inputs: list, the input dictionary of DrsFitsFiles
+    :param s1dprops: ParamDict, the parameter dictionary for s1d files
+    :param qc_params: list of lists, the quality control criteria lists
+
+    :return: None - writes files to disk
+    """
     # set the function name
-    func_name = display_func('write_files', __NAME__)
-    # set the first file as reference file
-    infile = props['INPUTS']['A_1']
+    _ = display_func('write_files', __NAME__)
+    # get data from props
+    pol_data = props['POL']
+    polerr_data = props['POLERR']
+    stokesi_data = props['STOKESI']
+    stokesierr_data = props['STOKESIERR']
+    null1_data = props['NULL1']
+    null2_data = props['NULL2']
     # ----------------------------------------------------------------------
     # get the raw files inputted by user
     rawfiles1 = []
@@ -1618,20 +1778,24 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
         # extract the basename from raw file
         rawfiles2.append(drsfile.basename)
     # ----------------------------------------------------------------------
-    # Make polar table
+    # get first file - for reference
+    infile0 = inputs[0]
     # ----------------------------------------------------------------------
-    # get polar exposure table
-    pol_table = make_polar_table(params, props)
+    # Create combined
     # ----------------------------------------------------------------------
-    # Write pol to file
+    cout = drs_file.combine(params, recipe, inputs, math='None', save=False)
+    cfile, ctable = cout
+
+    # ----------------------------------------------------------------------
+    # Write pol to file to disk
     # ----------------------------------------------------------------------
     # get a new copy of the pol file
-    polfile = recipe.outputs['POL_DEG_FILE'].newcopy(recipe=recipe)
+    polfile = recipe.outputs['POL_DEG_FILE'].newcopy(params=params)
     # construct the filename from file instance
-    polfile.construct_filename(params, infile=infile)
+    polfile.construct_filename(infile=cfile)
     # define header keys for output file
     # copy keys from input file
-    polfile.copy_original_keys(infile)
+    polfile.copy_original_keys(cfile)
     # add version
     polfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
@@ -1641,23 +1805,172 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     polfile.add_hkey('KW_PID', value=params['PID'])
     # add output tag
     polfile.add_hkey('KW_OUTPUT', value=polfile.name)
+    # must set the KW_IDENTIFIER (equal to the first file)
+    identifier0 = infile0.get_hkey('KW_IDENTIFIER', dtype=str)
+    polfile.add_hkey('KW_IDENTIFIER', value=identifier0)
     # add input files
     polfile.add_hkey_1d('KW_INFILE1', values=rawfiles1, dim1name='file')
     polfile.add_hkey_1d('KW_INFILE2', values=rawfiles2, dim1name='file')
     # add wave and blaze used
     polfile.add_hkey('KW_CDBWAVE', value=props['GLOBAL_WAVEFILE'])
     polfile.add_hkey('KW_CDBBLAZE', value=props['GLOBAL_BLAZEFILE'])
-    # ----------------------------------------------------------------------
     # add qc parameters
     polfile.add_qckeys(qc_params)
-    # ----------------------------------------------------------------------
     # add polar header keys
     polfile = add_polar_keywords(params, props, polfile)
+    # add data
+    polfile.data = pol_data
+    # log that we are saving pol file
+    WLOG(params, '', textentry('40-021-00005', args=[polfile.filename]))
+    # define multi lists
+    data_list = [polerr_data, ctable]
+    datatype_list = ['image', 'table']
+    name_list = ['POL_ERR', 'POL_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=polfile)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
+    # write image to file
+    polfile.write_multi(data_list=data_list, name_list=name_list,
+                         datatype_list=datatype_list,
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(polfile)
     # ----------------------------------------------------------------------
+    # Write Stokes I to file to disk
+    # ----------------------------------------------------------------------
+    # get a new copy of the pol file
+    stokesfile = recipe.outputs['POL_STOKESI'].newcopy(params=params)
+    # construct the filename from file instance
+    stokesfile.construct_filename(infile=cfile)
+    # copy header from pol file
+    stokesfile.copy_hdict(polfile)
+    # add output tag
+    stokesfile.add_hkey('KW_OUTPUT', value=stokesfile.name)
+    # add data
+    stokesfile.data = stokesi_data
+    # log that we are saving pol file
+    WLOG(params, '', textentry('40-021-00008', args=[stokesfile.filename]))
+    # define multi lists
+    data_list = [stokesierr_data, ctable]
+    datatype_list = ['image', 'table']
+    name_list = ['STOKESI_ERR', 'POL_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=stokesfile)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
+    # write image to file
+    stokesfile.write_multi(data_list=data_list, name_list=name_list,
+                           datatype_list=datatype_list,
+                           block_kind=recipe.out_block_str,
+                           runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(stokesfile)
+    # ----------------------------------------------------------------------
+    # Write null 1 data to disk
+    # ----------------------------------------------------------------------
+    # get a new copy of the pol file
+    null1file = recipe.outputs['POL_NULL1'].newcopy(params=params)
+    # construct the filename from file instance
+    null1file.construct_filename(infile=cfile)
+    # copy header from pol file
+    null1file.copy_hdict(polfile)
+    # add output tag
+    null1file.add_hkey('KW_OUTPUT', value=null1file.name)
+    # add data
+    null1file.data = null1_data
+    # log that we are saving null 1 file
+    WLOG(params, '', textentry('40-021-00006', args=[null1file.filename]))
+    # define multi lists
+    data_list = [ctable]
+    datatype_list = ['table']
+    name_list = ['POL_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=null1file)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
+    # write image to file
+    null1file.write_multi(data_list=data_list, name_list=name_list,
+                          datatype_list=datatype_list,
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(null1file)
+    # ----------------------------------------------------------------------
+    # Write null 2 data to disk
+    # ----------------------------------------------------------------------
+    # get a new copy of the pol file
+    null2file = recipe.outputs['POL_NULL2'].newcopy(params=params)
+    # construct the filename from file instance
+    null2file.construct_filename(infile=cfile)
+    # copy header from pol file
+    null2file.copy_hdict(polfile)
+    # add output tag
+    null2file.add_hkey('KW_OUTPUT', value=null2file.name)
+    # add data
+    null2file.data = null2_data
+    # log that we are saving null 2file
+    WLOG(params, '', textentry('40-021-00007', args=[null2file.filename]))
+    # define multi lists
+    data_list = [ctable]
+    datatype_list = ['table']
+    name_list = ['POL_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=null2file)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
+    # write image to file
+    null2file.write_multi(data_list=data_list, name_list=name_list,
+                          datatype_list=datatype_list,
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(null2file)
+    # ----------------------------------------------------------------------
+    # Write the s1d files to disk
+    # ----------------------------------------------------------------------
+    # loop around all keys
+    for s1dkey in s1dprops:
+        # get a new copy of the pol file
+        s1dfile = recipe.outputs[s1dkey].newcopy(params=params)
+        # construct the filename from file instance
+        s1dfile.construct_filename(infile=cfile)
+        # copy header from corrected e2ds file
+        s1dfile.copy_hdict(polfile)
+        # add output tag
+        s1dfile.add_hkey('KW_OUTPUT', value=s1dfile.name)
+        # copy data
+        s1dfile.data = s1dprops[s1dkey]['S1DTABLE']
+        # must change the datatpye to 'table'
+        s1dfile.datatype = 'table'
+        # log that we are saving s1d table
+        wargs = [s1dkey, s1dfile.filename]
+        WLOG(params, '', textentry('40-021-00010', args=wargs))
+        # define multi lists
+        data_list = [ctable]
+        datatype_list = ['table']
+        name_list = ['POL_TABLE']
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(recipe, drsfitsfile=null2file)]
+            name_list += ['PARAM_TABLE']
+            datatype_list += ['table']
+        # write image to file
+        s1dfile.write_multi(data_list=data_list, name_list=name_list,
+                            block_kind=recipe.out_block_str,
+                            runstring=recipe.runstring)
+        # add to output files (for indexing)
+        recipe.add_output_file(s1dfile)
 
-    # TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # TODO: Got to here
-    # TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # add LSD files
+    return polfile, cfile, ctable
+
+
 
 def add_polar_keywords(params: ParamDict, props: ParamDict,
                        outfile: DrsFitsFile) -> DrsFitsFile:
@@ -1688,25 +2001,27 @@ def add_polar_keywords(params: ParamDict, props: ParamDict,
     outfile.add_hkey('KW_POL_BJDCEN', value=props['BJDCEN'])
     # add BERV at center of observation
     outfile.add_hkey('KW_POL_BERVCEN', value=props['BERVCEN'])
+    # add mean MJD for polar sequence
+    outfile.add_hkey('KW_POL_MEAN_MJD', value=props['MEANMJD'])
     # add mean BJD for polar sequence
-    outfile.add_hkey('KW_POL_MEANBJD', value=props['MEANBJD'])
+    outfile.add_hkey('KW_POL_MEAN_BJD', value=props['MEANBJD'])
     # add stokes parameter
     outfile.add_hkey('KW_POL_STOKES', value=props['GLOBAL_STOKES'])
     # add number of exposures for polarimetry
     outfile.add_hkey('KW_POL_NEXP', value=props['N_EXPOSURES'])
     # add the total exposure time (in seconds)
     outfile.add_hkey('KW_POL_EXPTIME', value=props['TOTEXPTIME'])
-    # add the polarimetry method
-    outfile.add_hkey('KW_POL_METHOD', value=props['POLMETHO'])
-    # add flux weighted MJD of 4 exposures'
+    # add flux weighted MJD of the exposures'
     outfile.add_hkey('KW_POL_MJD_FW_CEN', value=props['MJDFWCEN'])
-    # add flux weighted BJD of 4 exposures'
-    outfile.add_hkey('KW_POL_BJD_FW_CEN', value=props['MJDFWCEN'])
-    # add mean BERV of 4 exposures
+    # add flux weighted BJD of the exposures'
+    outfile.add_hkey('KW_POL_BJD_FW_CEN', value=props['BJDFWCEN'])
+    # add mean BERV of the exposures
     outfile.add_hkey('KW_POL_MEAN_BERV', value=props['MEANBERV'])
     # -------------------------------------------------------------------------
     # add properties / switches from constants
     # -------------------------------------------------------------------------
+    # add the polarimetry method
+    outfile.add_hkey('KW_POL_METHOD', value=params['POLAR_METHOD'])
     # define whether we corrected for BERV
     outfile.add_hkey('KW_POL_CORR_BERV', value=params['POLAR_BERV_CORRECT'])
     # define whether we corrected for source RV
@@ -1759,44 +2074,6 @@ def add_polar_keywords(params: ParamDict, props: ParamDict,
     # -------------------------------------------------------------------------
     # return polfile with hdict updated
     return outfile
-
-
-def make_polar_table(params: ParamDict, props: ParamDict) -> Table:
-
-
-    exposures = props['INPUTS']
-    # storage for table
-    key_strings, exposure_nums, filenames = [], [], []
-    exptimes, mjdates, mjdmids, mjdends = [], [], [], []
-    bjds, bervs, berv_used_ests = [], [], []
-    # for all exposures add to storage
-    for key_str in exposures:
-        # get expfile (DrsFitsFile)
-        expfile = exposures[key_str]
-        # add key string
-        key_strings.append(key_str)
-        # add exposure number
-        exposure_nums.append(key_str.split('_')[-1])
-        # add filename
-        filenames.append(expfile.basename)
-        # add exposure time
-        exptimes.append(expfile.get_hkey('KW_EXPTIME', dtype=float))
-        # add mjdate
-        mjdates.append(expfile.get_hkey('KW_MJDATE', dtype=float))
-        # add mid exposure time
-        mjdmids.append(expfile.get_hkey('KW_MID_OBS_TIME'), dtype=float)
-        # add mjend
-        mjdates.append(expfile.get_hkey('KW_MJDEND'), dtype=float)
-        # add bjd
-        bjds.append(props['BJDS'][key_str])
-        # add bervs
-        bervs.append(props['BERVS'][key_str])
-        # add berv used estimate
-        berv_used_ests.append(props['BERV_USED_ESTIMATE'][key_str])
-
-    # TODO: Make table
-
-    # TODO: return table
 
 
 # =============================================================================
