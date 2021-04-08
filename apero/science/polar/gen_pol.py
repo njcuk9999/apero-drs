@@ -1604,6 +1604,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     func_name = display_func('write_files', __NAME__)
     # set the first file as reference file
     infile = props['INPUTS']['A_1']
+    # ----------------------------------------------------------------------
     # get the raw files inputted by user
     rawfiles1 = []
     for drsfile in inputs:
@@ -1616,7 +1617,11 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
         drsfile = props['INPUTS'][key_str]
         # extract the basename from raw file
         rawfiles2.append(drsfile.basename)
-
+    # ----------------------------------------------------------------------
+    # Make polar table
+    # ----------------------------------------------------------------------
+    # get polar exposure table
+    pol_table = make_polar_table(params, props)
     # ----------------------------------------------------------------------
     # Write pol to file
     # ----------------------------------------------------------------------
@@ -1650,7 +1655,9 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     polfile = add_polar_keywords(params, props, polfile)
     # ----------------------------------------------------------------------
 
-
+    # TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # TODO: Got to here
+    # TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 def add_polar_keywords(params: ParamDict, props: ParamDict,
                        outfile: DrsFitsFile) -> DrsFitsFile:
