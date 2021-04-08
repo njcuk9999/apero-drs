@@ -3881,7 +3881,6 @@ def plot_polar_lsd(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-
 polar_fit_cont = Graph('POLAR_FIT_CONT', kind='debug', func=plot_polar_fit_cont)
 polar_continuum = Graph('POLAR_CONTINUUM', kind='debug',
                         func=plot_polar_continuum)

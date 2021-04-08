@@ -1180,8 +1180,9 @@ obj_pol.set_outputs(POL_DEG_FILE=files.out_pol_deg,
                     S1DW_STOKESI=files.out_stokesi_s1dw,
                     S1DV_STOKESI=files.out_stokesi_s1dv)
 obj_pol.set_debug_plots('PLOT_POLAR_FIT_CONT', 'POLAR_CONTINUUM',
-                        'POLAR_RESULTS', 'POLAR_STOKES_I', 'POLAR_LSD')
-obj_pol.set_summary_plots()
+                        'POLAR_RESULTS', 'POLAR_STOKES_I', 'POLAR_LSD',
+                        'EXTRACT_S1D_WEIGHT', 'EXTRACT_S1D')
+obj_pol.set_summary_plots('SUM_EXTRACT_S1D')
 obj_pol.set_arg(pos=0, **obs_dir)
 obj_pol.set_kwarg(name='--exposures', dtype='files',
                   files=[files.out_ext_e2dsff, files.out_tellu_obj],

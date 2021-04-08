@@ -1014,17 +1014,21 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,  wavemap: np.ndarray,
                          kwargs, func_name)
     blazethres = pcheck(params, 'TELLU_CUT_BLAZE_NORM', 'blazethres', kwargs,
                         func_name)
-
+    # -------------------------------------------------------------------------
     # get size from e2ds
     nord, npix = e2ds.shape
     # -------------------------------------------------------------------------
     # deal with no errors
     if e2dserr is None:
-        e2dserr = np.zeros_like(e2ds)
+        # just have a line
+        e2dserr = np.tile(np.arange(npix), nord).reshape((nord, npix))
+        has_errors = False
+    else:
+        has_errors = True
+
     # -------------------------------------------------------------------------
     # log progress: calculating s1d (wavegrid)
     WLOG(params, '', textentry('40-016-00009', args=[wgrid]))
-
     # -------------------------------------------------------------------------
     # Decide on output wavelength grid
     # -------------------------------------------------------------------------
@@ -1087,9 +1091,12 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,  wavemap: np.ndarray,
     weight = np.zeros_like(wavegrid)
     # loop around all orders
     for order_num in range(nord):
+        # get wavelength mask - if there are NaNs in wavemap have to deal with
+        #    them (happens at least for polar)
+        wavemask = np.isfinite(wavemap[order_num])
         # identify the valid pixels
         valid = np.isfinite(se2ds[order_num]) & np.isfinite(sblaze[order_num])
-
+        valid &= wavemask
         # if we have no valid points we need to skip
         if np.sum(valid) == 0:
             continue
@@ -1097,16 +1104,17 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,  wavemap: np.ndarray,
         owave = wavemap[order_num]
         oe2ds = se2ds[order_num, valid]
         oe2dserr = se2dserr[order_num, valid]
-        oblaze = sblaze[order_num]
+        oblaze = sblaze[order_num, valid]
         # create the splines for this order
         spline_sp = mp.iuv_spline(owave[valid], oe2ds, k=5, ext=1)
-        spline_bl = mp.iuv_spline(owave, oblaze, k=1, ext=1)
+        spline_bl = mp.iuv_spline(owave[valid], oblaze, k=1, ext=1)
         spline_sperr = mp.iuv_spline(owave[valid], oe2dserr, k=5, ext=1)
         # valid must be cast as float for splining
         valid_float = valid.astype(float)
         # we mask pixels that are neighbours to a NaN.
         valid_float = np.convolve(valid_float, np.ones(3) / 3.0, mode='same')
-        spline_valid = mp.iuv_spline(owave, valid_float, k=1, ext=1)
+        spline_valid = mp.iuv_spline(owave[wavemask], valid_float[wavemask],
+                                     k=1, ext=1)
         # can only spline in domain of the wave
         useful_range = (wavegrid > mp.nanmin(owave[valid]))
         useful_range &= (wavegrid < mp.nanmax(owave[valid]))
@@ -1132,6 +1140,10 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,  wavemap: np.ndarray,
     with warnings.catch_warnings(record=True) as _:
         w_out_spec = out_spec / weight
         w_out_spec_err = out_spec_err / weight
+
+    # deal with errors - set them to zero (spline here is meaningless)
+    if not has_errors:
+        w_out_spec_err = np.zeros_like(w_out_spec)
 
     # construct the s1d table (for output)
     s1dtable = Table()
