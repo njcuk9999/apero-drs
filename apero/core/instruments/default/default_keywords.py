@@ -166,6 +166,12 @@ __all__ = [  # input keys
     'KW_POL_S_IRAF_FUNC', 'KW_POL_P_IRAF_FUNC', 'KW_POL_S_IRAF_DEGREE',
     'KW_POL_P_IRAF_DEGREE', 'KW_POL_CONT_BINSIZE', 'KW_POL_CONT_OVERLAP',
     'KW_POL_CONT_TELLMASK',
+    # polar lsd values
+    'KW_LSD_ORIGIN', 'KW_LSD_FIT_RV', 'KW_LSD_POL_MEAN', 'KW_LSD_POL_STDDEV',
+    'KW_LSD_POL_MEDIAN', 'KW_LSD_POL_MEDABSDEV', 'KW_LSD_STOKESVQU_MEAN',
+    'KW_LSD_STOKESVQU_STDDEV', 'KW_LSD_NULL_MEAN', 'KW_LSD_NULL_STDDEV',
+    'KW_LSD_MASK_FILE', 'KW_LSD_MASK_NUMLINES', 'KW_LSD_MASKLINES_USED',
+    'KW_LSD_MASKLINES_MWAVE', 'KW_LSD_MASKLINES_MLANDE'
 ]
 
 # set name
@@ -2400,6 +2406,95 @@ KW_POL_CONT_TELLMASK = Keyword('KW_POL_CONT_TELLMASK', key='', dtype=str,
                                source=__NAME__,
                                description='define the telluric mask '
                                            'parameters (1D list)')
+
+# define the lsd origin
+KW_LSD_ORIGIN = Keyword('KW_LSD_ORIGIN', key='', dtype=str,
+                        source=__NAME__,
+                        description='define the lsd origin')
+
+
+# define the rv from lsd gaussian fit
+KW_LSD_FIT_RV = Keyword('KW_LSD_FIT_RV', key='', dtype=float,
+                        source=__NAME__,
+                        description='define the rv from lsd gaussian fit')
+
+# define the mean degree of polarization
+KW_LSD_POL_MEAN = Keyword('KW_LSD_POL_MEAN', key='', dtype=float,
+                          source=__NAME__,
+                          description='define the mean degree of polarization')
+
+# define the std deviation of degree of polarization
+KW_LSD_POL_STDDEV = Keyword('KW_LSD_POL_MEAN', key='', dtype=float,
+                            source=__NAME__,
+                            description='define the std deviation of degree of '
+                                        'polarization')
+
+# define the median degree of polarization
+KW_LSD_POL_MEDIAN = Keyword('KW_LSD_POL_MEDIAN', key='', dtype=float,
+                            source=__NAME__,
+                            description='define the median degree of '
+                                        'polarization')
+
+# define the median deviations of degree of polarization
+KW_LSD_POL_MEDABSDEV = Keyword('KW_LSD_POL_MEDABSDEV', key='', dtype=float,
+                               source=__NAME__,
+                               description='define the median deviations of '
+                                           'degree of polarization')
+
+# define the mean of stokes VQU lsd profile
+KW_LSD_STOKESVQU_MEAN = Keyword('KW_LSD_STOKESVQU_MEAN', key='', dtype=float,
+                               source=__NAME__,
+                               description='define the mean of stokes VQU '
+                                           'lsd profile')
+
+# define the std deviation of stokes VQU LSD profile
+KW_LSD_STOKESVQU_STDDEV = Keyword('KW_LSD_STOKESVQU_STDDEV', key='',
+                                  dtype=float, source=__NAME__,
+                                  description='define the std deviation of '
+                                              'stokes VQU LSD profile')
+
+# define the mean of stokes VQU LSD null profile
+KW_LSD_NULL_MEAN = Keyword('KW_LSD_NULL_MEAN', key='', dtype=float,
+                           source=__NAME__,
+                           description='define the mean of stokes VQU LSD '
+                                       'null profile')
+
+# define the std deviation of stokes vqu lsd null profile
+KW_LSD_NULL_STDDEV = Keyword('KW_LSD_NULL_STDDEV', key='', dtype=float,
+                           source=__NAME__,
+                           description='define the std deviation of stokes '
+                                       'vqu lsd null profile')
+
+# define the mask file used in the lsd analysis
+KW_LSD_MASK_FILE = Keyword('KW_LSD_MASK_FILE', key='', dtype=str,
+                           source=__NAME__,
+                           description='define the mask file used in the '
+                                       'lsd analysis')
+
+# define the number of lines in the original mask
+KW_LSD_MASK_NUMLINES = Keyword('KW_LSD_MASK_NUMLINES', key='', dtype=int,
+                               source=__NAME__,
+                               description='define the number of lines in '
+                                           'the original mask')
+
+# define the number of lines used in the LSD analysis
+KW_LSD_MASKLINES_USED = Keyword('KW_LSD_MASK_NUMLINES', key='', dtype=int,
+                               source=__NAME__,
+                               description='define the number of lines used '
+                                           'in the LSD analysis')
+
+# define the mean wavelength of lines use din lsd analysis
+KW_LSD_MASKLINES_MWAVE = Keyword('KW_LSD_MASKLINES_MWAVE', key='', dtype=float,
+                                source=__NAME__,
+                                description='define the mean wavelength of '
+                                            'lines use din lsd analysis')
+
+# define the mean lande of lines used in lsd analysis
+KW_LSD_MASKLINES_MLANDE = Keyword('KW_LSD_MASKLINES_MLANDE', key='',
+                                  dtype=float, source=__NAME__,
+                                 description='define the mean lande of lines '
+                                             'used in lsd analysis')
+
 
 # =============================================================================
 #  End of configuration file

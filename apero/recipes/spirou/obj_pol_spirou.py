@@ -299,8 +299,8 @@ def __main__(recipe, params):
     # TODO:   p.fits should be done in the output post processing script
 
     # save LSD data to fits
-    #if do_lsd_analysis:
-    #    lsd.write_files(params, recipe, pprops, inputs, qc_params)
+    if do_lsd_analysis:
+       lsd.write_files(params, recipe, pprops, inputs, qc_params)
 
     # -------------------------------------------------------------------------
     # part7: plots
