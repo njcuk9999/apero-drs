@@ -59,9 +59,7 @@ def compile_docs(params):
     doc_dir = drs_misc.get_relative_folder(package, DOC_DIR)
     out_dir = drs_misc.get_relative_folder(package, OUT_DIR)
     # get pdflatex
-    pdflatex = params['DRS_PDFLATEX_PATH']
-    if pdflatex in ['None', None, '']:
-        pdflatex = shutil.which('pdflatex')
+    pdflatex = shutil.which('pdflatex')
 
     # get current directory
     cwd = os.getcwd()

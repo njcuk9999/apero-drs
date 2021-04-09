@@ -101,15 +101,6 @@ DRS_DATA_RUN.value = '/drs/spirou/data/run'
 DRS_DATA_ASSETS = DRS_DATA_ASSETS.copy(__NAME__)
 DRS_DATA_ASSETS.value = '/drs/spirou/data/assets'
 
-#   Define ds9 path (optional)
-DRS_DS9_PATH = DRS_DS9_PATH.copy(__NAME__)
-DRS_DS9_PATH.value = '/usr/bin/ds9'
-
-#   Define latex path (optional)
-DRS_PDFLATEX_PATH = DRS_PDFLATEX_PATH.copy(__NAME__)
-DRS_PDFLATEX_PATH.value = '/usr/bin/pdflatex'
-
-
 # =============================================================================
 # DATABASE SETTINGS
 # =============================================================================

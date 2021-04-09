@@ -13,6 +13,7 @@ import pandas as pd
 from pandastable import Table, TableModel, applyStyle
 from pandastable import dialogs
 from pathlib import Path
+import shutil
 import tkinter as tk
 from tkinter import messagebox
 
@@ -571,10 +572,7 @@ class DatabaseExplorer(tk.Frame):
 # =============================================================================
 def open_ds9(params, path):
     # try to find ds9 path
-    if 'DRS_DS9_PATH' in params:
-        ds9_path = params['DRS_DS9_PATH']
-    else:
-        ds9_path = 'ds9'
+    ds9_path = shutil.which('ds9')
     if drs_text.null_text(ds9_path, ['None', '']):
         ds9_path = 'ds9'
     # construct command

@@ -630,67 +630,6 @@ def user_interface(params, args, lang):
         all_params.set_source('CLEAN_INSTALL', 'command line')
 
     # ------------------------------------------------------------------
-    # Step 6: Check for programs
-    # ------------------------------------------------------------------
-    if args.ds9path is None or args.pdfpath is None:
-        # set the values of ds9path and pdfpath initial to None
-        ds9path, pdfpath = None, None
-        # ------------------------------------------------------------------
-        # ds9 path
-        # ------------------------------------------------------------------
-        # add header line
-        cprint(printheader(), 'g')
-        cprint('Recommended external programs (optional)')
-        # check command line args
-        if args.ds9path is not None:
-            if args.ds9path == 'None':
-                promptuser, ds9path = False, None
-
-            else:
-                promptuser, ds9path = check_path_arg('ds9dir', args.datadir)
-        # get ds9
-        if 'DRS_DS9_PATH' in all_params:
-            ds9path = all_params['DRS_DS9_PATH']
-        elif ds9path is None:
-            ds9path = shutil.which('ds9')
-        # deal with no ds9 path found
-        if ds9path is None and promptuser:
-            all_params['DRS_DS9_PATH'] = ask(message5, dtype='path',
-                                             default='None', required=False)
-            all_params.set_source('DRS_DS9_PATH', 'user')
-        else:
-            all_params['DRS_DS9_PATH'] = ds9path
-            all_params.set_source('DRS_DS9_PATH', func_name)
-            cprint('\n\t - Found ds9', 'g')
-        # ------------------------------------------------------------------
-        # pdf latex path
-        # ------------------------------------------------------------------
-        # check command line args
-        if args.pdfpath is not None:
-            if args.pdfpath == 'None':
-                promptuser, pdfpath = False, args.pdfpath
-
-            else:
-                promptuser, pdfpath = check_path_arg('pdfdir', args.pdfpath)
-        # get pdflatex
-        if 'DRS_PDFLATEX_PATH' in all_params:
-            pdfpath = all_params['DRS_PDFLATEX_PATH']
-        elif pdfpath is None:
-            pdfpath = shutil.which('pdflatex')
-        # deal with no ds9 path found
-        if pdfpath is None and promptuser:
-            all_params['DRS_PDFLATEX_PATH'] = ask(message6, dtype='path',
-                                                  default='None',
-                                                  required=False)
-            all_params.set_source('DRS_PDFLATEX_PATH', 'user')
-        else:
-            all_params['DRS_PDFLATEX_PATH'] = pdfpath
-            all_params.set_source('DRS_PDFLATEX_PATH', func_name)
-            cprint('\n\t - Found pdflatex', 'g')
-    else:
-        cprint('\t - DS9PATH set from cmd ({0})'.format(args.ds9path))
-        cprint('\t - PDFPATH set from cmd ({0})'.format(args.pdfpath))
-    # ------------------------------------------------------------------
     cprint(printheader(), 'm')
     # ----------------------------------------------------------------------
     # return all parameters
@@ -1486,13 +1425,6 @@ def update(params, args):
     else:
         all_params['CLEAN_INSTALL'] = False
         all_params.set_source('CLEAN_INSTALL', func_name)
-    # add ds9
-    all_params['DRS_DS9_PATH'] = Path(iparams['DRS_DS9_PATH'])
-    all_params.set_source('DRS_DS9_PATH', iparams.sources['DRS_DS9_PATH'])
-    # add pdflatex
-    all_params['DRS_PDFLATEX_PATH'] = Path(iparams['DRS_PDFLATEX_PATH'])
-    all_params.set_source('DRS_PDFLATEX_PATH',
-                          iparams.sources['DRS_PDFLATEX_PATH'])
     # ------------------------------------------------------------------
     # add the current database
     all_params = update_db_settings(all_params)

@@ -11,8 +11,7 @@ __all__ = [  # global settings
     # path settings
     'DRS_ROOT', 'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_DATA_OUT',
     'DRS_CALIB_DB', 'DRS_TELLU_DB', 'DRS_DATA_MSG', 'DRS_DATA_WORKING',
-    'DRS_DATA_RUN', 'DRS_DS9_PATH', 'DRS_PDFLATEX_PATH', 'DRS_DATA_MSG_FULL',
-    'DRS_DATA_ASSETS',
+    'DRS_DATA_RUN', 'DRS_DATA_MSG_FULL', 'DRS_DATA_ASSETS',
     # General properites
     'DRS_VERSION', 'AUTHORS', 'DRS_RELEASE', 'DRS_DATE', 'LANGUAGE',
     # Instrument/Observatory Constants
@@ -170,16 +169,6 @@ DRS_DATA_ASSETS = Const('DRS_DATA_ASSETS', dtype='path', source=__NAME__,
                         user=True, active=True, group=cgroup,
                         value='./apero-data/assets',
                         description='Define the assets directory')
-
-#   Define ds9 path (optional)
-DRS_DS9_PATH = Const('DRS_DS9_PATH', dtype=str, source=__NAME__, user=True,
-                     active=True, group=cgroup, value='None',
-                     description='Define ds9 path (optional)')
-
-#   Define latex path (optional)
-DRS_PDFLATEX_PATH = Const('DRS_PDFLATEX_PATH', dtype=str, source=__NAME__,
-                          user=True, active=True, group=cgroup, value='None',
-                          description='Define latex path (optional)')
 
 # =============================================================================
 # =============================================================================
