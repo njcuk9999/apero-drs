@@ -553,9 +553,9 @@ class TableSection:
         ds9path = shutil.which('ds9')
         if drs_text.null_text(ds9path, ['None', '']):
             ds9path = 'ds9'
-
+        # test whether ds9 was found
         if ds9path in [None, 'None', '']:
-            print('ds9 not found. Define path in DRS_DS9_PATH')
+            print('ds9 not found.')
             return
         command = '{0} {1} &'.format(ds9path, abspath)
         try:

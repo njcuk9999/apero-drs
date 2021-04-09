@@ -575,6 +575,10 @@ def open_ds9(params, path):
     ds9_path = shutil.which('ds9')
     if drs_text.null_text(ds9_path, ['None', '']):
         ds9_path = 'ds9'
+    # test whether ds9 was found
+    if ds9_path in [None, 'None', '']:
+        print('ds9 not found.')
+        return
     # construct command
     command = '{0} {1} &'.format(ds9_path, os.path.abspath(path))
     # run command

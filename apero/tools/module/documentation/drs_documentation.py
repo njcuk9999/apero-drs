@@ -60,7 +60,6 @@ def compile_docs(params):
     out_dir = drs_misc.get_relative_folder(package, OUT_DIR)
     # get pdflatex
     pdflatex = shutil.which('pdflatex')
-
     # get current directory
     cwd = os.getcwd()
 

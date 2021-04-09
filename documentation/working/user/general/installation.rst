@@ -193,17 +193,6 @@ Follow the step-by-step guide:
     
 .. note:: A to E will repeat for all installable instruments (To step up just one use the `--instrument` argument
 
-
-Additional options
--------------------------------------------------------------------------------------------
-
-One will be prompted to give installation paths to various optional tools (currently :term:`ds9`
-and :term:`pdflatex`
-note the user will not be prompted if these were automatically found using the `where` 
-command)
-
-
-
 .. only:: html
 
   :ref:`Back to top <installation>`
