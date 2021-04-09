@@ -10,8 +10,10 @@ Created on 2019-10-25 at 13:25
 @author: cook
 """
 from astropy import constants as cc
+from astropy.table import Table
 from astropy import units as uu
 import numpy as np
+import os
 from scipy.optimize import curve_fit
 from typing import Tuple
 
@@ -21,6 +23,8 @@ from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_data
+from apero.core.utils import drs_recipe
+from apero.io import drs_table
 from apero.science.polar import gen_pol
 
 # =============================================================================
@@ -36,6 +40,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
+DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
 # Get function string
@@ -61,10 +66,6 @@ def lsd_analysis_wrapper(params: ParamDict, props: ParamDict) -> ParamDict:
     # get wavelength ranges covering spectral lines in the ccf mask
     props = get_wl_ranges(params, props)
 
-    # TODO: --------------------------------------------------------------------
-    # TODO: Got to here
-    # TODO: --------------------------------------------------------------------
-
     # prepare polarimetry data
     props = prepare_polarimetry_data(params, props)
 
@@ -72,6 +73,124 @@ def lsd_analysis_wrapper(params: ParamDict, props: ParamDict) -> ParamDict:
     props = lsd_analysis(params, props)
 
     return props
+
+
+def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
+                polfile: DrsFitsFile, cfile: DrsFitsFile, ctable: Table):
+
+
+    # get data from polfile
+    lsd_velocities = props['LSD_VELOCITIES']
+    lsd_stokesvqu = props['LSD_STOKESVQU']
+    lsd_stokesvqu_err = props['LSD_STOKESVQU_ERR']
+    lsd_stokesi = props['LSD_STOKESI']
+    lsd_stokesi_err = props['LSD_STOKESI_ERR']
+    lsd_stokesi_model = props['LSD_STOKESI_MODEL']
+    lsd_null = props['LSD_NULL']
+    lsd_null_err = props['LSD_NULL_ERR']
+    lsd_fit_rv = props['LSD_FIT_RV']
+    lsd_pol_mean = props['LSD_POL_MEAN']
+    lsd_pol_stddev = props['LSD_POL_STDDEV']
+    lsd_pol_med = props['LSD_POL_MEDIAN']
+    lsd_pol_medabsdev = props['LSD_POL_MEDABSDEV']
+    lsd_stokesvqu_mean = props['LSD_STOKESVQU_MEAN']
+    lsd_stokesvqu_stddev = props['LSD_STOKESVQU_STDDEV']
+    lsd_null_mean = props['LSD_NULL_MEAN']
+    lsd_null_stddev = props['LSD_NULL_STDDEV']
+    lsd_mask_file = props['LSD_MASK_FILE']
+    lsd_num_lines_mask = props['LSD_LINES_NUM_MASK']
+    lsd_num_lines_used = props['LSD_LINES_NUM_USED']
+    lsd_lines_mean_wave = props['LSD_LINES_MEAN_WAVE']
+    lsd_lines_mean_lande = props['LSD_LINES_MEAN_LANDE']
+
+    # ------------------------------------------------------------------
+    # TODO: Are these 1D arrays? if so use single table
+    # define multi lists
+    data_list = [lsd_stokesvqu, lsd_stokesvqu_err, lsd_stokesi, lsd_stokesi_err,
+                 lsd_stokesi_model, lsd_null, lsd_null_err, ctable]
+    datatype_list = ['image', 'image', 'image', 'image', 'image', 'image',
+                     'image', 'table']
+    name_list = ['Velocity', 'StokesVQU', 'StokesVQU_Err', 'StokesI',
+                 'StokesI_Err', 'StokesIModel', 'Null', 'Null_Err', 'PolTable']
+
+    # ------------------------------------------------------------------
+    # TODO: Are these 2D arrays? if so use data extensions
+    # make lsd table
+    columns = ['Velocity', 'StokesVQU', 'StokesVQU_Err', 'StokesI',
+               'StokesI_Err', 'StokesIModel', 'Null', 'Null_Err']
+    values = [lsd_velocities, lsd_stokesvqu, lsd_stokesvqu_err, lsd_stokesi,
+              lsd_stokesi_err, lsd_stokesi_model, lsd_null, lsd_null_err]
+    # construct table
+    lsd_table = drs_table.make_table(params, columns=columns, values=values)
+
+    # define multi lists
+    data_list = [ctable]
+    datatype = ['table']
+    name_list = ['POL_TABLE']
+
+    # ----------------------------------------------------------------------
+    # Write LSD file to disk
+    # ----------------------------------------------------------------------
+    # get a new copy of the pol file
+    lsdfile = recipe.outputs['LSD_POL'].newcopy(params=params)
+    # construct the filename from file instance
+    lsdfile.construct_filename(infile=cfile)
+    # copy header from pol file
+    lsdfile.copy_hdict(polfile)
+    # ----------------------------------------------------------------------
+    # add output tag
+    lsdfile.add_hkey('KW_OUTPUT', value=lsdfile.name)
+    # add the lsd origin
+    instrument = params['INSTRUMENT']
+    lsdfile.add_hkey('KW_LSD_ORIGIN', value='{0}_LSD'.format(instrument))
+    # add the rv from lsd gaussian fit
+    lsdfile.add_hkey('KW_LSD_FIT_RV', value=lsd_fit_rv)
+    # add the mean degree of polarization
+    lsdfile.add_hkey('KW_LSD_POL_MEAN', value=lsd_pol_mean)
+    # add the std deviation of degree of polarization
+    lsdfile.add_hkey('KW_LSD_POL_STDDEV', value=lsd_pol_stddev)
+    # add the median degree of polarization
+    lsdfile.add_hkey('KW_LSD_POL_MEDIAN', value=lsd_pol_med)
+    # add the median deviations of degree of polarization
+    lsdfile.add_hkey('KW_LSD_POL_MEDABSDEV', value=lsd_pol_medabsdev)
+    # add the mean of stokes VQU lsd profile
+    lsdfile.add_hkey('KW_LSD_STOKESVQU_MEAN', value=lsd_stokesvqu_mean)
+    # add the std deviation of stokes VQU LSD profile
+    lsdfile.add_hkey('KW_LSD_STOKESVQU_STDDEV', value=lsd_stokesvqu_stddev)
+    # add the mean of stokes VQU LSD null profile
+    lsdfile.add_hkey('KW_LSD_NULL_MEAN', value=lsd_null_mean)
+    # add the std deviation of stokes vqu lsd null profile
+    lsdfile.add_hkey('KW_LSD_NULL_STDDEV', value=lsd_null_stddev)
+    # add the mask file used in the lsd analysis
+    lsdfile.add_hkey('KW_LSD_MASK_FILE', value=lsd_mask_file)
+    # add the number of lines in the original mask
+    lsdfile.add_hkey('KW_LSD_MASK_NUMLINES', value=lsd_num_lines_mask)
+    # add the number of lines used in the LSD analysis
+    lsdfile.add_hkey('KW_LSD_MASKLINES_USED', value=lsd_num_lines_used)
+    # add the mean wavelength of lines use din lsd analysis
+    lsdfile.add_hkey('KW_LSD_MASKLINES_MWAVE', value=lsd_lines_mean_wave)
+    # add the mean lande of lines used in lsd analysis
+    lsdfile.add_hkey('KW_LSD_MASKLINES_MLANDE', value=lsd_lines_mean_lande)
+    # ----------------------------------------------------------------------
+    # add data
+    # TODO: If 1D then lsd_table should go here
+    lsdfile.data = lsd_velocities
+    # log that we are saving pol file
+    WLOG(params, '', textentry('40-021-00009', args=[lsdfile.filename]))
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=lsdfile)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
+    # write image to file
+    lsdfile.write_multi(data_list=data_list, name_list=name_list,
+                        datatype_list=datatype_list,
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(lsdfile)
+
+
 
 
 # =============================================================================
@@ -150,7 +269,8 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     # log number of lines in original mask
     # TODO: move teext to language database
     msg = 'Number of lines in the original mask = {0}'
-    margs = [len(wavec)]
+    lines_num_mask = len(wavec)
+    margs = [len(lines_num_mask)]
     WLOG(params, '', msg.format(*margs))
     # -------------------------------------------------------------------------
     # get a flag mask
@@ -206,14 +326,17 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     props['LSD_LINES_LANDE'] = lande
     props['LSD_LINES_POL_EXC_POTENTIAL'] = excpotf
     props['LSD_LINES_POL_FLAG'] = flag
+    props['LSD_MASK_FILE'] = os.path.basename(maskpath)
+    props['LSD_LINES_NUM_MASK'] = lines_num_mask
     props['LSD_LINES_NUM_USED'] = num_lines_used
     props['LSD_LINES_MEAN_WAVE'] = mean_wave_lines
     props['LSD_LINES_MEAN_LANDE'] = mean_lande_lines
     # set source
     keys = ['LSD_LINES_WLC', 'LSD_LINES_ZNUMBER', 'LSD_LINES_DEPTH',
-            'LSD_LINES_POL_WEIGHT', 'LSD_LINES_LANDE',
+            'LSD_LINES_POL_WEIGHT', 'LSD_LINES_LANDE', 'LSD_MASK_FILE',
             'LSD_LINES_POL_EXC_POTENTIAL', 'LSD_LINES_POL_FLAG',
-            'LSD_LINES_NUM_USED', 'LSD_LINES_MEAN_WAVE', 'LSD_LINES_MEAN_LANDE']
+            'LSD_LINES_NUM_MASK', 'LSD_LINES_NUM_USED', 'LSD_LINES_MEAN_WAVE',
+            'LSD_LINES_MEAN_LANDE']
     props.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return the prop dictionary

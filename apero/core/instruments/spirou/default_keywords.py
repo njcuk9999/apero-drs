@@ -2116,6 +2116,77 @@ KW_POL_CONT_TELLMASK = KW_POL_CONT_TELLMASK.copy(__NAME__)
 KW_POL_CONT_TELLMASK.set(key='PCEWL{0:03d}',
                          comment='Excluded wave range (nm) for cont detection')
 
+# define the lsd origin
+KW_LSD_ORIGIN = KW_LSD_ORIGIN.copy(__NAME__)
+KW_LSD_ORIGIN.set(key='ORIGIN', comment='Origin of this LSD file')
+
+# define the rv from lsd gaussian fit
+KW_LSD_FIT_RV = KW_LSD_FIT_RV.copy(__NAME__)
+KW_LSD_FIT_RV.set(key='LSDFITRV', comment='RV from LSD gaussian fit (km/s)')
+
+# define the mean degree of polarization
+KW_LSD_POL_MEAN = KW_LSD_POL_MEAN.copy(__NAME__)
+KW_LSD_POL_MEAN.set(key='POLAVG', comment='Mean degree of polarization')
+
+# define the std deviation of degree of polarization
+KW_LSD_POL_STDDEV = KW_LSD_POL_STDDEV.copy(__NAME__)
+KW_LSD_POL_STDDEV.set(key='POLSTD',
+                      comment='Std deviation of degree of polarization')
+
+# define the median degree of polarization
+KW_LSD_POL_MEDIAN = KW_LSD_POL_MEDIAN.copy(__NAME__)
+KW_LSD_POL_MEDIAN.set(key='POLMED', comment='Median degree of polarization')
+
+# define the median deviations of degree of polarization
+KW_LSD_POL_MEDABSDEV = KW_LSD_POL_MEDABSDEV.copy(__NAME__)
+KW_LSD_POL_MEDABSDEV.set(key='POLMEDEV',
+                         comment='Median deviations of degree of polarization')
+
+# define the mean of stokes VQU lsd profile
+KW_LSD_STOKESVQU_MEAN = KW_LSD_STOKESVQU_MEAN.copy(__NAME__)
+KW_LSD_STOKESVQU_MEAN.set(key='LSDPAVG',
+                          comment='Mean of Stokes VQU LSD profile')
+
+# define the std deviation of stokes VQU LSD profile
+KW_LSD_STOKESVQU_STDDEV = KW_LSD_STOKESVQU_STDDEV.copy(__NAME__)
+KW_LSD_STOKESVQU_STDDEV.set(key='LSDPSTD',
+                            comment='Std deviation of Stokes VQU LSD profile')
+
+# define the mean of stokes VQU LSD null profile
+KW_LSD_NULL_MEAN = KW_LSD_NULL_MEAN.copy(__NAME__)
+KW_LSD_NULL_MEAN.set(key='LSDNAVG',
+                     comment='Mean of Stokes VQU LSD null profile')
+
+# define the std deviation of stokes vqu lsd null profile
+KW_LSD_NULL_STDDEV = KW_LSD_NULL_STDDEV.copy(__NAME__)
+KW_LSD_NULL_STDDEV.set(key='LSDNSTD',
+                       comment='Std deviation of Stokes VQU LSD null profile')
+
+# define the mask file used in the lsd analysis
+KW_LSD_MASK_FILE = KW_LSD_MASK_FILE.copy(__NAME__)
+KW_LSD_MASK_FILE.set(key='LSDMASK', comment='Mask file used in LSD analysis')
+
+# define the number of lines in the original mask
+KW_LSD_MASK_NUMLINES = KW_LSD_MASK_NUMLINES.copy(__NAME__)
+KW_LSD_MASK_NUMLINES.set(key='NLINMASK',
+                         comment='Number of lines in the original mask')
+
+# define the number of lines used in the LSD analysis
+KW_LSD_MASKLINES_USED = KW_LSD_MASKLINES_USED.copy(__NAME__)
+KW_LSD_MASKLINES_USED.set(key='NLINUSED',
+                          comment='Number of lines used in LSD analysis')
+
+# define the mean wavelength of lines use din lsd analysis
+KW_LSD_MASKLINES_MWAVE = KW_LSD_MASKLINES_MWAVE.copy(__NAME__)
+KW_LSD_MASKLINES_MWAVE.set(key='WAVEAVG',
+                           comment='Mean wavelength of lines used in '
+                                   'LSD analysis')
+
+# define the mean lande of lines used in lsd analysis
+KW_LSD_MASKLINES_MLANDE = KW_LSD_MASKLINES_MLANDE.copy(__NAME__)
+KW_LSD_MASKLINES_MLANDE.set(key='LANDEAVG',
+                            comment='Mean lande of lines used in LSD analysis')
+
 
 # =============================================================================
 #  End of configuration file
