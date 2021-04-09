@@ -140,7 +140,7 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
 
     # -------------------------------------------------------------------------
     # get loco file instance
-    darkinst = drs_file.get_file_definition(params, 'DARKM', block_ind='red')
+    darkinst = drs_file.get_file_definition(params, 'DARKM', block_kind='red')
     badinst = drs_file.get_file_definition(params, 'BADPIX', block_kind='red')
     backinst = drs_file.get_file_definition(params, 'BKGRD_MAP',
                                             block_kind='red')
