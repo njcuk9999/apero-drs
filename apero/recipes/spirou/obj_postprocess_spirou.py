@@ -126,6 +126,7 @@ def __main__(recipe, params):
             continue
         # -----------------------------------------------------------------
         # log process
+        # TODO: Add to language database
         imsg = 'Processing {0}'
         iargs = [post_file.name]
         WLOG(params, 'info', params['DRS_HEADER'])
@@ -154,6 +155,7 @@ def __main__(recipe, params):
             # update filename/basename and path
             filepostfile.set_filename(filepostfile.out_filename)
             # write file
+            # TODO: Add to language database
             msg = 'Writing to file: {0}'
             margs = [filepostfile.filename]
             WLOG(params, '', msg.format(*margs))
@@ -163,11 +165,13 @@ def __main__(recipe, params):
             # if user wants to clear - clear this data
             if clear:
                 for filename in filepostfile.clear_files:
+                    # TODO: Add to language database
                     wmsg = 'Removing {0}'
                     wargs = [filename]
                     WLOG(params, 'warning', wmsg.format(*wargs))
                     os.remove(filename)
         else:
+            # TODO: Add to language database
             WLOG(params, 'warning', '\tSkipping - files not found')
             # flag we have skipped some files
             has_skipped = True
