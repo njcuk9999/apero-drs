@@ -16,6 +16,7 @@ from astropy.table import Table
 from collections import OrderedDict
 import pandas as pd
 import sys
+import shutil
 import threading
 import warnings
 
@@ -37,6 +38,7 @@ from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.tools.module.gui import widgets
 from apero.tools.module.processing import drs_processing
 from apero import plotting
@@ -548,7 +550,10 @@ class TableSection:
         # update status
         self.master.status_bar.status.set('Opening DS9...')
         # construct command
-        ds9path = self.master.datastore.params['DRS_DS9_PATH']
+        ds9path = shutil.which('ds9')
+        if drs_text.null_text(ds9path, ['None', '']):
+            ds9path = 'ds9'
+
         if ds9path in [None, 'None', '']:
             print('ds9 not found. Define path in DRS_DS9_PATH')
             return

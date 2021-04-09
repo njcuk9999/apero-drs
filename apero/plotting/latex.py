@@ -89,26 +89,6 @@ class LatexDocument:
         # write file to disk
         write_file(self.latexfilename, self._t_)
 
-    def compile(self, logfile):
-        # get latex command
-        latex_cmd = self.params['DRS_PDFLATEX_PATH']
-        # deal with not having a latex command
-        if latex_cmd in ['None', None, '']:
-            raise ValueError('pdflatex not defined in DRS_PDFLATEX_PATH')
-        # add arguments
-        latex_cmd += ' -interaction=nonstopmode -halt-on-error '
-        # get current working directory
-        cwd = os.getcwd()
-        if os.path.dirname(self.latexfilename) != '':
-            # change to path
-            os.chdir(os.path.dirname(self.latexfilename))
-        # compile the tex file
-        cargs = [latex_cmd, self.latexfilename, logfile]
-        os.system('{0} {1} >> {2}'.format(*cargs))
-        # change back to original directory
-        if os.path.dirname(self.latexfilename) != '':
-            os.chdir(cwd)
-
     def openpdf(self):
         os.system('okular {0}'.format(self.pdffilename))
 
@@ -519,8 +499,7 @@ if __name__ == "__main__":
     doc.end()
 
     doc.write_latex()
-    doc.compile('log.txt')
-    doc.openpdf()
+
 
 
 # =============================================================================
