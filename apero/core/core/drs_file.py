@@ -3340,13 +3340,13 @@ class DrsFitsFile(DrsInputFile):
         # ---------------------------------------------------------------------
         # deal with name list
         if name_list is None:
-            names = [self.name] * len(data_list)
-        elif len(name_list) == len(data_list):
+            names = [self.name] * (len(data_list) + 1)
+        elif len(name_list) == len(data_list) + 1:
             names = list(name_list)
-        elif len(name_list) == len(data_list) - 1:
+        elif len(name_list) == len(data_list):
             names = [self.name] + list(name_list)
         else:
-            names = [self.name] * len(data_list)
+            names = [self.name] * (len(data_list) + 1)
         # add primary hdu (no name)
         names = [None] + names
         # ---------------------------------------------------------------------
@@ -3354,9 +3354,9 @@ class DrsFitsFile(DrsInputFile):
         data_list = [None, self.data] + data_list
         # variable header list tells us what should be that match up between
         #    headers and data
-        if len(header_list) == len(data_list):
+        if len(header_list) == len(data_list) - 2:
             header_list = [self.header, None] + header_list
-        else:
+        elif len(header_list) == len(data_list) - 1:
             header_list = [self.header] + header_list
         # ---------------------------------------------------------------------
         datatype_list = [None, self.datatype] + datatype_list
