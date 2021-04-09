@@ -3256,10 +3256,18 @@ class DrsFitsFile(DrsInputFile):
         # ---------------------------------------------------------------------
         # TODO: Question: can we name these whatever we like?
         # set extension names
-        names = [self.name]
+        names = [None, self.name]
+        # make lists of data + header (primary should not have data)
+        datalist = [None, self.data]
+        # header should go in primary and others should be blank
+        headerlist = [self.header, None]
+        # datatype list
+        datatypelist = [None, self.datatype]
+        # dtype list
+        dtypelist = [None, self.dtype]
         # write to file
-        drs_fits.writefits(params, self.filename, self.data, self.header,
-                           names, self.datatype, self.dtype, func=func_name)
+        drs_fits.writefits(params, self.filename, datalist, headerlist,
+                           names, datatypelist, dtypelist, func=func_name)
         # ---------------------------------------------------------------------
         # write output dictionary
         self.output_dictionary(block_kind, runstring)
@@ -3330,10 +3338,6 @@ class DrsFitsFile(DrsInputFile):
         if dtype_list is None:
             dtype_list = [None] * len(data_list)
         # ---------------------------------------------------------------------
-        # get data and header lists
-        data_list = [self.data] + data_list
-        header_list = [self.header] + header_list
-        # ---------------------------------------------------------------------
         # deal with name list
         if name_list is None:
             names = [self.name] * len(data_list)
@@ -3343,9 +3347,20 @@ class DrsFitsFile(DrsInputFile):
             names = [self.name] + list(name_list)
         else:
             names = [self.name] * len(data_list)
+        # add primary hdu (no name)
+        names = [None] + names
         # ---------------------------------------------------------------------
-        datatype_list = [self.datatype] + datatype_list
-        dtype_list = [self.dtype] + dtype_list
+        # get data and header lists - primary should not have data
+        data_list = [None, self.data] + data_list
+        # variable header list tells us what should be that match up between
+        #    headers and data
+        if len(header_list) == len(data_list):
+            header_list = [self.header, None] + header_list
+        else:
+            header_list = [self.header] + header_list
+        # ---------------------------------------------------------------------
+        datatype_list = [None, self.datatype] + datatype_list
+        dtype_list = [None, self.dtype] + dtype_list
         # writefits to file
         drs_fits.writefits(params, self.filename, data_list, header_list,
                            names, datatype_list, dtype_list, func=func_name)
@@ -5176,7 +5191,7 @@ class DrsOutFileExtension:
                  clear_file: bool = False,
                  tag: Union[str, None] = None,
                  extname: Union[str, None] = None,
-                 data_type: str = 'image'):
+                 datatype: Union[str, None] = None):
         """
         Properties for an extension of a POST PROCESS file
 
@@ -5224,7 +5239,7 @@ class DrsOutFileExtension:
         self.filename = None
         self.header = None
         self.data = None
-        self.datatype = data_type
+        self.datatype = datatype
         # table parameters
         self.table_drsfiles = []
         self.table_in_colnames = []
@@ -5359,10 +5374,10 @@ class DrsOutFileExtension:
             self.filename = filename
         else:
             self.filename = table['ABSPATH'][row]
-
+        # deal with setting data type (unless already set which overrides)
         if self.drsfile == 'table':
             self.datatype = 'table'
-        else:
+        elif self.datatype is None:
             self.datatype = self.drsfile.datatype
 
     def load_infile(self, params: ParamDict):
@@ -5646,7 +5661,7 @@ class DrsOutFile(DrsInputFile):
                 clear_file: bool = False,
                 tag: Union[str, None] = None,
                 extname: Union[str, None] = None,
-                datatype: str = 'image'):
+                datatype: Union[str, None] = None):
         """
         Add a fits extension
 
@@ -5907,7 +5922,7 @@ class DrsOutFile(DrsInputFile):
             # add the hlink criteria
             condition = '{0}="{1}"'.format(linkkind, criteria)
             # add kind condition
-            condition += ' AND BLOCK_KIND="{0}"'.format(ext.kind)
+            condition += ' AND BLOCK_KIND="{0}"'.format(ext.block_kind)
             # add hkey conditions
             if hkeys is not None and isinstance(hkeys, dict):
                 # loop around each valid header key in index database
@@ -6283,12 +6298,15 @@ class DrsOutFile(DrsInputFile):
                 names.append(self.extensions[ext].tag)
             else:
                 names.append(self.extensions[ext].name)
+        # deal with dtypes
+        dtypelist = [None] * len(names)
         # must make sure dirname exists
         if not os.path.exists(self.out_dirname):
             os.makedirs(self.out_dirname)
         # writefits to file
         drs_fits.writefits(self.params, self.out_filename, data_list,
-                           header_list, names, datatype_list, func=func_name)
+                           header_list, names, datatype_list, dtypelist,
+                           func=func_name)
         # write output dictionary
         self.output_dictionary(block_kind, runstring)
 
@@ -6615,8 +6633,9 @@ def combine(params: ParamDict, recipe: Any,
     for infile in infiles:
         infile.read_file()
     # make new infile using math
-    outfile, outtable = infiles[0].combine(infiles[1:], math, same_type,
-                                           path=abspath)
+    infile0 = infiles[0].newcopy(params=params)
+    outfile, outtable = infile0.combine(infiles[1:], math, same_type,
+                                        path=abspath)
     # update params in outfile
     outfile.params = params
     # update the number of files

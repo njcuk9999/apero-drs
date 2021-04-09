@@ -1228,28 +1228,28 @@ out_pol_deg = drs_finput('POL_DEG', hkeys=dict(KW_OUTPUT='POL_DEG'),
 
 # stokes i file
 out_pol_stokesi = drs_finput('STOKESI_POL',
-                             hkeys=dict(KW_OUTPUT='POL_STOKES_I'),
+                             hkeys=dict(KW_OUTPUT='STOKESI_POL'),
                              filetype='.fits',
                              suffix='_StokesI',
                              intype=[out_ext_e2dsff, out_tellu_obj],
                              outfunc=out.general_file)
 
 # null 1 file
-out_pol_null1 = drs_finput('NULL_POL1', hkeys=dict(KW_OUTPUT='POL_NULL_POL1'),
+out_pol_null1 = drs_finput('NULL_POL1', hkeys=dict(KW_OUTPUT='NULL_POL1'),
                            filetype='.fits',
                            suffix='_null1_pol',
                            intype=[out_ext_e2dsff, out_tellu_obj],
                            outfunc=out.general_file)
 
 # null 2 file
-out_pol_null2 = drs_finput('NULL_POL2', hkeys=dict(KW_OUTPUT='POL_NULL_POL2'),
+out_pol_null2 = drs_finput('NULL_POL2', hkeys=dict(KW_OUTPUT='NULL_POL2'),
                            filetype='.fits',
                            suffix='_null2_pol',
                            intype=[out_ext_e2dsff, out_tellu_obj],
                            outfunc=out.general_file)
 
 # lsd file
-out_pol_lsd = drs_finput('LSD_POL', hkeys=dict(KW_OUTPUT='POL_LSD'),
+out_pol_lsd = drs_finput('LSD_POL', hkeys=dict(KW_OUTPUT='LSD_POL'),
                          filetype='.fits',
                          suffix='_lsd_pol',
                          intype=[out_ext_e2dsff, out_tellu_obj],
@@ -1533,7 +1533,7 @@ post_p_file.add_ext('POLERR', out_pol_deg, pos=2, block_kind='red',
                     tag='PolErr', extname='POL_ERR')
 post_p_file.add_ext('STOKESI', out_pol_stokesi, pos=3, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER', clear_file=True,
-                    tag='StokesI', extname='STOKESI_DEG')
+                    tag='StokesI', extname='STOKESI_POL')
 post_p_file.add_ext('STOKESIERR', out_pol_stokesi, pos=4, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='StokesIErr', extname='STOKESI_ERR')
@@ -1546,7 +1546,7 @@ post_p_file.add_ext('NULL2', out_pol_null2, pos=6, block_kind='red',
 post_p_file.add_ext('WAVE_AB', out_wavem_fp, pos=7, fiber='AB',
                     block_kind='red', link='POLERR', hlink='KW_CDBWAVE',
                     tag='WaveAB')
-post_p_file.add_ext('BLAZE_AB', out_wavem_fp, pos=8, fiber='AB',
+post_p_file.add_ext('BLAZE_AB', out_ff_blaze, pos=8, fiber='AB',
                     block_kind='red', link='POLERR', hlink='KW_CDBBLAZE',
                     tag='BlazeAB')
 post_p_file.add_ext('POLTABLE', out_pol_deg, pos=9, block_kind='red',
