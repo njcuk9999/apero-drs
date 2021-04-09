@@ -107,16 +107,47 @@ QCParamList = Tuple[List[str], List[Any], List[str], List[int]]
 # Define Path classes
 # =============================================================================
 class BlockPath:
-    def __init__(self, params, name, key):
-        self.path = params[key]
+    def __init__(self, params: ParamDict, name: str, key: str):
+        """
+        Construct the block path
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param name: str, the name of the block path
+        :param key: str, the key in params where block path absolute path stored
+        """
+        # convert block path to real path (remove symbolic links)
+        block_path = None
+        try:
+            block_path = os.path.realpath(params[key])
+            # check that block path exists
+            if not os.path.exists(block_path):
+                emsg = 'BlockPathError: Key {0} does not exist\n\tPath={1}'
+                eargs = [key, params[key]]
+                WLOG(params, 'error', emsg.format(*eargs))
+        except Exception as e:
+            emsg = 'BlockPathError: Key {0}\n\tPath={1}\n\t{2}: {3}'
+            eargs = [key, params[key], type(e), str(e)]
+            WLOG(params, 'error', emsg.format(*eargs))
+        # now set path
+        self.path = block_path
         self.name = name
         self.has_obs_dirs = False
         self.fileset = None
 
     def __str__(self) -> str:
+        """
+        String Representation of the BlockPath
+
+        :return: str, the string representation of the block path
+        """
         return 'BlockPath[{0}]'.format(self.name)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        String Representation of the BlockPath
+
+        :return: str, the string representation of the block path
+        """
         return self.__str__()
 
     def __getstate__(self) -> dict:
@@ -142,6 +173,11 @@ class BlockPath:
 
 class RawPath(BlockPath):
     def __init__(self, params):
+        """
+        Construct the raw block path (input data)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        """
         super().__init__(params, 'raw', 'DRS_DATA_RAW')
         self.fileset = 'raw_file'
         self.has_obs_dirs = True
@@ -149,6 +185,11 @@ class RawPath(BlockPath):
 
 class TmpPath(BlockPath):
     def __init__(self, params):
+        """
+        Construct the tmp block path (preprocessing data)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        """
         super().__init__(params, 'tmp', 'DRS_DATA_WORKING')
         self.fileset = 'pp_file'
         self.has_obs_dirs = True
@@ -156,18 +197,34 @@ class TmpPath(BlockPath):
 
 class ReducedPath(BlockPath):
     def __init__(self, params):
+        """
+        Construct the reduced block path (reduced data)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        """
         super().__init__(params, 'red', 'DRS_DATA_REDUC')
         self.has_obs_dirs = True
         self.fileset = 'red_file'
 
+
 class AssetPath(BlockPath):
     def __init__(self, params):
+        """
+        Construct the assets block path (default data supplied with apero)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        """
         super().__init__(params, 'asset', 'DRS_DATA_ASSETS')
         self.has_obs_dirs = False
 
 
 class CalibPath(BlockPath):
     def __init__(self, params):
+        """
+        Construct the calibration block path (calibration data)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        """
         super().__init__(params, 'calib', 'DRS_CALIB_DB')
         self.has_obs_dirs = False
         self.fileset = 'calib_file'
@@ -175,6 +232,11 @@ class CalibPath(BlockPath):
 
 class TelluPath(BlockPath):
     def __init__(self, params):
+        """
+        Construct the telluric block path (telluric data)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        """
         super().__init__(params, 'tellu', 'DRS_TELLU_DB')
         self.has_obs_dirs = False
         self.fileset = 'tellu_file'
@@ -182,6 +244,11 @@ class TelluPath(BlockPath):
 
 class OutPath(BlockPath):
     def __init__(self, params):
+        """
+        Construct the postprocess path (post processed data)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        """
         super().__init__(params, 'out', 'DRS_DATA_OUT')
         self.has_obs_dirs = True
         self.fileset = 'out_file'
