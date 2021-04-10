@@ -1337,7 +1337,9 @@ class DrsRecipe(object):
                 if iarg in ['None', None, '']:
                     continue
                 # get obs_dir
-                obs_dir = drs_file.DrsPath(self.params, iarg)
+                obs_dir = drs_file.DrsPath(self.params,
+                                           block_kind=self.in_block_str,
+                                           obs_dir=iarg)
                 # construct input string
                 inputstr += '{0}={1} || '.format(argname, obs_dir.obs_dir)
                 # add to runstring

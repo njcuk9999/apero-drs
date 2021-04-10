@@ -60,25 +60,47 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # LSD wrapper function
 # =============================================================================
 def lsd_analysis_wrapper(params: ParamDict, props: ParamDict) -> ParamDict:
+    """
+    Wrapper for the LSD analysis
+    1. loads LSD mask
+    2. gets the correct wavelength ranges
+    3. prepares the polarimetry data
+    4. runs the LSD analysis
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param props: ParamDict, the parameter dictionary of data
+
+    :return: ParamDict, the updated props dictionary of data
+    """
     # select the correct lsd mask and load values into props
     props = load_lsd_mask(params, props)
-
     # get wavelength ranges covering spectral lines in the ccf mask
     props = get_wl_ranges(params, props)
-
     # prepare polarimetry data
     props = prepare_polarimetry_data(params, props)
-
     # call function to perform lsd analysis
     props = lsd_analysis(params, props)
-
+    # return props
     return props
 
 
 def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
                 polfile: DrsFitsFile, cfile: DrsFitsFile, ctable: Table):
+    """
+    Write the LSD file to disk
 
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
+    :param props: ParamDict, the parameter dictionary of data
+    :param polfile: DrsFitsFile, the pol DrsFitsFile (header copied from here)
+    :param cfile: DrsFitsFile, the combined input file (file base from here)
+    :param ctable: astropy.table.Table, the combined input file table with all
+                   header keys that are not shared between input files
 
+    :return: None - writes to disk
+    """
+    # set function name
+    _ = display_func('write_files', __NAME__)
     # get data from polfile
     lsd_velocities = props['LSD_VELOCITIES']
     lsd_stokesvqu = props['LSD_STOKESVQU']
@@ -102,42 +124,25 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     lsd_num_lines_used = props['LSD_LINES_NUM_USED']
     lsd_lines_mean_wave = props['LSD_LINES_MEAN_WAVE']
     lsd_lines_mean_lande = props['LSD_LINES_MEAN_LANDE']
-
-    # ------------------------------------------------------------------
-    # TODO: Are these 1D arrays? if so use single table
-    # define multi lists
-    data_list = [lsd_stokesvqu, lsd_stokesvqu_err, lsd_stokesi, lsd_stokesi_err,
-                 lsd_stokesi_model, lsd_null, lsd_null_err, ctable]
-    datatype_list = ['image', 'image', 'image', 'image', 'image', 'image',
-                     'image', 'table']
-    name_list = ['Velocity', 'StokesVQU', 'StokesVQU_Err', 'StokesI',
-                 'StokesI_Err', 'StokesIModel', 'Null', 'Null_Err', 'PolTable']
-
-    # ------------------------------------------------------------------
-    # TODO: Are these 2D arrays? if so use data extensions
+    # -------------------------------------------------------------------------
     # make lsd table
+
     columns = ['Velocity', 'StokesVQU', 'StokesVQU_Err', 'StokesI',
                'StokesI_Err', 'StokesIModel', 'Null', 'Null_Err']
     values = [lsd_velocities, lsd_stokesvqu, lsd_stokesvqu_err, lsd_stokesi,
               lsd_stokesi_err, lsd_stokesi_model, lsd_null, lsd_null_err]
     # construct table
     lsd_table = drs_table.make_table(params, columns=columns, values=values)
-
-    # define multi lists
-    data_list = [ctable]
-    datatype = ['table']
-    name_list = ['POL_TABLE']
-
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # Write LSD file to disk
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # get a new copy of the pol file
-    lsdfile = recipe.outputs['LSD_POL'].newcopy(params=params)
+    lsdfile = recipe.outputs['POL_LSD'].newcopy(params=params)
     # construct the filename from file instance
     lsdfile.construct_filename(infile=cfile)
     # copy header from pol file
     lsdfile.copy_hdict(polfile)
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # add output tag
     lsdfile.add_hkey('KW_OUTPUT', value=lsdfile.name)
     # add the lsd origin
@@ -171,10 +176,13 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     lsdfile.add_hkey('KW_LSD_MASKLINES_MWAVE', value=lsd_lines_mean_wave)
     # add the mean lande of lines used in lsd analysis
     lsdfile.add_hkey('KW_LSD_MASKLINES_MLANDE', value=lsd_lines_mean_lande)
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # add data
-    # TODO: If 1D then lsd_table should go here
-    lsdfile.data = lsd_velocities
+    lsdfile.data = lsd_table
+    # define other extensions
+    data_list = [ctable]
+    datatype_list = ['table']
+    name_list = ['POL_TABLE']
     # log that we are saving pol file
     WLOG(params, '', textentry('40-021-00009', args=[lsdfile.filename]))
     # snapshot of parameters
@@ -189,8 +197,6 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(lsdfile)
-
-
 
 
 # =============================================================================
@@ -270,7 +276,7 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     # TODO: move teext to language database
     msg = 'Number of lines in the original mask = {0}'
     lines_num_mask = len(wavec)
-    margs = [len(lines_num_mask)]
+    margs = [lines_num_mask]
     WLOG(params, '', msg.format(*margs))
     # -------------------------------------------------------------------------
     # get a flag mask
@@ -594,8 +600,7 @@ def lsd_analysis(params: ParamDict, props: ParamDict) -> ParamDict:
     lsd_stokesi, lsd_stokesi_err = lprout
     # -------------------------------------------------------------------------
     # calculate model Stokes I spectrum
-    # TODO: Question: This line isn't used??
-    lsd_stokesi_model = 1.0 - flux_lpm.dot(lsd_stokesi)
+    # lsd_stokesi_model = 1.0 - flux_lpm.dot(lsd_stokesi)
     # -------------------------------------------------------------------------
     # uncomment below to check model Stokes I spectrum
     # plt.plot(loc['LSD_WAVE'],loc['LSD_FLUX'])
@@ -673,14 +678,6 @@ def lsd_analysis(params: ParamDict, props: ParamDict) -> ParamDict:
     return props
 
 
-# =============================================================================
-# Define quality control and writing functions
-# =============================================================================
-
-
-# =============================================================================
-# Define worker functions
-# =============================================================================
 def nrefrac(wavelength: np.ndarray, density: float = 1.0):
     """
     Calculate refractive index of air from Cauchy formula.

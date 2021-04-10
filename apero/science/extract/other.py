@@ -225,7 +225,7 @@ def extract_files(params, recipe, infile, outfile, always_extract,
     # only extract if required
     if always_extract or (not exists):
         # need to get obs_dir and block dir (above obs_dir)
-        path_ins = drs_file.DrsPath(params, infile.filename)
+        path_ins = drs_file.DrsPath(params, abspath=infile.filename)
         obs_dir = path_ins.obs_dir
         # need to handle passing keywords from main
         kwargs = drs_startup.copy_kwargs(params, extrecipe, obs_dir=obs_dir,

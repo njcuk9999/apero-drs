@@ -277,7 +277,7 @@ class DrsPath:
         # define properties once block kind is set
         self.block_name = None
         self.block_fileset = None
-        # aboslute path must be a real path (not a symbolic link)
+        # absolute path must be a real path (not a symbolic link)
         if abspath is not None:
             self.abspath = os.path.realpath(abspath)
         else:

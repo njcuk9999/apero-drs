@@ -132,7 +132,7 @@ def __main__(recipe, params):
     cargs = [params, recipe, dark_table]
     master_dark, reffile = dark.construct_master_dark(*cargs)
     # get reference file night name
-    ref_inst = drs_file.DrsPath(params, reffile.filename)
+    ref_inst = drs_file.DrsPath(params, abspath=reffile.filename)
     obs_dir = ref_inst.obs_dir
     # Have to update obs_dir while locked for all param dicts (do not copy)
     #     Note: do not use 'uparamdicts' unless you know what you are doing.

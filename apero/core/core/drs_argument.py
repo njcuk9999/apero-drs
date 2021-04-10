@@ -550,10 +550,14 @@ class _CheckFiles(DrsAction):
         if self.recipe.obs_dir is not None:
             obs_dir = self.recipe.obs_dir
         elif self.obs_dir is not None:
-            obs_dir = drs_file.DrsPath(self.recipe.params, self.obs_dir)
+            obs_dir = drs_file.DrsPath(self.recipe.params,
+                                       block_kind=self.recipe.in_block_str,
+                                       obs_dir=self.obs_dir)
         else:
             dirname = getattr(self.namespace, 'obs_dir', '')
-            obs_dir = drs_file.DrsPath(self.recipe.params, dirname)
+            obs_dir = drs_file.DrsPath(self.recipe.params,
+                                       block_kind=self.recipe.in_block_str,
+                                       obs_dir=dirname)
         # get the argument name
         argname = self.dest
         # get the params from recipe

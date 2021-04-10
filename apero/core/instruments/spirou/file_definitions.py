@@ -1251,7 +1251,7 @@ out_pol_null2 = drs_finput('NULL_POL2', hkeys=dict(KW_OUTPUT='NULL_POL2'),
 # lsd file
 out_pol_lsd = drs_finput('LSD_POL', hkeys=dict(KW_OUTPUT='LSD_POL'),
                          filetype='.fits',
-                         suffix='_lsd_pol',
+                         suffix='_lsd_pol', #datatype='table',
                          intype=[out_ext_e2dsff, out_tellu_obj],
                          outfunc=out.general_file)
 

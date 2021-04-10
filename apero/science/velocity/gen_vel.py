@@ -605,6 +605,12 @@ def locate_reference_file(params, recipe, infile):
     #   for telluric files) --> must use the telluric files "intype file"
     if infile.name == 'TELLU_OBJ':
         instance = infile.intype
+        # need to get filename of input file
+        inbasename = infile.get_infile_infilename(filename=infile.filename)
+        # get absolute path
+        infilename = os.path.join(infile.path, inbasename)
+        # set filename
+        instance.set_filename(infilename)
     else:
         instance = infile
     # switch fiber and read file

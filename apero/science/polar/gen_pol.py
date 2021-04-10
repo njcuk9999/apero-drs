@@ -28,7 +28,6 @@ from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
-from apero.io import drs_table
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import extract
@@ -410,7 +409,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # -----------------------------------------------------------------
             # load the blaze file
             bout = flat_blaze.get_blaze(params, expfile.header,
-                                            expfile.fiber, database=calibdb)
+                                        expfile.fiber, database=calibdb)
             blazefile, blaze = bout
             # add the global wave solution to polar dict
             polar_dict['GLOBAL_BLAZE'] = blaze
@@ -665,6 +664,8 @@ def calculate_polarimetry(params: ParamDict, pprops: ParamDict,
                              "Difference"
 
     :param pprops: parameter dictionary, ParamDict containing data
+    :param polar_method: str or None, if set overrides POLAR_METHOD from
+                         parameter dictionary
 
     :return polarfunc: function, either polarimetry_diff_method(p, loc)
                        or polarimetry_ratio_method(p, loc)
@@ -702,6 +703,9 @@ def polarimetry_diff_method(params: ParamDict, props: ParamDict,
                                    error data for all exposures
                                    {1,..,NEXPOSURES}, and for all fibers {A,B}
             props['NEXPOSURES']: number of polarimetry exposures
+
+    :param interp_flux: bool or None, if set overrides POLAR_INTERPOLATE_FLUX
+                        from parameter dictionary
 
     :return pprops: parameter dictionary, the updated parameter dictionary
         Adds/updates the following:
@@ -874,6 +878,9 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
                                  error data for all exposures {1,..,NEXPOSURES},
                                  and for all fibers {A,B}
         props['NEXPOSURES']: number of polarimetry exposures
+
+    :param interp_flux: bool or None, if set overrides POLAR_INTERPOLATE_FLUX
+                        from parameter dictionary
 
     :return props: parameter dictionary, the updated parameter dictionary
         Adds/updates the following:
@@ -1064,6 +1071,9 @@ def calculate_stokes_i(params: ParamDict, props: ParamDict,
             DATA: array of numpy arrays (2D), E2DS data from all fibers in
                   all input exposures.
             NEXPOSURES: int, number of exposures in polar sequence
+
+    :param interp_flux: bool or None, if set overrides POLAR_INTERPOLATE_FLUX
+                        from parameter dictionary
 
     :return loc: parameter dictionary, the updated parameter dictionary
         Adds/updates the following:
@@ -1498,13 +1508,13 @@ def normalize_stokes_i(props: ParamDict) -> ParamDict:
         # interpolate points applying a cubic spline to the continuum data
         flux_interp = interpolate.interp1d(wl_cont, flux_cont, kind='cubic')
         # create continuum vector at same wavelength sampling as polar data
-        continuum = flux_interp(ordwave)
+        _continuum = flux_interp(ordwave)
         # save continuum with the same shape as input pol
-        order_cont_flux[order_num] = continuum
+        order_cont_flux[order_num] = _continuum
         # normalize stokes I by the continuum
-        stokesi[order_num] = flux / continuum
+        stokesi[order_num] = flux / _continuum
         # normalize stokes I by the continuum
-        stokesierr[order_num] = fluxerr / continuum
+        stokesierr[order_num] = fluxerr / _continuum
     # -------------------------------------------------------------------------
     # update stokesi and stokesierr
     props['STOKESI'] = stokesi
@@ -1536,6 +1546,11 @@ def clean_polarimetry_data(props: ParamDict, sigclip: bool = False,
             NULL2 :numpy array (2D), 2nd null polarization
             CONT_FLUX:
             CONT_POL:
+
+    :param sigclip: bool, switch if True does the sigma clip
+    :param nsig: int, the number of sigmas to clip at
+    :param overwrite: bool, if True updates original arrays with NaNs where
+                      values are sigma clipped in CLEAN_ data
 
     :return loc: parameter dictionaries,
         The updated parameter dictionary adds/updates the following:
@@ -1660,7 +1675,14 @@ def clean_polarimetry_data(props: ParamDict, sigclip: bool = False,
 # =============================================================================
 def make_s1d(params: ParamDict, recipe: DrsRecipe,
              props: ParamDict) -> ParamDict:
+    """
+    Make the 1D spectra from the 2D spectra in props
 
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe:
+    :param props:
+    :return:
+    """
     # set function name
     func_name = display_func('make_s1d', __NAME__)
     # get wavemap and blaze from props
@@ -1711,6 +1733,15 @@ def make_s1d(params: ParamDict, recipe: DrsRecipe,
 
 
 def quality_control(params) -> Tuple[List[List[Any]], bool]:
+    """
+    Quality control for the polar recipe
+    - currently blank
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: tuple, 1. list of quality control parameters for header, 2. whether
+             quality control passed or failed
+    """
     # ----------------------------------------------------------------------
     # set passed variable and fail message list
     fail_msg = []
@@ -1833,9 +1864,9 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
         datatype_list += ['table']
     # write image to file
     polfile.write_multi(data_list=data_list, name_list=name_list,
-                         datatype_list=datatype_list,
-                         block_kind=recipe.out_block_str,
-                         runstring=recipe.runstring)
+                        datatype_list=datatype_list,
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(polfile)
     # ----------------------------------------------------------------------
@@ -1969,7 +2000,6 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
 
     # add LSD files
     return polfile, cfile, ctable
-
 
 
 def add_polar_keywords(params: ParamDict, props: ParamDict,
@@ -2212,9 +2242,10 @@ def continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
             idx0 = ibin - window
             idxf = ibin + 1 + window
             # make sure it doesnt go over the edges
-            if idx0 < 0: idx0 = 0
-            if idxf > nbins: idxf = nbins - 1
-
+            if idx0 < 0:
+                idx0 = 0
+            if idxf > nbins:
+                idxf = nbins - 1
             # perform linear fit to these data
             lout = stats.linregress(xbin[idx0:idxf], ybin[idx0:idxf])
             slope, intercept, r_value, p_value, std_err = lout
