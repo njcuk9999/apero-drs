@@ -954,6 +954,12 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
     # add all others afterwards
     for it in range(len(data)):
         # ---------------------------------------------------------------------
+        # sanity check on data type (force Tables to 'table')
+        if isinstance(data[it], Table):
+            datatype[it] = 'table'
+        elif 'void' in data[it].dtype.name:
+            datatype[it] = 'table'
+        # ---------------------------------------------------------------------
         if datatype[it] == 'image':
             fitstype = fits.ImageHDU
         elif datatype[it] == 'table':

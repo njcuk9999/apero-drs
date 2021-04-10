@@ -132,7 +132,7 @@ def __main__(recipe, params):
     # loop around objects
     for filename in obj_stars:
         # get the path inst
-        path_inst = drs_file.DrsPath(params, filename)
+        path_inst = drs_file.DrsPath(params, abspath=filename)
         # append night names
         obs_dirs.append(path_inst.obs_dir)
         # append base names

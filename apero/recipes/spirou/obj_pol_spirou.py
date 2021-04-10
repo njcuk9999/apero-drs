@@ -296,11 +296,9 @@ def __main__(recipe, params):
                                qc_params)
     polfile, cfile, ctable = wout
 
-    # TODO:   p.fits should be done in the output post processing script
-
     # save LSD data to fits
     if do_lsd_analysis:
-       lsd.write_files(params, recipe, pprops, inputs, qc_params)
+       lsd.write_files(params, recipe, pprops, polfile, cfile, ctable)
 
     # -------------------------------------------------------------------------
     # part7: plots

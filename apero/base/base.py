@@ -208,6 +208,7 @@ def create_yamls(allparams: Any):
     install_dict['DRS_UCONFIG'] = str(userconfig)
     install_dict['INSTRUMENT'] = allparams['INSTRUMENT']
     install_dict['LANGUAGE'] = allparams['LANGUAGE']
+    install_dict['USE_TQDM'] = True
     # write database
     write_yaml(install_dict, install_path)
     # -------------------------------------------------------------------------
@@ -331,15 +332,34 @@ def create_yamls(allparams: Any):
     write_yaml(database_dict, database_path)
 
 
+def tqdm_module():
+    """
+    Get the tqdm module in on or off mode
+
+    :return: function, the tqdm method (or class with a call)
+    """
+    # this will replace tqdm with the return of the first arg
+    def _tqdm(*args, **kwargs):
+        return args[0]
+    # if we want to use tqdm then use it
+    if 'USE_TQDM' in IPARAMS:
+        if IPARAMS['USE_TQDM']:
+            from tqdm import tqdm as _tqdm
+
+    return _tqdm
+
 # =============================================================================
 # Define functions
 # =============================================================================
+# populate DPARAMS or IPARAMS
 try:
     DPARAMS = load_database_yaml()
     IPARAMS = load_install_yaml()
 except Exception as _:
     DPARAMS = dict()
     IPARAMS = dict()
+# need tqdm
+TQDM = tqdm_module()
 
 # =============================================================================
 # Start of code

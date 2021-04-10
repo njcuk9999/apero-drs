@@ -70,7 +70,7 @@ def construct_fp_table(params, filenames):
         # get the basename from filenames
         basename = os.path.basename(filenames[it])
         # get the path inst
-        path_inst = drs_file.DrsPath(params, filenames[it])
+        path_inst = drs_file.DrsPath(params, abspath=filenames[it])
         # get the observation directory
         obs_dir = path_inst.obs_dir
         # read the header

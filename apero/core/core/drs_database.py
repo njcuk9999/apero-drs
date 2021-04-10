@@ -23,7 +23,6 @@ import pandas as pd
 from pathlib import Path
 import shutil
 from typing import Any, Dict, List, Tuple, Type, Union
-from tqdm import tqdm
 
 from apero import lang
 from apero.base import base
@@ -35,6 +34,7 @@ from apero.core.core import drs_text
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.io import drs_fits
+
 
 # =============================================================================
 # Define variables
@@ -48,6 +48,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get astropy Time from base
 Time = base.Time
+# get tqdm from base
+tqdm = base.TQDM
 # get ParamDict
 ParamDict = constants.ParamDict
 # get execption
@@ -1647,7 +1649,7 @@ class IndexDatabase(DatabaseManager):
         # add required files to the database
         for reqfile in tqdm(reqfiles):
             # get a drs path for required file
-            req_inst = drs_file.DrsPath(self.params, reqfile)
+            req_inst = drs_file.DrsPath(self.params, abspath=reqfile)
             # get header keys
             hkeys = dict()
             # load missing files

@@ -11,7 +11,6 @@ import numpy as np
 import os
 import pandas as pd
 from typing import Dict, List, Union
-from tqdm import tqdm
 
 from apero.base import base
 from apero.base import drs_db
@@ -33,6 +32,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# get tqdm from base
+tqdm = base.TQDM
 # Get database definition
 Database = drs_db.Database
 DatabaseM = drs_database.DatabaseManager

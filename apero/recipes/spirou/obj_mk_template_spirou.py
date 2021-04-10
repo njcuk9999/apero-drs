@@ -169,7 +169,7 @@ def __main__(recipe, params):
     #     (depending on location)
     if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
         # set observation directory
-        infile_inst = drs_file.DrsPath(params, infile.filename)
+        infile_inst = drs_file.DrsPath(params, abspath=infile.filename)
         obs_dir = infile_inst.obs_dir
         params.set(key='OBS_DIR', value=obs_dir, source=mainname)
     else:
