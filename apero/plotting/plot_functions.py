@@ -1930,7 +1930,7 @@ sum_wave_fiber_comp = Graph('SUM_WAVE_FIBER_COMP', kind='summary',
 
 # add to definitions
 definitions += [wave_wl_vs_cavity, wave_fiber_comparison,
-                wave_fiber_comp, sum_wave_fiber_comp]
+                wave_fiber_comp, sum_wave_fiber_comp, wave_hc_diff_hist]
 
 
 # =============================================================================

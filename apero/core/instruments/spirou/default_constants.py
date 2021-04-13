@@ -1156,7 +1156,7 @@ WAVE_WAVESOL_FIT_DEGREE.author = base.AUTHORS['EA']
 # Define the cavity fit polynomial fit degree for wave solution
 #   Note default: 9 for spirou  3 for NIRPS
 WAVE_CAVITY_FIT_DEGREE = WAVE_CAVITY_FIT_DEGREE.copy(__NAME__)
-WAVE_CAVITY_FIT_DEGREE.value = 6
+WAVE_CAVITY_FIT_DEGREE.value = 11
 WAVE_CAVITY_FIT_DEGREE.author = base.AUTHORS['EA']
 
 # Define the number of sigmas to use in wave sol robust fits
