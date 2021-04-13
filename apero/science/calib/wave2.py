@@ -25,7 +25,6 @@ from apero.core.core import drs_file
 from apero.core.core import drs_database
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_data
-from apero.core.utils import drs_startup
 from apero.io import drs_image
 from apero.io import drs_fits
 from apero.io import drs_table
@@ -548,12 +547,12 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # get parameters from params and kwargs
     # -------------------------------------------------------------------------
-    # Define the initial value of FP effective cavity width 2xd in nm
-    guess_cavity_width = pcheck(params, 'WAVE_GUESS_CAVITY_WIDTH',
-                                func=func_name)
-    # Define the cavity fit polynomial fit degree for wave solution
-    cavity_fit_degree = pcheck(params, 'WAVE_CAVITY_FIT_DEGREE',
-                               func=func_name)
+    # # Define the initial value of FP effective cavity width 2xd in nm
+    # guess_cavity_width = pcheck(params, 'WAVE_GUESS_CAVITY_WIDTH',
+    #                             func=func_name)
+    # # Define the cavity fit polynomial fit degree for wave solution
+    # cavity_fit_degree = pcheck(params, 'WAVE_CAVITY_FIT_DEGREE',
+    #                            func=func_name)
     # min SNR to consider the line
     nsig_min = pcheck(params, 'WAVEREF_NSIG_MIN', func=func_name)
     # minimum distance to the edge of the array to consider a line
@@ -885,6 +884,22 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
 
     Original Author: Etienne Artigau
 
+    Master + AB
+        fit cavity = True
+        fit achromatic = False
+
+    Master A, B, C
+        fit cavity = False
+        fit achromatic = False
+
+    Night AB
+        fit cavity = True
+        fit achromatic = True
+
+    Night A, B, C
+        fit cavity = False
+        fit achromatic = True
+
     :param params: ParamDict, parameter dictionary of constants
     :param recipe: DrsRecipe instance, the recipe that called this function
     :param hclines: Table, HC line table (see above description)
@@ -973,7 +988,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     hcl_wave_meas = np.array(hclines['WAVE_MEAS'])
     hcl_pix_meas = np.array(hclines['PIXEL_MEAS'])
     hcl_wave_ref = np.array(hclines['WAVE_REF'])
-    hcl_nsig= np.array(hclines['NSIG'])
+    hcl_nsig = np.array(hclines['NSIG'])
 
     # -------------------------------------------------------------------------
     # Part 1: We do not know the wavelength of FP lines --> measure it for
@@ -1133,69 +1148,64 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # Loop 2: Find offsets
     # -------------------------------------------------------------------------
-    # loop around order offset iterations
-    for o_jt in range(order_offset_iterations):
-        # log that we are processing an order
-        # TODO: move to language database
-        msg = 'Locating offsets: iteartion {0}/ {1}'
-        margs = [o_jt + 1, order_offset_iterations]
-        WLOG(params, '', msg.format(*margs))
-        # loop around orders
-        # skip first order, and check order to order if the cavity
-        # is consistent with previous. Order=1 is compared to Order=0, then
-        # Order=2 to Order=1...
-        for order_num in orders[1:]:
-            # get mask for previous order
-            good_prev_fp = fpl_order == order_num - 1
-            good_fp = fpl_order == order_num
-            # get vectors for this order
-            ordfp_wave_meas = fpl_wave_meas[good_fp]
-            ordfp_peak_num = fpl_peak_num[good_fp]
-            # get vectors for previous order
-            prevfp_wave_meas = fpl_wave_meas[good_prev_fp]
-            prevfp_peak_num = fpl_peak_num[good_prev_fp]
-            # -----------------------------------------------------------------
-            # current peak numbers if you take the previous order cavity
-            #    length and assume it's the same of current order while using
-            #    the current order wavelength solution.
-            current_numbering = ordfp_peak_num
-            # The median between the two should be close to zero
-            #    (extrapolated_numbering can be float, not int as
-            #     current_numbering). If the is a mis-counting, then you get
-            #     a median very close to an integer value. This tells you the
-            #     offset to be applied to have a consistent cavity length
-            # get the median of previous order
-            med_prev = mp.nanmedian(prevfp_wave_meas * prevfp_peak_num)
-            # user median of previous order to extrapolate to this order
-            extrapolated_numbering = med_prev / ordfp_wave_meas
-            # -----------------------------------------------------------------
-            # work out the offset between current numbering and those
-            #   extrapolated from previous order
-            offset = mp.nanmedian(current_numbering - extrapolated_numbering)
-            # subtract this offset off the order values
-            if np.isfinite(offset):
-                ordfp_peak_num = ordfp_peak_num - offset
-                # add the peak num back to fplines
-                fpl_peak_num[good_fp] = ordfp_peak_num
-        # ---------------------------------------------------------------------
-        # now that we have patched the order-to-order glitches, we look for
-        #     a bulk offset in the counts that minimizes the dispersion in
-        #     cavity length.
-        global_offset = np.arange(-max_ord_bulk_offset, max_ord_bulk_offset + 1)
-        # set up storage of sigmas
-        gosigmas = np.zeros_like(global_offset, dtype=float)
-        # loop around offsets
-        for goffset in range(len(global_offset)):
-            # apply global offset
-            peak_num = fpl_peak_num + global_offset[goffset]
-            # calculate cavity
-            cavity_widths = fpl_wave_meas * peak_num
-            # work out sigma
-            gosigmas[goffset] = mp.estimate_sigma(cavity_widths, 1.0)
-        # best guess at offset
-        best_offset = global_offset[np.argmin(gosigmas)]
-        # update peak number with best offset (from gosigmas)
-        fpl_peak_num = fpl_peak_num + best_offset
+    # loop around each line (apart from the last)
+    for line_it in range(len(fpl_wave_meas) - 1):
+        # find expected next PEAK_NUM considering next WAVE_MEAS
+        # if it differs from actual next value, offset all value after this
+        # point to have a discontinuity
+        wavepeak_it = fpl_wave_meas[line_it] * fpl_peak_num[line_it]
+        wavepeak_it = wavepeak_it / fpl_wave_meas[line_it + 1]
+        # distance to next peak
+        peakdist = np.round(wavepeak_it) - fpl_peak_num[line_it + 1]
+        # deal with an undefined peak distances
+        if not np.isfinite(peakdist):
+            continue
+        # make distance an integer (nearest pixel)
+        peakdist = int(peakdist)
+        # if there is no change in distances continue
+        if peakdist == 0:
+            continue
+        # else add the distance to all future peaks
+        fpl_peak_num[line_it + 1:] += peakdist
+    # -------------------------------------------------------------------------
+    # find the bulk offset that leads to a minimisation of the STDDEV of the
+    #    cavity length through domain
+    bulk_offset = [0]
+    rms = [np.nanstd(fpl_wave_meas * fpl_peak_num)]
+    # keep track of which way we are going
+    sign = 1
+    # start a counter to make sure our while loop doesn't go on forever
+    count = 0
+    # loop around until the rms is zero
+    while (np.argmin(rms) == 0) or (np.argmin(rms) == (len(rms) - 1)):
+        if sign == 1:
+            new_bulk = np.nanmax(np.abs(bulk_offset)) + 1
+        else:
+            new_bulk = -np.nanmax(np.abs(bulk_offset))
+        bulk_offset = np.append(bulk_offset, new_bulk)
+        # calculate the new rms
+        new_rms = np.nanstd(fpl_wave_meas * (new_bulk + fpl_peak_num))
+        rms = np.append(rms, new_rms)
+        # flip the sign
+        sign *= -1
+        # sort the bulk offsets in order
+        offsetsort = np.argsort(bulk_offset)
+        # sort the bulk offsets from smallest to largest
+        bulk_offset = bulk_offset[offsetsort]
+        # also sort the rms
+        rms = list(np.array(rms)[offsetsort])
+        # deal with too many iterations
+        if count > mp.nanmin(fpl_peak_num):
+            emsg = 'Too many iterations for bulk offset N={0}'
+            eargs = [count]
+            WLOG(params, 'error', emsg.format(*eargs))
+        # add to count
+        count += 1
+    # update all peaks with current best offset
+    fpl_peak_num += bulk_offset[np.argmin(rms)]
+
+    # -------------------------------------------------------------------------
+    # Find cavity width now peak offsets have been found
     # -------------------------------------------------------------------------
     # now we have valid numbering and best-guess WAVE_MEAS, we find the
     #    cavity length
@@ -1232,29 +1242,6 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # we change the achromatic cavity length term to force HC peaks to have a
     #    zero velocity error.
-
-    # loop until
-    # TODO: PROBLEM: This currently diverges
-    #	 Mean HC position  -0.20+-0.89 m/s
-    #	 Mean HC position  -0.42+-0.89 m/s
-    #	 Mean HC position  -0.89+-0.89 m/s
-    #	 Mean HC position  -1.90+-0.89 m/s
-    #	 Mean HC position  -4.04+-0.88 m/s
-    #	 Mean HC position  -8.61+-0.89 m/s
-    #	 Mean HC position -18.30+-0.88 m/s
-    #	 Mean HC position -38.84+-0.95 m/s
-    #	 Mean HC position -79.57+-1.17 m/s
-    #	 Mean HC position -148.08+-1.68 m/s
-    #	 Mean HC position -236.02+-2.41 m/s
-    #	 Mean HC position -333.31+-3.24 m/s
-    #	 Mean HC position -435.13+-4.15 m/s
-    #	 Mean HC position -538.93+-5.09 m/s
-    #	 Mean HC position -643.93+-6.04 m/s
-    #	 Mean HC position -749.71+-7.01 m/s
-    #	 Mean HC position -855.97+-7.97 m/s
-    #	 Mean HC position -962.71+-8.92 m/s
-    #	 Mean HC position -1069.99+-9.90 m/s
-    #	 Mean HC position -1177.40+-10.89 m/s
     count = 0
     while mean2error > cavity_change_err_thres and count < 20:
         # get the proper cavity length from the cavity polynomial
@@ -1298,41 +1285,52 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # if we are allowed to change the achromatic cavity length, then
         #    we do it, else we just keep track of how much we would have
         #    changed it.
-        if fit_achromatic:
+        if not fit_cavity:
+            pass
+        elif fit_achromatic:
             # recalculate mean to error ratio
             mean2error = np.abs(mean_hc_vel / err_hc_vel)
             # update last coefficient of the cavity fit
-            cavity[-1] = cavity[-1] * (1 + mean2error / speed_of_light_ms)
-        # else set the mean2error to zero
+            cavity[-1] = cavity[-1] * (1 + mean_hc_vel / speed_of_light_ms)
+        # else update the cavity
         else:
+            # set mean2error to zero
             mean2error = 0.0
+            # create a temporary value of cavity length at each wave point
+            tmp_cavity = np.polyval(cavity, fpl_wave_ref)
+            # fit cavity length to find a correction
+            dv_cav = (1 + diff_hc / speed_of_light_ms)
+            cav_corr, _ = mp.robust_polyfit(hcl_wave_meas, dv_cav,
+                                            cavity_fit_degree, nsig_cut)
+            # update the cavity length at all points by the cavity correction
+            tmp_cavity *= np.polyval(cav_corr, fpl_wave_ref)
+            # fit cavity length again with this new correction
+            cavity = np.polyfit(fpl_wave_ref, tmp_cavity, cavity_fit_degree)
         # ---------------------------------------------------------------------
         # TODO: move to language database
         msg = 'Iteration {0}: Mean HC position {1:6.2f}+-{2:.2f} m/s'
         margs = [count + 1, mean_hc_vel, err_hc_vel]
         WLOG(params, '', msg.format(*margs))
-
+        # increase the count
         count += 1
     # -------------------------------------------------------------------------
     # TODO: move to language database
     msg = 'Change in cavity length {0:6.2f} nm'
-    margs = [cavity[-1] - cavity0[-1]]
+    cavlen1 = np.polyval(cavity, fpl_wave_ref)
+    cavlen0 = np.polyval(cavity0, fpl_wave_ref)
+    margs = [mp.nanmean(cavlen1) - mp.nanmean(cavlen0)]
     WLOG(params, '', msg.format(*margs))
     # -------------------------------------------------------------------------
     # plot the wavelength hc diff histograms
     recipe.plot('WAVE_HC_DIFF_HIST', diff_hc=diff_hc, error=hcsigma)
     # -------------------------------------------------------------------------
     # update wave solution for fplines
-    for _ in range(fwavesol_iterations):
-        # get wave / peak
-        wavepeak = fpl_wave_ref / fpl_peak_num
-        # update fplines
-        fpl_wave_ref = np.polyval(cavity, wavepeak)
+    fpl_wave_ref = np.polyval(cavity, fpl_wave_ref) / fpl_peak_num
     # -------------------------------------------------------------------------
     # Construct the wavelength coefficients / wave map
     # -------------------------------------------------------------------------
-    wave_coeffs = np.zeros([len(orders), wavesol_fit_degree])
-    wave_map = np.zeros([len(orders), nbxpix])
+    wave_coeffs = np.zeros([len(orders), wavesol_fit_degree + 1])
+    wave_map = np.zeros([len(orders), int(nbxpix)])
     # get xpix
     xpix = np.arange(nbxpix)
     # loop around orders
@@ -1435,8 +1433,11 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
         fit_cavity = False
         fit_achromatic = False
         # calculate wave solution
-        wprops = calc_wave_sol(params, recipe, hclines, fplines, fit_cavity,
-                               fit_achromatic, cavity_update=cavity)
+        wprops = calc_wave_sol(params, recipe, hclines, fplines,
+                               nbxpix=hc_e2ds_file.shape[1],
+                               fit_cavity=fit_cavity,
+                               fit_achromatic=fit_achromatic,
+                               cavity_update=cavity)
         # ---------------------------------------------------------------------
         # regenerate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=mprops['WAVEMAP'],
@@ -1723,7 +1724,7 @@ def write_wave_sol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     wavefile.add_hkey_1d('KW_INFILE2', values=hfiles, dim1name='file')
     # ------------------------------------------------------------------
     # add the order num, fit degree and fit coefficients etc
-    wavefile = add_wave_keys(params, wavefile, wprops)
+    wavefile = add_wave_keys(wavefile, wprops)
     # ------------------------------------------------------------------
     # add qc parameters
     wavefile.add_qckeys(qc_params)
@@ -1754,7 +1755,7 @@ def write_wave_sol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     return wavefile
 
 
-def add_wave_keys(params, infile, props):
+def add_wave_keys(infile: DrsFitsFile, props: ParamDict):
     # set function name
     _ = display_func('add_wave_keys', __NAME__)
     # add wave parameters
@@ -1790,8 +1791,8 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
                      hce2ds: DrsFitsFile, fpe2ds: DrsFitsFile,
                      wavefile: DrsFitsFile, hclines: Table,
                      fplines: Table, fiber: str,
-                     #TODO: REMOVE LATER
-                     kind=None):
+                     # TODO: REMOVE LATER
+                     file_kind=None):
     """
     Write the HC and FP lines table to file
 
@@ -1803,6 +1804,7 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     :param hclines: Table
     :param fplines: Table
     :param fiber: str, the fiber that we are processing
+    :param file_kind: str temp file naming override (remove later)
 
     :return: None - writes to file
     """
@@ -1812,13 +1814,13 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # write hc lines
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    hcfile = recipe.outputs['WAVEM_HCLIST'].newcopy(recipe=recipe,
+    hcfile = recipe.outputs['WAVEM_HCLIST'].newcopy(params=params,
                                                     fiber=fiber)
     # construct the filename from file instance
-    hcfile.construct_filename(params, infile=hce2ds)
+    hcfile.construct_filename(infile=hce2ds)
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
-    hcfile.copy_hdict(wavefile, None)
+    hcfile.copy_hdict(wavefile)
     # set output key
     hcfile.add_hkey('KW_OUTPUT', value=hcfile.name)
     # set data
@@ -1844,9 +1846,9 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # write fp lines
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    fpfile = recipe.outputs['WAVEM_FPLIST'].newcopy(recipe=recipe, fiber=fiber)
+    fpfile = recipe.outputs['WAVEM_FPLIST'].newcopy(params=params, fiber=fiber)
     # construct the filename from file instance
-    fpfile.construct_filename(params, infile=fpe2ds)
+    fpfile.construct_filename(infile=fpe2ds)
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     fpfile.copy_hdict(wavefile)
@@ -1861,9 +1863,9 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     WLOG(params, '', textentry('40-017-00039', args=wargs))
 
     # TODO: remove later
-    if kind is not None:
+    if file_kind is not None:
         path = fpfile.filename.split(fpfile.basename)[0]
-        fpfile.basename = '{0}_{1}'.format(kind, fpfile.basename)
+        fpfile.basename = '{0}_{1}'.format(file_kind, fpfile.basename)
         fpfile.filename = os.path.join(path, fpfile.basename)
     # define multi lists
     data_list, name_list = [], []
@@ -1902,9 +1904,9 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     # write hc lines
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    cavfile = recipe.outputs['WAVEM_CAVITY'].newcopy(recipe=recipe)
+    cavfile = recipe.outputs['WAVEM_CAVITY'].newcopy(params=params)
     # construct the filename from file instance
-    cavfile.construct_filename(params, infile=fpe2ds)
+    cavfile.construct_filename(infile=fpe2ds)
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     cavfile.copy_hdict(wavefile)

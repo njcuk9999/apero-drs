@@ -214,7 +214,7 @@ def __main__(recipe, params):
         # Construct HC + FP line reference files for master_fiber
         # =================================================================
         # set the wprops to initial wave solution
-        wprops = iwprops
+        wprops = iwprops.copy()
         # set cavity solution to None initially
         wprops['CAVITY'] = None
         wprops.set_source('CAVITY', mainname)
@@ -240,19 +240,20 @@ def __main__(recipe, params):
             # Write master line references to file
             #   master fiber hclines and fplines for all fibers!
             # -----------------------------------------------------------------
-            wmargs = [hc_e2ds_file, fp_e2ds_file, hclines, fplines,
-                      master_fiber, combine, rawhcfiles, rawfpfiles]
+            wmargs = [hc_e2ds_file, fp_e2ds_file, iwprops['WAVEINST'],
+                      hclines, fplines, master_fiber]
             _ = wave2.write_wave_lines(params, recipe, *wmargs,
-                                       kind='BEFORE')
-
+                                       file_kind='BEFORE{0}'.format(iteration))
             # -----------------------------------------------------------------
             # Calculate the wave solution for master fiber
             # master fiber + master wave setup
             fit_cavity = True
-            fit_achromatic = True
+            fit_achromatic = False
             # calculate wave solution
             wprops = wave2.calc_wave_sol(params, recipe, hclines, fplines,
-                                         fit_cavity, fit_achromatic,
+                                         nbxpix=hc_e2ds_file.shape[1],
+                                         fit_cavity=fit_cavity,
+                                         fit_achromatic=fit_achromatic,
                                          cavity_update=wprops['CAVITY'])
 
         # =================================================================
@@ -368,7 +369,8 @@ def __main__(recipe, params):
             # -----------------------------------------------------------------
             # Write wave solution
             # -----------------------------------------------------------------
-            wavefile = None
+            # TODO: need to write wave solution to file
+            wavefile = fp_e2ds_file
 
             # -----------------------------------------------------------------
             # Write cavity file (for master fiber)
@@ -382,8 +384,8 @@ def __main__(recipe, params):
             # Write master line references to file
             #   master fiber hclines and fplines for all fibers!
             # -----------------------------------------------------------------
-            wmargs = [hc_e2ds_file, fp_e2ds_file, hclines, fplines,
-                      fiber, combine, rawhcfiles, rawfpfiles]
+            wmargs = [hc_e2ds_file, fp_e2ds_file, wavefile, hclines,
+                      fplines, fiber]
             out = wave2.write_wave_lines(params, recipe, *wmargs)
             hclinefile, fplinefile = out
 
@@ -416,7 +418,7 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             # Update calibDB with FP solution and line references
             # ----------------------------------------------------------
-            if passed:
+            if passed and params['INPUTS']['DATABASE']:
                 # copy the hc wave solution file to the calibDB
                 calibdbm.add_calib_file(wavefile)
                 # copy the hc line ref file to the calibDB
