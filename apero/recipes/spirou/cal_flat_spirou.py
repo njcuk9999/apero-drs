@@ -232,7 +232,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # Update the calibration database
             # --------------------------------------------------------------
-            if passed:
+            if passed and params['INPUTS']['DATABASE']:
                 # copy the blaze file to the calibDB
                 calibdbm.add_calib_file(blazefile)
                 # copy the flat file to the calibDB

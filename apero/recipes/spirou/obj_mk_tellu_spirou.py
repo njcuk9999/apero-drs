@@ -268,7 +268,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Add transmission map to telluDB
         # ------------------------------------------------------------------
-        if np.all(qc_params[3]):
+        if np.all(qc_params[3]) and params['INPUTS']['DATABASE']:
             # copy the transmission map to telluDB
             telludbm.add_tellu_file(transfile)
         # ------------------------------------------------------------------

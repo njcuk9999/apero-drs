@@ -258,7 +258,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Update the telluric database with the template
     # ----------------------------------------------------------------------
-    if passed:
+    if passed and params['INPUTS']['DATABASE']:
         # copy the big cube median to the calibDB
         telludbm.add_tellu_file(template_file)
 
