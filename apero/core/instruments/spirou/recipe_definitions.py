@@ -765,7 +765,7 @@ cal_wave_master_ea.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                    'WAVEREF_EXPECTED', 'EXTRACT_S1D',
                                    'EXTRACT_S1D_WEIGHT',
                                    'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
-cal_wave_master_ea.set_summary_plots('SUM_WAVE_FIBER_COMP')
+cal_wave_master_ea.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
 cal_wave_master_ea.set_arg(pos=0, **obs_dir)
 cal_wave_master_ea.set_kwarg(name='--hcfiles', dtype='files',
                              files=[files.pp_hc1_hc1],
