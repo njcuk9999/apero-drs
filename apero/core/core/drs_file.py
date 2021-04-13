@@ -2747,7 +2747,16 @@ class DrsFitsFile(DrsInputFile):
         # return infile
         return infile, valid, outfilename
 
-    def get_infile_infilename(self, filename: Union[str, None]):
+    def get_infile_infilename(self, filename: Union[str, None],
+                              fiber: Union[str, None]):
+        """
+        Get an the input file from an input filename string (i.e. the input
+        of an input)
+
+        :param filename:
+        :param fiber:
+        :return:
+        """
 
         # set function name
         func_name = display_func('get_infile_infilename', __NAME__,
@@ -2761,6 +2770,12 @@ class DrsFitsFile(DrsInputFile):
                 emsg = 'Filename must be set or given \n\tFunction = {0}'
                 eargs = [func_name]
                 WLOG(self.params, 'error', emsg.format(*eargs))
+
+        # deal with fiber being set
+        if fiber is not None:
+            fiberstr = '_{0}'.format(fiber)
+        else:
+            fiberstr = ''
         # get base name
         basename = os.path.basename(filename)
         # if we have an intype we can remove a suffix
@@ -2773,8 +2788,8 @@ class DrsFitsFile(DrsInputFile):
             else:
                 inext = '.' + basename.split('.')[-1]
             # create new filename
-            nargs = [basename.split(suffix)[0], suffix, inext]
-            newfile = '{0}{1}{2}'.format(*nargs)
+            nargs = [basename.split(suffix)[0], suffix, fiberstr, inext]
+            newfile = '{0}{1}{2}{3}'.format(*nargs)
             # return new filename
             return newfile
         else:
@@ -6586,19 +6601,20 @@ def get_another_fiber_file(params: ParamDict, outfile: DrsFitsFile,
     # need a fresh copy of the outfile
     fresh_outfile = get_file_definition(params, outfile.name,
                                                  block_kind=out_block_kind)
+    # see whether we need fiber for intype
+    if fresh_outfile.intype.fibers is not None:
+        infiber = fiber
+    else:
+        infiber = None
     # get the infile for the input of outfile
-    inbasename = fresh_outfile.get_infile_infilename(filename=outfile.filename)
+    inbasename = fresh_outfile.get_infile_infilename(filename=outfile.filename,
+                                                     fiber=infiber)
     # get block for outfile
     outblock = DrsPath(params, abspath=outfile.filename)
     # get in block
     inblock = DrsPath(params, block_kind=in_block_kind)
     # get full path (base on in_block_kind)
     infilename = os.path.join(inblock.block_path, outblock.obs_dir, inbasename)
-    # see whether we need fiber for intype
-    if fresh_outfile.intype.fibers is not None:
-        infiber = fiber
-    else:
-        infiber = None
     # get a new copy of the infile
     infile = fresh_outfile.intype.newcopy(params=params, fiber=infiber)
     infile.set_filename(infilename)
