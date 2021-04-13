@@ -957,6 +957,8 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
         # sanity check on data type (force Tables to 'table')
         if isinstance(data[it], Table):
             datatype[it] = 'table'
+        elif not isinstance(data[it], np.ndarray):
+            pass
         elif 'void' in data[it].dtype.name:
             datatype[it] = 'table'
         # ---------------------------------------------------------------------

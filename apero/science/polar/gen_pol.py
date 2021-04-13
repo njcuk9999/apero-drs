@@ -1177,22 +1177,28 @@ def get_interp_flux(wavemap0: np.ndarray, flux0: np.ndarray,
     # loop around each order (per order spline)
     for order_num in range(wavemap0.shape[0]):
         # only keep clean data
-        clean = np.isfinite(flux0[order_num])
+        clean = np.isfinite(flux0[order_num]) & np.isfinite(flux0[order_num])
         # get order values
         ordwave0 = wavemap0[order_num][clean]
         ordflux0 = flux0[order_num][clean]
         ordblaze0 = blaze0[order_num][clean]
         ordwave1 = wavemap1[order_num]
-        # get spline of flux and blaze in original positions
-        flux_tck = interpolate.splrep(ordwave0, ordflux0, s=0)
-        blaze_tck = interpolate.splrep(ordwave0, ordblaze0, s=0)
+        ordclean0 = np.array(clean).astype(float)
+        # spline the spectrum and the blaze
+        spline_sp = mp.iuv_spline(ordwave0, ordflux0, k=5, ext=1)
+        spline_bl = mp.iuv_spline(ordwave0, ordblaze0, k=5, ext=1)
+        spline_clean = mp.iuv_spline(wavemap0[order_num], ordclean0, k=1, ext=1)
         # mask the global wavemap (1) so it lies within the bounds of the
         #  the local wavemap (0)
         wlmask = ordwave1 > np.min(ordwave0)
         wlmask &= ordwave1 < np.max(ordwave0)
         # apply the spline to the output wave grid (masked)
-        ordblaze1 = interpolate.splev(ordwave1[wlmask], blaze_tck, der=0)
-        ordflux1 = interpolate.splev(ordwave1[wlmask], flux_tck, der=0)
+        ordblaze1 = spline_bl(ordwave1[wlmask])
+        ordflux1 = spline_sp(ordwave1[wlmask])
+        # need to remove the gaps that were ill defined in the splines
+        #    (using the clean mask splined to the same grid)
+        cleanmask = spline_clean(ordwave1[wlmask]) < 0.99
+        ordflux1[cleanmask] = np.nan
         # push into flux1 array
         flux1[order_num][wlmask] = ordflux1 / ordblaze1
         # calculate fluxerr1 and push into array
