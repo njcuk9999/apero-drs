@@ -416,7 +416,7 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             # Update calibDB with FP solution and line references
             # ----------------------------------------------------------
-            if passed:
+            if passed and params['INPUTS']['DATABASE']:
                 # copy the hc wave solution file to the calibDB
                 calibdbm.add_calib_file(fpwavefile)
                 # copy the hc line ref file to the calibDB

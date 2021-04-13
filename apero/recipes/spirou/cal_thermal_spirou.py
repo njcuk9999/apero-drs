@@ -182,10 +182,12 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Update the calibration database
         # ------------------------------------------------------------------
-        # loop around fiber types
-        for fiber in fiber_types:
-            # add output from thermal files
-            calibdbm.add_calib_file(thermal_files[fiber])
+        # only if user wants us to add to database
+        if params['INPUTS']['DATABASE']:
+            # loop around fiber types
+            for fiber in fiber_types:
+                # add output from thermal files
+                calibdbm.add_calib_file(thermal_files[fiber])
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------

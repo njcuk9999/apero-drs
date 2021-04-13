@@ -229,7 +229,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
-        if passed:
+        if passed and params['INPUTS']['DATABASE']:
             # copy the order profile to the calibDB
             calibdbm.add_calib_file(orderpfile)
             # copy the loco file to the calibDB

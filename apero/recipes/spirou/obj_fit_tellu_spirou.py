@@ -344,7 +344,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Add TELLU_OBJ and TELLU_RECON to database
         # ------------------------------------------------------------------
-        if np.all(qc_params[3]):
+        if np.all(qc_params[3]) and params['INPUTS']['DATABASE']:
             # copy the tellu_obj file to database
             telludbm.add_tellu_file(corrfile)
             # copy the tellu_rcon file to database

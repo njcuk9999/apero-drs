@@ -202,7 +202,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
-    if passed:
+    if passed and params['INPUTS']['DATABASE']:
         # loop around fibers
         for fiber in medcubes:
             # get outfile

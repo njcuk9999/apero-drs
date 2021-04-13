@@ -229,7 +229,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
-        if passed:
+        if passed and params['INPUTS']['DATABASE']:
             # construct database instance
             calibdbm = drs_database.CalibrationDatabase(params)
             # load database

@@ -174,7 +174,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
-        if passed:
+        if passed and params['INPUTS']['DATABASE']:
             # add shapel transforms
             calibdbm.add_calib_file(outfile)
         # ------------------------------------------------------------------
