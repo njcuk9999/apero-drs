@@ -516,6 +516,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             with warnings.catch_warnings(record=True) as _:
                 raw_fluxerr = np.sqrt(np.array(infile.data))
             # TODO: Question: here you sqrt(flux)/blaze after sqrt(flux/blaze)
+            # TODO: Question:   - after = fluxerr: in "get_interp_flux"
             raw_fluxerr = raw_fluxerr / blaze
             # -----------------------------------------------------------------
             # get global wave
