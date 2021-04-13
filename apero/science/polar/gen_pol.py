@@ -12,6 +12,7 @@ Created on 2019-10-25 at 13:25
 from astropy.table import Table
 from astropy import units as uu
 import numpy as np
+import os
 from scipy import interpolate
 from scipy import stats
 from scipy import signal
@@ -440,6 +441,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # -----------------------------------------------------------------
             # need to deal with telluric files differently than e2ds files
             if expfile.name == 'TELLU_OBJ':
+                # get parameters
                 gkwargs = dict(outfile=expfile, fiber=fiber,
                                in_block_kind='red', out_block_kind='red',
                                getdata=True, gethdr=True)
@@ -456,6 +458,10 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # load the blaze file
             _, blaze = flat_blaze.get_blaze(params, infile.header, fiber,
                                             database=calibdb)
+            # get normalized blaze data
+            # TODO: Question: why is this blaze normalized but the blaze you
+            # TODO: Question: save later is not? polar_dict['GLOBAL_BLAZE']
+            blaze = blaze / np.nanmax(blaze)
             # -----------------------------------------------------------------
             # load wave for file
             wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
@@ -505,15 +511,18 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             polar_dict['RAW_WAVETIME'][key_str] = str(wprops['WAVETIME'])
             # -----------------------------------------------------------------
             # get the raw data
-            raw_flux = np.array(infile.data / blaze)
+            raw_flux = np.array(infile.data) / blaze
             # get the raw data errors
             with warnings.catch_warnings(record=True) as _:
-                raw_fluxerr = np.sqrt(infile.data)
+                raw_fluxerr = np.sqrt(np.array(infile.data))
+            # TODO: Question: here you sqrt(flux)/blaze after sqrt(flux/blaze)
+            raw_fluxerr = raw_fluxerr / blaze
             # -----------------------------------------------------------------
             # get global wave
             gwavemap = polar_dict['GLOBAL_WAVEMAP']
             # get interpolated data
-            flux, fluxerr = get_interp_flux(wavemap0=wavemap, flux0=raw_flux,
+            flux, fluxerr = get_interp_flux(wavemap0=wavemap,
+                                            flux0=np.array(infile.data),
                                             blaze0=blaze, wavemap1=gwavemap)
             # -----------------------------------------------------------------
             # add raw_flux, raw_fluxerr, flux, fluxerror to polar dict
@@ -1188,6 +1197,7 @@ def get_interp_flux(wavemap0: np.ndarray, flux0: np.ndarray,
         flux1[order_num][wlmask] = ordflux1 / ordblaze1
         # calculate fluxerr1 and push into array
         with warnings.catch_warnings(record=True) as _:
+            # TODO: Question: here you sqrt(flux/blaze) before sqrt(flux)/blaze
             fluxerr1[order_num][wlmask] = np.sqrt(ordflux1 / ordblaze1)
     # ---------------------------------------------------------------------
     return flux1, fluxerr1
@@ -1709,8 +1719,7 @@ def make_s1d(params: ParamDict, recipe: DrsRecipe,
             # get e2ds
             e2ds = np.array(props[s1dfile])
             # need to uncorrect for the blaze
-            # TODO: Question: why does the blaze need to be applied twice??
-            e2ds = e2ds * blaze ** 2
+            e2ds = e2ds * blaze
             # compute s1d
             sargs = [wavemap, e2ds, blaze]
             sprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid=grid,
