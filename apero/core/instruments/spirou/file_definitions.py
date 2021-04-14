@@ -885,7 +885,13 @@ out_wavem_hc = drs_finput('WAVEM_HC', hkeys=dict(KW_OUTPUT='WAVEM_HC'),
                           dbname='calibration', dbkey='WAVEM',
                           outfunc=out.calib_file)
 
-
+# resolution map
+out_wavem_res = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
+                             fibers=['AB', 'A', 'B', 'C'],
+                             filetype='.fits',
+                             intype=[out_ext_e2ds, out_ext_e2dsff],
+                             suffix='_wavemres',
+                             outfunc=out.calib_file)
 
 # hc resolution map
 out_wavem_hcres = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
