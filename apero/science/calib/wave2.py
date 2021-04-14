@@ -1453,6 +1453,7 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
         # add wave time and file
         wprops['WAVETIME'] = fp_e2ds_file.get_hkey('MJDMID', dtype=float)
         wprops['WAVEFILE'] = 'None'
+        wprops['WAVESOURCE'] = func_name
         # set sources
         skeys = ['HCLINES', 'FPLINES', 'WAVETIME', 'WAVEFILE']
         wprops.set_sources(skeys, func_name)

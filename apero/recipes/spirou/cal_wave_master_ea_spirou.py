@@ -273,6 +273,7 @@ def __main__(recipe, params):
         # add wave time and file
         wprops['WAVETIME'] = fp_e2ds_file.get_hkey('MJDMID', dtype=float)
         wprops['WAVEFILE'] = 'None'
+        wprops['WAVESOURCE'] = __NAME__
         # set sources
         skeys = ['HCLINES', 'FPLINES', 'WAVETIME', 'WAVEFILE']
         wprops.set_sources(skeys, mainname)
