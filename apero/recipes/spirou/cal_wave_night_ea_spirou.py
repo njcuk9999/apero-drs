@@ -216,56 +216,42 @@ def __main__(recipe, params):
         # set the wprops to initial wave solution
         wprops = iwprops.copy()
         # set cavity solution to None initially
-        wprops['CAVITY'] = None
-        wprops.set_source('CAVITY', mainname)
-        # TODO: Note in night solution we will load cavity file
-        #  cavity = wave2.get_cavity_file(params, recipe, infile=fp_e2ds_file)
+        wprops['CAVITY'] = wave2.get_cavity_file(params, recipe,
+                                                 infile=fp_e2ds_file)
 
-        # iterate twice so we have a good cavity length to start
-        for iteration in range(2):
-            # -----------------------------------------------------------------
-            # generate the hc reference lines
-            hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
-                          iteration=iteration + 1)
-            hclines = wave2.calc_wave_lines(params, recipe, **hcargs)
-            # -----------------------------------------------------------------
-            # generate the fp reference lines
-            fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
-                          cavity_poly=wprops['CAVITY'], iteration=iteration + 1)
-            fplines = wave2.calc_wave_lines(params, recipe, **fpargs)
+        # -----------------------------------------------------------------
+        # generate the hc reference lines
+        hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
+                      iteration=1)
+        hclines = wave2.calc_wave_lines(params, recipe, **hcargs)
+        # -----------------------------------------------------------------
+        # generate the fp reference lines
+        fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
+                      cavity_poly=wprops['CAVITY'], iteration=1)
+        fplines = wave2.calc_wave_lines(params, recipe, **fpargs)
 
-            # -----------------------------------------------------------------
-            # TODO: Remove after testing: Save the hclines and fplines from
-            #       first calculation
-            # Write master line references to file
-            #   master fiber hclines and fplines for all fibers!
-            # -----------------------------------------------------------------
-            wmargs = [hc_e2ds_file, fp_e2ds_file, iwprops['WAVEINST'],
-                      hclines, fplines, master_fiber]
-            _ = wave2.write_wave_lines(params, recipe, *wmargs,
-                                       file_kind='BEFORE{0}'.format(iteration))
-            # -----------------------------------------------------------------
-            # Calculate the wave solution for master fiber
-            # master fiber + master wave setup
-            fit_cavity = True
-            fit_achromatic = False
-            # calculate wave solution
-            wprops = wave2.calc_wave_sol(params, recipe, hclines, fplines,
-                                         nbxpix=hc_e2ds_file.shape[1],
-                                         fit_cavity=fit_cavity,
-                                         fit_achromatic=fit_achromatic,
-                                         cavity_update=wprops['CAVITY'])
+        # -----------------------------------------------------------------
+        # Calculate the wave solution for master fiber
+        # master fiber + master wave setup
+        fit_cavity = True
+        fit_achromatic = True
+        # calculate wave solution
+        wprops = wave2.calc_wave_sol(params, recipe, hclines, fplines,
+                                     nbxpix=hc_e2ds_file.shape[1],
+                                     fit_cavity=fit_cavity,
+                                     fit_achromatic=fit_achromatic,
+                                     cavity_update=wprops['CAVITY'])
 
         # =================================================================
         # Recalculate HC + FP line reference files for master_fiber
         # =================================================================
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
-                      iteration=3)
+                      iteration=2)
         hclines = wave2.calc_wave_lines(params, recipe, **hcargs)
         # generate the fp reference lines
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
-                      cavity_poly=wprops['CAVITY'], iteration=3)
+                      cavity_poly=wprops['CAVITY'], iteration=2)
         fplines = wave2.calc_wave_lines(params, recipe, **fpargs)
         # add lines to wave properties
         wprops['HCLINES'] = hclines
@@ -279,38 +265,11 @@ def __main__(recipe, params):
         wprops.set_sources(skeys, mainname)
 
         # =================================================================
-        # Calculate resolution map
-        # =================================================================
-        # TODO: move to constants
-        # define the number of bins in order direction to use in the
-        #   resolution map
-        params.set('WAVE_RES_MAP_ORDER_BINS', value=3, source=mainname)
-        # define the number of bins in spatial direction to use in the
-        #   resolution map
-        params.set('WAVE_RES_MAP_SPATIAL_BINS', value=3, source=mainname)
-        # define the low pass filter size for the HC E2DS file in the
-        #  resolution map
-        params.set('WAVE_RES_MAP_FILTER_SIZE', value=101, source=mainname)
-        # define the broad resolution map velocity cut off (in km/s)
-        params.set('WAVE_RES_VELO_CUTOFF1', value=20, source=mainname)
-        # define the tight resolution map velocity cut off (in km/s)
-        params.set('WAVE_RES_VELO_CUTOFF2', value=5, source=mainname)
-
-        # log progress
-        # TODO: move to language database
-        msg = 'Generating resolution map'
-        WLOG(params, 'info', msg)
-
-        # generate resolution map and update wprops
-        wprops = wave2.generate_resolution_map(params, recipe, wprops,
-                                               hc_e2ds_file)
-
-        # =================================================================
         # Calculate wave solution for other fibers
         # =================================================================
         # other fiber + master wave setup
         fit_cavity = False
-        fit_achromatic = False
+        fit_achromatic = True
         # get solution for other fibers and save all in a list of param dicts
         #   one for each fiber
         wprops_all = wave2.process_fibers(params, recipe, wprops, fp_outputs,
@@ -380,11 +339,6 @@ def __main__(recipe, params):
                 cargs = [fp_e2ds_file, wavefile, wprops['CAVITY']]
                 # write cavity file
                 cavityfile = wave2.write_cavity_file(params, recipe, *cargs)
-                # resolution args
-                rargs = [fp_e2ds_file, fiber, wavefile, wprops]
-                # write to file
-                wave2.write_resolution_map(params, recipe, *rargs)
-                # TODO: write resolution map to file
 
             # -----------------------------------------------------------------
             # Write master line references to file
