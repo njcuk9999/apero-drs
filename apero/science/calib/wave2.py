@@ -14,7 +14,8 @@ from astropy import constants as cc
 from astropy import units as uu
 import numpy as np
 import os
-from typing import Dict, List, Tuple, Union
+from scipy.optimize import curve_fit
+from typing import Any, Dict, List, Tuple, Union
 import warnings
 
 from apero.core import constants
@@ -1377,7 +1378,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
 
 def process_fibers(params: ParamDict, recipe: DrsRecipe,
                    mprops: ParamDict, fp_outputs: Dict[str, DrsFitsFile],
-                   hc_outputs: Dict[str, DrsFitsFile]) -> Dict[str, ParamDict]:
+                   hc_outputs: Dict[str, DrsFitsFile], fit_cavity: bool,
+                   fit_achromatic: bool) -> Dict[str, ParamDict]:
     """
     Process all fibers (skip for master)
 
@@ -1419,6 +1421,7 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
         # skip all this if this is the master fiber (its all been done)
         if fiber == master_fiber:
             solutions[fiber] = mprops
+            continue
         # ---------------------------------------------------------------------
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=mprops['WAVEMAP'],
@@ -1429,9 +1432,6 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
                       cavity_poly=cavity, iteration=1)
         fplines = calc_wave_lines(params, recipe, **fpargs)
         # ---------------------------------------------------------------------
-        # other fiber + master wave setup
-        fit_cavity = False
-        fit_achromatic = False
         # calculate wave solution
         wprops = calc_wave_sol(params, recipe, hclines, fplines,
                                nbxpix=hc_e2ds_file.shape[1],
@@ -1565,6 +1565,304 @@ def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
     drs_table.write_table(params, table, outfile, fmt='ascii.fast_no_header')
 
 
+def update_w_rv_props(wprops: ParamDict, rvprops: ParamDict,
+                      source: Union[str, None] = None
+                      ) -> Tuple[ParamDict, ParamDict]:
+    """
+    Update the wave parameter dictionary (wprops) and the rv parameter
+    dictionary (rvprops) with the correct values
+
+    wprops feeds into the output wave files
+    rvprops feeds into the outpout ccf (RV) files
+
+    :param wprops: ParamDict, the parameter dictionary of wave data
+    :param rvprops: ParamDict, the parameter dictionary of CCF (RV) data
+    :param source: str, the source for these constants (if None uses here)
+
+    :return:
+    """
+    # set function name
+    func_name = display_func('update_w_rv_props', __NAME__)
+    # deal with no source
+    if source is None:
+        source = str(func_name)
+    # set wave properties from ccf (rv) properties for wave outputs
+    wprops['WFP_DRIFT'] = rvprops['MEAN_RV']
+    wprops['WFP_FWHM'] = rvprops['MEAN_FWHM']
+    wprops['WFP_CONTRAST'] = rvprops['MEAN_CONTRAST']
+    wprops['WFP_MASK'] = rvprops['CCF_MASK']
+    wprops['WFP_LINES'] = rvprops['TOT_LINE']
+    wprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
+    wprops['WFP_WIDTH'] = rvprops['CCF_WIDTH']
+    wprops['WFP_STEP'] = rvprops['CCF_STEP']
+    wprops['WFP_FILE'] = wprops['WAVEFILE']
+    # add the rv stats (push from wprops to rvprops) for ccf outputs
+    rvprops['RV_WAVEFILE'] = wprops['WAVEFILE']
+    rvprops['RV_WAVETIME'] = wprops['WAVETIME']
+    rvprops['RV_WAVESRCE'] = wprops['WAVESOURCE']
+    rvprops['RV_TIMEDIFF'] = 'None'
+    rvprops['RV_WAVE_FP'] = rvprops['MEAN_RV']
+    rvprops['RV_SIMU_FP'] = 'None'
+    rvprops['RV_DRIFT'] = 'None'
+    rvprops['RV_OBJ'] = 'None'
+    rvprops['RV_CORR'] = 'None'
+    # set sources
+    rkeys = ['RV_WAVEFILE', 'RV_WAVETIME', 'RV_WAVESRCE', 'RV_TIMEDIFF',
+             'RV_WAVE_FP', 'RV_SIMU_FP', 'RV_DRIFT', 'RV_OBJ',
+             'RV_CORR']
+    wkeys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
+             'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP',
+             'WFP_FILE']
+    wprops.set_sources(wkeys, source)
+    rvprops.set_sources(rkeys, source)
+    # return wave props and rv props
+    return wprops, rvprops
+
+
+def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
+                            wprops: ParamDict, hc_e2ds_file: DrsFitsFile,
+                            nbin_order: Union[int, None] = None,
+                            nbin_spatial: Union[int, None] = None,
+                            filtersize: Union[int, None] = None,
+                            velo_cutoff1: Union[float, None] = None,
+                            velo_cutoff2: Union[float, None] = None
+                            ) -> ParamDict:
+
+    # set the function name
+    func_name = display_func('generate_resolution_map', __NAME__)
+    # -------------------------------------------------------------------------
+    # get parameters from parameter dictionary
+    # -------------------------------------------------------------------------
+    # get number of order bins
+    n_order_bin = pcheck(params, 'WAVE_RES_MAP_ORDER_BINS', func=func_name,
+                         override=nbin_order)
+    # get number of spatial bins
+    n_spatial_bin = pcheck(params, 'WAVE_RES_MAP_ORDER_BINS', func=func_name,
+                           override=nbin_spatial)
+    # get low pass filter for hc e2ds file
+    filtersize = pcheck(params, 'WAVE_RES_MAP_FILTER_SIZE', func=func_name,
+                        override=filtersize)
+    # get the velocity cut off for keeping lines close to our reference line
+    velocity_cutoff1 = pcheck(params, 'WAVE_RES_VELO_CUTOFF1', func=func_name,
+                              override=velo_cutoff1)
+    # get the tight velocity cut off for keeping lines close to our
+    #     reference line
+    velocity_cutoff2 = pcheck(params, 'WAVE_RES_VELO_CUTOFF2', func=func_name,
+                              override=velo_cutoff2)
+    # get the y limit for the res plot
+    res_ylim = pcheck(params, 'WAVE_HC_RESMAP_YLIM', func=func_name,
+                      mapf='list', dtype=float)
+    # -------------------------------------------------------------------------
+    # get parameters from wprops
+    wavemap = wprops['WAVEMAP']
+    hclines = wprops['HCLINES']
+    hc_pix_ref = hclines['PIXEL_REF']
+    hc_order = hclines['ORDER']
+    hc_wave_ref = hclines['WAVE_REF']
+    # get the HC E2DS file
+    hc_e2ds = np.array(hc_e2ds_file.data)
+    # -------------------------------------------------------------------------
+    # get number of orders and number of pixels from wavemap
+    nbo, nbpix = wavemap.shape
+    # get bin sizes
+    bin_spatial = nbpix / n_spatial_bin
+    bin_order = nbo / n_order_bin
+    # -------------------------------------------------------------------------
+    # low pass the HC E2DS files
+    for order_num in range(nbo):
+        # calculate the low frequency signal from the HC E2DS
+        lowpass = mp.lowpassfilter(hc_e2ds[order_num], filtersize)
+        # remove the low pass signal from the HC E2DS
+        hc_e2ds[order_num] = hc_e2ds[order_num] - lowpass
+    # -------------------------------------------------------------------------
+    # storage for plotting / outputs
+    map_dvs, map_fluxes, map_fits = dict(), dict(), dict()
+    map_waves, map_orders, map_res_eff = dict(), dict(), dict()
+    map_fwhm, map_amp, map_expo  = dict(), dict(), dict()
+    map_lower_ords, map_high_ords = dict(), dict()
+    map_lower_pix, map_high_pix = dict(), dict()
+    # get all orders and pixels
+    orders = np.arange(nbo)
+    xpix = np.arange(nbpix)
+    # -------------------------------------------------------------------------
+    # loop over number of bins in order direction
+    for i_order_bin in range(n_order_bin):
+        # loop over number of bins in spatial direction
+        for i_spatial_bin in range(n_spatial_bin):
+            # key for this iteration (order bin + spatial bin)
+            mapkey = (i_order_bin, i_spatial_bin)
+            # calculate which lines are valid
+            valid_lines = (hc_pix_ref // bin_spatial == i_spatial_bin)
+            valid_lines &= (hc_order // bin_order == i_order_bin)
+            # get valid orders and pixels
+            valid_orders = (orders // bin_order == i_order_bin)
+            valid_pixels = (xpix // bin_spatial == i_spatial_bin)
+            # get the minimum and maximum value for orders
+            map_lower_ords[mapkey] = np.min(orders[valid_orders])
+            map_high_ords[mapkey] = np.max(orders[valid_orders])
+            # get the minimum and maximum value for pixels
+            map_lower_pix[mapkey] = np.min(xpix[valid_pixels])
+            map_high_pix[mapkey] = np.max(xpix[valid_pixels])
+            # print which bin we are processing
+            # TODO: move to language database
+            msg = ('Processing order bin {0} spectral bin {1} '
+                   'Number lines: {2} \n\t Orders {3} to {4}, '
+                   'Pixels {5} to {6}')
+            margs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
+                     map_lower_ords[mapkey], map_high_ords[mapkey],
+                     map_lower_pix[mapkey], map_high_pix[mapkey]]
+            WLOG(params, '', msg.format(*margs))
+            # mask order and wave ref for this bin set
+            hc_order_i = hc_order[valid_lines]
+            hc_wave_ref_i = hc_wave_ref[valid_lines]
+            # -----------------------------------------------------------------
+            # calculate the velocities for all valid lines in this bin
+            # -----------------------------------------------------------------
+            # loop around each line and work out the velocity of this line
+            all_dv, all_flux, all_wave, all_order = [], [], [], []
+            for line_it in range(len(hc_order_i)):
+                # get the ratio between our wave map for this order and
+                # reference wavelength for this line
+                dwave = wavemap[hc_order_i[line_it]] / hc_wave_ref_i[line_it]
+                # convert this to a velocity difference
+                dv = (dwave - 1) * speed_of_light
+                # only keep velocities close to zero
+                keep = np.abs(dv) < velocity_cutoff1
+                # get the flux for all valid lines in this order in the dv range
+                flux = np.array(hc_e2ds[hc_order_i[line_it]][keep])
+                # one keep valid line dvs
+                dv = dv[keep]
+                wavekeep = wavemap[hc_order_i[line_it]][keep]
+                orderkeep = np.full_like(wavekeep, hc_order_i[line_it])
+                # get a new dv cutoff
+                dvmask = np.abs(dv) < velocity_cutoff2
+                # subtract off the median flux for these lines
+                #  this normalizes the flux
+                with warnings.catch_warnings(record=True) as _:
+                    flux = flux - np.nanmedian(flux[~dvmask])
+                    flux = flux / np.nansum(flux[dvmask])
+                # append all lines left to storage
+                all_dv += list(dv)
+                all_flux += list(flux)
+                all_wave += list(wavekeep)
+                all_order += list(orderkeep)
+            # -----------------------------------------------------------------
+            # prepare all dvs and flux for fitting
+            # -----------------------------------------------------------------
+            # initial guess: fwhm, amp, expo
+            guess = [3.5, 0.5, 2.0]
+            # sort dvs and fluxes by dvs
+            sort = np.argsort(all_dv)
+            all_dv, all_flux = np.array(all_dv)[sort], np.array(all_flux)[sort]
+            all_wave = np.array(all_wave)[sort]
+            all_order = np.array(all_order)[sort]
+            # mask values to only keep good values (flux is normalize)
+            mask = (all_flux > -0.1) & (all_flux < 1.0)
+            mask &= np.isfinite(all_flux)
+            # apply mask to dv and flux
+            all_dv, all_flux = all_dv[mask], all_flux[mask]
+            all_wave, all_order = all_wave[mask], all_order[mask]
+            # -----------------------------------------------------------------
+            # fit the dvs
+            # -----------------------------------------------------------------
+            try:
+                # attempt a first fit on the flux
+                cargs = [mp.centered_super_gauss, all_dv, all_flux]
+                with warnings.catch_warnings(record=True) as _:
+                    pcoeffs1, _ = curve_fit(*cargs, p0=guess)
+                # calculate the residuals between flux and fit
+                fluxfit1 = mp.centered_super_gauss(all_dv, *pcoeffs1)
+                residuals = all_flux - fluxfit1
+                # sigma clip the residuals
+                sigclip = np.abs(residuals) < 0.3
+                # update the all_dv and all_flux vectors
+                all_dv, all_flux = all_dv[sigclip], all_flux[sigclip]
+                all_wave, all_order = all_wave[sigclip], all_order[sigclip]
+                # re-fit based on sigma clipped vectors
+                cargs = [mp.centered_super_gauss, all_dv, all_flux]
+                with warnings.catch_warnings(record=True) as _:
+                    pcoeffs2, _ = curve_fit(*cargs, p0=guess)
+                # calculate fit
+                fluxfit2 = mp.centered_super_gauss(all_dv, *pcoeffs2)
+                # calculate resolution
+                fwhm, amp, expo = pcoeffs2
+                res_eff = speed_of_light / fwhm
+            except ValueError as e:
+                # set values to NaN
+                fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
+                fluxfit2 = np.full_like(all_dv, np.nan)
+                # TODO: move to language database
+                wmsg = ('Fit failed for order bin {0} spectral bin {1}'
+                        '\n\tError {0}: {1}')
+                wargs = [type(e), str(e)]
+                WLOG(params, 'warning', wmsg.format(*wargs))
+            except RuntimeError as e:
+                # set values to NaN
+                fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
+                fluxfit2 = np.full_like(all_dv, np.nan)
+                # TODO: move to language database
+                wmsg = ('Fit failed for order bin {0} spectral bin {1}'
+                        '\n\tError {0}: {1}')
+                wargs = [type(e), str(e)]
+                WLOG(params, 'warning', wmsg.format(*wargs))
+            # log parameters
+            # TODO: move to language database
+            msg = ('FWHM={0:.2f} km/s, effective resolution={1:.2f}, '
+                   'expo={2:.2f}')
+            margs = [fwhm, expo, res_eff]
+            WLOG(params, '', msg.format(*margs))
+            # storage for plotting
+            map_dvs[mapkey] = np.array(all_dv)
+            map_fluxes[mapkey] = np.array(all_flux)
+            map_waves[mapkey] = np.array(all_wave)
+            map_orders[mapkey] = np.array(all_order)
+            map_fits[mapkey] = np.array(fluxfit2)
+            map_fwhm[mapkey] = float(fwhm)
+            map_expo[mapkey] = float(expo)
+            map_amp[mapkey] = float(amp)
+            map_res_eff[mapkey] = float(res_eff)
+    # -------------------------------------------------------------------------
+    # produce the large plot
+    # -------------------------------------------------------------------------
+    # get xlim based on all fwhm values
+    maxfwhm = np.max(list(map_fwhm.values()))
+    xlim = [-2 * maxfwhm, 2 * maxfwhm]
+    # map line profile map
+    recipe.plot('WAVE_RESMAP', params=params, n_order_bin=n_order_bin,
+                n_spatial_bin=n_spatial_bin, map_dvs=map_dvs,
+                map_fluxes=map_fluxes, map_fits=map_fits,
+                map_res_eff=map_res_eff, map_lower_ords=map_lower_ords,
+                map_high_ords=map_high_ords, map_lower_pix=map_lower_pix,
+                map_high_pix=map_high_pix, xlim=xlim, ylim=res_ylim)
+    # -------------------------------------------------------------------------
+    # push to wprops
+    wprops['RES_MAP_DVS'] = map_dvs
+    wprops['RES_MAP_LINES'] = map_fluxes
+    wprops['RES_MAP_WAVES'] = map_waves
+    wprops['RES_MAP_ORDERS'] = map_orders
+    wprops['RES_MAP_FITS'] = map_fits
+    wprops['RES_MAP_LOW_ORD'] = map_lower_ords
+    wprops['RES_MAP_HIGH_ORD'] = map_high_ords
+    wprops['RES_MAP_LOW_PIX'] = map_lower_pix
+    wprops['RES_MAP_HIGH_PIX'] = map_high_pix
+    wprops['RES_MAP_FWHM'] = map_fwhm
+    wprops['RES_MAP_EXPO'] = map_expo
+    wprops['RES_MAP_AMP'] = map_amp
+    wprops['RES_MAP_EFFRES'] = map_res_eff
+    wprops['RES_MAP_NBIN_ORD'] = n_order_bin
+    wprops['RES_MAP_NBIN_PIX'] = n_spatial_bin
+    wprops['RES_NBO']  = nbo
+    wprops['RES_NBPIX'] = nbpix
+    # set source
+    keys = ['RES_MAP_DVS', 'RES_MAP_LINES', 'RES_MAP_FITS', 'RES_MAP_LOW_ORD',
+            'RES_MAP_HIGH_ORD', 'RES_MAP_LOW_PIX', 'RES_MAP_HIGH_PIX',
+            'RES_MAP_FWHM', 'RES_MAP_EXPO', 'RES_MAP_AMP', 'RES_MAP_EFFRES',
+            'RES_MAP_NBIN_ORD', 'RES_MAP_NBIN_PIX']
+    wprops.set_sources(keys, func_name)
+    # -------------------------------------------------------------------------
+    # return updated wprops
+    return wprops
+
 # =============================================================================
 # Define writing functions
 # =============================================================================
@@ -1663,10 +1961,11 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
     return qc_params
 
 
-def write_wave_sol(params: ParamDict, recipe: DrsRecipe, fiber: str,
-                   wprops: ParamDict, hcfile: DrsFitsFile, fpfile: DrsFitsFile,
-                   combine: bool, rawhcfiles: List[str], rawfpfiles: List[str],
-                   qc_params: List[list]) -> DrsFitsFile:
+def write_wavesol_master(params: ParamDict, recipe: DrsRecipe, fiber: str,
+                         wprops: ParamDict, hcfile: DrsFitsFile,
+                         fpfile: DrsFitsFile, combine: bool,
+                         rawhcfiles: List[str], rawfpfiles: List[str],
+                         qc_params: List[list]) -> DrsFitsFile:
     """
     Write the wave solution to file (adding headers where needed)
 
@@ -1756,7 +2055,15 @@ def write_wave_sol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     return wavefile
 
 
-def add_wave_keys(infile: DrsFitsFile, props: ParamDict):
+def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
+    """
+    Add wave keys to wave solution
+
+    :param infile: DrsFitsFile, the wave file to write keys to
+    :param props: ParamDict, the parameter dictionary of wave data
+
+    :return: DrsFitsFile, the updated wave file instance
+    """
     # set function name
     _ = display_func('add_wave_keys', __NAME__)
     # add wave parameters
@@ -1936,6 +2243,149 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     # return hc  and fp line files
     return cavfile
 
+
+def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
+                         fpe2ds: DrsFitsFile, fiber: str,
+                         wavefile: DrsFitsFile, wprops: ParamDict):
+    # set function name
+    _ = display_func('write_cavity_file', __NAME__)
+
+    # get maps from wprops
+    map_dvs = wprops['RES_MAP_DVS']
+    map_fluxes = wprops['RES_MAP_LINES']
+    map_waves = wprops['RES_MAP_WAVES']
+    map_orders = wprops['RES_MAP_ORDERS']
+    map_fits = wprops['RES_MAP_FITS']
+    map_lower_ords = wprops['RES_MAP_LOW_ORD']
+    map_high_ords = wprops['RES_MAP_HIGH_ORD']
+    map_lower_pix = wprops['RES_MAP_LOW_PIX']
+    map_high_pix = wprops['RES_MAP_HIGH_PIX']
+    map_fwhm = wprops['RES_MAP_FWHM']
+    map_expo = wprops['RES_MAP_EXPO']
+    map_amp = wprops['RES_MAP_AMP']
+    map_res_eff = wprops['RES_MAP_EFFRES']
+    n_order_bin = wprops['RES_MAP_NBIN_ORD']
+    n_spatial_bin = wprops['RES_MAP_NBIN_PIX']
+    nbo = wprops['RES_NBO']
+    nbpix = wprops['RES_NBPIX']
+
+    # ------------------------------------------------------------------
+    # Make stats table
+    # ------------------------------------------------------------------
+    # set columns for stats table
+    columns = ['ORDER_START', 'ORDER_END', 'PIX_START', 'PIX_END',
+               'FWHM', 'AMP', 'EXPO', 'RESOLUTION']
+    # push dictionaries into lists
+    values = [list(map_lower_ords.values()),
+              list(map_high_ords.values()),
+              list(map_lower_pix.values()),
+              list(map_high_pix.values()),
+              list(map_fwhm.values()),
+              list(map_amp.values()),
+              list(map_expo.values()),
+              list(map_res_eff.values())]
+    stat_table = drs_table.make_table(params, columns, values)
+    # ------------------------------------------------------------------
+    # Make sector tables (DV, FLUX, FIT FLUX)
+    # ------------------------------------------------------------------
+    tables, table_names, table_headers = [], [], []
+    # loop around keys
+    for key in map_dvs:
+        # set columns
+        columns = ['DV', 'FLUX', 'FITFLUX', 'WAVE', 'ORDER']
+        # push vectors into values
+        values = [np.array(map_dvs[key]), np.array(map_fluxes[key]),
+                  np.array(map_fits[key]), np.array(map_waves[key]),
+                  np.array(map_orders[key])]
+        # make the tables
+        tables.append(drs_table.make_table(params, columns, values))
+        # get properties for this sector
+        ordlow, ordhigh = map_lower_ords[key], map_high_ords[key]
+        pixlow, pixhigh = map_lower_pix[key], map_high_pix[key]
+        fwhm, amp = map_fwhm[key], map_amp[key]
+        expo, res_eff = map_expo[key], map_res_eff[key]
+        # generate name
+        name = 'Ord{0}_{1}_Pix{2}_{3}'.format(ordlow, ordhigh, pixlow, pixhigh)
+        table_names.append(name)
+        # header
+        header = drs_fits.Header()
+        # add nbo and nbpix
+        header = res_map_hdr(params, header, 'KW_RESMAP_NBO', value=nbo)
+        header = res_map_hdr(params, header, 'KW_RESMAP_NBPIX', value=nbpix)
+        # add the bin position in order direction
+        header = res_map_hdr(params, header, 'KW_RESMAP_BINORD', key[0])
+        header = res_map_hdr(params, header, 'KW_RESMAP_NBINORD', n_order_bin)
+        # add the bin position in spatial direction
+        header = res_map_hdr(params, header, 'KW_RESMAP_BINPIX', key[1])
+        header = res_map_hdr(params, header, 'KW_RESMAP_NBINPIX', n_spatial_bin)
+        # add order low
+        header = res_map_hdr(params, header, 'KW_RES_MAP_ORDLOW', ordlow)
+        # add order high
+        header = res_map_hdr(params, header, 'KW_RES_MAP_ORDHIGH', ordhigh)
+        # add pix low
+        header = res_map_hdr(params, header, 'KW_RES_MAP_PIXLOW', pixlow)
+        # add pix high
+        header = res_map_hdr(params, header, 'KW_RES_MAP_PIXHIGH', pixhigh)
+        # add fwhm
+        header = res_map_hdr(params, header, 'KW_RES_MAP_FWHM', fwhm)
+        # add amp
+        header = res_map_hdr(params, header, 'KW_RES_MAP_AMP', amp)
+        # add expo
+        header = res_map_hdr(params, header, 'KW_RES_MAP_EXPO', expo)
+        # add effective resolution
+        header = res_map_hdr(params, header, 'KW_RES_MAP_RESEFF', res_eff)
+        # add the headers
+        table_headers.append(header)
+    # ------------------------------------------------------------------
+    # write resolution map
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    resfile = recipe.outputs['WAVEM_RES'].newcopy(params=params,
+                                                  fiber=fiber)
+    # construct the filename from file instance
+    resfile.construct_filename(infile=fpe2ds)
+    # ------------------------------------------------------------------
+    # copy keys from hcwavefile
+    resfile.copy_hdict(wavefile)
+    # set output key
+    resfile.add_hkey('KW_OUTPUT', value=resfile.name)
+    # add some basic keys to know whats in this file
+    resfile.add_hkey('KW_RESMAP_NBO' ,value=nbo)
+    resfile.add_hkey('KW_RESMAP_NBPIX', value=nbpix)
+    resfile.add_hkey('KW_RESMAP_NBINORD', value=n_order_bin)
+    resfile.add_hkey('KW_RESMAP_NBINPIX', value=n_spatial_bin)
+    # set data
+    resfile.data = stat_table
+    resfile.datatype = 'table'
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [fiber, resfile.filename]
+    WLOG(params, '', textentry('40-017-00020', args=wargs))
+    # define multi lists
+    data_list, name_list = tables, table_names
+    header_list = table_headers
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=resfile)]
+        name_list += ['PARAM_TABLE']
+        header_list += [None]
+    # write image to file
+    resfile.write_multi(data_list=data_list, header_list=header_list,
+                        name_list=name_list,
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(resfile)
+
+
+def res_map_hdr(params: ParamDict, header: drs_fits.Header,
+                drs_key: str, value: Any) -> drs_fits.Header:
+    # get keystore information
+    key, _, comment = params[drs_key]
+    # load header
+    header[key] = (value, comment)
+    # return header
+    return header
 
 # =============================================================================
 # Start of code
