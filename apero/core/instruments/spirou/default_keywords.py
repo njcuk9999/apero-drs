@@ -1480,6 +1480,78 @@ KW_WNT_NSIG_FIT.set(key='WNTNSIGF', comment='wave night sig clip fit cut used',
                     parent='WAVE_NIGHT_NSIG_FIT_CUT', group='wave')
 
 # -----------------------------------------------------------------------------
+# Define wave res (new) variables
+# -----------------------------------------------------------------------------
+# number of orders for the resolution map header
+KW_RESMAP_NBO = KW_RESMAP_NBO.copy(__NAME__)
+KW_RESMAP_NBO.set(key='RES_NBO', comment='Total number of orders',
+                  group='wave-res')
+
+# number of pixels in an order for the resolution map header
+KW_RESMAP_NBPIX = KW_RESMAP_NBPIX.copy(__NAME__)
+KW_RESMAP_NBPIX.set(key='RESNBPIX', comment='Total number of pixels per order')
+
+# current bin number for order direction for the resolution map header
+KW_RESMAP_BINORD = KW_RESMAP_BINORD.copy(__NAME__)
+KW_RESMAP_BINORD.set(key='RESCBINO', group='wave-res',
+                     comment='Current bin number for order direction')
+
+# total number of bins in order direction for the resolution map header
+KW_RESMAP_NBINORD = KW_RESMAP_NBINORD.copy(__NAME__)
+KW_RESMAP_NBINORD.set(key='RESNBINO', group='wave-res',
+                      comment='Total number bins in order direction')
+
+# current bin number in spatial direction for the resolution map header
+KW_RESMAP_BINPIX = KW_RESMAP_BINPIX.copy(__NAME__)
+KW_RESMAP_BINPIX.set(key='RESCBINP', group='wave-res',
+                     comment='Current bin number for spatial direction')
+
+# total number of bins in spatial direction for the resolution map header
+KW_RESMAP_NBINPIX = KW_RESMAP_NBINPIX.copy(__NAME__)
+KW_RESMAP_NBINPIX.set(key='RESNBINP', group='wave-res',
+                      comment='Total number bins in spatial direction')
+
+# First order used in this sector
+KW_RES_MAP_ORDLOW = KW_RES_MAP_ORDLOW.copy(__NAME__)
+KW_RES_MAP_ORDLOW.set(key='ORDSTART', group='wave-res',
+                      comment='First order used in this sector')
+
+# Last order used in this sector
+KW_RES_MAP_ORDHIGH = KW_RES_MAP_ORDHIGH.copy(__NAME__)
+KW_RES_MAP_ORDHIGH.set(key='ORDFINAL', group='wave-res',
+                       comment='Last order used in this sector')
+
+# First pixel used in this sector
+KW_RES_MAP_PIXLOW = KW_RES_MAP_PIXLOW.copy(__NAME__)
+KW_RES_MAP_PIXLOW.set(key='PIXSTART', group='wave-res',
+                      comment='First pixel used in this sector')
+
+# Last pixel used in this sector
+KW_RES_MAP_PIXHIGH = KW_RES_MAP_PIXHIGH.copy(__NAME__)
+KW_RES_MAP_PIXHIGH.set(key='PIXFINAL', group='wave-res',
+                       comment='Last pixel used in this sector')
+
+# FWHM from fit for this sector
+KW_RES_MAP_FWHM = KW_RES_MAP_FWHM.copy(__NAME__)
+KW_RES_MAP_FWHM.set(key='FIT_FWHM', group='wave-res',
+                    comment='FWHM from fit for this sector')
+
+# Amplitude from fit for this sector
+KW_RES_MAP_AMP = KW_RES_MAP_AMP.copy(__NAME__)
+KW_RES_MAP_AMP.set(key='FIT_AMP', group='wave-res',
+                   comment='Amplitude from fit for this sector')
+
+# Exponent from fit for this sector
+KW_RES_MAP_EXPO = KW_RES_MAP_EXPO.copy(__NAME__)
+KW_RES_MAP_EXPO.set(key='FIT_EXPO', group='wave-res',
+                    comment='Exponent from fit for this sector')
+
+# Measured effective resolution measured for this sector
+KW_RES_MAP_RESEFF = KW_RES_MAP_RESEFF.copy(__NAME__)
+KW_RES_MAP_RESEFF.set(key='RES_EFF', group='wave-res',
+                      comment='Measured effective resolution for this sector')
+
+# -----------------------------------------------------------------------------
 # Define telluric preclean variables
 # -----------------------------------------------------------------------------
 # Define the exponent of water key from telluric preclean process
