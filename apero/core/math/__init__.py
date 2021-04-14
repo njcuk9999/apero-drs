@@ -19,6 +19,8 @@ from apero.core.math import fast
 # =============================================================================
 calculate_polyvals = gen_math.calculate_polyvals
 
+centered_super_gauss = gauss.centered_super_gauss
+
 ea_airy_function = gen_math.ea_airy_function
 
 estimate_sigma = gen_math.estimate_sigma

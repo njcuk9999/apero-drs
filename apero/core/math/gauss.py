@@ -292,6 +292,33 @@ def gauss_fit_s(x: Union[float, np.ndarray], a: float, x0: float, sigma: float,
     return gauss + correction
 
 
+def centered_super_gauss(x: np.ndarray, fwhm: float, amp: float,
+                         expo: float) -> np.ndarray:
+    """
+    generalized super gaussian with an arbitrary exponent. We pass the FWHM
+    which simplifies the understanding of the outputs for the random user.
+    We assume that the zero point is =0 and that there is no slope. The center
+    is set to x=0 conversion between ew and FHWM
+    we set:
+    0.5 = np.exp(-0.5*((FWHM/2)/ew)**expo)
+    np.log(0.5) = -0.5*((FWHM/2)/ew)**expo
+    -2*np.log(0.5) = ((FWHM/2)/ew)**expo
+    (-2*np.log(0.5))**(1/expo) = (FWHM/2)/ew
+    ew = (FWHM/2)/( (-2*np.log(0.5))**(1/expo) )
+
+    :param x: np.ndarray, the x values
+    :param fwhm: float, the FWHM of the super gaussian
+    :param amp: float, the amplitude of the super gaussian
+    :param expo: float, the exponent (for a normal gaussian this would be =2)
+
+    :return: the y values for given parameters across x
+    """
+    # convert fwhm to equivalent width
+    ew = (fwhm / 2) / (-2 * np.log(0.5)) ** (1 / expo)
+    # calculate the
+    return np.exp(-0.5 * (np.abs(x)/ew) ** np.abs(expo)) * amp
+
+
 def fit_gauss_with_slope(x: np.ndarray, y: np.ndarray,
                          guess: Union[list, np.ndarray],
                          return_fit: bool = False) -> FGSTypes:
