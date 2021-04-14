@@ -260,6 +260,15 @@ def remove_first_last_ticks(frame, axis='x'):
     return frame
 
 
+def legend_no_alpha(legend):
+    for handle in legend.legendHandles:
+        if hasattr(handle, 'set_alpha'):
+            handle.set_alpha(1)
+        if hasattr(handle, '_legmarker'):
+            if hasattr(handle._legmarker, 'set_alpha'):
+                handle._legmarker.set_alpha(1)
+
+
 def add_grid(frame):
     frame.minorticks_on()
     # Don't allow the axis to be on top of your data
@@ -2125,6 +2134,91 @@ def plot_wave_hc_resmap(plotter, graph, kwargs):
     # get matplotlib rectange
     rectangle = plotter.matplotlib.patches.Rectangle
     # ------------------------------------------------------------------
+    params = kwargs['params']
+    n_order_bin = kwargs['n_order_bin']
+    n_spatial_bin = kwargs['n_spatial_bin']
+    map_dvs = kwargs['map_dvs']
+    map_fluxes = kwargs['map_fluxes']
+    map_fits = kwargs['map_fits']
+    map_res_eff = kwargs['map_res_eff']
+    map_lower_ords = kwargs['map_lower_ords']
+    map_high_ords = kwargs['map_high_ords']
+    map_lower_pix = kwargs['map_lower_pix']
+    map_high_pix = kwargs['map_high_pix']
+    xlim, ylim = kwargs['xlim'], kwargs['ylim']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=n_order_bin,
+                                   ncols=n_spatial_bin, sharex='all',
+                                   sharey='all')
+    # ------------------------------------------------------------------
+    # loop over number of bins in order direction
+    for i_order_bin in range(n_order_bin):
+        # loop over number of bins in spatial direction
+        for i_spatial_bin in range(n_spatial_bin):
+            # get the correct frame
+            frame = frames[i_order_bin, i_spatial_bin]
+            # key for this iteration (order bin + spatial bin)
+            mapkey = (i_order_bin, i_spatial_bin)
+            # get the correct data
+            all_dvs = map_dvs[mapkey]
+            all_fluxes = map_fluxes[mapkey]
+            fit_fluxes = map_fits[mapkey]
+            resolution = map_res_eff[mapkey]
+
+            first_order = map_lower_ords[mapkey]
+            last_order = map_high_ords[mapkey]
+            first_x = map_lower_pix[mapkey]
+            last_x = map_high_pix[mapkey]
+
+            # get labels
+            if i_order_bin == 0 and i_spatial_bin == 0:
+                label1 = 'residual'
+                label2 = 'data'
+                label3 = 'fit'
+            else:
+                label1, label2, label3 = None, None, None
+
+            # plot data
+            frame.plot(all_dvs, all_fluxes - fit_fluxes, color='b', marker='.',
+                       ms=3, ls='None', alpha=0.1, label=label1)
+            frame.plot(all_dvs, all_fluxes, color='g', ms=3, marker='.',
+                       ls='None', alpha=0.5, label=label2)
+            frame.plot(all_dvs, fit_fluxes, color='r', ls='-', label=label3)
+            # set frame limits
+            frame.set(xlim=xlim, ylim=ylim)
+            # add label in legend (for sticky position)
+            largs = [first_order, last_order, first_x, last_x, resolution]
+            handle = rectangle((0, 0), 1, 1, fc="w", fill=False,
+                               edgecolor='none', linewidth=0)
+            label = 'Orders {0}-{1} region={2}-{3} R={4:.0f}'.format(*largs)
+            frame.legend([handle], [label], loc=9, fontsize=10)
+            # remove white space and some axis ticks
+            frame = remove_first_last_ticks(frame, axis='both')
+            if i_order_bin == n_order_bin - 1:
+                frame.set_xlabel('dv [km/s]')
+            if i_spatial_bin == 0:
+                frame.set_ylabel('Amp')
+    # finally add a figure legend
+    legend = fig.legend(loc=8, bbox_to_anchor=(0.5, 0), ncol=3)
+    legend_no_alpha(legend)
+    # add titles
+    plt.suptitle('Line Profiles for resolution grid')
+    # adjust spaces between plots
+    plt.subplots_adjust(hspace=0, wspace=0, bottom=0.075)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+def plot_wave_hc_resmap_old(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    plt = plotter.plt
+    # get matplotlib rectange
+    rectangle = plotter.matplotlib.patches.Rectangle
+    # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
     resmap_size = kwargs['resmap_size']
@@ -2831,9 +2925,13 @@ wave_hc_brightest_lines = Graph('WAVE_HC_BRIGHTEST_LINES', kind='debug',
                                 func=plot_wave_hc_brightest_lines)
 wave_hc_tfit_grid = Graph('WAVE_HC_TFIT_GRID', kind='debug',
                           func=plot_wave_hc_tfit_grid)
-wave_hc_resmap = Graph('WAVE_HC_RESMAP', kind='debug',
+wave_resmap = Graph('WAVE_RESMAP', kind='debug',
                        func=plot_wave_hc_resmap,
                        figsize=(20, 16))
+wave_hc_resmap = Graph('WAVE_HC_RESMAP', kind='debug',
+                       func=plot_wave_hc_resmap_old,
+                       figsize=(20, 16))
+
 wave_littrow_check1 = Graph('WAVE_LITTROW_CHECK1', kind='debug',
                             func=plot_wave_littrow_check)
 wave_littrow_extrap1 = Graph('WAVE_LITTROW_EXTRAP1', kind='debug',
@@ -2897,7 +2995,7 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_littrow_check2, wave_littrow_extrap2, wave_fp_final_order,
                 wave_fp_lwid_offset, wave_fp_wave_res, wave_fp_m_x_res,
                 wave_fp_ipt_cwid_1mhc, wave_fp_ipt_cwid_llhc, wave_fp_ll_diff,
-                wave_fp_multi_order, wave_fp_single_order,
+                wave_fp_multi_order, wave_fp_single_order, wave_resmap,
                 sum_wave_littrow_check, sum_wave_littrow_extrap,
                 sum_wave_fp_ipt_cwid_1mhc, waveref_expected, wavenight_iterplot,
                 sum_wavenight_iterplot, wavenight_histplot,
