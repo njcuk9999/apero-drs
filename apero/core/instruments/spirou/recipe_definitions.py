@@ -759,11 +759,12 @@ cal_wave_master_ea.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                                WAVEM_CAVITY=files.out_wavem_cavity,
                                WAVEM_HCLIST=files.out_wave_hclist_master,
                                WAVEM_FPLIST=files.out_wave_fplist_master,
+                               WAVEM_RES=files.out_wavem_res,
                                CCF_RV=files.out_ccf_fits)
 cal_wave_master_ea.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                    'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
                                    'WAVEREF_EXPECTED', 'EXTRACT_S1D',
-                                   'EXTRACT_S1D_WEIGHT',
+                                   'EXTRACT_S1D_WEIGHT', 'WAVE_HC_RESMAP',
                                    'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 cal_wave_master_ea.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
 cal_wave_master_ea.set_arg(pos=0, **obs_dir)
