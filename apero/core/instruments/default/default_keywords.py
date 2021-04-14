@@ -112,6 +112,11 @@ __all__ = [  # input keys
     'KW_WNT_DCAVITY', 'KW_WNT_DCAVSRCE',
     'KW_WNT_NITER1', 'KW_WNT_NITER2', 'KW_WNT_HCSIGCLIP',
     'KW_WNT_MADLIMIT', 'KW_WNT_NSIG_FIT',
+    # wave resolution map variables
+    'KW_RESMAP_NBO', 'KW_RESMAP_NBPIX', 'KW_RESMAP_BINORD', 'KW_RESMAP_NBINORD',
+    'KW_RESMAP_BINPIX', 'KW_RESMAP_NBINPIX', 'KW_RES_MAP_ORDLOW',
+    'KW_RES_MAP_ORDHIGH', 'KW_RES_MAP_PIXLOW', 'KW_RES_MAP_PIXHIGH',
+    'KW_RES_MAP_FWHM', 'KW_RES_MAP_AMP', 'KW_RES_MAP_EXPO', 'KW_RES_MAP_RESEFF',
     # telluric preclean variables
     'KW_TELLUP_EXPO_WATER', 'KW_TELLUP_EXPO_OTHERS',
     'KW_TELLUP_DV_WATER', 'KW_TELLUP_DV_OTHERS', 'KW_TELLUP_DO_PRECLEAN',
@@ -1631,6 +1636,85 @@ KW_WNT_MADLIMIT = Keyword('KW_WNT_MADLIMIT', key='', dtype=float,
 KW_WNT_NSIG_FIT = Keyword('KW_WNT_NSIG_FIT', key='', dtype=int, source=__NAME__,
                           description=('sigma clipping for the fit used '
                                        'in wave night'))
+
+# -----------------------------------------------------------------------------
+# Define wave ref (new) variables
+# -----------------------------------------------------------------------------
+# number of orders for the resolution map header
+KW_RESMAP_NBO = Keyword('KW_RESMAP_NBO', key='', dtype=int, source=__NAME__,
+                          description='number of orders for the resolution '
+                                      'map header')
+
+# number of pixels in an order for the resolution map header
+KW_RESMAP_NBPIX = Keyword('KW_RESMAP_NBO', key='', dtype=int, source=__NAME__,
+                          description='number of pixels in an order for the '
+                                      'resolution map header')
+
+# current bin number for order direction for the resolution map header
+KW_RESMAP_BINORD = Keyword('KW_RESMAP_NBO', key='', dtype=int, source=__NAME__,
+                           description='current bin number for order direction '
+                                       'for the resolution map header')
+
+# total number of bins in order direction for the resolution map header
+KW_RESMAP_NBINORD = Keyword('KW_RESMAP_NBINORD', key='', dtype=int,
+                            source=__NAME__,
+                            description='total number of bins in order '
+                                        'direction for the resolution map '
+                                        'header')
+
+# current bin number in spatial direction for the resolution map header
+KW_RESMAP_BINPIX = Keyword('KW_RESMAP_BINPIX', key='', dtype=int,
+                           source=__NAME__,
+                           description='current bin number in spatial direction'
+                                       ' for the resolution map header')
+
+# total number of bins in spatial direction for the resolution map header
+KW_RESMAP_NBINPIX = Keyword('KW_RESMAP_NBINPIX', key='', dtype=int,
+                           source=__NAME__,
+                           description='total number of bins in spatial '
+                                       'direction for the resolution map '
+                                       'header')
+
+# First order used in this sector
+KW_RES_MAP_ORDLOW = Keyword('KW_RES_MAP_ORDLOW', key='', dtype=int,
+                           source=__NAME__,
+                           description='First order used in this sector')
+
+# Last order used in this sector
+KW_RES_MAP_ORDHIGH = Keyword('KW_RES_MAP_ORDHIGH', key='', dtype=int,
+                           source=__NAME__,
+                           description='Last order used in this sector')
+
+# First pixel used in this sector
+KW_RES_MAP_PIXLOW = Keyword('KW_RES_MAP_PIXLOW', key='', dtype=int,
+                            source=__NAME__,
+                            description='First pixel used in this sector')
+
+# Last pixel used in this sector
+KW_RES_MAP_PIXHIGH = Keyword('KW_RES_MAP_PIXHIGH', key='', dtype=int,
+                             source=__NAME__,
+                             description='Last pixel used in this sector')
+
+# FWHM from fit for this sector
+KW_RES_MAP_FWHM = Keyword('KW_RES_MAP_FWHM', key='', dtype=int,
+                          source=__NAME__,
+                          description='FWHM from fit for this sector')
+
+# Amplitude from fit for this sector
+KW_RES_MAP_AMP = Keyword('KW_RES_MAP_AMP', key='', dtype=int,
+                         source=__NAME__,
+                         description='FWHM from fit for this sector')
+
+# Exponent from fit for this sector
+KW_RES_MAP_EXPO = Keyword('KW_RES_MAP_EXPO', key='', dtype=int,
+                          source=__NAME__,
+                          description='Exponent from fit for this sector')
+
+# Measured effective resolution measured for this sector
+KW_RES_MAP_RESEFF = Keyword('KW_RES_MAP_RESEFF', key='', dtype=int,
+                            source=__NAME__,
+                            description='Measured effective resolution measured'
+                                        ' for this sector')
 
 # -----------------------------------------------------------------------------
 # Define telluric preclean variables
