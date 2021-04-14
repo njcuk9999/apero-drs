@@ -4078,6 +4078,13 @@ PLOT_WAVE_HC_TFIT_GRID = Const('PLOT_WAVE_HC_TFIT_GRID', value=False,
                                            'triplet fit grid debug plot')
 
 # turn on the wave solution hc resolution map debug plot
+PLOT_WAVE_RESMAP = Const('PLOT_WAVE_RESMAP', value=False,
+                         dtype=bool, source=__NAME__, user=True,
+                         active=False, group=cgroup,
+                         description='turn on the wave solution hc '
+                                     'resolution map debug plot')
+
+# turn on the wave solution hc resolution map debug plot
 PLOT_WAVE_HC_RESMAP = Const('PLOT_WAVE_HC_RESMAP', value=False,
                             dtype=bool, source=__NAME__, user=True,
                             active=False, group=cgroup,

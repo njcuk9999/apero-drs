@@ -2370,6 +2370,10 @@ PLOT_WAVE_HC_TFIT_GRID.value = True
 PLOT_WAVE_HC_RESMAP = PLOT_WAVE_HC_RESMAP.copy(__NAME__)
 PLOT_WAVE_HC_RESMAP.value = True
 
+# turn on the wave solution hc resolution map debug plot
+PLOT_WAVE_RESMAP = PLOT_WAVE_RESMAP.copy(__NAME__)
+PLOT_WAVE_RESMAP.value = True
+
 # turn on the wave solution littrow check debug plot
 PLOT_WAVE_LITTROW_CHECK1 = PLOT_WAVE_LITTROW_CHECK1.copy(__NAME__)
 PLOT_WAVE_LITTROW_CHECK1.value = True

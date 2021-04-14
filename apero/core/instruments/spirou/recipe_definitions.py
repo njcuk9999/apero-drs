@@ -764,7 +764,7 @@ cal_wave_master_ea.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
 cal_wave_master_ea.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                    'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
                                    'WAVEREF_EXPECTED', 'EXTRACT_S1D',
-                                   'EXTRACT_S1D_WEIGHT', 'WAVE_HC_RESMAP',
+                                   'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
                                    'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 cal_wave_master_ea.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
 cal_wave_master_ea.set_arg(pos=0, **obs_dir)
