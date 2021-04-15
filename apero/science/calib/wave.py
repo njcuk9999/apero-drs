@@ -5326,7 +5326,7 @@ def wave_summary(recipe, params, llprops, fiber, qc_params):
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'],
                          fiber=fiber)
     # add constants used (for reproduction)
-    recipe.plot.add_stat('KW_WAVE_FITDEG', value=llprops['WAVE_FIT_DEGREE'],
+    recipe.plot.add_stat('KW_WAVE_DEG', value=llprops['DEG'],
                          fiber=fiber)
     recipe.plot.add_stat('KW_WAVE_MODE_HC', value=params['WAVE_MODE_HC'],
                          fiber=fiber)
