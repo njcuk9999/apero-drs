@@ -203,12 +203,12 @@ def __main__(recipe, params):
         # -----------------------------------------------------------------
         # load initial wavelength solution (start point) for this fiber
         #    this should only be a master wavelength solution
-        iwprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
+        iwprops = wave2.get_wavesolution(params, recipe, infile=hc_e2ds_file,
                                         fiber=master_fiber, master=True,
                                         database=calibdbm)
         # check that wave parameters are consistent with required number
         #   of parameters (from constants)
-        iwprops = wave.check_wave_consistency(params, iwprops)
+        iwprops = wave2.check_wave_consistency(params, iwprops)
 
         # =================================================================
         # Construct HC + FP line reference files for master_fiber
@@ -400,16 +400,16 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             if passed and params['INPUTS']['DATABASE']:
                 # update the e2ds and s1d files for hc
-                newhce2ds = wave.update_extract_files(params, recipe,
-                                                      hc_e2ds_file, wprops,
-                                                      EXTRACT_NAME, fiber,
-                                                      calibdbm=calibdbm)
+                newhce2ds = wave2.update_extract_files(params, recipe,
+                                                       hc_e2ds_file, wprops,
+                                                       EXTRACT_NAME, fiber,
+                                                       calibdbm=calibdbm)
                 # update the e2ds and s1d files for fp
                 #  we returrn the fp e2ds file as it has an updated header
-                newfpe2ds = wave.update_extract_files(params, recipe,
-                                                      fp_e2ds_file, wprops,
-                                                      EXTRACT_NAME, fiber,
-                                                      calibdbm=calibdbm)
+                newfpe2ds = wave2.update_extract_files(params, recipe,
+                                                       fp_e2ds_file, wprops,
+                                                       EXTRACT_NAME, fiber,
+                                                       calibdbm=calibdbm)
             # else just get the e2ds file from the current fp file
             else:
                 newfpe2ds = fp_e2ds_file
@@ -436,7 +436,7 @@ def __main__(recipe, params):
         # Construct summary document
         # -----------------------------------------------------------------
         # if we have a wave solution wave summary from fpprops
-        wave.wave_summary(recipe, params, wprops, master_fiber, qc_params)
+        wave2.wave_summary(recipe, params, wprops, master_fiber, qc_params)
 
         # construct summary (outside fiber loop)
         recipe.plot.summary_document(it)

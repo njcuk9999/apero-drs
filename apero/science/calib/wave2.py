@@ -24,12 +24,15 @@ from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_database
+from apero.core.utils import drs_startup
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_data
 from apero.io import drs_image
 from apero.io import drs_fits
 from apero.io import drs_table
 from apero.science.calib import gen_calib
+from apero.science.calib import flat_blaze
+from apero.science import extract
 from apero.science import velocity
 
 # =============================================================================
@@ -532,6 +535,47 @@ def get_cavity_file(params: ParamDict, recipe: DrsRecipe,
     # ---------------------------------------------------------------------
     # return cavity image
     return np.array(cimage)
+
+
+def check_wave_consistency(params, props, **kwargs):
+    func_name = display_func('check_wave_consistency', __NAME__)
+    # get constants from params/kwargs
+    required_deg = pcheck(params, 'WAVE_FIT_DEGREE', 'num_coeffs', kwargs,
+                          func_name)
+    # get dimension from data
+    nbo, ncoeffs = props['COEFFS'].shape
+    # get the fit degree from dimensions
+    deg = ncoeffs - 1
+    # check dimensions
+    if required_deg == deg:
+        # log that fit degrees match
+        WLOG(params, '', textentry('40-017-00002', args=[deg]))
+    # if not correct remap coefficients
+    else:
+        # log that fit degrees don't match
+        wargs = [deg, required_deg]
+        WLOG(params, 'warning', textentry('10-017-00003', args=wargs))
+        # setup output storage
+        output_coeffs = np.zeros([nbo, required_deg + 1])
+        output_map = np.zeros_like(props['WAVEMAP'])
+        # define pixel array
+        xfit = np.arange(output_map.shape[1])
+        # loop around each order
+        for order_num in range(nbo):
+            # get the wave map for this order
+            yfit = np.polyval(props['COEFFS'][order_num][::-1], xfit)
+            # get the new coefficients based on a fit to this wavemap
+            coeffs = mp.nanpolyfit(xfit, yfit, required_deg)[::-1]
+            # push into storage
+            output_coeffs[order_num] = coeffs
+            output_map[order_num] = yfit
+        # update props
+        props['WAVEMAP'] = output_map
+        props['COEFFS'] = output_coeffs
+        props['DEG'] = required_deg
+        props.set_sources(['WAVEMAP', 'COEFFS', 'DEG'], func_name)
+    # return props
+    return props
 
 
 # =============================================================================
@@ -1619,6 +1663,187 @@ def update_w_rv_props(wprops: ParamDict, rvprops: ParamDict,
     return wprops, rvprops
 
 
+def update_extract_files(params, recipe, extract_file, wprops, extname,
+                         fiber, calibdbm):
+    # ----------------------------------------------------------------------
+    # find the extraction recipe
+    extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
+                                           mod=recipe.recipemod)
+    extrecipe.params = params
+    # ----------------------------------------------------------------------
+    # get input to extract file
+    input_filename = extract_file.get_hkey('INF1000')
+    input_file = extract_file.intype
+    # ----------------------------------------------------------------------
+    # make a new copy of infileexclude_group
+    infile = input_file.newcopy(params=params)
+    infile.set_filename(input_filename)
+    # ----------------------------------------------------------------------
+    # get extraction files
+    e2ds_file = extrecipe.outputs['E2DS_FILE'].newcopy(params=params,
+                                                       fiber=fiber)
+    e2dsff_file = extrecipe.outputs['E2DSFF_FILE'].newcopy(params=params,
+                                                           fiber=fiber)
+    e2dsll_file = extrecipe.outputs['E2DSLL_FILE'].newcopy(params=params,
+                                                           fiber=fiber)
+    s1dw_file = extrecipe.outputs['S1D_W_FILE'].newcopy(params=params,
+                                                        fiber=fiber)
+    s1dv_file = extrecipe.outputs['S1D_V_FILE'].newcopy(params=params,
+                                                        fiber=fiber)
+    # ----------------------------------------------------------------------
+    # construct filename
+    e2ds_file.construct_filename(infile=infile)
+    e2dsff_file.construct_filename(infile=infile)
+    e2dsll_file.construct_filename(infile=infile)
+    s1dw_file.construct_filename(infile=infile)
+    s1dv_file.construct_filename(infile=infile)
+    # ----------------------------------------------------------------------
+    # log that we are updating the file with wave params
+    wargs = [e2ds_file.name, e2ds_file.filename]
+    WLOG(params, '', textentry('40-017-00038', args=wargs))
+    # update the e2ds file
+    # TODO: Need to worry about reading all extensions
+    e2ds_file.read_file()
+    e2ds_file.read_header()
+    e2ds_file = add_wave_keys(params, e2ds_file, wprops)
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2ds_file)]
+        name_list += ['PARAM_TABLE']
+    # write file
+    e2ds_file.write_multi(data_list=data_list, name_list=name_list,
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(e2ds_file)
+    # ----------------------------------------------------------------------
+    # log that we are updating the file with wave params
+    wargs = [e2dsff_file.name, e2dsff_file.filename]
+    WLOG(params, '', textentry('40-017-00038', args=wargs))
+    # update the e2ds file
+    # TODO: Need to worry about reading all extensions
+    e2dsff_file.read_file()
+    e2dsff_file = add_wave_keys(params, e2dsff_file, wprops)
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsff_file)]
+        name_list += ['PARAM_TABLE']
+    # write file
+    e2dsff_file.write_multi(data_list=data_list, name_list=name_list,
+                            block_kind=recipe.out_block_str,
+                            runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(e2dsff_file)
+    # ----------------------------------------------------------------------
+    # log that we are updating the file with wave params
+    wargs = [e2dsll_file.name, e2dsll_file.filename]
+    WLOG(params, '', textentry('40-017-00038', args=wargs))
+    # update the e2ds file
+    e2dsll_file.read_multi()
+    e2dsll_file = add_wave_keys(params, e2dsll_file, wprops)
+    # define multi lists
+    data_list, name_list = e2dsll_file.data_array, e2dsll_file.name_array
+    if data_list is None:
+        data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsll_file)]
+        # there should be a param_table from extraction
+        if 'PARAM_TABLE' in name_list:
+            name_list += ['PARAM_UPDATE']
+        else:
+            name_list += ['PARAM_TABLE']
+    # write file
+    e2dsll_file.write_multi(data_list=data_list, name_list=name_list,
+                            block_kind=recipe.out_block_str,
+                            runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(e2dsll_file)
+    # ----------------------------------------------------------------------
+    # Need to re-calculate the s1d files
+    # ----------------------------------------------------------------------
+    # load the blaze file for this fiber
+    blaze_file, blaze = flat_blaze.get_blaze(params, e2dsff_file.get_header(),
+                                             fiber, database=calibdbm)
+    # calculate s1d file
+    sargs = [wprops['WAVEMAP'], e2dsff_file.get_data(), blaze]
+    swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
+                                  fiber=fiber, s1dkind='E2DSFF')
+    svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
+                                  wgrid='velocity', fiber=fiber,
+                                  s1dkind='E2DSFF')
+    # ----------------------------------------------------------------------
+    # plot the s1d plot
+    recipe.plot('EXTRACT_S1D', params=params, props=svprops,
+                fiber=fiber, kind='E2DSFF')
+    # ----------------------------------------------------------------------
+    # Store S1D_W in file
+    # ----------------------------------------------------------------------
+    # copy header from e2dsll file
+    s1dw_file.copy_header(e2ds_file)
+    s1dw_file.copy_hdict(e2ds_file)
+    # set output key
+    s1dw_file.add_hkey('KW_OUTPUT', value=s1dw_file.name)
+    # add new header keys
+    s1dw_file = extract.add_s1d_keys(s1dw_file, swprops)
+    # copy data
+    s1dw_file.data = swprops['S1DTABLE']
+    # must change the datatype to 'table'
+    s1dw_file.datatype = 'table'
+    # ----------------------------------------------------------------------
+    # log that we are updating the file with wave params
+    wargs = [s1dw_file.name, s1dw_file.filename]
+    WLOG(params, '', textentry('40-017-00038', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=s1dw_file)]
+        name_list += ['PARAM_TABLE']
+    # write image to file
+    s1dw_file.write_multi(data_list=data_list, name_list=name_list,
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(s1dw_file)
+    # ----------------------------------------------------------------------
+    # Store S1D_W in file
+    # ----------------------------------------------------------------------
+    # copy header from e2dsll file
+    s1dv_file.copy_header(e2ds_file)
+    s1dv_file.copy_hdict(e2ds_file)
+    # add new header keys
+    s1dv_file = extract.add_s1d_keys(s1dv_file, svprops)
+    # set output key
+    s1dv_file.add_hkey('KW_OUTPUT', value=s1dv_file.name)
+    # copy data
+    s1dv_file.data = svprops['S1DTABLE']
+    # must change the datatype to 'table'
+    s1dv_file.datatype = 'table'
+    # ----------------------------------------------------------------------
+    # log that we are updating the file with wave params
+    wargs = [s1dv_file.name, s1dv_file.filename]
+    WLOG(params, '', textentry('40-017-00038', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=s1dv_file)]
+        name_list += ['PARAM_TABLE']
+    # write image to file
+    s1dv_file.write_multi(data_list=data_list, name_list=name_list,
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(s1dv_file)
+    # return e2dsff file
+    return e2dsff_file
+
+
 def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
                             wprops: ParamDict, hc_e2ds_file: DrsFitsFile,
                             nbin_order: Union[int, None] = None,
@@ -1862,6 +2087,7 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # return updated wprops
     return wprops
+
 
 # =============================================================================
 # Define writing functions
@@ -2386,6 +2612,30 @@ def res_map_hdr(params: ParamDict, header: drs_fits.Header,
     header[key] = (value, comment)
     # return header
     return header
+
+
+def wave_summary(recipe, params, props, fiber, qc_params):
+    # add qc params (fiber specific)
+    recipe.plot.add_qc_params(qc_params, fiber=fiber)
+    # add stats
+    recipe.plot.add_stat('KW_VERSION', value=props['DRS_VERSION'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_DRS_DATE', value=props['DRS_DATE'],
+                         fiber=fiber)
+    # add constants used (for reproduction)
+    recipe.plot.add_stat('KW_WAVE_DEG', value=props['DEG'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_WAVEFILE', value=props['WAVEFILE'])
+    recipe.plot.add_stat('KW_WAVETIME', value=props['WAVETIME'])
+    recipe.plot.add_stat('KW_WAVESOURCE', value=props['WAVESOURCE'])
+    recipe.plot.add_stat('KW_WAVE_NBO', value=props['NBO'])
+    recipe.plot.add_stat('KW_WAVE_DEG', value=props['DEG'])
+    recipe.plot.add_stat('KW_WFP_FILE', value=props['WFP_FILE'])
+    recipe.plot.add_stat('KW_WFP_DRIFT', value=props['WFP_DRIFT'])
+    recipe.plot.add_stat('KW_WFP_FWHM', value=props['WFP_FWHM'])
+    recipe.plot.add_stat('KW_WFP_CONTRAST', value=props['WFP_CONTRAST'])
+    recipe.plot.add_stat('KW_WFP_MASK', value=props['WFP_MASK'])
+
 
 # =============================================================================
 # Start of code
