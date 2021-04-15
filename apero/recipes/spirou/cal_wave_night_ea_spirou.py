@@ -330,15 +330,7 @@ def __main__(recipe, params):
             # -----------------------------------------------------------------
             fpargs = [recipe, fiber, wprops, hc_e2ds_file, fp_e2ds_file,
                       combine, rawhcfiles, rawfpfiles, qc_params]
-            wavefile = wave2.write_wavesol_master(params, *fpargs)
-            # -----------------------------------------------------------------
-            # Write cavity file (for master fiber)
-            # -----------------------------------------------------------------
-            if fiber == master_fiber:
-                # cavity args
-                cargs = [fp_e2ds_file, wavefile, wprops['CAVITY']]
-                # write cavity file
-                cavityfile = wave2.write_cavity_file(params, recipe, *cargs)
+            wavefile = wave2.write_wavesol(params, *fpargs)
 
             # -----------------------------------------------------------------
             # Write master line references to file
@@ -346,7 +338,7 @@ def __main__(recipe, params):
             # -----------------------------------------------------------------
             wmargs = [hc_e2ds_file, fp_e2ds_file, wavefile, hclines,
                       fplines, fiber]
-            out = wave2.write_wave_lines(params, recipe, *wmargs)
+            out = wave2.write_wave_lines(params, recipe, *wmargs, master=False)
             hclinefile, fplinefile = out
 
             # ----------------------------------------------------------

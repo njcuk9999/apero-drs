@@ -2187,11 +2187,11 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
     return qc_params
 
 
-def write_wavesol_master(params: ParamDict, recipe: DrsRecipe, fiber: str,
-                         wprops: ParamDict, hcfile: DrsFitsFile,
-                         fpfile: DrsFitsFile, combine: bool,
-                         rawhcfiles: List[str], rawfpfiles: List[str],
-                         qc_params: List[list]) -> DrsFitsFile:
+def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
+                  wprops: ParamDict, hcfile: DrsFitsFile,
+                  fpfile: DrsFitsFile, combine: bool,
+                  rawhcfiles: List[str], rawfpfiles: List[str],
+                  qc_params: List[list], master: bool = False) -> DrsFitsFile:
     """
     Write the wave solution to file (adding headers where needed)
 
@@ -2205,13 +2205,18 @@ def write_wavesol_master(params: ParamDict, recipe: DrsRecipe, fiber: str,
     :param rawhcfiles: list of strings, the raw input HC pp files
     :param rawfpfiles: list of strings, the raw input FP pp files
     :param qc_params: list of lists the quality control parameters
+    :param master: bool, if True we write a master wave solution
 
     :return: DrsFitsFile, the wave solution instance
     """
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    wavefile = recipe.outputs['WAVESOL_MASTER'].newcopy(params=params,
-                                                        fiber=fiber)
+    if master:
+        wavefile = recipe.outputs['WAVESOL_MASTER'].newcopy(params=params,
+                                                            fiber=fiber)
+    else:
+        wavefile = recipe.outputs['WAVEMAP_NIGHT'].newcopy(params=params,
+                                                           fiber=fiber)
     # construct the filename from file instance
     wavefile.construct_filename(infile=fpfile)
     # set some wave keys as "SELF" (i.e. from this wave solution)
@@ -2233,6 +2238,17 @@ def write_wavesol_master(params: ParamDict, recipe: DrsRecipe, fiber: str,
         wave_vals.append(wprops['COEFFS'][:, w_it])
     wave_table = drs_table.make_table(params, columns=wave_cols,
                                       values=wave_vals)
+    # ----------------------------------------------------------------------
+    # add version
+    wavefile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    wavefile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    wavefile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    wavefile.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    wavefile.add_hkey('KW_OUTPUT', value=wavefile.name)
+    wavefile.add_hkey('KW_FIBER', value=fiber)
     # ------------------------------------------------------------------
     # set input header keys
     # ------------------------------------------------------------------
@@ -2324,7 +2340,7 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
 def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
                      hce2ds: DrsFitsFile, fpe2ds: DrsFitsFile,
                      wavefile: DrsFitsFile, hclines: Table,
-                     fplines: Table, fiber: str,
+                     fplines: Table, fiber: str, master: bool = False,
                      # TODO: REMOVE LATER
                      file_kind=None):
     """
@@ -2348,8 +2364,12 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # write hc lines
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    hcfile = recipe.outputs['WAVEM_HCLIST'].newcopy(params=params,
-                                                    fiber=fiber)
+    if master:
+        hcfile = recipe.outputs['WAVEM_HCLIST'].newcopy(params=params,
+                                                        fiber=fiber)
+    else:
+        hcfile = recipe.outputs['WAVE_HCLIST'].newcopy(params=params,
+                                                       fiber=fiber)
     # construct the filename from file instance
     hcfile.construct_filename(infile=hce2ds)
     # ------------------------------------------------------------------
@@ -2380,7 +2400,12 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # write fp lines
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    fpfile = recipe.outputs['WAVEM_FPLIST'].newcopy(params=params, fiber=fiber)
+    if master:
+        fpfile = recipe.outputs['WAVEM_FPLIST'].newcopy(params=params,
+                                                        fiber=fiber)
+    else:
+        fpfile = recipe.outputs['WAVE_FPLIST'].newcopy(params=params,
+                                                       fiber=fiber)
     # construct the filename from file instance
     fpfile.construct_filename(infile=fpe2ds)
     # ------------------------------------------------------------------
