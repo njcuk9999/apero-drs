@@ -242,7 +242,7 @@ def __main__(recipe, params):
             # -----------------------------------------------------------------
             wmargs = [hc_e2ds_file, fp_e2ds_file, iwprops['WAVEINST'],
                       hclines, fplines, master_fiber]
-            _ = wave2.write_wave_lines(params, recipe, *wmargs,
+            _ = wave2.write_wave_lines(params, recipe, *wmargs, master=True,
                                        file_kind='BEFORE{0}'.format(iteration))
             # -----------------------------------------------------------------
             # Calculate the wave solution for master fiber
@@ -371,7 +371,7 @@ def __main__(recipe, params):
             # -----------------------------------------------------------------
             fpargs = [recipe, fiber, wprops, hc_e2ds_file, fp_e2ds_file,
                       combine, rawhcfiles, rawfpfiles, qc_params]
-            wavefile = wave2.write_wavesol_master(params, *fpargs)
+            wavefile = wave2.write_wavesol(params, *fpargs, master=True)
             # -----------------------------------------------------------------
             # Write cavity file (for master fiber)
             # -----------------------------------------------------------------
@@ -384,7 +384,6 @@ def __main__(recipe, params):
                 rargs = [fp_e2ds_file, fiber, wavefile, wprops]
                 # write to file
                 wave2.write_resolution_map(params, recipe, *rargs)
-                # TODO: write resolution map to file
 
             # -----------------------------------------------------------------
             # Write master line references to file
@@ -392,7 +391,7 @@ def __main__(recipe, params):
             # -----------------------------------------------------------------
             wmargs = [hc_e2ds_file, fp_e2ds_file, wavefile, hclines,
                       fplines, fiber]
-            out = wave2.write_wave_lines(params, recipe, *wmargs)
+            out = wave2.write_wave_lines(params, recipe, *wmargs, master=True)
             hclinefile, fplinefile = out
 
             # ----------------------------------------------------------

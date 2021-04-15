@@ -869,6 +869,64 @@ cal_wave_night.group_column = 'REPROCESS_OBSDIR_COL'
 recipes.append(cal_wave_night)
 
 # -----------------------------------------------------------------------------
+# cal wave night (new)
+# -----------------------------------------------------------------------------
+cal_wave_night_ea = DrsRecipe(__INSTRUMENT__)
+cal_wave_night_ea.name = 'cal_wave_master_ea_{0}.py'.format(INSTRUMENT_ALIAS)
+cal_wave_night_ea.shortname = 'WAVEEA'
+cal_wave_night_ea.instrument = __INSTRUMENT__
+cal_wave_night_ea.in_block_str = 'tmp'
+cal_wave_night_ea.out_block_str = 'red'
+cal_wave_night_ea.extension = 'fits'
+cal_wave_night_ea.description = textentry('WAVE_DESC')
+cal_wave_night_ea.epilog = textentry('WAVE_EXAMPLE')
+cal_wave_night_ea.kind = 'recipe'
+cal_wave_night_ea.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
+                              WAVEMAP_NIGHT=files.out_wave_night,
+                              WAVE_HCLIST=files.out_wave_hclist,
+                              WAVE_FPLIST=files.out_wave_fplist,
+                              CCF_RV=files.out_ccf_fits)
+cal_wave_night_ea.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
+                                   'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
+                                   'WAVEREF_EXPECTED', 'EXTRACT_S1D',
+                                   'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
+                                   'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
+cal_wave_night_ea.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
+cal_wave_night_ea.set_arg(pos=0, **obs_dir)
+cal_wave_night_ea.set_kwarg(name='--hcfiles', dtype='files',
+                             files=[files.pp_hc1_hc1],
+                             filelogic='exclusive', required=True,
+                             helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
+cal_wave_night_ea.set_kwarg(name='--fpfiles', dtype='files',
+                             files=[files.pp_fp_fp],
+                             filelogic='exclusive', required=True,
+                             helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
+cal_wave_night_ea.set_kwarg(**add_db)
+cal_wave_night_ea.set_kwarg(**badfile)
+cal_wave_night_ea.set_kwarg(**dobad)
+cal_wave_night_ea.set_kwarg(**backsub)
+cal_wave_night_ea.set_kwarg(**blazefile)
+cal_wave_night_ea.set_kwarg(default=True, **combine)
+cal_wave_night_ea.set_kwarg(**darkfile)
+cal_wave_night_ea.set_kwarg(**dodark)
+cal_wave_night_ea.set_kwarg(**fiber)
+cal_wave_night_ea.set_kwarg(**flipimage)
+cal_wave_night_ea.set_kwarg(**fluxunits)
+cal_wave_night_ea.set_kwarg(**locofile)
+cal_wave_night_ea.set_kwarg(**orderpfile)
+cal_wave_night_ea.set_kwarg(**plot)
+cal_wave_night_ea.set_kwarg(**resize)
+cal_wave_night_ea.set_kwarg(**shapexfile)
+cal_wave_night_ea.set_kwarg(**shapeyfile)
+cal_wave_night_ea.set_kwarg(**shapelfile)
+cal_wave_night_ea.set_kwarg(**wavefile)
+cal_wave_night_ea.set_kwarg(name='--forceext', dtype='bool',
+                            default_ref='WAVE_ALWAYS_EXTRACT',
+                            helpstr='WAVE_EXTRACT_HELP')
+cal_wave_night_ea.group_func = grouping.group_by_dirname
+cal_wave_night_ea.group_column = 'REPROCESS_OBSDIR_COL'
+
+# -----------------------------------------------------------------------------
 # cal_ccf
 # -----------------------------------------------------------------------------
 cal_ccf = DrsRecipe(__INSTRUMENT__)
