@@ -515,8 +515,6 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # get the raw data errors
             with warnings.catch_warnings(record=True) as _:
                 raw_fluxerr = np.sqrt(np.array(infile.data))
-            # TODO: Question: here you sqrt(flux)/blaze after sqrt(flux/blaze)
-            # TODO: Question:   - after = fluxerr: in "get_interp_flux"
             raw_fluxerr = raw_fluxerr / blaze
             # -----------------------------------------------------------------
             # get global wave
@@ -1204,8 +1202,7 @@ def get_interp_flux(wavemap0: np.ndarray, flux0: np.ndarray,
         flux1[order_num][wlmask] = ordflux1 / ordblaze1
         # calculate fluxerr1 and push into array
         with warnings.catch_warnings(record=True) as _:
-            # TODO: Question: here you sqrt(flux/blaze) before sqrt(flux)/blaze
-            fluxerr1[order_num][wlmask] = np.sqrt(ordflux1 / ordblaze1)
+            fluxerr1[order_num][wlmask] = np.sqrt(ordflux1) / ordblaze1
     # ---------------------------------------------------------------------
     return flux1, fluxerr1
 

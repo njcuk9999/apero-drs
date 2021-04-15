@@ -2643,13 +2643,11 @@ def wave_summary(recipe, params, props, fiber, qc_params):
     # add qc params (fiber specific)
     recipe.plot.add_qc_params(qc_params, fiber=fiber)
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=props['DRS_VERSION'],
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_DRS_DATE', value=props['DRS_DATE'],
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'],
                          fiber=fiber)
     # add constants used (for reproduction)
-    recipe.plot.add_stat('KW_WAVE_DEG', value=props['DEG'],
-                         fiber=fiber)
     recipe.plot.add_stat('KW_WAVEFILE', value=props['WAVEFILE'])
     recipe.plot.add_stat('KW_WAVETIME', value=props['WAVETIME'])
     recipe.plot.add_stat('KW_WAVESOURCE', value=props['WAVESOURCE'])
