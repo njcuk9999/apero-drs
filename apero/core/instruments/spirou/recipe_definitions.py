@@ -1274,13 +1274,12 @@ obj_pol.set_kwarg(name='--output_lsd', altnames=['-l'], dtype=str,
                   helpstr='Output LSD file', default='None')
 obj_pol.set_kwarg(name='--lsd', altnames=['-L'], dtype='switch',
                   default=False, helpstr='Run LSD analysis')
-
 obj_pol.set_kwarg(**blazefile)
 obj_pol.set_kwarg(**plot)
 obj_pol.set_kwarg(**wavefile)
 # TODO: Will need custom group function
-obj_pol.group_func = None
-obj_pol.group_column = None
+obj_pol.group_func = grouping.group_by_polar_sequence
+obj_pol.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(obj_pol)
 
