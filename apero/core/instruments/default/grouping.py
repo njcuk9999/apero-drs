@@ -474,31 +474,31 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
         # deal with no table
         if len(table0) == 0:
             continue
-        # create filter masks
-        if group_filter is not None:
-            # get the filter groups and update the sort on the table
-            table0, filtermasks = group_filter(table0)
-        else:
-            # else we just have one mask and it is all Trues --> i.e. no
-            #   filter mask
-            filtermasks = [np.ones(len(table0)).astype(bool)]
-
         # get unique column entries
         unique_entries = np.unique(table0[group_column])
         # loop around these unique entries and add to groups
         for entry in unique_entries:
-            # loop around filter groups
-            for filtermask in filtermasks:
-                # valid
-                valid = True
-                # need to create a run instance here
-                run_inst = drsgf.RunInstance(rargs, rkwargs)
-                # loop around arguments
-                for k_it, farg in enumerate(fargs):
-                    # get the argument name
-                    argname = file_args[k_it]
-                    # get this arguments table
-                    table1 = alldict[argname][farg]
+            # valid
+            valid = True
+            # need to create a run instance here
+            run_inst = drsgf.RunInstance(rargs, rkwargs)
+            # loop around arguments
+            for k_it, farg in enumerate(fargs):
+                # get the argument name
+                argname = file_args[k_it]
+                # get this arguments table
+                table1 = alldict[argname][farg]
+                # create filter masks
+                if group_filter is not None:
+                    # get the filter groups and update the sort on the table
+                    table1, filtermasks = group_filter(table1)
+                else:
+                    # else we just have one mask and it is all Trues --> i.e. no
+                    #   filter mask
+                    filtermasks = [np.ones(len(table1)).astype(bool)]
+                # loop around filter groups
+                for filtermask in filtermasks:
+                    # must sort this table
                     # deal with no table
                     if table1 is None:
                         valid = False
@@ -522,15 +522,15 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
                         continue
                     # in each dictionary we will have arguments
                     run_inst.dictionary[argname] = filenames
-                # add to run instances
-                if valid:
-                    # print statement
-                    pmsg = '\t\tProcessing I run {0}'.format(run_count)
-                    drs_log.Printer(None, None, pmsg)
-                    # add to run count
-                    run_count += 1
-                    # add to run_instances
-                    run_instances.append(run_inst)
+                    # add to run instances
+                    if valid:
+                        # print statement
+                        pmsg = '\t\tProcessing I run {0}'.format(run_count)
+                        drs_log.Printer(None, None, pmsg)
+                        # add to run count
+                        run_count += 1
+                        # add to run_instances
+                        run_instances.append(run_inst)
 
     # ----------------------------------------------------------------------
     # deal with non-file arguments
@@ -586,7 +586,8 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
         index database as inputs and must return a list of masks (each mask
         is the same length as the table)
 
-        :param table: astropy.table.Table, the index database table
+        :param table: astropy.table - the inputted "table" sorted to match
+                      masks
 
         :return: list of masks, each mask is a group of files that match a
                  polar sequence, each mask should be True where a file is part

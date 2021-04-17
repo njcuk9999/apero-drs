@@ -1435,7 +1435,7 @@ full_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
                                       'POLAR_DARK']))
 
 # polar sequence on all POLAR_DARK / POLAR_FP
-full_seq.add(obj_pol, files=[files.out_tellu_obj], fiber='AB',
+full_seq.add(obj_pol, rkwargs=dict(exposures=[files.out_tellu_obj]), fiber='AB',
              filters=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK']))
 
 # post processing
@@ -1547,8 +1547,8 @@ limited_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # polar sequence on all POLAR_DARK / POLAR_FP
-limited_seq.add(obj_pol, files=[files.out_tellu_obj], fiber='AB',
-                filters=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK']))
+limited_seq.add(obj_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
+                fiber='AB', filters=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK']))
 
 # post processing
 limited_seq.add(obj_pp_recipe, files=[files.pp_file],
@@ -1696,7 +1696,8 @@ science_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # polar sequence on all POLAR_DARK / POLAR_FP
-science_seq.add(obj_pol, files=[files.out_tellu_obj], fiber='AB',
+science_seq.add(obj_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
+                fiber='AB',
                 filters=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK'],
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
