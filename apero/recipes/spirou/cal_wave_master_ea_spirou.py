@@ -351,6 +351,8 @@ def __main__(recipe, params):
         passed = np.all(qc_params[-1])
         # update recipe log
         log1.add_qc(qc_params, passed)
+        # proxy cavity file
+        cavityfile = None
 
         # =================================================================
         # Write all files to disk
@@ -424,6 +426,8 @@ def __main__(recipe, params):
             # Update calibDB with FP solution and line references
             # ----------------------------------------------------------
             if passed and params['INPUTS']['DATABASE']:
+                # copy the cavity solution to calibration database
+                calibdbm.add_calib_file(cavityfile)
                 # copy the hc wave solution file to the calibDB
                 calibdbm.add_calib_file(wavefile)
                 # copy the hc line ref file to the calibDB
