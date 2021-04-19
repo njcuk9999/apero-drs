@@ -84,8 +84,7 @@ class RecipeLog:
         # get the recipe name
         self.name = str(name)
         self.sname = str(sname)
-        # the kind of recipe ("recipe", "tool", "processing") from recipe.kind
-        self.rtype = str(params['DRS_RECIPE_KIND'])
+        # the block kind (raw/tmp/red etc)
         self.block_kind = 'None'
         # the default logging absolute path
         self.defaultpath = str(params['DRS_DATA_MSG_FULL'])
@@ -124,6 +123,9 @@ class RecipeLog:
         self.kwargs = ''
         self.skwargs = ''
         self.runstring = ''
+        self.recipe_type = str(params['DRS_RECIPE_TYPE'])
+        self.recipe_kind = str(params['DRS_RECIPE_KIND'])
+        self.running = 0
         # set that recipe started
         self.started = True
         # set the iteration
@@ -375,17 +377,20 @@ class RecipeLog:
         if write:
             self.write_logfile()
 
-    def end(self, write: bool = True):
+    def end(self, write: bool = True, success: bool = True):
         """
         Add the row that says recipe finished correctly to database
 
         :param write: bool, whether to write to log database
+        :param success: bool, if True adds an ended flag
         :return:
         """
         # set function name
         _ = drs_misc.display_func('end', __NAME__, self.class_name)
         # set the ended parameter to True
-        self.ended = True
+        if success:
+            self.ended = True
+        self.running = False
         # whether to write (update) recipe log file
         if write:
             self.write_logfile()
@@ -417,7 +422,8 @@ class RecipeLog:
             # add entries
             self.logdbm.add_entries(recipe=inst.name, sname=inst.sname,
                                     block_kind=inst.block_kind,
-                                    rtype=inst.rtype,
+                                    recipe_type=inst.recipe_type,
+                                    recipe_kind=inst.recipe_kind,
                                     pid=inst.pid, htime=inst.htime,
                                     unixtime=utime, group=inst.group,
                                     level=inst.level,
@@ -440,7 +446,9 @@ class RecipeLog:
                                     qc_logic=inst.qc_logic,
                                     qc_pass=inst.qc_pass,
                                     errors=inst.errors,
-                                    ended=inst.ended, used=1)
+                                    running=inst.running,
+                                    ended=inst.ended,
+                                    used=1)
 
     def _make_row(self) -> OrderedDict:
         """
@@ -453,7 +461,8 @@ class RecipeLog:
         row = OrderedDict()
         row['RECIPE'] = self.name
         row['BLOCK_KIND'] = self.block_kind
-        row['RTYPE'] = self.rtype
+        row['RECIPE_TYPE'] = self.recipe_type
+        row['RECIPE_KIND'] = self.recipe_kind
         row['PID'] = self.pid
         row['HTIME'] = self.htime
         row['GROUPNAME'] = self.group
@@ -483,6 +492,7 @@ class RecipeLog:
         # add errors
         row['ERRORMSGS'] = self.errors
         # add whether recipe ended
+        row['RUNNING'] = self.ended
         row['ENDED'] = self.ended
         # return row
         return row

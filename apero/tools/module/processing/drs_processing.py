@@ -270,6 +270,8 @@ class Run:
         pargs = [self.recipe.shortname, int(self.priority)]
         # add argument --program
         self.kwargs['program'] = '{0}[{1:05d}]'.format(*pargs)
+        # add argument --recipe_kind
+        self.kwargs['recipe_kind'] = str(self.recipe.recipe_kind)
         # add argument --shortname
         self.kwargs['shortname'] = str(self.recipe.shortname)
         # deal with file arguments in kwargs (returned from recipe_setup as

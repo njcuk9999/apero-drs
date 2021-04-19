@@ -130,8 +130,9 @@ class DrsRecipe(object):
         self.template_required = False
         # shortname set to name initially
         self.shortname = str(self.name)
-        # recipe kind (for logging)
-        self.kind: Union[str, None] = None
+        # recipe type and kind (for logging)
+        self.recipe_type: Union[str, None] = None
+        self.recipe_kind: Union[str, None] = None
         # save recipe module
         self.recipemod = None
         # import module as ImportClass (pickle-able)
@@ -854,8 +855,9 @@ class DrsRecipe(object):
         self.template_required = bool(recipe.template_required)
         # shortname
         self.shortname = str(recipe.shortname)
-        # recipe kind (for logging)
-        self.kind = copy.deepcopy(recipe.kind)
+        # recipe type and kind (for logging)
+        self.recipe_kind = copy.deepcopy(recipe.recipe_kind)
+        self.recipe_type = copy.deepcopy(recipe.recipe_type)
         # import module
         self.module = self.module
         # input directory
@@ -1194,6 +1196,8 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # set program functionality
         self._make_special(drs_argument.set_program, skip=False)
+        # set the recipe kind (for logging)
+        self._make_special(drs_argument.set_recipe_kind, skip=False)
         # ---------------------------------------------------------------------
         # set shortname functionality
         self._make_special(drs_argument.set_shortname, skip=False)
@@ -1463,7 +1467,8 @@ class DrsRunSequence:
             files: Union[List[DrsInputFile], None] = None,
             rargs: Union[Dict[str, List[DrsInputFile]], None] = None,
             rkwargs: Union[Dict[str, List[DrsInputFile]], None] = None,
-            template_required: bool = False):
+            template_required: bool = False,
+            recipe_kind: Union[str, None] = None):
         """
         Add a recipe to the sequence, can overwrite default recipe behaviour
         with the name (shortname), master, fiber keys and add more specialised
@@ -1514,6 +1519,7 @@ class DrsRunSequence:
                         argument is allowed to have
         :param template_required: bool, if True means this recipe is turned
                         off if RECAL_TEMPLATES is True (run.ini files)
+        :param recipe_kind: str, if set update the recipe kind
 
         :return: None - updates DrsRunSequence.adds
         """
@@ -1528,6 +1534,7 @@ class DrsRunSequence:
         add_set['arguments'] = arguments
         add_set['filters'] = filters
         add_set['template_required'] = template_required
+        add_set['recipe_kind'] = recipe_kind
         # deal with adding recipe arguments
         if rargs is None:
             rargs = dict()
@@ -1586,6 +1593,9 @@ class DrsRunSequence:
             # update short name
             if add['name'] is not None:
                 frecipe.shortname = add['name']
+            # update recipe kind if not None
+            if add['recipe_kind'] is not None:
+                frecipe.recipe_kind = add['recipe_kind']
             # print out
             wargs = [frecipe.shortname]
             WLOG(params, '', textentry('40-503-00038', args=wargs))

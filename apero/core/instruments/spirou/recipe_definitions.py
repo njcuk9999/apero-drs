@@ -185,7 +185,8 @@ cal_pp.out_block_str = 'tmp'
 cal_pp.extension = 'fits'
 cal_pp.description = textentry('PREPROCESS_DESC')
 cal_pp.epilog = textentry('PREPROCESS_EXAMPLE')
-cal_pp.kind = 'recipe'
+cal_pp.recipe_type = 'recipe'
+cal_pp.recipe_kind = 'pre'
 cal_pp.set_outputs(PP_FILE=files.pp_file)
 cal_pp.set_arg(pos=0, **obs_dir)
 cal_pp.set_arg(name='files', dtype='files', pos='1+', files=[files.raw_file],
@@ -209,7 +210,8 @@ cal_badpix.out_block_str = 'red'
 cal_badpix.extension = 'fits'
 cal_badpix.description = textentry('BADPIX_DESC')
 cal_badpix.epilog = textentry('BADPIX_EXAMPLE')
-cal_badpix.kind = 'recipe'
+cal_badpix.recipe_type = 'recipe'
+cal_badpix.recipe_kind = 'calib-night'
 cal_badpix.set_outputs(BADPIX=files.out_badpix, BACKMAP=files.out_backmap)
 cal_badpix.set_debug_plots('BADPIX_MAP')
 cal_badpix.set_summary_plots('SUM_BADPIX_MAP')
@@ -245,7 +247,8 @@ cal_dark.out_block_str = 'red'
 cal_dark.extension = 'fits'
 cal_dark.description = textentry('DARK_DESC')
 cal_dark.epilog = textentry('DARK_EXAMPLE')
-cal_dark.kind = 'recipe'
+cal_dark.recipe_type = 'recipe'
+cal_dark.recipe_kind = 'calib-night'
 cal_dark.set_outputs(DARK_INT_FILE=files.out_dark_int,
                      DARK_TEL_FIEL=files.out_dark_tel,
                      DARK_SKY_FILE=files.out_dark_sky)
@@ -278,7 +281,8 @@ cal_dark_master.out_block_str = 'red'
 cal_dark_master.extension = 'fits'
 cal_dark_master.description = textentry('DARK_MASTER_DESC')
 cal_dark_master.epilog = textentry('DARK_MASTER_EXAMPLE')
-cal_dark_master.kind = 'recipe'
+cal_dark_master.recipe_type = 'recipe'
+cal_dark_master.recipe_kind = 'calib-master'
 cal_dark_master.set_outputs(DARK_MASTER_FILE=files.out_dark_master)
 cal_dark_master.set_kwarg(name='--filetype', dtype=str,
                           default='DARK_DARK_TEL, DARK_DARK_INT',
@@ -302,7 +306,8 @@ cal_loc.out_block_str = 'red'
 cal_loc.extension = 'fits'
 cal_loc.description = textentry('LOC_DESC')
 cal_loc.epilog = textentry('LOC_EXAMPLE')
-cal_loc.kind = 'recipe'
+cal_loc.recipe_type = 'recipe'
+cal_loc.recipe_kind = 'calib-night'
 cal_loc.set_outputs(ORDERP_FILE=files.out_loc_orderp,
                     LOCO_FILE=files.out_loc_loco,
                     FWHM_FILE=files.out_loc_fwhm,
@@ -346,7 +351,8 @@ cal_shape_master.out_block_str = 'red'
 cal_shape_master.extension = 'fits'
 cal_shape_master.description = textentry('SHAPE_DESC')
 cal_shape_master.epilog = textentry('SHAPEMASTER_EXAMPLE')
-cal_shape_master.kind = 'recipe'
+cal_shape_master.recipe_type = 'recipe'
+cal_shape_master.recipe_kind = 'calib-master'
 cal_shape_master.set_outputs(FPMASTER_FILE=files.out_shape_fpmaster,
                              DXMAP_FILE=files.out_shape_dxmap,
                              DYMAP_FILE=files.out_shape_dymap,
@@ -400,7 +406,8 @@ cal_shape.out_block_str = 'red'
 cal_shape.extension = 'fits'
 cal_shape.description = textentry('SHAPE_DESC')
 cal_shape.epilog = textentry('SHAPE_EXAMPLE')
-cal_shape.kind = 'recipe'
+cal_shape.recipe_type = 'recipe'
+cal_shape.recipe_kind = 'calib-night'
 cal_shape.set_outputs(LOCAL_SHAPE_FILE=files.out_shape_local,
                       SHAPEL_IN_FP_FILE=files.out_shapel_debug_ifp,
                       SHAPEL_OUT_FP_FILE=files.out_shapel_debug_ofp,
@@ -441,7 +448,8 @@ cal_ff.out_block_str = 'red'
 cal_ff.extension = 'fits'
 cal_ff.description = textentry('FLAT_DESC')
 cal_ff.epilog = textentry('FLAT_EXAMPLE')
-cal_ff.kind = 'recipe'
+cal_ff.recipe_type = 'recipe'
+cal_ff.recipe_kind = 'calib-night'
 cal_ff.set_outputs(FLAT_FILE=files.out_ff_flat,
                    BLAZE_FILE=files.out_ff_blaze,
                    E2DSLL_FILE=files.out_ext_e2dsll,
@@ -488,7 +496,8 @@ cal_thermal.out_block_str = 'red'
 cal_thermal.extension = 'fits'
 cal_thermal.description = textentry('EXTRACT_DESC')
 cal_thermal.epilog = textentry('EXTRACT_EXAMPLE')
-cal_thermal.kind = 'recipe'
+cal_thermal.recipe_type = 'recipe'
+cal_thermal.recipe_kind = 'calib-night'
 # TODO: Need to add out_thermal_e2ds_sky
 cal_thermal.set_outputs(THERMAL_E2DS_FILE=files.out_ext_e2dsff,
                         THERMALI_FILE=files.out_thermal_e2ds_int,
@@ -540,7 +549,8 @@ cal_leak_master.out_block_str = 'red'
 cal_leak_master.extension = 'fits'
 cal_leak_master.description = textentry('LEAKM_DESC')
 cal_leak_master.epilog = textentry('LEAKM_EXAMPLE')
-cal_leak_master.kind = 'recipe'
+cal_leak_master.recipe_type = 'recipe'
+cal_leak_master.recipe_kind = 'calib-master'
 cal_leak_master.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2dsff,
                             LEAK_MASTER=files.out_leak_master)
 cal_leak_master.set_arg(pos=0, **obs_dir)
@@ -565,7 +575,8 @@ cal_leak.out_block_str = 'red'
 cal_leak.extension = 'fits'
 cal_leak.description = textentry('LEAK_DESC')
 cal_leak.epilog = textentry('LEAK_EXAMPLE')
-cal_leak.kind = 'recipe'
+cal_leak.recipe_type = 'recipe'
+cal_leak.recipe_kind = 'calib-night'
 cal_leak.set_outputs(E2DS_FILE=files.out_ext_e2ds,
                      E2DSFF_FILE=files.out_ext_e2dsff,
                      E2DSLL_FILE=files.out_ext_e2dsll,
@@ -598,7 +609,8 @@ cal_extract.out_block_str = 'red'
 cal_extract.extension = 'fits'
 cal_extract.description = textentry('EXTRACT_DESC')
 cal_extract.epilog = textentry('EXTRACT_EXAMPLE')
-cal_extract.kind = 'recipe'
+cal_extract.recipe_type = 'recipe'
+cal_extract.recipe_kind = 'extract'
 cal_extract.set_outputs(E2DS_FILE=files.out_ext_e2ds,
                         E2DSFF_FILE=files.out_ext_e2dsff,
                         E2DSLL_FILE=files.out_ext_e2dsll,
@@ -667,7 +679,8 @@ cal_wave_master.out_block_str = 'red'
 cal_wave_master.extension = 'fits'
 cal_wave_master.description = textentry('WAVE_DESC')
 cal_wave_master.epilog = textentry('WAVE_EXAMPLE')
-cal_wave_master.kind = 'recipe'
+cal_wave_master.recipe_type = 'recipe'
+cal_wave_master.recipe_kind = 'calib-master'
 cal_wave_master.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                             WAVE_HCLL=files.out_wave_hcline,
                             WAVEM_HCRES=files.out_wavem_hcres,
@@ -753,7 +766,8 @@ cal_wave_master_ea.out_block_str = 'red'
 cal_wave_master_ea.extension = 'fits'
 cal_wave_master_ea.description = textentry('WAVE_DESC')
 cal_wave_master_ea.epilog = textentry('WAVE_EXAMPLE')
-cal_wave_master_ea.kind = 'recipe'
+cal_wave_master_ea.recipe_type = 'recipe'
+cal_wave_master_ea.recipe_kind = 'calib-master'
 cal_wave_master_ea.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                                WAVESOL_MASTER=files.out_wavem_fp,
                                WAVEM_CAVITY=files.out_wavem_cavity,
@@ -819,7 +833,8 @@ cal_wave_night.out_block_str = 'red'
 cal_wave_night.extension = 'fits'
 cal_wave_night.description = textentry('WAVE_DESC')
 cal_wave_night.epilog = textentry('WAVE_EXAMPLE')
-cal_wave_night.kind = 'recipe'
+cal_wave_night.recipe_type = 'recipe'
+cal_wave_night.recipe_kind = 'calib-night'
 cal_wave_night.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                            WAVEMAP_NIGHT=files.out_wave_night,
                            WAVE_HCLIST=files.out_wave_hclist,
@@ -880,7 +895,8 @@ cal_wave_night_ea.out_block_str = 'red'
 cal_wave_night_ea.extension = 'fits'
 cal_wave_night_ea.description = textentry('WAVE_DESC')
 cal_wave_night_ea.epilog = textentry('WAVE_EXAMPLE')
-cal_wave_night_ea.kind = 'recipe'
+cal_wave_night_ea.recipe_type = 'recipe'
+cal_wave_night_ea.recipe_kind = 'calib-night'
 cal_wave_night_ea.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                               WAVEMAP_NIGHT=files.out_wave_night,
                               WAVE_HCLIST=files.out_wave_hclist,
@@ -938,7 +954,8 @@ cal_ccf.out_block_str = 'red'
 cal_ccf.extension = 'fits'
 cal_ccf.description = textentry('CCF_DESC')
 cal_ccf.epilog = textentry('CCF_EXAMPLE')
-cal_ccf.kind = 'recipe'
+cal_ccf.recipe_type = 'recipe'
+cal_ccf.recipe_kind = 'rv'
 cal_ccf.set_outputs(CCF_RV=files.out_ccf_fits)
 cal_ccf.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP', 'CCF_SWAVE_REF',
                         'CCF_PHOTON_UNCERT')
@@ -982,7 +999,8 @@ obj_mk_tellu.out_block_str = 'red'
 obj_mk_tellu.extension = 'fits'
 obj_mk_tellu.description = textentry('MKTELL_DESC')
 obj_mk_tellu.epilog = textentry('MKTELL_EXAMPLE')
-obj_mk_tellu.kind = 'recipe'
+obj_mk_tellu.recipe_type = 'recipe'
+obj_mk_tellu.recipe_kind = 'tellu-hotstar'
 obj_mk_tellu.set_outputs(TELLU_CONV=files.out_tellu_conv,
                          TELLU_TRANS=files.out_tellu_trans,
                          TELLU_PCLEAN=files.out_tellu_pclean)
@@ -1023,7 +1041,8 @@ obj_mk_tellu_db.instrument = __INSTRUMENT__
 obj_mk_tellu_db.in_block_str = 'red'
 obj_mk_tellu_db.out_block_str = 'red'
 obj_mk_tellu_db.extension = 'fits'
-obj_mk_tellu_db.kind = 'recipe'
+obj_mk_tellu_db.recipe_type = 'recipe'
+obj_mk_tellu_db.recipe_kind = 'tellu-hotstar'
 obj_mk_tellu_db.description = textentry('MKTELLDB_DESC')
 obj_mk_tellu_db.epilog = textentry('MKTELLDB_EXAMPLE')
 obj_mk_tellu_db.set_outputs()
@@ -1061,7 +1080,8 @@ obj_fit_tellu.out_block_str = 'red'
 obj_fit_tellu.extension = 'fits'
 obj_fit_tellu.description = textentry('FTELLU_DESC')
 obj_fit_tellu.epilog = textentry('FTELLU_EXAMPLE')
-obj_fit_tellu.kind = 'recipe'
+obj_fit_tellu.recipe_type = 'recipe'
+obj_fit_tellu.recipe_kind = 'tellu'
 obj_fit_tellu.set_outputs(ABSO_NPY=files.out_tellu_abso_npy,
                           ABSO1_NPY=files.out_tellu_abso1_npy,
                           TELLU_OBJ=files.out_tellu_obj,
@@ -1114,7 +1134,8 @@ obj_fit_tellu_db.out_block_str = 'red'
 obj_fit_tellu_db.extension = 'fits'
 obj_fit_tellu_db.description = textentry('FTELLUDB_DESC')
 obj_fit_tellu_db.epilog = textentry('FTELLUDB_EXAMPLE')
-obj_fit_tellu_db.kind = 'recipe'
+obj_fit_tellu_db.recipe_type = 'recipe'
+obj_fit_tellu_db.recipe_kind = 'tellu-science'
 obj_fit_tellu_db.set_outputs()
 obj_fit_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
                            helpstr=textentry('FTELLUDB_CORES'))
@@ -1153,7 +1174,8 @@ obj_mk_template.out_block_str = 'red'
 obj_mk_template.extension = 'fits'
 obj_mk_template.description = textentry('MKTEMP_DESC')
 obj_mk_template.epilog = textentry('MKTEMP_EXAMPLE')
-obj_mk_template.kind = 'recipe'
+obj_mk_template.recipe_type = 'recipe'
+obj_mk_template.recipe_kind = 'tellu'
 obj_mk_template.set_outputs(TELLU_TEMP=files.out_tellu_template,
                             TELLU_BIGCUBE=files.out_tellu_bigcube,
                             TELLU_BIGCUBE0=files.out_tellu_bigcube0,
@@ -1183,38 +1205,6 @@ recipes.append(obj_mk_template)
 # -----------------------------------------------------------------------------
 # polar recipe
 # -----------------------------------------------------------------------------
-# polar = DrsRecipe(__INSTRUMENT__)
-# polar.name = 'polar_spirou.py'
-# polar.shortname = 'POLAR'
-# polar.instrument = __INSTRUMENT__
-# polar.in_block_str = 'red'
-# polar.out_block_str = 'red'
-# polar.extension = 'fits'
-# polar.description = ''
-# polar.epilog = ''
-# polar.kind = 'recipe'
-# polar.set_outputs()
-# polar.set_debug_plots()
-# polar.set_summary_plots()
-# polar.set_arg(pos=0, **obs_dir)
-# polar.set_debug_plots()
-# polar.set_summary_plots()
-# polar.set_arg(pos=0, **obs_dir)
-# polar.set_arg(name='files', dtype='files', pos='1+',
-#                    files=[files.out_ext_e2ds, files.out_ext_e2dsff],
-#                    filelogic='exclusive',
-#                    helpstr=textentry('FILES_HELP'] + textentry('FTELLU_FILES_HELP'],
-#                    limit=1)
-# polar.set_kwarg(**blazefile)
-# polar.set_kwarg(**plot)
-# polar.set_kwarg(**wavefile)
-# # add to recipe
-# recipes.append(polar)
-
-
-# -----------------------------------------------------------------------------
-# pol_new
-# -----------------------------------------------------------------------------
 obj_pol = DrsRecipe(__INSTRUMENT__)
 obj_pol.name = 'obj_pol_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_pol.shortname = 'POLAR'
@@ -1224,7 +1214,8 @@ obj_pol.out_block_str = 'red'
 obj_pol.extension = 'fits'
 obj_pol.description = textentry('FTELLU_DESC')
 obj_pol.epilog = textentry('FTELLU_EXAMPLE')
-obj_pol.kind = 'recipe'
+obj_pol.recipe_type = 'recipe'
+obj_pol.recipe_kind = 'polar'
 obj_pol.set_outputs(POL_DEG_FILE=files.out_pol_deg,
                     POL_NULL1=files.out_pol_null1,
                     POL_NULL2=files.out_pol_null2,
@@ -1295,7 +1286,8 @@ obj_pp_recipe.out_block_str = 'out'
 obj_pp_recipe.extension = 'fits'
 obj_pp_recipe.description = textentry('OUT_DESC_HELP')
 obj_pp_recipe.epilog = ''
-obj_pp_recipe.kind = 'recipe'
+obj_pp_recipe.recipe_type = 'recipe'
+obj_pp_recipe.recipe_kind = 'post'
 obj_pp_recipe.set_arg(pos=0, **obs_dir)
 obj_pp_recipe.set_arg(name='files', dtype='files', pos='1+',
                       files=[files.pp_file],
@@ -1357,7 +1349,7 @@ full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 # master run
 full_seq.add(cal_pp)
 full_seq.add(cal_dark_master, master=True)
-full_seq.add(cal_badpix, name='BADM', master=True)
+full_seq.add(cal_badpix, name='BADM', master=True, recipe_kind='calib-master')
 full_seq.add(cal_loc, name='LOCM', files=[files.pp_dark_flat], master=True)
 full_seq.add(cal_loc, name='LOCM', files=[files.pp_flat_dark], master=True)
 full_seq.add(cal_shape_master, master=True)
