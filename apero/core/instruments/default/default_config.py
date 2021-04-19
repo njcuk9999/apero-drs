@@ -18,7 +18,7 @@ __all__ = [  # global settings
     'INSTRUMENT', 'OBS_LONG', 'OBS_LAT', 'OBS_ALT',
     # DRS SETTINGS
     'DRS_PACKAGE', 'DRS_USERENV', 'DRS_GROUP', 'DRS_RECIPE_KIND',
-    'DRS_USER_DEFAULT', 'IS_MASTER',
+    'DRS_USER_DEFAULT', 'IS_MASTER', 'DRS_RECIPE_TYPE',
     # DRS INTERNAL PATHS
     'DRS_USER_DEFAULT', 'DRS_MOD_DATA_PATH', 'DRS_MOD_INSTRUMENT_CONFIG',
     'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA',
@@ -245,10 +245,21 @@ DRS_GROUP = Const('DRS_GROUP', value=None, dtype=str, source=__NAME__,
                                '(set in drs_setup)'))
 
 # The recipe kind that this parameter dictionary is associated with
+#   (i.e. master-calib, night-calib, obj-science, obj-tellu)
 DRS_RECIPE_KIND = Const('DRS_RECIPE_KIND', value=None, dtype=str,
                         source=__NAME__, group=cgroup,
                         description=('The recipe kind that this parameter '
-                                     'dictionary is associated with'))
+                                     'dictionary is associated with (i.e. '
+                                     'master-calib, night-calib, obj-science, '
+                                     'obj-tellu)'))
+
+# The recipe type that this parameter dictionary is associated with
+#   (i.e. recipe, tool, processing)
+DRS_RECIPE_TYPE = Const('DRS_RECIPE_TYPE', value=None, dtype=str,
+                        source=__NAME__, group=cgroup,
+                        description=('The recipe type that this parameter '
+                                     'dictionary is associated with  '
+                                     '(i.e. recipe, tool, processing)'))
 
 # Flag for master recipe associated with this param set
 IS_MASTER = Const('IS_MASTER', value=False, dtype=bool, source=__NAME__,

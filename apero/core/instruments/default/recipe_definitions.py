@@ -91,7 +91,8 @@ out_recipe = drs_recipe(__INSTRUMENT__)
 changelog.name = 'apero_changelog.py'
 changelog.instrument = __INSTRUMENT__
 changelog.description = textentry('CHANGELOG_DESCRIPTION')
-changelog.kind = 'tool'
+changelog.recipe_type = 'nolog-tool'
+changelog.recipe_kind = 'admin'
 changelog.set_arg(pos=0, name='preview', dtype='bool',
                   helpstr=textentry('PREVIEW_HELP'))
 
@@ -101,8 +102,8 @@ changelog.set_arg(pos=0, name='preview', dtype='bool',
 database_mgr.name = 'apero_database.py'
 database_mgr.instrument = __INSTRUMENT__
 database_mgr.description = 'APERO database manager'
-database_mgr.kind = 'tool'
-
+database_mgr.recipe_type = 'nolog-tool'
+database_mgr.recipe_kind = 'admin'
 database_mgr.set_kwarg(name='--kill', dtype='switch', default=False,
                        helpstr='Use this when database is stuck and you have'
                                'no other opens (mysql only)')
@@ -130,7 +131,8 @@ remake_doc.name = 'apero_documentation.py'
 remake_doc.instrument = __INSTRUMENT__
 # TODO: Move to language DB
 remake_doc.description = 'Re-make the apero documentation'
-remake_doc.kind = 'tool'
+remake_doc.recipe_type = 'nolog-tool'
+remake_doc.recipe_kind = 'admin'
 # TODO: Move Help to language DB
 remake_doc.set_kwarg(name='--upload', dtype='bool', default=False,
                      helpstr='[Bool] If True upload documentation to '
@@ -143,7 +145,8 @@ remake_doc.set_kwarg(name='--upload', dtype='bool', default=False,
 explorer.name = 'apero_explorer.py'
 explorer.instrument = __INSTRUMENT__
 explorer.description = textentry('EXPLORER_DESCRIPTION')
-explorer.kind = 'tool'
+explorer.recipe_type = 'nolog-tool'
+explorer.recipe_kind = 'user'
 # TODO: move helpstr to language database
 explorer.set_kwarg(name='--hash', default=False, dtype='switch',
                    helpstr=textentry('EXPLORER_HASH'))
@@ -154,7 +157,8 @@ explorer.set_kwarg(name='--hash', default=False, dtype='switch',
 listing.name = 'apero_listing.py'
 listing.instrument = __INSTRUMENT__
 listing.description = textentry('LISTING_DESC')
-listing.kind = 'tool'
+listing.recipe_type = 'nolog-tool'
+listing.recipe_kind = 'user'
 listing.set_kwarg(name='--obs_dir', dtype=str, default='',
                   helpstr=textentry('LISTING_HELP_OBS_DIR'))
 listing.set_kwarg(name='--kind', dtype=str, default='raw',
@@ -171,7 +175,8 @@ listing.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
 logstats.name = 'apero_log_stats.py'
 logstats.instrument = __INSTRUMENT__
 logstats.description = textentry('LOGSTAT_DESC')
-logstats.kind = 'tool'
+logstats.recipe_type = 'nolog-tool'
+logstats.recipe_kind = 'user'
 logstats.set_debug_plots('LOGSTATS_BAR')
 logstats.set_summary_plots()
 logstats.set_kwarg(name='--obs_dir', dtype=str, default='',
@@ -208,7 +213,8 @@ logstats.set_kwarg(**plot)
 remake_db.name = 'apero_mkdb.py'
 remake_db.instrument = __INSTRUMENT__
 remake_db.description = textentry('REMAKE_DESC')
-remake_db.kind = 'tool'
+remake_db.recipe_type = 'nolog-tool'
+remake_db.recipe_kind = 'user'
 remake_db.set_kwarg(name='--kind', dtype='options',
                     options=['calibration', 'telluric'],
                     default_ref='REMAKE_DATABASE_DEFAULT',
@@ -220,7 +226,8 @@ remake_db.set_kwarg(name='--kind', dtype='options',
 processing.name = 'apero_processing.py'
 processing.instrument = __INSTRUMENT__
 processing.description = textentry('PROCESS_DESCRIPTION')
-processing.kind = 'processing'
+processing.recipe_type = 'tool'
+processing.recipe_kind = 'processing'
 processing.set_arg(pos=0, name='runfile', dtype=str,
                    helpstr=textentry('PROCESS_RUNFILE_HELP'))
 processing.set_kwarg(name='--obs_dir', dtype=str, default='None',
@@ -251,7 +258,8 @@ processing.set_kwarg(name='--update_objdb', dtype=str, default='None',
 req_check.name = 'apero_dependencies.py'
 req_check.instrument = __INSTRUMENT__
 req_check.description = textentry('DEPENDENCIES_DESCRIPTION')
-req_check.kind = 'tool'
+req_check.recipe_type = 'nolog-tool'
+req_check.recipe_kind = 'admin'
 
 # -----------------------------------------------------------------------------
 # apero_reset.py
@@ -259,7 +267,8 @@ req_check.kind = 'tool'
 reset.name = 'apero_reset.py'
 reset.instrument = __INSTRUMENT__
 reset.description = textentry('RESET_DESCRIPTION')
-reset.kind = 'tool'
+reset.recipe_type = 'nolog-tool'
+reset.recipe_kind = 'user'
 reset.set_kwarg(name='--log', dtype='bool', default=True,
                 helpstr=textentry('RESET_LOG_HELP'))
 reset.set_kwarg(name='--warn', dtype='bool', default=True,
@@ -271,5 +280,6 @@ reset.set_kwarg(name='--warn', dtype='bool', default=True,
 validate.name = 'apero_validate.py'
 validate.instrument = __INSTRUMENT__
 validate.description = textentry('VALIDATE_DESCRIPTION')
-validate.kind = 'tool'
+validate.recipe_type = 'nolog-tool'
+validate.recipe_kind = 'user'
 

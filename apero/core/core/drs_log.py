@@ -1183,8 +1183,8 @@ def get_drs_data_msg(params: ParamDict, group: Union[str, None] = None,
     dir_data_msg = params.get('DRS_DATA_MSG', None)
     # ----------------------------------------------------------------------
     # only sort by recipe kind if group is None
-    if (params['DRS_RECIPE_KIND'] is not None) and (group is None):
-        kind = params['DRS_RECIPE_KIND'].lower()
+    if (params['DRS_RECIPE_TYPE'] is not None) and (group is None):
+        kind = params['DRS_RECIPE_TYPE'].lower()
         dir_data_msg = os.path.join(dir_data_msg, kind)
     # if we have a group then put it in processing folder
     elif group is not None:

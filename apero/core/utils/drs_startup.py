@@ -181,7 +181,8 @@ def setup(name: str = 'None', instrument: str = 'None',
         drsgroup = None
     # set DRS_GROUP
     recipe.params.set('DRS_GROUP', drsgroup, source=func_name)
-    recipe.params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
+    recipe.params.set('DRS_RECIPE_TYPE', recipe.recipe_type, source=func_name)
+    recipe.params.set('DRS_RECIPE_KIND', recipe.recipe_kind, source=func_name)
     # set master
     recipe.params.set('IS_MASTER', recipe.master, source=func_name)
     # -------------------------------------------------------------------------
@@ -311,7 +312,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     # -------------------------------------------------------------------------
     # add the recipe log
     cond1 = not drs_text.null_text(instrument, ['None', ''])
-    cond2 = params['DRS_RECIPE_KIND'] == 'recipe'
+    cond2 = params['DRS_RECIPE_TYPE'] != 'nolog-tool'
     if cond1 and cond2:
         recipe.log = drs_utils.RecipeLog(recipe.name, recipe.shortname,
                                          params, logger=WLOG)
@@ -319,11 +320,14 @@ def setup(name: str = 'None', instrument: str = 'None',
         logfile = drs_log.get_logfilepath(WLOG, params)
         recipe.log.set_log_file(logfile)
         recipe.log.block_kind = str(recipe.out_block_str)
+        recipe.log.recipe_kind = str(recipe.recipe_kind)
         # add user input parameters to log
         recipe.log.runstring = recipe.runstring
         recipe.log.args = recipe.largs
         recipe.log.kwargs = recipe.lkwargs
         recipe.log.skwargs = recipe.lskwargs
+        # set this code to running in the log
+        recipe.log.running = True
         # set lock function (lock file is OBS_DIR + _log
         # recipe.log.set_lock_func(drs_lock.locker)
         # write recipe log
@@ -372,7 +376,7 @@ def run(func: Any, recipe: DrsRecipe,
             # save params to llmain
             llmain = dict(e=e, tb='', params=params, recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_KIND'] == 'recipe':
+            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error('Debug Exit', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -391,7 +395,7 @@ def run(func: Any, recipe: DrsRecipe,
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_KIND'] == 'recipe':
+            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error('KeyboardInterrupt', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -407,7 +411,7 @@ def run(func: Any, recipe: DrsRecipe,
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_KIND'] == 'recipe':
+            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -424,7 +428,7 @@ def run(func: Any, recipe: DrsRecipe,
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_KIND'] == 'recipe':
+            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -441,7 +445,7 @@ def run(func: Any, recipe: DrsRecipe,
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_KIND'] == 'recipe':
+            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -576,6 +580,11 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
             WLOG(params, 'warning', textentry('40-003-00005', args=wargs),
                  colour='red')
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
+        # deal with logging
+        if success:
+            recipe.log.end()
+        else:
+            recipe.log.end(success=False)
         # ---------------------------------------------------------------------
         # unlock parameter dictionary
         params.unlock()
