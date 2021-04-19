@@ -482,7 +482,6 @@ def get_wavemap_from_coeffs(wave_coeffs: np.ndarray, nbo: int,
 
 def get_cavity_file(params: ParamDict, recipe: DrsRecipe,
                     header: Union[drs_fits.Header, None] = None,
-                    filename: Union[str, None] = None,
                     infile: Union[DrsFitsFile, None] = None,
                     database: Union[CalibDB, None] = None
                     ) -> Union[np.array, None]:
@@ -493,7 +492,6 @@ def get_cavity_file(params: ParamDict, recipe: DrsRecipe,
     :param recipe: Drs Recipe instance, the recipe running this function
     :param header: the header from an input file (required because we may have
                    multiple cavity files in the calibration database)
-    :param filename: str, the filename linked to the header
     :param infile: DrsFitsFile, instead of header + filename you can give a
                    DrsFitsFile instance (which has header and filename
                    internally)
@@ -524,8 +522,8 @@ def get_cavity_file(params: ParamDict, recipe: DrsRecipe,
     # load filename from inputs/calibDB
     # ---------------------------------------------------------------------
     lkwargs = dict(userinputkey='CAVITYFILE', database=calibdbm, key=cavity_key,
-                   inheader=header, filename=filename, return_source=True,
-                   required=False)
+                   inheader=header, return_source=True,
+                   required=True)
     # load wave fp file
     cout = gen_calib.load_calib_file(params, **lkwargs)
     if cout is None:
@@ -1705,7 +1703,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # TODO: Need to worry about reading all extensions
     e2ds_file.read_file()
     e2ds_file.read_header()
-    e2ds_file = add_wave_keys(params, e2ds_file, wprops)
+    e2ds_file = add_wave_keys(e2ds_file, wprops)
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
@@ -1725,7 +1723,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # update the e2ds file
     # TODO: Need to worry about reading all extensions
     e2dsff_file.read_file()
-    e2dsff_file = add_wave_keys(params, e2dsff_file, wprops)
+    e2dsff_file = add_wave_keys(e2dsff_file, wprops)
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
@@ -1744,7 +1742,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     WLOG(params, '', textentry('40-017-00038', args=wargs))
     # update the e2ds file
     e2dsll_file.read_multi()
-    e2dsll_file = add_wave_keys(params, e2dsll_file, wprops)
+    e2dsll_file = add_wave_keys(e2dsll_file, wprops)
     # define multi lists
     data_list, name_list = e2dsll_file.data_array, e2dsll_file.name_array
     if data_list is None:

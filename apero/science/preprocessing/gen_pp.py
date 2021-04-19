@@ -999,8 +999,8 @@ def query_gaia(params: ParamDict, url: str,
     func_name = __NAME__ + '.query_gaia()'
     # check for astroquery and return a fail and warning if not installed
     try:
-        from astroquery.utils.tap.core import TapPlus
-
+        with warnings.catch_warnings(record=True) as _:
+            from astroquery.utils.tap.core import TapPlus
     except Exception as e:
         eargs = [type(e), str(e), func_name]
         WLOG(params, 'warning', textentry('10-016-00009', args=eargs))
@@ -1039,7 +1039,8 @@ def query_simbad_id(params: ParamDict, obj_id: str) -> Union[Table, None]:
     # check for astroquery and return a fail and warning if not installed
     try:
         # import astroquery
-        from astroquery.simbad import Simbad
+        with warnings.catch_warnings(record=True) as _:
+            from astroquery.simbad import Simbad
         # get results
         with warnings.catch_warnings(record=True) as _:
             # create query string (for printing)
