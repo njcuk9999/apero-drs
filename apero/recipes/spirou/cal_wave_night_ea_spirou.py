@@ -215,10 +215,10 @@ def __main__(recipe, params):
         # =================================================================
         # set the wprops to initial wave solution
         wprops = iwprops.copy()
-        # set cavity solution to None initially
+        # get cavity solution from database
         wprops['CAVITY'] = wave2.get_cavity_file(params, recipe,
-                                                 infile=fp_e2ds_file)
-
+                                                 infile=fp_e2ds_file,
+                                                 database=calibdbm)
         # -----------------------------------------------------------------
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
