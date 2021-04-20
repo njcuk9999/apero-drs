@@ -232,6 +232,7 @@ def extract_files(params, recipe, infile, outfile, always_extract,
                                          files=[infile.basename])
         # set the program name (shouldn't be cal_extract)
         kwargs['program'] = '{0}_extract'.format(kind)
+        kwargs['recipe_kind'] = '{0}-extract'.format(kind)
         # force the input directory (combined files go to reduced dir)
         kwargs['force_indir'] = path_ins.block_kind
         # push data to extractiong code
