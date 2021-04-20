@@ -695,8 +695,8 @@ class DrsRecipe(object):
         :return:
         """
         # set function name
-        _ = drs_misc.display_func('set_inputs', __NAME__,
-                                  self.class_name)
+        func_name = drs_misc.display_func('set_inputs', __NAME__,
+                                          self.class_name)
         # deal with not having inputs
         if 'INPUTS' not in self.params:
             return
@@ -729,6 +729,16 @@ class DrsRecipe(object):
             if not drs_text.null_text(inputs['SHORTNAME'], ['None', '']):
                 # override short name
                 self.shortname = str(inputs['SHORTNAME'])
+        # ------------------------------------------------------------------
+        # if recipe kind is set override default
+        if 'RECIPE_KIND' in inputs:
+            # only if recipe kind is not None
+            if not drs_text.null_text(inputs['RECIPE_KIND'], ['None', '']):
+                # override recipe kind
+                self.recipe_kind = str(inputs['RECIPE_KIND'])
+                # must update in parameters as well
+                self.params.set('DRS_RECIPE_KIND', self.recipe_kind,
+                                source=func_name)
 
     def set_debug_plots(self, *args: str):
         """
