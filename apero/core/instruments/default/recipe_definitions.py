@@ -89,6 +89,7 @@ out_recipe = drs_recipe(__INSTRUMENT__)
 # apero_changelog.py
 # -----------------------------------------------------------------------------
 changelog.name = 'apero_changelog.py'
+changelog.shortname = 'CLOG'
 changelog.instrument = __INSTRUMENT__
 changelog.description = textentry('CHANGELOG_DESCRIPTION')
 changelog.recipe_type = 'nolog-tool'
@@ -100,6 +101,7 @@ changelog.set_arg(pos=0, name='preview', dtype='bool',
 # apero_database.py
 # -----------------------------------------------------------------------------
 database_mgr.name = 'apero_database.py'
+database_mgr.shortname = 'DBMGR'
 database_mgr.instrument = __INSTRUMENT__
 database_mgr.description = 'APERO database manager'
 database_mgr.recipe_type = 'nolog-tool'
@@ -129,6 +131,7 @@ database_mgr.set_kwarg(name='--join', dtype=str, default='replace',
 # -----------------------------------------------------------------------------
 remake_doc.name = 'apero_documentation.py'
 remake_doc.instrument = __INSTRUMENT__
+remake_doc.shortname = 'DOC'
 # TODO: Move to language DB
 remake_doc.description = 'Re-make the apero documentation'
 remake_doc.recipe_type = 'nolog-tool'
@@ -143,6 +146,7 @@ remake_doc.set_kwarg(name='--upload', dtype='bool', default=False,
 # -----------------------------------------------------------------------------
 
 explorer.name = 'apero_explorer.py'
+explorer.shortname = 'EXPLO'
 explorer.instrument = __INSTRUMENT__
 explorer.description = textentry('EXPLORER_DESCRIPTION')
 explorer.recipe_type = 'nolog-tool'
@@ -155,6 +159,7 @@ explorer.set_kwarg(name='--hash', default=False, dtype='switch',
 # apero_listing.py
 # -----------------------------------------------------------------------------
 listing.name = 'apero_listing.py'
+listing.shortname = 'LIST'
 listing.instrument = __INSTRUMENT__
 listing.description = textentry('LISTING_DESC')
 listing.recipe_type = 'nolog-tool'
@@ -173,6 +178,7 @@ listing.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
 # apero_log_stats.py
 # -----------------------------------------------------------------------------
 logstats.name = 'apero_log_stats.py'
+logstats.shortname = 'LSTAT'
 logstats.instrument = __INSTRUMENT__
 logstats.description = textentry('LOGSTAT_DESC')
 logstats.recipe_type = 'nolog-tool'
@@ -211,6 +217,7 @@ logstats.set_kwarg(**plot)
 # apero_mkdb.py
 # -----------------------------------------------------------------------------
 remake_db.name = 'apero_mkdb.py'
+remake_db.shortname = 'REMKDB'
 remake_db.instrument = __INSTRUMENT__
 remake_db.description = textentry('REMAKE_DESC')
 remake_db.recipe_type = 'nolog-tool'
@@ -224,6 +231,7 @@ remake_db.set_kwarg(name='--kind', dtype='options',
 # apero_processing.py
 # -----------------------------------------------------------------------------
 processing.name = 'apero_processing.py'
+processing.shortname = 'PROC'
 processing.instrument = __INSTRUMENT__
 processing.description = textentry('PROCESS_DESCRIPTION')
 processing.recipe_type = 'tool'
@@ -256,6 +264,7 @@ processing.set_kwarg(name='--update_objdb', dtype=str, default='None',
 # apero_requirements-check.py
 # -----------------------------------------------------------------------------
 req_check.name = 'apero_dependencies.py'
+req_check.shortname = 'DEPEND'
 req_check.instrument = __INSTRUMENT__
 req_check.description = textentry('DEPENDENCIES_DESCRIPTION')
 req_check.recipe_type = 'nolog-tool'
@@ -265,6 +274,7 @@ req_check.recipe_kind = 'admin'
 # apero_reset.py
 # -----------------------------------------------------------------------------
 reset.name = 'apero_reset.py'
+reset.shortname = 'RESET'
 reset.instrument = __INSTRUMENT__
 reset.description = textentry('RESET_DESCRIPTION')
 reset.recipe_type = 'nolog-tool'
@@ -278,6 +288,7 @@ reset.set_kwarg(name='--warn', dtype='bool', default=True,
 # apero_validate.py
 # -----------------------------------------------------------------------------
 validate.name = 'apero_validate.py'
+validate.shortname = 'VALID'
 validate.instrument = __INSTRUMENT__
 validate.description = textentry('VALIDATE_DESCRIPTION')
 validate.recipe_type = 'nolog-tool'

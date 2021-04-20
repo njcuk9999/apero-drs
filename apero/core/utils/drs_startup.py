@@ -326,8 +326,6 @@ def setup(name: str = 'None', instrument: str = 'None',
         recipe.log.args = recipe.largs
         recipe.log.kwargs = recipe.lkwargs
         recipe.log.skwargs = recipe.lskwargs
-        # set this code to running in the log
-        recipe.log.running = True
         # set lock function (lock file is OBS_DIR + _log
         # recipe.log.set_lock_func(drs_lock.locker)
         # write recipe log
@@ -580,10 +578,11 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
             WLOG(params, 'warning', textentry('40-003-00005', args=wargs),
                  colour='red')
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
-        # deal with logging
-        if success:
-            recipe.log.end()
-        else:
+        # ---------------------------------------------------------------------
+        # deal with logging (if log exists in recipe)
+        if success and recipe.log is not None:
+                recipe.log.end()
+        elif recipe.log is not None:
             recipe.log.end(success=False)
         # ---------------------------------------------------------------------
         # unlock parameter dictionary
