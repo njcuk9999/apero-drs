@@ -50,7 +50,7 @@ EXTRACT_NAME = 'cal_extract_spirou.py'
 # Everything else is controlled from recipe_definition
 def main(obs_dir=None, files=None, **kwargs):
     """
-    Main function for cal_leak_spirou.py
+    Main function for cal_leak
 
     :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
@@ -119,7 +119,7 @@ def __main__(recipe, params):
     # get this instruments science fibers and reference fiber
     pconst = constants.pload()
     # science fibers should be list of strings, reference fiber should be string
-    sci_fibers, ref_fiber =  pconst.FIBER_KINDS()
+    sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()

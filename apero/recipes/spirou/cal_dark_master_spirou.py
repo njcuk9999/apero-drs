@@ -18,7 +18,6 @@ from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.core.core import drs_database
-from apero.io import drs_path
 from apero.science.calib import dark
 
 

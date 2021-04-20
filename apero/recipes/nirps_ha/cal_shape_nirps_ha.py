@@ -12,8 +12,8 @@ Created on 2019-03-23 at 13:01
 from apero.base import base
 from apero import lang
 from apero.core import constants
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.science.calib import gen_calib
@@ -93,6 +93,8 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get files
     infiles = params['INPUTS']['FILES'][1]
+    # must check fp files pass quality control
+    infiles = gen_calib.check_fp_files(params, infiles)
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
@@ -105,8 +107,8 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cout = drs_file.combine(params, recipe, infiles, math='median')
-        infiles = [cout[0]]
+        cond = drs_file.combine(params, recipe, infiles, math='median')
+        infiles = [cond[0]]
         combine = True
     else:
         combine = False
@@ -172,7 +174,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
-        if passed:
+        if passed and params['INPUTS']['DATABASE']:
             # add shapel transforms
             calibdbm.add_calib_file(outfile)
         # ------------------------------------------------------------------

@@ -54,7 +54,7 @@ ObjectDatabase = drs_database.ObjectDatabase
 # Everything else is controlled from recipe_definition
 def main(obs_dir=None, files=None, **kwargs):
     """
-    Main function for cal_preprocess_spirou.py
+    Main function for cal_preprocess
 
     :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
@@ -118,7 +118,7 @@ def __main__(recipe, params):
         # ge this iterations file
         file_instance = infiles[it]
         # ------------------------------------------------------------------
-        # Fix the spirou header
+        # Fix the header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
         file_instance = drs_file.fix_header(params, recipe, file_instance)
@@ -187,7 +187,7 @@ def __main__(recipe, params):
             # get pass condition
             cout = prep.test_for_corrupt_files(params, image, hotpixels)
             snr_hotpix, rms_list = cout[0], cout[1]
-            shiftdx, shiftdy = cout[2], cout[3]
+            shiftdx, shiftdy = int(cout[2]), int(cout[3])
             # use dx/dy to shift the image back to where the engineering flat
             #    is located
             if shiftdx != 0 or shiftdy != 0:

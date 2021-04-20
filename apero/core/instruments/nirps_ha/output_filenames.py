@@ -10,13 +10,13 @@ Created on 2019-03-21 at 18:35
 @author: cook
 """
 import os
-from typing import Any, Union
+from typing import Any, Tuple, Union
 
 from apero.base import base
 from apero.core.core import drs_misc
 from apero.core.instruments.default import output_filenames
-from apero import lang
 from apero.core.constants import param_functions
+
 
 # =============================================================================
 # Define variables
@@ -52,7 +52,8 @@ def general_file(params: ParamDict, infile: Any, outfile: Any,
     :param infile: DrsFitsFile, input file - must be defined
     :param outfile: DrsFitsFile, output file - must be defined
     :param fiber: str, the fiber - must be set if infile.fibers is populated
-    :param path: str, the path the file should have
+    :param path: str, the path the file should have (if not set, set to
+                 params['OUTPATH']  with params['OBS_DIR'] if set)
     :param func: str, the function name if set (for errors)
     :param remove_insuffix: bool if set removes input suffix if not set
                             defaults to the outfile.remove_insuffix
@@ -156,7 +157,8 @@ def calib_file(params: ParamDict, infile: Any, outfile: Any,
     :param infile: DrsFitsFile, input file - must be defined
     :param outfile: DrsFitsFile, output file - must be defined
     :param fiber: str, the fiber - must be set if infile.fibers is populated
-    :param path: str, the path
+    :param path: str, the path the file should have (if not set, set to
+                 params['OUTPATH']  with params['OBS_DIR'] if set)
     :param func: str, the function name if set (for errors)
     :param remove_insuffix: bool if set removes input suffix if not set
                             defaults to the outfile.remove_insuffix
@@ -172,7 +174,7 @@ def calib_file(params: ParamDict, infile: Any, outfile: Any,
     # set function name from args
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)
-    # get obs_dir
+    # get observation directory
     # obs_dir = kwargs.get('obs_dir', None)
     # get prefix
     if outfile is not None:
@@ -232,7 +234,8 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
     :param params: ParamDict, paremeter dictionary of constants
     :param infile: DrsFitsFile, input file - must be defined
     :param outfile: DrsFitsFile, output file - must be defined
-    :param path: str, the path
+    :param path: str, the path the file should have (if not set, set to
+                 params['OUTPATH']  with params['OBS_DIR'] if set)
     :param func: str, the function name if set (for errors)
     :param suffix: str, if set the suffix of the file (defaults to
                    outfile.suffix)
@@ -244,7 +247,7 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func('blank', __NAME__)
+    func_name = display_func('set_file', __NAME__)
     # set function name from args
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)
@@ -252,6 +255,43 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
     return output_filenames.set_file(params, infile, outfile, fiber,
                                      path, func_name, remove_insuffix,
                                      prefix, suffix, filename)
+
+
+def post_file(params: ParamDict, drsfile: Any, identifier: str,
+              obs_dir: Union[str, None] = None) -> Tuple[str, str]:
+    """
+    Generate a post processed filename
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param drsfile: DrsOutFile instance, the drs out file associated with this
+                    post processed file
+    :param identifier: str, an identifier to the required output filename
+    :param obs_dir: str, the observation directory
+    :return:
+    """
+    # set function name
+    _ = display_func('post_file', __NAME__)
+    # -------------------------------------------------------------------------
+    # set filename to identifer
+    filename = str(identifier)
+    # -------------------------------------------------------------------------
+    # remove input suffix (extension) from identifier
+    if drsfile.inext is not None:
+        if filename.endswith(drsfile.inext):
+            filename = filename[:-len(drsfile.inext)]
+    # -------------------------------------------------------------------------
+    # add output suffix
+    filename = filename + drsfile.suffix
+    # -------------------------------------------------------------------------
+    if obs_dir is None:
+        obs_dir = ''
+    # construct path
+    path = os.path.join(params['DRS_DATA_OUT'], obs_dir)
+    # add path to filename
+    filename = os.path.join(path, filename)
+    # -------------------------------------------------------------------------
+    # return filename
+    return filename, path
 
 
 # =============================================================================

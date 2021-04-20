@@ -417,7 +417,7 @@ ALLOWED_DARK_TYPES.value = 'DARK_DARK_TEL, DARK_DARK_INT'
 DARK_MASTER_MATCH_TIME = DARK_MASTER_MATCH_TIME.copy(__NAME__)
 DARK_MASTER_MATCH_TIME.value = 2
 
-#   median filter size for dark masterWHM
+#   median filter size for dark master
 DARK_MASTER_MED_SIZE = DARK_MASTER_MED_SIZE.copy(__NAME__)
 DARK_MASTER_MED_SIZE.value = 4
 
@@ -1133,8 +1133,6 @@ THERMAL_ENVELOPE_PERCENTILE.value = 10
 THERMAL_PLOT_START_ORDER = THERMAL_PLOT_START_ORDER.copy(__NAME__)
 THERMAL_PLOT_START_ORDER.value = 40
 
-
-
 # =============================================================================
 # CALIBRATION: WAVE EA GENERAL SETTINGS
 # =============================================================================
@@ -1381,14 +1379,10 @@ WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
 WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
 WAVE_CCF_RV_THRES_QC.value = 0.5
 
-
-
 # TODO: Sort out wave constants below here
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
-
-
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
 WAVE_LINELIST_FILE.value = 'catalogue_UNe.csv'  # 'catalogue_UNe.dat'
@@ -2227,7 +2221,7 @@ CCF_BLAZE_NORM_PERCENTILE.value = 90
 # =============================================================================
 # OBJECT: POLARISATION SETTINGS
 # =============================================================================
-
+# TODO: add new polar settings
 
 
 # =============================================================================
@@ -2329,8 +2323,6 @@ PLOT_EXTRACT_S1D.value = True
 PLOT_EXTRACT_S1D_WEIGHT = PLOT_EXTRACT_S1D_WEIGHT.copy(__NAME__)
 PLOT_EXTRACT_S1D_WEIGHT.value = True
 
-
-
 # turn on the wave line fiber comparison plot
 PLOT_WAVE_FIBER_COMPARISON = PLOT_WAVE_FIBER_COMPARISON.copy(__NAME__)
 PLOT_WAVE_FIBER_COMPARISON.value = True
@@ -2425,8 +2417,6 @@ PLOT_WAVE_FP_MULTI_ORDER.value = True
 # turn on the wave solution fp single order debug plot
 PLOT_WAVE_FP_SINGLE_ORDER = PLOT_WAVE_FP_SINGLE_ORDER.copy(__NAME__)
 PLOT_WAVE_FP_SINGLE_ORDER.value = True
-
-
 
 # turn on the wave per night iteration debug plot
 PLOT_WAVENIGHT_ITERPLOT = PLOT_WAVENIGHT_ITERPLOT.copy(__NAME__)

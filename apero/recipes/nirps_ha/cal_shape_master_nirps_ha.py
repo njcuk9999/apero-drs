@@ -14,14 +14,15 @@ import numpy as np
 from apero.base import base
 from apero import lang
 from apero.core import constants
-from apero.core.core import drs_database
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.core import drs_database
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.io import drs_table
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
+from apero.science.calib import wave
 from apero.science.calib import shape
 
 
@@ -60,7 +61,7 @@ def main(obs_dir=None, fpfiles=None, **kwargs):
     :param fpfiles: list of strings or string, the list of fp files
     :param kwargs: any additional keywords
 
-    :type directory: str
+    :type obs_dir: str
     :type fpfiles: list[str]
 
     :keyword debug: int, debug level (0 for None)
@@ -116,11 +117,22 @@ def __main__(recipe, params):
 
     # get the headers (should be the header of the first file in each)
     fpheader = fpfile.get_header()
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
 
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
     # ----------------------------------------------------------------------
-    lprops = localisation.get_coefficients(params, recipe, fpheader, fiber)
+    lprops = localisation.get_coefficients(params, recipe, fpheader, fiber,
+                                           database=calibdbm)
+
+    # ----------------------------------------------------------------------
+    # Get wave coefficients from master wavefile
+    # ----------------------------------------------------------------------
+    # get master wave map
+    wprops = wave.get_wavesolution(params, recipe, fiber=fiber, master=True,
+                                   database=calibdbm)
 
     # ------------------------------------------------------------------
     # Correction of fp file
@@ -146,10 +158,6 @@ def __main__(recipe, params):
                                      filters=dict(KW_DPRTYPE=filetype))
     # convert to numpy array
     filenames = np.array(filenames)
-
-    # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
-    calibdbm.load_db()
 
     # ----------------------------------------------------------------------
     # Obtain FP master (from file or calculate)
@@ -233,7 +241,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ----------------------------------------------------------------------
-    if passed:
+    if passed and params['INPUTS']['DATABASE']:
         # add dxmap
         calibdbm.add_calib_file(outfile1)
         # add dymap

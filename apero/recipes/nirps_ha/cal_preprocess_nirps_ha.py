@@ -13,11 +13,12 @@ import os
 
 from apero.base import base
 from apero import lang
+from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.utils import drs_startup
 from apero.core.core import drs_database
-from apero.science import preprocessing as pp
+from apero.core.utils import drs_startup
+from apero.science import preprocessing as prep
 from apero.io import drs_image
 from apero.core.instruments.spirou import file_definitions
 
@@ -38,6 +39,8 @@ WLOG = drs_log.wlog
 textentry = lang.textentry
 # Raw prefix
 RAW_PREFIX = file_definitions.raw_prefix
+# get the object database
+ObjectDatabase = drs_database.ObjectDatabase
 
 
 # =============================================================================
@@ -51,7 +54,7 @@ RAW_PREFIX = file_definitions.raw_prefix
 # Everything else is controlled from recipe_definition
 def main(obs_dir=None, files=None, **kwargs):
     """
-    Main function for cal_preprocess_spirou.py
+    Main function for cal_preprocess
 
     :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
@@ -82,16 +85,16 @@ def main(obs_dir=None, files=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-
 def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
     # Get hot pixels for corruption check
-    hotpixels = pp.get_hot_pixels(params)
+    hotpixels = prep.get_hot_pixels(params)
     # get skip parmaeter
     skip = params['SKIP_DONE_PP']
-
+    # get pseudo constants
+    pconst = constants.pload()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -101,9 +104,9 @@ def __main__(recipe, params):
     num_files = len(params['INPUTS']['FILES'][1])
     # storage for output files
     output_names = []
-    # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
-    calibdbm.load_db()
+    # get object database
+    objdbm = ObjectDatabase(params)
+
     # loop around number of files
     for it in range(num_files):
         # ------------------------------------------------------------------
@@ -115,7 +118,7 @@ def __main__(recipe, params):
         # ge this iterations file
         file_instance = infiles[it]
         # ------------------------------------------------------------------
-        # Fix the nirps header
+        # Fix the header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
         file_instance = drs_file.fix_header(params, recipe, file_instance)
@@ -123,7 +126,18 @@ def __main__(recipe, params):
         # identification of file drs type
         # ------------------------------------------------------------------
         # identify this iterations file type
-        cond, infile = pp.drs_infile_id(params, recipe, file_instance)
+        cond, infile = prep.drs_infile_id(params, recipe, file_instance)
+
+        # ------------------------------------------------------------------
+        # For OBJECT files we need to resolve object and update header
+        # ------------------------------------------------------------------
+        obj_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
+        # only resolve targets that are objects
+        if infile.get_hkey('KW_DPRTYPE') in obj_dprtypes:
+            # get object based on object name and gaia id
+            infile.header = prep.resolve_target(params, pconst,
+                                                header=infile.header,
+                                                database=objdbm)
         # ------------------------------------------------------------------
         # if it wasn't found skip this file, if it was print a message
         if cond:
@@ -143,12 +157,13 @@ def __main__(recipe, params):
         errslope = datalist[2]
         # get the pixel exposure time from the data list
         inttime = datalist[3] * infile.get_hkey('KW_FRMTIME', dtype=float)
+
         # ------------------------------------------------------------------
         # Get out file and check skip
         # ------------------------------------------------------------------
         # get the output drs file
         oargs = [params, recipe, infile, recipe.outputs['PP_FILE'], RAW_PREFIX]
-        found, outfile = pp.drs_outfile_id(*oargs)
+        found, outfile = prep.drs_outfile_id(*oargs)
         # construct out filename
         outfile.construct_filename(infile=infile)
         # if we didn't find the output file we should log this error
@@ -166,13 +181,13 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # storage
         snr_hotpix, rms_list = [], []
-        shiftdy, shiftdx = 0.0, 0.0
+        shiftdx, shiftdy = 0, 0
         # do this iteratively as if there is a shift need to re-workout QC
         for iteration in range(2):
             # get pass condition
-            cout = pp.test_for_corrupt_files(params, image, hotpixels)
+            cout = prep.test_for_corrupt_files(params, image, hotpixels)
             snr_hotpix, rms_list = cout[0], cout[1]
-            shiftdx, shiftdy = cout[2], cout[3]
+            shiftdx, shiftdy = int(cout[2]), int(cout[3])
             # use dx/dy to shift the image back to where the engineering flat
             #    is located
             if shiftdx != 0 or shiftdy != 0:
@@ -184,7 +199,7 @@ def __main__(recipe, params):
                 image = np.roll(image, [shiftdx], axis=1)
             # work out QC here
             qargs = [snr_hotpix, infile, rms_list]
-            qc_params, passed = pp.quality_control(params, *qargs, log=False)
+            qc_params, passed = prep.quality_control(params, *qargs, log=False)
             # if passed break
             if passed:
                 break
@@ -194,7 +209,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # re-calculate qc
         qargs = [snr_hotpix, infile, rms_list]
-        qc_params, passed = pp.quality_control(params, *qargs, log=True)
+        qc_params, passed = prep.quality_control(params, *qargs, log=True)
         # update recipe log
         log1.add_qc(qc_params, passed)
         if not passed:
@@ -208,17 +223,20 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # correct cosmic rays
         WLOG(params, '', textentry('40-010-00018'))
-        image, cprops = pp.correct_cosmics(params, image, intercept,
-                                           errslope, inttime)
+        image, cprops = prep.correct_cosmics(params, image, intercept,
+                                             errslope, inttime)
+
         # correct for the top and bottom reference pixels
         WLOG(params, '', textentry('40-010-00003'))
-        image = pp.correct_top_bottom(params, image)
+        image = prep.correct_top_bottom(params, image)
 
-        # correct by a median filter from the dark amplifiers
+        # get calibration database
+        calibdbm = drs_database.CalibrationDatabase(params)
+        # do nirps correction
         WLOG(params, '', textentry('40-010-00016'))
-        image, pfile = pp.nirps_correction(params, image,
-                                           header=infile.get_header(),
-                                           database=calibdbm)
+        image, pfile = prep.nirps_correction(params, image,
+                                             header=infile.get_header(),
+                                             database=calibdbm)
         # ------------------------------------------------------------------
         # calculate mid observation time
         # ------------------------------------------------------------------
@@ -251,6 +269,7 @@ def __main__(recipe, params):
         outfile.add_qckeys(qc_params)
         # add dprtype
         outfile.add_hkey('KW_DPRTYPE', value=outfile.name)
+        outfile.add_hkey('KW_OUTPUT', value=recipe.outputs['PP_FILE'].name)
         # add the shift that was used to correct the image
         outfile.add_hkey('KW_PPSHIFTX', value=shiftdx)
         outfile.add_hkey('KW_PPSHIFTY', value=shiftdy)
@@ -275,6 +294,7 @@ def __main__(recipe, params):
         if params['PARAMETER_SNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
             name_list += ['PARAM_TABLE']
+        # ------------------------------------------------------------------
         # writefits image to file
         outfile.write_multi(data_list=data_list, name_list=name_list,
                             block_kind=recipe.out_block_str,

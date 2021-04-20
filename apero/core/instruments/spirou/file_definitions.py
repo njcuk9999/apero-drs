@@ -797,7 +797,6 @@ out_leak_master = drs_finput('LEAKM_E2DS', hkeys=dict(KW_OUTPUT='LEAKM_E2DS'),
 red_file.addset(out_leak_master)
 calib_file.addset(out_leak_master)
 
-
 # -----------------------------------------------------------------------------
 # wave files (master) ea
 # -----------------------------------------------------------------------------
@@ -919,8 +918,6 @@ out_wavem_ll_table = drs_input('WAVE_FPLLTABL',
                                suffix='_mhc_lines',
                                outfunc=out.calib_file)
 
-
-
 # add wave outputs to output fileset
 red_file.addset(out_wavem_fp)
 red_file.addset(out_wavem_hc)
@@ -1023,18 +1020,6 @@ red_file.addset(out_wave_fplist)
 calib_file.addset(out_wave_hc)
 calib_file.addset(out_wave_fp)
 calib_file.addset(out_wave_night)
-
-# -----------------------------------------------------------------------------
-# TODO: fill in definitions
-# drift
-# out_drift_raw = drs_finput('DRIFT_RAW_AB', KW_OUTPUT='DRIFT_RAW_AB',
-#                            fiber='AB')
-# out_drift_e2ds = drs_finput('DRIFT_E2DS_FITS_AB', fiber='AB',
-#                             KW_OUTPUT='DRIFT_E2DS_AB')
-# out_driftpeak_e2ds = drs_finput('DRIFTPEAK_E2DS_FITS_AB', fiber='AB',
-#                                 KW_OUTPUT='DRIFTPEAK_E2DS_AB')
-# out_driftccf_e2ds = drs_finput('DRIFTCCF_E2DS_FITS_AB', fiber='AB',
-#                                KW_OUTPUT='DRIFTCCF_E2DS_AB')
 
 # -----------------------------------------------------------------------------
 # make telluric
@@ -1354,8 +1339,8 @@ post_e_file.add_ext('EXT_B', out_ext_e2dsff, pos=3, fiber='B', block_kind='red',
 post_e_file.add_ext('EXT_C', out_ext_e2dsff, pos=4, fiber='C', block_kind='red',
                     link='EXT_AB', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='FluxC')
-post_e_file.add_ext('WAVE_AB', out_wavem_fp, pos=5, fiber='AB', block_kind='red',
-                    link='EXT_AB', hlink='KW_CDBWAVE',
+post_e_file.add_ext('WAVE_AB', out_wavem_fp, pos=5, fiber='AB',
+                    block_kind='red', link='EXT_AB', hlink='KW_CDBWAVE',
                     tag='WaveAB')
 post_e_file.add_ext('WAVE_A', out_wavem_fp, pos=6, fiber='A', block_kind='red',
                     link='EXT_A', hlink='KW_CDBWAVE',
@@ -1366,17 +1351,17 @@ post_e_file.add_ext('WAVE_B', out_wavem_fp, pos=7, fiber='B', block_kind='red',
 post_e_file.add_ext('WAVE_C', out_wavem_fp, pos=8, fiber='C', block_kind='red',
                     link='EXT_C', hlink='KW_CDBWAVE',
                     tag='WaveC')
-post_e_file.add_ext('BLAZE_AB', out_ff_blaze, pos=9, fiber='AB', block_kind='red',
-                    link='EXT_AB', hlink='KW_CDBBLAZE',
+post_e_file.add_ext('BLAZE_AB', out_ff_blaze, pos=9, fiber='AB',
+                    block_kind='red', link='EXT_AB', hlink='KW_CDBBLAZE',
                     tag='BlazeAB')
-post_e_file.add_ext('BLAZE_A', out_ff_blaze, pos=10, fiber='A', block_kind='red',
-                    link='EXT_A', hlink='KW_CDBBLAZE',
+post_e_file.add_ext('BLAZE_A', out_ff_blaze, pos=10, fiber='A',
+                    block_kind='red', link='EXT_A', hlink='KW_CDBBLAZE',
                     tag='BlazeA')
-post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B', block_kind='red',
-                    link='EXT_B', hlink='KW_CDBBLAZE',
+post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B',
+                    block_kind='red', link='EXT_B', hlink='KW_CDBBLAZE',
                     tag='BlazeB')
-post_e_file.add_ext('BLAZE_C', out_ff_blaze, pos=12, fiber='C', block_kind='red',
-                    link='EXT_C', hlink='KW_CDBBLAZE',
+post_e_file.add_ext('BLAZE_C', out_ff_blaze, pos=12, fiber='C',
+                    block_kind='red', link='EXT_C', hlink='KW_CDBBLAZE',
                     tag='BlazeC')
 # move header keys
 post_e_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
@@ -1567,7 +1552,6 @@ post_file.addset(post_p_file)
 # Other Files
 # =============================================================================
 other_ccf_mask_file = drs_input('CCF_MASK', filetype='.mas')
-
 
 # =============================================================================
 # End of code

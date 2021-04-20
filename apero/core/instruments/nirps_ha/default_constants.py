@@ -109,7 +109,7 @@ COMBINE_METRIC_THRESHOLD1.value = 0.99
 
 # Define the DPRTYPES allowed for the combine metric 1 comparison
 COMBINE_METRIC1_TYPES = COMBINE_METRIC1_TYPES.copy(__NAME__)
-COMBINE_METRIC1_TYPES.value = 'DARK_FLAT, FLAT_FLAT, FLAT_DARK, FP_FP'
+COMBINE_METRIC1_TYPES.value = 'DARK_FLAT, FLAT_FLAT, FLAT_DARK, FP_FP, DARK_FP'
 
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = CAVITY_1M_FILE.copy(__NAME__)
@@ -235,26 +235,6 @@ PP_HOTPIX_BOXSIZE.value = 5
 PP_CORRUPT_MED_SIZE = PP_CORRUPT_MED_SIZE.copy(__NAME__)
 PP_CORRUPT_MED_SIZE.value = 2
 
-# super-pessimistic noise estimate. Includes uncorrected common noise
-PP_COSMIC_NOISE_ESTIMATE = PP_COSMIC_NOISE_ESTIMATE.copy(__NAME__)
-PP_COSMIC_NOISE_ESTIMATE.value = 30.0
-
-# define the cuts in sigma where we should look for cosmics (variance)
-PP_COSMIC_VARCUT1 = PP_COSMIC_VARCUT1.copy(__NAME__)
-PP_COSMIC_VARCUT1.value = 100.0
-PP_COSMIC_VARCUT2 = PP_COSMIC_VARCUT2.copy(__NAME__)
-PP_COSMIC_VARCUT2.value = 50.0
-
-# define the cuts in sigma where we should look for cosmics (intercept)
-PP_COSMIC_INTCUT1 = PP_COSMIC_INTCUT1.copy(__NAME__)
-PP_COSMIC_INTCUT1.value = 50.0
-PP_COSMIC_INTCUT2 = PP_COSMIC_INTCUT2.copy(__NAME__)
-PP_COSMIC_INTCUT2.value = 10.0
-
-# random box size [in pixels] to speed-up low-frequency band computation
-PP_COSMIC_BOXSIZE = PP_COSMIC_BOXSIZE.copy(__NAME__)
-PP_COSMIC_BOXSIZE.value = 64
-
 # Define the fraction of the required exposure time that is required for a
 #   valid observation
 PP_BAD_EXPTIME_FRACTION = PP_BAD_EXPTIME_FRACTION.copy(__NAME__)
@@ -304,6 +284,26 @@ PP_CORRUPT_SNR_HOTPIX.value = 10
 # Defines the RMS threshold to also catch corrupt files
 PP_CORRUPT_RMS_THRES = PP_CORRUPT_RMS_THRES.copy(__NAME__)
 PP_CORRUPT_RMS_THRES.value = 0.15
+
+# super-pessimistic noise estimate. Includes uncorrected common noise
+PP_COSMIC_NOISE_ESTIMATE = PP_COSMIC_NOISE_ESTIMATE.copy(__NAME__)
+PP_COSMIC_NOISE_ESTIMATE.value = 30.0
+
+# define the cuts in sigma where we should look for cosmics (variance)
+PP_COSMIC_VARCUT1 = PP_COSMIC_VARCUT1.copy(__NAME__)
+PP_COSMIC_VARCUT1.value = 100.0
+PP_COSMIC_VARCUT2 = PP_COSMIC_VARCUT2.copy(__NAME__)
+PP_COSMIC_VARCUT2.value = 50.0
+
+# define the cuts in sigma where we should look for cosmics (intercept)
+PP_COSMIC_INTCUT1 = PP_COSMIC_INTCUT1.copy(__NAME__)
+PP_COSMIC_INTCUT1.value = 50.0
+PP_COSMIC_INTCUT2 = PP_COSMIC_INTCUT2.copy(__NAME__)
+PP_COSMIC_INTCUT2.value = 10.0
+
+# random box size [in pixels] to speed-up low-frequency band computation
+PP_COSMIC_BOXSIZE = PP_COSMIC_BOXSIZE.copy(__NAME__)
+PP_COSMIC_BOXSIZE.value = 64
 
 # Define whether to skip preprocessed files that have already be processed
 SKIP_DONE_PP = SKIP_DONE_PP.copy(__NAME__)
@@ -1138,12 +1138,255 @@ THERMAL_PLOT_START_ORDER = THERMAL_PLOT_START_ORDER.copy(__NAME__)
 THERMAL_PLOT_START_ORDER.value = 40
 
 # =============================================================================
-# CALIBRATION: WAVE GENERAL SETTINGS
+# CALIBRATION: WAVE EA GENERAL SETTINGS
 # =============================================================================
 # Define wave master fiber (controller fiber)
 WAVE_MASTER_FIBER = WAVE_MASTER_FIBER.copy(__NAME__)
 WAVE_MASTER_FIBER.value = 'A'
+WAVE_MASTER_FIBER.author = base.AUTHORS['NJC']
 
+# Define the initial value of FP effective cavity width 2xd in nm
+WAVE_GUESS_CAVITY_WIDTH = WAVE_GUESS_CAVITY_WIDTH.copy(__NAME__)
+WAVE_GUESS_CAVITY_WIDTH.value = 2.4e7
+WAVE_GUESS_CAVITY_WIDTH.author = base.AUTHORS['EA']
+
+# Define the wave solution polynomial fit degree
+WAVE_WAVESOL_FIT_DEGREE = WAVE_WAVESOL_FIT_DEGREE.copy(__NAME__)
+WAVE_WAVESOL_FIT_DEGREE.value = 5
+WAVE_WAVESOL_FIT_DEGREE.author = base.AUTHORS['EA']
+
+# Define the cavity fit polynomial fit degree for wave solution
+#   Note default: 9 for spirou  3 for NIRPS
+WAVE_CAVITY_FIT_DEGREE = WAVE_CAVITY_FIT_DEGREE.copy(__NAME__)
+WAVE_CAVITY_FIT_DEGREE.value = 11
+WAVE_CAVITY_FIT_DEGREE.author = base.AUTHORS['EA']
+
+# Define the number of sigmas to use in wave sol robust fits
+WAVE_NSIG_CUT = WAVE_NSIG_CUT.copy(__NAME__)
+WAVE_NSIG_CUT.value = 5
+WAVE_NSIG_CUT.author = base.AUTHORS['EA']
+
+# Define the minimum number of HC lines in an order to try to find
+#   absolute numbering
+WAVE_MIN_HC_LINES = WAVE_MIN_HC_LINES.copy(__NAME__)
+WAVE_MIN_HC_LINES.value = 5
+WAVE_MIN_HC_LINES.author = base.AUTHORS['EA']
+
+# Define the maximum offset in FP peaks to explore when FP peak counting
+WAVE_MAX_FP_COUNT_OFFSET = WAVE_MAX_FP_COUNT_OFFSET.copy(__NAME__)
+WAVE_MAX_FP_COUNT_OFFSET.value = 5
+WAVE_MAX_FP_COUNT_OFFSET.author = base.AUTHORS['EA']
+
+# Define the number of iterations required to converge the FP peak counting
+#   offset loop
+WAVE_FP_COUNT_OFFSET_ITRS = WAVE_FP_COUNT_OFFSET_ITRS.copy(__NAME__)
+WAVE_FP_COUNT_OFFSET_ITRS.value = 3
+WAVE_FP_COUNT_OFFSET_ITRS.author = base.AUTHORS['EA']
+
+# Define the number of iterations required to converge on a cavity fit
+#  (first time this is done)
+WAVE_CAVITY_FIT_ITRS1 = WAVE_CAVITY_FIT_ITRS1.copy(__NAME__)
+WAVE_CAVITY_FIT_ITRS1.value = 3
+WAVE_CAVITY_FIT_ITRS1.author = base.AUTHORS['EA']
+
+# Define the number of iterations required to check order offset
+WAVE_ORDER_OFFSET_ITRS = WAVE_ORDER_OFFSET_ITRS.copy(__NAME__)
+WAVE_ORDER_OFFSET_ITRS.value = 2
+WAVE_ORDER_OFFSET_ITRS.author = base.AUTHORS['EA']
+
+# Define the maximum bulk offset of lines in a order can have
+WAVE_MAX_ORDER_BULK_OFFSET = WAVE_MAX_ORDER_BULK_OFFSET.copy(__NAME__)
+WAVE_MAX_ORDER_BULK_OFFSET.value = 10
+WAVE_MAX_ORDER_BULK_OFFSET.author = base.AUTHORS['EA']
+
+# Define the required precision that the cavity width change must converge
+#   to (will be a fraction of the error)
+WAVE_CAVITY_CHANGE_ERR_THRES = WAVE_CAVITY_CHANGE_ERR_THRES.copy(__NAME__)
+WAVE_CAVITY_CHANGE_ERR_THRES.value = 1.0e-2
+WAVE_CAVITY_CHANGE_ERR_THRES.author = base.AUTHORS['EA']
+
+# Define the number of iterations required to converge on a cavity fit
+#  (second time this is done)
+WAVE_CAVITY_FIT_ITRS2 = WAVE_CAVITY_FIT_ITRS2.copy(__NAME__)
+WAVE_CAVITY_FIT_ITRS2.value = 3
+WAVE_CAVITY_FIT_ITRS2.author = base.AUTHORS['EA']
+
+# Define the odd ratio that is used in generating the weighted mean
+WAVE_HC_VEL_ODD_RATIO = WAVE_HC_VEL_ODD_RATIO.copy(__NAME__)
+WAVE_HC_VEL_ODD_RATIO.value = 1.0e-2
+WAVE_HC_VEL_ODD_RATIO.author = base.AUTHORS['EA']
+
+# Define the number of iterations required to do the final fplines
+#   wave solution
+WAVE_FWAVESOL_ITRS = WAVE_FWAVESOL_ITRS.copy(__NAME__)
+WAVE_FWAVESOL_ITRS.value = 3
+WAVE_FWAVESOL_ITRS.author = base.AUTHORS['EA']
+
+# define the wave fiber comparison plot order number
+WAVE_FIBER_COMP_PLOT_ORD = WAVE_FIBER_COMP_PLOT_ORD.copy(__NAME__)
+WAVE_FIBER_COMP_PLOT_ORD.value = 35
+WAVE_FIBER_COMP_PLOT_ORD.author = base.AUTHORS['NJC']
+
+# =============================================================================
+# CALIBRATION: WAVE LINES REFERENCE SETTINGS
+# =============================================================================
+# min SNR to consider the line
+WAVEREF_NSIG_MIN = WAVEREF_NSIG_MIN.copy(__NAME__)
+WAVEREF_NSIG_MIN.value = 15
+WAVEREF_NSIG_MIN.author = base.AUTHORS['EA']
+
+# minimum distance to the edge of the array to consider a line
+WAVEREF_EDGE_WMAX = WAVEREF_EDGE_WMAX.copy(__NAME__)
+WAVEREF_EDGE_WMAX.value = 20
+WAVEREF_EDGE_WMAX.author = base.AUTHORS['EA']
+
+# value in pixel (+/-) for the box size around each HC line to perform fit
+WAVEREF_HC_BOXSIZE = WAVEREF_HC_BOXSIZE.copy(__NAME__)
+WAVEREF_HC_BOXSIZE.value = 5
+WAVEREF_HC_BOXSIZE.author = base.AUTHORS['EA']
+
+# get valid hc dprtypes (string list separated by commas)
+WAVEREF_HC_FIBTYPES = WAVEREF_HC_FIBTYPES.copy(__NAME__)
+WAVEREF_HC_FIBTYPES.value = 'HCONE, HCTWO'
+WAVEREF_HC_FIBTYPES.author = base.AUTHORS['NJC']
+
+# get valid fp dprtypes (string list separated by commas)
+WAVEREF_FP_FIBTYPES = WAVEREF_FP_FIBTYPES.copy(__NAME__)
+WAVEREF_FP_FIBTYPES.value = 'FP'
+WAVEREF_FP_FIBTYPES.author = base.AUTHORS['NJC']
+
+# get the degree to fix master wavelength to in hc mode
+WAVEREF_FITDEG = WAVEREF_FITDEG.copy(__NAME__)
+WAVEREF_FITDEG.value = 5
+WAVEREF_FITDEG.author = base.AUTHORS['EA']
+
+# define the lowest N for fp peaks
+WAVEREF_FP_NLOW = WAVEREF_FP_NLOW.copy(__NAME__)
+WAVEREF_FP_NLOW.value = 9000
+WAVEREF_FP_NLOW.author = base.AUTHORS['EA']
+
+# define the highest N for fp peaks
+WAVEREF_FP_NHIGH = WAVEREF_FP_NHIGH.copy(__NAME__)
+WAVEREF_FP_NHIGH.value = 30000
+WAVEREF_FP_NHIGH.author = base.AUTHORS['EA']
+
+# define the number of iterations required to do the FP polynomial inversion
+WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
+WAVEREF_FP_POLYINV.value = 4
+WAVEREF_FP_POLYINV.author = base.AUTHORS['EA']
+
+# =============================================================================
+# CALIBRATION: WAVE CCF SETTINGS
+# =============================================================================
+#   The value of the noise for wave dv rms calculation
+#       snr = flux/sqrt(flux + noise^2)
+WAVE_CCF_NOISE_SIGDET = WAVE_CCF_NOISE_SIGDET.copy(__NAME__)
+WAVE_CCF_NOISE_SIGDET.value = 8.0  # 100
+
+#   The size around a saturated pixel to flag as unusable for wave dv rms
+#      calculation
+WAVE_CCF_NOISE_BOXSIZE = WAVE_CCF_NOISE_BOXSIZE.copy(__NAME__)
+WAVE_CCF_NOISE_BOXSIZE.value = 12
+
+#   The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
+WAVE_CCF_NOISE_THRES = WAVE_CCF_NOISE_THRES.copy(__NAME__)
+WAVE_CCF_NOISE_THRES.value = 1.0e9
+
+#   The CCF step size to use for the FP CCF
+WAVE_CCF_STEP = WAVE_CCF_STEP.copy(__NAME__)
+WAVE_CCF_STEP.value = 0.5
+
+#   The CCF width size to use for the FP CCF
+WAVE_CCF_WIDTH = WAVE_CCF_WIDTH.copy(__NAME__)
+WAVE_CCF_WIDTH.value = 7.5
+
+#   The target RV (CCF center) to use for the FP CCF
+WAVE_CCF_TARGET_RV = WAVE_CCF_TARGET_RV.copy(__NAME__)
+WAVE_CCF_TARGET_RV.value = 0.0
+
+#  The detector noise to use for the FP CCF
+WAVE_CCF_DETNOISE = WAVE_CCF_DETNOISE.copy(__NAME__)
+WAVE_CCF_DETNOISE.value = 100.0
+
+#  The filename of the CCF Mask to use for the FP CCF
+#     Note this file is copied over if WAVE_CCF_UPDATE_MASK = True
+WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
+# WAVE_CCF_MASK.value = 'fp.mas'
+WAVE_CCF_MASK.value = 'smart_fp_mask.mas'
+
+# Define the default CCF MASK normalisation mode for FP CCF
+#   options are:
+#     'None'         for no normalization
+#     'all'          for normalization across all orders
+#     'order'        for normalization for each order
+WAVE_CCF_MASK_NORMALIZATION = WAVE_CCF_MASK_NORMALIZATION.copy(__NAME__)
+WAVE_CCF_MASK_NORMALIZATION.value = 'order'
+
+# Define the wavelength units for the mask for the FP CCF
+WAVE_CCF_MASK_UNITS = WAVE_CCF_MASK_UNITS.copy(__NAME__)
+WAVE_CCF_MASK_UNITS.value = 'nm'
+
+# Define the ccf mask path the FP CCF
+WAVE_CCF_MASK_PATH = WAVE_CCF_MASK_PATH.copy(__NAME__)
+WAVE_CCF_MASK_PATH.value = 'ccf_masks/'
+
+# Define the CCF mask format (must be an astropy.table format)
+WAVE_CCF_MASK_FMT = WAVE_CCF_MASK_FMT.copy(__NAME__)
+WAVE_CCF_MASK_FMT.value = 'ascii'
+
+#  Define the weight of the CCF mask (if 1 force all weights equal)
+WAVE_CCF_MASK_MIN_WEIGHT = WAVE_CCF_MASK_MIN_WEIGHT.copy(__NAME__)
+WAVE_CCF_MASK_MIN_WEIGHT.value = 0.0
+
+#  Define the width of the template line (if 0 use natural)
+WAVE_CCF_MASK_WIDTH = WAVE_CCF_MASK_WIDTH.copy(__NAME__)
+WAVE_CCF_MASK_WIDTH.value = 1.7
+
+#  Define the number of orders (from zero to ccf_num_orders_max) to use
+#      to calculate the FP CCF
+WAVE_CCF_N_ORD_MAX = WAVE_CCF_N_ORD_MAX.copy(__NAME__)
+WAVE_CCF_N_ORD_MAX.value = 48
+
+#  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
+#      update the cavity width in the master wave solution recipe
+WAVE_CCF_UPDATE_MASK = WAVE_CCF_UPDATE_MASK.copy(__NAME__)
+WAVE_CCF_UPDATE_MASK.value = True
+
+# define the width of the lines in the smart mask [km/s]
+WAVE_CCF_SMART_MASK_WIDTH = WAVE_CCF_SMART_MASK_WIDTH.copy(__NAME__)
+WAVE_CCF_SMART_MASK_WIDTH.value = 1.0
+
+# define the minimum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MINLAM = WAVE_CCF_SMART_MASK_MINLAM.copy(__NAME__)
+WAVE_CCF_SMART_MASK_MINLAM.value = 950
+
+# define the maximum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MAXLAM = WAVE_CCF_SMART_MASK_MAXLAM.copy(__NAME__)
+WAVE_CCF_SMART_MASK_MAXLAM.value = 2500
+
+# define a trial minimum FP N value (should be lower than true
+#     minimum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN = WAVE_CCF_SMART_MASK_TRIAL_NMIN.copy(__NAME__)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN.value = 9000
+
+# define a trial maximum FP N value (should be higher than true
+#     maximum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX = WAVE_CCF_SMART_MASK_TRIAL_NMAX.copy(__NAME__)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX.value = 27000
+
+# define the converges parameter for dwave in smart mask generation
+WAVE_CCF_SMART_MASK_DWAVE_THRES = WAVE_CCF_SMART_MASK_DWAVE_THRES.copy(__NAME__)
+WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
+
+# define the quality control threshold from RV of CCF FP between master
+#    fiber and other fibers, above this limit fails QC [m/s]
+WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
+WAVE_CCF_RV_THRES_QC.value = 0.5
+
+# TODO: Sort out wave constants below here
+# =============================================================================
+# CALIBRATION: WAVE GENERAL SETTINGS
+# =============================================================================
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
 WAVE_LINELIST_FILE.value = 'catalogue_UNe.csv'  # 'catalogue_UNe.dat'
@@ -1507,157 +1750,6 @@ WAVE_FP_P2P_WIDTH_CUT = WAVE_FP_P2P_WIDTH_CUT.copy(__NAME__)
 WAVE_FP_P2P_WIDTH_CUT.value = 15
 
 # =============================================================================
-# CALIBRATION: WAVE CCF SETTINGS
-# =============================================================================
-#   The value of the noise for wave dv rms calculation
-#       snr = flux/sqrt(flux + noise^2)
-WAVE_CCF_NOISE_SIGDET = WAVE_CCF_NOISE_SIGDET.copy(__NAME__)
-WAVE_CCF_NOISE_SIGDET.value = 8.0  # 100
-
-#   The size around a saturated pixel to flag as unusable for wave dv rms
-#      calculation
-WAVE_CCF_NOISE_BOXSIZE = WAVE_CCF_NOISE_BOXSIZE.copy(__NAME__)
-WAVE_CCF_NOISE_BOXSIZE.value = 12
-
-#   The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
-WAVE_CCF_NOISE_THRES = WAVE_CCF_NOISE_THRES.copy(__NAME__)
-WAVE_CCF_NOISE_THRES.value = 1.0e9
-
-#   The CCF step size to use for the FP CCF
-WAVE_CCF_STEP = WAVE_CCF_STEP.copy(__NAME__)
-WAVE_CCF_STEP.value = 0.5
-
-#   The CCF width size to use for the FP CCF
-WAVE_CCF_WIDTH = WAVE_CCF_WIDTH.copy(__NAME__)
-WAVE_CCF_WIDTH.value = 7.5
-
-#   The target RV (CCF center) to use for the FP CCF
-WAVE_CCF_TARGET_RV = WAVE_CCF_TARGET_RV.copy(__NAME__)
-WAVE_CCF_TARGET_RV.value = 0.0
-
-#  The detector noise to use for the FP CCF
-WAVE_CCF_DETNOISE = WAVE_CCF_DETNOISE.copy(__NAME__)
-WAVE_CCF_DETNOISE.value = 100.0
-
-#  The filename of the CCF Mask to use for the FP CCF
-#     Note this file is copied over if WAVE_CCF_UPDATE_MASK = True
-WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
-# WAVE_CCF_MASK.value = 'fp.mas'
-WAVE_CCF_MASK.value = 'smart_fp_mask.mas'
-
-# Define the default CCF MASK normalisation mode for FP CCF
-#   options are:
-#     'None'         for no normalization
-#     'all'          for normalization across all orders
-#     'order'        for normalization for each order
-WAVE_CCF_MASK_NORMALIZATION = WAVE_CCF_MASK_NORMALIZATION.copy(__NAME__)
-WAVE_CCF_MASK_NORMALIZATION.value = 'order'
-
-# Define the wavelength units for the mask for the FP CCF
-WAVE_CCF_MASK_UNITS = WAVE_CCF_MASK_UNITS.copy(__NAME__)
-WAVE_CCF_MASK_UNITS.value = 'nm'
-
-# Define the ccf mask path the FP CCF
-WAVE_CCF_MASK_PATH = WAVE_CCF_MASK_PATH.copy(__NAME__)
-WAVE_CCF_MASK_PATH.value = 'ccf_masks/'
-
-# Define the CCF mask format (must be an astropy.table format)
-WAVE_CCF_MASK_FMT = WAVE_CCF_MASK_FMT.copy(__NAME__)
-WAVE_CCF_MASK_FMT.value = 'ascii'
-
-#  Define the weight of the CCF mask (if 1 force all weights equal)
-WAVE_CCF_MASK_MIN_WEIGHT = WAVE_CCF_MASK_MIN_WEIGHT.copy(__NAME__)
-WAVE_CCF_MASK_MIN_WEIGHT.value = 0.0
-
-#  Define the width of the template line (if 0 use natural)
-WAVE_CCF_MASK_WIDTH = WAVE_CCF_MASK_WIDTH.copy(__NAME__)
-WAVE_CCF_MASK_WIDTH.value = 1.7
-
-#  Define the number of orders (from zero to ccf_num_orders_max) to use
-#      to calculate the FP CCF
-WAVE_CCF_N_ORD_MAX = WAVE_CCF_N_ORD_MAX.copy(__NAME__)
-WAVE_CCF_N_ORD_MAX.value = 48
-
-#  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
-#      update the cavity width in the master wave solution recipe
-WAVE_CCF_UPDATE_MASK = WAVE_CCF_UPDATE_MASK.copy(__NAME__)
-WAVE_CCF_UPDATE_MASK.value = True
-
-# define the width of the lines in the smart mask [km/s]
-WAVE_CCF_SMART_MASK_WIDTH = WAVE_CCF_SMART_MASK_WIDTH.copy(__NAME__)
-WAVE_CCF_SMART_MASK_WIDTH.value = 1.0
-
-# define the minimum wavelength for the smart mask [nm]
-WAVE_CCF_SMART_MASK_MINLAM = WAVE_CCF_SMART_MASK_MINLAM.copy(__NAME__)
-WAVE_CCF_SMART_MASK_MINLAM.value = 950
-
-# define the maximum wavelength for the smart mask [nm]
-WAVE_CCF_SMART_MASK_MAXLAM = WAVE_CCF_SMART_MASK_MAXLAM.copy(__NAME__)
-WAVE_CCF_SMART_MASK_MAXLAM.value = 2500
-
-# define a trial minimum FP N value (should be lower than true
-#     minimum FP N value)
-WAVE_CCF_SMART_MASK_TRIAL_NMIN = WAVE_CCF_SMART_MASK_TRIAL_NMIN.copy(__NAME__)
-WAVE_CCF_SMART_MASK_TRIAL_NMIN.value = 9000
-
-# define a trial maximum FP N value (should be higher than true
-#     maximum FP N value)
-WAVE_CCF_SMART_MASK_TRIAL_NMAX = WAVE_CCF_SMART_MASK_TRIAL_NMAX.copy(__NAME__)
-WAVE_CCF_SMART_MASK_TRIAL_NMAX.value = 27000
-
-# define the converges parameter for dwave in smart mask generation
-WAVE_CCF_SMART_MASK_DWAVE_THRES = WAVE_CCF_SMART_MASK_DWAVE_THRES.copy(__NAME__)
-WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
-
-# define the quality control threshold from RV of CCF FP between master
-#    fiber and other fibers, above this limit fails QC [m/s]
-WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
-WAVE_CCF_RV_THRES_QC.value = 0.5
-
-# =============================================================================
-# CALIBRATION: WAVE MASTER REFERENCE SETTINGS
-# =============================================================================
-# min SNR to consider the line
-WAVEREF_NSIG_MIN = WAVEREF_NSIG_MIN.copy(__NAME__)
-WAVEREF_NSIG_MIN.value = 15
-
-# minimum distance to the edge of the array to consider a line
-WAVEREF_EDGE_WMAX = WAVEREF_EDGE_WMAX.copy(__NAME__)
-WAVEREF_EDGE_WMAX.value = 20
-
-# value in pixel (+/-) for the box size around each HC line to perform fit
-WAVEREF_HC_BOXSIZE = WAVEREF_HC_BOXSIZE.copy(__NAME__)
-WAVEREF_HC_BOXSIZE.value = 5
-
-# get valid hc dprtypes (string list separated by commas)
-WAVEREF_HC_FIBTYPES = WAVEREF_HC_FIBTYPES.copy(__NAME__)
-WAVEREF_HC_FIBTYPES.value = 'HCONE, HCTWO'
-
-# get valid fp dprtypes (string list separated by commas)
-WAVEREF_FP_FIBTYPES = WAVEREF_FP_FIBTYPES.copy(__NAME__)
-WAVEREF_FP_FIBTYPES.value = 'FP'
-
-# get the degree to fix master wavelength to in hc mode
-WAVEREF_FITDEG = WAVEREF_FITDEG.copy(__NAME__)
-WAVEREF_FITDEG.value = 5
-
-# define the lowest N for fp peaks
-WAVEREF_FP_NLOW = WAVEREF_FP_NLOW.copy(__NAME__)
-WAVEREF_FP_NLOW.value = 9000
-
-# define the highest N for fp peaks
-WAVEREF_FP_NHIGH = WAVEREF_FP_NHIGH.copy(__NAME__)
-WAVEREF_FP_NHIGH.value = 30000
-
-# define the number of iterations required to do the Fp polynomial inversion
-WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
-WAVEREF_FP_POLYINV.value = 4
-
-# define the wave fiber comparison plot order number
-WAVE_FIBER_COMP_PLOT_ORD = WAVE_FIBER_COMP_PLOT_ORD.copy(__NAME__)
-WAVE_FIBER_COMP_PLOT_ORD.value = 35
-
-# =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
 # =============================================================================
 # number of iterations for hc convergence
@@ -2011,7 +2103,7 @@ MKTEMPLATE_S1D_LOWF_SIZE.value = 501
 # Define the minimum allowed berv coverage to construct a template
 #   in km/s  (default is double the resolution in km/s)
 MKTEMPLATE_BERVCOR_QCMIN = MKTEMPLATE_BERVCOR_QCMIN.copy(__NAME__)
-MKTEMPLATE_BERVCOR_QCMIN.value = 6.0
+MKTEMPLATE_BERVCOR_QCMIN.value = 8.0
 
 # Define the core SNR in order to calculate required BERV coverage
 MKTEMPLATE_BERVCOV_CSNR = MKTEMPLATE_BERVCOV_CSNR.copy(__NAME__)
@@ -2019,8 +2111,7 @@ MKTEMPLATE_BERVCOV_CSNR.value = 100.0
 
 # Defome the resolution in km/s for calculating BERV coverage
 MKTEMPLATE_BERVCOV_RES = MKTEMPLATE_BERVCOV_RES.copy(__NAME__)
-MKTEMPLATE_BERVCOV_RES.value = 3.0
-
+MKTEMPLATE_BERVCOV_RES.value = 4.0
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
@@ -2230,6 +2321,29 @@ PLOT_EXTRACT_S1D.value = True
 PLOT_EXTRACT_S1D_WEIGHT = PLOT_EXTRACT_S1D_WEIGHT.copy(__NAME__)
 PLOT_EXTRACT_S1D_WEIGHT.value = True
 
+# turn on the wave line fiber comparison plot
+PLOT_WAVE_FIBER_COMPARISON = PLOT_WAVE_FIBER_COMPARISON.copy(__NAME__)
+PLOT_WAVE_FIBER_COMPARISON.value = True
+
+# turn on the wave line fiber comparison plot
+PLOT_WAVE_FIBER_COMP = PLOT_WAVE_FIBER_COMP.copy(__NAME__)
+PLOT_WAVE_FIBER_COMP.value = True
+
+# turn on the wave length vs cavity width plot
+PLOT_WAVE_WL_CAV = PLOT_WAVE_WL_CAV.copy(__NAME__)
+PLOT_WAVE_WL_CAV.value = True
+
+# turn on the wave diff HC histograms plot
+PLOT_WAVE_HC_DIFF_HIST = PLOT_WAVE_HC_DIFF_HIST.copy(__NAME__)
+PLOT_WAVE_HC_DIFF_HIST.value = True
+
+# turn on the wave lines hc/fp expected vs measured debug plot
+#  (will plot once for hc once for fp)
+PLOT_WAVEREF_EXPECTED = PLOT_WAVEREF_EXPECTED.copy(__NAME__)
+PLOT_WAVEREF_EXPECTED.value = True
+
+# TODO: WAVE plots need sorting
+
 # turn on the wave solution hc guess debug plot (in loop)
 PLOT_WAVE_HC_GUESS = PLOT_WAVE_HC_GUESS.copy(__NAME__)
 PLOT_WAVE_HC_GUESS.value = True
@@ -2245,6 +2359,10 @@ PLOT_WAVE_HC_TFIT_GRID.value = True
 # turn on the wave solution hc resolution map debug plot
 PLOT_WAVE_HC_RESMAP = PLOT_WAVE_HC_RESMAP.copy(__NAME__)
 PLOT_WAVE_HC_RESMAP.value = True
+
+# turn on the wave solution hc resolution map debug plot
+PLOT_WAVE_RESMAP = PLOT_WAVE_RESMAP.copy(__NAME__)
+PLOT_WAVE_RESMAP.value = True
 
 # turn on the wave solution littrow check debug plot
 PLOT_WAVE_LITTROW_CHECK1 = PLOT_WAVE_LITTROW_CHECK1.copy(__NAME__)
@@ -2298,15 +2416,6 @@ PLOT_WAVE_FP_MULTI_ORDER.value = True
 PLOT_WAVE_FP_SINGLE_ORDER = PLOT_WAVE_FP_SINGLE_ORDER.copy(__NAME__)
 PLOT_WAVE_FP_SINGLE_ORDER.value = True
 
-# turn on the wave lines hc/fp expected vs measured debug plot
-#  (will plot once for hc once for fp)
-PLOT_WAVEREF_EXPECTED = PLOT_WAVEREF_EXPECTED.copy(__NAME__)
-PLOT_WAVEREF_EXPECTED.value = True
-
-# turn on the wave line fiber comparison plot
-PLOT_WAVE_FIBER_COMPARISON = PLOT_WAVE_FIBER_COMPARISON.copy(__NAME__)
-PLOT_WAVE_FIBER_COMPARISON.value = True
-
 # turn on the wave per night iteration debug plot
 PLOT_WAVENIGHT_ITERPLOT = PLOT_WAVENIGHT_ITERPLOT.copy(__NAME__)
 PLOT_WAVENIGHT_ITERPLOT.value = True
@@ -2322,6 +2431,10 @@ PLOT_TELLUP_WAVE_TRANS.value = True
 # turn on the telluric pre-cleaning result debug plot
 PLOT_TELLUP_ABSO_SPEC = PLOT_TELLUP_ABSO_SPEC.copy(__NAME__)
 PLOT_TELLUP_ABSO_SPEC.value = True
+
+# turn on the telluric OH cleaning debug plot
+PLOT_TELLUP_CLEAN_OH = PLOT_TELLUP_CLEAN_OH.copy(__NAME__)
+PLOT_TELLUP_CLEAN_OH.value = True
 
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = PLOT_MKTELLU_WAVE_FLUX1.copy(__NAME__)
@@ -2401,6 +2514,10 @@ POST_HDREXT_COMMENT_KEY.value = 'KW_IDENTIFIER'
 # =============================================================================
 # TOOLS SETTINGS
 # =============================================================================
+# Define whether to use multiprocess Pool or Process
+REPROCESS_MP_TYPE = REPROCESS_MP_TYPE.copy(__NAME__)
+REPROCESS_MP_TYPE.value = 'process'
+
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)
 REPROCESS_RUN_KEY.value = 'ID'
