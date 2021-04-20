@@ -13,10 +13,10 @@ import numpy as np
 
 from apero.base import base
 from apero import lang
-from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.utils import drs_startup
+from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.io import drs_image
 from apero.science.calib import badpix
@@ -51,14 +51,13 @@ def main(obs_dir=None, flatfiles=None, darkfiles=None, **kwargs):
     """
     Main function for cal_badpix_spirou.py
 
-    :param directory: string, the night name sub-directory
+    :param obs_dir: string, the night name sub-directory
     :param flatfiles: list of strings or string, the list of flat files
     :param darkfiles: list of strings or string, the list of dark files
     :param kwargs: any additional keywords
 
-    :type directory: str
-    :type flatfiles: list[str], str
-    :type darkfiles: list[str], str
+    :type obs_dir: str
+    :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
 
@@ -66,8 +65,8 @@ def main(obs_dir=None, flatfiles=None, darkfiles=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(obs_dir=obs_dir, flatfiles=flatfiles,
-                   darkfiles=darkfiles, **kwargs)
+    fkwargs = dict(obs_dir=obs_dir, flatfiles=flatfiles, darkfiles=darkfiles,
+                   **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
@@ -132,9 +131,7 @@ def __main__(recipe, params):
     else:
         # get the number of files
         num_files = len(flatfiles)
-    # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
-    calibdbm.load_db()
+
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -232,7 +229,12 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
-        if passed:
+        if passed and params['INPUTS']['DATABASE']:
+            # construct database instance
+            calibdbm = drs_database.CalibrationDatabase(params)
+            # load database
+            calibdbm.load_db()
+            # add calibration files
             calibdbm.add_calib_file(badpixfile)
             calibdbm.add_calib_file(backmapfile)
         # ------------------------------------------------------------------

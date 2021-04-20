@@ -735,7 +735,7 @@ cal_wave_master.group_column = 'REPROCESS_OBSDIR_COL'
 recipes.append(cal_wave_master)
 
 # -----------------------------------------------------------------------------
-# cal wave night (new)
+# cal wave night
 # -----------------------------------------------------------------------------
 cal_wave_night = DrsRecipe(__INSTRUMENT__)
 cal_wave_night.name = 'cal_wave_night_{0}.py'.format(INSTRUMENT_ALIAS)
@@ -1378,8 +1378,10 @@ full_seq.add(cal_wave_master, master=True,
                           fpfiles=[files.pp_fp_fp]))
 # night runs
 full_seq.add(cal_badpix)
-full_seq.add(cal_loc, files=[files.pp_dark_flat], recipe_kind='calib-night-C')
-full_seq.add(cal_loc, files=[files.pp_flat_dark], recipe_kind='calib-night-AB')
+full_seq.add(cal_loc, files=[files.pp_dark_flat], name='LOCC',
+             recipe_kind='calib-night-C')
+full_seq.add(cal_loc, files=[files.pp_flat_dark], name='LOCAB',
+             recipe_kind='calib-night-AB')
 full_seq.add(cal_shape)
 full_seq.add(cal_ff, files=[files.pp_flat_flat])
 full_seq.add(cal_thermal)
@@ -1459,9 +1461,9 @@ limited_seq.add(cal_pp, recipe_kind='pre-all')
 limited_seq.add(cal_dark_master, master=True)
 limited_seq.add(cal_badpix, name='BADM', master=True,
                 recipe_kind='calib-master')
-limited_seq.add(cal_loc, name='LOCM', files=[files.pp_dark_flat], master=True,
+limited_seq.add(cal_loc, name='LOCMC', files=[files.pp_dark_flat], master=True,
              recipe_kind='calib-master-C')
-limited_seq.add(cal_loc, name='LOCM', files=[files.pp_flat_dark], master=True,
+limited_seq.add(cal_loc, name='LOCMAB', files=[files.pp_flat_dark], master=True,
              recipe_kind='calib-master-AB')
 limited_seq.add(cal_shape_master, master=True)
 limited_seq.add(cal_shape, name='SHAPELM', master=True,
@@ -1478,9 +1480,9 @@ limited_seq.add(cal_wave_master, master=True,
                              fpfiles=[files.pp_fp_fp]))
 # night runs
 limited_seq.add(cal_badpix)
-limited_seq.add(cal_loc, files=[files.pp_dark_flat],
+limited_seq.add(cal_loc, files=[files.pp_dark_flat], name='LOCC',
                 recipe_kind='calib-night-C')
-limited_seq.add(cal_loc, files=[files.pp_flat_dark],
+limited_seq.add(cal_loc, files=[files.pp_flat_dark], name='LOCAB',
                 recipe_kind='calib-night-AB')
 limited_seq.add(cal_shape)
 limited_seq.add(cal_ff, files=[files.pp_flat_flat])
@@ -1612,9 +1614,9 @@ master_seq = drs_recipe.DrsRunSequence('master_seq', __INSTRUMENT__)
 master_seq.add(cal_dark_master, master=True)
 master_seq.add(cal_badpix, name='BADM', master=True,
                recipe_kind='calib-master')
-master_seq.add(cal_loc, name='LOCM', files=[files.pp_dark_flat], master=True,
+master_seq.add(cal_loc, name='LOCMC', files=[files.pp_dark_flat], master=True,
                recipe_kind='calib-master-C')
-master_seq.add(cal_loc, name='LOCM', files=[files.pp_flat_dark], master=True,
+master_seq.add(cal_loc, name='LOCMAB', files=[files.pp_flat_dark], master=True,
                recipe_kind='calib-master-AB')
 master_seq.add(cal_shape_master, master=True)
 master_seq.add(cal_shape, name='SHAPELM', master=True,
@@ -1636,8 +1638,10 @@ master_seq.add(cal_wave_master, master=True,
 calib_seq = drs_recipe.DrsRunSequence('calib_seq', __INSTRUMENT__)
 # night runs
 calib_seq.add(cal_badpix)
-calib_seq.add(cal_loc, files=[files.pp_dark_flat])
-calib_seq.add(cal_loc, files=[files.pp_flat_dark])
+calib_seq.add(cal_loc, files=[files.pp_dark_flat], name='LOCC',
+              recipe_kind='calib-night-C')
+calib_seq.add(cal_loc, files=[files.pp_flat_dark], name='LOCAB',
+              recipe_kind='calib-night-AB')
 calib_seq.add(cal_shape)
 calib_seq.add(cal_ff, files=[files.pp_flat_flat])
 calib_seq.add(cal_thermal, files=[files.pp_dark_dark_int])
@@ -1655,11 +1659,13 @@ tellu_seq.add(cal_extract, name='EXTTELL', recipe_kind='extract-hotstar',
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
                                        'POLAR_FP']))
+
 # correct leakage for any telluric targets that are OBJ_FP
 tellu_seq.add(cal_leak, name='LEAKTELL', recipe_kind='leak-hotstar',
               files=[files.out_ext_e2dsff], fiber='AB',
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
+
 # other telluric recipes
 tellu_seq.add(obj_mk_tellu, name='MKTELLU1', recipe_kind='tellu-hotstar',
               files=[files.out_ext_e2dsff], fiber='AB',
@@ -1680,12 +1686,14 @@ tellu_seq.add(obj_mk_template, name='MKTELLU3', recipe_kind='tellu-hotstar',
                            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                        'POLAR_FP']),
               template_required=True)
+
 tellu_seq.add(obj_mk_tellu, name='MKTELLU4', recipe_kind='tellu-hotstar',
               fiber='AB', files=[files.out_ext_e2dsff],
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                        'POLAR_FP']),
               template_required=True)
+
 # post processing
 tellu_seq.add(obj_pp_recipe, files=[files.pp_file],
               recipe_kind='post-hotstar',
@@ -1704,11 +1712,13 @@ science_seq.add(cal_extract, name='EXTOBJ', recipe_kind='extract-science',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
                                          'POLAR_FP']))
+
 # correct leakage for any science targets that are OBJ_FP
 science_seq.add(cal_leak, name='LEAKOBJ', recipe_kind='leak-science',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_DPRTYPE=['OBJ_FP', 'POLAR_FP'],
                              KW_OBJNAME='SCIENCE_TARGETS'))
+
 science_seq.add(obj_fit_tellu, name='FTELLU1', recipe_kind='tellu-science',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',

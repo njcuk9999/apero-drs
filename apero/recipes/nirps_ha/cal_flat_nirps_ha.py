@@ -11,8 +11,8 @@ Created on 2019-07-05 at 16:45
 """
 from apero.base import base
 from apero import lang
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.io import drs_image
@@ -106,8 +106,8 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cout = drs_file.combine(params, recipe, infiles, math='median')
-        infiles = [cout[0]]
+        cond = drs_file.combine(params, recipe, infiles, math='median')
+        infiles = [cond[0]]
         combine = True
     else:
         combine = False
@@ -138,14 +138,16 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Load shape components
         # ------------------------------------------------------------------
-        shapexfile, shapex = shape.get_shapex(params, header)
-        shapeyfile, shapey = shape.get_shapey(params, header)
-        shapelocalfile, shapelocal = shape.get_shapelocal(params, header)
+        shapexfile, shapex = shape.get_shapex(params, header, database=calibdbm)
+        shapeyfile, shapey = shape.get_shapey(params, header, database=calibdbm)
+        shapelocalfile, shapelocal = shape.get_shapelocal(params, header,
+                                                          database=calibdbm)
 
         # ------------------------------------------------------------------
         # Correction of file
         # ------------------------------------------------------------------
-        props, image = gen_calib.calibrate_ppfile(params, recipe, infile)
+        props, image = gen_calib.calibrate_ppfile(params, recipe, infile,
+                                                  database=calibdbm)
 
         # ------------------------------------------------------------------
         # Load and straighten order profiles
@@ -175,7 +177,8 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # load the localisation properties for this fiber
             lprops = localisation.get_coefficients(params, recipe, header,
-                                                   fiber=fiber, merge=True)
+                                                   fiber=fiber, merge=True,
+                                                   database=calibdbm)
             # get the localisation center coefficients for this fiber
             lcoeffs = lprops['CENT_COEFFS']
             # shift the coefficients
@@ -229,7 +232,7 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # Update the calibration database
             # --------------------------------------------------------------
-            if passed:
+            if passed and params['INPUTS']['DATABASE']:
                 # copy the blaze file to the calibDB
                 calibdbm.add_calib_file(blazefile)
                 # copy the flat file to the calibDB
@@ -257,6 +260,11 @@ def __main__(recipe, params):
 
         # construct summary (outside fiber loop)
         recipe.plot.summary_document(it)
+
+        # ------------------------------------------------------------------
+        # update recipe log file
+        # ------------------------------------------------------------------
+        log1.end()
 
     # ----------------------------------------------------------------------
     # End of main code

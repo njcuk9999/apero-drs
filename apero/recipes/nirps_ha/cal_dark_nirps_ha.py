@@ -13,8 +13,8 @@ import numpy as np
 
 from apero.base import base
 from apero import lang
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.io import drs_image
@@ -105,8 +105,8 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cout = drs_file.combine(params, recipe, infiles, math='median')
-        infiles = [cout[0]]
+        cond = drs_file.combine(params, recipe, infiles, math='median')
+        infiles = [cond[0]]
         combine = True
     else:
         combine = False
@@ -215,7 +215,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
-        if passed:
+        if passed and params['INPUTS']['DATABASE']:
             calibdbm.add_calib_file(outfile)
         # ------------------------------------------------------------------
         # Summary plots

@@ -11,11 +11,11 @@ Created on 2020-03-02 at 17:26
 """
 from apero.base import base
 from apero import lang
+from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-from apero.core.core import drs_database
 from apero.science.extract import other as extother
 from apero.science.extract import gen_ext as extgen
 
@@ -112,8 +112,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # check whether filetype is allowed for instrument
         # get definition
-        fdkwargs = dict(block_kind='tmp', required=False)
-        darkfpfile = drs_file.get_file_definition(params, filetype, **fdkwargs)
+        gkwargs = dict(block_kind='tmp', required=False)
+        darkfpfile = drs_file.get_file_definition(params, filetype, **gkwargs)
         # deal with defintion not found
         if darkfpfile is None:
             eargs = [filetype, recipe.name, mainname]
@@ -121,8 +121,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # get all "filetype" filenames
         files = drs_utils.find_files(params, block_kind='tmp',
-                                     filters=dict(KW_DPRTYPE=filetype,
-                                                  OBS_DIR=params['OBS_DIR']))
+                                    filters=dict(KW_DPRTYPE=filetype,
+                                                 OBS_DIR=params['OBS_DIR']))
         # create infiles
         for filename in files:
             infile = darkfpfile.newcopy(filename=filename, params=params)
@@ -202,7 +202,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
-    if passed:
+    if passed and params['INPUTS']['DATABASE']:
         # loop around fibers
         for fiber in medcubes:
             # get outfile

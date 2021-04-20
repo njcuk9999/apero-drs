@@ -11,10 +11,10 @@ Created on 2019-07-05 at 16:46
 """
 from apero.base import base
 from apero import lang
-from apero.core.core import drs_log
-from apero.core.core import drs_file
-from apero.core.utils import drs_startup
 from apero.core import constants
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.science.extract import gen_ext as extgen
 
@@ -29,6 +29,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# get param dict
+ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -48,7 +50,7 @@ EXTRACT_NAME = 'cal_extract_nirps_ha.py'
 # Everything else is controlled from recipe_definition
 def main(obs_dir=None, files=None, **kwargs):
     """
-    Main function for cal_leak_nirps_ha.py
+    Main function for cal_leak
 
     :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
@@ -107,8 +109,8 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cout = drs_file.combine(params, recipe, infiles, math='median')
-        infiles = [cout[0]]
+        cond = drs_file.combine(params, recipe, infiles, math='median')
+        infiles = [cond[0]]
         combine = True
     else:
         combine = False

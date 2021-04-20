@@ -151,6 +151,12 @@ raw_lfc_fp = drs_finput('RAW_LFC_FP',
                                    KW_OBSTYPE='ALIGN'))
 raw_file.addset(raw_lfc_fp)
 
+raw_fp_lfc = drs_finput('RAW_FP_LFC',
+                        filetype='.fits', suffix='',
+                        hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_rs',
+                                   KW_OBSTYPE='ALIGN'))
+raw_file.addset(raw_fp_lfc)
+
 # -----------------------------------------------------------------------------
 # raw object files
 raw_obj_dark = drs_finput('RAW_OBJ_DARK', outfunc=out.blank,
@@ -341,6 +347,11 @@ pp_lfc_fp = drs_finput('LFC_FP', hkeys=dict(KW_DPRTYPE='LFC_FP'),
                        inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_lfc_fp)
 
+pp_fp_lfc = drs_finput('FP_LFC', hkeys=dict(KW_DPRTYPE='FP_LFC'),
+                       filetype='.fits', suffix='_pp', intype=raw_fp_lfc,
+                       inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_fp_lfc)
+
 # -----------------------------------------------------------------------------
 #  object
 pp_obj_dark = drs_finput('OBJ_DARK', hkeys=dict(KW_DPRTYPE='OBJ_DARK'),
@@ -420,7 +431,7 @@ pp_file.addset(pp_hc2_dark)
 # Reduced Files
 # =============================================================================
 # generic out file
-out_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
+red_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
                       intype=pp_file)
 # calib out file
 calib_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
@@ -439,7 +450,7 @@ out_pp_master = drs_finput('PPMSTR', hkeys=dict(KW_OUTPUT='PPMSTR'),
                            outfunc=out.calib_file,
                            dbname='calibration', dbkey='PPMSTR')
 # add dark outputs to output fileset
-out_file.addset(out_pp_master)
+red_file.addset(out_pp_master)
 calib_file.addset(out_pp_master)
 
 # -----------------------------------------------------------------------------
@@ -477,10 +488,10 @@ out_dark_master = drs_finput('DARKM', hkeys=dict(KW_OUTPUT='DARKM'),
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='DARKM')
 # add dark outputs to output fileset
-out_file.addset(out_dark_int)
-out_file.addset(out_dark_tel)
-out_file.addset(out_dark_sky)
-out_file.addset(out_dark_master)
+red_file.addset(out_dark_int)
+red_file.addset(out_dark_tel)
+red_file.addset(out_dark_sky)
+red_file.addset(out_dark_master)
 calib_file.addset(out_dark_int)
 calib_file.addset(out_dark_tel)
 calib_file.addset(out_dark_sky)
@@ -507,9 +518,9 @@ debug_back = drs_finput('DEBUG_BACK', hkeys=dict(KW_OUTPUT='DEBUG_BACK'),
                         suffix='_background.fits', outfunc=out.debug_file)
 
 # add badpix outputs to output fileset
-out_file.addset(out_badpix)
-out_file.addset(out_backmap)
-out_file.addset(debug_back)
+red_file.addset(out_badpix)
+red_file.addset(out_backmap)
+red_file.addset(debug_back)
 calib_file.addset(out_badpix)
 calib_file.addset(out_backmap)
 
@@ -525,7 +536,7 @@ out_loc_orderp = drs_finput('LOC_ORDERP', hkeys=dict(KW_OUTPUT='LOC_ORDERP'),
                             outfunc=out.calib_file,
                             dbname='calibration', dbkey='ORDER_PROFILE')
 out_loc_loco = drs_finput('LOC_LOCO', hkeys=dict(KW_OUTPUT='LOC_LOCO'),
-                          fibers=['AB', 'A', 'B', 'C'],
+                          fibers=['A', 'B'],
                           filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                           suffix='_loco',
                           outfunc=out.calib_file,
@@ -541,10 +552,10 @@ out_loc_sup = drs_finput('LOC_SUP', hkeys=dict(KW_OUTPUT='LOC_SUP'),
                          suffix='_with-order',
                          outfunc=out.calib_file)
 # add localisation outputs to output fileset
-out_file.addset(out_loc_orderp)
-out_file.addset(out_loc_loco)
-out_file.addset(out_loc_fwhm)
-out_file.addset(out_loc_sup)
+red_file.addset(out_loc_orderp)
+red_file.addset(out_loc_loco)
+red_file.addset(out_loc_fwhm)
+red_file.addset(out_loc_sup)
 calib_file.addset(out_loc_orderp)
 calib_file.addset(out_loc_loco)
 
@@ -592,14 +603,14 @@ out_shape_debug_bdx = drs_finput('SHAPE_BDX', hkeys=dict(KW_OUTPUT='SHAPE_BDX'),
                                  suffix='_shape_out_bdx',
                                  outfunc=out.debug_file)
 # add shape master outputs to output fileset
-out_file.addset(out_shape_dxmap)
-out_file.addset(out_shape_dymap)
-out_file.addset(out_shape_fpmaster)
-out_file.addset(out_shape_debug_ifp)
-out_file.addset(out_shape_debug_ofp)
-out_file.addset(out_shape_debug_ihc)
-out_file.addset(out_shape_debug_ohc)
-out_file.addset(out_shape_debug_bdx)
+red_file.addset(out_shape_dxmap)
+red_file.addset(out_shape_dymap)
+red_file.addset(out_shape_fpmaster)
+red_file.addset(out_shape_debug_ifp)
+red_file.addset(out_shape_debug_ofp)
+red_file.addset(out_shape_debug_ihc)
+red_file.addset(out_shape_debug_ohc)
+red_file.addset(out_shape_debug_bdx)
 
 calib_file.addset(out_shape_dxmap)
 calib_file.addset(out_shape_dymap)
@@ -626,9 +637,9 @@ out_shapel_debug_ofp = drs_finput('SHAPEL_OUT_FP',
                                   suffix='_shapel_out_fp.fits',
                                   outfunc=out.debug_file)
 # add shape local outputs to output fileset
-out_file.addset(out_shape_local)
-out_file.addset(out_shapel_debug_ifp)
-out_file.addset(out_shapel_debug_ofp)
+red_file.addset(out_shape_local)
+red_file.addset(out_shapel_debug_ifp)
+red_file.addset(out_shapel_debug_ofp)
 calib_file.addset(out_shape_local)
 
 # -----------------------------------------------------------------------------
@@ -656,9 +667,9 @@ out_orderp_straight = drs_ninput('ORDERP_STRAIGHT',
                                  outfunc=out.npy_file)
 
 # add flat outputs to output fileset
-out_file.addset(out_ff_blaze)
-out_file.addset(out_ff_flat)
-out_file.addset(out_orderp_straight)
+red_file.addset(out_ff_blaze)
+red_file.addset(out_ff_flat)
+red_file.addset(out_orderp_straight)
 calib_file.addset(out_ff_blaze)
 calib_file.addset(out_ff_flat)
 
@@ -721,13 +732,13 @@ out_ext_fplines = drs_finput('EXT_FPLIST', hkeys=dict(KW_OUTPUT='EXT_FPLIST'),
                              outfunc=out.general_file)
 
 # add extract outputs to output fileset
-out_file.addset(out_ext_e2ds)
-out_file.addset(out_ext_e2dsff)
-out_file.addset(out_ext_e2dsll)
-out_file.addset(out_ext_loco)
-out_file.addset(out_ext_s1d_w)
-out_file.addset(out_ext_s1d_v)
-out_file.addset(out_ext_fplines)
+red_file.addset(out_ext_e2ds)
+red_file.addset(out_ext_e2dsff)
+red_file.addset(out_ext_e2dsll)
+red_file.addset(out_ext_loco)
+red_file.addset(out_ext_s1d_w)
+red_file.addset(out_ext_s1d_v)
+red_file.addset(out_ext_fplines)
 
 # -----------------------------------------------------------------------------
 # thermal files
@@ -751,8 +762,8 @@ out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS',
                                   outfunc=out.general_file)
 
 # add thermal outputs to output fileset
-out_file.addset(out_thermal_e2ds_int)
-out_file.addset(out_thermal_e2ds_tel)
+red_file.addset(out_thermal_e2ds_int)
+red_file.addset(out_thermal_e2ds_tel)
 calib_file.addset(out_thermal_e2ds_int)
 calib_file.addset(out_thermal_e2ds_tel)
 
@@ -767,12 +778,88 @@ out_leak_master = drs_finput('LEAKM_E2DS', hkeys=dict(KW_OUTPUT='LEAKM_E2DS'),
                              suffix='_leak_master',
                              dbname='calibration', dbkey='LEAKM',
                              outfunc=out.general_file)
-out_file.addset(out_leak_master)
+red_file.addset(out_leak_master)
 calib_file.addset(out_leak_master)
 
+
 # -----------------------------------------------------------------------------
-# wave files (master)
+# wave files (master) ea
 # -----------------------------------------------------------------------------
+# wave solution using hc + fp
+out_wavem_sol = drs_finput('WAVESOL_MASTER',
+                           hkeys=dict(KW_OUTPUT='WAVESOL_MASTER'),
+                           fibers=['A', 'B'],
+                           filetype='.fits',
+                           intype=[out_ext_e2ds, out_ext_e2dsff],
+                           suffix='_wavesol_master_',
+                           dbname='calibration', dbkey='WAVESOL_MASTER',
+                           outfunc=out.calib_file)
+
+# hc line file from master
+out_wave_hclist_master = drs_finput('WAVE_HCLIST_MASTER',
+                                    hkeys=dict(KW_OUTPUT='WAVE_HCLIST_MASTER'),
+                                    fibers=['A', 'B'],
+                                    filetype='.fits',
+                                    intype=[out_ext_e2ds, out_ext_e2dsff],
+                                    suffix='_wavem_hclines',
+                                    dbname='calibration', dbkey='WAVEHCL',
+                                    datatype='table',
+                                    outfunc=out.calib_file)
+
+# fp line file from master
+out_wave_fplist_master = drs_finput('WAVE_FPLIST_MASTER',
+                                    hkeys=dict(KW_OUTPUT='WAVE_FPLIST_MASTER'),
+                                    fibers=['A', 'B'],
+                                    filetype='.fits',
+                                    intype=[out_ext_e2ds, out_ext_e2dsff],
+                                    suffix='_wavem_fplines',
+                                    dbname='calibration', dbkey='WAVEFPL',
+                                    datatype='table',
+                                    outfunc=out.calib_file)
+
+# teh cavity file polynomial file
+out_wavem_cavity = drs_finput('WAVEM_CAV', hkeys=dict(KW_OUTPUT='WAVEM_CAV'),
+                              filetype='.fits',
+                              intype=[out_ext_e2ds, out_ext_e2dsff],
+                              suffix='_wavecav_',
+                              dbname='calibration', dbkey='WAVECAV',
+                              outfunc=out.calib_file)
+
+# the default wave master
+out_wave_master = drs_finput('WAVEM_D', hkeys=dict(KW_OUTPUT='WAVEM_SOL'),
+                             fibers=['A', 'B'],
+                             filetype='.fits',
+                             intype=[out_ext_e2ds, out_ext_e2dsff],
+                             suffix='_wavem',
+                             dbname='calibration', dbkey='WAVEM_D',
+                             outfunc=out.calib_file)
+
+# add wave outputs to output fileset
+red_file.addset(out_wavem_sol)
+red_file.addset(out_wave_hclist_master)
+red_file.addset(out_wave_fplist_master)
+red_file.addset(out_wavem_cavity)
+red_file.addset(out_wave_master)
+calib_file.addset(out_wavem_sol)
+calib_file.addset(out_wave_hclist_master)
+calib_file.addset(out_wave_fplist_master)
+calib_file.addset(out_wavem_cavity)
+calib_file.addset(out_wave_master)
+
+# -----------------------------------------------------------------------------
+# wave files (master) old
+# -----------------------------------------------------------------------------
+# old wave fp
+out_wavem_fp = drs_finput('WAVEM_FP',
+                          hkeys=dict(KW_OUTPUT='WAVEM_FP'),
+                          fibers=['A', 'B'],
+                          filetype='.fits',
+                          intype=[out_ext_e2ds, out_ext_e2dsff],
+                          suffix='_wavem_fp',
+                          dbname='calibration', dbkey='WAVESOL_MASTER',
+                          outfunc=out.calib_file)
+
+
 # wave solution using hc only
 out_wavem_hc = drs_finput('WAVEM_HC', hkeys=dict(KW_OUTPUT='WAVEM_HC'),
                           fibers=['A', 'B'],
@@ -782,14 +869,13 @@ out_wavem_hc = drs_finput('WAVEM_HC', hkeys=dict(KW_OUTPUT='WAVEM_HC'),
                           dbname='calibration', dbkey='WAVEM',
                           outfunc=out.calib_file)
 
-# wave solution using hc + fp
-out_wavem_fp = drs_finput('WAVEM_FP', hkeys=dict(KW_OUTPUT='WAVEM_FP'),
-                          fibers=['A', 'B'],
-                          filetype='.fits',
-                          intype=[out_ext_e2ds, out_ext_e2dsff],
-                          suffix='_wavem_fp',
-                          dbname='calibration', dbkey='WAVEM',
-                          outfunc=out.calib_file)
+# resolution map
+out_wavem_res = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
+                             fibers=['A', 'B'],
+                             filetype='.fits',
+                             intype=[out_ext_e2ds, out_ext_e2dsff],
+                             suffix='_wavemres',
+                             outfunc=out.calib_file)
 
 # hc resolution map
 out_wavem_hcres = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
@@ -817,51 +903,14 @@ out_wavem_ll_table = drs_input('WAVE_FPLLTABL',
                                suffix='_mhc_lines',
                                outfunc=out.calib_file)
 
-# hc line file from master
-out_wave_hclist_master = drs_finput('WAVE_HCLIST_MASTER',
-                                    hkeys=dict(KW_OUTPUT='WAVE_HCLIST_MASTER'),
-                                    fibers=['A', 'B'],
-                                    filetype='.fits',
-                                    intype=[out_ext_e2ds, out_ext_e2dsff],
-                                    suffix='_wavem_hclines',
-                                    dbname='calibration', dbkey='WAVEHCL',
-                                    datatype='table',
-                                    outfunc=out.calib_file)
-
-# fp line file from master
-out_wave_fplist_master = drs_finput('WAVE_FPLIST_MASTER',
-                                    hkeys=dict(KW_OUTPUT='WAVE_FPLIST_MASTER'),
-                                    fibers=['A', 'B'],
-                                    filetype='.fits',
-                                    intype=[out_ext_e2ds, out_ext_e2dsff],
-                                    suffix='_wavem_fplines',
-                                    dbname='calibration', dbkey='WAVEFPL',
-                                    datatype='table',
-                                    outfunc=out.calib_file)
-
-# the default wave master
-out_wave_master = drs_finput('WAVEM_D', hkeys=dict(KW_OUTPUT='WAVEM_SOL'),
-                             fibers=['A', 'B'],
-                             filetype='.fits',
-                             intype=[out_ext_e2ds, out_ext_e2dsff],
-                             suffix='_wavem',
-                             dbname='calibration', dbkey='WAVEM_D',
-                             outfunc=out.calib_file)
-
 # add wave outputs to output fileset
-out_file.addset(out_wavem_hc)
-out_file.addset(out_wavem_fp)
-out_file.addset(out_wavem_hcres)
-out_file.addset(out_wavem_res_table)
-out_file.addset(out_wavem_ll_table)
-out_file.addset(out_wave_hclist_master)
-out_file.addset(out_wave_fplist_master)
-out_file.addset(out_wave_master)
-calib_file.addset(out_wavem_hc)
+red_file.addset(out_wavem_fp)
+red_file.addset(out_wavem_hc)
+red_file.addset(out_wavem_hcres)
+red_file.addset(out_wavem_res_table)
+red_file.addset(out_wavem_ll_table)
 calib_file.addset(out_wavem_fp)
-calib_file.addset(out_wave_master)
-calib_file.addset(out_wave_hclist_master)
-calib_file.addset(out_wave_fplist_master)
+calib_file.addset(out_wavem_hc)
 
 # -----------------------------------------------------------------------------
 # wave files
@@ -944,30 +993,18 @@ out_wave_fplist = drs_finput('WAVE_FPLIST', hkeys=dict(KW_OUTPUT='WAVE_FPLIST'),
                              outfunc=out.calib_file)
 
 # add wave outputs to output fileset
-out_file.addset(out_wave_hc)
-out_file.addset(out_wave_fp)
-out_file.addset(out_wave_night)
-out_file.addset(out_wave_hcline)
-out_file.addset(out_wave_hcres)
-out_file.addset(out_wave_res_table)
-out_file.addset(out_wave_ll_table)
-out_file.addset(out_wave_hclist)
-out_file.addset(out_wave_fplist)
+red_file.addset(out_wave_hc)
+red_file.addset(out_wave_fp)
+red_file.addset(out_wave_night)
+red_file.addset(out_wave_hcline)
+red_file.addset(out_wave_hcres)
+red_file.addset(out_wave_res_table)
+red_file.addset(out_wave_ll_table)
+red_file.addset(out_wave_hclist)
+red_file.addset(out_wave_fplist)
 calib_file.addset(out_wave_hc)
 calib_file.addset(out_wave_fp)
 calib_file.addset(out_wave_night)
-
-# -----------------------------------------------------------------------------
-# TODO: fill in definitions
-# drift
-# out_drift_raw = drs_finput('DRIFT_RAW_AB', KW_OUTPUT='DRIFT_RAW_AB',
-#                            fiber='AB')
-# out_drift_e2ds = drs_finput('DRIFT_E2DS_FITS_AB', fiber='AB',
-#                             KW_OUTPUT='DRIFT_E2DS_AB')
-# out_driftpeak_e2ds = drs_finput('DRIFTPEAK_E2DS_FITS_AB', fiber='AB',
-#                                 KW_OUTPUT='DRIFTPEAK_E2DS_AB')
-# out_driftccf_e2ds = drs_finput('DRIFTCCF_E2DS_FITS_AB', fiber='AB',
-#                                KW_OUTPUT='DRIFTCCF_E2DS_AB')
 
 # -----------------------------------------------------------------------------
 # make telluric
@@ -1005,10 +1042,10 @@ out_tellu_trans = drs_finput('TELLU_TRANS', hkeys=dict(KW_OUTPUT='TELLU_TRANS'),
                              outfunc=out.general_file)
 
 # add make_telluric outputs to output fileset
-out_file.addset(out_tellu_pclean)
-out_file.addset(out_tellu_conv)
-out_file.addset(out_tellu_trans)
-out_file.addset(out_tellu_spl_npy)
+red_file.addset(out_tellu_pclean)
+red_file.addset(out_tellu_conv)
+red_file.addset(out_tellu_trans)
+red_file.addset(out_tellu_spl_npy)
 tellu_file.addset(out_tellu_pclean)
 tellu_file.addset(out_tellu_conv)
 tellu_file.addset(out_tellu_trans)
@@ -1074,13 +1111,13 @@ out_tellu_rc1d_v = drs_finput('RC1D_V_FILE',
                               outfunc=out.general_file, datatype='table')
 
 # add fit telluric outputs to output fileset
-out_file.addset(out_tellu_abso_npy)
-out_file.addset(out_tellu_obj)
-out_file.addset(out_tellu_sc1d_w)
-out_file.addset(out_tellu_sc1d_v)
-out_file.addset(out_tellu_recon)
-out_file.addset(out_tellu_rc1d_w)
-out_file.addset(out_tellu_rc1d_v)
+red_file.addset(out_tellu_abso_npy)
+red_file.addset(out_tellu_obj)
+red_file.addset(out_tellu_sc1d_w)
+red_file.addset(out_tellu_sc1d_v)
+red_file.addset(out_tellu_recon)
+red_file.addset(out_tellu_rc1d_w)
+red_file.addset(out_tellu_rc1d_v)
 tellu_file.addset(out_tellu_obj)
 tellu_file.addset(out_tellu_recon)
 
@@ -1134,11 +1171,11 @@ out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
                                    outfunc=out.set_file)
 
 # add make template outputs to output fileset
-out_file.addset(out_tellu_template)
-out_file.addset(out_tellu_bigcube)
-out_file.addset(out_tellu_bigcube0)
-out_file.addset(out_tellu_s1d_template)
-out_file.addset(out_tellu_s1d_bigcube)
+red_file.addset(out_tellu_template)
+red_file.addset(out_tellu_bigcube)
+red_file.addset(out_tellu_bigcube0)
+red_file.addset(out_tellu_s1d_template)
+red_file.addset(out_tellu_s1d_bigcube)
 tellu_file.addset(out_tellu_template)
 
 # -----------------------------------------------------------------------------
@@ -1153,7 +1190,7 @@ out_ccf_fits = drs_finput('CCF_RV', hkeys=dict(KW_OUTPUT='CCF_RV'),
                           datatype='table',
                           outfunc=out.general_file)
 
-out_file.addset(out_ccf_fits)
+red_file.addset(out_ccf_fits)
 
 # =============================================================================
 # Post processed Files
@@ -1169,31 +1206,30 @@ post_e_file = drs_oinput('DRS_POST_E', filetype='.fits', suffix='e.fits',
                          outfunc=out.post_file, inext='o', required=False)
 # add extensions
 post_e_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
-                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
-post_e_file.add_ext('EXT_AB', out_ext_e2dsff, pos=1, fiber='AB', block_kind='red',
-                    link='PP', hlink='KW_IDENTIFIER')
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
+                                           'POLAR_DARK']),
+                    remove_drs_hkeys=True, remove_std_hkeys=True)
 post_e_file.add_ext('EXT_A', out_ext_e2dsff, pos=2, fiber='A', block_kind='red',
-                    link='EXT_AB', hlink='KW_IDENTIFIER')
+                    link='EXT_A', hlink='KW_IDENTIFIER', clear_file=True,
+                    tag='FluxA')
 post_e_file.add_ext('EXT_B', out_ext_e2dsff, pos=3, fiber='B', block_kind='red',
-                    link='EXT_AB', hlink='KW_IDENTIFIER')
-post_e_file.add_ext('EXT_C', out_ext_e2dsff, pos=4, fiber='C', block_kind='red',
-                    link='EXT_AB', hlink='KW_IDENTIFIER')
-post_e_file.add_ext('WAVE_AB', out_wavem_fp, pos=5, fiber='AB', block_kind='red',
-                    link='EXT_AB', hlink='KW_CDBWAVE')
+                    link='EXT_A', hlink='KW_IDENTIFIER', clear_file=True,
+                    tag='FluxB')
 post_e_file.add_ext('WAVE_A', out_wavem_fp, pos=6, fiber='A', block_kind='red',
-                    link='EXT_A', hlink='KW_CDBWAVE')
+                    link='EXT_A', hlink='KW_CDBWAVE',
+                    tag='WaveA')
 post_e_file.add_ext('WAVE_B', out_wavem_fp, pos=7, fiber='B', block_kind='red',
-                    link='EXT_B', hlink='KW_CDBWAVE')
-post_e_file.add_ext('WAVE_C', out_wavem_fp, pos=8, fiber='C', block_kind='red',
-                    link='EXT_C', hlink='KW_CDBWAVE')
-post_e_file.add_ext('BLAZE_AB', out_ff_blaze, pos=9, fiber='AB', block_kind='red',
-                    link='EXT_AB', hlink='KW_CDBBLAZE')
-post_e_file.add_ext('BLAZE_A', out_ff_blaze, pos=10, fiber='A', block_kind='red',
-                    link='EXT_A', hlink='KW_CDBBLAZE')
-post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B', block_kind='red',
-                    link='EXT_B', hlink='KW_CDBBLAZE')
-post_e_file.add_ext('BLAZE_C', out_ff_blaze, pos=12, fiber='C', block_kind='red',
-                    link='EXT_C', hlink='KW_CDBBLAZE')
+                    link='EXT_B', hlink='KW_CDBWAVE',
+                    tag='WaveB')
+post_e_file.add_ext('BLAZE_A', out_ff_blaze, pos=10, fiber='A',
+                    block_kind='red', link='EXT_A', hlink='KW_CDBBLAZE',
+                    tag='BlazeA')
+post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B',
+                    block_kind='red', link='EXT_B', hlink='KW_CDBBLAZE',
+                    tag='BlazeB')
+# move header keys
+post_e_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
+post_e_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
 # add to post processed file set
 post_file.addset(post_e_file)
 
@@ -1203,83 +1239,63 @@ post_file.addset(post_e_file)
 post_s_file = drs_oinput('DRS_POST_S', filetype='.fits', suffix='s.fits',
                          outfunc=out.post_file, inext='o', required=False)
 post_s_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
-                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
+                                           'POLAR_DARK']))
 # s1d w is a composite table
 post_s_file.add_ext('S1D_W', 'table', pos=1, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER')
 # add s1d w columns (all linked via PP file)
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
-                       incol='wavelength', outcol='Wave', fiber='AB',
-                       units='nm', kind='red')
-post_s_file.add_column('S1D_W', out_ext_s1d_w,
-                       incol='flux', outcol='FluxAB', fiber='AB',
-                       kind='red')
-post_s_file.add_column('S1D_W', out_ext_s1d_w,
-                       incol='eflux', outcol='FluxErrAB', fiber='AB',
-                       kind='red')
+                       incol='wavelength', outcol='Wave', fiber='A',
+                       units='nm', block_kind='red', clear_file=True)
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='flux', outcol='FluxA', fiber='A',
-                       kind='red')
+                       block_kind='red', clear_file=True)
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='eflux', outcol='FluxErrA', fiber='A',
-                       kind='red')
+                       block_kind='red', clear_file=True)
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='flux', outcol='FluxB', fiber='B',
-                       kind='red')
+                       block_kind='red', clear_file=True)
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='eflux', outcol='FluxErrB', fiber='B',
-                       kind='red')
-post_s_file.add_column('S1D_W', out_ext_s1d_w,
-                       incol='flux', outcol='FluxC', fiber='C',
-                       kind='red')
-post_s_file.add_column('S1D_W', out_ext_s1d_w,
-                       incol='eflux', outcol='FluxErrC', fiber='C',
-                       kind='red')
+                       block_kind='red', clear_file=True)
 post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
-                       incol='flux', outcol='FluxABTelluCorrected', fiber='AB',
-                       required=False, kind='red')
+                       incol='flux', outcol='FluxATelluCorrected', fiber='A',
+                       required=False, block_kind='red', clear_file=True)
 post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
-                       incol='eflux', outcol='FluxErrABTelluCorrected',
-                       fiber='AB', required=False,
-                       kind='red')
+                       incol='eflux', outcol='FluxErrATelluCorrected',
+                       fiber='A', required=False,
+                       block_kind='red', clear_file=True)
 # s1d w is a composite table
 post_s_file.add_ext('S1D_V', 'table', pos=2, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER')
 # add s1d w columns (all linked via PP file)
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
-                       incol='wavelength', outcol='Wave', fiber='AB',
-                       units='nm', kind='red')
-post_s_file.add_column('S1D_V', out_ext_s1d_v,
-                       incol='flux', outcol='FluxAB', fiber='AB',
-                       kind='red')
-post_s_file.add_column('S1D_V', out_ext_s1d_v,
-                       incol='eflux', outcol='FluxErrAB', fiber='AB',
-                       kind='red')
+                       incol='wavelength', outcol='Wave', fiber='A',
+                       units='nm', block_kind='red', clear_file=True)
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='flux', outcol='FluxA', fiber='A',
-                       kind='red')
+                       block_kind='red', clear_file=True)
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='eflux', outcol='FluxErrA', fiber='A',
-                       kind='red')
+                       block_kind='red', clear_file=True)
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='flux', outcol='FluxB', fiber='B',
-                       kind='red')
+                       block_kind='red', clear_file=True)
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='eflux', outcol='FluxErrB', fiber='B',
-                       kind='red')
-post_s_file.add_column('S1D_V', out_ext_s1d_v,
-                       incol='flux', outcol='FluxC', fiber='C',
-                       kind='red')
-post_s_file.add_column('S1D_V', out_ext_s1d_v,
-                       incol='eflux', outcol='FluxErrC', fiber='C',
-                       kind='red')
+                       block_kind='red', clear_file=True)
 post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
-                       incol='flux', outcol='FluxABTelluCorrected', fiber='AB',
-                       required=False, kind='red')
+                       incol='flux', outcol='FluxATelluCorrected', fiber='A',
+                       required=False, block_kind='red', clear_file=True)
 post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
-                       incol='eflux', outcol='FluxErrABTelluCorrected',
-                       fiber='AB', required=False,
-                       kind='red')
+                       incol='eflux', outcol='FluxErrATelluCorrected',
+                       fiber='A', required=False,
+                       block_kind='red', clear_file=True)
+# move header keys
+post_s_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
+post_s_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
 # add to post processed file set
 post_file.addset(post_s_file)
 
@@ -1291,15 +1307,23 @@ post_t_file = drs_oinput('DRS_POST_T', filetype='.fits', suffix='t.fits',
                          outfunc=out.post_file, inext='o', required=False)
 # add extensions
 post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
-                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
-post_t_file.add_ext('TELLU_AB', out_tellu_obj, pos=1, fiber='AB',
-                    link='PP', hlink='KW_IDENTIFIER', block_kind='red')
-post_t_file.add_ext('WAVE_AB', out_wavem_fp, pos=2, fiber='AB',
-                    link='TELLU_AB', hlink='KW_CDBWAVE', block_kind='red')
-post_t_file.add_ext('BLAZE_AB', out_ff_blaze, pos=3, fiber='AB',
-                    link='TELLU_AB', hlink='KW_CDBBLAZE', block_kind='red')
-post_t_file.add_ext('RECON_AB', out_tellu_recon, pos=4, fiber='AB',
-                    link='TELLU_AB', hlink='KW_IDENTIFIER', block_kind='red')
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
+                                           'POLAR_DARK']))
+post_t_file.add_ext('TELLU_A', out_tellu_obj, pos=1, fiber='A',
+                    link='PP', hlink='KW_IDENTIFIER', block_kind='red',
+                    clear_file=True, tag='FluxA')
+post_t_file.add_ext('WAVE_A', out_wavem_fp, pos=2, fiber='A',
+                    link='TELLU_A', hlink='KW_CDBWAVE', block_kind='red',
+                    clear_file=True, tag='WaveA')
+post_t_file.add_ext('BLAZE_A', out_ff_blaze, pos=3, fiber='A',
+                    link='TELLU_A', hlink='KW_CDBBLAZE', block_kind='red',
+                    clear_file=True, tag='BlazeA')
+post_t_file.add_ext('RECON_A', out_tellu_recon, pos=4, fiber='A',
+                    link='TELLU_A', hlink='KW_IDENTIFIER', block_kind='red',
+                    clear_file=True, tag='Recon')
+# move header keys
+post_t_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
+post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
 # add to post processed file set
 post_file.addset(post_t_file)
 
@@ -1309,9 +1333,15 @@ post_file.addset(post_t_file)
 post_v_file = drs_oinput('DRS_POST_V', filetype='.fits', suffix='v.fits',
                          outfunc=out.post_file, inext='o', required=False)
 post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
-                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
-post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
-                    link='PP', hlink='KW_IDENTIFIER', block_kind='red')
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']),
+                    clear_file=True)
+post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='A',
+                    link='PP', hlink='KW_IDENTIFIER', block_kind='red',
+                    clear_file=True, tag='CCF')
+# move header keys
+post_v_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
+post_v_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
+
 # add to post processed file set
 post_file.addset(post_v_file)
 

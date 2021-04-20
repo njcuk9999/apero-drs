@@ -9,14 +9,13 @@ Created on 2019-05-14 at 09:40
 
 @author: cook
 """
-
 from apero.base import base
 from apero import lang
 from apero.core import constants
-from apero.core import math as mp
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
+from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
@@ -108,8 +107,8 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cout = drs_file.combine(params, recipe, infiles, math='median')
-        infiles = [cout[0]]
+        cond = drs_file.combine(params, recipe, infiles, math='median')
+        infiles = [cond[0]]
         combine = True
     else:
         combine = False
@@ -118,6 +117,7 @@ def __main__(recipe, params):
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()
+
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -134,6 +134,7 @@ def __main__(recipe, params):
         infile = infiles[it]
         # get header from file instance
         header = infile.get_header()
+
         # ------------------------------------------------------------------
         # Correction of file
         # ------------------------------------------------------------------
@@ -228,7 +229,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
-        if passed:
+        if passed and params['INPUTS']['DATABASE']:
             # copy the order profile to the calibDB
             calibdbm.add_calib_file(orderpfile)
             # copy the loco file to the calibDB

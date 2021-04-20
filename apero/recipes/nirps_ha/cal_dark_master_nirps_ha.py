@@ -18,7 +18,6 @@ from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.core.core import drs_database
-from apero.core.core import drs_file
 from apero.science.calib import dark
 
 
@@ -96,6 +95,7 @@ def __main__(recipe, params):
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()
+
     # ----------------------------------------------------------------------
     # Get all preprocessed dark files
     # ----------------------------------------------------------------------
@@ -131,12 +131,9 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     cargs = [params, recipe, dark_table]
     master_dark, reffile = dark.construct_master_dark(*cargs)
-    # get reference file night name
-    ref_inst = drs_file.DrsPath(params, abspath=reffile.filename)
-    obs_dir = ref_inst.obs_dir
     # Have to update obs_dir while locked for all param dicts (do not copy)
     #     Note: do not use 'uparamdicts' unless you know what you are doing.
-    ukwargs = dict(key='OBS_DIR', value=obs_dir, source=mainname)
+    ukwargs = dict(key='OBS_DIR', value='other', source=mainname)
     constants.uparamdicts(params, recipe.params, WLOG.pin, **ukwargs)
 
     # ------------------------------------------------------------------
@@ -155,7 +152,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
-    if passed:
+    if passed and params['INPUTS']['DATABASE']:
         calibdbm.add_calib_file(outfile)
 
     # ------------------------------------------------------------------

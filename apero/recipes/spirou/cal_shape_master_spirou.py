@@ -119,11 +119,11 @@ def __main__(recipe, params):
     fiber = pcheck(params, 'SHAPE_MASTER_FIBER', func=mainname)
 
     # get combined hcfile
-    cond1 = drs_file.combine(params, recipe, hcfiles, math='median')
-    hcfile = cond1[0]
+    cout1 = drs_file.combine(params, recipe, hcfiles, math='median')
+    hcfile = cout1[0]
     # get combined fpfile
-    cond2 = drs_file.combine(params, recipe, fpfiles, math='median')
-    fpfile = cond2[0]
+    cout2 = drs_file.combine(params, recipe, fpfiles, math='median')
+    fpfile = cout2[0]
 
     # get the headers (should be the header of the first file in each)
     hcheader = hcfile.get_header()

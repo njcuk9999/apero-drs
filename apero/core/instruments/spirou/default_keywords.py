@@ -213,7 +213,6 @@ KW_INPUTRV.set(key='OBJRV', unit=uu.km / uu.s)
 KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
 KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K)
 
-
 # -----------------------------------------------------------------------------
 # Object resolution keys
 # -----------------------------------------------------------------------------

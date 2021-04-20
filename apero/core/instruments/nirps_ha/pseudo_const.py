@@ -251,6 +251,11 @@ class PseudoConstants(DefaultConstants):
         header, hdict = get_mid_obs_time(params, header, hdict,
                                          filename=filename)
         # ------------------------------------------------------------------
+        # Deal with drs mode
+        # ------------------------------------------------------------------
+        header, hdict = get_drs_mode(params, header, hdict,
+                                     filename=filename)
+        # ------------------------------------------------------------------
         # Deal with dprtype
         # ------------------------------------------------------------------
         header, hdict = get_dprtype(params, recipe, header, hdict,
@@ -336,13 +341,14 @@ class PseudoConstants(DefaultConstants):
         index_keys['KW_MID_OBS_TIME'] = float
         index_keys['KW_OBJECTNAME'] = str
         index_keys['KW_OBJNAME'] = str
-        index_keys['KW_OBSTYPE'] = str
+        index_keys['KW_OBSTYPE'] =str
         index_keys['KW_EXPTIME'] = float
         index_keys['KW_CCAS'] = str
         index_keys['KW_CREF'] = str
         index_keys['KW_CDEN'] = float
         index_keys['KW_CALIBWH'] = str
         index_keys['KW_DPRTYPE'] = str
+        index_keys['KW_DRS_MODE'] = str
         index_keys['KW_OUTPUT'] = str
         index_keys['KW_CMPLTEXP'] = int
         index_keys['KW_NEXP'] = int
@@ -363,8 +369,6 @@ class PseudoConstants(DefaultConstants):
         # return index header keys
         return keys, ctypes
 
-
-
     def FILEDEF_HEADER_KEYS(self) -> List[str]:
         """
         Define the keys allowed to be used in file definitions
@@ -373,7 +377,7 @@ class PseudoConstants(DefaultConstants):
         """
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
                 'KW_CCAS', 'KW_CREF', 'KW_CALIBWH',
-                'KW_DPRTYPE', 'KW_OUTPUT']
+                'KW_DPRTYPE', 'KW_OUTPUT', 'KW_DRS_MODE']
         return keys
 
 
@@ -691,7 +695,7 @@ class PseudoConstants(DefaultConstants):
     # DATABASE SETTINGS
     # =========================================================================
     # noinspection PyPep8Naming
-    def INDEX_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+    def INDEX_DB_COLUMNS(self) -> Tuple[List[str], List[type], List[str]]:
         """
         Define the columns used in the index database
 
@@ -708,7 +712,8 @@ class PseudoConstants(DefaultConstants):
             - USED: int, whether entry should be used or ignored
             - RAW: int, whether raw data has been fixed for the header
 
-        :return: list of columns (strings)
+        :return: tuple, list of columns (strings), list of types, list of
+                 columns (strings) that should be unique
         """
         # set function name
         _ = display_func('INDEX_DB_COLUMNS', __NAME__,
@@ -722,6 +727,7 @@ class PseudoConstants(DefaultConstants):
         index_columns['FILENAME'] = str
         index_columns['BLOCK_KIND'] = str
         index_columns['LAST_MODIFIED'] = float
+        index_columns['RECIPE'] = str
         index_columns['RUNSTRING'] = str
         # split names and types and add header keys
         columns = list(index_columns.keys()) + hkeys
@@ -732,8 +738,11 @@ class PseudoConstants(DefaultConstants):
         extra_columns['RAWFIX'] = int
         columns += list(extra_columns.keys())
         ctypes += list(extra_columns.values())
+        # define columns that should be unique
+        unique_cols = ['ABSPATH']
         # return columns and column types
-        return columns, ctypes
+        return columns, ctypes, unique_cols
+
 
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
@@ -960,6 +969,36 @@ def get_header_end_time(params: ParamDict, header: Any,
     # ----------------------------------------------------------------------
     # get astropy time
     return Time(timetype(rawtime), format=timefmt)
+
+
+def get_drs_mode(params: ParamDict, header: Any, hdict: Any,
+                 filename: Union[str, None, Path] = None) -> Tuple[Any, Any]:
+    """
+    Assign the drs mode to the drs (for nirps_ha this is HA)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check / update
+    :param hdict: drs_fits.Header the output header dictionary to update
+
+    # header keys used are ('SBRHB1_P','SBRHB2_P')
+        SPECTROSCOPY = ('P16', 'P16')
+        POLAR1 = ('P14', 'P16')
+        POLAR2 = ('P2', 'P16')
+        POLAR3 = ('P2', 'P4')
+        POLAR4 = ('P14', 'P4')
+
+    """
+    # get drs mode header keyword store
+    kw_drs_mode, _, kw_drs_mode_comment = params['KW_DRS_MODE']
+    # get drs mode header keyword store
+    drs_mode = 'HA'
+    # -------------------------------------------------------------------------
+    # add header key
+    header[kw_drs_mode] = (drs_mode, kw_drs_mode_comment)
+    hdict[kw_drs_mode] = (drs_mode, kw_drs_mode_comment)
+    # return header
+    return header, hdict
 
 
 def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
