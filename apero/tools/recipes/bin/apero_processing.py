@@ -107,11 +107,6 @@ def __main__(recipe, params):
     drs_processing.send_email(params, kind='start')
 
     # ----------------------------------------------------------------------
-    # Deal with reset options
-    # ----------------------------------------------------------------------
-    drs_processing.reset_files(params)
-
-    # ----------------------------------------------------------------------
     # find all raw files via index database
     # ----------------------------------------------------------------------
     # update the index database (taking into account include/exclude lists)

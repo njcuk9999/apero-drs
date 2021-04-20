@@ -87,14 +87,6 @@ RUN_KEYS['TRIGGER_RUN'] = False
 RUN_KEYS['USE_ODO_REJECTLIST'] = True
 RUN_KEYS['RECAL_TEMPLATES'] = False
 RUN_KEYS['ENGINEERING'] = False
-RUN_KEYS['RESET_ALLOWED'] = False
-RUN_KEYS['RESET_TMP'] = False
-RUN_KEYS['RESET_REDUCED'] = False
-RUN_KEYS['RESET_CALIB'] = False
-RUN_KEYS['RESET_TELLU'] = False
-RUN_KEYS['RESET_LOG'] = False
-RUN_KEYS['RESET_PLOT'] = False
-RUN_KEYS['RESET_RUN'] = False
 RUN_KEYS['TELLURIC_TARGETS'] = None
 RUN_KEYS['SCIENCE_TARGETS'] = None
 # storage for reporting removed engineering directories
@@ -104,7 +96,9 @@ SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
 # get list of obj name cols
 OBJNAMECOL = 'KW_OBJNAME'
 # list of arguments to remove from skip check
-SKIP_REMOVE_ARGS = ['--skip', '--program', '--debug', '--plot', '--shortname']
+SKIP_REMOVE_ARGS = ['--skip', '--program', '--prog', '--debug',  '--d',
+                    '--verbose' '--plot', '--shortname', '--short'
+                    '--rkind', '--recipe_kind']
 # keep a global copy of plt
 PLT_MOD = None
 
@@ -2479,6 +2473,7 @@ def add_non_file_args(params: ParamDict, recipe: DrsRecipe,
     return filedict
 
 
+# TODO: Not used?
 def group_run_files(params: ParamDict, recipe: DrsRecipe,
                     argdict: Dict[str, ArgDictType],
                     kwargdict: Dict[str, ArgDictType],
@@ -2568,6 +2563,7 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     # brute force approach
     runs = []
+    run_score = []
     # ----------------------------------------------------------------------
     # deal with no file found (only if we expect to have files)
     if has_file_args:
@@ -2610,6 +2606,7 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
                             masternight=recipe.master)
         # finally add new_run to runs
         runs += new_runs
+        run_score += [[0] * len(new_runs)]
     else:
         arg0, drsfiles0 = fout
         # ----------------------------------------------------------------------
@@ -2654,9 +2651,21 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
                     continue
                 # finally add new_run to runs
                 runs += new_runs
+                # rank the importance by number of files (for master run)
+                new_run_score = []
+                for new_run in new_runs:
+                    new_run_score.append(len(new_run[arg0]))
+                run_score += [new_run_score]
     # deal with master (should only be 1)
     if recipe.master:
-        return [runs[0]]
+        # find the group with the highest score
+        pos, score = 0, 0
+        # loop round and rank runs (score the position of the highest ranking)
+        for r_it, rscore in enumerate(run_score):
+            if sum(rscore) > score:
+                pos, score = r_it, sum(rscore)
+        # return highest ranking score
+        return [runs[pos]]
     else:
         # return runs
         return runs
