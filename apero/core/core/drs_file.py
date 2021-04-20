@@ -371,15 +371,11 @@ class DrsPath:
             self.obs_dir = obs_dir
         if basename is not None:
             self.basename = basename
+        # need to clean up obs_dir (should not contain block path or path from
+        #   block kind)
+        self._clean_obs_dir()
         # update absolute path
-        if obs_dir is not None or basename is not None:
-            if self.obs_dir is None:
-                pass
-            elif self.basename is None:
-                self.abspath = os.path.join(self.block_path, self.obs_dir)
-            else:
-                self.abspath = os.path.join(self.block_path, self.obs_dir,
-                                            self.basename)
+        self._update_abspath()
         # if we have absolute path use it
         if self.abspath is not None:
             self._from_abspath()
@@ -403,6 +399,7 @@ class DrsPath:
                 self.block_name = block.name.lower()
                 # set the block file set
                 self.block_fileset = block.fileset
+
 
     def block_names(self) -> List[str]:
         """
@@ -437,6 +434,52 @@ class DrsPath:
             emsg = 'DrsPath does not have absolute path set'
             WLOG(self.params, 'error', emsg)
             return Path('')
+
+    def _clean_obs_dir(self):
+        """
+        obs dir should not be a full path (i.e. should not contain
+        block_path or a path coming from block kind)
+
+        thus we need to clean obs dir before the next steps
+
+        :return:
+        """
+        # don't clean if not set
+        if self.obs_dir is None:
+            return
+        # if we have block_kind
+        if self.block_kind is not None:
+            # set block path from block kind
+            _ = self._set_block_path_from_block_kind()
+        # remove block path from obs_dir
+        if self.block_path is not None:
+            # if we have block path remove it from obs_dir
+            if self.block_path in self.obs_dir:
+                # get the length of the block path
+                blen = len(self.block_path)
+                # take off the start of obs dir
+                obs_dir = self.obs_dir[blen:]
+                # make sure obs dir does not start with the os separator
+                while obs_dir.startswith(os.sep):
+                    obs_dir = obs_dir[1:]
+
+    def _update_abspath(self):
+        """
+        Assuming obs dir is clean make the absolute path if:
+        1. block path, obs dir are set and basename is None
+        2. block path, obs dir and basename are set
+
+        else abspath is not updated
+        :return:
+        """
+        if self.obs_dir is not None or self.basename is not None:
+            if self.obs_dir is None:
+                return
+            elif self.basename is None and self.block_path is not None:
+                self.abspath = os.path.join(self.block_path, self.obs_dir)
+            elif self.block_path is not None:
+                self.abspath = os.path.join(self.block_path, self.obs_dir,
+                                            self.basename)
 
     def _from_abspath(self):
         """
@@ -498,9 +541,18 @@ class DrsPath:
             # log error
             WLOG(self.params, 'error', emsg.format(*eargs))
 
-    def _blocks_error(self, emsg, eargs):
+    def _blocks_error(self, emsg: str,
+                      eargs: List[Any]) -> Tuple[str, List[Any]]:
+        """
+        Add to block errors (emsg and eargs)
+
+        :param emsg: str, the current error message
+        :param eargs: list of objects, the current list of arguments
+
+        :return: tuple, 1. updated emsg, 2. update eargs
+        """
         # add the possible block types
-        count = 1
+        count = len(eargs)
         for block in self.blocks:
             emsg += '\n\t\t{{{0}}}: {{{1}}}'.format(count, count + 1)
             eargs += [block.name, block.path]
@@ -554,14 +606,18 @@ class DrsPath:
             # log error
             WLOG(self.params, 'error', emsg.format(*eargs))
 
-    def _from_block_kind(self):
+    def _set_block_path_from_block_kind(self) -> bool:
         """
-        Set abspath and block_path from block_kind
-        :return:
+        Set the block path from block kind
+
+        :return: True if block_path is set
         """
-        # deal with abspath not set
+        # do not update block path if already set
+        if self.block_path is not None:
+            return True
+        # deal with block kind not set
         if self.block_kind is None:
-            return
+            return False
         # assume we haven't found directory
         found = False
         # loop around directories and see if absolute path belongs to one
@@ -573,6 +629,16 @@ class DrsPath:
                 found = True
                 # break here (we don't need to continue)
                 break
+        # return found
+        return found
+
+    def _from_block_kind(self):
+        """
+        Set abspath and block_path from block_kind
+        :return:
+        """
+        # set block path from block kind
+        found = self._set_block_path_from_block_kind()
         # now we want to set absolute path
         if found:
             # if we have an obs_dir and no basename add the obs_dir to the
@@ -2966,7 +3032,7 @@ class DrsFitsFile(DrsInputFile):
             else:
                 # Log that key was not found
                 dargs = [key, filedict['OUT'], ', '.join(list(filedict.keys()))]
-                WLOG(params, 'debug', textentry('90-008-00002', args=dargs))
+                WLOG(params, 'warning', textentry('90-008-00002', args=dargs))
         # return valid
         return valid
 
@@ -3810,6 +3876,13 @@ class DrsFitsFile(DrsInputFile):
         self.check_read(header_only=True)
         # check key is valid
         drskey = self._check_key(key)
+        # NIRPS-CHANGE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # deal with no drs key
+        if len(drskey) == 0:
+            if has_default:
+                return default
+            else:
+                return None
         # if we have a default key try to get key else use default value
         if has_default:
             value = self.header.get(drskey, default)
