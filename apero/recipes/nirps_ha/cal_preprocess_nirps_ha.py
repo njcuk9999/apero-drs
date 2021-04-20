@@ -229,14 +229,18 @@ def __main__(recipe, params):
         # correct for the top and bottom reference pixels
         WLOG(params, '', textentry('40-010-00003'))
         image = prep.correct_top_bottom(params, image)
+        # correct the left / right (not needed for spirou)
+        image = prep.correct_left_right(params, image)
 
         # get calibration database
-        calibdbm = drs_database.CalibrationDatabase(params)
-        # do nirps correction
-        WLOG(params, '', textentry('40-010-00016'))
-        image, pfile = prep.nirps_correction(params, image,
-                                             header=infile.get_header(),
-                                             database=calibdbm)
+        # calibdbm = drs_database.CalibrationDatabase(params)
+        # # do nirps correction
+        # WLOG(params, '', textentry('40-010-00016'))
+        # image, pfile = prep.nirps_correction(params, image,
+        #                                      header=infile.get_header(),
+        #                                      database=calibdbm)
+        pfile = 'None'
+
         # ------------------------------------------------------------------
         # calculate mid observation time
         # ------------------------------------------------------------------

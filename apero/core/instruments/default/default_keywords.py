@@ -16,6 +16,7 @@ __all__ = [  # input keys
     'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_GAIA_DR', 'KW_INPUTRV', 'KW_OBJ_TEMP',
     'KW_POLAR_KEY_1', 'KW_POLAR_KEY_2',
     'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME', 'KW_IDENTIFIER',
+    'KW_RAW_DPRTYPE',
     # object resolution keys
     'KW_DRS_OBJNAME', 'KW_DRS_OBJNAME_S', 'KW_DRS_GAIAID', 'KW_DRS_GAIAID_S',
     'KW_DRS_RA', 'KW_DRS_RA_S', 'KW_DRS_DEC', 'KW_DRS_DEC_S',
@@ -299,6 +300,9 @@ KW_NEXP = Keyword('KW_NEXP', key='', dtype=int, source=__NAME__,
 # define the pi name HEADER key
 KW_PI_NAME = Keyword('KW_PI_NAME', key='', dtype=str, source=__NAME__,
                      description='define the pi name HEADER key')
+
+# define the raw dprtype from the telescope (if given)
+KW_RAW_DPRTYPE = Keyword('KW_RAW_DPRTYPE', key='', dtype=str, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)

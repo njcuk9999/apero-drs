@@ -211,9 +211,12 @@ def construct_dark_table(params, filenames, **kwargs):
                                                        out_fmt='mjd')
         exptime = hdr[params['KW_EXPTIME'][0]]
         ppversion = hdr[params['KW_PPVERSION'][0]]
-        wt_temp = hdr[params['KW_WEATHER_TOWER_TEMP'][0]]
-        cass_temp = hdr[params['KW_CASS_TEMP'][0]]
-        humidity = hdr[params['KW_HUMIDITY'][0]]
+        # TODO: Cannot get this value from headers currently [NIRPS]
+        wt_temp = hdr.get(params['KW_WEATHER_TOWER_TEMP'][0], np.nan)
+        # TODO: Cannot get this value from headers currently [NIRPS]
+        cass_temp = hdr.get(params['KW_CASS_TEMP'][0], np.nan)
+        # TODO: Cannot get this value from headers currently [NIRPS]
+        humidity = hdr.get(params['KW_HUMIDITY'][0], np.nan)
         dprtype = hdr[params['KW_DPRTYPE'][0]]
         # append to lists
         dark_time.append(float(acqtime))

@@ -27,6 +27,8 @@ correct_cosmics = detector.correct_cosmics
 
 correct_top_bottom = detector.ref_top_bottom
 
+correct_left_right = detector.correct_left_right
+
 nirps_order_mask = detector.nirps_order_mask
 
 median_filter_dark_amps = detector.median_filter_dark_amp

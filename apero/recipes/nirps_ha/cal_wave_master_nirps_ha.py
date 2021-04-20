@@ -28,7 +28,7 @@ from apero.science import velocity
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'cal_wave_master_ea_nirps_ha.py'
+__NAME__ = 'cal_wave_master_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

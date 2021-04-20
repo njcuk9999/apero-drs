@@ -343,10 +343,7 @@ class PseudoConstants(DefaultConstants):
         index_keys['KW_OBJNAME'] = str
         index_keys['KW_OBSTYPE'] =str
         index_keys['KW_EXPTIME'] = float
-        index_keys['KW_CCAS'] = str
-        index_keys['KW_CREF'] = str
-        index_keys['KW_CDEN'] = float
-        index_keys['KW_CALIBWH'] = str
+        index_keys['KW_RAW_DPRTYPE'] = str
         index_keys['KW_DPRTYPE'] = str
         index_keys['KW_DRS_MODE'] = str
         index_keys['KW_OUTPUT'] = str
@@ -376,8 +373,7 @@ class PseudoConstants(DefaultConstants):
         :return: list of keys
         """
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
-                'KW_CCAS', 'KW_CREF', 'KW_CALIBWH',
-                'KW_DPRTYPE', 'KW_OUTPUT', 'KW_DRS_MODE']
+                'KW_RAW_DPRTYPE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_DRS_MODE']
         return keys
 
 
@@ -824,38 +820,26 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     :return: the updated header and hdict
     """
     # set function name
-    func_name = display_func('get_trg_type', __NAME__)
+    _ = display_func('get_trg_type', __NAME__)
     # get keys from params
-    kwobjname = params['KW_OBJNAME'][0]
     kwobstype = params['KW_OBSTYPE'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwtrgcomment = params['KW_TARGET_TYPE'][2]
-    # deal with output key already in header
-    if header is not None:
-        if kwtrgtype in header:
-            if not drs_text.null_text(header[kwtrgtype], ['None', '']):
-                return header, hdict
-    # get objname
-    if kwobjname not in header:
-        eargs = [kwobjname, filename]
-        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
-                                func_name=func_name)
-
-    objname = header[kwobjname]
     # get obstype
     if kwobstype not in header:
         eargs = [kwobstype, filename]
-        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
-                                func_name=func_name)
-
+        raise drs_exceptions.DrsCodedException('01-001-00027', 'error',
+                                               targs=eargs)
     obstype = header[kwobstype]
+    # obstype might be in form "TYPE,DPRTYPE[0], DPRTYPE[1]"
+    obstype = obstype.split(',')[0]
     # deal with setting value
-    if obstype != 'OBJECT':
-        trg_type = ''
-    elif 'sky' in objname:
+    if obstype in ['OBJECT', 'STAR']:
+        trg_type = 'TARGET'
+    elif obstype in ['SKY']:
         trg_type = 'SKY'
     else:
-        trg_type = 'TARGET'
+        trg_type = ''
     # update header
     header[kwtrgtype] = (trg_type, kwtrgcomment)
     hdict[kwtrgtype] = (trg_type, kwtrgcomment)
@@ -878,6 +862,29 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
 
     :return: the updated header and hdict
     """
+
+    # TODO: START --------------------------------------------------------------
+    # TODO: FIX: temporary measure: fix time header keys
+    rawtime = Time(header['DATE'], format='fits')
+    exptime = header['HIERARCH ESO DET2 EXPO TIME']
+    # TODO: FIX: MJDATE should be the 'mid time' - exptime in days
+    header['MJDATE'] = (rawtime.mjd - exptime / (3600*24),
+                        'Modified Julian Date at start of observation')
+    hdict['MJDATE'] = header['MJDATE']
+    # TODO: FIX: MJDEND should be the 'mid time' + exptime in days
+    header['MJDEND'] = (rawtime.mjd + exptime / (3600*24),
+                       'Modified Julian Date at end of observation')
+    hdict['MJDEND'] = header['MJDEND']
+    # TODO: FIX: DATE-OBS should be DATE: YYYY-mm-dd
+    header['DATE-OBS'] = (rawtime.iso.split()[0],
+                         'Date at start of observation (UTC)')
+    hdict['DATE-OBS'] = header['DATE-OBS']
+    # TODO: FIX: UTC-OBS should be DATE: HH:MM:SS.SS
+    header['UTC-OBS'] = (rawtime.iso.split()[1],
+                         'Time at start of observation (UTC)')
+    hdict['UTC-OBS'] = header['UTC-OBS']
+    # TODO: END ---------------------------------------------------------------
+
     # set function name
     func_name = display_func('get_mid_obs_time', __NAME__)
     # get keys from params

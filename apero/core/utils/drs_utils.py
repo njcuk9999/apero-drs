@@ -398,8 +398,7 @@ class RecipeLog:
 
     def write_logfile(self):
         """
-        The lcoked writer function - do not use _writer directly
-        this locks the write procses using the predefined lock function
+        Write to the log database
 
         :return: None, unless return_values is True
         """

@@ -31,7 +31,8 @@ __all__ = [
     'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
-    'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF',
+    'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF', 'IMAGE_SATURATION',
+    'IMAGE_FRAME_TIME',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
     'OBJ_LIST_GAIA_URL', 'CALIB_CHECK_FP_PERCENTILE', 'CALIB_CHECK_FP_THRES',
@@ -79,7 +80,7 @@ __all__ = [
     'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE', 'LOC_BKGRD_THRESHOLD',
     'LOC_ORDER_CURVE_DROP', 'LOC_PLOT_CORNER_XZOOM1', 'LOC_PLOT_CORNER_XZOOM2',
     'LOC_PLOT_CORNER_YZOOM1', 'LOC_PLOT_CORNER_YZOOM2', 'LOC_COEFF_SIGCLIP',
-    'LOC_COEFFSIG_DEG',
+    'LOC_COEFFSIG_DEG', 'LOC_MAX_YPIX_VALUE',
     # shape constants
     'ALLOWED_FP_TYPES', 'FP_MASTER_MATCH_TIME',
     'FP_MASTER_PERCENT_THRES', 'SHAPE_QC_LTRANS_RES_THRES',
@@ -434,6 +435,17 @@ IMAGE_PIXEL_SIZE = Const('IMAGE_PIXEL_SIZE', value=None, dtype=float,
 FWHM_PIXEL_LSF = Const('FWHM_PIXEL_LSF', value=None, dtype=float,
                        source=__NAME__, group=cgroup,
                        description='Define mean line width expressed in pix')
+
+# Define the point at which the detector saturates
+IMAGE_SATURATION = Const('IMAGE_SATURATION', value=None, dtype=float,
+                         source=__NAME__, group=cgroup,
+                         description='Define the point at which the detector '
+                                     'saturates')
+
+# Define the frame time for an image
+IMAGE_FRAME_TIME = Const('IMAGE_FRAME_TIME', value=None, dtype=float,
+                         source=__NAME__, group=cgroup,
+                         description='Define the frame time for an image')
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
@@ -1144,6 +1156,12 @@ LOC_COEFFSIG_DEG = Const('LOC_COEFFSIG_DEG', value=None, dtype=int,
                          source=__NAME__, minimum=1, group=cgroup, 
                          description=('Defines the fit degree to fit in the '
                                       'coefficient cleaning'))
+
+#  Define the maximum value allowed in the localisation (cuts bluest orders)
+LOC_MAX_YPIX_VALUE = Const('LOC_MAX_YPIX_VALUE', value=None, dtype=int,
+                           source=__NAME__, minimum=0, group=cgroup,
+                           description='Define the maximum value allowed in '
+                                       'the localisation (cuts bluest orders)')
 
 # Order of polynomial to fit for widths
 LOC_WIDTH_POLY_DEG = Const('LOC_WIDTH_POLY_DEG', value=None, dtype=int,
