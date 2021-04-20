@@ -125,7 +125,7 @@ class RecipeLog:
         self.runstring = ''
         self.recipe_type = str(params['DRS_RECIPE_TYPE'])
         self.recipe_kind = str(params['DRS_RECIPE_KIND'])
-        self.running = 0
+        self.running = True
         # set that recipe started
         self.started = True
         # set the iteration
@@ -191,7 +191,8 @@ class RecipeLog:
         self.name = str(rlog.name)
         self.sname = str(rlog.sname)
         self.block_kind = str(rlog.block_kind)
-        self.rtype = str(rlog.rtype)
+        self.recipe_type = str(rlog.recipe_type)
+        self.recipe_kind = str(rlog.recipe_kind)
         self.pid = str(rlog.pid)
         self.htime = str(rlog.htime)
         self.utime = str(rlog.utime)
@@ -559,21 +560,21 @@ class RecipeLog:
         param_kinds.append('rlog')
         values.append(self.block_kind)
         source.append(func_name)
-        description.append('Recipe block type (recipe or tool)')
+        description.append('Recipe block type')
         count.append(1)
         # recipe type
-        names.append('rlog.rtype')
+        names.append('rlog.recipe_type')
         param_kinds.append('rlog')
-        values.append(self.block_kind)
+        values.append(self.recipe_type)
         source.append(func_name)
-        description.append('Recipe type (recipe or tool)')
+        description.append('Recipe type')
         count.append(1)
-        # recipe drs process id number
-        names.append('rlog.pid')
+        # recipe kind
+        names.append('rlog.recipe_kind')
         param_kinds.append('rlog')
-        values.append(self.rtype)
+        values.append(self.recipe_kind)
         source.append(func_name)
-        description.append('Recipe drs process id number')
+        description.append('Recipe kind')
         count.append(1)
         # recipe drs process id number
         names.append('rlog.pid')

@@ -441,7 +441,7 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
     file_args, non_file_args, alldict = fout
     # define the first file_arg columns
     if len(file_args) == 0:
-        raise ValueError('Must have file arguements')
+        raise ValueError('Must have file arguments')
     else:
         first_arg = file_args[0]
     # ----------------------------------------------------------------------
@@ -474,30 +474,37 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
         # deal with no table
         if len(table0) == 0:
             continue
+        # ---------------------------------------------------------------------
+        # get filter only on first argument
+        # ---------------------------------------------------------------------
+        # create filter masks - only if we have one set of file arguments
+        if group_filter is not None and len(fargs) == 1:
+            # get the filter groups and update the sort on the table
+            table1, filtermasks = group_filter(table0)
+        elif group_filter is not None:
+            raise ValueError('Cannot use group filter with more than 1 file '
+                             'argument')
+        else:
+            # else we just have one mask and it is all Trues --> i.e. no
+            #   filter mask
+            filtermasks = [np.ones(len(table0)).astype(bool)]
+        # ---------------------------------------------------------------------
         # get unique column entries
         unique_entries = np.unique(table0[group_column])
         # loop around these unique entries and add to groups
         for entry in unique_entries:
-            # valid
-            valid = True
-            # need to create a run instance here
-            run_inst = drsgf.RunInstance(rargs, rkwargs)
-            # loop around arguments
-            for k_it, farg in enumerate(fargs):
-                # get the argument name
-                argname = file_args[k_it]
-                # get this arguments table
-                table1 = alldict[argname][farg]
-                # create filter masks
-                if group_filter is not None:
-                    # get the filter groups and update the sort on the table
-                    table1, filtermasks = group_filter(table1)
-                else:
-                    # else we just have one mask and it is all Trues --> i.e. no
-                    #   filter mask
-                    filtermasks = [np.ones(len(table1)).astype(bool)]
-                # loop around filter groups
-                for filtermask in filtermasks:
+            # loop around filter groups (only not all Trues if len(fargs) == 1)
+            for filtermask in filtermasks:
+                # valid
+                valid = True
+                # need to create a run instance here
+                run_inst = drsgf.RunInstance(rargs, rkwargs)
+                # loop around arguments
+                for k_it, farg in enumerate(fargs):
+                    # get the argument name
+                    argname = file_args[k_it]
+                    # get this arguments table
+                    table1 = alldict[argname][farg]
                     # must sort this table
                     # deal with no table
                     if table1 is None:
@@ -512,8 +519,9 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
                     run_inst.group = entry
                     # create a mask of all files for this group_column
                     colmask = table1[group_column] == entry
-                    # add the filter group mask
-                    colmask &= filtermask
+                    # add the filter group mask (only for first argument)
+                    if k_it == 0:
+                        colmask &= filtermask
                     # get list of filenames
                     filenames = list(table1['OUT'][colmask])
                     # check we have entries
@@ -522,15 +530,15 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
                         continue
                     # in each dictionary we will have arguments
                     run_inst.dictionary[argname] = filenames
-                    # add to run instances
-                    if valid:
-                        # print statement
-                        pmsg = '\t\tProcessing I run {0}'.format(run_count)
-                        drs_log.Printer(None, None, pmsg)
-                        # add to run count
-                        run_count += 1
-                        # add to run_instances
-                        run_instances.append(run_inst)
+                # add to run instances
+                if valid:
+                    # print statement
+                    pmsg = '\t\tProcessing I run {0}'.format(run_count)
+                    drs_log.Printer(None, None, pmsg)
+                    # add to run count
+                    run_count += 1
+                    # add to run_instances
+                    run_instances.append(run_inst)
 
     # ----------------------------------------------------------------------
     # deal with non-file arguments
