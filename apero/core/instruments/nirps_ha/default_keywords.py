@@ -59,13 +59,13 @@ KW_UTC_OBS.set(key='UTC-OBS', comment='Time at start of observation (UTC)')
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 KW_RDNOISE = KW_RDNOISE.copy(__NAME__)
-KW_RDNOISE.set(key='RDNOISE', comment='Read noise (electrons)',
-               combine_method='flux')
+KW_RDNOISE.set(key='HIERARCH ESO DET OUT1 RON',
+               comment='Read noise (electrons)', combine_method='flux')
 
 # define the gain HEADER key (used to get value only)
 KW_GAIN = KW_GAIN.copy(__NAME__)
-KW_GAIN.set(key='GAIN', comment='Amplifier gain (electrons/ADU)',
-            combine_method='mean')
+KW_GAIN.set(key='HIERARCH ESO DET OUT1 GAIN',
+            comment='Amplifier gain (electrons/ADU)', combine_method='mean')
 
 # define the saturation limit HEADER key
 KW_SATURATE = KW_SATURATE.copy(__NAME__)
@@ -77,11 +77,14 @@ KW_FRMTIME = KW_FRMTIME.copy(__NAME__)
 KW_FRMTIME.set(key='FRMTIME', comment='[sec] Frame time, cadence of IR reads')
 
 # define the exposure time HEADER key (used to get value only)
+# TODO: This value should change
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
-KW_EXPTIME.set(key='EXPTIME', unit=uu.s, comment='[sec] Integration time',
+KW_EXPTIME.set(key='HIERARCH ESO DET SEQ1 DIT', unit=uu.s,
+               comment='[sec] Integration time',
                combine_method='sum')
 
 # define the required exposure time HEADER key (used to get value only)
+# NIRPS-CHANGE: Do we have this for NIRPS?
 KW_EXPREQ = KW_EXPREQ.copy(__NAME__)
 KW_EXPREQ.set(key='EXPREQ', unit=uu.s,
               comment='[sec] Requested integration time',
@@ -89,49 +92,58 @@ KW_EXPREQ.set(key='EXPREQ', unit=uu.s,
 
 # define the observation type HEADER key
 KW_OBSTYPE = KW_OBSTYPE.copy(__NAME__)
-KW_OBSTYPE.set(key='OBSTYPE', comment='Observation / Exposure type')
+KW_OBSTYPE.set(key='HIERARCH ESO DPR TYPE',
+               comment='Observation / Exposure type')
 
 # define the science fiber type HEADER key
-KW_CCAS = KW_CCAS.copy(__NAME__)
-KW_CCAS.set(key='SBCCAS_P',
-            comment='SPIRou Cassegrain Fiber Position (predefined)')
+# KW_CCAS = KW_CCAS.copy(__NAME__)
+# KW_CCAS.set(key='SBCCAS_P',
+#             comment='SPIRou Cassegrain Fiber Position (predefined)')
 
 # define the reference fiber type HEADER key
-KW_CREF = KW_CREF.copy(__NAME__)
-KW_CREF.set(key='SBCREF_P',
-            comment='SPIRou Reference Fiber Position (predefined)')
+# KW_CREF = KW_CREF.copy(__NAME__)
+# KW_CREF.set(key='SBCREF_P',
+#             comment='SPIRou Reference Fiber Position (predefined)')
 
 # define the calibration wheel position
-KW_CALIBWH = KW_CALIBWH.copy(__NAME__)
-KW_CALIBWH.set(key='SBCALI_P',
-               comment='SPIRou calibwh predefined position or angle')
+# KW_CALIBWH = KW_CALIBWH.copy(__NAME__)
+# KW_CALIBWH.set(key='SBCALI_P',
+#                comment='SPIRou calibwh predefined position or angle')
 
 # define the target type (object/sky)
 KW_TARGET_TYPE = KW_TARGET_TYPE.copy(__NAME__)
 KW_TARGET_TYPE.set(key='TRG_TYPE', comment='target or sky object')
 
 # define the density HEADER key
-KW_CDEN = KW_CDEN.copy(__NAME__)
-KW_CDEN.set(key='SBCDEN_P', comment='SPIRou Calib-Reference density (0 to 3.3)')
+# KW_CDEN = KW_CDEN.copy(__NAME__)
+# KW_CDEN.set(key='SBCDEN_P',
+#             comment='SPIRou Calib-Reference density (0 to 3.3)')
 
 # define polarisation HEADER key
-KW_CMMTSEQ = KW_CMMTSEQ.copy(__NAME__)
-KW_CMMTSEQ.set(key='CMMTSEQ')
+# KW_CMMTSEQ = KW_CMMTSEQ.copy(__NAME__)
+# KW_CMMTSEQ.set(key='CMMTSEQ')
 
 # define the exposure number within sequence HEADER key
 KW_CMPLTEXP = KW_CMPLTEXP.copy(__NAME__)
-KW_CMPLTEXP.set(key='CMPLTEXP',
+KW_CMPLTEXP.set(key='HIERARCH ESO TPL EXPNO',
                 comment='Exposure number within the exposure sequence ',
                 combine_method='1')
 
 # define the total number of exposures HEADER key
 KW_NEXP = KW_NEXP.copy(__NAME__)
-KW_NEXP.set(key='NEXP', comment='Total number of exposures within the sequence',
+KW_NEXP.set(key='HIERARCH ESO TPL NEXP',
+            comment='Total number of exposures within the sequence',
             combine_method='1')
 
 # define the pi name HEADER key
 KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
-KW_PI_NAME.set(key='PI_NAME', comment='The PI of the program')
+KW_PI_NAME.set(key='HIERARCH ESO OBS PI-COI NAME',
+               comment='The PI of the program')
+
+# define the raw dprtype from the telescope (if given)
+KW_RAW_DPRTYPE = KW_RAW_DPRTYPE.copy(__NAME__)
+KW_RAW_DPRTYPE.set(key='HIERARCH ESO DPR TYPE',
+                   comment='Observation type')
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)

@@ -55,198 +55,142 @@ raw_file = drs_finput('DRS_RAW', filetype='.fits', suffix='',
 #                            outfunc=out.blank)
 # raw_file.addset(raw_dark_dark)
 
-# raw dark in P4 (internal dark)
-raw_dark_dark_int = drs_finput('RAW_DARK_DARK_INT', filetype='.fits',
+# raw dark
+raw_dark_dark = drs_finput('RAW_DARK_DARK', filetype='.fits',
                                suffix='', inext='.fits', outfunc=out.blank,
-                               hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                                          KW_OBSTYPE='DARK', KW_CALIBWH='P4'))
-raw_file.addset(raw_dark_dark_int)
-
-# raw dark in P5 (telescope dark)
-raw_dark_dark_tel = drs_finput('RAW_DARK_DARK_TEL', filetype='.fits',
-                               suffix='', inext='.fits', outfunc=out.blank,
-                               hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                                          KW_OBSTYPE='DARK', KW_CALIBWH='P5'))
-raw_file.addset(raw_dark_dark_tel)
+                               hkeys=dict(KW_RAW_DPRTYPE='DARK'))
+raw_file.addset(raw_dark_dark)
 
 # sky observation (sky dark)
 raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', filetype='.fits',
                                suffix='', inext='.fits', outfunc=out.blank,
-                               hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                                          KW_OBSTYPE='OBJECT',
-                                          KW_TARGET_TYPE='SKY'))
+                               hkeys=dict(KW_RAW_DPRTYPE='EFF,SKY,SKY'))
 raw_file.addset(raw_dark_dark_sky)
 
 # sky observations (with fp)
+# NIRPS-CHANGE: Not defined - this is a guess
 raw_dark_fp_sky = drs_finput('RAW_DARK_FP_SKY', filetype='.fits', suffix='',
                              inext='.fits', outfunc=out.blank,
-                             hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
-                                        KW_OBSTYPE='OBJECT',
-                                        KW_TARGET_TYPE='SKY'))
+                             hkeys=dict(KW_RAW_DPRTYPE='SKY,FP'))
 raw_file.addset(raw_dark_fp_sky)
 
 # -----------------------------------------------------------------------------
 # raw flat files
 raw_dark_flat = drs_finput('RAW_DARK_FLAT', outfunc=out.blank, filetype='.fits',
                            suffix='',
-                           hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_wl',
-                                      KW_OBSTYPE='FLAT', ))
+                           hkeys=dict(KW_RAW_DPRTYPE='ORDERDEF,DARK,LAMP'))
 raw_file.addset(raw_dark_flat)
 
 raw_flat_dark = drs_finput('RAW_FLAT_DARK', outfunc=out.blank,
                            filetype='.fits', suffix='',
-                           hkeys=dict(KW_CCAS='pos_wl', KW_CREF='pos_pk',
-                                      KW_OBSTYPE='FLAT'))
+                           hkeys=dict(KW_RAW_DPRTYPE='ORDERDEF,LAMP,DARK'))
 raw_file.addset(raw_flat_dark)
 
 raw_flat_flat = drs_finput('RAW_FLAT_FLAT', outfunc=out.blank,
                            filetype='.fits', suffix='',
-                           hkeys=dict(KW_CCAS='pos_wl', KW_CREF='pos_wl',
-                                      KW_OBSTYPE='FLAT'))
+                           hkeys=dict(KW_RAW_DPRTYPE='FLAT,LAMP,LAMP'))
 raw_file.addset(raw_flat_flat)
 
+# NIRPS-CHANGE: Not defined - this is a guess
 raw_flat_fp = drs_finput('RAW_FLAT_FP', outfunc=out.blank,
                          filetype='.fits', suffix='',
-                         hkeys=dict(KW_CCAS='pos_wl', KW_CREF='pos_fp',
-                                    KW_OBSTYPE='FLAT'))
+                         hkeys=dict(KW_RAW_DPRTYPE='FLAT,LAMP,FP'))
 raw_file.addset(raw_flat_fp)
 
 # -----------------------------------------------------------------------------
 # raw align files
 raw_dark_fp = drs_finput('RAW_DARK_FP', outfunc=out.blank,
                          filetype='.fits', suffix='',
-                         hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
-                                    KW_OBSTYPE='ALIGN'))
+                         hkeys=dict(KW_RAW_DPRTYPE='CONTAM,DARK,FP'))
 raw_file.addset(raw_dark_fp)
 
 raw_fp_dark = drs_finput('RAW_FP_DARK', outfunc=out.blank,
                          filetype='.fits', suffix='',
-                         hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_pk',
-                                    KW_OBSTYPE='ALIGN'))
+                         hkeys=dict(KW_RAW_DPRTYPE='CONTAM,FP,DARK'))
 raw_file.addset(raw_fp_dark)
 
+# NIRPS-CHANGE: Not defined - this is a guess
 raw_fp_flat = drs_finput('RAW_FP_FLAT', outfunc=out.blank,
                          filetype='.fits', suffix='',
-                         hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_wl',
-                                    KW_OBSTYPE='ALIGN'))
+                         hkeys=dict(KW_RAW_DPRTYPE='CONTAM,FP,LAMP'))
 raw_file.addset(raw_fp_flat)
 
 raw_fp_fp = drs_finput('RAW_FP_FP', outfunc=out.blank,
                        filetype='.fits', suffix='',
-                       hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_fp',
-                                  KW_OBSTYPE='ALIGN'))
+                       hkeys=dict(KW_RAW_DPRTYPE='WAVE,FP,FP'))
 raw_file.addset(raw_fp_fp)
 
 # -----------------------------------------------------------------------------
 # raw LFC files
+# NIRPS-CHANGE: Not defined - this is a guess
 raw_lfc_lfc = drs_finput('RAW_LFC_LFC', filetype='.fits', suffix='',
                          outfunc=out.blank,
-                         hkeys=dict(KW_CCAS='pos_rs', KW_CREF='pos_rs',
-                                    KW_OBSTYPE='ALIGN'))
+                         hkeys=dict(KW_RAW_DPRTYPE='WAVE,LFC,LFC'))
 raw_file.addset(raw_lfc_lfc)
 
+# NIRPS-CHANGE: Not defined - this is a guess
 raw_lfc_fp = drs_finput('RAW_LFC_FP',
                         filetype='.fits', suffix='',
-                        hkeys=dict(KW_CCAS='pos_rs', KW_CREF='pos_fp',
-                                   KW_OBSTYPE='ALIGN'))
+                        hkeys=dict(KW_RAW_DPRTYPE='WAVE,LFC,FP'))
 raw_file.addset(raw_lfc_fp)
 
+# NIRPS-CHANGE: Not defined - this is a guess
 raw_fp_lfc = drs_finput('RAW_FP_LFC',
                         filetype='.fits', suffix='',
-                        hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_rs',
-                                   KW_OBSTYPE='ALIGN'))
+                        hkeys=dict(KW_RAW_DPRTYPE='WAVE,FP,LFC'))
 raw_file.addset(raw_fp_lfc)
+
+# -----------------------------------------------------------------------------
+# raw LED LED file
+raw_led_led = drs_finput('RAW_LED_LED', filetype='.fits', suffix='',
+                         hkeys=dict(KW_RAW_DPRTYPE='LED'))
+raw_file.addset(raw_led_led)
 
 # -----------------------------------------------------------------------------
 # raw object files
 raw_obj_dark = drs_finput('RAW_OBJ_DARK', outfunc=out.blank,
-                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                                     KW_OBSTYPE='OBJECT',
+                          hkeys=dict(KW_RAW_DPRTYPE='OBJECT,STAR,DARK',
                                      KW_TARGET_TYPE='TARGET', ))
 raw_file.addset(raw_obj_dark)
 
 raw_obj_fp = drs_finput('RAW_OBJ_FP', outfunc=out.blank, filetype='.fits',
                         suffix='', inext='.fits',
-                        hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
-                                   KW_OBSTYPE='OBJECT',
+                        hkeys=dict(KW_RAW_DPRTYPE='OBJECT,STAR,FP',
                                    KW_TARGET_TYPE='TARGET'))
 raw_file.addset(raw_obj_fp)
 
 raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', outfunc=out.blank,
                          filetype='.fits', suffix='', inext='.fits',
-                         hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc1',
-                                    KW_OBSTYPE='OBJECT',
+                         hkeys=dict(KW_RAW_DPRTYPE='OBJECT,STAR,UN1',
                                     KW_TARGET_TYPE='TARGET'))
 raw_file.addset(raw_obj_hc1)
-
-raw_obj_hc2 = drs_finput('RAW_OBJ_HCTWO', outfunc=out.blank, filetype='.fits',
-                         suffix='', inext='.fits',
-                         hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc2',
-                                    KW_OBSTYPE='OBJECT',
-                                    KW_TARGET_TYPE='TARGET'))
-raw_file.addset(raw_obj_hc2)
 
 # -----------------------------------------------------------------------------
 # raw comparison files
 raw_dark_hc1 = drs_finput('RAW_DARK_HCONE', outfunc=out.blank,
                           filetype='.fits', suffix='',
-                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc1',
-                                     KW_OBSTYPE='COMPARISON'))
+                          hkeys=dict(KW_RAW_DPRTYPE='WAVE,DARK,UN1'))
 raw_file.addset(raw_dark_hc1)
-
-raw_dark_hc2 = drs_finput('RAW_DARK_HCTWO', outfunc=out.blank,
-                          filetype='.fits', suffix='',
-                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc2',
-                                     KW_OBSTYPE='COMPARISON'))
-raw_file.addset(raw_dark_hc2)
 
 raw_fp_hc1 = drs_finput('RAW_FP_HCONE', outfunc=out.blank,
                         filetype='.fits', suffix='',
-                        hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_hc1',
-                                   KW_OBSTYPE='COMPARISON'))
+                        hkeys=dict(KW_RAW_DPRTYPE='WAVE,FP,UN1'))
 raw_file.addset(raw_fp_hc1)
-
-raw_fp_hc2 = drs_finput('RAW_FP_HCTWO', outfunc=out.blank,
-                        filetype='.fits', suffix='',
-                        hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_hc2',
-                                   KW_OBSTYPE='COMPARISON'))
-raw_file.addset(raw_fp_hc2)
 
 raw_hc1_fp = drs_finput('RAW_HCONE_FP', outfunc=out.blank,
                         filetype='.fits', suffix='',
-                        hkeys=dict(KW_CCAS='pos_hc1', KW_CREF='pos_fp',
-                                   KW_OBSTYPE='COMPARISON'))
+                        hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN1,FP'))
 raw_file.addset(raw_hc1_fp)
-
-raw_hc2_fp = drs_finput('RAW_HCTWO_FP', outfunc=out.blank,
-                        filetype='.fits', suffix='',
-                        hkeys=dict(KW_CCAS='pos_hc2', KW_CREF='pos_fp',
-                                   KW_OBSTYPE='COMPARISON'))
-raw_file.addset(raw_hc2_fp)
 
 raw_hc1_hc1 = drs_finput('RAW_HCONE_HCONE', filetype='.fits', suffix='',
                          outfunc=out.blank,
-                         hkeys=dict(KW_CCAS='pos_hc1', KW_CREF='pos_hc1',
-                                    KW_OBSTYPE='COMPARISON'))
+                         hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN1,UN1'))
 raw_file.addset(raw_hc1_hc1)
-
-raw_hc2_hc2 = drs_finput('RAW_HCTWO_HCTWO', filetype='.fits', suffix='',
-                         outfunc=out.blank,
-                         hkeys=dict(KW_CCAS='pos_hc2', KW_CREF='pos_hc2',
-                                    KW_OBSTYPE='COMPARISON'))
-raw_file.addset(raw_hc2_hc2)
 
 raw_hc1_dark = drs_finput('RAW_HCONE_DARK', filetype='.fits', suffix='',
                           outfunc=out.blank,
-                          hkeys=dict(KW_CCAS='pos_hc1', KW_CREF='pos_pk',
-                                     KW_OBSTYPE='COMPARISON', ))
+                          hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN1,DARK'))
 raw_file.addset(raw_hc1_dark)
-
-raw_hc2_dark = drs_finput('RAW_HCTWO_DARK', filetype='.fits', suffix='',
-                          outfunc=out.blank,
-                          hkeys=dict(KW_CCAS='pos_hc2', KW_CREF='pos_pk',
-                                     KW_OBSTYPE='COMPARISON'))
-raw_file.addset(raw_hc2_dark)
 
 # =============================================================================
 # Preprocessed Files
@@ -262,17 +206,11 @@ pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp',
 #                           inext='.fits', outfunc=out.general_file)
 # pp_file.addset(pp_dark_dark)
 
-pp_dark_dark_int = drs_finput('DARK_DARK_INT', filetype='.fits',
-                              suffix='_pp', intype=raw_dark_dark_int,
+pp_dark_dark = drs_finput('DARK_DARK_INT', filetype='.fits',
+                              suffix='_pp', intype=raw_dark_dark,
                               inext='.fits', outfunc=out.general_file,
                               hkeys=dict(KW_DPRTYPE='DARK_DARK_INT', ))
-pp_file.addset(pp_dark_dark_int)
-
-pp_dark_dark_tel = drs_finput('DARK_DARK_TEL', filetype='.fits',
-                              suffix='_pp', intype=raw_dark_dark_tel,
-                              inext='.fits', outfunc=out.general_file,
-                              hkeys=dict(KW_DPRTYPE='DARK_DARK_TEL'))
-pp_file.addset(pp_dark_dark_tel)
+pp_file.addset(pp_dark_dark)
 
 pp_dark_dark_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',
                               suffix='_pp', intype=raw_dark_dark_sky,
@@ -353,6 +291,13 @@ pp_fp_lfc = drs_finput('FP_LFC', hkeys=dict(KW_DPRTYPE='FP_LFC'),
 pp_file.addset(pp_fp_lfc)
 
 # -----------------------------------------------------------------------------
+# LED LED file
+pp_led_led = drs_finput('LED_LED', hkeys=dict(KW_DPRTYPE='LED_LED'),
+                        filetype='.fits', suffix='_pp', intype=raw_led_led,
+                        inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_led_led)
+
+# -----------------------------------------------------------------------------
 #  object
 pp_obj_dark = drs_finput('OBJ_DARK', hkeys=dict(KW_DPRTYPE='OBJ_DARK'),
                          filetype='.fits',
@@ -369,11 +314,6 @@ pp_obj_hc1 = drs_finput('OBJ_HC1', hkeys=dict(KW_DPRTYPE='OBJ_HCONE'),
                         suffix='_pp', intype=raw_obj_hc1,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_obj_hc1)
-pp_obj_hc2 = drs_finput('OBJ_HC2', hkeys=dict(KW_DPRTYPE='OBJ_HCTWO'),
-                        filetype='.fits',
-                        suffix='_pp', intype=raw_obj_hc2,
-                        inext='.fits', outfunc=out.general_file)
-pp_file.addset(pp_obj_hc2)
 # -----------------------------------------------------------------------------
 #  comparison
 pp_dark_hc1 = drs_finput('DARK_HCONE', hkeys=dict(KW_DPRTYPE='DARK_HCONE'),
@@ -381,51 +321,30 @@ pp_dark_hc1 = drs_finput('DARK_HCONE', hkeys=dict(KW_DPRTYPE='DARK_HCONE'),
                          suffix='_pp', intype=raw_dark_hc1,
                          inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_dark_hc1)
-pp_dark_hc2 = drs_finput('DARK_HCTW0', hkeys=dict(KW_DPRTYPE='DARK_HCTW0'),
-                         filetype='.fits',
-                         suffix='_pp', intype=raw_dark_hc2,
-                         inext='.fits', outfunc=out.general_file)
-pp_file.addset(pp_dark_hc2)
+
 pp_fp_hc1 = drs_finput('FP_HCONE', hkeys=dict(KW_DPRTYPE='FP_HCONE'),
                        filetype='.fits',
                        suffix='_pp', intype=raw_fp_hc1,
                        inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_fp_hc1)
-pp_fp_hc2 = drs_finput('FP_HCTWO', hkeys=dict(KW_DPRTYPE='FP_HCTWO'),
-                       filetype='.fits',
-                       suffix='_pp', intype=raw_fp_hc2,
-                       inext='.fits', outfunc=out.general_file)
-pp_file.addset(pp_fp_hc2)
+
 pp_hc1_fp = drs_finput('HCONE_FP', hkeys=dict(KW_DPRTYPE='HCONE_FP'),
                        filetype='.fits',
                        suffix='_pp', intype=raw_hc1_fp,
                        inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_hc1_fp)
-pp_hc2_fp = drs_finput('HCTWO_FP', hkeys=dict(KW_DPRTYPE='HCTWO_FP'),
-                       filetype='.fits',
-                       suffix='_pp', intype=raw_hc2_fp,
-                       inext='.fits', outfunc=out.general_file)
-pp_file.addset(pp_hc2_fp)
+
 pp_hc1_hc1 = drs_finput('HCONE_HCONE', hkeys=dict(KW_DPRTYPE='HCONE_HCONE'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_hc1_hc1,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_hc1_hc1)
-pp_hc2_hc2 = drs_finput('HCTWO_HCTWO', hkeys=dict(KW_DPRTYPE='HCTWO_HCTWO'),
-                        filetype='.fits',
-                        suffix='_pp', intype=raw_hc2_hc2,
-                        inext='.fits', outfunc=out.general_file)
-pp_file.addset(pp_hc2_hc2)
+
 pp_hc1_dark = drs_finput('HCONE_DARK', hkeys=dict(KW_DPRTYPE='HCONE_DARK'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_hc1_dark,
                          inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_hc1_dark)
-pp_hc2_dark = drs_finput('HCTWO_DARK', hkeys=dict(KW_DPRTYPE='HCTWO_DARK'),
-                         filetype='.fits',
-                         suffix='_pp', intype=raw_hc2_dark,
-                         inext='.fits', outfunc=out.general_file)
-pp_file.addset(pp_hc2_dark)
 
 # =============================================================================
 # Reduced Files
@@ -463,17 +382,11 @@ calib_file.addset(out_pp_master)
 #                       outfunc=out.calib_file,
 #                       dbname='calibration', dbkey='DARK')
 
-out_dark_int = drs_finput('DARKI', hkeys=dict(KW_OUTPUT='DARKI'),
-                          filetype='.fits', intype=pp_dark_dark_int,
+out_dark = drs_finput('DARKI', hkeys=dict(KW_OUTPUT='DARKI'),
+                          filetype='.fits', intype=pp_dark_dark,
                           suffix='_darki',
                           outfunc=out.calib_file,
                           dbname='calibration', dbkey='DARKI')
-
-out_dark_tel = drs_finput('DARKT', hkeys=dict(KW_OUTPUT='DARKT'),
-                          filetype='.fits', intype=pp_dark_dark_tel,
-                          suffix='_darkt',
-                          outfunc=out.calib_file,
-                          dbname='calibration', dbkey='DARKT')
 
 out_dark_sky = drs_finput('DARKS', hkeys=dict(KW_OUTPUT='DARKS'),
                           filetype='.fits', intype=pp_dark_dark_sky,
@@ -483,17 +396,15 @@ out_dark_sky = drs_finput('DARKS', hkeys=dict(KW_OUTPUT='DARKS'),
 
 out_dark_master = drs_finput('DARKM', hkeys=dict(KW_OUTPUT='DARKM'),
                              filetype='.fits',
-                             intype=[pp_dark_dark_tel, pp_dark_dark_int],
+                             intype=[pp_dark_dark],
                              suffix='_dark_master',
                              outfunc=out.calib_file,
                              dbname='calibration', dbkey='DARKM')
 # add dark outputs to output fileset
-red_file.addset(out_dark_int)
-red_file.addset(out_dark_tel)
+red_file.addset(out_dark)
 red_file.addset(out_dark_sky)
 red_file.addset(out_dark_master)
-calib_file.addset(out_dark_int)
-calib_file.addset(out_dark_tel)
+calib_file.addset(out_dark)
 calib_file.addset(out_dark_sky)
 calib_file.addset(out_dark_master)
 
@@ -739,33 +650,6 @@ red_file.addset(out_ext_loco)
 red_file.addset(out_ext_s1d_w)
 red_file.addset(out_ext_s1d_v)
 red_file.addset(out_ext_fplines)
-
-# -----------------------------------------------------------------------------
-# thermal files
-# -----------------------------------------------------------------------------
-# thermal from internal dark
-out_thermal_e2ds_int = drs_finput('THERMALI_E2DS',
-                                  hkeys=dict(KW_OUTPUT='THERMALI_E2DS'),
-                                  fibers=['A', 'B'],
-                                  filetype='.fits', intype=pp_dark_dark_int,
-                                  suffix='_thermal_e2ds_int',
-                                  dbname='calibration', dbkey='THERMALI',
-                                  outfunc=out.general_file)
-
-# thermal from telescope dark
-out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS',
-                                  hkeys=dict(KW_OUTPUT='THERMALT_E2DS'),
-                                  fibers=['A', 'B'],
-                                  filetype='.fits', intype=pp_dark_dark_tel,
-                                  suffix='_thermal_e2ds_tel',
-                                  dbname='calibration', dbkey='THERMALT',
-                                  outfunc=out.general_file)
-
-# add thermal outputs to output fileset
-red_file.addset(out_thermal_e2ds_int)
-red_file.addset(out_thermal_e2ds_tel)
-calib_file.addset(out_thermal_e2ds_int)
-calib_file.addset(out_thermal_e2ds_tel)
 
 # -----------------------------------------------------------------------------
 # leakage files

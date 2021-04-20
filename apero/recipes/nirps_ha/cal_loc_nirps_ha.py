@@ -178,12 +178,17 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Clean the coefficients (using a sanity check)
         # ------------------------------------------------------------------
-        # clean the center position fits
-        cargs = [image, cent_coeffs, fiber, 'center']
-        cent_coeffs = localisation.check_coeffs(params, recipe, *cargs)
-        # clean the width fits
-        wargs = [image, wid_coeffs, fiber, 'width']
-        wid_coeffs = localisation.check_coeffs(params, recipe, *wargs)
+        # # clean the center position fits
+        # cargs = [image, cent_coeffs, fiber, 'center']
+        # cent_coeffs = localisation.check_coeffs(params, recipe, *cargs)
+        # # clean the width fits
+        # wargs = [image, wid_coeffs, fiber, 'width']
+        # wid_coeffs = localisation.check_coeffs(params, recipe, *wargs)
+
+        # check and clean the center position and width fits
+        cargs = [image, cent_coeffs, wid_coeffs, fiber]
+        ccnout = localisation.check_coeffs_nirps(params, recipe, *cargs)
+        cent_coeffs, wid_coeffs = ccnout
 
         # ------------------------------------------------------------------
         # Use the fits the calculate pixel fit values

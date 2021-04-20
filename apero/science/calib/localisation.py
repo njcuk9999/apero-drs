@@ -12,14 +12,15 @@ Created on 2019-05-15 at 13:48
 import numpy as np
 import warnings
 from collections import OrderedDict
+from typing import Union, Tuple
 
 from apero.base import base
 from apero import lang
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log, drs_file
-from apero.core.utils import drs_startup
 from apero.core.core import drs_database
+from apero.core.utils import drs_recipe
 from apero.io import drs_table
 from apero.science.calib import gen_calib
 
@@ -36,6 +37,7 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
@@ -190,6 +192,167 @@ def check_coeffs(params, recipe, image, coeffs, fiber, kind=None):
     return new_coeffs
 
 
+def check_coeffs_nirps(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
+                       cent_coeffs: np.ndarray, wid_coeffs: np.ndarray,
+                       fiber: str, max_nord: Union[int, None] = None
+                       ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Function to check whether we have missed any orders and add them back
+    if we have (based on other orders and the step between orders)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
+    :param image: np.ndarray, an image on the detector (used for shape)
+    :param cent_coeffs: np.ndarray, the coefficients of the center positions
+    :param wid_coeffs: np.ndarray, the coefficients of the widths
+    :param fiber: str, the fiber we are checking
+    :param max_nord: int or None, if sets overrides FIBER_MAX_NUM_ORDERS from
+                     pseudo constants pconst.FIBER_SETTINGS dictionary
+
+    :return: tuple, 1. the updated cent_coeffs, 2. the updated wid_coeffs
+    """
+    # set function name
+    func_name = display_func('check_coeffs_nirps', __NAME__)
+    # get fiber params
+    pconst = constants.pload()
+    fiberparams = pconst.FIBER_SETTINGS(params, fiber)
+    # get the sigma clipping cut off value
+    nsigclip = params['LOC_COEFF_SIGCLIP']
+    coeffdeg = params['LOC_COEFFSIG_DEG']
+    ycut = params['LOC_MAX_YPIX_VALUE']
+    max_num_orders = pcheck(params, 'FIBER_MAX_NUM_ORDERS',
+                            override=max_nord, func=func_name,
+                            paramdict=fiberparams)
+    # get the shapes
+    nbypix, nbxpix = image.shape
+    nbo, nccoeffs = cent_coeffs.shape
+    _, nwcoeffs = wid_coeffs.shape
+    # define the x pixel positions
+    xpix = np.arange(nbxpix)
+    ypix = np.arange(nbypix)
+    # -------------------------------------------------------------------------
+    # identify centers of all orders (based on current coefficients)
+    centers = []
+    for ordernum in range(nbo):
+        centers.append(np.polyval(cent_coeffs[ordernum][::-1], nbxpix // 2))
+    # -------------------------------------------------------------------------
+    # find the indices of each order by extrapolating the neighbour's positions
+    indices = np.arange(nbo)
+    for ordernum in range(1, nbo - 1):
+        # get the previous step
+        diff_before = centers[ordernum] - centers[ordernum - 1]
+        step_prev = diff_before / (indices[ordernum] - indices[ordernum - 1])
+        # get the integer steps
+        diff_after = centers[ordernum + 1] - centers[ordernum]
+        nstep = np.round(diff_after / step_prev).astype(int)
+        # add the next index
+        indices[ordernum + 1] = indices[ordernum] + nstep
+    # -------------------------------------------------------------------------
+    # new shape of the coefficient matrix
+    new_cen_coeffs = np.zeros([np.max(indices) + 1, nccoeffs]) + np.nan
+    new_wid_coeffs = np.zeros([np.max(indices) + 1, nwcoeffs]) + np.nan
+    new_nbo = new_cen_coeffs.shape[0]
+    # fill known orders
+    new_cen_coeffs[indices, :] = cent_coeffs
+    new_wid_coeffs[indices, :] = wid_coeffs
+    # find position of each order from coefficients
+    ordermap = np.zeros([nbypix, np.max(indices) + 1]) + np.nan
+    widthmap = np.zeros([nbypix, np.max(indices) + 1]) + np.nan
+    # construct an order map that will be fitted
+    # loop around orders
+    for ordernum in range(new_nbo):
+        # calculate y positions (centers)
+        cypix = np.polyval(new_cen_coeffs[ordernum, ::-1], ypix)
+        # push into order map
+        ordermap[:, ordernum] = cypix
+        # calcaulte y positions (width)
+        wypix = np.polyval(new_wid_coeffs[ordernum, ::-1], ypix)
+        # push into width map
+        widthmap[:, ordernum] = wypix
+    # -------------------------------------------------------------------------
+    # remove bad values (out of bounds)
+    with warnings.catch_warnings(record=True) as _:
+        # remove pixels that are off the bottom of the image
+        ordermap[ordermap < 0] = np.nan
+        # remove pixels that are off the top of the image
+        ordermap[ordermap > nbypix] = np.nan
+        # remove parts of the polyfit which curve the wrong way
+        ordermap[np.gradient(np.gradient(ordermap,axis=0),axis=0)>0] = np.nan
+    # fixing continuity of orders - remove discontinuities that arise from the
+    #   polynomial going out of bounds and back into bounds
+    for ordernum in range(new_nbo):
+        # find the NaN positions in the order map (left side of detector)
+        ppos1 = np.where(~np.isfinite(ordermap[:nbxpix//2, ordernum]))[0]
+        if len(ppos1) > 0:
+            # remove all pixels where the polyfit is not valid (from left
+            #   side of detector)
+            cut1 = np.max(ppos1)
+            ordermap[:cut1, ordernum] = np.nan
+        # find the NaN positions in the order map (right side of detector)
+        ppos2 = np.where(~np.isfinite(ordermap[nbxpix//2:, ordernum]))[0]
+        if len(ppos2) > 0:
+            # remove all pixels where the polyfit is not valid (from right
+            #   side of detector)
+            cut2 = np.min(ppos2)
+            ordermap[cut2 + nbxpix//2:, ordernum] = np.nan
+    # -------------------------------------------------------------------------
+    # clean-up the order map
+    for y_it in range(nbypix):
+        orders = np.arange(new_nbo)
+        # polyfit across the orders (in y direction for centers)
+        cfit, mask = mp.robust_polyfit(orders, ordermap[y_it, :], coeffdeg,
+                                       nsigclip)
+        # re-fit the coefficients and push into ordermap
+        ordermap[y_it, :] = np.polyval(cfit, orders)
+        # polyfit across the orders (in y direction for widths)
+        wfit, mask = mp.robust_polyfit(orders, widthmap[y_it, :], coeffdeg,
+                                       nsigclip)
+        # re-fit the coefficients and push into ordermap
+        widthmap[y_it, :] = np.polyval(wfit, orders)
+
+    # -------------------------------------------------------------------------
+    # only keep those orders below our y-threshold cut
+    order_mask = np.where(np.max(ordermap,axis=0)<ycut)[0][-max_num_orders:]
+    # re-shape ordermap and widthmap
+    ordermap = ordermap[:, order_mask]
+    widthmap = widthmap[:, order_mask]
+    # reset new_cen_coeffs and new_wid_coeffs
+    new_cen_coeffs = np.zeros([max_num_orders, nccoeffs])
+    new_wid_coeffs = np.zeros([max_num_orders, nwcoeffs])
+    # reset nbo
+    nbo = int(max_num_orders)
+    # -------------------------------------------------------------------------
+    # re-fit the localisation polynomials
+    for ordernum in range(nbo):
+        # work out the new polynomials for this order (for centers)
+        ocen_coeffs = np.polyfit(ypix, ordermap[:, ordernum], nccoeffs - 1)
+        # must flip these backwards
+        new_cen_coeffs[ordernum, :] = ocen_coeffs[::-1]
+        # work out the new polynomials for this order (for widths)
+        owid_coeffs = np.polyfit(ypix, widthmap[:, ordernum], nwcoeffs - 1)
+        # must flip these backwards
+        new_wid_coeffs[ordernum, :] = owid_coeffs[::-1]
+    # -------------------------------------------------------------------------
+    # make arrays for plotting
+    cypix2, cypix1 = np.zeros([nbo, nbxpix]), np.zeros([nbo, nbxpix])
+    good_arr = np.ones([nbo, nbxpix]).astype(bool)
+    wypix2, wypix1 = np.zeros([nbo, nbxpix]), np.zeros([nbo, nbxpix])
+    # loop around orders and fill in values
+    for ordernum in range(nbo):
+        cypix2[ordernum] = np.polyval(new_cen_coeffs[ordernum][::-1], xpix)
+        cypix1[ordernum] = np.polyval(cent_coeffs[ordernum][::-1], xpix)
+        wypix2[ordernum] = np.polyval(new_wid_coeffs[ordernum][::-1], xpix)
+        wypix1[ordernum] = np.polyval(wid_coeffs[ordernum][::-1], xpix)
+    # plot of the coeffs
+    recipe.plot('LOC_CHECK_COEFFS', ypix=cypix2, ypix0=cypix1,
+                xpix=xpix, good=good_arr, kind='center', image=image)
+    recipe.plot('LOC_CHECK_COEFFS', ypix=wypix2, ypix0=wypix1,
+                xpix=xpix, good=good_arr, kind='width', image=image)
+    # -------------------------------------------------------------------------
+    # return new centers and widths
+    return new_cen_coeffs, new_wid_coeffs
+
+
 def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     func_name = __NAME__ + '.find_and_fit_localisation()'
 
@@ -247,7 +410,7 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # clip the data - start with the ic_offset row and only
     # deal with the central column column=ic_cent_col
-    y = image[row_offset:, central_col]
+    y = np.nanmedian(image[row_offset:, central_col-10:central_col+10], axis=1)
     # measure min max of box smoothed central col
     miny, maxy = mp.measure_box_min_max(y, horder_size)
     max_signal = np.nanpercentile(y, 95)
@@ -261,15 +424,15 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     # get the normalised minimum values for those rows above threshold
     #   i.e. good background measurements
     normed_miny = miny / diff_maxmin
-    goodback = np.compress(ycc > back_thres, normed_miny)
+    # find all y positions above the background threshold
+    goodmask = ycc > back_thres
     # measure the mean good background as a percentage
-    # (goodback and ycc are between 0 and 1)
-    mean_backgrd = np.mean(goodback) * 100
+    mean_backgrd = np.mean(normed_miny[goodmask]) * 100
     # Log the maximum signal and the mean background
     WLOG(params, 'info', textentry('40-013-00003', args=[max_signal]))
     WLOG(params, 'info', textentry('40-013-00004', args=[mean_backgrd]))
     # plot y, miny and maxy
-    recipe.plot('LOC_MINMAX_CENTS', y=y, miny=miny, maxy=maxy)
+    recipe.plot('LOC_MINMAX_CENTS', y=y, mask=goodmask, miny=miny, maxy=maxy)
 
     # ----------------------------------------------------------------------
     # Step 2: Search for order center on the central column - quick
@@ -624,7 +787,8 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     # add to qc header lists
     qc_values.append(sum_cent_max_rmpts)
     qc_names.append('sum(MAX_RMPTS_POS)')
-    qc_logic.append('sum(MAX_RMPTS_POS) < {0:.2f}'.format(max_removed_cent))
+    qc_logic.append('sum(MAX_RMPTS_POS) < {0:.2f}'
+                    ''.format(sum_cent_max_rmpts))
     # ----------------------------------------------------------------------
     # check that  max number of points rejected in width fit is below
     #   threshold
@@ -639,7 +803,8 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     # add to qc header lists
     qc_values.append(sum_wid_max_rmpts)
     qc_names.append('sum(MAX_RMPTS_WID)')
-    qc_logic.append('sum(MAX_RMPTS_WID) < {0:.2f}'.format(max_removed_wid))
+    qc_logic.append('sum(MAX_RMPTS_WID) < {0:.2f}'
+                    ''.format(sum_wid_max_rmpts))
     # ------------------------------------------------------------------
     if mean_rms_cent > rmsmax_cent:
         # add failed message to fail message list

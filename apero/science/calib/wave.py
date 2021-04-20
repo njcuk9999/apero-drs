@@ -3044,6 +3044,9 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
 
             # fit the merged line profile and do some sigma-clipping
             while maxdev > max_dev_thres:
+                # deal with no good data
+                if np.sum(keep) == 0:
+                    break
                 # fit with a guassian with a slope
                 fargs = dict(x=all_dvs[keep], y=all_lines[keep],
                              guess=init_guess)
@@ -4595,7 +4598,11 @@ def find_num_fppeak_diff(llprops, blaze, n_init, n_fin, wave_blaze_thres,
         # get array of x differences
         x_diff = x_fp[1:] - x_fp[:-1]
         # get median of x difference
-        med_x_diff = mp.nanmedian(x_diff)
+        # med_x_diff = mp.nanmedian(x_diff)
+                # get the fit between
+        nx_diff = np.arange(len(x_diff))
+        x_diff_coeffs, _ = mp.robust_polyfit(nx_diff, x_diff, 2, 5)
+        med_x_diff = np.polyval(x_diff_coeffs, nx_diff)
         # get indices where x_diff differs too much from median
         cond1 = x_diff < xdiff_min * med_x_diff
         cond2 = x_diff > xdiff_max * med_x_diff

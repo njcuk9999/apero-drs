@@ -122,11 +122,6 @@ shapelfile = dict(name='--shapel', dtype='file', default='None',
                   files=[files.out_shape_local],
                   helpstr=textentry('SHAPELFILE_HELP'))
 # -----------------------------------------------------------------------------
-thermalfile = dict(name='--thermalfile', dtype='file', default='None',
-                   files=[files.out_thermal_e2ds_int,
-                          files.out_thermal_e2ds_tel],
-                   helpstr=textentry('THERMALFILE_HELP'))
-# -----------------------------------------------------------------------------
 wavefile = dict(name='--wavefile', dtype='file', default='None',
                 files=[files.out_wave_hc, files.out_wave_fp,
                        files.out_wave_master],
@@ -242,7 +237,7 @@ cal_badpix.set_kwarg(name='--flatfiles', dtype='files',
                      filelogic='exclusive', required=True,
                      helpstr=textentry('BADPIX_FLATFILE_HELP'), default=[])
 cal_badpix.set_kwarg(name='--darkfiles', dtype='files',
-                     files=[files.pp_dark_dark_tel, files.pp_dark_dark_int],
+                     files=[files.pp_dark_dark],
                      filelogic='inclusive', required=True,
                      helpstr=textentry('BADPIX_DARKFILE_HELP'), default=[])
 cal_badpix.set_kwarg(**add_db)
@@ -270,15 +265,14 @@ cal_dark.description = textentry('DARK_DESC')
 cal_dark.epilog = textentry('DARK_EXAMPLE')
 cal_dark.recipe_type = 'recipe'
 cal_dark.recipe_kind = 'calib-night'
-cal_dark.set_outputs(DARK_INT_FILE=files.out_dark_int,
-                     DARK_TEL_FIEL=files.out_dark_tel,
+cal_dark.set_outputs(DARK_INT_FILE=files.out_dark,
+                     DARK_TEL_FIEL=files.out_dark,
                      DARK_SKY_FILE=files.out_dark_sky)
 cal_dark.set_debug_plots('DARK_IMAGE_REGIONS', 'DARK_HISTOGRAM')
 cal_dark.set_summary_plots('SUM_DARK_IMAGE_REGIONS', 'SUM_DARK_HISTOGRAM')
 cal_dark.set_arg(pos=0, **obs_dir)
 cal_dark.set_arg(name='files', dtype='files',
-                 files=[files.pp_dark_dark_int, files.pp_dark_dark_tel,
-                        files.pp_dark_dark_sky],
+                 files=[files.pp_dark_dark, files.pp_dark_dark_sky],
                  pos='1+', filelogic='exclusive',
                  helpstr=textentry('FILES_HELP') + textentry('DARK_FILES_HELP'))
 cal_dark.set_kwarg(**add_db)
@@ -306,7 +300,7 @@ cal_dark_master.recipe_type = 'recipe'
 cal_dark_master.recipe_kind = 'calib-master'
 cal_dark_master.set_outputs(DARK_MASTER_FILE=files.out_dark_master)
 cal_dark_master.set_kwarg(name='--filetype', dtype=str,
-                          default='DARK_DARK_TEL, DARK_DARK_INT',
+                          default='DARK_DARK',
                           helpstr=textentry('DARK_MASTER_FILETYPE'))
 cal_dark_master.set_kwarg(**add_db)
 cal_dark_master.set_kwarg(**plot)
@@ -506,58 +500,6 @@ cal_ff.group_column = 'REPROCESS_OBSDIR_COL'
 recipes.append(cal_ff)
 
 # -----------------------------------------------------------------------------
-# cal_thermal
-# -----------------------------------------------------------------------------
-cal_thermal = DrsRecipe(__INSTRUMENT__)
-cal_thermal.name = 'cal_thermal_{0}.py'.format(INSTRUMENT_ALIAS)
-cal_thermal.shortname = 'THERM'
-cal_thermal.instrument = __INSTRUMENT__
-cal_thermal.in_block_str = 'tmp'
-cal_thermal.out_block_str = 'red'
-cal_thermal.extension = 'fits'
-cal_thermal.description = textentry('EXTRACT_DESC')
-cal_thermal.epilog = textentry('EXTRACT_EXAMPLE')
-cal_thermal.recipe_type = 'recipe'
-cal_thermal.recipe_kind = 'calib-night'
-# TODO: Need to add out_thermal_e2ds_sky
-cal_thermal.set_outputs(THERMAL_E2DS_FILE=files.out_ext_e2dsff,
-                        THERMALI_FILE=files.out_thermal_e2ds_int,
-                        THERMALT_FILE=files.out_thermal_e2ds_tel)
-cal_thermal.set_arg(pos=0, **obs_dir)
-# TODO: Need to add files.pp_dark_dark_sky
-cal_thermal.set_arg(name='files', dtype='files', pos='1+',
-                    files=[files.pp_dark_dark_int, files.pp_dark_dark_tel],
-                    filelogic='exclusive',
-                    helpstr=(textentry('FILES_HELP') +
-                             textentry('EXTRACT_FILES_HELP')),
-                    limit=1)
-cal_thermal.set_kwarg(**add_db)
-cal_thermal.set_kwarg(**badfile)
-cal_thermal.set_kwarg(**dobad)
-cal_thermal.set_kwarg(**backsub)
-cal_thermal.set_kwarg(default=True, **combine)
-cal_thermal.set_kwarg(**darkfile)
-cal_thermal.set_kwarg(**dodark)
-cal_thermal.set_kwarg(**fiber)
-cal_thermal.set_kwarg(**flipimage)
-cal_thermal.set_kwarg(**fluxunits)
-cal_thermal.set_kwarg(**locofile)
-cal_thermal.set_kwarg(**orderpfile)
-cal_thermal.set_kwarg(**plot)
-cal_thermal.set_kwarg(**resize)
-cal_thermal.set_kwarg(**shapexfile)
-cal_thermal.set_kwarg(**shapeyfile)
-cal_thermal.set_kwarg(**shapelfile)
-cal_thermal.set_kwarg(**wavefile)
-cal_thermal.set_kwarg(name='--forceext', dtype='bool', default=False,
-                      default_ref='THERMAL_ALWAYS_EXTRACT',
-                      helpstr='THERMAL_EXTRACT_HELP')
-cal_thermal.group_func = grouping.group_by_dirname
-cal_thermal.group_column = 'REPROCESS_OBSDIR_COL'
-# add to recipe
-recipes.append(cal_thermal)
-
-# -----------------------------------------------------------------------------
 # cal_leak_master
 # -----------------------------------------------------------------------------
 cal_leak_master = DrsRecipe(__INSTRUMENT__)
@@ -681,7 +623,6 @@ cal_extract.set_kwarg(**shapelfile)
 cal_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
                       helpstr=textentry('THERMAL_HELP'),
                       default_ref='THERMAL_CORRECT')
-cal_extract.set_kwarg(**thermalfile)
 cal_extract.set_kwarg(**wavefile)
 cal_extract.group_func = grouping.group_individually
 cal_extract.group_column = 'REPROCESS_OBSDIR_COL'
@@ -1107,7 +1048,6 @@ obj_pp_recipe.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(obj_pp_recipe)
 
-
 # =============================================================================
 # Graveyard - old scripts
 # =============================================================================
@@ -1199,7 +1139,6 @@ cal_wave_master_old.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_wave_master_old)
 
-
 # -----------------------------------------------------------------------------
 # cal_wave_night_old
 # -----------------------------------------------------------------------------
@@ -1261,7 +1200,6 @@ cal_wave_night_old.group_func = grouping.group_by_dirname
 cal_wave_night_old.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(cal_wave_night_old)
-
 
 # =============================================================================
 # Run order
@@ -1329,7 +1267,6 @@ full_seq.add(cal_loc, files=[files.pp_flat_dark], name='LOCA',
              recipe_kind='calib-night-A')
 full_seq.add(cal_shape)
 full_seq.add(cal_ff, files=[files.pp_flat_flat])
-full_seq.add(cal_thermal)
 full_seq.add(cal_wave_night)
 # extract all OBJ_DARK and OBJ_FP
 full_seq.add(cal_extract, name='EXTALL', recipe_kind='extract-ALL',
@@ -1392,9 +1329,9 @@ limited_seq.add(cal_dark_master, master=True)
 limited_seq.add(cal_badpix, name='BADM', master=True,
                 recipe_kind='calib-master')
 limited_seq.add(cal_loc, name='LOCMB', files=[files.pp_dark_flat], master=True,
-             recipe_kind='calib-master-B')
+                recipe_kind='calib-master-B')
 limited_seq.add(cal_loc, name='LOCMA', files=[files.pp_flat_dark], master=True,
-             recipe_kind='calib-master-A')
+                recipe_kind='calib-master-A')
 limited_seq.add(cal_shape_master, master=True)
 limited_seq.add(cal_shape, name='SHAPELM', master=True,
                 recipe_kind='calib-master')
@@ -1529,9 +1466,9 @@ master_seq.add(cal_loc, name='LOCMA', files=[files.pp_flat_dark], master=True,
                recipe_kind='calib-master-A')
 master_seq.add(cal_shape_master, master=True)
 master_seq.add(cal_shape, name='SHAPELM', master=True,
-                recipe_kind='calib-master')
+               recipe_kind='calib-master')
 master_seq.add(cal_ff, name='FLATM', master=True,
-                recipe_kind='calib-master')
+               recipe_kind='calib-master')
 master_seq.add(cal_leak_master, master=True)
 master_seq.add(cal_wave_master, master=True,
                rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
@@ -1595,7 +1532,7 @@ tellu_seq.add(obj_mk_tellu, name='MKTELLU4', recipe_kind='tellu-hotstar',
 tellu_seq.add(obj_pp_recipe, files=[files.pp_file],
               recipe_kind='post-hotstar',
               filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
-                                         'POLAR_FP'],
+                                       'POLAR_FP'],
                            KW_OBJNAME='TELLURIC_TARGETS'))
 
 # -----------------------------------------------------------------------------

@@ -1356,7 +1356,7 @@ class DrsRecipe(object):
                                            obs_dir=iarg)
                 # construct input string
                 inputstr += '{0}={1} || '.format(argname, obs_dir.obs_dir)
-                # add to runstring
+                # add obs_dir to runstring
                 self.runstring += '{0} '.format(obs_dir.obs_dir)
             # deal with file arguments
             elif arg.dtype in ['file', 'files']:

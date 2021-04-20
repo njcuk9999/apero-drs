@@ -505,23 +505,30 @@ def plot_loc_minmax_cents(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     y = kwargs['y']
+    mask = kwargs['mask']
     miny = kwargs['miny']
     maxy = kwargs['maxy']
     # set up the row number
     rownumber = np.arange(len(y))
+    # get good values
+    ygood = np.array(y)
+    ygood[~mask] = np.nan
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter)
     # plot y against row number
-    frame.plot(rownumber, y, linestyle='-')
+    frame.plot(rownumber, y, linestyle='-', label='Central Cut')
+    frame.plot(rownumber, ygood, linestyle='-', label='Good pixels')
     # plot miny against row number
     if miny is not None:
-        frame.plot(rownumber, miny, marker='_')
+        frame.plot(rownumber, miny, label='Minimum (box)')
     # plot maxy against row number
     if maxy is not None:
-        frame.plot(rownumber, maxy, marker='_')
+        frame.plot(rownumber, maxy, label='Maximum (box)')
     # set title
     frame.set(title='Central CUT', xlabel='pixels', ylabel='ADU')
+    # add legend
+    frame.legend(loc=0)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -658,9 +665,10 @@ def plot_loc_im_sat_thres(plotter, graph, kwargs):
         # get ypix
         ypix = np.polyval(coeffs[order_num][::-1], xpix)
         # plot full fit
-        frame.plot(xpix, ypix, linewidth=1, color='blue', ls='--', label='all')
+        frame.plot(xpix, ypix, linewidth=1, color='blue', ls='--',
+                   label='New fit')
         # plot valid fit
-        frame.plot(x, y, linewidth=1, color='red', label='valid')
+        frame.plot(x, y, linewidth=1, color='red', label='Original fit')
     # only keep unique labels
     ulegend(frame, loc=10, ncol=2)
     # create an axes on the right side of ax. The width of cax will be 5%
@@ -881,6 +889,8 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
         frame2.legend(loc=0)
         # force x limits
         frame2.set_xlim(0, image.shape[1])
+        # force y limits
+        frame1.set_ylim(ymin, ymax)
         # ------------------------------------------------------------------
         # construct frame title
         if kind is None:

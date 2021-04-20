@@ -19,7 +19,7 @@ __date__ = base.__date__
 __release__ = base.__release__
 
 # =============================================================================
-# Spirou Constant definitions
+# NIRPS_HA Constant definitions
 # =============================================================================
 
 # =============================================================================
@@ -62,7 +62,6 @@ IMAGE_X_FULL.value = 4096
 IMAGE_Y_FULL = IMAGE_Y_FULL.copy(__NAME__)
 IMAGE_Y_FULL.value = 4096
 
-
 # Define the fibers
 FIBER_TYPES = FIBER_TYPES.copy(__NAME__)
 FIBER_TYPES.value = 'A, B'
@@ -88,7 +87,7 @@ IMAGE_X_HIGH.value = 4092
 IMAGE_Y_LOW = IMAGE_Y_LOW.copy(__NAME__)
 IMAGE_Y_LOW.value = 4
 IMAGE_Y_HIGH = IMAGE_Y_HIGH.copy(__NAME__)
-IMAGE_Y_HIGH.value = 4092
+IMAGE_Y_HIGH.value = 2880
 
 # Define the pixel size in km/s / pix
 #    also used for the median sampling size in tellu correction
@@ -98,6 +97,14 @@ IMAGE_PIXEL_SIZE.value = 1.00
 # Define mean line width expressed in pix
 FWHM_PIXEL_LSF = FWHM_PIXEL_LSF.copy(__NAME__)
 FWHM_PIXEL_LSF.value = 3.0
+
+# Define the point at which the detector saturates
+IMAGE_SATURATION = IMAGE_SATURATION.copy(__NAME__)
+IMAGE_SATURATION.value = 60000
+
+# Define the frame time for an image
+IMAGE_FRAME_TIME = IMAGE_FRAME_TIME.copy(__NAME__)
+IMAGE_FRAME_TIME.value = 5.57192
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
@@ -210,8 +217,8 @@ FIBER_FIRST_ORDER_JUMP_B.value = 0
 FIBER_MAX_NUM_ORDERS_A = FIBER_MAX_NUM_ORDERS_A.copy(__NAME__)
 FIBER_MAX_NUM_ORDERS_B = FIBER_MAX_NUM_ORDERS_B.copy(__NAME__)
 # set values
-FIBER_MAX_NUM_ORDERS_A.value = 69
-FIBER_MAX_NUM_ORDERS_B.value = 69
+FIBER_MAX_NUM_ORDERS_A.value = 41
+FIBER_MAX_NUM_ORDERS_B.value = 41
 
 #   Number of fibers
 FIBER_SET_NUM_FIBERS_A = FIBER_SET_NUM_FIBERS_A.copy(__NAME__)
@@ -416,7 +423,7 @@ HISTO_RANGE_HIGH.value = 0.8
 #        only find those types define by 'filetype' but 'filetype' must
 #        be one of theses (strings separated by commas)
 ALLOWED_DARK_TYPES = ALLOWED_DARK_TYPES.copy(__NAME__)
-ALLOWED_DARK_TYPES.value = 'DARK_DARK_TEL, DARK_DARK_INT'
+ALLOWED_DARK_TYPES.value = 'DARK_DARK'
 
 #   Define the maximum time span to combine dark files over (in hours)
 DARK_MASTER_MATCH_TIME = DARK_MASTER_MATCH_TIME.copy(__NAME__)
@@ -509,11 +516,11 @@ LOC_ORDERP_BOX_SIZE.value = 5
 
 #   row number of image to start localisation processing at
 LOC_START_ROW_OFFSET = LOC_START_ROW_OFFSET.copy(__NAME__)
-LOC_START_ROW_OFFSET.value = 0
+LOC_START_ROW_OFFSET.value = 375
 
 #   Definition of the central column for use in localisation
 LOC_CENTRAL_COLUMN = LOC_CENTRAL_COLUMN.copy(__NAME__)
-LOC_CENTRAL_COLUMN.value = 2044     # 2500
+LOC_CENTRAL_COLUMN.value = 2000    # 2500
 
 #   Half spacing between orders
 LOC_HALF_ORDER_SPACING = LOC_HALF_ORDER_SPACING.copy(__NAME__)
@@ -585,11 +592,15 @@ LOC_ORDER_CURVE_DROP.value = 2.0
 
 # set the sigma clipping cut off value for cleaning coefficients
 LOC_COEFF_SIGCLIP = LOC_COEFF_SIGCLIP.copy(__NAME__)
-LOC_COEFF_SIGCLIP.value = 7
+LOC_COEFF_SIGCLIP.value = 5
 
 #  Defines the fit degree to fit in the coefficient cleaning
 LOC_COEFFSIG_DEG = LOC_COEFFSIG_DEG.copy(__NAME__)
-LOC_COEFFSIG_DEG.value = 7
+LOC_COEFFSIG_DEG.value = 5
+
+#  Define the maximum value allowed in the localisation (cuts reddest orders)
+LOC_MAX_YPIX_VALUE = LOC_MAX_YPIX_VALUE.copy(__NAME__)
+LOC_MAX_YPIX_VALUE.value = 4040
 
 #   Saturation threshold for localisation
 LOC_SAT_THRES = LOC_SAT_THRES.copy(__NAME__)
@@ -886,8 +897,9 @@ FF_RMS_SKIP_ORDERS = FF_RMS_SKIP_ORDERS.copy(__NAME__)
 FF_RMS_SKIP_ORDERS.value = '[0, 22, 23, 24, 25, 48]'
 
 #   Maximum allowed RMS of flat field
+# TODO: This needs to be changed back original value 0.10
 QC_FF_MAX_RMS = QC_FF_MAX_RMS.copy(__NAME__)
-QC_FF_MAX_RMS.value = 0.10
+QC_FF_MAX_RMS.value = 1.0
 
 # Define the order to plot in summary plots
 FF_PLOT_ORDER = FF_PLOT_ORDER.copy(__NAME__)
@@ -1434,7 +1446,7 @@ WAVE_PIXEL_SHIFT_SLOPE.value = 0.0  # 4.22131253e-04
 
 #  Defines echelle number of first extracted order
 WAVE_T_ORDER_START = WAVE_T_ORDER_START.copy(__NAME__)
-WAVE_T_ORDER_START.value = 79
+WAVE_T_ORDER_START.value = 147
 
 #  Defines order from which the solution is calculated (first order)
 WAVE_N_ORD_START = WAVE_N_ORD_START.copy(__NAME__)
@@ -1442,7 +1454,7 @@ WAVE_N_ORD_START.value = 0
 
 #  Defines order to which the solution is calculated (last order)
 WAVE_N_ORD_FINAL = WAVE_N_ORD_FINAL.copy(__NAME__)
-WAVE_N_ORD_FINAL.value = 47
+WAVE_N_ORD_FINAL.value = 41
 
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
@@ -1475,9 +1487,9 @@ WAVE_HC_FITBOX_RMS_DEVMAX.value = 0.2
 
 # the e-width of the line expressed in pixels.
 WAVE_HC_FITBOX_EWMIN = WAVE_HC_FITBOX_EWMIN.copy(__NAME__)
-WAVE_HC_FITBOX_EWMIN.value = 0.7
+WAVE_HC_FITBOX_EWMIN.value = 1.0    #  0.7
 WAVE_HC_FITBOX_EWMAX = WAVE_HC_FITBOX_EWMAX.copy(__NAME__)
-WAVE_HC_FITBOX_EWMAX.value = 1.1
+WAVE_HC_FITBOX_EWMAX.value = 3.0   #  1.1
 
 # define the file type for saving the initial guess at the hc peak list
 WAVE_HCLL_FILE_FMT = WAVE_HCLL_FILE_FMT.copy(__NAME__)
@@ -1610,7 +1622,7 @@ WAVE_FP_DV_MAX.value = 0.25
 # Decide whether to refit the cavity width (will update if files do not
 #   exist)
 WAVE_FP_UPDATE_CAVITY = WAVE_FP_UPDATE_CAVITY.copy(__NAME__)
-WAVE_FP_UPDATE_CAVITY.value = True
+WAVE_FP_UPDATE_CAVITY.value = False
 
 # Select the FP cavity fitting (WAVE_MODE_FP = 1 only)
 #   Should be one of the following:
@@ -1660,16 +1672,16 @@ WAVE_LITTROW_ORDER_INIT_1.value = 0
 #  Define the order to start the Littrow fit from for the FP wave solution
 # TODO: Note currently used
 WAVE_LITTROW_ORDER_INIT_2 = WAVE_LITTROW_ORDER_INIT_2.copy(__NAME__)
-WAVE_LITTROW_ORDER_INIT_2.value = 1
+WAVE_LITTROW_ORDER_INIT_2.value = 0
 
 #  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = WAVE_LITTROW_ORDER_FINAL_1.copy(__NAME__)
-WAVE_LITTROW_ORDER_FINAL_1.value = 47
+WAVE_LITTROW_ORDER_FINAL_1.value = 41
 
 #  Define the order to end the Littrow fit at for the FP wave solution
 # TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = WAVE_LITTROW_ORDER_FINAL_2.copy(__NAME__)
-WAVE_LITTROW_ORDER_FINAL_2.value = 47
+WAVE_LITTROW_ORDER_FINAL_2.value = 41
 
 #  Define orders to ignore in Littrow fit (should be a string list separated
 #      by commas
@@ -1720,7 +1732,8 @@ WAVE_MODE_FP.value = 1
 # Define the initial value of FP effective cavity width 2xd in nm
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
 WAVE_FP_DOPD0 = WAVE_FP_DOPD0.copy(__NAME__)
-WAVE_FP_DOPD0.value = 2.44962434814043e7  # 2.44999e7  # 2.45e7
+# TODO: For NIRPS d = 12mm not 12.25 --> 2.4e7
+WAVE_FP_DOPD0.value = 2.4e7
 
 #  Define the polynomial fit degree between FP line numbers and the
 #      measured cavity width for each line
@@ -1747,7 +1760,7 @@ WAVE_FP_PEAK_LIM.value = 0.1
 
 #    Define peak to peak width that is too large (removed from FP peaks)
 WAVE_FP_P2P_WIDTH_CUT = WAVE_FP_P2P_WIDTH_CUT.copy(__NAME__)
-WAVE_FP_P2P_WIDTH_CUT.value = 15
+WAVE_FP_P2P_WIDTH_CUT.value = 30
 
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
