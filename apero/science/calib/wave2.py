@@ -990,12 +990,6 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     #  (first time this is done)
     cavity_fit_iterations1 = pcheck(params, 'WAVE_CAVITY_FIT_ITRS1',
                                     func=func_name)
-    # Define the number of iterations required to check order offset
-    order_offset_iterations = pcheck(params, 'WAVE_ORDER_OFFSET_ITRS',
-                                     func=func_name)
-    # Define the maximum bulk offset of lines in a order can have
-    max_ord_bulk_offset = pcheck(params, 'WAVE_MAX_ORDER_BULK_OFFSET',
-                                 func=func_name)
     # Define the required precision that the cavity width change must converge
     #   to (will be a fraction of the error)
     cavity_change_err_thres = pcheck(params, 'WAVE_CAVITY_CHANGE_ERR_THRES',
@@ -1006,9 +1000,6 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                                     func=func_name)
     # Define the odd ratio that is used in generating the weighted mean
     odd_ratio = pcheck(params, 'WAVE_HC_VEL_ODD_RATIO', func=func_name)
-    # Define the number of iterations required to do the final fplines
-    #   wave solution
-    fwavesol_iterations = pcheck(params, 'WAVE_FWAVESOL_ITRS', func=func_name)
     # -------------------------------------------------------------------------
     # setup parameters
     # -------------------------------------------------------------------------
