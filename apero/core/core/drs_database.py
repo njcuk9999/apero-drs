@@ -1186,12 +1186,32 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
     # deal with having header input
     elif header is not None:
         return None, header
-    # get hdict
-    if hasattr(drsfile, 'hdict') and len(list(drsfile.hdict.keys())) != 0:
+    # get hdict / header
+    cond1 = hasattr(drsfile, 'hdict') and len(list(drsfile.hdict.keys())) != 0
+    cond2 = hasattr(drsfile, 'header')
+    cond2 &= len(list(drsfile.get_header().keys())) != 0
+
+    # deal with having both hdict and heaader
+    if cond1 and cond2:
+        # combine
+        hdict = drsfile.hdict
+        header = drsfile.header
+        # add keys from hdict to header
+        for key in hdict:
+            # deal with COMMENT cards
+            if isinstance(hdict[key], drs_fits.HeaderCommentCards):
+                header[key] = (hdict[key][0], hdict.comments[key][0])
+            # just set them to  header[key] = (VALUE, COMMENT)
+            else:
+                header[key] = (hdict[key], hdict.comments[key])
+        # now set hdict to None
+        hdict = None
+    # deal with only having hdict
+    elif cond1:
         hdict = drsfile.hdict
         header = None
-    elif (hasattr(drsfile, 'header') and
-          len(list(drsfile.get_header().keys())) != 0):
+    # deal with only having header
+    elif cond2:
         hdict = None
         header = drsfile.get_header()
     else:

@@ -501,7 +501,8 @@ def get_cavity_file(params: ParamDict, recipe: DrsRecipe,
     :return: the cavity polynomial coefficients (as a numpy array)
     """
     # get cavity file
-    cavity_file = recipe.outputs['WAVEM_CAVITY'].newcopy(params=params)
+    cavity_file = drs_file.get_file_definition(params, 'WAVEM_CAV',
+                                               block_kind='red')
     # deal with infile (instead of header/filename)
     if infile is not None:
         header = infile.header
@@ -664,12 +665,13 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             # we have a wavelength value, we get an approximate pixel
             # value by fitting wavelength to pixel
             owave = wavemap[order_num]
-            with warnings.catch_warnings(record=True) as _:
-                fit_reverse = np.polyfit(owave, xpix, fitdeg)
             # we find lines within the order
             good = (wavell > np.min(owave)) & (wavell < np.max(owave))
             # we check that there is at least 1 line and append our line list
             if np.sum(good) != 0:
+                # fit wave --> pix
+                with warnings.catch_warnings(record=True) as _:
+                    fit_reverse = np.polyfit(owave, xpix, fitdeg)
                 # get the pixels positions based on out owave fit
                 pixfit = np.polyval(fit_reverse, wavell[good])
                 # append lists
@@ -731,17 +733,17 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             # we have a wavelength value, we get an approximate pixel
             # value by fitting wavelength to pixel
             owave = wavemap[order_num]
-            with warnings.catch_warnings(record=True) as _:
-                # fit_reverse = np.polyfit(owave, xpix, fitdeg)
-
-                ord_owave = np.argsort(owave)
-                spline_fit_reverse = mp.iuv_spline(owave[ord_owave],
-                                                   xpix[ord_owave])
-
             # we find lines within the order
             good = (wave0 > np.min(owave)) & (wave0 < np.max(owave))
             # we check that there is at least 1 line and append our line list
             if np.sum(good) != 0:
+                # spline fit wave --> pix
+                with warnings.catch_warnings(record=True) as _:
+                    # fit_reverse = np.polyfit(owave, xpix, fitdeg)
+
+                    ord_owave = np.argsort(owave)
+                    spline_fit_reverse = mp.iuv_spline(owave[ord_owave],
+                                                       xpix[ord_owave])
                 # get the pixels positions based on out owave fit
                 # pixfit = np.polyval(fit_reverse, wave0[good])
                 pixfit = spline_fit_reverse(wave0[good])
@@ -797,6 +799,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     amp = np.zeros_like(list_pixels)
     nsig = np.repeat(np.nan, len(list_pixels))
     # ----------------------------------------------------------------------
+    # TODO: this loop is super slow
     # loop around orders
     for order_num in range(nbo):
         # get the order spectrum
@@ -831,7 +834,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                 WLOG(params, 'warning', textentry('09-017-00006', args=eargs))
                 continue
             # --------------------------------------------------------------
-            # only continue if we have some finite values
+            # only continue if we have all finite values
             if np.all(np.isfinite(ypix)):
                 # try fitting a gaussian with a slope
                 try:
@@ -1090,8 +1093,9 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         #     the absolute numbering
         # ---------------------------------------------------------------------
         # we fit an approximate wavelength solution
-        hc_wave_fit, _ = mp.robust_polyfit(ordhc_pix_meas, ordhc_wave_ref,
-                                           wavesol_fit_degree, nsig_cut)
+        with warnings.catch_warnings(record=True) as _:
+            hc_wave_fit, _ = mp.robust_polyfit(ordhc_pix_meas, ordhc_wave_ref,
+                                               wavesol_fit_degree, nsig_cut)
         # we find the steps in FP lines at the position of all HC lines
         step_hc = np.polyval(fit_step, ordhc_pix_meas)
         # get the derivative of the wave fit
@@ -1467,7 +1471,7 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
         # ---------------------------------------------------------------------
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=mprops['WAVEMAP'],
-                      hclines=mhcl, fplines=mfpl, iteration=1)
+                      iteration=1)
         hclines = calc_wave_lines(params, recipe, **hcargs)
         # generate the fp reference lines
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=mprops['WAVEMAP'],
@@ -1482,11 +1486,11 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
                                cavity_update=cavity)
         # ---------------------------------------------------------------------
         # regenerate the hc reference lines
-        hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=mprops['WAVEMAP'],
-                      hclines=mhcl, fplines=mfpl, iteration=2)
+        hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
+                      iteration=2)
         hclines = calc_wave_lines(params, recipe, **hcargs)
         # re generate the fp reference lines
-        fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=mprops['WAVEMAP'],
+        fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
                       cavity_poly=cavity, iteration=2)
         fplines = calc_wave_lines(params, recipe, **fpargs)
         # add lines to wave properties
@@ -2237,6 +2241,8 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     wave_table = drs_table.make_table(params, columns=wave_cols,
                                       values=wave_vals)
     # ----------------------------------------------------------------------
+    # copy original keys from fp file
+    wavefile.copy_original_keys(fpfile)
     # add version
     wavefile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
@@ -2373,6 +2379,7 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     hcfile.copy_hdict(wavefile)
+    hcfile.copy_header(wavefile)
     # set output key
     hcfile.add_hkey('KW_OUTPUT', value=hcfile.name)
     # set data
@@ -2409,6 +2416,7 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     fpfile.copy_hdict(wavefile)
+    fpfile.copy_header(wavefile)
     # set output key
     fpfile.add_hkey('KW_OUTPUT', value=fpfile.name)
     # set data
@@ -2466,6 +2474,7 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     cavfile.construct_filename(infile=fpe2ds)
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
+    cavfile.copy_header(wavefile)
     cavfile.copy_hdict(wavefile)
     # set output key
     cavfile.add_hkey('KW_OUTPUT', value=cavfile.name)
@@ -2595,7 +2604,7 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
     resfile.construct_filename(infile=fpe2ds)
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
-    resfile.copy_hdict(wavefile)
+    resfile.copy_header(wavefile)
     # set output key
     resfile.add_hkey('KW_OUTPUT', value=resfile.name)
     # add some basic keys to know whats in this file

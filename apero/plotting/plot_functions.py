@@ -1845,8 +1845,15 @@ def plot_wave_hc_diff_hist(plotter, graph: Graph, kwargs: dict):
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    diff_hc = kwargs['diff_hc']
-    error = kwargs['error']
+    diff_hc = np.array(kwargs['diff_hc'])
+    error = np.array(kwargs['error'])
+    # filter by 5 and 95 percentiles
+    low, high = np.percentile(diff_hc, [5, 95])
+    mask = (diff_hc > low) & (diff_hc < high)
+    # update diff hc and error
+    diff_hc = diff_hc[mask]
+    error = error[mask]
+    # set number of bins
     nbins = 100
     # get nsig
     nsig = diff_hc / error
@@ -1855,7 +1862,7 @@ def plot_wave_hc_diff_hist(plotter, graph: Graph, kwargs: dict):
     fig, frames = graph.set_figure(plotter, nrows=1, ncols=2)
     # ------------------------------------------------------------------
     # plot histogram for hc diff
-    frames[0].hist(diff_hc[np.abs(diff_hc < 500)], bins=nbins)
+    frames[0].hist(diff_hc[np.abs(diff_hc) < 500], bins=nbins)
     # add axis labels + title
     frames[0].set(xlabel='Velocity [m/s]', ylabel='Number', title='HC diff')
     # plot histogram for nsig

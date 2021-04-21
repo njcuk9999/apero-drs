@@ -51,7 +51,6 @@ from apero.io import drs_fits
 from apero.io import drs_table
 from apero.io import drs_path
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -100,7 +99,8 @@ PseudoConstants = pseudo_const.PseudoConstants
 MaskedConstant = np.ma.core.MaskedConstant
 # -----------------------------------------------------------------------------
 # define complex typing
-QCParamList = Tuple[List[str], List[Any], List[str], List[int]]
+QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
+                    List[Union[List[str], List[int], List[Any]]]]
 
 
 # =============================================================================
@@ -399,7 +399,6 @@ class DrsPath:
                 self.block_name = block.name.lower()
                 # set the block file set
                 self.block_fileset = block.fileset
-
 
     def block_names(self) -> List[str]:
         """
@@ -733,8 +732,8 @@ class DrsInputFile:
                          the file
         :param inputdir: string, the input directory (associated with an input
                          file, when this is an output file)
-        :param directory: string, the aboslute path of the file without the
-                          filename (based on the fully generated filename)
+        :param obs_dir: string, the observation directory of the file without
+                        the filename (based on the fully generated filename)
         :param data: np.array - when loaded the data is stored here
         :param header: drs_fits.Header - when loaded the header is stored here
         :param fileset: List of DrsFile instances - this file can be used as
@@ -1007,8 +1006,8 @@ class DrsInputFile:
                          the file
         :param inputdir: string, the input directory (associated with an input
                          file, when this is an output file)
-        :param directory: string, the aboslute path of the file without the
-                          filename (based on the fully generated filename)
+        :param obs_dir: string, the observation directory of the file without
+                        the filename (based on the fully generated filename)
         :param data: np.array - when loaded the data is stored here
         :param header: drs_fits.Header - when loaded the header is stored here
         :param fileset: List of DrsFile instances - this file can be used as
@@ -1208,8 +1207,8 @@ class DrsInputFile:
                          the file
         :param inputdir: string, the input directory (associated with an input
                          file, when this is an output file)
-        :param directory: string, the aboslute path of the file without the
-                          filename (based on the fully generated filename)
+        :param obs_dir: string, the observation directory of the file without
+                        the filename (based on the fully generated filename)
         :param data: np.array - when loaded the data is stored here
         :param header: drs_fits.Header - when loaded the header is stored here
         :param fileset: List of DrsFile instances - this file can be used as
@@ -1323,8 +1322,8 @@ class DrsInputFile:
                          the file
         :param inputdir: string, the input directory (associated with an input
                          file, when this is an output file)
-        :param directory: string, the aboslute path of the file without the
-                          filename (based on the fully generated filename)
+        :param obs_dir: string, the observation directory of the file without
+                        the filename (based on the fully generated filename)
         :param data: np.array - when loaded the data is stored here
         :param header: drs_fits.Header - when loaded the header is stored here
         :param fileset: List of DrsFile instances - this file can be used as
@@ -1747,7 +1746,6 @@ class DrsInputFile:
                                  self.class_name)
         # check that params is set
         self.check_params(func_name)
-        params = self.params
         pconst = constants.pload()
         # get required keys for index database
         hkeys, htypes = pconst.INDEX_HEADER_KEYS()
@@ -1851,8 +1849,8 @@ class DrsFitsFile(DrsInputFile):
                          the file
         :param inputdir: string, the input directory (associated with an input
                          file, when this is an output file)
-        :param directory: string, the aboslute path of the file without the
-                          filename (based on the fully generated filename)
+        :param obs_dir: string, the observation directory of the file without
+                        the filename (based on the fully generated filename)
         :param data: np.array - when loaded the data is stored here
         :param header: drs_fits.Header - when loaded the header is stored here
         :param fileset: List of DrsFile instances - this file can be used as
@@ -2112,8 +2110,8 @@ class DrsFitsFile(DrsInputFile):
                          the file
         :param inputdir: string, the input directory (associated with an input
                          file, when this is an output file)
-        :param directory: string, the aboslute path of the file without the
-                          filename (based on the fully generated filename)
+        :param obs_dir: string, the observation directory of the file without
+                        the filename (based on the fully generated filename)
         :param data: np.array - when loaded the data is stored here
         :param header: drs_fits.Header - when loaded the header is stored here
         :param fileset: List of DrsFile instances - this file can be used as
@@ -2261,8 +2259,8 @@ class DrsFitsFile(DrsInputFile):
                          the file
         :param inputdir: string, the input directory (associated with an input
                          file, when this is an output file)
-        :param directory: string, the aboslute path of the file without the
-                          filename (based on the fully generated filename)
+        :param obs_dir: string, the observation directory of the file without
+                        the filename (based on the fully generated filename)
         :param data: np.array - when loaded the data is stored here
         :param header: drs_fits.Header - when loaded the header is stored here
         :param fileset: List of DrsFile instances - this file can be used as
@@ -2379,8 +2377,8 @@ class DrsFitsFile(DrsInputFile):
                          the file
         :param inputdir: string, the input directory (associated with an input
                          file, when this is an output file)
-        :param directory: string, the aboslute path of the file without the
-                          filename (based on the fully generated filename)
+        :param obs_dir: string, the observation directory of the file without
+                        the filename (based on the fully generated filename)
         :param data: np.array - when loaded the data is stored here
         :param header: drs_fits.Header - when loaded the header is stored here
         :param fileset: List of DrsFile instances - this file can be used as
@@ -2631,8 +2629,6 @@ class DrsFitsFile(DrsInputFile):
             self.check_read(header_only=True)
             # get header
             header = self.header
-            # get file
-            filename = self.filename
         # get short hand to required header keys
         rkeys = self.required_header_keys
         # -----------------------------------------------------------------
@@ -2861,8 +2857,6 @@ class DrsFitsFile(DrsInputFile):
         else:
             # else return the original filename
             return basename
-
-
 
     def check_table_filename(self, recipename: str,
                              infile: 'DrsFitsFile',
@@ -3109,6 +3103,9 @@ class DrsFitsFile(DrsInputFile):
         :param copy: bool, if True copieds the data before setting it (allows
                      HDU to be closed when opening many files (slower but
                      safer)
+        :param return_data: bool, if True returns data, if False updates
+                            self.data
+
         :return: None or [np.ndarray/Table] if return_data = True
         """
         # set function name
@@ -3325,8 +3322,8 @@ class DrsFitsFile(DrsInputFile):
             names = None
         else:
             rout = drs_fits.readfits(params, self.filename, getdata=True,
-                                           gethdr=True, fmt='fits-multi',
-                                           return_names=True)
+                                     gethdr=True, fmt='fits-multi',
+                                     return_names=True)
             dout, hout, names = rout
         # need to deal with no data in primary (should be default)
         if dout[0] is None:
@@ -3444,6 +3441,9 @@ class DrsFitsFile(DrsInputFile):
         :param header_list: optional list of headers (not including primary
                             this is set by DrsFitsFile.header) if not set
                             these are the same as DrsFitsFile.header
+        :param name_list: optional list of names for each extension
+                          can be the length of data list or one larger
+                          (to override name of self.data)
         :param datatype_list: list of strings (or unset) these can either be
                               'image' or 'table' and must be set for each
                             numpy array / table in the list (must be same length
@@ -3838,8 +3838,6 @@ class DrsFitsFile(DrsInputFile):
                                 self.datatype, self.dtype, True,
                                 list(basenames), self.s1d)
 
-
-
         # return newinfile and table
         return newinfile, combinetable
 
@@ -4226,7 +4224,7 @@ class DrsFitsFile(DrsInputFile):
         keyworddict = params.get_instanceof(keyword_inst, nameattr='key')
         # get pconstant
         pconstant = constants.pload()
-        
+
         # filter function
         def __keep_card(card: drs_fits.fits.header.Card) -> bool:
             """
@@ -4354,7 +4352,7 @@ class DrsFitsFile(DrsInputFile):
             kwstore = [keyword, value, comment]
         # extract keyword, value and comment and put it into hdict
         if kwstore is not None:
-            okey, dvalue, comment = self.get_keywordstore(tuple(kwstore), 
+            okey, dvalue, comment = self.get_keywordstore(tuple(kwstore),
                                                           func_name)
         else:
             okey, dvalue, comment = key, None, comment
@@ -4483,7 +4481,7 @@ class DrsFitsFile(DrsInputFile):
 
         # extract keyword, value and comment and put it into hdict
         if kwstore is not None:
-            okey, dvalue, comment = self.get_keywordstore(tuple(kwstore), 
+            okey, dvalue, comment = self.get_keywordstore(tuple(kwstore),
                                                           func_name)
         else:
             okey, dvalue, comment = keyword, None, comment
@@ -4874,7 +4872,7 @@ class DrsNpyFile(DrsInputFile):
         :param basename: string, the basename (i.e. filename without path) for
                          the file
         :param inputdir: NOT USED FOR NPY FILE CLASS
-        :param directory: NOT USED FOR NPY FILE CLASS
+        :param obs_dir: NOT USED FOR NPY FILE CLASS
         :param data: np.array - when loaded the data is stored here
         :param header: NOT USED FOR NPY FILE CLASS
         :param fileset: List of DrsFile instances - this file can be used as
@@ -5054,11 +5052,13 @@ class DrsNpyFile(DrsInputFile):
         return 1
 
     def get_data(self, copy: bool = False,
-                 extensions = None) -> Union[np.ndarray, Table, None]:
+                 extensions=None) -> Union[np.ndarray, Table, None]:
         """
         return the data array
 
         :param copy: bool, if True deep copies the data
+        :param extensions: not used for npy file
+
         :return: the data (numpy array)
         """
         # set function name
@@ -5080,11 +5080,16 @@ class DrsNpyFile(DrsInputFile):
 
         also used to update output_dictionary for index database
 
+        :param block_kind: not used for npy
+        :param runstring: not used for npy
+
         :return: None
         """
         # set function name
         func_name = display_func('write_file', __NAME__,
                                  self.class_name)
+        # block kind and runstring are not used
+        _ = block_kind, runstring
         # get parameters
         self.check_params(func_name)
         params = self.params
@@ -5175,7 +5180,7 @@ class DrsNpyFile(DrsInputFile):
         :param basename: string, the basename (i.e. filename without path) for
                          the file
         :param inputdir: NOT USED FOR NPY FILE CLASS
-        :param directory: NOT USED FOR NPY FILE CLASS
+        :param obs_dir: NOT USED FOR NPY FILE CLASS
         :param data: np.array - when loaded the data is stored here
         :param header: NOT USED FOR NPY FILE CLASS
         :param fileset: List of DrsFile instances - this file can be used as
@@ -5269,7 +5274,7 @@ class DrsNpyFile(DrsInputFile):
         :param basename: string, the basename (i.e. filename without path) for
                          the file
         :param inputdir: NOT USED FOR NPY FILE CLASS
-        :param directory: NOT USED FOR NPY FILE CLASS
+        :param obs_dir: NOT USED FOR NPY FILE CLASS
         :param data: np.array - when loaded the data is stored here
         :param header: NOT USED FOR NPY FILE CLASS
         :param fileset: List of DrsFile instances - this file can be used as
@@ -5449,18 +5454,21 @@ class DrsOutFileExtension:
         return 'DrsOutExt[{0}]'.format(self.name)
 
     def add_table_column(self, drsfile: DrsFitsFile,
-                  incol: str, outcol: str, fiber: Union[str, None],
-                  units: Union[str, None], required: bool = True,
-                  block_kind: str = 'red', clear_file: bool = False):
+                         incol: str, outcol: str, fiber: Union[str, None],
+                         units: Union[str, None], required: bool = True,
+                         block_kind: str = 'red', clear_file: bool = False):
         """
         Add a table column to an extension
 
         :param drsfile: drs fits file instance - must be a fits bin table
         :param incol: str, the input column name
         :param outcol: str, the output column name
-        :param fiber: str or None, if set set the fiber name
+        :param fiber: str or None, if set sets the fiber name
+        :param units: str or None, if set sets the units for a columns
         :param required: bool, if False column is not required
         :param block_kind: str, the block kind (raw/tmp/red/out)
+        :param clear_file: bool, sets whether the file that creates this column
+                           should be cleared if/when we are clearing red files
 
         :return:
         """
@@ -5568,7 +5576,6 @@ class DrsOutFileExtension:
             # don't want to read header from self.extname
             self.header = drs_fits.readfits(params, self.filename, False, True,
                                             fmt, copy=True)
-
 
     def make_table(self, params: ParamDict, indexdbm: Any, linkkind: str,
                    criteria: str):
@@ -5827,6 +5834,8 @@ class DrsOutFile(DrsInputFile):
         :param drsfile: DrsFitsFile, a fits file to add
         :param fiber: str, the fiber
         :param block_kind: str, the block kind (i.e. (raw/tmp/red)
+        :param hkeys: dict or None, if set is the dictionary of header keys
+                      to add to fits extension
         :param pos: position within the fits file
         :param fiber: str or None, if set defines the fiber to use
         :param link: str, if set this must be a previously defined extension
@@ -5860,7 +5869,7 @@ class DrsOutFile(DrsInputFile):
         # add new extension instance
         self.extensions[pos] = DrsOutFileExtension(name, drsfile, pos, fiber,
                                                    block_kind, hkeys, link,
-                                                   hlink,  header_only,
+                                                   hlink, header_only,
                                                    data_only,
                                                    remove_drs_hkeys,
                                                    remove_std_hkeys,
@@ -5879,9 +5888,11 @@ class DrsOutFile(DrsInputFile):
         :param incol: str, the input column name
         :param outcol: str, the output column name
         :param fiber: str or None, if set set the fiber name
+        :param units: str or None, if set sets the units for a columns
         :param required: bool, if False column is not required
         :param block_kind: str, the blcok kind (raw/tmp/red/out)
-
+        :param clear_file: bool, sets whether the file that creates this column
+                           should be cleared if/when we are clearing red files
         :return:
         """
         # get extension
@@ -5992,7 +6003,6 @@ class DrsOutFile(DrsInputFile):
         rkeys, rtypes = pconst.INDEX_HEADER_KEYS()
         # must have primary filename set
         if self.extensions[0].filename is None:
-
             emsg = 'Error cannot link infile not set for primary extension'
 
             WLOG(params, 'error', emsg)
@@ -6569,7 +6579,8 @@ def get_file_definition(params: ParamDict, name: str,
     :param params: ParamDict, the parameter dictionary of constants
     :param name: string, the recipe name
     :param instrument: string, the instrument name
-    :param kind: string, the typoe of file to look for ('raw', 'tmp', 'red')
+    :param block_kind: string, the type of file to look for ('raw',
+                       'tmp', 'red')
     :param return_all: bool, whether to return all instances of this file or
                        just the last entry (if False)
     :param fiber: string, some files require a fiber to choose the correct file
@@ -6577,9 +6588,10 @@ def get_file_definition(params: ParamDict, name: str,
     :param required: bool, if False then does not throw error when no files
                      found (only use if checking for return = None)
 
-    :type name: str
+    :param instrument: string, the instrument name
     :type instrument: str
-    :type kind: str
+    :param block_kind: string, the type of file to look for ('raw',
+                       'tmp', 'red')
     :type return_all: bool
     :type fiber: str
 
@@ -6673,7 +6685,7 @@ def get_another_fiber_file(params: ParamDict, outfile: DrsFitsFile,
     """
     # need a fresh copy of the outfile
     fresh_outfile = get_file_definition(params, outfile.name,
-                                                 block_kind=out_block_kind)
+                                        block_kind=out_block_kind)
     # see whether we need fiber for intype
     if fresh_outfile.intype.fibers is not None:
         infiber = fiber
@@ -6858,7 +6870,7 @@ def combine_metric_1(params: ParamDict, row: int, image1: np.ndarray,
 
 
 def combine_headers(params: ParamDict, headers: List[Header],
-                     names: List[str], math: str):
+                    names: List[str], math: str):
     """
     Takes a list of headers and combines them in the proper fashion (for the
     output combined file)
@@ -6992,15 +7004,17 @@ def combine_headers(params: ParamDict, headers: List[Header],
     return new_header, new_hdict, combine_table
 
 
-def combine_hkey(values: List[Any], method: str, math) -> Any:
+def combine_hkey(values: List[Any], method: str, math: str) -> Any:
     """
     Combine header keys using method given in Keyword setup
 
     :param values: a list of values to combine with given method
     :param method: str, the method to combine
+    :param math: str, if method = flux this is the math to use with it
 
     :return: Any, single value of the combined type or None if not combinable
     """
+    # noinspection PyBroadException
     try:
         if method in ['mean', 'average']:
             return mp.nanmean(values)
@@ -7035,7 +7049,6 @@ def combine_hkey(values: List[Any], method: str, math) -> Any:
 def fix_header(params: ParamDict, recipe: Any,
                infile: Union[DrsFitsFile, None] = None,
                header: Union[Header, FitsHeader, None] = None,
-               raise_exception: bool = False
                ) -> Union[DrsFitsFile, Tuple[FitsHeader, Header]]:
     """
     Instrument specific header fixes are define in pseudo_const.py for an
@@ -7047,8 +7060,6 @@ def fix_header(params: ParamDict, recipe: Any,
                    header to fix - if not set must have header set
     :param header: Header - if set fixes this header (if not set uses infile)
                    if both set 'header' takes precedence over infile.header
-    :param raise_exception: bool, if True raise an exception instead of
-                   logging an error
 
     :return: if infile is set return the infile with the updated infile.header,
              else return hdict and header (both fits.Header instances)
@@ -7561,8 +7572,8 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
                      the file
     :param inputdir: string, the input directory (associated with an input
                      file, when this is an output file)
-    :param directory: string, the aboslute path of the file without the
-                      filename (based on the fully generated filename)
+    :param obs_dir: string, the observation directory of the file without
+                    the filename (based on the fully generated filename)
     :param data: np.array - when loaded the data is stored here
     :param header: drs_fits.Header - when loaded the header is stored here
     :param fileset: List of DrsFile instances - this file can be used as
