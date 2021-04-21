@@ -186,14 +186,14 @@ def __main__(recipe, params):
         # =================================================================
         # get blaze and initial wave solution
         # =================================================================
-        # add level to recipe log
-        log_hc = log1.add_level(params, 'mode', 'hc')
-        # -----------------------------------------------------------------
         # log fiber process
         drs_startup.fiber_processing_update(params, master_fiber)
         # get hc and fp outputs
         hc_e2ds_file = hc_outputs[master_fiber]
         fp_e2ds_file = fp_outputs[master_fiber]
+        # read these files
+        hc_e2ds_file.read_file()
+        fp_e2ds_file.read_file()
         # define the header as being from the hc e2ds file
         hcheader = hc_e2ds_file.get_header()
         # -----------------------------------------------------------------
@@ -233,7 +233,6 @@ def __main__(recipe, params):
             fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
                           cavity_poly=wprops['CAVITY'], iteration=iteration + 1)
             fplines = wave2.calc_wave_lines(params, recipe, **fpargs)
-
             # -----------------------------------------------------------------
             # TODO: Remove after testing: Save the hclines and fplines from
             #       first calculation
@@ -426,8 +425,10 @@ def __main__(recipe, params):
             # Update calibDB with FP solution and line references
             # ----------------------------------------------------------
             if passed and params['INPUTS']['DATABASE']:
-                # copy the cavity solution to calibration database
-                calibdbm.add_calib_file(cavityfile)
+                # only save cavity file for master fiber
+                if fiber == master_fiber:
+                    # copy the cavity solution to calibration database
+                    calibdbm.add_calib_file(cavityfile)
                 # copy the hc wave solution file to the calibDB
                 calibdbm.add_calib_file(wavefile)
                 # copy the hc line ref file to the calibDB
