@@ -2830,8 +2830,13 @@ def plot_waveref_expected(plotter, graph, kwargs):
     for order_num in range(nbo):
         # get order mask
         omask = order_num == orders
+        # ------------------------------------------------------------------
+        # do not plot outliers in diff
+        low, high = np.percentile(diff[omask], [1, 99])
+        pmask = (diff[omask] > low) & (diff[omask] < high)
+        # ------------------------------------------------------------------
         # plot points
-        frame.scatter(wavemap[omask], diff[omask], s=5)
+        frame.scatter(wavemap[omask][pmask], diff[omask][pmask], s=5)
     # add title (with or without iteration)
     if iteration is not None:
         if isinstance(iteration, int) or isinstance(iteration, float):
