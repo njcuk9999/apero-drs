@@ -1454,6 +1454,9 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
         # get the e2ds_files for this fiber
         hc_e2ds_file = hc_outputs[fiber]
         fp_e2ds_file = fp_outputs[fiber]
+        # read these files
+        hc_e2ds_file.read_file()
+        fp_e2ds_file.read_file()
         # ---------------------------------------------------------------------
         # skip all this if this is the master fiber (its all been done)
         if fiber == master_fiber:
