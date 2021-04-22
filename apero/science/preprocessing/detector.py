@@ -264,15 +264,13 @@ def correct_left_right(params: ParamDict, image: np.ndarray) -> np.ndarray:
         nanmed = np.nanmedian(reference_pixels_sides[:, it])
         reference_pixels_sides[:, it] -= nanmed
     # median profile of the 8 pixels
-    medprofile = np.nanmedian(reference_pixels_sides,axis=1)
+    medprofile = np.nanmedian(reference_pixels_sides, axis=1)
     # filter profile with width
-    medprofile_filtered = median_filter(medprofile, width)
+    medprofile_filtered = ndimage.median_filter(medprofile, width)
     # correlated noise replicated onto the output image format
     correlated_noise = np.repeat(medprofile_filtered, ypix).reshape(ypix, xpix)
     # return the corrected image
     return image - correlated_noise
-
-
 
 
 def median_filter_dark_amp(params: ParamDict, image: np.ndarray) -> np.ndarray:
