@@ -499,7 +499,8 @@ class ParamDict(CaseInDict):
             # set source
             self.set_instance(key, instance)
 
-    def append_sources(self, keys: str, sources: Union[str, List[str], dict]):
+    def append_sources(self, keys: List[str],
+                       sources: Union[str, List[str], dict]):
         """
         Adds list of keys sources (appends if exists)
 
@@ -1046,6 +1047,8 @@ class ParamDict(CaseInDict):
         """
         Takes a snapshot of the current configuration (for reproducibility)
 
+        :param recipe: DrsRecipe class, the recipe instance that called this
+                       function
         :param names: list of strings, the name of each constant (can be
                       none to not add extra keys)
         :param kinds: list of kinds, the kind of each constant (can be
@@ -1160,7 +1163,7 @@ class ParamDict(CaseInDict):
             if key not in self.used:
                 continue
             # do not continue if we have not used this key (set to zero)
-            if self.used[key] < 1:
+            if int(self.used[key]) < 1:
                 continue
             # add param_dict entry (or entries)
             tabledict = _add_param_dict_to_tabledict(tabledict, self.data,
@@ -2263,7 +2266,7 @@ def _add_hdict(drsfitsfile: Any, names: Union[List[str], None] = None,
     names, values, sources, desc (for insertion into tabledict)
 
     :param drsfitsfile: DrsFitsFile
-    :param name: list of strings or None - the names currently set to add to
+    :param names: list of strings or None - the names currently set to add to
                  tabledict
     :param kinds: list of strings or None - the kinds currently set to add to
                   tabledict

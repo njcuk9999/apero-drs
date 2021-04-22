@@ -22,7 +22,6 @@ from apero import lang
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log, drs_file
-from apero.core.utils import drs_startup
 from apero.core.utils import drs_data
 
 # =============================================================================
@@ -56,12 +55,13 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define functions
 # =============================================================================
-def measure_fp_peaks(params, props, limit, normpercent):
+def measure_fp_peaks(params: ParamDict, props: ParamDict, limit: float,
+                     normpercent: float) -> ParamDict:
     """
     Measure the positions of the FP peaks
     Returns the pixels positions and Nth order of each FP peak
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 drift_peak_border_size: int, the border size (edges in
                                         x-direction) for the FP fitting
@@ -81,13 +81,13 @@ def measure_fp_peaks(params, props, limit, normpercent):
                                                a gaussian)
                 log_opt: string, log option, normally the program name
 
-    :param loc: parameter dictionary, ParamDict containing data
+    :param props: parameter dictionary, ParamDict containing data
             Must contain at least:
                 speref: numpy array (2D), the reference spectrum
                 wave: numpy array (2D), the wave solution image
                 lamp: string, the lamp type (either 'hc' or 'fp')
 
-    :return loc: parameter dictionary, the updated parameter dictionary
+    :return props: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 ordpeak: numpy array (1D), the order number for each valid FP
                          peak
@@ -310,13 +310,14 @@ def fit_fp_peaks(x, y, size, return_model=False):
         return p0, popt, pcov, warns
 
 
-def remove_wide_peaks(params, props, cutwidth):
+def remove_wide_peaks(params: ParamDict, props: ParamDict,
+                      cutwidth: float) -> ParamDict:
     """
     Remove peaks that are too wide
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
 
-    :param loc: parameter dictionary, ParamDict containing data
+    :param props: parameter dictionary, ParamDict containing data
             Must contain at least:
                 ordpeak: numpy array (1D), the order number for each valid FP
                          peak
@@ -330,16 +331,10 @@ def remove_wide_peaks(params, props, cutwidth):
                         FP peak
                 amppeak: numpy array (1D), the amplitude for each valid FP peak
 
-    :param expwidth: float or None, the expected width of FP peaks - used to
-                     "normalise" peaks (which are then subsequently removed
-                     if > "cutwidth") if expwidth is None taken from
-                     p['DRIFT_PEAK_EXP_WIDTH']
-    :param cutwidth: float or None, the normalised width of FP peaks thatis too
-                     large normalised width FP FWHM - expwidth
-                     cut is essentially: FP FWHM < (expwidth + cutwidth), if
-                     cutwidth is None taken from p['DRIFT_PEAK_NORM_WIDTH_CUT']
+    :param cutwidth: float, the normalised width of FP peaks that is too
+                     large
 
-    :return loc: parameter dictionary, the updated parameter dictionary
+    :return props: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 ordpeak: numpy array (1D), the order number for each valid FP
                          peak (masked to remove wide peaks)
@@ -607,7 +602,8 @@ def locate_reference_file(params, recipe, infile):
     if infile.name == 'TELLU_OBJ':
         instance = infile.intype
         # need to get filename of input file
-        inbasename = infile.get_infile_infilename(filename=infile.filename)
+        inbasename = infile.get_infile_infilename(filename=infile.filename,
+                                                  fiber=infile.fiber)
         # get absolute path
         infilename = os.path.join(infile.path, inbasename)
         # set filename

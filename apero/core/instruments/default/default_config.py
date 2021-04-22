@@ -35,7 +35,8 @@ __all__ = [  # global settings
     # DISPLAY/LOGGING SETTINGS
     'DRS_PRINT_LEVEL', 'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
     'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
-    'DRS_LOG_EXIT_TYPE', 'DRS_LOG_FORMAT', 'DRS_LOG_FITS_NAME',
+    'DRS_LOG_EXIT_TYPE', 'DRS_LOG_FORMAT', 'DRS_LOG_FITS_NAME', 'DRS_LOG_EMAIL',
+    'DRS_LOG_EMAIL_AUTH', 'DRS_LOG_EMAIL_AUTH_PATH',
     # PLOT SETTINGS
     'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
     'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
@@ -578,6 +579,29 @@ DRS_LOG_FITS_NAME = Const('DRS_LOG_FITS_NAME', value='log.fits', dtype=str,
                           source=__NAME__, group=cgroup,
                           description='Define the log fits file name',
                           output=False)
+
+# Define the email address to send emails from
+DRS_LOG_EMAIL = Const('DRS_LOG_EMAIL', value='apero.drs@gmail.com', dtype=str,
+                      source=__NAME__, group=cgroup,
+                      description='Define the email address to send emails '
+                                  'from',
+                      output=False)
+
+# Define the relative path of the log email oauth file
+DRS_LOG_EMAIL_AUTH_PATH = Const('DRS_LOG_EMAIL_AUTH_PATH',
+                                value='data/core',
+                                dtype=str, source=__NAME__, group=cgroup,
+                                description='Define the relative path of the '
+                                            'log email oauth file',
+                                output=False)
+
+
+# Define the filename of the log email oauth file
+DRS_LOG_EMAIL_AUTH = Const('DRS_LOG_EMAIL_AUTH', value='apero.drs.oauth2.json',
+                           dtype=str, source=__NAME__, group=cgroup,
+                           description='Define the filename of the log email '
+                                       'oauth file',
+                           output=False)
 
 # =============================================================================
 # PLOT SETTINGS

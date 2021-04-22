@@ -1,1 +1,2 @@
-New documentation will go here (hopefully reusing some of the old stuff)
+Currently these are just some md files that
+should be put into the proper documentation
