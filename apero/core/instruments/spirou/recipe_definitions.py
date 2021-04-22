@@ -1447,7 +1447,7 @@ full_seq.add(obj_pol, rkwargs=dict(exposures=[files.out_tellu_obj]), fiber='AB',
              recipe_kind='polar-tcorr')
 
 # post processing
-full_seq.add(obj_pp_recipe, files=[files.pp_file],
+full_seq.add(obj_pp_recipe, name='POSTALL', files=[files.pp_file],
              recipe_kind='post-all',
              filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
                                       'POLAR_DARK']))
@@ -1695,7 +1695,7 @@ tellu_seq.add(obj_mk_tellu, name='MKTELLU4', recipe_kind='tellu-hotstar',
               template_required=True)
 
 # post processing
-tellu_seq.add(obj_pp_recipe, files=[files.pp_file],
+tellu_seq.add(obj_pp_recipe, files=[files.pp_file], name='TELLPOST',
               recipe_kind='post-hotstar',
               filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
                                          'POLAR_FP'],
@@ -1753,7 +1753,7 @@ science_seq.add(obj_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # post processing
-science_seq.add(obj_pp_recipe, files=[files.pp_file],
+science_seq.add(obj_pp_recipe, files=[files.pp_file], name='SCIPOST',
                 recipe_kind='post-science',
                 filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
                                          'POLAR_FP'],

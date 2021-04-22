@@ -21,12 +21,11 @@ from pathlib import Path
 import random
 import string
 import time
-from typing import Any, Union, Tuple
+from typing import Any, List, Union, Tuple
 
 from apero import lang
 from apero.base import base
 from apero.base import drs_base
-
 
 # =============================================================================
 # Define variables
@@ -238,6 +237,61 @@ def display_func(name: Union[str, None] = None,
     return strfunc
 
 
+def send_email(params: Any, subject: str, message: Union[List[str], str],
+               email: Union[str, None] = None) -> int:
+    """
+    Send mail from the apero drs account to "email"
+
+    - if params['EMAIL_ADDRESS'] is set and "email" is None uses this email
+      address
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param subject: str, the subject of the email
+    :param message: str or list of strings, the message to send
+    :param email: str or None, if set this is the email address to send the
+                  email to
+    :param attach: str or None, if set this attaches a file to the email
+
+    :return: None - sends email
+    """
+    # set function name
+    func_name = display_func('send_email', __NAME__)
+    # ----------------------------------------------------------------------
+    # get send email address
+    if not drs_base.base_null_text(email, ['None', '']):
+        email_address = str(email)
+    elif drs_base.base_null_text(params['EMAIL_ADDRESS'], ['None', '']):
+        return 0
+    else:
+        email_address = params['EMAIL_ADDRESS']
+    # ----------------------------------------------------------------------
+    # get auth file location
+    asset_relpath = params['DRS_LOG_EMAIL_AUTH_PATH']
+    authfile = params['DRS_LOG_EMAIL_AUTH']
+    assetdir = get_relative_folder(__PACKAGE__, asset_relpath)
+    authpath = os.path.join(assetdir, authfile)
+    drs_email = params['DRS_LOG_EMAIL']
+    # ----------------------------------------------------------------------
+    # try to import yagmail
+    try:
+        import yagmail
+        yag = yagmail.SMTP(drs_email, oauth2_file=authpath)
+    except ImportError:
+        drs_base.base_error('00-503-00001', str(textentry('00-503-00001')),
+                            'error')
+        return 0
+    except Exception as e:
+        eargs = [type(e), e, func_name]
+        drs_base.base_error('00-503-00002', str(textentry('00-503-00002')),
+                            'error', args=eargs)
+        return 0
+    # ----------------------------------------------------------------------
+    # send via YAG
+    yag.send(to=email_address, subject=subject, contents=message)
+    # return 1
+    return 1
+
+
 # =============================================================================
 # Basic other functions
 # =============================================================================
@@ -348,6 +402,7 @@ def get_relative_folder(package: Union[None, str],
     # try base function
     return drs_base.base_func(drs_base.base_get_relative_folder, func_name,
                               package, folder)
+
 
 # =============================================================================
 # Start of code

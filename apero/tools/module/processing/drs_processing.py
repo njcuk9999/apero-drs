@@ -27,6 +27,7 @@ from apero.base import base
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_text
+from apero.core.core import drs_misc
 from apero.core.core import drs_log
 from apero.core.core import drs_argument
 from apero.core.utils import drs_recipe
@@ -755,54 +756,73 @@ def fix_run_file(runfile):
                 f.write(line + '\n')
 
 
-def send_email(params, kind):
-    func_name = __NAME__ + '.send_email()'
+def processing_email(params: ParamDict, position: str, name: str,
+                     tb: Union[str, None] = None):
+    """
+    Generate the email subject and contents for
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param position: str, either 'start' or 'end'
+    :param name: str, name of the code that called this function
+    :param tb: str or None, if set this is a traceback of the last error
+               recorded
+
+    :return:  None - send the email
+    """
     # ----------------------------------------------------------------------
     # check whether send email
+    if 'SEND_EMAIL' not in params:
+        return 0
     if not params['SEND_EMAIL']:
         return 0
     # ----------------------------------------------------------------------
-    # try to import yagmail
-    try:
-        import yagmail
-        yag = yagmail.SMTP(params['EMAIL_ADDRESS'])
-    except ImportError:
-        WLOG(params, 'error', textentry('00-503-00001'))
-        yagmail = None
-        yag = yagmail
-    except Exception as e:
-        eargs = [type(e), e, func_name]
-        WLOG(params, 'error', textentry('00-503-00002', args=eargs))
-        yagmail = None
-        yag = yagmail
+    # log sending email
+    # TODO: add to language db
+    msg = 'Sending {0} mail to {1}'
+    margs = [position, params['EMAIL_ADDRESS']]
+    WLOG(params, 'info', msg.format(*margs))
+    # ----------------------------------------------------------------------
+    # deal with no PID
+    if 'PID' not in params:
+        pid = 'Unknown'
+    else:
+        pid = params['PID']
+    # get instrument
+    if 'INSTRUMENT' in params:
+        instrument = params['INSTRUMENT']
+    else:
+        instrument = base.IPARAMS['INSTRUMENT']
+    # ----------------------------------------------------------------------
+    # deal with log file
+    logfile = drs_log.get_logfilepath(WLOG, params)
+    # read log file
+    with open(logfile, 'r') as lfile:
+        lines = lfile.readlines()
     # ----------------------------------------------------------------------
     # deal with kind = start
-    if kind == 'start':
-        receiver = params['EMAIL_ADDRESS']
-        iname = '{0}-DRS'.format(params['INSTRUMENT'])
-        sargs = [iname, __NAME__, params['PID']]
-        subject = textentry('40-503-00001', args=sargs)
-        body = ''
-        for logmsg in WLOG.pout['LOGGER_ALL']:
-            body += '{0}\t{1}\n'.format(*logmsg)
+    if position == 'start':
+        iname = 'APERO-{0}'.format(instrument)
+        sargs = [iname, name, pid]
+        subject = str(textentry('40-503-00001', args=sargs))
+        messages = list(lines)
     # ----------------------------------------------------------------------
     # deal with kind = end
-    elif kind == 'end':
-        receiver = params['EMAIL_ADDRESS']
-        iname = '{0}-DRS'.format(params['INSTRUMENT'])
-        sargs = [iname, __NAME__, params['PID']]
-        subject = textentry('40-503-00002', args=sargs)
-        body = ''
-        for logmsg in params['LOGGER_FULL']:
-            for log in logmsg:
-                body += '{0}\t{1}\n'.format(*log)
+    elif position == 'end':
+        iname = 'APERO-{0}'.format(instrument)
+        sargs = [iname, name, pid]
+        subject = str(textentry('40-503-00002', args=sargs))
+        messages = list(lines)
     # ----------------------------------------------------------------------
-    # else do not send email
     else:
-        return 0
+        return None, ''
     # ----------------------------------------------------------------------
-    # send via YAG
-    yag.send(to=receiver, subject=subject, contents=body)
+    # deal with traceback
+    if tb is not None:
+        messages += ['', '', '', 'TRACEBACK', '']
+        messages += tb.split('\n')
+    # ----------------------------------------------------------------------
+    # send the email
+    drs_misc.send_email(params, subject, messages)
 
 
 def reset_files(params):

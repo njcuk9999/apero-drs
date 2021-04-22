@@ -10,6 +10,7 @@ Created on 2019-07-26 at 09:47
 @author: cook
 """
 import sys
+import traceback
 
 from apero.base import base
 from apero.core.core import drs_log
@@ -100,65 +101,103 @@ def __main__(recipe, params):
     # reset sys.argv so it doesn't mess with recipes
     sys.argv = [__NAME__]
 
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # Send email about starting
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # send email if configured
-    drs_processing.send_email(params, kind='start')
+    drs_processing.processing_email(params, 'start', __NAME__)
+    # -------------------------------------------------------------------------
+    # everything else in a try (to log end email even with exception)
+    try:
+        # ---------------------------------------------------------------------
+        # find all raw files via index database
+        # ---------------------------------------------------------------------
+        includelist = params['INCLUDE_OBS_DIRS']
+        excludelist = params['EXCLUDE_OBS_DIRS']
+        # update the index database (taking into account include/exclude lists)
+        indexdbm = drs_utils.update_index_db(params, block_kind='raw',
+                                             includelist=includelist,
+                                             excludelist=excludelist)
+        # fix the header data (object name, dprtype, mjdmid and trg_type etc)
+        WLOG(params, '', 'Updating database with header fixes')
+        indexdbm.update_header_fix(recipe)
 
-    # ----------------------------------------------------------------------
-    # find all raw files via index database
-    # ----------------------------------------------------------------------
-    # update the index database (taking into account include/exclude lists)
-    indexdbm = drs_utils.update_index_db(params, block_kind='raw',
-                                         includelist=params['INCLUDE_OBS_DIRS'],
-                                         excludelist=params['EXCLUDE_OBS_DIRS'])
-    # fix the header data (object name, dprtype, mjdmid and trg_type etc)
-    WLOG(params, '', 'Updating database with header fixes')
-    indexdbm.update_header_fix(recipe)
+        # find all previous runs
+        skiptable = drs_processing.generate_skip_table(params)
 
-    # find all previous runs
-    skiptable = drs_processing.generate_skip_table(params)
+        # ----------------------------------------------------------------------
+        # Update the object database (recommended only for full reprocessing)
+        # ----------------------------------------------------------------------
+        if params['UPDATE_OBJ_DATABASE']:
+            manage_databases.update_object_database(params)
 
-    # ----------------------------------------------------------------------
-    # Update the object database (recommended only for full reprocessing)
-    # ----------------------------------------------------------------------
-    if params['UPDATE_OBJ_DATABASE']:
-        manage_databases.update_object_database(params)
+        # ----------------------------------------------------------------------
+        # Generate run list
+        # ----------------------------------------------------------------------
+        rlist = drs_processing.generate_run_list(params, indexdbm, runtable,
+                                                 skiptable)
 
-    # ----------------------------------------------------------------------
-    # Generate run list
-    # ----------------------------------------------------------------------
-    rlist = drs_processing.generate_run_list(params, indexdbm, runtable,
-                                             skiptable)
+        # ----------------------------------------------------------------------
+        # Process run list
+        # ----------------------------------------------------------------------
+        out = drs_processing.process_run_list(params, recipe, rlist, groupname)
+        outlist, has_errors, ptime = out
 
-    # ----------------------------------------------------------------------
-    # Process run list
-    # ----------------------------------------------------------------------
-    out = drs_processing.process_run_list(params, recipe, rlist, groupname)
-    outlist, has_errors, ptime = out
+        # ----------------------------------------------------------------------
+        # Print timing
+        # ----------------------------------------------------------------------
+        drs_processing.display_timing(params, outlist, ptime)
 
-    # ----------------------------------------------------------------------
-    # Print timing
-    # ----------------------------------------------------------------------
-    drs_processing.display_timing(params, outlist, ptime)
+        # ----------------------------------------------------------------------
+        # Print out any errors
+        # ----------------------------------------------------------------------
+        if has_errors:
+            drs_processing.display_errors(params, outlist)
 
-    # ----------------------------------------------------------------------
-    # Print out any errors
-    # ----------------------------------------------------------------------
-    if has_errors:
-        drs_processing.display_errors(params, outlist)
+        # ----------------------------------------------------------------------
+        # Compile some useful information as summary
+        # ----------------------------------------------------------------------
+        drs_processing.save_stats(params, outlist)
 
-    # ----------------------------------------------------------------------
-    # Compile some useful information as summary
-    # ----------------------------------------------------------------------
-    drs_processing.save_stats(params, outlist)
+        # ----------------------------------------------------------------------
+        # Send email about finishing
+        # ----------------------------------------------------------------------
+        # send email if configured
+        drs_processing.processing_email(params, 'end', __NAME__)
 
-    # ----------------------------------------------------------------------
-    # Send email about finishing
-    # ----------------------------------------------------------------------
-    # send email if configured
-    drs_processing.send_email(params, kind='end')
+    except Exception as e:
+        # ---------------------------------------------------------------------
+        # Send email about finishing
+        # ---------------------------------------------------------------------
+        # get traceback
+        string_trackback = traceback.format_exc()
+        # send email if configured
+        drs_processing.processing_email(params, 'end', __NAME__,
+                                        tb=string_trackback)
+        # raise exception
+        raise e
+    except KeyboardInterrupt as e:
+        # ---------------------------------------------------------------------
+        # Send email about finishing
+        # ---------------------------------------------------------------------
+        # get traceback
+        string_trackback = traceback.format_exc()
+        # send email if configured
+        drs_processing.processing_email(params, 'end', __NAME__,
+                                        tb=string_trackback)
+        # raise exception
+        raise e
+    except SystemExit as e:
+        # ---------------------------------------------------------------------
+        # Send email about finishing
+        # ---------------------------------------------------------------------
+        # get traceback
+        string_trackback = traceback.format_exc()
+        # send email if configured
+        drs_processing.processing_email(params, 'end', __NAME__,
+                                        tb=string_trackback)
+        # raise exception
+        raise e
 
     # ----------------------------------------------------------------------
     # End of main code
