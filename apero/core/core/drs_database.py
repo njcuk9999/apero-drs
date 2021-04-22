@@ -1189,8 +1189,20 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
     # get hdict / header
     cond1 = hasattr(drsfile, 'hdict') and len(list(drsfile.hdict.keys())) != 0
     cond2 = hasattr(drsfile, 'header')
-    cond2 &= len(list(drsfile.get_header().keys())) != 0
-
+    # if fits file then we check the size of header
+    if isinstance(drsfile, DrsFitsFile):
+        cond2 &= len(list(drsfile.get_header().keys())) != 0
+    # if npy file we check for header
+    elif isinstance(drsfile, drs_file.DrsNpyFile):
+        # if we have header check length of header
+        if cond2:
+            cond2 &= len(list(drsfile.header.keys())) != 0
+        # else set cond2 to False
+        else:
+            cond2 = False
+    # if we don't have header skip
+    else:
+        cond2 = False
     # deal with having both hdict and heaader
     if cond1 and cond2:
         # combine
