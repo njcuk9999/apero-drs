@@ -15211,18 +15211,7 @@ Changelog
 - Update config.py. [Neil Cook]
 - Update visu_RAW_spirou.py. [Neil Cook]
 
-  call to plt should come via ```sPlt``` i.e.:
-  instead of:
-  ```python
-  import matplotlib.pyplot as plt
-  ```
-
-  use
-
-  ```python
-  from SpirouDRS.spirouCore import sPlt
-  plt = sPlt.plt
-  ```
+  call to plt should come via ```sPlt```
 
   This avoids all errors with matplotlib backends.
 - Change. [njcuk9999]

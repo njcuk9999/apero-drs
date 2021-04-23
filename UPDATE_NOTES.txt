@@ -1,8 +1,20 @@
 # Update Note Summary - Version 0.7.108
 
-Date: 2020-12-21
+Date: 2021-04-23
 
-## Updates since Version 0.6.132
+## summary of big cosmetic changes
+    - any reference to NIGHT or NIGHTNAME or DIRECTORY will now be "obs_dir"
+    - no need to ever reference the INSTRUMENT - this is done at installation
+      new instruments need to be installed under a different apero profile
+    - recipe names changed cal_dark_{instrument}.py --> apero_dark_{instrument}.py
+      this avoids confusing recipes like cal_extract and cal_ccf not being "cal" or "obj"
+    - use apero_explorer.py to read calib/tellu DB and modify them
+    - all output extentions now have no data in primary HDU, all drs header
+      info now stored in primary HDU for all types
+    - "out" directory now exists for CADC outputs (created in APERO)
+    - most OBJ_FP files change DPRTYPE to POLAR_FP
+
+## Summary of updates since Version 0.6.131
 
 - database
     - complete code change on how databases are handled. Currently supported
