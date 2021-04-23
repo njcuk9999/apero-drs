@@ -931,7 +931,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     template_file.copy_hdict(template_2d_file)
     template_file.copy_header(template_2d_file)
     # add wave keys
-    template_file = wave.add_wave_keys(params, template_file, wprops)
+    template_file = wave.add_wave_keys(template_file, wprops)
     # add version
     template_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates

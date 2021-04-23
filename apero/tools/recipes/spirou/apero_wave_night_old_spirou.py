@@ -9,9 +9,6 @@ Created on 2019-12-18 at 16:57
 
 @author: cook
 """
-# TODO: change to apero_wave_spirou after testing complete
-# TODO: Currently a placeholder for EA code
-
 from apero.base import base
 from apero import lang
 from apero.core.core import drs_file
@@ -21,7 +18,7 @@ from apero.core.core import drs_database
 from apero.io import drs_image
 from apero.science.calib import gen_calib
 from apero.science.calib import flat_blaze
-from apero.science.calib import wave
+from apero.science.calib import wave_old
 from apero.science import velocity
 from apero.science.extract import other as extractother
 
@@ -194,15 +191,15 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # get master hc lines and fp lines from calibDB
             wargs = []
-            wout = wave.get_wavelines(params, recipe, fiber,
-                                      infile=hc_e2ds_file, database=calibdbm)
+            wout = wave_old.get_wavelines(params, recipe, fiber,
+                                          infile=hc_e2ds_file, database=calibdbm)
             mhclines, mhclsource, mfplines, mfplsource = wout
             # --------------------------------------------------------------
             # load wavelength solution (start point) for this fiber
             #    this should only be a master wavelength solution
-            wprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
-                                           fiber=fiber, master=True,
-                                           forcefiber=True, database=calibdbm)
+            wprops = wave_old.get_wavesolution(params, recipe, infile=hc_e2ds_file,
+                                               fiber=fiber, master=True,
+                                               forcefiber=True, database=calibdbm)
             # --------------------------------------------------------------
             # define the header as being from the hc e2ds file
             hcheader = hc_e2ds_file.get_header()
@@ -213,7 +210,7 @@ def __main__(recipe, params):
             # calculate the night wavelength solution
             wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines,
                      wprops['WAVEMAP'], wprops['WAVEFILE'], fiber, indcavity]
-            nprops = wave.night_wavesolution(params, recipe, *wargs)
+            nprops = wave_old.night_wavesolution(params, recipe, *wargs)
             # update in dcavity
             if indcavity is None:
                 indcavity = nprops['DCAVITY']
@@ -266,7 +263,7 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             # wave solution quality control
             # ----------------------------------------------------------
-            qc_params, passed = wave.night_quality_control(params, nprops)
+            qc_params, passed = wave_old.night_quality_control(params, nprops)
             # update recipe log
             log2.add_qc(qc_params, passed)
 
@@ -275,8 +272,8 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             wargs = [nprops, hc_e2ds_file, fp_e2ds_file, fiber, combine,
                      rawhcfiles, rawfpfiles, qc_params, wprops['WAVEINST']]
-            wavefile, nprops = wave.night_write_wavesolution(params, recipe,
-                                                             *wargs)
+            wavefile, nprops = wave_old.night_write_wavesolution(params, recipe,
+                                                                 *wargs)
 
             # ----------------------------------------------------------
             # Update calibDB with solution
@@ -290,16 +287,16 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             if passed and params['INPUTS']['DATABASE']:
                 # update the e2ds and s1d files for hc
-                newhce2ds = wave.update_extract_files(params, recipe,
-                                                      hc_e2ds_file, nprops,
-                                                      EXTRACT_NAME, fiber,
-                                                      calibdbm=calibdbm)
+                newhce2ds = wave_old.update_extract_files(params, recipe,
+                                                          hc_e2ds_file, nprops,
+                                                          EXTRACT_NAME, fiber,
+                                                          calibdbm=calibdbm)
                 # update the e2ds and s1d files for fp
                 #  we returrn the fp e2ds file as it has an updated header
-                newfpe2ds = wave.update_extract_files(params, recipe,
-                                                      fp_e2ds_file, nprops,
-                                                      EXTRACT_NAME, fiber,
-                                                      calibdbm=calibdbm)
+                newfpe2ds = wave_old.update_extract_files(params, recipe,
+                                                          fp_e2ds_file, nprops,
+                                                          EXTRACT_NAME, fiber,
+                                                          calibdbm=calibdbm)
             # else just get the e2ds file from the current fp file
             else:
                 newfpe2ds = fp_e2ds_file

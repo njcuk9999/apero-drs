@@ -21,7 +21,7 @@ from apero.core.core import drs_database
 from apero.io import drs_image
 from apero.science.calib import gen_calib
 from apero.science.calib import flat_blaze
-from apero.science.calib import wave
+from apero.science.calib import wave_old
 from apero.science.extract import other as extractother
 from apero.science import velocity
 
@@ -206,21 +206,21 @@ def __main__(recipe, params):
         # --------------------------------------------------------------
         # load initial wavelength solution (start point) for this fiber
         #    this should only be a master wavelength solution
-        iwprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
-                                        fiber=master_fiber, master=True,
-                                        database=calibdbm)
+        iwprops = wave_old.get_wavesolution(params, recipe, infile=hc_e2ds_file,
+                                            fiber=master_fiber, master=True,
+                                            database=calibdbm)
         # check that wave parameters are consistent with required number
         #   of parameters (from constants)
-        iwprops = wave.check_wave_consistency(params, iwprops)
+        iwprops = wave_old.check_wave_consistency(params, iwprops)
         # --------------------------------------------------------------
         # HC wavelength solution
         # --------------------------------------------------------------
-        hcprops, mwprops = wave.hc_wavesol(params, recipe, iwprops,
-                                           hc_e2ds_file, blaze, master_fiber)
+        hcprops, mwprops = wave_old.hc_wavesol(params, recipe, iwprops,
+                                               hc_e2ds_file, blaze, master_fiber)
         # --------------------------------------------------------------
         # HC quality control
         # --------------------------------------------------------------
-        qc_params = wave.hc_quality_control(params, hcprops)
+        qc_params = wave_old.hc_quality_control(params, hcprops)
         # passed if all qc passed
         passed = np.all(qc_params[-1])
         # update recipe log
@@ -228,18 +228,18 @@ def __main__(recipe, params):
         # --------------------------------------------------------------
         # log the global stats
         # --------------------------------------------------------------
-        wave.hc_log_global_stats(params, hcprops, hc_e2ds_file, master_fiber)
+        wave_old.hc_log_global_stats(params, hcprops, hc_e2ds_file, master_fiber)
         # --------------------------------------------------------------
         # write HC wavelength solution to file
         # --------------------------------------------------------------
         hcargs = [hcprops, hc_e2ds_file, master_fiber, combine, rawhcfiles,
                   qc_params, iwprops, mwprops]
-        hcwavefile = wave.hc_write_wavesol_master(params, recipe, *hcargs)
+        hcwavefile = wave_old.hc_write_wavesol_master(params, recipe, *hcargs)
         # --------------------------------------------------------------
         # write resolution and line profiles to file
         # --------------------------------------------------------------
         hcargs = [hcprops, hc_e2ds_file, hcwavefile, master_fiber]
-        wave.hc_write_resmap_master(params, recipe, *hcargs)
+        wave_old.hc_write_resmap_master(params, recipe, *hcargs)
         # --------------------------------------------------------------
         # update recipe log file for hc fiber
         # --------------------------------------------------------------
@@ -258,27 +258,27 @@ def __main__(recipe, params):
         # ----------------------------------------------------------
         fargs = [hc_e2ds_file, fp_e2ds_file, hcprops, mwprops, blaze,
                  master_fiber]
-        fpprops, mwprops = wave.fp_wavesol(params, recipe, *fargs)
+        fpprops, mwprops = wave_old.fp_wavesol(params, recipe, *fargs)
 
         # ----------------------------------------------------------
         # Construct master line reference files
         # ----------------------------------------------------------
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=mwprops['WAVEMAP'])
-        hclines = wave.get_master_lines(params, recipe, **hcargs)
+        hclines = wave_old.get_master_lines(params, recipe, **hcargs)
         # generate the fp reference lines
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=mwprops['WAVEMAP'],
                       cavity_poly=fpprops['FP_FIT_LL_D'])
-        fplines = wave.get_master_lines(params, recipe, **fpargs)
+        fplines = wave_old.get_master_lines(params, recipe, **fpargs)
 
         # ==================================================================
         # Process wave solutions (using nightly wave solution code)
         #   - this keeps master fiber solution consistence with wave night
         #   - and uses same methodology to calculate other fibers
         # ==================================================================
-        wprops_others = wave.process_fibers(params, recipe, mwprops,
-                                            fplines, hclines, fp_outputs,
-                                            hc_outputs)
+        wprops_others = wave_old.process_fibers(params, recipe, mwprops,
+                                                fplines, hclines, fp_outputs,
+                                                hc_outputs)
         # get the hc and fp lines
         mwprops = wprops_others[master_fiber]
         hclines, fplines = mwprops['HCLINES'], mwprops['FPLINES']
@@ -288,7 +288,7 @@ def __main__(recipe, params):
         # ==================================================================
         # must update the smart mask now cavity poynomial has been update
         #   (if it has been update else this just recomputes the mask)
-        wave.update_smart_fp_mask(params)
+        wave_old.update_smart_fp_mask(params)
 
         # store rvs from ccfs
         rvs_all = dict()
@@ -341,8 +341,8 @@ def __main__(recipe, params):
         # ==================================================================
         # QUALITY CONTROL (AFTER FP MASTER FIBER + OTHER FIBERS)
         # ==================================================================
-        qc_params = wave.fp_quality_control(params, fpprops, qc_params,
-                                            rvs_all)
+        qc_params = wave_old.fp_quality_control(params, fpprops, qc_params,
+                                                rvs_all)
         # passed if all qc passed
         passed = np.all(qc_params[-1])
         # update recipe log
@@ -364,35 +364,35 @@ def __main__(recipe, params):
             fpargs = [recipe, fpprops, hc_e2ds_file, fp_e2ds_file, fiber,
                       combine, rawhcfiles, rawfpfiles,  qc_params, wprops,
                       hcwavefile]
-            fpwavefile = wave.fp_write_wavesol_master(params, *fpargs)
+            fpwavefile = wave_old.fp_write_wavesol_master(params, *fpargs)
             # ----------------------------------------------------------
             # write FP result table to file
             # ----------------------------------------------------------
             if fiber == master_fiber:
                 fpargs = [fpprops, hc_e2ds_file, fiber]
-                wave.fpm_write_results_table(params, recipe, *fpargs)
+                wave_old.fpm_write_results_table(params, recipe, *fpargs)
             # ----------------------------------------------------------
             # Save line list table file
             # ----------------------------------------------------------
             if fiber == master_fiber:
                 fpargs = [fpprops, hc_e2ds_file, fiber]
-                wave.fpm_write_linelist_table(params, recipe, *fpargs)
+                wave_old.fpm_write_linelist_table(params, recipe, *fpargs)
 
             # ----------------------------------------------------------
             # Update header of current file with FP solution
             # ----------------------------------------------------------
             if passed and params['INPUTS']['DATABASE']:
                 # update the e2ds and s1d files for hc
-                newhce2ds = wave.update_extract_files(params, recipe,
-                                                      hc_e2ds_file, wprops,
-                                                      EXTRACT_NAME, fiber,
-                                                      calibdbm=calibdbm)
+                newhce2ds = wave_old.update_extract_files(params, recipe,
+                                                          hc_e2ds_file, wprops,
+                                                          EXTRACT_NAME, fiber,
+                                                          calibdbm=calibdbm)
                 # update the e2ds and s1d files for fp
                 #  we returrn the fp e2ds file as it has an updated header
-                newfpe2ds = wave.update_extract_files(params, recipe,
-                                                      fp_e2ds_file, wprops,
-                                                      EXTRACT_NAME, fiber,
-                                                      calibdbm=calibdbm)
+                newfpe2ds = wave_old.update_extract_files(params, recipe,
+                                                          fp_e2ds_file, wprops,
+                                                          EXTRACT_NAME, fiber,
+                                                          calibdbm=calibdbm)
             # else just get the e2ds file from the current fp file
             else:
                 newfpe2ds = fp_e2ds_file
@@ -410,7 +410,7 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             wmargs = [hc_e2ds_file, fp_e2ds_file, hclines, fplines,
                       fpwavefile, fiber]
-            out = wave.write_master_lines(params, recipe, *wmargs)
+            out = wave_old.write_master_lines(params, recipe, *wmargs)
             hclinefile, fplinefile = out
 
             # ----------------------------------------------------------
@@ -432,7 +432,7 @@ def __main__(recipe, params):
         # Construct summary document
         # --------------------------------------------------------------
         # if we have a wave solution wave summary from fpprops
-        wave.wave_summary(recipe, params, fpprops, master_fiber, qc_params)
+        wave_old.wave_summary(recipe, params, fpprops, master_fiber, qc_params)
 
         # construct summary (outside fiber loop)
         recipe.plot.summary_document(it)

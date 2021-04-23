@@ -38,7 +38,6 @@ from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-from apero.io import drs_path
 from apero.science.calib import wave
 from apero.science import telluric
 

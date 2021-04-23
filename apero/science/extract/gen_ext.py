@@ -35,6 +35,7 @@ from apero.science.calib import gen_calib
 from apero.science.calib import flat_blaze
 from apero.science.extract import berv
 
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -985,7 +986,7 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     # ----------------------------------------------------------------------
     # generate the fp reference lines
     fpargs = dict(e2dsfile=e2dsfile, wavemap=wavemap, fplines=mfplines)
-    rfpl = wave.get_master_lines(params, recipe, **fpargs)
+    rfpl = wave.calc_wave_lines(params, recipe, **fpargs)
     # ----------------------------------------------------------------------
     # return fp lines for e2ds file
     return rfpl
@@ -1316,7 +1317,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile.copy_original_keys(locofile, group='loc')
     # ----------------------------------------------------------------------
     # add wave keys
-    e2dsfile = wave.add_wave_keys(params, e2dsfile, wprops)
+    e2dsfile = wave.add_wave_keys(e2dsfile, wprops)
     # ----------------------------------------------------------------------
     # add berv properties to header
     e2dsfile = berv.add_berv_keys(params, e2dsfile, bprops)

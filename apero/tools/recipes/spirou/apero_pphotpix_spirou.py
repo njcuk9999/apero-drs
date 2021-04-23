@@ -26,8 +26,8 @@ from apero.tools.module.testing import drs_dev
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_preprocesshotpix_nirps_ha.py'
-__INSTRUMENT__ = 'NIRPS_HA'
+__NAME__ = 'apero_pphotpix_spirou.py'
+__INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
@@ -40,7 +40,8 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-textentry = lang.textentry
+textentry= lang.textentry
+
 # whether this is a debug run (produces mask image)
 DEBUG = False
 # define relative output path
@@ -64,7 +65,8 @@ c_hotpix.description = ('Create the hotpix table for an instrument (required '
 c_hotpix.kind = 'misc'
 c_hotpix.set_arg(pos=0, **RMOD.mod.obs_dir)
 c_hotpix.set_arg(pos=1, name='darkfile', dtype='file',
-                 helpstr='[STRING] dark ',
+                 helpstr='[STRING] The dark file name [DARK_DARK_INT] or '
+                         '[DARK_DARK_TEL]',
                  files=[FMOD.files.raw_dark_dark_int,
                         FMOD.files.raw_dark_dark_tel])
 c_hotpix.set_kwarg(name='--debugfile', dtype='switch', default=False,
@@ -92,7 +94,7 @@ def main(obs_dir=None, darkfile=None, **kwargs):
 
     :keyword debug: int, debug level (0 for None)
 
-    :returns: obs_dir of the local space
+    :returns: dictionary of the local space
     :rtype: dict
     """
     # assign function calls (must add positional)
