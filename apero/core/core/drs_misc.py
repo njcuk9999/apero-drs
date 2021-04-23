@@ -276,6 +276,12 @@ def send_email(params: Any, subject: str, message: Union[List[str], str],
     try:
         import yagmail
         yag = yagmail.SMTP(drs_email, oauth2_file=authpath)
+        # send via YAG
+        yag.send(to=email_address, subject=subject, contents=message)
+        # send unsent emails (try again)
+        yag.send_unsent()
+        # close the email connection
+        yag.close()
     except ImportError:
         drs_base.base_error('00-503-00001', str(textentry('00-503-00001')),
                             'error')
@@ -286,8 +292,6 @@ def send_email(params: Any, subject: str, message: Union[List[str], str],
                             'error', args=eargs)
         return 0
     # ----------------------------------------------------------------------
-    # send via YAG
-    yag.send(to=email_address, subject=subject, contents=message)
     # return 1
     return 1
 
