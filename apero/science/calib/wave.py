@@ -1088,7 +1088,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, blaze, fiber, **kwargs):
                       blaze, iteration=1, fiber=fiber)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    # TODO: remove if once we only use cal_wave or cal_wave_master/night
+    # TODO: remove if once we only use apero_wave or apero_wave_master/night
     if 'WAVEM_HCMAP' in recipe.outputs:
         wavefile = recipe.outputs['WAVEM_HCMAP'].newcopy(params=params,
                                                          fiber=fiber)
@@ -1261,7 +1261,7 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
 
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    # TODO: remove if once we only use cal_wave or cal_wave_master/night
+    # TODO: remove if once we only use apero_wave or apero_wave_master/night
     if 'WAVEM_FPMAP' in recipe.outputs:
         wavefile = recipe.outputs['WAVEM_FPMAP'].newcopy(params=params,
                                                          fiber=fiber)
@@ -5725,7 +5725,7 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
                     iteration='after')
         # ----------------------------------------------------------------------
         # get copy of instance of wave file (WAVE_HCMAP)
-        # TODO: remove if once we only use cal_wave or cal_wave_master/night
+        # TODO: remove if once we only use apero_wave or apero_wave_master/night
         if 'WAVEM_FPMAP' in recipe.outputs:
             wavefile = recipe.outputs['WAVEM_FPMAP'].newcopy(params=params,
                                                              fiber=fiber)

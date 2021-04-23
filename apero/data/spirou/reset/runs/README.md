@@ -23,7 +23,7 @@ These are located in the `{DRS_DATA_RUNS}` (default=`/data/runs/`) directory. Th
 
 ##### 1) Process automatically
 
-By default it processes every night and every file that can be found in the `{DRS_DATA_RAW}` (default=`/data/raw/`)  directory.
+By default it processes every obs dir and every file that can be found in the `{DRS_DATA_RAW}` (default=`/data/raw/`)  directory.
 One can turn on specific nights to process in several ways 
 (a) setting the `NIGHT_NAME` in the selected `{RUN_FILE}`
 (b) adding a night to the `EXCLUDE_OBS_DIRS` (exclude list = reject) or `INCLUDE_OBS_DIRS` (include list = keep)
@@ -52,10 +52,10 @@ and parallize them (if `CORES` set to a number greater than 1). They will be pro
 
 i.e. 
 ```
-id00001 = cal_ccf_spirou.py 2018-08-05 2295651o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
-id00002 = cal_ccf_spirou.py 2018-08-05 2295652o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
-id00004 = cal_ccf_spirou.py 2018-08-05 2295653o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
-id00005 = cal_ccf_spirou.py 2018-08-05 2295654o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
+id00001 = apero_ccf_spirou.py 2018-08-05 2295651o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
+id00002 = apero_ccf_spirou.py 2018-08-05 2295652o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
+id00004 = apero_ccf_spirou.py 2018-08-05 2295653o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
+id00005 = apero_ccf_spirou.py 2018-08-05 2295654o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
 ```
 
 #### The available sequences
@@ -80,36 +80,44 @@ Currently defined sequences are:
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
 
+where spec = OBJ_DARK + OBJ_FP
+where pol = POLAR_FP + POLAR_DARK
 
 | recipe                                                          | SHORT_NAME |
 | --------------------------------------------------------------- | ---------- | 
-| cal_preprocessing                                               | PP         |
-| cal_dark_master                                                 | DARKM      |
-| cal_badpix [master obs dir]                                     | BADM       |
-| cal_loc [DARK_FLAT; master obs dir]                             | LOCM       |
-| cal_loc [FLAT_DARK; master obs dir]                             | LOCM       |
-| cal_shape_master                                                | SHAPEM     |
-| cal_shape [master obs dir]                                      | SHAPELM    |
-| cal_ff [master obs dir]                                         | FLATM      |
-| cal_leak_master [master_night]                                  | LEAKM      |
-| cal_thermal [DARK_DARK_INT; master obs dir]                     | THIM       |
-| cal_thermal [DARK_DARK_TEL; master obs dir]                     | THTM       |
-| cal_wave_master                                                 | WAVEM      |
+| apero_preprocess [every obs dir]                                  | PP         |
+| apero_dark_master                                               | DARKM      |
+| apero_badpix [master obs dir]                                   | BADM       |
+| apero_loc [DARK_FLAT; master obs dir]                           | LOCM       |
+| apero_loc [FLAT_DARK; master obs dir]                           | LOCM       |
+| apero_shape_master                                              | SHAPEM     |
+| apero_shape [master obs dir]                                    | SHAPELM    |
+| apero_flat [master obs dir]                                     | FLATM      |
+| apero_leak_master [master_night]                                | LEAKM      |
+| apero_thermal [DARK_DARK_INT; master obs dir]                   | THIM       |
+| apero_thermal [DARK_DARK_TEL; master obs dir]                   | THTM       |
+| apero_wave_master [master_night]                                | WAVEM      |
 |                                                                 |            |
-| cal_badpix [every night]                                        | BAD        |
-| cal_loc [DARK_FLAT; every night]                                | LOC        |
-| cal_loc [FLAT_DARK; every night]                                | LOC        |
-| cal_shape [every night]                                         | SHAPE      |
-| cal_ff [every night]                                            | FF         |
-| cal_thermal [DARK_DARK_INT; every night]                        | THERMAL    |
-| cal_thermal [DARK_DARK_TEL; every night]                        | THERMAL    |
-| cal_wave_night [every night]                                    | WAVE       |
-| cal_extract [OBJ_DARK + OBJ_FP; every night; ALL OBJECTS]       | EXTALL     |
-| cal_leak [OBJ_FP; every night; ALL OBJECTS]                     | LEAKALL    |
-| obj_mk_tellu_db                                                 | MKTELLDB   |
-| obj_fit_tellu_db                                                | FTELLDB    |
-| cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]              | CCF        |
-
+| apero_badpix [every obs dir]                                      | BAD        |
+| apero_loc [DARK_FLAT; every obs dir]                              | LOC        |
+| apero_loc [FLAT_DARK; every obs dir]                              | LOC        |
+| apero_shape [every obs dir]                                       | SHAPE      |
+| apero_flat [every obs dir]                                        | FF         |
+| apero_thermal [DARK_DARK_INT; every obs dir]                      | THERMAL    |
+| apero_thermal [DARK_DARK_TEL; every obs dir]                      | THERMAL    |
+| apero_wave_night [every obs dir]                                  | WAVE       |
+| apero_extract [spec + pol; every obs dir; ALL OBJECTS]            | EXTALL     |
+| apero_leak [OBJ_FP; every obs dir; ALL OBJECTS]                   | LEAKALL    |
+| apero_mk_tellu [spec + pol; every obs dir; hot stars]             | MKTELLU1   |
+| apero_fit_tellu [spec + pol; every obs dir; hot stars]            | MKTELLU2   |
+| apero_mk_template [spec + pol; every obs dir; hot stars]          | MKTELLU3   |
+| apero_mk_tellu [spec + pol; every obs dir; hot stars]             | MKTELLU4   | 
+| apero_fit_tellu [spec + pol; every obs dir; non hot stars]        | FTELLU1    |
+| apero_mk_template [spec + pol; every obs dir; non hot stars]      | FTELLU2    |
+| apero_fit_tellu [spec + pol; every obs dir; non hot stars]        | FTELLU3    |
+| apero_ccf [spec + pol; fiber=AB; every obs dir]                   | CCF        |
+| apero_polar [POLAR_FP & TELLU_OBJ; fiber=AB; every obs dir]       | POLAR      |
+| apero_postprocess [spec + pol; fiber=AB; every obs dir]           | POSTALL    |
 
 ##### 2. `limited_seq`
 
@@ -119,42 +127,47 @@ to filter the objects processed
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
 
-| recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- | 
-| cal_preprocessing                                                   | PP         |
-| cal_dark_master                                                     | DARKM      |
-| cal_badpix [master obs dir]                                         | BADM       |
-| cal_loc [DARK_FLAT; master obs dir]                                 | LOCM       |
-| cal_loc [FLAT_DARK; master obs dir]                                 | LOCM       |
-| cal_shape_master                                                    | SHAPEM     |
-| cal_shape [master obs dir]                                          | SHAPELM    |
-| cal_ff [master obs dir]                                             | FLATM      |
-| cal_leak_master [master_night]                                      | LEAKM      |
-| cal_thermal [DARK_DARK_INT; master obs dir]                         | THIM       |
-| cal_thermal [DARK_DARK_TEL; master obs dir]                         | THTM       |
-| cal_wave_master                                                     | WAVEM      |
-|                                                                     |            |
-| cal_badpix [every night]                                            | BAD        |
-| cal_loc [DARK_FLAT; every night]                                    | LOC        |
-| cal_loc [FLAT_DARK; every night]                                    | LOC        |
-| cal_shape [every night]                                             | SHAPE      |
-| cal_ff [every night]                                                | FF         |
-| cal_thermal [DARK_DARK_INT; every night]                            | THERMAL    |
-| cal_thermal [DARK_DARK_TEL; every night]                            | THERMAL    |
-| cal_wave_night [every night]                                        | WAVE       |
-| cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]      | EXTTELL    |
-| cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]       | EXTOBJ     |
-| cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]                    | LEAKTELL   |
-| cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]                     | LEAKOBJ    |
-| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU1   |
-| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]    | MKTELLU2   |
-| obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]  | MKTELLU3   |
-| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU4   | 
-| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU1    |
-| obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]   | FTELLU2    |
-| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU3    |
-| cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]                  | CCF        |
+where spec = OBJ_DARK + OBJ_FP
+where pol = POLAR_FP + POLAR_DARK
 
+| recipe                                                                | SHORT_NAME |
+| --------------------------------------------------------------------- | ---------- | 
+| apero_preprocess [every obs dir]                                      | PP         |
+| apero_dark_master                                                     | DARKM      |
+| apero_badpix [master obs dir]                                         | BADM       |
+| apero_loc [DARK_FLAT; master obs dir]                                 | LOCMC      |
+| apero_loc [FLAT_DARK; master obs dir]                                 | LOCMAB     |
+| apero_shape_master                                                    | SHAPEM     |
+| apero_shape [master obs dir]                                          | SHAPELM    |
+| apero_flat [master obs dir]                                           | FLATM      |
+| apero_leak_master [master_night]                                      | LEAKM      |
+| apero_thermal [DARK_DARK_INT; master obs dir]                         | THIM       |
+| apero_thermal [DARK_DARK_TEL; master obs dir]                         | THTM       |
+| apero_wave_master [master obs dir]                                    | WAVEM      |
+|                                                                       |            |
+| apero_badpix [every obs dir]                                          | BAD        |
+| apero_loc [DARK_FLAT; every obs dir]                                  | LOCC       |
+| apero_loc [FLAT_DARK; every obs dir]                                  | LOCAB      |
+| apero_shape [every obs dir]                                           | SHAPE      |
+| apero_flat [every obs dir]                                            | FF         |
+| apero_thermal [DARK_DARK_INT; every obs dir]                          | THERMAL    |
+| apero_thermal [DARK_DARK_TEL; every obs dir]                          | THERMAL    |
+| apero_wave_night [every obs dir]                                      | WAVE       |
+| apero_extract [spec + pol; every obs dir; TELLURIC_TARGETS]           | EXTTELL    |
+| apero_extract [spec + pol; every obs dir; SCIENCE_TARGETS]            | EXTOBJ     |
+| apero_leak [OBJ_FP + POLAR_FP; every obs dir; TELLURIC_TARGETS]       | LEAKTELL   |
+| apero_leak [OBJ_FP + POLAR_FP; every obs dir; SCIENCE_TARGETS]        | LEAKOBJ    |
+| apero_mk_tellu [spec + pol; every obs dir; TELLURIC_TARGETS]          | MKTELLU1   |
+| apero_fit_tellu [spec + pol; every obs dir; TELLURIC_TARGETS]         | MKTELLU2   |
+| apero_mk_template [spec + pol; every obs dir; TELLURIC_TARGETS]       | MKTELLU3   |
+| apero_mk_tellu [spec + pol; every obs dir; TELLURIC_TARGETS]          | MKTELLU4   | 
+| apero_fit_tellu [spec + pol; every obs dir; SCIENCE_TARGETS]          | FTELLU1    |
+| apero_mk_template [spec + pol; every obs dir; SCIENCE_TARGETS]        | FTELLU2    |
+| apero_fit_tellu [spec + pol; every obs dir; SCIENCE_TARGETS]          | FTELLU3    |
+| apero_ccf [spec + pol; fiber=AB; every obs dir]                       | CCF        |
+| apero_polar [POLAR_FP & TELLU_OBJ; fiber=AB; every obs dir]           | POLAR      |
+| apero_postprocess [spec + pol; fiber=AB; every obs dir; TELLURIC_TARGETS] | TELLPOST   |
+| apero_postprocess [spec + pol; fiber=AB; every obs dir; SCIENCE_TARGETS] | SCIPOST    |
 
 ##### 3. preprocessing runs
 
@@ -168,7 +181,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
-| cal_preprocessing                                                   | PP         |
+| apero_preprocess [every obs dir]                                    | PP         |
 
 
 ###### 3b: `pp_seq_opt`
@@ -178,10 +191,15 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 
 | recipe                                                                   | SHORT_NAME |
 | ------------------------------------------------------------------------ | ---------- | 
-| cal_preprocessing [OBJ_DARK + OBJ_FP; every night; OBJECT="Calibration"] | PP_CAL     |
-| cal_preprocessing [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]      | PP_SCI     |
-| cal_preprocessing [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | PP_TEL     |
-
+| apero_preprocess [every obs dir; OBJECT="Calibration"]                   | PP_CAL     |
+| apero_preprocess [every obs dir; SCIENCE_TARGETS]                        | PP_SCI     |
+| apero_preprocess [every obs dir; TELLURIC_TARGETS]                       | PP_TEL     |
+| apero_preprocess [every obs dir; HC1_HC1]                                | PP_HC1HC1  |
+| apero_preprocess [every obs dir; DARK_FP]                                | PP_DFP     |
+| apero_preprocess [every obs dir; FP_DARK]                                | PP_FPD     |
+| apero_preprocess [every obs dir; LFC_LFC]                                | PP_LFC     |
+| apero_preprocess [every obs dir; LFC_FP]                                 | PP_LFCFP   |
+| apero_preprocess [every obs dir; FP_LFC]                                 | PP_FPLFC   |
 
 
 
@@ -194,17 +212,17 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
-| cal_dark_master                                                     | DARKM      |
-| cal_badpix [master obs dir]                                         | BADM       |
-| cal_loc [DARK_FLAT; master obs dir]                                 | LOCM       |
-| cal_loc [FLAT_DARK; master obs dir]                                 | LOCM       |
-| cal_shape_master                                                    | SHAPEM     |
-| cal_shape [master obs dir]                                          | SHAPELM    |
-| cal_ff [master obs dir]                                             | FLATM      |
-| cal_leak_master [master_night]                                      | LEAKM      |
-| cal_thermal [DARK_DARK_INT; master obs dir]                         | THIM       |
-| cal_thermal [DARK_DARK_TEL; master obs dir]                         | THTM       |
-| cal_wave_master                                                     | WAVEM      |
+| apero_dark_master                                                   | DARKM      |
+| apero_badpix [master obs dir]                                       | BADM       |
+| apero_loc [DARK_FLAT; master obs dir]                               | LOCMC      |
+| apero_loc [FLAT_DARK; master obs dir]                               | LOCMAB     |
+| apero_shape_master                                                  | SHAPEM     |
+| apero_shape [master obs dir]                                        | SHAPELM    |
+| apero_flat [master obs dir]                                         | FLATM      |
+| apero_leak_master [master_night]                                    | LEAKM      |
+| apero_thermal [DARK_DARK_INT; master obs dir]                       | THIM       |
+| apero_thermal [DARK_DARK_TEL; master obs dir]                       | THTM       |
+| apero_wave_master [master obs dir]                                  | WAVEM      |
 
 
 
@@ -218,14 +236,14 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
-| cal_badpix [every night]                                            | BAD        |
-| cal_loc [DARK_FLAT; every night]                                    | LOC        |
-| cal_loc [FLAT_DARK; every night]                                    | LOC        |
-| cal_shape [every night]                                             | SHAPE      |
-| cal_ff [every night]                                                | FF         |
-| cal_thermal [DARK_DARK_INT; every night]                            | THERMAL    |
-| cal_thermal [DARK_DARK_TEL; every night]                            | THERMAL    |
-| cal_wave_night [every night]                                        | WAVE       |
+| apero_badpix [every obs dir]                                        | BAD        |
+| apero_loc [DARK_FLAT; every obs dir]                                | LOCC       |
+| apero_loc [FLAT_DARK; every obs dir]                                | LOCAB      |
+| apero_shape [every obs dir]                                         | SHAPE      |
+| apero_flat [every obs dir]                                          | FF         |
+| apero_thermal [DARK_DARK_INT; every obs dir]                        | THI        |
+| apero_thermal [DARK_DARK_TEL; every obs dir]                        | THT        |
+| apero_wave_night [every obs dir]                                    | WAVE       |
 
 
 
@@ -237,15 +255,15 @@ Only run the steps required to process `{TELLURIC_TARGETS}` and make the telluri
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
 
-| recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- | 
-| cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]      | EXTTELL    |
-| cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]                    | LEAKTELL   |
-| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU1   |
-| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]    | MKTELLU2   |
-| obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]  | MKTELLU3   |
-| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU4   | 
-
+| recipe                                                                    | SHORT_NAME |
+| ------------------------------------------------------------------------- | ---------- | 
+| apero_extract [spec + pol; every obs dir; TELLURIC_TARGETS]               | EXTTELL    |
+| apero_leak [OBJ_FP; every obs dir; TELLURIC_TARGETS]                      | LEAKTELL   |
+| apero_mk_tellu [spec + pol; every obs dir; TELLURIC_TARGETS]              | MKTELLU1   |
+| apero_fit_tellu [spec + pol; every obs dir; TELLURIC_TARGETS]             | MKTELLU2   |
+| apero_mk_template [spec + pol; every obs dir; TELLURIC_TARGETS]           | MKTELLU3   |
+| apero_mk_tellu [spec + pol; every obs dir; TELLURIC_TARGETS]              | MKTELLU4   | 
+| apero_postprocess [spec + pol; fiber=AB; every obs dir; TELLURIC_TARGETS] | TELLPOST   |
 
 
 ##### 6. `science_seq`
@@ -256,28 +274,44 @@ Only run the steps required to process `{SCIENCE_TARGETS}`
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
 
-| recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- | 
-| cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]       | EXTOBJ     |
-| cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]                     | LEAKOBJ    |
-| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU1    |
-| obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]   | FTELLU2    |
-| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU3    |
-| cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]                  | CCF        |
+| recipe                                                                   | SHORT_NAME |
+| ------------------------------------------------------------------------ | ---------- | 
+| apero_extract [spec + pol; every obs dir; SCIENCE_TARGETS]               | EXTOBJ     |
+| apero_leak [OBJ_FP; every obs dir; SCIENCE_TARGETS]                      | LEAKOBJ    |
+| apero_fit_tellu [spec + pol; every obs dir; SCIENCE_TARGETS]             | FTELLU1    |
+| apero_mk_template [spec + pol; every obs dir; SCIENCE_TARGETS]           | FTELLU2    |
+| apero_fit_tellu [spec + pol; every obs dir; SCIENCE_TARGETS]             | FTELLU3    |
+| apero_ccf [spec + pol; fiber=AB; every obs dir]                          | CCF        |
+| apero_polar [POLAR_FP & TELLU_OBJ; fiber=AB; every obs dir]              | POLAR      |
+| apero_postprocess [spec + pol; fiber=AB; every obs dir; SCIENCE_TARGETS] | SCIPOST    |
+
+##### 7. `quick_seq`
+
+This is the quick look sequence (only runs extraction to get snr) does not
+run berv, thermal correction, s1d creation, ccf etc - do not use these outputs
+for science or the rest of the steps. This is done by adding the `--quicklook=True`
+to the apero_extract recipe input.
+
+| recipe                                                                        | SHORT_NAME |
+| ----------------------------------------------------------------------------- | ---------- | 
+| apero_extract [spec + pol; every obs dir; SCIENCE_TARGETS; --quicklook=True]  | EXTOBJ     |
 
 
 
-
-##### 7. `eng_seq`
+##### 8. `eng_seq`
 
 This is full of engineering sequences that probably will only be used with most options turned off.
 
-| recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- | 
-| cal_extract [HCONE_HCONE; every night]                              | EXTHC1     |
-| cal_extract [FP_FP; every night]                                    | EXTFPFP    |
-| cal_extract [DARK_FP; every night]                                  | EXTDFP     |
-
+| recipe                                                                | SHORT_NAME |
+| --------------------------------------------------------------------- | ---------- | 
+| apero_extract [HCONE_HCONE; every obs dir]                            | EXT_HC1HC1 |
+| apero_extract [FP_FP; every obs dir]                                  | EXT_FPFP   |
+| apero_extract [DARK_FP; every obs dir]                                | EXT_DFP    |
+| apero_extract [FP_DARK; every obs dir]                                | EXT_FPD    |
+| apero_extract [DARK_DARK_SKY; every obs dir]                          | EXT_SKY    |
+| apero_extract [LFC_LFC; every obs dir]                                | EXT_LFC    |
+| apero_extract [LFC_FP; every obs dir]                                 | EXT_LFCFP  |
+| apero_extract [FP_LFC; every obs dir]                                 | EXT_FPLFC  |
 
 
 ---
@@ -296,7 +330,7 @@ If using the processing script one must set this in that file else
 when choosing arguments one must use them from the master observation directory
 choosen.
 
-Note one has to run `cal_badpix` and `cal_loc` calibrations for the master 
+Note one has to run `apero_badpix` and `apero_loc` calibrations for the master 
 observation directory in order to run the shape master recipe.
 
 2) Run all the preprocessing
@@ -310,17 +344,17 @@ preprocessed data (i.e. use sequence `pp_seq`)
 3) Run the master sequence (i.e. use sequence `master_seq`)
 i.e. 
 ```
-cal_dark_master
-cal_badpix [master observation directory]
-cal_loc [DARK_FLAT; master observation directory]
-cal_loc [FLAT_DARK; master observation directory]
-cal_shape_master
-cal_shape [master observation directory]
-cal_ff [master observation directory]
-cal_leak_master
-cal_thermal [DARK_DARK_INT; master observation directory]
-cal_thermal [DARK_DARK_TEL; master observation directory]
-cal_wave_master
+apero_dark_master
+apero_badpix [master observation directory]
+apero_loc [DARK_FLAT; master observation directory]
+apero_loc [FLAT_DARK; master observation directory]
+apero_shape_master
+apero_shape [master observation directory]
+apero_flat [master observation directory]
+apero_leak_master
+apero_thermal [DARK_DARK_INT; master observation directory]
+apero_thermal [DARK_DARK_TEL; master observation directory]
+apero_wave_master
 ```
 
 
@@ -342,24 +376,24 @@ Note again one should extract all telluric stars and run the telluric sequence
 
 The calibration sequence is as follows:
 ```
-cal_badpix [every night]
-cal_loc [DARK_FLAT; every night]
-cal_loc [FLAT_DARK; every night]
-cal_shape [every night]
-cal_ff [every night]
-cal_thermal [DARK_DARK_INT; every night]
-cal_thermal [DARK_DARK_TEL; every night]
-cal_wave_night [every night]
+apero_badpix [every obs dir]
+apero_loc [DARK_FLAT; every obs dir]
+apero_loc [FLAT_DARK; every obs dir]
+apero_shape [every obs dir]
+apero_flat [every obs dir]
+apero_thermal [DARK_DARK_INT; every obs dir]
+apero_thermal [DARK_DARK_TEL; every obs dir]
+apero_wave_night [every obs dir]
 ```
 
 The telluric star sequence is as follows:
 ```
-cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]
-obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
+apero_extract [spec + pol; every obs dir; TELLURIC_TARGETS]
+apero_leak [OBJ_FP; every obs dir; TELLURIC_TARGETS]
+apero_mk_tellu [spec + pol; every obs dir; TELLURIC_TARGETS]
+apero_fit_tellu [spec + pol; every obs dir; TELLURIC_TARGETS]
+apero_mk_template [spec + pol; every obs dir; TELLURIC_TARGETS]
+apero_mk_tellu [spec + pol; every obs dir; TELLURIC_TARGETS]
 ```
 
 Note one must run all tellurics before running science. Not having
@@ -369,10 +403,10 @@ science.
 
 The science star sequence is as follows:
 ```
-cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]
-obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
+apero_extract [spec + pol; every obs dir; SCIENCE_TARGETS]
+apero_leak [OBJ_FP; every obs dir; SCIENCE_TARGETS]
+apero_fit_tellu [spec + pol; every obs dir; SCIENCE_TARGETS]
+apero_mk_template [spec + pol; every obs dir; SCIENCE_TARGETS]
+apero_fit_tellu [spec + pol; every obs dir; SCIENCE_TARGETS]
+apero_ccf [spec + pol; fiber=AB; every obs dir; SCIENCE_TARGETS]
 ```

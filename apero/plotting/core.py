@@ -1105,11 +1105,11 @@ def main(params, graph_name, mode=2, **kwargs):
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-    __NAME__ = 'cal_dark_spirou.py'
-    sys.argv = 'cal_dark_spirou.py 2018-09-24 2305769d_pp.fits'.split()
-    from apero.recipes.spirou import cal_dark_spirou
+    __NAME__ = 'apero_dark_spirou.py'
+    sys.argv = 'apero_dark_spirou.py 2018-09-24 2305769d_pp.fits'.split()
+    from apero.recipes.spirou import apero_dark_spirou
 
-    _recipe, _params = cal_dark_spirou.main(DEBUG0000=True)
+    _recipe, _params = apero_dark_spirou.main(DEBUG0000=True)
 
     _recipe.debug_plots.append('TEST1')
     _recipe.debug_plots.append('TEST2')

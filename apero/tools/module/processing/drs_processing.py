@@ -2507,7 +2507,7 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
     return is a list of these runs where each 'run' is a dictionary of
     arguments each with the values that specific argument should have
 
-    i.e. cal_extract should have at least ['directory', 'files']
+    i.e. apero_extract should have at least ['directory', 'files']
 
     :param params: ParamDict, the parameter dictionary of constants
     :param recipe: DrsRecipe, the recipe these args/kwargs are associated with
@@ -3534,7 +3534,7 @@ def _get_argposorder(recipe: DrsRecipe, argdict: Dict[str, ArgDictType],
 
     Take the dictionaries of arguments and figure out which order these
     positional arguments and keyword arguments should be in for this recipe
-    i.e. cal_extract  directory comes before files and before optional arguments
+    i.e. apero_extract  directory comes before files and before optional arguments
 
     for positional arguments this is defined by recipe.args[{arg}].pos,
     for optional arguments they are added to the end in whichever order they

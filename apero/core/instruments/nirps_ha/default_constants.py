@@ -980,11 +980,11 @@ LEAK_SAVE_UNCORRECTED.value = True
 EXT_QUICK_LOOK = EXT_QUICK_LOOK.copy(__NAME__)
 EXT_QUICK_LOOK.value = False
 
-#    Start order of the extraction in cal_ff if None starts from 0
+#    Start order of the extraction in apero_flat if None starts from 0
 EXT_START_ORDER = EXT_START_ORDER.copy(__NAME__)
 EXT_START_ORDER.value = None
 
-#    End order of the extraction in cal_ff if None ends at last order
+#    End order of the extraction in apero_flat if None ends at last order
 EXT_END_ORDER = EXT_END_ORDER.copy(__NAME__)
 EXT_END_ORDER.value = None
 

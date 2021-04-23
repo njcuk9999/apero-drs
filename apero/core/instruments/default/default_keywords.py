@@ -701,7 +701,7 @@ KW_PPMSTR_FILE = Keyword('KW_PPMSTR_FILE', key='', dtype=str, source=__NAME__,
                                       'pp master file used in pp (if used)'))
 
 # -----------------------------------------------------------------------------
-# Define cal_dark variables
+# Define apero_dark variables
 # -----------------------------------------------------------------------------
 # The fraction of dead pixels in the dark (in %)
 KW_DARK_DEAD = Keyword('KW_DARK_DEAD', key='', dtype=float, source=__NAME__,
@@ -738,7 +738,7 @@ KW_DARK_CUT = Keyword('KW_DARK_CUT', key='', dtype=float, source=__NAME__,
                                    'in ADU'))
 
 # -----------------------------------------------------------------------------
-# Define cal_badpix variables
+# Define apero_badpix variables
 # -----------------------------------------------------------------------------
 # fraction of hot pixels
 KW_BHOT = Keyword('KW_BHOT', key='', dtype=float, source=__NAME__,

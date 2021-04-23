@@ -270,24 +270,24 @@ from the command line or in python or in ipython (recommended).
 
 i.e. from the shell
 ```bash
-cal_badpix_spirou.py --flatfiles file1.fits --darkfiles file2.fits
+apero_badpix_spirou.py --flatfiles file1.fits --darkfiles file2.fits
 ```
 
 i.e. using python
 ```bash
-python cal_badpix_spirou.py --flatfiles file1.fits --darkfiles file2.fits
+python apero_badpix_spirou.py --flatfiles file1.fits --darkfiles file2.fits
 ```
 
 i.e. in ipython
 ```
-run apero/recipes/spirou/cal_badpix_spirou.py --flatfiles file1.fits --darkfiles file2.fits
+run apero/recipes/spirou/apero_badpix_spirou.py --flatfiles file1.fits --darkfiles file2.fits
 ```
 
 i.e. in a python script
 ```
-import cal_badpix_spirou
+import apero_badpix_spirou
 
-ll = cal_badpix_spirou.main('night_name', flatfiles='file1.fits', darkfiles='file2.fits')
+ll = apero_badpix_spirou.main('night_name', flatfiles='file1.fits', darkfiles='file2.fits')
 ```
 
 __NOTE__: there is a --help option available for every recipe
@@ -349,10 +349,10 @@ and parallize them (if `CORES` set to a number greater than 1). They will be pro
 
 i.e.
 ```
-id00001 = cal_ccf_spirou.py 2018-08-05 2295651o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
-id00002 = cal_ccf_spirou.py 2018-08-05 2295652o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
-id00004 = cal_ccf_spirou.py 2018-08-05 2295653o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
-id00005 = cal_ccf_spirou.py 2018-08-05 2295654o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
+id00001 = apero_ccf_spirou.py 2018-08-05 2295651o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
+id00002 = apero_ccf_spirou.py 2018-08-05 2295652o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
+id00004 = apero_ccf_spirou.py 2018-08-05 2295653o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
+id00005 = apero_ccf_spirou.py 2018-08-05 2295654o_pp_e2dsff_tcorr_AB.fits --mask masque_Oct19_Vrp9_Berv33.mas --rv 11.9 --width 20 --step 0.05
 ```
 
 #### 5.2.2 The available sequences
@@ -360,7 +360,7 @@ id00005 = cal_ccf_spirou.py 2018-08-05 2295654o_pp_e2dsff_tcorr_AB.fits --mask m
 Sequences are defined in the `apero/core/instruments/{INSTRUMENT}/recipe_definitions.py` script.
 These enable the user to quickly process sets of data in specific orders based on their needs.
 
-Note these can be combined in any order the user wants but some assume others have been completed first (in terms of files needed).
+Note these can be combined in any order the user wants, but some assume others have been completed first (in terms of files needed).
 i.e.
 
 ```
@@ -370,240 +370,10 @@ id00003 = tellu_seq
 id00004 = science_seq
 ```
 
-Currently defined sequences are:
+Currently defined sequences are found here:
 
-##### 1. `full_seq`
-
-where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
-i.e. for RUN_XXXX and SKIP_XXXX.
-
-Note: these default to True - set to False if not needed.
-
-| recipe                                                          | SHORT_NAME | COMMENT |
-| --------------------------------------------------------------- | ---------- | ------- |
-| cal_preprocessing                                               | PP         |         |
-| cal_dark_master                                                 | DARKM      |         |
-| cal_badpix [master night]                                       | BADM       |         |
-| cal_loc [DARK_FLAT; master night]                               | LOCM       |         |
-| cal_loc [FLAT_DARK; master night]                               | LOCM       |         |
-| cal_shape_master                                                | SHAPEM     |         |
-| cal_shape [master night]                                        | SHAPELM    |         |
-| cal_ff [master night]                                           | FLATM      |         |
-| cal_leak_master [master_night]                                  | LEAKM      |         |
-| cal_thermal [DARK_DARK_INT; master night]                       | THIM       |         |
-| cal_thermal [DARK_DARK_TEL; master night]                       | THTM       |         |
-| cal_wave_master                                                 | WAVEM      |         |
-|                                                                 |            |         |
-| cal_badpix [every night]                                        | BAD        |         |
-| cal_loc [DARK_FLAT; every night]                                | LOC        |         |
-| cal_loc [FLAT_DARK; every night]                                | LOC        |         |
-| cal_shape [every night]                                         | SHAPE      |         |
-| cal_ff [every night]                                            | FF         |         |
-| cal_thermal [DARK_DARK_INT; every night]                        | THERMAL    |         |
-| cal_thermal [DARK_DARK_TEL; every night]                        | THERMAL    |         |
-| cal_wave_night [every night]                                    | WAVE       |         |
-| cal_extract [OBJ_DARK + OBJ_FP; every night; ALL OBJECTS]       | EXTALL     |         |
-| cal_leak [OBJ_FP; every night; ALL OBJECTS]                     | LEAKALL    |         |
-| obj_mk_tellu_db                                                 | MKTELLDB   | 1       |
-| obj_fit_tellu_db                                                | FTELLDB    | 1       |
-| obj_fit_tellu        [OBJ_FP + OBJ_DARK; fiber=AB; every night] | FTELLU     | 1       |
-| cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]              | CCF        |         |
-| out_postprocess [every night]                                   | POST       |         |
-
-###### Comments
-
-- 1 Note you don't need to use `obj_fit_tellu_db` (FTELLUDB) AND `obj_fit_tellu` (FTELLU) at the same time.
-    - Use `obj_fit_tellu_db` (FTELLUDB) when you want to generate new templates (i.e. use with `obj_mk_tellu_db`)
-    - Use `obj_fit_tellu` (FTELLU) to just correct tellurics (Should turn off `obj_mk_tellu_db` (MKTELLUDB) and `obj_fit_tellu_db` (FTELLUDB))
-
-##### 2. `limited_seq`
-
-Similar to `full_seq` but uses the `{TELLURIC_TARGETS}` and `{SCIENCE_TARGETS}`
-to filter the objects processed (in `cal_extract`, `obj_mk_tellu`, `obj_fit_tellu`, `obj_mk_template`, `cal_ccf`)
-
-where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
-i.e. for RUN_XXXX and SKIP_XXXX.
-
-
-Note: these default to True - set to False if not needed.
-
-| recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- |
-| cal_preprocessing                                                   | PP         |
-| cal_dark_master                                                     | DARKM      |
-| cal_badpix [master night]                                           | BADM       |
-| cal_loc [DARK_FLAT; master night]                                   | LOCM       |
-| cal_loc [FLAT_DARK; master night]                                   | LOCM       |
-| cal_shape_master                                                    | SHAPEM     |
-| cal_shape [master night]                                            | SHAPELM    |
-| cal_ff [master night]                                               | FLATM      |
-| cal_leak_master [master_night]                                      | LEAKM      |
-| cal_thermal [DARK_DARK_INT; master night]                           | THIM       |
-| cal_thermal [DARK_DARK_TEL; master night]                           | THTM       |
-| cal_wave_master                                                     | WAVEM      |
-|                                                                     |            |
-| cal_badpix [every night]                                            | BAD        |
-| cal_loc [DARK_FLAT; every night]                                    | LOC        |
-| cal_loc [FLAT_DARK; every night]                                    | LOC        |
-| cal_shape [every night]                                             | SHAPE      |
-| cal_ff [every night]                                                | FF         |
-| cal_thermal [DARK_DARK_INT; every night]                            | THERMAL    |
-| cal_thermal [DARK_DARK_TEL; every night]                            | THERMAL    |
-| cal_wave_night [every night]                                        | WAVE       |
-| cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]      | EXTTELL    |
-| cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]       | EXTOBJ     |
-| cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]                    | LEAKTELL   |
-| cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]                     | LEAKOBJ    |
-| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU1   |
-| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]    | MKTELLU2   |
-| obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]  | MKTELLU3   |
-| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU4   |
-| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU1    |
-| obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]   | FTELLU2    |
-| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU3    |
-| cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS] | CCF        |
-| out_postprocess [every night]                                       | POST       |
-
-##### 3. preprocessing runs
-
-Only run the preprocessing recipe
-
-
-###### 3a: `pp_seq`
-
-where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
-i.e. for RUN_XXXX and SKIP_XXXX.
-
-| recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- |
-| cal_preprocessing                                                   | PP         |
-
-
-###### 3b: `pp_seq_opt`
-
-where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
-i.e. for RUN_XXXX and SKIP_XXXX.
-
-Note: these default to True - set to False if not needed.
-Note: there are overlaps - `PP_CAL` overlaps with `PP_HC1HC1`, `PP_FPFP` etc so set
-only the ones you need to True - otherwise you will process the same files twice.
-
-| recipe                                                                   | SHORT_NAME |
-| ------------------------------------------------------------------------ | ---------- |
-| cal_preprocessing [every night; OBJECT="Calibration"]                    | PP_CAL     |
-| cal_preprocessing [every night; SCIENCE_TARGETS]                         | PP_SCI     |
-| cal_preprocessing [every night; TELLURIC_TARGETS]                        | PP_TEL     |
-| cal_preprocessing [every night; HC1_HC1]                                 | PP_HC1HC1  |
-| cal_preprocessing [every night; FP_FP]                                   | PP_FPFP    |
-| cal_preprocessing [every night; DARK_FP]                                 | PP_DFP     |
-| cal_preprocessing [every night; DARK_DARK_SKY]                           | PP_SKY     |
-| cal_preprocessing [every night; LFC_LFC]                                 | PP_LFC     |
-
-
-
-##### 4. `master_seq`
-
-Only run the master recipes
-
-where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
-i.e. for RUN_XXXX and SKIP_XXXX.
-
-Note: these default to True - set to False if not needed.
-
-| recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- |
-| cal_dark_master                                                     | DARKM      |
-| cal_badpix [master night]                                           | BADM       |
-| cal_loc [DARK_FLAT; master night]                                   | LOCM       |
-| cal_loc [FLAT_DARK; master night]                                   | LOCM       |
-| cal_shape_master                                                    | SHAPEM     |
-| cal_shape [master night]                                            | SHAPELM    |
-| cal_ff [master night]                                               | FLATM      |
-| cal_leak_master [master_night]                                      | LEAKM      |
-| cal_thermal [DARK_DARK_INT; master night]                           | THIM       |
-| cal_thermal [DARK_DARK_TEL; master night]                           | THTM       |
-| cal_wave_master                                                     | WAVEM      |
-
-
-
-##### 5. `calib_seq`
-
-Only run the nightly calibration sequences and make a complete calibration database.
-(assumes that the master run is done i.e. `master_seq`)
-
-where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
-i.e. for RUN_XXXX and SKIP_XXXX.
-
-Note: these default to True - set to False if not needed.
-
-| recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- |
-| cal_badpix [every night]                                            | BAD        |
-| cal_loc [DARK_FLAT; every night]                                    | LOC        |
-| cal_loc [FLAT_DARK; every night]                                    | LOC        |
-| cal_shape [every night]                                             | SHAPE      |
-| cal_ff [every night]                                                | FF         |
-| cal_thermal [DARK_DARK_INT; every night]                            | THERMAL    |
-| cal_thermal [DARK_DARK_TEL; every night]                            | THERMAL    |
-| cal_wave_night [every night]                                        | WAVE       |
-
-
-
-##### 5. `tellu_seq`
-
-Only run the steps required to process `{TELLURIC_TARGETS}` and make the telluric database.
-(assumes that calibrations have been done i.e. `calib_seq`)
-
-where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
-i.e. for RUN_XXXX and SKIP_XXXX.
-
-Note: these default to True - set to False if not needed.
-
-| recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- |
-| cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]      | EXTTELL    |
-| cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]                    | LEAKTELL   |
-| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU1   |
-| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]    | MKTELLU2   |
-| obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]  | MKTELLU3   |
-| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU4   |
-
-
-
-##### 6. `science_seq`
-
-Only run the steps required to process `{SCIENCE_TARGETS}`
-(assumes that calibrations and tellurics have been done i.e. `calib_seq` and `tellu_seq`)
-
-where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
-i.e. for RUN_XXXX and SKIP_XXXX.
-
-Note: these default to True - set to False if not needed.
-
-| recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- |
-| cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]       | EXTOBJ     |
-| cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]                     | LEAKOBJ    |
-| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU1    |
-| obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]   | FTELLU2    |
-| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU3    |
-| cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS] | CCF        |
-| out_postprocess [every night]                                       | POST       |
-
-##### 7. engineering sequences
-
-Other sequences, probably only useful for engineering data
-
-Note: these default to True - set to False if not needed.
-
-
-| recipe                                                              | SHORT_NAME |
-| ------------------------------------------------------------------- | ---------- |
-| cal_extract [HC1_HC1]                                               | EXT_HC1HC1 |
-| cal_extract [FP_FP]                                                 | EXT_FPFP   |
-| cal_extract [DARK_FP]                                               | EXT_DFP    |
-| cal_extract [DARK_DARK_SKY]                                         | EXT_SKY    |
-| cal_extract [LFC_LFC]                                               | EXT_LFC    |
+- [SPIROU](apero/data/spirou/reset/runs/README.md)
+- [NIRPS](apero/data/nirps_ha/reset/runs/README.md)
 
 
 ---
@@ -623,7 +393,7 @@ an overview the steps are as follows
 If using the processing script one must set this in that file else
 when choosing arguments one must use them from the master night choosen.
 
-Note one has to run `cal_badpix` and `cal_loc` calibrations for the master night
+Note one has to run `apero_badpix` and `apero_loc` calibrations for the master night
 in order to run the shape master recipe.
 </li>
 
@@ -638,17 +408,17 @@ preprocessed data (i.e. use sequence `pp_seq`)
 <li> Run the master sequence (i.e. use sequence `master_seq`)
 i.e.
 ```
-cal_dark_master
-cal_badpix [master night]
-cal_loc [DARK_FLAT; master night]
-cal_loc [FLAT_DARK; master night]
-cal_shape_master
-cal_shape [master night]
-cal_ff [master night]
-cal_leak_master
-cal_thermal [DARK_DARK_INT; master night]
-cal_thermal [DARK_DARK_TEL; master night]
-cal_wave_master
+apero_dark_master
+apero_badpix [master night]
+apero_loc [DARK_FLAT; master night]
+apero_loc [FLAT_DARK; master night]
+apero_shape_master
+apero_shape [master night]
+apero_flat [master night]
+apero_leak_master
+apero_thermal [DARK_DARK_INT; master night]
+apero_thermal [DARK_DARK_TEL; master night]
+apero_wave_master
 ```
 
 Note if any step in the master sequence fails you cannot continue with the
@@ -668,24 +438,24 @@ Note again one should extract all telluric stars and run the telluric sequence
 
 The calibration sequence is as follows:
 ```
-cal_badpix [every night]
-cal_loc [DARK_FLAT; every night]
-cal_loc [FLAT_DARK; every night]
-cal_shape [every night]
-cal_ff [every night]
-cal_thermal [DARK_DARK_INT; every night]
-cal_thermal [DARK_DARK_TEL; every night]
-cal_wave_night [every night]
+apero_badpix [every night]
+apero_loc [DARK_FLAT; every night]
+apero_loc [FLAT_DARK; every night]
+apero_shape [every night]
+apero_flat [every night]
+apero_thermal [DARK_DARK_INT; every night]
+apero_thermal [DARK_DARK_TEL; every night]
+apero_wave_night [every night]
 ```
 
 The telluric star sequence is as follows:
 ```
-cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]
-obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
+apero_extract [spec + pol; every night; TELLURIC_TARGETS]
+apero_leak [OBJ_FP; every night; TELLURIC_TARGETS]
+apero_mk_tellu [spec + pol; every night; TELLURIC_TARGETS]
+apero_fit_tellu [spec + pol; every night; TELLURIC_TARGETS]
+apero_mk_template [spec + pol; every night; TELLURIC_TARGETS]
+apero_mk_tellu [spec + pol; every night; TELLURIC_TARGETS]
 ```
 
 Note one must run all tellurics before running science. Not having
@@ -695,12 +465,12 @@ science.
 
 The science star sequence is as follows:
 ```
-cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]
-obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
+apero_extract [spec + pol; every night; SCIENCE_TARGETS]
+apero_leak [OBJ_FP; every night; SCIENCE_TARGETS]
+apero_fit_tellu [spec + pol; every night; SCIENCE_TARGETS]
+apero_mk_template [spec + pol; every night; SCIENCE_TARGETS]
+apero_fit_tellu [spec + pol; every night; SCIENCE_TARGETS]
+apero_ccf [spec + pol; fiber=AB; every night; SCIENCE_TARGETS]
 ```
 </li>
 </ol>
@@ -764,7 +534,7 @@ Cleans file of detector effects.
 
 ##### *Run*:
 ```
-cal_preprocess_spirou.py [DIRECTORY] [RAW_FILES]
+apero_preprocess_spirou.py [DIRECTORY] [RAW_FILES]
 ```
 ##### *Optional Arguments*:
 ```
@@ -795,7 +565,7 @@ Collects all dark files and creates a master dark image to use for correction.
 
 ##### *Run*:
 ```
-cal_dark_master_spirou.py
+apero_master_spirou.py
 ```
 ##### *Optional Arguments*:
 ```
@@ -836,8 +606,8 @@ Creates a bad pixel mask for identifying and deal with bad pixels.
 
 ##### *Run*:
 ```
-cal_badpix_spirou.py [DIRECTORY] -flatfiles [FLAT_FLAT] -darkfiles [DARK_DARK_TEL]
-cal_badpix_spirou.py [DIRECTORY] -flatfiles [FLAT_FLAT] -darkfiles [DARK_DARK_INT]
+apero_badpix_spirou.py [DIRECTORY] -flatfiles [FLAT_FLAT] -darkfiles [DARK_DARK_TEL]
+apero_badpix_spirou.py [DIRECTORY] -flatfiles [FLAT_FLAT] -darkfiles [DARK_DARK_INT]
 ```
 ##### *Optional Arguments*:
 ```
@@ -880,8 +650,8 @@ Finds the orders on the image.
 
 ##### *Run*:
 ```
-cal_loc_spirou.py [DIRECTORY] [FLAT_DARK]
-cal_loc_spirou.py [DIRECTORY] [DARK_FLAT]
+apero_loc_spirou.py [DIRECTORY] [FLAT_DARK]
+apero_loc_spirou.py [DIRECTORY] [DARK_FLAT]
 ```
 ##### *Optional Arguments*:
 ```
@@ -929,7 +699,7 @@ bending of the orders (found in localisation).
 
 ##### *Run*:
 ```
-cal_shape_master_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
+apero_shape_master_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
 ```
 ##### *Optional Arguments*:
 ```
@@ -982,7 +752,7 @@ and shift to correct for slicer pupil geometry.
 
 ##### *Run*:
 ```
-cal_shape_spirou.py [DIRECTORY] [FP_FP]
+apero_shape_spirou.py [DIRECTORY] [FP_FP]
 ```
 ##### *Optional Arguments*:
 ```
@@ -1027,7 +797,7 @@ correction and flat correction images.
 
 ##### *Run*:
 ```
-cal_flat_spirou.py [DIRECTORY] [FLAT_FLAT]
+apero_flat_spirou.py [DIRECTORY] [FLAT_FLAT]
 ```
 ##### *Optional Arguments*:
 ```
@@ -1076,8 +846,8 @@ after extraction of science / calibration frames.
 
 ##### *Run*:
 ```
-cal_thermal_spirou.py [DIRECTORY] [DARK_DARK_INT]
-cal_thermal_spirou.py [DIRECTORY] [DARK_DARK_TEL]
+apero_thermal_spirou.py [DIRECTORY] [DARK_DARK_INT]
+apero_thermal_spirou.py [DIRECTORY] [DARK_DARK_TEL]
 ```
 ##### *Optional Arguments*:
 ```
@@ -1125,7 +895,7 @@ Extracts all DARK_FP files and creates a model for later leak correction.
 
 ##### *Run*:
 ```
-cal_leak_master.py [DIRECTORY]
+apero_leak_master.py [DIRECTORY]
 ```
 ##### *Optional Arguments*:
 ```
@@ -1158,7 +928,7 @@ to the FP master
 
 ##### *Run*:
 ```
-cal_wave_master_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
+apero_wave_master_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
 ```
 ##### *Optional Arguments*:
 ```
@@ -1193,7 +963,7 @@ DEBUG_{ODOMETER_CODE}_pp_background.fits          \\ debug background file (7x31
 {ODOMETER_CODE}_pp_e2dsff_wavemres_{FIBER}.fits     \\ wave res table (multi extension fits)
 {ODOMETER_CODE}_pp_e2dsff_wavem_hc_{FIBER}.fits     \\ wave solution from hc only (49x4088)
 {ODOMETER_CODE}_pp_e2dsff_wavem_fp_{FIBER}.fits     \\ wave solution from hc + fp (49x4088)
-cal_wave_results.tbl                                \\ wave res table (ASCII-table)
+apero_wave_results.tbl                                \\ wave res table (ASCII-table)
 {ODOMETER_CODE}_pp_e2dsff_mhc_lines_{FIBER}.tbl     \\ wave hc lines (ASCII-table)
 {ODOMETER_CODE}_pp_wavem_hclines_{FIBER}.fits       \\ wave hc ref/measured lines table (FITS-TABLE)
 {ODOMETER_CODE}_pp_wavem_fplines_{FIBER}.fits      \\ wave fp ref/measured lines table (FITS-TABLE)
@@ -1222,7 +992,7 @@ solution and measures drifts (via CCF) of the FP relative to the FP master
 
 ##### *Run*:
 ```
-cal_wave_night_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
+apero_wave_night_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
 ```
 ##### *Optional Arguments*:
 ```
@@ -1275,7 +1045,7 @@ Extracts any preprocessed image using all the calibrations required.
 
 ##### *Run*:
 ```
-cal_extract_spirou.py [DIRECTORY] [PP_FILE]
+apero_extract_spirou.py [DIRECTORY] [PP_FILE]
 
 ```
 ##### *Optional Arguments*:
@@ -1323,7 +1093,7 @@ Corrects extracted files for leakage coming from a FP (for OBJ_FP files only)
 
 ##### *Run*:
 ```
-cal_leak_spirou.py [DIRECTORY] [PP_FILE]
+apero_leak_spirou.py [DIRECTORY] [PP_FILE]
 
 ```
 ##### *Optional Arguments*:
@@ -1362,10 +1132,10 @@ Takes a hot star and calculates telluric transmission
 
 ##### *Run*:
 ```
-obj_mk_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_DARK]
-obj_mk_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_DARK]
-obj_mk_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_FP]
-obj_mk_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
+apero_mk_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_DARK]
+apero_mk_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_DARK]
+apero_mk_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_FP]
+apero_mk_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
 ```
 ##### *Optional Arguments*:
 ```
@@ -1408,10 +1178,10 @@ correct input images of atmospheric absorption.
 
 #### *Run*:
 ```
-obj_fit_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_DARK]
-obj_fit_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_DARK]
-obj_fit_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_FP]
-obj_fit_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
+apero_fit_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_DARK]
+apero_fit_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_DARK]
+apero_fit_tellu_spirou.py [DIRECTORY] [E2DS & OBJ_FP]
+apero_fit_tellu_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
 ```
 #### *Optional Arguments*:
 ```
@@ -1458,12 +1228,12 @@ Uses all telluric corrected images of a certain object name to create
 and BERV and wavelength corrected template in order to server as a better
 model SED for telluric correction.
 
-`obj_mk_tellu_spirou.py` and `obj_fit_tellu_spirou.py` need to be rerun after
+`apero_mk_tellu_spirou.py` and `apero_fit_tellu_spirou.py` need to be rerun after
 template generation.
 
 #### *Run*:
 ```
-obj_mk_template_spirou.py [OBJNAME]
+apero_mk_template_spirou.py [OBJNAME]
 ```
 #### *Optional Arguments*:
 ```
@@ -1511,14 +1281,14 @@ wave solution (when wave solution used a FP)
 
 ##### *Run*:
 ```
-cal_ccf_spirou.py [DIRECTORY] [E2DS & OBJ_FP]
-cal_ccf_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
-cal_ccf_spirou.py [DIRECTORY] [E2DS_CORR & OBJ_FP]
-cal_ccf_spirou.py [DIRECTORY] [E2DSFF_CORR & OBJ_FP]
-cal_ccf_spirou.py [DIRECTORY] [E2DS & OBJ_DARK]
-cal_ccf_spirou.py [DIRECTORY] [E2DSFF & OBJ_DARK]
-cal_ccf_spirou.py [DIRECTORY] [E2DS_CORR & OBJ_DARK]
-cal_ccf_spirou.py [DIRECTORY] [E2DSFF_CORR & OBJ_DARK]
+apero_ccf_spirou.py [DIRECTORY] [E2DS & OBJ_FP]
+apero_ccf_spirou.py [DIRECTORY] [E2DSFF & OBJ_FP]
+apero_ccf_spirou.py [DIRECTORY] [E2DS_CORR & OBJ_FP]
+apero_ccf_spirou.py [DIRECTORY] [E2DSFF_CORR & OBJ_FP]
+apero_ccf_spirou.py [DIRECTORY] [E2DS & OBJ_DARK]
+apero_ccf_spirou.py [DIRECTORY] [E2DSFF & OBJ_DARK]
+apero_ccf_spirou.py [DIRECTORY] [E2DS_CORR & OBJ_DARK]
+apero_ccf_spirou.py [DIRECTORY] [E2DSFF_CORR & OBJ_DARK]
 ```
 ##### *Optional Arguments*:
 ```

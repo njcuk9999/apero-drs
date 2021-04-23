@@ -26,7 +26,7 @@ from apero.tools.module.testing import drs_dev
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'cal_pphotpix_nirps_ha.py'
+__NAME__ = 'apero_preprocesshotpix_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

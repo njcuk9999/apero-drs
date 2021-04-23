@@ -907,7 +907,7 @@ out_wavem_res_table = drs_input('WAVE_FPRESTAB',
                                 filetype='.tbl',
                                 intype=[out_ext_e2ds, out_ext_e2dsff],
                                 outfunc=out.set_file,
-                                basename='cal_wave_results')
+                                basename='apero_wave_results')
 
 # fp line list table
 out_wavem_ll_table = drs_input('WAVE_FPLLTABL',
@@ -980,7 +980,7 @@ out_wave_res_table = drs_input('WAVE_FPRESTAB',
                                filetype='.tbl',
                                intype=[out_ext_e2ds, out_ext_e2dsff],
                                outfunc=out.set_file,
-                               basename='cal_wave_results')
+                               basename='apero_wave_results')
 
 # fp line list table
 out_wave_ll_table = drs_input('WAVE_FPLLTABL',
