@@ -230,7 +230,7 @@ def extract_files(params, recipe, infile, outfile, always_extract,
         # need to handle passing keywords from main
         kwargs = drs_startup.copy_kwargs(params, extrecipe, obs_dir=obs_dir,
                                          files=[infile.basename])
-        # set the program name (shouldn't be cal_extract)
+        # set the program name (shouldn't be apero_extract)
         kwargs['program'] = '{0}_extract'.format(kind)
         kwargs['recipe_kind'] = '{0}-extract'.format(kind)
         # force the input directory (combined files go to reduced dir)
@@ -252,7 +252,7 @@ def extract_files(params, recipe, infile, outfile, always_extract,
                 groupname = os.path.join(params['DRS_GROUP'], groupname)
                 kwargs['DRS_GROUP'] = groupname
         # ------------------------------------------------------------------
-        # pipe into cal_extract
+        # pipe into apero_extract
         try:
             llout = extrecipe.main(**kwargs)
         except Exception as e:

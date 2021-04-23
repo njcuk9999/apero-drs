@@ -271,7 +271,10 @@ class DrsRecipe(object):
         # set recipe name
         while self.name.endswith('.py'):
             self.name = self.name[:-3]
-        self.params['RECIPE'] = str(self.name)
+        if self.shortname is None:
+            self.params['RECIPE'] = str(self.name)
+        else:
+            self.params['RECIPE'] = str(self.shortname)
         self.params.set_source('RECIPE', func_name)
         # ---------------------------------------------------------------------
         # set up array to store inputs/outputs
@@ -1502,7 +1505,7 @@ class DrsRunSequence:
         :param recipe: DrsRecipe, a DrsRecipe instance to add to the sequence
         :param name: str, the short name to give the recipe (used to distinguish
                      two nearly identical DrsRecipe instances from each other)
-                     i.e. when using cal_dark (shortname=DARK) can have
+                     i.e. when using apero_dark (shortname=DARK) can have
                      DARK1 and DARK2 in same sequence
         :param master: bool, if True mark this recipe as a master sequence
                        affects skipping and adds the --master=True argument

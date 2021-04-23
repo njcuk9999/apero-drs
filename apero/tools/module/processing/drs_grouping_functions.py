@@ -130,7 +130,7 @@ def get_argposorder(rargs: Dict[str, DrsArgument],
 
     Take the dictionaries of arguments and figure out which order these
     positional arguments and keyword arguments should be in for this recipe
-    i.e. cal_extract  directory comes before files and before optional arguments
+    i.e. apero_extract  directory comes before files and before optional arguments
 
     for positional arguments this is defined by recipe.args[{arg}].pos,
     for optional arguments they are added to the end in whichever order they

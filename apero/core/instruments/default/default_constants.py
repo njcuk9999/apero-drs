@@ -713,11 +713,11 @@ PP_NUM_DARK_AMP = Const('PP_NUM_DARK_AMP', value=None, dtype=int,
                         minimum=0, source=__NAME__, group=cgroup,
                         description='Define the number of dark amplifiers')
 
-# Define the number of bins used in the dark median process         - [cal_pp]
+# Define the number of bins used in the dark median process         - [apero_preprocess]
 PP_DARK_MED_BINNUM = Const('PP_DARK_MED_BINNUM', value=None, dtype=int,
                            minimum=0, source=__NAME__, group=cgroup, 
                            description=('Define the number of bins used in the '
-                                        'dark median process - [cal_pp]'))
+                                        'dark median process - [apero_preprocess]'))
 
 #   Defines the pp hot pixel file (located in the data folder)
 PP_HOTPIX_FILE = Const('PP_HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
@@ -1868,16 +1868,16 @@ EXT_QUICK_LOOK = Const('EXT_QUICK_LOOK', value=None, dtype=bool,
                                     'look mode (do not use for final '
                                     'products)'))
 
-#  Start order of the extraction in cal_ff if None starts from 0
+#  Start order of the extraction in apero_flat if None starts from 0
 EXT_START_ORDER = Const('EXT_START_ORDER', value=None, dtype=int,
                         source=__NAME__, group=cgroup, 
-                        description=('Start order of the extraction in cal_ff '
+                        description=('Start order of the extraction in apero_flat '
                                      'if None starts from 0'))
 
-#  End order of the extraction in cal_ff if None ends at last order
+#  End order of the extraction in apero_flat if None ends at last order
 EXT_END_ORDER = Const('EXT_END_ORDER', value=None, dtype=int,
                       source=__NAME__, group=cgroup, 
-                      description=('End order of the extraction in cal_ff if '
+                      description=('End order of the extraction in apero_flat if '
                                    'None ends at last order'))
 
 # Half-zone extraction width left side (formally plage1)

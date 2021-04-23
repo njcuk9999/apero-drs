@@ -527,7 +527,7 @@ KW_PPC_NBAD_BOTH = KW_PPC_NBAD_BOTH.copy(__NAME__)
 KW_PPC_NBAD_BOTH.set('NBADBATH', comment='No. bad px both cosmic reject')
 
 # -----------------------------------------------------------------------------
-# Define cal_dark variables
+# Define apero_dark variables
 # -----------------------------------------------------------------------------
 # The fraction of dead pixels in the dark (in %)
 KW_DARK_DEAD = KW_DARK_DEAD.copy(__NAME__)
@@ -558,7 +558,7 @@ KW_DARK_CUT = KW_DARK_CUT.copy(__NAME__)
 KW_DARK_CUT.set(key='DACUT', comment='Threshold of dark level retain [ADU/s]')
 
 # -----------------------------------------------------------------------------
-# Define cal_badpix variables
+# Define apero_badpix variables
 # -----------------------------------------------------------------------------
 # fraction of hot pixels
 KW_BHOT = KW_BHOT.copy(__NAME__)
