@@ -1,4 +1,4 @@
-# Update Note Summary - Version 0.7.095
+# Update Note Summary - Version 0.7.108
 
 Date: 2020-12-21
 
@@ -17,6 +17,9 @@ Date: 2020-12-21
     - added apero_database.py tool for importing/exporting data to/from database/csv
     - added apero_explorer.py tool to look through import/export databases in a user
       friendly way
+    - problem with number of TCP connections we are making (TCP conection can
+      only be used every 60s - with many cores we get a pile up) - current
+      hack is to wait and try to reconnect
 
 - processing
     - moving to use multiprocess.Pool instead of multiprocess.Process (should
@@ -36,6 +39,9 @@ Date: 2020-12-21
     - raw files are updated in index database if last modified time is inconsistent
       (before only new files were added)
     - added to other_run.ini the LFCFP and FPLFC (PP, EXT) sequences
+    - added polar sequences to processing sequences
+    - added out post processing to processing sequences
+    - fixed emailing (now recieve email from apero.drs@gmail.com)
 
 - preprocessing
     - object resolution added to preprocessing (see object resolution section)
@@ -78,7 +84,12 @@ Date: 2020-12-21
       width coefficients (as tables of order vs coefficient)
 
 - wave solution
-    - complete re-coding of wave solution - same idea reorganised
+    - complete re-coding of wave solution - same rough idea reorganised
+        - master wave solution finds hc and fp lines, then calculates wave
+          solution on fiber AB (finds cavity) and then find A,B,C solution
+          using cavity width
+        - night solution - finds AB solution + updates cavity then finds
+          A,B,C solution
     - no hc solution - just a single wave solution per order
     - added new fits table extension - the wave coefficients (as a table of
       order vs coefficient)
@@ -205,3 +216,7 @@ Date: 2020-12-21
             - HDU[7]: Image HDU     name=WaveAB
             - HDU[8]: Image HDU     name=BlazeAB
             - HDU[9]: BinTable HDU  name=PolTable
+
+    Merge NIRPS_HA changes into 0.7 version
+        - works for bluest orders (first 41)
+        - tested up to wave solution
