@@ -12,7 +12,6 @@ Created on 2019-10-25 at 13:25
 from astropy.table import Table
 from astropy import units as uu
 import numpy as np
-import os
 from scipy import interpolate
 from scipy import stats
 from scipy import signal
