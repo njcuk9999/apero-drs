@@ -343,7 +343,7 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     # copy keys from input file
     transfile.copy_original_keys(infile, exclude_groups='wave')
     # add wave keys
-    transfile = wave.add_wave_keys(params, transfile, mprops)
+    transfile = wave.add_wave_keys(transfile, mprops)
     # add version
     transfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
