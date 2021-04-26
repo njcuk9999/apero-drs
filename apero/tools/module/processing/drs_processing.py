@@ -777,10 +777,8 @@ def processing_email(params: ParamDict, position: str, name: str,
         return 0
     # ----------------------------------------------------------------------
     # log sending email
-    # TODO: add to language db
-    msg = 'Sending {0} mail to {1}'
     margs = [position, params['EMAIL_ADDRESS']]
-    WLOG(params, 'info', msg.format(*margs))
+    WLOG(params, 'info', textentry('40-503-00041', args=margs))
     # ----------------------------------------------------------------------
     # deal with no PID
     if 'PID' not in params:
@@ -1564,8 +1562,8 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         # ------------------------------------------------------------------
         # print how many runs we are adding
         # ------------------------------------------------------------------
-        # TODO: move to language database
-        WLOG(params, '', '\t\tAdded {0} runs'.format(len(sruns)))
+        # Log message: Added {0} runs
+        WLOG(params, '', textentry('40-503-00042', args=[len(sruns)]))
         # ------------------------------------------------------------------
         # deal with trigger and no runs left to do
         # ------------------------------------------------------------------
@@ -2111,8 +2109,8 @@ def _multi_process_process(params, runlist, cores, groupname=None):
         _group_progress(params, g_it, grouplist, groupnames[g_it])
         # skip groups if event is set
         if event.is_set():
-            # TODO: Add to language db
-            WLOG(params, 'warning', '\tSkipping group')
+            # Log warnings: Skipping group
+            WLOG(params, 'warning', textentry('10-503-00017'))
             continue
         # loop around sub groups
         #    - each sub group is a set of runs of the same recipe
@@ -2127,8 +2125,8 @@ def _multi_process_process(params, runlist, cores, groupname=None):
             jobs.append(process)
         # do not continue until finished
         for pit, proc in enumerate(jobs):
-            # TODO: remove or add to language db
-            WLOG(params, 'debug', 'MULTIPROCESS - joining job {0}'.format(pit))
+            # debug log: MULTIPROCESS - joining job {0}
+            WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
             proc.join()
 
     # return return_dict
@@ -2726,9 +2724,9 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
                               master=master)
     # if we don't have one give warning
     else:
-        # TODO: move to language database
-        wmsg = '\tNo runs produced for {0} - No group function given'
-        WLOG(params, 'warning', wmsg.format(recipe.shortname))
+        # Log warning: No runs produced for {0} - No group function given'
+        wargs = [recipe.shortname]
+        WLOG(params, 'warning', textentry('10-503-00018', args=wargs))
         return []
 
 

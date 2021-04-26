@@ -90,7 +90,7 @@ def set_polar_exposures(params: ParamDict) -> List[DrsFitsFile]:
     :return: list of DrsFitsFile instances - one for each of the 4 exposures
     """
     # set function name
-    display_func('set_polar_exposures', __NAME__)
+    func_name = display_func('set_polar_exposures', __NAME__)
     # check input exposures
     if drs_text.null_text(params['INPUTS']['EXPOSURES'], ['None', '']):
         input_exposures = []
@@ -125,50 +125,46 @@ def set_polar_exposures(params: ParamDict) -> List[DrsFitsFile]:
         cond4b = rhomb1 == 'P14' and rhomb2 == 'P2'
         cond4c = rhomb1 == 'P14' and rhomb2 == 'P4'
         # ---------------------------------------------------------------------
-        # normal message
-        msg = 'Exposure {0} in polarimetric mode, set exposure number {1}'
         # spectroscopic mode
         if cond0:
             # add to position
             exposures[exp_pos] = exp
             # update the position
             exp_pos += 1
-            # TODO: move to language database
-            wmsg = ('Exposure {0} in spectroscopic mode, set exposure '
-                    'number = {1}')
+            # log warning: Exposure {0} in spectroscopic mode, set exposure
+            #     number = {1}
             wargs = [exp.basename, exp_pos]
-            WLOG(params, 'warning', wmsg.format(*wargs))
+            WLOG(params, 'warning', textentry('10-021-00006', wargs))
         # exposure 1
         elif cond1a or cond1b or cond1c:
             # add to position 1
             exposures[0] = exp
-            # TODO: move to language database
-            WLOG(params, '', msg.format(exp.basename, 1))
+            margs = [exp.basename, 1]
+            WLOG(params, '', textentry('40-021-00020', args=margs))
         # exposure 2
         elif cond2a or cond2b or cond2c:
             # add to position 1
             exposures[1] = exp
-            # TODO: move to language database
-            WLOG(params, '', msg.format(exp.basename, 2))
+            margs = [exp.basename, 2]
+            WLOG(params, '', textentry('40-021-00020', args=margs))
         # exposure 3
         elif cond3a or cond3b or cond3c:
             # add to position 1
             exposures[2] = exp
-            # TODO: move to language database
-            WLOG(params, '', msg.format(exp.basename, 3))
+            margs = [exp.basename, 3]
+            WLOG(params, '', textentry('40-021-00020', args=margs))
         # exposure 3
         elif cond4a or cond4b or cond4c:
             # add to position 1
             exposures[3] = exp
-            # TODO: move to language database
-            WLOG(params, '', msg.format(exp.basename, 4))
+            margs = [exp.basename, 4]
+            WLOG(params, '', textentry('40-021-00020', args=margs))
         # else unknown mode - raise error
         else:
-            # TODO: move to language database
-            emsg = 'Exposure {0} must have keys {1} and {2}'
+            # log error: Exposure {0} must have keys {1} and {2}
             eargs = [exp_pos, params['KW_POLAR_KEY_1'][0],
-                     params['KW_POLAR_KEY_2'][1]]
-            WLOG(params, 'error', emsg.format(*eargs))
+                     params['KW_POLAR_KEY_2'][1], func_name]
+            WLOG(params, 'error', textentry('09-021-00010', args=eargs))
         # stop if we already have 4 exposures
         if exp_pos > 3:
             break
@@ -182,17 +178,15 @@ def set_polar_exposures(params: ParamDict) -> List[DrsFitsFile]:
         if not drs_text.null_text(exp_input, ['None', '']):
             # get drs instance
             exp = exp_input[1][0]
-            # TODO: move to language database
-            msg = 'Setting exposure 1 in polarimetry sequence to {0}'
+            # log message: Setting exposure 1 in polarimetry sequence to {0}
             margs = [exp.basename]
-            WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', textentry('40-021-00021', args=margs))
     # -------------------------------------------------------------------------
     # lets make sure out full list is populated with DrsFitsFiles
     for it, exp in enumerate(exposures):
         if not isinstance(exp, DrsFitsFile):
-            # TODO: move to language database
-            emsg = 'Exposure {0} has not been set correctly'
-            WLOG(params, 'error', emsg.format(it + 1))
+            # Log Error: Exposure {0} has not been set correctly
+            WLOG(params, 'error', textentry('09-021-00011', args=[it + 1]))
     # -------------------------------------------------------------------------
     # return the list of exposures
     return exposures
@@ -335,27 +329,28 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # deal with multiple stokes parameters
     if len(np.unique(stokes)) != 1:
-        # TODO: move to language database
-        emsgs = 'Identified more than one stokes parameters in input data.'
+        # log error: Identified more than one stokes parameters in input data
+        emsg = textentry('09-021-00012')
+        # loop around exposures
         for it in range(len(stokes)):
-            emsg = '\n\tFile {0}\tExp {1}\tStokes:{2}'
-            emsg = emsg.format(basenames[it], exp_nums[it], stokes[it])
-            emsgs += emsg
-        WLOG(params, 'error', emsgs)
+            eargs = [basenames[it], exp_nums[it], stokes[it]]
+            emsg += '\n' + textentry('09-021-00013', args=eargs)
+        # pass error to logger
+        WLOG(params, 'error', emsg)
     else:
         polar_dict['GLOBAL_STOKES'] = stokes[0]
     # -------------------------------------------------------------------------
     # deal with multiple object names
     if len(np.unique(objnames)) != 1:
-        # TODO: move to language database
-        emsgs = 'Object name from header ({0}) not consistent between files'
-        emsgs = emsgs.format(params['KW_OBJNAME'][0])
+        # log error: Object name from header ({0}) not consistent between files
+        eargs = [params['KW_OBJNAME'][0]]
+        emsg = textentry('09-021-00014', args=eargs)
+        # loop around exposures
         for it in range(len(objnames)):
-            emsg = '\n\tFile {0}\t{1}={2}'
             eargs = [basenames[it], params['KW_OBJNAME'][0], objnames[it]]
-            emsg = emsg.format(*eargs)
-            emsgs += emsg
-        WLOG(params, 'error', emsgs)
+            emsg += '\n' + textentry('09-021-00015', args=eargs)
+        # pass error to logger
+        WLOG(params, 'error', emsg)
     # set object name
     object_name = objnames[0]
     # -------------------------------------------------------------------------
@@ -428,8 +423,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # work out key
             key_str = '{0}_{1}'.format(fiber, exp_nums[it])
             # log that we are loading data for this key
-            # TODO: move to language database
-            WLOG(params, 'info', 'Loading data for {0}'.format(key_str))
+            WLOG(params, 'info', textentry('40-021-00022', args=[key_str]))
             # -----------------------------------------------------------------
             # add key to polar dict list
             polar_dict['EXPOSURES'].append(key_str)
@@ -687,9 +681,8 @@ def calculate_polarimetry(params: ParamDict, pprops: ParamDict,
     elif method == 'Ratio':
         return polarimetry_ratio_method(params, pprops)
     else:
-        # TODO: move to language database
-        emsg = 'Method="{0}" not valid for polarimetry calculation'
-        WLOG(params, 'error', emsg.format(method))
+        # Log Error: Method="{0}" not valid for polarimetry calculation
+        WLOG(params, 'error', textentry('09-021-00016', args=[method]))
 
 
 def polarimetry_diff_method(params: ParamDict, props: ParamDict,
@@ -739,10 +732,8 @@ def polarimetry_diff_method(params: ParamDict, props: ParamDict,
         data, errdata = props['RAW_FLUX'], props['RAW_FLUXERR']
     # get the number of exposures
     nexp = float(props['N_EXPOSURES'])
-    # log start of polarimetry calculations
-    # TODO: move to language database
-    wmsg = 'Running function {0} to calculate polarization'
-    WLOG(params, '', wmsg.format(name))
+    # log that we are running function {0} to calculate polarization'
+    WLOG(params, '', textentry('40-021-00002', args=[name]))
     # ---------------------------------------------------------------------
     # set up storage
     # ---------------------------------------------------------------------
@@ -842,10 +833,10 @@ def polarimetry_diff_method(params: ParamDict, props: ParamDict,
 
     # else we have insufficient data (should not get here)
     else:
-        # TODO: move to language database
-        wmsg = ('Number of exposures in input data is not sufficient'
-                ' for polarimetry calculations... exiting')
-        WLOG(params, 'error', wmsg)
+        # Log error: Number of exposures in input data is not sufficient
+        # for polarimetry calculations
+        eargs = [nexp, func_name]
+        WLOG(params, 'error', textentry('09-021-00008', args=eargs))
     # -------------------------------------------------------------------------
     # add to props (for output)
     # -------------------------------------------------------------------------
@@ -858,9 +849,7 @@ def polarimetry_diff_method(params: ParamDict, props: ParamDict,
     # set sources
     props.set_sources(['METHOD', 'POL', 'POLERR', 'NULL1', 'NULL2'], func_name)
     # log end of polarimetry calculations
-    # TODO: move to language database
-    wmsg = 'Routine {0} run successfully'
-    WLOG(params, 'info', wmsg.format(name))
+    WLOG(params, 'info', textentry('40-021-00023', args=[name]))
     # -------------------------------------------------------------------------
     # return loc
     return props
@@ -908,9 +897,7 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
     polar_interpolate_flux = pcheck(params, 'POLAR_INTERPOLATE_FLUX',
                                     func=func_name, override=interp_flux)
     # log start of polarimetry calculations
-    # TODO: move to lanugage database
-    wmsg = 'Running function {0} to calculate polarization'
-    WLOG(params, '', wmsg.format(name))
+    WLOG(params, '', textentry('40-021-00002', args=[name]))
     # get parameters from loc
     if polar_interpolate_flux:
         data, errdata = props['FLUX'], props['FLUXERR']
@@ -1044,10 +1031,10 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
 
     # else we have insufficient data (should not get here)
     else:
-        # TODO: move to language database
-        wmsg = ('Number of exposures in input data is not sufficient'
-                ' for polarimetry calculations... exiting')
-        WLOG(params, 'error', wmsg)
+        # Log error: Number of exposures in input data is not sufficient
+        # for polarimetry calculations
+        eargs = [nexp, func_name]
+        WLOG(params, 'error', textentry('09-021-00008', args=eargs))
     # set the method
     props['METHOD'] = 'Ratio'
     props['POL'] = pol_arr
@@ -1057,9 +1044,7 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
     # set sources
     props.set_sources(['METHOD', 'POL', 'POLERR', 'NULL1', 'NULL2'], func_name)
     # log end of polarimetry calculations
-    # TODO: move to language database
-    wmsg = 'Routine {0} run successfully'
-    WLOG(params, 'info', wmsg.format(name))
+    WLOG(params, 'info', textentry('40-021-00023', args=[name]))
     # return loc
     return props
 
@@ -1307,11 +1292,9 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     flux_xbin, flux_ybin = None, None
     pol_xbin, pol_ybin = None, None
     # -------------------------------------------------------------------------
-    # print progress
-    # TODO: move to language database
-    msg = 'Calculating Stokes I using {0}'
+    # print progress: Calculating Stokes I using {0}'
     margs = [stokesi_detection_alg]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-021-00003', args=margs))
     # -------------------------------------------------------------------------
     # calculate continuum flux using moving median
     if stokesi_detection_alg == 'MOVING_MEDIAN':
@@ -1331,10 +1314,9 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
                                   min_points=10, verbose=False)
     # else raise error
     else:
-        # TODO: move to language database
-        emsg = 'Stokes I continuum detection algorithm invalid'
-        emsg += '\n\t Must be "MOVING_MEDIAN" or "IRAF"\n\tCurrent: {0}'
-        WLOG(params, 'error', emsg.format(stokesi_detection_alg))
+        # log error: Stokes I continuum detection algorithm invalid
+        eargs = [stokesi_detection_alg, func_name]
+        WLOG(params, 'error', textentry('09-021-00017', args=eargs))
         contflux = None
     # -------------------------------------------------------------------------
     # normalize flux by continuum
@@ -1342,11 +1324,9 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
         stokes_i = stokes_i / contflux
         stokes_ierr = stokes_ierr / contflux
     # -------------------------------------------------------------------------
-    # print progress
-    # TODO: move to language database
-    msg = 'Calculating polar using {0}'
+    # print progress: Calculating polar using {0}
     margs = [polar_detection_alg]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-021-00024', args=margs))
     # -------------------------------------------------------------------------
     # calculate polarization flux using moving median
     if polar_detection_alg == 'MOVING_MEDIAN':
@@ -1368,10 +1348,9 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
                                  verbose=False)
     # else raise error
     else:
-        # TODO: move to language database
-        emsg = 'Stokes I continuum detection algorithm invalid'
-        emsg += '\n\t Must be "MOVING_MEDIAN" or "IRAF"\n\tCurrent: {0}'
-        WLOG(params, 'error', emsg.format(polar_detection_alg))
+        # Log error: Stokes I continuum detection algorithm invalid
+        eargs = [polar_detection_alg, func_name]
+        WLOG(params, 'error', textentry('09-021-00017', args=eargs))
         contpol = None
     # -------------------------------------------------------------------------
     # remove continuum polarization
@@ -1714,11 +1693,9 @@ def make_s1d(params: ParamDict, recipe: DrsRecipe,
         for grid in ['wave', 'velocity']:
             # store s1d
             skey = 'S1D{0}_{1}'.format(grid[0].upper(), s1dfile)
-            # log progress
-            # TODO: Move to language database
-            msg = 'Creating {0} file'
+            # log progress: Creating {0} file
             margs = [skey]
-            WLOG(params, 'info', msg.format(*margs))
+            WLOG(params, 'info', textentry('40-021-00025', args=margs))
             # get e2ds
             e2ds = np.array(props[s1dfile])
             # need to uncorrect for the blaze
@@ -2232,11 +2209,9 @@ def continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
                     # save mean y of filtered data
                     ybin.append(np.mean(ytmp[nanmask][filtermask]))
                 else:
-                    # TODO: move to language database
-                    emsg = 'Can not recognize selected mode="{0}"'
-                    emsg += '\n\tFunction = {1}'
+                    # Log Error: Can not recognize selected mode="{0}"
                     eargs = [mode, func_name]
-                    WLOG(params, 'error', emsg.format(*eargs))
+                    WLOG(params, 'error', textentry('09-021-00018', args=eargs))
         # ---------------------------------------------------------------------
         # if we are dealing with last bin
         if ibin == nbins - 1 and not use_linear_fit:
@@ -2377,10 +2352,9 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
         # interpolate over all points
         cont = interpolate.splev(wavemap, spl)
     else:
-        # TODO: move to language database
-        emsg = 'Function = "{0}" not valid for {1}'
+        # Log Error: Continuum function "{0}" not valid for {1}'
         eargs = [function, func_name]
-        WLOG(params, 'error', emsg.format(*eargs))
+        WLOG(params, 'error', textentry('09-021-00019', args=eargs))
         cont = None
     # -------------------------------------------------------------------------
     # iteration loop: reject outliers and fit again
@@ -2413,9 +2387,9 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
             # [opt] [not in IRAF]
             if np.sum(~mspec1) < min_points:
                 if verbose:
-                    # TODO: move to language database
-                    wmsg = 'Minimum points {0} reached - stopping rejection.'
-                    WLOG(params, 'warning', wmsg.format(min_points))
+                    # Log warning: Minimum points {0} reached
+                    wmsg = textentry('10-021-00007', arg=[min_points])
+                    WLOG(params, 'warning', wmsg)
                 break
             # copy mask 1 back to primary mask
             mspec = np.array(mspec1)
@@ -2438,10 +2412,9 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
                 # interpolate over all points
                 cont = interpolate.splev(wavemap, spl)
             else:
-                # TODO: move to language database
-                emsg = 'Function = "{0}" not valid for {1}'
+                # Log Error: Continuum function = "{0}" not valid for {1}'
                 eargs = [function, func_name]
-                WLOG(params, 'error', emsg.format(*eargs))
+                WLOG(params, 'error', textentry('09-021-00019', args=eargs))
                 cont = None
     # compute residual and rms
     res = fspec - cont
@@ -2449,10 +2422,9 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
     sigm = np.nanstd(res[mspec])
     # print out if verbose
     if verbose:
-        # TODO: move to language database
-        msg = '\tnfit={0}/{1}\n\tfit RMS={2:.3e}'
+        # log stats: nfit={0}/{1} fit RMS={2:.3e}'
         margs = [np.sum(~mspec), len(mspec), sigm]
-        WLOG(params, '', msg.format(*margs))
+        WLOG(params, '', textentry('40-021-00026', args=margs))
     # compute residual and rms between original spectrum and model
     # different from above when median filtering is applied
     ores = spec - cont
@@ -2460,9 +2432,8 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
     osigm = np.nanstd(ores[mspec])
     # print out the unfiltered RMS (if we use the median filter)
     if med_filt > 0 and verbose:
-        # TODO: move to language database
-        msg = '\tUnfiltered RMS={0:.3e}'
-        WLOG(params, '', msg.format(osigm))
+        # log message: Unfiltered RMS={0:.3e}'
+        WLOG(params, '', textentry('40-021-00027', args=[osigm]))
     # -------------------------------------------------------------------------
     # produce the debug plot for fit continuum
     recipe.plot('POLAR_FIT_CONT', wavemap=wavemap, mask=mspec, spec=spec,
@@ -2568,11 +2539,9 @@ def _continuum_polarization(params: ParamDict, xarr: np.ndarray,
                 # save mean y of filtered data
                 ybin.append(np.mean(ytmp[nanmask]))
             else:
-                # TODO: move to language database
-                emsg = 'Can not recognize selected mode="{0}"'
-                emsg += '\n\tFunction = {1}'
+                # Log error: Can not recognize selected mode="{0}"
                 eargs = [mode, func_name]
-                WLOG(params, 'error', emsg.format(*eargs))
+                WLOG(params, 'error', textentry('09-021-00020', args=eargs))
         # ---------------------------------------------------------------------
         if ibin == nbins - 1:
             xbin.append(xarr[-1] + np.abs(xarr[-1] - xarr[-2]))

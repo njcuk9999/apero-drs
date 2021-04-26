@@ -259,10 +259,9 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     maskdata, maskpath = drs_data.load_sp_mask_lsd(params, temperature,
                                                    filename=lsd_mask_file)
     # -------------------------------------------------------------------------
-    # TODO: move text to language database
-    msg = 'Selected input LSD mask: {0}'
+    # log message: Selected input LSD mask: {0}'
     margs = [maskpath]
-    WLOG(params, 'info', msg.format(*margs))
+    WLOG(params, 'info', textentry('40-021-00028', args=margs))
     # -------------------------------------------------------------------------
     # get parameters from maskdata
     wavec = np.array(maskdata['wavec'])
@@ -273,11 +272,9 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     flag = np.array(maskdata['flagf'])
     # -------------------------------------------------------------------------
     # log number of lines in original mask
-    # TODO: move teext to language database
-    msg = 'Number of lines in the original mask = {0}'
     lines_num_mask = len(wavec)
     margs = [lines_num_mask]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-021-00029', args=margs))
     # -------------------------------------------------------------------------
     # get a flag mask
     flag_mask = flag == 1
@@ -314,10 +311,8 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     mean_lande_lines = np.nanmean(lande)
     # -------------------------------------------------------------------------
     # log the number of valid lines after filtering
-    # TODO: move teext to language database
-    msg = 'Number of lines after filtering: {0}'
     margs = [num_lines_used]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-021-00030', args=margs))
     # -------------------------------------------------------------------------
     # get weight from masks
     weight = wavec * depth * lande
@@ -922,7 +917,7 @@ def fit_gaussian_to_lsd_profile(params: ParamDict, velocities: np.ndarray,
                             sigma of gaussian fit
         """
     # set function name
-    _ = display_func('fit_gaussian_to_lsd_profile', __NAME__)
+    func_name = display_func('fit_gaussian_to_lsd_profile', __NAME__)
     # get guess at resolving power from params
     resolving_power_guess = params['POLAR_LSD_RES_POWER_GUESS']
     # get the position of minimum profile
@@ -947,10 +942,9 @@ def fit_gaussian_to_lsd_profile(params: ParamDict, velocities: np.ndarray,
         popt, pcov = curve_fit(mp.gauss_function, velocities, profile_inv,
                                p0=guess)
     except Exception as e:
-        # TODO: move to language database
-        wmsg = 'Failed to fit gaussian to LSD profile\n\t{0}: {1}'
-        wargs = [type(e), str(e)]
-        WLOG(params, 'warning', wmsg.format(*wargs))
+        # Log warning: Failed to fit gaussian to LSD profile\n\t{0}: {1}'
+        wargs = [type(e), str(e), func_name]
+        WLOG(params, 'warning', textentry('10-021-00008', args=wargs))
         # set coefficients to guess
         popt = guess
     # -------------------------------------------------------------------------

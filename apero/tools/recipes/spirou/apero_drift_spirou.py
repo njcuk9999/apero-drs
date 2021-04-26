@@ -152,11 +152,9 @@ def __main__(recipe, params):
             # check fibers are correct
             for fiber in fibers:
                 if fiber not in dfibers:
-                    # log error
-                    emsg = ('User input error: fiber={0} is invalid.'
-                            '\n\tMust be {1}')
+                    # log error User input error: fiber={0} is invalid.
                     eargs = [fiber, ' or '.join(dfibers)]
-                    WLOG(params, 'error', emsg.format(*eargs))
+                    WLOG(params, 'error', textentry('09-018-00002', args=eargs))
     # -------------------------------------------------------------------------
     # deal with other user inputs
     # -------------------------------------------------------------------------
@@ -198,15 +196,14 @@ def __main__(recipe, params):
         # ---------------------------------------------------------------------
         WLOG(params, 'info', params['DRS_HEADER'])
         pargs = [fiber, fb_it + 1, len(fibers)]
-        WLOG(params, 'info', 'Processing fiber {0} ({1} of {2})'.format(*pargs))
+        WLOG(params, 'info', textentry('40-018-00006', args=pargs))
         WLOG(params, 'info', params['DRS_HEADER'])
         # get this fibers dprtype
         fiberdpr = pconst.FIBER_DPR_POS(dprtype, fiber)
         # skip if dprtype in this fiber does not match FP
         if fiberdpr != params['DRIFT_DPR_FIBER_TYPE']:
-            emsg = 'Skipping fiber {0}={1} (Not of type "{1}")'
             eargs = [fiber, fiberdpr, params['DRIFT_DPR_FIBER_TYPE']]
-            WLOG(params, 'warning', emsg.format(*eargs))
+            WLOG(params, 'warning', textentry('10-018-00001', args=eargs))
 
         # ---------------------------------------------------------------------
         # Get all FP_FP e2ds files
@@ -216,15 +213,15 @@ def __main__(recipe, params):
         for obs_dir in obs_dirs:
             # check night names are value
             if obs_dir is not None:
-                # print progress
-                # TODO: move to language db
-                WLOG(params, 'info', 'Searching night = {0}'.format(obs_dir))
+                # print progress: seraching observation directory
+                iargs = [obs_dir]
+                WLOG(params, 'info', textentry('40-018-00005', args=iargs))
                 # deal with invalid night
                 if obs_dir not in all_obs_dirs:
-                    # TODO: move to language db
-                    emsg = ('Observation directory = "{0}" is not a valid '
-                            'reduced sub-directory')
-                    WLOG(params, 'error', emsg.format(obs_dir))
+                    # Log error: Observation directory = "{0}" is not a valid
+                    #     reduced sub-directory
+                    eargs = [obs_dir]
+                    WLOG(params, 'error', textentry('09-018-00001', args=eargs))
             # find files for this night (or None)
             filters = dict(KW_DPRTYPE=dprtype, KW_OUTPUT=filetype,
                            KW_FIBER=fiber, OBS_DIR=obs_dir)
@@ -249,7 +246,7 @@ def __main__(recipe, params):
             # -----------------------------------------------------------------
             WLOG(params, 'info', params['DRS_HEADER'])
             pargs = [f_it + 1, len(filenames)]
-            WLOG(params, 'info', 'Processing file {0} of {1}'.format(*pargs))
+            WLOG(params, 'info', textentry('40-018-00007', args=pargs))
             WLOG(params, 'info', params['DRS_HEADER'])
             # -----------------------------------------------------------------
             # make a new copy of infile
@@ -306,7 +303,7 @@ def __main__(recipe, params):
                  OUTPUT_FILENAME.format(dprtype, fiber)]
         out_filename = os.path.join(*cargs)
         # log that we are saving file
-        WLOG(params, '', 'Writing file: {0}'.format(out_filename))
+        WLOG(params, '', textentry('40-018-00008', args=[out_filename]))
         # save the table to file
         drs_table.write_table(params, table, out_filename, fmt='fits')
 

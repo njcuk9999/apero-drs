@@ -325,31 +325,7 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
                     fx = fx / mp.nansum(fx)
                 else:
                     fx = np.ones(fx.shape, dtype=float)
-
-                # weights are then modified by the gain and sigdet added
-                #    in quadrature
-                # TODO: URGENT: Must figure out what is going on here
-                # TODO:         case 0, 1 and 2 lead to "bands" of
-                # TODO:         flux (check the e2dsll files)
-                # case = 3
-                # if case == 0:
-                #     raw_weights = np.where(sx > 0, 1, 1e-9)
-                #     weights = raw_weights / ((sx * gain) + sigdet ** 2)
-                # elif case == 1:
-                #     # the weights should never be smaller than sigdet^2
-                #     sigdets = np.repeat([sigdet ** 2], len(sx))
-                #     noises = (sx * gain) + sigdet ** 2
-                #     # find the weight for each pixel in sx
-                #     raw_weights = mp.nanmax([noises, sigdets], axis=0)
-                #     # weights is the inverse
-                #     weights = 1.0 / raw_weights
-                # elif case == 2:
-                #     raw_weights = np.ones_like(sx)
-                #     weights = raw_weights / ((sx * gain) + sigdet ** 2)
-                # else:
-                #     weights = np.ones_like(sx)
-                #     weights[~np.isfinite(sx)] = np.nan
-
+                # get the amplitude (ratio between flux and flat)
                 amp = mp.nanmedian(sx / fx)
                 # residuals
                 res = sx - fx / amp
@@ -368,10 +344,6 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
                 spe[ic] = spe[ic] / mp.nansum(weights * fx ** 2)
                 spelong[:, ic] = spelong[:, ic] / mp.nansum(weights * fx ** 2)
                 coslong[:, ic] = weights
-                # Cosmic rays correction
-                # if cosmic:
-                #     spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
-                #                                  cosmic_sigcut, cosmic_thres)
     # multiple spe by gain to convert to e-
     spe *= gain
     spelong *= gain

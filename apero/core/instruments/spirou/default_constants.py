@@ -277,6 +277,14 @@ PP_NUM_REF_TOP.value = 4
 PP_NUM_REF_BOTTOM = PP_NUM_REF_BOTTOM.copy(__NAME__)
 PP_NUM_REF_BOTTOM.value = 4
 
+#   Define the number of un-illuminated reference pixels at left of image
+PP_NUM_REF_LEFT = PP_NUM_REF_LEFT.copy(__NAME__)
+PP_NUM_REF_LEFT.value = 4
+
+#   Define the number of un-illuminated reference pixels at right of image
+PP_NUM_REF_RIGHT = PP_NUM_REF_RIGHT.copy(__NAME__)
+PP_NUM_REF_RIGHT.value = 4
+
 # Define the percentile value for the rms normalisation (0-100)
 PP_RMS_PERCENTILE = PP_RMS_PERCENTILE.copy(__NAME__)
 PP_RMS_PERCENTILE.value = 95
