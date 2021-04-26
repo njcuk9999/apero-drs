@@ -1260,13 +1260,13 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     pol_binsize = params['POLAR_CONT_BINSIZE']
     pol_overlap = params['POLAR_CONT_OVERLAP']
     # stokes fit parameters
-    stokesi_detection_alg = params['STOKESI_CONTINUUM_DETECTION_ALGORITHM']
-    stokei_iraf_cont_fit_func = params['STOKESI_IRAF_CONT_FIT_FUNCTION']
-    stokes_iraf_cont_func_ord = params['STOKESI_IRAF_CONT_FUNCTION_ORDER']
+    stokesi_detection_alg = params['STOKESI_CONTINUUM_DET_ALG']
+    stokei_iraf_cont_fit_func = params['STOKESI_IRAF_CONT_FIT_FUNC']
+    stokes_iraf_cont_func_ord = params['STOKESI_IRAF_CONT_FUNC_ORDER']
     # polar fit parameters
-    polar_detection_alg = params['POLAR_CONTINUUM_DETECTION_ALGORITHM']
-    polar_iraf_cont_fit_func = params['POLAR_IRAF_CONT_FIT_FUNCTION']
-    polar_iraf_cont_func_ord = params['POLAR_IRAF_CONT_FUNCTION_ORDER']
+    polar_detection_alg = params['POLAR_CONTINUUM_DET_ALG']
+    polar_iraf_cont_fit_func = params['POLAR_IRAF_CONT_FIT_FUNC']
+    polar_iraf_cont_func_ord = params['POLAR_IRAF_CONT_FUNC_ORDER']
     # other parameters
     norm_stokes_i = params['POLAR_NORMALIZE_STOKES_I']
     cont_poly_fit = params['POLAR_CONT_POLYNOMIAL_FIT']
@@ -2096,16 +2096,16 @@ def add_polar_keywords(params: ParamDict, props: ParamDict,
                      value=params['POLAR_CONT_DEG_POLYNOMIAL'])
     # define the iraf function that was used to fit stokes I continuum
     outfile.add_hkey('KW_POL_S_IRAF_FUNC',
-                     value=params['STOKESI_IRAF_CONT_FIT_FUNCTION'])
+                     value=params['STOKESI_IRAF_CONT_FIT_FUNC'])
     # define the iraf function that was used to fit polar continuum
     outfile.add_hkey('KW_POL_P_IRAF_FUNC',
-                     value=params['POLAR_IRAF_CONT_FIT_FUNCTION'])
+                     value=params['POLAR_IRAF_CONT_FIT_FUNC'])
     # define the degree of the polynomial used to fit stokes I continuum
     outfile.add_hkey('KW_POL_S_IRAF_DEGREE',
-                     value=params['STOKESI_IRAF_CONT_FUNCTION_ORDER'])
+                     value=params['STOKESI_IRAF_CONT_FUNC_ORDER'])
     # define the degree of the polynomial used to fit polar continuum
     outfile.add_hkey('KW_POL_P_IRAF_DEGREE',
-                     value=params['POLAR_IRAF_CONT_FUNCTION_ORDER'])
+                     value=params['POLAR_IRAF_CONT_FUNC_ORDER'])
     # define the polar continuum bin size used
     outfile.add_hkey('KW_POL_CONT_BINSIZE', value=params['POLAR_CONT_BINSIZE'])
     # define the polar continuum overlap size used

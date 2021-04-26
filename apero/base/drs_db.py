@@ -159,7 +159,6 @@ class Database:
         # we don't use this if connection is not implemented
         _ = host, user, passwd, dbname, connect_kind
         # log that this function must be implemented in child database
-        # TODO: move to database
         emsg = 'Must implement "Database.connection" in child database class'
         raise NotImplementedError(emsg)
 

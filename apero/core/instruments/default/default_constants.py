@@ -145,6 +145,10 @@ __all__ = [
     'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
     'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
     'WAVEREF_FP_NLOW', 'WAVEREF_FP_NHIGH', 'WAVEREF_FP_POLYINV',
+    # wave resolution settings
+    'WAVE_RES_MAP_ORDER_BINS', 'WAVE_RES_MAP_SPATIAL_BINS',
+    'WAVE_RES_MAP_FILTER_SIZE', 'WAVE_RES_VELO_CUTOFF1',
+    'WAVE_RES_VELO_CUTOFF2',
     # wave ccf constants
     'WAVE_CCF_NOISE_SIGDET', 'WAVE_CCF_NOISE_BOXSIZE', 'WAVE_CCF_NOISE_THRES',
     'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
@@ -239,10 +243,24 @@ __all__ = [
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
     'CCF_MAX_CCF_WID_STEP_RATIO', 'CCF_BLAZE_NORM_PERCENTILE',
     'CCF_OBJRV_NULL_VAL', 'CCF_MASK_NORMALIZATION',
-    # polar constants
-
+    # general polar constants
+    'POLAR_FIBERS', 'POLAR_STOKES_PARAMS', 'POLAR_BERV_CORRECT',
+    'POLAR_SOURCE_RV_CORRECT', 'POLAR_METHOD', 'POLAR_INTERPOLATE_FLUX',
+    'STOKESI_CONTINUUM_DET_ALG', 'POLAR_CONTINUUM_DET_ALG',
+    'POLAR_NORMALIZE_STOKES_I', 'POLAR_REMOVE_CONTINUUM',
+    'POLAR_CLEAN_BY_SIGMA_CLIPPING', 'POLAR_NSIGMA_CLIPPING',
+    # polar poly moving median settings
+    'POLAR_CONT_BINSIZE', 'POLAR_CONT_OVERLAP', 'POLAR_CONT_POLYNOMIAL_FIT',
+    'POLAR_CONT_DEG_POLYNOMIAL',
+    # polar iraf settings
+    'STOKESI_IRAF_CONT_FIT_FUNC', 'POLAR_IRAF_CONT_FIT_FUNC',
+    'STOKESI_IRAF_CONT_FUNC_ORDER', 'POLAR_IRAF_CONT_FUNC_ORDER',
     # polar lsd constants
-
+    'POLAR_LSD_DIR', 'POLAR_LSD_FILE_KEY', 'POLAR_LSD_MIN_LANDE',
+    'POLAR_LSD_MAX_LANDE', 'POLAR_LSD_CCFLINES_AIR_WAVE',
+    'POLAR_LSD_MIN_LINEDEPTH', 'POLAR_LSD_V0', 'POLAR_LSD_VF', 'POLAR_LSD_NP',
+    'POLAR_LSD_NORMALIZE', 'POLAR_LSD_REMOVE_EDGES',
+    'POLAR_LSD_RES_POWER_GUESS',
     # debug dark plot settings
     'PLOT_DARK_IMAGE_REGIONS', 'PLOT_DARK_HISTOGRAM',
     # debug badpix plot settings
@@ -2314,6 +2332,47 @@ WAVEREF_FP_POLYINV = Const('WAVEREF_FP_POLYINV', value=None, dtype=int,
                                         'inversion'))
 
 # =============================================================================
+# CALIBRATION: WAVE RESOLUTION MAP SETTINGS
+# =============================================================================
+# define the number of bins in order direction to use in the resolution map
+WAVE_RES_MAP_ORDER_BINS = Const('WAVE_RES_MAP_ORDER_BINS', value=None,
+                                dtype=int, source=__NAME__, minimum=1,
+                                group=cgroup,
+                                description='define the number of bins in '
+                                            'order direction to use in the '
+                                            'resolution map')
+
+# define the number of bins in spatial direction to use in the resolution map
+WAVE_RES_MAP_SPATIAL_BINS = Const('WAVE_RES_MAP_SPATIAL_BINS', value=None,
+                                  dtype=int, source=__NAME__, minimum=1,
+                                  group=cgroup,
+                                  description='define the number of bins in '
+                                              'spatial direction to use in the '
+                                              'resolution map')
+
+# define the low pass filter size for the HC E2DS file in the resolution map
+WAVE_RES_MAP_FILTER_SIZE = Const('WAVE_RES_MAP_FILTER_SIZE', value=None,
+                                 dtype=int,
+                                 source=__NAME__, minimum=1, group=cgroup,
+                                 description='define the low pass filter size '
+                                             'for the HC E2DS file in the '
+                                             'resolution map')
+
+# define the broad resolution map velocity cut off (in km/s)
+WAVE_RES_VELO_CUTOFF1 = Const('WAVE_RES_VELO_CUTOFF1', value=None,
+                              dtype=float, source=__NAME__, minimum=0,
+                              group=cgroup,
+                              description='define the broad resolution map '
+                                          'velocity cut off (in km/s)')
+
+# define the tight resolution map velocity cut off (in km/s)
+WAVE_RES_VELO_CUTOFF2 = Const('WAVE_RES_VELO_CUTOFF2', value=None,
+                              dtype=float, source=__NAME__, minimum=0,
+                              group=cgroup,
+                              description='define the tight resolution map '
+                                          'velocity cut off (in km/s)')
+
+# =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: WAVE CCF SETTINGS'
@@ -3869,10 +3928,254 @@ CCF_BLAZE_NORM_PERCENTILE = Const('CCF_BLAZE_NORM_PERCENTILE', value=None,
                                                'using in CCF calc'))
 
 # =============================================================================
-# OBJECT: POLARISATION SETTINGS
+# GENERAL POLARISATION SETTINGS
 # =============================================================================
-cgroup = 'OBJECT: POLARISATION SETTINGS'
+cgroup = 'GENERAL POLARISATION SETTINGS'
 
+# Define all possible fibers used for polarimetry
+POLAR_FIBERS = Const('POLAR_FIBERS', value=None, dtype=str, source=__NAME__,
+                     group=cgroup,
+                     description='Define all possible fibers used for '
+                                 'polarimetry')
+
+# Define all possible stokes parameters
+POLAR_STOKES_PARAMS = Const('POLAR_STOKES_PARAMS', value=None, dtype=str,
+                            source=__NAME__, group=cgroup,
+                            description='Define all possible stokes parameters')
+
+# Whether or not to correct for BERV shift before calculate polarimetry
+POLAR_BERV_CORRECT = Const('POLAR_BERV_CORRECT', value=None, dtype=bool,
+                           source=__NAME__, group=cgroup,
+                           description='Whether or not to correct for BERV '
+                                       'shift before calculate polarimetry')
+
+# Whether or not to correct for SOURCE RV shift before calculate polarimetry
+POLAR_SOURCE_RV_CORRECT = Const('POLAR_SOURCE_RV_CORRECT', value=None,
+                                dtype=bool, source=__NAME__, group=cgroup,
+                                description='Whether or not to correct for '
+                                            'SOURCE RV shift before calculate '
+                                            'polarimetry')
+
+#  Define the polarimetry method
+#    currently must be either:
+#         - Ratio
+#         - Difference
+POLAR_METHOD = Const('POLAR_METHOD', value=None, dtype=str, source=__NAME__,
+                     group=cgroup,
+                     description='Define the polarimetry method currently '
+                                 'must be either: - Ratio - Difference')
+
+# Whether or not to interpolate flux values to correct for wavelength
+#   shifts between exposures
+POLAR_INTERPOLATE_FLUX = Const('POLAR_INTERPOLATE_FLUX', value=None,
+                               dtype=bool, source=__NAME__, group=cgroup,
+                               description='Whether or not to interpolate flux '
+                                           'values to correct for wavelength '
+                                           'shifts between exposures')
+
+# Select stokes I continuum detection algorithm:
+#     'IRAF' or 'MOVING_MEDIAN'
+STOKESI_CONTINUUM_DET_ALG = Const('STOKESI_CONTINUUM_DET_ALG', value=None,
+                                  dtype=str, source=__NAME__, group=cgroup,
+                                  options=['IRAF', 'MOVING_MEDIAN'],
+                                  description='Select stokes I continuum '
+                                              'detection algorithm: '
+                                              'IRAF or MOVING_MEDIAN')
+
+# Select stokes I continuum detection algorithm:
+#     'IRAF' or 'MOVING_MEDIAN'
+POLAR_CONTINUUM_DET_ALG = Const('POLAR_CONTINUUM_DET_ALG', value=None,
+                                dtype=str, source=__NAME__, group=cgroup,
+                                options=['IRAF', 'MOVING_MEDIAN'],
+                                description='Select stokes I continuum '
+                                            'detection algorithm: '
+                                            'IRAF or MOVING_MEDIAN')
+
+# Normalize Stokes I (True or False)
+POLAR_NORMALIZE_STOKES_I = Const('POLAR_NORMALIZE_STOKES_I', value=None,
+                                 dtype=bool, source=__NAME__, group=cgroup,
+                                 description='Normalize Stokes I (True or '
+                                             'False)')
+
+# Remove continuum polarization
+POLAR_REMOVE_CONTINUUM = Const('POLAR_REMOVE_CONTINUUM', value=None,
+                               dtype=bool, source=__NAME__, group=cgroup,
+                               description='Remove continuum polarization')
+
+# Apply polarimetric sigma-clip cleanning (Works better if continuum
+#     is removed)
+POLAR_CLEAN_BY_SIGMA_CLIPPING = Const('POLAR_CLEAN_BY_SIGMA_CLIPPING',
+                                      value=None, dtype=bool, source=__NAME__,
+                                      group=cgroup,
+                                      description='Apply polarimetric sigma-'
+                                                  'clip cleanning (Works '
+                                                  'better if continuum is '
+                                                  'removed)')
+
+# Define number of sigmas within which apply clipping
+POLAR_NSIGMA_CLIPPING = Const('POLAR_NSIGMA_CLIPPING', value=None, dtype=float,
+                              source=__NAME__, group=cgroup,
+                              description='Define number of sigmas within '
+                                          'which apply clipping')
+
+# =============================================================================
+# POLAR POLY MOVING MEDIAN SETTINGS
+# =============================================================================
+cgroup = 'POLAR POLY MOVING MEDIAN SETTINGS'
+
+# Define the polarimetry continuum bin size
+POLAR_CONT_BINSIZE = Const('POLAR_CONT_BINSIZE', value=None, dtype=int,
+                           source=__NAME__, group=cgroup,
+                           description='Define the polarimetry continuum bin '
+                                       'size')
+# Define the polarimetry continuum overlap size
+POLAR_CONT_OVERLAP = Const('POLAR_CONT_OVERLAP', value=None, dtype=int,
+                           source=__NAME__, group=cgroup,
+                           description='Define the polarimetry continuum '
+                                       'overlap size')
+
+# Fit polynomial to continuum polarization?
+#    If False it will use a cubic interpolation instead of polynomial fit
+POLAR_CONT_POLYNOMIAL_FIT = Const('POLAR_CONT_POLYNOMIAL_FIT', value=None,
+                                  dtype=bool, source=__NAME__, group=cgroup,
+                                  description='Fit polynomial to continuum '
+                                              'polarization? If False it will '
+                                              'use a cubic interpolation '
+                                              'instead of polynomial fit')
+
+# Define degree of polynomial to fit continuum polarization
+POLAR_CONT_DEG_POLYNOMIAL = Const('POLAR_CONT_DEG_POLYNOMIAL', value=None,
+                                  dtype=int, source=__NAME__, group=cgroup,
+                                  description='Define degree of polynomial to '
+                                              'fit continuum polarization')
+
+# =============================================================================
+# POLAR IRAF SETTINGS
+# =============================================================================
+cgroup = 'POLAR IRAF SETTINGS'
+
+# function to fit to the stokes I continuum: must be 'polynomial' or
+#    'spline3'
+STOKESI_IRAF_CONT_FIT_FUNC = Const('STOKESI_IRAF_CONT_FIT_FUNC', value=None,
+                                   dtype=str, options=['polynomial', 'spline3'],
+                                   source=__NAME__, group=cgroup,
+                                   description='function to fit to the stokes '
+                                               'I continuum must be polynomial '
+                                               'or spline3')
+
+# function to fit to the polar continuum: must be 'polynomial' or 'spline3'
+POLAR_IRAF_CONT_FIT_FUNC = Const('POLAR_IRAF_CONT_FIT_FUNC', value=None,
+                                 dtype=str, options=['polynomial', 'spline3'],
+                                 source=__NAME__, group=cgroup,
+                                 description='function to fit to the polar '
+                                             'continuum: must be polynomial '
+                                             'or spline3')
+
+# stokes i continuum fit function order: 'polynomial': degree or 'spline3':
+#    number of knots
+STOKESI_IRAF_CONT_FUNC_ORDER = Const('STOKESI_IRAF_CONT_FUNC_ORDER',
+                                     value=None, dtype=int,
+                                   source=__NAME__, group=cgroup,
+                                   description='polar continuum fit function '
+                                               'order, polynomial: degree, '
+                                               'spline3: number of knots')
+
+# polar continuum fit function order: 'polynomial': degree or 'spline3':
+#    number of knots
+POLAR_IRAF_CONT_FUNC_ORDER = Const('POLAR_IRAF_CONT_FUNC_ORDER',
+                                   value=None, dtype=int,
+                                   source=__NAME__, group=cgroup,
+                                   description='stokes i continuum fit function'
+                                               ' order, polynomial: degree, '
+                                               'spline3: number of knots')
+
+# =============================================================================
+# POLAR LSD SETTINGS
+# =============================================================================
+cgroup = 'POLAR LSD SETTINGS'
+
+#  Define the spectral lsd mask directory for lsd polar calculations
+POLAR_LSD_DIR = Const('POLAR_LSD_DIR', value=None, dtype=str, source=__NAME__,
+                      group=cgroup,
+                      description='Define the spectral lsd mask directory for '
+                                  'lsd polar calculations')
+
+#  Define the file regular expression key to lsd mask files
+#  for "marcs_t3000g50_all" this should be:
+#     - filekey = 'marcs_t*g
+#  for "t4000_g4.0_m0.00" it should be:
+#     - filekey = 't*_g'
+POLAR_LSD_FILE_KEY = Const('POLAR_LSD_FILE_KEY',
+                           value=None, dtype=str,
+                           source=__NAME__, group=cgroup,
+                           description='Define the file regular expression key '
+                                       'to lsd mask files for '
+                                       'marcs_t3000g50_all this should be: '
+                                       'filekey = marcs_t*g for '
+                                       't4000_g4.0_m0.00 it should be: filekey '
+                                       '= t*_g')
+
+# Define minimum lande of lines to be used in the LSD analyis
+POLAR_LSD_MIN_LANDE = Const('POLAR_LSD_MIN_LANDE', value=None, dtype=float,
+                            source=__NAME__, group=cgroup,
+                            description='Define minimum lande of lines to be '
+                                        'used in the LSD analyis')
+
+# Define maximum lande of lines to be used in the LSD analyis
+POLAR_LSD_MAX_LANDE = Const('POLAR_LSD_MAX_LANDE', value=None, dtype=float,
+                            source=__NAME__, group=cgroup,
+                            description='Define maximum lande of lines to be '
+                                        'used in the LSD analyis')
+
+# If mask lines are in air-wavelength then they will have to be
+#     converted from air to vacuum
+POLAR_LSD_CCFLINES_AIR_WAVE = Const('POLAR_LSD_CCFLINES_AIR_WAVE', value=None,
+                                    dtype=bool, source=__NAME__, group=cgroup,
+                                    description='If mask lines are in air-'
+                                                'wavelength then they will '
+                                                'have to be converted from air '
+                                                'to vacuum')
+
+# Define minimum line depth to be used in the LSD analyis
+POLAR_LSD_MIN_LINEDEPTH = Const('POLAR_LSD_MIN_LINEDEPTH', value=None,
+                                dtype=float, source=__NAME__, group=cgroup,
+                                description='Define minimum line depth to be '
+                                            'used in the LSD analyis')
+
+# Define initial velocity (km/s) for output LSD profile
+POLAR_LSD_V0 = Const('POLAR_LSD_V0',  value=None, dtype=float, source=__NAME__,
+                     group=cgroup,
+                     description='Define initial velocity (km/s) for output '
+                                 'LSD profile')
+
+#  Define final velocity (km/s) for output LSD profile
+POLAR_LSD_VF =  Const('POLAR_LSD_VF', value=None, dtype=float, source=__NAME__,
+                      group=cgroup,
+                      description='Define final velocity (km/s) for output LSD '
+                                  'profile')
+
+# Define number of points for output LSD profile
+POLAR_LSD_NP = Const('POLAR_LSD_NP', value=None, dtype=int, source=__NAME__,
+                     group=cgroup,
+                     description='Define number of points for output '
+                                 'LSD profile')
+
+# Renormalize data before LSD analysis
+POLAR_LSD_NORMALIZE = Const('POLAR_LSD_NORMALIZE', value=None, dtype=bool,
+                            source=__NAME__, group=cgroup,
+                            description='Renormalize data before LSD analysis')
+
+# Remove edges of LSD profile
+POLAR_LSD_REMOVE_EDGES = Const('POLAR_LSD_REMOVE_EDGES',  value=None,
+                               dtype=bool, source=__NAME__, group=cgroup,
+                               description='Remove edges of LSD profile')
+
+# Define the guess at the resolving power for lsd profile fit
+POLAR_LSD_RES_POWER_GUESS = Const('POLAR_LSD_RES_POWER_GUESS', value=None,
+                                  dtype=float, source=__NAME__, group=cgroup,
+                                  description='Define the guess at the '
+                                              'resolving power for lsd profile '
+                                              'fit')
 
 # =============================================================================
 # DEBUG PLOT SETTINGS

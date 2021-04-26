@@ -125,12 +125,10 @@ def __main__(recipe, params):
         if (not overwrite) and os.path.exists(outfile):
             continue
         # -----------------------------------------------------------------
-        # log process
-        # TODO: Add to language database
-        imsg = 'Processing {0}'
+        # log process: Processing {0}'
         iargs = [post_file.name]
         WLOG(params, 'info', params['DRS_HEADER'])
-        WLOG(params, 'info', imsg.format(*iargs))
+        WLOG(params, 'info', textentry('40-090-00001', args=iargs))
         WLOG(params, 'info', params['DRS_HEADER'])
         # -----------------------------------------------------------------
         # make a new copy of out file
@@ -155,24 +153,24 @@ def __main__(recipe, params):
             # update filename/basename and path
             filepostfile.set_filename(filepostfile.out_filename)
             # write file
-            # TODO: Add to language database
-            msg = 'Writing to file: {0}'
+            # log progress: Writing to file: {0}'
             margs = [filepostfile.filename]
-            WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', textentry('40-090-00002', args=margs))
             filepostfile.write_file(block_kind=recipe.out_block_str,
                                     runstring=recipe.runstring)
             recipe.add_output_file(filepostfile)
             # if user wants to clear - clear this data
             if clear:
                 for filename in filepostfile.clear_files:
-                    # TODO: Add to language database
-                    wmsg = 'Removing {0}'
+                    # log progress: Removing {0}'
                     wargs = [filename]
-                    WLOG(params, 'warning', wmsg.format(*wargs))
+                    WLOG(params, 'warning', textentry('10-090-00001',
+                                                      args=wargs))
                     os.remove(filename)
         else:
-            # TODO: Add to language database
-            WLOG(params, 'warning', '\tSkipping - files not found')
+            # \tSkipping output {0} - files not found \n\tFile: {1}'
+            wargs = [post_file.name, infile.filename]
+            WLOG(params, 'warning', textentry('10-090-00002', args=wargs))
             # flag we have skipped some files
             has_skipped = True
 

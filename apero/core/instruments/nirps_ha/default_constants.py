@@ -1288,6 +1288,34 @@ WAVEREF_FP_POLYINV.value = 4
 WAVEREF_FP_POLYINV.author = base.AUTHORS['EA']
 
 # =============================================================================
+# CALIBRATION: WAVE RESOLUTION MAP SETTINGS
+# =============================================================================
+# define the number of bins in order direction to use in the resolution map
+WAVE_RES_MAP_ORDER_BINS = WAVE_RES_MAP_ORDER_BINS.copy(__NAME__)
+WAVE_RES_MAP_ORDER_BINS.value = 3
+WAVE_RES_MAP_ORDER_BINS.author = base.AUTHORS['EA']
+
+# define the number of bins in spatial direction to use in the resolution map
+WAVE_RES_MAP_SPATIAL_BINS = WAVE_RES_MAP_SPATIAL_BINS.copy(__NAME__)
+WAVE_RES_MAP_SPATIAL_BINS.value = 3
+WAVE_RES_MAP_SPATIAL_BINS.author = base.AUTHORS['EA']
+
+# define the low pass filter size for the HC E2DS file in the resolution map
+WAVE_RES_MAP_FILTER_SIZE = WAVE_RES_MAP_FILTER_SIZE.copy(__NAME__)
+WAVE_RES_MAP_FILTER_SIZE.value = 101
+WAVE_RES_MAP_FILTER_SIZE.author = base.AUTHORS['EA']
+
+# define the broad resolution map velocity cut off (in km/s)
+WAVE_RES_VELO_CUTOFF1 = WAVE_RES_VELO_CUTOFF1.copy(__NAME__)
+WAVE_RES_VELO_CUTOFF1.value = 20
+WAVE_RES_VELO_CUTOFF1.author = base.AUTHORS['EA']
+
+# define the tight resolution map velocity cut off (in km/s)
+WAVE_RES_VELO_CUTOFF2 = WAVE_RES_VELO_CUTOFF2.copy(__NAME__)
+WAVE_RES_VELO_CUTOFF2.value = 5
+WAVE_RES_VELO_CUTOFF2.author = base.AUTHORS['EA']
+
+# =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
 # =============================================================================
 #   The value of the noise for wave dv rms calculation

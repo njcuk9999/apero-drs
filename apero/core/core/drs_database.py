@@ -1647,10 +1647,11 @@ class IndexDatabase(DatabaseManager):
         # check if columns and rkeys agree
         if len(columns) != len(ikeys):
             # prompt user and warn
-            # TODO: move to language DB
-            wmsg = 'Index database has wrong number of columns'
-            WLOG(self.params, 'warning', wmsg)
-            userinput = input('Reset database [Y]es or [N]o?\t')
+            wargs = [len(columns), len(ikeys)]
+            # log warning: Index database has wrong number of columns
+            WLOG(self.params, 'warning', textentry('10-002-00005', args=wargs))
+            # reset database
+            userinput = input(str(textentry('10-002-00006')))
             # if yes delete table and recreate
             if 'Y' in userinput.upper():
                 # remove table
@@ -1661,16 +1662,16 @@ class IndexDatabase(DatabaseManager):
                 # reload database
                 self.load_db()
                 # update all entries for raw index entries
-                # TODO: move to language DB
-                WLOG(self.params, 'info', 'Rebuilding raw index entries')
+                iargs = ['raw']
+                WLOG(self.params, 'info', textentry('40-006-00006', args=iargs))
                 self.update_entries('raw', force_update=True)
                 # update all entries for tmp index entries
-                # TODO: move to language DB
-                WLOG(self.params, 'info', 'Rebuilding tmp index entries')
+                iargs = ['tmp']
+                WLOG(self.params, 'info', textentry('40-006-00006', args=iargs))
                 self.update_entries('tmp', force_update=True)
                 # update all entries for reduced index entries
-                # TODO: move to language DB
-                WLOG(self.params, 'info', 'Rebuilding reduced index entries')
+                iargs = ['red']
+                WLOG(self.params, 'info', textentry('40-006-00006', args=iargs))
                 self.update_entries('red', force_update=True)
                 return
         # ---------------------------------------------------------------------

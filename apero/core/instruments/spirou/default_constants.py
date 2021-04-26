@@ -908,7 +908,7 @@ LEAKM_EXTRACT_TYPE.value = 'E2DSFF'
 
 # Define the types of input extracted files to correct for leakage
 ALLOWED_LEAK_TYPES = ALLOWED_LEAK_TYPES.copy(__NAME__)
-ALLOWED_LEAK_TYPES.value = 'OBJ_FP'
+ALLOWED_LEAK_TYPES.value = 'OBJ_FP, POLAR_FP'
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
@@ -1270,6 +1270,34 @@ WAVEREF_FP_NHIGH.author = base.AUTHORS['EA']
 WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
 WAVEREF_FP_POLYINV.value = 4
 WAVEREF_FP_POLYINV.author = base.AUTHORS['EA']
+
+# =============================================================================
+# CALIBRATION: WAVE RESOLUTION MAP SETTINGS
+# =============================================================================
+# define the number of bins in order direction to use in the resolution map
+WAVE_RES_MAP_ORDER_BINS = WAVE_RES_MAP_ORDER_BINS.copy(__NAME__)
+WAVE_RES_MAP_ORDER_BINS.value = 3
+WAVE_RES_MAP_ORDER_BINS.author = base.AUTHORS['EA']
+
+# define the number of bins in spatial direction to use in the resolution map
+WAVE_RES_MAP_SPATIAL_BINS = WAVE_RES_MAP_SPATIAL_BINS.copy(__NAME__)
+WAVE_RES_MAP_SPATIAL_BINS.value = 3
+WAVE_RES_MAP_SPATIAL_BINS.author = base.AUTHORS['EA']
+
+# define the low pass filter size for the HC E2DS file in the resolution map
+WAVE_RES_MAP_FILTER_SIZE = WAVE_RES_MAP_FILTER_SIZE.copy(__NAME__)
+WAVE_RES_MAP_FILTER_SIZE.value = 101
+WAVE_RES_MAP_FILTER_SIZE.author = base.AUTHORS['EA']
+
+# define the broad resolution map velocity cut off (in km/s)
+WAVE_RES_VELO_CUTOFF1 = WAVE_RES_VELO_CUTOFF1.copy(__NAME__)
+WAVE_RES_VELO_CUTOFF1.value = 20
+WAVE_RES_VELO_CUTOFF1.author = base.AUTHORS['EA']
+
+# define the tight resolution map velocity cut off (in km/s)
+WAVE_RES_VELO_CUTOFF2 = WAVE_RES_VELO_CUTOFF2.copy(__NAME__)
+WAVE_RES_VELO_CUTOFF2.value = 5
+WAVE_RES_VELO_CUTOFF2.author = base.AUTHORS['EA']
 
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
@@ -2219,10 +2247,192 @@ CCF_BLAZE_NORM_PERCENTILE = CCF_BLAZE_NORM_PERCENTILE.copy(__NAME__)
 CCF_BLAZE_NORM_PERCENTILE.value = 90
 
 # =============================================================================
-# OBJECT: POLARISATION SETTINGS
+# GENERAL POLARISATION SETTINGS
 # =============================================================================
-# TODO: add new polar settings
+# Define all possible fibers used for polarimetry
+POLAR_FIBERS = POLAR_FIBERS.copy(__NAME__)
+POLAR_FIBERS.value = 'A,B'
+POLAR_FIBERS.author = base.AUTHORS['EM']
 
+# Define all possible stokes parameters
+POLAR_STOKES_PARAMS = POLAR_STOKES_PARAMS.copy(__NAME__)
+POLAR_STOKES_PARAMS.value = 'V,Q,U'
+POLAR_STOKES_PARAMS.author = base.AUTHORS['EM']
+
+# Whether or not to correct for BERV shift before calculate polarimetry
+POLAR_BERV_CORRECT = POLAR_BERV_CORRECT.copy(__NAME__)
+POLAR_BERV_CORRECT.value = True
+POLAR_BERV_CORRECT.author = base.AUTHORS['EM']
+
+# Whether or not to correct for SOURCE RV shift before calculate polarimetry
+POLAR_SOURCE_RV_CORRECT = POLAR_SOURCE_RV_CORRECT.copy(__NAME__)
+POLAR_SOURCE_RV_CORRECT.value = False
+POLAR_SOURCE_RV_CORRECT.author = base.AUTHORS['EM']
+
+#  Define the polarimetry method
+#    currently must be either:
+#         - Ratio
+#         - Difference
+POLAR_METHOD = POLAR_METHOD.copy(__NAME__)
+POLAR_METHOD.value = 'Ratio'
+POLAR_METHOD.author = base.AUTHORS['EM']
+
+# Whether or not to interpolate flux values to correct for wavelength
+#   shifts between exposures
+POLAR_INTERPOLATE_FLUX = POLAR_INTERPOLATE_FLUX.copy(__NAME__)
+POLAR_INTERPOLATE_FLUX.value = True
+POLAR_INTERPOLATE_FLUX.author = base.AUTHORS['EM']
+
+# Select stokes I continuum detection algorithm:
+#     'IRAF' or 'MOVING_MEDIAN'
+STOKESI_CONTINUUM_DET_ALG = STOKESI_CONTINUUM_DET_ALG.copy(__NAME__)
+STOKESI_CONTINUUM_DET_ALG.value = 'MOVING_MEDIAN'
+STOKESI_CONTINUUM_DET_ALG.author = base.AUTHORS['EM']
+
+# Select stokes I continuum detection algorithm:
+#     'IRAF' or 'MOVING_MEDIAN'
+POLAR_CONTINUUM_DET_ALG = POLAR_CONTINUUM_DET_ALG.copy(__NAME__)
+POLAR_CONTINUUM_DET_ALG.value = 'MOVING_MEDIAN'
+POLAR_CONTINUUM_DET_ALG.author = base.AUTHORS['EM']
+
+# Normalize Stokes I (True or False)
+POLAR_NORMALIZE_STOKES_I = POLAR_NORMALIZE_STOKES_I.copy(__NAME__)
+POLAR_NORMALIZE_STOKES_I.value = True
+POLAR_NORMALIZE_STOKES_I.author = base.AUTHORS['EM']
+
+# Remove continuum polarization
+POLAR_REMOVE_CONTINUUM = POLAR_REMOVE_CONTINUUM.copy(__NAME__)
+POLAR_REMOVE_CONTINUUM.value = True
+POLAR_REMOVE_CONTINUUM.author = base.AUTHORS['EM']
+
+# Apply polarimetric sigma-clip cleanning (Works better if continuum
+#     is removed)
+POLAR_CLEAN_BY_SIGMA_CLIPPING = POLAR_CLEAN_BY_SIGMA_CLIPPING.copy(__NAME__)
+POLAR_CLEAN_BY_SIGMA_CLIPPING.value = True
+POLAR_CLEAN_BY_SIGMA_CLIPPING.author = base.AUTHORS['EM']
+
+# Define number of sigmas within which apply clipping
+POLAR_NSIGMA_CLIPPING = POLAR_NSIGMA_CLIPPING.copy(__NAME__)
+POLAR_NSIGMA_CLIPPING.value = 4
+POLAR_NSIGMA_CLIPPING.author = base.AUTHORS['EM']
+
+# =============================================================================
+# POLAR POLY MOVING MEDIAN SETTINGS
+# =============================================================================
+# Define the polarimetry continuum bin size
+POLAR_CONT_BINSIZE = POLAR_CONT_BINSIZE.copy(__NAME__)
+POLAR_CONT_BINSIZE.value = 900
+POLAR_CONT_BINSIZE.author = base.AUTHORS['EM']
+
+# Define the polarimetry continuum overlap size
+POLAR_CONT_OVERLAP = POLAR_CONT_OVERLAP.copy(__NAME__)
+POLAR_CONT_OVERLAP.value = 200
+POLAR_CONT_OVERLAP.author = base.AUTHORS['EM']
+
+# Fit polynomial to continuum polarization?
+#    If False it will use a cubic interpolation instead of polynomial fit
+POLAR_CONT_POLYNOMIAL_FIT = POLAR_CONT_POLYNOMIAL_FIT.copy(__NAME__)
+POLAR_CONT_POLYNOMIAL_FIT.value = True
+POLAR_CONT_POLYNOMIAL_FIT.author = base.AUTHORS['EM']
+
+# Define degree of polynomial to fit continuum polarization
+POLAR_CONT_DEG_POLYNOMIAL = POLAR_CONT_DEG_POLYNOMIAL.copy(__NAME__)
+POLAR_CONT_DEG_POLYNOMIAL.value = 3
+POLAR_CONT_DEG_POLYNOMIAL.author = base.AUTHORS['EM']
+
+# =============================================================================
+# POLAR IRAF SETTINGS
+# =============================================================================
+# function to fit to the stokes I continuum: must be 'polynomial' or
+#    'spline3'
+STOKESI_IRAF_CONT_FIT_FUNC = STOKESI_IRAF_CONT_FIT_FUNC.copy(__NAME__)
+STOKESI_IRAF_CONT_FIT_FUNC.value = 'polynomial'
+STOKESI_IRAF_CONT_FIT_FUNC.author = base.AUTHORS['EM']
+
+# function to fit to the polar continuum: must be 'polynomial' or 'spline3'
+POLAR_IRAF_CONT_FIT_FUNC = POLAR_IRAF_CONT_FIT_FUNC.copy(__NAME__)
+POLAR_IRAF_CONT_FIT_FUNC.value = 'polynomial'
+POLAR_IRAF_CONT_FIT_FUNC.author = base.AUTHORS['EM']
+
+# stokes i continuum fit function order: 'polynomial': degree or 'spline3':
+#    number of knots
+STOKESI_IRAF_CONT_FUNC_ORDER = STOKESI_IRAF_CONT_FUNC_ORDER.copy(__NAME__)
+STOKESI_IRAF_CONT_FUNC_ORDER.value = 5
+STOKESI_IRAF_CONT_FUNC_ORDER.author = base.AUTHORS['EM']
+
+# polar continuum fit function order: 'polynomial': degree or 'spline3':
+#    number of knots
+POLAR_IRAF_CONT_FUNC_ORDER = POLAR_IRAF_CONT_FUNC_ORDER.copy(__NAME__)
+POLAR_IRAF_CONT_FUNC_ORDER.value = 3
+POLAR_IRAF_CONT_FUNC_ORDER.author = base.AUTHORS['EM']
+
+# =============================================================================
+# POLAR LSD SETTINGS
+# =============================================================================
+# Define the spectral lsd mask directory for lsd polar calculations
+POLAR_LSD_DIR = POLAR_LSD_DIR.copy(__NAME__)
+POLAR_LSD_DIR.value = 'lsd'
+POLAR_LSD_DIR.author = base.AUTHORS['EM']
+
+# Define the file regular expression key to lsd mask files
+#  for "marcs_t3000g50_all" this should be:
+#     - filekey = 'marcs_t*g
+#  for "t4000_g4.0_m0.00" it should be:
+#     - filekey = 't*_g'
+POLAR_LSD_FILE_KEY = POLAR_LSD_FILE_KEY.copy(__NAME__)
+POLAR_LSD_FILE_KEY.value = 'marcs_t*g50_all'
+POLAR_LSD_FILE_KEY.author = base.AUTHORS['EM']
+
+# Define minimum lande of lines to be used in the LSD analyis
+POLAR_LSD_MIN_LANDE = POLAR_LSD_MIN_LANDE.copy(__NAME__)
+POLAR_LSD_MIN_LANDE.value = 0.0
+POLAR_LSD_MIN_LANDE.author = base.AUTHORS['EM']
+
+# Define maximum lande of lines to be used in the LSD analyis
+POLAR_LSD_MAX_LANDE = POLAR_LSD_MAX_LANDE.copy(__NAME__)
+POLAR_LSD_MAX_LANDE.value = 10.0
+POLAR_LSD_MAX_LANDE.author = base.AUTHORS['EM']
+
+# If mask lines are in air-wavelength then they will have to be
+#     converted from air to vacuum
+POLAR_LSD_CCFLINES_AIR_WAVE = POLAR_LSD_CCFLINES_AIR_WAVE.copy(__NAME__)
+POLAR_LSD_CCFLINES_AIR_WAVE.value = False
+POLAR_LSD_CCFLINES_AIR_WAVE.author = base.AUTHORS['EM']
+
+# Define minimum line depth to be used in the LSD analyis
+POLAR_LSD_MIN_LINEDEPTH = POLAR_LSD_MIN_LINEDEPTH.copy(__NAME__)
+POLAR_LSD_MIN_LINEDEPTH.value = 0.005
+POLAR_LSD_MIN_LINEDEPTH.author = base.AUTHORS['EM']
+
+# Define initial velocity (km/s) for output LSD profile
+POLAR_LSD_V0 = POLAR_LSD_V0.copy(__NAME__)
+POLAR_LSD_V0.value = -150.0
+POLAR_LSD_V0.author = base.AUTHORS['EM']
+
+#  Define final velocity (km/s) for output LSD profile
+POLAR_LSD_VF = POLAR_LSD_VF.copy(__NAME__)
+POLAR_LSD_VF.value = 150.0
+POLAR_LSD_VF.author = base.AUTHORS['EM']
+
+# Define number of points for output LSD profile
+POLAR_LSD_NP = POLAR_LSD_NP.copy(__NAME__)
+POLAR_LSD_NP.value = 151
+POLAR_LSD_NP.author = base.AUTHORS['EM']
+
+# Renormalize data before LSD analysis
+POLAR_LSD_NORMALIZE = POLAR_LSD_NORMALIZE.copy(__NAME__)
+POLAR_LSD_NORMALIZE.value = False
+POLAR_LSD_NORMALIZE.author = base.AUTHORS['EM']
+
+# Remove edges of LSD profile
+POLAR_LSD_REMOVE_EDGES = POLAR_LSD_REMOVE_EDGES.copy(__NAME__)
+POLAR_LSD_REMOVE_EDGES.value = True
+POLAR_LSD_REMOVE_EDGES.author = base.AUTHORS['EM']
+
+# Define the guess at the resolving power for lsd profile fit
+POLAR_LSD_RES_POWER_GUESS = POLAR_LSD_RES_POWER_GUESS.copy(__NAME__)
+POLAR_LSD_RES_POWER_GUESS.value = 50000.0
+POLAR_LSD_RES_POWER_GUESS.author = base.AUTHORS['EM']
 
 # =============================================================================
 # DEBUG PLOT SETTINGS

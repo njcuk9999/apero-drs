@@ -687,10 +687,9 @@ apero_wave_master.set_kwarg(**wavefile)
 apero_wave_master.set_kwarg(name='--forceext', dtype='bool',
                           default_ref='WAVE_ALWAYS_EXTRACT',
                           helpstr='WAVE_EXTRACT_HELP')
-# TODO: move helpstr to language database
 apero_wave_master.set_kwarg(name='--cavityfile', dtype='file', default='None',
                           files=[files.out_wavem_cavity],
-                          helpstr='Wave cavity file')
+                          helpstr=textentry('WAVEM_CAVFILE_HELP'))
 apero_wave_master.group_func = grouping.group_by_dirname
 apero_wave_master.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
