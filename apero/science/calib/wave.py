@@ -1439,7 +1439,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     cavlen1 = np.polyval(cavity, fpl_wave_ref)
     cavlen0 = np.polyval(cavity0, fpl_wave_ref)
     margs = [mp.nanmean(cavlen1) - mp.nanmean(cavlen0)]
-    WLOG(params, '', textentry('40-017-00058', *margs))
+    WLOG(params, '', textentry('40-017-00058', args=margs))
     # -------------------------------------------------------------------------
     # plot the wavelength hc diff histograms
     recipe.plot('WAVE_HC_DIFF_HIST', diff_hc=diff_hc, error=hcsigma)
