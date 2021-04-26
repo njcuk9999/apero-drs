@@ -168,12 +168,12 @@ class Plotter:
         # ------------------------------------------------------------------
         # deal with no plot needed
         if self.plotoption == -1:
-            WLOG(self.params, 'debug', textentry('09-100-00002'))
+            WLOG(self.params, 'debug', textentry('90-100-00002'))
             return 0
         # ------------------------------------------------------------------
         # deal with no plot needed
         if (self.plotoption == 0) and (name in self.debug_graphs):
-            WLOG(self.params, 'debug', textentry('09-100-00002'))
+            WLOG(self.params, 'debug', textentry('90-100-00002'))
             return 0
         # ------------------------------------------------------------------
         # add fiber to keyword arguments
@@ -193,7 +193,7 @@ class Plotter:
                 pass
             # if it is check whether it is set to False
             elif not self.plot_switches[name]:
-                dmsg = textentry('09-100-00003', args=[name.upper()])
+                dmsg = textentry('90-100-00003', args=[name.upper()])
                 WLOG(self.params, 'debug', dmsg)
                 # if it is check whether it is set to False
                 return 0
@@ -987,11 +987,11 @@ class Plotter:
         self.backend = matplotlib.get_backend()
         # debug log which backend used
         dargs = [self.backend]
-        WLOG(self.params, 'debug', textentry('09-100-00001', args=dargs))
+        WLOG(self.params, 'debug', textentry('90-100-00001', args=dargs))
         # ------------------------------------------------------------------
         # deal with still having MacOSX backend
         if self.backend == 'MacOSX':
-            WLOG(self.params, 'error', textentry('09-100-00001'))
+            WLOG(self.params, 'error', textentry('90-100-00001'))
 
 
 # =============================================================================

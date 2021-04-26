@@ -287,7 +287,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
         qc_logic.append('BERV_COV < {0}'.format(min_berv_cov))
         qc_pass.append(0)
         fargs = [berv_cov, min_berv_cov]
-        fail_msgs.append(textentry('10-019-00010', args=fargs))
+        fail_msgs.append(textentry('10-019-00011', args=fargs))
     else:
         qc_names.append('BERV_COV')
         qc_values.append(berv_cov)

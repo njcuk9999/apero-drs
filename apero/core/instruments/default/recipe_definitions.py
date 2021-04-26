@@ -103,28 +103,22 @@ changelog.set_arg(pos=0, name='preview', dtype='bool',
 database_mgr.name = 'apero_database.py'
 database_mgr.shortname = 'DBMGR'
 database_mgr.instrument = __INSTRUMENT__
-database_mgr.description = 'APERO database manager'
+database_mgr.description = textentry('DBMGR_DESCRIPTION')
 database_mgr.recipe_type = 'nolog-tool'
 database_mgr.recipe_kind = 'admin'
 database_mgr.set_kwarg(name='--kill', dtype='switch', default=False,
-                       helpstr='Use this when database is stuck and you have'
-                               'no other opens (mysql only)')
+                       helpstr=textentry('DBMGR_KILLARG_HELP'))
 database_mgr.set_kwarg(name='--csv', dtype=str, default='None',
-                       helpstr='Path to csv file. For --importdb this is the'
-                               'csv file you wish to add. For --exportdb this'
-                               'is the csv file that will be saved.')
+                       helpstr=textentry('DBMGR_CSVARG_HELP'))
 database_mgr.set_kwarg(name='--exportdb', dtype=str, default='None',
                        options=base.DATABASE_NAMES,
-                       helpstr='Export a database to a csv file')
+                       helpstr=textentry('DBMGR_EXPORTDB_HELP'))
 database_mgr.set_kwarg(name='--importdb', dtype=str, default='None',
                        options=base.DATABASE_NAMES,
-                       helpstr='Import a csv file into a database')
+                       helpstr=textentry('DBMGR_IMPORTDB_HELP'))
 database_mgr.set_kwarg(name='--join', dtype=str, default='replace',
                        options=['replace', 'append'],
-                       helpstr='How to add the csv file to database:'
-                               ' append adds all lines to the end of current database, '
-                               ' replace removes all previous lines from database.'
-                               ' Default is "replace"')
+                       helpstr=textentry('DBMGR_JOIN_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_documentation.py
@@ -132,26 +126,21 @@ database_mgr.set_kwarg(name='--join', dtype=str, default='replace',
 remake_doc.name = 'apero_documentation.py'
 remake_doc.instrument = __INSTRUMENT__
 remake_doc.shortname = 'DOC'
-# TODO: Move to language DB
-remake_doc.description = 'Re-make the apero documentation'
+remake_doc.description = textentry('REMAKE_DOC_DESCRIPTION')
 remake_doc.recipe_type = 'nolog-tool'
 remake_doc.recipe_kind = 'admin'
-# TODO: Move Help to language DB
 remake_doc.set_kwarg(name='--upload', dtype='bool', default=False,
-                     helpstr='[Bool] If True upload documentation to '
-                             'defined server (for web access)')
+                     helpstr=textentry('REMAKE_DOC_UPLOADARG_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py
 # -----------------------------------------------------------------------------
-
 explorer.name = 'apero_explorer.py'
 explorer.shortname = 'EXPLO'
 explorer.instrument = __INSTRUMENT__
 explorer.description = textentry('EXPLORER_DESCRIPTION')
 explorer.recipe_type = 'nolog-tool'
 explorer.recipe_kind = 'user'
-# TODO: move helpstr to language database
 explorer.set_kwarg(name='--hash', default=False, dtype='switch',
                    helpstr=textentry('EXPLORER_HASH'))
 
@@ -190,27 +179,14 @@ logstats.set_kwarg(name='--obs_dir', dtype=str, default='',
 logstats.set_kwarg(name='--kind', dtype=str, default='red',
                    options=['tmp', 'red'],
                    helpstr=textentry('LOGSTAT_HELP_KIND'))
-# TODO: add help string
 logstats.set_kwarg(name='--recipe', dtype=str, default='None',
-                   helpstr='Define a recipe name (the full python name) to'
-                           'filter all results by - this will change the '
-                           'analysis done on the log files')
+                   helpstr=textentry('LOGSTAT_HELP_RECIPEARG'))
 logstats.set_kwarg(name='--since', dtype=str, default='None',
-                   helpstr='Define a date and time for the earliest log. '
-                           'Must be in the form yyyy-mm-dd HH:MM:SS or '
-                           'yyyy-mm-dd (and the time will be assumed '
-                           'midnight).')
+                   helpstr=textentry('LOGSTAT_HELP_SINCEARG'))
 logstats.set_kwarg(name='--before', dtype=str, default='None',
-                   helpstr='Define a date and time for the most recent log. '
-                           'Must be in the form yyyy-mm-dd HH:MM:SS or '
-                           'yyyy-mm-dd (and the time will be assumed '
-                           'midnight).')
+                   helpstr=textentry('LOGSTAT_HELP_BEFOREARG'))
 logstats.set_kwarg(name='--mlog', dtype='bool', default=False,
-                   helpstr='Whether to save a master log to the drs path '
-                           '(MASTER_LOG.fits). '
-                           'i.e. for --kind=red the DATA_DIR/reduced/ dir). '
-                           'Note if --recipe is set this will add a suffix'
-                           'to the output name. ')
+                   helpstr=textentry('LOGSTAT_HELP_MLOG'))
 logstats.set_kwarg(**plot)
 
 # -----------------------------------------------------------------------------

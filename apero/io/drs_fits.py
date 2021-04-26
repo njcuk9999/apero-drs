@@ -1041,10 +1041,8 @@ def update_extension(params: ParamDict, filename: str, extension: int,
     elif fmt in ['table', 'fits-table']:
         fitstype = fits.BinTableHDU
     else:
-        # TODO: move to language database
-        emsg = 'fmt must be image or table'
-        # log error
-        WLOG(params, 'error', emsg)
+        # log error fmt must be image or table
+        WLOG(params, 'error', textentry('00-004-00013', args=[fmt]))
         return
     # open hdulist
     with fits.open(filename) as hdulist:
@@ -1077,12 +1075,11 @@ def update_extension(params: ParamDict, filename: str, extension: int,
                         new_hdu_list.append(fitstype(data, header=header))
         # else raise error
         else:
-            # TODO: move to language database
-            emsg = 'Extension {0} not in {1}'
-            eargs = [extension, filename]
+            # log error: Extension {0} not in {1}
+            eargs = [extension, filename, func_name]
             # log error
-            WLOG(params, 'error', emsg.format(*eargs))
-            # return
+            WLOG(params, 'error', textentry('00-004-00014', args=eargs))
+            return
         # write to file
         with warnings.catch_warnings(record=True) as w:
             try:

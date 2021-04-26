@@ -85,12 +85,6 @@ PDB_RC_FILE = base.PDB_RC_FILE
 Keyword = constants.constant_functions.Keyword
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
-# TODO: This should be changed for astropy -> 2.0.1
-# bug that hdu.scale has bug before version 2.0.1
-if av.major < 2 or (av.major == 2 and av.minor < 1):
-    SCALEARGS = dict(bscale=(1.0 + 1.0e-8), bzero=1.0e-8)
-else:
-    SCALEARGS = dict(bscale=1, bzero=0)
 # get header comment card from drs_fits
 HCC = drs_fits.HeaderCommentCards
 # get default psuedo constants class
@@ -387,10 +381,8 @@ class DrsPath:
             self._from_block_kind()
         # else we have a problem
         else:
-            # TODO: move to language database
-            emsg = ('DrsPath requires at least abspath or block_kind or '
-                    'block_name')
-            WLOG(self.params, 'error', emsg)
+            # log error: DrsPath requires at least abspath/block_kind/block_name
+            WLOG(self.params, 'error', textentry('00-004-00007'))
             return
         # now we have block kind we can set other properties
         for block in self.blocks:
@@ -429,9 +421,8 @@ class DrsPath:
         if self.abspath is not None:
             return Path(self.abspath)
         else:
-            # TODO: add to language database
-            emsg = 'DrsPath does not have absolute path set'
-            WLOG(self.params, 'error', emsg)
+            # Log error: DrsPath does not have absolute path set
+            WLOG(self.params, 'error', textentry('00-004-00008'))
             return Path('')
 
     def _clean_obs_dir(self):
@@ -531,17 +522,14 @@ class DrsPath:
                 self.path_kind = 'obs'
                 return
         else:
-            # TODO: move to language database
-            emsg = ('DrsPath abspath = {0} must be related to a valid block.'
-                    '\n\t Valid blocks are:')
+            # log error: DrsPath abspath = {0} must be related to a valid block
             eargs = [self.abspath]
             # add block error
-            emsg, eargs = self._blocks_error(emsg, eargs)
+            eargs += [self._blocks_error()]
             # log error
-            WLOG(self.params, 'error', emsg.format(*eargs))
+            WLOG(self.params, 'error', textentry('00-004-00009', args=eargs))
 
-    def _blocks_error(self, emsg: str,
-                      eargs: List[Any]) -> Tuple[str, List[Any]]:
+    def _blocks_error(self) -> str:
         """
         Add to block errors (emsg and eargs)
 
@@ -551,12 +539,10 @@ class DrsPath:
         :return: tuple, 1. updated emsg, 2. update eargs
         """
         # add the possible block types
-        count = len(eargs)
+        emsg = ''
         for block in self.blocks:
-            emsg += '\n\t\t{{{0}}}: {{{1}}}'.format(count, count + 1)
-            eargs += [block.name, block.path]
-            count += 2
-        return emsg, eargs
+            emsg += '\n\t\t{0}: {1}'.format(block.name, block.path)
+        return emsg
 
     def _from_block_path(self):
         """
@@ -597,13 +583,13 @@ class DrsPath:
                 self.abspath = str(self.block_path)
                 self.path_kind = 'block'
         else:
-            # TODO: move to langauge database
-            emsg = 'DrsPath: {0} is not a valid block path'
+            # Log error: DrsPath: {0} is not a valid block path
             eargs = [self.block_path]
             # add block error
-            emsg, eargs = self._blocks_error(emsg, eargs)
+            eargs += [self._blocks_error()]
             # log error
-            WLOG(self.params, 'error', emsg.format(*eargs))
+            WLOG(self.params, 'error', textentry('00-004-00010', args=eargs))
+
 
     def _set_block_path_from_block_kind(self) -> bool:
         """
@@ -658,13 +644,12 @@ class DrsPath:
                 self.abspath = str(self.block_path)
                 self.path_kind = 'block'
         else:
-            # TODO: move to langauge database
-            emsg = 'DrsPath: {0} is not a valid block kind'
+            # Log error: DrsPath: {0} is not a valid block kind
             eargs = [self.block_kind]
             # add block error
-            emsg, eargs = self._blocks_error(emsg, eargs)
+            eargs += [self._blocks_error()]
             # log error
-            WLOG(self.params, 'error', emsg.format(*eargs))
+            WLOG(self.params, 'error', textentry('00-004-00011', args=eargs))
 
 
 # =============================================================================
@@ -2828,10 +2813,9 @@ class DrsFitsFile(DrsInputFile):
             if self.filename is not None:
                 filename = self.filename
             else:
-                # TODO: move to language database
-                emsg = 'Filename must be set or given \n\tFunction = {0}'
+                # log error: Filename must be set or given
                 eargs = [func_name]
-                WLOG(self.params, 'error', emsg.format(*eargs))
+                WLOG(self.params, 'error', textentry('00-004-00012', eargs))
 
         # deal with fiber being set
         if fiber is not None:
@@ -6709,17 +6693,15 @@ def get_another_fiber_file(params: ParamDict, outfile: DrsFitsFile,
     outfile2.construct_filename(infile=infile)
     # load data if required
     if getdata:
-        # TODO: move to language database
-        msg = 'Reading data for file: {0}'
+        # log message: Reading data for file
         margs = [outfile2.filename]
-        WLOG(params, '', msg.format(*margs))
+        WLOG(params, '', textentry('40-004-00005', args=margs))
         outfile2.read_data()
     # load header if required
     if gethdr:
-        # TODO: move to language database
-        msg = 'Reading header for file: {0}'
+        # log message: Reading header for file: {0}'
         margs = [outfile2.filename]
-        WLOG(params, '', msg.format(*margs))
+        WLOG(params, '', textentry('40-004-00006', args=margs))
         outfile2.read_header()
     # return outfile
     return outfile2

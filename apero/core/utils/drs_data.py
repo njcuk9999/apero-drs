@@ -578,12 +578,10 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
                             func_name=func_name, colnames=colnames)
     # -------------------------------------------------------------------------
     # log message and return table and mask
-    # TODO: move to language database
-    msg = 'Mask used for LSD computation: {0}'
+    # Log message: Mask used for LSD computation: {0}'
     margs = [absfilename]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-021-00011', args=margs))
     return table, absfilename
-
 
 
 def load_order_mask(params: ParamDict,

@@ -35,7 +35,6 @@ __author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
 __date__ = '2021-04-23'
 __release__ = 'alpha pre-release'
 # do this once per drs import
-# TODO: first time Time.now is done it takes a long time - get it done now
 __now__ = Time.now()
 AstropyTime = Time
 AstropyTimeDelta = TimeDelta
@@ -43,6 +42,8 @@ AstropyTimeDelta = TimeDelta
 AUTHORS = dict()
 AUTHORS['NJC'] = 'Neil James Cook'
 AUTHORS['EA'] = 'Etienne Artigau'
+AUTHORS['EM'] = 'Eder Martioli'
+AUTHORS['MH'] = 'Melissa Hobson'
 
 # Define yaml files
 INSTALL_YAML = 'install.yaml'

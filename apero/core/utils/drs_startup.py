@@ -783,16 +783,14 @@ def end_plotting(params: ParamDict, recipe: Union[DrsRecipe, None]):
     _ = display_func('end_plotting', __NAME__)
     # only do this is we don't have a recipe
     if recipe is None or not hasattr(recipe, 'plot'):
-        # TODO: Add to language db
-        WLOG(params, 'debug', 'Closing plots manually')
+        WLOG(params, 'debug', textentry('90-100-00004'))
         import matplotlib.pyplot as plt
         plt.close('all')
         return
     # get the plotter from recipe
     plotter = recipe.plot
     if plotter is not None:
-        # TODO: Add to language db
-        WLOG(params, 'debug', 'Closing plots')
+        WLOG(params, 'debug', textentry('90-100-00005'))
         if len(plotter.debug_graphs) > 0:
             plotter.close_plots()
 

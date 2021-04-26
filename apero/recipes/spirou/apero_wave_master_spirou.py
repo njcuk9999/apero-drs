@@ -280,26 +280,8 @@ def __main__(recipe, params):
         # =================================================================
         # Calculate resolution map
         # =================================================================
-        # TODO: move to constants
-        # define the number of bins in order direction to use in the
-        #   resolution map
-        params.set('WAVE_RES_MAP_ORDER_BINS', value=3, source=mainname)
-        # define the number of bins in spatial direction to use in the
-        #   resolution map
-        params.set('WAVE_RES_MAP_SPATIAL_BINS', value=3, source=mainname)
-        # define the low pass filter size for the HC E2DS file in the
-        #  resolution map
-        params.set('WAVE_RES_MAP_FILTER_SIZE', value=101, source=mainname)
-        # define the broad resolution map velocity cut off (in km/s)
-        params.set('WAVE_RES_VELO_CUTOFF1', value=20, source=mainname)
-        # define the tight resolution map velocity cut off (in km/s)
-        params.set('WAVE_RES_VELO_CUTOFF2', value=5, source=mainname)
-
-        # log progress
-        # TODO: move to language database
-        msg = 'Generating resolution map'
-        WLOG(params, 'info', msg)
-
+        # log progress: Generating resolution map'
+        WLOG(params, 'info', textentry('40-017-00010'))
         # generate resolution map and update wprops
         wprops = wave.generate_resolution_map(params, recipe, wprops,
                                               hc_e2ds_file)
