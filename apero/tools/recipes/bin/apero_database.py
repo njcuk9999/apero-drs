@@ -11,6 +11,7 @@ Created on 2019-07-26 at 09:39
 """
 from pathlib import Path
 
+from apero import lang
 from apero.base import base
 from apero.core.core import drs_log
 from apero.core.core import drs_text
@@ -30,6 +31,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -94,10 +97,8 @@ def __main__(recipe, params):
     csvpath = params['INPUTS'].get('CSV', 'None')
     # deal with no csv file
     if drs_text.null_text(csvpath, ['None', '']):
-        # log error
-        # TODO: move to language database
-        emsg = 'Argument Error: --csv file is required'
-        WLOG(params, 'error', emsg)
+        # log error: Argument Error: --csv file is required'
+        WLOG(params, 'error', textentry('09-507-00001'))
         csvpath = None
     else:
         csvpath = Path(csvpath)

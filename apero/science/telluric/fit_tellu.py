@@ -177,11 +177,10 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
                 count += 1
                 # sleep a little time (to possibly clear back log)
                 time.sleep(0.1)
-                # TODO: Move to language database
-                emsg = 'Removing/Writing abso npy file failed. Trying again'
-                emsg += '\n\tFunction = {0} \n\t{1}: {2}'
+                # log progress: Removing/Writing abso npy file failed.
+                #     Trying again
                 eargs = [func_name, type(e), str(e)]
-                WLOG(params, 'warning', emsg.format(*eargs))
+                WLOG(params, 'warning', textentry('10-019-00012', eargs))
 
     # ----------------------------------------------------------------------
     # use abso1 (water/others exponent) to create a mask for abso

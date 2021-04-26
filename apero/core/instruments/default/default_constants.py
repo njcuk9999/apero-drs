@@ -15,6 +15,7 @@ __all__ = [
     'PP_OBJ_DPRTYPES', 'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES',
     'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE', 'PP_TOTAL_AMP_NUM',
     'PP_CORRUPT_MED_SIZE', 'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM',
+    'PP_NUM_REF_LEFT', 'PP_NUM_REF_RIGHT',
     'PP_RMS_PERCENTILE', 'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
     'PP_CORRUPT_RMS_THRES', 'PP_COSMIC_NOISE_ESTIMATE', 'PP_COSMIC_VARCUT1',
     'PP_COSMIC_VARCUT2', 'PP_COSMIC_INTCUT1', 'PP_COSMIC_INTCUT2',
@@ -754,6 +755,18 @@ PP_NUM_REF_BOTTOM = Const('PP_NUM_REF_BOTTOM', value=None, dtype=int,
                           source=__NAME__, group=cgroup, 
                           description=('Define the number of un-illuminated '
                                        'reference pixels at bottom of image'))
+
+# Define the number of un-illuminated reference pixels at left of image
+PP_NUM_REF_LEFT = Const('PP_NUM_REF_LEFT', value=None, dtype=int,
+                          source=__NAME__, group=cgroup,
+                          description=('Define the number of un-illuminated '
+                                       'reference pixels at left of image'))
+
+# Define the number of un-illuminated reference pixels at right of image
+PP_NUM_REF_RIGHT = Const('PP_NUM_REF_RIGHT', value=None, dtype=int,
+                          source=__NAME__, group=cgroup,
+                          description=('Define the number of un-illuminated '
+                                       'reference pixels at right of image'))
 
 # Define the percentile value for the rms normalisation (0-100)
 PP_RMS_PERCENTILE = Const('PP_RMS_PERCENTILE', value=None, dtype=int,

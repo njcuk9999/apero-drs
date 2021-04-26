@@ -1119,8 +1119,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # loop around orders
     for order_num in orders:
         # log that we are processing an order
-        # TODO: move to language database
-        WLOG(params, '', 'Measure the wavelength Order {0}'.format(order_num))
+        WLOG(params, '', textentry('40-017-00056', args=[order_num]))
         # find the hc and fp lines for the current oder
         good_fp = fpl_order == order_num
         good_hc = hcl_order == order_num
@@ -1430,19 +1429,17 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # fit cavity length again with this new correction
             cavity = np.polyfit(fpl_wave_ref, tmp_cavity, cavity_fit_degree)
         # ---------------------------------------------------------------------
-        # TODO: move to language database
-        msg = 'Iteration {0}: Mean HC position {1:6.2f}+-{2:.2f} m/s'
+        # log message: Iteration {0}: Mean HC position {1:6.2f}+-{2:.2f} m/s'
         margs = [count + 1, mean_hc_vel, err_hc_vel]
-        WLOG(params, '', msg.format(*margs))
+        WLOG(params, '', textentry('40-017-00057', margs))
         # increase the count
         count += 1
     # -------------------------------------------------------------------------
-    # TODO: move to language database
-    msg = 'Change in cavity length {0:6.2f} nm'
+    # log message: Change in cavity length {0:6.2f} nm'
     cavlen1 = np.polyval(cavity, fpl_wave_ref)
     cavlen0 = np.polyval(cavity0, fpl_wave_ref)
     margs = [mp.nanmean(cavlen1) - mp.nanmean(cavlen0)]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-017-00058', *margs))
     # -------------------------------------------------------------------------
     # plot the wavelength hc diff histograms
     recipe.plot('WAVE_HC_DIFF_HIST', diff_hc=diff_hc, error=hcsigma)
@@ -1783,7 +1780,6 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     wargs = [e2ds_file.name, e2ds_file.filename]
     WLOG(params, '', textentry('40-017-00038', args=wargs))
     # update the e2ds file
-    # TODO: Need to worry about reading all extensions
     e2ds_file.read_file()
     e2ds_file.read_header()
     e2ds_file = add_wave_keys(e2ds_file, wprops)
@@ -1804,7 +1800,6 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     wargs = [e2dsff_file.name, e2dsff_file.filename]
     WLOG(params, '', textentry('40-017-00038', args=wargs))
     # update the e2ds file
-    # TODO: Need to worry about reading all extensions
     e2dsff_file.read_file()
     e2dsff_file = add_wave_keys(e2dsff_file, wprops)
     # define multi lists
@@ -2010,14 +2005,12 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
             map_lower_pix[mapkey] = np.min(xpix[valid_pixels])
             map_high_pix[mapkey] = np.max(xpix[valid_pixels])
             # print which bin we are processing
-            # TODO: move to language database
-            msg = ('Processing order bin {0} spectral bin {1} '
-                   'Number lines: {2} \n\t Orders {3} to {4}, '
-                   'Pixels {5} to {6}')
+            # Processing order bin {0} spectral bin {1} Number lines: {2}
+            # Orders {3} to {4} Pixels {5} to {6}
             margs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
                      map_lower_ords[mapkey], map_high_ords[mapkey],
                      map_lower_pix[mapkey], map_high_pix[mapkey]]
-            WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', textentry('40-017-00059', args=margs))
             # mask order and wave ref for this bin set
             hc_order_i = hc_order[valid_lines]
             hc_wave_ref_i = hc_wave_ref[valid_lines]
@@ -2097,26 +2090,26 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
                 # set values to NaN
                 fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
                 fluxfit2 = np.full_like(all_dv, np.nan)
-                # TODO: move to language database
-                wmsg = ('Fit failed for order bin {0} spectral bin {1}'
-                        '\n\tError {0}: {1}')
-                wargs = [type(e), str(e)]
-                WLOG(params, 'warning', wmsg.format(*wargs))
+                # Fit failed for order bin {0} spectral bin {1}
+                wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
+                         map_lower_ords[mapkey], map_high_ords[mapkey],
+                         map_lower_pix[mapkey], map_high_pix[mapkey],
+                         type(e), str(e)]
+                WLOG(params, 'warning', textentry('10-016-00024', wargs))
             except RuntimeError as e:
                 # set values to NaN
                 fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
                 fluxfit2 = np.full_like(all_dv, np.nan)
-                # TODO: move to language database
-                wmsg = ('Fit failed for order bin {0} spectral bin {1}'
-                        '\n\tError {0}: {1}')
-                wargs = [type(e), str(e)]
-                WLOG(params, 'warning', wmsg.format(*wargs))
-            # log parameters
-            # TODO: move to language database
-            msg = ('FWHM={0:.2f} km/s, effective resolution={1:.2f}, '
-                   'expo={2:.2f}')
+                # Fit failed for order bin {0} spectral bin {1}
+                wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
+                         map_lower_ords[mapkey], map_high_ords[mapkey],
+                         map_lower_pix[mapkey], map_high_pix[mapkey],
+                         type(e), str(e)]
+                WLOG(params, 'warning', textentry('10-016-00024', wargs))
+            # log parameters: FWHM={0:.2f} km/s, effective resolution={1:.2f},
+            #     expo={2:.2f}
             margs = [fwhm, expo, res_eff]
-            WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', textentry('40-017-00060', margs))
             # storage for plotting
             map_dvs[mapkey] = np.array(all_dv)
             map_fluxes[mapkey] = np.array(all_flux)

@@ -405,7 +405,7 @@ def update_object_database(params: ParamDict):
         objname = gtable[gl_obj_colname][row]
         gaiaid = gtable[gl_gaia_colname][row]
         # TODO: Need column in database / reset / google sheet or some way
-        # TODO: to switch between
+        #       to switch between
         gaiadr = 'Gaia DR2'
         # clean up object name
         cobjname = pconst.DRS_OBJ_NAME(objname)

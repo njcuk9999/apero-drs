@@ -18,6 +18,7 @@ import numpy as np
 import os
 import warnings
 
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
@@ -38,6 +39,8 @@ __release__ = base.__release__
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = lang.textentry
 # define columns from log files
 RECIPECOL = 'RECIPE'
 STARTCOL = 'STARTED'
@@ -48,8 +51,6 @@ ERRORSTR = '-!|'
 WARNINGSTR = '-@|'
 ERRORPREFIX, ERRORSUFFIX = 'E[', ']:'
 WARNPREFIX, WARNSUFFIX = 'W[', ']:'
-
-# TODO: Move all text to language database
 
 # =============================================================================
 # Define class
@@ -130,8 +131,7 @@ def get_log_files(params, recipe, path, obs_dir=None):
     files = np.sort(glob.glob(os.path.join(path, '*')))
     # ----------------------------------------------------------------------
     # log progress
-    # TODO: move to language database
-    WLOG(params, 'info', 'Finding observation directories for {0}'.format(path))
+    WLOG(params, 'info', textentry('40-508-00001', args=[path]))
     # find directories
     obs_dirs = []
     # loop around files
@@ -146,12 +146,10 @@ def get_log_files(params, recipe, path, obs_dir=None):
             obs_dirs.append(filepath)
     # log how many nights found
     if len(obs_dirs) > 0:
-        # TODO: move to language database
-        msg = 'Found {0} observation directories'.format(len(obs_dirs))
-        WLOG(params, '', msg)
+        # log message: Found {0} observation directories
+        WLOG(params, '', textentry('40-508-00002', args=[len(obs_dirs)]))
     else:
-        # TODO: move to language database
-        WLOG(params, 'error', 'No observation directories found.')
+        WLOG(params, 'error', textentry('09-508-00001'))
 
     # any recipes without a night name will be saved above the night directories
     #    level so we must add the input path to the list of nights
@@ -171,10 +169,9 @@ def get_log_files(params, recipe, path, obs_dir=None):
             out_obs_dirs.append(os.path.basename(_obs_dir))
     # log how many log files found
     if len(logfiles) > 0:
-        msg = 'Found {0} observation directories'.format(len(logfiles))
-        WLOG(params, '', msg)
+        WLOG(params, '', textentry('40-508-00002', args=[len(logfiles)]))
     else:
-        WLOG(params, 'error', 'No observation directories found.')
+        WLOG(params, 'error', textentry('09-508-00001'))
     # return the log files and night names
     return logfiles, out_obs_dirs
 
@@ -182,13 +179,13 @@ def get_log_files(params, recipe, path, obs_dir=None):
 def make_log_table(params, logfiles, obs_dirs, recipename, since=None,
                    before=None):
     # log progress
-    WLOG(params, '', 'Loading log files')
+    WLOG(params, '', textentry('40-508-00003'))
     # define dict storage
     masterdict = OrderedDict()
     # loop around log files and open them into storage
     for l_it, logfile in enumerate(logfiles):
         # print progress
-        WLOG(params, '', '\t - Loading {0}'.format(logfile))
+        WLOG(params, '', textentry('40-508-00004', args=[logfile]))
         # open file
         with warnings.catch_warnings(record=True) as _:
             table = Table.read(logfile, format='fits')
@@ -269,7 +266,7 @@ def save_master(params, mastertable, path, recipename, makemaster):
         # construct absolute path
         absmtable = os.path.join(path, mastername)
         # log saving of table
-        WLOG(params, 'info', 'Saving master log to: {0}'.format(absmtable))
+        WLOG(params, 'info', textentry('40-508-00005', args=[absmtable]))
         # save table
         mastertable.write(absmtable, format='fits', overwrite=True)
 
@@ -292,15 +289,13 @@ def search_recipes(params, recipe, recipename):
         if recipename == trial_recipe.name:
             # log that we found recipe
             wargs = [recipename]
-            wmsg = 'Found and filtering by recipe="{0}"'
-            WLOG(params, '', wmsg.format(*wargs))
+            WLOG(params, '', textentry('40-508-00006', args=wargs))
             # return recipe
             return recipename
 
     # log that we did not find recipe
     wargs = [recipename]
-    wmsg = 'Did not find recipe="{0}" not filtering by recipe.'
-    WLOG(params, 'warning', wmsg.format(*wargs))
+    WLOG(params, 'warning', textentry('10-508-00001', args=wargs))
 
     # if we have got to this point return None
     return None
@@ -315,8 +310,7 @@ def get_time(params, inputtime, kind='time'):
         outtime = Time(inputtime, format='iso')
     except Exception as e:
         eargs = [kind, inputtime, type(e), str(e)]
-        emsg = 'Time "{0}"="{1}" not understood. \n\t Error {1}: {2}'
-        WLOG(params, 'error', emsg.format(*eargs))
+        WLOG(params, 'error', textentry('09-508-00002', args=eargs))
         outtime = None
     # return astropy time
     return outtime
@@ -385,7 +379,7 @@ def calculate_recipe_stats(params, mastertable, recipename):
     # get log files
     logfiles = mastertable[LOGCOL]
     # log that we are getting log files
-    WLOG(params, '', 'Obtaining individual log files')
+    WLOG(params, '', textentry('40-508-00007'))
     # for each log file get all log errors and warnings
     errors, warns = [], []
     for logfile in logfiles:
@@ -395,10 +389,11 @@ def calculate_recipe_stats(params, mastertable, recipename):
             found, logfile = _find_log_file(params, logfile)
             # if not found report warning
             if not found:
-                WLOG(params, 'warning', '\t - No log file: {0}'.format(logfile))
+                wargs = [logfile]
+                WLOG(params, 'warning', textentry('10-508-00002', args=wargs))
                 errors += 'No log file'
                 continue
-        WLOG(params, '', '\t - Loading: {0}'.format(logfile))
+        WLOG(params, '', textentry('40-508-00004', args=[logfile]))
         error, warn = _create_log_objs(params, logfile)
         errors += error
         warns += warn
@@ -456,7 +451,7 @@ def calculate_recipe_stats(params, mastertable, recipename):
     # print unique error messages
     used_errors = dict()
     WLOG(params, '', '')
-    WLOG(params, 'info', 'Unique error messages: ')
+    WLOG(params, 'info', textentry('40-508-00008'))
     # count number of time unique message appear
     for it, error_msg in enumerate(error_msgs):
         if error_msg not in used_errors:
@@ -474,7 +469,7 @@ def calculate_recipe_stats(params, mastertable, recipename):
     # print unique warning messages
     used_warnings = dict()
     WLOG(params, '', '')
-    WLOG(params, 'info', 'Unique warning messages: ')
+    WLOG(params, 'info', textentry('40-508-00009'))
     # count number of time unique message appear
     for it, warn_msg in enumerate(warn_msgs):
         if warn_msg not in used_warnings:
@@ -604,16 +599,12 @@ def _extend_xticks(frame, values):
 # Define worker functions
 # =============================================================================
 def _print_stats(params, started, passed, ended, urecipe):
-    WLOG(params, 'info', 'Recipe = {0}'.format(urecipe))
-    WLOG(params, '', '\t Started  ={0:4d}'.format(started))
-
+    WLOG(params, 'info', textentry('40-508-00010', args=[urecipe]))
+    WLOG(params, '', textentry('40-508-00011', args=[started]))
     uargs = [passed, started - passed, 100 * (started - passed) / started]
-    msg = '\t passed qc={0:4d}\t failed qc ={1:4d}\t ({2:.2f} %)'
-    WLOG(params, '', msg.format(*uargs))
-
+    WLOG(params, '', textentry('40-508-00012', args=uargs))
     uargs = [ended, started - ended, 100 * (started - ended) / started]
-    msg = '\t finished ={0:4d}\t unfinished={1:4d}\t ({2:.2f} %)'
-    WLOG(params, '', msg.format(*uargs))
+    WLOG(params, '', textentry('40-508-00013', args=uargs))
 
 
 def _create_log_objs(params, logfile):
@@ -636,9 +627,9 @@ def _create_log_objs(params, logfile):
                                                ERRORSTR, ERRORPREFIX,
                                                ERRORSUFFIX, mdate)
         except Exception as e:
-            emsg = 'Skipping Line(E): {0}\n{1}:{2}'
-            eargs = [line, type(e), str(e)]
-            WLOG(params, 'warning', emsg.format(*eargs))
+            # log warning: Skipping Line(E): {0}\n{1}:{2}
+            wargs = ['E', line, type(e), str(e)]
+            WLOG(params, 'warning', textentry('10-508-00003', args=wargs))
             continue
         # find if we have a warning string
         try:
@@ -646,9 +637,9 @@ def _create_log_objs(params, logfile):
                                               WARNINGSTR, WARNPREFIX,
                                               WARNSUFFIX, mdate)
         except Exception as e:
-            emsg = 'Skipping Line(W): {0}\n{1}:{2}'
-            eargs = [line, type(e), str(e)]
-            WLOG(params, 'warning', emsg.format(*eargs))
+            # log warning: Skipping Line(W): {0}\n{1}:{2}'
+            wargs = ['W', line, type(e), str(e)]
+            WLOG(params, 'warning', textentry('10-508-00003', args=wargs))
     # return errors and warnings
     return errorlines, warnlines
 

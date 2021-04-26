@@ -242,9 +242,8 @@ def correct_left_right(params: ParamDict, image: np.ndarray) -> np.ndarray:
     :return image: numpy array (2D), the corrected image
     :rtype: np.ndarray
     """
-    # TODO: change to NUM_REF_LEFT NUM_REF_RIGHT
-    nleft = params['PP_NUM_REF_TOP']
-    nright = params['PP_NUM_REF_BOTTOM']
+    nleft = params['PP_NUM_REF_LEFT']
+    nright = params['PP_NUM_REF_RIGHT']
     width = 5
     # get the shape
     ypix, xpix = image.shape
