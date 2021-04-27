@@ -2061,10 +2061,10 @@ def add_polar_keywords(params: ParamDict, props: ParamDict,
                      value=params['POLAR_REMOVE_CONTINUUM'])
     # define the stokes I continuum detection algorithm
     outfile.add_hkey('KW_POL_SCONT_DET_ALG',
-                     value=params['STOKESI_CONTINUUM_DETECTION_ALGORITHM'])
+                     value=params['STOKESI_CONTINUUM_DET_ALG'])
     # define the polar continuum detection algorithm
     outfile.add_hkey('KW_POL_PCONT_DET_ALG',
-                     value=params['POLAR_CONTINUUM_DETECTION_ALGORITHM'])
+                     value=params['POLAR_CONTINUUM_DET_ALG'])
     # define whether we used polynomial fit for continuum polarization
     outfile.add_hkey('KW_POL_CONT_POLYFIT',
                      value=params['POLAR_CONT_POLYNOMIAL_FIT'])
