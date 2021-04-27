@@ -216,12 +216,12 @@ def __main__(recipe, params):
         usefiber = pconst.FIBER_WAVE_TYPES(fiber)
         # ------------------------------------------------------------------
         # load master wavelength solution
-        mprops = wave.get_wavesolution(params, recipe, header, master=True,
+        mprops = wave.get_wavesolution(params, recipe, master=True,
                                        fiber=fiber, infile=infile,
                                        database=calibdbm)
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
-        wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
+        wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
                                        infile=infile, database=calibdbm)
 
         # ------------------------------------------------------------------

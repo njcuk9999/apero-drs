@@ -170,7 +170,7 @@ def __main__(recipe, params):
         bprops = extract.get_berv(params, infile)
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
-        wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
+        wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
                                        infile=infile, database=calibdbm)
         # ------------------------------------------------------------------
         # Get blaze

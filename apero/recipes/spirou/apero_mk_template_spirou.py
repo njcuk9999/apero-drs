@@ -185,7 +185,7 @@ def __main__(recipe, params):
     recipe.plot.set_location(0)
     # ----------------------------------------------------------------------
     # load master wavelength solution
-    mkwargs = dict(header=infile.get_header(), master=True, fiber=fiber,
+    mkwargs = dict(infile=infile, master=True, fiber=fiber,
                    database=calibdbm)
     mprops = wave.get_wavesolution(params, recipe, **mkwargs)
     # ------------------------------------------------------------------

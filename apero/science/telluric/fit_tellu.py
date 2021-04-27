@@ -744,7 +744,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     header = infile.get_header()
     # ------------------------------------------------------------------
     # load wavelength solution for this fiber
-    wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
+    wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
                                    infile=infile, database=database)
     # ------------------------------------------------------------------
     # Construct fiber file name and read data
