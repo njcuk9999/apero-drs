@@ -743,6 +743,12 @@ class RecipeLog:
         source.append(func_name)
         description.append('recipe errors')
         count.append(1)
+        # recipe still running
+        names.append('rlog.running')
+        param_kinds.append('rlog')
+        values.append(0)
+        description.append('whether the recipe was still running')
+        count.append(1)
         # flag for recipe ended (false at time of writing)
         names.append('rlog.ended')
         param_kinds.append('rlog')
