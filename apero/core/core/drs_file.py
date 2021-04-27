@@ -23,7 +23,6 @@ Import rules:
     do not import from core.core.drs_argument
 """
 from astropy.table import Table, vstack
-from astropy import version as av
 from collections import OrderedDict
 from copy import deepcopy
 from hashlib import blake2b
@@ -249,6 +248,9 @@ class OutPath(BlockPath):
 
 
 class DrsPath:
+
+    blocks: List[BlockPath] = None
+
     def __init__(self, params: ParamDict,
                  abspath: Union[Path, str, None] = None,
                  block_kind: Union[str, None] = None,
@@ -292,12 +294,46 @@ class DrsPath:
         #            block_kind, obs_dir, basename set
         self.path_kind = None
         # set up the directories
-        self.blocks = [RawPath(params), TmpPath(params), ReducedPath(params),
-                       AssetPath(params), CalibPath(params),
-                       TelluPath(params), OutPath(params)]
+        self.blocks = self.get_blocks(params)
         # update kind dir and sub dir
         if _update:
             self.update()
+
+    @staticmethod
+    def get_blocks(params: ParamDict) -> List[BlockPath]:
+        """
+        Definition of blocks (return as list)
+
+        :param params:
+        :return:
+        """
+        blocks = [RawPath(params), TmpPath(params), ReducedPath(params),
+                  AssetPath(params), CalibPath(params),
+                  TelluPath(params), OutPath(params)]
+
+        return blocks
+
+    @staticmethod
+    def get_block_names(blocks: Union[List[BlockPath], None] = None,
+                        params: Union[ParamDict, None] = None):
+        """
+        Get the block names
+
+        :param blocks: List of BlockPath instances (i.e. self.blocks) or None
+        :param params: ParamDict, when we don't have blocks require params
+        :return:
+        """
+        if blocks is None:
+            if params is not None:
+                blocks = DrsPath.get_blocks(params)
+            else:
+                raise ValueError('params must be given when class not '
+                                 'constructed')
+        # get blocks
+        names = []
+        for block in blocks:
+            names.append(block.name)
+        return names
 
     def __str__(self) -> str:
         """
@@ -397,10 +433,7 @@ class DrsPath:
         Get a list of block names
         :return:
         """
-        names = []
-        for block in self.blocks:
-            names.append(block.name)
-        return names
+        return self.get_block_names(blocks=self.blocks)
 
     def blocks_with_obs_dirs(self) -> List[str]:
         """
@@ -532,9 +565,6 @@ class DrsPath:
     def _blocks_error(self) -> str:
         """
         Add to block errors (emsg and eargs)
-
-        :param emsg: str, the current error message
-        :param eargs: list of objects, the current list of arguments
 
         :return: tuple, 1. updated emsg, 2. update eargs
         """

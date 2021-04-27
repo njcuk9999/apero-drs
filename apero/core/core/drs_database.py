@@ -1554,7 +1554,7 @@ class IndexDatabase(DatabaseManager):
     # complex typing for filename(s) in update_entries
     FileTypes = Union[List[Union[Path, str]], Path, str, None]
 
-    def update_entries(self, block_kind,
+    def update_entries(self, block_kind: str,
                        include_directories: Union[List[str], None] = None,
                        exclude_directories: Union[List[str], None] = None,
                        filename: FileTypes = None, suffix: str = '',

@@ -14,6 +14,8 @@ import traceback
 
 from apero.base import base
 from apero.core.core import drs_log
+from apero.core.core import drs_file
+from apero.core.core import drs_database
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.tools.module.processing import drs_processing
@@ -31,7 +33,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
-
+# Get index database
+IndexDatabase = drs_database.IndexDatabase
 
 # =============================================================================
 # Define functions
@@ -110,14 +113,24 @@ def __main__(recipe, params):
     # everything else in a try (to log end email even with exception)
     try:
         # ---------------------------------------------------------------------
-        # find all raw files via index database
+        # find all files via index database
         # ---------------------------------------------------------------------
         includelist = params['INCLUDE_OBS_DIRS']
         excludelist = params['EXCLUDE_OBS_DIRS']
+        # get all block kinds
+        block_kinds = drs_file.DrsPath.get_block_names(params=params)
+        # construct the index database instance
+        indexdbm = IndexDatabase(params)
         # update the index database (taking into account include/exclude lists)
-        indexdbm = drs_utils.update_index_db(params, block_kind='raw',
-                                             includelist=includelist,
-                                             excludelist=excludelist)
+        #    we have to loop around block kinds to prevent recipe from updating
+        #    the index database every time a new recipe starts
+        # Question: Will this work or does a new set of imports govern each
+        #           recipe run??
+        for block_kind in block_kinds:
+            indexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
+                                                 includelist=includelist,
+                                                 excludelist=excludelist,
+                                                 indexdbm=indexdbm)
         # fix the header data (object name, dprtype, mjdmid and trg_type etc)
         WLOG(params, '', 'Updating database with header fixes')
         indexdbm.update_header_fix(recipe)

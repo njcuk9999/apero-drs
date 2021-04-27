@@ -747,6 +747,7 @@ class RecipeLog:
         names.append('rlog.running')
         param_kinds.append('rlog')
         values.append(0)
+        source.append(func_name)
         description.append('whether the recipe was still running')
         count.append(1)
         # flag for recipe ended (false at time of writing)
