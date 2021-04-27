@@ -197,9 +197,11 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # load wavelength solution (start point) for this fiber
             #    this should only be a master wavelength solution
-            wprops = wave_old.get_wavesolution(params, recipe, infile=hc_e2ds_file,
+            wprops = wave_old.get_wavesolution(params, recipe,
+                                               infile=hc_e2ds_file,
                                                fiber=fiber, master=True,
-                                               forcefiber=True, database=calibdbm)
+                                               forcefiber=True,
+                                               database=calibdbm)
             # --------------------------------------------------------------
             # define the header as being from the hc e2ds file
             hcheader = hc_e2ds_file.get_header()

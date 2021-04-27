@@ -145,8 +145,8 @@ def __main__(recipe, params):
         fiber = e2dsfile.get_hkey('KW_FIBER', dtype=str)
         # --------------------------------------------------------------
         # load wavelength solution for this fiber
-        wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
-                                       database=calibdbm)
+        wprops = wave.get_wavesolution(params, recipe, infile=e2dsfile,
+                                       fiber=fiber, database=calibdbm)
         # --------------------------------------------------------------
         # create fplines file for required fibers
         # --------------------------------------------------------------

@@ -776,22 +776,22 @@ def dark_fp_regen_s1d(params, recipe, props, database=None, **kwargs):
     # get the leak extract file type
     s1dextfile = pcheck(params, 'EXT_S1D_INFILE', 's1dextfile', kwargs,
                         func_name)
+    leak2dext = params.listp('LEAK_2D_EXTRACT_FILES', dtype=str)
+
     # storage for s1d outputs
     s1dv_outs = dict()
     s1dw_outs = dict()
     # loop around fibers
     for fiber in outputs:
-        # get the s1d in file type
+        # get the e2ds in file type
         extfile = outputs[fiber][s1dextfile]
-        # get the ext file header
-        header = extfile.get_header()
         # --------------------------------------------------------------
         # load the blaze file for this fiber
-        blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
+        blaze_file, blaze = flat_blaze.get_blaze(params, extfile.header, fiber)
         # --------------------------------------------------------------
-        # load wavelength solution for this fiber
-        wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
-                                       database=database)
+        # load wavelength solution for this fiber (must be from the e2ds file)
+        wprops = wave.get_wavesolution(params, recipe, infile=extfile,
+                                       fiber=fiber, database=database)
         # --------------------------------------------------------------
         # create 1d spectra (s1d) of the e2ds file
         sargs = [wprops['WAVEMAP'], extfile.get_data(), blaze]

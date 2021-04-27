@@ -213,7 +213,8 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # load wavelength solution for this fiber
             wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
-                                           database=calibdbm)
+                                           database=calibdbm,
+                                           nbpix=image.shape[1])
             # --------------------------------------------------------------
             # load the localisation properties for this fiber
             lprops = localisation.get_coefficients(params, recipe, header,

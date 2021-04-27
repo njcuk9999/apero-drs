@@ -300,6 +300,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
                      fiber: Union[str, None] = None,
                      master: bool = False,
                      database: Union[CalibDB, None] = None,
+                     nbpix: Union[int, None] = None,
                      **kwargs) -> ParamDict:
     """
     Get the wavelength solution
@@ -315,11 +316,14 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     :param recipe: DrsRecipe instance, the recipe instance used
     :param header: FitsHeader or None, the header to use
     :param infile: DrsFitsFile or None, the infile associated with the header
-                   can be used instead of header
+                   can be used instead of header - this MUST be of E2DS
+                   file format to get the proper wave solution
     :param fiber: str, the fiber to get the wave solution for
     :param master: bool, if True forces use of the master wavelength solution
     :param database: calib database or None, if set avoids reloading the
                      calibration database
+    :param nbpix: int or None, if in file is not set we require the size of each
+                  order in pixels
     :param kwargs: keyword arguments passed to function
 
     :keyword force: bool, if True forces wave solution to come from calibDB
@@ -426,9 +430,15 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     if wavemap is None:
         # get image dimensions
         if infile is not None:
-            nby, nbx = infile.get_data().shape
+            _, nbx = infile.get_data().shape
+        # if not we must have nbpix specified (cannot come from primary header)
+        elif nbpix is not None:
+            nbx = int(nbpix)
+        # otherwise we cannot make wavemap so log error
         else:
-            nby, nbx = header['NAXIS2'], header['NAXIS1']
+            WLOG(params, 'error', textentry('09-017-00008', args=[func_name]))
+            nbx = 0
+        # get the wave map
         wavemap = get_wavemap_from_coeffs(wave_coeffs, nbo, nbx)
     # -------------------------------------------------------------------------
     # store wave properties in parameter dictionary
