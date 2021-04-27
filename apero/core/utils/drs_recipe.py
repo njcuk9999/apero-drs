@@ -271,11 +271,9 @@ class DrsRecipe(object):
         # set recipe name
         while self.name.endswith('.py'):
             self.name = self.name[:-3]
-        if self.shortname is None:
-            self.params['RECIPE'] = str(self.name)
-        else:
-            self.params['RECIPE'] = str(self.shortname)
-        self.params.set_source('RECIPE', func_name)
+        self.params['RECIPE'] = str(self.name)
+        self.params['RECIPE_SHORT'] = str(self.shortname)
+        self.params.set_sources(['RECIPE', 'RECIPE_SHORT'], func_name)
         # ---------------------------------------------------------------------
         # set up array to store inputs/outputs
         self.params['INPUTS'] = ParamDict()

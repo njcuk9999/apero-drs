@@ -241,6 +241,8 @@ class Logger:
         # deal with option
         if option is not None:
             option = option
+        elif 'RECIPE_SHORT' in params:
+            option = str(params.get('RECIPE_SHORT', ''))
         elif 'RECIPE' in params:
             option = str(params.get('RECIPE', ''))
         else:
@@ -249,7 +251,6 @@ class Logger:
         userprogram = str(params.get('DRS_USER_PROGRAM', None))
         if userprogram != 'None':
             option = userprogram
-
         # ---------------------------------------------------------------------
         # if key is '' then set it to all
         if len(key) == 0:
