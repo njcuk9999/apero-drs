@@ -100,7 +100,8 @@ QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
 # Define Path classes
 # =============================================================================
 class BlockPath:
-    def __init__(self, params: ParamDict, name: str, key: str):
+    def __init__(self, params: ParamDict, name: str, key: str,
+                 indexing: bool):
         """
         Construct the block path
 
@@ -126,6 +127,7 @@ class BlockPath:
         self.name = name
         self.has_obs_dirs = False
         self.fileset = None
+        self.indexing = indexing
 
     def __str__(self) -> str:
         """
@@ -171,7 +173,7 @@ class RawPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'raw', 'DRS_DATA_RAW')
+        super().__init__(params, 'raw', 'DRS_DATA_RAW', indexing=True)
         self.fileset = 'raw_file'
         self.has_obs_dirs = True
 
@@ -183,7 +185,7 @@ class TmpPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'tmp', 'DRS_DATA_WORKING')
+        super().__init__(params, 'tmp', 'DRS_DATA_WORKING', indexing=True)
         self.fileset = 'pp_file'
         self.has_obs_dirs = True
 
@@ -195,7 +197,7 @@ class ReducedPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'red', 'DRS_DATA_REDUC')
+        super().__init__(params, 'red', 'DRS_DATA_REDUC', indexing=True)
         self.has_obs_dirs = True
         self.fileset = 'red_file'
 
@@ -207,7 +209,7 @@ class AssetPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'asset', 'DRS_DATA_ASSETS')
+        super().__init__(params, 'asset', 'DRS_DATA_ASSETS', indexing=False)
         self.has_obs_dirs = False
 
 
@@ -218,7 +220,7 @@ class CalibPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'calib', 'DRS_CALIB_DB')
+        super().__init__(params, 'calib', 'DRS_CALIB_DB', indexing=False)
         self.has_obs_dirs = False
         self.fileset = 'calib_file'
 
@@ -230,7 +232,7 @@ class TelluPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'tellu', 'DRS_TELLU_DB')
+        super().__init__(params, 'tellu', 'DRS_TELLU_DB', indexing=False)
         self.has_obs_dirs = False
         self.fileset = 'tellu_file'
 
@@ -242,7 +244,7 @@ class OutPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'out', 'DRS_DATA_OUT')
+        super().__init__(params, 'out', 'DRS_DATA_OUT', indexing=True)
         self.has_obs_dirs = True
         self.fileset = 'out_file'
 
@@ -315,7 +317,8 @@ class DrsPath:
 
     @staticmethod
     def get_block_names(blocks: Union[List[BlockPath], None] = None,
-                        params: Union[ParamDict, None] = None):
+                        params: Union[ParamDict, None] = None,
+                        block_filter: Union[str, None] = None):
         """
         Get the block names
 
@@ -332,7 +335,16 @@ class DrsPath:
         # get blocks
         names = []
         for block in blocks:
-            names.append(block.name)
+            # deal with block filter
+            if block_filter is not None:
+                # if block filter is an attribute of block
+                if hasattr(block, block_filter):
+                    # if this attribute is True then add to names
+                    if getattr(block, block_filter):
+                        names.append(block.name)
+            # if we don't have a block filter just add all blocks
+            else:
+                names.append(block.name)
         return names
 
     def __str__(self) -> str:
