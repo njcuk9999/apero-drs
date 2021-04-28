@@ -12,6 +12,7 @@ Created on 2019-07-26 at 09:47
 import sys
 import traceback
 
+from apero import lang
 from apero.base import base
 from apero.core.core import drs_log
 from apero.core.core import drs_file
@@ -35,6 +36,9 @@ __release__ = base.__release__
 WLOG = drs_log.wlog
 # Get index database
 IndexDatabase = drs_database.IndexDatabase
+# get text entry instance
+textentry = lang.textentry
+
 
 # =============================================================================
 # Define functions
@@ -118,7 +122,8 @@ def __main__(recipe, params):
         includelist = params['INCLUDE_OBS_DIRS']
         excludelist = params['EXCLUDE_OBS_DIRS']
         # get all block kinds
-        block_kinds = drs_file.DrsPath.get_block_names(params=params)
+        block_kinds = drs_file.DrsPath.get_block_names(params=params,
+                                                       block_filter='indexing')
         # construct the index database instance
         indexdbm = IndexDatabase(params)
         # update the index database (taking into account include/exclude lists)
@@ -127,12 +132,15 @@ def __main__(recipe, params):
         # Question: Will this work or does a new set of imports govern each
         #           recipe run??
         for block_kind in block_kinds:
+            # log block update
+            WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
+            # update index database for block kind
             indexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
                                                  includelist=includelist,
                                                  excludelist=excludelist,
                                                  indexdbm=indexdbm)
         # fix the header data (object name, dprtype, mjdmid and trg_type etc)
-        WLOG(params, '', 'Updating database with header fixes')
+        WLOG(params, '', textentry('40-503-00043'))
         indexdbm.update_header_fix(recipe)
 
         # find all previous runs
