@@ -235,6 +235,32 @@ FIBER_SET_NUM_FIBERS_C.value = 1
 # Define object dpr types
 PP_OBJ_DPRTYPES = PP_OBJ_DPRTYPES.copy(__NAME__)
 PP_OBJ_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, POLAR_DARK, POLAR_FP'
+PP_OBJ_DPRTYPES.author = base.AUTHORS['NJC']
+
+# Define the bad list google spreadsheet id
+PP_BADLIST_SSID = PP_BADLIST_SSID.copy(__NAME__)
+PP_BADLIST_SSID.value = '1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM'
+PP_BADLIST_SSID.author = base.AUTHORS['NJC']
+
+# Define the bad list google workbook number
+PP_BADLIST_SSWB = PP_BADLIST_SSWB.copy(__NAME__)
+PP_BADLIST_SSWB.value = 0
+PP_BADLIST_SSWB.author = base.AUTHORS['NJC']
+
+# Define the bad list header key
+PP_BADLIST_DRS_HKEY = PP_BADLIST_DRS_HKEY.copy(__NAME__)
+PP_BADLIST_DRS_HKEY.value = 'KW_IDENTIFIER'
+PP_BADLIST_DRS_HKEY.author = base.AUTHORS['NJC']
+
+# Define the bad list google spreadsheet value column
+PP_BADLIST_SS_VALCOL = PP_BADLIST_SS_VALCOL.copy(__NAME__)
+PP_BADLIST_SS_VALCOL.value = 'ODOMETER'
+PP_BADLIST_SS_VALCOL.author = base.AUTHORS['NJC']
+
+# Define the bad list google spreadsheet mask column for preprocessing
+PP_BADLIST_SS_MASKCOL = PP_BADLIST_SS_MASKCOL.copy(__NAME__)
+PP_BADLIST_SS_MASKCOL.value = 'PP'
+PP_BADLIST_SS_MASKCOL.author = base.AUTHORS['NJC']
 
 # Defines the box size surrounding hot pixels to use
 PP_HOTPIX_BOXSIZE = PP_HOTPIX_BOXSIZE.copy(__NAME__)

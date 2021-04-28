@@ -23,6 +23,8 @@ drs_outfile_id = identification.drs_outfile_id
 
 get_hot_pixels = detector.get_hot_pixels
 
+reject_infile = gen_pp.reject_infile
+
 correct_cosmics = detector.correct_cosmics
 
 correct_top_bottom = detector.ref_top_bottom

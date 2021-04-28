@@ -1093,6 +1093,73 @@ def query_glist(objname: str, sheet_id: str, worksheet: int = 0,
     return gtable[row]
 
 
+def reject_infile(params: ParamDict, header: drs_fits.Header,
+                  bad_kind: str = 'pp') -> bool:
+    """
+    Using params and the header identify whether this file should be rejected
+    (uses a googlesheet of True and False along with a key from the header
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param header: Header, the fits header of the file
+    :param bad_kind: str, for now just 'pp' - changes the column that is used
+    :return: True if file is bad (and should be skipped) or False if file is
+             good
+    """
+    # set function name
+    func_name = display_func('get_bad_list', __NAME__)
+    # -------------------------------------------------------------------------
+    # get parameters from params
+    sheet_id = params['PP_BADLIST_SSID']
+    worksheet = params['PP_BADLIST_SSWB']
+    # TODO: Add in RV kind?
+    if bad_kind == 'pp':
+        header_col = params['PP_BADLIST_DRS_HKEY']
+        value_col = params['PP_BADLIST_SS_VALCOL']
+    else:
+        header_col = params['PP_BADLIST_DRS_HKEY']
+        value_col = params['PP_BADLIST_SS_VALCOL']
+    mask_col = params['PP_BADLIST_SS_MASKCOL']
+    # -------------------------------------------------------------------------
+    # get header key
+    if header_col in params:
+        kw_header = params[header_col][0]
+    else:
+        wargs = [header_col]
+        WLOG(params, 'warning', textentry('10-503-00019', args=wargs))
+        return False
+    # -------------------------------------------------------------------------
+    # get header key value
+    if kw_header in header:
+        value = header[kw_header]
+    else:
+        wargs = [kw_header, header_col]
+        WLOG(params, 'warning', textentry('10-503-00020', args=wargs))
+        return False
+    # -------------------------------------------------------------------------
+    # get bad list table
+    try:
+        table = get_google_sheet(sheet_id, worksheet, cached=True)
+    except Exception as e:
+        # construct url for worksheet
+        url = GOOGLE_BASE_URL.format(sheet_id, worksheet)
+        wargs = [url, type(e), str(e), func_name]
+        WLOG(params, 'warning', textentry('10-503-00021', args=wargs))
+        return False
+    # convert mask column to bool
+    mask = np.array(table[mask_col] == 'True')
+    # get value column
+    values = np.array(table[value_col])
+    # -------------------------------------------------------------------------
+    # deal with no files being rejected
+    if np.sum(mask) == 0:
+        return False
+    # if value is in values mask then we return True
+    if value in values[mask]:
+        return True
+    else:
+        return False
+
+
 def get_google_sheet(sheet_id: str, worksheet: int = 0,
                      cached: bool = True) -> Table:
     """
