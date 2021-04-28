@@ -12,7 +12,9 @@ __all__ = [
     # general
     'DATA_ENGINEERING', 'CALIB_DB_FORCE_WAVESOL', 'DATA_CORE',
     # preprocessing constants
-    'PP_OBJ_DPRTYPES', 'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES',
+    'PP_OBJ_DPRTYPES', 'PP_BADLIST_SSID',
+    'PP_BADLIST_SSWB', 'PP_BADLIST_DRS_HKEY', 'PP_BADLIST_SS_VALCOL',
+    'PP_BADLIST_SS_MASKCOL', 'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES',
     'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE', 'PP_TOTAL_AMP_NUM',
     'PP_CORRUPT_MED_SIZE', 'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM',
     'PP_NUM_REF_LEFT', 'PP_NUM_REF_RIGHT',
@@ -692,6 +694,35 @@ cgroup = 'PRE-PROCESSING SETTINGS'
 PP_OBJ_DPRTYPES = Const('PP_OBJ_DPRTYPES', value=None, dtype=str,
                         source=__NAME__, group=cgroup,
                         description='Define object dpr types')
+
+# Define the bad list google spreadsheet id
+PP_BADLIST_SSID = Const('PP_BADLIST_SSID', value=None, dtype=str,
+                        source=__NAME__, group=cgroup,
+                        description='Define the bad list google spreadsheet id')
+
+# Define the bad list google workbook number
+PP_BADLIST_SSWB = Const('PP_BADLIST_SSWB', value=None, dtype=int,
+                        source=__NAME__, group=cgroup,
+                        description='Define the bad list google workbook '
+                                    'number')
+
+# Define the bad list header key
+PP_BADLIST_DRS_HKEY = Const('PP_BADLIST_DRS_HKEY', value=None, dtype=str,
+                            source=__NAME__, group=cgroup,
+                            description='Define the bad list header key')
+
+# Define the bad list google spreadsheet value column
+PP_BADLIST_SS_VALCOL = Const('PP_BADLIST_SS_VALCOL', value=None, dtype=str,
+                            source=__NAME__, group=cgroup,
+                            description='Define the bad list google '
+                                        'spreadsheet value column')
+
+# Define the bad list google spreadsheet mask column for preprocessing
+PP_BADLIST_SS_MASKCOL = Const('PP_BADLIST_SS_MASKCOL', value=None, dtype=str,
+                              source=__NAME__, group=cgroup,
+                              description='Define the bad list google '
+                                          'spreadsheet mask column for '
+                                          'preprocessing')
 
 # Defines the box size surrounding hot pixels to use
 PP_HOTPIX_BOXSIZE = Const('PP_HOTPIX_BOXSIZE', value=None, dtype=int,

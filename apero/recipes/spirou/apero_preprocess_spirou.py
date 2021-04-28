@@ -118,6 +118,15 @@ def __main__(recipe, params):
         # ge this iterations file
         file_instance = infiles[it]
         # ------------------------------------------------------------------
+        # Check that file is not in bad list
+        # ------------------------------------------------------------------
+        # find out if file is flagged as bad
+        reject_file = prep.reject_infile(params, file_instance.get_header())
+        # deal with bad files
+        if reject_file:
+            WLOG(params, 'warning', textentry('10-503-00022'))
+
+        # ------------------------------------------------------------------
         # Fix the header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
