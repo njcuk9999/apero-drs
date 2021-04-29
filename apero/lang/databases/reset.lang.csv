@@ -1050,7 +1050,7 @@
 "{0} = drs header key","Bad list drs key {0} invalid (not in params)","","prints that bad list header key was invalid","10-503-00019","WARNING"
 "{0} = header key","Bad list header key {0} not in header (drs key = {1})","","prints that bad list header key was not in header","10-503-00020","WARNING"
 "{0} = googlesheet url; {1} =  error type; {2} = error string; {3} = function name","Bad list cannot access googesheet \n\t Link: {0} \n\t {1}: {2} \n\t Function = {3}","","prints that could not get bad list from google sheet","10-503-00021","WARNING"
-"None","File in bad list - skipping.","","prints that file is bad from google spreadsheet","10-503-00022","WARNING"
+"None","File in reject list - skipping.","","prints that file is bad from google spreadsheet","10-503-00022","WARNING"
 "","","","","",""
 "","","","","",""
 "","","","","",""
