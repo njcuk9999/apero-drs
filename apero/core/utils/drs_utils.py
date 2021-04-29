@@ -775,6 +775,41 @@ def update_index_db(params: ParamDict, block_kind: str,
                     suffix: str = '',
                     indexdbm: Union[IndexDatabase, None] = None
                     ) -> IndexDatabase:
+    """
+    Block function to update index database
+
+    (if params['INPUTS']['PARALLEL'] is True does not update database).
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param block_kind: str, the block kind (raw/tmp/red)
+    :param includelist: list of strings or None, if set the observation
+                        directories to include in update
+    :param excludelist: list of strings or None, if set the observation
+                        directories to exclude in update
+    :param filename: list of paths, path, list or strings or string or None,
+                     if set the filename or filenames to update
+    :param suffix: str, the suffix (i.e. extension of filenames) - filters
+                   to only set these files
+    :param indexdbm: IndexDatabase instance or None, if set will not reload
+                     index database if None will load index database
+
+    :return: updated or loaded index database unless
+             params['INPUTS']['PARALLEL'] is True
+    """
+    # -------------------------------------------------------------------------
+    # load the index database
+    if indexdbm is None:
+        indexdbm = IndexDatabase(params)
+    indexdbm.load_db()
+    # -------------------------------------------------------------------------
+    # check whether we are updating the index
+    update_index = True
+    if 'INPUTS' in params:
+        if params['INPUTS']['PARALLEL']:
+            update_index = False
+    if not update_index:
+        return indexdbm
+    # -------------------------------------------------------------------------
     # deal with white list and black list
     if not drs_text.null_text(includelist, ['None', 'All', '']):
         include_dirs = list(includelist)
@@ -784,11 +819,7 @@ def update_index_db(params: ParamDict, block_kind: str,
         exclude_dirs = list(excludelist)
     else:
         exclude_dirs = None
-    # load the index database
-    if indexdbm is None:
-        indexdbm = IndexDatabase(params)
-    indexdbm.load_db()
-    # get white
+    # -------------------------------------------------------------------------
     # update index database with raw files
     indexdbm.update_entries(block_kind=block_kind,
                             exclude_directories=exclude_dirs,

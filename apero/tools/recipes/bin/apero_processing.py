@@ -126,11 +126,12 @@ def __main__(recipe, params):
                                                        block_filter='indexing')
         # construct the index database instance
         indexdbm = IndexDatabase(params)
+        # force the parallel key to False here (should not be True before we
+        #   run processing)
+        params['INPUTS']['PARALLEL'] = False
         # update the index database (taking into account include/exclude lists)
         #    we have to loop around block kinds to prevent recipe from updating
         #    the index database every time a new recipe starts
-        # Question: Will this work or does a new set of imports govern each
-        #           recipe run??
         for block_kind in block_kinds:
             # log block update
             WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
