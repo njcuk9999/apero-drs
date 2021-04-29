@@ -99,7 +99,7 @@ OBJNAMECOL = 'KW_OBJNAME'
 # list of arguments to remove from skip check
 SKIP_REMOVE_ARGS = ['--skip', '--program', '--prog', '--debug',  '--d',
                     '--verbose' '--plot', '--shortname', '--short'
-                    '--rkind', '--recipe_kind']
+                    '--rkind', '--recipe_kind', '--parallel']
 # keep a global copy of plt
 PLT_MOD = None
 
@@ -130,6 +130,12 @@ class Run:
         self.kwargs = dict()
         self.fileargs = dict()
         self.required_args = []
+        # get number of cores and set parallelisation
+        cores = _get_cores(params)
+        if cores > 1:
+            self.parallel = True
+        else:
+            self.parallel = False
         # set parameters
         self.block_kind = None
         self.obs_dir = None
@@ -190,8 +196,9 @@ class Run:
                     else:
                         self.kwargs[kwargname] = self.kwargs[kwargname][0]
 
-    def find_recipe(self, mod=None) -> Tuple[drs_recipe.DrsRecipe,
-                                             base_class.ImportModule]:
+    FindRecipeReturn = Tuple[drs_recipe.DrsRecipe, base_class.ImportModule]
+
+    def find_recipe(self, mod=None) -> FindRecipeReturn:
         """
 
         :param mod: Module
@@ -253,6 +260,7 @@ class Run:
         self.master = self.recipe.master
         # run parser with arguments
         self.kwargs = self.recipe.recipe_setup(self.indexdb, inargs=self.args)
+        # ---------------------------------------------------------------------
         # deal with arguments that should be user defined only
         for kwarg in self.recipe.kwargs:
             # argument must be in kwargs (after recipe setup)
@@ -263,17 +271,36 @@ class Run:
                     del self.kwargs[kwarg]
         # add argument to set program name
         pargs = [self.recipe.shortname, int(self.priority)]
+        # ---------------------------------------------------------------------
         # add argument --program
-        self.kwargs['program'] = '{0}[{1:05d}]'.format(*pargs)
+        prog = '{0}[{1:05d}]'.format(*pargs)
+        self.kwargs['program'] = prog
+        if '--program' not in self.runstring:
+            self.runstring += ' --program={0}'.format(prog)
+        # ---------------------------------------------------------------------
         # add argument --recipe_kind
-        self.kwargs['recipe_kind'] = str(self.recipe.recipe_kind)
+        rkind = str(self.recipe.recipe_kind)
+        self.kwargs['recipe_kind'] = rkind
+        if '--recipe_kind' not in self.runstring:
+            self.runstring += ' --recipe_kind={0}'.format(rkind)
+        # ---------------------------------------------------------------------
         # add argument --shortname
-        self.kwargs['shortname'] = str(self.recipe.shortname)
+        sname = str(self.recipe.shortname)
+        self.kwargs['shortname'] = sname
+        if '--shortname' not in self.runstring:
+            self.runstring += ' --shortname={0}'.format(sname)
+        # ---------------------------------------------------------------------
+        # add argument --parallel
+        self.kwargs['parallel'] = bool(self.parallel)
+        if '--parallel' not in self.runstring:
+            self.runstring += '--parallel={0}'.format(self.parallel)
+        # ---------------------------------------------------------------------
         # deal with file arguments in kwargs (returned from recipe_setup as
         #    [filenames, file instances]
         self.filename_args()
         # turn on the input validation
         self.recipe.input_validation = True
+        # ---------------------------------------------------------------------
         # sort out names
         self.shortname = self.recipe.shortname
         self.runname = 'RUN_{0}'.format(self.shortname)
@@ -281,6 +308,7 @@ class Run:
         # get properties
         self.get_recipe_kind()
         self.get_obs_dir()
+        # ---------------------------------------------------------------------
         # populate a list of reciped arguments
         for kwarg in self.recipe.kwargs:
             # only add required arguments

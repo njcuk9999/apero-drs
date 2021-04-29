@@ -1207,8 +1207,12 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # set program functionality
         self._make_special(drs_argument.set_program, skip=False)
+        # ---------------------------------------------------------------------
         # set the recipe kind (for logging)
         self._make_special(drs_argument.set_recipe_kind, skip=False)
+        # ---------------------------------------------------------------------
+        # set whether the recipe is to be run in parallel
+        self._make_special(drs_argument.set_parallel, skip=False)
         # ---------------------------------------------------------------------
         # set shortname functionality
         self._make_special(drs_argument.set_shortname, skip=False)
