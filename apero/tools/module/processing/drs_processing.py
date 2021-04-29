@@ -293,7 +293,7 @@ class Run:
         # add argument --parallel
         self.kwargs['parallel'] = bool(self.parallel)
         if '--parallel' not in self.runstring:
-            self.runstring += '--parallel={0}'.format(self.parallel)
+            self.runstring += ' --parallel={0}'.format(self.parallel)
         # ---------------------------------------------------------------------
         # deal with file arguments in kwargs (returned from recipe_setup as
         #    [filenames, file instances]
