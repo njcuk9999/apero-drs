@@ -242,7 +242,13 @@ class Run:
         else:
             self.obs_dir = ''
 
-    def update(self):
+    def update(self, update_runstring: bool = False):
+        """
+        Update the runstring, args and kwargs
+
+        :param update_runstring:
+        :return:
+        """
         # get args
         self.args = self.runstring.split(' ')
         # the first argument must be the recipe name
@@ -275,24 +281,24 @@ class Run:
         # add argument --program
         prog = '{0}[{1:05d}]'.format(*pargs)
         self.kwargs['program'] = prog
-        if '--program' not in self.runstring:
+        if update_runstring:
             self.runstring += ' --program={0}'.format(prog)
         # ---------------------------------------------------------------------
         # add argument --recipe_kind
         rkind = str(self.recipe.recipe_kind)
         self.kwargs['recipe_kind'] = rkind
-        if '--recipe_kind' not in self.runstring:
+        if update_runstring:
             self.runstring += ' --recipe_kind={0}'.format(rkind)
         # ---------------------------------------------------------------------
         # add argument --shortname
         sname = str(self.recipe.shortname)
         self.kwargs['shortname'] = sname
-        if '--shortname' not in self.runstring:
+        if update_runstring:
             self.runstring += ' --shortname={0}'.format(sname)
         # ---------------------------------------------------------------------
         # add argument --parallel
         self.kwargs['parallel'] = bool(self.parallel)
-        if '--parallel' not in self.runstring:
+        if update_runstring:
             self.runstring += ' --parallel={0}'.format(self.parallel)
         # ---------------------------------------------------------------------
         # deal with file arguments in kwargs (returned from recipe_setup as
@@ -1295,12 +1301,13 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
         if params['DRS_DEBUG'] > 0:
             dargs = [run_object.runstring, params['DRS_DEBUG']]
             run_object.runstring = '{0} --debug={1}'.format(*dargs)
-            run_object.update()
         # deal with passing master argument
         if input_recipe.master:
             dargs = [run_object.runstring, 'True']
             run_object.runstring = '{0} --master={1}'.format(*dargs)
-            run_object.update()
+        # update run object (runstring should only be updated once here
+        #    otherwise we add arguments multiple times)
+        run_object.update(update_runstring=True)
         # append to list
         if not skip:
             # log that we have validated run

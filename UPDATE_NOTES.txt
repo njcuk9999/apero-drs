@@ -7,12 +7,14 @@ Date: 2021-04-23
     - no need to ever reference the INSTRUMENT - this is done at installation
       new instruments need to be installed under a different apero profile
     - recipe names changed cal_dark_{instrument}.py --> apero_dark_{instrument}.py
-      this avoids confusing recipes like cal_extract and cal_ccf not being "cal" or "obj"
+      this avoids confusing recipes like cal_extract and cal_ccf not
+      being "cal" or "obj"
     - use apero_explorer.py to read calib/tellu DB and modify them
     - all output extentions now have no data in primary HDU, all drs header
       info now stored in primary HDU for all types
     - "out" directory now exists for CADC outputs (created in APERO)
-    - most OBJ_FP files change DPRTYPE to POLAR_FP
+    - most OBJ_FP files change DPRTYPE to POLAR_FP unless truly a spectroscopic
+      observation
 
 ## Summary of updates since Version 0.6.131
 
@@ -70,6 +72,9 @@ Date: 2021-04-23
     - DRS_MODE also adds/updates DPRTYPES
         - OBJ_FP, OBJ_DARK + DRS_MODE = SPECTROSCOPY --> OBJ_FP, OBJ_DARK
         - OBJ_FP, OBJ_DARK + DRS_MODE = POLAR --> POLAR_FP, POLAR_DARK
+    - now reject files from bad odometer list (googlesheet) available here:
+      https://docs.google.com/spreadsheets/d/1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM/edit#gid=0
+      based on the PP column and the odometer code
 
 - object resolution
     - now done in preprocessing (was extraction)
