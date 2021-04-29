@@ -1971,17 +1971,124 @@ class _SetProgram(DrsAction):
         setattr(namespace, self.dest, value)
 
 
+class _SetParallel(DrsAction):
+    def __init__(self, *args, **kwargs):
+        """
+        Construct the Set Parallel action (for setting the parallelisation
+        from an argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_SetParallel'
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func('__init__', __NAME__, self.class_name)
+        # define recipe as None (overwritten in __call__)
+        self.recipe = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_SetProgram[DrsAction]'
+
+    def _set_parallel(self, values: Any) -> bool:
+        """
+        Set whether this is a run that is happening in parallel (usually
+        only via apero_processing.py)
+
+        :param values: Any, the value to set the program name to
+        :return: str, the string representation of values (for program name)
+        :raises: drs_exceptions.LogExit
+        """
+        # set function name (cannot break here --> no access to inputs)
+        func_name = display_func('_set_recipe_kind',
+                                 __NAME__, self.class_name)
+        # get params
+        params = self.recipe.params
+        # deal with difference datatypes for values
+        if isinstance(values, list):
+            strvalue = values[0]
+        elif isinstance(values, np.ndarray):
+            strvalue = values[0]
+        else:
+            strvalue = str(values)
+        # conditions
+        if str(strvalue).lower() in ['yes', 'true', 't', 'y', '1']:
+            # debug print
+            return True
+        elif str(strvalue).lower() in ['no', 'false', 'f', 'n', '0']:
+            # debug print
+            return False
+        else:
+            eargs = [self.dest, strvalue]
+            WLOG(params, 'error', textentry('09-001-00013', args=eargs))
+            return False
+
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _SetRecipeKind() - sets the drs program name
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check boolean argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
+        # get recipe from parser
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func('__call__', __NAME__,
+                         self.class_name)
+        # check for help
+        # noinspection PyProtectedMember
+        parser._has_special()
+        # display version
+        value = self._set_parallel(values)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
 class _SetRecipeKind(DrsAction):
     def __init__(self, *args, **kwargs):
         """
-        Construct the Set Program action (for setting the drs program from an
+        Construct the Set Program action (for setting the recipe kind from an
         argument)
 
         :param args: arguments passed to argparse.Action.__init__
         :param kwargs: keyword arguments passed to argparse.Action.__init__
         """
         # set class name
-        self.class_name = '_SetProgram'
+        self.class_name = '_SetRecipeKind'
         # set function name (cannot break here --> no access to inputs)
         _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
@@ -2971,10 +3078,13 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
     """
     # set function name
     func_name = display_func('valid_obs_dir', __NAME__)
-
     # get block directory
     block_inst = drs_file.DrsPath(params, block_kind=block_kind)
-
+    # check whether we are updating the index
+    update_index = True
+    if 'INPUTS' in params:
+        if params['INPUTS']['PARALLEL']:
+            update_index = False
     # -------------------------------------------------------------------------
     # 1. check directory is a valid string
     # -------------------------------------------------------------------------
@@ -2997,7 +3107,8 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
         # try to load database
         indexdb.load_db()
     # update database with entries
-    indexdb.update_entries(block_kind=block_inst.block_kind)
+    if update_index:
+        indexdb.update_entries(block_kind=block_inst.block_kind)
     # assert database is in indexdb
     assert isinstance(indexdb.database, drs_db.Database)
     # set up condition
@@ -3060,6 +3171,11 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     drsfiles = arg.files
     # get the drs logic
     drs_logic = arg.filelogic
+    # check whether we are updating the index
+    update_index = True
+    if 'INPUTS' in params:
+        if params['INPUTS']['PARALLEL']:
+            update_index = False
     # deal with arg.path set
     obs_dir = _check_arg_path(params, arg, obs_dir)
     # ---------------------------------------------------------------------
@@ -3083,7 +3199,8 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
         # try to load database
         indexdb.load_db()
     # update database with entries
-    indexdb.update_entries(block_kind=obs_dir.block_kind)
+    if update_index:
+        indexdb.update_entries(block_kind=obs_dir.block_kind)
     # assert database is in indexdb
     assert isinstance(indexdb.database, drs_db.Database)
     # set up condition
@@ -3829,7 +3946,36 @@ def set_recipe_kind(params: ParamDict) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 1
     # set the help message
-    props['help'] = textentry('SET_PROGRAM_HELP')
+    props['help'] = textentry('SET_RECIPE_KIND_HELP')
+    # return the argument dictionary
+    return props
+
+
+def set_parallel(params: ParamDict) -> OrderedDict:
+    """
+    Make a custom special argument: Set the recipe kind name (sent to log)
+
+    :param params: ParamDict, Parameter Dictionary of constants
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func('set_parallel', __NAME__)
+    # set up an output storage dictionary
+    props = OrderedDict()
+    # set the argument name
+    props['name'] = '--parallel'
+    # set any argument alternative names
+    props['altnames'] = []
+    # set the argument action function
+    props['action'] = _SetParallel
+    # set the number of argument to expect
+    props['nargs'] = 1
+    # set the default value
+    props['default'] = False
+    # set the help message
+    props['help'] = textentry('SET_PARALLEL_HELP')
     # return the argument dictionary
     return props
 
