@@ -89,6 +89,8 @@
 "None","How to add the csv file to database: append adds all lines to the end of current database, replace removes all previous lines from database. Default is replace.","","","DBMGR_JOIN_HELP","TEXT"
 "None","Re-make the apero documentation","","","REMAKE_DOC_DESCRIPTION","TEXT"
 "None","[Bool] If True upload documentation to defined server (for web access)","","","REMAKE_DOC_UPLOADARG_HELP","TEXT"
+"None","[STRING] The recipe kind for this recipe run (normally only used in apero_processing.py)","","","SET_RECIPE_KIND_HELP","TEXT"
+"None","[BOOL] If True this is a run in parellel - disable some features (normally only used in apero_processing.py)","","","SET_PARALLEL_HELP","TEXT"
 "None","This is the Default error message","None","None","","ERROR"
 "None","This is a test message","Ceci est un message test","Test message","00-000-99999","None"
 "None","Dev Error: General Error","","Dev Error","","ERROR"
