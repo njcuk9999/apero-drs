@@ -131,11 +131,7 @@ class Run:
         self.fileargs = dict()
         self.required_args = []
         # get number of cores and set parallelisation
-        cores = _get_cores(params)
-        if cores > 1:
-            self.parallel = True
-        else:
-            self.parallel = False
+        self.parallel = True
         # set parameters
         self.block_kind = None
         self.obs_dir = None

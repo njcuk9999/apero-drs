@@ -292,7 +292,8 @@ def correction(recipe, params, infile, image, bkgrdfile, return_map=False,
                    local_background_correction, background_image_full,
                    background_image]
         # save debug file
-        debug_file(recipe, params, infile, dimages)
+        if params['DEBUG_BACKGROUND_FILE']:
+            debug_file(recipe, params, infile, dimages)
         # ------------------------------------------------------------------
         # if return map just return the bad pixel map
         if return_map:

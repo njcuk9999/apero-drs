@@ -125,6 +125,12 @@ class RecipeLog:
         self.runstring = ''
         self.recipe_type = str(params['DRS_RECIPE_TYPE'])
         self.recipe_kind = str(params['DRS_RECIPE_KIND'])
+        self.program_name = str(params['DRS_USER_PROGRAM'])
+        # deal with running in parallel
+        self.parallel = False
+        if 'INPUTS' in params:
+            self.parallel = int(params['INPUTS'].get('PARALLEL', False))
+        # set this recipe to running
         self.running = True
         # set that recipe started
         self.started = True
@@ -424,6 +430,7 @@ class RecipeLog:
                                     block_kind=inst.block_kind,
                                     recipe_type=inst.recipe_type,
                                     recipe_kind=inst.recipe_kind,
+                                    program_name=inst.program_name,
                                     pid=inst.pid, htime=inst.htime,
                                     unixtime=utime, group=inst.group,
                                     level=inst.level,
@@ -446,6 +453,7 @@ class RecipeLog:
                                     qc_logic=inst.qc_logic,
                                     qc_pass=inst.qc_pass,
                                     errors=inst.errors,
+                                    parallel=inst.parallel,
                                     running=inst.running,
                                     ended=inst.ended,
                                     used=1)

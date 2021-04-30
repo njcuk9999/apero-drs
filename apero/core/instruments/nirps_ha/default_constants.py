@@ -845,10 +845,6 @@ SHAPEOFFSET_ABSDEV_THRESHOLD.value = 0.2
 SHAPE_UNIQUE_FIBERS = SHAPE_UNIQUE_FIBERS.copy(__NAME__)
 SHAPE_UNIQUE_FIBERS.value = 'A, B'
 
-#  Define whether to output debug (sanity check) files
-SHAPE_DEBUG_OUTPUTS = SHAPE_DEBUG_OUTPUTS.copy(__NAME__)
-SHAPE_DEBUG_OUTPUTS.value = True
-
 #  Define first zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
 SHAPEL_PLOT_ZOOM1 = SHAPEL_PLOT_ZOOM1.copy(__NAME__)
@@ -967,10 +963,6 @@ LEAK_HIGH_PERCENTILE.value = 99
 # define the limit on surpious FP ratio (1 +/- limit)
 LEAK_BAD_RATIO_OFFSET = LEAK_BAD_RATIO_OFFSET.copy(__NAME__)
 LEAK_BAD_RATIO_OFFSET.value = 0.1
-
-# Define whether to save uncorrected files
-LEAK_SAVE_UNCORRECTED = LEAK_SAVE_UNCORRECTED.copy(__NAME__)
-LEAK_SAVE_UNCORRECTED.value = True
 
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS

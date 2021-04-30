@@ -923,22 +923,23 @@ def get_extraction_files(params, recipe, infile, extname):
 
 
 def save_uncorrected_ext_fp(params, extractdict):
+    # -------------------------------------------------------------------------
+    # check we want to save uncorrected
+    if not params['DEBUG_UNCORR_EXT_FILES']:
+        return
+    # -------------------------------------------------------------------------
     # loop around fibers
     for fiber in extractdict:
         # loop around file type
         for extname in extractdict[fiber]:
             # get ext file
             extfile = extractdict[fiber][extname]
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # check that file exists - if it doesn't generate exception
             if not os.path.exists(extfile.filename):
                 eargs = [fiber, extname, extfile.filename]
                 WLOG(params, 'error', textentry('00-016-00027', args=eargs))
-            # --------------------------------------------------------------
-            # check we want to save uncorrected
-            if not params['LEAK_SAVE_UNCORRECTED']:
-                continue
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # get basename
             infile = extfile.basename
             inpath = extfile.filename
@@ -1377,37 +1378,38 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # Store E2DSLL in file
     # ----------------------------------------------------------------------
-    # get a new copy of the e2dsll file
-    e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(params=params,
-                                                       fiber=fiber)
-    # construct the filename from file instance
-    e2dsllfile.construct_filename(infile=infile)
-    # copy header from e2dsll file
-    e2dsllfile.copy_hdict(e2dsfile)
-    # set output key
-    e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
-    # copy data
-    e2dsllfile.data = eprops['E2DSLL']
-    # ----------------------------------------------------------------------
-    # log that we are saving rotated image
-    wargs = [e2dsllfile.filename]
-    WLOG(params, '', textentry('40-016-00007', args=wargs))
-    # define multi lists
-    data_list = [eprops['E2DSCC']]
-    name_list = ['E2DSLL', 'E2DSCC']
-    datatype_list = ['image']
-    # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsllfile)]
-        name_list += ['PARAM_TABLE']
-        datatype_list += ['table']
-    # write image to file
-    e2dsllfile.write_multi(data_list=data_list, name_list=name_list,
-                           datatype_list=datatype_list,
-                           block_kind=recipe.out_block_str,
-                           runstring=recipe.runstring)
-    # add to output files (for indexing)
-    recipe.add_output_file(e2dsllfile)
+    if params['DEBUG_E2DSLL_FILE']:
+        # get a new copy of the e2dsll file
+        e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(params=params,
+                                                           fiber=fiber)
+        # construct the filename from file instance
+        e2dsllfile.construct_filename(infile=infile)
+        # copy header from e2dsll file
+        e2dsllfile.copy_hdict(e2dsfile)
+        # set output key
+        e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
+        # copy data
+        e2dsllfile.data = eprops['E2DSLL']
+        # ----------------------------------------------------------------------
+        # log that we are saving rotated image
+        wargs = [e2dsllfile.filename]
+        WLOG(params, '', textentry('40-016-00007', args=wargs))
+        # define multi lists
+        data_list = [eprops['E2DSCC']]
+        name_list = ['E2DSLL', 'E2DSCC']
+        datatype_list = ['image']
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsllfile)]
+            name_list += ['PARAM_TABLE']
+            datatype_list += ['table']
+        # write image to file
+        e2dsllfile.write_multi(data_list=data_list, name_list=name_list,
+                               datatype_list=datatype_list,
+                               block_kind=recipe.out_block_str,
+                               runstring=recipe.runstring)
+        # add to output files (for indexing)
+        recipe.add_output_file(e2dsllfile)
     # ----------------------------------------------------------------------
     # Store S1D_W in file
     # ----------------------------------------------------------------------

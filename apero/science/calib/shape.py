@@ -1480,7 +1480,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # ----------------------------------------------------------------------
     # Writing DEBUG files
     # ----------------------------------------------------------------------
-    if params['SHAPE_DEBUG_OUTPUTS']:
+    if params['DEBUG_SHAPE_FILES']:
         # log progress (writing debug outputs)
         WLOG(params, '', textentry('40-014-00029'))
         # ------------------------------------------------------------------
@@ -1783,7 +1783,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     # ----------------------------------------------------------------------
     # Writing DEBUG files
     # ----------------------------------------------------------------------
-    if params['SHAPE_DEBUG_OUTPUTS']:
+    if params['DEBUG_SHAPE_FILES']:
         # log progress (writing debug outputs)
         WLOG(params, '', textentry('40-014-00029'))
         # in file

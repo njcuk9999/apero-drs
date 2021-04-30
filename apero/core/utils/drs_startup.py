@@ -531,44 +531,8 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
             quiet = False
     # -------------------------------------------------------------------------
     if outputs not in [None, 'None', '']:
-        # load index database
-        indexdb = drs_database.IndexDatabase(params)
-        indexdb.load_db()
-        # get pconstants
-        pconst = constants.pload()
-        # load index header keys
-        rkeys, rtypes = pconst.INDEX_HEADER_KEYS()
-        # loop around output_files
-        for okey in recipe.output_files:
-            # get output dict for okey
-            output = recipe.output_files[okey]
-            # set up drs path
-            outfile = recipe.output_block.copy()
-            # update parameters
-            outfile.abspath = str(output['ABSPATH'])
-            outfile.obs_dir = str(output['OBS_DIR'])
-            outfile.basename = str(output['FILENAME'])
-            # get parameters for add entry
-            block_kind = str(output['BLOCK_KIND'])
-            recipename = str(output['RECIPE'])
-            runstring = str(output['RUNSTRING'])
-            used = int(output['USED'])
-            rawfix = int(output['RAWFIX'])
-            # store header keys
-            hkeys = dict()
-            # loop around required index database header keys
-            for rkey in rkeys:
-                if rkey in output:
-                    # deal with null entries
-                    if drs_text.null_text(output[rkey], ['None', '', 'Null']):
-                        hkeys[rkey] = 'Null'
-                    else:
-                        hkeys[rkey] = output[rkey]
-                else:
-                    hkeys[rkey] = 'Null'
-            # finally add to database
-            indexdb.add_entry(outfile, block_kind, recipename, runstring,
-                              hkeys, used, rawfix)
+        # index files
+        index_files(params, recipe)
     # -------------------------------------------------------------------------
     # log end message
     if end:
@@ -643,6 +607,47 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
                     outdict[key] = llmain[key]
         # return outdict
         return outdict
+
+
+def index_files(params, recipe):
+    # load index database
+    indexdb = drs_database.IndexDatabase(params)
+    indexdb.load_db()
+    # get pconstants
+    pconst = constants.pload()
+    # load index header keys
+    rkeys, rtypes = pconst.INDEX_HEADER_KEYS()
+    # loop around output_files
+    for okey in recipe.output_files:
+        # get output dict for okey
+        output = recipe.output_files[okey]
+        # set up drs path
+        outfile = recipe.output_block.copy()
+        # update parameters
+        outfile.abspath = str(output['ABSPATH'])
+        outfile.obs_dir = str(output['OBS_DIR'])
+        outfile.basename = str(output['FILENAME'])
+        # get parameters for add entry
+        block_kind = str(output['BLOCK_KIND'])
+        recipename = str(output['RECIPE'])
+        runstring = str(output['RUNSTRING'])
+        used = int(output['USED'])
+        rawfix = int(output['RAWFIX'])
+        # store header keys
+        hkeys = dict()
+        # loop around required index database header keys
+        for rkey in rkeys:
+            if rkey in output:
+                # deal with null entries
+                if drs_text.null_text(output[rkey], ['None', '', 'Null']):
+                    hkeys[rkey] = 'Null'
+                else:
+                    hkeys[rkey] = output[rkey]
+            else:
+                hkeys[rkey] = 'Null'
+        # finally add to database
+        indexdb.add_entry(outfile, block_kind, recipename, runstring,
+                          hkeys, used, rawfix)
 
 
 def copy_kwargs(params: ParamDict, recipe: Union[DrsRecipe, None] = None,
@@ -887,7 +892,7 @@ def _parallel_key_present(fkwargs) -> bool:
     # search for parallel
     parallel = False
     if _search_for_key('parallel', fkwargs):
-        if 'parallel' in fkwargs and fkwargs['parallel'] is None:
+        if 'parallel' in fkwargs and fkwargs['parallel'] is not None:
             parallel = fkwargs['parallel']
         else:
             # make sys.argv a string
