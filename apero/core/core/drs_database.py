@@ -28,7 +28,6 @@ from apero import lang
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
-from apero.core.core import drs_misc
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_text
 from apero.core.core import drs_file
@@ -1940,6 +1939,7 @@ class LogDatabase(DatabaseManager):
                     block_kind: Union[str, None] = None,
                     recipe_type: Union[str, None] = None,
                     recipe_kind: Union[str, None] = None,
+                    program_name: Union[str, None] = None,
                     pid: Union[str, None] = None,
                     htime: Union[str, None] = None,
                     unixtime: Union[float, None] = None,
@@ -1965,17 +1965,20 @@ class LogDatabase(DatabaseManager):
                     qc_pass: Union[str, None] = None,
                     errors: Union[str, None] = None,
                     running: Union[bool, int, None] = None,
+                    parallel: Union[bool, int, None] = None,
                     ended: Union[bool, int, None] = None,
                     used: Union[int, None] = None):
         """
         Add a log entry to database
 
         :param recipe: str, the recipe name
+        :param sname: str, the short name
         :param block_kind: str, the block kind (raw/tmp/reduced etc)
         :param recipe_type: str, the type of recipe ('recipe', 'tool',
                             'processing' etc)
         :param recipe_kind: str, the kind of recipe ('calib', 'extract',
                'tellu' etc)
+        :param program_name: str, the program name for this run
         :param pid: str, the unique process identifier for this run
         :param htime: str, the human time (related to pid creation)
         :param unixtime: float, the unix time (related to pid creation)
@@ -2013,21 +2016,23 @@ class LogDatabase(DatabaseManager):
                        ||
         :param ended: bool or int, whether a recipe is still running - 1 for
                       running 0 if not running
+        :param running: bool or int, whether recipe is running at this time
+        :param parallel: bool or int, whether recipe was run in parallel
         :param ended: bool or int, whether a recipe run ended - 1 for ended
                       0 if did not end (default)
         :param used: int, if entry should be used - always 1 for use internally
 
         :return: None - updates database
         """
-
         # need to clean error to put into database
         clean_error = _clean_error(errors)
         # get correct order
-        keys = [recipe, sname, block_kind, recipe_type, recipe_kind, pid,
-                htime, unixtime, group, level, sublevel, levelcrit, inpath,
-                outpath, obs_dir, logfile, plotdir, runstring, args, kwargs,
-                skwargs, started, passed_all_qc, qc_string, qc_names,
-                qc_values, qc_logic, qc_pass, clean_error, running, ended, used]
+        keys = [recipe, sname, block_kind, recipe_type, recipe_kind,
+                program_name, pid, htime, unixtime, group, level, sublevel,
+                levelcrit, inpath, outpath, obs_dir, logfile, plotdir,
+                runstring, args, kwargs, skwargs, started, passed_all_qc,
+                qc_string, qc_names, qc_values, qc_logic, qc_pass,
+                clean_error, running, parallel, ended, used]
         # get column names and column datatypes
         colnames, coltypes = self.pconst.LOG_DB_COLUMNS()
         # storage of values

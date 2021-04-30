@@ -1126,6 +1126,7 @@ class PseudoConstants:
         log_columns['BLOCK_KIND'] = str
         log_columns['RECIPE_TYPE'] = str
         log_columns['RECIPE_KIND'] = str
+        log_columns['PROGRAM_NAME'] = str
         log_columns['PID'] = str
         log_columns['HUMANTIME'] = str
         log_columns['UNIXTIME'] = float
@@ -1150,6 +1151,7 @@ class PseudoConstants:
         log_columns['QC_LOGIC'] = str
         log_columns['QC_PASS'] = str
         log_columns['ERRORMSGS'] = str
+        log_columns['IN_PARALLEL'] = int
         log_columns['RUNNING'] = int
         log_columns['ENDED'] = int
         log_columns['USED'] = int

@@ -864,10 +864,6 @@ SHAPEOFFSET_ABSDEV_THRESHOLD.value = 0.2
 SHAPE_UNIQUE_FIBERS = SHAPE_UNIQUE_FIBERS.copy(__NAME__)
 SHAPE_UNIQUE_FIBERS.value = 'A, B, C'
 
-#  Define whether to output debug (sanity check) files
-SHAPE_DEBUG_OUTPUTS = SHAPE_DEBUG_OUTPUTS.copy(__NAME__)
-SHAPE_DEBUG_OUTPUTS.value = True
-
 #  Define first zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
 SHAPEL_PLOT_ZOOM1 = SHAPEL_PLOT_ZOOM1.copy(__NAME__)
@@ -985,10 +981,6 @@ LEAK_HIGH_PERCENTILE.value = 99
 # define the limit on surpious FP ratio (1 +/- limit)
 LEAK_BAD_RATIO_OFFSET = LEAK_BAD_RATIO_OFFSET.copy(__NAME__)
 LEAK_BAD_RATIO_OFFSET.value = 0.1
-
-# Define whether to save uncorrected files
-LEAK_SAVE_UNCORRECTED = LEAK_SAVE_UNCORRECTED.copy(__NAME__)
-LEAK_SAVE_UNCORRECTED.value = True
 
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
@@ -2467,6 +2459,29 @@ POLAR_LSD_REMOVE_EDGES.author = base.AUTHORS['EM']
 POLAR_LSD_RES_POWER_GUESS = POLAR_LSD_RES_POWER_GUESS.copy(__NAME__)
 POLAR_LSD_RES_POWER_GUESS.value = 50000.0
 POLAR_LSD_RES_POWER_GUESS.author = base.AUTHORS['EM']
+
+# =============================================================================
+# DEBUG OUTPUT FILE SETTINGS
+# =============================================================================
+# Whether to save background debug file (large 0.5 GB per file)
+#   one of these per extraction (lots)
+DEBUG_BACKGROUND_FILE = DEBUG_BACKGROUND_FILE.copy(__NAME__)
+DEBUG_BACKGROUND_FILE.value = False
+
+# Whether to save the E2DSLL file (around 0.05 to 0.1 GB per file)
+#   one of these per fiber (lots)
+DEBUG_E2DSLL_FILE = DEBUG_E2DSLL_FILE.copy(__NAME__)
+DEBUG_E2DSLL_FILE.value = True
+
+# Whether to save the shape in and out debug files (around 0.1 GB per file)
+#   but only one set of these per night
+DEBUG_SHAPE_FILES = DEBUG_SHAPE_FILES.copy(__NAME__)
+DEBUG_SHAPE_FILES.value = False
+
+# Whether to save the uncorrected for FP C fiber leak files
+#      (around 0.01 GB per file) one of these per fiber
+DEBUG_UNCORR_EXT_FILES = DEBUG_UNCORR_EXT_FILES.copy(__NAME__)
+DEBUG_UNCORR_EXT_FILES.value = False
 
 # =============================================================================
 # DEBUG PLOT SETTINGS

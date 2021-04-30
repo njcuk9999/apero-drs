@@ -10,11 +10,14 @@ Created on 2019-08-16 at 11:18
 @author: cook
 """
 import os
+from typing import Union
 
 from apero.base import base
 from apero import lang
 from apero.core import constants
-from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_log
+from apero.core.core import drs_file
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.io import drs_image
 
@@ -31,6 +34,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
+DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -184,13 +188,19 @@ def extract_wave_files(params, recipe, extname, hcfile,
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def extract_files(params, recipe, infile, outfile, always_extract,
-                  extrecipe, extract_type, kind='gen', func_name=None):
+def extract_files(params: ParamDict, recipe: DrsRecipe,
+                  infile: DrsFitsFile, outfile: DrsFitsFile,
+                  always_extract: bool, extrecipe: str,
+                  extract_type: str, kind: str = 'gen',
+                  func_name: Union[str, None] = None):
     if func_name is None:
         func_name = __NAME__ + '.extract_files()'
     # get the fiber types from a list parameter
     fiber_types = drs_image.get_fiber_types(params)
-
+    # we must index any files currently in recipe.output_files before this
+    #  point as we need to use these files later on - examples are
+    #  the file that were combined
+    drs_startup.index_files(params, recipe)
     # ------------------------------------------------------------------
     # Get the output hc e2ds filename (and check if it exists)
     # ------------------------------------------------------------------
@@ -233,6 +243,7 @@ def extract_files(params, recipe, infile, outfile, always_extract,
         # set the program name (shouldn't be apero_extract)
         kwargs['program'] = '{0}_extract'.format(kind)
         kwargs['recipe_kind'] = '{0}-extract'.format(kind)
+        kwargs['parallel'] = params['INPUTS']['PARALLEL']
         # force the input directory (combined files go to reduced dir)
         kwargs['force_indir'] = path_ins.block_kind
         # push data to extractiong code

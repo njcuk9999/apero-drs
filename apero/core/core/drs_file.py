@@ -6858,6 +6858,7 @@ def combine(params: ParamDict, recipe: Any,
                             runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(outfile)
+
     # return combined infile
     return outfile, outtable
 

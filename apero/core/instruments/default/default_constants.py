@@ -107,7 +107,7 @@ __all__ = [
     'SHAPEOFFSET_DEVIANT_PMAX', 'SHAPEOFFSET_FPMAX_NUM_ERROR',
     'SHAPEOFFSET_FIT_HC_SIGMA', 'SHAPEOFFSET_MAXDEV_THRESHOLD',
     'SHAPEOFFSET_ABSDEV_THRESHOLD', 'SHAPE_UNIQUE_FIBERS',
-    'SHAPE_DEBUG_OUTPUTS', 'SHAPE_PLOT_SELECTED_ORDER',
+    'SHAPE_PLOT_SELECTED_ORDER',
     'SHAPEL_PLOT_ZOOM1', 'SHAPEL_PLOT_ZOOM2',
     # flat constants
     'FF_BLAZE_HALF_WINDOW', 'FF_BLAZE_THRESHOLD', 'FF_BLAZE_DEGREE',
@@ -119,7 +119,7 @@ __all__ = [
     'ALLOWED_LEAK_TYPES', 'LEAK_EXTRACT_FILE', 'LEAK_2D_EXTRACT_FILES',
     'LEAK_1D_EXTRACT_FILES', 'LEAK_BCKGRD_PERCENTILE', 'LEAK_NORM_PERCENTILE',
     'LEAKM_WSMOOTH', 'LEAKM_KERSIZE', 'LEAK_LOW_PERCENTILE',
-    'LEAK_HIGH_PERCENTILE', 'LEAK_BAD_RATIO_OFFSET', 'LEAK_SAVE_UNCORRECTED',
+    'LEAK_HIGH_PERCENTILE', 'LEAK_BAD_RATIO_OFFSET',
     # extract constants
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
     'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
@@ -264,6 +264,9 @@ __all__ = [
     'POLAR_LSD_MIN_LINEDEPTH', 'POLAR_LSD_V0', 'POLAR_LSD_VF', 'POLAR_LSD_NP',
     'POLAR_LSD_NORMALIZE', 'POLAR_LSD_REMOVE_EDGES',
     'POLAR_LSD_RES_POWER_GUESS',
+    # debug output file settings
+    'DEBUG_BACKGROUND_FILE', 'DEBUG_E2DSLL_FILE', 'DEBUG_SHAPE_FILES',
+    'DEBUG_UNCORR_EXT_FILES',
     # debug dark plot settings
     'PLOT_DARK_IMAGE_REGIONS', 'PLOT_DARK_HISTOGRAM',
     # debug badpix plot settings
@@ -1724,12 +1727,6 @@ SHAPE_UNIQUE_FIBERS = Const('SHAPE_UNIQUE_FIBERS', value=None, dtype=str,
                                          'getting the localisation '
                                          'coefficients for dymap'))
 
-#  Define whether to output debug (sanity check) files
-SHAPE_DEBUG_OUTPUTS = Const('SHAPE_DEBUG_OUTPUTS', value=None, dtype=bool,
-                            source=__NAME__, group=cgroup, 
-                            description=('Define whether to output debug '
-                                         '(sanity check) files'))
-
 #  Define first zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
 SHAPEL_PLOT_ZOOM1 = Const('SHAPEL_PLOT_ZOOM1', value=None, dtype=str,
@@ -1911,12 +1908,6 @@ LEAK_BAD_RATIO_OFFSET = Const('LEAK_BAD_RATIO_OFFSET', value=None, dtype=float,
                               source=__NAME__, minimum=0.0, group=cgroup, 
                               description=('define the limit on surpious FP '
                                            'ratio (1 +/- limit)'))
-
-# Define whether to save uncorrected files
-LEAK_SAVE_UNCORRECTED = Const('LEAK_SAVE_UNCORRECTED', value=None, dtype=bool,
-                              source=__NAME__, group=cgroup, 
-                              description=('Define whether to save uncorrected '
-                                           'files'))
 
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
@@ -4220,6 +4211,49 @@ POLAR_LSD_RES_POWER_GUESS = Const('POLAR_LSD_RES_POWER_GUESS', value=None,
                                   description='Define the guess at the '
                                               'resolving power for lsd profile '
                                               'fit')
+
+# =============================================================================
+# DEBUG OUTPUT FILE SETTINGS
+# =============================================================================
+cgroup = 'DEBUG OUTPUT FILE SETTINGS'
+# Whether to save background debug file (large 0.5 GB per file)
+#   one of these per extraction (lots)
+DEBUG_BACKGROUND_FILE = Const('DEBUG_BACKGROUND_FILE', value=True,
+                              dtype=bool, source=__NAME__,
+                              user=True, active=False, group=cgroup,
+                              description='Whether to save background debug '
+                                          'file (large 0.5 GB per file) one '
+                                          'of these per extraction (lots)')
+
+# Whether to save the E2DSLL file (around 0.05 to 0.1 GB per file)
+#   one of these per fiber (lots)
+DEBUG_E2DSLL_FILE = Const('DEBUG_E2DSLL_FILE', value=True,
+                          dtype=bool, source=__NAME__,
+                          user=True, active=False, group=cgroup,
+                          description='Whether to save the E2DSLL file '
+                                      '(around 0.05 to 0.1 GB per file) '
+                                      'one of these per fiber (lots)')
+
+# Whether to save the shape in and out debug files (around 0.1 GB per file)
+#   but only one set of these per night
+DEBUG_SHAPE_FILES = Const('DEBUG_SHAPE_FILES', value=True,
+                              dtype=bool, source=__NAME__,
+                              user=True, active=False, group=cgroup,
+                              description='Whether to save the shape in and '
+                                          'out debug files (around 0.1 GB per '
+                                          'file) but only one set of these '
+                                          'per night')
+
+# Whether to save the uncorrected for FP C fiber leak files
+#      (around 0.01 GB per file) one of these per fiber
+DEBUG_UNCORR_EXT_FILES = Const('DEBUG_UNCORR_EXT_FILES', value=True,
+                              dtype=bool, source=__NAME__,
+                              user=True, active=False, group=cgroup,
+                              description='Whether to save the uncorrected '
+                                          'for FP C fiber leak files (around '
+                                          '0.01 GB per file) one of these per '
+                                          'fiber')
+
 
 # =============================================================================
 # DEBUG PLOT SETTINGS
