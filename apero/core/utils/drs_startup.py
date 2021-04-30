@@ -195,6 +195,12 @@ def setup(name: str = 'None', instrument: str = 'None',
     # do not need to display if we have special keywords
     quiet = _quiet_keys_present(recipe, quiet, fkwargs)
     # -------------------------------------------------------------------------
+    # deal with parallel argument (must be pushed before other arguments)
+    if _parallel_key_present(fkwargs):
+        recipe.params['INPUTS']['PARALLEL'] = True
+    else:
+        recipe.params['INPUTS']['PARALLEL'] = False
+    # -------------------------------------------------------------------------
     # display (print only no log)
     if (not quiet) and ('instrument' not in recipe.args):
         # display title
@@ -866,6 +872,36 @@ def _quiet_keys_present(recipe: DrsRecipe, quiet: bool,
 
     # return the updated quiet flag
     return quiet
+
+
+def _parallel_key_present(fkwargs) -> bool:
+    """
+    Hack a way to get parallel argument before argparse
+
+    :param fkwargs: dictionary, the input keywords from python call to recipe
+
+    :return: bool, True if in parallel
+    """
+    # set function name
+    _ = display_func('_parallel_key_present', __NAME__)
+    # search for parallel
+    parallel = False
+    if _search_for_key('parallel', fkwargs):
+        if 'parallel' in fkwargs and fkwargs['parallel'] is None:
+            parallel = fkwargs['parallel']
+        else:
+            # make sys.argv a string
+            str_argv = ' '.join(sys.argv)
+            # get rest of args
+            argrest = str_argv.split('parallel')[-1].strip().upper()
+            if argrest.startswith('=TRUE') or argrest.startswith('=1'):
+                parallel = True
+            elif argrest.startswith('TRUE') or argrest.startswith('1'):
+                parallel = True
+            else:
+                parallel = False
+    # return the updated quiet flag
+    return parallel
 
 
 def _display_drs_title(params: ParamDict, group: Union[str, None] = None,
