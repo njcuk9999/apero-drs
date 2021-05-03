@@ -285,7 +285,6 @@ def __main__(recipe, params):
         # generate resolution map and update wprops
         wprops = wave.generate_resolution_map(params, recipe, wprops,
                                               hc_e2ds_file)
-
         # =================================================================
         # Calculate wave solution for other fibers
         # =================================================================

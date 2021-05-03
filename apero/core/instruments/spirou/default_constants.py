@@ -621,6 +621,10 @@ LOC_COEFF_SIGCLIP.value = 7
 LOC_COEFFSIG_DEG = LOC_COEFFSIG_DEG.copy(__NAME__)
 LOC_COEFFSIG_DEG.value = 7
 
+#  Define the maximum value allowed in the localisation (cuts reddest orders)
+LOC_MAX_YPIX_VALUE = LOC_MAX_YPIX_VALUE.copy(__NAME__)
+LOC_MAX_YPIX_VALUE.value = 4088
+
 #   Saturation threshold for localisation
 LOC_SAT_THRES = LOC_SAT_THRES.copy(__NAME__)
 LOC_SAT_THRES.value = 1000  # 64536

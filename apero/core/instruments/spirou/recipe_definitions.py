@@ -416,8 +416,8 @@ apero_shape.set_outputs(LOCAL_SHAPE_FILE=files.out_shape_local,
 apero_shape.set_debug_plots('SHAPEL_ZOOM_SHIFT', 'SHAPE_LINEAR_TPARAMS')
 apero_shape.set_summary_plots('SUM_SHAPEL_ZOOM_SHIFT')
 apero_shape.set_arg(pos=0, **obs_dir)
-apero_shape.set_arg(name='files', dtype='files', files=[files.pp_fp_fp], pos='1+',
-                  helpstr=textentry('SHAPE_FPFILES_HELP'))
+apero_shape.set_arg(name='files', dtype='files', files=[files.pp_fp_fp],
+                    pos='1+', helpstr=textentry('SHAPE_FPFILES_HELP'))
 apero_shape.set_kwarg(**add_db)
 apero_shape.set_kwarg(**badfile)
 apero_shape.set_kwarg(**dobad)
@@ -457,7 +457,7 @@ apero_flat.set_outputs(FLAT_FILE=files.out_ff_flat,
                    ORDERP_SFILE=files.out_orderp_straight,
                    DEBUG_BACK=files.debug_back)
 apero_flat.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
-                          'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2')
+                           'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2')
 apero_flat.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES', 'SUM_FLAT_BLAZE_ORDER')
 apero_flat.set_arg(pos=0, **obs_dir)
 apero_flat.set_arg(name='files', dtype='files', filelogic='exclusive',
@@ -1158,7 +1158,6 @@ apero_postprocess.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(apero_postprocess)
 
-
 # =============================================================================
 # Graveyard - old scripts
 # =============================================================================
@@ -1250,7 +1249,6 @@ apero_wave_master_old.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(apero_wave_master_old)
 
-
 # -----------------------------------------------------------------------------
 # apero_wave_night_old
 # -----------------------------------------------------------------------------
@@ -1312,7 +1310,6 @@ apero_wave_night_old.group_func = grouping.group_by_dirname
 apero_wave_night_old.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(apero_wave_night_old)
-
 
 # =============================================================================
 # Run order

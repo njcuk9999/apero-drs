@@ -843,6 +843,21 @@ class PseudoConstants:
         # raise not implemented yet error
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+    def FIBER_DPRTYPE(self, dprtype: str):
+        """
+        Input DPRTYPE tells you which fiber we are correcting for
+
+        :param dprtype: str, the dprtype (probably either FLAT_DARK or DARK_FLAT
+        :return: str, the fiber
+        """
+        # set function name
+        func_name = display_func('FIBER_DPRTYPE', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = dprtype
+        # raise not implemented yet error
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
     # noinspection PyPep8Naming
     def FIBER_LOC_COEFF_EXT(self, coeffs: np.ndarray, fiber: str):
         """
