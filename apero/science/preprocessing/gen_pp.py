@@ -1115,10 +1115,19 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
     if bad_kind == 'pp':
         header_col = params['PP_BADLIST_DRS_HKEY']
         value_col = params['PP_BADLIST_SS_VALCOL']
+        mask_col = params['PP_BADLIST_SS_MASKCOL']
     else:
         header_col = params['PP_BADLIST_DRS_HKEY']
         value_col = params['PP_BADLIST_SS_VALCOL']
-    mask_col = params['PP_BADLIST_SS_MASKCOL']
+        mask_col = params['PP_BADLIST_SS_MASKCOL']
+    # -------------------------------------------------------------------------
+    # deal with no bad list
+    cond1 = drs_text.null_text(header_col, ['None', ''])
+    cond2 = drs_text.null_text(value_col, ['None', ''])
+    cond3 = drs_text.null_text(mask_col, ['None', ''])
+    # no header, value or mask column --> do not skip
+    if cond1 or cond2 or cond3:
+        return False
     # -------------------------------------------------------------------------
     # get header key
     if header_col in params:

@@ -205,8 +205,9 @@ apero_preprocess.recipe_type = 'recipe'
 apero_preprocess.recipe_kind = 'pre'
 apero_preprocess.set_outputs(PP_FILE=files.pp_file)
 apero_preprocess.set_arg(pos=0, **obs_dir)
-apero_preprocess.set_arg(name='files', dtype='files', pos='1+', files=[files.raw_file],
-               helpstr=textentry('PREPROCESS_UFILES_HELP'), limit=1)
+apero_preprocess.set_arg(name='files', dtype='files', pos='1+',
+                         files=[files.raw_file],
+                         helpstr=textentry('PREPROCESS_UFILES_HELP'), limit=1)
 apero_preprocess.set_kwarg(name='--skip', dtype='bool', default=False,
                  helpstr=textentry('PPSKIP_HELP'), default_ref='SKIP_DONE_PP')
 apero_preprocess.group_func = grouping.group_individually
@@ -430,8 +431,8 @@ apero_shape.set_outputs(LOCAL_SHAPE_FILE=files.out_shape_local,
 apero_shape.set_debug_plots('SHAPEL_ZOOM_SHIFT', 'SHAPE_LINEAR_TPARAMS')
 apero_shape.set_summary_plots('SUM_SHAPEL_ZOOM_SHIFT')
 apero_shape.set_arg(pos=0, **obs_dir)
-apero_shape.set_arg(name='files', dtype='files', files=[files.pp_fp_fp], pos='1+',
-                  helpstr=textentry('SHAPE_FPFILES_HELP'))
+apero_shape.set_arg(name='files', dtype='files', files=[files.pp_fp_fp],
+                    pos='1+', helpstr=textentry('SHAPE_FPFILES_HELP'))
 apero_shape.set_kwarg(**add_db)
 apero_shape.set_kwarg(**badfile)
 apero_shape.set_kwarg(**dobad)
@@ -471,7 +472,7 @@ apero_flat.set_outputs(FLAT_FILE=files.out_ff_flat,
                    ORDERP_SFILE=files.out_orderp_straight,
                    DEBUG_BACK=files.debug_back)
 apero_flat.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
-                       'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2')
+                           'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2')
 apero_flat.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES', 'SUM_FLAT_BLAZE_ORDER')
 apero_flat.set_arg(pos=0, **obs_dir)
 apero_flat.set_arg(name='files', dtype='files', filelogic='exclusive',

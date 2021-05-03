@@ -661,6 +661,21 @@ class PseudoConstants(DefaultConstants):
         else:
             return dprtypes[1]
 
+    def FIBER_DPRTYPE(self, dprtype: str) -> Union[str, None]:
+        """
+        Input DPRTYPE tells you which fiber we are correcting for
+
+        :param dprtype: str, the dprtype (probably either FLAT_DARK or DARK_FLAT
+        :return: str, the fiber
+        """
+        # identify fiber type based on data type
+        if dprtype == 'FLAT_DARK':
+            return 'AB'
+        elif dprtype == 'DARK_FLAT':
+            return 'C'
+        else:
+            return None
+
     def FIBER_LOC_COEFF_EXT(self, coeffs: np.ndarray,
                             fiber: str) -> Tuple[np.ndarray, int]:
         """

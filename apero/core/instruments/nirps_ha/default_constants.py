@@ -234,6 +234,31 @@ FIBER_SET_NUM_FIBERS_B.value = 1
 PP_OBJ_DPRTYPES = PP_OBJ_DPRTYPES.copy(__NAME__)
 PP_OBJ_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
 
+# Define the bad list google spreadsheet id
+PP_BADLIST_SSID = PP_BADLIST_SSID.copy(__NAME__)
+PP_BADLIST_SSID.value = '1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM'
+PP_BADLIST_SSID.author = base.AUTHORS['NJC']
+
+# Define the bad list google workbook number
+PP_BADLIST_SSWB = PP_BADLIST_SSWB.copy(__NAME__)
+PP_BADLIST_SSWB.value = 0
+PP_BADLIST_SSWB.author = base.AUTHORS['NJC']
+
+# Define the bad list header key
+PP_BADLIST_DRS_HKEY = PP_BADLIST_DRS_HKEY.copy(__NAME__)
+PP_BADLIST_DRS_HKEY.value = None
+PP_BADLIST_DRS_HKEY.author = base.AUTHORS['NJC']
+
+# Define the bad list google spreadsheet value column
+PP_BADLIST_SS_VALCOL = PP_BADLIST_SS_VALCOL.copy(__NAME__)
+PP_BADLIST_SS_VALCOL.value = None
+PP_BADLIST_SS_VALCOL.author = base.AUTHORS['NJC']
+
+# Define the bad list google spreadsheet mask column for preprocessing
+PP_BADLIST_SS_MASKCOL = PP_BADLIST_SS_MASKCOL.copy(__NAME__)
+PP_BADLIST_SS_MASKCOL.value = None
+PP_BADLIST_SS_MASKCOL.author = base.AUTHORS['NJC']
+
 # Defines the box size surrounding hot pixels to use
 PP_HOTPIX_BOXSIZE = PP_HOTPIX_BOXSIZE.copy(__NAME__)
 PP_HOTPIX_BOXSIZE.value = 5
@@ -274,6 +299,14 @@ PP_NUM_REF_TOP.value = 4
 #   Define the number of un-illuminated reference pixels at bottom of image
 PP_NUM_REF_BOTTOM = PP_NUM_REF_BOTTOM.copy(__NAME__)
 PP_NUM_REF_BOTTOM.value = 4
+
+#   Define the number of un-illuminated reference pixels at left of image
+PP_NUM_REF_LEFT = PP_NUM_REF_LEFT.copy(__NAME__)
+PP_NUM_REF_LEFT.value = 4
+
+#   Define the number of un-illuminated reference pixels at right of image
+PP_NUM_REF_RIGHT = PP_NUM_REF_RIGHT.copy(__NAME__)
+PP_NUM_REF_RIGHT.value = 4
 
 # Define the percentile value for the rms normalisation (0-100)
 PP_RMS_PERCENTILE = PP_RMS_PERCENTILE.copy(__NAME__)
@@ -1642,7 +1675,7 @@ WAVE_FP_DV_MAX.value = 0.25
 # Decide whether to refit the cavity width (will update if files do not
 #   exist)
 WAVE_FP_UPDATE_CAVITY = WAVE_FP_UPDATE_CAVITY.copy(__NAME__)
-WAVE_FP_UPDATE_CAVITY.value = False
+WAVE_FP_UPDATE_CAVITY.value = True
 
 # Select the FP cavity fitting (WAVE_MODE_FP = 1 only)
 #   Should be one of the following:

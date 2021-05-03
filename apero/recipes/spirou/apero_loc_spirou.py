@@ -144,12 +144,11 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Identify fiber type
         # ------------------------------------------------------------------
+        # get pconst
+        pconst = constants.pload()
         # identify fiber type based on data type
-        if props['DPRTYPE'] == 'FLAT_DARK':
-            fiber = 'AB'
-        elif props['DPRTYPE'] == 'DARK_FLAT':
-            fiber = 'C'
-        else:
+        fiber = pconst.FIBER_DPRTYPE(dprtype=props['DPRTYPE'])
+        if fiber is None:
             eargs = [props['DPRTYPE'], recipe.name, 'FLAT_DARK or DARK_FLAT',
                      infile.basename]
             WLOG(params, 'error', textentry('00-013-00001', args=eargs))
