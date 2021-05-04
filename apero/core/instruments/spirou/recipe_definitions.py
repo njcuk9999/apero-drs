@@ -1365,11 +1365,11 @@ full_seq.add(apero_shape, name='SHAPELM', master=True,
              recipe_kind='calib-master')
 full_seq.add(apero_flat, name='FLATM', master=True,
              recipe_kind='calib-master')
-full_seq.add(apero_leak_master, master=True)
 full_seq.add(apero_thermal, name='THI_M', files=[files.pp_dark_dark_int],
              master=True, recipe_kind='calib-master-INT')
 full_seq.add(apero_thermal, name='THT_M', files=[files.pp_dark_dark_tel],
              master=True, recipe_kind='calib-master-TEL')
+full_seq.add(apero_leak_master, master=True)
 full_seq.add(apero_wave_master, master=True,
              rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
                           fpfiles=[files.pp_fp_fp]))
@@ -1468,11 +1468,11 @@ limited_seq.add(apero_shape, name='SHAPELM', master=True,
                 recipe_kind='calib-master')
 limited_seq.add(apero_flat, name='FLATM', master=True,
                 recipe_kind='calib-master')
-limited_seq.add(apero_leak_master, master=True)
 limited_seq.add(apero_thermal, name='THI_M', files=[files.pp_dark_dark_int],
                 master=True, recipe_kind='calib-master-INT')
 limited_seq.add(apero_thermal, name='THT_M', files=[files.pp_dark_dark_tel],
                 master=True, recipe_kind='calib-master-TEL')
+limited_seq.add(apero_leak_master, master=True)
 limited_seq.add(apero_wave_master, master=True,
                 rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
                              fpfiles=[files.pp_fp_fp]))
@@ -1621,11 +1621,11 @@ master_seq.add(apero_shape, name='SHAPELM', master=True,
                 recipe_kind='calib-master')
 master_seq.add(apero_flat, name='FLATM', master=True,
                 recipe_kind='calib-master')
-master_seq.add(apero_leak_master, master=True)
 master_seq.add(apero_thermal, name='THI_M', files=[files.pp_dark_dark_int],
                master=True, recipe_kind='calib-master-INT')
 master_seq.add(apero_thermal, name='THT_M', files=[files.pp_dark_dark_tel],
                master=True, recipe_kind='calib-master-TEL')
+master_seq.add(apero_leak_master, master=True)
 master_seq.add(apero_wave_master, master=True,
                rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
                             fpfiles=[files.pp_fp_fp]))
@@ -1774,7 +1774,6 @@ quick_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-quick',
 # -----------------------------------------------------------------------------
 # blank sequence (for trigger)
 # -----------------------------------------------------------------------------
-# TODO: TEST THIS
 blank_seq = drs_recipe.DrsRunSequence('blank_seq', __INSTRUMENT__)
 
 # -----------------------------------------------------------------------------
