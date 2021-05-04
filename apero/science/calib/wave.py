@@ -726,10 +726,18 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     fibtype = pconst.FIBER_DPR_POS(dprtype, fiber)
     # set up the xpixels
     xpix = np.arange(nbpix)
+    # deal with no iteration number
+    if iteration is None:
+        str_itr = 0
+    else:
+        str_itr = str(iteration)
     # ----------------------------------------------------------------------
     # get the lines for HC files from hclines input
     # ----------------------------------------------------------------------
     if hclines is not None:
+        # print progress Running get ref lines for HC
+        WLOG(params, 'info', textentry('40-017-00061', args=[str_itr]))
+        # get lines
         list_waves = hclines['WAVE_REF']
         list_orders = hclines['ORDER']
         list_pixels = hclines['PIXEL_REF']
@@ -739,6 +747,9 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # get the lines for HC files from fplines input
     # ----------------------------------------------------------------------
     elif fplines is not None:
+        # print progress Running get ref lines for HC
+        WLOG(params, 'info', textentry('40-017-00062', args=[str_itr]))
+        # get lines
         list_waves = fplines['WAVE_REF']
         list_orders = fplines['ORDER']
         list_pixels = fplines['PIXEL_REF']
@@ -749,7 +760,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     elif fibtype in hcfibtypes:
         # print progress Running get ref lines for HC
-        WLOG(params, 'info', textentry('40-017-00049'))
+        WLOG(params, 'info', textentry('40-017-00049', args=[str_itr]))
         # load the line list
         wavell, ampll = drs_data.load_linelist(params)
         # storage for outputs
@@ -795,7 +806,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     elif fibtype in fpfibtypes:
         # print progress Running get ref lines for FP
-        WLOG(params, 'info', textentry('40-017-00050'))
+        WLOG(params, 'info', textentry('40-017-00050', args=[str_itr]))
         # ------------------------------------------------------------------
         # deal with getting cavity poly
         if cavity_poly is not None:
