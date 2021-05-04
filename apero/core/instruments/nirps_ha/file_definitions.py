@@ -206,10 +206,10 @@ pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp',
 #                           inext='.fits', outfunc=out.general_file)
 # pp_file.addset(pp_dark_dark)
 
-pp_dark_dark = drs_finput('DARK_DARK_INT', filetype='.fits',
-                              suffix='_pp', intype=raw_dark_dark,
-                              inext='.fits', outfunc=out.general_file,
-                              hkeys=dict(KW_DPRTYPE='DARK_DARK_INT', ))
+pp_dark_dark = drs_finput('DARK_DARK', filetype='.fits',
+                          suffix='_pp', intype=raw_dark_dark,
+                          inext='.fits', outfunc=out.general_file,
+                          hkeys=dict(KW_DPRTYPE='DARK_DARK'))
 pp_file.addset(pp_dark_dark)
 
 pp_dark_dark_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',

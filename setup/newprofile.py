@@ -241,9 +241,12 @@ if __name__ == '__main__':
     msg = ('\n\nIMPORTANT: This script copies all parameters for the currently '
            'loaded APERO profile:\n\t{0}\n\n You must review and update all '
            'files manually at the following path before running APERO:'
-           '\n\t{1}\n\nNote this includes creating new directories and running'
-           'apero_reset.py once all directories are added to the new config '
-           'files.')
+           '\n\t{1}\n\nNote this includes:'
+           '\n\t1. Editing the paths in user_config.py'
+           '\n\t2. Editing the database.yaml "PROFILE" names'
+           '\n\t3. Editing the DRS_UCONFIG path in install.yaml'
+           '\n\t4. Creating new directories'
+           '\n\t5. Running apero_reset.py once steps 1-4 are completed.')
     margs = [allparams['OLD_USERCONFIG'], allparams['USERCONFIG']]
     install.cprint(msg.format(*margs), 'y')
     # ----------------------------------------------------------------------

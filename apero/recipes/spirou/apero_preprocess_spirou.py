@@ -164,8 +164,10 @@ def __main__(recipe, params):
         intercept = datalist[1]
         # get error on slope from the data list
         errslope = datalist[2]
+        # get frame time
+        frame_time = pconst.FRAME_TIME(params, infile.get_header())
         # get the pixel exposure time from the data list
-        inttime = datalist[3] * infile.get_hkey('KW_FRMTIME', dtype=float)
+        inttime = datalist[3] * frame_time
 
         # ------------------------------------------------------------------
         # Get out file and check skip

@@ -315,6 +315,30 @@ class PseudoConstants(DefaultConstants):
         header, _ = get_mid_obs_time(params, header, None, filename)
         return float(header[params['KW_MID_OBS_TIME']])
 
+    def FRAME_TIME(self, params: ParamDict, header: Any):
+        """
+        Get the frame time (either from header or constants depending on 
+        instrument)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :return: float the frame time in seconds
+        """
+        return float(params['IMAGE_FRAME_TIME'])
+
+    def SATURATION(self, params: ParamDict, header: Any):
+        """
+        Get the saturation (either from header or constants depending on
+        instrument)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :return: float the frame time in seconds
+        """
+        return float(params['IMAGE_SATURATION'])
+
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
@@ -334,9 +358,9 @@ class PseudoConstants(DefaultConstants):
         """
         # set keyts
         index_keys = dict()
+        # note unlike spirou date-obs for nirps is YYYY-MM-DDThh:mm:ss
         index_keys['KW_DATE_OBS'] = str
-        index_keys['KW_UTC_OBS'] = str
-        index_keys['KW_ACQTIME'] = float
+        index_keys['KW_MJDATE'] = float
         index_keys['KW_TARGET_TYPE'] = str
         index_keys['KW_MID_OBS_TIME'] = float
         index_keys['KW_OBJECTNAME'] = str
@@ -877,29 +901,6 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
 
     :return: the updated header and hdict
     """
-
-    # TODO: START --------------------------------------------------------------
-    # TODO: FIX: temporary measure: fix time header keys
-    rawtime = Time(header['DATE'], format='fits')
-    exptime = header['HIERARCH ESO DET2 EXPO TIME']
-    # TODO: FIX: MJDATE should be the 'mid time' - exptime in days
-    header['MJDATE'] = (rawtime.mjd - exptime / (3600*24),
-                        'Modified Julian Date at start of observation')
-    hdict['MJDATE'] = header['MJDATE']
-    # TODO: FIX: MJDEND should be the 'mid time' + exptime in days
-    header['MJDEND'] = (rawtime.mjd + exptime / (3600*24),
-                       'Modified Julian Date at end of observation')
-    hdict['MJDEND'] = header['MJDEND']
-    # TODO: FIX: DATE-OBS should be DATE: YYYY-mm-dd
-    header['DATE-OBS'] = (rawtime.iso.split()[0],
-                         'Date at start of observation (UTC)')
-    hdict['DATE-OBS'] = header['DATE-OBS']
-    # TODO: FIX: UTC-OBS should be DATE: HH:MM:SS.SS
-    header['UTC-OBS'] = (rawtime.iso.split()[1],
-                         'Time at start of observation (UTC)')
-    hdict['UTC-OBS'] = header['UTC-OBS']
-    # TODO: END ---------------------------------------------------------------
-
     # set function name
     func_name = display_func('get_mid_obs_time', __NAME__)
     # get keys from params
@@ -927,13 +928,13 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     exptime = timetype(header[exp_timekey])
     # -------------------------------------------------------------------
     # get header time
-    endtime = get_header_end_time(params, header, filename)
+    starttime = get_header_time(params, header, filename)
     # get the time after start of the observation
     timedelta = TimeDelta(exptime * exp_timeunit) / 2.0
     # calculate observation time
-    obstime = endtime - timedelta
+    obstime = starttime + timedelta
     # set the method for getting mid obs time
-    method = 'mjdend-exp/2'
+    method = 'mjdobs+exp/2'
     # -------------------------------------------------------------------
     # return time in requested format
     if timefmt is None:
@@ -962,8 +963,8 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     return header, hdict
 
 
-def get_header_end_time(params: ParamDict, header: Any,
-                        filename: Union[str, None, Path] = None) -> Time:
+def get_header_time(params: ParamDict, header: Any,
+                    filename: Union[str, None, Path] = None) -> Time:
     """
     Get acquisition time from header
 
@@ -975,11 +976,11 @@ def get_header_end_time(params: ParamDict, header: Any,
     :return: astropy.Time instance for the header time
     """
     # set function name
-    func_name = display_func('get_header_end_time', __NAME__)
+    func_name = display_func('get_header_time', __NAME__)
     # get acqtime
-    time_key = params['KW_ACQTIME'][0]
-    timefmt = params.instances['KW_ACQTIME'].datatype
-    timetype = params.instances['KW_ACQTIME'].dataformat
+    time_key = params['KW_MJDATE'][0]
+    timefmt = params.instances['KW_MJDATE'].datatype
+    timetype = params.instances['KW_MJDATE'].dataformat
 
     # get time key from header
     if time_key not in header:

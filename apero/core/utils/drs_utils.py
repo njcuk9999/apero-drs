@@ -384,6 +384,25 @@ class RecipeLog:
         if write:
             self.write_logfile()
 
+    def get_children(self) -> List['RecipeLog']:
+        """
+        Get all child classes attached to this instance
+
+        :return:
+        """
+        # if we have a set then we look for children
+        if len(self.set) != 0:
+            children = []
+            # loop around children and check for children of children
+            for child in self.set:
+                children += child.get_children()
+            # return this list of instances
+            return children
+        # if we don't have a set we just return ourself (weirdly we are one of
+        #   our children in this definition)
+        else:
+            return [self]
+
     def end(self, write: bool = True, success: bool = True):
         """
         Add the row that says recipe finished correctly to database
@@ -417,10 +436,7 @@ class RecipeLog:
         # ---------------------------------------------------------------------
         # add instances (if we have a set use the set otherwise just add
         #    your self)
-        if len(self.set) == 0:
-            instances = [self]
-        else:
-            instances = self.set
+        instances = self.get_children()
         # loop around instances
         for inst in instances:
             # get utime
