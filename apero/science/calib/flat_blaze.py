@@ -163,17 +163,13 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     # try to fit and if there is a failure catch it
     try:
         # we optimize over pixels that are not NaN
-        # popt0, pcov0 = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
-        #                         method='dogbox', bounds=bounds)
-        # set the first guess for the full fit to the fit without slope and
-        #   quadratic terms
-        # fit_guess = popt0
-        # set the quad, cube and slope to zero (pass without DC and SLOPE)
-        # fit_guess[[3, 4, 5]] = 0.0
-
-        # we optimize over pixels that are not NaN (this time with no bounds)
         popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
                                bounds=bounds)
+        # we then re-fit to avoid local minima (this has happened - fitting
+        #   a second time seemed to fix this - when the guess is off)
+        popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt,
+                               bounds=bounds)
+
         # ------------------------------------------------------------------
         # set the model to zeros at first
         blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
@@ -199,6 +195,9 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
             # we optimize over pixels that are not NaN (this time with no bounds)
             popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
                                    p0=fit_guess)
+            # we then re-fit to avoid local minima (this has happened - fitting
+            #   a second time seemed to fix this - when the guess is off)
+            popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt)
             # ------------------------------------------------------------------
             # set the model to zeros at first
             blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
