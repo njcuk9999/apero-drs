@@ -155,27 +155,17 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
     else:
         calibdbm = database
     # -------------------------------------------------------------------------
-    # some keys have to come from params for nirps
-    if params['INSTRUMENT'] == 'NIRPS_HA':
-        ikwargs = dict()
-        ikwargs['saturate'] = dict(has_default=True,
-                                   default=params['IMAGE_SATURATION'])
-        ikwargs['frmtime'] = dict(has_default=True,
-                                  default=params['IMAGE_FRAME_TIME'])
-    else:
-        ikwargs = dict(saturate=dict(), frmtime=dict())
+    # load pconst
+    pconst = constants.pload()
     # -------------------------------------------------------------------------
     # Get basic image properties
     sigdet = infile.get_hkey('KW_RDNOISE')
     exptime = infile.get_hkey('KW_EXPTIME')
     gain = infile.get_hkey('KW_GAIN')
     dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
-    saturate = infile.get_hkey('KW_SATURATE', dtype=float,
-                               **ikwargs['saturate'])
-    frmtime = infile.get_hkey('KW_FRMTIME', dtype=float,
-                              **ikwargs['frmtime'])
+    saturate = pconst.SATURATION(params, infile.get_header())
+    frmtime = pconst.FRAME_TIME(params, infile.get_header())
     nfiles = infile.numfiles
-
     # log that we are calibrating a file
     WLOG(params, 'info', textentry('40-014-00038', args=[infile.filename]))
 

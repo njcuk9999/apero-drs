@@ -28,34 +28,16 @@ KW_IDENTIFIER = KW_IDENTIFIER.copy(__NAME__)
 KW_IDENTIFIER.set(key='FILENAME',
                   comment='filename anticipated by fitspipe server')
 
-# define the HEADER key for acquisition time
-#     Note datatype must be a astropy.Time.format
-#     'jd', 'mjd', 'decimalyear', 'unix', 'cxcsec', 'gps', 'plot_date',
-#     'datetime', 'iso', 'isot', 'yday', 'datetime64', 'fits', 'byear',
-#     'jyear', 'byear_str', 'jyear_str'
-KW_ACQTIME = KW_ACQTIME.copy(__NAME__)
-KW_ACQTIME.set(key='MJDEND', datatype='mjd', dataformat=float,
-               comment='Modified Julian Date at start of observation',
-               combine_method='maximum')
-
-# define the MJ end date HEADER key
-KW_MJDEND = KW_MJDEND.copy(__NAME__)
-KW_MJDEND.set(key='MJDEND', datatype='mjd', dataformat=float,
-              comment='Modified Julian Date at end of observation',
-              combine_method='maximum')
-
 # define the MJ date HEADER key (only used for logging)
 KW_MJDATE = KW_MJDATE.copy(__NAME__)
-KW_MJDATE.set(key='MJDATE', datatype='mjd', dataformat=float,
-              comment='', combine_method='minimum')
+KW_MJDATE.set(key='MJD-OBS', datatype='mjd', dataformat=float,
+              comment='Observation Start (Modified Julian Date)',
+              combine_method='minimum')
 
 # define the observation date HEADER key
 KW_DATE_OBS = KW_DATE_OBS.copy(__NAME__)
-KW_DATE_OBS.set(key='DATE-OBS', comment='Date at start of observation (UTC)')
-
-# define the observation time HEADER key
-KW_UTC_OBS = KW_UTC_OBS.copy(__NAME__)
-KW_UTC_OBS.set(key='UTC-OBS', comment='Time at start of observation (UTC)')
+KW_DATE_OBS.set(key='DATE-OBS', datatype='fits', dataformat=str,
+                comment='Observation Start (YYYY-MM-DDThh:mm:ss UTC)')
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 KW_RDNOISE = KW_RDNOISE.copy(__NAME__)
@@ -67,15 +49,6 @@ KW_GAIN = KW_GAIN.copy(__NAME__)
 KW_GAIN.set(key='HIERARCH ESO DET OUT1 GAIN',
             comment='Amplifier gain (electrons/ADU)', combine_method='mean')
 
-# define the saturation limit HEADER key
-KW_SATURATE = KW_SATURATE.copy(__NAME__)
-KW_SATURATE.set(key='SATURATE', comment='Saturation value (ADU) ',
-                combine_method='mean')
-
-# define the frame time HEADER key
-KW_FRMTIME = KW_FRMTIME.copy(__NAME__)
-KW_FRMTIME.set(key='FRMTIME', comment='[sec] Frame time, cadence of IR reads')
-
 # define the exposure time HEADER key (used to get value only)
 # TODO: This value should change
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
@@ -85,8 +58,9 @@ KW_EXPTIME.set(key='HIERARCH ESO DET SEQ1 DIT', unit=uu.s,
 
 # define the required exposure time HEADER key (used to get value only)
 # NIRPS-CHANGE: Do we have this for NIRPS?
+# TODO: For now set this to the actual exposure time
 KW_EXPREQ = KW_EXPREQ.copy(__NAME__)
-KW_EXPREQ.set(key='EXPREQ', unit=uu.s,
+KW_EXPREQ.set(key='HIERARCH ESO DET SEQ1 DIT', unit=uu.s,
               comment='[sec] Requested integration time',
               combine_method='sum')
 

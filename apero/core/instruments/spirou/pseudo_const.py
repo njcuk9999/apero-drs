@@ -315,6 +315,36 @@ class PseudoConstants(DefaultConstants):
         header, _ = get_mid_obs_time(params, header, None, filename)
         return float(header[params['KW_MID_OBS_TIME']])
 
+    def FRAME_TIME(self, params: ParamDict, header: Any):
+        """
+        Get the frame time (either from header or constants depending on
+        instrument)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :return: float the frame time in seconds
+        """
+        # get header key
+        kw_frmtime = params['KW_FRMTIME'][0]
+        # return frame time
+        return float(header[kw_frmtime])
+
+    def SATURATION(self, params: ParamDict, header: Any):
+        """
+        Get the saturation (either from header or constants depending on
+        instrument)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :return: float the frame time in seconds
+        """
+        # get header key
+        kw_sat = params['KW_SATURATE'][0]
+        # return frame time
+        return float(header[kw_sat])
+
     def GET_STOKES_FROM_HEADER(self, params: ParamDict, header: Any,
                                wlog: Any = None) -> Tuple[Union[str, None], int]:
         """
@@ -1098,7 +1128,7 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     exptime = timetype(header[exp_timekey])
     # -------------------------------------------------------------------
     # get header time
-    endtime = get_header_end_time(params, header, filename)
+    endtime = get_header_time(params, header, filename)
     # get the time after start of the observation
     timedelta = TimeDelta(exptime * exp_timeunit) / 2.0
     # calculate observation time
@@ -1133,8 +1163,8 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     return header, hdict
 
 
-def get_header_end_time(params: ParamDict, header: Any,
-                        filename: Union[str, None, Path] = None) -> Time:
+def get_header_time(params: ParamDict, header: Any,
+                    filename: Union[str, None, Path] = None) -> Time:
     """
     Get acquisition time from header
 
@@ -1146,7 +1176,7 @@ def get_header_end_time(params: ParamDict, header: Any,
     :return: astropy.Time instance for the header time
     """
     # set function name
-    func_name = display_func('get_header_end_time', __NAME__)
+    func_name = display_func('get_header_time', __NAME__)
     # get acqtime
     time_key = params['KW_ACQTIME'][0]
     timefmt = params.instances['KW_ACQTIME'].datatype

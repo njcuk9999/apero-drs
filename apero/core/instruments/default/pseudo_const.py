@@ -329,6 +329,36 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('DRS_MIDMJD')
 
+    def FRAME_TIME(self, params: Any, header: Any):
+        """
+        Get the frame time (either from header or constants depending on
+        instrument)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :return: float the frame time in seconds
+        """
+        # cannot get frame time without instrument
+        _ = params, header
+        # raise implementation error
+        self._not_implemented('FRAME_TIME')
+
+    def SATURATION(self, params: Any, header: Any):
+        """
+        Get the saturation (either from header or constants depending on
+        instrument)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :return: float the frame time in seconds
+        """
+        # cannot get saturation without instrument
+        _ = params, header
+        # raise implementation error
+        self._not_implemented('SATURATION')
+
     def GET_STOKES_FROM_HEADER(self, params: Any, header: Any, wlog: Any):
         """
         Get the stokes parameter and exposure number from the header
@@ -375,27 +405,6 @@ class PseudoConstants:
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
-    # noinspection PyPep8Naming
-    def OUTPUT_FILE_HEADER_KEYS(self) -> List[str]:
-        """
-        Output file header keys. (Uesd for database)
-        Used for indexing
-
-        :return: list of strings, the output file header keys
-        """
-        # set function name
-        _ = display_func('OUTPUT_FILE_HEADER_KEYS', __NAME__,
-                         self.class_name)
-        # Get required header keys from spirouKeywords.py (via p)
-        output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
-                       'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
-                       'KW_EXPTIME', 'KW_CCAS', 'KW_CREF', 'KW_CDEN',
-                       'KW_DPRTYPE', 'KW_OUTPUT', 'KW_CMPLTEXP', 'KW_NEXP',
-                       'KW_VERSION', 'KW_PPVERSION', 'KW_PI_NAME', 'KW_PID',
-                       'KW_FIBER']
-        # return output_keys
-        return output_keys
-
     def INDEX_HEADER_KEYS(self) -> Tuple[List[str], List[Type]]:
         """
         Which header keys should we have in the index database.

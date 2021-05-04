@@ -27,6 +27,7 @@ import itertools
 import numpy as np
 from typing import Any, Dict, List, Tuple, Union
 
+from apero.base import base
 from apero.core.core import drs_argument
 from apero.core.core import drs_log
 from apero.tools.module.processing import drs_grouping_functions as drsgf
@@ -35,6 +36,15 @@ from apero.tools.module.processing import drs_grouping_functions as drsgf
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'drs_utils.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# get display func
+display_func = drs_log.display_func
 # get argument class
 DrsArgument = drs_argument.DrsArgument
 # define complex type argdict
@@ -62,6 +72,8 @@ def no_group(rargs: Dict[str, DrsArgument],
     :param kwargs:
     :return:
     """
+    # set function name
+    _ = display_func('no_group', __NAME__)
     # group column
     group_column = kwargs.get('group_column', None)
     master_value = kwargs.get('master', None)
@@ -132,6 +144,8 @@ def group_individually(rargs: Dict[str, DrsArgument],
     :return: the run list - where each entry is a dictionary containing the
              arguments to send for each individual run
     """
+    # set function name
+    _ = display_func('group_individually', __NAME__)
     # group column
     group_column = kwargs.get('group_column', None)
     # define runs
@@ -429,6 +443,8 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
     :return: the run list - where each entry is a dictionary containing the
              arguments to send for each individual run
     """
+    # set function name
+    func_name = display_func('group_by_dirname', __NAME__)
     # define runs
     run_instances = []
     # group column
@@ -476,7 +492,18 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
     #    each file argument)
     for groupnum, drsfile_group in enumerate(drsfile_groups):
         # get arg 0 table
-        table0 = alldict[first_arg][drsfile_group[0]]
+        rawtab = alldict[first_arg][drsfile_group[0]]
+        if isinstance(rawtab, Table.Row):
+            table0 = Table(rawtab)
+        elif isinstance(rawtab, Table):
+            table0 = rawtab
+        else:
+            # TODO: move to language DB
+            emsg = ('alldict[{0}][{1}] is not a valid Table '
+                    '\n\tFilename: {2}')
+            eargs = [first_arg, drsfile_group[0], func_name]
+            # TODO: Change to DrsCoded exception when in langdb
+            raise ValueError(emsg.format(*eargs))
         # deal with no table
         if table0 is None:
             continue
@@ -496,6 +523,7 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
         # if we have a group filter defined and more than 1 file argument we
         #   have to crash - we can't deal with this
         elif group_filter is not None:
+            # TODO: move to language database
             raise ValueError('Cannot use group filter with more than 1 file '
                              'argument')
         else:
@@ -527,8 +555,22 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
                 for argpos, drsfiletype in enumerate(drsfile_group):
                     # get the file argument name
                     argname = file_args[argpos]
-                    # get this arguments table
-                    table1 = alldict[argname][drsfiletype]
+                    # get this arguments table - alldict[argname][drsfiletype]
+                    #   may be a astropy.table.Row --> recast into Table
+                    #   slower - but other lines later break when dealing with
+                    #   a row
+                    rawtab = alldict[argname][drsfiletype]
+                    if isinstance(rawtab, Table.Row):
+                        table1 = Table(rawtab)
+                    elif isinstance(rawtab, Table):
+                        table1 = rawtab
+                    else:
+                        # TODO: move to language DB
+                        emsg = ('alldict[{0}][{1}] is not a valid Table '
+                                '\n\tFilename: {2}')
+                        eargs = [argname, drsfiletype, func_name]
+                        # TODO: Change to DrsCoded exception when in langdb
+                        raise ValueError(emsg.format(*eargs))
                     # deal with no table --> no files for this argument
                     if table1 is None:
                         valid = False
@@ -612,6 +654,9 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
     :return: the run list - where each entry is a dictionary containing the
              arguments to send for each individual run
     """
+    # set function name
+    _ = display_func('group_by_polar_sequence', __NAME__)
+
     # -------------------------------------------------------------------------
     # need to define a polar filter (inputs are the table out put is a set
     #   of masks - one for each group)
