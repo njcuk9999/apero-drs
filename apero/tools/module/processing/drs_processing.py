@@ -2289,14 +2289,14 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
     for argname in args:
         # get arg instance
         arg = args[argname]
-        # if check required see if parameter is required
-        if check_required:
-            if not arg.required and not arg.reprocess:
-                continue
         # see if we are over writing argument
         if argname in recipe.extras:
             filedict[argname] = recipe.extras[argname]
             continue
+        # if check required see if parameter is required
+        if check_required:
+            if not arg.required and not arg.reprocess:
+                continue
         # make sure we are only dealing with dtype=files
         if arg.dtype not in ['file', 'files']:
             # deal with any special non file arguments

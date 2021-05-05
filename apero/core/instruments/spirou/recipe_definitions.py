@@ -193,7 +193,7 @@ apero_preprocess.set_arg(name='files', dtype='files', pos='1+',
                          files=[files.raw_file],
                          helpstr=textentry('PREPROCESS_UFILES_HELP'), limit=1)
 apero_preprocess.set_kwarg(name='--skip', dtype='bool', default=False,
-                 helpstr=textentry('PPSKIP_HELP'), default_ref='SKIP_DONE_PP')
+                           helpstr=textentry('PPSKIP_HELP'), default_ref='SKIP_DONE_PP')
 apero_preprocess.group_func = grouping.group_individually
 apero_preprocess.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -251,16 +251,16 @@ apero_dark.epilog = textentry('DARK_EXAMPLE')
 apero_dark.recipe_type = 'recipe'
 apero_dark.recipe_kind = 'calib-night'
 apero_dark.set_outputs(DARK_INT_FILE=files.out_dark_int,
-                     DARK_TEL_FIEL=files.out_dark_tel,
-                     DARK_SKY_FILE=files.out_dark_sky)
+                       DARK_TEL_FIEL=files.out_dark_tel,
+                       DARK_SKY_FILE=files.out_dark_sky)
 apero_dark.set_debug_plots('DARK_IMAGE_REGIONS', 'DARK_HISTOGRAM')
 apero_dark.set_summary_plots('SUM_DARK_IMAGE_REGIONS', 'SUM_DARK_HISTOGRAM')
 apero_dark.set_arg(pos=0, **obs_dir)
 apero_dark.set_arg(name='files', dtype='files',
-                 files=[files.pp_dark_dark_int, files.pp_dark_dark_tel,
-                        files.pp_dark_dark_sky],
-                 pos='1+', filelogic='exclusive',
-                 helpstr=textentry('FILES_HELP') + textentry('DARK_FILES_HELP'))
+                   files=[files.pp_dark_dark_int, files.pp_dark_dark_tel,
+                          files.pp_dark_dark_sky],
+                   pos='1+', filelogic='exclusive',
+                   helpstr=textentry('FILES_HELP') + textentry('DARK_FILES_HELP'))
 apero_dark.set_kwarg(**add_db)
 apero_dark.set_kwarg(default=True, **combine)
 apero_dark.set_kwarg(**plot)
@@ -310,19 +310,19 @@ apero_loc.epilog = textentry('LOC_EXAMPLE')
 apero_loc.recipe_type = 'recipe'
 apero_loc.recipe_kind = 'calib-night'
 apero_loc.set_outputs(ORDERP_FILE=files.out_loc_orderp,
-                    LOCO_FILE=files.out_loc_loco,
-                    FWHM_FILE=files.out_loc_fwhm,
-                    SUP_FILE=files.out_loc_sup,
-                    DEBUG_BACK=files.debug_back)
+                      LOCO_FILE=files.out_loc_loco,
+                      FWHM_FILE=files.out_loc_fwhm,
+                      SUP_FILE=files.out_loc_sup,
+                      DEBUG_BACK=files.debug_back)
 apero_loc.set_debug_plots('LOC_MINMAX_CENTS', 'LOC_MIN_CENTS_THRES',
-                        'LOC_FINDING_ORDERS', 'LOC_IM_SAT_THRES',
-                        'LOC_ORD_VS_RMS', 'LOC_CHECK_COEFFS',
-                        'LOC_FIT_RESIDUALS')
+                          'LOC_FINDING_ORDERS', 'LOC_IM_SAT_THRES',
+                          'LOC_ORD_VS_RMS', 'LOC_CHECK_COEFFS',
+                          'LOC_FIT_RESIDUALS')
 apero_loc.set_summary_plots('SUM_LOC_IM_THRES', 'SUM_LOC_IM_CORNER')
 apero_loc.set_arg(pos=0, **obs_dir)
 apero_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
-                files=[files.pp_dark_flat, files.pp_flat_dark], pos='1+',
-                helpstr=textentry('FILES_HELP') + textentry('LOC_FILES_HELP'))
+                  files=[files.pp_dark_flat, files.pp_flat_dark], pos='1+',
+                  helpstr=textentry('FILES_HELP') + textentry('LOC_FILES_HELP'))
 apero_loc.set_kwarg(**add_db)
 apero_loc.set_kwarg(**badfile)
 apero_loc.set_kwarg(**dobad)
@@ -355,26 +355,26 @@ apero_shape_master.epilog = textentry('SHAPEMASTER_EXAMPLE')
 apero_shape_master.recipe_type = 'recipe'
 apero_shape_master.recipe_kind = 'calib-master'
 apero_shape_master.set_outputs(FPMASTER_FILE=files.out_shape_fpmaster,
-                             DXMAP_FILE=files.out_shape_dxmap,
-                             DYMAP_FILE=files.out_shape_dymap,
-                             SHAPE_IN_FP_FILE=files.out_shape_debug_ifp,
-                             SHAPE_IN_HC_FILE=files.out_shape_debug_ihc,
-                             SHAPE_OUT_FP_FILE=files.out_shape_debug_ofp,
-                             SHAPE_OUT_HC_FILE=files.out_shape_debug_ohc,
-                             SHAPE_BDXMAP_FILE=files.out_shape_debug_bdx,
-                             DEBUG_BACK=files.debug_back)
+                               DXMAP_FILE=files.out_shape_dxmap,
+                               DYMAP_FILE=files.out_shape_dymap,
+                               SHAPE_IN_FP_FILE=files.out_shape_debug_ifp,
+                               SHAPE_IN_HC_FILE=files.out_shape_debug_ihc,
+                               SHAPE_OUT_FP_FILE=files.out_shape_debug_ofp,
+                               SHAPE_OUT_HC_FILE=files.out_shape_debug_ohc,
+                               SHAPE_BDXMAP_FILE=files.out_shape_debug_bdx,
+                               DEBUG_BACK=files.debug_back)
 apero_shape_master.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
-                                 'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
+                                   'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
 apero_shape_master.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
 apero_shape_master.set_arg(pos=0, **obs_dir)
 apero_shape_master.set_kwarg(name='--fpfiles', dtype='files',
-                           files=[files.pp_fp_fp],
-                           filelogic='exclusive', required=True,
-                           helpstr=textentry('SHAPE_FPFILES_HELP'), default=[])
+                             files=[files.pp_fp_fp],
+                             filelogic='exclusive', required=True,
+                             helpstr=textentry('SHAPE_FPFILES_HELP'), default=[])
 apero_shape_master.set_kwarg(name='--hcfiles', dtype='files',
-                           files=[files.pp_hc1_hc1],
-                           filelogic='exclusive', required=True,
-                           helpstr=textentry('SHAPE_HCFILES_HELP'), default=[])
+                             files=[files.pp_hc1_hc1],
+                             filelogic='exclusive', required=True,
+                             helpstr=textentry('SHAPE_HCFILES_HELP'), default=[])
 apero_shape_master.set_kwarg(**add_db)
 apero_shape_master.set_kwarg(**badfile)
 apero_shape_master.set_kwarg(**dobad)
@@ -388,8 +388,8 @@ apero_shape_master.set_kwarg(**locofile)
 apero_shape_master.set_kwarg(**plot)
 apero_shape_master.set_kwarg(**resize)
 apero_shape_master.set_kwarg(name='--fpmaster', dtype='files',
-                           files=[files.out_shape_fpmaster], default='None',
-                           helpstr=textentry('SHAPE_FPMASTER_HELP'))
+                             files=[files.out_shape_fpmaster], default='None',
+                             helpstr=textentry('SHAPE_FPMASTER_HELP'))
 apero_shape_master.group_func = grouping.group_by_dirname
 apero_shape_master.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -410,9 +410,9 @@ apero_shape.epilog = textentry('SHAPE_EXAMPLE')
 apero_shape.recipe_type = 'recipe'
 apero_shape.recipe_kind = 'calib-night'
 apero_shape.set_outputs(LOCAL_SHAPE_FILE=files.out_shape_local,
-                      SHAPEL_IN_FP_FILE=files.out_shapel_debug_ifp,
-                      SHAPEL_OUT_FP_FILE=files.out_shapel_debug_ofp,
-                      DEBUG_BACK=files.debug_back)
+                        SHAPEL_IN_FP_FILE=files.out_shapel_debug_ifp,
+                        SHAPEL_OUT_FP_FILE=files.out_shapel_debug_ofp,
+                        DEBUG_BACK=files.debug_back)
 apero_shape.set_debug_plots('SHAPEL_ZOOM_SHIFT', 'SHAPE_LINEAR_TPARAMS')
 apero_shape.set_summary_plots('SUM_SHAPEL_ZOOM_SHIFT')
 apero_shape.set_arg(pos=0, **obs_dir)
@@ -452,17 +452,17 @@ apero_flat.epilog = textentry('FLAT_EXAMPLE')
 apero_flat.recipe_type = 'recipe'
 apero_flat.recipe_kind = 'calib-night'
 apero_flat.set_outputs(FLAT_FILE=files.out_ff_flat,
-                   BLAZE_FILE=files.out_ff_blaze,
-                   E2DSLL_FILE=files.out_ext_e2dsll,
-                   ORDERP_SFILE=files.out_orderp_straight,
-                   DEBUG_BACK=files.debug_back)
+                       BLAZE_FILE=files.out_ff_blaze,
+                       E2DSLL_FILE=files.out_ext_e2dsll,
+                       ORDERP_SFILE=files.out_orderp_straight,
+                       DEBUG_BACK=files.debug_back)
 apero_flat.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                            'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2')
 apero_flat.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES', 'SUM_FLAT_BLAZE_ORDER')
 apero_flat.set_arg(pos=0, **obs_dir)
 apero_flat.set_arg(name='files', dtype='files', filelogic='exclusive',
-               files=[files.pp_flat_flat], pos='1+',
-               helpstr=textentry('FILES_HELP') + textentry('FLAT_FILES_HELP'))
+                   files=[files.pp_flat_flat], pos='1+',
+                   helpstr=textentry('FILES_HELP') + textentry('FLAT_FILES_HELP'))
 apero_flat.set_kwarg(**add_db)
 apero_flat.set_kwarg(**badfile)
 apero_flat.set_kwarg(**dobad)
@@ -501,16 +501,16 @@ apero_thermal.recipe_type = 'recipe'
 apero_thermal.recipe_kind = 'calib-night'
 # TODO: Need to add out_thermal_e2ds_sky
 apero_thermal.set_outputs(THERMAL_E2DS_FILE=files.out_ext_e2dsff,
-                        THERMALI_FILE=files.out_thermal_e2ds_int,
-                        THERMALT_FILE=files.out_thermal_e2ds_tel)
+                          THERMALI_FILE=files.out_thermal_e2ds_int,
+                          THERMALT_FILE=files.out_thermal_e2ds_tel)
 apero_thermal.set_arg(pos=0, **obs_dir)
 # TODO: Need to add files.pp_dark_dark_sky
 apero_thermal.set_arg(name='files', dtype='files', pos='1+',
-                    files=[files.pp_dark_dark_int, files.pp_dark_dark_tel],
-                    filelogic='exclusive',
-                    helpstr=(textentry('FILES_HELP') +
-                             textentry('EXTRACT_FILES_HELP')),
-                    limit=1)
+                      files=[files.pp_dark_dark_int, files.pp_dark_dark_tel],
+                      filelogic='exclusive',
+                      helpstr=(textentry('FILES_HELP') +
+                               textentry('EXTRACT_FILES_HELP')),
+                      limit=1)
 apero_thermal.set_kwarg(**add_db)
 apero_thermal.set_kwarg(**badfile)
 apero_thermal.set_kwarg(**dobad)
@@ -530,8 +530,8 @@ apero_thermal.set_kwarg(**shapeyfile)
 apero_thermal.set_kwarg(**shapelfile)
 apero_thermal.set_kwarg(**wavefile)
 apero_thermal.set_kwarg(name='--forceext', dtype='bool', default=False,
-                      default_ref='THERMAL_ALWAYS_EXTRACT',
-                      helpstr='THERMAL_EXTRACT_HELP')
+                        default_ref='THERMAL_ALWAYS_EXTRACT',
+                        helpstr='THERMAL_EXTRACT_HELP')
 apero_thermal.group_func = grouping.group_by_dirname
 apero_thermal.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -553,10 +553,10 @@ apero_leak_master.epilog = textentry('LEAKM_EXAMPLE')
 apero_leak_master.recipe_type = 'recipe'
 apero_leak_master.recipe_kind = 'calib-master'
 apero_leak_master.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2dsff,
-                            LEAK_MASTER=files.out_leak_master)
+                              LEAK_MASTER=files.out_leak_master)
 apero_leak_master.set_arg(pos=0, **obs_dir)
 apero_leak_master.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
-                          helpstr=textentry('LEAKM_HELP_FILETYPE'))
+                            helpstr=textentry('LEAKM_HELP_FILETYPE'))
 apero_leak_master.set_kwarg(**add_db)
 apero_leak_master.set_kwarg(**plot)
 apero_leak_master.group_func = grouping.no_group
@@ -579,20 +579,20 @@ apero_leak.epilog = textentry('LEAK_EXAMPLE')
 apero_leak.recipe_type = 'recipe'
 apero_leak.recipe_kind = 'leak'
 apero_leak.set_outputs(E2DS_FILE=files.out_ext_e2ds,
-                     E2DSFF_FILE=files.out_ext_e2dsff,
-                     E2DSLL_FILE=files.out_ext_e2dsll,
-                     S1D_W_FILE=files.out_ext_s1d_w,
-                     S1D_V_FILE=files.out_ext_s1d_v)
+                       E2DSFF_FILE=files.out_ext_e2dsff,
+                       E2DSLL_FILE=files.out_ext_e2dsll,
+                       S1D_W_FILE=files.out_ext_s1d_w,
+                       S1D_V_FILE=files.out_ext_s1d_v)
 apero_leak.set_arg(pos=0, **obs_dir)
 apero_leak.set_arg(name='files', dtype='files', pos='1+',
-                 files=[files.out_ext_e2dsff],
-                 helpstr=textentry('FILES_HELP') + textentry('LEAK_FILES_HELP'),
-                 limit=1)
+                   files=[files.out_ext_e2dsff],
+                   helpstr=textentry('FILES_HELP') + textentry('LEAK_FILES_HELP'),
+                   limit=1)
 apero_leak.set_kwarg(**add_db)
 apero_leak.set_kwarg(**plot)
 apero_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
-                   files=[files.out_leak_master],
-                   helpstr=textentry('LEAK_LEAKFILE_HELP'))
+                     files=[files.out_leak_master],
+                     helpstr=textentry('LEAK_LEAKFILE_HELP'))
 apero_leak.group_func = grouping.group_individually
 apero_leak.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -613,31 +613,31 @@ apero_extract.epilog = textentry('EXTRACT_EXAMPLE')
 apero_extract.recipe_type = 'recipe'
 apero_extract.recipe_kind = 'extract'
 apero_extract.set_outputs(E2DS_FILE=files.out_ext_e2ds,
-                        E2DSFF_FILE=files.out_ext_e2dsff,
-                        E2DSLL_FILE=files.out_ext_e2dsll,
-                        S1D_W_FILE=files.out_ext_s1d_w,
-                        S1D_V_FILE=files.out_ext_s1d_v,
-                        ORDERP_SFILE=files.out_orderp_straight,
-                        DEBUG_BACK=files.debug_back,
-                        EXT_FPLINES=files.out_ext_fplines,
-                        Q2DS_FILE=files.out_ql_e2ds,
-                        Q2DSFF_FILE=files.out_ql_e2dsff)
+                          E2DSFF_FILE=files.out_ext_e2dsff,
+                          E2DSLL_FILE=files.out_ext_e2dsll,
+                          S1D_W_FILE=files.out_ext_s1d_w,
+                          S1D_V_FILE=files.out_ext_s1d_v,
+                          ORDERP_SFILE=files.out_orderp_straight,
+                          DEBUG_BACK=files.debug_back,
+                          EXT_FPLINES=files.out_ext_fplines,
+                          Q2DS_FILE=files.out_ql_e2ds,
+                          Q2DSFF_FILE=files.out_ql_e2dsff)
 apero_extract.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
-                            'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
-                            'THERMAL_BACKGROUND', 'EXTRACT_SPECTRAL_ORDER1',
-                            'EXTRACT_SPECTRAL_ORDER2', 'EXTRACT_S1D',
-                            'EXTRACT_S1D_WEIGHT')
+                              'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
+                              'THERMAL_BACKGROUND', 'EXTRACT_SPECTRAL_ORDER1',
+                              'EXTRACT_SPECTRAL_ORDER2', 'EXTRACT_S1D',
+                              'EXTRACT_S1D_WEIGHT')
 apero_extract.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES',
-                              'SUM_EXTRACT_SP_ORDER', 'SUM_EXTRACT_S1D')
+                                'SUM_EXTRACT_SP_ORDER', 'SUM_EXTRACT_S1D')
 apero_extract.set_arg(pos=0, **obs_dir)
 apero_extract.set_arg(name='files', dtype='files', pos='1+',
-                    files=[files.pp_file],
-                    helpstr=(textentry('FILES_HELP') +
-                             textentry('EXTRACT_FILES_HELP')),
-                    limit=1)
+                      files=[files.pp_file],
+                      helpstr=(textentry('FILES_HELP') +
+                               textentry('EXTRACT_FILES_HELP')),
+                      limit=1)
 apero_extract.set_kwarg(name='--quicklook', dtype='bool', default=False,
-                      helpstr=textentry('QUICK_LOOK_EXT_HELP'),
-                      default_ref='EXT_QUICK_LOOK')
+                        helpstr=textentry('QUICK_LOOK_EXT_HELP'),
+                        default_ref='EXT_QUICK_LOOK')
 apero_extract.set_kwarg(**badfile)
 apero_extract.set_kwarg(**dobad)
 apero_extract.set_kwarg(**backsub)
@@ -659,8 +659,8 @@ apero_extract.set_kwarg(**shapexfile)
 apero_extract.set_kwarg(**shapeyfile)
 apero_extract.set_kwarg(**shapelfile)
 apero_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
-                      helpstr=textentry('THERMAL_HELP'),
-                      default_ref='THERMAL_CORRECT')
+                        helpstr=textentry('THERMAL_HELP'),
+                        default_ref='THERMAL_CORRECT')
 apero_extract.set_kwarg(**thermalfile)
 apero_extract.set_kwarg(**wavefile)
 apero_extract.group_func = grouping.group_individually
@@ -683,27 +683,27 @@ apero_wave_master.epilog = textentry('WAVE_EXAMPLE')
 apero_wave_master.recipe_type = 'recipe'
 apero_wave_master.recipe_kind = 'calib-master'
 apero_wave_master.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
-                            WAVESOL_MASTER=files.out_wavem_fp,
-                            WAVEM_CAVITY=files.out_wavem_cavity,
-                            WAVEM_HCLIST=files.out_wave_hclist_master,
-                            WAVEM_FPLIST=files.out_wave_fplist_master,
-                            WAVEM_RES=files.out_wavem_res,
-                            CCF_RV=files.out_ccf_fits)
+                              WAVESOL_MASTER=files.out_wavem_fp,
+                              WAVEM_CAVITY=files.out_wavem_cavity,
+                              WAVEM_HCLIST=files.out_wave_hclist_master,
+                              WAVEM_FPLIST=files.out_wave_fplist_master,
+                              WAVEM_RES=files.out_wavem_res,
+                              CCF_RV=files.out_ccf_fits)
 apero_wave_master.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
-                                'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
-                                'WAVEREF_EXPECTED', 'EXTRACT_S1D',
-                                'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
-                                'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
+                                  'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
+                                  'WAVEREF_EXPECTED', 'EXTRACT_S1D',
+                                  'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
+                                  'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 apero_wave_master.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
 apero_wave_master.set_arg(pos=0, **obs_dir)
 apero_wave_master.set_kwarg(name='--hcfiles', dtype='files',
-                          files=[files.pp_hc1_hc1],
-                          filelogic='exclusive', required=True,
-                          helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
+                            files=[files.pp_hc1_hc1],
+                            filelogic='exclusive', required=True,
+                            helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
 apero_wave_master.set_kwarg(name='--fpfiles', dtype='files',
-                          files=[files.pp_fp_fp],
-                          filelogic='exclusive', required=True,
-                          helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
+                            files=[files.pp_fp_fp],
+                            filelogic='exclusive', required=True,
+                            helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
 apero_wave_master.set_kwarg(**add_db)
 apero_wave_master.set_kwarg(**badfile)
 apero_wave_master.set_kwarg(**dobad)
@@ -724,11 +724,11 @@ apero_wave_master.set_kwarg(**shapeyfile)
 apero_wave_master.set_kwarg(**shapelfile)
 apero_wave_master.set_kwarg(**wavefile)
 apero_wave_master.set_kwarg(name='--forceext', dtype='bool',
-                          default_ref='WAVE_ALWAYS_EXTRACT',
-                          helpstr='WAVE_EXTRACT_HELP')
+                            default_ref='WAVE_ALWAYS_EXTRACT',
+                            helpstr='WAVE_EXTRACT_HELP')
 apero_wave_master.set_kwarg(name='--cavityfile', dtype='file', default='None',
-                          files=[files.out_wavem_cavity],
-                          helpstr=textentry('WAVEM_CAVFILE_HELP'))
+                            files=[files.out_wavem_cavity],
+                            helpstr=textentry('WAVEM_CAVFILE_HELP'))
 apero_wave_master.group_func = grouping.group_by_dirname
 apero_wave_master.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -749,25 +749,25 @@ apero_wave_night.epilog = textentry('WAVE_EXAMPLE')
 apero_wave_night.recipe_type = 'recipe'
 apero_wave_night.recipe_kind = 'calib-night'
 apero_wave_night.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
-                           WAVEMAP_NIGHT=files.out_wave_night,
-                           WAVE_HCLIST=files.out_wave_hclist,
-                           WAVE_FPLIST=files.out_wave_fplist,
-                           CCF_RV=files.out_ccf_fits)
+                             WAVEMAP_NIGHT=files.out_wave_night,
+                             WAVE_HCLIST=files.out_wave_hclist,
+                             WAVE_FPLIST=files.out_wave_fplist,
+                             CCF_RV=files.out_ccf_fits)
 apero_wave_night.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
-                               'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
-                               'WAVEREF_EXPECTED', 'EXTRACT_S1D',
-                               'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
-                               'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
+                                 'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
+                                 'WAVEREF_EXPECTED', 'EXTRACT_S1D',
+                                 'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
+                                 'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 apero_wave_night.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
 apero_wave_night.set_arg(pos=0, **obs_dir)
 apero_wave_night.set_kwarg(name='--hcfiles', dtype='files',
-                         files=[files.pp_hc1_hc1],
-                         filelogic='exclusive', required=True,
-                         helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
+                           files=[files.pp_hc1_hc1],
+                           filelogic='exclusive', required=True,
+                           helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
 apero_wave_night.set_kwarg(name='--fpfiles', dtype='files',
-                         files=[files.pp_fp_fp],
-                         filelogic='exclusive', required=True,
-                         helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
+                           files=[files.pp_fp_fp],
+                           filelogic='exclusive', required=True,
+                           helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
 apero_wave_night.set_kwarg(**add_db)
 apero_wave_night.set_kwarg(**badfile)
 apero_wave_night.set_kwarg(**dobad)
@@ -788,8 +788,8 @@ apero_wave_night.set_kwarg(**shapeyfile)
 apero_wave_night.set_kwarg(**shapelfile)
 apero_wave_night.set_kwarg(**wavefile)
 apero_wave_night.set_kwarg(name='--forceext', dtype='bool',
-                         default_ref='WAVE_ALWAYS_EXTRACT',
-                         helpstr='WAVE_EXTRACT_HELP')
+                           default_ref='WAVE_ALWAYS_EXTRACT',
+                           helpstr='WAVE_EXTRACT_HELP')
 apero_wave_night.group_func = grouping.group_by_dirname
 apero_wave_night.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -811,27 +811,27 @@ apero_ccf.recipe_type = 'recipe'
 apero_ccf.recipe_kind = 'rv'
 apero_ccf.set_outputs(CCF_RV=files.out_ccf_fits)
 apero_ccf.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP', 'CCF_SWAVE_REF',
-                        'CCF_PHOTON_UNCERT')
+                          'CCF_PHOTON_UNCERT')
 apero_ccf.set_summary_plots('SUM_CCF_PHOTON_UNCERT', 'SUM_CCF_RV_FIT')
 apero_ccf.set_arg(pos=0, **obs_dir)
 apero_ccf.set_arg(name='files', dtype='files', pos='1+',
-                files=[files.out_ext_e2ds, files.out_ext_e2dsff,
-                       files.out_tellu_obj], filelogic='exclusive',
-                helpstr=textentry('FILES_HELP') + textentry('CCF_FILES_HELP'),
-                limit=1)
+                  files=[files.out_ext_e2ds, files.out_ext_e2dsff,
+                         files.out_tellu_obj], filelogic='exclusive',
+                  helpstr=textentry('FILES_HELP') + textentry('CCF_FILES_HELP'),
+                  limit=1)
 apero_ccf.set_kwarg(name='--mask', dtype='file', default_ref='CCF_DEFAULT_MASK',
-                  helpstr=textentry('CCF_MASK_HELP'),
-                  files=files.other_ccf_mask_file)
+                    helpstr=textentry('CCF_MASK_HELP'),
+                    files=files.other_ccf_mask_file)
 apero_ccf.set_kwarg(name='--rv', dtype=float, default_ref='CCF_NO_RV_VAL',
-                  helpstr=textentry('CCF_RV_HELP'))
+                    helpstr=textentry('CCF_RV_HELP'))
 apero_ccf.set_kwarg(name='--width', dtype=float, default_ref='CCF_DEFAULT_WIDTH',
-                  helpstr=textentry('CCF_WIDTH_HELP'))
+                    helpstr=textentry('CCF_WIDTH_HELP'))
 apero_ccf.set_kwarg(name='--step', dtype=float, default_ref='CCF_DEFAULT_STEP',
-                  helpstr=textentry('CCF_STEP_HELP'))
+                    helpstr=textentry('CCF_STEP_HELP'))
 apero_ccf.set_kwarg(name='--masknormmode', dtype=str,
-                  default_ref='CCF_MASK_NORMALIZATION',
-                  options=['None', 'all', 'order'],
-                  helpstr=textentry('CCF_MASK_NORM_HELP'))
+                    default_ref='CCF_MASK_NORMALIZATION',
+                    options=['None', 'all', 'order'],
+                    helpstr=textentry('CCF_MASK_NORM_HELP'))
 apero_ccf.set_kwarg(**add_db)
 apero_ccf.set_kwarg(**blazefile)
 apero_ccf.set_kwarg(**plot)
@@ -855,29 +855,29 @@ apero_mk_tellu.epilog = textentry('MKTELL_EXAMPLE')
 apero_mk_tellu.recipe_type = 'recipe'
 apero_mk_tellu.recipe_kind = 'tellu-hotstar'
 apero_mk_tellu.set_outputs(TELLU_CONV=files.out_tellu_conv,
-                         TELLU_TRANS=files.out_tellu_trans,
-                         TELLU_PCLEAN=files.out_tellu_pclean)
+                           TELLU_TRANS=files.out_tellu_trans,
+                           TELLU_PCLEAN=files.out_tellu_pclean)
 apero_mk_tellu.set_debug_plots('MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2',
-                             'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
-                             'TELLUP_CLEAN_OH')
+                               'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
+                               'TELLUP_CLEAN_OH')
 apero_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX',
-                               'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
+                                 'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
 apero_mk_tellu.set_arg(pos=0, **obs_dir)
 apero_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
-                     files=[files.out_ext_e2ds, files.out_ext_e2dsff],
-                     filelogic='exclusive',
-                     helpstr=(textentry('FILES_HELP') +
-                              textentry('MKTELL_FILES_HELP')),
-                     limit=1)
+                       files=[files.out_ext_e2ds, files.out_ext_e2dsff],
+                       filelogic='exclusive',
+                       helpstr=(textentry('FILES_HELP') +
+                                textentry('MKTELL_FILES_HELP')),
+                       limit=1)
 apero_mk_tellu.set_kwarg(**add_db)
 apero_mk_tellu.set_kwarg(**blazefile)
 apero_mk_tellu.set_kwarg(**plot)
 apero_mk_tellu.set_kwarg(**wavefile)
 apero_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
-                       helpstr=textentry('USE_TEMP_HELP'))
+                         helpstr=textentry('USE_TEMP_HELP'))
 apero_mk_tellu.set_kwarg(name='--template', dtype='file', default='None',
-                       files=[files.out_tellu_template],
-                       helpstr=textentry('TEMPLATE_FILE_HELP'))
+                         files=[files.out_tellu_template],
+                         helpstr=textentry('TEMPLATE_FILE_HELP'))
 apero_mk_tellu.group_func = grouping.group_individually
 apero_mk_tellu.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -900,18 +900,18 @@ apero_mk_tellu_db.description = textentry('MKTELLDB_DESC')
 apero_mk_tellu_db.epilog = textentry('MKTELLDB_EXAMPLE')
 apero_mk_tellu_db.set_outputs()
 apero_mk_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
-                          helpstr=textentry('MKTELLDB_CORES'))
+                            helpstr=textentry('MKTELLDB_CORES'))
 apero_mk_tellu_db.set_kwarg(name='--filetype', dtype=str,
-                          default_ref='TELLURIC_FILETYPE',
-                          helpstr=textentry('MKTELLDB_FILETYPE'),
-                          options=['EXT_E2DS', 'EXT_E2DS_FF'])
+                            default_ref='TELLURIC_FILETYPE',
+                            helpstr=textentry('MKTELLDB_FILETYPE'),
+                            options=['EXT_E2DS', 'EXT_E2DS_FF'])
 apero_mk_tellu_db.set_kwarg(name='--fiber', dtype=str,
-                          default_ref='TELLURIC_FIBER_TYPE',
-                          helpstr=textentry('MKTELLDB_FIBER'),
-                          options=['AB', 'A', 'B', 'C'])
+                            default_ref='TELLURIC_FIBER_TYPE',
+                            helpstr=textentry('MKTELLDB_FIBER'),
+                            options=['AB', 'A', 'B', 'C'])
 apero_mk_tellu_db.set_kwarg(name='--test', dtype=str, default='None',
-                          options=['True', 'False', '1', '0', 'None'],
-                          helpstr=textentry('PROCESS_TEST_HELP'))
+                            options=['True', 'False', '1', '0', 'None'],
+                            helpstr=textentry('PROCESS_TEST_HELP'))
 apero_mk_tellu_db.set_kwarg(**add_db)
 apero_mk_tellu_db.set_kwarg(**blazefile)
 apero_mk_tellu_db.set_kwarg(**plot)
@@ -936,35 +936,35 @@ apero_fit_tellu.epilog = textentry('FTELLU_EXAMPLE')
 apero_fit_tellu.recipe_type = 'recipe'
 apero_fit_tellu.recipe_kind = 'tellu'
 apero_fit_tellu.set_outputs(ABSO_NPY=files.out_tellu_abso_npy,
-                          ABSO1_NPY=files.out_tellu_abso1_npy,
-                          TELLU_OBJ=files.out_tellu_obj,
-                          SC1D_W_FILE=files.out_tellu_sc1d_w,
-                          SC1D_V_FILE=files.out_tellu_sc1d_v,
-                          TELLU_RECON=files.out_tellu_recon,
-                          RC1D_W_FILE=files.out_tellu_rc1d_w,
-                          RC1D_V_FILE=files.out_tellu_rc1d_v,
-                          TELLU_PCLEAN=files.out_tellu_pclean)
+                            ABSO1_NPY=files.out_tellu_abso1_npy,
+                            TELLU_OBJ=files.out_tellu_obj,
+                            SC1D_W_FILE=files.out_tellu_sc1d_w,
+                            SC1D_V_FILE=files.out_tellu_sc1d_v,
+                            TELLU_RECON=files.out_tellu_recon,
+                            RC1D_W_FILE=files.out_tellu_rc1d_w,
+                            RC1D_V_FILE=files.out_tellu_rc1d_v,
+                            TELLU_PCLEAN=files.out_tellu_pclean)
 apero_fit_tellu.set_debug_plots('EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT',
-                              'FTELLU_PCA_COMP1', 'FTELLU_PCA_COMP2',
-                              'FTELLU_RECON_SPLINE1', 'FTELLU_RECON_SPLINE2',
-                              'FTELLU_WAVE_SHIFT1', 'FTELLU_WAVE_SHIFT2',
-                              'FTELLU_RECON_ABSO1', 'FTELLU_RECON_ABSO2',
-                              'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
-                              'TELLUP_CLEAN_OH')
+                                'FTELLU_PCA_COMP1', 'FTELLU_PCA_COMP2',
+                                'FTELLU_RECON_SPLINE1', 'FTELLU_RECON_SPLINE2',
+                                'FTELLU_WAVE_SHIFT1', 'FTELLU_WAVE_SHIFT2',
+                                'FTELLU_RECON_ABSO1', 'FTELLU_RECON_ABSO2',
+                                'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
+                                'TELLUP_CLEAN_OH')
 apero_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO',
-                                'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
+                                  'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
 apero_fit_tellu.set_arg(pos=0, **obs_dir)
 apero_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
-                      files=[files.out_ext_e2ds, files.out_ext_e2dsff],
-                      filelogic='exclusive',
-                      helpstr=(textentry('FILES_HELP')
-                               + textentry('FTELLU_FILES_HELP')),
-                      limit=1)
+                        files=[files.out_ext_e2ds, files.out_ext_e2dsff],
+                        filelogic='exclusive',
+                        helpstr=(textentry('FILES_HELP')
+                                 + textentry('FTELLU_FILES_HELP')),
+                        limit=1)
 apero_fit_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
-                        helpstr=textentry('USE_TEMP_HELP'))
+                          helpstr=textentry('USE_TEMP_HELP'))
 apero_fit_tellu.set_kwarg(name='--template', dtype='file', default='None',
-                        files=[files.out_tellu_template],
-                        helpstr=textentry('TEMPLATE_FILE_HELP'))
+                          files=[files.out_tellu_template],
+                          helpstr=textentry('TEMPLATE_FILE_HELP'))
 apero_fit_tellu.set_kwarg(**add_db)
 apero_fit_tellu.set_kwarg(**blazefile)
 apero_fit_tellu.set_kwarg(**plot)
@@ -991,21 +991,21 @@ apero_fit_tellu_db.recipe_type = 'recipe'
 apero_fit_tellu_db.recipe_kind = 'tellu-science'
 apero_fit_tellu_db.set_outputs()
 apero_fit_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
-                           helpstr=textentry('FTELLUDB_CORES'))
+                             helpstr=textentry('FTELLUDB_CORES'))
 apero_fit_tellu_db.set_kwarg(name='--filetype', dtype=str,
-                           default_ref='TELLURIC_FILETYPE',
-                           helpstr=textentry('FTELLUDB_FILETYPE'))
+                             default_ref='TELLURIC_FILETYPE',
+                             helpstr=textentry('FTELLUDB_FILETYPE'))
 apero_fit_tellu_db.set_kwarg(name='--fiber', dtype=str,
-                           default_ref='TELLURIC_FIBER_TYPE',
-                           helpstr=textentry('FTELLUDB_FIBER'))
+                             default_ref='TELLURIC_FIBER_TYPE',
+                             helpstr=textentry('FTELLUDB_FIBER'))
 apero_fit_tellu_db.set_kwarg(name='--objname', dtype=str, default='None',
-                           helpstr=textentry('FTELLUDB_OBJNAME'))
+                             helpstr=textentry('FTELLUDB_OBJNAME'))
 apero_fit_tellu_db.set_kwarg(name='--dprtype', dtype=str,
-                           default_ref='TELLU_ALLOWED_DPRTYPES',
-                           helpstr=textentry('FTELLUDB_DPRTYPES'))
+                             default_ref='TELLU_ALLOWED_DPRTYPES',
+                             helpstr=textentry('FTELLUDB_DPRTYPES'))
 apero_fit_tellu_db.set_kwarg(name='--test', dtype=str, default='None',
-                           options=['True', 'False', '1', '0', 'None'],
-                           helpstr=textentry('PROCESS_TEST_HELP'))
+                             options=['True', 'False', '1', '0', 'None'],
+                             helpstr=textentry('PROCESS_TEST_HELP'))
 apero_fit_tellu_db.set_kwarg(**add_db)
 apero_fit_tellu_db.set_kwarg(**add_db)
 apero_fit_tellu_db.set_kwarg(**plot)
@@ -1030,22 +1030,22 @@ apero_mk_template.epilog = textentry('MKTEMP_EXAMPLE')
 apero_mk_template.recipe_type = 'recipe'
 apero_mk_template.recipe_kind = 'tellu'
 apero_mk_template.set_outputs(TELLU_TEMP=files.out_tellu_template,
-                            TELLU_BIGCUBE=files.out_tellu_bigcube,
-                            TELLU_BIGCUBE0=files.out_tellu_bigcube0,
-                            TELLU_TEMP_S1D=files.out_tellu_s1d_template,
-                            TELLU_BIGCUBE_S1D=files.out_tellu_s1d_bigcube)
+                              TELLU_BIGCUBE=files.out_tellu_bigcube,
+                              TELLU_BIGCUBE0=files.out_tellu_bigcube0,
+                              TELLU_TEMP_S1D=files.out_tellu_s1d_template,
+                              TELLU_BIGCUBE_S1D=files.out_tellu_s1d_bigcube)
 apero_mk_template.set_debug_plots('EXTRACT_S1D', 'MKTEMP_BERV_COV')
 apero_mk_template.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_MKTEMP_BERV_COV')
 apero_mk_template.set_arg(name='objname', pos=0, dtype=str,
-                        helpstr=textentry('MKTEMP_OBJNAME_HELP'))
+                          helpstr=textentry('MKTEMP_OBJNAME_HELP'))
 apero_mk_template.set_kwarg(name='--filetype', dtype=str,
-                          default_ref='MKTEMPLATE_FILETYPE',
-                          helpstr=textentry('MKTEMP_FILETYPE'),
-                          options=['EXT_E2DS', 'EXT_E2DS_FF'])
+                            default_ref='MKTEMPLATE_FILETYPE',
+                            helpstr=textentry('MKTEMP_FILETYPE'),
+                            options=['EXT_E2DS', 'EXT_E2DS_FF'])
 apero_mk_template.set_kwarg(name='--fiber', dtype=str,
-                          default_ref='MKTEMPLATE_FIBER_TYPE',
-                          helpstr=textentry('MKTEMP_FIBER'),
-                          options=['AB', 'A', 'B', 'C'])
+                            default_ref='MKTEMPLATE_FIBER_TYPE',
+                            helpstr=textentry('MKTEMP_FIBER'),
+                            options=['AB', 'A', 'B', 'C'])
 apero_mk_template.set_kwarg(**add_db)
 apero_mk_template.set_kwarg(**blazefile)
 apero_mk_template.set_kwarg(**plot)
@@ -1070,54 +1070,54 @@ apero_pol.epilog = textentry('FTELLU_EXAMPLE')
 apero_pol.recipe_type = 'recipe'
 apero_pol.recipe_kind = 'polar'
 apero_pol.set_outputs(POL_DEG_FILE=files.out_pol_deg,
-                    POL_NULL1=files.out_pol_null1,
-                    POL_NULL2=files.out_pol_null2,
-                    POL_STOKESI=files.out_pol_stokesi,
-                    POL_LSD=files.out_pol_lsd,
-                    S1DW_POL=files.out_pol_s1dw,
-                    S1DV_POL=files.out_pol_s1dv,
-                    S1DW_NULL1=files.out_null1_s1dw,
-                    S1DV_NULL1=files.out_null1_s1dv,
-                    S1DW_NULL2=files.out_null2_s1dw,
-                    S1DV_NULL2=files.out_null2_s1dv,
-                    S1DW_STOKESI=files.out_stokesi_s1dw,
-                    S1DV_STOKESI=files.out_stokesi_s1dv)
+                      POL_NULL1=files.out_pol_null1,
+                      POL_NULL2=files.out_pol_null2,
+                      POL_STOKESI=files.out_pol_stokesi,
+                      POL_LSD=files.out_pol_lsd,
+                      S1DW_POL=files.out_pol_s1dw,
+                      S1DV_POL=files.out_pol_s1dv,
+                      S1DW_NULL1=files.out_null1_s1dw,
+                      S1DV_NULL1=files.out_null1_s1dv,
+                      S1DW_NULL2=files.out_null2_s1dw,
+                      S1DV_NULL2=files.out_null2_s1dv,
+                      S1DW_STOKESI=files.out_stokesi_s1dw,
+                      S1DV_STOKESI=files.out_stokesi_s1dv)
 apero_pol.set_debug_plots('PLOT_POLAR_FIT_CONT', 'POLAR_CONTINUUM',
-                        'POLAR_RESULTS', 'POLAR_STOKES_I', 'POLAR_LSD',
-                        'EXTRACT_S1D_WEIGHT', 'EXTRACT_S1D')
+                          'POLAR_RESULTS', 'POLAR_STOKES_I', 'POLAR_LSD',
+                          'EXTRACT_S1D_WEIGHT', 'EXTRACT_S1D')
 apero_pol.set_summary_plots('SUM_EXTRACT_S1D')
 apero_pol.set_arg(pos=0, **obs_dir)
 apero_pol.set_kwarg(name='--exposures', dtype='files',
-                  files=[files.out_ext_e2dsff, files.out_tellu_obj],
-                  filelogic='exclusive', default='None',
-                  helpstr='List of exposures to add (order determined by '
-                          'recipe)', reprocess=True)
+                    files=[files.out_ext_e2dsff, files.out_tellu_obj],
+                    filelogic='exclusive', default='None',
+                    helpstr='List of exposures to add (order determined by '
+                            'recipe)', reprocess=True)
 apero_pol.set_kwarg(name='--exp1', altnames=['-1'], dtype='file',
-                  files=[files.out_ext_e2dsff, files.out_tellu_obj],
-                  filelogic='exclusive', default='None',
-                  helpstr='Override input exposure 1')
+                    files=[files.out_ext_e2dsff, files.out_tellu_obj],
+                    filelogic='exclusive', default='None',
+                    helpstr='Override input exposure 1')
 apero_pol.set_kwarg(name='--exp2', altnames=['-2'], dtype='file',
-                  files=[files.out_ext_e2dsff, files.out_tellu_obj],
-                  filelogic='exclusive', default='None',
-                  helpstr='Override input exposure 2')
+                    files=[files.out_ext_e2dsff, files.out_tellu_obj],
+                    filelogic='exclusive', default='None',
+                    helpstr='Override input exposure 2')
 apero_pol.set_kwarg(name='--exp3', altnames=['-3'], dtype='file',
-                  files=[files.out_ext_e2dsff, files.out_tellu_obj],
-                  filelogic='exclusive', default='None',
-                  helpstr='Override input exposure 3')
+                    files=[files.out_ext_e2dsff, files.out_tellu_obj],
+                    filelogic='exclusive', default='None',
+                    helpstr='Override input exposure 3')
 apero_pol.set_kwarg(name='--exp4', altnames=['-4'], dtype='file',
-                  files=[files.out_ext_e2dsff, files.out_tellu_obj],
-                  filelogic='exclusive', default='None',
-                  helpstr='Override input exposure 4')
+                    files=[files.out_ext_e2dsff, files.out_tellu_obj],
+                    filelogic='exclusive', default='None',
+                    helpstr='Override input exposure 4')
 apero_pol.set_kwarg(name='--objrv', dtype=float, default=0.0,
-                  helpstr='Object radial velocity [km/s]')
+                    helpstr='Object radial velocity [km/s]')
 apero_pol.set_kwarg(name='--lsdmask', altnames=['-m'], dtype=str,
-                  helpstr='LSD mask', default='None')
+                    helpstr='LSD mask', default='None')
 apero_pol.set_kwarg(name='--output', altnames=['-o'], dtype=str,
-                  helpstr='Output file', default='None')
+                    helpstr='Output file', default='None')
 apero_pol.set_kwarg(name='--output_lsd', altnames=['-l'], dtype=str,
-                  helpstr='Output LSD file', default='None')
+                    helpstr='Output LSD file', default='None')
 apero_pol.set_kwarg(name='--lsd', altnames=['-L'], dtype='switch',
-                  default=False, helpstr='Run LSD analysis')
+                    default=False, helpstr='Run LSD analysis')
 apero_pol.set_kwarg(**blazefile)
 apero_pol.set_kwarg(**plot)
 apero_pol.set_kwarg(**wavefile)
@@ -1143,16 +1143,16 @@ apero_postprocess.recipe_type = 'recipe'
 apero_postprocess.recipe_kind = 'post'
 apero_postprocess.set_arg(pos=0, **obs_dir)
 apero_postprocess.set_arg(name='files', dtype='files', pos='1+',
-                      files=[files.pp_file],
-                      filelogic='exclusive',
-                      helpstr=(textentry('FILES_HELP')),
-                      limit=1)
+                          files=[files.pp_file],
+                          filelogic='exclusive',
+                          helpstr=(textentry('FILES_HELP')),
+                          limit=1)
 apero_postprocess.set_kwarg(name='--overwrite', dtype='switch',
-                        default_ref='POST_OVERWRITE',
-                        helpstr=textentry('OUT_OVERWRITE_HELP'))
+                            default_ref='POST_OVERWRITE',
+                            helpstr=textentry('OUT_OVERWRITE_HELP'))
 apero_postprocess.set_kwarg(name='--clear', dtype='switch',
-                        default_ref='POST_CLEAR_REDUCED',
-                        helpstr=textentry('OUT_CLEAR_HELP'))
+                            default_ref='POST_CLEAR_REDUCED',
+                            helpstr=textentry('OUT_CLEAR_HELP'))
 apero_postprocess.group_func = grouping.group_individually
 apero_postprocess.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -1177,45 +1177,45 @@ apero_wave_master_old.epilog = textentry('WAVE_EXAMPLE')
 apero_wave_master_old.recipe_type = 'recipe'
 apero_wave_master_old.recipe_kind = 'calib-master'
 apero_wave_master_old.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
-                                WAVE_HCLL=files.out_wave_hcline,
-                                WAVEM_HCRES=files.out_wavem_hcres,
-                                WAVEM_HCMAP=files.out_wavem_hc,
-                                WAVEM_FPMAP=files.out_wavem_fp,
-                                WAVEM_FPRESTAB=files.out_wavem_res_table,
-                                WAVEM_FPLLTAB=files.out_wavem_ll_table,
-                                WAVEM_HCLIST=files.out_wave_hclist_master,
-                                WAVEM_FPLIST=files.out_wave_fplist_master,
-                                CCF_RV=files.out_ccf_fits)
+                                  WAVE_HCLL=files.out_wave_hcline,
+                                  WAVEM_HCRES=files.out_wavem_hcres,
+                                  WAVEM_HCMAP=files.out_wavem_hc,
+                                  WAVEM_FPMAP=files.out_wavem_fp,
+                                  WAVEM_FPRESTAB=files.out_wavem_res_table,
+                                  WAVEM_FPLLTAB=files.out_wavem_ll_table,
+                                  WAVEM_HCLIST=files.out_wave_hclist_master,
+                                  WAVEM_FPLIST=files.out_wave_fplist_master,
+                                  CCF_RV=files.out_ccf_fits)
 apero_wave_master_old.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
-                                    'WAVE_HC_TFIT_GRID', 'WAVE_HC_RESMAP',
-                                    'WAVE_LITTROW_CHECK1', 'WAVE_LITTROW_EXTRAP1',
-                                    'WAVE_LITTROW_CHECK2', 'WAVE_LITTROW_EXTRAP2',
-                                    'WAVE_FP_FINAL_ORDER', 'WAVE_FP_LWID_OFFSET',
-                                    'WAVE_FP_WAVE_RES', 'WAVE_FP_M_X_RES',
-                                    'WAVE_FP_IPT_CWID_1MHC',
-                                    'WAVE_FP_IPT_CWID_LLHC',
-                                    'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
-                                    'WAVE_FP_SINGLE_ORDER',
-                                    'CCF_RV_FIT', 'CCF_RV_FIT_LOOP',
-                                    'WAVEREF_EXPECTED', 'EXTRACT_S1D',
-                                    'EXTRACT_S1D_WEIGHT', 'WAVE_FIBER_COMPARISON',
-                                    'WAVE_FIBER_COMP', 'WAVENIGHT_ITERPLOT',
-                                    'WAVENIGHT_HISTPLOT')
+                                      'WAVE_HC_TFIT_GRID', 'WAVE_HC_RESMAP',
+                                      'WAVE_LITTROW_CHECK1', 'WAVE_LITTROW_EXTRAP1',
+                                      'WAVE_LITTROW_CHECK2', 'WAVE_LITTROW_EXTRAP2',
+                                      'WAVE_FP_FINAL_ORDER', 'WAVE_FP_LWID_OFFSET',
+                                      'WAVE_FP_WAVE_RES', 'WAVE_FP_M_X_RES',
+                                      'WAVE_FP_IPT_CWID_1MHC',
+                                      'WAVE_FP_IPT_CWID_LLHC',
+                                      'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
+                                      'WAVE_FP_SINGLE_ORDER',
+                                      'CCF_RV_FIT', 'CCF_RV_FIT_LOOP',
+                                      'WAVEREF_EXPECTED', 'EXTRACT_S1D',
+                                      'EXTRACT_S1D_WEIGHT', 'WAVE_FIBER_COMPARISON',
+                                      'WAVE_FIBER_COMP', 'WAVENIGHT_ITERPLOT',
+                                      'WAVENIGHT_HISTPLOT')
 apero_wave_master_old.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
-                                      'SUM_WAVE_LITTROW_CHECK',
-                                      'SUM_WAVE_LITTROW_EXTRAP',
-                                      'SUM_CCF_RV_FIT', 'SUM_WAVE_FIBER_COMP',
-                                      'SUM_WAVENIGHT_ITERPLOT',
-                                      'SUM_WAVENIGHT_HISTPLOT', )
+                                        'SUM_WAVE_LITTROW_CHECK',
+                                        'SUM_WAVE_LITTROW_EXTRAP',
+                                        'SUM_CCF_RV_FIT', 'SUM_WAVE_FIBER_COMP',
+                                        'SUM_WAVENIGHT_ITERPLOT',
+                                        'SUM_WAVENIGHT_HISTPLOT', )
 apero_wave_master_old.set_arg(pos=0, **obs_dir)
 apero_wave_master_old.set_kwarg(name='--hcfiles', dtype='files',
-                              files=[files.pp_hc1_hc1],
-                              filelogic='exclusive', required=True,
-                              helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
+                                files=[files.pp_hc1_hc1],
+                                filelogic='exclusive', required=True,
+                                helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
 apero_wave_master_old.set_kwarg(name='--fpfiles', dtype='files',
-                              files=[files.pp_fp_fp],
-                              filelogic='exclusive', required=True,
-                              helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
+                                files=[files.pp_fp_fp],
+                                filelogic='exclusive', required=True,
+                                helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
 apero_wave_master_old.set_kwarg(**add_db)
 apero_wave_master_old.set_kwarg(**badfile)
 apero_wave_master_old.set_kwarg(**dobad)
@@ -1236,14 +1236,14 @@ apero_wave_master_old.set_kwarg(**shapeyfile)
 apero_wave_master_old.set_kwarg(**shapelfile)
 apero_wave_master_old.set_kwarg(**wavefile)
 apero_wave_master_old.set_kwarg(name='--forceext', dtype='bool',
-                              default_ref='WAVE_ALWAYS_EXTRACT',
-                              helpstr='WAVE_EXTRACT_HELP')
+                                default_ref='WAVE_ALWAYS_EXTRACT',
+                                helpstr='WAVE_EXTRACT_HELP')
 apero_wave_master_old.set_kwarg(name='--hcmode', dtype='options',
-                              helpstr=textentry('HCMODE_HELP'), options=['0'],
-                              default_ref='WAVE_MODE_HC')
+                                helpstr=textentry('HCMODE_HELP'), options=['0'],
+                                default_ref='WAVE_MODE_HC')
 apero_wave_master_old.set_kwarg(name='--fpmode', dtype='options',
-                              helpstr=textentry('FPMODE_HELP'), options=['0', '1'],
-                              default_ref='WAVE_MODE_FP')
+                                helpstr=textentry('FPMODE_HELP'), options=['0', '1'],
+                                default_ref='WAVE_MODE_FP')
 apero_wave_master_old.group_func = grouping.group_by_dirname
 apero_wave_master_old.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -1264,26 +1264,26 @@ apero_wave_night_old.epilog = textentry('WAVE_EXAMPLE')
 apero_wave_night_old.recipe_type = 'recipe'
 apero_wave_night_old.recipe_kind = 'calib-night'
 apero_wave_night_old.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
-                               WAVEMAP_NIGHT=files.out_wave_night,
-                               WAVE_HCLIST=files.out_wave_hclist,
-                               WAVE_FPLIST=files.out_wave_fplist,
-                               CCF_RV=files.out_ccf_fits)
+                                 WAVEMAP_NIGHT=files.out_wave_night,
+                                 WAVE_HCLIST=files.out_wave_hclist,
+                                 WAVE_FPLIST=files.out_wave_fplist,
+                                 CCF_RV=files.out_ccf_fits)
 apero_wave_night_old.set_debug_plots('WAVENIGHT_ITERPLOT', 'WAVENIGHT_HISTPLOT',
-                                   'WAVEREF_EXPECTED', 'CCF_RV_FIT',
-                                   'CCF_RV_FIT_LOOP', 'EXTRACT_S1D',
-                                   'EXTRACT_S1D_WEIGHT')
+                                     'WAVEREF_EXPECTED', 'CCF_RV_FIT',
+                                     'CCF_RV_FIT_LOOP', 'EXTRACT_S1D',
+                                     'EXTRACT_S1D_WEIGHT')
 apero_wave_night_old.set_summary_plots('SUM_WAVENIGHT_ITERPLOT',
-                                     'SUM_WAVENIGHT_HISTPLOT',
-                                     'SUM_CCF_RV_FIT')
+                                       'SUM_WAVENIGHT_HISTPLOT',
+                                       'SUM_CCF_RV_FIT')
 apero_wave_night_old.set_arg(pos=0, **obs_dir)
 apero_wave_night_old.set_kwarg(name='--hcfiles', dtype='files',
-                             files=[files.pp_hc1_hc1],
-                             filelogic='exclusive', required=True,
-                             helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
+                               files=[files.pp_hc1_hc1],
+                               filelogic='exclusive', required=True,
+                               helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
 apero_wave_night_old.set_kwarg(name='--fpfiles', dtype='files',
-                             files=[files.pp_fp_fp],
-                             filelogic='exclusive', required=True,
-                             helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
+                               files=[files.pp_fp_fp],
+                               filelogic='exclusive', required=True,
+                               helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
 apero_wave_night_old.set_kwarg(**add_db)
 apero_wave_night_old.set_kwarg(**badfile)
 apero_wave_night_old.set_kwarg(**dobad)
@@ -1304,8 +1304,8 @@ apero_wave_night_old.set_kwarg(**shapeyfile)
 apero_wave_night_old.set_kwarg(**shapelfile)
 apero_wave_night_old.set_kwarg(**wavefile)
 apero_wave_night_old.set_kwarg(name='--forceext', dtype='bool',
-                             default_ref='WAVE_ALWAYS_EXTRACT',
-                             helpstr='WAVE_EXTRACT_HELP')
+                               default_ref='WAVE_ALWAYS_EXTRACT',
+                               helpstr='WAVE_EXTRACT_HELP')
 apero_wave_night_old.group_func = grouping.group_by_dirname
 apero_wave_night_old.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -1460,9 +1460,9 @@ limited_seq.add(apero_dark_master, master=True)
 limited_seq.add(apero_badpix, name='BADM', master=True,
                 recipe_kind='calib-master')
 limited_seq.add(apero_loc, name='LOCMC', files=[files.pp_dark_flat], master=True,
-             recipe_kind='calib-master-C')
+                recipe_kind='calib-master-C')
 limited_seq.add(apero_loc, name='LOCMAB', files=[files.pp_flat_dark], master=True,
-             recipe_kind='calib-master-AB')
+                recipe_kind='calib-master-AB')
 limited_seq.add(apero_shape_master, master=True)
 limited_seq.add(apero_shape, name='SHAPELM', master=True,
                 recipe_kind='calib-master')
@@ -1618,9 +1618,9 @@ master_seq.add(apero_loc, name='LOCMAB', files=[files.pp_flat_dark], master=True
                recipe_kind='calib-master-AB')
 master_seq.add(apero_shape_master, master=True)
 master_seq.add(apero_shape, name='SHAPELM', master=True,
-                recipe_kind='calib-master')
+               recipe_kind='calib-master')
 master_seq.add(apero_flat, name='FLATM', master=True,
-                recipe_kind='calib-master')
+               recipe_kind='calib-master')
 master_seq.add(apero_thermal, name='THI_M', files=[files.pp_dark_dark_int],
                master=True, recipe_kind='calib-master-INT')
 master_seq.add(apero_thermal, name='THT_M', files=[files.pp_dark_dark_tel],
@@ -1763,10 +1763,10 @@ science_seq.add(apero_postprocess, files=[files.pp_file], name='SCIPOST',
 # TODO: TEST THIS
 quick_seq = drs_recipe.DrsRunSequence('quick_seq', __INSTRUMENT__)
 # extract science
-quick_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-quick',
+quick_seq.add(apero_extract, name='EXTQUICK', recipe_kind='extract-quick',
               files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
                      files.pp_polar_fp],
-              fiber='AB', arguments=dict(quicklook=True),
+              arguments=dict(quicklook=True),
               filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                            KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
                                        'POLAR_FP']))
