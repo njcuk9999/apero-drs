@@ -100,7 +100,7 @@ KW_CMPLTEXP.set(key='HIERARCH ESO TPL EXPNO',
 
 # define the total number of exposures HEADER key
 KW_NEXP = KW_NEXP.copy(__NAME__)
-KW_NEXP.set(key='HIERARCH ESO TPL NEXP ',
+KW_NEXP.set(key='HIERARCH ESO TPL NEXP',
             comment='Number of exposures within template')
 
 # define the pi name HEADER key
