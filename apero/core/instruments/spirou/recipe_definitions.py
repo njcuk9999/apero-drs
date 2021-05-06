@@ -1293,11 +1293,11 @@ full_seq.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 full_seq.add(cal_shape_master, master=True)
 full_seq.add(cal_shape, name='SHAPELM', master=True)
 full_seq.add(cal_ff, name='FLATM', master=True)
-full_seq.add(cal_leak_master, master=True)
 full_seq.add(cal_thermal, name='THI_M', files=[sf.pp_dark_dark_int],
              master=True)
 full_seq.add(cal_thermal, name='THT_M', files=[sf.pp_dark_dark_tel],
              master=True)
+full_seq.add(cal_leak_master, master=True)
 full_seq.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
              master=True)
 # night runs
@@ -1337,11 +1337,11 @@ limited_seq.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 limited_seq.add(cal_shape_master, master=True)
 limited_seq.add(cal_shape, name='SHAPELM', master=True)
 limited_seq.add(cal_ff, name='FLATM', master=True)
-limited_seq.add(cal_leak_master, master=True)
 limited_seq.add(cal_thermal, name='THI_M', files=[sf.pp_dark_dark_int],
                 master=True)
 limited_seq.add(cal_thermal, name='THT_M', files=[sf.pp_dark_dark_tel],
                 master=True)
+limited_seq.add(cal_leak_master, master=True)
 limited_seq.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
                 master=True)
 # night runs
@@ -1430,11 +1430,11 @@ master_seq.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 master_seq.add(cal_shape_master, master=True)
 master_seq.add(cal_shape, name='SHAPELM', master=True)
 master_seq.add(cal_ff, name='FLATM', master=True)
-master_seq.add(cal_leak_master, master=True)
 master_seq.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
                master=True)
 master_seq.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
                master=True)
+master_seq.add(cal_leak_master, master=True)
 master_seq.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
                master=True)
 
