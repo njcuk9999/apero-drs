@@ -1364,8 +1364,8 @@ post_e_file.add_ext('BLAZE_C', out_ff_blaze, pos=12, fiber='C',
                     block_kind='red', link='EXT_C', hlink='KW_CDBBLAZE',
                     tag='BlazeC')
 # move header keys
-post_e_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
-post_e_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
+post_e_file.add_hkey('KW_VERSION', inheader='EXT_AB', outheader='PP')
+post_e_file.add_hkey('KW_DRS_DATE_NOW', inheader='EXT_AB', outheader='PP')
 # add to post processed file set
 post_file.addset(post_e_file)
 
@@ -1376,10 +1376,12 @@ post_s_file = drs_oinput('DRS_POST_S', filetype='.fits', suffix='s.fits',
                          outfunc=out.post_file, inext='o', required=False)
 post_s_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
-                                           'POLAR_DARK']))
+                                           'POLAR_DARK']),
+                    remove_drs_hkeys=True, remove_std_hkeys=True)
 # s1d w is a composite table
 post_s_file.add_ext('S1D_W', 'table', pos=1, block_kind='red',
-                    link='PP', hlink='KW_IDENTIFIER')
+                    link='PP', hlink='KW_IDENTIFIER',
+                    extname='UniformWavelength')
 # add s1d w columns (all linked via PP file)
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='wavelength', outcol='Wave', fiber='AB',
@@ -1417,7 +1419,8 @@ post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
                        block_kind='red', clear_file=True)
 # s1d w is a composite table
 post_s_file.add_ext('S1D_V', 'table', pos=2, block_kind='red',
-                    link='PP', hlink='KW_IDENTIFIER')
+                    link='PP', hlink='KW_IDENTIFIER',
+                    extname='UniformVelocity')
 # add s1d w columns (all linked via PP file)
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='wavelength', outcol='Wave', fiber='AB',
@@ -1454,8 +1457,8 @@ post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        fiber='AB', required=False,
                        block_kind='red', clear_file=True)
 # move header keys
-post_s_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
-post_s_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
+post_s_file.add_hkey('KW_VERSION', inheader='S1D_W', outheader='PP')
+post_s_file.add_hkey('KW_DRS_DATE_NOW', inheader='S1D_W', outheader='PP')
 # add to post processed file set
 post_file.addset(post_s_file)
 
@@ -1468,7 +1471,8 @@ post_t_file = drs_oinput('DRS_POST_T', filetype='.fits', suffix='t.fits',
 # add extensions
 post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
-                                           'POLAR_DARK']))
+                                           'POLAR_DARK']),
+                    remove_drs_hkeys=True, remove_std_hkeys=True)
 post_t_file.add_ext('TELLU_AB', out_tellu_obj, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='FluxAB')
@@ -1482,8 +1486,8 @@ post_t_file.add_ext('RECON_AB', out_tellu_recon, pos=4, fiber='AB',
                     link='TELLU_AB', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='Recon')
 # move header keys
-post_t_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
-post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
+post_t_file.add_hkey('KW_VERSION', inheader='TELLU_AB', outheader='PP')
+post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='TELLU_AB', outheader='PP')
 # add to post processed file set
 post_file.addset(post_t_file)
 
@@ -1495,7 +1499,8 @@ post_v_file = drs_oinput('DRS_POST_V', filetype='.fits', suffix='v.fits',
 post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
                                            'POLAR_DARK']),
-                    clear_file=True)
+                    clear_file=True, remove_drs_hkeys=True,
+                    remove_std_hkeys=True)
 post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='CCF')
@@ -1515,7 +1520,8 @@ post_p_file = drs_oinput('DRS_POST_P', filetype='.fits', suffix='p.fits',
 # add extensions
 post_p_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK']),
-                    clear_file=True)
+                    clear_file=True, remove_drs_hkeys=True,
+                    remove_std_hkeys=True)
 post_p_file.add_ext('POL', out_pol_deg, pos=1, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='Pol', extname='POL_DEG')
@@ -1543,6 +1549,9 @@ post_p_file.add_ext('BLAZE_AB', out_ff_blaze, pos=8, fiber='AB',
 post_p_file.add_ext('POLTABLE', out_pol_deg, pos=9, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='PolTable', extname='POL_TABLE', datatype='table')
+# move header keys
+post_p_file.add_hkey('KW_VERSION', inheader='POL', outheader='PP')
+post_p_file.add_hkey('KW_DRS_DATE_NOW', inheader='POL', outheader='PP')
 
 # add to post processed file set
 post_file.addset(post_p_file)

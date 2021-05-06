@@ -246,13 +246,6 @@ def __main__(recipe, params):
             eprops = extract.extract2d(params, image2, orderp, lcoeffs2, nframes,
                                        props, inflat=flat, inblaze=blaze,
                                        fiber=fiber)
-
-            # --------------------------------------------------------------
-            # thermal correction of spectrum
-            if not quicklook:
-                eprops = extract.thermal_correction(params, recipe, header,
-                                                    props, eprops, fiber=fiber,
-                                                    database=calibdbm)
             # --------------------------------------------------------------
             if not quicklook:
                 s1dextfile = params['EXT_S1D_INTYPE']
