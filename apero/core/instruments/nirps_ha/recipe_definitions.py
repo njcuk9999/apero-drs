@@ -373,9 +373,7 @@ apero_shape_master.set_outputs(FPMASTER_FILE=files.out_shape_fpmaster,
                              DXMAP_FILE=files.out_shape_dxmap,
                              DYMAP_FILE=files.out_shape_dymap,
                              SHAPE_IN_FP_FILE=files.out_shape_debug_ifp,
-                             SHAPE_IN_HC_FILE=files.out_shape_debug_ihc,
                              SHAPE_OUT_FP_FILE=files.out_shape_debug_ofp,
-                             SHAPE_OUT_HC_FILE=files.out_shape_debug_ohc,
                              SHAPE_BDXMAP_FILE=files.out_shape_debug_bdx,
                              DEBUG_BACK=files.debug_back)
 apero_shape_master.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
@@ -425,9 +423,9 @@ apero_shape.epilog = textentry('SHAPE_EXAMPLE')
 apero_shape.recipe_type = 'recipe'
 apero_shape.recipe_kind = 'calib-night'
 apero_shape.set_outputs(LOCAL_SHAPE_FILE=files.out_shape_local,
-                      SHAPEL_IN_FP_FILE=files.out_shapel_debug_ifp,
-                      SHAPEL_OUT_FP_FILE=files.out_shapel_debug_ofp,
-                      DEBUG_BACK=files.debug_back)
+                        SHAPEL_IN_FP_FILE=files.out_shapel_debug_ifp,
+                        SHAPEL_OUT_FP_FILE=files.out_shapel_debug_ofp,
+                        DEBUG_BACK=files.debug_back)
 apero_shape.set_debug_plots('SHAPEL_ZOOM_SHIFT', 'SHAPE_LINEAR_TPARAMS')
 apero_shape.set_summary_plots('SUM_SHAPEL_ZOOM_SHIFT')
 apero_shape.set_arg(pos=0, **obs_dir)

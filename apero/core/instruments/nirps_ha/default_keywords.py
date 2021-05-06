@@ -114,10 +114,17 @@ KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
 KW_PI_NAME.set(key='HIERARCH ESO OBS PI-COI NAME',
                comment='The PI of the program')
 
-# define the raw dprtype from the telescope (if given)
+# define the instrument mode header key
+KW_INST_MODE = KW_INST_MODE.copy(__NAME__)
+KW_INST_MODE.set(key='HIERARCH ESO INS MODE', comment='Instrument mode used')
+
+# define the raw dprtype from the telescope
 KW_RAW_DPRTYPE = KW_RAW_DPRTYPE.copy(__NAME__)
-KW_RAW_DPRTYPE.set(key='HIERARCH ESO DPR TYPE',
-                   comment='Observation type')
+KW_RAW_DPRTYPE.set(key='HIERARCH ESO DPR TYPE', comment='Observation type')
+
+# define the raw dpr category
+KW_RAW_DPRCATG = KW_RAW_DPRCATG.copy(__NAME__)
+KW_RAW_DPRCATG.set(key='HIERARCH ESO DPR CATG', comment='Observation category')
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)

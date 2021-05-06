@@ -101,7 +101,8 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     ampsize = int(nbx / tamp)
     # express image and slope in ADU not ADU/s
     image2 = np.array(image) * inttime
-    errslope = np.array(errslope) * inttime
+    with warnings.catch_warnings(record=True) as _:
+        errslope = np.array(errslope) * inttime
     # -------------------------------------------------------------------------
     # using the error on the slope
     # -------------------------------------------------------------------------
@@ -123,7 +124,8 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     # get the expected image value (with noise estimate added)
     expected = image2 + readout_noise ** 2
     # get the fractional number of sigmas away from expected value
-    nsig2 = variance / expected
+    with warnings.catch_warnings(record=True) as _:
+        nsig2 = variance / expected
     # number of simga away from bulk of expected-to-observed variance
     nsig2 = nsig2 / np.nanpercentile(np.abs(nsig2), norm_frac)
     # mask the nsigma by the variance cuts

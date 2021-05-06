@@ -323,7 +323,7 @@ PP_CORRUPT_SNR_HOTPIX.value = 10
 
 # Defines the RMS threshold to also catch corrupt files
 PP_CORRUPT_RMS_THRES = PP_CORRUPT_RMS_THRES.copy(__NAME__)
-PP_CORRUPT_RMS_THRES.value = 0.15
+PP_CORRUPT_RMS_THRES.value = 0.3  # was 0.15
 
 # super-pessimistic noise estimate. Includes uncorrected common noise
 PP_COSMIC_NOISE_ESTIMATE = PP_COSMIC_NOISE_ESTIMATE.copy(__NAME__)
