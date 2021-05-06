@@ -367,7 +367,9 @@ class PseudoConstants(DefaultConstants):
         index_keys['KW_OBJNAME'] = str
         index_keys['KW_OBSTYPE'] =str
         index_keys['KW_EXPTIME'] = float
+        index_keys['KW_INST_MODE'] = str
         index_keys['KW_RAW_DPRTYPE'] = str
+        index_keys['KW_RAW_DPRCATG'] = str
         index_keys['KW_DPRTYPE'] = str
         index_keys['KW_DRS_MODE'] = str
         index_keys['KW_OUTPUT'] = str
@@ -397,7 +399,8 @@ class PseudoConstants(DefaultConstants):
         :return: list of keys
         """
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
-                'KW_RAW_DPRTYPE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_DRS_MODE']
+                'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG', 'KW_INST_MODE',
+                'KW_DPRTYPE', 'KW_OUTPUT', 'KW_DRS_MODE']
         return keys
 
 

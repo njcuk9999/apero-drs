@@ -8,6 +8,8 @@ Created on 2019-03-05 16:38
 @author: ncook
 Version 0.0.1
 """
+import warnings
+
 import numpy as np
 import os
 
@@ -153,13 +155,19 @@ def __main__(recipe, params):
         image = datalist[0]
         # get intercept from the data list
         intercept = datalist[1]
-        # get error on slope from the data list
-        # TODO: question: where is the errslope for NIRPS?
-        errslope = np.sqrt(np.abs(image))
         # get frame time
         frame_time = pconst.FRAME_TIME(params, None)
         # get the pixel exposure time from the data list
         inttime = datalist[2] * frame_time
+        # get error on slope from the data list
+        readout_noise = infile.get_hkey('KW_RDNOISE', dtype=float)
+        # error on slope needs to be worked out
+        #   errslope = sqrt((slope*exptime)+ron^2)/sqrt(exptime)
+        #   where exptime = nread * frame_time
+        with warnings.catch_warnings(record=True) as _:
+            errslope = np.sqrt(np.abs(image * inttime) + readout_noise**2)
+            errslope = errslope / np.sqrt(inttime)
+
         # ------------------------------------------------------------------
         # Get out file and check skip
         # ------------------------------------------------------------------
