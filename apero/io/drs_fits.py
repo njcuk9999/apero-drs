@@ -970,7 +970,7 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
             continue
         # ---------------------------------------------------------------------
         # only add if header is a fits header
-        if isinstance(header[it], Header):
+        if isinstance(header[it], (Header, fits.Header)):
             # deal with our custom headers
             if hasattr(header[it], 'to_fits_header'):
                 header_it = header[it].to_fits_header()
@@ -980,7 +980,7 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
         else:
             header_it = fits.Header()
         # must add the EXTNAME for all extensions
-        header_it['EXTNAME'] = names[it]
+        header_it['EXTNAME'] = (names[it], 'name of the extension')
         # ---------------------------------------------------------------------
         # set HDU_i
         hdu_i = fitstype(data[it], header=header_it)

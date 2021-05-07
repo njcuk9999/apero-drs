@@ -6436,7 +6436,8 @@ class DrsOutFile(DrsInputFile):
         for line in textwrap.wrap(description, 71):
             header.insert(hdrkey, ('COMMENT', line))
         # finally add the number of extensions to the primary header
-        header['NEXTEND'] = len(self.extensions) - 1
+        nextend_comment = 'Number of standard extensions'
+        header['NEXTEND'] = (len(self.extensions) - 1, nextend_comment)
         # add header back to extensions
         self.extensions[0].header = header
 
