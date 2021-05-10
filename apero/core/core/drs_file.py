@@ -101,13 +101,16 @@ QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
 # =============================================================================
 class BlockPath:
     def __init__(self, params: ParamDict, name: str, key: str,
-                 indexing: bool):
+                 indexing: bool, logging: bool):
         """
         Construct the block path
 
         :param params: ParamDict, the parameter dictionary of constants
         :param name: str, the name of the block path
-        :param key: str, the key in params where block path absolute path stored
+        :param key: str, the key in params where block path absolute path
+                    stored
+        :param indexing: bool, if True this block is indexed
+        :param logging: bool, if True this block is logged
         """
         # convert block path to real path (remove symbolic links)
         block_path = None
@@ -128,6 +131,7 @@ class BlockPath:
         self.has_obs_dirs = False
         self.fileset = None
         self.indexing = indexing
+        self.logging = logging
 
     def __str__(self) -> str:
         """
@@ -173,7 +177,8 @@ class RawPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'raw', 'DRS_DATA_RAW', indexing=True)
+        super().__init__(params, 'raw', 'DRS_DATA_RAW', indexing=True,
+                         logging=False)
         self.fileset = 'raw_file'
         self.has_obs_dirs = True
 
@@ -185,7 +190,8 @@ class TmpPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'tmp', 'DRS_DATA_WORKING', indexing=True)
+        super().__init__(params, 'tmp', 'DRS_DATA_WORKING', indexing=True,
+                         logging=True)
         self.fileset = 'pp_file'
         self.has_obs_dirs = True
 
@@ -197,7 +203,8 @@ class ReducedPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'red', 'DRS_DATA_REDUC', indexing=True)
+        super().__init__(params, 'red', 'DRS_DATA_REDUC', indexing=True,
+                         logging=True)
         self.has_obs_dirs = True
         self.fileset = 'red_file'
 
@@ -209,7 +216,8 @@ class AssetPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'asset', 'DRS_DATA_ASSETS', indexing=False)
+        super().__init__(params, 'asset', 'DRS_DATA_ASSETS', indexing=False,
+                         logging=False)
         self.has_obs_dirs = False
 
 
@@ -220,7 +228,8 @@ class CalibPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'calib', 'DRS_CALIB_DB', indexing=False)
+        super().__init__(params, 'calib', 'DRS_CALIB_DB', indexing=False,
+                         logging=False)
         self.has_obs_dirs = False
         self.fileset = 'calib_file'
 
@@ -232,7 +241,8 @@ class TelluPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'tellu', 'DRS_TELLU_DB', indexing=False)
+        super().__init__(params, 'tellu', 'DRS_TELLU_DB', indexing=False,
+                         logging=False)
         self.has_obs_dirs = False
         self.fileset = 'tellu_file'
 
@@ -244,7 +254,9 @@ class OutPath(BlockPath):
 
         :param params: ParamDict, the parameter dictionary of constants
         """
-        super().__init__(params, 'out', 'DRS_DATA_OUT', indexing=True)
+        # TODO: no PARAM_SNAPSHOT --> can't redo log
+        super().__init__(params, 'out', 'DRS_DATA_OUT', indexing=True,
+                         logging=False)
         self.has_obs_dirs = True
         self.fileset = 'out_file'
 
@@ -632,7 +644,6 @@ class DrsPath:
             # log error
             WLOG(self.params, 'error', textentry('00-004-00010', args=eargs))
 
-
     def _set_block_path_from_block_kind(self) -> bool:
         """
         Set the block path from block kind
@@ -692,6 +703,20 @@ class DrsPath:
             eargs += [self._blocks_error()]
             # log error
             WLOG(self.params, 'error', textentry('00-004-00011', args=eargs))
+
+    def get_block(self):
+        """
+        Get the block for this instances block kind
+
+        :return:
+        """
+        # deal with no block kind
+        if self.block_kind is None:
+            return None
+        # loop around blocks
+        for block in self.blocks:
+            if block.name == self.block_kind:
+                return block
 
 
 # =============================================================================

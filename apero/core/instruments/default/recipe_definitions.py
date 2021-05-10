@@ -108,6 +108,8 @@ database_mgr.recipe_type = 'nolog-tool'
 database_mgr.recipe_kind = 'admin'
 database_mgr.set_kwarg(name='--kill', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_KILLARG_HELP'))
+database_mgr.set_kwarg(name='--update', dtype='switch', default=False,
+                       helpstr=textentry('DBMGR_UPDATE_HELP'))
 database_mgr.set_kwarg(name='--csv', dtype=str, default='None',
                        helpstr=textentry('DBMGR_CSVARG_HELP'))
 database_mgr.set_kwarg(name='--exportdb', dtype=str, default='None',
@@ -188,20 +190,6 @@ logstats.set_kwarg(name='--before', dtype=str, default='None',
 logstats.set_kwarg(name='--mlog', dtype='bool', default=False,
                    helpstr=textentry('LOGSTAT_HELP_MLOG'))
 logstats.set_kwarg(**plot)
-
-# -----------------------------------------------------------------------------
-# apero_mkdb.py
-# -----------------------------------------------------------------------------
-remake_db.name = 'apero_mkdb.py'
-remake_db.shortname = 'REMKDB'
-remake_db.instrument = __INSTRUMENT__
-remake_db.description = textentry('REMAKE_DESC')
-remake_db.recipe_type = 'nolog-tool'
-remake_db.recipe_kind = 'user'
-remake_db.set_kwarg(name='--kind', dtype='options',
-                    options=['calibration', 'telluric'],
-                    default_ref='REMAKE_DATABASE_DEFAULT',
-                    helpstr=textentry('REMAKE_HELP_KIND'), default='calibration')
 
 # -----------------------------------------------------------------------------
 # apero_processing.py

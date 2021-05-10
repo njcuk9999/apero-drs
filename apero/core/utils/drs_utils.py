@@ -52,6 +52,8 @@ LogDatabase = drs_database.LogDatabase
 # get header classes from io.drs_fits
 Header = drs_fits.Header
 FitsHeader = drs_fits.fits.Header
+# set a variable to stop multiple tests when not required
+PARAM_SNAPSHOT_CHECKED = False
 
 
 # =============================================================================
@@ -553,8 +555,14 @@ class RecipeLog:
         Make lists of the names, kinds, values, sources, descriptions and counts
         for param table addition
 
+        Note columns should be rlog.{LOG_DB_COLUMN}
+
+        where LOG_DB_COLUMN is lowercase and is checked at the end
+
         :return: tuple of lists (name/kinds/values/sources/descriptions/counts)
         """
+        # global
+        global PARAM_SNAPSHOT_CHECKED
         # set function name
         func_name = display_func('get_param_table', __NAME__, self.class_name)
         # storage arrays
@@ -781,6 +789,30 @@ class RecipeLog:
         source.append(func_name)
         description.append('flag for recipe ended (false at time of writing)')
         count.append(1)
+        # ---------------------------------------------------------------------
+        # check names against current database list (must work)
+        # only do this once per import
+        if not PARAM_SNAPSHOT_CHECKED:
+            # get log keys
+            log_keys, _ = constants.pload().LOG_DB_COLUMNS()
+            # loop around names
+            for name in names:
+                # check name starts with rlog
+                if not name.startswith('rlog.'):
+                    # TODO: move to language database
+                    emsg = 'ParamTable rlog parameter {0} must start with rlog.'
+                    raise ValueError(emsg.format(name))
+                # get log name as it should be in log db columns
+                logname = name[5:].upper()
+                # check that it exists in log database columns
+                if logname not in log_keys:
+                    # TODO: move to language database
+                    emsg = ('ParamTable rlog parameter {0} must be in '
+                            'LOG_DB_COLUMNS')
+                    raise ValueError(emsg.format(name))
+            # update PARAM_SNAPSHOT_CHECKED to True --> i.e. do not check again
+            PARAM_SNAPSHOT_CHECKED = True
+        # ---------------------------------------------------------------------
         # return lists
         return names, param_kinds, values, source, description, count
 
