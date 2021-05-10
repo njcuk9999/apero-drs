@@ -87,6 +87,7 @@
 "None","Export a database to a csv file","","","DBMGR_EXPORTDB_HELP","TEXT"
 "None","Import a csv file into a database","","","DBMGR_IMPORTDB_HELP","TEXT"
 "None","How to add the csv file to database: append adds all lines to the end of current database, replace removes all previous lines from database. Default is replace.","","","DBMGR_JOIN_HELP","TEXT"
+"None","Use this to update the database based on files on disk in the correct directories","","","DBMGR_UPDATE_HELP","TEXT"
 "None","Re-make the apero documentation","","","REMAKE_DOC_DESCRIPTION","TEXT"
 "None","[Bool] If True upload documentation to defined server (for web access)","","","REMAKE_DOC_UPLOADARG_HELP","TEXT"
 "None","[STRING] The recipe kind for this recipe run (normally only used in apero_processing.py)","","","SET_RECIPE_KIND_HELP","TEXT"

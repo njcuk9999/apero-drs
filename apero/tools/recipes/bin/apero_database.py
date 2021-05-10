@@ -17,7 +17,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.tools.module.database import manage_databases
-
+from apero.tools.module.database import database_update
 
 # =============================================================================
 # Define variables
@@ -90,6 +90,18 @@ def __main__(recipe, params):
         # End of main code
         # ------------------------------------------------------------------
         return drs_startup.return_locals(params, locals())
+
+    # ----------------------------------------------------------------------
+    # deal with update
+    # ----------------------------------------------------------------------
+    if params['INPUTS']['UPDATE']:
+        # update database
+        database_update.update_database(params, recipe)
+        # ------------------------------------------------------------------
+        # End of main code
+        # ------------------------------------------------------------------
+        return drs_startup.return_locals(params, locals())
+
     # ----------------------------------------------------------------------
     # get csv file path
     # ----------------------------------------------------------------------
@@ -132,6 +144,7 @@ def __main__(recipe, params):
         # End of main code
         # ------------------------------------------------------------------
         return drs_startup.return_locals(params, locals())
+
     # ----------------------------------------------------------------------
     # If we got here user did not define export or import
     # ----------------------------------------------------------------------

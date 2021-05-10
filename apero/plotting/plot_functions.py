@@ -2830,9 +2830,12 @@ def plot_waveref_expected(plotter, graph, kwargs):
     for order_num in range(nbo):
         # get order mask
         omask = order_num == orders
+        # do not continue if we have no lines in order
+        if np.sum(omask) == 0:
+            continue
         # ------------------------------------------------------------------
         # do not plot outliers in diff
-        low, high = np.percentile(diff[omask], [1, 99])
+        low, high = np.nanpercentile(diff[omask], [1, 99])
         pmask = (diff[omask] > low) & (diff[omask] < high)
         # ------------------------------------------------------------------
         # plot points
