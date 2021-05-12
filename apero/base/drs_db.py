@@ -135,6 +135,7 @@ class Database:
         self.tables = []
         # storage for database path
         self.path = None
+        self.backup_path = None
         # have a main table name
         self.tname = 'MAIN'
 
@@ -881,6 +882,20 @@ class Database:
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
+    def reload_from_backup(self, pconst: Any = None):
+        """
+        Reload database from back up the database
+
+        :param pconst: PseudoConsts - apero.core.constants.pload() this is
+                       required to get the unique columns - if unset assumes
+                       there are no unique columns
+
+        :return:
+        """
+        _ = pconst
+        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
+        NotImplemented(emsg)
+
     def lock(self):
         """
         Lock the database (until unlock is done)
@@ -1080,6 +1095,7 @@ class SQLiteDatabase(Database):
         self.host = None
         self.user = None
         self.path = path
+        self.backup_path = ''
         self.passwd = None
         self.dbname = None
         self.tname = 'MAIN'
@@ -1323,6 +1339,31 @@ class SQLiteDatabase(Database):
                 backup_conn.close()
                 conn.close()
 
+    def reload_from_backup(self, pconst: Any = None):
+        """
+        Reload database from back up the database
+
+        :param pconst: PseudoConsts - apero.core.constants.pload() this is
+                       required to get the unique columns - if unset assumes
+                       there are no unique columns
+
+        :return:
+        """
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname, 'backup')
+        # don't use pconst here
+        _ = pconst
+        # construct backup path
+        backup_path = str(self.path).replace('.db', 'backup.db')
+        # make backup database
+        conargs = dict(func=func_name, kind='backup')
+        with closing(self.connection(**conargs)) as conn:
+            with closing(sqlite3.connect(backup_path)) as backup_conn:
+                # copy main into backup database
+                backup_conn.backup(conn)
+                # close connections
+                backup_conn.close()
+                conn.close()
+
     def lock(self):
         """
         Lock the database (until unlock is done)
@@ -1356,12 +1397,14 @@ class SQLiteDatabase(Database):
 
 class MySQLDatabase(Database):
     # A wrapper for a MySQL database.
-    def __init__(self, host: str, user: str, passwd: str,
+    def __init__(self, path: str, host: str, user: str, passwd: str,
                  database: str, tablename: str, verbose: bool = False,
                  absolute_table_name: bool = False):
         """
         Create an object for reading and writing to a SQLite database.
 
+        :param path: str, the path (only used for backups - so not required
+                     unless using the backup method)
         :param host: str, the mysql host name (user@host)
         :param user: str, the mysql user name (user@host)
         :param passwd: str, the password for user@host mysql connection
@@ -1408,6 +1451,7 @@ class MySQLDatabase(Database):
             self.tname = _proxy_table(tablename)
         # re-set path after call to super
         self.path = '{0}@{1}'.format(self.user, self.host)
+        self.backup_path = str(path) + '.mysql.backup'
         # deal with database for sql
         self.add_database()
         # update table list
@@ -1754,6 +1798,51 @@ class MySQLDatabase(Database):
             # append table name
             self.tables.append(_table[0])
 
+    # admin methods
+    def backup(self):
+        """
+        Back up the database
+
+        :return:
+        """
+        # construct backup path
+        if self.backup_path is None:
+            return
+        # -------------------------------------------------------------------
+        # get all rows as a pandas data frame
+        df = self.get('*', table=self.tname, return_pandas=True)
+        # -------------------------------------------------------------------
+        # save to csv file
+        df.to_csv(self.backup_path)
+
+    def reload_from_backup(self, pconst: Any):
+        """
+        Reload database from back up the database
+
+        :param pconst: PseudoConsts - apero.core.constants.pload() this is
+                       required to get the unique columns - if unset assumes
+                       there are no unique columns
+
+        :return:
+        """
+        # construct backup path
+        if self.backup_path is None:
+            return
+        # get unique columns
+        if pconst is None:
+            ucols = None
+        elif 'INDEX' in self.tname:
+            _, _, ucols = pconst.INDEX_DB_COLUMNS()
+        elif 'OBJECT' in self.tname:
+            _, _, ucols = pconst.OBJECT_DB_COLUMNS()
+        else:
+            ucols = None
+        # load csv file into pandas table
+        df = pd.read_csv(self.backup_path)
+        # add pandas table to database
+        self.add_from_pandas(df, self.tname, if_exists='replace',
+                             unique_cols=ucols)
+
 
 # =============================================================================
 # Define functions
@@ -1785,7 +1874,8 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
         # create table name
         tablename = '{0}_{1}'.format(kind, sparams[kind]['PROFILE'])
         # return the MySQLDatabase instance
-        return MySQLDatabase(host=sparams['HOST'],
+        return MySQLDatabase(path=path,
+                             host=sparams['HOST'],
                              user=sparams['USER'],
                              passwd=sparams['PASSWD'],
                              database=sparams['DATABASE'],
