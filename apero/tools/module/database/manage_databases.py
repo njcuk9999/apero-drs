@@ -65,6 +65,8 @@ def kill(params: ParamDict, timeout: int = 60):
     dparams = base.DPARAMS
     # deal with mysql
     if dparams['USE_MYSQL']:
+        # get path
+        path = ''
         # get hostname / user / password
         host = dparams['MYSQL']['HOST']
         user = dparams['MYSQL']['USER']
@@ -75,7 +77,8 @@ def kill(params: ParamDict, timeout: int = 60):
         # wrap in a try (this may not always work
         try:
             # get database connection
-            infodb = drs_db.MySQLDatabase(host=host, user=user, passwd=passwd,
+            infodb = drs_db.MySQLDatabase(path=path, host=host, user=user,
+                                          passwd=passwd,
                                           database=databasename,
                                           tablename=tablename,
                                           absolute_table_name=True)

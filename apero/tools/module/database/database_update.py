@@ -10,6 +10,7 @@ Created on 2021-05-10
 @author: cook
 """
 from astropy.table import Table
+from astropy.io import fits
 import numpy as np
 import os
 import glob
@@ -70,12 +71,28 @@ def update_database(params: ParamDict, recipe: DrsRecipe):
     # load pconst
     pconst = constants.pload()
     # update calibration database
+    # TODO: move to language database
+    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+    WLOG(params, 'info', 'Updating calibraiton database', colour='magenta')
+    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
     calib_tellu_update(params, recipe, pconst, 'calibration')
     # update telluric database
+    # TODO: move to language database
+    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+    WLOG(params, 'info', 'Updating telluric database', colour='magenta')
+    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
     calib_tellu_update(params, recipe, pconst, 'telluric')
     # update log and index database
+    # TODO: move to language database
+    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+    WLOG(params, 'info', 'Updating log database', colour='magenta')
+    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
     log_update(params, pconst)
     # update index database
+    # TODO: move to language database
+    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+    WLOG(params, 'info', 'Updating index database', colour='magenta')
+    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
     index_update(params)
 
 
@@ -130,7 +147,7 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
     elif db_type == 'telluric':
         manage_databases.create_telluric_database(pconst, db_list)
         # reload the telluric database
-        dbmanager = drs_database.CalibrationDatabase(params)
+        dbmanager = drs_database.TelluricDatabase(params)
         dbmanager.load_db()
     # ----------------------------------------------------------------------
     # get all fits files in the cdb path
@@ -154,10 +171,14 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
     db_files = np.array(db_files)[sortmask]
     # ----------------------------------------------------------------------
     # loop around all calib files and try to find the kinds
-    for it, db_file in enumerate(db_files):
+    for it in tqdm(range(len(db_files))):
+        # ------------------------------------------------------------------
+        # get db_file
+        db_file = db_files[it]
+        # ------------------------------------------------------------------
         # log progress
         wargs = [it + 1, len(db_files), os.path.basename(db_file)]
-        WLOG(params, 'info', textentry('40-505-00001', args=wargs))
+        WLOG(params, 'debug', textentry('40-505-00001', args=wargs))
         # ------------------------------------------------------------------
         if not hasattr(filemod.get(), file_set_name):
             eargs = [name, file_set_name, filemod.get(), func_name]
@@ -170,7 +191,7 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
         if os.path.basename(db_file).startswith(MASTER_PREFIX):
             # log skipping
             wargs = [MASTER_PREFIX]
-            WLOG(params, 'info', textentry('40-505-00003', args=wargs))
+            WLOG(params, 'debug', textentry('40-505-00003', args=wargs))
             # skip
             continue
         # ------------------------------------------------------------------
@@ -184,8 +205,8 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
         # ------------------------------------------------------------------
         # append to cdb_data
         if found:
-            # log that we found i
-            WLOG(params, '', textentry('40-505-00002', args=[kind]))
+            # log that we found file
+            WLOG(params, 'debug', textentry('40-505-00002', args=[kind]))
             # --------------------------------------------------------------
             # add the files back to the database
             if db_type == 'calibration':
@@ -195,9 +216,6 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
         # ------------------------------------------------------------------
         # delete file
         del kind, db_out_file
-    # print note about masters
-    WLOG(params, 'info', textentry('40-505-00004'))
-    _ = input('\t')
 
 
 def index_update(params: ParamDict,):
@@ -243,7 +261,7 @@ def log_update(params: ParamDict, pconst: PseudoConstants):
         WLOG(params, '', msg.format(block.name))
         # ---------------------------------------------------------------------
         # get all files
-        files = Path(block.path).rglob('*.fits')
+        files = list(Path(block.path).rglob('*.fits'))
         # storage for unique logcodes
         logentries, log_pids = dict(), []
         # ---------------------------------------------------------------------
@@ -251,8 +269,13 @@ def log_update(params: ParamDict, pconst: PseudoConstants):
         for filepath in tqdm(files):
             # get string version
             filename = str(filepath)
+            # get hdu names
+            with fits.open(filename) as hdus:
+                hdu_names = list(map(lambda x: x.name, hdus))
+            # deal with no param table - skip
+            if 'PARAM_TABLE' not in hdu_names:
+                continue
             # load param table
-            # TODO: need to check for PARAM_TABLE in filename
             ptable = drs_table.read_table(params, filename, fmt='fits',
                                           hdu='PARAM_TABLE')
             # get all log update entries (per file)
