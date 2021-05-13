@@ -222,12 +222,31 @@ def __main__(recipe, params):
         #  cavity = wave2.get_cavity_file(params, recipe, infile=fp_e2ds_file)
 
         # iterate twice so we have a good cavity length to start
-        for iteration in range(2):
+        for iteration in range(3):
             # -----------------------------------------------------------------
             # generate the hc reference lines
             hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
                           iteration=iteration + 1)
             hclines = wave.calc_wave_lines(params, recipe, **hcargs)
+            # -----------------------------------------------------------------
+            # default wave map might be off by too many pixels therefore we
+            #   calculate a global offset and re-calculate
+            if iteration == 0:
+                iwmap = wprops['WAVEMAP']
+                # We measure gradient of the wave map so we can get the scaling
+                #   factor of the wave map
+                fchange = np.gradient(iwmap, axis=1) / iwmap
+                opart1 = np.nanmedian(fchange)
+                # get the bulk offset in lines (in pixel space)
+                opart2 = np.nanmedian(hclines['DIFF'])
+                # fractional offset of wavelengths (re-expressed as a scaling)
+                offset = opart1 * opart2
+                # update the initial wave map
+                wprops['WAVEMAP'] = iwmap * (1 - offset)
+                # recalculate hclines with offset applied
+                hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
+                              iteration=iteration + 1)
+                hclines = wave.calc_wave_lines(params, recipe, **hcargs)
             # -----------------------------------------------------------------
             # generate the fp reference lines
             fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
