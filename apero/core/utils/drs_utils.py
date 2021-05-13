@@ -615,7 +615,7 @@ class RecipeLog:
         description.append('Recipe drs process id number')
         count.append(1)
         # Recipe process time (human format)
-        names.append('rlog.htime')
+        names.append('rlog.humantime')
         param_kinds.append('rlog')
         values.append(self.htime)
         source.append(func_name)
@@ -629,7 +629,7 @@ class RecipeLog:
         description.append('Recipe process time (unix format)')
         count.append(1)
         # Recipe group name
-        names.append('rlog.group')
+        names.append('rlog.groupname')
         param_kinds.append('rlog')
         values.append(self.group)
         source.append(func_name)
@@ -650,7 +650,7 @@ class RecipeLog:
         description.append('Recipe sub-level name')
         count.append(1)
         # Recipe level/sub level description
-        names.append('rlog.level_criteria')
+        names.append('rlog.levelcrit')
         param_kinds.append('rlog')
         values.append(self.level_criteria)
         source.append(func_name)
@@ -748,7 +748,7 @@ class RecipeLog:
         description.append('full quality control names')
         count.append(1)
         # full quality control values
-        names.append('rlog.qc_value')
+        names.append('rlog.qc_values')
         param_kinds.append('rlog')
         values.append(self.qc_value)
         source.append(func_name)
@@ -769,7 +769,7 @@ class RecipeLog:
         description.append('full quality control pass/fail')
         count.append(1)
         # recipe errors
-        names.append('rlog.errors')
+        names.append('rlog.errormsgs')
         param_kinds.append('rlog')
         values.append(self.errors)
         source.append(func_name)
