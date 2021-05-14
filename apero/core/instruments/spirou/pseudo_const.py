@@ -1012,14 +1012,20 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
         kwrawobjname, kwobjname = '', ''
         return_header = False
         rawobjname = str(objname)
-    # clean object name
-    objectname = rawobjname.strip()
-    for bad_char in BAD_OBJ_CHARS:
-        objectname = objectname.replace(bad_char, '_')
-    objectname = objectname.upper()
-    # deal with multiple underscores in a row
-    while '__' in objectname:
-        objectname = objectname.replace('__', '_')
+
+    # object name maybe None
+    if drs_text.null_text(rawobjname, ['', 'None']):
+        objectname = 'Null'
+    # else remove spaces - clean object name
+    else:
+        objectname = rawobjname.strip()
+        # now remove bad characters
+        for bad_char in BAD_OBJ_CHARS:
+            objectname = objectname.replace(bad_char, '_')
+        objectname = objectname.upper()
+        # deal with multiple underscores in a row
+        while '__' in objectname:
+            objectname = objectname.replace('__', '_')
     # deal with returning header
     if return_header:
         # add it to the header with new keyword
@@ -1050,14 +1056,12 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     func_name = display_func('get_trg_type', __NAME__)
     # get keys from params
     kwobjname = params['KW_OBJNAME'][0]
+    kwobjname1 = params['KW_OBJECTNAME'][0]
+    kwobjname2 = params['KW_OBJECTNAME2'][0]
     kwobstype = params['KW_OBSTYPE'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwtrgcomment = params['KW_TARGET_TYPE'][2]
-    # deal with output key already in header
-    if header is not None:
-        if kwtrgtype in header:
-            if not drs_text.null_text(header[kwtrgtype], ['None', '']):
-                return header, hdict
+
     # get objname
     if kwobjname not in header:
         eargs = [kwobjname, filename]
@@ -1072,13 +1076,30 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
                                 func_name=func_name)
 
     obstype = header[kwobstype]
-    # deal with setting value
+    # get list of object names
+    object_names = [objname]
+    # deal with raw object name(s)
+    if kwobjname1 in header:
+        object_names.append(header[kwobjname1])
+    if kwobjname2 in header:
+        object_names.append(header[kwobjname2])
+
+    # deal with setting value (must test all object names
     if obstype != 'OBJECT':
         trg_type = ''
-    elif 'sky' in objname:
-        trg_type = 'SKY'
     else:
         trg_type = 'TARGET'
+        for object_name in object_names:
+            # if sky is in one of these object names then we assume we have a
+            #   sky frame
+            if 'SKY' in object_name.upper():
+                trg_type = 'SKY'
+                break
+    # deal with output key already in header
+    if header is not None and trg_type != 'SKY':
+        if kwtrgtype in header:
+            if not drs_text.null_text(header[kwtrgtype], ['None', '']):
+                return header, hdict
     # update header
     header[kwtrgtype] = (trg_type, kwtrgcomment)
     hdict[kwtrgtype] = (trg_type, kwtrgcomment)

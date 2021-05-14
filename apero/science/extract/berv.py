@@ -112,7 +112,7 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     # Deal with wrong BERV type
     # -------------------------------------------------------------------------
     # do not try to calculate berv for specific DPRTYPES
-    if (bprops['DPRTYPE'] not in dprtypes):
+    if bprops['DPRTYPE'] not in dprtypes:
         # log that we are skipping due to dprtype
         WLOG(params, '', textentry('40-016-00018', args=[bprops['DPRTYPE']]))
         # all entries returns are empty

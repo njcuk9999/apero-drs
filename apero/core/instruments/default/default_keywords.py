@@ -14,8 +14,8 @@ __all__ = [  # input keys
     'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
     'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
     'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_GAIA_DR', 'KW_INPUTRV', 'KW_OBJ_TEMP',
-    'KW_POLAR_KEY_1', 'KW_POLAR_KEY_2',
-    'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME', 'KW_IDENTIFIER',
+    'KW_POLAR_KEY_1', 'KW_POLAR_KEY_2', 'KW_SATURATE', 'KW_FRMTIME',
+    'KW_OBJECTNAME', 'KW_OBJECTNAME2', 'KW_IDENTIFIER',
     'KW_INST_MODE', 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG',
     # object resolution keys
     'KW_DRS_OBJNAME', 'KW_DRS_OBJNAME_S', 'KW_DRS_GAIAID', 'KW_DRS_GAIAID_S',
@@ -332,6 +332,9 @@ KW_OBJNAME = Keyword('KW_OBJNAME', key='', dtype=str, source=__NAME__,
 # define the raw observation name
 KW_OBJECTNAME = Keyword('KW_OBJECTNAME', key='', dtype=str, source=__NAME__,
                         description='define the raw observation name')
+KW_OBJECTNAME2 = Keyword('KW_OBJECTNAME2', key='', dtype=str, source=__NAME__,
+                        description='another object name which may need to be'
+                                    'checked')
 
 # define the gaia id
 KW_GAIA_ID = Keyword('KW_GAIA_ID', key='', dtype=str, source=__NAME__,
