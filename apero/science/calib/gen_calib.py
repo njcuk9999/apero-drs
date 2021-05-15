@@ -89,6 +89,8 @@ def check_files(params, infile):
     # deal with objname filter
     if 'NONE' in objarray:
         skip = skip or False
+    elif 'NULL' in objarray:
+        skip = skip or False
     # else check for objname in
     elif objname.upper() in objarray:
         skip = skip or False
@@ -100,6 +102,8 @@ def check_files(params, infile):
     # ----------------------------------------------------------------------
     # deal with objname filter
     if 'NONE' in dprtype_inputs:
+        skip = skip or False
+    elif 'NULL' in dprtype_inputs:
         skip = skip or False
     # else check for objname in
     elif dprtype in dprtype_inputs:

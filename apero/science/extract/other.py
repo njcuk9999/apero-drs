@@ -190,7 +190,7 @@ def extract_wave_files(params, recipe, extname, hcfile,
 # =============================================================================
 def extract_files(params: ParamDict, recipe: DrsRecipe,
                   infile: DrsFitsFile, outfile: DrsFitsFile,
-                  always_extract: bool, extrecipe: str,
+                  always_extract: bool, extrecipe: Union[DrsRecipe, None],
                   extract_type: str, kind: str = 'gen',
                   func_name: Union[str, None] = None):
     if func_name is None:
