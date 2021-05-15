@@ -2,6 +2,120 @@ Changelog
 =========
 
 
+0.7.117 (2021-05-15)
+--------------------
+- `Apero.science.calib.gen_calib.py` - objname can be Null or None - deal
+  with this. [Neil Cook]
+- Make sure SKY is checked in OBJECT and OBJNAME even when `TRG_TYPE` is
+  set. [Neil Cook]
+
+
+0.7.116 (2021-05-13)
+--------------------
+- `Apero.science.calib.wave.py` - make sure qc failure prints to screen.
+  [Neil Cook]
+- `Apero.core.utils.drs_utils.py` - some rlog columns were still wrong -->
+  correct humantime, groupname, levelcrit, `qc_values`, errormsgs. [Neil
+  Cook]
+- `Apero.recipes.spirou.apero_wave_master_spirou.py` - for master solution
+  need an offset test after first HC lines calculation (this is because
+  default wave solution can be off from master night if master night is
+  far from when the default wave solution was made) [Neil Cook]
+- Update `mini_run` files to have `SCIENCE_TARGETS` = All by default. [Neil
+  Cook]
+- Continue work on recreating databases from files on disk. [Neil Cook]
+
+
+0.7.115 (2021-05-10)
+--------------------
+- Update language database. [Neil Cook]
+- Add functionality to update databases from files on disk (index, log,
+  calib, tellu) [Neil Cook]
+- `Apero.data.spirou.reset.runs.*.ini` - correct run.ini with THI and THT.
+  [Neil Cook]
+- `Apero.core.core.drs_file.py` + `apero.io.drs_fits.py` - make sure headers
+  are copied to extensions - was isinstance(header[it], Header) now
+  isinstance(header[it], (Header, fits.Header)) [Neil Cook]
+
+
+0.7.114 (2021-05-06)
+--------------------
+- CADC output fixes. [Neil Cook]
+- More fixes for nirps into 0.7 (works up to `apero_flat)` [Neil Cook]
+- Fixes for quicklook sequence. [Neil Cook]
+
+
+0.7.113 (2021-05-04)
+--------------------
+- Update runs for NIRPS (LOC(M)AB --> LOC(M)A, LOC(M)C --> LOC(M)B)
+  [Neil Cook]
+- Update to code to bring NIRPS to 0.7. [Neil Cook]
+- `Apero.core.instruments.spirou.recipe_definitions.py` - `leak_master` must
+  be after thermal masters. [Neil Cook]
+- `Apero.science.calib.wave.py` - add printouts for `calc_wave_lines`. [Neil
+  Cook]
+- `Apero.science.calib.flat_blaze.py` - correct problem with blaze in new
+  mini data set (local minima) [Neil Cook]
+- Update language database. [Neil Cook]
+- Equalise nirps with spirou. [Neil Cook]
+- Add program + parallel to log database + add switches for DEBUG files.
+  [Neil Cook]
+- Update `UPDATE_NOTES.txt`. [Neil Cook]
+
+
+0.7.112 (2021-04-30)
+--------------------
+- Make sure keys are added before argparse. [Neil Cook]
+- Only update `drs_processing.py` Run runstring once. [Neil Cook]
+- Correct typo '--parallel' --> ' --parallel' [Neil Cook]
+- Deal with using --parallel argument (stops index database updating in
+  a recipe run) [Neil Cook]
+- Update language database. [Neil Cook]
+- `Apero.core.core.drs_argument.py` - add parallel argument. [Neil Cook]
+- Update language database. [Neil Cook]
+
+
+0.7.111 (2021-04-28)
+--------------------
+- `Apero.science.preprocessing.gen_pp.py` - add bad list checker. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Update language database. [Neil Cook]
+- `Apero.tools.recipe.bin.apero_processing.py` - index certain block kinds
+  to avoid indexing during recipe runs. [Neil Cook]
+- `Apero.science.polar.gen_pol.py` - correct typo
+  `STOKESI_CONTINUUM_DETECTION_ALGORITHM` --> `STOKESI_CONTINUUM_DET_ALG`.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- `Apero.tools.recipe.bin.apero_processing.py` - try to stop re-indexing
+  of the database occuring. [Neil Cook]
+- `Get_wavesol` requires either 'infile' OR ('header' and 'nbpix') not
+  both - correct. [Neil Cook]
+
+
+0.7.110 (2021-04-27)
+--------------------
+- `Apero.core.utils.drs_utils.py` - add running to param table
+  (rlog.running) [Neil Cook]
+- `Apero.science.wave.py` - correct typo `*margs` --> args=margs. [Neil
+  Cook]
+- Move text to language database + update language database. [Neil Cook]
+- Move text to language database and constants to instrument/default
+  definitions. [Neil Cook]
+- Fix mk tellu `add_wave_keys`. [Neil Cook]
+
+
+0.7.109 (2021-04-23)
+--------------------
+- Move `wave.py` --> `wave_old.py`  and move `wave2.py` --> `wave.py`  (and move
+  last required functions from `wave_old.py` --> wave.py) + move
+  `wave_master_old` + `wave_night_old` to apero/tools/recipes/spirou/ [Neil
+  Cook]
+- Change recipe names `cal_` `obj_` --> `apero_` [Neil Cook]
+- Update changelog + update notes. [Neil Cook]
+- Update version/date/changelog/update notes. [Neil Cook]
+
+
 0.7.108 (2021-04-22)
 --------------------
 - Fix grouping + fix emailing + fix run.ini files. [Neil Cook]
