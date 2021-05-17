@@ -429,6 +429,8 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
     # if we don't have an epoch at this point in time we assume the
     #    epoch is the time of observation (i.e. the RA and DEC are where the
     #    telescope was pointing)
+    # TODO: Confirm coords from header are where the telescope was pointing
+    #       and not in J2000.0 or something else
     if props['DRS_EPOCH'] in ['None', 'Null', '', np.nan]:
         epoch = Time(props['OBS_TIME'], format='jd')
     # epoch must be in jd
