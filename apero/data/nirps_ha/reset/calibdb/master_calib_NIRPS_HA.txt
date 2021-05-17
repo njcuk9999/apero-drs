@@ -1,5 +1,0 @@
-# Default files (Copied from apero-drs data folder)
-WAVEM_D_A 1 None MASTER_WAVE_NIRPS_HA_CUT_41.fits 1970-01-01_00:00:00.000000 0.0
-WAVEM_D_B 1 None MASTER_WAVE_NIRPS_HA_CUT_41.fits 1970-01-01_00:00:00.000000 0.0
-
-# DRS processed
