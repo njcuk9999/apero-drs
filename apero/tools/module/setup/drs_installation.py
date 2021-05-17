@@ -418,12 +418,12 @@ def user_interface(params, args, lang):
         # clean profile name
         profilename = clean_profile_name(profilename)
         # update args.name
-        args.name = str(profilename)
+        args.name = str(profilename).lower()
     else:
         # clean profile name
         profilename = clean_profile_name(args.name)
         # update args.name
-        args.name = str(profilename)
+        args.name = str(profilename).lower()
     # add name
     all_params['PROFILENAME'] = args.name
     # update default paths
@@ -448,14 +448,20 @@ def user_interface(params, args, lang):
     prompt_inst = 'Choose instrument to install '
     inst_options, prompt_options = [], []
     # loop around instruments
+    icount, valid_instruments = 1, []
     for it, instrument in enumerate(drs_instruments):
-        inst_options += [it + 1]
-        prompt_options += ['{0}. {1}'.format(it + 1, instrument)]
+        if instrument.upper() != 'NONE':
+            inst_options += [icount]
+            prompt_options += ['{0}. {1}'.format(icount, instrument)]
+            # add to the counter
+            icount += 1
+            # add instrument to valid instrument choices
+            valid_instruments.append(instrument)
     # ask user
     inst_number = ask(prompt_inst, options=inst_options, dtype='int',
                       optiondesc=prompt_options)
     # update instrument based on inst_number
-    instrument = drs_instruments[inst_number - 1]
+    instrument = valid_instruments[inst_number - 1]
     # set instrument in all params
     all_params['INSTRUMENT'] = instrument
     all_params.set_source('INSTRUMENT', func_name)
@@ -740,18 +746,50 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     if response not in ['None', '', None]:
         all_params['MYSQL']['DATABASE'] = response
     # ----------------------------------------------------------------------
-    # ask for the database name
-    db_question = 'Enter APERO profile to use (leave blank for default/current)'
-    if profile is not None:
-        response = str(profile)
-    # if not set from command line ask user for value
-    else:
-        response = ask(db_question, dtype=str)
-    # only add response if not None
-    if response not in ['None', '', None]:
-        all_params['MYSQL']['PROFILE'] = response
-    else:
-        all_params['MYSQL']['PROFILE'] = all_params['PROFILENAME']
+    # Individual database table settings
+    # ----------------------------------------------------------------------
+    database_user = ['CALIB', 'TELLU', 'INDEX', 'LOG', 'OBJECT', 'LANGUAGE']
+    databases_raw = ['CALIB', 'TELLU', 'IDX', 'LOG', 'OBJ', 'LANG']
+    database_ask = [True, True, False, False, False, False]
+    database_args = ['calibtable', 'tellutable', 'indextable', 'logtable',
+                     'objtable', 'langtable']
+    # loop around databases
+    for db_it in range(len(database_user)):
+        # ---------------------------------------------------------------------
+        # db key for all_params
+        dbkey = '{0}_PROFILE'.format(databases_raw[db_it])
+        # ---------------------------------------------------------------------
+        # deal with command line arguments
+        if hasattr(args, database_args[db_it]):
+            # get value
+            response = getattr(args, database_args[db_it])
+            # only deal with non Null values
+            if response not in ['None', '', None]:
+                # set key
+                all_params['MYSQL'][dbkey] = str(response)
+                # skip asking the question
+                continue
+        # ---------------------------------------------------------------------
+        # only ask for those flagged as allowed to be changed by user
+        if database_ask[db_it] or all_params['DEVMODE']:
+            # -----------------------------------------------------------------
+            # ask for the database name
+            db_question = ('Enter table suffix for {0} database table'
+                           ' (leave blank for default: {2}) \n\t'
+                           ' Note "{1}_{{SUFFIX}}_DB" will be the final table '
+                           'name. \n\t i.e. by default: {1}_{2}_DB')
+            db_qargs = [database_user[db_it], databases_raw[db_it],
+                        all_params['PROFILENAME']]
+            db_question = db_question.format(*db_qargs)
+            # -----------------------------------------------------------------
+            response = ask(db_question, dtype=str)
+        else:
+            response = None
+        # --------------------------------------------------------------------
+        if response not in ['None', '', None]:
+            all_params['MYSQL'][dbkey] = response
+        else:
+            all_params['MYSQL'][dbkey] = all_params['PROFILENAME']
     # ----------------------------------------------------------------------
     return all_params
 
@@ -1398,17 +1436,30 @@ def update(params, args):
     # ----------------------------------------------------------------------
     # set up dictionary
     all_params = ParamDict()
+    # ----------------------------------------------------------------------
+    # deal with having a profile name
+    if args.name in ['None', None, '']:
+        profilename = ask(message0, str, default='apero')
+        # clean profile name
+        profilename = clean_profile_name(profilename)
+        # update args.name
+        args.name = str(profilename).lower()
+    else:
+        # clean profile name
+        profilename = clean_profile_name(args.name)
+        # update args.name
+        args.name = str(profilename).lower()
+    # add name
+    all_params['PROFILENAME'] = args.name
     # ------------------------------------------------------------------
     # add user config
     all_params['USERCONFIG'] = config_path
     all_params.set_source('USERCONFIG', func_name)
-
     # set instrument in all params
     all_params['INSTRUMENT'] = instrument
     all_params.set_source('INSTRUMENT', func_name)
     all_params['LANGUAGE'] = language
     all_params.set_source('LANGUAGE', language)
-
     # load params for instrument
     iparams = constants.load(cache=False)
     # ------------------------------------------------------------------

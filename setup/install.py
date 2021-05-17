@@ -201,10 +201,32 @@ def get_args():
                         help='MySQL database name '
                              '(Only required if --databasemode=2. '
                              'If unset user is prompted for choice.')
-    parser.add_argument('--database_pro', action='store', dest='database_pro',
-                        help='APERO profile used for MySQL database '
-                             '(Only required if --databasemode=2. '
-                             'If unset user is prompted for choice.')
+    parser.add_argument('--calib-table', action='store', dest='calibtable',
+                        help='APERO database table name suffix for the'
+                             'calibration database (default is the APERO '
+                             'profile name). If unset user is prompted for '
+                             'choice.')
+    parser.add_argument('--tellu-table', action='store', dest='tellutable',
+                        help='APERO database table name suffix for the'
+                             'telluric database (default is the APERO '
+                             'profile name). If unset user is prompted for '
+                             'choice.')
+    parser.add_argument('--index-table', action='store', dest='indextable',
+                        help='APERO database table name suffix for the'
+                             'index database (default is the APERO '
+                             'profile name).')
+    parser.add_argument('--log-table', action='store', dest='logtable',
+                        help='APERO database table name suffix for the'
+                             'log database (default is the APERO '
+                             'profile name).')
+    parser.add_argument('--obj-table', action='store', dest='objtable',
+                        help='APERO database table name suffix for the'
+                             'object database (default is the APERO '
+                             'profile name).')
+    parser.add_argument('--lang-table', action='store', dest='langtable',
+                        help='APERO database table name suffix for the'
+                             'language database (default is the APERO '
+                             'profile name).')
     # parse arguments
     args = parser.parse_args()
     return args
@@ -541,8 +563,6 @@ if __name__ == '__main__':
         allparams = install.update(params, args)
     # add dev mode to allparams
     allparams['DEVMODE'] = args.devmode
-    # add name
-    allparams['PROFILENAME'] = args.name
     # add clean warn
     allparams['CLEANWARN'] = args.cleanwarn
     # add environmental variable DRS_UCONFIG
