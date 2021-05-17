@@ -426,11 +426,17 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
     package = pcheck(params, 'DRS_PACKAGE', func=func_name, override=package)
     # make barycorrpy directory an absolute path
     bc_dir = drs_path.get_relative_folder(params, package, bc_dir)
+    # if we don't have an epoch at this point in time we assume the
+    #    epoch is the time of observation (i.e. the RA and DEC are where the
+    #    telescope was pointing)
+    if props['DRS_EPOCH'] in ['None', 'Null', '', np.nan]:
+        epoch = Time(props['OBS_TIME'], format='jd')
     # epoch must be in jd
-    epoch_fmt = params.instances['KW_DRS_EPOCH'].unit
-    if epoch_fmt == uu.yr:
-        epoch_fmt = 'decimalyear'
-    epoch = Time(props['DRS_EPOCH'], format=epoch_fmt)
+    else:
+        epoch_fmt = params.instances['KW_DRS_EPOCH'].unit
+        if epoch_fmt == uu.yr:
+            epoch_fmt = 'decimalyear'
+        epoch = Time(props['DRS_EPOCH'], format=epoch_fmt)
     # get args
     # TODO: Add back in leap seconds (when barycorrpy works)
     bkwargs = dict(ra=props['DRS_RA'], dec=props['DRS_DEC'],
