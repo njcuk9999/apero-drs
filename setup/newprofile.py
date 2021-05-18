@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''
+"""
 # CODE NAME HERE
 
 # CODE DESCRIPTION HERE
@@ -8,20 +8,19 @@
 Created on 2019-11-26 at 15:54
 
 @author: cook
-'''
-import numpy as np
+"""
+
 import argparse
-import os
-import glob
-import sys
-import signal
-import shutil
+import numpy as np
 from pathlib import Path
+import shutil
+import signal
+import sys
+from typing import Any
 
 from apero.base import base
 from apero.core import constants
 from apero.tools.module.setup import drs_installation as install
-from apero.io import drs_path
 
 # =============================================================================
 # Define variables
@@ -47,16 +46,31 @@ OLDTEXT = '" ${YELLOW}}'
 TEXTCHANGE = ['${{yellow}}{PROFILENAME}', '${{YELLOW}}{PROFILENAME}',
               '{UCONFIG}']
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
-def catch_sigint(signal_received, frame):
+def catch_sigint(signal_received: Any, frame: Any):
+    """
+    Deal with Keyboard interupt --> do a sys.exit
+
+    :param signal_received: Any, not used (but expected)
+    :param frame: Any, not used (but expected)
+
+    :return: None, exits if this function is called
+    """
+    # we don't use these we just exit
+    _ = signal_received, frame
     print('\n\nExiting installation script')
     # raise Keyboard Interrupt
     sys.exit()
 
 
-def get_args():
+def get_args() -> argparse.Namespace:
+    """
+    Define the command line arguments (via argparse) for this recipe
+    :return:
+    """
     # get parser
     description = ' Install {0} software for reducing observational data'
     parser = argparse.ArgumentParser(description=description.format(DRS_PATH))
@@ -72,6 +86,9 @@ def get_args():
                              'RECOMMENDED - clears out old files and copies'
                              'over all required default data files. '
                              'If unset user is prompted for  choice.')
+    parser.add_argument('--dev', action='store_true', default=False,
+                        dest='devmode',
+                        help='activate developer mode')
     # parse arguments
     args = parser.parse_args()
     # need fake clean argument
@@ -80,7 +97,15 @@ def get_args():
     return args
 
 
-def old_new(args, all_params):
+def old_new(args: argparse.Namespace, all_params: Any) -> Any:
+    """
+    Add the "old" parameters to our "new" installation parameter dictionary
+
+    :param args: argparse.Namespace
+    :param all_params: ParamDict, the new installation parameter dictionary
+
+    :return: ParamDict, the updated installation parameter dictionary
+    """
     if args.name is None:
         name = install.ask('Define a name for new profile', dtype=str)
     else:
@@ -126,8 +151,14 @@ def old_new(args, all_params):
     return all_params
 
 
-def copy_update(all_params):
+def copy_update(all_params: Any):
+    """
+    Copy the user config/constant in files to new place
 
+    :param all_params: ParamDict, the new installation parameter dictionary
+
+    :return: None, copies config/constant ini files
+    """
     old_uconfig = all_params['OLD_USERCONFIG']
     new_path = all_params['USERCONFIG']
     profilename = all_params['PROFILENAME']
@@ -169,8 +200,8 @@ def copy_update(all_params):
     # ----------------------------------------------------------------------
     # set old and new text dicts
     # ----------------------------------------------------------------------
-    OLDDICT = dict(PROFILENAME=old_profile_name, UCONFIG=old_uconfig)
-    NEWDICT = dict(PROFILENAME=profilename, UCONFIG=new_path)
+    olddict = dict(PROFILENAME=old_profile_name, UCONFIG=old_uconfig)
+    newdict = dict(PROFILENAME=profilename, UCONFIG=new_path)
 
     # ----------------------------------------------------------------------
     # copy all to new path
@@ -195,8 +226,8 @@ def copy_update(all_params):
         for line in lines:
             # loop around text
             for text in TEXTCHANGE:
-                oldtext = text.format(**OLDDICT)
-                newtext = text.format(**NEWDICT)
+                oldtext = text.format(**olddict)
+                newtext = text.format(**newdict)
                 if oldtext in line:
                     msg = '\tReplacing text: {0} --> {1}'
                     install.cprint(msg.format(oldtext, newtext), 'g')
@@ -208,11 +239,12 @@ def copy_update(all_params):
             f.writelines(newlines)
 
 
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == '__main__':
+def main():
+    """
+    Run the new profile creator
+
+    :return:
+    """
     # set up arguments
     args = get_args()
     # catch Ctrl+C
@@ -243,7 +275,8 @@ if __name__ == '__main__':
            'files manually at the following path before running APERO:'
            '\n\t{1}\n\nNote this includes:'
            '\n\t1. Editing the paths in user_config.py'
-           '\n\t2. Editing the database.yaml "PROFILE" names'
+           '\n\t2. Editing the database.yaml "PROFILE" names (they have been'
+           ' set to the new profile name by default)' 
            '\n\t3. Editing the DRS_UCONFIG path in install.yaml'
            '\n\t4. Creating new directories'
            '\n\t5. Running apero_reset.py once steps 1-4 are completed.')
@@ -256,3 +289,11 @@ if __name__ == '__main__':
     install.cprint('New profile setup complete', 'm')
     install.cprint(install.printheader(), 'm')
     print('\n')
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == '__main__':
+    main()
