@@ -199,6 +199,7 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if calibdb.tname in calibdb.tables:
+        calibdb.backup()
         calibdb.delete_table(calibdb.tname)
     # add main table
     calibdb.add_table(calibdb.tname, columns, ctypes)
@@ -234,6 +235,7 @@ def create_telluric_database(pconst: PseudoConst,
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if telludb.tname in telludb.tables:
+        telludb.backup()
         telludb.delete_table(telludb.tname)
     # add main table
     telludb.add_table(telludb.tname, columns, ctypes)
@@ -262,6 +264,7 @@ def create_index_database(pconst: PseudoConst,
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if indexdb.tname in indexdb.tables:
+        indexdb.backup()
         indexdb.delete_table(indexdb.tname)
     # add main table
     indexdb.add_table(indexdb.tname, columns, ctypes, unique_cols=cuniques)
@@ -290,6 +293,7 @@ def create_log_database(pconst: PseudoConst,
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if logdb.tname in logdb.tables:
+        logdb.backup()
         logdb.delete_table(logdb.tname)
     # add main table
     logdb.add_table(logdb.tname, columns, ctypes)
@@ -322,6 +326,7 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if objectdb.tname in objectdb.tables:
+        objectdb.backup()
         objectdb.delete_table(objectdb.tname)
     # add main table
     objectdb.add_table(objectdb.tname, columns, ctypes, unique_cols=cuniques)
@@ -358,6 +363,7 @@ def make_object_reset(params: ParamDict):
     objdbm.load_db()
     # remove table if it already exists
     if objdbm.database.tname in objdbm.database.tables:
+        objdbm.database.backup()
         objdbm.database.delete_table(objdbm.database.tname)
     # get columns and ctypes from pconst
     columns, ctypes, cuniques = pconst.OBJECT_DB_COLUMNS()
@@ -446,6 +452,7 @@ def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
     ctypes = langdbm.ctypes
     # -------------------------------------------------------------------------
     if langdb.tname in langdb.tables:
+        langdb.backup()
         langdb.delete_table(langdb.tname)
     # add main table
     langdb.add_table(langdb.tname, columns, ctypes)

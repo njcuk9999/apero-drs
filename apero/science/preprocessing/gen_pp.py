@@ -1445,30 +1445,8 @@ def quality_control(params, snr_hotpix, infile, rms_list, log=True):
 # =============================================================================
 # Main code here
 if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # debug test for AstroObject class
-    _params = constants.load()
-    _pconst = constants.pload()
-
-    # load database
-    _objdbm = ObjectDatabase(_params)
-    _objdbm.load_db()
-
-    # for now delete database
-    _columns, _ctypes, _cunique = _pconst.OBJECT_DB_COLUMNS()
-    _objdbm.database.delete_table('OBJECT')
-    _objdbm.database.add_table('OBJECT', _columns, _ctypes,
-                               unique_cols=_cunique)
-    _objdbm.load_db()
-    _outdict = dict()
-
-    # get a list of object names from glist
-    _gtable = get_google_sheet(_params['OBJ_LIST_GOOGLE_SHEET_URL'],
-                               _params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
-    _objnames = list(np.unique(_gtable[_params['GL_OBJ_COL_NAME']]))
-
-    # resolve targets
-    resolve_targets(_params, _objnames, database=_objdbm)
+    # no main code
+    print('Hello World!')
 
 # =============================================================================
 # End of code
