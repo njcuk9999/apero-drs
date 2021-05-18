@@ -132,7 +132,8 @@ def old_new(args: argparse.Namespace, all_params: Any) -> Any:
         user_path = Path(args.path)
     # check path exists
     if not user_path.exists():
-        install.cprint('Error: Path invalid. \n\t Path = {0}'.format(user_path))
+        install.cprint('Error: Path invalid. \n\t Path = {0}'.format(user_path),
+                       colour='r')
         sys.exit()
 
     # create new path
@@ -142,7 +143,12 @@ def old_new(args: argparse.Namespace, all_params: Any) -> Any:
     # create new path
     # ----------------------------------------------------------------------
     if new_path.exists():
-        install.cprint('Error: Path exists. \n\t Path = {0}'.format(new_path))
+        install.cprint('Error: APERO profile exists cannot create new profile'
+                       'with same name as old profile in current path.'
+                       '\n\t Remove path and all contents if you wish to '
+                       'continue.'
+                       '\n\t Path = {0}'.format(new_path),
+                       colour='r')
         sys.exit()
     else:
         new_path.mkdir()
