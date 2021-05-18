@@ -17,6 +17,7 @@ only from:
 from astropy.table import Table
 from contextlib import closing
 import numpy as np
+import os
 import pandas as pd
 from pathlib import Path
 import sqlite3
@@ -1329,6 +1330,12 @@ class SQLiteDatabase(Database):
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname, 'backup')
         # construct backup path
         backup_path = str(self.path).replace('.db', 'backup.db')
+        # remove old backup
+        try:
+            if os.path.exists(backup_path):
+                os.remove(backup_path)
+        except Exception as _:
+            pass
         # make backup database
         conargs = dict(func=func_name, kind='backup')
         with closing(self.connection(**conargs)) as conn:
@@ -1808,6 +1815,13 @@ class MySQLDatabase(Database):
         # construct backup path
         if self.backup_path is None:
             return
+        # -------------------------------------------------------------------
+        # remove old backup
+        try:
+            if os.path.exists(self.backup_path):
+                os.remove(self.backup_path)
+        except Exception as _:
+            pass
         # -------------------------------------------------------------------
         # get all rows as a pandas data frame
         df = self.get('*', table=self.tname, return_pandas=True)
