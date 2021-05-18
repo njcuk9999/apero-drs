@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''
+"""
 # CODE NAME HERE
 
 # CODE DESCRIPTION HERE
@@ -8,15 +8,15 @@
 Created on 2019-11-26 at 15:54
 
 @author: cook
-'''
-import numpy as np
-import importlib
-import glob
-import os
-import sys
-import signal
+"""
 import argparse
+import importlib
+import os
 from pathlib import Path
+import signal
+import sys
+from typing import Any, List, Tuple, Union
+
 
 # =============================================================================
 # Define variables
@@ -44,7 +44,11 @@ module_translation['mysql-connector-python'] = 'mysql.connector'
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_args():
+def get_args() -> argparse.Namespace:
+    """
+    Define the command line arguments (via argparse) for this recipe
+    :return:
+    """
     # get parser
     description = ' Install {0} software for reducing observational data'
     parser = argparse.ArgumentParser(description=description.format(DRS_PATH))
@@ -232,10 +236,12 @@ def get_args():
     return args
 
 
-def load_requirements(filename) -> list:
+def load_requirements(filename: Union[str, Path]) -> List[str]:
     """
     Load requirements from file
-    :return:
+
+    :return: list of strings, return a list of required modules and versions
+             (from a pip style requirements.txt)
     """
     # storage for list of modules
     modules = []
@@ -255,6 +261,12 @@ def load_requirements(filename) -> list:
 
 
 def validate():
+    """
+    Check whether users system satisfies all python module requirements
+
+    :raises SystemExit: if modules are not correct
+    :return: None
+    """
     # python version check
     if sys.version_info.major < 3:
         print('\tFatal Error: Python 2 is not supported')
@@ -302,6 +314,7 @@ def validate():
             checked.append(modname)
         # ------------------------------------------------------------------
         # test importing module
+        # noinspection PyBroadException
         try:
             imod = importlib.import_module(modname)
             # --------------------------------------------------------------
@@ -319,7 +332,24 @@ def validate():
                 sys.exit()
 
 
-def check_version(module, imod, rversionlist, suggested, required=True):
+def check_version(module: str, imod: Any, rversionlist: Union[List[str], None],
+                  suggested: str, required: bool = True):
+    """
+    Check a module version
+
+    :param module: str, module name
+    :param imod: Module imported
+    :param rversionlist: list of strings, the required version, subversion etc
+                         could be ['1'], ['1', '1'], or ['1', '1', '1'] etc
+                         for version 1, 1.1, 1.1.1  etc
+    :param suggested: str, the suggested version
+    :param required: bool, if True this module is required and code will exit
+                     if version is not satisfied
+
+    :raises SystemExit: if module is required and not valid
+
+    :return: None, prints if module is valid or suggested
+    """
     # test version
     passed = False
     # ------------------------------------------------------------------
@@ -334,17 +364,19 @@ def check_version(module, imod, rversionlist, suggested, required=True):
         # loop around rversion list
         for v_it, rversion in enumerate(rversionlist):
             # convert rversion to int
+            # noinspection PyBroadException
             try:
                 rversion = int(rversion)
-            except:
+            except Exception as _:
                 break
             # if we don't have a level this deep break
             if len(version) < (v_it - 1):
                 break
             # try to make an integer
+            # noinspection PyBroadException
             try:
                 version[v_it] = int(version[v_it])
-            except:
+            except Exception as _:
                 break
             # if version is higher pass
             if version[v_it] > rversion:
@@ -378,76 +410,30 @@ def check_version(module, imod, rversionlist, suggested, required=True):
             print('\tPassed: {1} ({3} >= {2})'.format(*args))
 
 
-def catch_sigint(signal_received, frame):
+def catch_sigint(signal_received: Any, frame: Any):
+    """
+    Deal with Keyboard interupt --> do a sys.exit
+
+    :param signal_received: Any, not used (but expected)
+    :param frame: Any, not used (but expected)
+
+    :return: None, exits if this function is called
+    """
+    # we don't use these we just exit
+    _ = signal_received, frame
     print('\n\nExiting installation script')
     # raise Keyboard Interrupt
     sys.exit()
 
 
-class PathCompleter(object):
-    '''
-    Copy of drs_installation.py.PathCompleter
-    '''
+def check_install() -> Tuple[Any, Any]:
+    """
+    Check for apero installation directory
 
-    def __init__(self, root=None):
-        self.root = root
-        try:
-            self.readline = importlib.import_module('readline')
-        except:
-            self.readline = None
-
-    def pathcomplete(self, text, state):
-        '''
-        This is the tab completer for systems paths.
-        Only tested on *nix systems
-        '''
-        line = self.readline.get_line_buffer().split()
-        # replace ~ with the user's home dir.
-        # See https://docs.python.org/2/library/os.path.html
-        if '~' in text:
-            text = os.path.expanduser('~')
-        # deal with having a root folder
-        if self.root is not None:
-            text = os.path.join(self.root, text)
-        # return list
-        return [x for x in np.sort(glob.glob(text + '*'))][state]
-
-
-def tab_input(message, root=None):
-    '''
-    copy of drs_installation.py.tab_input
-    :param message:
-    :param root:
-    :return:
-    '''
-    # try to import readline (unix only)
-    try:
-        readline = importlib.import_module('readline')
-    except:
-        readline = None
-    # deal with no readline module
-    if readline is None:
-        return input(message + '\n\t>> ')
-    # ----------------------------------------------------------------------
-    # Register our completer function
-    readline.set_completer(PathCompleter(root).pathcomplete)
-    # for MAC users
-    if sys.platform == 'darwin':
-        # Apple uses libedit.
-        # readline.parse_and_bind('bind -e')
-        # readline.parse_and_bind('bind '\t' rl_complete')
-        pass
-    # for everyone else
-    elif sys.platform == 'linux':
-        # Use the tab key for completion
-        readline.parse_and_bind('tab: complete')
-        readline.set_completer_delims(' \t\n`~!@#$%^&*()-=+[{]}\\|;:\'",<>?')
-    uinput = input(message + '\n\t>> ')
-    # return uinput
-    return uinput
-
-
-def check_install():
+    :raises ImportError: if unable to find apero installation
+    :return: tuple, 1. the apero.constants sub-module, 2. the apero.installation
+             module
+    """
     # start with file definition
     start = Path(__file__).absolute()
     # get apero working directory
@@ -468,87 +454,58 @@ def check_install():
     # try to import the modules
     try:
         constants = importlib.import_module(constants_mod)
-    except Exception as e:
+    except Exception as _:
         # raise error
         raise ImportError('Cannot import {0}'.format(constants_mod))
     try:
         install = importlib.import_module(install_mod)
-    except Exception as e:
+    except Exception as _:
         # raise error
         raise ImportError('Cannot import {0}'.format(install_mod))
-
     # add apero to the PYTHONPATH
     if 'PYTHONPATH' in os.environ:
         oldpath = os.environ['PYTHONPATH']
         os.environ['PYTHONPATH'] = str(drs_path) + os.pathsep + oldpath
-
+    # else we just add it to current PYTHON PATH
     else:
         os.environ['PYTHONPATH'] = str(drs_path)
         # add to active path
         os.sys.path = [str(drs_path)] + os.sys.path
-
     # if we have reached this point we can break out of the while loop
     return constants, install
 
 
-def ask_for_install_path(drs_path: Path, debug):
-    umsg = '\nCannot find {0}. Please enter {0} installation path:'
-    # user input required
-    uinput = tab_input(umsg.format(drs_path))
-    # try to create path from user input
-    try:
-        upath = Path(uinput)
-        # make sure user input exists
-        if not upath.exists():
-            umsg = ('\nPath "{0}" does not exist.'
-                    '\nPlease enter a valid path. (Ctrl+C) to quit')
-            print(umsg.format(upath))
-        # if it does exist add it as a path to test
-        else:
-            # add debug output
-            if debug:
-                print('Adding "{0}" to sys.path'.format(upath))
-            # update
-            sys.path.append(upath)
-    except:
-        umsg = ('\nPath "{0}" is not a valid path.'
-                '\nPlease enter a valid path. (Ctrl+C) to quit')
-        print(umsg.format(uinput))
+def main():
+    """
+    Run the installation
 
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == '__main__':
+    :return:
+    """
+    # ----------------------------------------------------------------------
     # get arguments
     args = get_args()
-
+    # ----------------------------------------------------------------------
     # deal with validation
     if not args.skip:
         validate()
-
     # ----------------------------------------------------------------------
     # Importing DRS paths
     # ----------------------------------------------------------------------
-    # set guess path
-    drs_path = Path(DRS_PATH)
     # catch Ctrl+C
     signal.signal(signal.SIGINT, catch_sigint)
     # get install paths
     constants, install = check_install()
+    # noinspection PyBroadException
     try:
         from apero.tools.module.setup import drs_installation as install
         from apero.core import constants
     except Exception as _:
         pass
-
     # ----------------------------------------------------------------------
     # start up
     # ----------------------------------------------------------------------
     # get global parameters
     params = constants.load(from_file=False)
-
     # ----------------------------------------------------------------------
     # Start of user setup
     # ----------------------------------------------------------------------
@@ -569,7 +526,6 @@ if __name__ == '__main__':
     os.environ['DRS_UCONFIG'] = str(allparams['USERCONFIG'])
     # reload params
     params = constants.load(allparams['INSTRUMENT'], from_file=False)
-
     # ----------------------------------------------------------------------
     # End of user setup
     # ----------------------------------------------------------------------
@@ -617,6 +573,14 @@ if __name__ == '__main__':
     install.cprint('Installation complete', 'm')
     install.cprint(install.printheader(), 'm')
     print('\n')
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+# Run main code here
+if __name__ == '__main__':
+    main()
 
 # =============================================================================
 # End of code

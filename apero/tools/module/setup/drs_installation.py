@@ -8,17 +8,15 @@ Created on 2019-11-09 10:44
 @author: ncook
 Version 0.0.1
 """
+import argparse
+from collections import OrderedDict
 import importlib
 import numpy as np
-import sys
 import os
-import shutil
-import string
-import readline
-import glob
-from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Union
+import string
+import sys
+from typing import Any, List, Dict, Tuple, Union
 
 from apero.base import base
 from apero.core.core import drs_misc
@@ -202,7 +200,7 @@ unset RED BLUE YELLOW WHITE END
 # =============================================================================
 # Define setup/general functions
 # =============================================================================
-def cprint(message, colour='g'):
+def cprint(message: str, colour: str = 'g'):
     """
     print coloured message
 
@@ -213,8 +211,10 @@ def cprint(message, colour='g'):
     print(Colors.print(message, colour))
 
 
-def ask(question, dtype=None, options=None, optiondesc=None, default=None,
-        required=True):
+def ask(question: str, dtype: Union[str, type, None] = None,
+        options: Union[List[Any], None] = None,
+        optiondesc: Union[List[str], None] = None, default: Any = None,
+        required: bool = True):
     """
     Ask a question
 
@@ -249,16 +249,11 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
         # print options
         if options is not None:
             cprint('Options are:', 'b')
-            print('\t' + '\n\t'.join(np.array(optiondesc, dtype=str)))
+            print('   ' + '\n   '.join(np.array(optiondesc, dtype=str)))
         if default is not None:
-            cprint('\tDefault is: {0}'.format(default), 'b')
+            cprint('   Default is: {0}'.format(default), 'b')
         # record response
-        if dtype == 'path':
-            uinput = tab_input('')
-            # strip spaces
-            uinput = uinput.strip()
-        else:
-            uinput = input(' >>\t')
+        uinput = input(' >>   ')
         # deal with string ints, floats, logic
         if dtype in ['int', 'float', 'bool']:
             # noinspection PyBroadException
@@ -373,7 +368,16 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
         return uinput
 
 
-def check_path_arg(name, value: Union[str, Path]):
+def check_path_arg(name: str, value: Union[str, Path]) -> Tuple[bool, Path]:
+    """
+    Check whether path exists and ask user to create it if it doesn't
+
+    :param name: str, the path name (description of the path)
+    :param value: str or Path, the path to create
+
+    :return: tuple, 1. whether to prompt the user for another path (i.e. they
+             didn't want to create the path, 2. the value of the path
+    """
     promptuser = True
     # check if user config is None (i.e. set from cmd line)
     if value is not None:
@@ -395,7 +399,17 @@ def check_path_arg(name, value: Union[str, Path]):
     return promptuser, value
 
 
-def user_interface(params, args, lang):
+def user_interface(params: ParamDict, args: argparse.Namespace,
+                   lang: str) -> Tuple[ParamDict, argparse.Namespace]:
+    """
+    Ask the user the questions required to install apero
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param args: passed from argparse
+    :param lang: str, the language the user requires
+
+    :return: tuple, 1. all parameters dict, 2. the argparse namespace
+    """
     # set function name
     func_name = __NAME__ + '.user_interface()'
     # get default from params
@@ -642,7 +656,6 @@ def user_interface(params, args, lang):
     return all_params, args
 
 
-
 def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     """
     Ask the user for the MySQL settings
@@ -658,7 +671,6 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     # only sqlite setting
     all_params['SQLITE']['USE_SQLITE3'] = False
     all_params['MYSQL']['USE_MYSQL'] = True
-
     # ----------------------------------------------------------------------
     # set values to None
     host, username, password, name, profile = None, None, None, None, None
@@ -747,10 +759,35 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
         all_params['MYSQL']['DATABASE'] = response
     # ----------------------------------------------------------------------
     # Individual database table settings
+    all_params = mysql_database_tables(args, all_params)
+    # ----------------------------------------------------------------------
+    return all_params
+
+
+def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
+                          db_ask: bool = True) -> ParamDict:
+    """
+    Get/ask for the MYSQL database table names
+
+    :param args: argparse.Namespace - the argparse namespace
+    :param all_params: ParamDict, the installation parameter dictionary
+    :param db_ask: bool, if True uses default definitions to ask for tables,
+                   if False does not ask
+
+    :return: ParamDict, the installation parameter dictionary
+    """
+    # deal with not having mysql section
+    if 'MYSQL' not in all_params:
+        all_params['MYSQL'] = dict()
+    # ----------------------------------------------------------------------
+    # Individual database table settings
     # ----------------------------------------------------------------------
     database_user = ['CALIB', 'TELLU', 'INDEX', 'LOG', 'OBJECT', 'LANGUAGE']
     databases_raw = ['CALIB', 'TELLU', 'IDX', 'LOG', 'OBJ', 'LANG']
-    database_ask = [True, True, False, False, False, False]
+    if db_ask:
+        database_ask = [True, True, False, False, False, False]
+    else:
+        database_ask = [False] * 6
     database_args = ['calibtable', 'tellutable', 'indextable', 'logtable',
                      'objtable', 'langtable']
     # loop around databases
@@ -817,7 +854,7 @@ def clean_profile_name(inname: str) -> str:
     """
     Remove any bad characters from profile name
 
-    :param name: str, the profile name to clean up
+    :param inname: str, the profile name to clean up
 
     :return: str, the cleaned profile name
     """
@@ -841,7 +878,15 @@ def clean_profile_name(inname: str) -> str:
 # =============================================================================
 # Define installation functions
 # =============================================================================
-def bin_paths(params, all_params):
+def bin_paths(params: ParamDict, all_params: ParamDict) -> ParamDict:
+    """
+    Add the bin and tool paths to installation parameter dictionary
+
+    :param params: ParamDict, the constants parameter dictionary
+    :param all_params: ParamDict, the installation parameter dictionary
+
+    :return: ParamDict, the updated installation parameter dictionary
+    """
     # get package
     package = params['DRS_PACKAGE']
     # get root path
@@ -869,7 +914,16 @@ def bin_paths(params, all_params):
     return all_params
 
 
-def create_configs(params, all_params):
+def create_configs(params: ParamDict, all_params: ParamDict) -> ParamDict:
+    """
+    Create the configuration files and add them to the installation parameter
+    dictionary
+
+    :param params: ParamDict, the constants parameter dictionary
+    :param all_params: ParamDict, the installation parameter dictionary
+
+    :return: ParamDict, the updated installation parameter dictionary
+    """
     # set function name
     func_name = __NAME__ + '.create_configs()'
     # get config directory
@@ -895,7 +949,15 @@ def create_configs(params, all_params):
     return all_params
 
 
-def update_configs(all_params):
+def update_configs(all_params: ParamDict) -> ParamDict:
+    """
+    Update the configuration files and return the installation parameter
+    dictionary
+
+    :param all_params: ParamDict, the installation parameter dictionary
+
+    :return: ParamDict, the updated installation parameter dictionary
+    """
     # loop around config files
     for filename in all_params['CONFIGFILES']:
         # get the current config values
@@ -913,7 +975,16 @@ def update_configs(all_params):
     return all_params
 
 
-def create_shell_scripts(params, all_params):
+def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
+    """
+    Create the shell scripts, copy them to the correct directory and add the
+    paths to the installation parameter dictionary
+
+    :param params: ParamDict, the constants parameter dictionary
+    :param all_params: ParamDict, the installation parameter dictionary
+
+    :return: ParamDict, the updated installation parameter dictionary
+    """
     # ----------------------------------------------------------------------
     # get package
     package = params['DRS_PACKAGE']
@@ -1016,7 +1087,16 @@ def create_shell_scripts(params, all_params):
     return all_params
 
 
-def clean_install(params, all_params):
+def clean_install(params: ParamDict, all_params: ParamDict) -> ParamDict:
+    """
+    Clean the installation directories and update the installation parameter
+    dictionary
+
+    :param params: ParamDict, the constants parameter dictionary
+    :param all_params: ParamDict, the installation parameter dictionary
+
+    :return: ParamDict, the updated installation parameter dictionary
+    """
     # get package
     package = params['DRS_PACKAGE']
     # get clean warning
@@ -1046,15 +1126,20 @@ def clean_install(params, all_params):
     add_paths(all_params)
     # construct reset command
     toolmod.main(quiet=True, warn=cleanwarn)
-
-
-
-
     # return all params
     return all_params
 
 
-def create_symlinks(params, all_params):
+def create_symlinks(params: ParamDict, all_params: ParamDict) -> ParamDict:
+    """
+    Create the symbolic links in the bin and tools directories and update
+    the installation parameter dictionary
+
+    :param params: ParamDict, the constants parameter dictionary
+    :param all_params: ParamDict, the installation parameter dictionary
+
+    :return: ParamDict, the updated installation parameter dictionary
+    """
     # get available instruments
     drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get package
@@ -1111,7 +1196,17 @@ def create_symlinks(params, all_params):
 
 
 def _create_link(recipe_dir: Path, suffix: Union[str, Path], new_dir: Path,
-                 log=True):
+                 log: bool = True):
+    """
+    Create a symbolic link
+
+    :param recipe_dir: Path, the directory containing real recipes
+    :param suffix: str, the suffix to look for in the original directory
+    :param new_dir: Path, the new directory to create link in
+    :param log: bool, if True logs creating these new links
+
+    :return: None - creates links in "new_dir"
+    """
     # deal with directories not exists
     new_dir.mkdir(parents=True, exist_ok=True)
     # get all python files in recipe folder
@@ -1137,7 +1232,14 @@ def _create_link(recipe_dir: Path, suffix: Union[str, Path], new_dir: Path,
             cprint('Error: Cannot chmod 777', 'r')
 
 
-def add_paths(all_params):
+def add_paths(all_params: ParamDict):
+    """
+    Add to path and python path (temporarily) while we install apero
+
+    :param all_params: ParamDict, the installation parameter dictionary
+
+    :return: None, just updates PATH and PYTHONPATH environmental variables
+    """
     # get paths and add in correct order
     paths = [str(all_params['DRS_ROOT'].parent),
              str(all_params['DRS_OUT_BIN_PATH'])]
@@ -1176,15 +1278,27 @@ def add_paths(all_params):
         os.environ['PYTHONPATH'] = sep.join(paths)
 
 
-def printheader():
+def printheader() -> str:
+    """
+    Construct a header row the size of the window
+
+    :return: str, the header string to be printed
+    """
     rows, columns = constants.param_functions.window_size()
     return '=' * (columns - 1)
 
 
-def print_options(params, all_params):
+def print_options(params: ParamDict, all_params: ParamDict):
+    """
+    Print the options to run apero
+
+    :param params: ParamDict, the constants parameter dictionary
+    :param all_params: ParamDict, the installation parameter dictionary
+
+    :return: None prints to screen (using cprint)
+    """
     # set up the text dictionary
     text = dict()
-
     # deal with user config (should end with os.sep)
     userconfig = str(all_params['USERCONFIG'])
     if not userconfig.endswith(os.sep):
@@ -1206,7 +1320,14 @@ def print_options(params, all_params):
     cprint(message4.format(**text), 'g')
 
 
-def reset_paths_empty(all_params):
+def reset_paths_empty(all_params: ParamDict) -> bool:
+    """
+    Flag whether we need to reset any of the "RESET_PATHS" (global variable)
+
+    :param all_params: ParamDict, the installation parameter dictionary
+
+    :return: bool, True if one of the "RESET_PATHS" is empty, False otherwise
+    """
     # look for paths
     for path in RESET_PATHS:
         # get instrument path
@@ -1221,7 +1342,20 @@ def reset_paths_empty(all_params):
 # =============================================================================
 # create user files functions
 # =============================================================================
-def create_ufiles(params, devmode, ask_user=True):
+def create_ufiles(params: ParamDict, devmode: bool,
+                  ask_user: bool = True) -> Tuple[List[str], List[str]]:
+    """
+    Create the user config/constant ini files
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param devmode: bool, if True we are in dev mode - need all constants
+                    in constants files (not just the normal list of user
+                    constants)
+    :param ask_user: bool, if True asks the user which constants groups to add
+                     (only in dev mode)
+    :return: tuple, 1. list of config lines to add to config ini file,
+                    2. list of constant lines to add to constant ini file
+    """
     # storage of parameters of different types
     config = OrderedDict()
     const = OrderedDict()
@@ -1231,7 +1365,6 @@ def create_ufiles(params, devmode, ask_user=True):
     # ------------------------------------------------------------------
     # dev groups
     dev_groups = dict()
-
     # ------------------------------------------------------------------
     # loop around all parameters and find which need to be added
     #  to config file and const file
@@ -1314,29 +1447,58 @@ def create_ufiles(params, devmode, ask_user=True):
     return config_lines, const_lines
 
 
-def create_ufile(instrument, kind, dictionary, grouplist, log=False):
+def create_ufile(instrument: str, ckind: str, group_dict: Dict[str, list],
+                 grouplist: List[str]) -> List[str]:
+    """
+    From a dictionary of groups (with constant instances) and a list of groups
+    construct a list of lines to add for this "ckind" (constant kind)
+
+    :param instrument: str, the instrument for these constants
+    :param ckind: str, the constant kind (either "config" or "constant")
+    :param group_dict: dict, a dictionary of groups where each group is a
+                       list of tuples where each tuple contains
+                       the constants instance and the default value
+                       i.e.
+                       group_dict['GROUP1'] = group1list
+
+                       group1list = [[constant1, default_value1],
+                                     [constant2, default_value2],
+                                     [constant3, default_value3]]
+
+    :param grouplist: List of strings, the group names (should be the same as
+                      list(grouplist.keys()) but may not be
+
+    :return: List of strings, the lines to add to the "ckind" ini file
+    """
     lines = []
-    lines += user_header('{0} {1} file'.format(instrument, kind))
+    lines += user_header('{0} {1} file'.format(instrument, ckind))
     # loop around groups
     for group in grouplist:
         # only add if we have parameters that are needed in that group
-        if group in dictionary:
+        if group in group_dict:
             # add a header if this is a new group
             lines += ['']
             lines += user_header(group)
             # loop around group parameters
-            for item in range(len(dictionary[group])):
+            for item in range(len(group_dict[group])):
                 # get instance of this parameter
-                instance = dictionary[group][item][0]
+                instance = group_dict[group][item][0]
                 # get value of this parameter
-                value = dictionary[group][item][1]
+                value = group_dict[group][item][1]
                 # create line
                 lines += instance.write_line(value=value)
     # return lines
     return lines
 
 
-def user_header(title):
+def user_header(title: str) -> List[str]:
+    """
+    Returns a group title for constants / config ini file
+
+    :param title: str, the group title
+
+    :return: List of strings - the title lines to add
+    """
     lines = ['# {0}'.format('-' * 77),
              '# ',
              '#  {0}'.format(title),
@@ -1345,7 +1507,24 @@ def user_header(title):
     return lines
 
 
-def ufile_write(aparams, lines, upath: Path, ufile, kind):
+def ufile_write(aparams: ParamDict, lines: List[str], upath: Path,
+                ufile: Union[Path, str], ckind: str) -> Path:
+    """
+    Write a constants/config ini file to disk
+
+    :param aparams: ParamDict, the installation parameter dictionary
+    :param lines: list of strings, the list of lines to be added to the ini
+                  file
+    :param upath: Path, the directory and full path of the user ini file to be
+                  written
+    :param ufile: Path, the filename for the user ini file (this should be
+                  different depending on "ckind") otherwise files will overwrite
+                  each other
+    :param ckind: str, the constant kind (either "config" or "constant") for the
+                  user ini file
+
+    :return: Path, the full path and filename to the user ini file
+    """
     # make directory if it doesn't exist
     if not upath.exists():
         os.makedirs(upath)
@@ -1395,7 +1574,7 @@ def ufile_write(aparams, lines, upath: Path, ufile, kind):
                 # display a warning
                 umessage1 = ('\nConflicting line found in current {0} file for'
                              'constant "{1}"')
-                cprint(umessage1.format(kind, variable), 'y')
+                cprint(umessage1.format(ckind, variable), 'y')
                 umessage2 = 'Replace default:\n\t{0} \n with current:\n\t{1}'
                 output = ask(umessage2.format(value, cvalue), dtype='YN')
                 if output:
@@ -1415,7 +1594,17 @@ def ufile_write(aparams, lines, upath: Path, ufile, kind):
 # =============================================================================
 # update functions
 # =============================================================================
-def update(params, args):
+def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
+    """
+    Get parameters from "params" and from the current setup and the input
+    arguments and construct the installation parameter dictionary from here
+    (instead of asking for user for all parameters)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param args: argparse.Namespace - command line arguments passed via argparse
+
+    :return: ParamDict, the installation parameter dictionary
+    """
     # set function name
     func_name = __NAME__ + '.update()'
     # get config path
@@ -1436,6 +1625,8 @@ def update(params, args):
     # ----------------------------------------------------------------------
     # set up dictionary
     all_params = ParamDict()
+    # dev mode
+    all_params['DEVMODE'] = args.devmode
     # ----------------------------------------------------------------------
     # deal with having a profile name
     if args.name in ['None', None, '']:
@@ -1477,6 +1668,12 @@ def update(params, args):
         all_params['CLEAN_INSTALL'] = False
         all_params.set_source('CLEAN_INSTALL', func_name)
     # ------------------------------------------------------------------
+    # Individual database table settings
+    all_params = mysql_database_tables(args, all_params, db_ask=False)
+    # ------------------------------------------------------------------
+    # update base.PARAMS with all params
+    base.DPARAMS = update_dparams(all_params, base.DPARAMS)
+    # ------------------------------------------------------------------
     # add the current database
     all_params = update_db_settings(all_params)
     # ------------------------------------------------------------------
@@ -1484,7 +1681,60 @@ def update(params, args):
     return all_params
 
 
-def update_db_settings(aparams):
+def update_dparams(aparams: ParamDict,
+                   dparams: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Update the database dictionary, this is required so we can then pass it to
+    the normal function - but with MYSQL parameters updated from "aprams"
+    (the installation parameter dictionary)
+
+    :param aparams: ParamDict, the installation parameter dictionary
+    :param dparams: dict, the database dictionary (base.DPARAMS)
+
+    :return: dict, the base.DPARAMS (normally this should be returned to
+             update base.DPARAMS - but this is left to the function call
+             incase it is required in other situations
+    """
+    # deal with no settings to update
+    if 'MYSQL' not in aparams:
+        return dparams
+    # add calib database
+    value = aparams['MYSQL'].get('CALIB_PROFILE', None)
+    if value is not None:
+        dparams['MYSQL']['CALIB']['PROFILE'] = value
+    # add tellu database
+    value = aparams['MYSQL'].get('TELLU_PROFILE', None)
+    if value is not None:
+        dparams['MYSQL']['TELLU']['PROFILE'] = value
+    # add index database
+    value = aparams['MYSQL'].get('IDX_PROFILE', None)
+    if value is not None:
+        dparams['MYSQL']['INDEX']['PROFILE'] = value
+    # add log database
+    value = aparams['MYSQL'].get('LOG_PROFILE', None)
+    if value is not None:
+        dparams['MYSQL']['LOG']['PROFILE'] = value
+    # add object database
+    value = aparams['MYSQL'].get('OBJ_PROFILE', None)
+    if value is not None:
+        dparams['MYSQL']['OBJECT']['PROFILE'] = value
+    # add language database
+    value = aparams['MYSQL'].get('LANG_PROFILE', None)
+    if value is not None:
+        dparams['MYSQL']['LANG']['PROFILE'] = value
+    # return dparams
+    return dparams
+
+
+def update_db_settings(aparams: ParamDict) -> ParamDict:
+    """
+    Update "aparams" (the installation parameter dictionary) with the database
+    settings from base.DPARAMS
+
+    :param aparams: ParamDict, the installation parameter dictionary
+
+    :return: ParamDict, the updated installation parameter dictionary
+    """
     # read the database settings for current profile
     dparams = base.DPARAMS
     # ------------------------------------------------------------------
@@ -1571,54 +1821,6 @@ def update_db_settings(aparams):
     # ------------------------------------------------------------------
     # return the update all_params (now with the SQLITE and MYSQL dictionaries)
     return aparams
-
-# =============================================================================
-# Define functions
-# =============================================================================
-class PathCompleter(object):
-    """
-    Copy of
-    """
-
-    def __init__(self, root=None):
-        self.root = root
-
-    def pathcomplete(self, text, state):
-        """
-        This is the tab completer for systems paths.
-        Only tested on *nix systems
-        """
-        _ = readline.get_line_buffer().split()
-
-        # replace ~ with the user's home dir.
-        # See https://docs.python.org/2/library/os.path.html
-        if '~' in text:
-            text = os.path.expanduser('~')
-
-        # deal with having a root folder
-        if self.root is not None:
-            text = os.path.join(self.root, text)
-
-        return [x for x in np.sort(glob.glob(text + '*'))][state]
-
-
-def tab_input(message, root=None):
-    # Register our completer function
-    readline.set_completer(PathCompleter(root).pathcomplete)
-    # for MAC users
-    if sys.platform == 'darwin':
-        # Apple uses libedit.
-        # readline.parse_and_bind("bind -e")
-        # readline.parse_and_bind("bind '\t' rl_complete")
-        pass
-    # for everyone else
-    elif sys.platform == 'linux':
-        # Use the tab key for completion
-        readline.parse_and_bind('tab: complete')
-        readline.set_completer_delims(' \t\n`~!@#$%^&*()-=+[{]}\\|;:\'",<>?')
-    uinput = input(message + '\n\t>> ')
-    # return uinput
-    return uinput
 
 
 # =============================================================================
