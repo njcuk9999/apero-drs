@@ -78,7 +78,7 @@ def construct_fp_table(params, filenames):
         # must load file here to check if fp is valid
         image = drs_fits.readfits(params, filenames[it], log=False)
         # if image is not valid skip
-        if not gen_calib.check_fp(params, image):
+        if not gen_calib.check_fp(params, image, filename=filenames[it]):
             continue
         # delete image we'll get it again later in more memory efficient manner
         del image

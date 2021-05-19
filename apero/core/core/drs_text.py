@@ -518,6 +518,24 @@ def cull_leading_trailing(text: str, chars: Union[List[str], str]) -> str:
     return text
 
 
+def clean_strings(strings: Union[List[str], str]) -> Union[List[str], str]:
+    """
+    Take a string or list of strings and removes all trailing and preceeding
+    whitespaces and puts all characters as upper case
+
+    :param strings: list of strings or string, the string or strings to
+                    strip of whitespaces + upper case
+    :return:
+    """
+    if isinstance(strings, str):
+        return strings.strip().upper()
+    else:
+        outstrings = []
+        for string in strings:
+            outstrings.append(string.strip().upper())
+        return outstrings
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
