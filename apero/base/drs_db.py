@@ -14,6 +14,8 @@ only from:
     - apero.base.drs_base
 
 """
+import warnings
+
 from astropy.table import Table
 from contextlib import closing
 import numpy as np
@@ -282,7 +284,7 @@ class Database:
         :param command: str, The SQL command to be run.
         :return:
         """
-        cursor.execute(command)
+        cursor = _mysql_exectue(cursor, command)
         if fetch:
             result = cursor.fetchall()
         else:
@@ -1195,7 +1197,7 @@ class SQLiteDatabase(Database):
         # while counter is less than maximum wait time
         while time_count < MAXWAIT:
             try:
-                cursor.execute(command)
+                cursor = _mysql_exectue(cursor, command)
                 if fetch:
                     result = cursor.fetchall()
                     return result
@@ -1507,23 +1509,17 @@ class MySQLDatabase(Database):
             # try to connect
             try:
                 if connect_kind == 'mysql.connect':
-                    conn = mysql.connect(host=host, user=user, passwd=passwd,
-                                         database=dbname,
-                                         connection_timeout=3600)
-                    # print('CONNECTION TIME MYSQL:CONNECT: {0}'.format(time.time() - start))
+                    conn = _mysql_connect(host, user, passwd, dbname)
                     return conn
 
                 else:
-                    import sqlalchemy
-                    dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
-                    dargs = [user, passwd, host, dbname]
-                    db = sqlalchemy.create_engine(dpath.format(*dargs),
-                                                  pool_pre_ping=True)
-                    conn = db.connect()
-                    # print('CONNECTION TIME: MYSQL:SQLALCHEMY: {0}'.format(time.time() - start))
+                    conn = _mysql_sqlalchemy_connect(host, user, passwd, dbname)
                     return conn
 
             except Exception as e:
+                # deal with warnings going to errors
+                if base.WARN_TO_ERROR:
+                    raise e
                 error = e
                 time.sleep(5 + np.random.uniform()*1)
                 count += 1
@@ -1605,7 +1601,7 @@ class MySQLDatabase(Database):
                 command = 'SHOW DATABASES'
                 # execute command
                 try:
-                    cursor.execute(command)
+                    cursor = _mysql_exectue(cursor, command)
                     _databases = cursor.fetchall()
                 except Exception as e:
                     # close
@@ -1640,7 +1636,7 @@ class MySQLDatabase(Database):
                 with closing(tmpconn.cursor()) as cursor:
                     try:
                         command = 'CREATE DATABASE {0}'.format(self.dbname)
-                        cursor.execute(command)
+                        cursor = _mysql_exectue(cursor, command)
                         # close
                         cursor.close()
                         tmpconn.close()
@@ -1679,7 +1675,7 @@ class MySQLDatabase(Database):
         """
         # while counter is less than maximum wait time
         try:
-            cursor.execute(command)
+            cursor = _mysql_exectue(cursor, command)
             if fetch:
                 result = cursor.fetchall()
                 return result
@@ -1771,9 +1767,8 @@ class MySQLDatabase(Database):
         # try to read sql using pandas
         # noinspection PyBroadException
         try:
-            conargs = dict(func=func_name, kind='READ_SQL:SQLALCHEMY')
             with closing(self.connection(connect_kind='sqlalchemy')) as dconn:
-                df = pd.read_sql(command, con=dconn)
+                df = _read_sql(command, dconn)
                 dconn.close()
         except Exception as _:
             # log error: Could not read SQL command as pandas table
@@ -1829,7 +1824,7 @@ class MySQLDatabase(Database):
         # save to csv file
         df.to_csv(self.backup_path)
 
-    def reload_from_backup(self, pconst: Any):
+    def reload_from_backup(self, pconst: Any = None):
         """
         Reload database from back up the database
 
@@ -2377,6 +2372,60 @@ class LanguageDatabase(BaseDatabaseManager):
             storage[rowdata['KEYNAME']] = rowtext
         # return dictionary storage
         return storage
+
+
+
+# =============================================================================
+# Function with annoying warning that need suppressing
+#    when we use base.WARN_TO_ERROR
+# =============================================================================
+def _ignore_warnings():
+    if base.WARN_TO_ERROR:
+        warnings.filterwarnings('ignore')
+
+
+def _unignore_warnings():
+    if base.WARN_TO_ERROR:
+        warnings.filterwarnings('error')
+
+
+def _mysql_connect(host, user, passwd, dbname):
+    with warnings.catch_warnings():
+        _ignore_warnings()
+        conn = mysql.connect(host=host, user=user, passwd=passwd,
+                             database=dbname,
+                             connection_timeout=3600)
+    _unignore_warnings()
+    return conn
+
+
+def _mysql_sqlalchemy_connect(host, user, passwd, dbname):
+    with warnings.catch_warnings():
+        _ignore_warnings()
+        import sqlalchemy
+        dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
+        dargs = [user, passwd, host, dbname]
+        db = sqlalchemy.create_engine(dpath.format(*dargs),
+                                      pool_pre_ping=True)
+        conn = db.connect()
+    _unignore_warnings()
+    return conn
+
+
+def _mysql_exectue(cursor, command):
+    with warnings.catch_warnings():
+        _ignore_warnings()
+        cursor.execute(command)
+    _unignore_warnings()
+    return cursor
+
+
+def _read_sql(command, dconn):
+    with warnings.catch_warnings():
+        _ignore_warnings()
+        df = pd.read_sql(command, con=dconn)
+    _unignore_warnings()
+    return df
 
 
 # =============================================================================

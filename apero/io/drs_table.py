@@ -58,9 +58,9 @@ textentry = lang.textentry
 
 # -----------------------------------------------------------------------------
 # define list of integers
-INTEGERS = (np.int, np.int32, np.int64, int)
-STRINGS = (str, np.str)
-FLOATS = (np.float, np.float32, np.float64, float)
+INTEGERS = (np.int32, np.int64, int)
+STRINGS = (str)
+FLOATS = (np.float32, np.float64, float)
 
 
 # =============================================================================

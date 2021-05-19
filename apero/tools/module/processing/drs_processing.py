@@ -1345,20 +1345,23 @@ def skip_run_object(params, runobj, skiptable, skip_storage):
             if recipe.name.strip('.py') in skip_storage:
                 # get the cleaned arguments directory from skip_storage
                 #   (quicker than re-calculating)
-                arguments = skip_storage[recipe.name.strip('.py')]
+                runstrings = skip_storage[recipe.name.strip('.py')]
             else:
                 # mask skip table by recipe
                 mask = skiptable['RECIPE'] == recipe.name.strip('.py')
                 # get valid arguments to check
-                arguments = skiptable['RUNSTRING'][mask]
+                runstrings = skiptable['RUNSTRING'][mask]
                 # re-clean arguments this time using additional recipe
                 #    requirements
-                arguments = skip_remove_non_required_args(arguments, runobj)
+                runstrings = skip_remove_non_required_args(runstrings, runobj)
                 # update skip storage (so we don't do this again)
-                skip_storage[recipe.name.strip('.py')] = arguments
+                skip_storage[recipe.name.strip('.py')] = runstrings
             # if the clean run string is in the arguments list then we skip
-            # TODO: problem with clean_runstring being a list??
-            if clean_runstring in arguments:
+            # deal with no runstrings to check
+            if len(runstrings) == 0:
+                return False, None
+            # else check for clean_runstring in runstrings
+            elif clean_runstring in runstrings:
                 # User set skip to 'True' and argument previously used
                 return True, textentry('40-503-00032')
             else:

@@ -9,6 +9,7 @@ Created on 2019-01-19 at 13:37
 
 @author: cook
 """
+import warnings
 from collections import OrderedDict
 import importlib
 import numpy as np
@@ -1238,7 +1239,8 @@ def _display_python_modules() -> str:
     # loop around packages and get versions
     for p_it, package in enumerate(packages):
         try:
-            mod = importlib.import_module(package)
+            with warnings.catch_warnings(record=True) as _:
+                mod = importlib.import_module(package)
             # if we have version for module
             if hasattr(mod, '__version__'):
                 # get current version

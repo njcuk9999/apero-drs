@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 import string
 from typing import Any
+import warnings
 import yaml
 
 
@@ -66,6 +67,18 @@ PSEUDO_CONST_CLASS = 'PseudoConstants'
 # absolute paths (from relative paths to here)
 RECOMM_USER = __PATH__.parent.joinpath('requirements_current.txt')
 RECOMM_DEV = __PATH__.parent.joinpath('requirements_developer.txt')
+# -----------------------------------------------------------------------------
+# warnings
+# -----------------------------------------------------------------------------
+# only use this to turn warnings to errors (we need to use this flag to stop
+#   some exceptions creating long loops and freezing when all warnings go to
+#   errors)
+WARN_TO_ERROR = False
+warnings.filterwarnings('error', category=FutureWarning)
+# this is how we turn warnings to errors
+if WARN_TO_ERROR:
+    warnings.filterwarnings('error')
+
 # -----------------------------------------------------------------------------
 # databases
 DATABASE_NAMES = ['calib', 'tellu', 'index', 'log', 'object', 'lang']

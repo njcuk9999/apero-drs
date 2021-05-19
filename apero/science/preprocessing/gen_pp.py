@@ -1154,8 +1154,15 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
         wargs = [url, type(e), str(e), func_name]
         WLOG(params, 'warning', textentry('10-503-00021', args=wargs))
         return False
+    # if we have no entries return False
+    if len(table[mask_col]) == 0:
+        return False
     # convert mask column to bool
-    mask = np.array(table[mask_col] == 'True')
+    if isinstance(table[mask_col][0], str):
+        mask = np.array(table[mask_col]) == 'True'
+    # if it is cached it wont be strings it will be bools
+    else:
+        mask = np.array(table[mask_col])
     # get value column
     values = np.array(table[value_col])
     # -------------------------------------------------------------------------
