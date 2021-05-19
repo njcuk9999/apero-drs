@@ -7,21 +7,23 @@ Created on 2019-06-27 at 10:48
 
 @author: cook
 """
+from astropy.io import fits
 from astropy.table import Table
 import numpy as np
 from typing import List, Union, Tuple
 import warnings
 
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_database
+from apero.core.core import drs_text
 from apero.core.utils import drs_data
+from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 from apero.io import drs_image
-
 from apero.science.calib import dark
 from apero.science.calib import badpix
 from apero.science.calib import background
@@ -39,6 +41,9 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
+DrsFitsFile = drs_file.DrsFitsFile
+DrsHeader = drs_fits.Header
 # get calibration database
 CalibDatabase = drs_database.CalibrationDatabase
 # Get Logging function
@@ -54,7 +59,21 @@ display_func = drs_log.display_func
 # =============================================================================
 # Define user functions
 # =============================================================================
-def check_files(params, infile):
+def check_files(params: ParamDict,
+                infile: DrsFitsFile) -> Tuple[bool, List[List[str]]]:
+    """
+    Skip objnames and dprtypes based on whether:
+
+    1. KW_DPRTYPE is None (or user set --dprtype)
+    2. KW_OBJNAME is None or Null (or user set --objname)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param infile: DrsFitsFile, the drs fits file instance, this contains
+                   the header to look for KW_DPRTYPE and KW_OBJNAME
+    :return: tuple, 1. bool, True if DPRTYPE/OBJNAME match skip conditions
+                    2. list - first element the DPRTYPE skip conditions, second
+                       elemtn the OBJNAME skip conditions
+    """
     # get pseudo constants
     pconst = constants.pload()
     # get infile DPRTYPE and OBJNAME
@@ -67,13 +86,13 @@ def check_files(params, infile):
     if objname is None:
         objname = 'None'
     # clean (capitalize and remove white spaces)
-    dprtype = clean_strings(dprtype)
+    dprtype = drs_text.clean_strings(dprtype)
     objname = pconst.DRS_OBJ_NAME(objname)
     # get inputs
     dprtype_inputs = params['INPUTS']['DPRTYPE'].split(',')
     objname_inputs = params['INPUTS']['OBJNAME'].split(',')
     # clean (capitalize and remove white spaces)
-    dprtype_inputs = clean_strings(dprtype_inputs)
+    dprtype_inputs = drs_text.clean_strings(dprtype_inputs)
     objname_inputs = list(map(pconst.DRS_OBJ_NAME, objname_inputs))
     # ----------------------------------------------------------------------
     # log checking file info
@@ -118,30 +137,79 @@ def check_files(params, infile):
     return skip, skip_conditions
 
 
-def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
+def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
+                     infile: DrsFitsFile,
+                     database: Union[CalibDatabase, None] = None,
+                     image: Union[np.ndarray, None] = None,
+                     header: Union[DrsHeader, fits.Header, None] = None,
+                     correctdark: bool = True,
+                     flip_image: Union[bool, None] = None,
+                     converte: bool = True,
+                     resize_image: Union[bool, None] = None,
+                     correctbad: bool = True, correctback: bool = True,
+                     cleanhotpix: bool = True,
+                     n_percentile: Union[float, None] = None,
+                     darkfile: Union[str, None] = None,
+                     badpixfile: Union[str, None] = None,
+                     backfile: Union[str, None] = None
+                     ) -> Tuple[ParamDict, np.ndarray]:
+    """
+    Calibrate a preprocessed file
 
+    The following steps are done (based on configuration)
+
+    1. remove pixels that are out of bounds
+    2. correct for dark
+    3. flip image
+    4. convert ADU/s to electrons
+    5. resize
+    6. corrected for bad pixels
+    7. corrected for background
+    8. normalise by a percentile
+    9. clean hot pixels
+    10. remove pixels that are out of bounds
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe class that called this function
+    :param infile: DrsFitsFile, the fits file instance
+    :param database: CalibrationDatabase or None, if set passes the calibration
+                     database from call instead of reloading it again
+    :param image: numpy array or None, if set does not get the image from
+                  the "infile" argument but sets it from this
+    :param header: Header instance, if set does not get the header from the
+                   "infile" argument buts sets it from this
+    :param correctdark: bool, if True corrects dark using calibrations
+    :param flip_image: bool or None, if True overrides "INPUT_FLIP_IMAGE" and
+                       flips the image based on configuration params
+    :param converte: bool, if True converts from ADU/s to electrons
+    :param resize_image: bool or None, if True overrides "INPUT_RESIZE_IMAGE"
+                         and resizes the image based on configruation params
+    :param correctbad: bool, if True replaces bad pixels with NaNs
+    :param correctback: bool, if True corrects background
+    :param cleanhotpix: bool, if True corrects hot pixels
+    :param n_percentile: float or None, if set uses this percentile to normalize
+                         the image
+    :param darkfile: str or None, if set overrides the dark file used from the
+                     calibration database
+    :param badpixfile: str or None, if set overrides the bad pixel map file used
+                       from the calibration database
+    :param backfile: str or None, if set overrides the background file used
+                     from the calibration database
+
+    :return: Tuple, 1. the calibration properties as a parameter dictionary,
+                    2. the calibrated image
+    """
     func_name = __NAME__ + '.calibrate_file()'
-    # deal with inputs (either from params or kwargs)
-    image = kwargs.get('image', None)
-    header = kwargs.get('header', None)
-    correctdark = kwargs.get('correctdark', True)
-    flip = pcheck(params, 'INPUT_FLIP_IMAGE', 'flip', kwargs, func_name)
-    converte = kwargs.get('converte', True)
-    resize = pcheck(params, 'INPUT_RESIZE_IMAGE', 'resize', kwargs, func_name)
-    correctbad = kwargs.get('correctbad', True)
-    correctback = kwargs.get('correctback', True)
-    cleanhotpix = kwargs.get('cleanhotpix', True)
-    n_percentile = kwargs.get('n_percentile', None)
-    darkfile = kwargs.get('darkfile', None)
-    badpixfile = kwargs.get('badpixfile', None)
-    backfile = kwargs.get('backfile', None)
-
+    # deal with inputs from params
+    flip = pcheck(params, 'INPUT_FLIP_IMAGE', func=func_name,
+                  override=flip_image)
+    resize = pcheck(params, 'INPUT_RESIZE_IMAGE', func=func_name,
+                    override=resize_image)
     # get image and header
     if image is None:
         image = infile.get_data(copy=True)
     if header is None:
         header = infile.get_header()
-
     # -------------------------------------------------------------------------
     # get loco file instance
     darkinst = drs_file.get_file_definition(params, 'DARKM', block_kind='red')
@@ -332,8 +400,24 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
     return props, image5
 
 
-def add_calibs_to_header(outfile, props):
+def add_calibs_to_header(outfile: DrsFitsFile,
+                         props: ParamDict) -> DrsFitsFile:
+    """
+    Add the calibration properties to an outfile header
 
+    The calibration header keys added are:
+    - KW_CDBDARK, the dark file used to correct file
+    - KW_CDBBAD, the bad file used to correct file
+    - KW_CDBBACK, the background file used to correct file
+    - KW_C_FLIP, whether the image was flipped
+    - KW_C_CVRTE, whether the flux was converted to electrons
+    - KW_C_RESIZE, whether the image was resized
+
+    :param outfile: DrsFitsFile, the outfile to add header keys to
+    :param props: ParamDict, the calibration properties parameter dictionary
+
+    :return: outfile, DrsFitsFile, the input outfile with updated header
+    """
     # define property keys (must be in calibrate_ppfile function)
     propkeys = ['DARKFILE', 'BADPFILE', 'BACKFILE', 'FLIPPED', 'CONVERT_E',
                 'RESIZED']
@@ -529,22 +613,42 @@ def load_calib_file(params: ParamDict, key: str,
             return image, header, filename
 
 
-def check_fp(params, image, **kwargs):
+def check_fp(params: ParamDict, image: np.ndarray, filename: str,
+             percentile: Union[float, None] = None,
+             fp_qc_thres: Union[float, None] = None,
+             centersize: Union[int, None] = None,
+             num_ref: Union[int, None] = None) -> bool:
     """
     Checks that a 2D image containing FP is valid
-    :param params:
-    :param image:
-    :return:
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image: numpy array, the FP image
+    :param filename: str, the filename of the FP we are checking (for logging)
+    :param percentile: None or float, overrides 'CALIB_CHECK_FP_PERCENTILE'
+                       should be between 0 and 100
+    :param fp_qc_thres: None or float, overrides 'CALIB_CHECK_FP_THES', this is
+                        the quality control threshold for the measured FP
+    :param centersize: None or int, overrides 'CALIB_CHECK_FP_CENT_SIZE', this
+                       is the FP center size in pixels
+    :param num_ref: None or int, overrides 'PP_NUM_REF_TOP', this is the number
+                    of reference pixels at the top
+
+    :return: bool, whether the FP file passes quality control
     """
     # set the function name
     func_name = __NAME__ + '.check_fp()'
+    # log: Validating FP file
+    # TODO: Add to language database
+    WLOG(params, '', 'Validating FP file: {0}'.format(filename))
     # get properties from params
-    percentile = pcheck(params, 'CALIB_CHECK_FP_PERCENTILE', 'percentile',
-                        kwargs, func_name)
-    fp_qc = pcheck(params, 'CALIB_CHECK_FP_THRES', 'fp_qc', kwargs, func_name)
-    centersize = pcheck(params, 'CALIB_CHECK_FP_CENT_SIZE', 'centersize',
-                        kwargs, func_name)
-    num_ref = pcheck(params, 'PP_NUM_REF_TOP', 'num_ref', kwargs, func_name)
+    percentile = pcheck(params, 'CALIB_CHECK_FP_PERCENTILE', func=func_name,
+                        override=percentile)
+    fp_qc = pcheck(params, 'CALIB_CHECK_FP_THRES', 'fp_qc', func=func_name,
+                   override=fp_qc_thres)
+    centersize = pcheck(params, 'CALIB_CHECK_FP_CENT_SIZE', func=func_name,
+                        override=centersize)
+    num_ref = pcheck(params, 'PP_NUM_REF_TOP', func=func_name,
+                     override=num_ref)
     # get the image size
     nbypix, nbxpix = image.shape
     # find the 95th percentile of the center of the image
@@ -560,13 +664,16 @@ def check_fp(params, image, **kwargs):
     return passed
 
 
-def check_fp_files(params, fpfiles):
+def check_fp_files(params: ParamDict,
+                   fpfiles: List[DrsFitsFile]) -> List[DrsFitsFile]:
     """
     Check a set of fpfiles for valid (2D) fp data
 
-    :param params:
-    :param fpfiles:
-    :return:
+    :param params: ParamDict, the parameter dictionary of constants
+    :param fpfiles: list of DrsFitsFiles, the FP fits files instances to check
+
+    :return: list of DrsFitsFiles, the valid FP fits file (those that pass FP
+             quality control checks)
     """
     # set the function name
     func_name = __NAME__ + '.check_fp_files()'
@@ -577,7 +684,7 @@ def check_fp_files(params, fpfiles):
         # add to list
         fpfilenames.append(fpfile.filename)
         # check if fp is good
-        if check_fp(params, fpfile.get_data()):
+        if check_fp(params, fpfile.get_data(), filename=fpfile.filename):
             newfpfiles.append(fpfile)
         else:
             # log a warning that file removed
@@ -589,19 +696,6 @@ def check_fp_files(params, fpfiles):
         WLOG(params, 'error', textentry('09-000-00010', args=[func_name]))
     # return new fp files
     return newfpfiles
-
-
-# =============================================================================
-# Define worker functions
-# =============================================================================
-def clean_strings(strings):
-    if isinstance(strings, str):
-        return strings.strip().upper()
-    else:
-        outstrings = []
-        for string in strings:
-            outstrings.append(string.strip().upper())
-        return outstrings
 
 
 # =============================================================================

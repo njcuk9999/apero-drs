@@ -207,8 +207,6 @@ def setup(name: str = 'None', instrument: str = 'None',
         # display title
         _display_drs_title(recipe.params, drsgroup, printonly=True)
     # -------------------------------------------------------------------------
-    # print a new line (before TLOG)
-    print('')
     # display loading message
     TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
     # -------------------------------------------------------------------------
@@ -224,8 +222,6 @@ def setup(name: str = 'None', instrument: str = 'None',
     # -------------------------------------------------------------------------
     # clear loading message
     TLOG(recipe.params, '', '')
-    # print a new line (after TLOG)
-    print('')
     # -------------------------------------------------------------------------
     # create runstring and log args/kwargs/skwargs (must be done after
     #    option_manager)
