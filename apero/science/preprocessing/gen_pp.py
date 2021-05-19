@@ -23,6 +23,7 @@ from apero.core.core import drs_text
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_database
+from apero.core.instruments.default import pseudo_const
 from apero import lang
 from apero.core.core import drs_log
 from apero.io import drs_fits
@@ -49,6 +50,7 @@ textentry = lang.textentry
 ObjectDatabase = drs_database.ObjectDatabase
 # get param dict
 ParamDict = constants.ParamDict
+PseudoConst = pseudo_const.PseudoConstants
 # SQL queries
 QUERY_GAIA = 'SELECT {0} FROM {1} WHERE {2}'
 QCOLS = ('ra as ra, dec as dec, source_id as gaiaid, parallax as plx, '
@@ -867,7 +869,7 @@ class AstroObject(object):
         return header
 
 
-def resolve_target(params: ParamDict, pconst,
+def resolve_target(params: ParamDict, pconst: PseudoConst,
                    objname: Union[str, None] = None,
                    database: Union[ObjectDatabase, None] = None,
                    header: Union[drs_fits.Header, None] = None
