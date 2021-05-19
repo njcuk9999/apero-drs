@@ -240,7 +240,7 @@ class Text(str):
 
 
 def textentry(key: str, args: Union[List[Any], str, None] = None,
-              kwargs: Union[Dict[str, Any], None] = None):
+              kwargs: Union[Dict[str, Any], None] = None) -> Text:
     """
     Get text from a database
 

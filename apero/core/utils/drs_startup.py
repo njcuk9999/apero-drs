@@ -207,6 +207,8 @@ def setup(name: str = 'None', instrument: str = 'None',
         # display title
         _display_drs_title(recipe.params, drsgroup, printonly=True)
     # -------------------------------------------------------------------------
+    # print a new line (before TLOG)
+    print('')
     # display loading message
     TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
     # -------------------------------------------------------------------------
@@ -222,6 +224,8 @@ def setup(name: str = 'None', instrument: str = 'None',
     # -------------------------------------------------------------------------
     # clear loading message
     TLOG(recipe.params, '', '')
+    # print a new line (after TLOG)
+    print('')
     # -------------------------------------------------------------------------
     # create runstring and log args/kwargs/skwargs (must be done after
     #    option_manager)
@@ -1096,6 +1100,8 @@ def _display_initial_parameterisation(params: ParamDict,
     # add config sources
     for source in np.sort(params['DRS_CONFIG']):
         wmsgs += textentry('\n\tDRS_CONFIG: {0}'.format(source))
+    # add database settings
+    wmsgs = _display_database_settings(params, wmsgs)
     # add others
     wmsgs += textentry('\n\tPRINT_LEVEL: {}'.format(params['DRS_PRINT_LEVEL']))
     wmsgs += textentry('\n\tLOG_LEVEL: {}'.format(params['DRS_LOG_LEVEL']))
@@ -1110,6 +1116,62 @@ def _display_initial_parameterisation(params: ParamDict,
          logonly=logonly)
     WLOG(params, '', params['DRS_HEADER'], printonly=printonly,
          logonly=logonly)
+
+
+def _display_database_settings(params: ParamDict,
+                               wmsgs: lang.Text) -> lang.Text:
+    """
+    Display database settings
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param wmsgs: the current lang.Text instance
+
+    :return: lang.Text, the updated lang.Text instance
+    """
+    dparams = base.DPARAMS
+
+    # -------------------------------------------------------------------------
+    # SQLITE DISPLAY
+    # -------------------------------------------------------------------------
+    if dparams['USE_SQLITE3']:
+        # get sub dictionary
+        aparams = dparams['SQLITE3']
+        # add database type
+        wmsgs += textentry('\n\tDATABASE: SQLITE3')
+        # loop around database names
+        for dbname in base.DATABASE_NAMES:
+            # get database key
+            dbkey = dbname.upper()
+            # get database path
+            if aparams[dbkey]['PATH'] in params:
+                path = params[aparams[dbkey]['PATH']]
+            else:
+                path = aparams[dbkey]['PATH']
+            # construct full path to database
+            fullpath = os.path.join(path, aparams[dbkey]['NAME'])
+            # add to wmsgs
+            dargs = [dbkey, fullpath]
+            wmsgs += textentry('\n\tDATABASE-{0}: {1}'.format(*dargs))
+    # -------------------------------------------------------------------------
+    # MYSQL DISPLAY
+    # -------------------------------------------------------------------------
+    elif dparams['USE_MYSQL']:
+        # get sub dictionary
+        aparams = dparams['MYSQL']
+        # add database type
+        wmsgs += textentry('\n\tDATABASE: MYSQL')
+        # loop around database names
+        for dbname in base.DATABASE_NAMES:
+            # get database key
+            dbkey = dbname.upper()
+            # construct table name
+            tablename = '{0}_{1}_DB'.format(dbkey, aparams[dbkey]['PROFILE'])
+            # add to wmsgs
+            dargs = [dbkey, aparams['DATABASE'], aparams['HOST'],
+                     tablename]
+            wmsgs += textentry('\n\tDATABASE-{0}: {1}@{2}:{3}'.format(*dargs))
+    # return lang.text updated (or not if no database was used)
+    return wmsgs
 
 
 def _display_system_info(params: ParamDict, logonly: bool = True,
