@@ -194,13 +194,14 @@ class DatabaseManager:
             emsg = 'Database type "{0}" invalid'
             WLOG(self.params, 'error', emsg.format(self.dbtype))
 
-    def load_db(self, check: bool = False):
+    def load_db(self, check: bool = False, log: bool = False):
         """
         Load the database class and connect to SQL database
 
         :param check: if True will reload the database even if already defined
                       else if we Database.database is set this function does
                       nothing
+        :param log: if True prints that we are loading database
 
         :return:
         """
@@ -213,8 +214,9 @@ class DatabaseManager:
         if self.instrument == 'None':
             return
         # log that we are loading database
-        margs = [self.name, self.path]
-        WLOG(self.params, 'info', textentry('40-006-00005', args=margs))
+        if log:
+            margs = [self.name, self.path]
+            WLOG(self.params, 'info', textentry('40-006-00005', args=margs))
         # load database
         self.database = drs_db.database_wrapper(self.kind, self.path)
 
@@ -1273,6 +1275,7 @@ class IndexDatabase(DatabaseManager):
         :param params: ParamDict, parameter dictionary of constants
         :param check: bool, if True makes sure database file exists (otherwise
                       assumes it is)
+        :param log: bool, if False does not log
 
         :return: None
         """
