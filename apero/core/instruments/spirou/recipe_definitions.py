@@ -1766,7 +1766,7 @@ quick_seq = drs_recipe.DrsRunSequence('quick_seq', __INSTRUMENT__)
 quick_seq.add(apero_extract, name='EXTQUICK', recipe_kind='extract-quick',
               files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
                      files.pp_polar_fp],
-              arguments=dict(quicklook=True),
+              arguments=dict(quicklook=True, fiber='AB'),
               filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                            KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
                                        'POLAR_FP']))

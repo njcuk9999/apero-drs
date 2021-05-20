@@ -222,159 +222,159 @@ KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K)
 # -----------------------------------------------------------------------------
 # the object name to be used by the drs (after preprocessing)
 KW_DRS_OBJNAME = KW_DRS_OBJNAME.copy(__NAME__)
-KW_DRS_OBJNAME.set(key='HIERARCH DRS RES OBJN',
+KW_DRS_OBJNAME.set(key='DR_OBJN',
                    comment='objname to be used by the DRS',
-                   group='resolve')
+                   group='resolve', post_exclude=True)
 
 # the source of the object name used by the drs
 KW_DRS_OBJNAME_S = KW_DRS_OBJNAME_S.copy(__NAME__)
-KW_DRS_OBJNAME_S.set(key='HIERARCH DRS RES OBJN_S',
+KW_DRS_OBJNAME_S.set(key='DR_OBJNS',
                      comment='Source of objname used by the DRS',
-                     group='resolve')
+                     group='resolve', post_exclude=True)
 
 # the gaia id to be used by the drs (after preprocessing)
 KW_DRS_GAIAID = KW_DRS_GAIAID.copy(__NAME__)
-KW_DRS_GAIAID.set(key='HIERARCH DRS RES GAIADR2',
+KW_DRS_GAIAID.set(key='DR_GAIA2',
                   comment='Gaia id to be used by the DRS',
-                  group='resolve')
+                  group='resolve', post_exclude=True)
 
 # the source of the gaia id to be used by the drs (after preprocessing)
 KW_DRS_GAIAID_S = KW_DRS_GAIAID_S.copy(__NAME__)
-KW_DRS_GAIAID_S.set(key='HIERARCH DRS RES GAIADR2_S',
+KW_DRS_GAIAID_S.set(key='DR_GAIAS',
                     comment='Source of the gaiaid used by the DRS',
-                    group='resolve')
+                    group='resolve', post_exclude=True)
 
 # the right ascension to be used by the drs (after preprocessing)
 KW_DRS_RA = KW_DRS_RA.copy(__NAME__)
-KW_DRS_RA.set(key='HIERARCH DRS RES RA', unit=uu.deg,
+KW_DRS_RA.set(key='DR_RA', unit=uu.deg,
               comment='The RA [in deg] used by the DRS',
-              group='resolve')
+              group='resolve', post_exclude=True)
 
 # the source of the ra to be used by the drs (after preprocessing)
 KW_DRS_RA_S = KW_DRS_RA_S.copy(__NAME__)
-KW_DRS_RA_S.set(key='HIERARCH DRS RES RA_S',
+KW_DRS_RA_S.set(key='DR_RA_S',
                 comment='Source of the ra used by the DRS',
-                group='resolve')
+                group='resolve', post_exclude=True)
 
 # the declination to be used by the drs (after preprocessing)
 KW_DRS_DEC = KW_DRS_DEC.copy(__NAME__)
-KW_DRS_DEC.set(key='HIERARCH DRS RES DEC', unit=uu.deg,
+KW_DRS_DEC.set(key='DR_DEC', unit=uu.deg,
                comment='The dec [in deg] used by the DRS',
-               group='resolve')
+               group='resolve', post_exclude=True)
 
 # the source of the dec to be used by the drs (after preprocessing)
 KW_DRS_DEC_S = KW_DRS_DEC_S.copy(__NAME__)
-KW_DRS_DEC_S.set(key='HIERARCH DRS RES DEC_S',
+KW_DRS_DEC_S.set(key='DR_DEC_S',
                  comment='Source of the dec used by the DRS',
-                 group='resolve')
+                 group='resolve', post_exclude=True)
 
 # the proper motion in ra to be used by the drs (after preprocessing)
 KW_DRS_PMRA = KW_DRS_PMRA.copy(__NAME__)
-KW_DRS_PMRA.set(key='HIERARCH DRS RES PMRA', unit=uu.mas / uu.yr,
+KW_DRS_PMRA.set(key='DR_PMRA', unit=uu.mas / uu.yr,
                 comment='The pmra [mas/yr] used by the DRS',
-                group='resolve')
+                group='resolve', post_exclude=True)
 
 # the source of the pmra used by the drs (afer prepreocessing)
 KW_DRS_PMRA_S = KW_DRS_PMRA_S.copy(__NAME__)
-KW_DRS_PMRA_S.set(key='HIERARCH DRS RES PMRA_S',
+KW_DRS_PMRA_S.set(key='DR_PMRAS',
                   comment='Source of the pmra used by the DRS',
-                  group='resolve')
+                  group='resolve', post_exclude=True)
 
 # the proper motion in dec to be used by the drs (after preprocessing)
 KW_DRS_PMDE = KW_DRS_PMDE.copy(__NAME__)
-KW_DRS_PMDE.set(key='HIERARCH DRS RES PMDE', unit=uu.mas / uu.yr,
+KW_DRS_PMDE.set(key='DR_PMDE', unit=uu.mas / uu.yr,
                 comment='The pmdec [mas/yr] used by the DRS',
-                group='resolve')
+                group='resolve', post_exclude=True)
 
 # the source of the pmde used by the drs (after preprocessing)
 KW_DRS_PMDE_S = KW_DRS_PMDE_S.copy(__NAME__)
-KW_DRS_PMDE_S.set(key='HIERARCH DRS RES PMDE_S',
+KW_DRS_PMDE_S.set(key='DR_PMDES',
                   comment='Source of the pmde used by the DRS',
-                  group='resolve')
+                  group='resolve', post_exclude=True)
 
 # the parallax to be used by the drs (after preprocessing)
 KW_DRS_PLX = KW_DRS_PLX.copy(__NAME__)
-KW_DRS_PLX.set(key='HIERARCH DRS RES PLX', unit=uu.mas,
+KW_DRS_PLX.set(key='DR_PLX', unit=uu.mas,
                comment='The parallax [mas] used by the DRS',
-               group='resolve')
+               group='resolve', post_exclude=True)
 
 # the source of the parallax used by the drs (after preprocessing)
 KW_DRS_PLX_S = KW_DRS_PLX_S.copy(__NAME__)
-KW_DRS_PLX_S.set(key='HIERARCH DRS RES PLX_S',
+KW_DRS_PLX_S.set(key='DR_PLX_S',
                  comment='Source of the plx used by the DRS',
-                 group='resolve')
+                 group='resolve', post_exclude=True)
 
 # the radial velocity to be used by the drs (after preprocessing)
 KW_DRS_RV = KW_DRS_RV.copy(__NAME__)
-KW_DRS_RV.set(key='HIERARCH DRS RES RV', unit=uu.km / uu.s,
+KW_DRS_RV.set(key='DR_RV', unit=uu.km / uu.s,
               comment='The RV [km/s] used by the DRS',
-              group='resolve')
+              group='resolve', post_exclude=True)
 
 # the source of the radial velocity used by the drs (after preprocessing)
 KW_DRS_RV_S = KW_DRS_RV_S.copy(__NAME__)
-KW_DRS_RV_S.set(key='HIERARCH DRS RES RV_S',
+KW_DRS_RV_S.set(key='DR_RV_S',
                 comment='Source of the rv used by the DRS',
-                group='resolve')
+                group='resolve', post_exclude=True)
 
 # the Gaia G magnitude to be used by the drs (after preprocessing)
 KW_DRS_GMAG = KW_DRS_GMAG.copy(__NAME__)
-KW_DRS_GMAG.set(key='HIERARCH DRS RES GMAG',
+KW_DRS_GMAG.set(key='HDR_GMAG',
                 comment='The Gaia G mag used by the DRS',
-                group='resolve')
+                group='resolve', post_exclude=True)
 
 # the source of the gmag used by the drs (after preprocessing)
 KW_DRS_GMAG_S = KW_DRS_GMAG_S.copy(__NAME__)
-KW_DRS_GMAG_S.set(key='HIERARCH DRS RES GMAG_S',
+KW_DRS_GMAG_S.set(key='DR_GMAGS',
                   comment='Source of the gmag used by the DRS',
-                  group='resolve')
+                  group='resolve', post_exclude=True)
 
 # the Gaia BP magnitude to be used by the drs (after preprocessing)
 KW_DRS_BPMAG = KW_DRS_BPMAG.copy(__NAME__)
-KW_DRS_BPMAG.set(key='HIERARCH DRS RES BPMAG',
+KW_DRS_BPMAG.set(key='DR_BMAG',
                  comment='The Gaia BP mag used by the DRS',
-                 group='resolve')
+                 group='resolve', post_exclude=True)
 
 # the source of the bpmag used by the drs (after preprocessing)
 KW_DRS_BPMAG_S = KW_DRS_BPMAG_S.copy(__NAME__)
-KW_DRS_BPMAG_S.set(key='HIERARCH DRS RES BPMAG_S',
+KW_DRS_BPMAG_S.set(key='DR_BMAGS',
                    comment='Source of the bpmag used by the DRS',
-                   group='resolve')
+                   group='resolve', post_exclude=True)
 
 # the Gaia RP magnitude to be used by the drs (after preprocessing)
 KW_DRS_RPMAG = KW_DRS_RPMAG.copy(__NAME__)
-KW_DRS_RPMAG.set(key='HIERARCH DRS RES RPMAG',
+KW_DRS_RPMAG.set(key='DR_RMAG',
                  comment='The Gaia RP mag used by the DRS',
-                 group='resolve')
+                 group='resolve', post_exclude=True)
 
 # the source of the rpmag used by the drs (after preprocessing)
 KW_DRS_RPMAG_S = KW_DRS_RPMAG_S.copy(__NAME__)
-KW_DRS_RPMAG_S.set(key='HIERARCH DRS RES RPMAG_S',
+KW_DRS_RPMAG_S.set(key='DR_RMAGS',
                    comment='Source of the rpmag used by the DRS',
-                   group='resolve')
+                   group='resolve', post_exclude=True)
 
 # the epoch to be used by the drs (after preprocessing)
 KW_DRS_EPOCH = KW_DRS_EPOCH.copy(__NAME__)
-KW_DRS_EPOCH.set(key='HIERARCH DRS RES EPOCH', unit=uu.yr,
+KW_DRS_EPOCH.set(key='DR_EPOC', unit=uu.yr,
                  comment='The Epoch used by the DRS',
-                 group='resolve')
+                 group='resolve', post_exclude=True)
 
 # the source of the epoch used by the drs (after preprocessing)
 KW_DRS_EPOCH_S = KW_DRS_EPOCH_S.copy(__NAME__)
-KW_DRS_EPOCH_S.set(key='HIERARCH DRS RES EPOCH_S',
+KW_DRS_EPOCH_S.set(key='DR_EPOCS',
                    comment='Source of the epoch used by the DRS',
-                   group='resolve')
+                   group='resolve', post_exclude=True)
 
 # the effective temperature to be used by the drs (after preprocessing)
 KW_DRS_TEFF = KW_DRS_TEFF.copy(__NAME__)
-KW_DRS_TEFF.set(key='HIERARCH DRS RES TEFF', unit=uu.K,
+KW_DRS_TEFF.set(key='DR_TEFF', unit=uu.K,
                 comment='The Teff [K] used by the DRS',
-                group='resolve')
+                group='resolve', post_exclude=True)
 
 # the source of teff used by the drs (after preprocessing)
 KW_DRS_TEFF_S = KW_DRS_TEFF_S.copy(__NAME__)
-KW_DRS_TEFF_S.set(key='HIERARCH DRS RES TEFF_S',
+KW_DRS_TEFF_S.set(key='DR_TEFFS',
                   comment='Source of the Teff used by the DRS',
-                  group='resolve')
+                  group='resolve', post_exclude=True)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -513,22 +513,27 @@ KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='Quality control param passed QC',
 # -----------------------------------------------------------------------------
 # The shift in pixels so that image is at same location as engineering flat
 KW_PPSHIFTX = KW_PPSHIFTX.copy(__NAME__)
-KW_PPSHIFTX.set(key='DETOFFDX', comment='Pixel offset in x from readout lag')
+KW_PPSHIFTX.set(key='DETOFFDX', comment='Pixel offset in x from readout lag',
+                post_exclude=True)
 # The shift in pixels so that image is at same location as engineering flat
 KW_PPSHIFTY = KW_PPSHIFTY.copy(__NAME__)
-KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag')
+KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag',
+                post_exclude=True)
 
 # the number of bad pixels found via the intercept (cosmic ray rejection)
 KW_PPC_NBAD_INTE = KW_PPC_NBAD_INTE.copy(__NAME__)
-KW_PPC_NBAD_INTE.set('NBADINTE', comment='No. bad px intercept cosmic reject')
+KW_PPC_NBAD_INTE.set('NBADINTE', comment='No. bad px intercept cosmic reject',
+                post_exclude=True)
 
 # the number of bad pixels found via the slope (cosmic ray rejection)
 KW_PPC_NBAD_SLOPE = KW_PPC_NBAD_SLOPE.copy(__NAME__)
-KW_PPC_NBAD_SLOPE.set('NBADSLOP', comment='No. bad px slope cosmic reject')
+KW_PPC_NBAD_SLOPE.set('NBADSLOP', comment='No. bad px slope cosmic reject',
+                post_exclude=True)
 
 # the number of bad pixels found with both intercept and slope (cosmic ray)
 KW_PPC_NBAD_BOTH = KW_PPC_NBAD_BOTH.copy(__NAME__)
-KW_PPC_NBAD_BOTH.set('NBADBATH', comment='No. bad px both cosmic reject')
+KW_PPC_NBAD_BOTH.set('NBADBOTH', comment='No. bad px both cosmic reject',
+                post_exclude=True)
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables

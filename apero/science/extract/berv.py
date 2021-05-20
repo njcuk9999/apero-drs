@@ -271,11 +271,11 @@ def get_keys_from_header(params: ParamDict, header: drs_fits.Header,
     bprops['DBERV_EST'] = header.get(params['KW_DBERV_EST'][0], np.nan)
     bprops.set_source('DBERV_EST', 'header')
     # get the observation time and method parameters
-    bprops['OBSTIME'] = header.get(params['KW_BERV_OBSTIME'][0], np.nan)
-    bprops['OBSTIMEMETHOD'] = header.get(params['KW_BERV_OBSTIME_METHOD'][0],
+    bprops['OBS_TIME'] = header.get(params['KW_BERV_OBSTIME'][0], np.nan)
+    bprops['OBS_TIME_METHOD'] = header.get(params['KW_BERV_OBSTIME_METHOD'][0],
                                          'None')
-    bprops.set_source('OBSTIME', 'header')
-    bprops.set_source('OBSTIMEMETHOD', 'header')
+    bprops.set_source('OBS_TIME', 'header')
+    bprops.set_source('OBS_TIME_METHOD', 'header')
     # get object name and source
     bprops['DRS_OBJNAME'] = header.get(params['KW_DRS_OBJNAME'][0], np.nan)
     bprops.set_source('DRS_OBJNAME',
@@ -565,8 +565,8 @@ def add_berv_keys(params: ParamDict, infile: DrsFitsFile,
     infile.add_hkey('KW_BJD_EST', value=props['BJD_EST'])
     infile.add_hkey('KW_BERVMAX_EST', value=props['BERV_MAX_EST'])
     infile.add_hkey('KW_DBERV_EST', value=props['DBERV_EST'])
-    infile.add_hkey('KW_BERV_OBSTIME', value=props['OBSTIME'])
-    infile.add_hkey('KW_BERV_OBSTIME_METHOD', value=props['OBSTIMEMETHOD'])
+    infile.add_hkey('KW_BERV_OBSTIME', value=props['OBS_TIME'])
+    infile.add_hkey('KW_BERV_OBSTIME_METHOD', value=props['OBS_TIME_METHOD'])
     # return infile
     return infile
 
