@@ -245,16 +245,6 @@ def __main__(recipe, params):
                           cavity_poly=wprops['CAVITY'], iteration=iteration + 1)
             fplines = wave.calc_wave_lines(params, recipe, **fpargs)
             # -----------------------------------------------------------------
-            # TODO: Remove after testing: Save the hclines and fplines from
-            #       first calculation
-            # Write master line references to file
-            #   master fiber hclines and fplines for all fibers!
-            # -----------------------------------------------------------------
-            wmargs = [hc_e2ds_file, fp_e2ds_file, iwprops['WAVEINST'],
-                      hclines, fplines, master_fiber]
-            _ = wave.write_wave_lines(params, recipe, *wmargs, master=True,
-                                      file_kind='BEFORE{0}'.format(iteration))
-            # -----------------------------------------------------------------
             # Calculate the wave solution for master fiber
             # master fiber + master wave setup
             fit_cavity = True
