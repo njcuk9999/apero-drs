@@ -1380,7 +1380,7 @@ if __name__ == "__main__":
     _stats['Name'] = ['TEST_VALUE_1', 'V2', 'VALUE3', 'TEST4']
     _stats['Value'] = [1, 0.1, 0.2, 100]
 
-    _plotter.summary_document(_qc_params, _stats)
+    _plotter.summary_document(None, _qc_params, _stats)
 
 # =============================================================================
 # End of code
