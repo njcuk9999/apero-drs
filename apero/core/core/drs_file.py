@@ -6018,8 +6018,19 @@ class DrsOutFile(DrsInputFile):
         # copy extensions
         for ext in self.extensions:
             new.extensions[ext] = self.extensions[ext].copy()
+        # copy header adds
+        for key in self.header_add:
+            new.header_add[key] = list(self.header_add[key])
         # copy whether required
         new.out_required = bool(self.out_required)
+
+        # specific data
+        new.out_filename = deepcopy(self.out_filename)
+        new.out_dirname = deepcopy(self.out_dirname)
+        new.out_required = deepcopy(self.out_required)
+        # store reduced files
+        new.clear_files = deepcopy(self.clear_files)
+
         # return new copy
         return new
 
