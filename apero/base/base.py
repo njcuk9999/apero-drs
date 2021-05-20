@@ -74,7 +74,6 @@ RECOMM_DEV = __PATH__.parent.joinpath('requirements_developer.txt')
 #   some exceptions creating long loops and freezing when all warnings go to
 #   errors)
 WARN_TO_ERROR = False
-warnings.filterwarnings('error', category=FutureWarning)
 # this is how we turn warnings to errors
 if WARN_TO_ERROR:
     warnings.filterwarnings('error')
