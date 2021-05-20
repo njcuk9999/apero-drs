@@ -1279,7 +1279,7 @@ WAVEREF_EDGE_WMAX.author = base.AUTHORS['EA']
 
 # value in pixel (+/-) for the box size around each HC line to perform fit
 WAVEREF_HC_BOXSIZE = WAVEREF_HC_BOXSIZE.copy(__NAME__)
-WAVEREF_HC_BOXSIZE.value = 5
+WAVEREF_HC_BOXSIZE.value = 13
 WAVEREF_HC_BOXSIZE.author = base.AUTHORS['EA']
 
 # get valid hc dprtypes (string list separated by commas)
