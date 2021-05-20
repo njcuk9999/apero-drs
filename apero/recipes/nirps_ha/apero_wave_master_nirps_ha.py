@@ -218,9 +218,6 @@ def __main__(recipe, params):
         # set cavity solution to None initially
         wprops['CAVITY'] = None
         wprops.set_source('CAVITY', mainname)
-        # TODO: Note in night solution we will load cavity file
-        #  cavity = wave2.get_cavity_file(params, recipe, infile=fp_e2ds_file)
-
         # iterate twice so we have a good cavity length to start
         for iteration in range(2):
             # -----------------------------------------------------------------
@@ -228,6 +225,17 @@ def __main__(recipe, params):
             hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
                           iteration=iteration + 1)
             hclines = wave.calc_wave_lines(params, recipe, **hcargs)
+            # -----------------------------------------------------------------
+            # default wave map might be off by too many pixels therefore we
+            #   calculate a global offset and re-calculate
+            if iteration == 0:
+                # calculate hc offset
+                oargs = [iwprops['WAVEMAP'], hclines]
+                wprops['WAVEMAP'] = wave.hc_wave_sol_offset(params, *oargs)
+                # recalculate hclines with offset applied
+                hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
+                              iteration=iteration + 1)
+                hclines = wave.calc_wave_lines(params, recipe, **hcargs)
             # -----------------------------------------------------------------
             # generate the fp reference lines
             fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
