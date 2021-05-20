@@ -1014,6 +1014,38 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # return table
     return table
 
+def hc_wave_sol_offset(params: ParamDict, inwavemap: np.ndarray,
+                       hclines: Table) -> np.ndarray:
+    """
+    Use the HCLINES "DIFF" column to work out an offset in the input wavemap
+    and shift the input wavemap to try to estimate the correction of this
+
+    default wave map might be off by too many pixels therefore we
+    calculate a global offset and re-calculate
+
+    :param inwavemap: np.ndarray, the input wave map
+    :param hclines: astropy.table.Table, the hclines table
+
+    :return: np.ndarray, the updated wavemap
+    """
+    # We measure gradient of the wave map so we can get the scaling
+    #   factor of the wave map
+    fchange = np.gradient(inwavemap, axis=1) / inwavemap
+    opart1 = np.nanmedian(fchange)
+    # get the bulk offset in lines (in pixel space)
+    opart2 = np.nanmedian(hclines['DIFF'])
+    # fractional offset of wavelengths (re-expressed as a scaling)
+    offset = opart1 * opart2
+    # print offset added
+    # TODO: move to language database
+    msg = 'Appling global fraction offset of wavemap: {0}'
+    margs = [1 - offset]
+    WLOG(params, '', msg.format(*margs))
+    # update the initial wave map
+    wavemap = inwavemap * (1 - offset)
+    # return offset wavemap
+    return wavemap
+
 
 def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                   hclines: Table, fplines: Table,
