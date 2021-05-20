@@ -10,20 +10,21 @@ Created on 2019-01-19 at 13:45
 @author: cook
 """
 from astropy.table import Table
-import numpy as np
-import sys
-import os
-import matplotlib
 from collections import OrderedDict
+from collections.abc import Iterable
+import matplotlib
+import numpy as np
+import os
+import sys
+from typing import Any, Generator, List, Tuple, Union
 
-from apero.base import base
-from apero.core.core import drs_text
 from apero import lang
+from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
 from apero.core import math as mp
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.io import drs_path
-
 from apero.plotting import plot_functions
 from apero.plotting import latex
 from apero.plotting import html
@@ -42,6 +43,9 @@ __release__ = base.__release__
 display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
+# get ParamDict
+ParamDict = constants.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
@@ -63,13 +67,24 @@ clean = latex.clean
 # Define plotting class
 # =============================================================================
 class Plotter:
-    def __init__(self, params, recipe=None, mode=None):
+    def __init__(self, params: ParamDict, recipe: Union[DrsRecipe, None] = None,
+                 mode: Union[int, None] = None):
+        """
+        Constructor for the plotter class
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param recipe: DrsRecipe or None, the recipe that called this plotter
+        :param mode: int or None, this is the plot mode, if None uses
+                     'DRS_PLOT' from params
+        """
+        # set params and recipe
         self.params = params
         self.recipe = recipe
-
+        # deal with no recipe set
         if recipe is None:
             self.recipename = 'Unknown'
             self.used_command = 'None'
+        # else get recipe name and used command from recipe instance
         else:
             self.recipename = '{0} ({1})'.format(recipe.name, recipe.shortname)
             self.used_command = self.recipe.used_command
@@ -78,14 +93,21 @@ class Plotter:
             self.plotoption = params['DRS_PLOT']
         else:
             self.plotoption = mode
-
+        # set up names of the plots that have been used
         self.names = OrderedDict()
+        # set up the plot switches
         self.plot_switches = OrderedDict()
+        # flag whether we have debug plots
         self.has_debugs = False
+        # save stats to here
         self.stat_dict = OrderedDict()
+        # set stats unset (will be filled with a astropy.Table if used)
         self.stats = None
+        # storage for qc parameters
         self.qc_params = OrderedDict()
+        # storage for warnings (will be filled with a list when used)
         self.warnings = None
+        # storage for the pid directory
         self.pid_dir = ''
         # ------------------------------------------------------------------
         # storage of debug plots
@@ -114,7 +136,19 @@ class Plotter:
         # set matplotlib via _get_matplotlib()
         self._get_matplotlib()
 
-    def set_location(self, iteration=0):
+    def set_location(self, iteration: int = 0):
+        """
+        Set the plot directory path
+
+        Sets:
+        - self.pid_dir - plot directory name
+        - self.location - full path to plot directory
+        - self.summary_filename - full path to summary file
+
+        :param iteration: int, the iteration number (used when we have
+                          multiple plots of the same type)
+        :return: None, updates attributes pid_dir, location and summary_filename
+        """
         # get name and location
         if self.recipe is None:
             rname = 'None'
@@ -144,7 +178,8 @@ class Plotter:
         if self.recipe.log is not None:
             self.recipe.log.set_plot_dir(self.params, self.location)
 
-    def __call__(self, name, func=None, fiber=None, **kwargs):
+    def __call__(self, name: str, func: Union[Any, None] = None,
+                 fiber: Union[str, None] = None, **kwargs):
         """
         Function used to plot a specific graph (name needs to be defined in
         plot functions), keyword arguments are passed to plotting function
@@ -232,7 +267,15 @@ class Plotter:
         # if successful return 1
         return 1
 
-    def plotstart(self, graph):
+    def plotstart(self, graph: Graph) -> bool:
+        """
+        Find out whether we should start this plot (or skip).
+
+        Bases this on graph.kind and self.plotoption
+
+        :param graph: Graph instances, has atrribute "kind"
+        :return:
+        """
         if graph.kind == 'debug':
             # must make sure we are not asking user to see plot in
             #   summary mode
@@ -263,7 +306,14 @@ class Plotter:
             # return False --> plot not allowed
             return False
 
-    def plotend(self, graph):
+    def plotend(self, graph: Graph):
+        """
+        Perform the final plotting tasks before properly closing all plots
+
+        :param graph: Graph instance
+
+        :return: None - saves / closes plots
+        """
         # deal with debug plots
         if graph.kind == 'debug':
             # we shouldn't have got here but if plot=0 do not plot
@@ -298,7 +348,19 @@ class Plotter:
         else:
             pass
 
-    def plotloop(self, looplist):
+    def plotloop(self, 
+                 looplist: Union[list, np.ndarray, Iterable]) -> Generator:
+        """
+        A generator to loop around plotting instants and ask the user
+        whether they want the previous, next, or a specific element in a
+        list of iterables
+
+        :param looplist: list, np.array or iterable - the 'list' to generate
+                         the asked parameters from
+
+        :return: Generator - yield the value in the list asked for by the user
+                 or ends loop if user wishes
+        """
         # must run in plot mode 2
         if self.plotoption == 1:
             current_mode = 1
@@ -389,7 +451,15 @@ class Plotter:
         # close all plots
         self.plt.close('all')
 
-    def close_plots(self, loop=False):
+    def close_plots(self, loop: bool = False):
+        """
+        Asks the user whether they want to close plots (used in specific
+        plot modes where many graphs may need to be closed)
+
+        :param loop: bool, if True this is inside a loop
+
+        :return: None, closes all plots if user selected "Y"
+        """
         # make sure we have plots open
         if not self.plots_active:
             return
@@ -398,19 +468,14 @@ class Plotter:
             WLOG(self.params, 'info', textentry('40-100-00006'), printonly=True)
         # log message asking to close plots
         WLOG(self.params, 'info', textentry('40-003-00003'), printonly=True)
-        # deal with python 2 / python 3 input method
-        if sys.version_info.major < 3:
-            # note python 3 wont find this!
-            # noinspection PyUnresolvedReferences
-            uinput = raw_input('[Y]es or [N]o:\t')
-        else:
-            uinput = input('[Y]es or [N]o:\t')
+        # deal with input method
+        uinput = str(input('[Y]es or [N]o:\t'))
         # if yes close all plots
         if 'Y' in uinput.upper():
             # close any open plots properly
             self.closeall()
 
-    def interactive(self, switch=False, show=True):
+    def interactive(self, switch: bool = False, show: bool = True):
         """
         plt.ion()/plt.ioff() sometimes does not work in debug mode
         therefore we must catch it.
@@ -445,8 +510,30 @@ class Plotter:
     # ------------------------------------------------------------------
     # summary methods
     # ------------------------------------------------------------------
-    def summary_document(self, iteration=None, qc_params=None, stats=None,
-                         warnings=True):
+    def summary_document(self, iteration: Union[int, None] = None,
+                         qc_params: Union[List[Any], None] = None,
+                         stats: Union[Table, None] = None,
+                         warnings: bool = True):
+        """
+        Produce the summary document(s) using all parameters saved in the
+        plot class so far, this may include:
+
+        1. adds any summary plots
+        2. stats (i.e. header keys)
+        3. quality control
+
+        to html and / or latex depending on setup
+
+        :param iteration: int or None, if set this document has iterations
+                          and thus the location/path/filename may need to change
+        :param qc_params: list or None, add the qc_params at this point
+                          they can also be added prior to this point
+        :param stats: Table or None, add the stats at this point, they can
+                      also be added prior to this point
+        :param warnings: bool, if True adds the warnings to the summary
+
+        :return: None writes html / latex files
+        """
         func_name = display_func('summary_document', __NAME__,
                                  'Plotter')
         # deal with iteration set
@@ -503,7 +590,18 @@ class Plotter:
         if htmldoc is not None:
             htmldoc.cleanup()
 
-    def summary_latex(self, qc_params, stats, warnings):
+    def summary_latex(self, qc_params: Union[List[Any], None] = None,
+                      stats: Union[Table, None] = None, warnings: bool = True):
+        """
+        Write the summary document as a latex file (can be compiled externally
+        using pdflatex)
+
+        :param qc_params: list or None, add the qc_params to add
+        :param stats: Table or None, the stats to add
+        :param warnings: bool, if True adds the warnings to the summary
+
+        :return: None, writes latex file
+        """
         # set up the latex document
         doc = latex.LatexDocument(self.params, self.summary_filename)
         # get recipe short name
@@ -571,7 +669,16 @@ class Plotter:
         # return the doc
         return doc
 
-    def summary_latex_qc_params(self, doc, qc_params):
+    def summary_latex_qc_params(self, doc: latex.LatexDocument,
+                                qc_params: Union[List[Any], None] = None):
+        """
+        Compile the qc params  table for the latex document
+
+        :param doc: LatexDocument class
+        :param qc_params: list or None, add the qc_params to add
+
+        :return: None - updates the LatexDocument instance 'doc'
+        """
         if qc_params is None and self.qc_params is None:
             return
         # get recipe short name
@@ -606,7 +713,16 @@ class Plotter:
             # insert table
             doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
 
-    def summary_latex_stats(self, doc, stats):
+    def summary_latex_stats(self, doc: latex.LatexDocument,
+                            stats: Union[Table, None] = None):
+        """
+        Add the stats table to the latex document
+
+        :param doc: LatexDocument class
+        :param stats: Table or None, the stats to add
+
+        :return: None - updates the LatexDocument instance 'doc'
+        """
         if stats is None:
             return
         # get recipe short name
@@ -635,7 +751,15 @@ class Plotter:
             # insert table
             doc.insert_table(stats_latex, caption=caption)
 
-    def summary_latex_warnings(self, doc):
+    def summary_latex_warnings(self,
+                               doc: latex.LatexDocument) -> latex.LatexDocument:
+        """
+        Add the warnings table to the latex document
+
+        :param doc: LatexDocument class
+
+        :return: doc, the update LatexDocument instance
+        """
         # deal with warnings unset
         if self.warnings is None:
             return doc
@@ -659,7 +783,17 @@ class Plotter:
         # return the doc
         return doc
 
-    def summary_html(self, qc_params, stats, warnings):
+    def summary_html(self, qc_params: Union[List[Any], None] = None,
+                     stats: Union[Table, None] = None, warnings: bool = True):
+        """
+        Write the summary document as a html file
+
+        :param qc_params: list or None, add the qc_params to add
+        :param stats: Table or None, the stats to add
+        :param warnings: bool, if True adds the warnings to the summary
+
+        :return: None, writes latex file
+        """
         summary_filename = self.summary_filename
         # set up the latex document
         doc = html.HtmlDocument(self.params, summary_filename)
@@ -712,7 +846,16 @@ class Plotter:
         # return doc
         return doc
 
-    def summary_html_qc_params(self, doc, qc_params):
+    def summary_html_qc_params(self, doc: html.HtmlDocument,
+                               qc_params: Union[List[Any], None] = None):
+        """
+        Compile the qc params  table for the html document
+
+        :param doc: HtmlDocument class
+        :param qc_params: list or None, add the qc_params to add
+
+        :return: None - updates the HtmlDocument instance 'doc'
+        """
         if qc_params is None and self.qc_params is None:
             return
         # add qc_param table
@@ -747,7 +890,16 @@ class Plotter:
             # insert table
             doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
 
-    def summary_html_stats(self, doc, stats):
+    def summary_html_stats(self, doc: html.HtmlDocument,
+                           stats: Union[Table, None] = None):
+        """
+        Add the stats table to the html document
+
+        :param doc: HtmlDocument class
+        :param stats: Table or None, the stats to add
+
+        :return: None - updates the HtmlDocument instance 'doc'
+        """
         if stats is None:
             return
         # get recipe short name
@@ -775,7 +927,49 @@ class Plotter:
             # insert table
             doc.insert_table(stats_html, caption=caption)
 
+    def summary_html_warnings(self,
+                              doc: html.HtmlDocument) -> html.HtmlDocument:
+        """
+        Add the warnings table to the html document
+
+        :param doc: HtmlDocument class
+
+        :return: doc, the update HtmlDocument instance
+        """
+        # deal with warnings unset
+        if self.warnings is None:
+            return doc
+        # set up section
+        doc.section(textentry('40-100-01011'))
+        doc.newline()
+        # deal with no warnings
+        if len(self.warnings) == 0:
+            doc.add_text('None')
+            doc.newline()
+        else:
+            warn_lines = []
+            # add warnings
+            for it, warning in enumerate(self.warnings):
+                # get time and message
+                wtime, wmsg = warning
+                # append lines
+                warn_lines.append('{0}: {1}'.format(wtime, wmsg))
+            # add text
+            doc.add_text(warn_lines)
+        # return the doc
+        return doc
+
+    # -------------------------------------------------------------------------
+    # summary worker functions
     def summary_stats(self):
+        """
+        Update attribute 'stats' from attribute 'stat_dict'
+
+        stats is a dictionary containing:
+        - NAME, VALUE, COMMENTS (optional), FIBER (optional)
+
+        :return: None, update self.stats with self.stat_dict data
+        """
         # storage of table columns
         names, values, comments, fibers = [], [], [], []
         # switch for knowing whether we have found comments
@@ -807,32 +1001,22 @@ class Plotter:
         if has_fibers:
             self.stats['FIBER'] = fibers
 
-    def summary_html_warnings(self, doc):
-        # deal with warnings unset
-        if self.warnings is None:
-            return doc
-        # set up section
-        doc.section(textentry('40-100-01011'))
-        doc.newline()
-        # deal with no warnings
-        if len(self.warnings) == 0:
-            doc.add_text('None')
-            doc.newline()
-        else:
-            warn_lines = []
-            # add warnings
-            for it, warning in enumerate(self.warnings):
-                # get time and message
-                wtime, wmsg = warning
-                # append lines
-                warn_lines.append('{0}: {1}'.format(wtime, wmsg))
-            # add text
-            doc.add_text(warn_lines)
-        # return the doc
-        return doc
+    def add_stat(self, key: str, value: Any, comment: Union[str, None] = None,
+                 fiber: Union[str, None] = None):
+        """
+        Add an individual stat to the stats dictionary (self.stat_dict)
 
-    def add_stat(self, key, value, comment=None, fiber=None):
+        :param key: str, the key (name) of the stat - can be a key within
+                    parameters to get the value and comment if it is a header
+                    key (i.e. KW_XXX)
+        :param value: Any, the value for the key (name)
+        :param comment: str or None, if set this is the comment that goes with
+                        the key (name)
+        :param fiber: str or None, if set this is the fiber that goes with the
+                      key (name)
 
+        :return: None, updates self.stat_dict
+        """
         if fiber is None:
             fkey = key
         else:
@@ -857,11 +1041,29 @@ class Plotter:
             # add to stat dictionary
             self.stat_dict[fkey] = [dkey, str(value), comment, fiber]
 
-    def add_qc_params(self, qc_params, fiber):
+    def add_qc_params(self, qc_params: list, fiber: str):
+        """
+        Add a list of qc parameters to the qc params dictionary (assuming
+        the self.qc_params is a dictionary
+
+        :param qc_params: list of list, the qc parameters
+                          [qc_names, qc_values, qc_logic, qc_pass]
+        :param fiber: str, the fiber associated with this set of qc_params
+
+        :return: None, updates self.qc_params
+        """
         # add qc_params for this fiber
         self.qc_params[fiber] = qc_params
 
-    def add_warnings(self, params=None):
+    def add_warnings(self, params: Union[ParamDict, None] = None):
+        """
+        Add any warnings logged up to this point from params['LOGGER_WARNING']
+
+        :param params: ParamDict or None, if set this is the parameter
+                       dictionary of constants, if None uses self.params
+
+        :return: None, updates self.warning
+        """
         # deal with unset params
         if params is None:
             params = self.params
@@ -887,7 +1089,7 @@ class Plotter:
     # ------------------------------------------------------------------
     # internal methods
     # ------------------------------------------------------------------
-    def _get_func(self, name):
+    def _get_func(self, name: str) -> Graph:
         """
         Internal function to return the plot object defined by "name"
         :param name: string, the name of the graph to plot
@@ -910,8 +1112,10 @@ class Plotter:
 
     def _get_plot_names(self):
         """
-        Get the plot names (stored in self.names)
-        :return: None
+        Get the plot names (stored in self.names) from plot_obj.name for
+        all plot definitions (plot_functions.definitions)
+
+        :return: None, updates self.names
         """
         self.names = OrderedDict()
         # loop around plot objects
@@ -925,7 +1129,8 @@ class Plotter:
         """
         Find all currently defined plot switches in params and checks
         to see if we have any debug plots
-        :return:
+
+        :return: None, updates self.plot_switches and self.has_debugs
         """
         if self.recipe is None:
             debug_plots = []
@@ -949,12 +1154,12 @@ class Plotter:
             elif kind == 'show':
                 self.has_debugs = True
 
-    def _get_matplotlib(self, force=False):
+    def _get_matplotlib(self, force: bool = False):
         """
         Deal with the difference plotting modes and get the correct backend
         This sets self.plt, self.matplotlib and self.mpl_toolkits
 
-        :return:
+        :return: None, updates self.plt, self.axes_grid1, self.matplotlib
         """
         global PLT_MOD
         global MPL_MOD
@@ -997,7 +1202,15 @@ class Plotter:
 # =============================================================================
 # Define  functions
 # =============================================================================
-def import_matplotlib():
+def import_matplotlib() -> Union[Tuple[Any, Any, Any], None]:
+    """
+    Try to import matplotlib with the first available backend that actually
+    works - we recommend Qt5Agg - but most things should work with all of theses
+    (other than Agg which should be the last case and will not allow GUI plots)
+
+    :return: either the imports 'plt', 'matplotlib', and 'axes_grid1'  or
+             return None
+    """
     global PLT_MOD
     global MPL_MOD
     # fix for MacOSX plots freezing
@@ -1016,7 +1229,21 @@ def import_matplotlib():
     return None
 
 
-def qc_param_table(qc_params, qc_param_dict):
+def qc_param_table(qc_params: Union[List[Any], None],
+                   qc_param_dict: OrderedDict
+                   ) -> Union[Tuple[Table, np.ndarray], Tuple[None, None]]:
+    """
+    Create the quality control parameter table from qc_params and / or the
+    qc_param_dict
+    
+    :param qc_params: list of quality control variables
+                      [qc_names, qc_values, qc_logic, qc_pass]
+    :param qc_param_dict: OrderedDict, the quality control dictionary (for
+                          when we have multiple fibers)
+
+    :return: tuple 1. either the qc param table or None,
+             2. either a np.array of bools (passed/fail) or None
+    """
     # deal with no qc_params
     if qc_params is None:
         # flag that we do have fibers
@@ -1072,7 +1299,15 @@ def qc_param_table(qc_params, qc_param_dict):
         return qc_table, np.array(passed)
 
 
-def _sigfig(value, digits=5):
+def _sigfig(value: Union[float, str], digits: int = 5) -> Union[float, Any]:
+    """
+    Tries to get value with a certain number of significant figures
+
+    :param value: float or str, the decimal number to convert
+    :param digits: int, the number of significant figure to pint
+
+    :return: float if it was successful, otherwise just the value itself
+    """
     # deal with float values
     try:
         if '.' in str(value):
@@ -1083,16 +1318,19 @@ def _sigfig(value, digits=5):
     return value
 
 
-def main(params, graph_name, mode=2, **kwargs):
+def main(params: ParamDict, graph_name: str,
+         mode: Union[int, None] = 2, **kwargs):
     """
     Call the plotter without a class instance already loaded
-    :param params:
-    :param graph_name:
-    :param mode:
-    :param kwargs:
-    :return:
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param graph_name: str, the name of the graph to plot
+    :param mode: int or None, this is the plot mode, if None uses
+                 'DRS_PLOT' from params
+    :param kwargs: keywords passed to the plot function
+
+    :return: None, plots using Plotter instance
     """
-    # update
     # get plotter
     plotter = Plotter(params, None, mode=mode)
     # use plotter to plot
