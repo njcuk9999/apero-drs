@@ -57,6 +57,7 @@ table, td, th {
 </style>
 """
 
+
 # =============================================================================
 # Define class
 # =============================================================================
@@ -249,7 +250,7 @@ class HtmlDocument:
         self._t_ += cmd('h4', text)
         self.newline()
 
-    def add_text(self, text: str):
+    def add_text(self, text: Union[List[str], str]):
         """
         Add a text block to the html document
 
@@ -407,7 +408,7 @@ def open_file(filename):
     return lines
 
 
-def write_file(filename: str, text: List[str]):
+def write_file(filename: str, text: Union[List[str], str]):
     """
     Write the "text" to "filename"
 
@@ -417,6 +418,8 @@ def write_file(filename: str, text: List[str]):
 
     :return: None, writes to "filename"
     """
+    if isinstance(text, str):
+        text = [text]
     # write the lines
     with open(filename, 'w') as wfile:
         wfile.writelines(text)
@@ -497,7 +500,7 @@ def apply_colormask(lines: List[str], colormask: Union[list, np.ndarray],
 # Main code here
 if __name__ == "__main__":
     # get params
-    params = constants.load()
+    _params = constants.load()
     # -------------------------------------------------------------------------
     # Create a test html file
     # -------------------------------------------------------------------------
@@ -516,7 +519,7 @@ if __name__ == "__main__":
     # test the various parts of the Html document
     # ----------------------------------------------------------------------
     # start the html document
-    doc = HtmlDocument(params, 'test.pdf')
+    doc = HtmlDocument(_params, 'test.pdf')
     # load the preamble
     doc.preamble()
     # add a title + authors

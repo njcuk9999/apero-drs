@@ -53,6 +53,7 @@ SYMBOLS['%'] = r'\%'
 SYMBOLS['['] = r'\['
 SYMBOLS[']'] = r'\]'
 
+
 # =============================================================================
 # Define classes
 # =============================================================================
@@ -616,7 +617,7 @@ def open_file(filename: str) -> List[str]:
     return lines
 
 
-def write_file(filename: str, text: List[str]):
+def write_file(filename: str, text: Union[List[str], str]):
     """
     Write the "text" to "filename"
 
@@ -626,6 +627,8 @@ def write_file(filename: str, text: List[str]):
 
     :return: None, writes to "filename"
     """
+    if isinstance(text, str):
+        text = [text]
     # write the lines
     with open(filename, 'w') as wfile:
         wfile.writelines(text)
@@ -697,7 +700,7 @@ def apply_colormask(lines: List[str], colormask: Union[list, np.ndarray],
 # Main code here
 if __name__ == "__main__":
     # get params
-    params = constants.load()
+    _params = constants.load()
     # -------------------------------------------------------------------------
     # create a test latex file
     # -------------------------------------------------------------------------
@@ -716,7 +719,7 @@ if __name__ == "__main__":
     # test the various parts of the Latex document
     # ----------------------------------------------------------------------
     # start the latex document
-    doc = LatexDocument(params, 'test.pdf')
+    doc = LatexDocument(_params, 'test.pdf')
     # load the preamble
     doc.preamble()
     # begin the latex document
