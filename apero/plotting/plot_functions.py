@@ -9,15 +9,19 @@ Created on 2019-10-03 at 10:51
 
 @author: cook
 """
-import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
+from collections.abc import Iterable
 import copy
+import numpy as np
 import os
+from typing import Any, Dict, Generator, Tuple, Union
 import warnings
 
 from apero.base import base
+from apero.core import constants
 from apero.core import math as mp
+from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
@@ -29,6 +33,9 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# Get parameter dictionary class
+ParamDict = constants.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
 # set up definition storage
 definitions = []
 # Speed of light
@@ -45,8 +52,32 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # Define plotting class
 # =============================================================================
 class Graph:
-    def __init__(self, name, kind='debug', func=None, filename=None,
-                 description=None, figsize=None, dpi=None):
+    def __init__(self, name: str, kind: str = 'debug',
+                 func: Any = None, filename: Union[str, None] = None,
+                 description: Union[str, None] = None,
+                 figsize: Union[Tuple[float, float], None] = None,
+                 dpi: Union[int, None] = None):
+        """
+        Construct a graph instance (there should be one of these instances for
+        each type of graph) these graphs a linked to a plotting function:
+            Function(plotter, graph, kwarg)
+
+        :param name: str, the name of the graph (this is how we link to this
+                     graph using recipe.plot(name) so must be unique
+        :param kind: str, either 'debug' or 'summary'
+        :param func: Function, this is the actual plotting function
+                     the function must have the following arguments and only the
+                     following arguments:
+                     Function(plotter, graph, kwarg)
+        :param filename: str or None, this overrides the default filename given
+                         if set (this includes the aboslute path to the plot)
+        :param description: str, for kind=='summary' this is the figure caption
+                            that is used
+        :param figsize: tuple[int, int], this is the figsize to use for the
+                        summary plot saved to disk (kind=='summary')
+        :param dpi: int, this is the dots per inch (resolution) for the summary
+                    plot save to disk (kind=='summary')
+        """
         self.name = name
         # set kind
         if kind in ['debug', 'summary', 'show']:
@@ -73,11 +104,12 @@ class Graph:
         else:
             self.dpi = dpi
 
-    def copy(self):
+    def copy(self) -> 'Graph':
         """
         Make a copy of the Graph instance (don't ever want to set values to
         the default ones defined below)
-        :return:
+
+        :return: Graph instance - the copy of this Graph instance
         """
         name = copy.deepcopy(self.name)
         # deep copy other parameters (deep copy as could be string or None)
@@ -91,13 +123,19 @@ class Graph:
         # return new instance
         return Graph(name, **kwargs)
 
-    def set_filename(self, params, location, suffix=None):
+    def set_filename(self, params: ParamDict, location: str,
+                     suffix: Union[str, None] = None):
         """
         Set the file name for this Graph instance
-        :param params:
-        :param location:
-        :param suffix:
-        :return:
+
+        :param params: ParamDict, the parameter dictionary of constants
+                       (used to get "PID") for the filename
+        :param location: str, the aboslute path to the directory where plot
+                         should be saved
+        :param suffix: str or None, if set adds an additional suffix to the
+                       filename
+
+        :return: None, updates self.filename
         """
         # get pid
         pid = params['PID']
@@ -111,7 +149,19 @@ class Graph:
         # construct absolute filename
         self.filename = os.path.join(location, filename)
 
-    def set_figure(self, plotter, figsize=None, **kwargs):
+    def set_figure(self, plotter: 'Plotter',
+                   figsize: Union[Tuple[int, int], None] = None,
+                   **kwargs) -> Tuple[Any, Any]:
+        """
+        Set up the figure (should be done before plotting)
+
+        :param plotter: Plotter, the plotting.core.Plotter instance
+        :param figsize: tuple or None, if set this is the size of the figure
+        :param kwargs: keyword arguments passed to
+                       matplotlib.pyplot.plt.subplots
+
+        :return: matplotlib figure and axes (return of plt.subplots)
+        """
         # get plt from plotter (for matplotlib set up)
         plt = plotter.plt
         # get figure and frame
@@ -124,7 +174,19 @@ class Graph:
         # return figure and frames
         return fig, frames
 
-    def set_grid(self, plotter, figsize=None, **kwargs):
+    def set_grid(self, plotter: 'Plotter',
+                 figsize: Union[Tuple[int, int], None] = None,
+                 **kwargs) -> Tuple[Any, Any]:
+        """
+        Set up the figure grid (should be done before plotting)
+
+        :param plotter: Plotter, the plotting.core.Plotter instance
+        :param figsize: tuple or None, if set this is the size of the figure
+        :param kwargs: keyword arguments passed to
+                       matplotlib.pyplot.plt.figure().add_gridspec
+
+        :return: matplotlib figure and return of plt.figure.().add_gridspec
+        """
         # get plt from plotter (for matplotlib set up)
         plt = plotter.plt
         # get figure and frame
@@ -140,8 +202,92 @@ class Graph:
         return fig, gs
 
 
+class Plotter:
+    """
+    Proxy for plotting.core that cannot be imported here as it requires
+    this module itself
+    """
+    params: ParamDict
+    recipe: Union[DrsRecipe, None]
+    mode: Union[int, None]
+    recipename: str
+    used_command: str
+    plotoption: int
+    location: Union[str, None]
+    backend: Any
+    plt: Any
+    matplotlib: Any
+    axes_grid1: Any
+
+    def plotstart(self, graph: Graph) -> bool:
+        """
+        Proxy for plotting.core.Plotter.plotstart
+
+        Find out whether we should start this plot (or skip).
+
+        Bases this on graph.kind and self.plotoption
+
+        :param graph: Graph instances, has atrribute "kind"
+        :return:
+        """
+        _ = self.plt, graph
+        return True
+
+    def plotend(self, graph: Graph):
+        """
+        Proxy for plotting.core.Plotter.plotend
+
+        Perform the final plotting tasks before properly closing all plots
+
+        :param graph: Graph instance
+
+        :return: None - saves / closes plots
+        """
+        _ = self.plt, graph
+
+    def plotloop(self,
+                 looplist: Union[list, np.ndarray, Iterable]) -> Generator:
+        """
+        Proxy for core.plotting.Plotter.plotloop
+        A generator to loop around plotting instants and ask the user
+        whether they want the previous, next, or a specific element in a
+        list of iterables
+
+        :param looplist: list, np.array or iterable - the 'list' to generate
+                         the asked parameters from
+
+        :return: Generator - yield the value in the list asked for by the user
+                 or ends loop if user wishes
+        """
+        _ = self.plt, looplist
+        yield None
+
+    def close_plots(self, loop: bool = False):
+        """
+        Proxy for core.plotting.Plotter.close_plots
+
+        Asks the user whether they want to close plots (used in specific
+        plot modes where many graphs may need to be closed)
+
+        :param loop: bool, if True this is inside a loop
+
+        :return: None, closes all plots if user selected "Y"
+        """
+        _ = self.plt, loop
+
+
 class CrossCursor(object):
-    def __init__(self, frame, color='r', alpha=0.5):
+    def __init__(self, frame: Any, color: str = 'r', alpha: float = 0.5):
+        """
+        Construct a matplotlib object that updates some text on the plot when
+        the cursor is moved (via event "mouse_move") - sets self.txt to blank
+        until mouse is moved
+
+        :param frame: matplotlib axis
+        :param color: str, the colour of the text
+        :param alpha: float, the transparency of the text
+                      (0 = clear, 1 = opaque)
+        """
         self.frame = frame
         # the horizontal line
         self.lx = frame.axhline(color=color, alpha=alpha)
@@ -156,7 +302,15 @@ class CrossCursor(object):
         # start off the text without values
         self.txt.set_text('x=NaN, y=NaN')
 
-    def mouse_move(self, event):
+    def mouse_move(self, event: Any):
+        """
+        The event for matplotlib to catch (on mouse movement this function is
+        called)
+
+        :param event: matplotlib event
+
+        :return: None, updates self.txt
+        """
         if not event.inaxes:
             return
         # get the new x and y locations
@@ -171,11 +325,27 @@ class CrossCursor(object):
 
 
 class ClickCursor(object):
-    def __init__(self, fig, frame):
+    def __init__(self, fig: Any, frame: Any):
+        """
+        Construct an object that prints to screen when the cursor
+        is clicked (via event "mouse_click") - sets self.txt to blank until
+        mouse is moved
+
+        :param fig: matplotlib figure
+        :param frame: matplotlib frame
+        """
         self.fig = fig
         self.frame = frame
 
-    def mouse_click(self, event):
+    def mouse_click(self, event: Any):
+        """
+        The event for matplotlib to catch (on mouse click this function is
+        called)
+
+        :param event: matplotlib event
+
+        :return: None, prints text to screen
+        """
         # noinspection PyProtectedMember
         if self.fig.canvas.manager.toolbar._active:
             return
@@ -190,7 +360,18 @@ class ClickCursor(object):
 # =============================================================================
 # Define user graph functions
 # =============================================================================
-def ulegend(frame=None, plotter=None, **kwargs):
+def ulegend(frame: Any = None,
+            plotter: Union[Plotter, None] = None, **kwargs):
+    """
+    Filter a legend so we only have unique legend elements that have unique
+    text
+
+    :param frame: matplotlib axis
+    :param plotter: Plotter instance (from plotting.core)
+    :param kwargs: keyword arguments passed to frame.legend
+
+    :return: None, updates the frame.legend
+    """
     # deal with no frame set
     if frame is None:
         frame = plotter.plt.gca()
@@ -207,22 +388,25 @@ def ulegend(frame=None, plotter=None, **kwargs):
     frame.legend(unique_h, unique_l, **kwargs)
 
 
-def mc_line(frame, plt, line, x, y, z, norm=None, cmap=None):
+def mc_line(frame: Any, plt: Any, line: Any, x: np.ndarray, y: np.ndarray,
+            z: np.ndarray, norm: Union[Any, None] = None,
+            cmap: Union[str, None] = None) -> Any:
     """
     Create a line coloured by vector "z"
     From here:
         https://matplotlib.org/3.1.1/gallery/lines_bars_and_markers/
             multicolored_line.html
 
-    :param frame:
-    :param plt:
-    :param line:
-    :param x:
-    :param y:
-    :param z:
-    :param norm:
-    :param cmap:
-    :return:
+    :param frame: matplotlib axis
+    :param plt: matplotlib.pyplot
+    :param line: matplotlib.collections.LineCollection
+    :param x: the x data
+    :param y: the y data
+    :param z: the z data (colour axis)
+    :param norm: matplotlib.Normalize 
+    :param cmap: str, the colour map to use (from matplotlib)
+    
+    :return: the update frame (with correctly coloured line collection)
     """
     # deal with no colormap
     if cmap is None:
@@ -244,7 +428,18 @@ def mc_line(frame, plt, line, x, y, z, norm=None, cmap=None):
     return frame.add_collection(lc)
 
 
-def remove_first_last_ticks(frame, axis='x'):
+def remove_first_last_ticks(frame: Any, axis: str = 'x') -> Any:
+    """
+    Remove the first and last axis tick labels from the x axis, y axis or
+    both axes 
+    
+    :param frame: matplotlib axis 
+    :param axis: str, the axis to remove the ticks from, must be 'x', 'y', or 
+                 'both'
+    
+    :return: the updated frame
+    """
+
     if axis == 'x' or axis == 'both':
         xticks = frame.get_xticks()
         xticklabels = xticks.astype(str)
@@ -260,16 +455,32 @@ def remove_first_last_ticks(frame, axis='x'):
     return frame
 
 
-def legend_no_alpha(legend):
+def legend_no_alpha(legend: Any):
+    """
+    Remove an transparency from the legend lines
+    
+    :param legend: matplotlib legend instance
+     
+    :return: None, updates legend instance
+    """
     for handle in legend.legendHandles:
         if hasattr(handle, 'set_alpha'):
             handle.set_alpha(1)
         if hasattr(handle, '_legmarker'):
-            if hasattr(handle._legmarker, 'set_alpha'):
-                handle._legmarker.set_alpha(1)
+            legmarker = getattr(handle, '_legmarker')
+            if hasattr(legmarker, 'set_alpha'):
+                legmarker.set_alpha(1)
 
 
-def add_grid(frame):
+def add_grid(frame: Any):
+    """
+    Add grid lines to a frame
+    
+    :param frame: matplotlib axis
+     
+    :return: None, updates frame 
+    """
+    # turn on minor ticks
     frame.minorticks_on()
     # Don't allow the axis to be on top of your data
     frame.grid(which='major', linestyle='-', linewidth='0.5', color='black',
@@ -281,7 +492,16 @@ def add_grid(frame):
 # =============================================================================
 # Define test plotting functions
 # =============================================================================
-def graph_test_plot_1(plotter, graph, kwargs):
+def graph_test_plot_1(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Test Plot 1
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -301,7 +521,16 @@ def graph_test_plot_1(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def graph_test_plot_2(plotter, graph, kwargs):
+def graph_test_plot_2(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Test Plot 2
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -344,7 +573,17 @@ definitions += [test_plot1, test_plot2, test_plot3, test_plot4]
 # =============================================================================
 # Define dark plotting functions
 # =============================================================================
-def plot_dark_image_regions(plotter, graph, kwargs):
+def plot_dark_image_regions(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Dark image region plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -401,7 +640,16 @@ def plot_dark_image_regions(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_dark_histogram(plotter, graph, kwargs):
+def plot_dark_histogram(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Dark Histogram plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -458,7 +706,16 @@ definitions += [dark_image_regions, dark_histogram,
 # =============================================================================
 # Define badpix plotting functions
 # =============================================================================
-def plot_badpix_map(plotter, graph, kwargs):
+def plot_badpix_map(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Bad pixel map plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -497,7 +754,17 @@ definitions += [badpix_map, summary_badpix_map]
 # =============================================================================
 # Define localisation plotting functions
 # =============================================================================
-def plot_loc_minmax_cents(plotter, graph, kwargs):
+def plot_loc_minmax_cents(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation min/max centers plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -534,7 +801,17 @@ def plot_loc_minmax_cents(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_loc_min_cents_thres(plotter, graph, kwargs):
+def plot_loc_min_cents_thres(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation min/max threshold plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -557,7 +834,17 @@ def plot_loc_min_cents_thres(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_loc_finding_orders(plotter, graph, kwargs):
+def plot_loc_finding_orders(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation finding orders threshold plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -633,7 +920,17 @@ def plot_loc_finding_orders(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_loc_im_sat_thres(plotter, graph, kwargs):
+def plot_loc_im_sat_thres(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation image saturation threshold plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -683,7 +980,17 @@ def plot_loc_im_sat_thres(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_loc_fit_residuals(plotter, graph, kwargs):
+def plot_loc_fit_residuals(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation fit residuals plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -713,7 +1020,16 @@ def plot_loc_fit_residuals(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_loc_ord_vs_rms(plotter, graph, kwargs):
+def plot_loc_ord_vs_rms(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation order vs rms plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -742,7 +1058,16 @@ def plot_loc_ord_vs_rms(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_loc_im_corner(plotter, graph, kwargs):
+def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation image plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -817,7 +1142,17 @@ def plot_loc_im_corner(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_loc_check_coeffs(plotter, graph, kwargs):
+def plot_loc_check_coeffs(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation check coefficients plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -956,7 +1291,16 @@ definitions += [loc_minmax_cents, loc_min_cents_thres, loc_finding_orders,
 # =============================================================================
 # Define shape plotting functions
 # =============================================================================
-def plot_shape_dx(plotter, graph, kwargs):
+def plot_shape_dx(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Shape dx plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1032,7 +1376,17 @@ def plot_shape_dx(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_shape_linear_tparams(plotter, graph, kwargs):
+def plot_shape_linear_tparams(plotter: Plotter, graph: Graph,
+                              kwargs: Dict[str, Any]):
+    """
+    Graph: Shape linear transform plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1119,7 +1473,17 @@ def plot_shape_linear_tparams(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_shape_angle_offset(plotter, graph, kwargs):
+def plot_shape_angle_offset(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Shape angle offset plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1211,7 +1575,17 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             plotter.plotend(graph)
 
 
-def plot_shape_local_zoom_shift(plotter, graph, kwargs):
+def plot_shape_local_zoom_shift(plotter: Plotter, graph: Graph,
+                                kwargs: Dict[str, Any]):
+    """
+    Graph: Shape local zoom shift plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1300,7 +1674,17 @@ definitions += [shape_dx, shape_linear_tparams, shape_angle_offset_all,
 # =============================================================================
 # Define flat plotting functions
 # =============================================================================
-def plot_flat_order_fit_edges(plotter, graph, kwargs):
+def plot_flat_order_fit_edges(plotter: Plotter, graph: Graph,
+                              kwargs: Dict[str, Any]):
+    """
+    Graph: Flat order fit edges plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1423,7 +1807,17 @@ def plot_flat_order_fit_edges(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_flat_blaze_order(plotter, graph, kwargs):
+def plot_flat_blaze_order(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Flat blaze order plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1514,7 +1908,17 @@ definitions += [flat_order_fit_edges1, flat_order_fit_edges2,
 # =============================================================================
 # Define thermal plotting functions
 # =============================================================================
-def plot_thermal_background(plotter, graph, kwargs):
+def plot_thermal_background(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Thermal background plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1563,7 +1967,17 @@ definitions += [thermal_background]
 # =============================================================================
 # Define extraction plotting functions
 # =============================================================================
-def plot_extract_spectral_order(plotter, graph, kwargs):
+def plot_extract_spectral_order(plotter: Plotter, graph: Graph,
+                                kwargs: Dict[str, Any]):
+    """
+    Graph: extract spectral order plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1628,7 +2042,16 @@ def plot_extract_spectral_order(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_extract_s1d(plotter, graph, kwargs):
+def plot_extract_s1d(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: extract 1D plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1695,7 +2118,17 @@ def plot_extract_s1d(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_extract_s1d_weights(plotter, graph, kwargs):
+def plot_extract_s1d_weights(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: extract 1D weights plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1795,7 +2228,17 @@ definitions += [extract_spectral_order1, extract_spectral_order2,
 # =============================================================================
 # Define wave ea plotting functions
 # =============================================================================
-def plot_wave_wl_vs_cavity(plotter, graph, kwargs):
+def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Wavelength vs cavity length plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1838,7 +2281,17 @@ def plot_wave_wl_vs_cavity(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_hc_diff_hist(plotter, graph: Graph, kwargs: dict):
+def plot_wave_hc_diff_hist(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Wavelength HC difference histogram
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1874,7 +2327,17 @@ def plot_wave_hc_diff_hist(plotter, graph: Graph, kwargs: dict):
     plotter.plotend(graph)
 
 
-def plot_wave_fiber_comparison(plotter, graph, kwargs):
+def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
+                               kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution fiber comparison plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1962,7 +2425,16 @@ definitions += [wave_wl_vs_cavity, wave_fiber_comparison,
 # =============================================================================
 # Define wave plotting functions
 # =============================================================================
-def plot_wave_hc_guess(plotter, graph, kwargs):
+def plot_wave_hc_guess(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution HC guess plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2044,7 +2516,17 @@ def plot_wave_hc_guess(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_wave_hc_brightest_lines(plotter, graph, kwargs):
+def plot_wave_hc_brightest_lines(plotter: Plotter, graph: Graph,
+                                 kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution HC brightest lines plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2080,7 +2562,17 @@ def plot_wave_hc_brightest_lines(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
+def plot_wave_hc_tfit_grid(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution HC t-fit grid
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2142,7 +2634,16 @@ def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_hc_resmap(plotter, graph, kwargs):
+def plot_wave_hc_resmap(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution resolution map plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2151,7 +2652,6 @@ def plot_wave_hc_resmap(plotter, graph, kwargs):
     # get matplotlib rectange
     rectangle = plotter.matplotlib.patches.Rectangle
     # ------------------------------------------------------------------
-    params = kwargs['params']
     n_order_bin = kwargs['n_order_bin']
     n_spatial_bin = kwargs['n_spatial_bin']
     map_dvs = kwargs['map_dvs']
@@ -2227,7 +2727,18 @@ def plot_wave_hc_resmap(plotter, graph, kwargs):
     # wrap up using plotter
     plotter.plotend(graph)
 
-def plot_wave_hc_resmap_old(plotter, graph, kwargs):
+
+def plot_wave_hc_resmap_old(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution resolution map plot (old)
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2323,7 +2834,17 @@ def plot_wave_hc_resmap_old(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_littrow_check(plotter, graph, kwargs):
+def plot_wave_littrow_check(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution Littrow check plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2376,7 +2897,17 @@ def plot_wave_littrow_check(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_littrow_extrap(plotter, graph, kwargs):
+def plot_wave_littrow_extrap(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution Littrow extrapolation plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2425,7 +2956,17 @@ def plot_wave_littrow_extrap(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_final_order(plotter, graph, kwargs):
+def plot_wave_fp_final_order(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP final order plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2456,7 +2997,17 @@ def plot_wave_fp_final_order(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_lwid_offset(plotter, graph, kwargs):
+def plot_wave_fp_lwid_offset(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP l-width offset plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2489,7 +3040,17 @@ def plot_wave_fp_lwid_offset(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_wave_res(plotter, graph, kwargs):
+def plot_wave_fp_wave_res(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP wave resolution plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2515,7 +3076,17 @@ def plot_wave_fp_wave_res(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_m_x_res(plotter, graph, kwargs):
+def plot_wave_fp_m_x_res(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP M vs x-res plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2554,7 +3125,17 @@ def plot_wave_fp_m_x_res(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_ipt_cwid_1mhc(plotter, graph, kwargs):
+def plot_wave_fp_ipt_cwid_1mhc(plotter: Plotter, graph: Graph,
+                               kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP IPT c-width 1/m plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2600,7 +3181,17 @@ def plot_wave_fp_ipt_cwid_1mhc(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_ipt_cwid_llhc(plotter, graph, kwargs):
+def plot_wave_fp_ipt_cwid_llhc(plotter: Plotter, graph: Graph,
+                               kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP IPT c-width ll plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2646,7 +3237,17 @@ def plot_wave_fp_ipt_cwid_llhc(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_ll_diff(plotter, graph, kwargs):
+def plot_wave_fp_ll_diff(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP ll difference plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2695,7 +3296,17 @@ def plot_wave_fp_ll_diff(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_multi_order(plotter, graph, kwargs):
+def plot_wave_fp_multi_order(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP multi-order plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2748,7 +3359,17 @@ def plot_wave_fp_multi_order(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_single_order(plotter, graph, kwargs):
+def plot_wave_fp_single_order(plotter: Plotter, graph: Graph,
+                              kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP single-order plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2809,7 +3430,17 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_waveref_expected(plotter, graph, kwargs):
+def plot_waveref_expected(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution reference expected plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2860,7 +3491,17 @@ def plot_waveref_expected(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wavenight_iterplot(plotter, graph, kwargs):
+def plot_wavenight_iterplot(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Wave night iteration plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2887,7 +3528,17 @@ def plot_wavenight_iterplot(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wavenight_histplot(plotter, graph, kwargs):
+def plot_wavenight_histplot(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Wave night histogram plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2951,8 +3602,8 @@ wave_hc_brightest_lines = Graph('WAVE_HC_BRIGHTEST_LINES', kind='debug',
 wave_hc_tfit_grid = Graph('WAVE_HC_TFIT_GRID', kind='debug',
                           func=plot_wave_hc_tfit_grid)
 wave_resmap = Graph('WAVE_RESMAP', kind='debug',
-                       func=plot_wave_hc_resmap,
-                       figsize=(20, 16))
+                    func=plot_wave_hc_resmap,
+                    figsize=(20, 16))
 wave_hc_resmap = Graph('WAVE_HC_RESMAP', kind='debug',
                        func=plot_wave_hc_resmap_old,
                        figsize=(20, 16))
@@ -2999,7 +3650,6 @@ wave_fp_single_order = Graph('WAVE_FP_SINGLE_ORDER', kind='debug',
 waveref_expected = Graph('WAVEREF_EXPECTED', kind='debug',
                          func=plot_waveref_expected)
 
-
 wavenight_iterplot = Graph('WAVENIGHT_ITERPLOT', kind='debug',
                            func=plot_wavenight_iterplot)
 sum_desc = 'Wave night iteration plot'
@@ -3030,7 +3680,17 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
 # =============================================================================
 # Define telluric plotting functions
 # =============================================================================
-def plot_tellup_wave_trans(plotter, graph, kwargs):
+def plot_tellup_wave_trans(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Telluric wave transmission plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3060,7 +3720,17 @@ def plot_tellup_wave_trans(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_tellup_clean_oh(plotter, graph, kwargs):
+def plot_tellup_clean_oh(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    """
+    Graph: Telluric clean OH lines plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3095,7 +3765,17 @@ def plot_tellup_clean_oh(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_tellup_abso_spec(plotter, graph, kwargs):
+def plot_tellup_abso_spec(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Telluric absorption spectrum plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3121,7 +3801,7 @@ def plot_tellup_abso_spec(plotter, graph, kwargs):
     # set NaN values in spectrum to NaNs in mask
     mask[~np.isfinite(spectrum)] = np.nan
     # work out a scaling
-    scale = np.nanpercentile(spectrum/trans*mask, 99.5)
+    scale = np.nanpercentile(spectrum / trans * mask, 99.5)
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -3151,7 +3831,17 @@ def plot_tellup_abso_spec(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_mktellu_wave_flux(plotter, graph, kwargs):
+def plot_mktellu_wave_flux(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Make Telluric wave flux plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3224,7 +3914,17 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_ftellu_pca_comp(plotter, graph, kwargs):
+def plot_ftellu_pca_comp(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    """
+    Graph: Fit telluric PCA components plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3287,7 +3987,17 @@ def plot_ftellu_pca_comp(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_ftellu_recon_spline(plotter, graph, kwargs):
+def plot_ftellu_recon_spline(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Fit telluric recon spline plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3344,7 +4054,17 @@ def plot_ftellu_recon_spline(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_ftellu_wave_shift(plotter, graph, kwargs):
+def plot_ftellu_wave_shift(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Fit telluric wave shift plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3404,7 +4124,17 @@ def plot_ftellu_wave_shift(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_ftellu_recon_abso(plotter, graph, kwargs):
+def plot_ftellu_recon_abso(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Fit telluric recon absorption plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3478,7 +4208,17 @@ def plot_ftellu_recon_abso(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_mktemp_berv_cov(plotter, graph, kwargs):
+def plot_mktemp_berv_cov(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    """
+    Graph: Make telluric template BERV coverage plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3574,7 +4314,16 @@ definitions += [mktellu_wave_flux1, mktellu_wave_flux2, sum_mktellu_wave_flux,
 # =============================================================================
 # Define velocity plotting functions
 # =============================================================================
-def plot_ccf_rv_fit(plotter, graph, kwargs):
+def plot_ccf_rv_fit(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: CCF RV fit plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3655,7 +4404,16 @@ def plot_ccf_rv_fit(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_ccf_swave_ref(plotter, graph, kwargs):
+def plot_ccf_swave_ref(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: CCF spectral wave reference plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3704,7 +4462,17 @@ def plot_ccf_swave_ref(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_ccf_photon_uncert(plotter, graph, kwargs):
+def plot_ccf_photon_uncert(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: CCF photon uncertainty plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3766,7 +4534,16 @@ definitions += [ccf_rv_fit, ccf_rv_fit_loop, ccf_swave_ref,
 # =============================================================================
 # Define polarisation plotting functions
 # =============================================================================
-def plot_polar_fit_cont(plotter, graph, kwargs):
+def plot_polar_fit_cont(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Polar fit continuum plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3828,7 +4605,17 @@ def plot_polar_fit_cont(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_polar_continuum(plotter, graph, kwargs):
+def plot_polar_continuum(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    """
+    Graph: Polar continuum spectrum plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3874,7 +4661,16 @@ def plot_polar_continuum(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_polar_results(plotter, graph, kwargs):
+def plot_polar_results(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Polar results plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3917,7 +4713,16 @@ def plot_polar_results(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_polar_stoke_i(plotter, graph, kwargs):
+def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Polar Stokes I plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3956,7 +4761,16 @@ def plot_polar_stoke_i(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_polar_lsd(plotter, graph, kwargs):
+def plot_polar_lsd(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Polar LSD plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -4011,17 +4825,24 @@ polar_results = Graph('POLAR_RESULTS', kind='debug', func=plot_polar_results)
 polar_stokes_i = Graph('POLAR_STOKES_I', kind='debug', func=plot_polar_stoke_i)
 polar_lsd = Graph('POLAR_LSD', kind='debug', func=plot_polar_lsd)
 
-
 # add to definitions
 definitions += [polar_fit_cont, polar_continuum, polar_results,
                 polar_stokes_i, polar_lsd]
 
 
-
 # =============================================================================
 # Define tool functions
 # =============================================================================
-def plot_logstats_bar(plotter, graph, kwargs):
+def plot_logstats_bar(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Log stats bar plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -4080,14 +4901,15 @@ definitions += [logstats_bar]
 # =============================================================================
 # Define other plotting functions
 # =============================================================================
-def plot_image(plotter, graph, kwargs):
+def plot_image(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     """
     Generic image plotter
 
-    :param plotter:
-    :param graph:
-    :param kwargs:
-    :return:
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
     """
     # ------------------------------------------------------------------
     # start the plotting process
@@ -4127,7 +4949,16 @@ def plot_image(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_plot(plotter, graph, kwargs):
+def plot_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Generic print position on click plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):

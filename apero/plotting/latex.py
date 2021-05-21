@@ -9,12 +9,15 @@ Created on 2019-10-04 at 14:14
 
 @author: cook
 """
+from astropy.table import Table
+from collections import OrderedDict
+import glob
 import numpy as np
 import os
-import glob
-from collections import OrderedDict
+from typing import Dict, List, Union
 
 from apero.base import base
+from apero.core import constants
 
 # =============================================================================
 # Define variables
@@ -26,6 +29,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# Get parameter dictionary class
+ParamDict = constants.ParamDict
 # define known extensions
 KNOWN_EXTENSIONS = ['.pdf', '.tex', '.html']
 # define latex packages to add (with options)
@@ -52,7 +57,15 @@ SYMBOLS[']'] = r'\]'
 # Define classes
 # =============================================================================
 class LatexDocument:
-    def __init__(self, params, filename, extension='.pdf'):
+    def __init__(self, params: ParamDict, filename: str,
+                 extension: str = '.pdf'):
+        """
+        Construct Latex instance
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param filename: str, the filename to save the html document to
+        :param extension: str, the extension to save the html file to
+        """
         # save params
         self.params = params
         # remove extensions
@@ -80,9 +93,19 @@ class LatexDocument:
     # user functions
     # ----------------------------------------------------------------------
     def print(self):
+        """
+        Print the text storage
+
+        :return: None, prints self._t_
+        """
         print(self._t_)
 
     def write_latex(self):
+        """
+        Write the latex file using writing function
+
+        :return: None, writes html file
+        """
         # deal with an unfinished file (no \end{document})
         if not self.finished:
             self.end()
@@ -90,9 +113,20 @@ class LatexDocument:
         write_file(self.latexfilename, self._t_)
 
     def openpdf(self):
+        """
+        Open the latex using okular
+
+        :return: None runs firefox on the html filename
+        """
+        # TODO: does this need to able to change for other users / OSs?
         os.system('okular {0}'.format(self.pdffilename))
 
     def cleanup(self):
+        """
+        Remove all temporary files from the filename
+
+        :return: None - removes files
+        """
         # get all files in directory that have the filename (without extension)
         files = np.sort(glob.glob(self.filename + '*'))
         # loop around files
@@ -109,7 +143,16 @@ class LatexDocument:
     # ----------------------------------------------------------------------
     # top level latex functions
     # ----------------------------------------------------------------------
-    def preamble(self, documentclass=None, packages=None):
+    def preamble(self, documentclass: Union[str, None] = None,
+                 packages: Union[Dict[str, str], None] = None):
+        """
+        Add the latex preamble text (head and body)
+
+        :param documentclass: str, the document class (if None set to "article")
+        :param packages: dictionary of packages, list of latex packages required
+
+        :return: None, updates the text storage
+        """
         # add documentclass
         if documentclass is None:
             self._t_ += cmd('documentclass', 'article')
@@ -145,6 +188,11 @@ class LatexDocument:
         self.newline()
 
     def begin(self):
+        """
+        The latex begin document text
+
+        :return: None, updates the text storage
+        """
         # do not add if we have started already
         if self.started:
             return
@@ -158,25 +206,17 @@ class LatexDocument:
         self._t_ += cmd('begin', 'document')
         self.newline()
 
-    def end(self):
-        # do not add if we have finished already
-        if self.finished:
-            return
-        # add comment
-        self.newline(2)
-        self._t_ += comment('End document')
-        self.newline()
-        # set finished to True
-        self.finished = True
-        # add \begin{document}
-        self._t_ += cmd('end', 'document')
-        self.newline()
+    def add_title(self, title: str,
+                  authors: Union[List[str], str, None] = None):
+        """
+        Add a title to the html page
 
-    def newline(self, number=1):
-        for _ in range(number):
-            self._t_ += '\n'
+        :param title: str, the title to add
+        :param authors: list of strings or a string, the author(s) to add to
+                        the html page
 
-    def add_title(self, title, authors=None):
+        :return: None, updates the text storage
+        """
         self.newline()
         self._t_ += comment('Add title and authors')
         self.newline()
@@ -192,25 +232,83 @@ class LatexDocument:
         self.newline(2)
         self._t_ += cmd('maketitle')
 
+    def newline(self, number: int = 1):
+        """
+        Add some new lines to the text storage
+
+        :param number: int, the number of lines to add
+
+        :return: None, updates text storage
+        """
+        for _ in range(number):
+            self._t_ += '\n'
+
+    def end(self):
+        """
+        The final code to add to the latex document (end, document)
+
+        :return: None, updates text storage
+        """
+        # do not add if we have finished already
+        if self.finished:
+            return
+        # add comment
+        self.newline(2)
+        self._t_ += comment('End document')
+        self.newline()
+        # set finished to True
+        self.finished = True
+        # add \begin{document}
+        self._t_ += cmd('end', 'document')
+        self.newline()
+
     # ----------------------------------------------------------------------
     # document latex functions
     # ----------------------------------------------------------------------
-    def section(self, text):
+    def section(self, text: str):
+        """
+        Add a section title to the section
+
+        :param text: str, the title of the section
+
+        :return: None, updates text storage
+        """
         self.newline(2)
         self._t_ += cmd('section', text)
         self.newline()
 
-    def subsection(self, text):
+    def subsection(self, text: str):
+        """
+        Add a sub-section title to the section
+
+        :param text: str, the title of the sub-section
+
+        :return: None, updates text storage
+        """
         self.newline(2)
         self._t_ += cmd('subsection', text)
         self.newline()
 
-    def subsubsection(self, text):
+    def subsubsection(self, text: str):
+        """
+        Add a sub-sub-section title to the section
+
+        :param text: str, the title of the sub-sub-section
+
+        :return: None, updates text storage
+        """
         self.newline(2)
         self._t_ += cmd('subsubsection', text)
         self.newline()
 
-    def add_text(self, text):
+    def add_text(self, text: str):
+        """
+        Add a text block to the latex document
+
+        :param text: str, the text to add to the block
+
+        :return: None, updates text storage
+        """
         self.newline()
         # deal with text as list or string
         if isinstance(text, str):
@@ -219,19 +317,50 @@ class LatexDocument:
         for text_it in text:
             self._t_ += text_it
 
-    def insert(self, text):
+    def insert(self, text: str):
+        """
+        insert a single line of text
+
+        :param text: str
+        :return:
+        """
         self.newline()
         self._t_ += text
 
-    def insert_latex(self, filename):
+    def insert_latex(self, filename: str):
+        """
+        inserts latex code from "filename" into the text storage
+
+        :param filename: str, the filename to read latex code from
+
+        :return: None, updates text storage
+        """
         lines = open_file(filename)
         # write to text
         self.newline()
         for line in lines:
             self._t_ += line
 
-    def insert_table(self, table, units=None, caption=None, label=None,
-                     colormask=None):
+    def insert_table(self, table: Table,
+                     units: Union[Dict[str, str], None] = None,
+                     caption: Union[str, None] = None,
+                     label: Union[str, None] = None,
+                     colormask: Union[np.ndarray, list, None] = None):
+        """
+        Insert a table into the html document
+
+        :param table: astropy.table.Table instance, the table to add
+        :param units: Dict or None, this is not used for html but here to
+                      be the same as latex function
+        :param caption: str, the caption for the table
+        :param label: str, this is not used for html but here to be same as
+                      latex function
+        :param colormask: np.ndarray or list, the mask of True / False for
+                          colouring table elements by (decided by "GOOD_COLOUR"
+                          and "BAD_COLOUR" global constants)
+
+        :return: None, updates text storage
+        """
         # get the number of columns
         num_cols = len(table.colnames)
         # set up the column alignment
@@ -274,7 +403,25 @@ class LatexDocument:
         if os.path.exists(self.tablefile):
             os.remove(self.tablefile)
 
-    def add_command(self, command, inputs=None, options=None):
+    def add_command(self, command: str,
+                    inputs: Union[str, None] = None,
+                    options: Union[str, None] = None):
+        """
+        Add a latex command to the text storage
+
+        in form:
+            command
+            command[options]
+            command[options]{inputs}
+
+        depending whether options and inputs are set
+
+        :param command: str, a valid latex command
+        :param inputs: str or None, the inputs to given command
+        :param options: str or None, the options for given command
+
+        :return: None, updates text storage
+        """
         self.newline()
         self._t_ += cmd(command, inputs, options)
         self.newline()
@@ -282,7 +429,15 @@ class LatexDocument:
     # ----------------------------------------------------------------------
     # environment latex functions
     # ----------------------------------------------------------------------
-    def equation(self, text, label=None):
+    def equation(self, text: str, label: Union[str, None] = None):
+        """
+        Add equation to the latex document
+
+        :param text: str, the equation to add (supports full latex math code)
+        :param label: str, the label reference to give this equation
+
+        :return: None, updates text storage
+        """
         self.newline(2)
         # add equation start
         self._t_ += cmd('begin', 'equation')
@@ -298,8 +453,21 @@ class LatexDocument:
         self._t_ += cmd('end', 'equation')
         self.newline()
 
-    def figure(self, filename, height=None, width=None, caption=None,
-               label=None):
+    def figure(self, filename: str, height: Union[int, None] = None,
+               width: Union[int, None] = None, caption: Union[str, None] = None,
+               label: Union[str, None] = None):
+        """
+        Add a figure (image from source "filename") to the latex document,
+        can set height, width and caption
+
+        :param filename: str, the absolute path to the image to add
+        :param height: int or None, if set forces the height of the figure
+        :param width: int or None, if set forces the width of the figure
+        :param caption: str or None, if set adds a caption to the figure
+        :param label: str or None, if set adds the reference to the figure
+
+        :return: None, updates text storage
+        """
         self.newline(2)
         # add equation start
         self._t_ += cmd('begin', 'figure') + '[hp]'
@@ -333,11 +501,49 @@ class LatexDocument:
         self.newline(2)
 
 
-
 # =============================================================================
 # Define functions
 # =============================================================================
-def clean(text):
+def cmd(command: str, inputs: Union[str, None] = None,
+        options: Union[str, None] = None) -> str:
+    """
+    Add a latex command in the form:
+
+        command
+        command[options]
+        command[options]{inputs}
+
+    depending whether options and inputs are set
+
+    :param command: str, the latex command to add
+    :param inputs: str or None, if set the string of inputs (valid for latex)
+    :param options: str or None, if set the string of options (valid for latex)
+
+    :return: None, updates text storage
+    """
+    # set up keywords
+    kwargs = dict(command=command, input=inputs, options=options)
+    # add command name
+    command = r'\{command}'.format(**kwargs)
+    # add options
+    if options is not None:
+        command += r'[{options}]'.format(**kwargs)
+    # add input
+    if inputs is not None:
+        command += r'{{{input}}}'.format(**kwargs)
+    # return
+    return command
+
+
+def clean(text: Union[List[str], str]) -> Union[List[str], str]:
+    """
+    Clean some text so that it is valid for latex
+
+    :param text: str or list of strings, the text to be cleaned
+
+    :return: str or list of strings, the updated text that should be valid
+             for latex
+    """
     # if we have a list go to clean list function
     if isinstance(text, list):
         return cleanlist(text)
@@ -360,12 +566,20 @@ def clean(text):
         # re-replace corrections already applied
         if proxy in newtext:
             newtext = newtext.replace(proxy, SYMBOLS[symbol])
-
     # return new text
     return newtext
 
 
-def cleanlist(textlist):
+def cleanlist(textlist: Union[List[str], str]) -> Union[List[str], str]:
+    """
+    Wrapper around "clean" - clean text function - takes a list of strings
+    and cleans them
+
+    :param textlist: list of strings or string, a list of strings to clean
+                     ready for use in latex
+
+    :return: list of strings or string, update textlist of strings cleaned
+    """
     if isinstance(textlist, str):
         return clean(textlist)
     else:
@@ -376,40 +590,63 @@ def cleanlist(textlist):
     return textlist
 
 
-def cmd(command, inputs=None, options=None):
-    # set up keywords
-    kwargs = dict(command=command, input=inputs, options=options)
-    # add command name
-    command = r'\{command}'.format(**kwargs)
-    # add options
-    if options is not None:
-        command += r'[{options}]'.format(**kwargs)
-    # add input
-    if inputs is not None:
-        command += r'{{{input}}}'.format(**kwargs)
-    # return
-    return command
+def comment(text: str) -> str:
+    """
+    Add a latex command
 
+    :param text: string, the command to add (without % prefix)
 
-def comment(text):
+    :return: the updated comment text
+    """
     return r'% {0}'.format(text)
 
 
-def open_file(filename):
+def open_file(filename: str) -> List[str]:
+    """
+    Read a text file and return all lines of text
+
+    :param filename: str, the filename to open
+
+    :return: list of strings, the strings to read
+    """
     # read the lines
-    with open(filename, 'r') as f:
-        lines = f.readlines()
+    with open(filename, 'r') as rfile:
+        lines = rfile.readlines()
     # return lines
     return lines
 
 
-def write_file(filename, text):
+def write_file(filename: str, text: List[str]):
+    """
+    Write the "text" to "filename"
+
+    :param filename: str, the filename to write to
+
+    :param text: list of strings, the text to write
+
+    :return: None, writes to "filename"
+    """
     # write the lines
-    with open(filename, 'w') as f:
-        f.writelines(text)
+    with open(filename, 'w') as wfile:
+        wfile.writelines(text)
 
 
-def apply_colormask(lines, colormask, table):
+def apply_colormask(lines: List[str], colormask: Union[list, np.ndarray],
+                    table: Table) -> List[str]:
+    """
+    Apply a colour mask to the latex table - i.e. colour any rows that
+    have colormask == True with "GOOD_COLOUR" and colour any rows that have
+    colormask == False with "BAD_COLOUR"
+
+    :param lines: list of strings, the latex table entry lines to column
+    :param colormask: list or numpy array, same as length of lines, a True or
+                      False for each line to be coloured "good" (else coloured
+                      "bad")
+    :param table: astropy.table.Table the original table to make sure length
+                  is correct
+
+    :return: list of strings, the updated "lines"
+    """
     if colormask is not None:
         # get good latex cmd
         goodcmd = cmd('rowcolor', GOOD_COLOUR, 'HTML') + ' '
@@ -459,47 +696,59 @@ def apply_colormask(lines, colormask, table):
 # =============================================================================
 # Main code here
 if __name__ == "__main__":
-    from astropy.table import Table
+    # get params
+    params = constants.load()
+    # -------------------------------------------------------------------------
+    # create a test latex file
+    # -------------------------------------------------------------------------
+    # step 1. we need some fake table data
     x = np.arange(10000, 50000, 5000)
     y = (x / 10000.0) ** 2
     n = np.char.add(np.char.add('SIMP', x.astype(str)), '_NEW')
+    # push into a table
     datatable = Table()
     datatable['name'] = n
     datatable['value'] = x
     datatable['value2'] = y
+    # create a mask (for the coloured rows)
     datamask = np.array(x % 10000).astype(bool)
-
-
-
     # ----------------------------------------------------------------------
-    # test
-    doc = LatexDocument('test.pdf')
+    # test the various parts of the Latex document
+    # ----------------------------------------------------------------------
+    # start the latex document
+    doc = LatexDocument(params, 'test.pdf')
+    # load the preamble
     doc.preamble()
+    # begin the latex document
     doc.begin()
+    # add a title + authors
     doc.add_title('This is a test', 'Neil Cook')
-    
+    # add an introduction section
     doc.section('Introduction')
+    # add some introductory text
     doc.add_text('Here is the text of your introduction.')
-    
+    # add an equation
     doc.equation(r'\alpha = \sqrt{\beta}', label='simple_equation')
-
+    # add a sub-section
     doc.subsection('Subsection Heading Here')
+    # add some text to the sub-section
     doc.add_text('Write your subsection text here.')
-
+    # add a test figure (must exist on disk)
     doc.figure('plot_TEST1_PID-00015701409882315794.pdf',
                width=14, caption='Test figure 1', label='simple_figure')
-
+    # add a sub section for the table
     doc.subsection('Table test section')
+    # add the table
     doc.insert_table(datatable, caption='Test table', label='simple_table',
                      colormask=datamask)
-
+    # add a conclusion section
     doc.section('Conclusion')
+    # add some conclusion text
     doc.add_text('Write your conclusion here')
-
+    # end the document
     doc.end()
-
+    # write the latex file to disk
     doc.write_latex()
-
 
 
 # =============================================================================
