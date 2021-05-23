@@ -529,8 +529,9 @@ class PseudoConstants(DefaultConstants):
         index_keys['KW_ACQTIME'] = float
         index_keys['KW_TARGET_TYPE'] = str
         index_keys['KW_MID_OBS_TIME'] = float
-        index_keys['KW_OBJECTNAME'] = str
-        index_keys['KW_OBJNAME'] = str
+        index_keys['KW_OBJNAME'] = str        # cleaned object name
+        index_keys['KW_OBJECTNAME'] = str     # raw object name
+        index_keys['KW_OBJECTNAME2'] = str    # other raw object name
         index_keys['KW_OBSTYPE'] =str
         index_keys['KW_EXPTIME'] = float
         index_keys['KW_CCAS'] = str
@@ -1090,6 +1091,9 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     else:
         trg_type = 'TARGET'
         for object_name in object_names:
+            # skip None (can happen when header come from database table)
+            if object_name is None:
+                continue
             # if sky is in one of these object names then we assume we have a
             #   sky frame
             if 'SKY' in object_name.upper():
