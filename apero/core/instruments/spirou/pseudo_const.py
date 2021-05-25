@@ -990,7 +990,9 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
     """
     # set function name
     func_name = display_func('clean_obj_name', __NAME__)
-    # deal with no objname --> header mode
+    # -------------------------------------------------------------------------
+    # check KW_OBJNAME and then KW_OBJECTNAME
+    # -------------------------------------------------------------------------
     if objname is None:
         return_header = True
         # get keys from params
@@ -1014,8 +1016,25 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
         kwrawobjname, kwobjname = '', ''
         return_header = False
         rawobjname = str(objname)
-
-    # object name maybe None
+    # -------------------------------------------------------------------------
+    # if object name is still None - check KW_OBJECTNAME2
+    # -------------------------------------------------------------------------
+    # object name maybe come from OBJECT instead of OBJNAME
+    if drs_text.null_text(rawobjname, ['', 'None', 'Null']):
+        return_header = True
+        # get keys from params
+        kwrawobjname = params['KW_OBJECTNAME2'][0]
+        # get raw object name
+        if kwrawobjname not in header:
+            eargs = [kwrawobjname, filename]
+            raise DrsCodedException('01-001-00027', 'error', targs=eargs,
+                                    func_name=func_name)
+        rawobjname = header[kwrawobjname]
+    # -------------------------------------------------------------------------
+    # if object name is still None - just set it to Null - we can't do anything
+    #    else here
+    # -------------------------------------------------------------------------
+    # finally if we really cannot resolve target name
     if drs_text.null_text(rawobjname, ['', 'None', 'Null']):
         objectname = 'Null'
     # else remove spaces - clean object name
@@ -1028,6 +1047,9 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
         # deal with multiple underscores in a row
         while '__' in objectname:
             objectname = objectname.replace('__', '_')
+        # strip leading / trailing '_'
+        objectname = objectname.strip('_')
+    # -------------------------------------------------------------------------
     # deal with returning header
     if return_header:
         # add it to the header with new keyword
