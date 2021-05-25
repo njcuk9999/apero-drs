@@ -183,9 +183,9 @@ def __main__(recipe, params):
         # run extraction
         hc_outputs, fp_outputs = extractother.extract_wave_files(*eargs)
 
-        # =================================================================
+        # =====================================================================
         # get blaze and initial wave solution
-        # =================================================================
+        # =====================================================================
         # log fiber process
         drs_startup.fiber_processing_update(params, master_fiber)
         # get hc and fp outputs
@@ -196,11 +196,11 @@ def __main__(recipe, params):
         fp_e2ds_file.read_file()
         # define the header as being from the hc e2ds file
         hcheader = hc_e2ds_file.get_header()
-        # -----------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # load the blaze file for this fiber
         blaze_file, blaze = flat_blaze.get_blaze(params, hcheader,
                                                  master_fiber)
-        # -----------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # load initial wavelength solution (start point) for this fiber
         #    this should only be a master wavelength solution
         iwprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
@@ -210,9 +210,9 @@ def __main__(recipe, params):
         #   of parameters (from constants)
         iwprops = wave.check_wave_consistency(params, iwprops)
 
-        # =================================================================
+        # =====================================================================
         # Construct HC + FP line reference files for master_fiber
-        # =================================================================
+        # =====================================================================
         # set the wprops to initial wave solution
         wprops = iwprops.copy()
         # set cavity solution to None initially
