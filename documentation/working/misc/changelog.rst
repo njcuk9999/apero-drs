@@ -2,6 +2,86 @@ Changelog
 =========
 
 
+0.7.122 (2021-05-25)
+--------------------
+- `Apero.recipes.nirps_ha.apero_wave_master_nirps_ha.py` - pep8 updates.
+  [Neil Cook]
+- `Apero.core.instruments.spirou.pseudo_const.py` - if OBJNAME is None use
+  OBJECT header key. [njcuk9999]
+- `Apero.core.core.drs_Database.py` +
+  `apero.core.instruments.spirou.pseudo_const.py` - address Null vs None
+  values in database. [njcuk9999]
+- `Apero.core.instruments.spirou.pseudo_const.py` - need to add objectname
+  and objectname2 for index database. [njcuk9999]
+
+
+0.7.121 (2021-05-21)
+--------------------
+- `Apero.plotting.html.py` `latex.py` `plot_functions.py` - add typing doc
+  strings and pep8. [Neil Cook]
+- `Apero.plotting.html.py` `latex.py` `plot_functions.py` - add typing doc
+  strings and pep8. [Neil Cook]
+- `Apero.recipes.nirps_ha.apero_wave_master_nirps_ha.py` +
+  `spirou/apero_wave_master_spirou.py` - remove debug hc + fp lines. [Neil
+  Cook]
+- `Apero.recipes.nirps_ha.apero_wave_master_nirps_ha.py` +
+  `spirou/apero_wave_master_spirou.py` + `apero.science.calib.wave.py` -
+  move offset code and apply to spirou and nirps. [Neil Cook]
+- Update berv keys + remove HIERARCH keys + remove pp keys from post
+  products (to be in-line with CADC) [Neil Cook]
+- `Apero.core.core.drs_file.py` - make sure we copy all post file
+  properties (explains why `header_add` were disappearing) [Neil Cook]
+- `Apero.core.instruments.nirps_ha.default_constants.py` -
+  `WAVEREF_HC_BOXSIZE` from 5-->13. [Neil Cook]
+- `Apero.base.base.py` - remove future warning --> error. [Neil Cook]
+- `Apero.plotting.core.py` - update typing/doc strings. [Neil Cook]
+- `Apero.plotting.core.py` - update typing/doc strings. [Neil Cook]
+
+
+0.7.120 (2021-05-19)
+--------------------
+- `Apero.science.preprocessing.gen_pp.py` - update `resolve_target` (python
+  typing) [Neil Cook]
+- `Apero.science.calib.gen_calib.py` - fix from logging issues in `check_fp`
+  + add doc strings + typing. [Neil Cook]
+- `Apero.core.core.drs_database.py` - `load_db` does not log by default.
+  [Neil Cook]
+- `Apero.core.utils.drs_startup.py` - add database settings to the display
+  print out. [Neil Cook]
+
+
+0.7.119 (2021-05-19)
+--------------------
+- Test requirements + fix some warnings + add way to filter warnings (db
+  mysql connection need func to ignore internal warnings as they are
+  weird) [Neil Cook]
+- Database - backup databases before deleting (in case I'm being stupid
+  and delete them without realising) [Neil Cook]
+- `Apero.setup.newprofile.py` - update error message for invalid path /
+  apero profile name + change cprint sys.exit message to red. [Neil
+  Cook]
+- `Apero.setup.*.py` - update installation doc strings + pep8 + bring
+  `newprofile.py` inline with changes to install.py. [Neil Cook]
+
+
+0.7.118 (2021-05-17)
+--------------------
+- `Apero.setup.install.py` + `apero.tools.module.setup.drs_installation.py`
+  - fix problem with database tables going to "MAIN" and problem with
+  upper case vs lower case apero profile names (force lower) [Neil Cook]
+- Apero.data.spirou.reset.calibdb - remove `master_calib_SPIROU.txt` (not
+  longer used) [Neil Cook]
+- `Apero.data.nirps_ha.databases.reset.calib.csv` - test 41 orders first
+  for wave solution. [Neil Cook]
+- `Apero.science.extract.berv.py` - add todo to check epoch for spirou.
+  [Neil Cook]
+- `Apero.science.calib.shape.py` - Problem with shape when maximum
+  correlation between FPs split between pixels (Issue #668) [Neil Cook]
+- Must deal with having no epoch - assume it is the observation time in
+  this case. [Neil Cook]
+- Update version to 0.7.117, update docs, date, changelog. [Neil Cook]
+
+
 0.7.117 (2021-05-15)
 --------------------
 - `Apero.science.calib.gen_calib.py` - objname can be Null or None - deal
