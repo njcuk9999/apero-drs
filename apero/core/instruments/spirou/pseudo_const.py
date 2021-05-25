@@ -999,7 +999,8 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
         # deal with output key already in header
         if header is not None:
             if kwobjname in header:
-                if not drs_text.null_text(header[kwobjname], ['None', '']):
+                objval = header[kwobjname]
+                if not drs_text.null_text(objval, ['None', 'Null', '']):
                     return header, hdict
         # get raw object name
         if kwrawobjname not in header:
@@ -1015,7 +1016,7 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
         rawobjname = str(objname)
 
     # object name maybe None
-    if drs_text.null_text(rawobjname, ['', 'None']):
+    if drs_text.null_text(rawobjname, ['', 'None', 'Null']):
         objectname = 'Null'
     # else remove spaces - clean object name
     else:
@@ -1102,7 +1103,7 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     # deal with output key already in header
     if header is not None and trg_type != 'SKY':
         if kwtrgtype in header:
-            if not drs_text.null_text(header[kwtrgtype], ['None', '']):
+            if not drs_text.null_text(header[kwtrgtype], ['None', 'Null', '']):
                 return header, hdict
     # update header
     header[kwtrgtype] = (trg_type, kwtrgcomment)
@@ -1140,7 +1141,8 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     # deal with output key already in header
     if header is not None:
         if kwmidobstime in header:
-            if not drs_text.null_text(header[kwmidobstime], ['None', '']):
+            tvalue = header[kwmidobstime]
+            if not drs_text.null_text(tvalue, ['None', 'Null', '']):
                 return header, hdict
     # deal with no hdict
     if hdict is None:
@@ -1316,7 +1318,8 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     # deal with output key already in header
     if header is not None:
         if kwdprtype in header:
-            if not drs_text.null_text(header[kwdprtype], ['None', '']):
+            dprval = header[kwdprtype]
+            if not drs_text.null_text(dprval, ['None', 'Null', '']):
                 return header, hdict
     # deal with no hdict
     if hdict is None:
