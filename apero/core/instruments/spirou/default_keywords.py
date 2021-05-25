@@ -146,11 +146,11 @@ KW_OBJDEC.set(key='DEC_DEG', unit=uu.deg, comment='Target declination ')
 
 # define the observation name
 KW_OBJECTNAME = KW_OBJECTNAME.copy(__NAME__)
-KW_OBJECTNAME.set(key='OBJNAME', comment='Target name')
+KW_OBJECTNAME.set(key='OBJECT', comment='Target name')
 
 # define the observation name
 KW_OBJECTNAME2 = KW_OBJECTNAME2.copy(__NAME__)
-KW_OBJECTNAME2.set(key='OBJECT', comment='Target name')
+KW_OBJECTNAME2.set(key='OBJNAME', comment='Target name (alternate)')
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
@@ -223,13 +223,13 @@ KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K)
 # the object name to be used by the drs (after preprocessing)
 KW_DRS_OBJNAME = KW_DRS_OBJNAME.copy(__NAME__)
 KW_DRS_OBJNAME.set(key='DR_OBJN',
-                   comment='objname to be used by the DRS',
+                   comment='cleaned object name to be used by the DRS',
                    group='resolve', post_exclude=True)
 
 # the source of the object name used by the drs
 KW_DRS_OBJNAME_S = KW_DRS_OBJNAME_S.copy(__NAME__)
 KW_DRS_OBJNAME_S.set(key='DR_OBJNS',
-                     comment='Source of objname used by the DRS',
+                     comment='Source of cleaned object name used by the DRS',
                      group='resolve', post_exclude=True)
 
 # the gaia id to be used by the drs (after preprocessing)
@@ -408,20 +408,21 @@ root_hc = 'HC'
 
 # define the observation name
 KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
-KW_OBJNAME.set(key='DRSOBJN', comment='Target name')
+KW_OBJNAME.set(key='DRSOBJN', comment='APERO-cleaned Target name')
 
 # Define the key to get the data fits file type
 KW_DPRTYPE = KW_DPRTYPE.copy(__NAME__)
-KW_DPRTYPE.set(key='DPRTYPE', comment='The type of file (from pre-process)')
+KW_DPRTYPE.set(key='DPRTYPE', comment='APERO-type of file (from pre-process)')
 
 # Define the key to get the drs mode
 KW_DRS_MODE = KW_DRS_MODE.copy(__NAME__)
-KW_DRS_MODE.set(key='DRSMODE', comment='DRS Mode (Spectroscopy or Polar[N])')
+KW_DRS_MODE.set(key='DRSMODE', comment='APERO-mode (Spectroscopy or Polar)')
 
 # Define the mid exposure time
 # Note: must change INDEX_HEADER_KEYS data type definition if changing this
 KW_MID_OBS_TIME = KW_MID_OBS_TIME.copy(__NAME__)
-KW_MID_OBS_TIME.set(key='MJDMID', comment='Mid Observation time [mjd]',
+KW_MID_OBS_TIME.set(key='MJDMID',
+                    comment='APERO calculated Mid Observation time [mjd]',
                     datatype='mjd', dataformat=float,
                     combine_method='mean')
 
@@ -816,7 +817,8 @@ KW_BERVGAIA_ID.set(key='BC_GAIA', comment='The Gaia ID used for BERV params')
 
 # the OBJNAME used to identify KW_BERV_POS_SOURCE for BERV calculation
 KW_BERVOBJNAME = KW_BERVOBJNAME.copy(__NAME__)
-KW_BERVOBJNAME.set(key='BC_OBJNM', comment='The OBJNAME used for BERV params')
+KW_BERVOBJNAME.set(key='BC_OBJNM',
+                   comment='The OBJECT NAME used for BERV params')
 
 # the epoch (jd) used to calculate the BERV
 KW_BERVEPOCH = KW_BERVEPOCH.copy(__NAME__)
