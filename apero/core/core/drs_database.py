@@ -57,6 +57,7 @@ DrsCodedException = drs_exceptions.DrsCodedException
 display_func = drs_log.display_func
 # get WLOG
 WLOG = drs_log.wlog
+TLOG = drs_log.Printer
 # get drs header
 DrsHeader = drs_file.Header
 FitsHeader = drs_file.FitsHeader
@@ -1348,11 +1349,11 @@ class IndexDatabase(DatabaseManager):
         # get last modified time for file (need absolute path)
         last_modified = basefile.to_path().stat().st_mtime
         # get recipe
-        if recipe is None:
+        if drs_text.null_text(recipe, ['None', 'Null']):
             recipe = 'Unknown'
         # get run string
-        if runstring is None:
-            runstring = 'None'
+        if drs_text.null_text(runstring, ['None', 'Null']):
+            runstring = 'NULL'
         # ------------------------------------------------------------------
         # get allowed header keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
@@ -1374,7 +1375,7 @@ class IndexDatabase(DatabaseManager):
                     # get value
                     value = hkeys[hkey]
                     # deal with a null value
-                    if isinstance(value, str) and value.lower() == 'null':
+                    if drs_text.null_text(value, ['None', 'Null']):
                         hvalues.append('NULL')
                     else:
                         # try to case and append
@@ -1703,8 +1704,7 @@ class IndexDatabase(DatabaseManager):
 
     def update_header_fix(self, recipe):
         # set function name
-        _ = display_func('update_objname', __NAME__,
-                         self.classname)
+        _ = display_func('update_objname', __NAME__, self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -1734,7 +1734,10 @@ class IndexDatabase(DatabaseManager):
                 # get value from table for rkey
                 value = table[rkey].iloc[row]
                 # populate header
-                header[drs_key] = value
+                if value is None:
+                    header[drs_key] = 'Null'
+                else:
+                    header[drs_key] = value
             # fix header (with new keys in)
             header, _ = drs_file.fix_header(self.params, recipe, header=header)
             # condition is that full path is the same
@@ -1749,7 +1752,7 @@ class IndexDatabase(DatabaseManager):
                 if drs_key in header:
                     values.append(header[drs_key])
                 else:
-                    values.append('None')
+                    values.append('Null')
             # update this row (should only be one row based on condition)
             self.database.set(columns, values=values, condition=condition,
                               table=self.database.tname)
@@ -1864,8 +1867,12 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
         allfiles = []
         # loop around subdirs
         for subdir in subdirs:
+            # processing sub-directories
+            TLOG(params, '', 'Analysing {0}...'.format(subdir))
             # append to filenames
             allfiles += list(subdir.glob('*{0}'.format(suffix)))
+    # clear loading message
+    TLOG(params, '', '')
     # -------------------------------------------------------------------------
     # store valid files
     valid_files = []
