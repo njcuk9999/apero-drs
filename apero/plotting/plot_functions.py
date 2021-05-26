@@ -1225,7 +1225,7 @@ def plot_loc_check_coeffs(plotter: Plotter, graph: Graph,
         # force x limits
         frame2.set_xlim(0, image.shape[1])
         # force y limits
-        frame1.set_ylim(ymin, ymax)
+        frame2.set_ylim(ymin, ymax)
         # ------------------------------------------------------------------
         # construct frame title
         if kind is None:
