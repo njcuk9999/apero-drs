@@ -920,6 +920,11 @@ FF_BLAZE_BPERCENTILE.value = 95
 FF_BLAZE_NITER = FF_BLAZE_NITER.copy(__NAME__)
 FF_BLAZE_NITER.value = 2
 
+# Define the sinc fit median filter width (we want to fit the shape of the
+#   order not line structures)
+FF_BLAZE_SINC_MED_SIZE = FF_BLAZE_SINC_MED_SIZE.copy(__NAME__)
+FF_BLAZE_SINC_MED_SIZE.value = 50
+
 #   Define the orders not to plot on the RMS plot should be a string
 #       containing a list of integers
 FF_RMS_SKIP_ORDERS = FF_RMS_SKIP_ORDERS.copy(__NAME__)
@@ -1120,61 +1125,6 @@ EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1200, 1210, 1300, 1800'
 
 
 # =============================================================================
-# CALIBRATION: THERMAL SETTINGS
-# =============================================================================
-# whether to apply the thermal correction to extractions
-THERMAL_CORRECT = THERMAL_CORRECT.copy(__NAME__)
-THERMAL_CORRECT.value = True
-
-# define whether to always extract thermals (i.e. overwrite existing files)
-THERMAL_ALWAYS_EXTRACT = THERMAL_ALWAYS_EXTRACT.copy(__NAME__)
-THERMAL_ALWAYS_EXTRACT.value = False
-
-# define the type of file to use for wave solution (currently allowed are
-#    'E2DS' or 'E2DSFF'
-THERMAL_EXTRACT_TYPE = THERMAL_EXTRACT_TYPE.copy(__NAME__)
-THERMAL_EXTRACT_TYPE.value = 'E2DSFF'
-
-# define DPRTYPEs we need to correct thermal background using
-#    telluric absorption (TAPAS)  (must be a string list separated by a comma)
-THERMAL_CORRETION_TYPE1 = THERMAL_CORRETION_TYPE1.copy(__NAME__)
-THERMAL_CORRETION_TYPE1.value = 'OBJ'
-
-# define DPRTYPEs we need to correct thermal background using
-#     method 2 (must be a string list separated by a comma)
-THERMAL_CORRETION_TYPE2 = THERMAL_CORRETION_TYPE2.copy(__NAME__)
-THERMAL_CORRETION_TYPE2.value = 'FP, HC, HCONE, HCTWO, FLAT'
-
-# define the order to perform the thermal background scaling on
-THERMAL_ORDER = THERMAL_ORDER.copy(__NAME__)
-THERMAL_ORDER.value = 48
-
-# width of the median filter used for the background
-THERMAL_FILTER_WID = THERMAL_FILTER_WID.copy(__NAME__)
-THERMAL_FILTER_WID.value = 101
-
-# define thermal red limit (in nm)
-THERMAL_RED_LIMIT = THERMAL_RED_LIMIT.copy(__NAME__)
-THERMAL_RED_LIMIT.value = 2500
-
-# define thermal blue limit (in nm)
-THERMAL_BLUE_LIMIT = THERMAL_BLUE_LIMIT.copy(__NAME__)
-THERMAL_BLUE_LIMIT.value = 2450
-
-# maximum tapas transmission to be considered completely opaque for the
-# purpose of background determination in order 49.
-THERMAL_THRES_TAPAS = THERMAL_THRES_TAPAS.copy(__NAME__)
-THERMAL_THRES_TAPAS.value = 0.010
-
-# define the percentile to measure the background for correction type 2
-THERMAL_ENVELOPE_PERCENTILE = THERMAL_ENVELOPE_PERCENTILE.copy(__NAME__)
-THERMAL_ENVELOPE_PERCENTILE.value = 10
-
-# define the order to plot on the thermal debug plot
-THERMAL_PLOT_START_ORDER = THERMAL_PLOT_START_ORDER.copy(__NAME__)
-THERMAL_PLOT_START_ORDER.value = 40
-
-# =============================================================================
 # CALIBRATION: WAVE EA GENERAL SETTINGS
 # =============================================================================
 # Define wave master fiber (controller fiber)
@@ -1195,7 +1145,7 @@ WAVE_WAVESOL_FIT_DEGREE.author = base.AUTHORS['EA']
 # Define the cavity fit polynomial fit degree for wave solution
 #   Note default: 9 for spirou  3 for NIRPS
 WAVE_CAVITY_FIT_DEGREE = WAVE_CAVITY_FIT_DEGREE.copy(__NAME__)
-WAVE_CAVITY_FIT_DEGREE.value = 11
+WAVE_CAVITY_FIT_DEGREE.value = 5
 WAVE_CAVITY_FIT_DEGREE.author = base.AUTHORS['EA']
 
 # Define the number of sigmas to use in wave sol robust fits
@@ -1445,8 +1395,9 @@ WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
 
 # define the quality control threshold from RV of CCF FP between master
 #    fiber and other fibers, above this limit fails QC [m/s]
+# TODO: We should really think about this a bit more
 WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
-WAVE_CCF_RV_THRES_QC.value = 0.5
+WAVE_CCF_RV_THRES_QC.value = 2.0    #  0.5 (spirou value)
 
 # TODO: Sort out wave constants below here
 # =============================================================================
