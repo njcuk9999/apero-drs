@@ -44,6 +44,9 @@ DrsCodedException = drs_exceptions.DrsCodedException
 display_func = drs_misc.display_func
 # define bad characters for objects (alpha numeric + "_")
 BAD_OBJ_CHARS = [' '] + list(string.punctuation.replace('_', ''))
+# null text
+NULL_TEXT = ['', 'None', 'Null']
+
 
 # =============================================================================
 # Define Constants class (pseudo constants)
@@ -804,37 +807,61 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
     """
     # set function name
     func_name = display_func('clean_obj_name', __NAME__)
-    # deal with no objname --> header mode
-    if objname is None:
-        return_header = True
-        # get keys from params
-        kwrawobjname = params['KW_OBJECTNAME'][0]
-        kwobjname = params['KW_OBJNAME'][0]
-        # deal with output key already in header
-        if header is not None:
-            if kwobjname in header:
-                if not drs_text.null_text(header[kwobjname], ['None', '']):
-                    return header, hdict
-        # get raw object name
-        if kwrawobjname not in header:
-            eargs = [kwrawobjname, filename]
-            raise DrsCodedException('01-001-00027', 'error', targs=eargs,
-                                    func_name=func_name)
 
-        rawobjname = header[kwrawobjname]
+
+    # if we don't have header don't try this part (this happens when we
+    #   are just calling using objname)
+    if header is not None:
+        # return header if we have header given
+        return_header = True
+        # ---------------------------------------------------------------------
+        # check KW_OBJNAME and then KW_OBJECTNAME
+        # ---------------------------------------------------------------------
+        # if objname is None we need to get it from the header
+        if drs_text.null_text(objname, NULL_TEXT):
+            # get keys from params
+            kwrawobjname = params['KW_OBJECTNAME'][0]
+            kwobjname = params['KW_OBJNAME'][0]
+            # deal with output key already in header
+            if kwobjname in header:
+                if not drs_text.null_text(header[kwobjname], NULL_TEXT):
+                    return header, hdict
+            # get raw object name
+            if kwrawobjname not in header:
+                eargs = [kwrawobjname, filename]
+                raise DrsCodedException('01-001-00027', 'error', targs=eargs,
+                                        func_name=func_name)
+            else:
+                rawobjname = header[kwrawobjname]
+        # else just set up blank parameters
+        else:
+            kwrawobjname, kwobjname = '', ''
+            rawobjname = str(objname)
     # else just set up blank parameters
     else:
         kwrawobjname, kwobjname = '', ''
         return_header = False
         rawobjname = str(objname)
-    # clean object name
-    objectname = rawobjname.strip()
-    for bad_char in BAD_OBJ_CHARS:
-        objectname = objectname.replace(bad_char, '_')
-    objectname = objectname.upper()
-    # deal with multiple underscores in a row
-    while '__' in objectname:
-        objectname = objectname.replace('__', '_')
+    # -------------------------------------------------------------------------
+    # if object name is still None - just set it to Null - we can't do anything
+    #    else here
+    # -------------------------------------------------------------------------
+    # finally if we really cannot resolve target name
+    if drs_text.null_text(rawobjname, NULL_TEXT):
+        objectname = 'Null'
+    # else remove spaces - clean object name
+    else:
+        objectname = rawobjname.strip()
+        # now remove bad characters
+        for bad_char in BAD_OBJ_CHARS:
+            objectname = objectname.replace(bad_char, '_')
+        objectname = objectname.upper()
+        # deal with multiple underscores in a row
+        while '__' in objectname:
+            objectname = objectname.replace('__', '_')
+        # strip leading / trailing '_'
+        objectname = objectname.strip('_')
+    # -------------------------------------------------------------------------
     # deal with returning header
     if return_header:
         # add it to the header with new keyword
@@ -918,7 +945,7 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     # deal with output key already in header
     if header is not None:
         if kwmidobstime in header:
-            if not drs_text.null_text(header[kwmidobstime], ['None', '']):
+            if not drs_text.null_text(header[kwmidobstime], NULL_TEXT):
                 return header, hdict
     # deal with no hdict
     if hdict is None:
@@ -1050,7 +1077,7 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     # deal with output key already in header
     if header is not None:
         if kwdprtype in header:
-            if not drs_text.null_text(header[kwdprtype], ['None', '']):
+            if not drs_text.null_text(header[kwdprtype], NULL_TEXT):
                 return header, hdict
     # deal with no hdict
     if hdict is None:
