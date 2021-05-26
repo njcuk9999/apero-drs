@@ -212,9 +212,13 @@ def __main__(recipe, params):
             WLOG(params, 'info', textentry('40-016-00014', args=wargs))
             # --------------------------------------------------------------
             # load wavelength solution for this fiber
-            wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
-                                           database=calibdbm,
-                                           nbpix=image.shape[1])
+            if not quicklook:
+                wprops = wave.get_wavesolution(params, recipe, header,
+                                               fiber=fiber,
+                                               database=calibdbm,
+                                               nbpix=image.shape[1])
+            else:
+                wprops = ParamDict()
             # --------------------------------------------------------------
             # load the localisation properties for this fiber
             lprops = localisation.get_coefficients(params, recipe, header,
@@ -272,16 +276,19 @@ def __main__(recipe, params):
             recipe.plot('FLAT_ORDER_FIT_EDGES2', params=params, image1=image,
                         image2=image2, order=sorder, coeffs1=lcoeffs,
                         coeffs2=lcoeffs2, fiber=fiber)
-            # plot (in a loop) the fitted blaze and calculated flat with the
-            #     e2ds image
-            recipe.plot('EXTRACT_SPECTRAL_ORDER1', order=None, eprops=eprops,
-                        wave=wprops['WAVEMAP'], fiber=fiber)
-            # plot for sorder the fitted blaze and calculated flat with the
-            #     e2ds image
-            recipe.plot('EXTRACT_SPECTRAL_ORDER2', order=sorder, eprops=eprops,
-                        wave=wprops['WAVEMAP'], fiber=fiber)
-            # plot the s1d plot
+            # plot non-quick look graphs
             if not quicklook:
+                # plot (in a loop) the fitted blaze and calculated flat with the
+                #     e2ds image
+                recipe.plot('EXTRACT_SPECTRAL_ORDER1', order=None,
+                            eprops=eprops,
+                            wave=wprops['WAVEMAP'], fiber=fiber)
+                # plot for sorder the fitted blaze and calculated flat with the
+                #     e2ds image
+                recipe.plot('EXTRACT_SPECTRAL_ORDER2', order=sorder,
+                            eprops=eprops,
+                            wave=wprops['WAVEMAP'], fiber=fiber)
+                # plot the s1d plot
                 recipe.plot('EXTRACT_S1D', params=params, props=svprops,
                             fiber=fiber, kind='E2DSFF')
             # --------------------------------------------------------------
