@@ -113,7 +113,7 @@ __all__ = [
     'FF_BLAZE_HALF_WINDOW', 'FF_BLAZE_THRESHOLD', 'FF_BLAZE_DEGREE',
     'FF_RMS_SKIP_ORDERS', 'QC_FF_MAX_RMS', 'FF_PLOT_ORDER',
     'FF_BLAZE_SCUT', 'FF_BLAZE_SIGFIT', 'FF_BLAZE_BPERCENTILE',
-    'FF_BLAZE_NITER',
+    'FF_BLAZE_NITER', 'FF_BLAZE_SINC_MED_SIZE',
     # leakage constants
     'ALLOWED_LEAKM_TYPES', 'LEAKM_ALWAYS_EXTRACT', 'LEAKM_EXTRACT_TYPE',
     'ALLOWED_LEAK_TYPES', 'LEAK_EXTRACT_FILE', 'LEAK_2D_EXTRACT_FILES',
@@ -1790,6 +1790,11 @@ FF_BLAZE_BPERCENTILE = Const('FF_BLAZE_BPERCENTILE', value=None, dtype=float,
 # Define the number of times to iterate around blaze sinc fit
 FF_BLAZE_NITER = Const('FF_BLAZE_BPERCENTILE', value=None, dtype=int,
                        source=__NAME__, minimum=0, group=cgroup)
+
+# Define the sinc fit median filter width (we want to fit the shape of the
+#   order not line structures)
+FF_BLAZE_SINC_MED_SIZE = Const('FF_BLAZE_SINC_MED_SIZE', value=None, dtype=int,
+                               source=__NAME__, minimum=0, group=cgroup)
 
 # Define the orders not to plot on the RMS plot should be a string
 #     containing a list of integers

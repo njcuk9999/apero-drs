@@ -910,6 +910,11 @@ FF_BLAZE_BPERCENTILE.value = 95
 FF_BLAZE_NITER = FF_BLAZE_NITER.copy(__NAME__)
 FF_BLAZE_NITER.value = 2
 
+# Define the sinc fit median filter width (we want to fit the shape of the
+#   order not line structures)
+FF_BLAZE_SINC_MED_SIZE = FF_BLAZE_SINC_MED_SIZE.copy(__NAME__)
+FF_BLAZE_SINC_MED_SIZE.value = 25
+
 #   Define the orders not to plot on the RMS plot should be a string
 #       containing a list of integers
 FF_RMS_SKIP_ORDERS = FF_RMS_SKIP_ORDERS.copy(__NAME__)
