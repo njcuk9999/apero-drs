@@ -1320,18 +1320,22 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     fp_peak_num_1 = np.array(fpl_peak_num)
     fp_wave_meas_1 = np.array(fpl_wave_meas)
     fp_wave_ref_1 = np.array(fpl_wave_ref)
+
     # -------------------------------------------------------------------------
     # Loop 2: Find offsets
     # -------------------------------------------------------------------------
+    # find all non-NaN files
+    good = np.where(np.isfinite(fpl_wave_meas))[0]
+
     # loop around each line (apart from the last)
-    for line_it in range(len(fpl_wave_meas) - 1):
+    for line_it in range(len(good) - 1):
         # find expected next PEAK_NUM considering next WAVE_MEAS
         # if it differs from actual next value, offset all value after this
         # point to have a discontinuity
-        wavepeak_it = fpl_wave_meas[line_it] * fpl_peak_num[line_it]
-        wavepeak_it = wavepeak_it / fpl_wave_meas[line_it + 1]
+        wavepeak_it = fpl_wave_meas[good][line_it] * fpl_peak_num[good][line_it]
+        wavepeak_it = wavepeak_it / fpl_wave_meas[good][line_it + 1]
         # distance to next peak
-        peakdist = np.round(wavepeak_it) - fpl_peak_num[line_it + 1]
+        peakdist = np.round(wavepeak_it) - fpl_peak_num[good][line_it + 1]
         # deal with an undefined peak distances
         if not np.isfinite(peakdist):
             continue
@@ -1341,7 +1345,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         if peakdist == 0:
             continue
         # else add the distance to all future peaks
-        fpl_peak_num[line_it + 1:] += peakdist
+        fpl_peak_num[good[line_it + 1]:] += peakdist
     # -------------------------------------------------------------------------
     # find the bulk offset that leads to a minimisation of the STDDEV of the
     #    cavity length through domain
