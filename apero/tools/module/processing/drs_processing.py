@@ -2927,7 +2927,7 @@ def _update_table_objnames(params, table):
         # original objnames
         objnames = table[OBJNAMECOL]
         # need to map values by new drs obj name
-        table[OBJNAMECOL] = list(map(pconst.DRS_OBJ_NAME, objnames))
+        table[OBJNAMECOL] = pconst.DRS_OBJ_NAMES(objnames)
     # return table
     return table
 
@@ -3018,7 +3018,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe) -> Dict[str, Any]:
                     tellu_include_list = telluric.get_tellu_include_list(params)
                     # note we need to update this list to match
                     # the cleaning that is done in preprocessing
-                    clist = list(map(pconst.DRS_OBJ_NAME, tellu_include_list))
+                    clist = pconst.DRS_OBJ_NAMES(tellu_include_list)
                     # add cleaned obj list to filters
                     filters[key] = list(clist)
                 else:
@@ -3029,7 +3029,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe) -> Dict[str, Any]:
                 objlist = _split_string_list(user_filter, allow_whitespace=True)
                 # note we need to update this list to match
                 # the cleaning that is done in preprocessing
-                clist = list(map(pconst.DRS_OBJ_NAME, objlist))
+                clist = pconst.DRS_OBJ_NAMES(objlist)
                 # add cleaned obj list to filters
                 filters[key] = list(clist)
                 if value == 'SCIENCE_TARGETS':
