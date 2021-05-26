@@ -110,7 +110,7 @@ def __main__(recipe, params):
     else:
         fpfiles = params['INPUTS']['FPFILES'][1]
         # must check fp files pass quality control
-        # fpfiles = gen_calib.check_fp_files(params, fpfiles)
+        fpfiles = gen_calib.check_fp_files(params, fpfiles)
     # get list of filenames (for output)
     rawhcfiles, rawfpfiles = [], []
     for infile in hcfiles:
