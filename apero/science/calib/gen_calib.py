@@ -93,7 +93,7 @@ def check_files(params: ParamDict,
     objname_inputs = params['INPUTS']['OBJNAME'].split(',')
     # clean (capitalize and remove white spaces)
     dprtype_inputs = drs_text.clean_strings(dprtype_inputs)
-    objname_inputs = list(map(pconst.DRS_OBJ_NAME, objname_inputs))
+    objname_inputs = pconst.DRS_OBJ_NAMES(objname_inputs)
     # ----------------------------------------------------------------------
     # log checking file info
     wargs = [dprtype, objname]

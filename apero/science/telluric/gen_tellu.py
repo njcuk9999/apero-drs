@@ -87,7 +87,7 @@ def get_tellu_include_list(params: ParamDict,
     whitelist = drs_data.load_text_file(params, whitelistfile, func_name,
                                         dtype=str)
     # must clean names
-    whitelist = list(map(pconst.DRS_OBJ_NAME, whitelist))
+    whitelist = pconst.DRS_OBJ_NAMES(whitelist)
     # return the whitelist
     return whitelist
 
@@ -113,7 +113,7 @@ def get_tellu_exclude_list(params: ParamDict,
     blacklist = drs_data.load_text_file(params, blacklistfile, func_name,
                                         dtype=str)
     # must clean names
-    blacklist = list(map(pconst.DRS_OBJ_NAME, blacklist))
+    blacklist = pconst.DRS_OBJ_NAMES(blacklist)
     # return the whitelist
     return blacklist, blacklistfile
 

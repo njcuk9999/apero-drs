@@ -288,7 +288,7 @@ class AstroObject(object):
             GOOGLE_TABLES[url] = gtable
         # ---------------------------------------------------------------------
         # get row that matches entry
-        rtable = query_glist(self.input_objname, self.gsheet_url,
+        rtable = query_glist(self.params, self.input_objname, self.gsheet_url,
                              self.gsheet_wnum, self.gl_obj_colname,
                              self.gl_alias_colname, self.pconst)
         # ---------------------------------------------------------------------
@@ -582,7 +582,7 @@ class AstroObject(object):
         :return:
         """
         # try to get gaia id from google sheets
-        gtable = query_glist(self.input_objname, self.gsheet_url,
+        gtable = query_glist(self.params, self.input_objname, self.gsheet_url,
                              self.gsheet_wnum, self.gl_obj_colname,
                              self.gl_alias_colname, self.pconst)
         # set some properties from gtable
@@ -1060,10 +1060,9 @@ def query_simbad_id(params: ParamDict, obj_id: str) -> Union[Table, None]:
         return None
 
 
-def query_glist(objname: str, sheet_id: str, worksheet: int = 0,
-                gl_obj_col_name: str = 'OBJNAME',
-                gl_alias_col_name: str = 'ALIASES',
-                pconst = None):
+def query_glist(params: ParamDict, objname: str, sheet_id: str,
+                worksheet: int = 0, gl_obj_col_name: str = 'OBJNAME',
+                gl_alias_col_name: str = 'ALIASES', pconst = None):
     # get the google sheet
     gtable = get_google_sheet(sheet_id, worksheet)
     # deal with empty table
@@ -1082,7 +1081,7 @@ def query_glist(objname: str, sheet_id: str, worksheet: int = 0,
         aliases += gtable[gl_alias_col_name][row].split('|')
         # clean the aliases
         if pconst is not None:
-            aliases = list(map(pconst.DRS_OBJ_NAME, aliases))
+            aliases = pconst.DRS_OBJ_NAMES(aliases)
         # search for object name
         position = crossmatch_name(objname, aliases)
         # break if we have found a match

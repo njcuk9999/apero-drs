@@ -1000,7 +1000,7 @@ class DrsRecipe(object):
                             # make sure there are no white spaces
                             value = np.char.strip(value)
                             # deal with object name cleaning
-                            value = list(map(pconst.DRS_OBJ_NAME, value))
+                            value = pconst.DRS_OBJ_NAMES(value)
                         # need to filter list by tstars and ostars
                         # (if not in either list means they are not on disk)
                         all_objs = list(ostars) + list(tstars)
