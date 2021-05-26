@@ -223,7 +223,7 @@ def create_yamls(allparams: Any):
     install_dict['LANGUAGE'] = allparams['LANGUAGE']
     install_dict['USE_TQDM'] = True
     # write database
-    write_yaml(install_dict, install_path)
+    write_yaml(install_dict, str(install_path))
     # -------------------------------------------------------------------------
     # create database yaml
     # -------------------------------------------------------------------------
@@ -342,7 +342,7 @@ def create_yamls(allparams: Any):
     # mysql['PARAMS_PATH'] = 'DRS_DATA_ASSETS'
     database_dict['MYSQL'] = mysql
     # write database
-    write_yaml(database_dict, database_path)
+    write_yaml(database_dict, str(database_path))
 
 
 def tqdm_module():
@@ -353,6 +353,7 @@ def tqdm_module():
     """
     # this will replace tqdm with the return of the first arg
     def _tqdm(*args, **kwargs):
+        _ = kwargs
         return args[0]
     # if we want to use tqdm then use it
     if 'USE_TQDM' in IPARAMS:
@@ -361,10 +362,12 @@ def tqdm_module():
 
     return _tqdm
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
 # populate DPARAMS or IPARAMS
+# noinspection PyBroadException
 try:
     DPARAMS = load_database_yaml()
     IPARAMS = load_install_yaml()
