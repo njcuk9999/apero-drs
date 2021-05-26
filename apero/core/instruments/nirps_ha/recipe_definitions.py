@@ -186,6 +186,8 @@ apero_pp_master.set_outputs(PP_MASTER=files.out_pp_master)
 apero_pp_master.set_arg(pos=0, **obs_dir)
 apero_pp_master.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
                         helpstr=textentry('PPMASTER_FILETYPE_HELP'))
+apero_pp_master.group_func = grouping.no_group
+apero_pp_master.group_column = None
 # add to recipe
 recipes.append(apero_pp_master)
 
