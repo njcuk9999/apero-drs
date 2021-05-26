@@ -270,6 +270,23 @@ class PseudoConstants:
         self._not_implemented('HEADER_FIXES')
 
     # noinspection PyPep8Naming
+    def DRS_OBJ_NAMES(self,
+                      objnamelist: Union[List[str], np.ndarray]) -> List[str]:
+        """
+        Wrapper around DRS_OBJ_NAME (for a list of strings)
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param objnamelist: list of strings, the objnames to clean
+        :return:
+        """
+        outlist = []
+        # loop around objnames
+        for objname in objnamelist:
+            outlist.append(self.DRS_OBJ_NAME(objname=objname))
+        # return outlist
+        return outlist
+
+    # noinspection PyPep8Naming
     def DRS_OBJ_NAME(self, objname: str) -> str:
         """
         Clean and standardize an object name
