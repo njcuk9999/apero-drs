@@ -493,10 +493,17 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
     for groupnum, drsfile_group in enumerate(drsfile_groups):
         # get arg 0 table
         rawtab = alldict[first_arg][drsfile_group[0]]
+        # if rawtable is a single row - we had one row and need to convert
+        #   back to a table
         if isinstance(rawtab, Table.Row):
             table0 = Table(rawtab)
+        # if rawtab is a Table then we are good - we have multiple rows
         elif isinstance(rawtab, Table):
             table0 = rawtab
+        # rawtab none means no files of this type
+        elif rawtab is None:
+            continue
+        # else we have to deal with an error
         else:
             # TODO: move to language DB
             emsg = ('alldict[{0}][{1}] is not a valid Table '
