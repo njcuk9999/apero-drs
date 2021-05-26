@@ -159,8 +159,8 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
             if kind == 'flat':
                 # fargs = [e2dsi, fluxi, blaze_cut, blaze_deg]
                 # fout = flat_blaze.calculate_blaze_flat(*fargs)
-                fargs = [e2dsi, blaze_scut, blaze_sigfit, blaze_bpercentile,
-                         order_num, fiber, blaze_niter]
+                fargs = [e2dsi, blaze_scut, blaze_bpercentile,
+                         order_num, fiber]
                 fout = flat_blaze.calculate_blaze_flat_sinc(params, *fargs)
                 e2dsi, flati, blazei, rmsi = fout
                 # log process (for fiber # and order # S/N = , FF rms = )
