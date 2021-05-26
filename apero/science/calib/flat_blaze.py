@@ -11,6 +11,7 @@ Created on 2019-07-10 at 09:30
 """
 import numpy as np
 from scipy.optimize import curve_fit
+from typing import Union
 import warnings
 
 from apero.base import base
@@ -104,17 +105,34 @@ def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
     return e2ds, flat, blaze, rms
 
 
-def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile,
-                              order_num, fiber, niter=2, ):
+def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
+                              peak_cut: float, badpercentile: float,
+                              order_num: int, fiber: str,
+                              sinc_med_size: Union[int, None] = None):
+    """
+    Calculate the blaze function using a sinc function
+
+    :param params:
+    :param e2ds_ini:
+    :param peak_cut:
+    :param badpercentile:
+    :param order_num:
+    :param fiber:
+    :param sinc_med_size:
+    :return:
+    """
     # get function name
     func_name = __NAME__ + '.calculate_blaze_flat_sinc()'
+    # get med filt parameter
+    med_size = pcheck(params, 'FF_BLAZE_SINC_MED_SIZE', func=func_name,
+                      override=sinc_med_size)
     # ----------------------------------------------------------------------
     # defnie the x positions
     xpix = np.arange(len(e2ds_ini))
     # ------------------------------------------------------------------
-
-    e2ds = mp.medfilt_1d(e2ds_ini, 15)
-
+    # Need to median filter the e2ds here as we want to fit the shape not
+    #   individual line shapes for the blaze
+    e2ds = mp.medfilt_1d(e2ds_ini, med_size)
     # region over which we will fit
     keep = np.isfinite(e2ds)
     # keep only regions that make sense compared to the 95th percentile
@@ -122,7 +140,6 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     with warnings.catch_warnings(record=True) as _:
         keep &= e2ds > 0.05 * np.nanpercentile(e2ds, 95)
         keep &= e2ds < 2 * np.nanpercentile(e2ds, 95)
-
     # ------------------------------------------------------------------
     # guess of peak value, we do not take the max as there may be a
     #     hot/bad pix in the order
@@ -189,7 +206,7 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
         #         keep = (np.abs(residual) < nsigfit) & np.isfinite(blaze)
         #     popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
         #                            p0=fit_guess) #, bounds=bounds)
-    except RuntimeError as e:
+    except RuntimeError as _:
         # if it failed with bounds try without bounds
         try:
             # we optimize over pixels that are not NaN (this time with no bounds)
