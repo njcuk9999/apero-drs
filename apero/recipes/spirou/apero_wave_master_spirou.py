@@ -237,7 +237,7 @@ def __main__(recipe, params):
                 wprops['WAVEMAP'] = wave.hc_wave_sol_offset(params, *oargs)
                 # recalculate hclines with offset applied
                 hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
-                              iteration=iteration + 1)
+                              iteration='{0} + offset'.format(iteration + 1))
                 hclines = wave.calc_wave_lines(params, recipe, **hcargs)
             # -----------------------------------------------------------------
             # generate the fp reference lines

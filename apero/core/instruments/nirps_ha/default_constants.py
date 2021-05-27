@@ -1249,7 +1249,7 @@ WAVEREF_FITDEG.author = base.AUTHORS['EA']
 
 # define the lowest N for fp peaks
 WAVEREF_FP_NLOW = WAVEREF_FP_NLOW.copy(__NAME__)
-WAVEREF_FP_NLOW.value = 9000
+WAVEREF_FP_NLOW.value = 7500
 WAVEREF_FP_NLOW.author = base.AUTHORS['EA']
 
 # define the highest N for fp peaks
@@ -1261,6 +1261,11 @@ WAVEREF_FP_NHIGH.author = base.AUTHORS['EA']
 WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
 WAVEREF_FP_POLYINV.value = 4
 WAVEREF_FP_POLYINV.author = base.AUTHORS['EA']
+
+# define the guess HC exponetial width [pixels]
+WAVEREF_HC_GUESS_EWID = WAVEREF_HC_GUESS_EWID.copy(__NAME__)
+WAVEREF_HC_GUESS_EWID.value = 1
+WAVEREF_HC_GUESS_EWID.author = base.AUTHORS['EA']
 
 # =============================================================================
 # CALIBRATION: WAVE RESOLUTION MAP SETTINGS

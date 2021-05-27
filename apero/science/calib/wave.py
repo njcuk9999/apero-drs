@@ -680,7 +680,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                     cavity_poly: Union[np.ndarray, None] = None,
                     hclines: Union[Table, None] = None,
                     fplines: Union[Table, None] = None,
-                    iteration: Union[int, None] = None):
+                    iteration: Union[str, int, None] = None):
     # set the function name
     func_name = display_func('get_master_lines', __NAME__)
     # -------------------------------------------------------------------------
@@ -713,6 +713,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # define the number of iterations required to do the FP polynomial inversion
     fp_inv_itr = pcheck(params, 'WAVEREF_FP_POLYINV', 'fp_inv_itr',
                         func=func_name)
+    # define the guess HC exponetial width [pixels]
+    guess_hc_ewid = pcheck(params, 'WAVEREF_HC_GUESS_EWID', func=func_name)
     # ------------------------------------------------------------------
     # get psuedo constants
     pconst = constants.pload(params['INSTRUMENT'])
@@ -936,7 +938,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             # deal with less points than fit (shouldn't happen but worth
             #    catching before an exception happens in fit_gauss_with_slope)
             if len(ypix) < 5:
-                eargs = [order_num, it, index, ypix]
+                eargs = [order_num, it, index, ypix, func_name]
                 WLOG(params, 'warning', textentry('09-017-00006', args=eargs))
                 continue
             # --------------------------------------------------------------
@@ -945,16 +947,21 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                 # try fitting a gaussian with a slope
                 try:
                     # get ypix max and min
-                    ymax, ymin = mp.nanmax(ypix), mp.nanmin(ypix)
+                    posmax = mp.nanargmax(ypix)
+                    posmin = mp.nanargmin(ypix)
+                    ymax, ymin = ypix[posmax], ypix[posmin]
+                    xcen = index[posmax]
                     # get up a gauss fit guess
-                    guess = [ymax - ymin, xpixi, 1, ymin, 0]
+                    #   [amplitude, mean position, FWHM, DC, slope]
+                    guess = [ymax - ymin, xcen, guess_hc_ewid, ymin, 0]
                     # if HC fit a gaussian with a slope
                     if fibtype in hcfibtypes:
                         out = mp.fit_gauss_with_slope(index, ypix, guess, True)
                         # get parameters from fit
                         popt, pcov, model = out
                         # get width condition
-                        cond2 = (popt[2] < 2) and (popt[2] > 0.5)
+                        cond2 = (popt[2] < 2 * guess_hc_ewid)
+                        cond2 &= (popt[2] > 0.5 * guess_hc_ewid)
                     # else fit ea airy function to FP
                     else:
                         out = velocity.fit_fp_peaks(index, ypix, wfit,
