@@ -148,6 +148,7 @@ __all__ = [
     'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
     'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
     'WAVEREF_FP_NLOW', 'WAVEREF_FP_NHIGH', 'WAVEREF_FP_POLYINV',
+    'WAVEREF_HC_GUESS_EWID',
     # wave resolution settings
     'WAVE_RES_MAP_ORDER_BINS', 'WAVE_RES_MAP_SPATIAL_BINS',
     'WAVE_RES_MAP_FILTER_SIZE', 'WAVE_RES_VELO_CUTOFF1',
@@ -2370,6 +2371,12 @@ WAVEREF_FP_POLYINV = Const('WAVEREF_FP_POLYINV', value=None, dtype=int,
                            description=('define the number of iterations '
                                         'required to do the FP polynomial '
                                         'inversion'))
+
+# define the guess HC exponetial width [pixels]
+WAVEREF_HC_GUESS_EWID = Const('WAVEREF_HC_GUESS_EWID', value=None, dtype=float,
+                              source=__NAME__, minimum=0, group=cgroup,
+                              description=('define the guess HC exponetial '
+                                           'width [pixels]'))
 
 # =============================================================================
 # CALIBRATION: WAVE RESOLUTION MAP SETTINGS
