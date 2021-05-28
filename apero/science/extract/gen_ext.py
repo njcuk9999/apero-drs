@@ -978,7 +978,7 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
         return None
     # ----------------------------------------------------------------------
     # get master hc lines and fp lines from calibDB
-    wout = wave.get_wavelines(params, recipe, fiber, infile=e2dsfile,
+    wout = wave.get_wavelines(params, fiber, infile=e2dsfile,
                               database=database)
     mhclines, mhclsource, mfplines, mfplsource = wout
     # deal with no fplines found

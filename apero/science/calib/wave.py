@@ -66,6 +66,8 @@ speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 speed_of_light = cc.c.to(uu.km / uu.s).value
 # Get function string
 display_func = drs_log.display_func
+# define the header types
+HeaderType = Union[drs_fits.Header, drs_fits.fits.Header, None]
 
 
 # =============================================================================
@@ -130,9 +132,8 @@ def get_masterwave_filename(params: ParamDict, fiber: str,
 WaveReturn = Tuple[DrsFitsFile, Union[np.ndarray, None], str, float]
 
 
-def get_wave_solution_from_wavefile(params: ParamDict,
-                                    usefiber: str, inwavefile: str,
-                                    header: drs_fits.Header,
+def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
+                                    inwavefile: str, header: HeaderType,
                                     database: Union[CalibDB, None] = None,
                                     master: bool = False) -> WaveReturn:
     """
@@ -228,8 +229,7 @@ def get_wave_solution_from_wavefile(params: ParamDict,
 
 
 def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
-                                    infile: DrsFitsFile,
-                                    header: drs_fits.Header,
+                                    infile: DrsFitsFile, header: HeaderType,
                                     usefiber: str) -> WaveReturn:
     # set function
     func_name = display_func('get_wave_solution_from_inheader',
@@ -295,7 +295,7 @@ def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
 
 
 def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
-                     header: Union[drs_fits.Header, None] = None,
+                     header: HeaderType = None,
                      infile: Union[DrsFitsFile, None] = None,
                      fiber: Union[str, None] = None,
                      master: bool = False,
@@ -478,6 +478,16 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
 
 def get_wavemap_from_coeffs(wave_coeffs: np.ndarray, nbo: int,
                             nbx: int) -> np.ndarray:
+    """
+    Get the wave map from a wave matrix (set of coefficients per order)
+
+    :param wave_coeffs: np.ndarray (2D), the wave coefficients
+                        shape = (nbo x (fit degree + 1))
+    :param nbo: int, the number of orders
+    :param nbx: int, the number of pixels along the order direction (x)
+
+    :return: np.ndarray, 2D wave map, shape = (nbo x nbx)
+    """
     # set up storage
     wavemap = np.zeros((nbo, nbx))
     xpixels = np.arange(nbx)
@@ -490,8 +500,7 @@ def get_wavemap_from_coeffs(wave_coeffs: np.ndarray, nbo: int,
     return wavemap
 
 
-def get_cavity_file(params: ParamDict, recipe: DrsRecipe,
-                    header: Union[drs_fits.Header, None] = None,
+def get_cavity_file(params: ParamDict, header: HeaderType = None,
                     infile: Union[DrsFitsFile, None] = None,
                     database: Union[CalibDB, None] = None
                     ) -> Union[np.array, None]:
@@ -546,19 +555,38 @@ def get_cavity_file(params: ParamDict, recipe: DrsRecipe,
     return np.array(cimage)
 
 
-def get_wavelines(params: ParamDict, recipe: DrsRecipe, fiber: str,
-                  header: Union[drs_fits.Header,
-                                drs_fits.fits.Header, None] = None,
+def get_wavelines(params: ParamDict, fiber: str,
+                  header: HeaderType = None,
                   infile: Union[DrsFitsFile, None] = None,
-                  database: Union[CalibDB, None] = None, **kwargs):
+                  database: Union[CalibDB, None] = None,
+                  hclinefile: Union[str, None] = None,
+                  fplinefile: Union[str, None] = None,
+                  ) -> Tuple[Table, str, Table, str]:
+    """
+    Get the HC and FP line tables from the calibration database
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param fiber: str, the fiber we need the lines for
+    :param header: Header, the fits header (for matching calibDB to date)
+                   can be None if infile is defined
+    :param infile: DrsFitsFile, the drs fits file instance containing a header,
+                   can be None if header is defined
+    :param database: CalibDB, the calibration database instance, can be None
+                     and is loaded during running (slower)
+    :param hclinefile: str or None, if sets overrides the HC line table from
+                       the calibration database
+    :param fplinefile: str or None, if set overrides the FP line table from
+                       the calibration database
+
+    :return: Tuple, 1. astropy.table.Table, the HC line table,
+             2. str, the source of the HC line table,
+             3. astropy.table.Table, the FP line table,
+             4. str, the source of the FP line table
+    """
     # set up function name
     func_name = display_func('get_wavelines', __NAME__)
     # get psuedo constants
     pconst = constants.pload()
-    # get parameters from params/kwargs
-    hclinefile = kwargs.get('hclinefile', None)
-    fplinefile = kwargs.get('fplinefile', None)
-    required = kwargs.get('required', True)
     # deal with fibers that we don't have
     usefiber = pconst.FIBER_WAVE_TYPES(fiber)
     # ------------------------------------------------------------------------
@@ -631,11 +659,22 @@ def get_wavelines(params: ParamDict, recipe: DrsRecipe, fiber: str,
     return hclines, hcsource, fplines, fpsource
 
 
-def check_wave_consistency(params, props, **kwargs):
+def check_wave_consistency(params: ParamDict, props: ParamDict,
+                           num_coeffs: Union[int, None] = None) -> ParamDict:
+    """
+    Check the consistency of the wave solution (fit degree) and if incorrect
+    convert wave solution coefficients to this degree for use after this point
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param props: ParamDict, the parameter dictionary of wave data
+    :param num_coeffs: int or None, if set overrides params['WAVE_FIT_DEGREE']
+
+    :return: ParamDict, the updated parameter dictionary of wave data
+    """
     func_name = display_func('check_wave_consistency', __NAME__)
     # get constants from params/kwargs
-    required_deg = pcheck(params, 'WAVE_FIT_DEGREE', 'num_coeffs', kwargs,
-                          func_name)
+    required_deg = pcheck(params, 'WAVE_FIT_DEGREE', func=func_name,
+                          override=num_coeffs)
     # get dimension from data
     nbo, ncoeffs = props['COEFFS'].shape
     # get the fit degree from dimensions
@@ -1186,7 +1225,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # find the hc and fp lines for the current oder
         good_fp = fpl_order == order_num
         good_hc = hcl_order == order_num
-
+        # skip bad orders
         if np.sum(good_fp) < 30 or np.sum(good_hc) < 5:
             continue
         # get the fplines for this order
