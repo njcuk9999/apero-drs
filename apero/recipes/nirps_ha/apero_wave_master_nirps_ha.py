@@ -230,7 +230,7 @@ def __main__(recipe, params):
             #   calculate a global offset and re-calculate
             if iteration == 0:
                 # calculate hc offset
-                oargs = [iwprops['WAVEMAP'], hclines]
+                oargs = [wprops['WAVEMAP'], hclines]
                 wprops['WAVEMAP'] = wave.hc_wave_sol_offset(params, *oargs)
                 # recalculate hclines with offset applied
                 hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
