@@ -254,30 +254,14 @@ def fit_fp_peaks(x, y, size, return_model=False):
     warns = None
     # get gauss function
     ea_airy = mp.ea_airy_function
+    # get the guess on the maximum peak position
+    maxpos = np.nanargmax(y)
+    minpos = np.nanargmin(y)
+    ymax = y[maxpos]
+    ymin = y[minpos]
     # set up initial guess
-    # pnames = ['amp', 'pos', 'period', 'shape', 'dc']
     # [amp, position, period, exponent, zero point]
-    p0 = [np.max(y) - np.min(y), np.median(x), size, 1.5,
-          np.max([0, np.min(y)])]
-    # # set up the bounds
-    # lowerbounds = [0.5 * p0[0], p0[1] - 2, 0.7 * p0[2], 1.0, 0.0]
-    # upperbounds = [2.0 * p0[0], p0[1] + 2, 1.3 * p0[2], 10.0, 0.5 * p0[0]]
-    # bounds = [lowerbounds, upperbounds]
-    # # test bounds make sense
-    # for p_it in range(len(lowerbounds)):
-    #     if lowerbounds[p_it] >= upperbounds[p_it]:
-    #         if warns is None:
-    #             warns = ''
-    #         warns += ('\nBoundError: Lower bound {0} incorrect (lower={1} '
-    #                   'upper={2})'.format(pnames[p_it], lowerbounds[p_it],
-    #                               upperbounds[p_it]))
-    #     if p0[p_it] < lowerbounds[p_it] or p0[p_it] > upperbounds[p_it]:
-    #         if warns is None:
-    #             warns = ''
-    #         warns += ('\nBoundError: Inital guess for {0} out of bounds '
-    #                   '(guess={1} lower={2} upper={3})'
-    #                   ''.format(pnames[p_it], p0[p_it],
-    #                             lowerbounds[p_it], upperbounds[p_it]))
+    p0 = [ymax - ymin, mp.nanmedian(x), size, 1.5, np.max([0, ymin])]
 
     # deal with bad bounds
     if warns is not None:

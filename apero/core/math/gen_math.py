@@ -134,6 +134,8 @@ def ea_airy_function(x: np.ndarray, amp: float, x0: float, w: float,
     """
     # set function name
     _ = display_func('calculate_polyvals', __NAME__)
+    # airy function should always be an emission feature
+    amp = abs(amp)
     # calculate ea_airy_function
     y = zp + amp * ((1 + np.cos(2 * np.pi * (x - x0) / w)) / 2.0) ** beta
     return y

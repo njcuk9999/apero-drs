@@ -968,6 +968,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                                                     return_model=True)
                         # get parameters from fit
                         p0, popt, pcov, warns, model = out
+                        # force popt[0] to positive
+                        popt[0] = abs(popt[0])
                         # get width condition
                         cond2 = np.abs(popt[2] / wfit - 1) < 0.5
                     # calculate the RMS of the fit
@@ -994,6 +996,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # exactly the same length
     with warnings.catch_warnings(record=True) as _:
         bad = ~(nsig > nsig_min)
+    # apply bad mask to arrays (set bad to NaN)
     nsig[bad] = np.nan
     ewidth[bad] = np.nan
     amp[bad] = np.nan
@@ -1183,6 +1186,9 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # find the hc and fp lines for the current oder
         good_fp = fpl_order == order_num
         good_hc = hcl_order == order_num
+
+        if np.sum(good_fp) < 30 or np.sum(good_hc) < 5:
+            continue
         # get the fplines for this order
         ordfp_pix_meas = fpl_pix_meas[good_fp]
         ordfp_peak_num = fpl_peak_num[good_fp]
