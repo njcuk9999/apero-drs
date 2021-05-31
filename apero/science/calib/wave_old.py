@@ -602,7 +602,8 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     # set the function name
     func_name = display_func('get_master_lines', __NAME__)
     # get parameters from params and kwargs
-    nsig_min = pcheck(params, 'WAVEREF_NSIG_MIN', 'nsig_min', kwargs, func_name)
+    nsig_min = pcheck(params, 'WAVEREF_NSIG_MIN_HC', 'nsig_min', kwargs,
+                      func_name)
     wmax = pcheck(params, 'WAVEREF_EDGE_WMAX', 'wmax', kwargs, func_name)
     hcboxsize = pcheck(params, 'WAVEREF_HC_BOXSIZE', 'hcboxsize', kwargs,
                        func_name)

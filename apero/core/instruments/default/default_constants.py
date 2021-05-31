@@ -138,14 +138,16 @@ __all__ = [
     'THERMAL_PLOT_START_ORDER',
     # wave general constants
     'WAVE_MASTER_FIBER', 'WAVE_GUESS_CAVITY_WIDTH', 'WAVE_WAVESOL_FIT_DEGREE',
-    'WAVE_CAVITY_FIT_DEGREE', 'WAVE_NSIG_CUT', 'WAVE_MIN_HC_LINES',
+    'WAVE_CAVITY_FIT_DEGREE', 'WAVE_NSIG_CUT',
+    'WAVE_MIN_HC_LINES', 'WAVE_MIN_FP_LINES',
     'WAVE_MAX_FP_COUNT_OFFSET', 'WAVE_FP_COUNT_OFFSET_ITRS',
     'WAVE_CAVITY_FIT_ITRS1', 'WAVE_ORDER_OFFSET_ITRS',
     'WAVE_MAX_ORDER_BULK_OFFSET', 'WAVE_CAVITY_CHANGE_ERR_THRES',
     'WAVE_CAVITY_FIT_ITRS2', 'WAVE_HC_VEL_ODD_RATIO', 'WAVE_FWAVESOL_ITRS',
-    'WAVE_FIBER_COMP_PLOT_ORD',
+    'WAVE_FIBER_COMP_PLOT_ORD', 'WAVE_REMOVE_ORDERS',
     # wave master reference constants
-    'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
+    'WAVEREF_NSIG_MIN_HC', 'WAVEREF_NSIG_MIN_FP',
+    'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
     'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
     'WAVEREF_FP_NLOW', 'WAVEREF_FP_NHIGH', 'WAVEREF_FP_POLYINV',
     'WAVEREF_HC_GUESS_EWID',
@@ -2229,9 +2231,17 @@ WAVE_NSIG_CUT = Const('WAVE_NSIG_CUT', value=None, dtype=int, source=__NAME__,
 
 # Define the minimum number of HC lines in an order to try to find
 #   absolute numbering
-WAVE_MIN_HC_LINES = Const('WAVE_NSIG_CUT', value=None, dtype=int,
+WAVE_MIN_HC_LINES = Const('WAVE_MIN_HC_LINES', value=None, dtype=int,
                           source=__NAME__, group=cgroup, minimum=1,
                           description='Define the minimum number of HC lines '
+                                      'in an order to try to find absolute '
+                                      'numbering')
+
+# Define the minimum number of FP lines in an order to try to find
+#   absolute numbering
+WAVE_MIN_FP_LINES = Const('WAVE_MIN_FP_LINES', value=None, dtype=int,
+                          source=__NAME__, group=cgroup, minimum=1,
+                          description='Define the minimum number of FP lines '
                                       'in an order to try to find absolute '
                                       'numbering')
 
@@ -2302,6 +2312,12 @@ WAVE_HC_VEL_ODD_RATIO = Const('WAVE_HC_VEL_ODD_RATIO', value=None,
                               description='Define the odd ratio that is used '
                                           'in generating the weighted mean')
 
+# Define orders that we cannot fit HC or FP lines to (list of strings)
+WAVE_REMOVE_ORDERS =  Const('WAVE_REMOVE_ORDERS', value=None,
+                            dtype=str, source=__NAME__, group=cgroup,
+                            description='Define orders that we cannot fit HC '
+                                        'or FP lines to (list of strings)')
+
 # Define the number of iterations required to do the final fplines
 #   wave solution
 WAVE_FWAVESOL_ITRS = Const('WAVE_FWAVESOL_ITRS', value=None,
@@ -2322,10 +2338,15 @@ WAVE_FIBER_COMP_PLOT_ORD = Const('WAVE_FIBER_COMP_PLOT_ORD', value=None,
 # CALIBRATION: WAVE LINES REFERENCE SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: WAVE LINES REFERENCE SETTINGS'
-# min SNR to consider the line
-WAVEREF_NSIG_MIN = Const('WAVEREF_NSIG_MIN', value=None, dtype=int,
-                         source=__NAME__, minimum=0, group=cgroup,
-                         description='min SNR to consider the line')
+# min SNR to consider the line (for HC)
+WAVEREF_NSIG_MIN_HC = Const('WAVEREF_NSIG_MIN_HC', value=None, dtype=int,
+                            source=__NAME__, minimum=0, group=cgroup,
+                            description='min SNR to consider the line')
+
+# min SNR to consider the line (for FP)
+WAVEREF_NSIG_MIN_FP = Const('WAVEREF_NSIG_MIN_FP', value=None, dtype=int,
+                            source=__NAME__, minimum=0, group=cgroup,
+                            description='min SNR to consider the line')
 
 # minimum distance to the edge of the array to consider a line
 WAVEREF_EDGE_WMAX = Const('WAVEREF_EDGE_WMAX', value=None, dtype=int,
