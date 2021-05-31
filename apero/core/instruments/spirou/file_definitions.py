@@ -142,7 +142,8 @@ raw_lfc_lfc = drs_finput('RAW_LFC_LFC', KW_CCAS='pos_rs', KW_CREF='pos_rs',
 raw_file.addset(raw_lfc_lfc)
 
 raw_lfc_fp = drs_finput('RAW_LFC_FP', KW_CCAS='pos_rs', KW_CREF='pos_fp',
-                         filetype='.fits', suffix='', KW_OBSTYPE='ALIGN')
+                         filetype='.fits', suffix='', KW_OBSTYPE='ALIGN',
+                         outfunc=out.blank)
 raw_file.addset(raw_lfc_fp)
 
 raw_fp_lfc = drs_finput('RAW_FP_LFC', KW_CCAS='pos_fp', KW_CREF='pos_rs',
