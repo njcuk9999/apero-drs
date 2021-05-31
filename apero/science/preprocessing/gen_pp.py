@@ -11,10 +11,12 @@ Created on 2019-12-12 at 09:45
 """
 from astropy import units as uu
 from astropy.coordinates import SkyCoord, Distance
+from astropy.io.ascii.core import InconsistentTableError
 from astropy.table import Table
 import numpy as np
 import pandas as pd
 import requests
+import time
 from typing import List, Tuple, Union
 import warnings
 
@@ -1064,7 +1066,7 @@ def query_glist(params: ParamDict, objname: str, sheet_id: str,
                 worksheet: int = 0, gl_obj_col_name: str = 'OBJNAME',
                 gl_alias_col_name: str = 'ALIASES', pconst = None):
     # get the google sheet
-    gtable = get_google_sheet(sheet_id, worksheet)
+    gtable = get_google_sheet(params, sheet_id, worksheet)
     # deal with empty table
     if gtable is None:
         return None
@@ -1148,7 +1150,7 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
     # -------------------------------------------------------------------------
     # get bad list table
     try:
-        table = get_google_sheet(sheet_id, worksheet, cached=True)
+        table = get_google_sheet(params, sheet_id, worksheet, cached=True)
     except Exception as e:
         # construct url for worksheet
         url = GOOGLE_BASE_URL.format(sheet_id, worksheet)
@@ -1177,12 +1179,13 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
         return False
 
 
-def get_google_sheet(sheet_id: str, worksheet: int = 0,
+def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
                      cached: bool = True) -> Table:
     """
     Load a google sheet from url using a sheet id (if cached = True and
     previous loaded - just loads from memory)
 
+    :param ParamDict, parameter dictionary of constants
     :param sheet_id: str, the google sheet id
     :param worksheet: int, the worksheet id (defaults to 0)
     :param cached: bool, if True and previous loaded, loads from memory
@@ -1191,16 +1194,43 @@ def get_google_sheet(sheet_id: str, worksheet: int = 0,
     """
     # set google cache table as global
     global GOOGLE_TABLES
+    # set function name
+    func_name = display_func('get_google_sheet', __NAME__)
     # construct url for worksheet
     url = GOOGLE_BASE_URL.format(sheet_id, worksheet)
     # deal with table existing
     if url in GOOGLE_TABLES and cached:
         return GOOGLE_TABLES[url]
     # get data using a request
-    rawdata = requests.get(url)
+    try:
+        rawdata = requests.get(url)
+    except Exception as e:
+        # TODO: Add to language database
+        emsg = ('Could not load table from url: {0}'
+                '\n\t Error {1}: {2} \n\t Function = {3}')
+        eargs = [url, type(e), str(e), func_name]
+        WLOG(params, 'error', emsg.format(*eargs))
+        return Table()
     # convert rawdata input table
     with warnings.catch_warnings(record=True) as _:
-        table = Table.read(rawdata.text, format='ascii')
+        tries = 0
+        while tries < 10:
+            # try to open table
+            try:
+                table = Table.read(rawdata.text, format='ascii')
+                break
+            # if this fails try again (but with a limit
+            except InconsistentTableError as _:
+                tries += 1
+                # lets wait a little bit to try again
+                time.sleep(2)
+    # need to deal with too many tries
+    if tries >= 10:
+        # TODO: Add to language database
+        emsg = ('Could not load table from url: {0}'
+                '\n\t (Tried 10 times) Function = {1}')
+        eargs = [url, func_name]
+        WLOG(params, 'error', emsg.format(*eargs))
     # add to cached storage
     GOOGLE_TABLES[url] = table
     # return table
@@ -1351,7 +1381,7 @@ def get_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
     rvcol = params['GL_R_RV_COL']
     odocol = params['GL_R_ODO_COL']
     # get reject table
-    reject_table = get_google_sheet(sheet_id, workbook_id)
+    reject_table = get_google_sheet(params, sheet_id, workbook_id)
     # convert masks to boolean
     if ppcol in reject_table.colnames:
         reject_table[ppcol] = reject_table[ppcol] == 'TRUE'
