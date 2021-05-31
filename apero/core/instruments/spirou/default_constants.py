@@ -1203,6 +1203,12 @@ WAVE_MIN_HC_LINES = WAVE_MIN_HC_LINES.copy(__NAME__)
 WAVE_MIN_HC_LINES.value = 5
 WAVE_MIN_HC_LINES.author = base.AUTHORS['EA']
 
+# Define the minimum number of FP lines in an order to try to find
+#   absolute numbering
+WAVE_MIN_FP_LINES = WAVE_MIN_FP_LINES.copy(__NAME__)
+WAVE_MIN_FP_LINES.value = 30
+WAVE_MIN_FP_LINES.author = base.AUTHORS['EA']
+
 # Define the maximum offset in FP peaks to explore when FP peak counting
 WAVE_MAX_FP_COUNT_OFFSET = WAVE_MAX_FP_COUNT_OFFSET.copy(__NAME__)
 WAVE_MAX_FP_COUNT_OFFSET.value = 5
@@ -1247,6 +1253,10 @@ WAVE_HC_VEL_ODD_RATIO = WAVE_HC_VEL_ODD_RATIO.copy(__NAME__)
 WAVE_HC_VEL_ODD_RATIO.value = 1.0e-2
 WAVE_HC_VEL_ODD_RATIO.author = base.AUTHORS['EA']
 
+# Define orders that we cannot fit HC or FP lines to (list of strings)
+WAVE_REMOVE_ORDERS = WAVE_REMOVE_ORDERS.copy(__NAME__)
+WAVE_REMOVE_ORDERS.value = '48'
+
 # Define the number of iterations required to do the final fplines
 #   wave solution
 WAVE_FWAVESOL_ITRS = WAVE_FWAVESOL_ITRS.copy(__NAME__)
@@ -1261,10 +1271,15 @@ WAVE_FIBER_COMP_PLOT_ORD.author = base.AUTHORS['NJC']
 # =============================================================================
 # CALIBRATION: WAVE LINES REFERENCE SETTINGS
 # =============================================================================
-# min SNR to consider the line
-WAVEREF_NSIG_MIN = WAVEREF_NSIG_MIN.copy(__NAME__)
-WAVEREF_NSIG_MIN.value = 15
-WAVEREF_NSIG_MIN.author = base.AUTHORS['EA']
+# min SNR to consider the line (for HC)
+WAVEREF_NSIG_MIN_HC = WAVEREF_NSIG_MIN_HC.copy(__NAME__)
+WAVEREF_NSIG_MIN_HC.value = 15
+WAVEREF_NSIG_MIN_HC.author = base.AUTHORS['EA']
+
+# min SNR to consider the line (for FP)
+WAVEREF_NSIG_MIN_FP = WAVEREF_NSIG_MIN_FP.copy(__NAME__)
+WAVEREF_NSIG_MIN_FP.value = 15
+WAVEREF_NSIG_MIN_FP.author = base.AUTHORS['EA']
 
 # minimum distance to the edge of the array to consider a line
 WAVEREF_EDGE_WMAX = WAVEREF_EDGE_WMAX.copy(__NAME__)

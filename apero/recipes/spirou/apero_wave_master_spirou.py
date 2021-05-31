@@ -251,6 +251,7 @@ def __main__(recipe, params):
             fit_achromatic = False
             # calculate wave solution
             wprops = wave.calc_wave_sol(params, recipe, hclines, fplines,
+                                        nbo=hc_e2ds_file.shape[0],
                                         nbxpix=hc_e2ds_file.shape[1],
                                         fit_cavity=fit_cavity,
                                         fit_achromatic=fit_achromatic,

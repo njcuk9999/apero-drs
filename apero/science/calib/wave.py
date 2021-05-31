@@ -732,7 +732,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # cavity_fit_degree = pcheck(params, 'WAVE_CAVITY_FIT_DEGREE',
     #                            func=func_name)
     # min SNR to consider the line
-    nsig_min = pcheck(params, 'WAVEREF_NSIG_MIN', func=func_name)
+    nsig_min_hc = pcheck(params, 'WAVEREF_NSIG_MIN_HC', func=func_name)
+    nsig_min_fp = pcheck(params, 'WAVEREF_NSIG_MIN_FP', func=func_name)
     # minimum distance to the edge of the array to consider a line
     wmax = pcheck(params, 'WAVEREF_EDGE_WMAX', func=func_name)
     # value in pixel (+/-) for the box size around each HC line to perform fit
@@ -754,6 +755,9 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                         func=func_name)
     # define the guess HC exponetial width [pixels]
     guess_hc_ewid = pcheck(params, 'WAVEREF_HC_GUESS_EWID', func=func_name)
+    # define orders not to fit
+    remove_orders = pcheck(params, 'WAVE_REMOVE_ORDERS', func=func_name,
+                           mapf='list', dtype=int)
     # ------------------------------------------------------------------
     # get psuedo constants
     pconst = constants.pload(params['INSTRUMENT'])
@@ -809,6 +813,9 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # loop around orders and get the lines that fall within each
         #    diffraction order
         for order_num in range(nbo):
+            # do not add lines lines from remove lines
+            if order_num in remove_orders:
+                continue
             # we have a wavelength value, we get an approximate pixel
             # value by fitting wavelength to pixel
             owave = wavemap[order_num]
@@ -865,18 +872,23 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         wave0 = wave0 * np.nanmean(wavemap)
         # need a few iterations to invert polynomial relations
         for _ in range(fp_inv_itr):
-            wave0 = np.polyval(cavity_length_poly, wave0)
-            wave0 = wave0 / nth_peak
+            wave0 = np.polyval(cavity_length_poly, wave0) / nth_peak
         # keep lines within the master_wavelength domain
         keep = (wave0 > np.min(wavemap)) & (wave0 < np.max(wavemap))
         wave0 = wave0[keep]
+        # nth_peak = nth_peak[keep]
         # sort by wavelength
-        wave0 = wave0[np.argsort(wave0)]
+        sortmask = np.argsort(wave0)
+        wave0 = wave0[sortmask]
+        # nth_peak = nth_peak[sortmask]
         # storage for outputs
         list_waves, list_orders, list_pixels, list_wfit = [], [], [], []
         # loop around orders and get the lines that fall within each
         #    diffraction order
         for order_num in range(nbo):
+            # do not add lines lines from remove lines
+            if order_num in remove_orders:
+                continue
             # we have a wavelength value, we get an approximate pixel
             # value by fitting wavelength to pixel
             owave = wavemap[order_num]
@@ -970,7 +982,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             # Need to check that index is in bounds
             if (np.min(index) < 0) or (np.max(index) >= nbpix):
                 eargs = [order_num, it, index, xpixi, wfit, func_name]
-                WLOG(params, 'warning', textentry('09-017-00005', args=eargs))
+                WLOG(params, 'debug', textentry('09-017-00005', args=eargs))
                 continue
             # get the flux value in this peak
             ypix = sorder[index]
@@ -989,12 +1001,14 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                     posmax = mp.nanargmax(ypix)
                     posmin = mp.nanargmin(ypix)
                     ymax, ymin = ypix[posmax], ypix[posmin]
-                    xcen = index[posmax]
-                    # get up a gauss fit guess
-                    #   [amplitude, mean position, FWHM, DC, slope]
-                    guess = [ymax - ymin, xcen, guess_hc_ewid, ymin, 0]
+                    # xcen = index[posmax]
+                    xcen = order_pixels[it]
+
                     # if HC fit a gaussian with a slope
                     if fibtype in hcfibtypes:
+                        # get up a gauss fit guess
+                        #   [amplitude, mean position, FWHM, DC, slope]
+                        guess = [ymax - ymin, xcen, guess_hc_ewid, ymin, 0]
                         out = mp.fit_gauss_with_slope(index, ypix, guess, True)
                         # get parameters from fit
                         popt, pcov, model = out
@@ -1019,17 +1033,26 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                         amp[good[it]] = popt[0]
                         pixel_m[good[it]] = popt[1]
                         ewidth[good[it]] = popt[2]
-                        nsig[good[it]] = popt[0] / rms
+                        nsig[good[it]] = np.abs(popt[0]) / rms
                         # line is valid
                         valid_lines += 1
                 # ignore any bad lines
                 except RuntimeError:
                     pass
-        # log progress: Order {0}/{1} Fiber {2} Valid lines: {3}/{4} (type={5})
-        eargs = [order_num, nbo - 1, fiber, valid_lines, len(order_waves),
-                 fibtype]
-        WLOG(params, '', textentry('40-017-00051', args=eargs))
-
+        # log that we skippec an order
+        if order_num in remove_orders:
+            # TODO: move to language database
+            WLOG(params, '', 'Skipped Order {0}'.format(order_num))
+        else:
+            # log progress: Order {0}/{1} Fiber {2} Valid lines: {3}/{4}
+            eargs = [order_num, nbo - 1, fiber, valid_lines, len(order_waves),
+                     fibtype]
+            WLOG(params, '', textentry('40-017-00051', args=eargs))
+    # get SNR minimum value depending on fiber type
+    if fibtype in hcfibtypes:
+        nsig_min = int(nsig_min_hc)
+    else:
+        nsig_min = int(nsig_min_fp)
     # lines that are not at a high enough SNR are flagged as NaN
     # we do NOT remove these lines as we want all tables to have
     # exactly the same length
@@ -1097,7 +1120,7 @@ def hc_wave_sol_offset(params: ParamDict, inwavemap: np.ndarray,
 
 
 def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
-                  hclines: Table, fplines: Table,
+                  hclines: Table, fplines: Table, nbo: int,
                   nbxpix: int, fit_cavity: bool = True,
                   fit_achromatic: bool = True,
                   cavity_update: Union[np.ndarray, None] = None,
@@ -1137,6 +1160,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     :param recipe: DrsRecipe instance, the recipe that called this function
     :param hclines: Table, HC line table (see above description)
     :param fplines: Table, FP line table (see above description)
+    :param nbo: int, the number of orders (from the e2ds image)
     :param nbxpix: int, the number of pixels in the along-order direction
     :param fit_cavity: bool, if True fits cavity width
     :param fit_achromatic: bool, if True fits achromatic part of cavity
@@ -1167,6 +1191,9 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # Define the minimum number of HC lines in an order to try to find
     #   absolute numbering
     min_hc_lines = pcheck(params, 'WAVE_MIN_HC_LINES', func=func_name)
+    # Define the minimum number of FP lines in an order to try to find
+    #   absolute numbering
+    min_fp_lines = pcheck(params, 'WAVE_MIN_FP_LINES', func=func_name)
     # Define the maximum offset in FP peaks to explore when FP peak counting
     max_fp_c_offset = pcheck(params, 'WAVE_MAX_FP_COUNT_OFFSET', func=func_name)
     # Define the number of iterations required to converge the FP peak counting
@@ -1187,11 +1214,14 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                                     func=func_name)
     # Define the odd ratio that is used in generating the weighted mean
     odd_ratio = pcheck(params, 'WAVE_HC_VEL_ODD_RATIO', func=func_name)
+    # define orders not to fit
+    remove_orders = pcheck(params, 'WAVE_REMOVE_ORDERS', func=func_name,
+                           mapf='list', dtype=int)
     # -------------------------------------------------------------------------
     # setup parameters
     # -------------------------------------------------------------------------
     # order list
-    orders = np.unique(fplines['ORDER'])
+    orders = np.arange(nbo)
     # -------------------------------------------------------------------------
     # only keep pixels that have finite positions
     # it is fine to have orders with no valid lines
@@ -1226,7 +1256,18 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         good_fp = fpl_order == order_num
         good_hc = hcl_order == order_num
         # skip bad orders
-        if np.sum(good_fp) < 30 or np.sum(good_hc) < 5:
+        if np.sum(good_fp) < min_fp_lines:
+            # TODO: move to language database
+            msg = '\tSkipped Order {0} (too few {1} lines {2} < {3})'
+            margs = [order_num, 'FP', np.sum(good_fp), min_fp_lines]
+            WLOG(params, '', msg.format(*margs))
+            continue
+        # skip orders flagged for removal
+        if order_num in remove_orders:
+            # TODO: move to language database
+            msg = '\tSkipped Order {0} (in removed orders)'
+            margs = [order_num]
+            WLOG(params, '', msg.format(*margs))
             continue
         # get the fplines for this order
         ordfp_pix_meas = fpl_pix_meas[good_fp]
@@ -1266,6 +1307,10 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # put into the table
             fpl_pix_meas[good_fp] = ordfp_pix_meas
             fpl_peak_num[good_fp] = ordfp_peak_num
+            # TODO: move to language database
+            msg = '\tSkipped Order {0} (too few {1} lines {2} < {3})'
+            margs = [order_num, 'HC', np.sum(good_hc), min_hc_lines]
+            WLOG(params, '', msg.format(*margs))
             # skip to next order
             continue
         # ---------------------------------------------------------------------
@@ -1287,7 +1332,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         #    cavity through the order
         cavity_per_order = mp.nanmedian(ordhc_wave_ref ** 2 / step_hc_wave)
         # copy this
-        cavity_per_order0 = np.array(cavity_per_order)
+        cavity_per_order0 = float(cavity_per_order)
         # -----------------------------------------------------------------
         # we explore integer offset in FP peak counting and find the
         #     offset that defines the wavelength solution leading to the
@@ -1486,6 +1531,9 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # ---------------------------------------------------------------------
         # loop around order
         for order_num in orders:
+            # skip orders flagged for removal
+            if order_num in remove_orders:
+                continue
             # find the hc and fp lines for the current oder
             good_fp = fpl_order == order_num
             good_hc = hcl_order == order_num
@@ -1559,23 +1607,49 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # Construct the wavelength coefficients / wave map
     # -------------------------------------------------------------------------
     wave_coeffs = np.zeros([len(orders), wavesol_fit_degree + 1])
-    wave_map = np.zeros([len(orders), int(nbxpix)])
     # get xpix
     xpix = np.arange(nbxpix)
+    # worko out the initial wave coefficients
     # loop around orders
     for order_num in orders:
+        # do not add removed orders
+        if order_num in remove_orders:
+            wave_coeffs[order_num] = np.nan
+            continue
         # get the fp lines for this order
         good_fp = fpl_order == order_num
         # get fpline vectors
         ordfp_pix_meas = fpl_pix_meas[good_fp]
         ordfp_wave_ref = fpl_wave_ref[good_fp]
         # fit the solution to this order
-        ord_wave_sol, _ = mp.robust_polyfit(ordfp_pix_meas, ordfp_wave_ref,
-                                            wavesol_fit_degree, nsig_cut)
+        with warnings.catch_warnings(record=True) as _:
+            ord_wave_sol, _ = mp.robust_polyfit(ordfp_pix_meas, ordfp_wave_ref,
+                                                wavesol_fit_degree, nsig_cut)
         # add to wave coefficients
         wave_coeffs[order_num] = ord_wave_sol[::-1]
+    # -------------------------------------------------------------------------
+    # deal with removed orders (insert them by using a consistency check)
+    if len(remove_orders) > 0:
+        # fit the wave coefficients across orders for consistency
+        wave_coeffs_new = np.zeros_like(wave_coeffs)
+        # loop around coefficients
+        for icoeff in range(wavesol_fit_degree + 1):
+            # fit along orders
+            fitcoeffs, _ = mp.robust_polyfit(orders, wave_coeffs[:, icoeff],
+                                             9, 10)
+            # update wave coeffs for all values
+            wave_coeffs_new[:, icoeff] = np.polyval(fitcoeffs, orders)
+        # insert the values for "removed orders"
+        wave_coeffs = np.array(wave_coeffs)
+        for order_num in remove_orders:
+            wave_coeffs[order_num] = np.array(wave_coeffs_new[order_num])
+    # -------------------------------------------------------------------------
+    # generate the wave map from the coefficients
+    wave_map = np.zeros([len(orders), int(nbxpix)])
+    # loop around orders
+    for order_num in orders:
         # generate wave map for order
-        wave_map[order_num] = np.polyval(ord_wave_sol, xpix)
+        wave_map[order_num] = np.polyval(wave_coeffs[order_num][::-1], xpix)
     # -------------------------------------------------------------------------
     # update the fplines and hclines tables
     fplines['WAVE_MEAS'] = fpl_wave_meas
@@ -1665,6 +1739,7 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
         # ---------------------------------------------------------------------
         # calculate wave solution
         wprops = calc_wave_sol(params, recipe, hclines, fplines,
+                               nbo=hc_e2ds_file.shape[0],
                                nbxpix=hc_e2ds_file.shape[1],
                                fit_cavity=fit_cavity,
                                fit_achromatic=fit_achromatic,
