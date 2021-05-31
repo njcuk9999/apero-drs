@@ -371,7 +371,8 @@ def make_object_reset(params: ParamDict):
     objdbm.database.add_table(objdbm.database.tname, columns, ctypes,
                               unique_cols=cuniques)
     # get google sheets
-    gtable = gen_pp.get_google_sheet(params['OBJ_LIST_GOOGLE_SHEET_URL'],
+    gtable = gen_pp.get_google_sheet(params,
+                                     params['OBJ_LIST_GOOGLE_SHEET_URL'],
                                      params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
     objnames = list(np.unique(gtable['OBJECT']))
     # resolve targets
@@ -406,7 +407,8 @@ def update_object_database(params: ParamDict):
     objdbm = drs_database.ObjectDatabase(params)
     objdbm.load_db()
     # get google sheets
-    gtable = gen_pp.get_google_sheet(params['OBJ_LIST_GOOGLE_SHEET_URL'],
+    gtable = gen_pp.get_google_sheet(params,
+                                     params['OBJ_LIST_GOOGLE_SHEET_URL'],
                                      params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
     # update rows in gtable
     for row in tqdm(range(len(gtable))):
