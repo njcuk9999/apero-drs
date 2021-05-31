@@ -14,6 +14,7 @@ import os
 from scipy.ndimage import filters
 from scipy.ndimage import map_coordinates as mapc
 from scipy.optimize import curve_fit
+from scipy.signal import convolve2d
 from scipy.stats import stats
 import warnings
 
@@ -466,6 +467,23 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
                 boxvalues = mask2[ypeak1 + dd[y_it], xpeak1 + dd[x_it]]
                 # push these values into the map
                 map_dxdy[y_it, x_it] = np.mean(boxvalues)
+        # To determine the  accurate shift between a nightly FP and the master
+        # FP, we first find the round pixel offset. To do so, we put the master
+        # FP peaks on a binary mask of the night's FP peaks and count the
+        # number of matches for a range of offsets. Normally, the best match
+        # is the shift with the largest fraction of FP peaks falling at peak
+        # positions on the mask. As the slicer has 4 peaks, you get
+        # 'outriggers' in that correlation map where ~75% of peaks are matched,
+        # meaning that you are off by 1 slice width (slice 1-2-3 in on image
+        # are matched to slices 2-3-4 in the other). Normally this works
+        # nicely, but we had a problem when the detector moved by nearly 0.5
+        # pixel. We ended with 50%/50% of good matches for two different
+        # pixels corresponding to the correct offset and 75% corresponding
+        # to the offset by 1 slice.
+        # To fix if, we now 'smooth' the correlation map, so that two pixels
+        # at 0.5 count more than a single pixel at 0.75
+        map_kernel = [[0.5, 0.5, 0.5], [0.5, 1.0, 0.5], [0.5, 0.5, 0.5]]
+        map_dxdy = convolve2d(map_dxdy, map_kernel, mode='same')
         # get the shifts for these mapped values
         pos = np.argmax(map_dxdy)
         dy0, dx0 = -dd[pos // len(dd)], -dd[pos % len(dd)]
