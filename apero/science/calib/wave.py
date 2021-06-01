@@ -2137,6 +2137,9 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # get the y limit for the res plot
     res_ylim = pcheck(params, 'WAVE_HC_RESMAP_YLIM', func=func_name,
                       mapf='list', dtype=float)
+    # define the way we fit line profiles
+    fitmode = pcheck(params, 'WAVE_HC_RESMAP_FITTYPE', func=func_name)
+
     # -------------------------------------------------------------------------
     # get parameters from wprops
     wavemap = wprops['WAVEMAP']
@@ -2144,6 +2147,7 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     hc_pix_ref = hclines['PIXEL_REF']
     hc_order = hclines['ORDER']
     hc_wave_ref = hclines['WAVE_REF']
+    hc_nsig = hclines['NSIG']
     # get the HC E2DS file
     hc_e2ds = np.array(hc_e2ds_file.data)
     # -------------------------------------------------------------------------
@@ -2182,6 +2186,12 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
             # get valid orders and pixels
             valid_orders = (orders // bin_order == i_order_bin)
             valid_pixels = (xpix // bin_spatial == i_spatial_bin)
+            # only keep the best 100 lines in "nsig" (SNR) - if we have more
+            #   than 100 finite values for SNR
+            valid_lines &= np.isfinite(hc_nsig)
+            if np.sum(valid_lines) > 100:
+                sigcut = -np.sort(-hc_nsig[valid_lines])[100]
+                valid_lines &= hc_nsig > sigcut
             # get the minimum and maximum value for orders
             map_lower_ords[mapkey] = np.min(orders[valid_orders])
             map_high_ords[mapkey] = np.max(orders[valid_orders])
@@ -2230,66 +2240,27 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
                 all_wave += list(wavekeep)
                 all_order += list(orderkeep)
             # -----------------------------------------------------------------
-            # prepare all dvs and flux for fitting
+            # Fit the line profiles for this bin
             # -----------------------------------------------------------------
-            # initial guess: fwhm, amp, expo
-            guess = [3.5, 0.5, 2.0]
-            # sort dvs and fluxes by dvs
-            sort = np.argsort(all_dv)
-            all_dv, all_flux = np.array(all_dv)[sort], np.array(all_flux)[sort]
-            all_wave = np.array(all_wave)[sort]
-            all_order = np.array(all_order)[sort]
-            # mask values to only keep good values (flux is normalize)
-            mask = (all_flux > -0.1) & (all_flux < 1.0)
-            mask &= np.isfinite(all_flux)
-            # apply mask to dv and flux
-            all_dv, all_flux = all_dv[mask], all_flux[mask]
-            all_wave, all_order = all_wave[mask], all_order[mask]
+            if fitmode == 'super-gaussian':
+                fout = res_fit_super_gauss(params, mapkey,
+                                           i_order_bin, i_spatial_bin,
+                                           valid_lines, all_dv,
+                                           all_flux, all_wave, all_order,
+                                           map_lower_ords, map_high_ords,
+                                           map_lower_pix, map_high_pix)
+                # get super gauss returns
+                fwhm, amp, expo, res_eff, fluxfit2 = fout[:5]
+                all_dv, all_flux, all_wave, all_order = fout[5:]
+            else:
+                fout = res_fit_gauss(params, mapkey, i_order_bin, i_spatial_bin,
+                                     valid_lines, all_dv, all_flux, all_wave,
+                                     all_order, map_lower_ords, map_high_ords,
+                                     map_lower_pix, map_high_pix)
+                # get gauss returns
+                fwhm, amp, expo, res_eff, fluxfit2 = fout[:5]
+                all_dv, all_flux, all_wave, all_order = fout[5:]
             # -----------------------------------------------------------------
-            # fit the dvs
-            # -----------------------------------------------------------------
-            try:
-                # attempt a first fit on the flux
-                cargs = [mp.centered_super_gauss, all_dv, all_flux]
-                with warnings.catch_warnings(record=True) as _:
-                    pcoeffs1, _ = curve_fit(*cargs, p0=guess)
-                # calculate the residuals between flux and fit
-                fluxfit1 = mp.centered_super_gauss(all_dv, *pcoeffs1)
-                residuals = all_flux - fluxfit1
-                # sigma clip the residuals
-                sigclip = np.abs(residuals) < 0.3
-                # update the all_dv and all_flux vectors
-                all_dv, all_flux = all_dv[sigclip], all_flux[sigclip]
-                all_wave, all_order = all_wave[sigclip], all_order[sigclip]
-                # re-fit based on sigma clipped vectors
-                cargs = [mp.centered_super_gauss, all_dv, all_flux]
-                with warnings.catch_warnings(record=True) as _:
-                    pcoeffs2, _ = curve_fit(*cargs, p0=guess)
-                # calculate fit
-                fluxfit2 = mp.centered_super_gauss(all_dv, *pcoeffs2)
-                # calculate resolution
-                fwhm, amp, expo = pcoeffs2
-                res_eff = speed_of_light / fwhm
-            except ValueError as e:
-                # set values to NaN
-                fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
-                fluxfit2 = np.full_like(all_dv, np.nan)
-                # Fit failed for order bin {0} spectral bin {1}
-                wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
-                         map_lower_ords[mapkey], map_high_ords[mapkey],
-                         map_lower_pix[mapkey], map_high_pix[mapkey],
-                         type(e), str(e)]
-                WLOG(params, 'warning', textentry('10-016-00024', wargs))
-            except RuntimeError as e:
-                # set values to NaN
-                fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
-                fluxfit2 = np.full_like(all_dv, np.nan)
-                # Fit failed for order bin {0} spectral bin {1}
-                wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
-                         map_lower_ords[mapkey], map_high_ords[mapkey],
-                         map_lower_pix[mapkey], map_high_pix[mapkey],
-                         type(e), str(e)]
-                WLOG(params, 'warning', textentry('10-016-00024', wargs))
             # log parameters: FWHM={0:.2f} km/s, effective resolution={1:.2f},
             #     expo={2:.2f}
             margs = [fwhm, expo, res_eff]
@@ -2346,6 +2317,164 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # return updated wprops
     return wprops
 
+
+def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
+                        i_order_bin: int, i_spatial_bin: int,
+                        valid_lines: np.ndarray, all_dv: List[float],
+                        all_flux: List[float], all_wave: List[float],
+                        all_order: List[float],
+                        map_lower_ords: dict, map_high_ords: dict,
+                        map_lower_pix: dict, map_high_pix: dict):
+    # set function name
+    func_name = display_func('res_fit_super_gauss', __NAME__)
+    # -----------------------------------------------------------------
+    # get sigma clip
+    sigclipthres = pcheck(params, 'WAVE_HC_RESMAP_SIGCLIP', func=func_name)
+    # -----------------------------------------------------------------
+    # prepare all dvs and flux for fitting
+    # -----------------------------------------------------------------
+    # initial guess: fwhm, amp, expo
+    guess = [3.5, 0.5, 2.0]
+    # sort dvs and fluxes by dvs
+    sort = np.argsort(all_dv)
+    all_dv, all_flux = np.array(all_dv)[sort], np.array(all_flux)[sort]
+    all_wave = np.array(all_wave)[sort]
+    all_order = np.array(all_order)[sort]
+    # mask values to only keep good values (flux is normalize)
+    mask = (all_flux > -0.1) & (all_flux < 1.0)
+    mask &= np.isfinite(all_flux)
+    # apply mask to dv and flux
+    all_dv, all_flux = all_dv[mask], all_flux[mask]
+    all_wave, all_order = all_wave[mask], all_order[mask]
+    # -----------------------------------------------------------------
+    # fit the dvs
+    # -----------------------------------------------------------------
+    try:
+        # attempt a first fit on the flux
+        cargs = [mp.centered_super_gauss, all_dv, all_flux]
+        with warnings.catch_warnings(record=True) as _:
+            pcoeffs1, _ = curve_fit(*cargs, p0=guess)
+        # calculate the residuals between flux and fit
+        fluxfit1 = mp.centered_super_gauss(all_dv, *pcoeffs1)
+        residuals = all_flux - fluxfit1
+        # sigma clip the residuals
+        sigclip = np.abs(residuals) < sigclipthres
+        # update the all_dv and all_flux vectors
+        all_dv, all_flux = all_dv[sigclip], all_flux[sigclip]
+        all_wave, all_order = all_wave[sigclip], all_order[sigclip]
+        # re-fit based on sigma clipped vectors
+        cargs = [mp.centered_super_gauss, all_dv, all_flux]
+        with warnings.catch_warnings(record=True) as _:
+            pcoeffs2, _ = curve_fit(*cargs, p0=guess)
+        # calculate fit
+        fluxfit2 = mp.centered_super_gauss(all_dv, *pcoeffs2)
+        # calculate resolution
+        fwhm, amp, expo = pcoeffs2
+        res_eff = speed_of_light / fwhm
+    except ValueError as e:
+        # set values to NaN
+        fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
+        fluxfit2 = np.full_like(all_dv, np.nan)
+        # Fit failed for order bin {0} spectral bin {1}
+        wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
+                 map_lower_ords[mapkey], map_high_ords[mapkey],
+                 map_lower_pix[mapkey], map_high_pix[mapkey],
+                 type(e), str(e)]
+        WLOG(params, 'warning', textentry('10-016-00024', wargs))
+    except RuntimeError as e:
+        # set values to NaN
+        fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
+        fluxfit2 = np.full_like(all_dv, np.nan)
+        # Fit failed for order bin {0} spectral bin {1}
+        wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
+                 map_lower_ords[mapkey], map_high_ords[mapkey],
+                 map_lower_pix[mapkey], map_high_pix[mapkey],
+                 type(e), str(e)]
+        WLOG(params, 'warning', textentry('10-016-00024', wargs))
+
+    fout = [fwhm, amp, expo, res_eff, fluxfit2, all_dv, all_flux,
+            all_wave, all_order]
+
+
+def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
+                  i_order_bin: int, i_spatial_bin: int,
+                  valid_lines: np.ndarray, all_dv: List[float],
+                  all_flux: List[float], all_wave: List[float],
+                  all_order: List[float],
+                  map_lower_ords: dict, map_high_ords: dict,
+                  map_lower_pix: dict, map_high_pix: dict):
+    # set function name
+    func_name = display_func('res_fit_gauss', __NAME__)
+    # -----------------------------------------------------------------
+    # get sigma clip
+    sigclipthres = pcheck(params, 'WAVE_HC_RESMAP_SIGCLIP', func=func_name)
+    # -----------------------------------------------------------------
+    # prepare all dvs and flux for fitting
+    # -----------------------------------------------------------------
+    # sort dvs and fluxes by dvs
+    sort = np.argsort(all_dv)
+    all_dv, all_flux = np.array(all_dv)[sort], np.array(all_flux)[sort]
+    all_wave = np.array(all_wave)[sort]
+    all_order = np.array(all_order)[sort]
+    # mask values to only keep good values (flux is normalize)
+    mask = (all_flux > -0.1) & (all_flux < 1.0)
+    mask &= np.isfinite(all_flux)
+    # apply mask to dv and flux
+    all_dv, all_flux = all_dv[mask], all_flux[mask]
+    all_wave, all_order = all_wave[mask], all_order[mask]
+    # initial guess: amp, position, sigma, dc]
+    guess = [0.5, 0.0, 3.5, 0.0]
+    # -----------------------------------------------------------------
+    # fit the dvs
+    # -----------------------------------------------------------------
+    try:
+        # attempt a first fit on the flux
+        cargs = [mp.gauss_function, all_dv, all_flux]
+        with warnings.catch_warnings(record=True) as _:
+            pcoeffs1, _ = curve_fit(*cargs, p0=guess)
+        # calculate the residuals between flux and fit
+        fluxfit1 = mp.gauss_function(all_dv, *pcoeffs1)
+        residuals = all_flux - fluxfit1
+        # sigma clip the residuals
+        sigclip = np.abs(residuals) < sigclipthres
+        # update the all_dv and all_flux vectors
+        all_dv, all_flux = all_dv[sigclip], all_flux[sigclip]
+        all_wave, all_order = all_wave[sigclip], all_order[sigclip]
+        # re-fit based on sigma clipped vectors
+        cargs = [mp.gauss_function, all_dv, all_flux]
+        with warnings.catch_warnings(record=True) as _:
+            pcoeffs2, _ = curve_fit(*cargs, p0=guess)
+        # calculate fit
+        fluxfit2 = mp.gauss_function(all_dv, *pcoeffs2)
+        # calculate resolution
+        amp, _, sigma, _ = pcoeffs2
+        fwhm = sigma * np.sqrt(2 * np.log(2)) * 2
+        res_eff = speed_of_light / fwhm
+    except ValueError as e:
+        # set values to NaN
+        fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
+        fluxfit2 = np.full_like(all_dv, np.nan)
+        # Fit failed for order bin {0} spectral bin {1}
+        wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
+                 map_lower_ords[mapkey], map_high_ords[mapkey],
+                 map_lower_pix[mapkey], map_high_pix[mapkey],
+                 type(e), str(e)]
+        WLOG(params, 'warning', textentry('10-016-00024', wargs))
+    except RuntimeError as e:
+        # set values to NaN
+        fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
+        fluxfit2 = np.full_like(all_dv, np.nan)
+        # Fit failed for order bin {0} spectral bin {1}
+        wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
+                 map_lower_ords[mapkey], map_high_ords[mapkey],
+                 map_lower_pix[mapkey], map_high_pix[mapkey],
+                 type(e), str(e)]
+        WLOG(params, 'warning', textentry('10-016-00024', wargs))
+
+    fout = [fwhm, amp, 2.0, res_eff, fluxfit2, all_dv, all_flux,
+            all_wave, all_order]
+
+    return fout
 
 # =============================================================================
 # Define writing functions

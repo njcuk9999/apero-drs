@@ -1649,6 +1649,14 @@ WAVE_HC_RESMAP_XLIM.value = '-8.0, 8.0'
 WAVE_HC_RESMAP_YLIM = WAVE_HC_RESMAP_YLIM.copy(__NAME__)
 WAVE_HC_RESMAP_YLIM.value = '-0.05, 0.7'
 
+# Define whether to fit line profiles with "gaussian" or "super-gaussian"
+WAVE_HC_RESMAP_FITTYPE = WAVE_HC_RESMAP_FITTYPE.copy(__NAME__)
+WAVE_HC_RESMAP_FITTYPE.value = 'super-gaussian'
+
+# Define the sigma clip for line profiles for the resolution map
+WAVE_HC_RESMAP_SIGCLIP = WAVE_HC_RESMAP_SIGCLIP.copy(__NAME__)
+WAVE_HC_RESMAP_SIGCLIP.value = 0.2
+
 # Define the minimum instrumental error
 WAVE_FP_ERRX_MIN = WAVE_FP_ERRX_MIN.copy(__NAME__)
 WAVE_FP_ERRX_MIN.value = 0.01  # 0.03
