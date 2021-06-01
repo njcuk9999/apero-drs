@@ -186,7 +186,7 @@ __all__ = [
     'WAVE_HC_TFIT_SIGCLIP_THRES', 'WAVE_HC_TFIT_DVCUT_ORDER',
     'WAVE_HC_TFIT_DVCUT_ALL', 'WAVE_HC_RESMAP_SIZE', 'WAVE_HC_RES_MAXDEV_THRES',
     'WAVE_HC_QC_SIGMA_MAX', 'WAVE_HC_RESMAP_DV_SPAN', 'WAVE_HC_RESMAP_XLIM',
-    'WAVE_HC_RESMAP_YLIM',
+    'WAVE_HC_RESMAP_YLIM', 'WAVE_HC_RESMAP_FITTYPE', 'WAVE_HC_RESMAP_SIGCLIP',
     # wave littrow parameters
     'WAVE_LITTROW_ORDER_INIT_1', 'WAVE_LITTROW_ORDER_INIT_2',
     'WAVE_LITTROW_ORDER_FINAL_1', 'WAVE_LITTROW_ORDER_FINAL_2',
@@ -2926,6 +2926,19 @@ WAVE_HC_RESMAP_YLIM = Const('WAVE_HC_RESMAP_YLIM', value=None, dtype=str,
                                          'PLOT_WAVE_HC_RESMAP debug plot, '
                                          'should be a string list containing a '
                                          'min and max y value'))
+
+# Define whether to fit line profiles with "gaussian" or "super-gaussian"
+WAVE_HC_RESMAP_FITTYPE = Const('WAVE_HC_RESMAP_FITTYPE', value=None, dtype=str,
+                               source=__NAME__, group=cgroup,
+                               description='Define whether to fit line '
+                                           'profiles with "gaussian" or '
+                                           '"super-gaussian"')
+
+# Define the sigma clip for line profiles for the resolution map
+WAVE_HC_RESMAP_SIGCLIP = Const('WAVE_HC_RESMAP_SIGCLIP', value=None,
+                               dtype=float, source=__NAME__, group=cgroup,
+                               description='Define the sigma clip for line '
+                                           'profiles for the resolution map')
 
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
