@@ -2391,9 +2391,10 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
                  map_lower_pix[mapkey], map_high_pix[mapkey],
                  type(e), str(e)]
         WLOG(params, 'warning', textentry('10-016-00024', wargs))
-
+    # return outputs
     fout = [fwhm, amp, expo, res_eff, fluxfit2, all_dv, all_flux,
             all_wave, all_order]
+    return fout
 
 
 def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
@@ -2470,7 +2471,7 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
                  map_lower_pix[mapkey], map_high_pix[mapkey],
                  type(e), str(e)]
         WLOG(params, 'warning', textentry('10-016-00024', wargs))
-
+    # return outputs
     fout = [fwhm, amp, 2.0, res_eff, fluxfit2, all_dv, all_flux,
             all_wave, all_order]
 
