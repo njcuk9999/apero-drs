@@ -1,6 +1,6 @@
-# Update Note Summary - Version 0.7.108
+# Update Note Summary - Version 0.7.126
 
-Date: 2021-04-23
+Date: 2021-06-02
 
 ## summary of big cosmetic changes
     - any reference to NIGHT or NIGHTNAME or DIRECTORY will now be "obs_dir"
@@ -250,5 +250,6 @@ Date: 2021-04-23
             - HDU[9]: BinTable HDU  name=PolTable
 
     Merge NIRPS_HA changes into 0.7 version
-        - works for bluest orders (first 41)
-        - tested up to wave solution
+        - works for all orders on A fiber up to extract (cannot test
+          science / telluric parts due to no real or simulated data)
+        - problems with localisation of A vs B due to absorption band

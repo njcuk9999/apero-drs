@@ -2,6 +2,60 @@ Changelog
 =========
 
 
+0.7.126 (2021-06-01)
+--------------------
+- Apero.science.calib.wave.py - fix res map to work for NIRPS (gaussian
+  fit vs super-gaussian fit for spirou) [Neil Cook]
+
+
+0.7.125 (2021-05-31)
+--------------------
+- Apero.science.preprocessing.gen_pp.py - handle request.get() exception
+  or going to the wrong link (table inconsistent) [Neil Cook]
+- Update wave codes for NIRPS and SPIRou - now can remove orders from
+  any part of the detector. [Neil Cook]
+- Update some doc strings + unused arguments in wave codes. [Neil Cook]
+- Update nirps default wave grid (for cut 71) [Neil Cook]
+
+
+0.7.124 (2021-05-27)
+--------------------
+- Update nirps default wave grid (for cut 71) [Neil Cook]
+- Wave sol changes for NIRPS_HA full detector. [Neil Cook]
+
+
+0.7.123 (2021-05-26)
+--------------------
+- Apero.recipes.nirps_ha.apero_wave_master_nirps_ha.py - add back in the
+  FP file check. [Neil Cook]
+- Apero.recipes.science.calib.wave.py - modify wave code for nirps.
+  [Neil Cook]
+- Setup.newprofile.py - (re)create yamls after updating them. [Neil
+  Cook]
+- Apero.science.extract.extraction.py - clean up
+  calculate_blaze_flat_sinc args. [Neil Cook]
+- Apero.science.calib.flat_blaze.py - make med filter size a constant
+  (for each instrument) [Neil Cook]
+- Apero.recipes.*.apero_extract_*.py - quicklook remove wavesol. [Neil
+  Cook]
+- Apero.plotting.plot_funcitons.py - type frame1.set_ylim -->
+  frame2.set_ylim. [Neil Cook]
+- Apero.core.utils.drs_recipe.py + others - deal with DRS_OBJ_NAME +
+  DRS_OBJ_NAMES. [Neil Cook]
+- Apero.instruments.nirps_ha.recipe_definitions.py - apero_pp_master
+  needed group_func + group_column. [Neil Cook]
+- Apero.core.instruments.default.grouping.py - need to deal with
+  rawtab=None. [Neil Cook]
+- Apero.instruments.*.pseudo_const.py - sort out objname + null text.
+  [Neil Cook]
+- Apero.core.instruments.*.default_constants.py - add
+  FF_BLAZE_SINC_MED_SIZE. [Neil Cook]
+- Apero.base.base.py - write_yaml Path-->str + pep8. [Neil Cook]
+- Apero.core.instruments.spirou.default_keywords.py - use OBJECT not
+  OBJNAME (reversal of last weeks change) [Neil Cook]
+- Update date / version / changelog / documentation. [Neil Cook]
+
+
 0.7.122 (2021-05-25)
 --------------------
 - Apero.recipes.nirps_ha.apero_wave_master_nirps_ha.py - pep8 updates.
