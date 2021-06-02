@@ -1763,20 +1763,26 @@ def _set_force_dirs(recipe: DrsRecipe,
             dargs = ['recipe.inputdir', in_block_str, kwarg]
             dmsg = textentry('90-008-00014', args=dargs)
             WLOG(recipe.params, 'debug', dmsg)
+    # ----------------------------------------------------------------------
     # set recipe.inputdir
     if in_block_str is not None:
         # get block names
         block_names = drs_file.DrsPath.get_block_names(params=recipe.params)
-        # force to upper
-        block_names = list(map(lambda x: x.upper(), block_names))
         # must check that block str is not a block kind
-        if in_block_str.upper() not in block_names:
+        if in_block_str not in block_names:
             # only set this if block str is an actual path
             if os.path.exists(os.path.abspath(in_block_str)):
                 in_block_str = os.path.abspath(in_block_str)
             # set the input dir
             recipe.inputdir = drs_file.DrsPath(recipe.params,
                                                block_path=in_block_str)
+            # update the in block kind str
+            recipe.in_block_str = recipe.inputdir.block_kind
+        # else set the recipe in_block_str to the block defined in in_block_str
+        else:
+            # set the input dir
+            recipe.inputdir = drs_file.DrsPath(recipe.params,
+                                               block_kind=in_block_str)
             # update the in block kind str
             recipe.in_block_str = recipe.inputdir.block_kind
     # ----------------------------------------------------------------------
