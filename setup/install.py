@@ -518,10 +518,6 @@ def main():
         allparams, args = install.user_interface(params, args, LANGUAGE)
     else:
         allparams = install.update(params, args)
-    # add dev mode to allparams
-    allparams['DEVMODE'] = args.devmode
-    # add clean warn
-    allparams['CLEANWARN'] = args.cleanwarn
     # add environmental variable DRS_UCONFIG
     os.environ['DRS_UCONFIG'] = str(allparams['USERCONFIG'])
     # reload params
