@@ -424,6 +424,11 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     cprint(printheader(), 'm')
     print('\n')
     # ------------------------------------------------------------------
+    # add dev mode to allparams
+    all_params['DEVMODE'] = args.devmode
+    # add clean warn
+    all_params['CLEANWARN'] = args.cleanwarn
+    # ------------------------------------------------------------------
     # Step 0: Ask for profile name (if not given)
     # ------------------------------------------------------------------
     # deal with having a profile name
@@ -1625,8 +1630,11 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
     # ----------------------------------------------------------------------
     # set up dictionary
     all_params = ParamDict()
-    # dev mode
+    # ------------------------------------------------------------------
+    # add dev mode to allparams
     all_params['DEVMODE'] = args.devmode
+    # add clean warn
+    all_params['CLEANWARN'] = args.cleanwarn
     # ----------------------------------------------------------------------
     # deal with having a profile name
     if args.name in ['None', None, '']:
