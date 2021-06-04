@@ -542,6 +542,69 @@ BKGR_KER_SIG.value = 3
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
 # =============================================================================
+# median-binning size in the dispersion direction. This is just used to
+#     get an order-of-magnitude of the order profile along a given column
+LOC_BINSIZE = LOC_BINSIZE.copy(__NAME__)
+LOC_BINSIZE.value = 50
+LOC_BINSIZE.author = base.AUTHORS['EA']
+
+# the zero point percentile of a box
+LOC_BOX_PERCENTILE_LOW = LOC_BOX_PERCENTILE_LOW.copy(__NAME__)
+LOC_BOX_PERCENTILE_LOW.value = 25
+LOC_BOX_PERCENTILE_LOW.author = base.AUTHORS['EA']
+
+# the percentile of a box that is always an illuminated pixel
+LOC_BOX_PERCENTILE_HIGH = LOC_BOX_PERCENTILE_HIGH.copy(__NAME__)
+LOC_BOX_PERCENTILE_HIGH.value = 95
+LOC_BOX_PERCENTILE_HIGH.author = base.AUTHORS['EA']
+
+# the size of the percentile filter - should be a bit bigger than the
+# inter-order gap
+LOC_PERCENTILE_FILTER_SIZE = LOC_PERCENTILE_FILTER_SIZE.copy(__NAME__)
+LOC_PERCENTILE_FILTER_SIZE.value = 100
+LOC_PERCENTILE_FILTER_SIZE.author = base.AUTHORS['EA']
+
+# the fiber dilation number of iterations this should only be used when
+#     we want a combined localisation solution i.e. AB from A and B
+LOC_FIBER_DILATE_ITERATIONS = LOC_FIBER_DILATE_ITERATIONS.copy(__NAME__)
+LOC_FIBER_DILATE_ITERATIONS.value = 3
+LOC_FIBER_DILATE_ITERATIONS.author = base.AUTHORS['EA']
+
+# the minimum area (number of pixels) that defines an order
+LOC_MIN_ORDER_AREA = LOC_MIN_ORDER_AREA.copy(__NAME__)
+LOC_MIN_ORDER_AREA.value = 500
+LOC_MIN_ORDER_AREA.author = base.AUTHORS['EA']
+
+# Order of polynomial to fit for widths
+LOC_WIDTH_POLY_DEG = LOC_WIDTH_POLY_DEG.copy(__NAME__)
+LOC_WIDTH_POLY_DEG.value = 5
+LOC_WIDTH_POLY_DEG.author = base.AUTHORS['EA']
+
+# Order of polynomial to fit for positions
+LOC_CENT_POLY_DEG = LOC_CENT_POLY_DEG.copy(__NAME__)
+LOC_CENT_POLY_DEG.value = 5
+LOC_CENT_POLY_DEG.author = base.AUTHORS['EA']
+
+# range width size (used to fit the width of the orders at certain points)
+LOC_RANGE_WID_SUM = LOC_RANGE_WID_SUM.copy(__NAME__)
+LOC_RANGE_WID_SUM.value = 100
+LOC_RANGE_WID_SUM.author = base.AUTHORS['EA']
+
+# define the minimum detector position where the centers of the orders should
+#   fall (across order direction)
+LOC_YDET_MIN = LOC_YDET_MIN.copy(__NAME__)
+LOC_YDET_MIN.value = 78
+LOC_YDET_MIN.author = base.AUTHORS['EA']
+
+# define the maximum detector position where the centers of the orders should
+#   fall (across order direction)
+LOC_YDET_MAX = LOC_YDET_MAX.copy(__NAME__)
+LOC_YDET_MAX.value = 4060
+LOC_YDET_MAX.author = base.AUTHORS['EA']
+
+# =============================================================================
+# CALIBRATION: LOCALISATION SETTINGS
+# =============================================================================
 #   Size of the order_profile smoothed box
 #     (from pixel - size to pixel + size)
 LOC_ORDERP_BOX_SIZE = LOC_ORDERP_BOX_SIZE.copy(__NAME__)
@@ -1417,7 +1480,7 @@ WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
 #    fiber and other fibers, above this limit fails QC [m/s]
 # TODO: We should really think about this a bit more
 WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
-WAVE_CCF_RV_THRES_QC.value = 2.0    #  0.5 (spirou value)
+WAVE_CCF_RV_THRES_QC.value = 2.0    # 0.5 (spirou value)
 
 # TODO: Sort out wave constants below here
 # =============================================================================
@@ -1511,9 +1574,9 @@ WAVE_HC_FITBOX_RMS_DEVMAX.value = 0.2
 
 # the e-width of the line expressed in pixels.
 WAVE_HC_FITBOX_EWMIN = WAVE_HC_FITBOX_EWMIN.copy(__NAME__)
-WAVE_HC_FITBOX_EWMIN.value = 1.0    #  0.7
+WAVE_HC_FITBOX_EWMIN.value = 1.0    # 0.7
 WAVE_HC_FITBOX_EWMAX = WAVE_HC_FITBOX_EWMAX.copy(__NAME__)
-WAVE_HC_FITBOX_EWMAX.value = 3.0   #  1.1
+WAVE_HC_FITBOX_EWMAX.value = 3.0   # 1.1
 
 # define the file type for saving the initial guess at the hc peak list
 WAVE_HCLL_FILE_FMT = WAVE_HCLL_FILE_FMT.copy(__NAME__)
@@ -2282,33 +2345,25 @@ PLOT_DARK_HISTOGRAM.value = True
 PLOT_BADPIX_MAP = PLOT_BADPIX_MAP.copy(__NAME__)
 PLOT_BADPIX_MAP.value = True
 
-# turn on the localisation cent min max debug plot
-PLOT_LOC_MINMAX_CENTS = PLOT_LOC_MINMAX_CENTS.copy(__NAME__)
-PLOT_LOC_MINMAX_CENTS.value = True
+# turn on localisation the width regions plot
+PLOT_LOC_WIDTH_REGIONS = PLOT_LOC_WIDTH_REGIONS.copy(__NAME__)
+PLOT_LOC_WIDTH_REGIONS.value = True
 
-# turn on the localisation cent/thres debug plot
-PLOT_LOC_MIN_CENTS_THRES = PLOT_LOC_MIN_CENTS_THRES.copy(__NAME__)
-PLOT_LOC_MIN_CENTS_THRES.value = True
+# turn on localisation fiber doublet paroty plot
+PLOT_LOC_FIBER_DOUBLET_PARITY = PLOT_LOC_FIBER_DOUBLET_PARITY.copy(__NAME__)
+PLOT_LOC_FIBER_DOUBLET_PARITY.value = True
 
-# turn on the localisation finding orders debug plot
-PLOT_LOC_FINDING_ORDERS = PLOT_LOC_FINDING_ORDERS.copy(__NAME__)
-PLOT_LOC_FINDING_ORDERS.value = False
+# turn on localisation gap in orders plot
+PLOT_LOC_GAP_ORDERS = PLOT_LOC_GAP_ORDERS.copy(__NAME__)
+PLOT_LOC_GAP_ORDERS.value = True
 
-# turn on the image above saturation threshold debug plot
-PLOT_LOC_IM_SAT_THRES = PLOT_LOC_IM_SAT_THRES.copy(__NAME__)
-PLOT_LOC_IM_SAT_THRES.value = True
+# turn on localisation image fit plot
+PLOT_LOC_IMAGE_FIT = PLOT_LOC_IMAGE_FIT.copy(__NAME__)
+PLOT_LOC_IMAGE_FIT.value = True
 
-# turn on the localisation fit residuals plot (warning: done many times)
-PLOT_LOC_FIT_RESIDUALS = PLOT_LOC_FIT_RESIDUALS.copy(__NAME__)
-PLOT_LOC_FIT_RESIDUALS.value = False
-
-# turn on the order number vs rms debug plot
-PLOT_LOC_ORD_VS_RMS = PLOT_LOC_ORD_VS_RMS.copy(__NAME__)
-PLOT_LOC_ORD_VS_RMS.value = True
-
-# turn on the localisation check coeffs debug plot
-PLOT_LOC_CHECK_COEFFS = PLOT_LOC_CHECK_COEFFS.copy(__NAME__)
-PLOT_LOC_CHECK_COEFFS.value = True
+# turn on localisation image corners plot
+PLOT_LOC_IM_CORNER = PLOT_LOC_IM_CORNER.copy(__NAME__)
+PLOT_LOC_IM_CORNER.value = True
 
 # turn on the shape dx debug plot
 PLOT_SHAPE_DX = PLOT_SHAPE_DX.copy(__NAME__)
