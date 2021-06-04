@@ -473,6 +473,52 @@ class PseudoConstants(DefaultConstants):
         # return params
         return fiberparams
 
+    def FIBER_LOCALISATION(self, fiber) -> List[str]:
+        """
+        Return which fibers to calculate localisation for
+
+        :param fiber: str, fiber name
+
+        :return: list of strings, the fibers to find localisation for
+        """
+        return fiber
+
+    def FIBER_DILATE(self, fiber: str) -> bool:
+        """
+        whether we are dilate the imagine due to fiber configuration this should
+        only be used when we want a combined localisation solution
+        i.e. AB from A and B
+        for NIRPS this is False
+
+        :param fiber: str, the fiber name
+        :return: bool, True if we should dilate, False otherwise
+        """
+        _ = fiber
+        return False
+
+    def FIBER_DOUBLETS(self, fiber: str) -> bool:
+        """
+        whether we have orders coming in doublets (i.e. SPIROUs AB --> A + B)
+
+        Not used for NIRPS
+
+        :param fiber: str, the fiber name
+        :return: bool, True if we have fiber 'doublets', False otherwise
+        """
+        _ = fiber
+        return False
+
+    def FIBER_DOUBLET_PARITY(self, fiber: str) -> Union[int, None]:
+        """
+        Give the doublet fibers parity - all other fibers should not use this
+        function - not used for NIRPS
+
+        :param fiber: str, the fiber name
+        :return: int or None, either +/-1 (for fiber A/B) or None)
+        """
+        _ = fiber
+        return None
+
     def FIBER_LOC_TYPES(self, fiber: str) -> str:
         """
         The fiber localisation types to use (i.e. some fiber types should use

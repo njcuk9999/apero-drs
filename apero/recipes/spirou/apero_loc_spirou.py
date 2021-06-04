@@ -163,32 +163,40 @@ def __main__(recipe, params):
         # Localization of orders on central column
         # ------------------------------------------------------------------
         # find and fit localisation
-        largs = [order_profile, props['SIGDET'], fiber]
-        lout = localisation.find_and_fit_localisation(params, recipe, *largs)
+        _fibers = pconst.FIBER_LOCALISATION(fiber)
+        ldict = dict()
+        for _fiber in _fibers:
+            lout = localisation.calc_localisation(params, recipe, image, _fiber)
+            ldict[_fiber] = lout
+        # deal with merging coefficients and formatting for use as they
+        #   were in older codes (may be redundant in future)
+        cent_coeffs, wid_coeffs = localisation.merge_coeffs(params, ldict)
 
-        # get parameters from lout
-        cent_0, cent_coeffs, cent_rms, cent_max_ptp = lout[:4]
-        cent_frac_ptp, cent_max_rmpts = lout[4:6]
-        wid_0, wid_coeffs, wid_rms, wid_max_ptp = lout[6:10]
-        wid_frac_ptp, wid_max_rmpts, xplot, yplot = lout[10:14]
-        rorder_num, mean_rms_cent, mean_rms_wid = lout[14:17]
-        max_signal, mean_backgrd = lout[17:]
-
-        # ------------------------------------------------------------------
-        # Clean the coefficients (using a sanity check)
-        # ------------------------------------------------------------------
-        # clean the center position fits
-        cargs = [image, cent_coeffs, fiber, 'center']
-        cent_coeffs = localisation.check_coeffs(params, recipe, *cargs)
-        # clean the width fits
-        wargs = [image, wid_coeffs, fiber, 'width']
-        wid_coeffs = localisation.check_coeffs(params, recipe, *wargs)
-
-        # ------------------------------------------------------------------
-        # Use the fits the calculate pixel fit values
-        # ------------------------------------------------------------------
-        center_fits = mp.calculate_polyvals(cent_coeffs, image.shape[1])
-        width_fits = mp.calculate_polyvals(wid_coeffs, image.shape[1])
+        # lout = localisation.find_and_fit_localisation(params, recipe, *largs)
+        #
+        # # get parameters from lout
+        # cent_0, cent_coeffs, cent_rms, cent_max_ptp = lout[:4]
+        # cent_frac_ptp, cent_max_rmpts = lout[4:6]
+        # wid_0, wid_coeffs, wid_rms, wid_max_ptp = lout[6:10]
+        # wid_frac_ptp, wid_max_rmpts, xplot, yplot = lout[10:14]
+        # rorder_num, mean_rms_cent, mean_rms_wid = lout[14:17]
+        # max_signal, mean_backgrd = lout[17:]
+        #
+        # # ------------------------------------------------------------------
+        # # Clean the coefficients (using a sanity check)
+        # # ------------------------------------------------------------------
+        # # clean the center position fits
+        # cargs = [image, cent_coeffs, fiber, 'center']
+        # cent_coeffs = localisation.check_coeffs(params, recipe, *cargs)
+        # # clean the width fits
+        # wargs = [image, wid_coeffs, fiber, 'width']
+        # wid_coeffs = localisation.check_coeffs(params, recipe, *wargs)
+        #
+        # # ------------------------------------------------------------------
+        # # Use the fits the calculate pixel fit values
+        # # ------------------------------------------------------------------
+        # center_fits = mp.calculate_polyvals(cent_coeffs, image.shape[1])
+        # width_fits = mp.calculate_polyvals(wid_coeffs, image.shape[1])
 
         # ------------------------------------------------------------------
         # Plot the image and fit points
@@ -198,13 +206,16 @@ def __main__(recipe, params):
         sat_thres = loc_sat_thres * props['GAIN'] * num_files
 
         # plot image above saturation threshold
-        recipe.plot('LOC_IM_SAT_THRES', image=image, xarr=xplot, yarr=yplot,
-                    threshold=sat_thres, coeffs=cent_coeffs)
+        # plot first and final fit over image
+        recipe.plot('LOC_IMAGE_FIT', image=image, threshold=None,
+                    coeffs=cent_coeffs, kind='both')
+        recipe.plot('LOC_IM_CORNER', image=image,
+                    params=params, coeffs=cent_coeffs)
         # ------------------------------------------------------------------
         # Plot of RMS for positions and widths
         # ------------------------------------------------------------------
-        recipe.plot('LOC_ORD_VS_RMS', rnum=rorder_num, fiber=fiber,
-                    rms_center=cent_rms, rms_fwhm=wid_rms)
+        # recipe.plot('LOC_ORD_VS_RMS', rnum=rorder_num, fiber=fiber,
+        #             rms_center=cent_rms, rms_fwhm=wid_rms)
 
         # ------------------------------------------------------------------
         # Quality control
@@ -236,9 +247,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Summary plots
         # ------------------------------------------------------------------
-        recipe.plot('SUM_LOC_IM_THRES', image=image, xarr=xplot, yarr=yplot,
+        recipe.plot('SUM_LOC_IM_FIT', image=image,
                     threshold=sat_thres, coeffs=cent_coeffs)
-        recipe.plot('SUM_LOC_IM_CORNER', image=image, xarr=xplot, yarr=yplot,
+        recipe.plot('SUM_LOC_IM_CORNER', image=image,
                     threshold=sat_thres, params=params, coeffs=cent_coeffs)
         # ------------------------------------------------------------------
         # Construct summary document

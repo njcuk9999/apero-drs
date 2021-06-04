@@ -641,6 +641,64 @@ class PseudoConstants(DefaultConstants):
         # return params
         return fiberparams
 
+    def FIBER_LOCALISATION(self, fiber) -> List[str]:
+        """
+        Return which fibers to calculate localisation for
+
+        :param fiber: str, fiber name
+
+        :return: list of strings, the fibers to find localisation for
+        """
+        if fiber in ['AB', 'A', 'B']:
+            return ['A', 'B']
+        else:
+            return ['C']
+
+    def FIBER_DILATE(self, fiber: str) -> bool:
+        """
+        whether we are dilate the imagine due to fiber configuration this should
+        only be used when we want a combined localisation solution
+        i.e. find fiber AB (instead of A and B)
+
+        :param fiber: str, the fiber name
+        :return: bool, True if we should dilate, False otherwise
+        """
+        if fiber in ['AB']:
+            return True
+        else:
+            return False
+
+    def FIBER_DOUBLETS(self, fiber: str) -> bool:
+        """
+        whether we have orders coming in doublets (i.e. SPIROUs AB --> A + B)
+
+        :param fiber: str, the fiber name
+        :return: bool, True if we have fiber 'doublets', False otherwise
+        """
+        if fiber in ['AB', 'A', 'B']:
+            return True
+        else:
+            return False
+
+    def FIBER_DOUBLET_PARITY(self, fiber:str) -> Union[int, None]:
+        """
+        Give the doublt fibers parity - all other fibers should not use this
+        function
+
+        :param fiber: str, the fiber name
+        :return: int or None, either +/-1 (for fiber A/B) or None)
+        """
+        # if fiber A we return -1
+        if fiber == 'A':
+            return -1
+        # for fiber B we return +1
+        elif fiber == 'B':
+            return 1
+        # all other fibers should return None - this should not ever be the
+        #   case and should break
+        else:
+            return None
+
     def FIBER_LOC_TYPES(self, fiber: str) -> str:
         """
         The fiber localisation types to use (i.e. some fiber types should use

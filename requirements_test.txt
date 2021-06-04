@@ -11,6 +11,7 @@ pandastable==0.12.2.post1
 Pillow==8.2.0
 PyQt5==5.15.4
 pyyaml==5.4.1
+scikit-image=0.18.1
 scipy==1.6.3
 tqdm==4.60.0
 yagmail==0.14.256

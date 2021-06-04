@@ -314,11 +314,9 @@ apero_loc.set_outputs(ORDERP_FILE=files.out_loc_orderp,
                       FWHM_FILE=files.out_loc_fwhm,
                       SUP_FILE=files.out_loc_sup,
                       DEBUG_BACK=files.debug_back)
-apero_loc.set_debug_plots('LOC_MINMAX_CENTS', 'LOC_MIN_CENTS_THRES',
-                          'LOC_FINDING_ORDERS', 'LOC_IM_SAT_THRES',
-                          'LOC_ORD_VS_RMS', 'LOC_CHECK_COEFFS',
-                          'LOC_FIT_RESIDUALS')
-apero_loc.set_summary_plots('SUM_LOC_IM_THRES', 'SUM_LOC_IM_CORNER')
+apero_loc.set_debug_plots('LOC_WIDTH_REGIONS', 'LOC_FIBER_DOUBLET_PARITY',
+                          'LOC_GAP_ORDERS', 'LOC_IMAGE_FIT', 'LOC_IM_CORNER')
+apero_loc.set_summary_plots('SUM_LOC_IM_FIT', 'SUM_LOC_IM_CORNER')
 apero_loc.set_arg(pos=0, **obs_dir)
 apero_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
                   files=[files.pp_dark_flat, files.pp_flat_dark], pos='1+',

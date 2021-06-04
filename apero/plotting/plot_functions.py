@@ -754,10 +754,10 @@ definitions += [badpix_map, summary_badpix_map]
 # =============================================================================
 # Define localisation plotting functions
 # =============================================================================
-def plot_loc_minmax_cents(plotter: Plotter, graph: Graph,
-                          kwargs: Dict[str, Any]):
+def plot_loc_width_regions(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
     """
-    Graph: Localisation min/max centers plot
+    Graph: Localisation width regions
 
     :param plotter: core.plotting.Plotter instance
     :param graph: Graph instance
@@ -771,40 +771,40 @@ def plot_loc_minmax_cents(plotter: Plotter, graph: Graph,
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    y = kwargs['y']
-    mask = kwargs['mask']
-    miny = kwargs['miny']
-    maxy = kwargs['maxy']
-    # set up the row number
-    rownumber = np.arange(len(y))
-    # get good values
-    ygood = np.array(y)
-    ygood[~mask] = np.nan
+    centers = kwargs['centers']
+    widths = kwargs['widths']
+    image = kwargs['image']
+    # get size of image
+    nbypix, nbxpix = image.shape
+    # get x positions of width regions
+    pos1 = 1 * nbxpix / 4
+    pos2 = 2 * nbxpix / 4
+    pos3 = 3 * nbxpix / 4
+    # get the ylimits
+    ymin, ymax = np.nanpercentile(widths, [10, 90])
+    ydiff = ymax - ymin
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter)
-    # plot y against row number
-    frame.plot(rownumber, y, linestyle='-', label='Central Cut')
-    frame.plot(rownumber, ygood, linestyle='-', label='Good pixels')
-    # plot miny against row number
-    if miny is not None:
-        frame.plot(rownumber, miny, label='Minimum (box)')
-    # plot maxy against row number
-    if maxy is not None:
-        frame.plot(rownumber, maxy, label='Maximum (box)')
-    # set title
-    frame.set(title='Central CUT', xlabel='pixels', ylabel='ADU')
-    # add legend
+    # ------------------------------------------------------------------
+    # plot
+    frame.plot(centers, widths[:, 0], 'r.', label='width at x={0}'.format(pos1))
+    frame.plot(centers, widths[:, 1], 'g.', label='width at x={0}'.format(pos2))
+    frame.plot(centers, widths[:, 2], 'b.', label='width at x={0}'.format(pos3))
+    # set axis labels and title
+    frame.set(ylim=[ymin - 0.5*ydiff, ymax + 0.5*ydiff],
+              xlabel='x position along order', ylabel='y width of order',
+              title='Localisation width along order')
     frame.legend(loc=0)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
 
-def plot_loc_min_cents_thres(plotter: Plotter, graph: Graph,
-                             kwargs: Dict[str, Any]):
+def plot_loc_fiber_doublet_parity(plotter: Plotter, graph: Graph,
+                                  kwargs: Dict[str, Any]):
     """
-    Graph: Localisation min/max threshold plot
+    Graph: Localisation fiber doublet parity plot
 
     :param plotter: core.plotting.Plotter instance
     :param graph: Graph instance
@@ -818,26 +818,32 @@ def plot_loc_min_cents_thres(plotter: Plotter, graph: Graph,
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    threshold = kwargs['threshold']
+    index = kwargs['index']
     centers = kwargs['centers']
-    # set up the row number
-    rownumber = np.arange(len(centers))
+    residuals = kwargs['residuals']
+    cfit = kwargs['fit']
     # ------------------------------------------------------------------
     # set up plot
-    fig, frame = graph.set_figure(plotter)
-    # plot the centers
-    frame.plot(rownumber, np.minimum(centers, threshold))
-    # set title
-    frame.set(title='Central CUT', xlabel='pixels', ylabel='ADU')
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex='all')
+    # ------------------------------------------------------------------
+    # plot the centers and the fit
+    frames[0].plot(index, centers, 'g.')
+    frames[0].plot(index, np.polyval(cfit, index), ls='--', color='red')
+    # plot the residuals
+    frames[1].plot(index, residuals, 'g.')
+    frames[1].axhline(y=0, ls='--', color='red')
+    # set axis labels and title
+    frames[0].set(xlabel='Nth order', ylabel='y pixel order center',
+                  title='Localisation fiber doublet plot')
+    frames[1].set(xlabel='Nth order', ylabel='residual to order fit')
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
 
-def plot_loc_finding_orders(plotter: Plotter, graph: Graph,
-                            kwargs: Dict[str, Any]):
+def plot_loc_gap_orders(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     """
-    Graph: Localisation finding orders threshold plot
+    Graph: Localisation gap between consecutive orders
 
     :param plotter: core.plotting.Plotter instance
     :param graph: Graph instance
@@ -849,79 +855,30 @@ def plot_loc_finding_orders(plotter: Plotter, graph: Graph,
     # start the plotting process
     if not plotter.plotstart(graph):
         return
-    # get plt
-    plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    plotdict = kwargs['plotdict']
-    plotlimits = kwargs['plimits']
-    # get the plot loop generator (around orders)
-    generator = plotter.plotloop(list(plotdict.keys()))
-    # prompt to start looper
-    plotter.close_plots(loop=True)
-    # loop around orders
-    for order_num in generator:
-        # get this orders values
-        col_vals = plotdict[order_num]
-        # expand limits
-        minxcc, maxxcc, minycc, maxycc = plotlimits[order_num]
-        # get the length
-        length = len(col_vals)
-        # get colours for each line
-        colors = plt.cm.jet(np.linspace(0, 1, len(col_vals)))[::-1]
-        # get the number of columns
-        ncols = int(np.ceil(np.sqrt(length)))
-        nrows = int(np.ceil(length / ncols))
-        # set up plot
-        fig, frames = graph.set_figure(plotter, ncols=ncols, nrows=nrows)
-        # loop around col_vals
-        for row in range(np.product(frames.shape)):
-            # get the correct frame
-            jt, it = row % ncols, row // ncols
-            frame = frames[it, jt]
-            # deal with out of bounds frames
-            if row >= length:
-                frame.axis('off')
-                continue
-            # get the col val
-            col_val = col_vals[row]
-            # get variables for this col_val
-            rowcenter, rowtop, rowbottom, center, width, ycc = col_val
-            # plot data
-            xpix = np.arange(rowtop - center, rowbottom - center, 1.0)
-            frame.plot(xpix, ycc, color=colors[row])
-            # plot lines
-            frame.vlines(-width / 2, ymin=0.0, ymax=maxycc,
-                         colors=colors[row])
-            frame.vlines(width / 2, ymin=0.0, ymax=maxycc,
-                         colors=colors[row])
-            # set lim
-            frame.set(ylim=[minycc, maxycc], xlim=[minxcc, maxxcc])
-            # add center text
-            frame.text(0.5, 0.1, 'C={0:.2f}'.format(center),
-                       fontdict=dict(fontsize=8), horizontalalignment='center',
-                       verticalalignment='center', transform=frame.transAxes)
-            # hide certain axis
-            if it != nrows - 1:
-                frame.set_xticklabels([])
-            if jt != 0:
-                frame.set_yticklabels([])
-        # ------------------------------------------------------------------
-        # add title
-        plt.suptitle('Order {0}'.format(order_num))
-        plt.subplots_adjust(hspace=0, wspace=0, top=0.95, bottom=0.05,
-                            left=0.05, right=0.975)
-        # ------------------------------------------------------------------
-        # update filename (adding order_num to end)
-        suffix = 'order{0}'.format(order_num)
-        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
-        # ------------------------------------------------------------------
-        # wrap up using plotter
-        plotter.plotend(graph)
+    centers = kwargs['centers']
+    mask = kwargs['mask']
+    fit = kwargs['fit']
+    # get difference between the centers
+    cdiff = centers[1:] - centers[:-1]
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter)
+    # ------------------------------------------------------------------
+    # plot the orders
+    frame.plot(centers[1:], cdiff, 'r.')
+    frame.plot(centers[1:][mask], cdiff[mask], 'g.')
+    frame.plot(centers[1:], np.polyval(fit, centers[1:]))
+    frame.set(xlabel='y position of order',
+              ylabel='order-to-order gap in pixels')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
 
 
-def plot_loc_im_sat_thres(plotter: Plotter, graph: Graph,
-                          kwargs: Dict[str, Any]):
+def plot_loc_image_fit(plotter: Plotter, graph: Graph,
+                       kwargs: Dict[str, Any]):
     """
     Graph: Localisation image saturation threshold plot
 
@@ -941,31 +898,70 @@ def plot_loc_im_sat_thres(plotter: Plotter, graph: Graph,
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     image = kwargs['image']
-    threshold = kwargs['threshold']
-    xarr = kwargs['xarr']
-    yarr = kwargs['yarr']
     coeffs = kwargs['coeffs']
-    # get xpix
-    xpix = np.arange(image.shape[1])
+    coeffs_old = kwargs.get('coeffs_old', None)
+    threshold = kwargs.get('threshold', None)
+    reverse = kwargs.get('reverse', True)
+    plot_kind = kwargs['kind']
+    offset = kwargs.get('offset', 0.0)
+    xlines = kwargs.get('xlines', None)
+    ylines = kwargs.get('ylines', None)
+    # get shape
+    nbypix, nbxpix = image.shape
+    # get x array
+    xpix = np.arange(nbxpix)
+    # deal with no threshold
+    if threshold is None:
+        threshold = np.nanpercentile(image, 95)
+    # ------------------------------------------------------------------
+    title = 'Localisation for fibers={0}'.format(plot_kind)
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter)
+    # ------------------------------------------------------------------
     # plot image
     im = frame.imshow(image, origin='lower', clim=(1.0, threshold),
                       cmap='gist_gray', zorder=0, aspect='auto')
-    # set the limits
-    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
-    # loop around xarr and yarr and plot
-    for order_num in range(len(xarr)):
-        # x and y
-        x, y = xarr[order_num], yarr[order_num]
-        # get ypix
-        ypix = np.polyval(coeffs[order_num][::-1], xpix)
-        # plot full fit
-        frame.plot(xpix, ypix, linewidth=1, color='blue', ls='--',
-                   label='New fit')
-        # plot valid fit
-        frame.plot(x, y, linewidth=1, color='red', label='Original fit')
+    # ------------------------------------------------------------------
+    # plot old coeffs
+    if coeffs_old is not None:
+        for order_num in range(coeffs_old.shape[0]):
+            # deal with reverse coefficients
+            if reverse:
+                cfit = np.polyval(coeffs_old[order_num][::-1], xpix + offset)
+            # else just fit
+            else:
+                cfit = np.polyval(coeffs_old[order_num], xpix + offset)
+            # plot this orders coefficients
+            oldlabel = 'old fit (Norders={0})'.format(coeffs_old.shape[0])
+            frame.plot(xpix, cfit, ls='-', color='blue', lw=1,
+                       label=oldlabel)
+        # if we have old points label the new points "new fit"
+        newlabel = 'new fit (Norders={0})'.format(coeffs.shape[0])
+    else:
+        newlabel = 'fit (Norders={0})'.format(coeffs.shape[0])
+    # ------------------------------------------------------------------
+    # plot coeffs
+    for order_num in range(coeffs.shape[0]):
+        # deal with reverse coefficients
+        if reverse:
+            cfit = np.polyval(coeffs[order_num][::-1], xpix + offset)
+        # else just fit
+        else:
+            cfit = np.polyval(coeffs[order_num], xpix + offset)
+        # plot this orders coefficients
+        frame.plot(xpix, cfit, ls='--', color='red', lw=1, label=newlabel)
+    # ------------------------------------------------------------------
+    # plot guide lines
+    if xlines is not None:
+        for xline in xlines:
+            frame.axvline(xline, color='orange', ls=':')
+    if ylines is not None:
+        for yline in ylines:
+            frame.axhline(yline, color='orange', ls=':')
+    # set the title
+    frame.set(xlim=[0, nbxpix], ylim=[0, nbypix], title=title)
+    # ------------------------------------------------------------------
     # only keep unique labels
     ulegend(frame, loc=10, ncol=2)
     # create an axes on the right side of ax. The width of cax will be 5%
@@ -980,87 +976,9 @@ def plot_loc_im_sat_thres(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-def plot_loc_fit_residuals(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
-    """
-    Graph: Localisation fit residuals plot
-
-    :param plotter: core.plotting.Plotter instance
-    :param graph: Graph instance
-    :param kwargs: keyword arguments to get plotting parameters from
-
-    :return: None, plots this plot
-    """
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    x = kwargs['x']
-    y = kwargs['y']
-    xo = kwargs['xo']
-    rnum = kwargs['rnum']
-    kind = kwargs['kind']
-    # ------------------------------------------------------------------
-    # set up plot
-    fig, frame = graph.set_figure(plotter)
-    # ------------------------------------------------------------------
-    # plot residuals of data - fit
-    frame.plot(x, y, marker='_')
-    # set title and limits
-    frame.set(title='{0} fit residual of order {1}'.format(kind, rnum),
-              xlim=(0, len(xo)), ylim=(np.min(y), np.max(y)))
-    # ------------------------------------------------------------------
-    # update suffix
-    suffix = 'kind{0}_order{1}'.format(kind, rnum)
-    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
-    # ------------------------------------------------------------------
-    # wrap up using plotter
-    plotter.plotend(graph)
-
-
-def plot_loc_ord_vs_rms(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
-    """
-    Graph: Localisation order vs rms plot
-
-    :param plotter: core.plotting.Plotter instance
-    :param graph: Graph instance
-    :param kwargs: keyword arguments to get plotting parameters from
-
-    :return: None, plots this plot
-    """
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    rnum = kwargs['rnum']
-    rms_center = kwargs['rms_center']
-    rms_fwhm = kwargs['rms_fwhm']
-    fiber = kwargs['fiber']
-    # ------------------------------------------------------------------
-    # set up plot
-    fig, frame = graph.set_figure(plotter)
-    # plot image
-    frame.plot(np.arange(rnum), rms_center[0:rnum], label='center')
-    frame.plot(np.arange(rnum), rms_fwhm[0:rnum], label='fwhm')
-    # construct title
-    title = 'Dispersion of localization parameters fiber {0}'.format(fiber)
-    # set title labels limits
-    frame.set(xlim=(0, rnum), xlabel='Order number', ylabel='RMS [pixel]',
-              title=title)
-    # Add legend
-    frame.legend(loc=0)
-    # ------------------------------------------------------------------
-    # wrap up using plotter
-    plotter.plotend(graph)
-
-
 def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     """
-    Graph: Localisation image plot
+    Graph: Localisation image "corners" plot
 
     :param plotter: core.plotting.Plotter instance
     :param graph: Graph instance
@@ -1079,8 +997,6 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # get the arguments from kwargs
     params = kwargs['params']
     image = kwargs['image']
-    xarr = kwargs['xarr']
-    yarr = kwargs['yarr']
     coeffs = kwargs['coeffs']
     # get xpix
     xpix = np.arange(image.shape[1])
@@ -1118,15 +1034,11 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
                           cmap='gist_gray', aspect='auto',
                           extent=[xmin, xmax, ymin, ymax])
         # loop around xarr and yarr and plot
-        for order_num in range(len(xarr)):
-            # x and y
-            x, y = xarr[order_num], yarr[order_num]
+        for order_num in range(coeffs.shape[0]):
             # get ypix
             ypix = np.polyval(coeffs[order_num][::-1], xpix)
             # plot full fit
-            frame.plot(xpix, ypix, linewidth=1, color='blue', ls='--', zorder=1)
-            # plot valid fit
-            frame.plot(x, y, linewidth=1, color='red', zorder=2)
+            frame.plot(xpix, ypix, linewidth=1, color='red', ls='--', zorder=1)
         # set the limits
         frame.set(xlim=(xmin, xmax), ylim=(ymin, ymax))
         # create an axes on the right side of ax. The width of cax will be 5%
@@ -1142,150 +1054,566 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     plotter.plotend(graph)
 
 
-def plot_loc_check_coeffs(plotter: Plotter, graph: Graph,
-                          kwargs: Dict[str, Any]):
-    """
-    Graph: Localisation check coefficients plot
-
-    :param plotter: core.plotting.Plotter instance
-    :param graph: Graph instance
-    :param kwargs: keyword arguments to get plotting parameters from
-
-    :return: None, plots this plot
-    """
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    plt = plotter.plt
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    good_arr = kwargs['good']
-    xpix = kwargs['xpix']
-    ypix = kwargs['ypix']
-    ypix0 = kwargs['ypix0']
-    image = kwargs['image']
-    order = kwargs.get('order', None)
-    kind = kwargs.get('kind', None)
-    # ------------------------------------------------------------------
-    # get order generator
-    # ------------------------------------------------------------------
-    if order is None:
-        order_gen = plotter.plotloop(np.arange(len(good_arr)))
-        # prompt to start looper
-        plotter.close_plots(loop=True)
-    # else we just deal with the order specified
-    else:
-        order_gen = [order]
-    # ------------------------------------------------------------------
-    # loop around orders
-    for order_num in order_gen:
-        # get this iterations values
-        good = good_arr[order_num]
-        ypixgo = ypix[order_num, good]
-        ypix0go = ypix0[order_num, good]
-        residual = ypixgo - ypix0go
-        # get the y limits
-        ymax = np.ceil(np.nanmax([np.nanmax(ypixgo), np.nanmax(ypix0go)]))
-        ymin = np.floor(np.nanmin([np.nanmin(ypixgo), np.nanmin(ypix0go)]))
-        ydiff = np.ceil(ymax - ymin)
-        ymax = np.min([int(ymax + 0.25 * ydiff), image.shape[0]])
-        ymin = np.max([int(ymin - 0.25 * ydiff), 0])
-        # mask the image between y limits
-        imagezoom = image[ymin:ymax]
-        # normalise zoom image
-        imagezoom = imagezoom / np.nanpercentile(imagezoom, 85)
-        # ------------------------------------------------------------------
-        # set up plot
-        if kind == 'center':
-            fig, frames = graph.set_figure(plotter, nrows=2, ncols=1,
-                                           sharex=True)
-            frame1, frame2 = frames
-        else:
-            fig, frame2 = graph.set_figure(plotter, nrows=1, ncols=1)
-            frame1 = None
-        # ------------------------------------------------------------------
-        # plot the image fits (if we are dealing with a center plot)
-        if kind == 'center':
-            frame1.imshow(imagezoom, aspect='auto', origin='lower', zorder=0,
-                          cmap='gist_gray', vmin=0, vmax=1,
-                          extent=[0, image.shape[1], ymin, ymax])
-            frame1.plot(xpix[good], ypix0go, color='b', ls='--', label='old',
-                        zorder=2)
-            frame1.plot(xpix[good], ypixgo, color='r', ls='-', label='new',
-                        zorder=1)
-            frame1.legend(loc=0)
-            # force x limits
-            frame1.set_xlim(0, image.shape[1])
-        # ------------------------------------------------------------------
-        # plot the residuals
-        frame2.plot(xpix[good], residual, marker='x')
-        # add legend
-        frame2.legend(loc=0)
-        # force x limits
-        frame2.set_xlim(0, image.shape[1])
-        # force y limits
-        frame2.set_ylim(ymin, ymax)
-        # ------------------------------------------------------------------
-        # construct frame title
-        if kind is None:
-            title = 'Coefficient Residuals (New - Original) Order={1}'
-        else:
-            title = '{0} coefficient residuals (New - Original) Order={1}'
-        # ------------------------------------------------------------------
-        # set title and labels
-        if kind == 'center':
-            frame1.set(title=title.format(kind, order_num),
-                       ylabel='y pixel position')
-            frame2.set(xlabel='x pixel position',
-                       ylabel=r'$\Delta$y pixel position')
-        else:
-            frame2.set(title=title.format(kind, order_num),
-                       xlabel='x pixel position',
-                       ylabel=r'$\Delta$y pixel position')
-        # ------------------------------------------------------------------
-        # adjust plot
-        plt.subplots_adjust(top=0.925, bottom=0.125, left=0.1, right=0.975,
-                            hspace=0.05)
-        # ------------------------------------------------------------------
-        # update filename (adding order_num to end)
-        suffix = 'order{0}'.format(order_num)
-        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
-        # ------------------------------------------------------------------
-        # wrap up using plotter
-        plotter.plotend(graph)
-
-
-# define graphing instances
-loc_minmax_cents = Graph('LOC_MINMAX_CENTS', kind='debug',
-                         func=plot_loc_minmax_cents)
-loc_min_cents_thres = Graph('LOC_MIN_CENTS_THRES', kind='debug',
-                            func=plot_loc_min_cents_thres)
-loc_finding_orders = Graph('LOC_FINDING_ORDERS', kind='debug',
-                           func=plot_loc_finding_orders)
-loc_im_sat_thres = Graph('LOC_IM_SAT_THRES', kind='debug',
-                         func=plot_loc_im_sat_thres)
-loc_fit_residuals = Graph('LOC_FIT_RESIDUALS', kind='debug',
-                          func=plot_loc_fit_residuals)
-loc_ord_vs_rms = Graph('LOC_ORD_VS_RMS', kind='debug',
-                       func=plot_loc_ord_vs_rms)
-loc_check_coeffs = Graph('LOC_CHECK_COEFFS', kind='debug',
-                         func=plot_loc_check_coeffs)
+loc_width_regions = Graph('LOC_WIDTH_REGIONS', kind='debug',
+                          func=plot_loc_width_regions)
+loc_fiber_doublet_parity = Graph('LOC_FIBER_DOUBLET_PARITY', kind='debug',
+                                 func=plot_loc_fiber_doublet_parity)
+loc_gap_orders = Graph('LOC_GAP_ORDERS', kind='debug',
+                       func=plot_loc_gap_orders)
+loc_image_fit = Graph('LOC_IMAGE_FIT', kind='debug', func=plot_loc_image_fit)
+loc_im_corner = Graph('LOC_IM_CORNER', kind='debug', func=plot_loc_im_corner)
 sum_desc = ('Polynomial fits for localisation (overplotted on '
             'pre-processed image)')
-sum_loc_im_sat_thres = Graph('SUM_LOC_IM_THRES', kind='summary',
-                             func=plot_loc_im_sat_thres, figsize=(12, 8),
+sum_plot_loc_im_fit = Graph('SUM_LOC_IM_FIT', kind='summary',
+                             func=plot_loc_image_fit, figsize=(12, 8),
                              dpi=300, description=sum_desc)
 sum_desc = ('Zoom in polynomial fits for localisation (overplotted on '
             'pre-processed image)')
 sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
                                func=plot_loc_im_corner, figsize=(16, 10),
                                dpi=150, description=sum_desc)
+
 # add to definitions
-definitions += [loc_minmax_cents, loc_min_cents_thres, loc_finding_orders,
-                loc_im_sat_thres, loc_ord_vs_rms, loc_check_coeffs,
-                loc_fit_residuals,
-                sum_loc_im_sat_thres, sum_plot_loc_im_corner]
+definitions += [loc_width_regions, loc_fiber_doublet_parity, loc_gap_orders,
+                loc_image_fit, loc_im_corner, sum_plot_loc_im_fit,
+                sum_plot_loc_im_corner]
+
+
+# =============================================================================
+# Define localisation plotting functions
+# =============================================================================
+# def plot_loc_minmax_cents(plotter: Plotter, graph: Graph,
+#                           kwargs: Dict[str, Any]):
+#     """
+#     Graph: Localisation min/max centers plot
+#
+#     :param plotter: core.plotting.Plotter instance
+#     :param graph: Graph instance
+#     :param kwargs: keyword arguments to get plotting parameters from
+#
+#     :return: None, plots this plot
+#     """
+#     # ------------------------------------------------------------------
+#     # start the plotting process
+#     if not plotter.plotstart(graph):
+#         return
+#     # ------------------------------------------------------------------
+#     # get the arguments from kwargs
+#     y = kwargs['y']
+#     mask = kwargs['mask']
+#     miny = kwargs['miny']
+#     maxy = kwargs['maxy']
+#     # set up the row number
+#     rownumber = np.arange(len(y))
+#     # get good values
+#     ygood = np.array(y)
+#     ygood[~mask] = np.nan
+#     # ------------------------------------------------------------------
+#     # set up plot
+#     fig, frame = graph.set_figure(plotter)
+#     # plot y against row number
+#     frame.plot(rownumber, y, linestyle='-', label='Central Cut')
+#     frame.plot(rownumber, ygood, linestyle='-', label='Good pixels')
+#     # plot miny against row number
+#     if miny is not None:
+#         frame.plot(rownumber, miny, label='Minimum (box)')
+#     # plot maxy against row number
+#     if maxy is not None:
+#         frame.plot(rownumber, maxy, label='Maximum (box)')
+#     # set title
+#     frame.set(title='Central CUT', xlabel='pixels', ylabel='ADU')
+#     # add legend
+#     frame.legend(loc=0)
+#     # ------------------------------------------------------------------
+#     # wrap up using plotter
+#     plotter.plotend(graph)
+#
+#
+# def plot_loc_min_cents_thres(plotter: Plotter, graph: Graph,
+#                              kwargs: Dict[str, Any]):
+#     """
+#     Graph: Localisation min/max threshold plot
+#
+#     :param plotter: core.plotting.Plotter instance
+#     :param graph: Graph instance
+#     :param kwargs: keyword arguments to get plotting parameters from
+#
+#     :return: None, plots this plot
+#     """
+#     # ------------------------------------------------------------------
+#     # start the plotting process
+#     if not plotter.plotstart(graph):
+#         return
+#     # ------------------------------------------------------------------
+#     # get the arguments from kwargs
+#     threshold = kwargs['threshold']
+#     centers = kwargs['centers']
+#     # set up the row number
+#     rownumber = np.arange(len(centers))
+#     # ------------------------------------------------------------------
+#     # set up plot
+#     fig, frame = graph.set_figure(plotter)
+#     # plot the centers
+#     frame.plot(rownumber, np.minimum(centers, threshold))
+#     # set title
+#     frame.set(title='Central CUT', xlabel='pixels', ylabel='ADU')
+#     # ------------------------------------------------------------------
+#     # wrap up using plotter
+#     plotter.plotend(graph)
+#
+#
+# def plot_loc_finding_orders(plotter: Plotter, graph: Graph,
+#                             kwargs: Dict[str, Any]):
+#     """
+#     Graph: Localisation finding orders threshold plot
+#
+#     :param plotter: core.plotting.Plotter instance
+#     :param graph: Graph instance
+#     :param kwargs: keyword arguments to get plotting parameters from
+#
+#     :return: None, plots this plot
+#     """
+#     # ------------------------------------------------------------------
+#     # start the plotting process
+#     if not plotter.plotstart(graph):
+#         return
+#     # get plt
+#     plt = plotter.plt
+#     # ------------------------------------------------------------------
+#     # get the arguments from kwargs
+#     plotdict = kwargs['plotdict']
+#     plotlimits = kwargs['plimits']
+#     # get the plot loop generator (around orders)
+#     generator = plotter.plotloop(list(plotdict.keys()))
+#     # prompt to start looper
+#     plotter.close_plots(loop=True)
+#     # loop around orders
+#     for order_num in generator:
+#         # get this orders values
+#         col_vals = plotdict[order_num]
+#         # expand limits
+#         minxcc, maxxcc, minycc, maxycc = plotlimits[order_num]
+#         # get the length
+#         length = len(col_vals)
+#         # get colours for each line
+#         colors = plt.cm.jet(np.linspace(0, 1, len(col_vals)))[::-1]
+#         # get the number of columns
+#         ncols = int(np.ceil(np.sqrt(length)))
+#         nrows = int(np.ceil(length / ncols))
+#         # set up plot
+#         fig, frames = graph.set_figure(plotter, ncols=ncols, nrows=nrows)
+#         # loop around col_vals
+#         for row in range(np.product(frames.shape)):
+#             # get the correct frame
+#             jt, it = row % ncols, row // ncols
+#             frame = frames[it, jt]
+#             # deal with out of bounds frames
+#             if row >= length:
+#                 frame.axis('off')
+#                 continue
+#             # get the col val
+#             col_val = col_vals[row]
+#             # get variables for this col_val
+#             rowcenter, rowtop, rowbottom, center, width, ycc = col_val
+#             # plot data
+#             xpix = np.arange(rowtop - center, rowbottom - center, 1.0)
+#             frame.plot(xpix, ycc, color=colors[row])
+#             # plot lines
+#             frame.vlines(-width / 2, ymin=0.0, ymax=maxycc,
+#                          colors=colors[row])
+#             frame.vlines(width / 2, ymin=0.0, ymax=maxycc,
+#                          colors=colors[row])
+#             # set lim
+#             frame.set(ylim=[minycc, maxycc], xlim=[minxcc, maxxcc])
+#             # add center text
+#             frame.text(0.5, 0.1, 'C={0:.2f}'.format(center),
+#                        fontdict=dict(fontsize=8), horizontalalignment='center',
+#                        verticalalignment='center', transform=frame.transAxes)
+#             # hide certain axis
+#             if it != nrows - 1:
+#                 frame.set_xticklabels([])
+#             if jt != 0:
+#                 frame.set_yticklabels([])
+#         # ------------------------------------------------------------------
+#         # add title
+#         plt.suptitle('Order {0}'.format(order_num))
+#         plt.subplots_adjust(hspace=0, wspace=0, top=0.95, bottom=0.05,
+#                             left=0.05, right=0.975)
+#         # ------------------------------------------------------------------
+#         # update filename (adding order_num to end)
+#         suffix = 'order{0}'.format(order_num)
+#         graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+#         # ------------------------------------------------------------------
+#         # wrap up using plotter
+#         plotter.plotend(graph)
+#
+#
+# def plot_loc_im_sat_thres(plotter: Plotter, graph: Graph,
+#                           kwargs: Dict[str, Any]):
+#     """
+#     Graph: Localisation image saturation threshold plot
+#
+#     :param plotter: core.plotting.Plotter instance
+#     :param graph: Graph instance
+#     :param kwargs: keyword arguments to get plotting parameters from
+#
+#     :return: None, plots this plot
+#     """
+#     # ------------------------------------------------------------------
+#     # start the plotting process
+#     if not plotter.plotstart(graph):
+#         return
+#     # get plt
+#     plt = plotter.plt
+#     axes_grid1 = plotter.axes_grid1
+#     # ------------------------------------------------------------------
+#     # get the arguments from kwargs
+#     image = kwargs['image']
+#     threshold = kwargs['threshold']
+#     xarr = kwargs['xarr']
+#     yarr = kwargs['yarr']
+#     coeffs = kwargs['coeffs']
+#     # get xpix
+#     xpix = np.arange(image.shape[1])
+#     # ------------------------------------------------------------------
+#     # set up plot
+#     fig, frame = graph.set_figure(plotter)
+#     # plot image
+#     im = frame.imshow(image, origin='lower', clim=(1.0, threshold),
+#                       cmap='gist_gray', zorder=0, aspect='auto')
+#     # set the limits
+#     frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
+#     # loop around xarr and yarr and plot
+#     for order_num in range(len(xarr)):
+#         # x and y
+#         x, y = xarr[order_num], yarr[order_num]
+#         # get ypix
+#         ypix = np.polyval(coeffs[order_num][::-1], xpix)
+#         # plot full fit
+#         frame.plot(xpix, ypix, linewidth=1, color='blue', ls='--',
+#                    label='New fit')
+#         # plot valid fit
+#         frame.plot(x, y, linewidth=1, color='red', label='Original fit')
+#     # only keep unique labels
+#     ulegend(frame, loc=10, ncol=2)
+#     # create an axes on the right side of ax. The width of cax will be 5%
+#     # of ax and the padding between cax and ax will be fixed at 0.05 inch.
+#     divider = axes_grid1.make_axes_locatable(frame)
+#     cax = divider.append_axes("right", size="5%", pad=0.05)
+#     plt.colorbar(im, cax=cax)
+#     # adjust plot
+#     plt.subplots_adjust(top=0.95, bottom=0.05, left=0.075, right=0.925)
+#     # ------------------------------------------------------------------
+#     # wrap up using plotter
+#     plotter.plotend(graph)
+#
+#
+# def plot_loc_fit_residuals(plotter: Plotter, graph: Graph,
+#                            kwargs: Dict[str, Any]):
+#     """
+#     Graph: Localisation fit residuals plot
+#
+#     :param plotter: core.plotting.Plotter instance
+#     :param graph: Graph instance
+#     :param kwargs: keyword arguments to get plotting parameters from
+#
+#     :return: None, plots this plot
+#     """
+#     # ------------------------------------------------------------------
+#     # start the plotting process
+#     if not plotter.plotstart(graph):
+#         return
+#     # ------------------------------------------------------------------
+#     # get the arguments from kwargs
+#     x = kwargs['x']
+#     y = kwargs['y']
+#     xo = kwargs['xo']
+#     rnum = kwargs['rnum']
+#     kind = kwargs['kind']
+#     # ------------------------------------------------------------------
+#     # set up plot
+#     fig, frame = graph.set_figure(plotter)
+#     # ------------------------------------------------------------------
+#     # plot residuals of data - fit
+#     frame.plot(x, y, marker='_')
+#     # set title and limits
+#     frame.set(title='{0} fit residual of order {1}'.format(kind, rnum),
+#               xlim=(0, len(xo)), ylim=(np.min(y), np.max(y)))
+#     # ------------------------------------------------------------------
+#     # update suffix
+#     suffix = 'kind{0}_order{1}'.format(kind, rnum)
+#     graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+#     # ------------------------------------------------------------------
+#     # wrap up using plotter
+#     plotter.plotend(graph)
+#
+#
+# def plot_loc_ord_vs_rms(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+#     """
+#     Graph: Localisation order vs rms plot
+#
+#     :param plotter: core.plotting.Plotter instance
+#     :param graph: Graph instance
+#     :param kwargs: keyword arguments to get plotting parameters from
+#
+#     :return: None, plots this plot
+#     """
+#     # ------------------------------------------------------------------
+#     # start the plotting process
+#     if not plotter.plotstart(graph):
+#         return
+#     # ------------------------------------------------------------------
+#     # get the arguments from kwargs
+#     rnum = kwargs['rnum']
+#     rms_center = kwargs['rms_center']
+#     rms_fwhm = kwargs['rms_fwhm']
+#     fiber = kwargs['fiber']
+#     # ------------------------------------------------------------------
+#     # set up plot
+#     fig, frame = graph.set_figure(plotter)
+#     # plot image
+#     frame.plot(np.arange(rnum), rms_center[0:rnum], label='center')
+#     frame.plot(np.arange(rnum), rms_fwhm[0:rnum], label='fwhm')
+#     # construct title
+#     title = 'Dispersion of localization parameters fiber {0}'.format(fiber)
+#     # set title labels limits
+#     frame.set(xlim=(0, rnum), xlabel='Order number', ylabel='RMS [pixel]',
+#               title=title)
+#     # Add legend
+#     frame.legend(loc=0)
+#     # ------------------------------------------------------------------
+#     # wrap up using plotter
+#     plotter.plotend(graph)
+#
+#
+# def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+#     """
+#     Graph: Localisation image plot
+#
+#     :param plotter: core.plotting.Plotter instance
+#     :param graph: Graph instance
+#     :param kwargs: keyword arguments to get plotting parameters from
+#
+#     :return: None, plots this plot
+#     """
+#     # ------------------------------------------------------------------
+#     # start the plotting process
+#     if not plotter.plotstart(graph):
+#         return
+#     # get plt
+#     plt = plotter.plt
+#     axes_grid1 = plotter.axes_grid1
+#     # ------------------------------------------------------------------
+#     # get the arguments from kwargs
+#     params = kwargs['params']
+#     image = kwargs['image']
+#     xarr = kwargs['xarr']
+#     yarr = kwargs['yarr']
+#     coeffs = kwargs['coeffs']
+#     # get xpix
+#     xpix = np.arange(image.shape[1])
+#     # get zoom values
+#     xzoom1 = params.listp('LOC_PLOT_CORNER_XZOOM1', dtype=int)
+#     xzoom2 = params.listp('LOC_PLOT_CORNER_XZOOM2', dtype=int)
+#     yzoom1 = params.listp('LOC_PLOT_CORNER_YZOOM1', dtype=int)
+#     yzoom2 = params.listp('LOC_PLOT_CORNER_YZOOM2', dtype=int)
+#     # get number of zooms required
+#     length = len(xzoom1)
+#     # get the number of columns
+#     ncols = int(np.ceil(np.sqrt(length)))
+#     nrows = int(np.ceil(length / ncols))
+#     # set up plot
+#     fig, frames = graph.set_figure(plotter, ncols=ncols, nrows=nrows)
+#     # loop around col_vals
+#     for row in range(np.product(frames.shape)):
+#         # get the correct frame
+#         jt, it = row % ncols, row // ncols
+#         frame = frames[it, jt]
+#         # deal with out of bounds frames
+#         if row >= length:
+#             frame.axis('off')
+#             continue
+#         # get limits for zooms
+#         xmin, xmax = xzoom1[row], xzoom2[row]
+#         ymin, ymax = yzoom1[row], yzoom2[row]
+#         # get image zoom
+#         image_zoom = image[ymin:ymax, xmin:xmax]
+#         # threshold = percentile
+#         threshold = np.nanpercentile(image_zoom, 95)
+#         # ------------------------------------------------------------------
+#         # plot image
+#         im = frame.imshow(image_zoom, origin='lower', vmin=0.0, vmax=threshold,
+#                           cmap='gist_gray', aspect='auto',
+#                           extent=[xmin, xmax, ymin, ymax])
+#         # loop around xarr and yarr and plot
+#         for order_num in range(len(xarr)):
+#             # x and y
+#             x, y = xarr[order_num], yarr[order_num]
+#             # get ypix
+#             ypix = np.polyval(coeffs[order_num][::-1], xpix)
+#             # plot full fit
+#             frame.plot(xpix, ypix, linewidth=1, color='blue', ls='--', zorder=1)
+#             # plot valid fit
+#             frame.plot(x, y, linewidth=1, color='red', zorder=2)
+#         # set the limits
+#         frame.set(xlim=(xmin, xmax), ylim=(ymin, ymax))
+#         # create an axes on the right side of ax. The width of cax will be 5%
+#         # of ax and the padding between cax and ax will be fixed at 0.05 inch.
+#         divider = axes_grid1.make_axes_locatable(frame)
+#         cax = divider.append_axes("top", size="5%", pad=0.05)
+#         cb = plt.colorbar(im, cax=cax, orientation='horizontal')
+#         cb.ax.xaxis.set_ticks_position('top')
+#     # adjust plot
+#     plt.subplots_adjust(top=0.95, bottom=0.05, left=0.075, right=0.925)
+#     # ------------------------------------------------------------------
+#     # wrap up using plotter
+#     plotter.plotend(graph)
+#
+#
+# def plot_loc_check_coeffs(plotter: Plotter, graph: Graph,
+#                           kwargs: Dict[str, Any]):
+#     """
+#     Graph: Localisation check coefficients plot
+#
+#     :param plotter: core.plotting.Plotter instance
+#     :param graph: Graph instance
+#     :param kwargs: keyword arguments to get plotting parameters from
+#
+#     :return: None, plots this plot
+#     """
+#     # ------------------------------------------------------------------
+#     # start the plotting process
+#     if not plotter.plotstart(graph):
+#         return
+#     plt = plotter.plt
+#     # ------------------------------------------------------------------
+#     # get the arguments from kwargs
+#     good_arr = kwargs['good']
+#     xpix = kwargs['xpix']
+#     ypix = kwargs['ypix']
+#     ypix0 = kwargs['ypix0']
+#     image = kwargs['image']
+#     order = kwargs.get('order', None)
+#     kind = kwargs.get('kind', None)
+#     # ------------------------------------------------------------------
+#     # get order generator
+#     # ------------------------------------------------------------------
+#     if order is None:
+#         order_gen = plotter.plotloop(np.arange(len(good_arr)))
+#         # prompt to start looper
+#         plotter.close_plots(loop=True)
+#     # else we just deal with the order specified
+#     else:
+#         order_gen = [order]
+#     # ------------------------------------------------------------------
+#     # loop around orders
+#     for order_num in order_gen:
+#         # get this iterations values
+#         good = good_arr[order_num]
+#         ypixgo = ypix[order_num, good]
+#         ypix0go = ypix0[order_num, good]
+#         residual = ypixgo - ypix0go
+#         # get the y limits
+#         ymax = np.ceil(np.nanmax([np.nanmax(ypixgo), np.nanmax(ypix0go)]))
+#         ymin = np.floor(np.nanmin([np.nanmin(ypixgo), np.nanmin(ypix0go)]))
+#         ydiff = np.ceil(ymax - ymin)
+#         ymax = np.min([int(ymax + 0.25 * ydiff), image.shape[0]])
+#         ymin = np.max([int(ymin - 0.25 * ydiff), 0])
+#         # mask the image between y limits
+#         imagezoom = image[ymin:ymax]
+#         # normalise zoom image
+#         imagezoom = imagezoom / np.nanpercentile(imagezoom, 85)
+#         # ------------------------------------------------------------------
+#         # set up plot
+#         if kind == 'center':
+#             fig, frames = graph.set_figure(plotter, nrows=2, ncols=1,
+#                                            sharex=True)
+#             frame1, frame2 = frames
+#         else:
+#             fig, frame2 = graph.set_figure(plotter, nrows=1, ncols=1)
+#             frame1 = None
+#         # ------------------------------------------------------------------
+#         # plot the image fits (if we are dealing with a center plot)
+#         if kind == 'center':
+#             frame1.imshow(imagezoom, aspect='auto', origin='lower', zorder=0,
+#                           cmap='gist_gray', vmin=0, vmax=1,
+#                           extent=[0, image.shape[1], ymin, ymax])
+#             frame1.plot(xpix[good], ypix0go, color='b', ls='--', label='old',
+#                         zorder=2)
+#             frame1.plot(xpix[good], ypixgo, color='r', ls='-', label='new',
+#                         zorder=1)
+#             frame1.legend(loc=0)
+#             # force x limits
+#             frame1.set_xlim(0, image.shape[1])
+#         # ------------------------------------------------------------------
+#         # plot the residuals
+#         frame2.plot(xpix[good], residual, marker='x')
+#         # add legend
+#         frame2.legend(loc=0)
+#         # force x limits
+#         frame2.set_xlim(0, image.shape[1])
+#         # force y limits
+#         frame2.set_ylim(ymin, ymax)
+#         # ------------------------------------------------------------------
+#         # construct frame title
+#         if kind is None:
+#             title = 'Coefficient Residuals (New - Original) Order={1}'
+#         else:
+#             title = '{0} coefficient residuals (New - Original) Order={1}'
+#         # ------------------------------------------------------------------
+#         # set title and labels
+#         if kind == 'center':
+#             frame1.set(title=title.format(kind, order_num),
+#                        ylabel='y pixel position')
+#             frame2.set(xlabel='x pixel position',
+#                        ylabel=r'$\Delta$y pixel position')
+#         else:
+#             frame2.set(title=title.format(kind, order_num),
+#                        xlabel='x pixel position',
+#                        ylabel=r'$\Delta$y pixel position')
+#         # ------------------------------------------------------------------
+#         # adjust plot
+#         plt.subplots_adjust(top=0.925, bottom=0.125, left=0.1, right=0.975,
+#                             hspace=0.05)
+#         # ------------------------------------------------------------------
+#         # update filename (adding order_num to end)
+#         suffix = 'order{0}'.format(order_num)
+#         graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+#         # ------------------------------------------------------------------
+#         # wrap up using plotter
+#         plotter.plotend(graph)
+#
+#
+# # define graphing instances
+# loc_minmax_cents = Graph('LOC_MINMAX_CENTS', kind='debug',
+#                          func=plot_loc_minmax_cents)
+# loc_min_cents_thres = Graph('LOC_MIN_CENTS_THRES', kind='debug',
+#                             func=plot_loc_min_cents_thres)
+# loc_finding_orders = Graph('LOC_FINDING_ORDERS', kind='debug',
+#                            func=plot_loc_finding_orders)
+# loc_im_sat_thres = Graph('LOC_IM_SAT_THRES', kind='debug',
+#                          func=plot_loc_im_sat_thres)
+# loc_fit_residuals = Graph('LOC_FIT_RESIDUALS', kind='debug',
+#                           func=plot_loc_fit_residuals)
+# loc_ord_vs_rms = Graph('LOC_ORD_VS_RMS', kind='debug',
+#                        func=plot_loc_ord_vs_rms)
+# loc_check_coeffs = Graph('LOC_CHECK_COEFFS', kind='debug',
+#                          func=plot_loc_check_coeffs)
+# sum_desc = ('Polynomial fits for localisation (overplotted on '
+#             'pre-processed image)')
+# sum_loc_im_sat_thres = Graph('SUM_LOC_IM_THRES', kind='summary',
+#                              func=plot_loc_im_sat_thres, figsize=(12, 8),
+#                              dpi=300, description=sum_desc)
+# sum_desc = ('Zoom in polynomial fits for localisation (overplotted on '
+#             'pre-processed image)')
+# sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
+#                                func=plot_loc_im_corner, figsize=(16, 10),
+#                                dpi=150, description=sum_desc)
+# # add to definitions
+# definitions += [loc_minmax_cents, loc_min_cents_thres, loc_finding_orders,
+#                 loc_im_sat_thres, loc_ord_vs_rms, loc_check_coeffs,
+#                 loc_fit_residuals,
+#                 sum_loc_im_sat_thres, sum_plot_loc_im_corner]
 
 
 # =============================================================================
@@ -2527,22 +2855,22 @@ def plot_wave_hc_brightest_lines(plotter: Plotter, graph: Graph,
 
     :return: None, plots this plot
     """
-    # ------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
         return
     plt = plotter.plt
-    # ------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # get the arguments from kwargs
     wavemap = kwargs['wave']
     dv = kwargs['dv']
     mask = kwargs['mask']
     iteration = kwargs['iteration']
     niters = kwargs['niters']
-    # ------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, ncols=1, nrows=1)
-    # ------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # plot all lines
     frame.scatter(wavemap[~mask], dv[~mask], color='g', s=5, label='All lines')
     # plot brightest lines

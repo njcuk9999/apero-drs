@@ -819,6 +819,67 @@ class PseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+
+    def FIBER_LOCALISATION(self, fiber):
+        """
+        Return which fibers to calculate localisation for
+
+        :param fiber: str, fiber name
+
+        :return: list of strings, the fibers to find localisation for
+        """
+        # set function name
+        func_name = display_func('FIBER_LOCALISATION', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = fiber
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def FIBER_DILATE(self, fiber: str):
+        """
+        whether we are dilate the imagine due to fiber configuration this should
+        only be used when we want a combined localisation solution
+        i.e. AB from A and B
+
+        :param fiber: str, the fiber name
+        :return: bool, True if we should dilate, False otherwise
+        """
+        # set function name
+        func_name = display_func('FIBER_DILATE', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = fiber
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def FIBER_DOUBLETS(self, fiber: str):
+        """
+        whether we have orders coming in doublets (i.e. SPIROUs AB --> A + B)
+
+        :param fiber: str, the fiber name
+        :return: bool, True if we have fiber 'doublets', False otherwise
+        """
+        # set function name
+        func_name = display_func('FIBER_DOUBLETS', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = fiber
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def FIBER_DOUBLET_PARITY(self, fiber: str) -> Union[int, None]:
+        """
+        Give the doublt fibers parity - all other fibers should not use this
+        function
+
+        :param fiber: str, the fiber name
+        :return: int or None, either +/-1 (for fiber A/B) or None)
+        """
+        # set function name
+        func_name = display_func('FIBER_DOUBLET_PARITY', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = fiber
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
     # noinspection PyPep8Naming
     def FIBER_LOC_TYPES(self, fiber: str) -> str:
         """

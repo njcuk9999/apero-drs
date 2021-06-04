@@ -74,9 +74,14 @@ __all__ = [
     'BKGR_N_BAD_NEIGHBOURS', 'BKGR_NO_SUBTRACTION', 'BKGR_KER_AMP',
     'BKGR_KER_WX', 'BKGR_KER_WY', 'BKGR_KER_SIG',
     # localisation constants
+    'LOC_BINSIZE', 'LOC_BOX_PERCENTILE_LOW', 'LOC_BOX_PERCENTILE_HIGH',
+    'LOC_PERCENTILE_FILTER_SIZE',
+    'LOC_FIBER_DILATE_ITERATIONS', 'LOC_MIN_ORDER_AREA', 'LOC_WIDTH_POLY_DEG',
+    'LOC_CENT_POLY_DEG', 'LOC_RANGE_WID_SUM', 'LOC_RANGE_WID_SUM',
+    'LOC_YDET_MIN', 'LOC_YDET_MAX',
+    # localisation constants
     'LOC_ORDERP_BOX_SIZE', 'LOC_START_ROW_OFFSET', 'LOC_CENTRAL_COLUMN',
-    'LOC_HALF_ORDER_SPACING', 'LOC_MINPEAK_AMPLITUDE',
-    'LOC_WIDTH_POLY_DEG', 'LOC_CENT_POLY_DEG', 'LOC_COLUMN_SEP_FITTING',
+    'LOC_HALF_ORDER_SPACING', 'LOC_MINPEAK_AMPLITUDE', 'LOC_COLUMN_SEP_FITTING',
     'LOC_EXT_WINDOW_SIZE', 'LOC_IMAGE_GAP', 'LOC_ORDER_WIDTH_MIN',
     'LOC_NOISE_MULTIPLIER_THRES', 'LOC_MAX_RMS_CENT', 'LOC_MAX_PTP_CENT',
     'LOC_PTPORMS_CENT', 'LOC_MAX_RMS_WID', 'LOC_MAX_PTP_WID',
@@ -165,7 +170,6 @@ __all__ = [
     'WAVE_CCF_SMART_MASK_MAXLAM', 'WAVE_CCF_SMART_MASK_TRIAL_NMIN',
     'WAVE_CCF_SMART_MASK_TRIAL_NMAX', 'WAVE_CCF_SMART_MASK_DWAVE_THRES',
     'WAVE_CCF_RV_THRES_QC', 'WAVE_CCF_MASK_NORMALIZATION',
-
 
     # TODO: sort out these constants
     # wave general constants
@@ -275,9 +279,8 @@ __all__ = [
     # debug badpix plot settings
     'PLOT_BADPIX_MAP',
     # debug loc plot settings
-    'PLOT_LOC_MINMAX_CENTS', 'PLOT_LOC_MIN_CENTS_THRES',
-    'PLOT_LOC_FINDING_ORDERS', 'PLOT_LOC_IM_SAT_THRES', 'PLOT_LOC_ORD_VS_RMS',
-    'PLOT_LOC_CHECK_COEFFS', 'PLOT_LOC_FIT_RESIDUALS',
+    'PLOT_LOC_WIDTH_REGIONS', 'PLOT_LOC_FIBER_DOUBLET_PARITY',
+    'PLOT_LOC_GAP_ORDERS', 'PLOT_LOC_IMAGE_FIT', 'PLOT_LOC_IM_CORNER',
     # debug shape plot settings
     'PLOT_SHAPE_DX', 'PLOT_SHAPE_ANGLE_OFFSET_ALL', 'PLOT_SHAPE_ANGLE_OFFSET',
     'PLOT_SHAPEL_ZOOM_SHIFT', 'PLOT_SHAPE_LINEAR_TPARAMS',
@@ -401,7 +404,7 @@ RAW_TO_PP_ROTATION = Const('RAW_TO_PP_ROTATION', dtype=int, value=None,
 # Define raw image size (mostly just used as a check and in places where we
 #   don't have access to this information) in x dim
 IMAGE_X_FULL = Const('IMAGE_X_FULL', dtype=int, value=None, source=__NAME__,
-                     group=cgroup, 
+                     group=cgroup,
                      description=('Define raw image size (mostly just used as '
                                   'a check and in places where we dont have '
                                   'access to this information) in x dim'))
@@ -429,13 +432,13 @@ INPUT_COMBINE_IMAGES = Const('INPUT_COMBINE_IMAGES', dtype=bool, value=True,
 
 # Defines whether to, by default, flip images that are inputted
 INPUT_FLIP_IMAGE = Const('INPUT_FLIP_IMAGE', dtype=bool, value=True,
-                         source=__NAME__, group=cgroup, 
+                         source=__NAME__, group=cgroup,
                          description=('Defines whether to, by default, '
                                       'flip images that are inputted'))
 
 # Defines whether to, by default, resize images that are inputted
 INPUT_RESIZE_IMAGE = Const('INPUT_RESIZE_IMAGE', dtype=bool, value=True,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('Defines whether to, by default, '
                                         'resize images that are inputted'))
 
@@ -453,7 +456,7 @@ IMAGE_Y_HIGH = Const('IMAGE_Y_HIGH', value=None, dtype=int, minimum=0,
 # Define the pixel size in km/s / pix
 #    also used for the median sampling size in tellu correction
 IMAGE_PIXEL_SIZE = Const('IMAGE_PIXEL_SIZE', value=None, dtype=float,
-                         source=__NAME__, group=cgroup, 
+                         source=__NAME__, group=cgroup,
                          description=('Define the pixel size in km/s / pix '
                                       'also used for the median sampling '
                                       'size in tellu correction'))
@@ -483,7 +486,7 @@ cgroup = 'CALIBRATION: GENERAL SETTINGS'
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
 COMBINE_METRIC_THRESHOLD1 = Const('COMBINE_METRIC_THRESHOLD1', value=None,
                                   dtype=float, source=__NAME__, group=cgroup,
-                                  minimum=0, maximum=1, 
+                                  minimum=0, maximum=1,
                                   description=('Define the threshold under '
                                                'which a file should not be '
                                                'combined (metric is compared '
@@ -492,66 +495,66 @@ COMBINE_METRIC_THRESHOLD1 = Const('COMBINE_METRIC_THRESHOLD1', value=None,
 
 # Define the DPRTYPES allowed for the combine metric 1 comparison
 COMBINE_METRIC1_TYPES = Const('COMBINE_METRIC1_TYPES', value=None, dtype=str,
-                              source=__NAME__, group=cgroup, 
+                              source=__NAME__, group=cgroup,
                               description=('Define the DPRTYPES allowed for '
                                            'the combine metric 1 comparison'))
 
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = Const('CAVITY_1M_FILE', value=None, dtype=str, source=__NAME__,
-                       group=cgroup, 
+                       group=cgroup,
                        description=('Define the coefficients of the fit of '
                                     '1/m vs d'))
 
 # Define the coefficients of the fit of wavelength vs d
 CAVITY_LL_FILE = Const('CAVITY_LL_FILE', value=None, dtype=str, source=__NAME__,
-                       group=cgroup, 
+                       group=cgroup,
                        description=('Define the coefficients of the fit of '
                                     'wavelength vs d'))
 
 # define the check FP percentile level
 CALIB_CHECK_FP_PERCENTILE = Const('CALIB_CHECK_FP_PERCENTILE', value=None,
                                   dtype=int, minimum=0, source=__NAME__,
-                                  group=cgroup, 
+                                  group=cgroup,
                                   description=('define the check FP percentile '
                                                'level'))
 
 # define the check FP threshold qc parameter
 CALIB_CHECK_FP_THRES = Const('CALIB_CHECK_FP_THRES', value=None,
                              dtype=float, minimum=0.0, source=__NAME__,
-                             group=cgroup, 
+                             group=cgroup,
                              description=('define the check FP threshold qc '
                                           'parameter'))
 
 # define the check FP center image size [px]
 CALIB_CHECK_FP_CENT_SIZE = Const('CALIB_CHECK_FP_CENT_SIZE', value=None,
                                  dtype=int, minimum=0, source=__NAME__,
-                                 group=cgroup, 
+                                 group=cgroup,
                                  description=('define the check FP center '
                                               'image size [px]'))
 
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 OBJ_LIST_GAIA_URL = Const('OBJ_LIST_GAIA_URL', value=None, dtype=str,
-                          source=__NAME__, group=cgroup, 
+                          source=__NAME__, group=cgroup,
                           description=('Define the TAP Gaia URL (for use in '
                                        'crossmatching to Gaia via astroquery)'))
 
 # Define the google sheet to use for crossmatch
 OBJ_LIST_GOOGLE_SHEET_URL = Const('OBJ_LIST_GOOGLE_SHEET_URL', value=None,
-                                  dtype=str, source=__NAME__, group=cgroup, 
+                                  dtype=str, source=__NAME__, group=cgroup,
                                   description=('Define the google sheet to use '
                                                'for crossmatch'))
 
 # Define the google sheet workbook number
 OBJ_LIST_GOOGLE_SHEET_WNUM = Const('OBJ_LIST_GOOGLE_SHEET_WNUM', value=0,
                                    dtype=int, source=__NAME__, group=cgroup,
-                                   minimum=0, 
+                                   minimum=0,
                                    description=('Define the google sheet '
                                                 'workbook number'))
 
 # Define whether to resolve from local database (via drs_database / drs_db)
 OBJ_LIST_RESOLVE_FROM_DATABASE = Const('OBJ_LIST_RESOLVE_FROM_DATABASE',
                                        value=None, dtype=bool, source=__NAME__,
-                                       group=cgroup, 
+                                       group=cgroup,
                                        description=('Define whether to resolve '
                                                     'from local database '
                                                     '(via drs_database / '
@@ -561,7 +564,7 @@ OBJ_LIST_RESOLVE_FROM_DATABASE = Const('OBJ_LIST_RESOLVE_FROM_DATABASE',
 #    ra/dec/pmra/pmde/plx will always come from header
 OBJ_LIST_RESOLVE_FROM_GAIAID = Const('OBJ_LIST_RESOLVE_FROM_GAIAID',
                                      value=None, dtype=bool, source=__NAME__,
-                                     group=cgroup, 
+                                     group=cgroup,
                                      description=('Define whether to resolve '
                                                   'from gaia id (via TapPlus '
                                                   'to Gaia) if False ra/dec/'
@@ -573,7 +576,7 @@ OBJ_LIST_RESOLVE_FROM_GAIAID = Const('OBJ_LIST_RESOLVE_FROM_GAIAID',
 #    OBJ_LIST_RESOLVE_FROM_COORDS = True else will default to header values
 OBJ_LIST_RESOLVE_FROM_GLIST = Const('OBJ_LIST_RESOLVE_FROM_GLIST',
                                     value=None, dtype=bool, source=__NAME__,
-                                    group=cgroup, 
+                                    group=cgroup,
                                     description=('Define whether to get Gaia '
                                                  'ID / Teff / RV from google '
                                                  'sheets if False will try to '
@@ -588,7 +591,7 @@ OBJ_LIST_RESOLVE_FROM_GLIST = Const('OBJ_LIST_RESOLVE_FROM_GLIST',
 #    identification of the gaia id - not recommended
 OBJ_LIST_RESOLVE_FROM_COORDS = Const('OBJ_LIST_RESOLVE_FROM_COORDS',
                                      value=None, dtype=bool, source=__NAME__,
-                                     group=cgroup, 
+                                     group=cgroup,
                                      description=('Define whether to get '
                                                   'Gaia ID from header RA '
                                                   'and Dec (basically if all '
@@ -601,7 +604,7 @@ OBJ_LIST_RESOLVE_FROM_COORDS = Const('OBJ_LIST_RESOLVE_FROM_COORDS',
 # Define the gaia epoch to use in the gaia query
 OBJ_LIST_GAIA_EPOCH = Const('OBJ_LIST_GAIA_EPOCH', value=None, dtype=float,
                             source=__NAME__, minimum=2000.0, maximum=2100.0,
-                            group=cgroup, 
+                            group=cgroup,
                             description=('Define the gaia epoch to use in '
                                          'the gaia query'))
 
@@ -609,7 +612,7 @@ OBJ_LIST_GAIA_EPOCH = Const('OBJ_LIST_GAIA_EPOCH', value=None, dtype=float,
 #   in arcseconds
 OBJ_LIST_CROSS_MATCH_RADIUS = Const('OBJ_LIST_CROSS_MATCH_RADIUS', value=None,
                                     dtype=float, source=__NAME__, minimum=0.0,
-                                    group=cgroup, 
+                                    group=cgroup,
                                     description=('Define the radius for '
                                                  'crossmatching objects (in '
                                                  'both lookup table and '
@@ -617,27 +620,27 @@ OBJ_LIST_CROSS_MATCH_RADIUS = Const('OBJ_LIST_CROSS_MATCH_RADIUS', value=None,
 
 # Define the gaia parallax limit for using gaia point
 OBJ_LIST_GAIA_PLX_LIM = Const('OBJ_LIST_GAIA_PLX_LIM', value=None, dtype=float,
-                              source=__NAME__, minimum=0.0, group=cgroup, 
+                              source=__NAME__, minimum=0.0, group=cgroup,
                               description=('Define the gaia parallax limit '
                                            'for using gaia point'))
 
 # Define the gaia magnitude cut to use in the gaia query
 OBJ_LIST_GAIA_MAG_CUT = Const('OBJ_LIST_GAIA_MAG_CUT', value=None, dtype=float,
                               source=__NAME__, minimum=10.0, maximum=25.0,
-                              group=cgroup, 
+                              group=cgroup,
                               description=('Define the gaia magnitude cut to '
                                            'use in the gaia query'))
 
 # Define the odometer code rejection google sheet id
 ODOCODE_REJECT_GSHEET_ID = Const('ODOCODE_REJECT_GSHEET_ID', value=None,
-                                 dtype=str, source=__NAME__, group=cgroup, 
+                                 dtype=str, source=__NAME__, group=cgroup,
                                  description=('Define the odometer code '
                                               'rejection google sheet id'))
 
 # Define the odmeter code rejection google sheet workbook
 ODOCODE_REJECT_GSHEET_NUM = Const('ODOCODE_REJECT_GSHEET_NUM', value=int,
                                   dtype=str, source=__NAME__, minimum=0,
-                                  group=cgroup, 
+                                  group=cgroup,
                                   description=('Define the odmeter code '
                                                'rejection google sheet '
                                                'workbook'))
@@ -649,7 +652,7 @@ cgroup = 'CALIBRATION: FIBER SETTINGS'
 # Number of orders to skip at start of image
 FIBER_FIRST_ORDER_JUMP_AB = Const('FIBER_FIRST_ORDER_JUMP_AB', value=None,
                                   dtype=int, minimum=0, source=__NAME__,
-                                  group=cgroup, 
+                                  group=cgroup,
                                   description=('Number of orders to skip '
                                                'at start of image'))
 FIBER_FIRST_ORDER_JUMP_A = Const('FIBER_FIRST_ORDER_JUMP_A', value=None,
@@ -719,9 +722,9 @@ PP_BADLIST_DRS_HKEY = Const('PP_BADLIST_DRS_HKEY', value=None, dtype=str,
 
 # Define the bad list google spreadsheet value column
 PP_BADLIST_SS_VALCOL = Const('PP_BADLIST_SS_VALCOL', value=None, dtype=str,
-                            source=__NAME__, group=cgroup,
-                            description='Define the bad list google '
-                                        'spreadsheet value column')
+                             source=__NAME__, group=cgroup,
+                             description='Define the bad list google '
+                                         'spreadsheet value column')
 
 # Define the bad list google spreadsheet mask column for preprocessing
 PP_BADLIST_SS_MASKCOL = Const('PP_BADLIST_SS_MASKCOL', value=None, dtype=str,
@@ -732,13 +735,13 @@ PP_BADLIST_SS_MASKCOL = Const('PP_BADLIST_SS_MASKCOL', value=None, dtype=str,
 
 # Defines the box size surrounding hot pixels to use
 PP_HOTPIX_BOXSIZE = Const('PP_HOTPIX_BOXSIZE', value=None, dtype=int,
-                          minimum=1, source=__NAME__, group=cgroup, 
+                          minimum=1, source=__NAME__, group=cgroup,
                           description=('Defines the box size surrounding '
                                        'hot pixels to use'))
 
 # Defines the size around badpixels that is considered part of the bad pixel
 PP_CORRUPT_MED_SIZE = Const('PP_CORRUPT_MED_SIZE', value=None, dtype=int,
-                            minimum=1, source=__NAME__, group=cgroup, 
+                            minimum=1, source=__NAME__, group=cgroup,
                             description=('Defines the size around badpixels '
                                          'that is considered part of the '
                                          'bad pixel'))
@@ -747,7 +750,7 @@ PP_CORRUPT_MED_SIZE = Const('PP_CORRUPT_MED_SIZE', value=None, dtype=int,
 #   valid observation
 PP_BAD_EXPTIME_FRACTION = Const('PP_BAD_EXPTIME_FRACTION', value=None,
                                 dtype=float, minimum=0, source=__NAME__,
-                                group=cgroup, 
+                                group=cgroup,
                                 description=('Define the fraction of the '
                                              'required exposure time that '
                                              'is required for a valid '
@@ -755,7 +758,7 @@ PP_BAD_EXPTIME_FRACTION = Const('PP_BAD_EXPTIME_FRACTION', value=None,
 
 # Defines the threshold in sigma that selects hot pixels
 PP_CORRUPT_HOT_THRES = Const('PP_CORRUPT_HOT_THRES', value=None, dtype=int,
-                             minimum=0, source=__NAME__, group=cgroup, 
+                             minimum=0, source=__NAME__, group=cgroup,
                              description=('Defines the threshold in sigma that '
                                           'selects hot pixels'))
 
@@ -771,43 +774,43 @@ PP_NUM_DARK_AMP = Const('PP_NUM_DARK_AMP', value=None, dtype=int,
 
 # Define the number of bins used in the dark median process         - [apero_preprocess]
 PP_DARK_MED_BINNUM = Const('PP_DARK_MED_BINNUM', value=None, dtype=int,
-                           minimum=0, source=__NAME__, group=cgroup, 
+                           minimum=0, source=__NAME__, group=cgroup,
                            description=('Define the number of bins used in the '
                                         'dark median process - [apero_preprocess]'))
 
 #   Defines the pp hot pixel file (located in the data folder)
 PP_HOTPIX_FILE = Const('PP_HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
-                       group=cgroup, 
+                       group=cgroup,
                        description=('Defines the pp hot pixel file (located in '
                                     'the data folder)'))
 
 # Define the number of un-illuminated reference pixels at top of image
 PP_NUM_REF_TOP = Const('PP_NUM_REF_TOP', value=None, dtype=int,
-                       source=__NAME__, group=cgroup, 
+                       source=__NAME__, group=cgroup,
                        description=('Define the number of un-illuminated '
                                     'reference pixels at top of image'))
 
 # Define the number of un-illuminated reference pixels at bottom of image
 PP_NUM_REF_BOTTOM = Const('PP_NUM_REF_BOTTOM', value=None, dtype=int,
-                          source=__NAME__, group=cgroup, 
+                          source=__NAME__, group=cgroup,
                           description=('Define the number of un-illuminated '
                                        'reference pixels at bottom of image'))
 
 # Define the number of un-illuminated reference pixels at left of image
 PP_NUM_REF_LEFT = Const('PP_NUM_REF_LEFT', value=None, dtype=int,
-                          source=__NAME__, group=cgroup,
-                          description=('Define the number of un-illuminated '
-                                       'reference pixels at left of image'))
+                        source=__NAME__, group=cgroup,
+                        description=('Define the number of un-illuminated '
+                                     'reference pixels at left of image'))
 
 # Define the number of un-illuminated reference pixels at right of image
 PP_NUM_REF_RIGHT = Const('PP_NUM_REF_RIGHT', value=None, dtype=int,
-                          source=__NAME__, group=cgroup,
-                          description=('Define the number of un-illuminated '
-                                       'reference pixels at right of image'))
+                         source=__NAME__, group=cgroup,
+                         description=('Define the number of un-illuminated '
+                                      'reference pixels at right of image'))
 
 # Define the percentile value for the rms normalisation (0-100)
 PP_RMS_PERCENTILE = Const('PP_RMS_PERCENTILE', value=None, dtype=int,
-                          minimum=0, maximum=100, source=__NAME__, group=cgroup, 
+                          minimum=0, maximum=100, source=__NAME__, group=cgroup,
                           description=('Define the percentile value for the '
                                        'rms normalisation (0-100)'))
 
@@ -815,7 +818,7 @@ PP_RMS_PERCENTILE = Const('PP_RMS_PERCENTILE', value=None, dtype=int,
 #   the pp_rms_percentile-th is lower than this this value is used
 PP_LOWEST_RMS_PERCENTILE = Const('PP_LOWEST_RMS_PERCENTILE', value=None,
                                  dtype=float, minimum=0.0, source=__NAME__,
-                                 group=cgroup, 
+                                 group=cgroup,
                                  description=('Define the lowest rms value of '
                                               'the rms percentile allowed if '
                                               'the value of the '
@@ -824,13 +827,13 @@ PP_LOWEST_RMS_PERCENTILE = Const('PP_LOWEST_RMS_PERCENTILE', value=None,
 
 # Defines the snr hotpix threshold to define a corrupt file
 PP_CORRUPT_SNR_HOTPIX = Const('PP_CORRUPT_SNR_HOTPIX', value=None, dtype=float,
-                              minimum=0.0, source=__NAME__, group=cgroup, 
+                              minimum=0.0, source=__NAME__, group=cgroup,
                               description=('Defines the snr hotpix threshold '
                                            'to define a corrupt file'))
 
 # Defines the RMS threshold to also catch corrupt files
 PP_CORRUPT_RMS_THRES = Const('PP_CORRUPT_RMS_THRES', value=None, dtype=float,
-                             minimum=0.0, source=__NAME__, group=cgroup, 
+                             minimum=0.0, source=__NAME__, group=cgroup,
                              description=('Defines the RMS threshold to also '
                                           'catch corrupt files'))
 
@@ -990,7 +993,7 @@ DARK_CUTLIMIT = Const('DARK_CUTLIMIT', value=None, dtype=float, source=__NAME__,
 
 # Defines the lower and upper percentiles when measuring the dark
 DARK_QMIN = Const('DARK_QMIN', value=None, dtype=int, source=__NAME__,
-                  minimum=0, maximum=100, group=cgroup, 
+                  minimum=0, maximum=100, group=cgroup,
                   description=('Defines the lower and upper percentiles when '
                                'measuring the dark'))
 DARK_QMAX = Const('DARK_QMAX', value=None, dtype=int, source=__NAME__,
@@ -1010,14 +1013,14 @@ HISTO_RANGE_HIGH = Const('HISTO_RANGE_LOW', value=None, dtype=int,
 
 #  Define whether to use SKYDARK for dark corrections
 USE_SKYDARK_CORRECTION = Const('USE_SKYDARK_CORRECTION', value=None,
-                               dtype=bool, source=__NAME__, group=cgroup, 
+                               dtype=bool, source=__NAME__, group=cgroup,
                                description=('Define whether to use SKYDARK for '
                                             'dark corrections'))
 
 #  If use_skydark_correction is True define whether we use
 #     the SKYDARK only or use SKYDARK/DARK (whichever is closest)
 USE_SKYDARK_ONLY = Const('USE_SKYDARK_ONLY', value=None, dtype=bool,
-                         source=__NAME__, group=cgroup, 
+                         source=__NAME__, group=cgroup,
                          description=('If use_skydark_correction is True define'
                                       ' whether we use the SKYDARK only or use '
                                       'SKYDARK/DARK (whichever is closest)'))
@@ -1026,7 +1029,7 @@ USE_SKYDARK_ONLY = Const('USE_SKYDARK_ONLY', value=None, dtype=bool,
 #      only find those types define by 'filetype' but 'filetype' must
 #      be one of theses (strings separated by commas)
 ALLOWED_DARK_TYPES = Const('ALLOWED_DARK_TYPES', value=None, dtype=str,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('Define the allowed DPRTYPES for '
                                         'finding files for DARK_MASTER will '
                                         'only find those types define by '
@@ -1036,7 +1039,7 @@ ALLOWED_DARK_TYPES = Const('ALLOWED_DARK_TYPES', value=None, dtype=str,
 
 # Define the maximum time span to combine dark files over (in hours)
 DARK_MASTER_MATCH_TIME = Const('DARK_MASTER_MATCH_TIME', value=None,
-                               dtype=float, source=__NAME__, group=cgroup, 
+                               dtype=float, source=__NAME__, group=cgroup,
                                description=('Define the maximum time span to '
                                             'combine dark files over (in '
                                             'hours)'))
@@ -1052,7 +1055,7 @@ DARK_MASTER_MED_SIZE = Const('DARK_MASTER_MED_SIZE', value=None, dtype=int,
 cgroup = 'CALIBRATION: BAD PIXEL MAP SETTINGS'
 # Defines the full detector flat file (located in the data folder)
 BADPIX_FULL_FLAT = Const('BADPIX_FULL_FLAT', value=None, dtype=str,
-                         source=__NAME__, group=cgroup, 
+                         source=__NAME__, group=cgroup,
                          description=('Defines the full detector flat file '
                                       '(located in the data folder)'))
 
@@ -1060,21 +1063,21 @@ BADPIX_FULL_FLAT = Const('BADPIX_FULL_FLAT', value=None, dtype=str,
 #    image [percentage]
 BADPIX_NORM_PERCENTILE = Const('BADPIX_NORM_PERCENTILE', value=None,
                                dtype=float, source=__NAME__,
-                               minimum=0.0, maximum=100.0, group=cgroup, 
+                               minimum=0.0, maximum=100.0, group=cgroup,
                                description=('Percentile to normalise to when '
                                             'normalising and median filtering '
                                             'image [percentage]'))
 
 # Define the median image in the x dimension over a boxcar of this width
 BADPIX_FLAT_MED_WID = Const('BADPIX_FLAT_MED_WID', value=None, dtype=int,
-                            source=__NAME__, minimum=0, group=cgroup, 
+                            source=__NAME__, minimum=0, group=cgroup,
                             description=('Define the median image in the x '
                                          'dimension over a boxcar of this '
                                          'width'))
 
 # Define the maximum differential pixel cut ratio
 BADPIX_FLAT_CUT_RATIO = Const('BADPIX_FLAT_CUT_RATIO', value=None, dtype=float,
-                              source=__NAME__, minimum=0.0, group=cgroup, 
+                              source=__NAME__, minimum=0.0, group=cgroup,
                               description=('Define the maximum differential '
                                            'pixel cut ratio'))
 
@@ -1085,13 +1088,13 @@ BADPIX_ILLUM_CUT = Const('BADPIX_ILLUM_CUT', value=None, dtype=float,
 
 # Define the maximum flux in ADU/s to be considered too hot to be used
 BADPIX_MAX_HOTPIX = Const('BADPIX_MAX_HOTPIX', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup, 
+                          source=__NAME__, minimum=0.0, group=cgroup,
                           description=('Define the maximum flux in ADU/s to '
                                        'be considered too hot to be used'))
 
 # Defines the threshold on the full detector flat file to deem pixels as good
 BADPIX_FULL_THRESHOLD = Const('BADPIX_FULL_THRESHOLD', value=None, dtype=float,
-                              source=__NAME__, minimum=0.0, group=cgroup, 
+                              source=__NAME__, minimum=0.0, group=cgroup,
                               description=('Defines the threshold on the full '
                                            'detector flat file to deem pixels '
                                            'as good'))
@@ -1102,64 +1105,151 @@ BADPIX_FULL_THRESHOLD = Const('BADPIX_FULL_THRESHOLD', value=None, dtype=float,
 cgroup = 'CALIBRATION: BACKGROUND CORRECTION SETTINGS'
 #  Width of the box to produce the background mask
 BKGR_BOXSIZE = Const('BKGR_BOXSIZE', value=None, dtype=int,
-                     source=__NAME__, minimum=0, group=cgroup, 
+                     source=__NAME__, minimum=0, group=cgroup,
                      description=('Width of the box to produce the background '
                                   'mask'))
 
 #  Do background percentile to compute minimum value (%)
 BKGR_PERCENTAGE = Const('BKGR_PERCENTAGE', value=None, dtype=float,
                         source=__NAME__, minimum=0.0, maximum=100.0,
-                        group=cgroup, 
+                        group=cgroup,
                         description=('Do background percentile to compute '
                                      'minimum value (%)'))
 
 #  Size in pixels of the convolve tophat for the background mask
 BKGR_MASK_CONVOLVE_SIZE = Const('BKGR_MASK_CONVOLVE_SIZE', value=None,
                                 dtype=int, source=__NAME__, minimum=0,
-                                group=cgroup, 
+                                group=cgroup,
                                 description=('Size in pixels of the convolve '
                                              'tophat for the background mask'))
 
 #  If a pixel has this or more "dark" neighbours, we consider it dark
 #      regardless of its initial value
 BKGR_N_BAD_NEIGHBOURS = Const('BKGR_N_BAD_NEIGHBOURS', value=None, dtype=int,
-                              source=__NAME__, minimum=0, group=cgroup, 
+                              source=__NAME__, minimum=0, group=cgroup,
                               description=('If a pixel has this or more "dark" '
                                            'neighbours, we consider it dark '
                                            'regardless of its initial value'))
 
 #  Do not correct for background measurement (True or False)
 BKGR_NO_SUBTRACTION = Const('BKGR_NO_SUBTRACTION', value=None, dtype=bool,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('Do not correct for background '
                                          'measurement (True or False)'))
 
 #  Kernel amplitude determined from drs_local_scatter.py
 BKGR_KER_AMP = Const('BKGR_KER_AMP', value=None, dtype=float, source=__NAME__,
-                     group=cgroup, 
+                     group=cgroup,
                      description=('Kernel amplitude determined from '
                                   'drs_local_scatter.py'))
 
-#  Background kernel width in in x and y [pixels]
+#  Background kernel width in x and y [pixels]
 BKGR_KER_WX = Const('BKGR_KER_WX', value=None, dtype=int, source=__NAME__,
-                    group=cgroup, 
-                    description=('Background kernel width in in x and '
-                                 'y [pixels]'))
+                    group=cgroup,
+                    description=('Background kernel width in x [pixels]'))
 BKGR_KER_WY = Const('BKGR_KER_WY', value=None, dtype=int, source=__NAME__,
-                    group=cgroup, description='')
+                    group=cgroup,
+                    description='Background kernel width in y [pixels]')
 
 #  construct a convolution kernel. We go from -IC_BKGR_KER_SIG to
 #      +IC_BKGR_KER_SIG sigma in each direction. Its important no to
 #      make the kernel too big as this slows-down the 2D convolution.
 #      Do NOT make it a -10 to +10 sigma gaussian!
 BKGR_KER_SIG = Const('BKGR_KER_SIG', value=None, dtype=float, source=__NAME__,
-                     group=cgroup, 
-                     description=('construct a convolution kernel. We go from '
-                                  '-IC_BKGR_KER_SIG to +IC_BKGR_KER_SIG sigma '
-                                  'in each direction. Its important no to make '
-                                  'the kernel too big as this slows-down the '
-                                  '2D convolution. Do NOT make it a -10 to +10 '
-                                  'sigma gaussian!'))
+                     group=cgroup,
+                     description='construct a convolution kernel. We go from '
+                                 '-IC_BKGR_KER_SIG to +IC_BKGR_KER_SIG sigma '
+                                 'in each direction. Its important no to make '
+                                 'the kernel too big as this slows-down the '
+                                 '2D convolution. Do NOT make it a -10 to +10 '
+                                 'sigma gaussian!')
+
+# =============================================================================
+# CALIBRATION: LOCALISATION SETTINGS
+# =============================================================================
+cgroup = 'CALIBRATION: LOCALISATION SETTINGS'
+# median-binning size in the dispersion direction. This is just used to
+#     get an order-of-magnitude of the order profile along a given column
+LOC_BINSIZE = Const('LOC_BINSIZE', value=None, dtype=int, source=__NAME__,
+                    group=cgroup, minimum=1,
+                    description='median-binning size in the dispersion '
+                                'direction. This is just used to get an '
+                                'order-of-magnitude of the order profile '
+                                'along a given column')
+
+# the zero point percentile of a box
+LOC_BOX_PERCENTILE_LOW = Const('LOC_BOX_PERCENTILE_LOW', value=None,
+                               dtype=int, minimum=0, source=__NAME__,
+                               group=cgroup,
+                               description='the zero point percentile of a '
+                                           'box')
+
+# the percentile of a box that is always an illuminated pixel
+LOC_BOX_PERCENTILE_HIGH = Const('LOC_BOX_PERCENTILE_HIGH', value=None,
+                                dtype=int, minimum=0, source=__NAME__,
+                                group=cgroup,
+                                description='the percentile of a box that is '
+                                            'always an illuminated pixel')
+
+# the size of the percentile filter - should be a bit bigger than the
+# inter-order gap
+LOC_PERCENTILE_FILTER_SIZE = Const('LOC_PERCENTILE_FILTER_SIZE', value=None,
+                                   minimum=1, dtype=int,
+                                   source=__NAME__, group=cgroup,
+                                   description='the size of the pecentile '
+                                               'filter - should be a bit '
+                                               'bigger than the inter-order '
+                                               'gap')
+
+# the fiber dilation number of iterations this should only be used when
+#     we want a combined localisation solution i.e. AB from A and B
+LOC_FIBER_DILATE_ITERATIONS = Const('LOC_FIBER_DILATE_ITERATIONS', value=None,
+                                    dtype=int, source=__NAME__, group=cgroup,
+                                    minimum=1,
+                                    description='the fiber dilation number of '
+                                                'iterations this should only '
+                                                'be  used when we want a '
+                                                'combined  localisation '
+                                                'solution i.e. AB from A and B')
+
+# the minimum area (number of pixels) that defines an order
+LOC_MIN_ORDER_AREA = Const('LOC_MIN_ORDER_AREA', value=None, minimum=1,
+                           dtype=int, source=__NAME__, group=cgroup,
+                           description='the minimum area (number of pixels) '
+                                       'that defines an order')
+
+# Order of polynomial to fit for widths
+LOC_WIDTH_POLY_DEG = Const('LOC_WIDTH_POLY_DEG', value=None, minimum=1,
+                           dtype=int, source=__NAME__, group=cgroup,
+                           description='Order of polynomial to fit for widths')
+
+# Order of polynomial to fit for positions
+LOC_CENT_POLY_DEG = Const('LOC_CENT_POLY_DEG', value=None, minimum=1,
+                          dtype=int, source=__NAME__, group=cgroup,
+                          description='Order of polynomial to fit for '
+                                      'positions')
+
+# range width size (used to fit the width of the orders at certain points)
+LOC_RANGE_WID_SUM = Const('LOC_RANGE_WID_SUM', value=None, minimum=1,
+                          dtype=int, source=__NAME__, group=cgroup,
+                          description='range width size (used to fit the width '
+                                      'of the orders at certain points)')
+
+# define the minimum detector position where the centers of the orders should
+#   fall (across order direction)
+LOC_YDET_MIN = Const('LOC_YDET_MIN', value=None, dtype=int, source=__NAME__,
+                     group=cgroup, minimum=0,
+                     description='define the minimum detector position where '
+                                 'the centers of the orders should fall '
+                                 '(across order direction)')
+
+# define the maximum detector position where the centers of the orders should
+#   fall (across order direction)
+LOC_YDET_MAX = Const('LOC_YDET_MIN', value=None, dtype=int, source=__NAME__,
+                     group=cgroup, minimum=0,
+                     description='define the maximum detector position where '
+                                 'the centers of the orders should fall '
+                                 '(across order direction)')
 
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
@@ -1168,20 +1258,20 @@ cgroup = 'CALIBRATION: LOCALISATION SETTINGS'
 # Size of the order_profile smoothed box
 #   (from pixel - size to pixel + size)
 LOC_ORDERP_BOX_SIZE = Const('LOC_ORDERP_BOX_SIZE', value=None, dtype=int,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('Size of the order_profile smoothed '
                                          'box (from pixel - size to pixel '
                                          '+ size)'))
 
 # row number of image to start localisation processing at
 LOC_START_ROW_OFFSET = Const('LOC_START_ROW_OFFSET', value=None, dtype=int,
-                             source=__NAME__, minimum=0, group=cgroup, 
+                             source=__NAME__, minimum=0, group=cgroup,
                              description=('row number of image to start '
                                           'localisation processing at'))
 
 # Definition of the central column for use in localisation
 LOC_CENTRAL_COLUMN = Const('LOC_CENTRAL_COLUMN', value=None, dtype=int,
-                           source=__NAME__, minimum=0, group=cgroup, 
+                           source=__NAME__, minimum=0, group=cgroup,
                            description=('Definition of the central column '
                                         'for use in localisation'))
 
@@ -1193,13 +1283,13 @@ LOC_HALF_ORDER_SPACING = Const('LOC_HALF_ORDER_SPACING', value=None,
 
 # Minimum amplitude to accept (in e-)
 LOC_MINPEAK_AMPLITUDE = Const('LOC_MINPEAK_AMPLITUDE', value=None, dtype=float,
-                              source=__NAME__, minimum=0.0, group=cgroup, 
+                              source=__NAME__, minimum=0.0, group=cgroup,
                               description=('Minimum amplitude to accept '
                                            '(in e-)'))
 
 # Normalised amplitude threshold to accept pixels for background calculation
 LOC_BKGRD_THRESHOLD = Const('LOC_BKGRD_THRESHOLD', value=None, dtype=float,
-                            source=__NAME__, minimum=0.0, group=cgroup, 
+                            source=__NAME__, minimum=0.0, group=cgroup,
                             description=('Normalised amplitude threshold to '
                                          'accept pixels for background '
                                          'calculation'))
@@ -1207,7 +1297,7 @@ LOC_BKGRD_THRESHOLD = Const('LOC_BKGRD_THRESHOLD', value=None, dtype=float,
 # Define the amount we drop from the centre of the order when
 #    previous order center is missed (in finding the position)
 LOC_ORDER_CURVE_DROP = Const('LOC_ORDER_CURVE_DROP', value=None, dtype=float,
-                             source=__NAME__, minimum=0.0, group=cgroup, 
+                             source=__NAME__, minimum=0.0, group=cgroup,
                              description=('Define the amount we drop from the '
                                           'centre of the order when previous '
                                           'order center is missed (in finding '
@@ -1215,13 +1305,13 @@ LOC_ORDER_CURVE_DROP = Const('LOC_ORDER_CURVE_DROP', value=None, dtype=float,
 
 # set the sigma clipping cut off value for cleaning coefficients
 LOC_COEFF_SIGCLIP = Const('LOC_COEFF_SIGCLIP', value=None, dtype=float,
-                          source=__NAME__, minimum=0, group=cgroup, 
+                          source=__NAME__, minimum=0, group=cgroup,
                           description=('set the sigma clipping cut off value '
                                        'for cleaning coefficients'))
 
 #  Defines the fit degree to fit in the coefficient cleaning
 LOC_COEFFSIG_DEG = Const('LOC_COEFFSIG_DEG', value=None, dtype=int,
-                         source=__NAME__, minimum=1, group=cgroup, 
+                         source=__NAME__, minimum=1, group=cgroup,
                          description=('Defines the fit degree to fit in the '
                                       'coefficient cleaning'))
 
@@ -1231,22 +1321,10 @@ LOC_MAX_YPIX_VALUE = Const('LOC_MAX_YPIX_VALUE', value=None, dtype=int,
                            description='Define the maximum value allowed in '
                                        'the localisation (cuts bluest orders)')
 
-# Order of polynomial to fit for widths
-LOC_WIDTH_POLY_DEG = Const('LOC_WIDTH_POLY_DEG', value=None, dtype=int,
-                           source=__NAME__, minimum=1, group=cgroup, 
-                           description=('Order of polynomial to fit for '
-                                        'widths'))
-
-# Order of polynomial to fit for positions
-LOC_CENT_POLY_DEG = Const('LOC_CENT_POLY_DEG', value=None, dtype=int,
-                          source=__NAME__, minimum=1, group=cgroup, 
-                          description=('Order of polynomial to fit for '
-                                       'positions'))
-
 #   Define the jump size when finding the order position
 #       (jumps in steps of this from the center outwards)
 LOC_COLUMN_SEP_FITTING = Const('LOC_COLUMN_SEP_FITTING', value=None, dtype=int,
-                               source=__NAME__, minimum=1, group=cgroup, 
+                               source=__NAME__, minimum=1, group=cgroup,
                                description=('Define the jump size when finding '
                                             'the order position (jumps in '
                                             'steps of this from the center '
@@ -1254,19 +1332,19 @@ LOC_COLUMN_SEP_FITTING = Const('LOC_COLUMN_SEP_FITTING', value=None, dtype=int,
 
 # Definition of the extraction window size (half size)
 LOC_EXT_WINDOW_SIZE = Const('LOC_EXT_WINDOW_SIZE', value=None, dtype=int,
-                            source=__NAME__, minimum=1, group=cgroup, 
+                            source=__NAME__, minimum=1, group=cgroup,
                             description=('Definition of the extraction window '
                                          'size (half size)'))
 
 # Definition of the gap index in the selected area
 LOC_IMAGE_GAP = Const('LOC_IMAGE_GAP', value=None, dtype=int, source=__NAME__,
-                      minimum=0, group=cgroup, 
+                      minimum=0, group=cgroup,
                       description=('Definition of the gap index in the '
                                    'selected area'))
 
 # Define minimum width of order to be accepted
 LOC_ORDER_WIDTH_MIN = Const('LOC_ORDER_WIDTH_MIN', value=None, dtype=float,
-                            source=__NAME__, minimum=0.0, group=cgroup, 
+                            source=__NAME__, minimum=0.0, group=cgroup,
                             description=('Define minimum width of order to be '
                                          'accepted'))
 
@@ -1275,7 +1353,7 @@ LOC_ORDER_WIDTH_MIN = Const('LOC_ORDER_WIDTH_MIN', value=None, dtype=float,
 #     max(pixel value) - min(pixel value) > THRES * RDNOISE
 LOC_NOISE_MULTIPLIER_THRES = Const('LOC_NOISE_MULTIPLIER_THRES', value=None,
                                    dtype=float, source=__NAME__, minimum=0.0,
-                                   group=cgroup, 
+                                   group=cgroup,
                                    description=('Define the noise multiplier '
                                                 'threshold in order to accept '
                                                 'an order center as usable '
@@ -1285,31 +1363,31 @@ LOC_NOISE_MULTIPLIER_THRES = Const('LOC_NOISE_MULTIPLIER_THRES', value=None,
 
 # Maximum rms for sigma-clip order fit (center positions)
 LOC_MAX_RMS_CENT = Const('LOC_MAX_RMS_CENT', value=None, dtype=float,
-                         source=__NAME__, minimum=0.0, group=cgroup, 
+                         source=__NAME__, minimum=0.0, group=cgroup,
                          description=('Maximum rms for sigma-clip order fit '
                                       '(center positions)'))
 
 # Maximum peak-to-peak for sigma-clip order fit (center positions)
 LOC_MAX_PTP_CENT = Const('LOC_MAX_PTP_CENT', value=None, dtype=float,
-                         source=__NAME__, minimum=0.0, group=cgroup, 
+                         source=__NAME__, minimum=0.0, group=cgroup,
                          description=('Maximum peak-to-peak for sigma-clip '
                                       'order fit (center positions)'))
 
 # Maximum frac ptp/rms for sigma-clip order fit (center positions)
 LOC_PTPORMS_CENT = Const('LOC_PTPORMS_CENT', value=None, dtype=float,
-                         source=__NAME__, minimum=0.0, group=cgroup, 
+                         source=__NAME__, minimum=0.0, group=cgroup,
                          description=('Maximum frac ptp/rms for sigma-clip '
                                       'order fit (center positions)'))
 
 # Maximum rms for sigma-clip order fit (width)
 LOC_MAX_RMS_WID = Const('LOC_MAX_RMS_WID', value=None, dtype=float,
-                        source=__NAME__, minimum=0.0, group=cgroup, 
+                        source=__NAME__, minimum=0.0, group=cgroup,
                         description=('Maximum rms for sigma-clip order fit '
                                      '(width)'))
 
 # Maximum fractional peak-to-peak for sigma-clip order fit (width)
 LOC_MAX_PTP_WID = Const('LOC_MAX_PTP_WID', value=None, dtype=float,
-                        source=__NAME__, minimum=0.0, group=cgroup, 
+                        source=__NAME__, minimum=0.0, group=cgroup,
                         description=('Maximum fractional peak-to-peak for '
                                      'sigma-clip order fit (width)'))
 
@@ -1321,56 +1399,56 @@ LOC_SAT_THRES = Const('LOC_SAT_THRES', value=None, dtype=float, source=__NAME__,
 # Maximum points removed in location fit
 QC_LOC_MAXFIT_REMOVED_CTR = Const('QC_LOC_MAXFIT_REMOVED_CTR', value=None,
                                   dtype=int, source=__NAME__, minimum=0,
-                                  group=cgroup, 
+                                  group=cgroup,
                                   description=('Maximum points removed in '
                                                'location fit'))
 
 # Maximum points removed in width fit
 QC_LOC_MAXFIT_REMOVED_WID = Const('QC_LOC_MAXFIT_REMOVED_WID', value=None,
                                   dtype=int, source=__NAME__, minimum=0,
-                                  group=cgroup, 
+                                  group=cgroup,
                                   description=('Maximum points removed '
                                                'in width fit'))
 
 # Maximum rms allowed in fitting location
 QC_LOC_RMSMAX_CTR = Const('QC_LOC_RMSMAX_CTR', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup, 
+                          source=__NAME__, minimum=0.0, group=cgroup,
                           description=('Maximum rms allowed in fitting '
                                        'location'))
 
 # Maximum rms allowed in fitting width
 QC_LOC_RMSMAX_WID = Const('QC_LOC_RMSMAX_WID', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup, 
+                          source=__NAME__, minimum=0.0, group=cgroup,
                           description=('Maximum rms allowed in fitting '
                                        'width'))
 
 # Option for archiving the location image
 LOC_SAVE_SUPERIMP_FILE = Const('LOC_SAVE_SUPERIMP_FILE', value=None,
-                               dtype=bool, source=__NAME__, group=cgroup, 
+                               dtype=bool, source=__NAME__, group=cgroup,
                                description=('Option for archiving the '
                                             'location image'))
 
 # set the zoom in levels for the plots (xmin values)
 LOC_PLOT_CORNER_XZOOM1 = Const('LOC_PLOT_CORNER_XZOOM1', value=None,
-                               dtype=str, source=__NAME__, group=cgroup, 
+                               dtype=str, source=__NAME__, group=cgroup,
                                description=('set the zoom in levels for '
                                             'the plots (xmin values)'))
 
 # set the zoom in levels for the plots (xmax values)
 LOC_PLOT_CORNER_XZOOM2 = Const('LOC_PLOT_CORNER_XZOOM2', value=None,
-                               dtype=str, source=__NAME__, group=cgroup, 
+                               dtype=str, source=__NAME__, group=cgroup,
                                description=('set the zoom in levels for the '
                                             'plots (xmax values)'))
 
 # set the zoom in levels for the plots (ymin values)
 LOC_PLOT_CORNER_YZOOM1 = Const('LOC_PLOT_CORNER_YZOOM1', value=None,
-                               dtype=str, source=__NAME__, group=cgroup, 
+                               dtype=str, source=__NAME__, group=cgroup,
                                description=('set the zoom in levels for the '
                                             'plots (ymin values)'))
 
 # set the zoom in levels for the plots (ymax values)
 LOC_PLOT_CORNER_YZOOM2 = Const('LOC_PLOT_CORNER_YZOOM2', value=None,
-                               dtype=str, source=__NAME__, group=cgroup, 
+                               dtype=str, source=__NAME__, group=cgroup,
                                description=('set the zoom in levels for the '
                                             'plots (ymax values)'))
 
@@ -1382,7 +1460,7 @@ cgroup = 'CALIBRATION: SHAPE SETTINGS'
 #      only find those types define by 'filetype' but 'filetype' must
 #      be one of theses (strings separated by commas)
 ALLOWED_FP_TYPES = Const('ALLOWED_FP_TYPES', value=None, dtype=str,
-                         source=__NAME__, group=cgroup, 
+                         source=__NAME__, group=cgroup,
                          description=('Define the allowed DPRTYPES for finding '
                                       'files for SHAPE_MASTER will only find '
                                       'those types define by filetype but '
@@ -1391,7 +1469,7 @@ ALLOWED_FP_TYPES = Const('ALLOWED_FP_TYPES', value=None, dtype=str,
 
 # Define the maximum time span to combine fp files over (in hours)
 FP_MASTER_MATCH_TIME = Const('FP_MASTER_MATCH_TIME', value=None,
-                             dtype=float, source=__NAME__, group=cgroup, 
+                             dtype=float, source=__NAME__, group=cgroup,
                              description=('Define the maximum time span to '
                                           'combine fp files over (in hours)'))
 
@@ -1399,7 +1477,7 @@ FP_MASTER_MATCH_TIME = Const('FP_MASTER_MATCH_TIME', value=None,
 #    fp master in shape master
 FP_MASTER_PERCENT_THRES = Const('FP_MASTER_PERCENT_THRES', value=None,
                                 dtype=float, minimum=0, maximum=100,
-                                source=__NAME__, group=cgroup, 
+                                source=__NAME__, group=cgroup,
                                 description=('Define the percentile at which '
                                              'the FPs are normalised when '
                                              'getting the fp master in shape '
@@ -1408,7 +1486,7 @@ FP_MASTER_PERCENT_THRES = Const('FP_MASTER_PERCENT_THRES', value=None,
 #  Define the largest standard deviation allowed for the shift in
 #   x or y when doing the shape master fp linear transform
 SHAPE_QC_LTRANS_RES_THRES = Const('SHAPE_QC_LTRANS_RES_THRES', value=None,
-                                  dtype=float, source=__NAME__, group=cgroup, 
+                                  dtype=float, source=__NAME__, group=cgroup,
                                   description=('Define the largest standard '
                                                'deviation allowed for the '
                                                'shift in x or y when doing the '
@@ -1419,7 +1497,7 @@ SHAPE_QC_LTRANS_RES_THRES = Const('SHAPE_QC_LTRANS_RES_THRES', value=None,
 SHAPE_MASTER_VALIDFP_PERCENTILE = Const('SHAPE_MASTER_VALIDFP_PERCENTILE',
                                         value=None, dtype=float, minimum=0,
                                         maximum=100, source=__NAME__,
-                                        group=cgroup, 
+                                        group=cgroup,
                                         description=('Define the percentile '
                                                      'which defines a true FP '
                                                      'peak [0-100]'))
@@ -1427,7 +1505,7 @@ SHAPE_MASTER_VALIDFP_PERCENTILE = Const('SHAPE_MASTER_VALIDFP_PERCENTILE',
 #  Define the fractional flux an FP much have compared to its neighbours
 SHAPE_MASTER_VALIDFP_THRESHOLD = Const('SHAPE_MASTER_VALIDFP_THRESHOLD',
                                        value=None, dtype=float, minimum=0,
-                                       source=__NAME__, group=cgroup, 
+                                       source=__NAME__, group=cgroup,
                                        description=('Define the fractional '
                                                     'flux an FP much have '
                                                     'compared to its '
@@ -1436,7 +1514,7 @@ SHAPE_MASTER_VALIDFP_THRESHOLD = Const('SHAPE_MASTER_VALIDFP_THRESHOLD',
 #  Define the number of iterations used to get the linear transform params
 SHAPE_MASTER_LINTRANS_NITER = Const('SHAPE_MASTER_LINTRANS_NITER', value=None,
                                     dtype=int, minimum=1, source=__NAME__,
-                                    group=cgroup, 
+                                    group=cgroup,
                                     description=('Define the number of '
                                                  'iterations used to get the '
                                                  'linear transform params'))
@@ -1444,7 +1522,7 @@ SHAPE_MASTER_LINTRANS_NITER = Const('SHAPE_MASTER_LINTRANS_NITER', value=None,
 #  Define the initial search box size (in pixels) around the fp peaks
 SHAPE_MASTER_FP_INI_BOXSIZE = Const('SHAPE_MASTER_FP_INI_BOXSIZE', value=None,
                                     dtype=int, minimum=1, source=__NAME__,
-                                    group=cgroup, 
+                                    group=cgroup,
                                     description=('Define the initial search '
                                                  'box size (in pixels) around '
                                                  'the fp peaks'))
@@ -1452,7 +1530,7 @@ SHAPE_MASTER_FP_INI_BOXSIZE = Const('SHAPE_MASTER_FP_INI_BOXSIZE', value=None,
 #  Define the small search box size (in pixels) around the fp peaks
 SHAPE_MASTER_FP_SMALL_BOXSIZE = Const('SHAPE_MASTER_FP_SMALL_BOXSIZE',
                                       value=None, dtype=int, minimum=1,
-                                      source=__NAME__, group=cgroup, 
+                                      source=__NAME__, group=cgroup,
                                       description=('Define the small search '
                                                    'box size (in pixels) '
                                                    'around the fp peaks'))
@@ -1460,7 +1538,7 @@ SHAPE_MASTER_FP_SMALL_BOXSIZE = Const('SHAPE_MASTER_FP_SMALL_BOXSIZE',
 #  Define the minimum number of FP files in a group to mean group is valid
 SHAPE_FP_MASTER_MIN_IN_GROUP = Const('SHAPE_FP_MASTER_MIN_IN_GROUP', value=None,
                                      dtype=int, minimum=1, source=__NAME__,
-                                     group=cgroup, 
+                                     group=cgroup,
                                      description=('Define the minimum number '
                                                   'of FP files in a group to '
                                                   'mean group is valid'))
@@ -1468,8 +1546,8 @@ SHAPE_FP_MASTER_MIN_IN_GROUP = Const('SHAPE_FP_MASTER_MIN_IN_GROUP', value=None,
 #  Define which fiber should be used for fiber-dependent calibrations in
 #   shape master
 SHAPE_MASTER_FIBER = Const('SHAPE_MASTER_FIBER', value=None, dtype=str,
-                           source=__NAME__, group=cgroup, 
-                           
+                           source=__NAME__, group=cgroup,
+
                            description=('Define which fiber should be used '
                                         'for fiber-dependent calibrations '
                                         'in shape master'))
@@ -1483,14 +1561,14 @@ SHAPE_MASTER_DX_RMS_QC = Const('SHAPE_MASTER_FIBER', value=None, dtype=float,
 
 # The number of iterations to run the shape finding out to
 SHAPE_NUM_ITERATIONS = Const('SHAPE_NUM_ITERATIONS', value=None, dtype=int,
-                             minimum=1, source=__NAME__, group=cgroup, 
+                             minimum=1, source=__NAME__, group=cgroup,
                              description=('The number of iterations to run '
                                           'the shape finding out to'))
 
 # The order to use on the shape plot
 SHAPE_PLOT_SELECTED_ORDER = Const('SHAPE_PLOT_SELECTED_ORDER', value=None,
                                   dtype=int, minimum=0, source=__NAME__,
-                                  group=cgroup, 
+                                  group=cgroup,
                                   description=('The order to use on the '
                                                'shape plot'))
 
@@ -1501,14 +1579,14 @@ SHAPE_ORDER_WIDTH = Const('SHAPE_ORDER_WIDTH', value=None, dtype=int,
 
 # number of sections per order to split the order into
 SHAPE_NSECTIONS = Const('SHAPE_NSECTIONS', value=None, dtype=int,
-                        minimum=1, source=__NAME__, group=cgroup, 
+                        minimum=1, source=__NAME__, group=cgroup,
                         description=('number of sections per order to split '
                                      'the order into'))
 
 # the range of angles (in degrees) for the first iteration (large)
 # and subsequent iterations (small)
 SHAPE_LARGE_ANGLE_MIN = Const('SHAPE_LARGE_ANGLE_MIN', value=None,
-                              dtype=float, source=__NAME__, group=cgroup, 
+                              dtype=float, source=__NAME__, group=cgroup,
                               description=('the range of angles (in degrees) '
                                            'for the first iteration (large) '
                                            'and subsequent iterations (small)'))
@@ -1532,21 +1610,21 @@ SHAPE_SMALL_ANGLE_MIN = Const('SHAPE_SMALL_ANGLE_MIN', value=None,
 # the range of angles (in degrees) for the first iteration (large)
 # and subsequent iterations (small)
 SHAPE_SMALL_ANGLE_MAX = Const('SHAPE_SMALL_ANGLE_MAX', value=None,
-                              dtype=float, source=__NAME__, group=cgroup, 
+                              dtype=float, source=__NAME__, group=cgroup,
                               description=('the range of angles (in degrees) '
                                            'for the first iteration (large) '
                                            'and subsequent iterations (small)'))
 
 # max sigma clip (in sigma) on points within a section
 SHAPE_SIGMACLIP_MAX = Const('SHAPE_SIGMACLIP_MAX', value=None, dtype=float,
-                            minimum=0.0, source=__NAME__, group=cgroup, 
+                            minimum=0.0, source=__NAME__, group=cgroup,
                             description=('max sigma clip (in sigma) on points '
                                          'within a section'))
 
 # the size of the median filter to apply along the order (in pixels)
 SHAPE_MEDIAN_FILTER_SIZE = Const('SHAPE_MEDIAN_FILTER_SIZE', value=None,
                                  dtype=int, minimum=0, source=__NAME__,
-                                 group=cgroup, 
+                                 group=cgroup,
                                  description=('the size of the median filter '
                                               'to apply along the order '
                                               '(in pixels)'))
@@ -1554,7 +1632,7 @@ SHAPE_MEDIAN_FILTER_SIZE = Const('SHAPE_MEDIAN_FILTER_SIZE', value=None,
 # The minimum value for the cross-correlation to be deemed good
 SHAPE_MIN_GOOD_CORRELATION = Const('SHAPE_MIN_GOOD_CORRELATION', value=None,
                                    dtype=float, minimum=0.0, source=__NAME__,
-                                   group=cgroup, 
+                                   group=cgroup,
                                    description=('The minimum value for the '
                                                 'cross-correlation to be '
                                                 'deemed good'))
@@ -1573,34 +1651,34 @@ SHAPE_LONG_DX_MEDFILT_WID = Const('SHAPE_SHORT_DX_MEDFILT_WID', value=None,
 #  Defines the largest allowed standard deviation for a given
 #  per-order and per-x-pixel shift of the FP peaks
 SHAPE_QC_DXMAP_STD = Const('SHAPE_QC_DXMAP_STD', value=None, dtype=int,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('Defines the largest allowed standard '
                                         'deviation for a given per-order and '
                                         'per-x-pixel shift of the FP peaks'))
 
 # defines the shape offset xoffset (before and after) fp peaks
 SHAPEOFFSET_XOFFSET = Const('SHAPEOFFSET_XOFFSET', value=None, dtype=int,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('defines the shape offset xoffset '
                                          '(before and after) fp peaks'))
 
 # defines the bottom percentile for fp peak
 SHAPEOFFSET_BOTTOM_PERCENTILE = Const('SHAPEOFFSET_BOTTOM_PERCENTILE',
                                       value=None, dtype=float, source=__NAME__,
-                                      group=cgroup, 
+                                      group=cgroup,
                                       description=('defines the bottom '
                                                    'percentile for fp peak'))
 
 # defines the top percentile for fp peak
 SHAPEOFFSET_TOP_PERCENTILE = Const('SHAPEOFFSET_TOP_PERCENTILE', value=None,
-                                   dtype=float, source=__NAME__, group=cgroup, 
+                                   dtype=float, source=__NAME__, group=cgroup,
                                    description=('defines the top percentile '
                                                 'for fp peak'))
 
 # defines the floor below which top values should be set to
 # this fraction away from the max top value
 SHAPEOFFSET_TOP_FLOOR_FRAC = Const('SHAPEOFFSET_TOP_FLOOR_FRAC', value=None,
-                                   dtype=float, source=__NAME__, group=cgroup, 
+                                   dtype=float, source=__NAME__, group=cgroup,
                                    description=('defines the floor below which '
                                                 'top values should be set to '
                                                 'this fraction away from the '
@@ -1609,7 +1687,7 @@ SHAPEOFFSET_TOP_FLOOR_FRAC = Const('SHAPEOFFSET_TOP_FLOOR_FRAC', value=None,
 # define the median filter to apply to the hc (high pass filter)]
 SHAPEOFFSET_MED_FILTER_WIDTH = Const('SHAPEOFFSET_MED_FILTER_WIDTH',
                                      value=None, dtype=int, source=__NAME__,
-                                     group=cgroup, 
+                                     group=cgroup,
                                      description=('define the median filter to '
                                                   'apply to the hc (high pass '
                                                   'filter)]'))
@@ -1618,21 +1696,21 @@ SHAPEOFFSET_MED_FILTER_WIDTH = Const('SHAPEOFFSET_MED_FILTER_WIDTH',
 #    (~10000 to ~25000)
 SHAPEOFFSET_FPINDEX_MAX = Const('SHAPEOFFSET_FPINDEX_MAX', value=None,
                                 dtype=int, source=__NAME__,
-                                minimum=10000, maximum=25000, group=cgroup, 
+                                minimum=10000, maximum=25000, group=cgroup,
                                 description=('Maximum number of FP (larger '
                                              'than expected number (~10000 to '
                                              '~25000)'))
 
 # Define the valid length of a FP peak
 SHAPEOFFSET_VALID_FP_LENGTH = Const('SHAPEOFFSET_VALID_FP_LENGTH', value=None,
-                                    dtype=int, source=__NAME__, group=cgroup, 
+                                    dtype=int, source=__NAME__, group=cgroup,
                                     description=('Define the valid length of a'
                                                  ' FP peak'))
 
 # Define the maximum allowed offset (in nm) that we allow for
 #   the detector)
 SHAPEOFFSET_DRIFT_MARGIN = Const('SHAPEOFFSET_DRIFT_MARGIN', value=None,
-                                 dtype=float, source=__NAME__, group=cgroup, 
+                                 dtype=float, source=__NAME__, group=cgroup,
                                  description=('Define the maximum allowed '
                                               'offset (in nm) that we allow '
                                               'for the detector)'))
@@ -1641,41 +1719,41 @@ SHAPEOFFSET_DRIFT_MARGIN = Const('SHAPEOFFSET_DRIFT_MARGIN', value=None,
 #   inversion trick
 SHAPEOFFSET_WAVEFP_INV_IT = Const('SHAPEOFFSET_WAVEFP_INV_IT',
                                   value=None, dtype=int, source=__NAME__,
-                                  group=cgroup, 
+                                  group=cgroup,
                                   description=('Define the number of '
                                                'iterations to do for the '
                                                'wave_fp inversion trick'))
 
 # Define the border in pixels at the edge of the detector
 SHAPEOFFSET_MASK_BORDER = Const('SHAPEOFFSET_MASK_BORDER', value=None,
-                                dtype=int, source=__NAME__, group=cgroup, 
+                                dtype=int, source=__NAME__, group=cgroup,
                                 description=('Define the border in pixels at '
                                              'the edge of the detector'))
 
 # Define the minimum maxpeak value as a fraction of the
 #  maximum maxpeak
 SHAPEOFFSET_MIN_MAXPEAK_FRAC = Const('SHAPEOFFSET_MIN_MAXPEAK_FRAC', value=None,
-                                     dtype=float, source=__NAME__, group=cgroup, 
+                                     dtype=float, source=__NAME__, group=cgroup,
                                      description=('Define the minimum maxpeak '
                                                   'value as a fraction of the '
                                                   'maximum maxpeak'))
 
 # Define the width of the FP mask (+/- the center)
 SHAPEOFFSET_MASK_PIXWIDTH = Const('SHAPEOFFSET_MASK_PIXWIDTH', value=None,
-                                  dtype=int, source=__NAME__, group=cgroup, 
+                                  dtype=int, source=__NAME__, group=cgroup,
                                   description=('Define the width of the FP '
                                                'mask (+/- the center)'))
 
 # Define the width of the FP to extract (+/- the center)
 SHAPEOFFSET_MASK_EXTWIDTH = Const('SHAPEOFFSET_MASK_EXTWIDTH', value=None,
-                                  dtype=int, source=__NAME__, group=cgroup, 
+                                  dtype=int, source=__NAME__, group=cgroup,
                                   description=('Define the width of the FP to '
                                                'extract (+/- the center)'))
 
 # Define the most deviant peaks - percentile from [min to max]
 SHAPEOFFSET_DEVIANT_PMIN = Const('SHAPEOFFSET_DEVIANT_PMIN', value=None,
                                  dtype=float, minimum=0, maximum=100,
-                                 source=__NAME__, group=cgroup, 
+                                 source=__NAME__, group=cgroup,
                                  description=('Define the most deviant peaks - '
                                               'percentile from [min to max]'))
 SHAPEOFFSET_DEVIANT_PMAX = Const('SHAPEOFFSET_DEVIANT_PMAX', value=None,
@@ -1688,7 +1766,7 @@ SHAPEOFFSET_DEVIANT_PMAX = Const('SHAPEOFFSET_DEVIANT_PMAX', value=None,
 #  from -50 to +50 in practice, it is -1, 0 or +1 for the cases we've
 #  tested to date
 SHAPEOFFSET_FPMAX_NUM_ERROR = Const('SHAPEOFFSET_FPMAX_NUM_ERROR', value=None,
-                                    dtype=int, source=__NAME__, group=cgroup, 
+                                    dtype=int, source=__NAME__, group=cgroup,
                                     description=('Define the maximum error in '
                                                  'FP order assignment we '
                                                  'assume that the error in FP '
@@ -1700,7 +1778,7 @@ SHAPEOFFSET_FPMAX_NUM_ERROR = Const('SHAPEOFFSET_FPMAX_NUM_ERROR', value=None,
 # The number of sigmas that the HC spectrum is allowed to be
 #   away from the predicted (from FP) position
 SHAPEOFFSET_FIT_HC_SIGMA = Const('SHAPEOFFSET_FIT_HC_SIGMA', value=None,
-                                 dtype=float, source=__NAME__, group=cgroup, 
+                                 dtype=float, source=__NAME__, group=cgroup,
                                  description=('The number of sigmas that the '
                                               'HC spectrum is allowed to be '
                                               'away from the predicted (from '
@@ -1709,14 +1787,14 @@ SHAPEOFFSET_FIT_HC_SIGMA = Const('SHAPEOFFSET_FIT_HC_SIGMA', value=None,
 # Define the maximum allowed maximum absolute deviation away
 #   from the error fit
 SHAPEOFFSET_MAXDEV_THRESHOLD = Const('SHAPEOFFSET_MAXDEV_THRESHOLD', value=None,
-                                     dtype=float, source=__NAME__, group=cgroup, 
+                                     dtype=float, source=__NAME__, group=cgroup,
                                      description=('Define the maximum allowed '
                                                   'maximum absolute deviation '
                                                   'away from the error fit'))
 
 # very low thresholding values tend to clip valid points
 SHAPEOFFSET_ABSDEV_THRESHOLD = Const('SHAPEOFFSET_ABSDEV_THRESHOLD', value=None,
-                                     dtype=float, source=__NAME__, group=cgroup, 
+                                     dtype=float, source=__NAME__, group=cgroup,
                                      description=('very low thresholding '
                                                   'values tend to clip valid '
                                                   'points'))
@@ -1724,7 +1802,7 @@ SHAPEOFFSET_ABSDEV_THRESHOLD = Const('SHAPEOFFSET_ABSDEV_THRESHOLD', value=None,
 # define the names of the unique fibers (i.e. not AB) for use in
 #   getting the localisation coefficients for dymap
 SHAPE_UNIQUE_FIBERS = Const('SHAPE_UNIQUE_FIBERS', value=None, dtype=str,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('define the names of the unique '
                                          'fibers (i.e. not AB) for use in '
                                          'getting the localisation '
@@ -1733,7 +1811,7 @@ SHAPE_UNIQUE_FIBERS = Const('SHAPE_UNIQUE_FIBERS', value=None, dtype=str,
 #  Define first zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
 SHAPEL_PLOT_ZOOM1 = Const('SHAPEL_PLOT_ZOOM1', value=None, dtype=str,
-                          source=__NAME__, group=cgroup, 
+                          source=__NAME__, group=cgroup,
                           description=('Define first zoom plot for shape local '
                                        'zoom debug plot should be a string '
                                        'list (xmin, xmax, ymin, ymax)'))
@@ -1741,7 +1819,7 @@ SHAPEL_PLOT_ZOOM1 = Const('SHAPEL_PLOT_ZOOM1', value=None, dtype=str,
 #  Define second zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
 SHAPEL_PLOT_ZOOM2 = Const('SHAPEL_PLOT_ZOOM2', value=None, dtype=str,
-                          source=__NAME__, group=cgroup, 
+                          source=__NAME__, group=cgroup,
                           description=('Define second zoom plot for shape '
                                        'local zoom debug plot should be a '
                                        'string list (xmin, xmax, ymin, ymax)'))
@@ -1753,13 +1831,13 @@ cgroup = 'CALIBRATION: FLAT SETTINGS'
 # TODO: is blaze_size needed with sinc function?
 # Half size blaze smoothing window
 FF_BLAZE_HALF_WINDOW = Const('FF_BLAZE_HALF_WINDOW', value=None, dtype=int,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description='Half size blaze smoothing window')
 
 # TODO: is blaze_cut needed with sinc function?
 # Minimum relative e2ds flux for the blaze computation
 FF_BLAZE_THRESHOLD = Const('FF_BLAZE_THRESHOLD', value=None, dtype=float,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('Minimum relative e2ds flux for the '
                                         'blaze computation'))
 
@@ -1772,7 +1850,7 @@ FF_BLAZE_DEGREE = Const('FF_BLAZE_DEGREE', value=None, dtype=int,
 # Define the threshold, expressed as the fraction of the maximum peak, below
 #    this threshold the blaze (and e2ds) is set to NaN
 FF_BLAZE_SCUT = Const('FF_BLAZE_SCUT', value=None, dtype=float,
-                      source=__NAME__, group=cgroup, 
+                      source=__NAME__, group=cgroup,
                       description=('Define the threshold, expressed as the '
                                    'fraction of the maximum peak, below this '
                                    'threshold the blaze (and e2ds) is set to '
@@ -1780,7 +1858,7 @@ FF_BLAZE_SCUT = Const('FF_BLAZE_SCUT', value=None, dtype=float,
 
 # Define the rejection threshold for the blaze sinc fit
 FF_BLAZE_SIGFIT = Const('FF_BLAZE_SIGFIT', value=None, dtype=float,
-                        source=__NAME__, group=cgroup, 
+                        source=__NAME__, group=cgroup,
                         description=('Define the rejection threshold for the '
                                      'blaze sinc fit'))
 
@@ -1802,7 +1880,7 @@ FF_BLAZE_SINC_MED_SIZE = Const('FF_BLAZE_SINC_MED_SIZE', value=None, dtype=int,
 # Define the orders not to plot on the RMS plot should be a string
 #     containing a list of integers
 FF_RMS_SKIP_ORDERS = Const('FF_RMS_SKIP_ORDERS', value=None, dtype=str,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('Define the orders not to plot on the '
                                         'RMS plot should be a string '
                                         'containing a list of integers'))
@@ -1823,7 +1901,7 @@ FF_PLOT_ORDER = Const('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__,
 cgroup = 'CALIBRATION: LEAKAGE SETTINGS'
 # Define the types of input file allowed by the leakage master recipe
 ALLOWED_LEAKM_TYPES = Const('ALLOWED_LEAKM_TYPES', value=None, dtype=str,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('Define the types of input file '
                                          'allowed by the leakage master '
                                          'recipe'))
@@ -1831,7 +1909,7 @@ ALLOWED_LEAKM_TYPES = Const('ALLOWED_LEAKM_TYPES', value=None, dtype=str,
 # define whether to always extract leak master files
 #      (i.e. overwrite existing files)
 LEAKM_ALWAYS_EXTRACT = Const('LEAKM_ALWAYS_EXTRACT', value=None, dtype=bool,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description=('define whether to always extract '
                                           'leak master files (i.e. overwrite '
                                           'existing files)'))
@@ -1839,7 +1917,7 @@ LEAKM_ALWAYS_EXTRACT = Const('LEAKM_ALWAYS_EXTRACT', value=None, dtype=bool,
 # define the type of file to use for leak master solution
 #    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
 LEAKM_EXTRACT_TYPE = Const('LEAKM_EXTRACT_TYPE', value=None, dtype=str,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('define the type of file to use for '
                                         'leak master solution (currently '
                                         'allowed are E2DSFF) - must match with '
@@ -1847,7 +1925,7 @@ LEAKM_EXTRACT_TYPE = Const('LEAKM_EXTRACT_TYPE', value=None, dtype=str,
 
 # Define the types of input extracted files to correct for leakage
 ALLOWED_LEAK_TYPES = Const('ALLOWED_LEAK_TYPES', value=None, dtype=str,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('Define the types of input extracted '
                                         'files to correct for leakage'))
 
@@ -1855,7 +1933,7 @@ ALLOWED_LEAK_TYPES = Const('ALLOWED_LEAK_TYPES', value=None, dtype=str,
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
 #     must match with LEAKM_EXTRACT_TYPE
 LEAK_EXTRACT_FILE = Const('LEAK_EXTRACT_FILE', value=None, dtype=str,
-                          source=__NAME__, group=cgroup, 
+                          source=__NAME__, group=cgroup,
                           description=('define the type of file to use for the '
                                        'leak correction (currently allowed are '
                                        'E2DS_FILE or E2DSFF_FILE (linked to '
@@ -1864,33 +1942,33 @@ LEAK_EXTRACT_FILE = Const('LEAK_EXTRACT_FILE', value=None, dtype=str,
 
 # define the extraction files which are 2D images (i.e. order num x nbpix)
 LEAK_2D_EXTRACT_FILES = Const('LEAK_2D_EXTRACT_FILES', value=None, dtype=str,
-                              source=__NAME__, group=cgroup, 
+                              source=__NAME__, group=cgroup,
                               description=('define the extraction files which '
                                            'are 2D images (i.e. order num x '
                                            'nbpix)'))
 
 # define the extraction files which are 1D spectra
 LEAK_1D_EXTRACT_FILES = Const('LEAK_1D_EXTRACT_FILES', value=None, dtype=str,
-                              source=__NAME__, group=cgroup, 
+                              source=__NAME__, group=cgroup,
                               description=('define the extraction files which '
                                            'are 1D spectra'))
 
 # define the thermal background percentile for the leak and leak master
 LEAK_BCKGRD_PERCENTILE = Const('LEAK_BCKGRD_PERCENTILE', value=None, dtype=float,
-                               source=__NAME__, group=cgroup, 
+                               source=__NAME__, group=cgroup,
                                description=('define the thermal background '
                                             'percentile for the leak and '
                                             'leak master'))
 
 # define the normalisation percentile for the leak and leak master
 LEAK_NORM_PERCENTILE = Const('LEAK_NORM_PERCENTILE', value=None, dtype=float,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description=('define the normalisation percentile '
                                           'for the leak and leak master'))
 
 # define the e-width of the smoothing kernel for leak master
 LEAKM_WSMOOTH = Const('LEAKM_WSMOOTH', value=None, dtype=int,
-                      source=__NAME__, minimum=0, group=cgroup, 
+                      source=__NAME__, minimum=0, group=cgroup,
                       description=('define the e-width of the smoothing kernel '
                                    'for leak master'))
 
@@ -1913,7 +1991,7 @@ LEAK_HIGH_PERCENTILE = Const('LEAK_LOW_PERCENTILE', value=None, dtype=float,
 
 # define the limit on surpious FP ratio (1 +/- limit)
 LEAK_BAD_RATIO_OFFSET = Const('LEAK_BAD_RATIO_OFFSET', value=None, dtype=float,
-                              source=__NAME__, minimum=0.0, group=cgroup, 
+                              source=__NAME__, minimum=0.0, group=cgroup,
                               description=('define the limit on surpious FP '
                                            'ratio (1 +/- limit)'))
 
@@ -1924,32 +2002,32 @@ cgroup = 'CALIBRATION: EXTRACTION SETTINGS'
 #    Whether extraction code is done in quick look mode (do not use for
 #       final products)
 EXT_QUICK_LOOK = Const('EXT_QUICK_LOOK', value=None, dtype=bool,
-                       source=__NAME__, group=cgroup, 
+                       source=__NAME__, group=cgroup,
                        description=('Whether extraction code is done in quick '
                                     'look mode (do not use for final '
                                     'products)'))
 
 #  Start order of the extraction in apero_flat if None starts from 0
 EXT_START_ORDER = Const('EXT_START_ORDER', value=None, dtype=int,
-                        source=__NAME__, group=cgroup, 
+                        source=__NAME__, group=cgroup,
                         description=('Start order of the extraction in apero_flat '
                                      'if None starts from 0'))
 
 #  End order of the extraction in apero_flat if None ends at last order
 EXT_END_ORDER = Const('EXT_END_ORDER', value=None, dtype=int,
-                      source=__NAME__, group=cgroup, 
+                      source=__NAME__, group=cgroup,
                       description=('End order of the extraction in apero_flat if '
                                    'None ends at last order'))
 
 # Half-zone extraction width left side (formally plage1)
 EXT_RANGE1 = Const('EXT_RANGE1', value=None, dtype=str, source=__NAME__,
-                   group=cgroup, 
+                   group=cgroup,
                    description=('Half-zone extraction width left side '
                                 '(formally plage1)'))
 
 # Half-zone extraction width right side (formally plage2)
 EXT_RANGE2 = Const('EXT_RANGE2', value=None, dtype=str, source=__NAME__,
-                   group=cgroup, 
+                   group=cgroup,
                    description=('Half-zone extraction width right side '
                                 '(formally plage2)'))
 
@@ -1957,7 +2035,7 @@ EXT_RANGE2 = Const('EXT_RANGE2', value=None, dtype=str, source=__NAME__,
 #    to NaN. If None no orders are skipped. If Not None should be a
 #    string (valid python list)
 EXT_SKIP_ORDERS = Const('EXT_SKIP_ORDERS', value=None, dtype=str,
-                        source=__NAME__, group=cgroup, 
+                        source=__NAME__, group=cgroup,
                         description=('Define the orders to skip extraction on '
                                      '(will set all order values to NaN. If '
                                      'None no orders are skipped. If Not None '
@@ -1965,13 +2043,13 @@ EXT_SKIP_ORDERS = Const('EXT_SKIP_ORDERS', value=None, dtype=str,
 
 #  Defines whether to run extraction with cosmic correction
 EXT_COSMIC_CORRETION = Const('EXT_COSMIC_CORRETION', value=None, dtype=bool,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description=('Defines whether to run extraction '
                                           'with cosmic correction'))
 
 #  Define the percentage of flux above which we use to cut
 EXT_COSMIC_SIGCUT = Const('EXT_COSMIC_SIGCUT', value=None, dtype=float,
-                          source=__NAME__, group=cgroup, 
+                          source=__NAME__, group=cgroup,
                           description=('Define the number of sigmas away from '
                                        'the median flux which we use to cut '
                                        'cosmic rays'))
@@ -1979,7 +2057,7 @@ EXT_COSMIC_SIGCUT = Const('EXT_COSMIC_SIGCUT', value=None, dtype=float,
 #  Defines the maximum number of iterations we use to check for cosmics
 #      (for each pixel)
 EXT_COSMIC_THRESHOLD = Const('EXT_COSMIC_THRESHOLD', value=None, dtype=int,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description=('Defines the maximum number of '
                                           'iterations we use to check for '
                                           'cosmics (for each pixel)'))
@@ -1991,18 +2069,18 @@ QC_EXT_FLUX_MAX = Const('QC_EXT_FLUX_MAX', value=None, dtype=float,
 
 # Define which extraction file to use for s1d creation
 EXT_S1D_INTYPE = Const('EXT_S1D_INTYPE', value=None, dtype=str,
-                       source=__NAME__, group=cgroup, 
+                       source=__NAME__, group=cgroup,
                        description=('Define which extraction file to use for '
                                     's1d creation'))
 # Define which extraction file (recipe definitons) linked to EXT_S1D_INTYPE
 EXT_S1D_INFILE = Const('EXT_S1D_INFILE', value=None, dtype=str,
-                       source=__NAME__, group=cgroup, 
+                       source=__NAME__, group=cgroup,
                        description=('Define which extraction file (recipe '
                                     'definitons) linked to EXT_S1D_INTYPE'))
 
 # Define the start s1d wavelength (in nm)
 EXT_S1D_WAVESTART = Const('EXT_S1D_WAVESTART', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup, 
+                          source=__NAME__, minimum=0.0, group=cgroup,
                           description=('Define the start s1d wavelength '
                                        '(in nm)'))
 
@@ -2013,14 +2091,14 @@ EXT_S1D_WAVEEND = Const('EXT_S1D_WAVEEND', value=None, dtype=float,
 
 #  Define the s1d spectral bin for S1D spectra (nm) when uniform in wavelength
 EXT_S1D_BIN_UWAVE = Const('EXT_S1D_BIN_UWAVE', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup, 
+                          source=__NAME__, minimum=0.0, group=cgroup,
                           description=('Define the s1d spectral bin for S1D '
                                        'spectra (nm) when uniform in '
                                        'wavelength'))
 
 #  Define the s1d spectral bin for S1D spectra (km/s) when uniform in velocity
 EXT_S1D_BIN_UVELO = Const('EXT_S1D_BIN_UVELO', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup, 
+                          source=__NAME__, minimum=0.0, group=cgroup,
                           description=('Define the s1d spectral bin for '
                                        'S1D spectra (km/s) when uniform in '
                                        'velocity'))
@@ -2028,26 +2106,26 @@ EXT_S1D_BIN_UVELO = Const('EXT_S1D_BIN_UVELO', value=None, dtype=float,
 #  Define the s1d smoothing kernel for the transition between orders in pixels
 EXT_S1D_EDGE_SMOOTH_SIZE = Const('EXT_S1D_EDGE_SMOOTH_SIZE', value=None,
                                  dtype=int, source=__NAME__, minimum=0,
-                                 group=cgroup, 
+                                 group=cgroup,
                                  description=('Define the s1d smoothing kernel '
                                               'for the transition between '
                                               'orders in pixels'))
 
 #    Define dprtypes to calculate berv for
 EXT_ALLOWED_BERV_DPRTYPES = Const('EXT_ALLOWED_BERV_DPRTYPES', value=None,
-                                  dtype=str, source=__NAME__, group=cgroup, 
+                                  dtype=str, source=__NAME__, group=cgroup,
                                   description=('Define dprtypes to calculate '
                                                'berv for'))
 
 #    Define which BERV calculation to use ('barycorrpy' or 'estimate' or 'None')
 EXT_BERV_KIND = Const('EXT_BERV_KIND', value=None, dtype=str, source=__NAME__,
-                      options=['barycorrpy', 'estimate', 'None'], group=cgroup, 
+                      options=['barycorrpy', 'estimate', 'None'], group=cgroup,
                       description=('Define which BERV calculation to use '
                                    '(barycorrpy or estimate or None)'))
 
 #   Define the barycorrpy data directory
 EXT_BERV_BARYCORRPY_DIR = Const('EXT_BERV_BARYCORRPY_DIR', value=None,
-                                dtype=str, source=__NAME__, group=cgroup, 
+                                dtype=str, source=__NAME__, group=cgroup,
                                 description=('Define the barycorrpy data '
                                              'directory'))
 
@@ -2068,26 +2146,26 @@ EXT_BERV_LEAPDIR = Const('EXT_BERV_LEAPDIR', value=None, dtype=str,
 
 #   Define whether to update leap seconds if older than 6 months
 EXT_BERV_LEAPUPDATE = Const('EXT_BERV_LEAPUPDATE', value=None, dtype=bool,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('Define whether to update leap '
                                          'seconds if older than 6 months'))
 
 #    Define the accuracy of the estimate (for logging only) [m/s]
 EXT_BERV_EST_ACC = Const('EXT_BERV_EST_ACC', value=None, dtype=float,
-                         source=__NAME__, group=cgroup, 
+                         source=__NAME__, group=cgroup,
                          description=('Define the accuracy of the estimate '
                                       '(for logging only) [m/s]'))
 
 # Define the order to plot in summary plots
 EXTRACT_PLOT_ORDER = Const('EXTRACT_PLOT_ORDER', value=None, dtype=int,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('Define the order to plot in '
                                         'summary plots'))
 
 # Define the wavelength lower bounds for s1d plots
 #     (must be a string list of floats) defines the lower wavelength in nm
 EXTRACT_S1D_PLOT_ZOOM1 = Const('EXTRACT_S1D_PLOT_ZOOM1', value=None,
-                               dtype=str, source=__NAME__, group=cgroup, 
+                               dtype=str, source=__NAME__, group=cgroup,
                                description=('Define the wavelength lower '
                                             'bounds for s1d plots (must be a '
                                             'string list of floats) defines '
@@ -2096,7 +2174,7 @@ EXTRACT_S1D_PLOT_ZOOM1 = Const('EXTRACT_S1D_PLOT_ZOOM1', value=None,
 # Define the wavelength upper bounds for s1d plots
 #     (must be a string list of floats) defines the upper wavelength in nm
 EXTRACT_S1D_PLOT_ZOOM2 = Const('EXTRACT_S1D_PLOT_ZOOM2', value=None,
-                               dtype=str, source=__NAME__, group=cgroup, 
+                               dtype=str, source=__NAME__, group=cgroup,
                                description=('Define the wavelength upper '
                                             'bounds for s1d plots (must be a '
                                             'string list of floats) defines '
@@ -2132,7 +2210,7 @@ THERMAL_EXTRACT_TYPE = Const('THERMAL_EXTRACT_TYPE', value=None, dtype=str,
 # define DPRTYPEs we need to correct thermal background using
 #  telluric absorption (TAPAS)
 THERMAL_CORRETION_TYPE1 = Const('THERMAL_CORRETION_TYPE1', value=None,
-                                dtype=str, source=__NAME__, group=cgroup, 
+                                dtype=str, source=__NAME__, group=cgroup,
                                 description=('define DPRTYPEs we need to '
                                              'correct thermal background using '
                                              'telluric absorption (TAPAS)'))
@@ -2140,20 +2218,20 @@ THERMAL_CORRETION_TYPE1 = Const('THERMAL_CORRETION_TYPE1', value=None,
 # define DPRTYPEs we need to correct thermal background using
 #   method 2
 THERMAL_CORRETION_TYPE2 = Const('THERMAL_CORRETION_TYPE2', value=None,
-                                dtype=str, source=__NAME__, group=cgroup, 
+                                dtype=str, source=__NAME__, group=cgroup,
                                 description=('define DPRTYPEs we need to '
                                              'correct thermal background '
                                              'using method 2'))
 
 # define the order to perform the thermal background scaling on
 THERMAL_ORDER = Const('THERMAL_ORDER', value=None, dtype=int, source=__NAME__,
-                      group=cgroup, 
+                      group=cgroup,
                       description=('define the order to perform the thermal '
                                    'background scaling on'))
 
 # width of the median filter used for the background
 THERMAL_FILTER_WID = Const('THERMAL_FILTER_WID', value=None, dtype=int,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('width of the median filter used for '
                                         'the background'))
 
@@ -2170,7 +2248,7 @@ THERMAL_BLUE_LIMIT = Const('THERMAL_BLUE_LIMIT', value=None, dtype=float,
 # maximum tapas transmission to be considered completely opaque for the
 # purpose of background determination in last order.
 THERMAL_THRES_TAPAS = Const('THERMAL_THRES_TAPAS', value=None, dtype=float,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('maximum tapas transmission to be '
                                          'considered completely opaque for '
                                          'the purpose of background '
@@ -2179,14 +2257,14 @@ THERMAL_THRES_TAPAS = Const('THERMAL_THRES_TAPAS', value=None, dtype=float,
 # define the percentile to measure the background for correction type 2
 THERMAL_ENVELOPE_PERCENTILE = Const('THERMAL_ENVELOPE_PERCENTILE', value=None,
                                     dtype=float, source=__NAME__,
-                                    minimum=0, maximum=100, group=cgroup, 
+                                    minimum=0, maximum=100, group=cgroup,
                                     description=('define the percentile to '
                                                  'measure the background for '
                                                  'correction type 2'))
 
 # define the order to plot on the thermal debug plot
 THERMAL_PLOT_START_ORDER = Const('THERMAL_PLOT_START_ORDER', value=None,
-                                 dtype=int, source=__NAME__, group=cgroup, 
+                                 dtype=int, source=__NAME__, group=cgroup,
                                  description=('define the order to plot on the '
                                               'thermal debug plot'))
 
@@ -2313,10 +2391,10 @@ WAVE_HC_VEL_ODD_RATIO = Const('WAVE_HC_VEL_ODD_RATIO', value=None,
                                           'in generating the weighted mean')
 
 # Define orders that we cannot fit HC or FP lines to (list of strings)
-WAVE_REMOVE_ORDERS =  Const('WAVE_REMOVE_ORDERS', value=None,
-                            dtype=str, source=__NAME__, group=cgroup,
-                            description='Define orders that we cannot fit HC '
-                                        'or FP lines to (list of strings)')
+WAVE_REMOVE_ORDERS = Const('WAVE_REMOVE_ORDERS', value=None,
+                           dtype=str, source=__NAME__, group=cgroup,
+                           description='Define orders that we cannot fit HC '
+                                       'or FP lines to (list of strings)')
 
 # Define the number of iterations required to do the final fplines
 #   wave solution
@@ -2622,18 +2700,15 @@ WAVE_CCF_RV_THRES_QC = Const('WAVE_CCF_RV_THRES_QC', value=None, dtype=float,
                                           'master fiber and other fibers, '
                                           'above this limit fails QC [m/s]'))
 
-
-
 # TODO: Sort out wave constants below here
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: WAVE GENERAL SETTING'
 
-
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = Const('WAVE_LINELIST_FILE', value=None, dtype=str,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('Define the line list file (located in '
                                         'the DRS_WAVE_DATA directory)'))
 
@@ -2646,7 +2721,7 @@ WAVE_LINELIST_FMT = Const('WAVE_LINELIST_FMT', value=None, dtype=str,
 # Define the line list file column names (must be separated by commas
 # and must be equal to the number of columns in file)
 WAVE_LINELIST_COLS = Const('WAVE_LINELIST_COLS', value=None, dtype=str,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('Define the line list file column '
                                         'names (must be separated by commas '
                                         'and must be equal to the number of '
@@ -2654,14 +2729,14 @@ WAVE_LINELIST_COLS = Const('WAVE_LINELIST_COLS', value=None, dtype=str,
 
 # Define the line list file row the data starts
 WAVE_LINELIST_START = Const('WAVE_LINELIST_START', value=None, dtype=int,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('Define the line list file row the '
                                          'data starts'))
 
 # Define the line list file wavelength column and amplitude column
 #  Must be in WAVE_LINELIST_COLS
 WAVE_LINELIST_WAVECOL = Const('WAVE_LINELIST_WAVECOL', value=None, dtype=str,
-                              source=__NAME__, group=cgroup, 
+                              source=__NAME__, group=cgroup,
                               description=('Define the line list file '
                                            'wavelength column and amplitude '
                                            'column Must be in '
@@ -2695,7 +2770,7 @@ WAVE_FIT_DEGREE = Const('WAVE_FIT_DEGREE', value=None, dtype=int,
 
 # Define intercept and slope for a pixel shift
 WAVE_PIXEL_SHIFT_INTER = Const('WAVE_PIXEL_SHIFT_INTER', value=None,
-                               dtype=float, source=__NAME__, group=cgroup, 
+                               dtype=float, source=__NAME__, group=cgroup,
                                description=('Define intercept and slope for a '
                                             'pixel shift'))
 WAVE_PIXEL_SHIFT_SLOPE = Const('WAVE_PIXEL_SHIFT_SLOPE', value=None,
@@ -2704,19 +2779,19 @@ WAVE_PIXEL_SHIFT_SLOPE = Const('WAVE_PIXEL_SHIFT_SLOPE', value=None,
 
 #  Defines echelle of first extracted order
 WAVE_T_ORDER_START = Const('WAVE_T_ORDER_START', value=None,
-                           dtype=int, source=__NAME__, group=cgroup, 
+                           dtype=int, source=__NAME__, group=cgroup,
                            description=('Defines echelle of first extracted '
                                         'order'))
 
 #  Defines order from which the solution is calculated
 WAVE_N_ORD_START = Const('WAVE_N_ORD_START', value=None, dtype=int,
-                         source=__NAME__, group=cgroup, 
+                         source=__NAME__, group=cgroup,
                          description=('Defines order from which the solution '
                                       'is calculated'))
 
 #  Defines order to which the solution is calculated
 WAVE_N_ORD_FINAL = Const('WAVE_N_ORD_FINAL', value=None, dtype=int,
-                         source=__NAME__, group=cgroup, 
+                         source=__NAME__, group=cgroup,
                          description=('Defines order to which the solution is '
                                       'calculated'))
 
@@ -2733,20 +2808,20 @@ WAVE_MODE_HC = Const('WAVE_MODE_HC', value=None, dtype=int, source=__NAME__,
 # width of the box for fitting HC lines. Lines will be fitted from -W to +W,
 #     so a 2*W+1 window
 WAVE_HC_FITBOX_SIZE = Const('WAVE_HC_FITBOX_SIZE', value=None, dtype=int,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('width of the box for fitting HC '
                                          'lines. Lines will be fitted from -W '
                                          'to +W, so a 2*W+1 window'))
 
 # number of sigma above local RMS for a line to be flagged as such
 WAVE_HC_FITBOX_SIGMA = Const('WAVE_HC_FITBOX_SIGMA', value=None, dtype=float,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description=('number of sigma above local RMS for '
                                           'a line to be flagged as such'))
 
 # the fit degree for the wave hc gaussian peaks fit
 WAVE_HC_FITBOX_GFIT_DEG = Const('WAVE_HC_FITBOX_GFIT_DEG', value=None,
-                                dtype=int, source=__NAME__, group=cgroup, 
+                                dtype=int, source=__NAME__, group=cgroup,
                                 description=('the fit degree for the wave hc '
                                              'gaussian peaks fit'))
 
@@ -2754,7 +2829,7 @@ WAVE_HC_FITBOX_GFIT_DEG = Const('WAVE_HC_FITBOX_GFIT_DEG', value=None,
 #     value must be SNR>5 (or 1/SNR<0.2)
 WAVE_HC_FITBOX_RMS_DEVMIN = Const('WAVE_HC_FITBOX_RMS_DEVMIN', value=None,
                                   dtype=float, source=__NAME__, minimum=0.0,
-                                  group=cgroup, 
+                                  group=cgroup,
                                   description=('the RMS of line-fitted line '
                                                'must be between DEVMIN and '
                                                'DEVMAX of the peak value must '
@@ -2765,7 +2840,7 @@ WAVE_HC_FITBOX_RMS_DEVMAX = Const('WAVE_HC_FITBOX_RMS_DEVMAX', value=None,
 
 # the e-width of the line expressed in pixels.
 WAVE_HC_FITBOX_EWMIN = Const('WAVE_HC_FITBOX_EWMIN', value=None, dtype=float,
-                             source=__NAME__, minimum=0.0, group=cgroup, 
+                             source=__NAME__, minimum=0.0, group=cgroup,
                              description=('the e-width of the line expressed '
                                           'in pixels.'))
 WAVE_HC_FITBOX_EWMAX = Const('WAVE_HC_FITBOX_EWMAX', value=None, dtype=float,
@@ -2783,7 +2858,7 @@ WAVE_HCLL_FILE_FMT = Const('WAVE_LINELIST_FMT', value=None, dtype=str,
 #     20 is a good number, and we see no reason to change it
 WAVE_HC_NMAX_BRIGHT = Const('WAVE_HC_NMAX_BRIGHT', value=None, dtype=int,
                             source=__NAME__, minimum=10, maximum=30,
-                            group=cgroup, 
+                            group=cgroup,
                             description=('number of bright lines kept per '
                                          'order avoid >25 as it takes super '
                                          'long avoid <12 as some orders are '
@@ -2794,7 +2869,7 @@ WAVE_HC_NMAX_BRIGHT = Const('WAVE_HC_NMAX_BRIGHT', value=None, dtype=int,
 # Number of times to run the fit triplet algorithm
 WAVE_HC_NITER_FIT_TRIPLET = Const('WAVE_HC_NITER_FIT_TRIPLET', value=None,
                                   dtype=int, source=__NAME__, minimum=1,
-                                  group=cgroup, 
+                                  group=cgroup,
                                   description=('Number of times to run the fit '
                                                'triplet algorithm'))
 
@@ -2802,7 +2877,7 @@ WAVE_HC_NITER_FIT_TRIPLET = Const('WAVE_HC_NITER_FIT_TRIPLET', value=None,
 #     line in m/s
 WAVE_HC_MAX_DV_CAT_GUESS = Const('WAVE_HC_MAX_DV_CAT_GUESS', value=None,
                                  dtype=int, source=__NAME__, minimum=0.0,
-                                 group=cgroup, 
+                                 group=cgroup,
                                  description=('Maximum distance between '
                                               'catalog line and init guess '
                                               'line to accept line in m/s'))
@@ -2815,21 +2890,21 @@ WAVE_HC_TFIT_DEG = Const('WAVE_HC_TFIT_DEG', value=None, dtype=int,
 # Cut threshold for the triplet line fit [in km/s]
 WAVE_HC_TFIT_CUT_THRES = Const('WAVE_HC_TFIT_CUT_THRES', value=None,
                                dtype=float, source=__NAME__, minimum=0.0,
-                               group=cgroup, 
+                               group=cgroup,
                                description=('Cut threshold for the triplet '
                                             'line fit [in km/s]'))
 
 # Minimum number of lines required per order
 WAVE_HC_TFIT_MINNUM_LINES = Const('WAVE_HC_TFIT_MINNUM_LINES', value=None,
                                   dtype=int, source=__NAME__, minimum=0,
-                                  group=cgroup, 
+                                  group=cgroup,
                                   description=('Minimum number of lines '
                                                'required per order'))
 
 # Minimum total number of lines required
 WAVE_HC_TFIT_MINTOT_LINES = Const('WAVE_HC_TFIT_MINTOT_LINES', value=None,
                                   dtype=int, source=__NAME__, minimum=0,
-                                  group=cgroup, 
+                                  group=cgroup,
                                   description=('Minimum total number of '
                                                'lines required'))
 
@@ -2839,7 +2914,7 @@ WAVE_HC_TFIT_MINTOT_LINES = Const('WAVE_HC_TFIT_MINTOT_LINES', value=None,
 #     grid is fitted with a 12th order polynomial as a function of
 #     order number (format = string list separated by commas
 WAVE_HC_TFIT_ORDER_FIT_CONT = Const('WAVE_HC_TFIT_ORDER_FIT_CONT', value=None,
-                                    dtype=str, source=__NAME__, group=cgroup, 
+                                    dtype=str, source=__NAME__, group=cgroup,
                                     description=('this sets the order of the '
                                                  'polynomial used to ensure '
                                                  'continuity in the xpix vs '
@@ -2856,14 +2931,14 @@ WAVE_HC_TFIT_ORDER_FIT_CONT = Const('WAVE_HC_TFIT_ORDER_FIT_CONT', value=None,
 # Number of times to loop through the sigma clip for triplet fit
 WAVE_HC_TFIT_SIGCLIP_NUM = Const('WAVE_HC_TFIT_SIGCLIP_NUM', value=None,
                                  dtype=int, source=__NAME__, minimum=1,
-                                 group=cgroup, 
+                                 group=cgroup,
                                  description=('Number of times to loop through '
                                               'the sigma clip for triplet fit'))
 
 # Sigma clip threshold for triplet fit
 WAVE_HC_TFIT_SIGCLIP_THRES = Const('WAVE_HC_TFIT_SIGCLIP_THRES', value=None,
                                    dtype=float, source=__NAME__, minimum=0.0,
-                                   group=cgroup, 
+                                   group=cgroup,
                                    description=('Sigma clip threshold for '
                                                 'triplet fit'))
 
@@ -2871,7 +2946,7 @@ WAVE_HC_TFIT_SIGCLIP_THRES = Const('WAVE_HC_TFIT_SIGCLIP_THRES', value=None,
 #     outside will be rejected [m/s]
 WAVE_HC_TFIT_DVCUT_ORDER = Const('WAVE_HC_TFIT_DVCUT_ORDER', value=None,
                                  dtype=float, source=__NAME__, minimum=0.0,
-                                 group=cgroup, 
+                                 group=cgroup,
                                  description=('Define the distance in m/s away '
                                               'from the center of dv hist '
                                               'points outside will be rejected '
@@ -2882,27 +2957,27 @@ WAVE_HC_TFIT_DVCUT_ALL = Const('WAVE_HC_TFIT_DVCUT_ALL', value=None,
 
 # Define the resolution and line profile map size (y-axis by x-axis)
 WAVE_HC_RESMAP_SIZE = Const('WAVE_HC_RESMAP_SIZE', value=None, dtype=str,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('Define the resolution and line '
                                          'profile map size (y-axis by x-axis)'))
 
 # Define the maximum allowed deviation in the RMS line spread function
 WAVE_HC_RES_MAXDEV_THRES = Const('WAVE_HC_RES_MAXDEV_THRES', value=None,
-                                 dtype=float, source=__NAME__, group=cgroup, 
+                                 dtype=float, source=__NAME__, group=cgroup,
                                  description=('Define the maximum allowed '
                                               'deviation in the RMS line '
                                               'spread function'))
 
 # quality control criteria if sigma greater than this many sigma fails
 WAVE_HC_QC_SIGMA_MAX = Const('WAVE_HC_QC_SIGMA_MAX', value=None, dtype=float,
-                             source=__NAME__, minimum=0.0, group=cgroup, 
+                             source=__NAME__, minimum=0.0, group=cgroup,
                              description=('quality control criteria if sigma '
                                           'greater than this many sigma fails'))
 
 # Defines the dv span for PLOT_WAVE_HC_RESMAP debug plot, should be a
 #    string list containing a min and max dv value
 WAVE_HC_RESMAP_DV_SPAN = Const('WAVE_HC_RESMAP_DV_SPAN', value=None, dtype=str,
-                               source=__NAME__, group=cgroup, 
+                               source=__NAME__, group=cgroup,
                                description=('Defines the dv span for '
                                             'PLOT_WAVE_HC_RESMAP debug plot, '
                                             'should be a string list '
@@ -2912,7 +2987,7 @@ WAVE_HC_RESMAP_DV_SPAN = Const('WAVE_HC_RESMAP_DV_SPAN', value=None, dtype=str,
 # Defines the x limits for PLOT_WAVE_HC_RESMAP debug plot, should be a
 #   string list containing a min and max x value
 WAVE_HC_RESMAP_XLIM = Const('WAVE_HC_RESMAP_XLIM', value=None, dtype=str,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('Defines the x limits for '
                                          'PLOT_WAVE_HC_RESMAP debug plot, '
                                          'should be a string list containing '
@@ -2921,7 +2996,7 @@ WAVE_HC_RESMAP_XLIM = Const('WAVE_HC_RESMAP_XLIM', value=None, dtype=str,
 # Defines the y limits for PLOT_WAVE_HC_RESMAP debug plot, should be a
 #   string list containing a min and max y value
 WAVE_HC_RESMAP_YLIM = Const('WAVE_HC_RESMAP_YLIM', value=None, dtype=str,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('Defines the y limits for '
                                          'PLOT_WAVE_HC_RESMAP debug plot, '
                                          'should be a string list containing a '
@@ -2946,7 +3021,7 @@ WAVE_HC_RESMAP_SIGCLIP = Const('WAVE_HC_RESMAP_SIGCLIP', value=None,
 cgroup = 'CALIBRATION: WAVE LITTROW SETTINGS'
 #  Define the order to start the Littrow fit from for the HC wave solution
 WAVE_LITTROW_ORDER_INIT_1 = Const('WAVE_LITTROW_ORDER_INIT_1', value=None,
-                                  dtype=int, source=__NAME__, group=cgroup, 
+                                  dtype=int, source=__NAME__, group=cgroup,
                                   description=('Define the order to start the '
                                                'Littrow fit from for the HC '
                                                'wave solution'))
@@ -2954,14 +3029,14 @@ WAVE_LITTROW_ORDER_INIT_1 = Const('WAVE_LITTROW_ORDER_INIT_1', value=None,
 #  Define the order to start the Littrow fit from for the FP wave solution
 # TODO: Note currently used
 WAVE_LITTROW_ORDER_INIT_2 = Const('WAVE_LITTROW_ORDER_INIT_2', value=None,
-                                  dtype=int, source=__NAME__, group=cgroup, 
+                                  dtype=int, source=__NAME__, group=cgroup,
                                   description=('Define the order to start the '
                                                'Littrow fit from for the FP '
                                                'wave solution'))
 
 #  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = Const('WAVE_LITTROW_ORDER_FINAL_1', value=None,
-                                   dtype=int, source=__NAME__, group=cgroup, 
+                                   dtype=int, source=__NAME__, group=cgroup,
                                    description=('Define the order to end the '
                                                 'Littrow fit at for the HC '
                                                 'wave solution'))
@@ -2969,7 +3044,7 @@ WAVE_LITTROW_ORDER_FINAL_1 = Const('WAVE_LITTROW_ORDER_FINAL_1', value=None,
 #  Define the order to end the Littrow fit at for the FP wave solution
 # TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = Const('WAVE_LITTROW_ORDER_FINAL_2', value=None,
-                                   dtype=int, source=__NAME__, group=cgroup, 
+                                   dtype=int, source=__NAME__, group=cgroup,
                                    description=('Define the order to end the '
                                                 'Littrow fit at for the FP '
                                                 'wave solution'))
@@ -2977,7 +3052,7 @@ WAVE_LITTROW_ORDER_FINAL_2 = Const('WAVE_LITTROW_ORDER_FINAL_2', value=None,
 #  Define orders to ignore in Littrow fit (should be a string list separated
 #      by commas
 WAVE_LITTROW_REMOVE_ORDERS = Const('WAVE_LITTROW_REMOVE_ORDERS', value=None,
-                                   dtype=str, source=__NAME__, group=cgroup, 
+                                   dtype=str, source=__NAME__, group=cgroup,
                                    description=('Define orders to ignore in '
                                                 'Littrow fit (should be a '
                                                 'string list separated by '
@@ -2985,20 +3060,20 @@ WAVE_LITTROW_REMOVE_ORDERS = Const('WAVE_LITTROW_REMOVE_ORDERS', value=None,
 
 #  Define the littrow cut steps for the HC wave solution
 WAVE_LITTROW_CUT_STEP_1 = Const('WAVE_LITTROW_CUT_STEP_1', value=None,
-                                dtype=int, source=__NAME__, group=cgroup, 
+                                dtype=int, source=__NAME__, group=cgroup,
                                 description=('Define the littrow cut steps for '
                                              'the HC wave solution'))
 
 #  Define the littrow cut steps for the FP wave solution
 WAVE_LITTROW_CUT_STEP_2 = Const('WAVE_LITTROW_CUT_STEP_2', value=None,
-                                dtype=int, source=__NAME__, group=cgroup, 
+                                dtype=int, source=__NAME__, group=cgroup,
                                 description=('Define the littrow cut steps for '
                                              'the FP wave solution'))
 
 #  Define the fit polynomial order for the Littrow fit (fit across the orders)
 #    for the HC wave solution
 WAVE_LITTROW_FIG_DEG_1 = Const('WAVE_LITTROW_FIG_DEG_1', value=None,
-                               dtype=int, source=__NAME__, group=cgroup, 
+                               dtype=int, source=__NAME__, group=cgroup,
                                description=('Define the fit polynomial order '
                                             'for the Littrow fit (fit across '
                                             'the orders) for the HC wave '
@@ -3007,7 +3082,7 @@ WAVE_LITTROW_FIG_DEG_1 = Const('WAVE_LITTROW_FIG_DEG_1', value=None,
 #  Define the fit polynomial order for the Littrow fit (fit across the orders)
 #    for the FP wave solution
 WAVE_LITTROW_FIG_DEG_2 = Const('WAVE_LITTROW_FIG_DEG_2', value=None,
-                               dtype=int, source=__NAME__, group=cgroup, 
+                               dtype=int, source=__NAME__, group=cgroup,
                                description=('Define the fit polynomial order '
                                             'for the Littrow fit (fit across '
                                             'the orders) for the FP wave '
@@ -3017,7 +3092,7 @@ WAVE_LITTROW_FIG_DEG_2 = Const('WAVE_LITTROW_FIG_DEG_2', value=None,
 # TODO needs to be the same as ic_ll_degr_fit
 WAVE_LITTROW_EXT_ORDER_FIT_DEG = Const('WAVE_LITTROW_EXT_ORDER_FIT_DEG',
                                        value=None, dtype=int, source=__NAME__,
-                                       group=cgroup, 
+                                       group=cgroup,
                                        description=('Define the order fit for '
                                                     'the Littrow solution (fit '
                                                     'along the orders) TODO '
@@ -3031,7 +3106,7 @@ WAVE_LITTROW_QC_RMS_MAX = Const('WAVE_LITTROW_QC_RMS_MAX', value=None,
 
 #   Maximum littrow Deviation from wave solution (at x cut points)
 WAVE_LITTROW_QC_DEV_MAX = Const('WAVE_LITTROW_QC_DEV_MAX', value=None,
-                                dtype=float, source=__NAME__, group=cgroup, 
+                                dtype=float, source=__NAME__, group=cgroup,
                                 description=('Maximum littrow Deviation from '
                                              'wave solution (at x cut points)'))
 
@@ -3047,21 +3122,21 @@ WAVE_MODE_FP = Const('WAVE_MODE_FP', value=None, dtype=int, source=__NAME__,
 
 # Define the initial value of FP effective cavity width 2xd in nm
 WAVE_FP_DOPD0 = Const('WAVE_FP_DOPD0', value=None, dtype=float,
-                      source=__NAME__, minimum=0.0, group=cgroup, 
+                      source=__NAME__, minimum=0.0, group=cgroup,
                       description=('Define the initial value of FP effective '
                                    'cavity width 2xd in nm'))
 
 #  Define the polynomial fit degree between FP line numbers and the
 #      measured cavity width for each line
 WAVE_FP_CAVFIT_DEG = Const('WAVE_FP_CAVFIT_DEG', value=None, dtype=int,
-                           source=__NAME__, minimum=0, group=cgroup, 
+                           source=__NAME__, minimum=0, group=cgroup,
                            description=('Define the polynomial fit degree '
                                         'between FP line numbers and the '
                                         'measured cavity width for each line'))
 
 #  Define the FP jump size that is too large
 WAVE_FP_LARGE_JUMP = Const('WAVE_FP_LARGE_JUMP', value=None, dtype=float,
-                           source=__NAME__, minimum=0, group=cgroup, 
+                           source=__NAME__, minimum=0, group=cgroup,
                            description=('Define the FP jump size that is too '
                                         'large'))
 
@@ -3074,7 +3149,7 @@ WAVE_FP_CM_IND = Const('WAVE_FP_P2P_WIDTH_CUT', value=None, dtype=int,
 #   defined in WAVE_FP_PEAK_LIM
 WAVE_FP_NORM_PERCENTILE = Const('WAVE_FP_NORM_PERCENTILE', value=None,
                                 dtype=float, source=__NAME__, minimum=0.0,
-                                group=cgroup, 
+                                group=cgroup,
                                 description=('define the percentile to '
                                              'normalize the spectrum to '
                                              '(per order) used to determine FP '
@@ -3085,7 +3160,7 @@ WAVE_FP_NORM_PERCENTILE = Const('WAVE_FP_NORM_PERCENTILE', value=None,
 # define the normalised limit below which FP peaks are not used
 WAVE_FP_PEAK_LIM = Const('WAVE_FP_PEAK_LIM', value=None,
                          dtype=float, source=__NAME__, minimum=0.0,
-                         group=cgroup, 
+                         group=cgroup,
                          description=('define the normalised limit below which '
                                       'FP peaks are not used'))
 
@@ -3103,58 +3178,58 @@ WAVE_FP_ERRX_MIN = Const('WAVE_FP_ERRX_MIN', value=None, dtype=float,
 
 #  Define the wavelength fit polynomial order
 WAVE_FP_LL_DEGR_FIT = Const('WAVE_FP_LL_DEGR_FIT', value=None, dtype=int,
-                            source=__NAME__, minimum=0, group=cgroup, 
+                            source=__NAME__, minimum=0, group=cgroup,
                             description=('Define the wavelength fit polynomial '
                                          'order'))
 
 #  Define the max rms for the wavelength sigma-clip fit
 WAVE_FP_MAX_LLFIT_RMS = Const('WAVE_FP_MAX_LLFIT_RMS', value=None, dtype=float,
-                              source=__NAME__, minimum=0, group=cgroup, 
+                              source=__NAME__, minimum=0, group=cgroup,
                               description=('Define the max rms for the '
                                            'wavelength sigma-clip fit'))
 
 #  Define the weight threshold (small number) below which we do not keep fp
 #     lines
 WAVE_FP_WEIGHT_THRES = Const('WAVE_FP_WEIGHT_THRES', value=None, dtype=float,
-                             source=__NAME__, minimum=0.0, group=cgroup, 
+                             source=__NAME__, minimum=0.0, group=cgroup,
                              description=('Define the weight threshold (small '
                                           'number) below which we do not keep '
                                           'fp lines'))
 
 # Minimum blaze threshold to keep FP peaks
 WAVE_FP_BLAZE_THRES = Const('WAVE_FP_BLAZE_THRES', value=None, dtype=float,
-                            source=__NAME__, minimum=0.0, group=cgroup, 
+                            source=__NAME__, minimum=0.0, group=cgroup,
                             description=('Minimum blaze threshold to keep '
                                          'FP peaks'))
 
 # Minimum FP peaks pixel separation fraction diff. from median
 WAVE_FP_XDIF_MIN = Const('WAVE_FP_XDIF_MIN', value=None, dtype=float,
-                         source=__NAME__, minimum=0.0, group=cgroup, 
+                         source=__NAME__, minimum=0.0, group=cgroup,
                          description=('Minimum FP peaks pixel separation '
                                       'fraction diff. from median'))
 
 # Maximum FP peaks pixel separation fraction diff. from median
 WAVE_FP_XDIF_MAX = Const('WAVE_FP_XDIF_MAX', value=None, dtype=float,
-                         source=__NAME__, minimum=0.0, group=cgroup, 
+                         source=__NAME__, minimum=0.0, group=cgroup,
                          description=('Maximum FP peaks pixel separation '
                                       'fraction diff. from median'))
 
 # Maximum fract. wavelength offset between cross-matched FP peaks
 WAVE_FP_LL_OFFSET = Const('WAVE_FP_LL_OFFSET', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup, 
+                          source=__NAME__, minimum=0.0, group=cgroup,
                           description=('Maximum fract. wavelength offset '
                                        'between cross-matched FP peaks'))
 
 # Maximum DV to keep HC lines in combined (WAVE_NEW) solution
 WAVE_FP_DV_MAX = Const('WAVE_FP_DV_MAX', value=None, dtype=float,
-                       source=__NAME__, minimum=0.0, group=cgroup, 
+                       source=__NAME__, minimum=0.0, group=cgroup,
                        description=('Maximum DV to keep HC lines in combined '
                                     '(WAVE_NEW) solution'))
 
 # Decide whether to refit the cavity width (will update if files do not
 #   exist)
 WAVE_FP_UPDATE_CAVITY = Const('WAVE_FP_UPDATE_CAVITY', value=None, dtype=bool,
-                              source=__NAME__, group=cgroup, 
+                              source=__NAME__, group=cgroup,
                               description=('Decide whether to refit the cavity '
                                            'width (will update if files do not '
                                            'exist)'))
@@ -3164,7 +3239,7 @@ WAVE_FP_UPDATE_CAVITY = Const('WAVE_FP_UPDATE_CAVITY', value=None, dtype=bool,
 #       0 - derive using the 1/m vs d fit from HC lines
 #       1 - derive using the ll vs d fit from HC lines
 WAVE_FP_CAVFIT_MODE = Const('WAVE_FP_CAVFIT_MODE', value=None, dtype=int,
-                            source=__NAME__, options=[0, 1], group=cgroup, 
+                            source=__NAME__, options=[0, 1], group=cgroup,
                             description=('Select the FP cavity fitting '
                                          '(WAVE_MODE_FP = 1 only) Should be '
                                          'one of the following: 0 - derive '
@@ -3177,7 +3252,7 @@ WAVE_FP_CAVFIT_MODE = Const('WAVE_FP_CAVFIT_MODE', value=None, dtype=int,
 #       0 - use fit_1d_solution function
 #       1 - fit with sigma-clipping and mod 1 pixel correction
 WAVE_FP_LLFIT_MODE = Const('WAVE_FP_LLFIT_MODE', value=None, dtype=int,
-                           source=__NAME__, options=[0, 1], group=cgroup, 
+                           source=__NAME__, options=[0, 1], group=cgroup,
                            description=('Select the FP wavelength fitting '
                                         '(WAVE_MODE_FP = 1 only) Should be '
                                         'one of the following: '
@@ -3187,13 +3262,13 @@ WAVE_FP_LLFIT_MODE = Const('WAVE_FP_LLFIT_MODE', value=None, dtype=int,
 
 # Minimum FP peaks wavelength separation fraction diff. from median
 WAVE_FP_LLDIF_MIN = Const('WAVE_FP_LLDIF_MIN', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup, 
+                          source=__NAME__, minimum=0.0, group=cgroup,
                           description=('Minimum FP peaks wavelength separation '
                                        'fraction diff. from median'))
 
 # Maximum FP peaks wavelength separation fraction diff. from median
 WAVE_FP_LLDIF_MAX = Const('WAVE_FP_LLDIF_MAX', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup, 
+                          source=__NAME__, minimum=0.0, group=cgroup,
                           description=('Maximum FP peaks wavelength separation '
                                        'fraction diff. from median'))
 
@@ -3205,19 +3280,19 @@ WAVE_FP_SIGCLIP = Const('WAVE_FP_SIGCLIP', value=None, dtype=float,
 # First order for multi-order wave fp plot
 WAVE_FP_PLOT_MULTI_INIT = Const('WAVE_FP_PLOT_MULTI_INIT', value=None,
                                 dtype=int, source=__NAME__, minimum=0,
-                                group=cgroup, 
+                                group=cgroup,
                                 description=('First order for multi-order wave '
                                              'fp plot'))
 
 # Number of orders in multi-order wave fp plot
 WAVE_FP_PLOT_MULTI_NBO = Const('WAVE_FP_PLOT_MULTI_NBO', value=None, dtype=int,
-                               source=__NAME__, minimum=1, group=cgroup, 
+                               source=__NAME__, minimum=1, group=cgroup,
                                description=('Number of orders in multi-order '
                                             'wave fp plot'))
 
 # define the dprtype for generating FPLINES (string list)
 WAVE_FP_DPRLIST = Const('WAVE_FP_DPRLIST', value=None, dtype=str,
-                        source=__NAME__, group=cgroup, 
+                        source=__NAME__, group=cgroup,
                         description=('define the dprtype for generating '
                                      'FPLINES (string list)'))
 
@@ -3229,33 +3304,33 @@ cgroup = 'CALIBRATION: WAVE NIGHT SETTINGS'
 # number of iterations for hc convergence
 WAVE_NIGHT_NITERATIONS1 = Const('WAVE_NIGHT_NITERATIONS1', value=None,
                                 dtype=int, source=__NAME__, minimum=1,
-                                group=cgroup, 
+                                group=cgroup,
                                 description=('number of iterations for hc '
                                              'convergence'))
 
 # number of iterations for fp convergence
 WAVE_NIGHT_NITERATIONS2 = Const('WAVE_NIGHT_NITERATIONS2', value=None,
                                 dtype=int, source=__NAME__, minimum=1,
-                                group=cgroup, 
+                                group=cgroup,
                                 description=('number of iterations for fp '
                                              'convergence'))
 
 # starting point for the cavity corrections
 WAVE_NIGHT_DCAVITY = Const('WAVE_NIGHT_DCAVITY', value=None, dtype=float,
-                           source=__NAME__, minimum=0.0, group=cgroup, 
+                           source=__NAME__, minimum=0.0, group=cgroup,
                            description=('starting point for the cavity '
                                         'corrections'))
 
 # define the sigma clip value to remove bad hc lines
 WAVE_NIGHT_HC_SIGCLIP = Const('WAVE_NIGHT_HC_SIGCLIP', value=None, dtype=float,
-                              source=__NAME__, minimum=0.0, group=cgroup, 
+                              source=__NAME__, minimum=0.0, group=cgroup,
                               description=('define the sigma clip value to '
                                            'remove bad hc lines'))
 
 # median absolute deviation cut off
 WAVE_NIGHT_MED_ABS_DEV = Const('WAVE_NIGHT_MED_ABS_DEV', value=None,
                                dtype=float, source=__NAME__, minimum=0.0,
-                               group=cgroup, 
+                               group=cgroup,
                                description=('median absolute deviation '
                                             'cut off'))
 
@@ -3267,19 +3342,19 @@ WAVE_NIGHT_NSIG_FIT_CUT = Const('WAVE_NIGHT_NSIG_FIT_CUT', value=None,
 
 # wave night plot hist number of bins
 WAVENIGHT_PLT_NBINS = Const('WAVENIGHT_PLT_NBINS', value=None, dtype=int,
-                            source=__NAME__, minimum=0, group=cgroup, 
+                            source=__NAME__, minimum=0, group=cgroup,
                             description=('wave night plot hist number of '
                                          'bins'))
 
 # wave night plot hc bin lower bound in multiples of rms
 WAVENIGHT_PLT_BINL = Const('WAVENIGHT_PLT_BINL', value=None, dtype=float,
-                           source=__NAME__, minimum=0, group=cgroup, 
+                           source=__NAME__, minimum=0, group=cgroup,
                            description=('wave night plot hc bin lower bound '
                                         'in multiples of rms'))
 
 # wave night plot hc bin upper bound in multiples of rms
 WAVENIGHT_PLT_BINU = Const('WAVENIGHT_PLT_BINU', value=None, dtype=float,
-                           source=__NAME__, minimum=0, group=cgroup, 
+                           source=__NAME__, minimum=0, group=cgroup,
                            description=('wave night plot hc bin upper bound in '
                                         'multiples of rms'))
 
@@ -3294,27 +3369,27 @@ TAPAS_FILE = Const('TAPAS_FILE', value=None, dtype=str, source=__NAME__,
 
 # Define the format (astropy format) of the tapas file "TAPAS_FILE"
 TAPAS_FILE_FMT = Const('TAPAS_FILE_FMT', value=None, dtype=str, source=__NAME__,
-                       group=cgroup, 
+                       group=cgroup,
                        description=('Define the format (astropy format) of the '
                                     'tapas file "TAPAS_FILE"'))
 
 # The allowed input DPRTYPES for input telluric files
 TELLU_ALLOWED_DPRTYPES = Const('TELLU_ALLOWED_DPRTYPES', value=None, dtype=str,
-                               source=__NAME__, group=cgroup, 
+                               source=__NAME__, group=cgroup,
                                description=('The allowed input DPRTYPES for '
                                             'input telluric files'))
 
 # Define level above which the blaze is high enough to accurately
 #    measure telluric
 TELLU_CUT_BLAZE_NORM = Const('TELLU_CUT_BLAZE_NORM', value=None, dtype=float,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description=('Define level above which the blaze '
                                           'is high enough to accurately '
                                           'measure telluric'))
 
 # Define telluric include/exclude list directory
 TELLU_LIST_DIRECTORY = Const('TELLU_LIST_DIRECTORY', value=None, dtype=str,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description=('Define telluric include/exclude list '
                                           'directory'))
 
@@ -3340,7 +3415,7 @@ TELLUP_DO_PRECLEANING = Const('TELLUP_DO_PRECLEANING', value=None, dtype=bool,
 
 # width in km/s for the ccf scan to determine the abso in pre-cleaning
 TELLUP_CCF_SCAN_RANGE = Const('TELLUP_CCF_SCAN_RANGE', value=None, dtype=float,
-                              source=__NAME__, group=cgroup, minimum=0.0, 
+                              source=__NAME__, group=cgroup, minimum=0.0,
                               description=('width in km/s for the ccf scan to '
                                            'determine the abso in '
                                            'pre-cleaning'))
@@ -3367,40 +3442,40 @@ TELLUP_OHLINE_PCA_FILE = Const('TELLUP_OHLINE_PCA_FILE', value=None, dtype=str,
 # define the orders not to use in pre-cleaning fit (due to thermal
 # background)
 TELLUP_REMOVE_ORDS = Const('TELLUP_REMOVE_ORDS', value=None, dtype=str,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('define the orders not to use in '
                                         'pre-cleaning fit (due to thermal '
                                         'background)'))
 
 # define the minimum snr to accept orders for pre-cleaning fit
 TELLUP_SNR_MIN_THRES = Const('TELLUP_SNR_MIN_THRES', value=None, dtype=float,
-                             source=__NAME__, group=cgroup, minimum=0.0, 
+                             source=__NAME__, group=cgroup, minimum=0.0,
                              description=('define the minimum snr to accept '
                                           'orders for pre-cleaning fit'))
 
 # define the telluric trans other abso CCF file
 TELLUP_OTHERS_CCF_FILE = Const('TELLUP_OTHERS_CCF_FILE', value=None, dtype=str,
-                               source=__NAME__, group=cgroup, 
+                               source=__NAME__, group=cgroup,
                                description=('define the telluric trans other '
                                             'abso CCF file'))
 
 # define the telluric trans water abso CCF file
 TELLUP_H2O_CCF_FILE = Const('TELLUP_H2O_CCF_FILE', value=None, dtype=str,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('define the telluric trans water abso '
                                          'CCF file'))
 
 # define dexpo convergence threshold
 TELLUP_DEXPO_CONV_THRES = Const('TELLUP_DEXPO_CONV_THRES', value=None,
                                 dtype=float, source=__NAME__, group=cgroup,
-                                minimum=0.0, 
+                                minimum=0.0,
                                 description=('define dexpo convergence '
                                              'threshold'))
 
 # define the maximum number of iterations to try to get dexpo
 # convergence
 TELLUP_DEXPO_MAX_ITR = Const('TELLUP_DEXPO_MAX_ITR', value=None, dtype=int,
-                             source=__NAME__, group=cgroup, minimum=1, 
+                             source=__NAME__, group=cgroup, minimum=1,
                              description=('define the maximum number of '
                                           'iterations to try to get dexpo '
                                           'convergence'))
@@ -3408,14 +3483,14 @@ TELLUP_DEXPO_MAX_ITR = Const('TELLUP_DEXPO_MAX_ITR', value=None, dtype=int,
 # define the kernel threshold in abso_expo
 TELLUP_ABSO_EXPO_KTHRES = Const('TELLUP_ABSO_EXPO_KTHRES', value=None,
                                 dtype=float, source=__NAME__, group=cgroup,
-                                minimum=0.0, 
+                                minimum=0.0,
                                 description=('define the kernel threshold in '
                                              'abso_expo'))
 
 # define the gaussian width of the kernel used in abso_expo
 TELLUP_ABSO_EXPO_KWID = Const('TELLUP_ABSO_EXPO_KWID', value=None,
                               dtype=float, source=__NAME__, group=cgroup,
-                              minimum=0.0, 
+                              minimum=0.0,
                               description=('define the gaussian width of the '
                                            'kernel used in abso_expo'))
 
@@ -3423,7 +3498,7 @@ TELLUP_ABSO_EXPO_KWID = Const('TELLUP_ABSO_EXPO_KWID', value=None,
 #   a value of 2 is gaussian, a value >2 is boxy
 TELLUP_ABSO_EXPO_KEXP = Const('TELLUP_ABSO_EXPO_KEXP', value=None,
                               dtype=float, source=__NAME__, group=cgroup,
-                              minimum=0.0, 
+                              minimum=0.0,
                               description=('define the gaussian exponent of '
                                            'the kernel used in abso_expo a '
                                            'value of 2 is gaussian, a '
@@ -3432,7 +3507,7 @@ TELLUP_ABSO_EXPO_KEXP = Const('TELLUP_ABSO_EXPO_KEXP', value=None,
 # define the transmission threshold (in exponential form) for keeping
 #   valid transmission
 TELLUP_TRANS_THRES = Const('TELLUP_TRANS_THRES', value=None,
-                           dtype=float, source=__NAME__, group=cgroup, 
+                           dtype=float, source=__NAME__, group=cgroup,
                            description=('define the transmission threshold '
                                         '(in exponential form) for keeping '
                                         'valid transmission'))
@@ -3440,13 +3515,13 @@ TELLUP_TRANS_THRES = Const('TELLUP_TRANS_THRES', value=None,
 # define the threshold for discrepant transmission (in sigma)
 TELLUP_TRANS_SIGLIM = Const('TELLUP_TRANS_SIGLIM', value=None,
                             dtype=float, source=__NAME__, group=cgroup,
-                            minimum=0.0, 
+                            minimum=0.0,
                             description=('define the threshold for discrepant '
                                          'transmission (in sigma)'))
 
 # define whether to force airmass fit to header airmass value
 TELLUP_FORCE_AIRMASS = Const('TELLUP_FORCE_AIRMASS', value=None, dtype=bool,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description=('define whether to force airmass '
                                           'fit to header airmass value'))
 
@@ -3454,7 +3529,7 @@ TELLUP_FORCE_AIRMASS = Const('TELLUP_FORCE_AIRMASS', value=None, dtype=bool,
 #    high-snr targets later
 TELLUP_D_WATER_ABSO = Const('TELLUP_D_WATER_ABSO', value=None,
                             dtype=float, source=__NAME__, group=cgroup,
-                            minimum=0.0, 
+                            minimum=0.0,
                             description=('set the typical water abso exponent. '
                                          'Compare to values in header for '
                                          'high-snr targets later'))
@@ -3462,7 +3537,7 @@ TELLUP_D_WATER_ABSO = Const('TELLUP_D_WATER_ABSO', value=None,
 # set the lower and upper bounds (String list) for the exponent of
 #  the other species of absorbers
 TELLUP_OTHER_BOUNDS = Const('TELLUP_OTHER_BOUNDS', value=None, dtype=str,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('set the lower and upper bounds '
                                          '(String list) for the exponent of '
                                          'the other species of absorbers'))
@@ -3470,7 +3545,7 @@ TELLUP_OTHER_BOUNDS = Const('TELLUP_OTHER_BOUNDS', value=None, dtype=str,
 # set the lower and upper bounds (string list) for the exponent of
 #  water absorber
 TELLUP_WATER_BOUNDS = Const('TELLUP_WATER_BOUNDS', value=None, dtype=str,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('set the lower and upper bounds '
                                          '(string list) for the exponent of '
                                          'water absorber'))
@@ -3484,7 +3559,7 @@ cgroup = 'OBJECT: MAKE TELLURIC SETTINGS'
 #     That's pretty much the peak value, but it is resistent to
 #     eventual outliers
 MKTELLU_BLAZE_PERCENTILE = Const('MKTELLU_BLAZE_PERCENTILE', value=None,
-                                 dtype=float, source=__NAME__, group=cgroup, 
+                                 dtype=float, source=__NAME__, group=cgroup,
                                  description=('value below which the blaze in '
                                               'considered too low to be useful '
                                               'for all blaze profiles, we '
@@ -3498,13 +3573,13 @@ MKTELLU_CUT_BLAZE_NORM = Const('MKTELLU_CUT_BLAZE_NORM', value=None,
 
 # Define list of absorbers in the tapas fits table
 TELLU_ABSORBERS = Const('TELLU_ABSORBERS', value=None, dtype=str,
-                        source=__NAME__, group=cgroup, 
+                        source=__NAME__, group=cgroup,
                         description=('Define list of absorbers in the tapas '
                                      'fits table'))
 
 # define the default convolution width [in pixels]
 MKTELLU_DEFAULT_CONV_WIDTH = Const('MKTELLU_DEFAULT_CONV_WIDTH', value=None,
-                                   dtype=int, source=__NAME__, group=cgroup, 
+                                   dtype=int, source=__NAME__, group=cgroup,
                                    description=('define the default convolution'
                                                 ' width [in pixels]'))
 
@@ -3512,7 +3587,7 @@ MKTELLU_DEFAULT_CONV_WIDTH = Const('MKTELLU_DEFAULT_CONV_WIDTH', value=None,
 #    are very broad. this avoids having spurious noise in our
 #    templates [pixel]
 MKTELLU_TEMP_MED_FILT = Const('MKTELLU_TEMP_MED_FILT', value=None, dtype=int,
-                              source=__NAME__, group=cgroup, 
+                              source=__NAME__, group=cgroup,
                               description=('median-filter the template. we '
                                            'know that stellar features are '
                                            'very broad. this avoids having '
@@ -3522,7 +3597,7 @@ MKTELLU_TEMP_MED_FILT = Const('MKTELLU_TEMP_MED_FILT', value=None, dtype=int,
 # Define the orders to plot (not too many)
 #    values should be a string list separated by commas
 MKTELLU_PLOT_ORDER_NUMS = Const('MKTELLU_PLOT_ORDER_NUMS', value=None,
-                                dtype=str, source=__NAME__, group=cgroup, 
+                                dtype=str, source=__NAME__, group=cgroup,
                                 description=('Define the orders to plot '
                                              '(not too many) values should '
                                              'be a string list separated by '
@@ -3530,7 +3605,7 @@ MKTELLU_PLOT_ORDER_NUMS = Const('MKTELLU_PLOT_ORDER_NUMS', value=None,
 
 # Set an upper limit for the allowed line-of-sight optical depth of water
 MKTELLU_TAU_WATER_ULIMIT = Const('MKTELLU_TAU_WATER_ULIMIT', value=None,
-                                 dtype=float, source=__NAME__, group=cgroup, 
+                                 dtype=float, source=__NAME__, group=cgroup,
                                  description=('Set an upper limit for the '
                                               'allowed line-of-sight optical '
                                               'depth of water'))
@@ -3538,7 +3613,7 @@ MKTELLU_TAU_WATER_ULIMIT = Const('MKTELLU_TAU_WATER_ULIMIT', value=None,
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
 MKTELLU_QC_SNR_ORDER = Const('MKTELLU_QC_SNR_ORDER', value=None, dtype=int,
-                             source=__NAME__, minimum=0, group=cgroup, 
+                             source=__NAME__, minimum=0, group=cgroup,
                              description=('Define the order to use for SNR '
                                           'check when accepting tellu files '
                                           'to the telluDB'))
@@ -3546,7 +3621,7 @@ MKTELLU_QC_SNR_ORDER = Const('MKTELLU_QC_SNR_ORDER', value=None, dtype=int,
 # Defines the maximum allowed value for the recovered water vapor optical
 #    depth
 MKTELLU_TRANS_MAX_WATERCOL = Const('MKTELLU_TRANS_MAX_WATERCOL', value=None,
-                                   dtype=float, source=__NAME__, group=cgroup, 
+                                   dtype=float, source=__NAME__, group=cgroup,
                                    description=('Defines the maximum allowed '
                                                 'value for the recovered water '
                                                 'vapor optical depth'))
@@ -3554,7 +3629,7 @@ MKTELLU_TRANS_MAX_WATERCOL = Const('MKTELLU_TRANS_MAX_WATERCOL', value=None,
 # Defines the minimum allowed value for the recovered water vapor optical
 #    depth (should not be able 1)
 MKTELLU_TRANS_MIN_WATERCOL = Const('MKTELLU_TRANS_MIN_WATERCOL', value=None,
-                                   dtype=float, source=__NAME__, group=cgroup, 
+                                   dtype=float, source=__NAME__, group=cgroup,
                                    description=('Defines the minimum allowed '
                                                 'value for the recovered water '
                                                 'vapor optical depth (should '
@@ -3563,7 +3638,7 @@ MKTELLU_TRANS_MIN_WATERCOL = Const('MKTELLU_TRANS_MIN_WATERCOL', value=None,
 # minimum transmission required for use of a given pixel in the TAPAS
 #    and SED fitting
 MKTELLU_THRES_TRANSFIT = Const('MKTELLU_THRES_TRANSFIT', value=None,
-                               dtype=float, source=__NAME__, group=cgroup, 
+                               dtype=float, source=__NAME__, group=cgroup,
                                description=('minimum transmission required '
                                             'for use of a given pixel in the '
                                             'TAPAS and SED fitting'))
@@ -3571,7 +3646,7 @@ MKTELLU_THRES_TRANSFIT = Const('MKTELLU_THRES_TRANSFIT', value=None,
 # Defines the bad pixels if the spectrum is larger than this value.
 #    These values are likely an OH line or a cosmic ray
 MKTELLU_TRANS_FIT_UPPER_BAD = Const('MKTELLU_TRANS_FIT_UPPER_BAD', value=None,
-                                    dtype=float, source=__NAME__, group=cgroup, 
+                                    dtype=float, source=__NAME__, group=cgroup,
                                     description=('Defines the bad pixels if '
                                                  'the spectrum is larger '
                                                  'than this value. These '
@@ -3581,14 +3656,14 @@ MKTELLU_TRANS_FIT_UPPER_BAD = Const('MKTELLU_TRANS_FIT_UPPER_BAD', value=None,
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
 MKTELLU_QC_SNR_MIN = Const('MKTELLU_QC_SNR_MIN', value=None, dtype=float,
-                           source=__NAME__, minimum=0.0, group=cgroup, 
+                           source=__NAME__, minimum=0.0, group=cgroup,
                            description=('Define the minimum SNR for order '
                                         '"QC_TELLU_SNR_ORDER" that will be '
                                         'accepted to the telluDB'))
 
 # Define the allowed difference between recovered and input airmass
 MKTELLU_QC_AIRMASS_DIFF = Const('MKTELLU_QC_AIRMASS_DIFF', value=None,
-                                dtype=float, source=__NAME__, group=cgroup, 
+                                dtype=float, source=__NAME__, group=cgroup,
                                 description=('Define the allowed difference '
                                              'between recovered and input '
                                              'airmass'))
@@ -3601,7 +3676,7 @@ cgroup = 'OBJECT: FIT TELLURIC SETTINGS'
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
 FTELLU_QC_SNR_ORDER = Const('FTELLU_QC_SNR_ORDER', value=None, dtype=int,
-                            source=__NAME__, minimum=0, group=cgroup, 
+                            source=__NAME__, minimum=0, group=cgroup,
                             description=('Define the order to use for SNR '
                                          'check when accepting tellu files '
                                          'to the telluDB'))
@@ -3609,7 +3684,7 @@ FTELLU_QC_SNR_ORDER = Const('FTELLU_QC_SNR_ORDER', value=None, dtype=int,
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
 FTELLU_QC_SNR_MIN = Const('FTELLU_QC_SNR_MIN', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup, 
+                          source=__NAME__, minimum=0.0, group=cgroup,
                           description=('Define the minimum SNR for order '
                                        '"QC_TELLU_SNR_ORDER" that will be '
                                        'accepted to the telluDB'))
@@ -3657,7 +3732,7 @@ FTELLU_FIT_DERIV_PC = Const('FTELLU_FIT_DERIV_PC', value=None, dtype=bool,
 # The number of pixels required (per order) to be able to interpolate the
 #    template on to a berv shifted wavelength grid
 FTELLU_FIT_KEEP_NUM = Const('FTELLU_FIT_KEEP_NUM', value=None, dtype=int,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('The number of pixels required (per '
                                          'order) to be able to interpolate the '
                                          'template on to a berv shifted '
@@ -3666,7 +3741,7 @@ FTELLU_FIT_KEEP_NUM = Const('FTELLU_FIT_KEEP_NUM', value=None, dtype=int,
 # The minimium transmission allowed to define good pixels (for reconstructed
 #    absorption calculation)
 FTELLU_FIT_MIN_TRANS = Const('FTELLU_FIT_MIN_TRANS', value=None, dtype=float,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description=('The minimium transmission allowed '
                                           'to define good pixels (for '
                                           'reconstructed absorption '
@@ -3675,7 +3750,7 @@ FTELLU_FIT_MIN_TRANS = Const('FTELLU_FIT_MIN_TRANS', value=None, dtype=float,
 # The minimum wavelength constraint (in nm) to calculate reconstructed
 #     absorption
 FTELLU_LAMBDA_MIN = Const('FTELLU_LAMBDA_MIN', value=None, dtype=float,
-                          source=__NAME__, group=cgroup, 
+                          source=__NAME__, group=cgroup,
                           description=('The minimum wavelength constraint '
                                        '(in nm) to calculate reconstructed '
                                        'absorption'))
@@ -3683,28 +3758,28 @@ FTELLU_LAMBDA_MIN = Const('FTELLU_LAMBDA_MIN', value=None, dtype=float,
 # The maximum wavelength constraint (in nm) to calculate reconstructed
 #     absorption
 FTELLU_LAMBDA_MAX = Const('FTELLU_LAMBDA_MAX', value=None, dtype=float,
-                          source=__NAME__, group=cgroup, 
+                          source=__NAME__, group=cgroup,
                           description=('The maximum wavelength constraint '
                                        '(in nm) to calculate reconstructed '
                                        'absorption'))
 
 # The gaussian kernel used to smooth the template and residual spectrum [km/s]
 FTELLU_KERNEL_VSINI = Const('FTELLU_KERNEL_VSINI', value=None, dtype=float,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('The gaussian kernel used to smooth '
                                          'the template and residual spectrum '
                                          '[km/s]'))
 
 # The number of iterations to use in the reconstructed absorption calculation
 FTELLU_FIT_ITERS = Const('FTELLU_FIT_ITERS', value=None, dtype=int,
-                         source=__NAME__, group=cgroup, 
+                         source=__NAME__, group=cgroup,
                          description=('The number of iterations to use in the '
                                       'reconstructed absorption calculation'))
 
 # The minimum log absorption the is allowed in the molecular absorption
 #     calculation
 FTELLU_FIT_RECON_LIMIT = Const('FTELLU_FIT_RECON_LIMIT', value=None,
-                               dtype=float, source=__NAME__, group=cgroup, 
+                               dtype=float, source=__NAME__, group=cgroup,
                                description=('The minimum log absorption the is '
                                             'allowed in the molecular '
                                             'absorption calculation'))
@@ -3712,7 +3787,7 @@ FTELLU_FIT_RECON_LIMIT = Const('FTELLU_FIT_RECON_LIMIT', value=None,
 # Define the orders to plot (not too many) for recon abso plot
 #    values should be a string list separated by commas
 FTELLU_PLOT_ORDER_NUMS = Const('FTELLU_PLOT_ORDER_NUMS', value=None,
-                               dtype=str, source=__NAME__, group=cgroup, 
+                               dtype=str, source=__NAME__, group=cgroup,
                                description=('Define the orders to plot (not '
                                             'too many) for recon abso plot '
                                             'values should be a string list '
@@ -3720,7 +3795,7 @@ FTELLU_PLOT_ORDER_NUMS = Const('FTELLU_PLOT_ORDER_NUMS', value=None,
 
 # Define the selected fit telluric order for debug plots (when not in loop)
 FTELLU_SPLOT_ORDER = Const('FTELLU_SPLOT_ORDER', value=None,
-                           dtype=int, source=__NAME__, group=cgroup, 
+                           dtype=int, source=__NAME__, group=cgroup,
                            description=('Define the selected fit telluric '
                                         'order for debug plots (when not in '
                                         'loop)'))
@@ -3764,20 +3839,20 @@ MKTEMPLATE_FIBER_TYPE = Const('MKTEMPLATE_FIBER_TYPE', value=None, dtype=str,
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_FILESOURCE = Const('MKTEMPLATE_FILESOURCE', value=None, dtype=str,
                               source=__NAME__, group=cgroup,
-                              options=['telludb', 'disk'], 
+                              options=['telludb', 'disk'],
                               description=('the order to use for signal to '
                                            'noise cut requirement'))
 
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_SNR_ORDER = Const('MKTEMPLATE_SNR_ORDER', value=None, dtype=int,
-                             source=__NAME__, minimum=0, group=cgroup, 
+                             source=__NAME__, minimum=0, group=cgroup,
                              description=('the order to use for signal to '
                                           'noise cut requirement'))
 
 # The number of iterations to filter low frequency noise before medianing
 #   the template "big cube" to the final template spectrum
 MKTEMPLATE_E2DS_ITNUM = Const('MKTEMPLATE_E2DS_ITNUM', value=None, dtype=int,
-                              source=__NAME__, minimum=1, group=cgroup, 
+                              source=__NAME__, minimum=1, group=cgroup,
                               description=('The number of iterations to filter '
                                            'low frequency noise before '
                                            'medianing the template "big cube" '
@@ -3787,7 +3862,7 @@ MKTEMPLATE_E2DS_ITNUM = Const('MKTEMPLATE_E2DS_ITNUM', value=None, dtype=int,
 #   the template "big cube" to the final template spectrum
 MKTEMPLATE_E2DS_LOWF_SIZE = Const('MKTEMPLATE_E2DS_LOWF_SIZE', value=None,
                                   dtype=int, source=__NAME__, minimum=1,
-                                  group=cgroup, 
+                                  group=cgroup,
                                   description=('The size (in pixels) to filter '
                                                'low frequency noise before '
                                                'medianing the template "big '
@@ -3797,7 +3872,7 @@ MKTEMPLATE_E2DS_LOWF_SIZE = Const('MKTEMPLATE_E2DS_LOWF_SIZE', value=None,
 # The number of iterations to filter low frequency noise before medianing
 #   the s1d template "big cube" to the final template spectrum
 MKTEMPLATE_S1D_ITNUM = Const('MKTEMPLATE_S1D_ITNUM', value=None, dtype=int,
-                             source=__NAME__, minimum=1, group=cgroup, 
+                             source=__NAME__, minimum=1, group=cgroup,
                              description=('The number of iterations to filter '
                                           'low frequency noise before '
                                           'medianing the s1d template "big '
@@ -3808,7 +3883,7 @@ MKTEMPLATE_S1D_ITNUM = Const('MKTEMPLATE_S1D_ITNUM', value=None, dtype=int,
 #   the s1d template "big cube" to the final template spectrum
 MKTEMPLATE_S1D_LOWF_SIZE = Const('MKTEMPLATE_S1D_LOWF_SIZE', value=None,
                                  dtype=int, source=__NAME__, minimum=1,
-                                 group=cgroup, 
+                                 group=cgroup,
                                  description=('The size (in pixels) to filter '
                                               'low frequency noise before '
                                               'medianing the s1d template '
@@ -3819,7 +3894,7 @@ MKTEMPLATE_S1D_LOWF_SIZE = Const('MKTEMPLATE_S1D_LOWF_SIZE', value=None,
 #   in km/s  (default is double the resolution in km/s)
 MKTEMPLATE_BERVCOR_QCMIN = Const('MKTEMPLATE_BERVCOR_QCMIN', value=None,
                                  dtype=float, source=__NAME__, minimum=0.0,
-                                 group=cgroup, 
+                                 group=cgroup,
                                  description=('Define the minimum allowed berv '
                                               'coverage to construct a '
                                               'template in km/s (default '
@@ -3829,7 +3904,7 @@ MKTEMPLATE_BERVCOR_QCMIN = Const('MKTEMPLATE_BERVCOR_QCMIN', value=None,
 # Define the core SNR in order to calculate required BERV coverage
 MKTEMPLATE_BERVCOV_CSNR = Const('MKTEMPLATE_BERVCOV_CSNR', value=None,
                                 dtype=float, source=__NAME__, minimum=0.0,
-                                group=cgroup, 
+                                group=cgroup,
                                 description=('Define the core SNR in order to '
                                              'calculate required BERV '
                                              'coverage'))
@@ -3837,7 +3912,7 @@ MKTEMPLATE_BERVCOV_CSNR = Const('MKTEMPLATE_BERVCOV_CSNR', value=None,
 # Defome the resolution in km/s for calculating BERV coverage
 MKTEMPLATE_BERVCOV_RES = Const('MKTEMPLATE_BERVCOV_RES', value=None,
                                dtype=float, source=__NAME__, minimum=0.0,
-                               group=cgroup, 
+                               group=cgroup,
                                description=('Defome the resolution in km/s for '
                                             'calculating BERV coverage'))
 
@@ -3851,14 +3926,14 @@ CCF_MASK_PATH = Const('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__,
 
 # Define target rv the null value for CCF (only change if changing code)
 CCF_NO_RV_VAL = Const('CCF_NO_RV_VAL', value=np.nan, dtype=float,
-                      source=__NAME__, group=cgroup, 
+                      source=__NAME__, group=cgroup,
                       description=('Define target rv the null value for CCF'
                                    ' (only change if changing code)'))
 
 # Define target rv header null value
 #     (values greater than absolute value are set to zero)
 CCF_OBJRV_NULL_VAL = Const('CCF_OBJRV_NULL_VAL', value=1000, dtype=float,
-                           source=__NAME__, group=cgroup, 
+                           source=__NAME__, group=cgroup,
                            description=('Define target rv header null value '
                                         '(values greater than absolute value '
                                         'are set to zero)'))
@@ -3903,7 +3978,7 @@ CCF_MASK_WIDTH = Const('CCF_MASK_WIDTH', value=None, dtype=float,
 #     i.e. error will be generated if CCF_STEP > (CCF_WIDTH / RATIO)
 CCF_MAX_CCF_WID_STEP_RATIO = Const('CCF_MAX_CCF_WID_STEP_RATIO', value=None,
                                    dtype=float, source=__NAME__, minimum=1.0,
-                                   group=cgroup, 
+                                   group=cgroup,
                                    description=('Define the maximum allowed '
                                                 'ratio between input CCF STEP '
                                                 'and CCF WIDTH i.e. error will '
@@ -3952,7 +4027,7 @@ CCF_ALLOWED_DPRTYPES = Const('CCF_ALLOWED_DPRTYPES', value=None, dtype=str,
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
 CCF_CORRECT_TELLU_TYPES = Const('CCF_CORRECT_TELLU_TYPES', value=None,
-                                dtype=str, source=__NAME__, group=cgroup, 
+                                dtype=str, source=__NAME__, group=cgroup,
                                 description=('Define the KW_OUTPUT types that '
                                              'are valid telluric corrected '
                                              'spectra'))
@@ -3960,7 +4035,7 @@ CCF_CORRECT_TELLU_TYPES = Const('CCF_CORRECT_TELLU_TYPES', value=None,
 # The transmission threshold for removing telluric domain (if and only if
 #     we have a telluric corrected input file
 CCF_TELLU_THRES = Const('CCF_TELLU_THRES', value=None, dtype=float,
-                        source=__NAME__, group=cgroup, 
+                        source=__NAME__, group=cgroup,
                         description=('The transmission threshold for removing '
                                      'telluric domain (if and only if we have'
                                      ' a telluric corrected input file'))
@@ -3968,7 +4043,7 @@ CCF_TELLU_THRES = Const('CCF_TELLU_THRES', value=None, dtype=float,
 # The half size (in pixels) of the smoothing box used to calculate what value
 #    should replace the NaNs in the E2ds before CCF is calculated
 CCF_FILL_NAN_KERN_SIZE = Const('CCF_FILL_NAN_KERN_SIZE', value=None,
-                               dtype=float, source=__NAME__, group=cgroup, 
+                               dtype=float, source=__NAME__, group=cgroup,
                                description=('The half size (in pixels) of the '
                                             'smoothing box used to calculate '
                                             'what value should replace the '
@@ -3978,7 +4053,7 @@ CCF_FILL_NAN_KERN_SIZE = Const('CCF_FILL_NAN_KERN_SIZE', value=None,
 # the step size (in pixels) of the smoothing box used to calculate what value
 #   should replace the NaNs in the E2ds before CCF is calculated
 CCF_FILL_NAN_KERN_RES = Const('CCF_FILL_NAN_KERN_RES', value=None,
-                              dtype=float, source=__NAME__, group=cgroup, 
+                              dtype=float, source=__NAME__, group=cgroup,
                               description=('the step size (in pixels) of the '
                                            'smoothing box used to calculate '
                                            'what value should replace the '
@@ -3987,7 +4062,7 @@ CCF_FILL_NAN_KERN_RES = Const('CCF_FILL_NAN_KERN_RES', value=None,
 
 #  Define the detector noise to use in the ccf
 CCF_DET_NOISE = Const('CCF_DET_NOISE', value=None, dtype=float, source=__NAME__,
-                      group=cgroup, 
+                      group=cgroup,
                       description=('Define the detector noise to use in '
                                    'the ccf'))
 
@@ -3995,7 +4070,7 @@ CCF_DET_NOISE = Const('CCF_DET_NOISE', value=None, dtype=float, source=__NAME__,
 #     if 0 then we have an absorption line
 #     if 1 then we have an emission line
 CCF_FIT_TYPE = Const('CCF_FIT_TYPE', value=None, dtype=int, source=__NAME__,
-                     options=[0, 1], group=cgroup, 
+                     options=[0, 1], group=cgroup,
                      description=('Define the fit type for the CCF fit if 0 '
                                   'then we have an absorption line if 1 then '
                                   'we have an emission line'))
@@ -4003,7 +4078,7 @@ CCF_FIT_TYPE = Const('CCF_FIT_TYPE', value=None, dtype=int, source=__NAME__,
 # Define the percentile the blaze is normalised by before using in CCF calc
 CCF_BLAZE_NORM_PERCENTILE = Const('CCF_BLAZE_NORM_PERCENTILE', value=None,
                                   dtype=float, source=__NAME__, minimum=0,
-                                  maximum=100, group=cgroup, 
+                                  maximum=100, group=cgroup,
                                   description=('Define the percentile the '
                                                'blaze is normalised by before '
                                                'using in CCF calc'))
@@ -4156,10 +4231,10 @@ POLAR_IRAF_CONT_FIT_FUNC = Const('POLAR_IRAF_CONT_FIT_FUNC', value=None,
 #    number of knots
 STOKESI_IRAF_CONT_FUNC_ORDER = Const('STOKESI_IRAF_CONT_FUNC_ORDER',
                                      value=None, dtype=int,
-                                   source=__NAME__, group=cgroup,
-                                   description='polar continuum fit function '
-                                               'order, polynomial: degree, '
-                                               'spline3: number of knots')
+                                     source=__NAME__, group=cgroup,
+                                     description='polar continuum fit function '
+                                                 'order, polynomial: degree, '
+                                                 'spline3: number of knots')
 
 # polar continuum fit function order: 'polynomial': degree or 'spline3':
 #    number of knots
@@ -4224,16 +4299,16 @@ POLAR_LSD_MIN_LINEDEPTH = Const('POLAR_LSD_MIN_LINEDEPTH', value=None,
                                             'used in the LSD analyis')
 
 # Define initial velocity (km/s) for output LSD profile
-POLAR_LSD_V0 = Const('POLAR_LSD_V0',  value=None, dtype=float, source=__NAME__,
+POLAR_LSD_V0 = Const('POLAR_LSD_V0', value=None, dtype=float, source=__NAME__,
                      group=cgroup,
                      description='Define initial velocity (km/s) for output '
                                  'LSD profile')
 
 #  Define final velocity (km/s) for output LSD profile
-POLAR_LSD_VF =  Const('POLAR_LSD_VF', value=None, dtype=float, source=__NAME__,
-                      group=cgroup,
-                      description='Define final velocity (km/s) for output LSD '
-                                  'profile')
+POLAR_LSD_VF = Const('POLAR_LSD_VF', value=None, dtype=float, source=__NAME__,
+                     group=cgroup,
+                     description='Define final velocity (km/s) for output LSD '
+                                 'profile')
 
 # Define number of points for output LSD profile
 POLAR_LSD_NP = Const('POLAR_LSD_NP', value=None, dtype=int, source=__NAME__,
@@ -4247,7 +4322,7 @@ POLAR_LSD_NORMALIZE = Const('POLAR_LSD_NORMALIZE', value=None, dtype=bool,
                             description='Renormalize data before LSD analysis')
 
 # Remove edges of LSD profile
-POLAR_LSD_REMOVE_EDGES = Const('POLAR_LSD_REMOVE_EDGES',  value=None,
+POLAR_LSD_REMOVE_EDGES = Const('POLAR_LSD_REMOVE_EDGES', value=None,
                                dtype=bool, source=__NAME__, group=cgroup,
                                description='Remove edges of LSD profile')
 
@@ -4283,23 +4358,22 @@ DEBUG_E2DSLL_FILE = Const('DEBUG_E2DSLL_FILE', value=True,
 # Whether to save the shape in and out debug files (around 0.1 GB per file)
 #   but only one set of these per night
 DEBUG_SHAPE_FILES = Const('DEBUG_SHAPE_FILES', value=True,
-                              dtype=bool, source=__NAME__,
-                              user=True, active=False, group=cgroup,
-                              description='Whether to save the shape in and '
-                                          'out debug files (around 0.1 GB per '
-                                          'file) but only one set of these '
-                                          'per night')
+                          dtype=bool, source=__NAME__,
+                          user=True, active=False, group=cgroup,
+                          description='Whether to save the shape in and '
+                                      'out debug files (around 0.1 GB per '
+                                      'file) but only one set of these '
+                                      'per night')
 
 # Whether to save the uncorrected for FP C fiber leak files
 #      (around 0.01 GB per file) one of these per fiber
 DEBUG_UNCORR_EXT_FILES = Const('DEBUG_UNCORR_EXT_FILES', value=True,
-                              dtype=bool, source=__NAME__,
-                              user=True, active=False, group=cgroup,
-                              description='Whether to save the uncorrected '
-                                          'for FP C fiber leak files (around '
-                                          '0.01 GB per file) one of these per '
-                                          'fiber')
-
+                               dtype=bool, source=__NAME__,
+                               user=True, active=False, group=cgroup,
+                               description='Whether to save the uncorrected '
+                                           'for FP C fiber leak files (around '
+                                           '0.01 GB per file) one of these per '
+                                           'fiber')
 
 # =============================================================================
 # DEBUG PLOT SETTINGS
@@ -4324,55 +4398,38 @@ PLOT_BADPIX_MAP = Const('PLOT_BADPIX_MAP', value=False, dtype=bool,
                         group=cgroup,
                         description='turn on badpix map debug plot')
 
-# turn on the localisation cent min max debug plot
-PLOT_LOC_MINMAX_CENTS = Const('PLOT_LOC_MINMAX_CENTS', value=False,
-                              dtype=bool, source=__NAME__, user=True,
-                              active=False, group=cgroup,
-                              description='turn on the localisation cent min '
-                                          'max debug plot')
-
-# turn on the localisation cent/thres debug plot
-PLOT_LOC_MIN_CENTS_THRES = Const('PLOT_LOC_MIN_CENTS_THRES', value=False,
-                                 dtype=bool, source=__NAME__, user=True,
-                                 active=False, group=cgroup,
-                                 description='turn on the localisation '
-                                             'cent/thres debug plot')
-
-# turn on the localisation finding orders debug plot
-PLOT_LOC_FINDING_ORDERS = Const('PLOT_LOC_FINDING_ORDERS', value=False,
-                                dtype=bool, source=__NAME__, user=True,
-                                active=False, group=cgroup,
-                                description='turn on the localisation finding '
-                                            'orders debug plot')
-
-# turn on the image above saturation threshold debug plot
-PLOT_LOC_IM_SAT_THRES = Const('PLOT_LOC_IM_SAT_THRES', value=False,
-                              dtype=bool, source=__NAME__, user=True,
-                              active=False, group=cgroup,
-                              description='turn on the image above saturation '
-                                          'threshold debug plot')
-
-# turn on the order number vs rms debug plot
-PLOT_LOC_ORD_VS_RMS = Const('PLOT_LOC_ORD_VS_RMS', value=False,
-                            dtype=bool, source=__NAME__, user=True,
-                            active=False, group=cgroup,
-                            description='turn on the order number vs '
-                                        'rms debug plot')
-
-# turn on the localisation check coeffs debug plot
-PLOT_LOC_CHECK_COEFFS = Const('PLOT_LOC_CHECK_COEFFS', value=False,
-                              dtype=bool, source=__NAME__, user=True,
-                              active=False, group=cgroup,
-                              description='turn on the localisation check '
-                                          'coeffs debug plot')
-
-# turn on the localisation fit residuals plot (warning: done many times)
-PLOT_LOC_FIT_RESIDUALS = Const('PLOT_LOC_FIT_RESIDUALS', value=False,
+# turn on localisation the width regions plot
+PLOT_LOC_WIDTH_REGIONS = Const('PLOT_LOC_WIDTH_REGIONS', value=False,
                                dtype=bool, source=__NAME__, user=True,
                                active=False, group=cgroup,
-                               description='turn on the localisation fit '
-                                           'residuals plot (warning: '
-                                           'done many times)')
+                               description='turn on localisation the width '
+                                           'regions plot')
+
+# turn on localisation fiber doublet paroty plot
+PLOT_LOC_FIBER_DOUBLET_PARITY = Const('PLOT_LOC_FIBER_DOUBLET_PARITY',
+                                      value=False, dtype=bool, source=__NAME__,
+                                      user=True,  active=False, group=cgroup,
+                                      description='turn on localisation fiber '
+                                                  'doublet paroty plot')
+
+# turn on localisation gap in orders plot
+PLOT_LOC_GAP_ORDERS = Const('PLOT_LOC_GAP_ORDERS', value=False, dtype=bool,
+                            source=__NAME__, user=True,  active=False,
+                            group=cgroup,
+                            description='turn on localisation gap in orders '
+                                        'plot')
+
+# turn on localisation image fit plot
+PLOT_LOC_IMAGE_FIT = Const('PLOT_LOC_IMAGE_FIT', value=False, dtype=bool,
+                            source=__NAME__, user=True,  active=False,
+                            group=cgroup,
+                            description='turn on localisation image fit plot')
+
+# turn on localisation image corners plot
+PLOT_LOC_IM_CORNER = Const('PLOT_LOC_IM_CORNER', value=False, dtype=bool,
+                            source=__NAME__, user=True,  active=False,
+                            group=cgroup,
+                            description='turn on localisation image corners plot')
 
 # turn on the shape dx debug plot
 PLOT_SHAPE_DX = Const('PLOT_SHAPE_DX', value=False, dtype=bool, source=__NAME__,
@@ -4472,7 +4529,6 @@ PLOT_EXTRACT_S1D_WEIGHT = Const('PLOT_EXTRACT_S1D_WEIGHT', value=False,
                                 description='turn on the extraction 1d spectrum'
                                             ' weight (before/after) debug plot')
 
-
 # turn on the wave line fiber comparison plot
 PLOT_WAVE_FIBER_COMPARISON = Const('PLOT_WAVE_FIBER_COMPARISON', value=False,
                                    dtype=bool, source=__NAME__, user=True,
@@ -4496,9 +4552,9 @@ PLOT_WAVE_WL_CAV = Const('PLOT_WAVE_WL_CAV_PLOT', value=False,
 
 # turn on the wave diff HC histograms plot
 PLOT_WAVE_HC_DIFF_HIST = Const('PLOT_WAVE_HC_DIFF_HIST', value=False,
-                         dtype=bool, source=__NAME__, user=True,
-                         active=False, group=cgroup,
-                         description='turn on the wave diff HC histograms plot')
+                               dtype=bool, source=__NAME__, user=True,
+                               active=False, group=cgroup,
+                               description='turn on the wave diff HC histograms plot')
 
 # TODO: WAVE plots need sorting
 
@@ -4671,10 +4727,10 @@ PLOT_TELLUP_ABSO_SPEC = Const('PLOT_TELLUP_ABSO_SPEC', value=False,
 
 # turn on the telluric OH cleaning debug plot
 PLOT_TELLUP_CLEAN_OH = Const('PLOT_TELLUP_CLEAN_OH', value=False,
-                              dtype=bool, source=__NAME__, user=True,
-                              active=False, group=cgroup,
-                              description='turn on the telluric OH cleaning '
-                                          'debug plot')
+                             dtype=bool, source=__NAME__, user=True,
+                             active=False, group=cgroup,
+                             description='turn on the telluric OH cleaning '
+                                         'debug plot')
 
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = Const('PLOT_MKTELLU_WAVE_FLUX1', value=False,
@@ -4785,7 +4841,6 @@ PLOT_CCF_PHOTON_UNCERT = Const('PLOT_CCF_PHOTON_UNCERT', value=False,
                                description='turn on the ccf photon uncertainty '
                                            'debug plot')
 
-
 # turn on the polar fit continuum plot
 PLOT_POLAR_FIT_CONT = Const('PLOT_POLAR_FIT_CONT', value=False,
                             dtype=bool, source=__NAME__, user=True,
@@ -4863,31 +4918,31 @@ REPROCESS_RUN_KEY = Const('REPROCESS_RUN_KEY', value=None, dtype=str,
 
 # Define the obs_dir column name for raw file table
 REPROCESS_OBSDIR_COL = Const('REPROCESS_OBSDIR_COL', value=None, dtype=str,
-                           source=__NAME__, group=cgroup, 
-                           description=('Define the obs_dir column name '
-                                        'for raw file table'))
+                             source=__NAME__, group=cgroup,
+                             description=('Define the obs_dir column name '
+                                          'for raw file table'))
 
 # Define the pi name column name for raw file table
 REPROCESS_PINAMECOL = Const('REPROCESS_PINAMECOL', value=None, dtype=str,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('Define the pi name column name for '
                                          'raw file table'))
 
 # Define the absolute file column name for raw file table
 REPROCESS_ABSFILECOL = Const('REPROCESS_ABSFILECOL', value=None, dtype=str,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description=('Define the absolute file column '
                                           'name for raw file table'))
 
 # Define the modified file column name for raw file table
 REPROCESS_MODIFIEDCOL = Const('REPROCESS_MODIFIEDCOL', value=None, dtype=str,
-                              source=__NAME__, group=cgroup, 
+                              source=__NAME__, group=cgroup,
                               description=('Define the modified file column '
                                            'name for raw file table'))
 
 # Define the sort column (from header keywords) for raw file table
 REPROCESS_SORTCOL_HDRKEY = Const('REPROCESS_SORTCOL_HDRKEY', value=None,
-                                 dtype=str, source=__NAME__, group=cgroup, 
+                                 dtype=str, source=__NAME__, group=cgroup,
                                  description=('Define the sort column (from '
                                               'header keywords) for raw file '
                                               'table'))
@@ -4899,16 +4954,15 @@ REPROCESS_RAWINDEXFILE = Const('REPROCESS_RAWINDEXFILE', value=None, dtype=str,
 
 # define the sequence (1 of 5, 2 of 5 etc) col for raw file table
 REPROCESS_SEQCOL = Const('REPROCESS_SEQCOL', value=None, dtype=str,
-                         source=__NAME__, group=cgroup, 
+                         source=__NAME__, group=cgroup,
                          description=('define the sequence (1 of 5, 2 of 5 '
                                       'etc) col for raw file table'))
 
 # define the time col for raw file table
 REPROCESS_TIMECOL = Const('REPROCESS_TIMECOL', value=None, dtype=str,
-                          source=__NAME__, group=cgroup, 
+                          source=__NAME__, group=cgroup,
                           description=('define the time col for raw file '
                                        'table'))
-
 
 # define the dprtypes for objects (for getting non telluric stars)
 REPROCESS_OBJ_DPRTYPES = Const('REPROCESS_OBJ_DPRTYPES', value=None, dtype=str,
@@ -4918,7 +4972,7 @@ REPROCESS_OBJ_DPRTYPES = Const('REPROCESS_OBJ_DPRTYPES', value=None, dtype=str,
 
 # define the default database to remake
 REMAKE_DATABASE_DEFAULT = Const('REMAKE_DATABASE_DEFAULT', value='calibration',
-                                dtype=str, source=__NAME__, group=cgroup, 
+                                dtype=str, source=__NAME__, group=cgroup,
                                 description=('define the default database to '
                                              'remake'))
 
@@ -4933,32 +4987,32 @@ SUMMARY_LATEX_PDF = Const('SUMMARY_LATEX_PDF', value=True, dtype=bool,
 
 # Define exposure meter minimum wavelength for mask
 EXPMETER_MIN_LAMBDA = Const('EXPMETER_MIN_LAMBDA', value=None, dtype=float,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('Define exposure meter minimum '
                                          'wavelength for mask'))
 
 # Define exposure meter maximum wavelength for mask
 EXPMETER_MAX_LAMBDA = Const('EXPMETER_MAX_LAMBDA', value=None, dtype=float,
-                            source=__NAME__, group=cgroup, 
+                            source=__NAME__, group=cgroup,
                             description=('Define exposure meter maximum '
                                          'wavelength for mask'))
 
 # Define exposure meter telluric threshold (minimum tapas transmission)
 EXPMETER_TELLU_THRES = Const('EXPMETER_TELLU_THRES', value=None, dtype=float,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description=('Define exposure meter telluric '
                                           'threshold (minimum tapas '
                                           'transmission)'))
 
 # Define the types of file allowed for drift measurement
 DRIFT_DPRTYPES = Const('DRIFT_DPRTYPES', value=None, dtype=str,
-                       source=__NAME__, group=cgroup, 
+                       source=__NAME__, group=cgroup,
                        description=('Define the types of file allowed for '
                                     'drift measurement'))
 
 # Define the fiber dprtype allowed for drift measurement (only FP)
 DRIFT_DPR_FIBER_TYPE = Const('DRIFT_DPR_FIBER_TYPE', value=None, dtype=str,
-                             source=__NAME__, group=cgroup, 
+                             source=__NAME__, group=cgroup,
                              description=('Define the fiber dprtype allowed '
                                           'for drift measurement (only FP)'))
 
