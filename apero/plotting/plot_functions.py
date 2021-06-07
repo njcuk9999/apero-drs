@@ -769,34 +769,39 @@ def plot_loc_width_regions(plotter: Plotter, graph: Graph,
     # start the plotting process
     if not plotter.plotstart(graph):
         return
-    # ------------------------------------------------------------------
+    # get plt
+    plt = plotter.plt
+    # -------------------------------------------------------------------------
     # get the arguments from kwargs
-    centers = kwargs['centers']
-    widths = kwargs['widths']
-    image = kwargs['image']
-    # get size of image
-    nbypix, nbxpix = image.shape
-    # get x positions of width regions
-    pos1 = 1 * nbxpix / 4
-    pos2 = 2 * nbxpix / 4
-    pos3 = 3 * nbxpix / 4
-    # get the ylimits
-    ymin, ymax = np.nanpercentile(widths, [10, 90])
-    ydiff = ymax - ymin
-    # ------------------------------------------------------------------
+    coeffs1 = np.array(kwargs['coeffs1'])[:, ::-1]
+    coeffs2 = np.array(kwargs['coeffs2'])[:, ::-1]
+    # -------------------------------------------------------------------------
     # set up plot
-    fig, frame = graph.set_figure(plotter)
-    # ------------------------------------------------------------------
-    # plot
-    frame.plot(centers, widths[:, 0], 'r.', label='width at x={0}'.format(pos1))
-    frame.plot(centers, widths[:, 1], 'g.', label='width at x={0}'.format(pos2))
-    frame.plot(centers, widths[:, 2], 'b.', label='width at x={0}'.format(pos3))
-    # set axis labels and title
-    frame.set(ylim=[ymin - 0.5*ydiff, ymax + 0.5*ydiff],
-              xlabel='x position along order', ylabel='y width of order',
-              title='Localisation width along order')
-    frame.legend(loc=0)
-    # ------------------------------------------------------------------
+    fig, frames = graph.set_figure(plotter, ncols=coeffs1.shape[1], nrows=1)
+    # -------------------------------------------------------------------------
+    str_coeffs = []
+    # plot coefficients
+    for coeff in range(coeffs1.shape[1]):
+        # get string version of coeff
+        scoeff = str(coeff)
+        # plot this coefficient
+        frames[coeff].plot(coeffs1[:, coeff], 'b.', label='first fit')
+        frames[coeff].plot(coeffs2[:, coeff], 'r.', label='final fit')
+        # add axis labels
+        frames[coeff].set(xlabel='Order Number',
+                          ylabel='Coefficient $c_' + scoeff + '$')
+        frames[coeff].legend(loc=0)
+        # construct coeffcient string
+        if coeff == 0:
+            str_coeffs += ['$c_0$']
+        elif coeff == 1:
+            str_coeffs += ['$c_1$x']
+        else:
+            str_coeffs += ['$c_{' + scoeff + '}x^{' + str(coeff - 1) + '}$']
+    # set global title
+    title = 'Localisation width calculation per order: {0}'
+    plt.suptitle(title.format(' + '.join(str_coeffs)))
+    # -------------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
@@ -906,6 +911,7 @@ def plot_loc_image_fit(plotter: Plotter, graph: Graph,
     offset = kwargs.get('offset', 0.0)
     xlines = kwargs.get('xlines', None)
     ylines = kwargs.get('ylines', None)
+    width_coeffs = kwargs.get('width_coeffs', None)
     # get shape
     nbypix, nbxpix = image.shape
     # get x array
@@ -951,6 +957,18 @@ def plot_loc_image_fit(plotter: Plotter, graph: Graph,
             cfit = np.polyval(coeffs[order_num], xpix + offset)
         # plot this orders coefficients
         frame.plot(xpix, cfit, ls='--', color='red', lw=1, label=newlabel)
+        # plot widths
+        if width_coeffs is not None:
+            # get the width fit per pixel
+            if reverse:
+                wfit = np.polyval(width_coeffs[order_num][::-1], xpix)
+            else:
+                wfit = np.polyval(width_coeffs[order_num], xpix)
+            # plot these on the edge
+            frame.plot(xpix, cfit + wfit/2, ls=':', color='m', lw=1,
+                       alpha=0.75, label=newlabel)
+            frame.plot(xpix, cfit - wfit / 2, ls=':', color='m', lw=1,
+                       alpha=0.75, label=newlabel)
     # ------------------------------------------------------------------
     # plot guide lines
     if xlines is not None:
@@ -998,6 +1016,7 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     params = kwargs['params']
     image = kwargs['image']
     coeffs = kwargs['coeffs']
+    width_coeffs = kwargs.get('width_coeffs', None)
     # get xpix
     xpix = np.arange(image.shape[1])
     # get zoom values
@@ -1039,6 +1058,16 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
             ypix = np.polyval(coeffs[order_num][::-1], xpix)
             # plot full fit
             frame.plot(xpix, ypix, linewidth=1, color='red', ls='--', zorder=1)
+            # add the width poly + ypix if widths are given
+            if width_coeffs is not None:
+                # get the width fit
+                wfit = np.polyval(width_coeffs[order_num][::-1], xpix)
+                # plot these on the edge
+                frame.plot(xpix, ypix + wfit / 2, ls=':', color='m', lw=1,
+                           alpha=0.75)
+                frame.plot(xpix, ypix - wfit / 2, ls=':', color='m', lw=1,
+                           alpha=0.75)
+
         # set the limits
         frame.set(xlim=(xmin, xmax), ylim=(ymin, ymax))
         # create an axes on the right side of ax. The width of cax will be 5%

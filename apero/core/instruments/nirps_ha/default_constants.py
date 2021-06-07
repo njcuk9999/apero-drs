@@ -577,7 +577,7 @@ LOC_MIN_ORDER_AREA.author = base.AUTHORS['EA']
 
 # Order of polynomial to fit for widths
 LOC_WIDTH_POLY_DEG = LOC_WIDTH_POLY_DEG.copy(__NAME__)
-LOC_WIDTH_POLY_DEG.value = 5
+LOC_WIDTH_POLY_DEG.value = 1
 LOC_WIDTH_POLY_DEG.author = base.AUTHORS['EA']
 
 # Order of polynomial to fit for positions
@@ -625,14 +625,6 @@ LOC_HALF_ORDER_SPACING.value = 300
 # Minimum amplitude to accept (in e-)
 LOC_MINPEAK_AMPLITUDE = LOC_MINPEAK_AMPLITUDE.copy(__NAME__)
 LOC_MINPEAK_AMPLITUDE.value = 10  # 50
-
-#   Order of polynomial to fit for widths
-LOC_WIDTH_POLY_DEG = LOC_WIDTH_POLY_DEG.copy(__NAME__)
-LOC_WIDTH_POLY_DEG.value = 4
-
-#   Order of polynomial to fit for positions
-LOC_CENT_POLY_DEG = LOC_CENT_POLY_DEG.copy(__NAME__)
-LOC_CENT_POLY_DEG.value = 6
 
 #   Define the jump size when finding the order position
 #       (jumps in steps of this from the center outwards)
