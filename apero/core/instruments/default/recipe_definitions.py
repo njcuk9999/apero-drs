@@ -108,6 +108,8 @@ database_mgr.recipe_type = 'nolog-tool'
 database_mgr.recipe_kind = 'admin'
 database_mgr.set_kwarg(name='--kill', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_KILLARG_HELP'))
+database_mgr.set_kwarg(name='--objdb', dtype=str, default='None',
+                       helpstr='Update the object reset database')
 database_mgr.set_kwarg(name='--update', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_UPDATE_HELP'))
 database_mgr.set_kwarg(name='--csv', dtype=str, default='None',

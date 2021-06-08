@@ -124,7 +124,8 @@ class DatabaseManager:
         # set unloaded database
         self.database = None
 
-    def set_path(self, kind: str, check: bool = True):
+    def set_path(self, kind: str, check: bool = True,
+                 dparams: Union[dict, None] = None):
         """
         Set the path for the database
 
@@ -140,7 +141,7 @@ class DatabaseManager:
         if self.instrument == 'None':
             return
         # load database settings
-        self.database_settings(kind=kind)
+        self.database_settings(kind=kind, dparams=dparams)
 
         # ---------------------------------------------------------------------
         # deal with path for SQLITE3
@@ -241,9 +242,18 @@ class DatabaseManager:
         # return string representation
         return self.__str__()
 
-    def database_settings(self, kind: str):
+    def database_settings(self, kind: str, dparams: Union[dict, None] = None):
+        """
+        Load the initial database settings
+        :param kind:
+        :param dparams:
+        :return:
+        """
         # load database yaml file
-        ddict = base.DPARAMS
+        if dparams is None:
+            ddict = base.DPARAMS
+        else:
+            ddict = dict(dparams)
         # get correct sub-dictionary
         if ddict['USE_MYSQL']:
             sdict = ddict['MYSQL']
@@ -2214,7 +2224,8 @@ def _clean_error(errors: Union[str, None]) -> Union[str, None]:
 # Define other databases
 # =============================================================================
 class ObjectDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True,
+                 dparams: Union[dict, None] = None):
         """
         Constructor of the Object Database class
 
@@ -2234,7 +2245,7 @@ class ObjectDatabase(DatabaseManager):
         self.name = 'object'
         self.kind = 'OBJECT'
         # set path
-        self.set_path(kind=self.kind, check=check)
+        self.set_path(kind=self.kind, check=check, dparams=dparams)
 
     def get_entries(self, columns: str = '*',
                     nentries: Union[int, None] = None,
