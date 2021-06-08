@@ -13,6 +13,7 @@ from collections import OrderedDict
 import numpy as np
 from skimage import measure
 from scipy.ndimage import percentile_filter, binary_dilation
+from scipy.ndimage.filters import median_filter
 from typing import Dict, List, Tuple, Union
 import warnings
 
@@ -213,6 +214,10 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     mask_orders[:, 0:binsize] = 0
     mask_orders[:, -binsize:] = 0
     mask_orders[-binsize:, :] = 0
+    # -------------------------------------------------------------------------
+    # clean up edges of orders
+    for row in range(mask_orders.shape[0]):
+        mask_orders[row] = median_filter(mask_orders[row], 5)
     # -------------------------------------------------------------------------
     # apply a binary dilation, mostly to avoid mis-interpreting slices as
     #    individual orders

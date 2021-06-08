@@ -9,12 +9,13 @@ Created on 2021-05-10
 
 @author: cook
 """
-from astropy.table import Table
+from astropy.table import Table, vstack
 from astropy.io import fits
 import numpy as np
 import os
 import glob
 from pathlib import Path
+import shutil
 from typing import Any, List, Tuple
 
 from apero.base import base
@@ -23,12 +24,14 @@ from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
 from apero.io import drs_fits
 from apero.io import drs_table
 from apero.tools.module.database import manage_databases
 from apero.core.instruments.default import pseudo_const
+from apero.science import preprocessing as prep
 
 
 # =============================================================================
@@ -55,6 +58,8 @@ textentry = lang.textentry
 tqdm = base.tqdm_module()
 # Define master prefix
 MASTER_PREFIX = 'MASTER_'
+# Define the gaia drs column in database
+GAIA_COL = 'GAIADR2ID'
 
 
 # =============================================================================
@@ -94,6 +99,139 @@ def update_database(params: ParamDict, recipe: DrsRecipe):
     WLOG(params, 'info', 'Updating index database', colour='magenta')
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
     index_update(params)
+
+
+def update_obj_reset(params: ParamDict):
+    """
+    Update the reset.object.csv file from either a manual dfits query piped
+    to a text file (or set of text files) or from the currently defined
+    raw directory
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return:
+    """
+    # get objdb arg from user
+    objdb_arg = str(params['INPUTS']['OBJDB'])
+    # deal with objdb argument being null
+    if drs_text.null_text(objdb_arg, ['None', '', 'Null']):
+        return
+    # -------------------------------------------------------------------------
+    # load psuedo constants
+    pconst = constants.pload()
+    # get database parameters
+    dparams = base.DPARAMS
+    # get the obj cols
+    rawobjcol = params['KW_OBJECTNAME'][0]
+    objcol = params['KW_OBJNAME'][0]
+    # get reset path
+    asset_dir = params['DRS_DATA_ASSETS']
+    reset_path = params['DATABASE_DIR']
+    obj_reset_path = os.path.join(asset_dir, reset_path)
+    # get obj reset filename
+    if dparams['USE_MYSQL']:
+        obj_reset_basename = dparams['MYSQL']['OBJECT']['RESET']
+    else:
+        obj_reset_basename = dparams['SQLITE3']['OBJECT']['RESET']
+    # get full path to reset file
+    obj_reset_file = os.path.join(obj_reset_path, obj_reset_basename)
+    # -------------------------------------------------------------------------
+    # backup and remove old reset file
+    shutil.copy(obj_reset_file, obj_reset_file + '.backup')
+    # clear obj reset file
+    _clear_obj_reset_file(obj_reset_file)
+    # -------------------------------------------------------------------------
+    # load the master file
+    if objdb_arg.upper() in ['TRUE', '1']:
+        master_table = _master_obj_table_from_raw(params)
+    else:
+        # get files using glob
+        files = glob.glob(objdb_arg)
+        # get master table from these files
+        master_table = _master_obj_table_from_dfits(files)
+    # print how many objects files found
+    # TODO: add to langauge database
+    msg = 'Found {0} object observations'
+    margs = [len(master_table)]
+    WLOG(params, '', msg.format(*margs))
+    # -------------------------------------------------------------------------
+    # get unique objects
+    utable = _unique_obj_table(params, master_table)
+    # print how many objects found
+    # TODO: add to langauge database
+    msg = 'Found {0} unique object names'
+    margs = [len(utable)]
+    WLOG(params, '', msg.format(*margs))
+    # -------------------------------------------------------------------------
+    # Load temporary new database
+    # -------------------------------------------------------------------------
+    # modify path to reset files (this is what we are going to create)
+    params.set('DRS_DATA_ASSETS', os.path.dirname(obj_reset_file))
+    params.set('DATABASE_DIR', '')
+    # update dparams (to be pushed into object database definition)
+    dparams = dict(base.DPARAMS)
+    if dparams['USE_MYSQL']:
+        dparams['MYSQL']['OBJECT']['PROFILE'] = 'RESET_TEST'
+        dparams['MYSQL']['OBJECT']['RESET'] = os.path.basename(obj_reset_file)
+    else:
+        dparams['SQLITE3']['OBJECT']['PROFILE'] = 'RESET_TEST'
+        dparams['SQLITE3']['OBJECT']['NAME'] = 'object_reset_test.db'
+        dparams['SQLITE3']['OBJECT']['RESET'] = os.path.basename(obj_reset_file)
+    # list database
+    iobjdb = drs_database.ObjectDatabase(params, check=False, dparams=dparams)
+    databases = dict(object=iobjdb)
+    # set up a proxy database (do not change current databases)
+    manage_databases.create_object_database(params, pconst, databases)
+    # load object database
+    objdbm = drs_database.ObjectDatabase(params, dparams=dparams)
+    objdbm.load_db()
+    # -------------------------------------------------------------------------
+    # Resolve targets in Gaia
+    # -------------------------------------------------------------------------
+    # loop around objects
+    for row in range(len(utable)):
+        # get objname for this row
+        rawobjname = utable[rawobjcol][row]
+        # ---------------------------------------------------------------------
+        # print progress
+        # TODO: move to language database
+        msg = 'Analysing {0}={1}   ({2}/{3})'
+        margs = [rawobjcol, rawobjname, row+1, len(utable)]
+        WLOG(params, '', msg.format(*margs))
+        # ---------------------------------------------------------------------
+        # make a fake header
+        header = drs_fits.Header()
+        for col in utable.colnames:
+            header[col] = utable[col][row]
+
+        # need to add columns
+        header[objcol] = pconst.DRS_OBJ_NAME(rawobjname)
+        # ---------------------------------------------------------------------
+        # resolve target
+        _ = prep.resolve_target(params, pconst, header=header, database=objdbm)
+
+    # -------------------------------------------------------------------------
+    # deal with saving database to csv
+    # -------------------------------------------------------------------------
+    # only want to keep rows with Gaia ID
+    condition = '{0} !="NULL"'.format(GAIA_COL)
+    # get dataframe
+    df = objdbm.database.get('*', objdbm.database.tname, condition=condition,
+                             return_pandas=True)
+    # print update
+    # TODO: add to language database
+    msg = 'Found {0} objects with Gaia entries'
+    margs = [len(df)]
+    WLOG(params, '', msg.format(*margs))
+    # sort by objname
+    df = df.sort_values('OBJNAME')
+    # print saving of file
+    # TODO: add to langauge database
+    msg = 'Saving reset file to: {0}'
+    margs = [obj_reset_file]
+    WLOG(params, 'info', msg.format(*margs))
+    # save to csv file
+    df.to_csv(obj_reset_file, index=False)
 
 
 def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
@@ -297,6 +435,9 @@ def log_update(params: ParamDict, pconst: PseudoConstants):
             logdbm.add_entries(*logentries[lcode])
 
 
+# =============================================================================
+# Define worker functions
+# =============================================================================
 def _log_update(pconst: PseudoConstants,
                 ptable: Table) -> Tuple[List[Any], str, str]:
     """
@@ -335,6 +476,167 @@ def _log_update(pconst: PseudoConstants,
     logcode = '{0} {1} {2}'.format(*largs)
     # return the log values and the log code
     return logvalues, logcode, logdict['rlog.pid']
+
+
+def _clear_obj_reset_file(filename: str):
+    """
+    Clear the object reset file
+
+    :param filename: str, the object reset file to clear
+
+    :return: None, clear the file
+    """
+    # open the file
+    with open(filename, 'r') as reset_file:
+        lines = reset_file.readlines()
+    # remove obj reset file
+    os.remove(filename)
+    # write only the first line (the header columns)
+    with open(filename, 'w') as reset_file:
+        reset_file.write(lines[0])
+
+
+def _master_obj_table_from_raw(params: ParamDict) -> Table:
+    """
+    Create the master object table from the current files in the current raw
+    directory
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: Table, the master table combined output of dfits files
+    """
+    # get the current raw directory
+    rawdir = params['DRS_DATA_RAW']
+    # Define FLOAT columns (for object database from dfits)
+    rcols = [params['KW_OBJECTNAME'][0], params['KW_OBJRA'][0],
+             params['KW_OBJDEC'][0], params['KW_ACQTIME'][0],
+             params['KW_INPUTRV'][0], params['KW_OBJ_TEMP'][0]]
+    # get all o.fits files
+    obj_files = glob.glob(os.path.join(rawdir, '*', '*o.fits'))
+    # store header values
+    dict_table = dict()
+    # add empty columns to fill
+    for rcol in rcols:
+        dict_table[rcol] = []
+    # print progress
+    # TODO: move to lanugage database
+    msg = 'Reading {0} object headers...'
+    margs = [len(obj_files)]
+    WLOG(params, 'info', msg.format(*margs))
+    # loop around fits files and get header keys
+    for filename in tqdm(obj_files):
+        # load header
+        try:
+            header = fits.getheader(filename)
+        except Exception as _:
+            continue
+        # add header
+        for rcol in rcols:
+            if rcol in header:
+                dict_table[rcol].append(header[rcol])
+            else:
+                dict_table[rcol].append('Null')
+    # finally convert dict_table to astropy table
+    master_table = Table()
+    for rcol in rcols:
+        master_table[rcol] = np.array(dict_table[rcol])
+    # return master table
+    return master_table
+
+
+def _master_obj_table_from_dfits(files: List[str]) -> Table:
+    """
+    Get the master object table list from a set of dfits file
+
+    i.e. dfits *.fits | fitsort OBJNAME RA_DEG DEC_DEG MJDEND OBJRV
+                                                    OBJTEMP > spirou_targets.txt
+
+    :param files: list of strings, the absolute paths to the dfits files
+
+    :return: Table, the master table combined output of dfits files
+    """
+    # get a list of all files
+    master_table = Table()
+    # open and combine lines
+    for filename in files:
+        table = Table.read(filename, format='ascii.tab')
+        # clean column names
+        tmp_table = Table()
+        # clean column names
+        for col in table.colnames:
+            newcol = col.strip()
+            tmp_table[newcol] = table[col]
+        # add to master table
+        master_table = vstack([master_table, tmp_table])
+    # return master table
+    return master_table
+
+
+def _unique_obj_table(params: ParamDict, master_table: Table) -> Table:
+    """
+    Convert a mater_table into a table of unique OBJNAMES
+    must contain columns of the header keys equivalent to:
+
+    KW_OBJECT, KW_OBJRA, KW_OBJDEC, KW_ACQTIME, KW_INPUTRV, KW_OBJ_TEMP
+
+    The order and any extra columns do not matter
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param master_table: astropy.table.Table, the master table containing all
+                         rows (either from dfits or search of all headers on
+                         disk)
+    :return: astropy.table.Table, the unique objects table - this will take the
+             first row of each unique object name (defined by header key
+             KW_OBJECT)
+    """
+    # get object column
+    objcol = params['KW_OBJECTNAME'][0]
+    # Define FLOAT columns (for object database from dfits)
+    float_cols = [params['KW_OBJRA'][0], params['KW_OBJDEC'][0],
+                  params['KW_ACQTIME'][0], params['KW_INPUTRV'][0],
+                  params['KW_OBJ_TEMP'][0]]
+    # keep only one of each object types
+    unique_objects = []
+    # store mask of unique objects
+    mask = np.zeros(len(master_table)).astype(bool)
+    # loop around all rows
+    for row in range(len(master_table)):
+        # get a slighly cleaner objname
+        objname = master_table[objcol][row].strip()
+        # deal with objnames already found (skip)
+        if objname in unique_objects:
+            continue
+        # else this is the first example --> add to mask and unique objects
+        else:
+            mask[row] = True
+            unique_objects.append(objname)
+    # mask the master table
+    master_table = master_table[mask]
+    # fix columns
+    master_table[objcol] = unique_objects
+    # remove bad columns
+    for colname in master_table.colnames:
+        # remove columns starting with "col" - artifact of dfits
+        if colname.startswith('col'):
+            del master_table[colname]
+    # fix float columns
+    for float_col in float_cols:
+        float_data = np.zeros(len(master_table))
+        # loop around each entry (have to deal with non-float values)
+        for row in range(len(master_table)):
+            # try to make a float
+            try:
+                row_value = float(master_table[float_col][row])
+            # set everything else to NaN
+            except Exception as _:
+                row_value = np.nan
+            # add to new float data values for this row
+            float_data[row] = row_value
+        # load float data into table (replace column)
+        master_table[float_col] = float_data
+    # return this table
+    return master_table
+
 
 
 # =============================================================================

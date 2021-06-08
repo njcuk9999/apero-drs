@@ -94,6 +94,17 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # deal with update
     # ----------------------------------------------------------------------
+    if not drs_text.null_text(params['INPUTS']['OBJDB']):
+        # update database
+        database_update.update_obj_reset(params)
+        # ------------------------------------------------------------------
+        # End of main code
+        # ------------------------------------------------------------------
+        return drs_startup.return_locals(params, locals())
+
+    # ----------------------------------------------------------------------
+    # deal with update
+    # ----------------------------------------------------------------------
     if params['INPUTS']['UPDATE']:
         # update database
         database_update.update_database(params, recipe)
