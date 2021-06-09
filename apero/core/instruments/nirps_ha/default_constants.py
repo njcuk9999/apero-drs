@@ -545,7 +545,7 @@ BKGR_KER_SIG.value = 3
 # median-binning size in the dispersion direction. This is just used to
 #     get an order-of-magnitude of the order profile along a given column
 LOC_BINSIZE = LOC_BINSIZE.copy(__NAME__)
-LOC_BINSIZE.value = 50
+LOC_BINSIZE.value = 25
 LOC_BINSIZE.author = base.AUTHORS['EA']
 
 # the zero point percentile of a box
@@ -1266,7 +1266,7 @@ WAVE_HC_VEL_ODD_RATIO.author = base.AUTHORS['EA']
 
 # Define orders that we cannot fit HC or FP lines to (list of strings)
 WAVE_REMOVE_ORDERS = WAVE_REMOVE_ORDERS.copy(__NAME__)
-WAVE_REMOVE_ORDERS.value = '42, 43, 44'
+WAVE_REMOVE_ORDERS.value = '45, 46, 47'
 
 # Define the number of iterations required to do the final fplines
 #   wave solution

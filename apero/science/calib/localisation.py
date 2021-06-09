@@ -210,10 +210,38 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # create a binary mask that will indicate if a pixel is in or out of orders
     mask_orders = image > threshold
     # mask the edges to avoid problems
-    mask_orders[0:binsize] = 0
     mask_orders[:, 0:binsize] = 0
     mask_orders[:, -binsize:] = 0
-    mask_orders[-binsize:, :] = 0
+    # -------------------------------------------------------------------------
+    # copy mask orders (for plotting
+    mask_orders0 = np.array(mask_orders)
+    # -------------------------------------------------------------------------
+    # find the regions that define the orders
+    # the map contains integer values that are common to all pixels that form
+    # a region in the binary mask
+    all_labels = measure.label(mask_orders, connectivity=2)
+    label_props = measure.regionprops(all_labels)
+    # find the area of all regions, we know that orders cover many pixels
+    area = []
+    for label_prop in label_props:
+        area.append(label_prop.area)
+    # these areas are considered orders. This is just a first guess we will
+    #   confirm these later - we have to add 1 as measure.label defines "0" as
+    #   the "background" - this is not an order
+    is_order = np.where(np.array(area) > min_area)[0] + 1
+    # -------------------------------------------------------------------------
+    # loop around orders
+    for order_num in is_order:
+        # get this orders pixels
+        mask_region = (all_labels == order_num)
+        # get the flux values of the pixels for this order
+        value = image[mask_region]
+        # get the low flux bound (more than 5% of peak flux)
+        low_flux = value < np.nanpercentile(value, 95) * 0.05
+        # get the positions so we can mask them with the low_flux mask
+        ypix1, xpix1 = np.where(mask_region)
+        # mask mask_orders with low_flux for this order region
+        mask_orders[ypix1[low_flux], xpix1[low_flux]] = 0
     # -------------------------------------------------------------------------
     # clean up edges of orders
     for row in range(mask_orders.shape[0]):
@@ -231,7 +259,12 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     else:
         mask_orders = binary_dilation(mask_orders)
     # -------------------------------------------------------------------------
-    # find the regions that define the orders
+    # TODO: Add plot
+    #recipe.plot('')
+    #plt.imshow(mask_orders0)
+    #plt.imshow(mask_orders, alpha=0.5)
+    # -------------------------------------------------------------------------
+    # find the regions that define the orders (again now we have
     # the map contains integer values that are common to all pixels that form
     # a region in the binary mask
     all_labels = measure.label(mask_orders, connectivity=2)
@@ -256,7 +289,8 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     order_centers = np.zeros(len(is_order))
     # storage for the width of orcer
     order_widths = np.zeros([len(is_order), num_wid_samples])
-
+    # storage for valid labels
+    valid_labels = np.array(is_order)
     # loop through orders
     for order_num in range(len(is_order)):
         # ---------------------------------------------------------------------
@@ -308,6 +342,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     order_centers = order_centers[keep]
     order_widths = order_widths[keep]
     all_fits = all_fits[keep]
+    valid_labels = valid_labels[keep]
     # -------------------------------------------------------------------------
     # sort all regions in increasing y value
     sortmask = np.argsort(order_centers)
@@ -335,6 +370,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
         order_centers = order_centers[keep]
         other_widths = order_widths[keep]
         all_fits = all_fits[keep]
+        valid_labels = valid_labels[keep]
     # -------------------------------------------------------------------------
     # find the gap between consecutive orders and use this to confirm the
     #    numbering
@@ -348,6 +384,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     valid_order_centers = order_centers[1:][gapmask]
     valid_gap = (order_centers[1:] - order_centers[:-1])[gapmask]
     valid_fits = all_fits[1:][gapmask]
+    valid_labels = valid_labels[1:][gapmask]
     # -------------------------------------------------------------------------
     # loop around valid orders and count the orders using known gap
     index2 = np.zeros_like(valid_order_centers, dtype=int)
@@ -368,9 +405,9 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # order of polynomial fits used for the consistency of fitting values
     nth_ord = np.ones(cent_order_fit + 1, dtype=float)
     # for the intercept, we use a high-order-fit
-    nth_ord[-1] = 11
+    nth_ord[-1] = 13
     # for the slope, we use a high-order fit
-    nth_ord[-2] = 5
+    nth_ord[-2] = 3
     # for the curvature, we use a high-order-fit
     nth_ord[-3] = 3
     # -------------------------------------------------------------------------
@@ -389,6 +426,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     keep = (center_full > ydet_min) & (center_full < ydet_max)
     # copy to the final center fits
     final_cent_fit = fits_full[keep]
+    center_full = center_full[keep]
     # -------------------------------------------------------------------------
     # log final number of orders
     msg = 'Final number of Orders: {0}'
@@ -398,31 +436,40 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # Calculate width polynomial fits
     # -------------------------------------------------------------------------
     # storage for the width fit
-    width_fit = np.zeros([final_cent_fit.shape[0], wid_order_fit + 1])
+    width_fit = np.zeros([len(valid_labels), wid_order_fit + 1])
+    width_pos = np.zeros([len(valid_labels)])
     # loop around each order
-    for order_num in range(final_cent_fit.shape[0]):
+    for wit, valid_label in enumerate(valid_labels):
         # we get back the map of all pixels in this order (from the labelling)
-        ordpixmap = all_labels == is_order[order_num]
+        ordpixmap = all_labels == valid_label
         # we sum all the pixels in the y direction (this is the width in pixels
         #  we have per x pixel
-        sumpixmap = np.sum(ordpixmap, axis=0)
+        sumpixmap_x = np.sum(ordpixmap, axis=0)
+        sumpixmap_y = np.sum(ordpixmap, axis=1)
+        # get valid pixels within this order
+        validsumpixmap = np.where(sumpixmap_x > 0.5 * np.max(sumpixmap_x))[0]
+        imin = np.min(validsumpixmap) + 15
+        imax = np.max(validsumpixmap) - 15
         # we convolve this with a box to smooth it out
-        csumpixmap = np.convolve(sumpixmap, np.ones(15)/15, mode='same')
+        csumpixmap = np.convolve(sumpixmap_x, np.ones(15)/15, mode='same')
         # we then fit this robustly with a polyfit
-        wfit, wmask = mp.robust_polyfit(xpix, csumpixmap, wid_order_fit, 5)
+        wfit, wmask = mp.robust_polyfit(xpix[imin:imax], csumpixmap[imin:imax],
+                                        wid_order_fit, 5)
         # add this to the fit
-        width_fit[order_num] = wfit
+        width_fit[wit] = wfit
+        # get the mean position of region in y
+        wpos = np.sum(sumpixmap_y * np.arange(len(sumpixmap_y)))
+        width_pos[wit] = wpos / np.sum(sumpixmap_y)
     # -------------------------------------------------------------------------
     # need a final width fit array
     final_width_fit = np.zeros([final_cent_fit.shape[0], wid_order_fit + 1])
-    order_array = np.arange(width_fit.shape[0])
     # force continuity between the localisation parameters
     for it in range(width_fit.shape[1]):
         # robustly fit in the order direction
-        wfit, wmask = mp.robust_polyfit(order_array, width_fit[:, it],
+        wfit, wmask = mp.robust_polyfit(width_pos, width_fit[:, it],
                                         wid_order_fit, 5)
         # update the full fits
-        final_width_fit[:, it] = np.polyval(wfit, order_array)
+        final_width_fit[:, it] = np.polyval(wfit, center_full)
     # -------------------------------------------------------------------------
     # plot the width coefficients
     recipe.plot('LOC_WIDTH_REGIONS', coeffs1=width_fit, coeffs2=final_width_fit)

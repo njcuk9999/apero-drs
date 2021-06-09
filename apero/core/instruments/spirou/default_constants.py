@@ -534,7 +534,7 @@ BKGR_KER_SIG.value = 3
 # median-binning size in the dispersion direction. This is just used to
 #     get an order-of-magnitude of the order profile along a given column
 LOC_BINSIZE = LOC_BINSIZE.copy(__NAME__)
-LOC_BINSIZE.value = 50
+LOC_BINSIZE.value = 25
 LOC_BINSIZE.author = base.AUTHORS['EA']
 
 # the zero point percentile of a box
