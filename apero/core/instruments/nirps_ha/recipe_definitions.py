@@ -709,10 +709,10 @@ apero_wave_night.epilog = textentry('WAVE_EXAMPLE')
 apero_wave_night.recipe_type = 'recipe'
 apero_wave_night.recipe_kind = 'calib-night'
 apero_wave_night.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
-                           WAVEMAP_NIGHT=files.out_wave_night,
-                           WAVE_HCLIST=files.out_wave_hclist,
-                           WAVE_FPLIST=files.out_wave_fplist,
-                           CCF_RV=files.out_ccf_fits)
+                             WAVEMAP_NIGHT=files.out_wave_night,
+                             WAVE_HCLIST=files.out_wave_hclist,
+                             WAVE_FPLIST=files.out_wave_fplist,
+                             CCF_RV=files.out_ccf_fits)
 apero_wave_night.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
                                'WAVEREF_EXPECTED', 'EXTRACT_S1D',
