@@ -245,7 +245,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # -------------------------------------------------------------------------
     # clean up edges of orders
     for row in range(mask_orders.shape[0]):
-        mask_orders[row] = median_filter(mask_orders[row], 5)
+        mask_orders[row] = median_filter(mask_orders[row], 11)
     # -------------------------------------------------------------------------
     # apply a binary dilation, mostly to avoid mis-interpreting slices as
     #    individual orders
@@ -261,8 +261,8 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # -------------------------------------------------------------------------
     # TODO: Add plot
     #recipe.plot('')
-    #plt.imshow(mask_orders0)
-    #plt.imshow(mask_orders, alpha=0.5)
+    #plt.imshow(mask_orders0, aspect='auto', origin='lower')
+    #plt.imshow(mask_orders, alpha=0.5, aspect='auto', origin='lower')
     # -------------------------------------------------------------------------
     # find the regions that define the orders (again now we have
     # the map contains integer values that are common to all pixels that form
@@ -356,7 +356,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     #    other orders
     if fiber_doublets:
         index = np.arange(len(order_centers))
-        cent_fit = np.polyfit(index, order_centers, cent_order_fit)
+        cent_fit = np.polyfit(index, order_centers, 5)
         residuals = order_centers - np.polyval(cent_fit, index)
         # doublet fibers have a parity
         if fiber_doublet_parity < 0:
@@ -407,7 +407,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # for the intercept, we use a high-order-fit
     nth_ord[-1] = 13
     # for the slope, we use a high-order fit
-    nth_ord[-2] = 3
+    nth_ord[-2] = 7
     # for the curvature, we use a high-order-fit
     nth_ord[-3] = 3
     # -------------------------------------------------------------------------

@@ -571,7 +571,7 @@ LOC_WIDTH_POLY_DEG.author = base.AUTHORS['EA']
 
 # Order of polynomial to fit for positions
 LOC_CENT_POLY_DEG = LOC_CENT_POLY_DEG.copy(__NAME__)
-LOC_CENT_POLY_DEG.value = 5
+LOC_CENT_POLY_DEG.value = 3
 LOC_CENT_POLY_DEG.author = base.AUTHORS['EA']
 
 # range width size (used to fit the width of the orders at certain points)
