@@ -2477,6 +2477,23 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
 
     return fout
 
+
+
+def get_echelle_orders(wavemap):
+    # TODO: fill out
+    central_waveval = wavemap[:, wavemap.shape[1] // 2]
+    # echelle orders lambda / delta lambda
+    echelle_orders = (central_waveval[1:] / np.diff(central_waveval)) - 1
+    # are slightly off integers due to non-perfect wave solution
+    echelle_orders = np.round(echelle_orders).astype(int)
+
+    # TODO: there is one less echelle order than orders
+    # TODO: Question: Which side needs an extra order?
+
+    # TODO: return echelle orders for header
+    # TODO: put in header
+
+
 # =============================================================================
 # Define writing functions
 # =============================================================================
