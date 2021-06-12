@@ -347,7 +347,7 @@ def __main__(recipe, params):
             hclines = wprops['HCLINES']
             fplines = wprops['FPLINES']
             # get the echelle order numbers
-            wprops = wave.get_echelle_orders(wprops)
+            wprops = wave.get_echelle_orders(params, wprops)
             # -----------------------------------------------------------------
             # Write wave solution
             # -----------------------------------------------------------------
