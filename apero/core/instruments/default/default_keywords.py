@@ -77,7 +77,7 @@ __all__ = [  # input keys
     'KW_LEAK_KERSIZE', 'KW_LEAK_LP_U', 'KW_LEAK_UP_U', 'KW_LEAK_BADR_U',
     # wave values
     'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE', 'KW_WAVESOURCE',
-    'KW_WAVECOEFFS', 'KW_WAVE_FITDEG', 'KW_WAVE_MODE_HC',
+    'KW_WAVECOEFFS', 'KW_WAVE_FITDEG', 'KW_WAVE_MODE_HC', 'KW_WAVE_ECHELLE',
     'KW_WAVE_MODE_FP', 'KW_WAVE_ECHELLE_START', 'KW_WAVE_HCG_WSIZE',
     'KW_WAVE_HCG_SIGPEAK', 'KW_WAVE_HCG_GFITMODE',
     'KW_WAVE_HCG_FB_RMSMIN', 'KW_WAVE_HCG_FB_RMSMAX',
@@ -1190,6 +1190,11 @@ KW_WAVESOURCE = Keyword('KW_WAVESOURCE', key='', dtype=str, source=__NAME__,
 # the wave coefficients
 KW_WAVECOEFFS = Keyword('KW_WAVECOEFFS', key='', dtype=float, source=__NAME__,
                         description='the wave coefficients')
+
+# the wave echelle numbers
+KW_WAVE_ECHELLE = Keyword('KW_WAVE_ECHELLE', key='', dtype=float,
+                          source=__NAME__,
+                          description='the wave echelle numbers')
 
 # the initial wave file used for wave solution
 KW_INIT_WAVE = Keyword('KW_INIT_WAVE', key='', dtype=str, source=__NAME__,
