@@ -2479,19 +2479,44 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
 
 
 
-def get_echelle_orders(wavemap):
-    # TODO: fill out
+def get_echelle_orders(params: ParamDict, wprops: ParamDict) -> ParamDict:
+    """
+    Get the Echelle orders for a wave map
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param wprops: ParamDict, the wave properties parameter dictionary
+
+    :return: ParamDict, the updated wprops
+    """
+    # set function name
+    func_name = display_func('get_echelle_orders', __NAME__)
+    # -------------------------------------------------------------------------
+    # get wave map from wprops
+    wavemap = wprops['WAVEMAP']
+    # get the central wavelength of each order
     central_waveval = wavemap[:, wavemap.shape[1] // 2]
+    # -------------------------------------------------------------------------
     # echelle orders lambda / delta lambda
     echelle_orders = (central_waveval[1:] / np.diff(central_waveval)) - 1
     # are slightly off integers due to non-perfect wave solution
     echelle_orders = np.round(echelle_orders).astype(int)
-
-    # TODO: there is one less echelle order than orders
-    # TODO: Question: Which side needs an extra order?
-
-    # TODO: return echelle orders for header
-    # TODO: put in header
+    # -------------------------------------------------------------------------
+    # need to add the first order
+    diff = np.mean(np.diff(echelle_orders))
+    echelle_orders = np.append(echelle_orders[0] - diff, echelle_orders)
+    # -------------------------------------------------------------------------
+    # sanity check that we have the correct number of orders
+    if len(echelle_orders) != wavemap.shape[0]:
+        # TODO: move to language database
+        emsg = ('Number of Echelle orders (={0}) must be the same as '
+                'number of orders (={1}) \n\t Function = {2}')
+        eargs = [len(echelle_orders), wavemap.shape[0], func_name]
+        WLOG(params, 'error', emsg.format(*eargs))
+    # -------------------------------------------------------------------------
+    # add back to wprops
+    wprops['EORDERS'] = echelle_orders.astype(int)
+    wprops.set_source('EORDERS', func_name)
+    return wprops
 
 
 # =============================================================================
@@ -2725,6 +2750,9 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
     infile.add_hkey('KW_WAVE_DEG', value=props['DEG'])
     infile.add_hkey_2d('KW_WAVECOEFFS', values=props['COEFFS'],
                        dim1name='order', dim2name='coeffs')
+    # add echelle order conversions
+    infile.add_hkey_1d('KW_WAVE_ECHELLE', values=props['EORDERS'],
+                       dim1name='order')
     # add wave fp parameters
     infile.add_hkey('KW_WFP_FILE', value=props['WFP_FILE'])
     infile.add_hkey('KW_WFP_DRIFT', value=props['WFP_DRIFT'])

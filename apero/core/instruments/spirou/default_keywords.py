@@ -1011,6 +1011,11 @@ KW_WAVECOEFFS = KW_WAVECOEFFS.copy(__NAME__)
 KW_WAVECOEFFS.set(key='WAVE{0:04d}', comment='Wavelength coefficients',
                   parent=None, group='wave')
 
+# the wave echelle numbers
+KW_WAVE_ECHELLE = KW_WAVE_ECHELLE.copy(__NAME__)
+KW_WAVE_ECHELLE.set(key='WAVEEC{0:02d}', comment='Echelle order numbers',
+                    parent=None, group='wave')
+
 # the initial wave file used for wave solution
 KW_INIT_WAVE = KW_INIT_WAVE.copy(__NAME__)
 KW_INIT_WAVE.set(key='WAVEINIT', comment='Initial wavelength solution used',

@@ -349,7 +349,8 @@ def __main__(recipe, params):
             # get the hclines and fp flines for this fiber
             hclines = wprops['HCLINES']
             fplines = wprops['FPLINES']
-
+            # get the echelle order numbers
+            wprops = wave.get_echelle_orders(wprops)
             # -----------------------------------------------------------------
             # Write wave solution
             # -----------------------------------------------------------------
