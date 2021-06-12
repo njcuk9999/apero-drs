@@ -35,6 +35,7 @@ drs_recipe = drs_recipe.DrsRecipe
 # Below one must define all recipes and put into the "recipes" list
 changelog = drs_recipe(__INSTRUMENT__)
 explorer = drs_recipe(__INSTRUMENT__)
+get_files = drs_recipe(__INSTRUMENT__)
 database_mgr = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
 logstats = drs_recipe(__INSTRUMENT__)
@@ -46,7 +47,7 @@ reset = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [changelog, database_mgr, explorer,
+recipes = [changelog, database_mgr, explorer, get_files,
            processing, listing, logstats, remake_db, remake_doc,
            req_check, reset, validate]
 
@@ -147,6 +148,49 @@ explorer.recipe_type = 'nolog-tool'
 explorer.recipe_kind = 'user'
 explorer.set_kwarg(name='--hash', default=False, dtype='switch',
                    helpstr=textentry('EXPLORER_HASH'))
+
+
+# -----------------------------------------------------------------------------
+# apero_get.py
+# -----------------------------------------------------------------------------
+# TODO: move strings to language db
+get_files.anme = 'apero_get.py'
+get_files.shortname = 'GET'
+get_files.instrument = __INSTRUMENT__
+get_files.description = 'Use database to search and copy any files quickly'
+get_files.recipe_type = 'nolog-tool'
+get_files.recipe_kind = 'user'
+get_files.set_kwarg(name='--gui', default=False, dtype='switch',
+                    helpstr='Use a gui to filter files (Currently not ready)')
+get_files.set_kwarg(name='--objnames', dtype=str, default='None',
+                    helpstr='The object names separated by a comma. Use "" for'
+                            'objects with whitespaces i.e "obj1,obj2,obj 3"')
+get_files.set_kwarg(name='--dprtypes', dtype=str, default='None',
+                    helpstr='The DPRTYPES to use (multiple dprtypes combined '
+                            'with OR logic) separate dprtypes with commas.'
+                            'Leaving blank will not use DPRTYPE to filter '
+                            'files.')
+get_files.set_kwarg(name='--outtypes', dtype=str, default='None',
+                    helpstr='The drs output file types to use (multiple '
+                            'output type combined  with OR logic) separate '
+                            'output types with commas.'
+                            'Leaving blank will not use output type to filter'
+                            'files.')
+get_files.set_kwarg(name='--fibers', dtype=str, default='None',
+                    helpstr='The fibres to use (multiple '
+                            'output type combined  with OR logic) separate '
+                            'fibers with commas. Leaving blank will not use '
+                            'fiber to filter files.')
+get_files.set_kwarg(name='--outpath', dtype=str, default='None',
+                    helpstr='This is the directory where copied files will be'
+                            'placed. Must be a valid path and must have '
+                            'permission be able to'
+                            'writ.')
+get_files.set_kwarg(name='--symlinks', default=False, dtype='switch',
+                    helpstr='Create symlinks to the file instead of copying')
+get_files.set_kwarg(name='--test', default=False, dtype='switch',
+                    helpstr='Does not copy files - prints copy as a debug test.'
+                            'Recommended for first time use.')
 
 # -----------------------------------------------------------------------------
 # apero_listing.py
