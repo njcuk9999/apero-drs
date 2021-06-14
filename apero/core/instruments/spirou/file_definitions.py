@@ -27,6 +27,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# Instrument name in header
+INSTRUMENT_NAME = 'SPIRou'
 
 # =============================================================================
 # Define Files
@@ -59,14 +61,16 @@ raw_file = drs_finput('DRS_RAW', filetype='.fits', suffix='',
 raw_dark_dark_int = drs_finput('RAW_DARK_DARK_INT', filetype='.fits',
                                suffix='', inext='.fits', outfunc=out.blank,
                                hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                                          KW_OBSTYPE='DARK', KW_CALIBWH='P4'))
+                                          KW_OBSTYPE='DARK', KW_CALIBWH='P4',
+                                          KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_dark_dark_int)
 
 # raw dark in P5 (telescope dark)
 raw_dark_dark_tel = drs_finput('RAW_DARK_DARK_TEL', filetype='.fits',
                                suffix='', inext='.fits', outfunc=out.blank,
                                hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                                          KW_OBSTYPE='DARK', KW_CALIBWH='P5'))
+                                          KW_OBSTYPE='DARK', KW_CALIBWH='P5',
+                                          KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_dark_dark_tel)
 
 # sky observation (sky dark)
@@ -74,7 +78,8 @@ raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', filetype='.fits',
                                suffix='', inext='.fits', outfunc=out.blank,
                                hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
                                           KW_OBSTYPE='OBJECT',
-                                          KW_TARGET_TYPE='SKY'))
+                                          KW_TARGET_TYPE='SKY',
+                                          KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_dark_dark_sky)
 
 # sky observations (with fp)
@@ -82,7 +87,8 @@ raw_dark_fp_sky = drs_finput('RAW_DARK_FP_SKY', filetype='.fits', suffix='',
                              inext='.fits', outfunc=out.blank,
                              hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
                                         KW_OBSTYPE='OBJECT',
-                                        KW_TARGET_TYPE='SKY'))
+                                        KW_TARGET_TYPE='SKY',
+                                        KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_dark_fp_sky)
 
 # -----------------------------------------------------------------------------
@@ -90,25 +96,29 @@ raw_file.addset(raw_dark_fp_sky)
 raw_dark_flat = drs_finput('RAW_DARK_FLAT', outfunc=out.blank, filetype='.fits',
                            suffix='',
                            hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_wl',
-                                      KW_OBSTYPE='FLAT', ))
+                                      KW_OBSTYPE='FLAT',
+                                      KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_dark_flat)
 
 raw_flat_dark = drs_finput('RAW_FLAT_DARK', outfunc=out.blank,
                            filetype='.fits', suffix='',
                            hkeys=dict(KW_CCAS='pos_wl', KW_CREF='pos_pk',
-                                      KW_OBSTYPE='FLAT'))
+                                      KW_OBSTYPE='FLAT',
+                                      KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_flat_dark)
 
 raw_flat_flat = drs_finput('RAW_FLAT_FLAT', outfunc=out.blank,
                            filetype='.fits', suffix='',
                            hkeys=dict(KW_CCAS='pos_wl', KW_CREF='pos_wl',
-                                      KW_OBSTYPE='FLAT'))
+                                      KW_OBSTYPE='FLAT',
+                                      KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_flat_flat)
 
 raw_flat_fp = drs_finput('RAW_FLAT_FP', outfunc=out.blank,
                          filetype='.fits', suffix='',
                          hkeys=dict(KW_CCAS='pos_wl', KW_CREF='pos_fp',
-                                    KW_OBSTYPE='FLAT'))
+                                    KW_OBSTYPE='FLAT',
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_flat_fp)
 
 # -----------------------------------------------------------------------------
@@ -116,25 +126,29 @@ raw_file.addset(raw_flat_fp)
 raw_dark_fp = drs_finput('RAW_DARK_FP', outfunc=out.blank,
                          filetype='.fits', suffix='',
                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
-                                    KW_OBSTYPE='ALIGN'))
+                                    KW_OBSTYPE='ALIGN',
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_dark_fp)
 
 raw_fp_dark = drs_finput('RAW_FP_DARK', outfunc=out.blank,
                          filetype='.fits', suffix='',
                          hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_pk',
-                                    KW_OBSTYPE='ALIGN'))
+                                    KW_OBSTYPE='ALIGN',
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_fp_dark)
 
 raw_fp_flat = drs_finput('RAW_FP_FLAT', outfunc=out.blank,
                          filetype='.fits', suffix='',
                          hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_wl',
-                                    KW_OBSTYPE='ALIGN'))
+                                    KW_OBSTYPE='ALIGN',
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_fp_flat)
 
 raw_fp_fp = drs_finput('RAW_FP_FP', outfunc=out.blank,
                        filetype='.fits', suffix='',
                        hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_fp',
-                                  KW_OBSTYPE='ALIGN'))
+                                  KW_OBSTYPE='ALIGN',
+                                  KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_fp_fp)
 
 # -----------------------------------------------------------------------------
@@ -142,19 +156,22 @@ raw_file.addset(raw_fp_fp)
 raw_lfc_lfc = drs_finput('RAW_LFC_LFC', filetype='.fits', suffix='',
                          outfunc=out.blank,
                          hkeys=dict(KW_CCAS='pos_rs', KW_CREF='pos_rs',
-                                    KW_OBSTYPE='ALIGN'))
+                                    KW_OBSTYPE='ALIGN',
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_lfc_lfc)
 
 raw_lfc_fp = drs_finput('RAW_LFC_FP', outfunc=out.blank,
                         filetype='.fits', suffix='',
                         hkeys=dict(KW_CCAS='pos_rs', KW_CREF='pos_fp',
-                                   KW_OBSTYPE='ALIGN'))
+                                   KW_OBSTYPE='ALIGN',
+                                   KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_lfc_fp)
 
 raw_fp_lfc = drs_finput('RAW_FP_LFC', outfunc=out.blank,
                         filetype='.fits', suffix='',
                         hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_rs',
-                                   KW_OBSTYPE='ALIGN'))
+                                   KW_OBSTYPE='ALIGN',
+                                   KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_fp_lfc)
 
 # -----------------------------------------------------------------------------
@@ -163,7 +180,8 @@ raw_obj_dark = drs_finput('RAW_OBJ_DARK', outfunc=out.blank,
                           hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
                                      KW_OBSTYPE='OBJECT',
                                      KW_DRS_MODE='SPECTROSCOPY',
-                                     KW_TARGET_TYPE='TARGET', ))
+                                     KW_TARGET_TYPE='TARGET',
+                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_obj_dark)
 
 raw_obj_fp = drs_finput('RAW_OBJ_FP', outfunc=out.blank, filetype='.fits',
@@ -171,37 +189,42 @@ raw_obj_fp = drs_finput('RAW_OBJ_FP', outfunc=out.blank, filetype='.fits',
                         hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
                                    KW_OBSTYPE='OBJECT',
                                    KW_DRS_MODE='SPECTROSCOPY',
-                                   KW_TARGET_TYPE='TARGET'))
+                                   KW_TARGET_TYPE='TARGET',
+                                   KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_obj_fp)
 
 raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', outfunc=out.blank,
                          filetype='.fits', suffix='', inext='.fits',
                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc1',
                                     KW_OBSTYPE='OBJECT',
-                                    KW_TARGET_TYPE='TARGET'))
+                                    KW_TARGET_TYPE='TARGET',
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_obj_hc1)
 
 raw_obj_hc2 = drs_finput('RAW_OBJ_HCTWO', outfunc=out.blank, filetype='.fits',
                          suffix='', inext='.fits',
                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc2',
                                     KW_OBSTYPE='OBJECT',
-                                    KW_TARGET_TYPE='TARGET'))
+                                    KW_TARGET_TYPE='TARGET',
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_obj_hc2)
 
 # raw object files
 raw_polar_dark = drs_finput('RAW_POLAR_DARK', outfunc=out.blank,
-                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                                     KW_OBSTYPE='OBJECT',
-                                     KW_DRS_MODE='POLAR',
-                                     KW_TARGET_TYPE='TARGET', ))
+                            hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
+                                       KW_OBSTYPE='OBJECT',
+                                       KW_DRS_MODE='POLAR',
+                                       KW_TARGET_TYPE='TARGET',
+                                       KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_polar_dark)
 
 raw_polar_fp = drs_finput('RAW_POLAR_FP', outfunc=out.blank, filetype='.fits',
-                        suffix='', inext='.fits',
-                        hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
-                                   KW_OBSTYPE='OBJECT',
-                                   KW_DRS_MODE='POLAR',
-                                   KW_TARGET_TYPE='TARGET'))
+                          suffix='', inext='.fits',
+                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
+                                     KW_OBSTYPE='OBJECT',
+                                     KW_DRS_MODE='POLAR',
+                                     KW_TARGET_TYPE='TARGET',
+                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_polar_fp)
 
 # -----------------------------------------------------------------------------
@@ -209,61 +232,71 @@ raw_file.addset(raw_polar_fp)
 raw_dark_hc1 = drs_finput('RAW_DARK_HCONE', outfunc=out.blank,
                           filetype='.fits', suffix='',
                           hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc1',
-                                     KW_OBSTYPE='COMPARISON'))
+                                     KW_OBSTYPE='COMPARISON',
+                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_dark_hc1)
 
 raw_dark_hc2 = drs_finput('RAW_DARK_HCTWO', outfunc=out.blank,
                           filetype='.fits', suffix='',
                           hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc2',
-                                     KW_OBSTYPE='COMPARISON'))
+                                     KW_OBSTYPE='COMPARISON',
+                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_dark_hc2)
 
 raw_fp_hc1 = drs_finput('RAW_FP_HCONE', outfunc=out.blank,
                         filetype='.fits', suffix='',
                         hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_hc1',
-                                   KW_OBSTYPE='COMPARISON'))
+                                   KW_OBSTYPE='COMPARISON',
+                                   KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_fp_hc1)
 
 raw_fp_hc2 = drs_finput('RAW_FP_HCTWO', outfunc=out.blank,
                         filetype='.fits', suffix='',
                         hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_hc2',
-                                   KW_OBSTYPE='COMPARISON'))
+                                   KW_OBSTYPE='COMPARISON',
+                                   KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_fp_hc2)
 
 raw_hc1_fp = drs_finput('RAW_HCONE_FP', outfunc=out.blank,
                         filetype='.fits', suffix='',
                         hkeys=dict(KW_CCAS='pos_hc1', KW_CREF='pos_fp',
-                                   KW_OBSTYPE='COMPARISON'))
+                                   KW_OBSTYPE='COMPARISON',
+                                   KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_hc1_fp)
 
 raw_hc2_fp = drs_finput('RAW_HCTWO_FP', outfunc=out.blank,
                         filetype='.fits', suffix='',
                         hkeys=dict(KW_CCAS='pos_hc2', KW_CREF='pos_fp',
-                                   KW_OBSTYPE='COMPARISON'))
+                                   KW_OBSTYPE='COMPARISON',
+                                   KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_hc2_fp)
 
 raw_hc1_hc1 = drs_finput('RAW_HCONE_HCONE', filetype='.fits', suffix='',
                          outfunc=out.blank,
                          hkeys=dict(KW_CCAS='pos_hc1', KW_CREF='pos_hc1',
-                                    KW_OBSTYPE='COMPARISON'))
+                                    KW_OBSTYPE='COMPARISON',
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_hc1_hc1)
 
 raw_hc2_hc2 = drs_finput('RAW_HCTWO_HCTWO', filetype='.fits', suffix='',
                          outfunc=out.blank,
                          hkeys=dict(KW_CCAS='pos_hc2', KW_CREF='pos_hc2',
-                                    KW_OBSTYPE='COMPARISON'))
+                                    KW_OBSTYPE='COMPARISON',
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_hc2_hc2)
 
 raw_hc1_dark = drs_finput('RAW_HCONE_DARK', filetype='.fits', suffix='',
                           outfunc=out.blank,
                           hkeys=dict(KW_CCAS='pos_hc1', KW_CREF='pos_pk',
-                                     KW_OBSTYPE='COMPARISON', ))
+                                     KW_OBSTYPE='COMPARISON',
+                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_hc1_dark)
 
 raw_hc2_dark = drs_finput('RAW_HCTWO_DARK', filetype='.fits', suffix='',
                           outfunc=out.blank,
                           hkeys=dict(KW_CCAS='pos_hc2', KW_CREF='pos_pk',
-                                     KW_OBSTYPE='COMPARISON'))
+                                     KW_OBSTYPE='COMPARISON',
+                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_hc2_dark)
 
 # =============================================================================
@@ -393,14 +426,14 @@ pp_obj_hc2 = drs_finput('OBJ_HC2', hkeys=dict(KW_DPRTYPE='OBJ_HCTWO'),
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_obj_hc2)
 pp_polar_dark = drs_finput('POLAR_DARK', hkeys=dict(KW_DPRTYPE='POLAR_DARK'),
-                         filetype='.fits',
-                         suffix='_pp', intype=raw_polar_dark,
-                         inext='.fits', outfunc=out.general_file)
+                           filetype='.fits',
+                           suffix='_pp', intype=raw_polar_dark,
+                           inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_polar_dark)
 pp_polar_fp = drs_finput('POLAR_FP', hkeys=dict(KW_DPRTYPE='POLAR_FP'),
-                       filetype='.fits',
-                       suffix='_pp', intype=raw_polar_fp,
-                       inext='.fits', outfunc=out.general_file)
+                         filetype='.fits',
+                         suffix='_pp', intype=raw_polar_fp,
+                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_polar_fp)
 
 # -----------------------------------------------------------------------------
@@ -874,7 +907,6 @@ out_wavem_fp = drs_finput('WAVEM_FP',
                           dbname='calibration', dbkey='WAVESOL_MASTER',
                           outfunc=out.calib_file)
 
-
 # wave solution using hc only
 out_wavem_hc = drs_finput('WAVEM_HC', hkeys=dict(KW_OUTPUT='WAVEM_HC'),
                           fibers=['AB', 'A', 'B', 'C'],
@@ -886,11 +918,11 @@ out_wavem_hc = drs_finput('WAVEM_HC', hkeys=dict(KW_OUTPUT='WAVEM_HC'),
 
 # resolution map
 out_wavem_res = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
-                             fibers=['AB', 'A', 'B', 'C'],
-                             filetype='.fits',
-                             intype=[out_ext_e2ds, out_ext_e2dsff],
-                             suffix='_wavemres',
-                             outfunc=out.calib_file)
+                           fibers=['AB', 'A', 'B', 'C'],
+                           filetype='.fits',
+                           intype=[out_ext_e2ds, out_ext_e2dsff],
+                           suffix='_wavemres',
+                           outfunc=out.calib_file)
 
 # hc resolution map
 out_wavem_hcres = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
@@ -1242,7 +1274,7 @@ out_pol_null2 = drs_finput('NULL_POL2', hkeys=dict(KW_OUTPUT='NULL_POL2'),
 # lsd file
 out_pol_lsd = drs_finput('LSD_POL', hkeys=dict(KW_OUTPUT='LSD_POL'),
                          filetype='.fits',
-                         suffix='_lsd_pol', #datatype='table',
+                         suffix='_lsd_pol',  # datatype='table',
                          intype=[out_ext_e2dsff, out_tellu_obj],
                          outfunc=out.general_file)
 
@@ -1462,7 +1494,6 @@ post_s_file.add_hkey('KW_DRS_DATE_NOW', inheader='S1D_W', outheader='PP')
 # add to post processed file set
 post_file.addset(post_s_file)
 
-
 # -----------------------------------------------------------------------------
 # post processed telluric file
 # -----------------------------------------------------------------------------
@@ -1555,7 +1586,6 @@ post_p_file.add_hkey('KW_DRS_DATE_NOW', inheader='POL', outheader='PP')
 
 # add to post processed file set
 post_file.addset(post_p_file)
-
 
 # =============================================================================
 # Other Files
