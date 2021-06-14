@@ -184,7 +184,17 @@ def __main__(recipe, params):
         drs_reset.reset_run(params)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Run']))
-
+    # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Out')
+    # plot folder
+    if warn:
+        reset8 = drs_reset.reset_confirmation(params, 'Out',
+                                              params['DRS_DATA_OUT'])
+    if reset8:
+        drs_reset.reset_out_folders(params, log)
+    else:
+        WLOG(params, '', textentry('40-502-00013', args=['Run']))
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
