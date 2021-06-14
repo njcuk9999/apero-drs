@@ -472,6 +472,72 @@ def reset_run(params: ParamDict, log: bool = True):
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
 
 
+def reset_out_folders(params: ParamDict, log: bool = True):
+    """
+    Resets the reduced directory
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param log: bool, if True logs the removal
+
+    :return: None - resets reduced directory
+    """
+    # log progress
+    WLOG(params, '', textentry('40-502-00003', args=['out']))
+    # remove files from reduced folder
+    red_dir = params['DRS_DATA_OUT']
+    # loop around files and folders in calib_dir
+    remove_all(params, red_dir, log)
+    # remake path
+    if not os.path.exists(red_dir):
+        os.makedirs(red_dir)
+    # -------------------------------------------------------------------------
+    # remove entries from index database
+    # -------------------------------------------------------------------------
+    # get index database
+    indexdb = drs_database.IndexDatabase(params)
+    # load index database
+    indexdb.load_db()
+    # check that table is in database
+    if not indexdb.database.tname_in_db():
+        # get database paths
+        databases = manage_databases.list_databases(params)
+        # load pseudo constants
+        pconst = constants.pload()
+        # create index database
+        manage_databases.create_index_database(pconst, databases)
+        # get index database
+        indexdb = drs_database.IndexDatabase(params)
+        # load index database
+        indexdb.load_db()
+    # set up condition
+    condition = 'BLOCK_KIND="out"'
+    # remove entries
+    indexdb.remove_entries(condition=condition)
+    # -------------------------------------------------------------------------
+    # remove entries from log database
+    # -------------------------------------------------------------------------
+    # get log database
+    logdb = drs_database.LogDatabase(params)
+    # load index database
+    logdb.load_db()
+    # check that table is in database
+    if not logdb.database.tname_in_db():
+        # get database paths
+        databases = manage_databases.list_databases(params)
+        # load pseudo constants
+        pconst = constants.pload()
+        # create index database
+        manage_databases.create_log_database(pconst, databases)
+        # get log database
+        logdb = drs_database.LogDatabase(params)
+        # load index database
+        logdb.load_db()
+    # set up condition
+    condition = 'RECIPE_TYPE="out"'
+    # remove entries
+    logdb.remove_entries(condition=condition)
+
+
 def reset_assets(params: ParamDict, log: bool = True):
     """
     Reset the Assets directory (including re-creating databases)
