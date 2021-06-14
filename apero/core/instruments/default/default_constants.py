@@ -35,7 +35,7 @@ __all__ = [
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
     'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF', 'IMAGE_SATURATION',
-    'IMAGE_FRAME_TIME',
+    'IMAGE_FRAME_TIME', 'ALL_POLAR_RHOMB_POS',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
     'OBJ_LIST_GAIA_URL', 'CALIB_CHECK_FP_PERCENTILE', 'CALIB_CHECK_FP_THRES',
@@ -476,6 +476,11 @@ IMAGE_SATURATION = Const('IMAGE_SATURATION', value=None, dtype=float,
 IMAGE_FRAME_TIME = Const('IMAGE_FRAME_TIME', value=None, dtype=float,
                          source=__NAME__, group=cgroup,
                          description='Define the frame time for an image')
+
+# Define all polar rhomb positions
+ALL_POLAR_RHOMB_POS = Const('ALL_POLAR_RHOMB_POS', value=None, dtype=str,
+                            source=__NAME__, group=cgroup,
+                            description='Define all polar rhomb positions')
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
