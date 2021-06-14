@@ -1334,38 +1334,38 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any,
     kw_polar_key_1 = params['KW_POLAR_KEY_1'][0]
     kw_polar_key_2 = params['KW_POLAR_KEY_2'][0]
     kw_obstype = params['KW_OBSTYPE'][0]
+    all_polar_rhomb_pos = params.listp('ALL_POLAR_RHOMB_POS', dtype=str)
     # -------------------------------------------------------------------------
-    # set drs_mode
-    drs_mode = None
     # deal with no hdict
     if hdict is None:
         hdict = dict()
     # get polar key 1 from the header
     if kw_polar_key_1 not in header:
-        drs_mode = 'UNKNOWN'
         polar_key1 = None
     else:
         polar_key1 = header[kw_polar_key_1]
     # get polar key 2 from the header
     if kw_polar_key_2 not in header:
-        drs_mode = 'UNKNOWN'
-        kw_polar_key_2 = None
+        polar_key2 = None
     else:
         polar_key2 = header[kw_polar_key_2]
     # -------------------------------------------------------------------------
     # get obstype from the header
     if kw_obstype not in header:
-        drs_mode = 'UNKNOWN'
         obstype = None
     else:
         obstype = header[kw_obstype]
     # -------------------------------------------------------------------------
+    # default set drs mode to Unknown
+    drs_mode = 'Unknown'
     # get drs mode
     if drs_mode is None and obstype == 'OBJECT':
+        # check polar keys are valid (if so and not polar we assume
+        #   the are spectroscopy)
+        valid_key1 = polar_key1 in all_polar_rhomb_pos
+        valid_key2 = polar_key2 in all_polar_rhomb_pos
         # define the drs mode
-        if polar_key1 == 'P16' and polar_key2 == 'P16':
-            drs_mode = 'SPECTROSCOPY'
-        elif polar_key1 == 'P14' and polar_key2 == 'P16':
+        if polar_key1 == 'P14' and polar_key2 == 'P16':
             drs_mode = 'POLAR'
         elif polar_key1 == 'P2' and polar_key2 == 'P16':
             drs_mode = 'POLAR'
@@ -1373,10 +1373,8 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any,
             drs_mode = 'POLAR'
         elif polar_key1 == 'P14' and polar_key2 == 'P4':
             drs_mode = 'POLAR'
-        else:
-            drs_mode = 'UNKNOWN'
-    else:
-        drs_mode = 'UNKNOWN'
+        elif valid_key1 and valid_key2:
+            drs_mode = 'SPECTROSCOPY'
     # -------------------------------------------------------------------------
     # add header key
     header[kw_drs_mode] = (drs_mode, kw_drs_mode_comment)

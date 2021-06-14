@@ -96,6 +96,10 @@ IMAGE_PIXEL_SIZE.value = 2.28
 FWHM_PIXEL_LSF = FWHM_PIXEL_LSF.copy(__NAME__)
 FWHM_PIXEL_LSF.value = 2.1
 
+# Define all polar rhomb positions
+ALL_POLAR_RHOMB_POS = ALL_POLAR_RHOMB_POS.copy(__NAME__)
+ALL_POLAR_RHOMB_POS.value = 'P2, P4, P14, P16'
+
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
