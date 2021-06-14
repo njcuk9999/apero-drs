@@ -114,6 +114,10 @@ KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
 KW_PI_NAME.set(key='HIERARCH ESO OBS PI-COI NAME',
                comment='The PI of the program')
 
+# define the instrument HEADER key
+KW_INSTRUMENT = KW_INSTRUMENT.copy(__NAME__)
+KW_INSTRUMENT.set(key='INSTRUME', comment='Instrument Name')
+
 # define the instrument mode header key
 KW_INST_MODE = KW_INST_MODE.copy(__NAME__)
 KW_INST_MODE.set(key='HIERARCH ESO INS MODE', comment='Instrument mode used')

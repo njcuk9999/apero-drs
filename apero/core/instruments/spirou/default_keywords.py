@@ -133,6 +133,10 @@ KW_NEXP.set(key='NEXP', comment='Total number of exposures within the sequence',
 KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
 KW_PI_NAME.set(key='PI_NAME', comment='The PI of the program')
 
+# define the instrument HEADER key
+KW_INSTRUMENT = KW_INSTRUMENT.copy(__NAME__)
+KW_INSTRUMENT.set(key='INSTRUME', comment='Instrument Name')
+
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)
 # -----------------------------------------------------------------------------
