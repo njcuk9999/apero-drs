@@ -1360,7 +1360,7 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any,
     # default set drs mode to Unknown
     drs_mode = 'Unknown'
     # get drs mode
-    if drs_mode is None and obstype == 'OBJECT':
+    if drs_mode == 'Unknown' and obstype == 'OBJECT':
         # check polar keys are valid (if so and not polar we assume
         #   the are spectroscopy)
         valid_key1 = polar_key1 in all_polar_rhomb_pos
