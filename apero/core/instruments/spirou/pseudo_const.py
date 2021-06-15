@@ -1365,16 +1365,10 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any,
         valid_key1 = polar_key1 in all_polar_rhomb_pos
         valid_key2 = polar_key2 in all_polar_rhomb_pos
         # define the drs mode
-        if polar_key1 == 'P14' and polar_key2 == 'P16':
-            drs_mode = 'POLAR'
-        elif polar_key1 == 'P2' and polar_key2 == 'P16':
-            drs_mode = 'POLAR'
-        elif polar_key1 == 'P2' and polar_key2 == 'P4':
-            drs_mode = 'POLAR'
-        elif polar_key1 == 'P14' and polar_key2 == 'P4':
-            drs_mode = 'POLAR'
-        elif valid_key1 and valid_key2:
+        if polar_key1 == 'P16' and polar_key2 == 'P16':
             drs_mode = 'SPECTROSCOPY'
+        elif valid_key1 and valid_key2:
+            drs_mode = 'POLAR'
     # -------------------------------------------------------------------------
     # add header key
     header[kw_drs_mode] = (drs_mode, kw_drs_mode_comment)
