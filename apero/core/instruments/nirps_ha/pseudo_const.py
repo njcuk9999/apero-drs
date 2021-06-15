@@ -370,6 +370,7 @@ class PseudoConstants(DefaultConstants):
         index_keys['KW_OBJNAME'] = str
         index_keys['KW_OBSTYPE'] =str
         index_keys['KW_EXPTIME'] = float
+        index_keys['KW_INSTRUMENT'] = str
         index_keys['KW_INST_MODE'] = str
         index_keys['KW_RAW_DPRTYPE'] = str
         index_keys['KW_RAW_DPRCATG'] = str

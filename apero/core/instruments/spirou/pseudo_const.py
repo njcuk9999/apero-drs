@@ -537,6 +537,7 @@ class PseudoConstants(DefaultConstants):
         index_keys['KW_OBJECTNAME2'] = str    # other raw object name
         index_keys['KW_OBSTYPE'] =str
         index_keys['KW_EXPTIME'] = float
+        index_keys['KW_INSTRUMENT'] = str
         index_keys['KW_CCAS'] = str
         index_keys['KW_CREF'] = str
         index_keys['KW_CDEN'] = float
