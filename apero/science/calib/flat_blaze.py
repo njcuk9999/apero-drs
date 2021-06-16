@@ -478,6 +478,8 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     e2dsllfile.construct_filename(infile=infile)
     # copy header from blaze file
     e2dsllfile.copy_hdict(blazefile)
+    # set in files
+    e2dsllfile.infiles = list(hfiles)
     # set output key
     e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
     # copy data

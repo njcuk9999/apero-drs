@@ -6892,8 +6892,12 @@ def combine(params: ParamDict, recipe: Any,
     # combine outpath and out directory
     abspath = os.path.join(outpath, obs_dir)
     # read all infiles (must be done before combine)
+    basenames = []
     for infile in infiles:
+        # read the infile
         infile.read_file()
+        # get the base name for each infile
+        basenames.append(infile.basename)
     # make new infile using math
     infile0 = infiles[0].newcopy(params=params)
     outfile, outtable = infile0.combine(infiles[1:], math, same_type,
@@ -6906,6 +6910,8 @@ def combine(params: ParamDict, recipe: Any,
     data_list = [outtable]
     datatype_list = ['table']
     name_list = ['COMBINE_TABLE']
+    # add input files
+    outfile.infiles = list(basenames)
     # add version
     outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates

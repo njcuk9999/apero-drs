@@ -97,6 +97,8 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
         # add data from thermal_outputs
         thermal_file.datatype = thermal_outputs[fiber].datatype
         thermal_file.data = thermal_outputs[fiber].get_data()
+        # get input files
+        thermal_file.infiles = [thermalfile.basename]
         # update drs out id
         thermal_file.hdict[params['KW_OUTPUT'][0]] = thermal_file.name
         thermal_file.header[params['KW_OUTPUT'][0]] = thermal_file.name

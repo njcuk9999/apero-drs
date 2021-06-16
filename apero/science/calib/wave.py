@@ -472,6 +472,9 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
             'COEFFS', 'WAVETIME', 'WAVEINST', 'NBPIX'] + wfp_keys
     wprops.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
+    # get the echelle order numbers
+    wprops = get_echelle_orders(params, wprops)
+    # -------------------------------------------------------------------------
     # return the map and properties
     return wprops
 
@@ -1967,6 +1970,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     e2ds_file.read_file()
     e2ds_file.read_header()
     e2ds_file = add_wave_keys(e2ds_file, wprops)
+    e2ds_file.infiles = [infile.basename]
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
@@ -1986,6 +1990,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # update the e2ds file
     e2dsff_file.read_file()
     e2dsff_file = add_wave_keys(e2dsff_file, wprops)
+    e2dsff_file.infiles = [infile.basename]
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
@@ -2005,6 +2010,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # update the e2ds file
     e2dsll_file.read_multi()
     e2dsll_file = add_wave_keys(e2dsll_file, wprops)
+    e2dsll_file.infiles = [infile.basename]
     # define multi lists
     data_list, name_list = e2dsll_file.data_array, e2dsll_file.name_array
     if data_list is None:
@@ -2050,6 +2056,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     s1dw_file.add_hkey('KW_OUTPUT', value=s1dw_file.name)
     # add new header keys
     s1dw_file = extract.add_s1d_keys(s1dw_file, swprops)
+    s1dw_file.infiles = [infile.basename]
     # copy data
     s1dw_file.data = swprops['S1DTABLE']
     # must change the datatype to 'table'
@@ -2078,6 +2085,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     s1dv_file.copy_hdict(e2ds_file)
     # add new header keys
     s1dv_file = extract.add_s1d_keys(s1dv_file, svprops)
+    s1dv_file.infiles = [infile.basename]
     # set output key
     s1dv_file.add_hkey('KW_OUTPUT', value=s1dv_file.name)
     # copy data
@@ -2815,6 +2823,8 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # copy keys from hcwavefile
     hcfile.copy_hdict(wavefile)
     hcfile.copy_header(wavefile)
+    # set infile
+    hcfile.infiles = list(wavefile.infiles)
     # set output key
     hcfile.add_hkey('KW_OUTPUT', value=hcfile.name)
     # set data
@@ -2852,6 +2862,8 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # copy keys from hcwavefile
     fpfile.copy_hdict(wavefile)
     fpfile.copy_header(wavefile)
+    # set infile
+    fpfile.infiles = list(wavefile.infiles)
     # set output key
     fpfile.add_hkey('KW_OUTPUT', value=fpfile.name)
     # set data
@@ -2966,6 +2978,8 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     # copy keys from hcwavefile
     cavfile.copy_header(wavefile)
     cavfile.copy_hdict(wavefile)
+    # set infile
+    cavfile.infiles = list(wavefile.infiles)
     # set output key
     cavfile.add_hkey('KW_OUTPUT', value=cavfile.name)
     # set data

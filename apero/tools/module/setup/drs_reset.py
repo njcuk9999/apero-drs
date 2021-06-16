@@ -205,7 +205,7 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
         # load index database
         logdb.load_db()
     # set up condition
-    condition = 'RECIPE_TYPE="tmp"'
+    condition = 'BLOCK_KIND="tmp"'
     # remove entries
     logdb.remove_entries(condition=condition)
 
@@ -271,7 +271,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
         # load index database
         logdb.load_db()
     # set up condition
-    condition = 'RECIPE_TYPE="red"'
+    condition = 'BLOCK_KIND="red"'
     # remove entries
     logdb.remove_entries(condition=condition)
 
@@ -533,7 +533,7 @@ def reset_out_folders(params: ParamDict, log: bool = True):
         # load index database
         logdb.load_db()
     # set up condition
-    condition = 'RECIPE_TYPE="out"'
+    condition = 'BLOCK_KIND="out"'
     # remove entries
     logdb.remove_entries(condition=condition)
 
