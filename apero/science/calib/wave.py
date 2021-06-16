@@ -2688,16 +2688,18 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     # ------------------------------------------------------------------
     # add input hc files (and deal with combining or not combining)
     if combine:
-        hfiles = rawhcfiles
+        hfiles1 = rawhcfiles
     else:
-        hfiles = [hcfile.basename]
-    wavefile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+        hfiles1 = [hcfile.basename]
+    wavefile.add_hkey_1d('KW_INFILE1', values=hfiles1, dim1name='file')
     # add input fp files (and deal with combining or not combining)
     if combine:
-        hfiles = rawfpfiles
+        hfiles2 = rawfpfiles
     else:
-        hfiles = [fpfile.basename]
-    wavefile.add_hkey_1d('KW_INFILE2', values=hfiles, dim1name='file')
+        hfiles2 = [fpfile.basename]
+    wavefile.add_hkey_1d('KW_INFILE2', values=hfiles2, dim1name='file')
+    # add infiles to outfile
+    wavefile.infiles = list(hfiles1) + list(hfiles2)
     # ------------------------------------------------------------------
     # add the order num, fit degree and fit coefficients etc
     wavefile = add_wave_keys(wavefile, wprops)

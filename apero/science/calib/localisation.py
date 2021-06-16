@@ -1523,6 +1523,8 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     else:
         hfiles = [infile.basename]
     orderpfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add infiles
+    orderpfile.infiles = hfiles
     # add the calibration files use
     orderpfile = gen_calib.add_calibs_to_header(orderpfile, props)
     # add qc parameters
@@ -1571,6 +1573,8 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     else:
         hfiles = [infile.basename]
     loco1file.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add infiles
+    loco1file.infiles = list(hfiles)
     # add the calibration files use
     loco1file = gen_calib.add_calibs_to_header(loco1file, props)
     # add localisation parameters
@@ -1623,6 +1627,8 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     # define header keys for output file
     # copy keys from loco1file
     loco2file.copy_hdict(loco1file)
+    # add infiles
+    loco2file.infiles = list(hfiles)
     # set output key
     loco2file.add_hkey('KW_OUTPUT', value=loco2file.name)
     # copy data
@@ -1660,6 +1666,8 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
         loco3file.copy_hdict(loco1file)
         # set output key
         loco3file.add_hkey('KW_OUTPUT', value=loco3file.name)
+        # add infiles
+        loco3file.infiles = list(hfiles)
         # copy data
         loco3file.data = image5
         # --------------------------------------------------------------

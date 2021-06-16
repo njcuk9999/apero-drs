@@ -1326,6 +1326,8 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     else:
         hfiles = [infile.basename]
     ccf_file.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add infiles to outfile
+    ccf_file.infiles = list(hfiles)
     # add fiber to file
     ccf_file.add_hkey('KW_FIBER', value=fiber)
     # ----------------------------------------------------------------------

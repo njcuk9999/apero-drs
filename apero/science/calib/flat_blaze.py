@@ -374,6 +374,8 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
         hfiles = [infile.basename]
     blazefile.add_hkey_1d('KW_INFILE1', values=hfiles,
                           dim1name='file')
+    # set in files
+    blazefile.infiles = list(hfiles)
     # add qc parameters
     blazefile.add_qckeys(qc_params)
     # add the calibration files use
@@ -445,6 +447,8 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     flatfile.construct_filename(infile=infile)
     # copy header from blaze file
     flatfile.copy_hdict(blazefile)
+    # set in files
+    flatfile.infiles = list(hfiles)
     # set output key
     flatfile.add_hkey('KW_OUTPUT', value=flatfile.name)
     # copy data

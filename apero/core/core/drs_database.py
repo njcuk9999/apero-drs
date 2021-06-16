@@ -1307,6 +1307,7 @@ class IndexDatabase(DatabaseManager):
     def add_entry(self, basefile: drs_file.DrsPath,
                   block_kind: str, recipe: Union[str, None] = None,
                   runstring: Union[str, None] = None,
+                  infiles: Union[str, None] = None,
                   hkeys: Union[Dict[str, str], None] = None,
                   used: Union[int, None] = None,
                   rawfix: Union[int, None] = None):
@@ -1323,6 +1324,8 @@ class IndexDatabase(DatabaseManager):
         :param recipe: str, the recipe name
         :param runstring: str, the command line arg representation of this
                           indexs recipe run
+        :param infiles: str, the string list of infiles for this index entry
+                        (blank if not a drs output)
         :param hkeys: dictionary of strings, for each instrument a set
                             of header keys is index - add any that are set to
                             here (see pseudo_constants.INDEX_HEADER_KEYS)
@@ -1364,6 +1367,9 @@ class IndexDatabase(DatabaseManager):
         # get run string
         if drs_text.null_text(runstring, ['None', 'Null']):
             runstring = 'NULL'
+        # get infiles
+        if drs_text.null_text(infiles, ['None', 'Null', '']):
+            infiles = 'NULL'
         # ------------------------------------------------------------------
         # get allowed header keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
@@ -1407,7 +1413,7 @@ class IndexDatabase(DatabaseManager):
         try:
             # add new entry to database
             values = [path, obs_dir, basename, block_kind, float(last_modified),
-                      str(recipe), str(runstring)]
+                      str(recipe), str(runstring), str(infiles)]
             values += hvalues + [used, rawfix]
             self.database.add_row(values, table=self.database.tname,
                                   unique_cols=ucols)
@@ -1415,7 +1421,7 @@ class IndexDatabase(DatabaseManager):
         except drs_db.UniqueEntryException:
             # add new entry to database
             values = [path, obs_dir, basename, block_kind, float(last_modified),
-                      str(recipe), str(runstring)]
+                      str(recipe), str(runstring), str(infiles)]
             values += hvalues + [used, rawfix]
             # condition comes from uhash - so set to None here (to remember)
             condition = None
