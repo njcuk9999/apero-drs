@@ -1449,6 +1449,21 @@ post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
                        incol='eflux', outcol='FluxErrABTelluCorrected',
                        fiber='AB', required=False,
                        block_kind='red', clear_file=True)
+post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
+                       incol='flux', outcol='FluxATelluCorrected', fiber='A',
+                       required=False, block_kind='red', clear_file=True)
+post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
+                       incol='eflux', outcol='FluxErrATelluCorrected',
+                       fiber='A', required=False,
+                       block_kind='red', clear_file=True)
+post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
+                       incol='flux', outcol='FluxBTelluCorrected', fiber='B',
+                       required=False, block_kind='red', clear_file=True)
+post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
+                       incol='eflux', outcol='FluxErrBTelluCorrected',
+                       fiber='B', required=False,
+                       block_kind='red', clear_file=True)
+
 # s1d w is a composite table
 post_s_file.add_ext('S1D_V', 'table', pos=2, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER',
@@ -1488,6 +1503,20 @@ post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='eflux', outcol='FluxErrABTelluCorrected',
                        fiber='AB', required=False,
                        block_kind='red', clear_file=True)
+post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
+                       incol='flux', outcol='FluxATelluCorrected', fiber='A',
+                       required=False, block_kind='red', clear_file=True)
+post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
+                       incol='eflux', outcol='FluxErrATelluCorrected',
+                       fiber='A', required=False,
+                       block_kind='red', clear_file=True)
+post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
+                       incol='flux', outcol='FluxBTelluCorrected', fiber='B',
+                       required=False, block_kind='red', clear_file=True)
+post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
+                       incol='eflux', outcol='FluxErrBTelluCorrected',
+                       fiber='B', required=False,
+                       block_kind='red', clear_file=True)
 # move header keys
 post_s_file.add_hkey('KW_VERSION', inheader='S1D_W', outheader='PP')
 post_s_file.add_hkey('KW_DRS_DATE_NOW', inheader='S1D_W', outheader='PP')
@@ -1516,6 +1545,28 @@ post_t_file.add_ext('BLAZE_AB', out_ff_blaze, pos=3, fiber='AB',
 post_t_file.add_ext('RECON_AB', out_tellu_recon, pos=4, fiber='AB',
                     link='TELLU_AB', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='Recon')
+post_t_file.add_ext('OHLINE', out_tellu_pclean, pos=5, fiber='AB',
+                    link='TELLU_AB', hlink='KW_IDENTIFIER', block_kind='red',
+                    clear_file=True, tag='OHLine', extname='SKY_MODEL')
+post_t_file.add_ext('TELLU_A', out_tellu_obj, pos=6, fiber='A',
+                    link='PP', hlink='KW_IDENTIFIER', block_kind='red',
+                    clear_file=True, tag='FluxA')
+post_t_file.add_ext('WAVE_A', out_wavem_fp, pos=7, fiber='A',
+                    link='TELLU_A', hlink='KW_CDBWAVE', block_kind='red',
+                    clear_file=True, tag='WaveA')
+post_t_file.add_ext('BLAZE_A', out_ff_blaze, pos=8, fiber='A',
+                    link='TELLU_A', hlink='KW_CDBBLAZE', block_kind='red',
+                    clear_file=True, tag='BlazeA')
+post_t_file.add_ext('TELLU_B', out_tellu_obj, pos=9, fiber='B',
+                    link='PP', hlink='KW_IDENTIFIER', block_kind='red',
+                    clear_file=True, tag='FluxB')
+post_t_file.add_ext('WAVE_B', out_wavem_fp, pos=10, fiber='B',
+                    link='TELLU_B', hlink='KW_CDBWAVE', block_kind='red',
+                    clear_file=True, tag='WaveB')
+post_t_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B',
+                    link='TELLU_B', hlink='KW_CDBBLAZE', block_kind='red',
+                    clear_file=True, tag='BlazeB')
+
 # move header keys
 post_t_file.add_hkey('KW_VERSION', inheader='TELLU_AB', outheader='PP')
 post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='TELLU_AB', outheader='PP')
@@ -1577,7 +1628,73 @@ post_p_file.add_ext('WAVE_AB', out_wavem_fp, pos=7, fiber='AB',
 post_p_file.add_ext('BLAZE_AB', out_ff_blaze, pos=8, fiber='AB',
                     block_kind='red', link='POLERR', hlink='KW_CDBBLAZE',
                     tag='BlazeAB')
-post_p_file.add_ext('POLTABLE', out_pol_deg, pos=9, block_kind='red',
+# s1d w table
+post_p_file.add_ext('S1D_W', 'table', pos=9, block_kind='red',
+                    link='PP', hlink='KW_IDENTIFIER',
+                    extname='UniformWavelength')
+# add s1d w columns (all linked via PP file)
+post_p_file.add_column('S1D_W', out_pol_s1dw,
+                       incol='wavelength', outcol='Wave', fiber='None',
+                       units='nm', block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_W', out_pol_s1dw,
+                       incol='flux', outcol='FluxPol', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_W', out_pol_s1dw,
+                       incol='eflux', outcol='FluxErrPol', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_W', out_stokesi_s1dw,
+                       incol='flux', outcol='FluxStokesI', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_W', out_stokesi_s1dw,
+                       incol='eflux', outcol='FluxErrStokesI', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_W', out_null1_s1dw,
+                       incol='flux', outcol='FluxNull1', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_W', out_null1_s1dw,
+                       incol='eflux', outcol='FluxErrNull1', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_W', out_null2_s1dw,
+                       incol='flux', outcol='FluxNull2', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_W', out_null2_s1dw,
+                       incol='eflux', outcol='FluxErrNull2', fiber='None',
+                       block_kind='red', clear_file=True)
+# s1d v table
+post_p_file.add_ext('S1D_V', 'table', pos=10, block_kind='red',
+                    link='PP', hlink='KW_IDENTIFIER',
+                    extname='UniformWavelength')
+# add s1d w columns (all linked via PP file)
+post_p_file.add_column('S1D_V', out_pol_s1dv,
+                       incol='wavelength', outcol='Wave', fiber='None',
+                       units='nm', block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_V', out_pol_s1dv,
+                       incol='flux', outcol='FluxPol', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_V', out_pol_s1dv,
+                       incol='eflux', outcol='FluxErrPol', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_V', out_stokesi_s1dv,
+                       incol='flux', outcol='FluxStokesI', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_V', out_stokesi_s1dv,
+                       incol='eflux', outcol='FluxErrStokesI', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_V', out_null1_s1dv,
+                       incol='flux', outcol='FluxNull1', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_V', out_null1_s1dv,
+                       incol='eflux', outcol='FluxErrNull1', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_V', out_null2_s1dv,
+                       incol='flux', outcol='FluxNull2', fiber='None',
+                       block_kind='red', clear_file=True)
+post_p_file.add_column('S1D_V', out_null2_s1dv,
+                       incol='eflux', outcol='FluxErrNull2', fiber='None',
+                       block_kind='red', clear_file=True)
+
+# add the polar input combine table
+post_p_file.add_ext('POLTABLE', out_pol_deg, pos=11, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='PolTable', extname='POL_TABLE', datatype='table')
 # move header keys
