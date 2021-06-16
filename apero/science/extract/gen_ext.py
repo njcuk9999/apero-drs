@@ -1262,6 +1262,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     else:
         hfiles = [infile.basename]
     e2dsfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add infiles to outfile
+    e2dsfile.infiles = list(hfiles)
     # add the calibration files use
     e2dsfile = gen_calib.add_calibs_to_header(e2dsfile, props)
     # ----------------------------------------------------------------------
@@ -1353,6 +1355,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfffile.construct_filename(infile=infile)
     # copy header from e2dsff file
     e2dsfffile.copy_hdict(e2dsfile)
+    # add infiles to outfile
+    e2dsfffile.infiles = list(hfiles)
     # add extraction type (does not change for future files)
     e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
     # set output key
@@ -1386,6 +1390,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
         e2dsllfile.construct_filename(infile=infile)
         # copy header from e2dsll file
         e2dsllfile.copy_hdict(e2dsfile)
+        # add infiles to outfile
+        e2dsllfile.infiles = list(hfiles)
         # set output key
         e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
         # copy data
@@ -1420,6 +1426,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     s1dwfile.construct_filename(infile=infile)
     # copy header from e2dsll file
     s1dwfile.copy_hdict(e2dsfile)
+    # add infiles to outfile
+    s1dwfile.infiles = list(hfiles)
     # set output key
     s1dwfile.add_hkey('KW_OUTPUT', value=s1dwfile.name)
     # add new header keys
@@ -1456,6 +1464,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     s1dvfile.copy_hdict(e2dsfile)
     # add new header keys
     s1dvfile = add_s1d_keys(s1dvfile, svprops)
+    # add infiles to outfile
+    s1dvfile.infiles = list(hfiles)
     # set output key
     s1dvfile.add_hkey('KW_OUTPUT', value=s1dvfile.name)
     # copy data
@@ -1514,6 +1524,8 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     else:
         hfiles = [infile.basename]
     e2dsfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add infiles to outfile
+    e2dsfile.infiles = list(hfiles)
     # add the calibration files use
     e2dsfile = gen_calib.add_calibs_to_header(e2dsfile, props)
     # ----------------------------------------------------------------------
@@ -1590,6 +1602,8 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfffile.construct_filename(infile=infile)
     # copy header from e2dsff file
     e2dsfffile.copy_hdict(e2dsfile)
+    # add infiles to outfile
+    e2dsfffile.infiles = list(hfiles)
     # add extraction type (does not change for future files)
     e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
     # set output key
@@ -1756,6 +1770,8 @@ def write_leak_master(params, recipe, rawfiles, medcubes, qc_params, props):
         outfile.add_hkey('KW_OUTPUT', value=outfile.name)
         # add input files
         outfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='file')
+        # add input files to outfile
+        outfile.infiles = list(rawfiles)
         # add qc parameters
         outfile.add_qckeys(qc_params_fiber)
         # add leak parameters from props (if set)
@@ -1862,6 +1878,8 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         s1dwfile.add_hkey('KW_OUTPUT', value=s1dwfile.name)
         # add new header keys
         s1dwfile = add_s1d_keys(s1dwfile, swprops)
+        # copy in files
+        s1dwfile.infiles = list(extfile.infiles)
         # copy data
         s1dwfile.data = swprops['S1DTABLE']
         # must change the datatype to 'table'
@@ -1889,6 +1907,8 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         s1dvfile.copy_header(extfile)
         # add new header keys
         s1dvfile = add_s1d_keys(s1dvfile, svprops)
+        # copy in files
+        s1dvfile.infiles = list(extfile.infiles)
         # set output key
         s1dvfile.add_hkey('KW_OUTPUT', value=s1dvfile.name)
         # copy data

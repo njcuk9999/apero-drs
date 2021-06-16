@@ -359,6 +359,8 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     else:
         hfiles = [infile.basename]
     transfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add infiles to outfile
+    transfile.infiles = list(hfiles)
     # add  calibration files used
     transfile.add_hkey('KW_CDBBLAZE', value=nprops['BLAZE_FILE'])
     transfile.add_hkey('KW_CDBWAVE', value=mprops['WAVEFILE'])

@@ -941,6 +941,8 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     else:
         hfiles = [infile.basename]
     corrfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add infiles to outfile
+    corrfile.infiles = list(hfiles)
     # add  calibration files used
     corrfile.add_hkey('KW_CDBBLAZE', value=nprops['BLAZE_FILE'])
     corrfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
@@ -1090,6 +1092,8 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     sc1dwfile.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     sc1dwfile.copy_hdict(corrfile)
+    # copy infiles to outfile
+    sc1dwfile.infiles = list(corrfile.infiles)
     # add output tag
     sc1dwfile.add_hkey('KW_OUTPUT', value=sc1dwfile.name)
     # add new header keys
@@ -1121,6 +1125,8 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     sc1dvfile.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     sc1dvfile.copy_hdict(corrfile)
+    # copy infiles to outfile
+    sc1dvfile.infiles = list(corrfile.infiles)
     # add output tag
     sc1dvfile.add_hkey('KW_OUTPUT', value=sc1dvfile.name)
     # add new header keys
@@ -1156,6 +1162,8 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     reconfile.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     reconfile.copy_hdict(corrfile)
+    # copy infiles to outfile
+    reconfile.infiles = list(corrfile.infiles)
     # add output tag
     reconfile.add_hkey('KW_OUTPUT', value=reconfile.name)
     # copy data

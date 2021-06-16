@@ -632,6 +632,7 @@ def index_files(params, recipe):
         block_kind = str(output['BLOCK_KIND'])
         recipename = str(output['RECIPE'])
         runstring = str(output['RUNSTRING'])
+        infiles = str(output['INFILES'])
         used = int(output['USED'])
         rawfix = int(output['RAWFIX'])
         # store header keys
@@ -647,7 +648,7 @@ def index_files(params, recipe):
             else:
                 hkeys[rkey] = 'Null'
         # finally add to database
-        indexdb.add_entry(outfile, block_kind, recipename, runstring,
+        indexdb.add_entry(outfile, block_kind, recipename, runstring, infiles,
                           hkeys, used, rawfix)
 
 

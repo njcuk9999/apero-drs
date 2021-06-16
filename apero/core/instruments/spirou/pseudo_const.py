@@ -573,7 +573,7 @@ class PseudoConstants(DefaultConstants):
         :return: list of keys
         """
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
-                'KW_CCAS', 'KW_CREF', 'KW_CALIBWH',
+                'KW_CCAS', 'KW_CREF', 'KW_CALIBWH', 'KW_INSTRUMENT',
                 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_DRS_MODE']
         return keys
 
@@ -1015,6 +1015,7 @@ class PseudoConstants(DefaultConstants):
         index_columns['LAST_MODIFIED'] = float
         index_columns['RECIPE'] = str
         index_columns['RUNSTRING'] = str
+        index_columns['INFILES'] = str
         # split names and types and add header keys
         columns = list(index_columns.keys()) + hkeys
         ctypes = list(index_columns.values()) + htypes

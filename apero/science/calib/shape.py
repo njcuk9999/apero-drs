@@ -1407,14 +1407,20 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     if hcfile is None:
         outfile1.add_hkey_1d('KW_INFILE1', values=rawfpfiles,
                              dim1name='fpfiles')
+        # add in files
+        outfile1.infiles = rawfpfiles
     elif fpfile is None:
         outfile1.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
                              dim1name='hcfiles')
+        # add in files
+        outfile1.infiles = rawhcfiles
     else:
         outfile1.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
                              dim1name='hcfiles')
         outfile1.add_hkey_1d('KW_INFILE2', values=rawfpfiles,
                              dim1name='fpfiles')
+        # add in files
+        outfile1.infiles = list(rawhcfiles) + list(rawfpfiles)
     # add the calibration files use
     outfile1 = gen_calib.add_calibs_to_header(outfile1, fpprops)
     # add qc parameters
@@ -1447,6 +1453,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     outfile2.construct_filename(infile=fpfile)
     # copy header from outfile1
     outfile2.copy_hdict(outfile1)
+    # add in files
+    outfile2.infiles = list(rawhcfiles) + list(rawfpfiles)
     # set output key
     outfile2.add_hkey('KW_OUTPUT', value=outfile2.name)
     # copy data
@@ -1475,6 +1483,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     outfile3.construct_filename(infile=fpfile)
     # copy header from outfile1
     outfile3.copy_hdict(outfile1)
+    # add in files
+    outfile3.infiles = list(rawhcfiles) + list(rawfpfiles)
     # set output key
     outfile3.add_hkey('KW_OUTPUT', value=outfile3.name)
     # copy data
@@ -1506,7 +1516,11 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile0 = recipe.outputs['SHAPE_BDXMAP_FILE'].newcopy(params=params)
         debugfile0.construct_filename(infile=fpfile)
         debugfile0.copy_hdict(outfile1)
+        # add in files
+        debugfile0.infiles = list(rawhcfiles) + list(rawfpfiles)
+        # add output type
         debugfile0.add_hkey('KW_OUTPUT', value=debugfile0.name)
+        # add data
         debugfile0.data = dxmap0
         # define multi lists
         data_list = [fp_table]
@@ -1528,7 +1542,11 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile1 = recipe.outputs['SHAPE_IN_FP_FILE'].newcopy(params=params)
         debugfile1.construct_filename(infile=fpfile)
         debugfile1.copy_hdict(outfile1)
+        # add in files
+        debugfile1.infiles = list(rawhcfiles) + list(rawfpfiles)
+        # add output type
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
+        # add output type
         debugfile1.data = fpimage
         # define multi lists
         data_list = [fp_table]
@@ -1547,7 +1565,11 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile2 = recipe.outputs['SHAPE_OUT_FP_FILE'].newcopy(params=params)
         debugfile2.construct_filename(infile=fpfile)
         debugfile2.copy_hdict(outfile1)
+        # add in files
+        debugfile2.infiles = list(rawhcfiles) + list(rawfpfiles)
+        # add output type
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
+        # add data
         debugfile2.data = fpimage2
         # define multi lists
         data_list = [fp_table]
@@ -1571,6 +1593,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
             debugfile3 = shape_in_hc_file.newcopy(params=params)
             debugfile3.construct_filename(infile=hcfile)
             debugfile3.copy_original_keys(hcfile)
+            # add in files
+            debugfile3.infiles = list(rawhcfiles) + list(rawfpfiles)
             # add version
             debugfile3.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
             # add dates
@@ -1609,7 +1633,11 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
                 shape_out_hc_file = recipe.outputs['SHAPE_OUT_HC_FILE']
                 debugfile4 = shape_out_hc_file.newcopy(params=params)
                 debugfile4.construct_filename(infile=hcfile)
+                # copy debug file 3
                 debugfile4.copy_hdict(debugfile3)
+                # add in files
+                debugfile4.infiles = list(rawhcfiles) + list(rawfpfiles)
+                # add output key
                 debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
                 debugfile4.data = hcimage2
                 # define multi lists
@@ -1769,6 +1797,8 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         hfiles = [infile.basename]
     outfile.add_hkey_1d('KW_INFILE1', values=hfiles,
                         dim1name='hcfiles')
+    # add in files
+    outfile.infiles = list(hfiles)
     # add the calibration files use
     outfile = gen_calib.add_calibs_to_header(outfile, props)
     # add qc parameters
@@ -1808,6 +1838,9 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         debugfile1 = shapel_in_fp_file.newcopy(params=params)
         debugfile1.construct_filename(infile=infile)
         debugfile1.copy_hdict(outfile)
+        # add in files
+        debugfile1.infiles = list(hfiles)
+        # add output file
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = image
         # define multi lists
@@ -1827,6 +1860,9 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         debugfile2 = shapel_out_fp_file.newcopy(params=params)
         debugfile2.construct_filename(infile=infile)
         debugfile2.copy_hdict(outfile)
+        # add in files
+        debugfile2.infiles = list(hfiles)
+        # add output file
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
         debugfile2.data = image2
         # define multi lists

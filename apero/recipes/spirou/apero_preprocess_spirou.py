@@ -277,6 +277,8 @@ def __main__(recipe, params):
         # add input filename
         outfile.add_hkey_1d('KW_INFILE1', values=[infile.basename],
                             dim1name='infile')
+        # set infiles
+        outfile.infiles = [infile.basename]
         # add qc parameters
         outfile.add_qckeys(qc_params)
         # add dprtype

@@ -330,13 +330,16 @@ class DrsPath:
     @staticmethod
     def get_block_names(blocks: Union[List[BlockPath], None] = None,
                         params: Union[ParamDict, None] = None,
-                        block_filter: Union[str, None] = None):
+                        block_filter: Union[str, None] = None) -> List[str]:
         """
         Get the block names
 
         :param blocks: List of BlockPath instances (i.e. self.blocks) or None
         :param params: ParamDict, when we don't have blocks require params
-        :return:
+        :param block_filter: str, either 'indexing' or 'logging', whether we
+                             should filter block kinds by a specific type
+
+        :return: list of strings, the block names
         """
         if blocks is None:
             if params is not None:
@@ -753,6 +756,7 @@ class DrsInputFile:
                  dtype: Union[type, None] = None,
                  is_combined: Union[bool, None] = None,
                  combined_list: Union[list, None] = None,
+                 infiles: Union[list, None] = None,
                  s1d: Union[list, None] = None,
                  hkeys: Union[Dict[str, str], None] = None):
         """
@@ -816,6 +820,7 @@ class DrsInputFile:
                             of files [not used in DrsInputFile]
         :param combined_list: list, the list of combined files that make this
                               file instance [not used in DrsInputFile]
+        :param infiles: list, the list of input files (if output file)
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
@@ -882,6 +887,10 @@ class DrsInputFile:
         self.dtype = dtype
         self.is_combined = is_combined
         self.combined_list = combined_list
+        if infiles is None:
+            self.infiles = []
+        else:
+            self.infiles = infiles
         self.s1d = s1d
         # just set hkeys
         self.header_keys = hkeys
@@ -1026,6 +1035,7 @@ class DrsInputFile:
                 dtype: Union[type, None] = None,
                 is_combined: Union[bool, None] = None,
                 combined_list: Union[list, None] = None,
+                infiles: Union[list, None] = None,
                 s1d: Union[list, None] = None,
                 hkeys: Union[Dict[str, str], None] = None):
         """
@@ -1090,6 +1100,7 @@ class DrsInputFile:
                             of files [not used in DrsInputFile]
         :param combined_list: list, the list of combined files that make this
                               file instance [not used in DrsInputFile]
+        :param infiles: list, the list of input files (if output file)
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
@@ -1108,7 +1119,7 @@ class DrsInputFile:
                             obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, hkeys)
+                            is_combined, combined_list, infiles, s1d, hkeys)
 
     def check_params(self, func):
         """
@@ -1226,6 +1237,7 @@ class DrsInputFile:
                   dtype: Union[type, None] = None,
                   is_combined: Union[bool, None] = None,
                   combined_list: Union[list, None] = None,
+                  infiles: Union[list, None] = None,
                   s1d: Union[list, None] = None,
                   hkeys: Union[Dict[str, str], None] = None):
         """
@@ -1291,6 +1303,7 @@ class DrsInputFile:
                             of files [not used in DrsInputFile]
         :param combined_list: list, the list of combined files that make this
                               file instance [not used in DrsInputFile]
+        :param infiles: list, the list of input files (if output file)
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
@@ -1307,7 +1320,7 @@ class DrsInputFile:
                             obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, hkeys)
+                            is_combined, combined_list, infiles, s1d, hkeys)
 
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
@@ -1341,6 +1354,7 @@ class DrsInputFile:
                      dtype: Union[type, None] = None,
                      is_combined: Union[bool, None] = None,
                      combined_list: Union[list, None] = None,
+                     infiles: Union[list, None] = None,
                      s1d: Union[list, None] = None,
                      hkeys: Union[Dict[str, str], None] = None):
         """
@@ -1406,6 +1420,7 @@ class DrsInputFile:
                             of files [not used in DrsInputFile]
         :param combined_list: list, the list of combined files that make this
                               file instance [not used in DrsInputFile]
+        :param infiles: list, the list of input files (if output file)
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
@@ -1422,7 +1437,7 @@ class DrsInputFile:
                             obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, hkeys)
+                            is_combined, combined_list, infiles, s1d, hkeys)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -1870,6 +1885,7 @@ class DrsFitsFile(DrsInputFile):
                  dtype: Union[type, None] = None,
                  is_combined: Union[bool, None] = False,
                  combined_list: Union[list, None] = None,
+                 infiles: Union[list, None] = None,
                  s1d: Union[list, None] = None,
                  hkeys: Union[Dict[str, str], None] = None):
         """
@@ -1929,6 +1945,7 @@ class DrsFitsFile(DrsInputFile):
                             of files
         :param combined_list: list, the list of combined files that make this
                               file instance
+        :param infiles: list, the list of input files (if output file)
         :param s1d: list, a list of s1d images attached to this file instance
                     (for use with extraction file instances)
 
@@ -1950,7 +1967,7 @@ class DrsFitsFile(DrsInputFile):
                               fileset, filesetnames, outfunc, inext, dbname,
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
-                              combined_list, s1d, hkeys)
+                              combined_list, infiles, s1d, hkeys)
         # if ext in kwargs then we have a file extension to check
         self.filetype = filetype
         # set the input extension type
@@ -2028,6 +2045,8 @@ class DrsFitsFile(DrsInputFile):
             self.combined_list = []
         else:
             self.combined_list = combined_list
+        # list the input files (if this is an output file)
+        self.infiles = []
         # list s1d files linked to this file
         if s1d is None:
             self.s1d = []
@@ -2130,6 +2149,7 @@ class DrsFitsFile(DrsInputFile):
                 dtype: Union[type, None] = None,
                 is_combined: Union[bool, None] = None,
                 combined_list: Union[list, None] = None,
+                infiles: Union[list, None] = None,
                 s1d: Union[list, None] = None,
                 hkeys: Union[Dict[str, str], None] = None):
         """
@@ -2194,6 +2214,7 @@ class DrsFitsFile(DrsInputFile):
                             of files [not used in DrsInputFile]
         :param combined_list: list, the list of combined files that make this
                               file instance [not used in DrsInputFile]
+        :param infiles: list, the list of input files (if output file)
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
@@ -2212,7 +2233,7 @@ class DrsFitsFile(DrsInputFile):
                             obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, hkeys)
+                            is_combined, combined_list, infiles, s1d, hkeys)
 
     def string_output(self) -> str:
         """
@@ -2278,6 +2299,7 @@ class DrsFitsFile(DrsInputFile):
                   dtype: Union[type, None] = None,
                   is_combined: Union[bool, None] = None,
                   combined_list: Union[list, None] = None,
+                  infiles: Union[list, None] = None,
                   s1d: Union[list, None] = None,
                   hkeys: Union[Dict[str, str], None] = None):
         """
@@ -2343,6 +2365,7 @@ class DrsFitsFile(DrsInputFile):
                             of files [not used in DrsInputFile]
         :param combined_list: list, the list of combined files that make this
                               file instance [not used in DrsInputFile]
+        :param infiles: list, the list of input files (if output file)
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
@@ -2396,6 +2419,7 @@ class DrsFitsFile(DrsInputFile):
                      dtype: Union[type, None] = None,
                      is_combined: Union[bool, None] = None,
                      combined_list: Union[list, None] = None,
+                     infiles: Union[list, None] = None,
                      s1d: Union[list, None] = None,
                      hkeys: Union[Dict[str, str], None] = None):
         """
@@ -2461,6 +2485,7 @@ class DrsFitsFile(DrsInputFile):
                             of files [not used in DrsInputFile]
         :param combined_list: list, the list of combined files that make this
                               file instance [not used in DrsInputFile]
+        :param infiles: list, the list of input files (if output file)
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
@@ -2477,7 +2502,7 @@ class DrsFitsFile(DrsInputFile):
                             obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, hkeys)
+                            is_combined, combined_list, infiles, s1d, hkeys)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -3651,6 +3676,8 @@ class DrsFitsFile(DrsInputFile):
             self.output_dict['RUNSTRING'] = str(runstring)
             # deal with recipe
             self.output_dict['RECIPE'] = str(runstring).split()[0]
+        # add the infiles
+        self.output_dict['INFILES'] = '|'.join(self.infiles)
         # add whether this row should be used be default (always 1)
         self.output_dict['USED'] = used
         # add the raw fix (all files here should be raw fixed)
@@ -4900,6 +4927,7 @@ class DrsNpyFile(DrsInputFile):
                  dtype: Union[type, None] = None,
                  is_combined: Union[bool, None] = None,
                  combined_list: Union[list, None] = None,
+                 infiles: Union[list, None] = None,
                  s1d: Union[list, None] = None,
                  hkeys: Union[Dict[str, str], None] = None):
         """
@@ -4945,6 +4973,7 @@ class DrsNpyFile(DrsInputFile):
         :param dtype: NOT USED FOR NPY FILE CLASS
         :param is_combined: NOT USED FOR NPY FILE CLASS
         :param combined_list: NOT USED FOR NPY FILE CLASS
+        :param infiles: NOT USED FOR NPY FILE CLASS
         :param s1d: NOT USED FOR NPY FILE CLASS
         :param hkeys: NOT USED FOR NPY FILE CLASS
         """
@@ -5207,6 +5236,7 @@ class DrsNpyFile(DrsInputFile):
                 dtype: Union[type, None] = None,
                 is_combined: Union[bool, None] = None,
                 combined_list: Union[list, None] = None,
+                infiles: Union[list, None] = None,
                 s1d: Union[list, None] = None,
                 hkeys: Union[Dict[str, str], None] = None):
         """
@@ -5253,6 +5283,7 @@ class DrsNpyFile(DrsInputFile):
         :param dtype: NOT USED FOR NPY FILE CLASS
         :param is_combined: NOT USED FOR NPY FILE CLASS
         :param combined_list: NOT USED FOR NPY FILE CLASS
+        :param infiles: list, the list of input files (if output file)
         :param s1d: NOT USED FOR NPY FILE CLASS
         :param hkeys: NOT USED FOR NPY FILE CLASS
         """
@@ -5299,6 +5330,7 @@ class DrsNpyFile(DrsInputFile):
                      dtype: Union[type, None] = None,
                      is_combined: Union[bool, None] = None,
                      combined_list: Union[list, None] = None,
+                     infiles: Union[list, None] = None,
                      s1d: Union[list, None] = None,
                      hkeys: Union[Dict[str, str], None] = None):
         """
@@ -5347,6 +5379,7 @@ class DrsNpyFile(DrsInputFile):
         :param dtype: NOT USED FOR NPY FILE CLASS
         :param is_combined: NOT USED FOR NPY FILE CLASS
         :param combined_list: NOT USED FOR NPY FILE CLASS
+        :param infiles: NOT USED FOR NPY FILE CLASS
         :param s1d: NOT USED FOR NPY FILE CLASS
         :param hkeys: NOT USED FOR NPY FILE CLASS
         """
@@ -5359,7 +5392,7 @@ class DrsNpyFile(DrsInputFile):
                             obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, hkeys)
+                            is_combined, combined_list, infiles, s1d, hkeys)
 
     # -------------------------------------------------------------------------
     # database methods
@@ -7426,9 +7459,9 @@ def generate_arg_checksum(source: Union[List[str], str],
     # we want a hash of 10 characters
     digest = blake2b(encoded, digest_size=ndigits)
     # create hash
-    hash = digest.hexdigest()
+    _hash = digest.hexdigest()
     # return hash
-    return str(hash)
+    return str(_hash)
 
 
 def decide_on_table_row(table: Union[Table, pd.DataFrame]) -> int:
@@ -7596,6 +7629,7 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
                  dtype: Union[type, None] = None,
                  is_combined: Union[bool, None] = None,
                  combined_list: Union[list, None] = None,
+                 infiles: Union[list, None] = None,
                  s1d: Union[list, None] = None,
                  hkeys: Union[Dict[str, str], None] = None):
     """
@@ -7666,6 +7700,7 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
                         of files [not used in DrsInputFile]
     :param combined_list: list, the list of combined files that make this
                           file instance [not used in DrsInputFile]
+    :param infiles: list, the list of input files (if output file)
     :param s1d: list, a list of s1d images attached to this file instance
                       (for use with extraction file
                        instances) [not used in DrsInputFile]
@@ -7796,7 +7831,10 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
         is_combined = deepcopy(instance2.is_combined)
     # set combined_list
     if combined_list is None:
-        combined_list = instance2.combined_list
+        combined_list = deepcopy(instance2.combined_list)
+    # set input files
+    if infiles is None:
+        infiles = deepcopy(instance2.infiles)
     # set s1d
     if s1d is None:
         s1d = instance2.s1d
@@ -7815,7 +7853,7 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
                         fileset, filesetnames, outfunc, inext, dbname,
                         dbkey, rkeys, numfiles, shape, hdict,
                         output_dict, datatype, dtype, is_combined,
-                        combined_list, s1d, new_hkeys)
+                        combined_list, infiles, s1d, new_hkeys)
 
 # =============================================================================
 # End of code

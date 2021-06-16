@@ -1831,6 +1831,8 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # add input files
     polfile.add_hkey_1d('KW_INFILE1', values=rawfiles1, dim1name='file')
     polfile.add_hkey_1d('KW_INFILE2', values=rawfiles2, dim1name='file')
+    # add input files to output file
+    polfile.infiles = list(rawfiles1) + list(rawfiles2)
     # add wave and blaze used
     polfile.add_hkey('KW_CDBWAVE', value=props['GLOBAL_WAVEFILE'])
     polfile.add_hkey('KW_CDBBLAZE', value=props['GLOBAL_BLAZEFILE'])
@@ -1867,6 +1869,8 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     stokesfile.construct_filename(infile=cfile)
     # copy header from pol file
     stokesfile.copy_hdict(polfile)
+    # add input files to output file
+    stokesfile.infiles = list(rawfiles1) + list(rawfiles2)
     # add output tag
     stokesfile.add_hkey('KW_OUTPUT', value=stokesfile.name)
     # add data
@@ -1898,6 +1902,8 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     null1file.construct_filename(infile=cfile)
     # copy header from pol file
     null1file.copy_hdict(polfile)
+    # add input files to output file
+    null1file.infiles = list(rawfiles1) + list(rawfiles2)
     # add output tag
     null1file.add_hkey('KW_OUTPUT', value=null1file.name)
     # add data
@@ -1929,6 +1935,8 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     null2file.construct_filename(infile=cfile)
     # copy header from pol file
     null2file.copy_hdict(polfile)
+    # add input files to output file
+    null2file.infiles = list(rawfiles1) + list(rawfiles2)
     # add output tag
     null2file.add_hkey('KW_OUTPUT', value=null2file.name)
     # add data
@@ -1962,6 +1970,8 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
         s1dfile.construct_filename(infile=cfile)
         # copy header from corrected e2ds file
         s1dfile.copy_hdict(polfile)
+        # add input files to output file
+        s1dfile.infiles = list(rawfiles1) + list(rawfiles2)
         # add output tag
         s1dfile.add_hkey('KW_OUTPUT', value=s1dfile.name)
         # copy data

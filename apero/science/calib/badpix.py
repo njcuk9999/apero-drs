@@ -369,6 +369,8 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
                            dim1name='flatfile')
     badpixfile.add_hkey_1d('KW_INFILE2', values=hfiles2,
                            dim1name='darkfile')
+    # add infiles
+    badpixfile.infiles = list(hfiles1) + list(hfiles2)
     # add qc parameters
     badpixfile.add_qckeys(qc_params)
     # add background statistics
@@ -410,6 +412,8 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     backmapfile.copy_hdict(badpixfile)
     # add output tag
     backmapfile.add_hkey('KW_OUTPUT', value=backmapfile.name)
+    # add infiles
+    backmapfile.infiles = list(hfiles1) + list(hfiles2)
     # write to file
     backmap = np.array(backmap, dtype=int)
     # copy data
