@@ -1364,6 +1364,8 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     else:
         infiles = [infile.basename]
     tpclfile.add_hkey_1d('KW_INFILE1', values=infiles, dim1name='file')
+    # add infiles to outfile
+    tpclfile.infiles = list(infiles)
     # add  calibration files used
     tpclfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
     # ----------------------------------------------------------------------

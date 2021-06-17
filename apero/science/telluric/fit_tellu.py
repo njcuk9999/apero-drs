@@ -1190,6 +1190,8 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     rc1dwfile.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     rc1dwfile.copy_hdict(corrfile)
+    # copy infiles to outfile
+    rc1dwfile.infiles = list(corrfile.infiles)
     # add output tag
     rc1dwfile.add_hkey('KW_OUTPUT', value=rc1dwfile.name)
     # add new header keys
@@ -1221,6 +1223,8 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     rc1dvfile.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     rc1dvfile.copy_hdict(corrfile)
+    # copy infiles to outfile
+    rc1dvfile.infiles = list(corrfile.infiles)
     # add output tag
     rc1dvfile.add_hkey('KW_OUTPUT', value=rc1dvfile.name)
     # add new header keys
