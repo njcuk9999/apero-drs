@@ -1827,6 +1827,8 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         for extname in outputs[fiber]:
             # get the s1d in file type
             extfile = outputs[fiber][extname]
+            # add infiles to out file
+            extfile.infiles = [extfile.basename]
             # add leak corr key
             extfile.add_hkey('KW_LEAK_CORR', value=True)
             # loop around leak keys to add
