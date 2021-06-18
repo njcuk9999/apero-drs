@@ -242,7 +242,9 @@ def __main__(recipe, params):
         # correct the left / right (not needed for spirou)
         image = prep.correct_left_right(params, image)
 
-        # get calibration database
+        # TODO: Add Etiennes function to clean first pixel in amp
+
+        # # get calibration database
         # calibdbm = drs_database.CalibrationDatabase(params)
         # # do nirps correction
         # WLOG(params, '', textentry('40-010-00016'))
