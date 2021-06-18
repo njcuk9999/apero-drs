@@ -115,7 +115,7 @@ class BlockPath:
         # convert block path to real path (remove symbolic links)
         block_path = None
         try:
-            block_path = os.path.realpath(params[key])
+            block_path = params[key]
             # check that block path exists
             if not os.path.exists(block_path):
                 emsg = 'BlockPathError: Key {0} does not exist\n\tPath={1}'
@@ -289,7 +289,7 @@ class DrsPath:
         self.block_fileset = None
         # absolute path must be a real path (not a symbolic link)
         if abspath is not None:
-            self.abspath = os.path.realpath(abspath)
+            self.abspath = abspath
         else:
             self.abspath = None
         self.block_kind = block_kind
@@ -1842,6 +1842,8 @@ class DrsInputFile:
             self.output_dict['RUNSTRING'] = str(runstring)
             # deal with recipe
             self.output_dict['RECIPE'] = str(runstring).split()[0]
+        # add the infiles
+        self.output_dict['INFILES'] = '|'.join(self.infiles)
         # add whether this row should be used be default (always 1)
         #    if file does not exist we do set this to zero though (as a flag)
         self.output_dict['USED'] = used
@@ -5850,6 +5852,8 @@ class DrsOutFile(DrsInputFile):
         self.out_filename = None
         self.out_dirname = None
         self.out_required = required
+        # store infiles
+        self.infiles = []
         # store reduced files
         self.clear_files = []
 
@@ -6056,14 +6060,14 @@ class DrsOutFile(DrsInputFile):
             new.header_add[key] = list(self.header_add[key])
         # copy whether required
         new.out_required = bool(self.out_required)
-
         # specific data
         new.out_filename = deepcopy(self.out_filename)
         new.out_dirname = deepcopy(self.out_dirname)
         new.out_required = deepcopy(self.out_required)
+        # store infiles
+        new.infiles = deepcopy(self.infiles)
         # store reduced files
         new.clear_files = deepcopy(self.clear_files)
-
         # return new copy
         return new
 
@@ -6274,6 +6278,43 @@ class DrsOutFile(DrsInputFile):
         # self._remove_duplicate_keys(params, pconst)
         # add extension names as comments
         self._add_extensions_names_to_primary(params)
+
+    def set_db_infiles(self, params: ParamDict, database: Any):
+        """
+        Set the "infiles" for use in indexing - this takes the
+        index database entry for extension 1 (or 0 if 1 not present) and
+        puts the "INFILES" column into self.infiles
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param database: IndexDatabase, the database instance
+
+        :return: None, updates self.infiles
+        """
+        # get filename to crossmatch with database
+        if len(self.extensions) > 1:
+            filename = self.extensions[1].filename
+        else:
+            filename = self.extensions[0].filename
+        # condition on database
+        condition = 'ABSPATH="{0}"'.format(filename)
+        # get database entries
+        tname = database.database.tname
+        dkwargs = dict(condition=condition, table=tname, return_pandas=True)
+        # try to get infiles from database
+        table = database.database.get('*', **dkwargs)
+        # deal with no entries
+        if len(table) == 0:
+            rawinfiles = []
+        # else just keep last entry
+        else:
+            rawinfiles = str(table['INFILES'].iloc[-1]).split(',')
+        # clean entries
+        infiles = []
+        for rawinfile in rawinfiles:
+            if not drs_text.null_text(rawinfile, ['None', 'Null', '']):
+                infiles.append(rawinfile)
+        # set the infiles
+        self.infiles = list(infiles)
 
     def _add_header_keys(self, params: ParamDict):
         """
@@ -6525,7 +6566,7 @@ class DrsOutFile(DrsInputFile):
             if ext.filename not in self.clear_files:
                 if ext.filename is not None:
                     # make sure filename does not contain sym links
-                    filename = os.path.realpath(ext.filename)
+                    filename = ext.filename
                     # add to clear files
                     self.clear_files.append(filename)
         # deal with table column clear files
@@ -6621,6 +6662,8 @@ class DrsOutFile(DrsInputFile):
             self.output_dict['RUNSTRING'] = str(runstring)
             # deal with recipe
             self.output_dict['RECIPE'] = str(runstring).split()[0]
+        # add the infiles
+        self.output_dict['INFILES'] = '|'.join(self.infiles)
         # add whether this row should be used be default (always 1)
         self.output_dict['USED'] = used
         # add the raw fix (all files here should be raw fixed)
