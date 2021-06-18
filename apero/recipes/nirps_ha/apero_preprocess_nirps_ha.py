@@ -235,23 +235,8 @@ def __main__(recipe, params):
         WLOG(params, '', textentry('40-010-00018'))
         image, cprops = prep.correct_cosmics(params, image, intercept,
                                              errslope, inttime)
-
-        # correct for the top and bottom reference pixels
-        WLOG(params, '', textentry('40-010-00003'))
-        image = prep.correct_top_bottom(params, image)
-        # correct the left / right (not needed for spirou)
-        image = prep.correct_left_right(params, image)
-
-        # TODO: Add Etiennes function to clean first pixel in amp
-
-        # # get calibration database
-        # calibdbm = drs_database.CalibrationDatabase(params)
-        # # do nirps correction
-        # WLOG(params, '', textentry('40-010-00016'))
-        # image, pfile = prep.nirps_correction(params, image,
-        #                                      header=infile.get_header(),
-        #                                      database=calibdbm)
-        pfile = 'None'
+        # nirps correction for preprocessing (specific to NIRPS)
+        image = prep.nirps_correction(params, image)
 
         # ------------------------------------------------------------------
         # calculate mid observation time
@@ -289,7 +274,6 @@ def __main__(recipe, params):
         # add the shift that was used to correct the image
         outfile.add_hkey('KW_PPSHIFTX', value=shiftdx)
         outfile.add_hkey('KW_PPSHIFTY', value=shiftdy)
-        outfile.add_hkey('KW_PPMSTR_FILE', value=os.path.basename(pfile))
         # add mid observation time
         outfile.add_hkey('KW_MID_OBS_TIME', value=mid_obs_time.mjd)
         outfile.add_hkey('KW_MID_OBSTIME_METHOD', value=mid_obs_method)
@@ -318,8 +302,8 @@ def __main__(recipe, params):
         # add to output files (for indexing)
         recipe.add_output_file(outfile)
         # index this file
-        drs_startup.end_main(params, None, recipe, success=True, outputs='pp',
-                             end=False)
+        drs_startup.end_main(params, None, recipe, success=True,
+                             outputs='pp', end=False)
         # ------------------------------------------------------------------
         # append to output storage in p
         # ------------------------------------------------------------------

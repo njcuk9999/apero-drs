@@ -511,56 +511,117 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
 # =============================================================================
 # Define nirps detector functions
 # =============================================================================
-def nirps_correction(params: ParamDict, image: np.ndarray,
-                     mask: Union[np.ndarray, None] = None,
-                     header: Union[drs_fits.Header, None] = None,
-                     database: Union[CalibrationDatabase, None] = None
-                     ) -> Tuple[np.ndarray, str]:
+def nirps_correction(params: ParamDict, image: np.ndarray) -> np.ndarray:
     """
-    Pre-processing correction for NIRPS
+    Pre-processing of NIRPS images with only left/right and top/bottom pixels
+
+    if we pass the name of a flat_flat file as 'mask_file', then we also
+    correct for correlated noise between amps using dark pixels. This should
+    not be done on an LED image. You can set plot = True or force = True
+    if you want to see nice plots or force the overwrite of existing pre-process
+    files.
 
     :param params: ParamDict, the parameter dictionary of constants
     :param image: np.ndarray, the image to correct
-    :param mask: np.ndarray or None - if set a mask for the correction
-    :param header: fits.Header or None - if set the header for file
-    :param database: CalibrationDatabase or Nont - if set the loaded calibDB
-                     (if set to None is loaded inside the code)
 
-    :return: tuple, 1. the corrected image, 2. the mask filename
+    :return: numpy 2D array, the corrected image
     """
     # define the bin size for low level frequencies
     binsize = params['PP_MEDAMP_BINSIZE']
     # number of amplifiers in total
     namps = params['PP_TOTAL_AMP_NUM']
-    # deal with not having a mask
-    if mask is None:
-        # get pp mask file
-        mask, pfile = get_pp_mask(params, header, database=database)
-    else:
-        pfile = 'user'
-    # get image shape
-    dim1, dim2 = image.shape
-    # create masked version of data
+    # shape of the image
+    nbypix, nbxpix = image.shape
+    # define the width of amplifiers
+    ampwid = nbxpix // namps
+    # -------------------------------------------------------------------------
+    # before we even get started, we remove top/bottom ref pixels
+    # to reduce DC level differences between ampliers
+    # remove the ramp in pixel values between the top and bottom of the array
+    # corrects for amplified DC level offsets
+    # map of pixel values within an amplifier
+    ypix, xpix = np.indices([nbypix, ampwid])
+    # fraction of position on the amplifier
+    ypix = ypix / nbypix
+    # storage for the top/bottom median
+    top_med = np.zeros(namps)
+    bottom_med = np.zeros(namps)
+    # loop around the amplifiers
+    for namp in range(namps):
+        # start and end across amplifiers
+        start, end = namp * ampwid, (namp + 1) * ampwid
+        # median of bottom ref pixels
+        bottom_med[namp] = np.nanmedian(image[0:4, start:end])
+        # median of top ref pixels
+        top_med[namp] = np.nanmedian(image[-4:, start:end])
+    # subtraction of slope between top and bottom
+    for namp in range(namps):
+        bottom_med = bottom_med - np.nanmedian(bottom_med)
+        top_med = top_med - np.nanmedian(top_med)
+    # subtract top / bottom from image for each amplifier
+    for namp in range(namps):
+        # start and end across amplifiers
+        start, end = namp * ampwid, (namp + 1) * ampwid
+        # get correction
+        tb_corr = bottom_med[namp] + ypix * (top_med[namp] - bottom_med[namp])
+        # correct iamge
+        image[:, start:end] = image[:, start:end]  - tb_corr
+    # -------------------------------------------------------------------------
+    # copy the image
     image2 = np.array(image)
-    image2[mask] = np.nan
-    # low frequency correction
-    # median-bin and expand back to original size
-    medbin_image = mp.medbin(image2, binsize, binsize)
-    lowf = ndimage.zoom(medbin_image, dim1 // binsize)
-    # subtract low-frequency from masked image
+    # TODO: move to language database
+    msg = 'Masking bright pixels'
+    WLOG(params, '', msg)
+    # define the bright mask
+    bright_mask = np.ones_like(image, dtype=bool)
+    # loop around all pixels in the y-direction
+    for pixel_y in range(nbypix):
+        # get the 90th percentile value for this row
+        p90 = np.nanpercentile(image2[pixel_y], 90)
+        # add to mask
+        bright_mask[pixel_y] = image2[pixel_y] > p90
+    # set all bright pixels to NaN
+    image2[bright_mask] = np.nan
+    # -------------------------------------------------------------------------
+    # we find the low level frequencies
+    # we bin in regions of binsize x binsize pixels. This CANNOT be
+    # smaller than the order footprint on the array
+    # as it would lead to a set of NaNs in the downsized
+    # image and chaos afterward
+    # TODO: move to language database
+    msg = 'Finding low frequencies'
+    WLOG(params, '', msg)
+    # find 25th percentile, more robust against outliers
+    tmp = mp.percentile_bin(image2, binsize, binsize, percentile=25)
+    # set NaN pixels to zero (for the zoom)
+    tmp[~np.isfinite(tmp)] = 0.0
+    # use the zoom to bin the data
+    lowf = ndimage.zoom(tmp, np.array(image2.shape)//binsize)
+    # subtract the low frequency
     image2 = image2 - lowf
-    # find the amplifier cross-talk map
-    crosstalk = med_amplifiers(image, namps)
-    # subtract low-frequency from masked image
-    image2 = image2 - crosstalk
-    # subtract both low-frequency and cross-talk from input image
-    image = image - (lowf + crosstalk)
-    # calculate the median of the masked image (to calculate scattered light?
-    med_image2 = mp.nanmedian(image2, axis=0)
-    # subtract off the masked image (scattered light correction?)
-    image = image - np.tile(med_image2, dim1).reshape(dim1, dim2)
+    # remove correlated profile in Y axis
+    yprofile1d = np.nanmedian(image2, axis=1)
+    # remove an eventual small zero point or low frequency
+    zerop = mp.lowpassfilter(yprofile1d, 501)
+    yprofile1d = yprofile1d - zerop
+    # pad in two dimensions
+    yprofile = np.repeat(yprofile1d, nbypix).reshape(nbypix, nbxpix)
+    # remove from input image
+    image = image - yprofile
+    # first pixel of each amplifier
+    amppix = np.arange(namps//2) * ampwid * 2
+    first_col_x = np.append(amppix, amppix - 1 + (ampwid * 2))
+    first_col_x = np.sort(first_col_x)
+    # median-filter the first and last ref pixel, which trace the
+    # behavior of the first-col per amp.
+    med_first = ndimage.median_filter(image[:, 0], 7)
+    med_last = ndimage.median_filter(image[:, -1], 7)
+    amp0 = (med_first + med_last) / 2
+    # subtract first column behavior
+    for col_x in first_col_x:
+        image[:, col_x] = image[:, col_x] - amp0
     # return corrected image
-    return image, pfile
+    return image
 
 
 def get_pp_mask(params: ParamDict, header: drs_fits.Header,
