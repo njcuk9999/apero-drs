@@ -2,6 +2,91 @@ Changelog
 =========
 
 
+0.7.133 (2021-06-17)
+--------------------
+- Keep adding drs output files with infiles (for the database) - brute
+  force approach --> find blanks in database (we missed some) [Neil
+  Cook]
+- Keep adding drs output files with infiles (for the database) - brute
+  force approach --> find blanks in database (we missed some) [Neil
+  Cook]
+- Add KW_INSTRUMENT + add infiles column to the index database. [Neil
+  Cook]
+
+
+0.7.132 (2021-06-15)
+--------------------
+- Update requirements_test.txt. [Neil Cook]
+- Apero.core.instruments.*.pseudo_const.py - fix drs_mode. [Neil Cook]
+- Apero.core.instruments.*.pseudo_const.py - add instrument to the
+  keywords. [Neil Cook]
+- Apero.core.instruments.spirou.pseudo_const.py - update DRSMODE -
+  spectroscopy only for P16,P16   everything else with P2 or P4 or P14
+  or P16 is POLAR (if valid in both channels) [Neil Cook]
+
+
+0.7.131 (2021-06-14)
+--------------------
+- Apero.core.instruments.*.file_definitions + default_keywords.py - make
+  sure raw files check instrument header key. [Neil Cook]
+- Apero.core.instruments.spirou.pseudo_const.py - add polar rhomb
+  positions that are valid for spectroscopy (P2,P4,P14,P16) unless
+  specific polar combination. [Neil Cook]
+- Add out directory to the reset code. [Neil Cook]
+
+
+0.7.130 (2021-06-12)
+--------------------
+- Work on apero_get.py. [Neil Cook]
+- Updates to echelle order numbers to wave solution - add to header.
+  [Neil Cook]
+- Add echelle order numbers to wave solution. [Neil Cook]
+
+
+0.7.129 (2021-06-11)
+--------------------
+- Updates to localisation - now tested on mini data 1+2 spirou, + nirps
+  20210218. [Neil Cook]
+- Code space for echelle orders + change wave_night __NAME__ to
+  wave_night (was wave_master) [Neil Cook]
+- Apero_get.py - new tool to get any file from the drs - currently code
+  not copied see apero-utils/general/apero_get/apero_get.py for the
+  draft code. [Neil Cook]
+
+
+0.7.128 (2021-06-09)
+--------------------
+- Updates to localisation. [Neil Cook]
+- Apero.tools.recipes.bin.apero_database.py - add a mode to update
+  reset.object.csv using either a dfits text file or a read of all
+  current raw files. [Neil Cook]
+- Continue changes to update localisation for SPIRou and NIRPS. [Neil
+  Cook]
+- Upgrade the localisation using new recipe from EA (use blob finding)
+  [Neil Cook]
+- Fix installation bug (Issue #669) [Neil Cook]
+
+
+0.7.127 (2021-06-02)
+--------------------
+- Apero.core.utils.drs_startup.py - must update recipe.inpudir and
+  recipe.in_block_str when in_block_str is a block kind (and forced)
+  [Neil Cook]
+- Apero.core.utils.drs_startup.py - deal with in_block_str being a path
+  as well as the current working directory containing block kind as a
+  directory (would break here before) [Neil Cook]
+- Apero.science.calib.wave.py - need a return to res_fit_super_gauss
+  function. [Neil Cook]
+- Merge branch 'master' into v0.7.126-working. [Neil Cook]
+
+  # Conflicts:
+  #	README.md
+- Update README.md. [Neil Cook]
+
+  correct typo
+- Update version/date/changelog/update notes/documentation. [Neil Cook]
+
+
 0.7.126 (2021-06-01)
 --------------------
 - Apero.science.calib.wave.py - fix res map to work for NIRPS (gaussian

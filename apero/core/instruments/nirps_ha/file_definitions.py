@@ -28,7 +28,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Instrument name in header
-INSTRUMENT_NAME = 'INSTRUMENT_NAME'
+INSTRUMENT_NAME = 'NIRPS'
 
 # =============================================================================
 # Define Files
