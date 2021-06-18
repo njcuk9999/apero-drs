@@ -1890,10 +1890,16 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     # clear loading message
     TLOG(params, '', '')
     # -------------------------------------------------------------------------
+    # print progress
+    # TODO: add to language database
+    msg = '\tChecking last modified date for all files'
+    WLOG(params, '', msg)
     # store valid files
     valid_files = []
     # filter files
-    for filename in allfiles:
+    for filename in tqdm(allfiles):
+        # make filename a string
+        filenamestr = str(filename)
         # do not include directories
         if not filename.is_file():
             continue
@@ -1906,7 +1912,7 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
             if str(filename) in excfiles:
                 if last_modified is not None:
                     # get position in excfiles
-                    pos = np.where(np.array(excfiles) == str(filename))[0][0]
+                    pos = excfiles.index(filenamestr)
                     # get last modified time
                     ftime = filename.stat().st_mtime
                     # only continue if ftime is equal to the one given
