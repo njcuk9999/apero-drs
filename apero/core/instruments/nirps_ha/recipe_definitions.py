@@ -171,6 +171,7 @@ pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 # -----------------------------------------------------------------------------
 # apero_pp_master_nirps_ha
 # -----------------------------------------------------------------------------
+# TODO: remove
 apero_pp_master = DrsRecipe(__INSTRUMENT__)
 apero_pp_master.name = 'apero_pp_master_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_pp_master.shortname = 'PPM'
@@ -1241,7 +1242,6 @@ recipes.append(apero_wave_night_old)
 # -----------------------------------------------------------------------------
 full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 # master run
-full_seq.add(apero_pp_master, master=True)
 full_seq.add(apero_preprocess, recipe_kind='pre-all')
 full_seq.add(apero_dark_master, master=True)
 full_seq.add(apero_badpix, name='BADM', master=True, recipe_kind='calib-master')
@@ -1323,7 +1323,6 @@ full_seq.add(apero_postprocess, files=[files.pp_file],
 # -----------------------------------------------------------------------------
 limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
 # master run
-limited_seq.add(apero_pp_master, master=True)
 limited_seq.add(apero_preprocess, recipe_kind='pre-all')
 limited_seq.add(apero_dark_master, master=True)
 limited_seq.add(apero_badpix, name='BADM', master=True,
@@ -1428,7 +1427,6 @@ limited_seq.add(apero_postprocess, name='SCIPOST', files=[files.pp_file],
 # pp sequence (for trigger)
 # -----------------------------------------------------------------------------
 pp_seq = drs_recipe.DrsRunSequence('pp_seq', __INSTRUMENT__)
-pp_seq.add(apero_pp_master, master=True)
 pp_seq.add(apero_preprocess)
 
 pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)

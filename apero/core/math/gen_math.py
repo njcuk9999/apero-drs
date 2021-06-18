@@ -774,6 +774,45 @@ def xpand_mask(mask1: np.ndarray, mask2: np.ndarray) -> np.ndarray:
     return mask1
 
 
+def percentile_bin(image: np.ndarray, bx: int, by: int,
+                   percentile: float = 50) -> np.ndarray:
+    """
+    Percentile-bin an image
+
+    To be used for low-pass filtering of an image.
+
+    Note the binsizes cannot be smaller than the order footprint on the array
+    as it would lead to a set of NaNs in the downsized image and chaos afterward
+
+    :param image: numpy 2D array, the iamge to bin
+    :param bx: int, the bin size in the x-direction
+    :param by: int, the bin size in the y-direction
+    :param percentile: float, the percentile by which to bin
+
+    :return: numpy 2D array, the updated image
+    """
+    # get the shape of the image
+    nbypix, nbxpix = image.shape
+    #  To be used for low-pass
+    # filterning of an image at a given percentile
+    # Nice for background measurement with low percentiles (say ~10%)
+    # thresholding for point sources detection with high percentiels (say ~90%)
+    outimage = np.zeros([by, bx])
+    # loop around the columns (y)
+    for b_it in range(by):
+        # loop around the rows (x)
+        for b_jt in range(bx):
+            # get x,y start,end
+            ystart, yend = b_it * nbypix//by, (b_it+1) * nbypix//by
+            xstart, xend = b_jt * nbxpix//bx, (b_jt+1) * nbxpix//bx
+            # slice the image
+            slice = image[ystart:yend, xstart:xend]
+            # get the nan percentile
+            outimage[b_it, b_jt] = np.nanpercentile(slice, percentile)
+    # return out image
+    return outimage
+
+
 # =============================================================================
 # Define wave functions
 # =============================================================================
