@@ -150,6 +150,8 @@ def __main__(recipe, params):
         if success:
             # deal with processing headers
             filepostfile.process_header(params)
+            # deal with database infiles
+            filepostfile.set_db_infiles(params, database=indexdbm)
             # update filename/basename and path
             filepostfile.set_filename(filepostfile.out_filename)
             # write file
