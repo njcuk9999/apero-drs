@@ -2609,7 +2609,7 @@ POST_HDREXT_COMMENT_KEY.value = 'KW_IDENTIFIER'
 # Define which block kinds to reindex (warning can take a long time)
 #    only select block kinds that have (or could be) manually changed
 REPROCESS_REINDEX_BLOCKS = REPROCESS_REINDEX_BLOCKS.copy(__NAME__)
-REPROCESS_REINDEX_BLOCKS.value = 'raw,tmp'
+REPROCESS_REINDEX_BLOCKS.value = 'raw,tmp,red,out'
 
 # Define whether to use multiprocess Pool or Process
 REPROCESS_MP_TYPE = REPROCESS_MP_TYPE.copy(__NAME__)
