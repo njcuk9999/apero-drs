@@ -1410,11 +1410,17 @@ class IndexDatabase(DatabaseManager):
         obs_dir = str(basefile.obs_dir)
         basename = str(basefile.basename)
         # ------------------------------------------------------------------
+        # TODO: this need changing
+        #   step 1: filter database by "obs_dir" + block_kind
+        #   step 2: find whether hash is in filtered database
+        #   step 3: if it is use "set" else use "add_row"
+
         try:
             # add new entry to database
             values = [path, obs_dir, basename, block_kind, float(last_modified),
                       str(recipe), str(runstring), str(infiles)]
             values += hvalues + [used, rawfix]
+            # add row
             self.database.add_row(values, table=self.database.tname,
                                   unique_cols=ucols)
         # if this is called we need to set instead of adding
@@ -1698,6 +1704,11 @@ class IndexDatabase(DatabaseManager):
         if len(reqfiles) == 0:
             # return
             return
+        # ---------------------------------------------------------------------
+        # TODO: add to language database
+        msg = '\tReading headers of {0} files (to be updated)'
+        margs = [len(reqfiles)]
+        WLOG(self.params, '', msg.format(*margs))
         # add required files to the database
         for reqfile in tqdm(reqfiles):
             # get a drs path for required file
@@ -1712,7 +1723,7 @@ class IndexDatabase(DatabaseManager):
                 for rkey in rkeys:
                     # get drs key
                     drs_key = self.params[rkey][0]
-
+                    # if key is in header then add to hkeys
                     if drs_key in header:
                         hkeys[rkey] = header[drs_key]
             # add to database
