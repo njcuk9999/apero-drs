@@ -1931,7 +1931,7 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
                 # get last modified time
                 ftime = filename.stat().st_mtime
                 # only continue if ftime is equal to the one given
-                if ftime == lmod[filename]:
+                if ftime == lmod[strfilename]:
                     continue
             # else if we do not have a last modified vector just skip
             #    this file
