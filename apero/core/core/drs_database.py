@@ -1896,32 +1896,45 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     WLOG(params, '', msg)
     # store valid files
     valid_files = []
+    # include files condition
+    incond = incfiles is not None and len(incfiles) > 0
+    # exclude files condition
+    outcond = excfiles is not None
+    # last mod condition
+    lmodcond = last_modified is not None
+    # -------------------------------------------------------------------------
+    # make incfiles and exfiles sets (quicker than lists)
+    if incond:
+        incfiles = set(incfiles)
+    if outcond:
+        excfiles = set(excfiles)
+    # convert last modifi
+    if last_modified is not None:
+        lmod = dict(zip(excfiles, last_modified))
+    else:
+        lmod = dict()
+    # -------------------------------------------------------------------------
     # filter files
     for filename in tqdm(allfiles):
-        # make filename a string
-        filenamestr = str(filename)
         # do not include directories
         if not filename.is_file():
             continue
-        # include files
-        if incfiles is not None and len(incfiles) > 0:
-            if str(filename) not in incfiles:
-                continue
-        # exclude files
-        if excfiles is not None:
-            if str(filename) in excfiles:
-                if last_modified is not None:
-                    # get position in excfiles
-                    pos = excfiles.index(filenamestr)
-                    # get last modified time
-                    ftime = filename.stat().st_mtime
-                    # only continue if ftime is equal to the one given
-                    if ftime == last_modified[pos]:
-                        continue
-                # else if we do not have a last modified vector just skip
-                #    this file
-                else:
+        # include files (if include files defined) and filename in incfiles
+        if incond and str(filename) not in incfiles:
+            continue
+        # exclude files (if exclude files defined) and filename in excfiles
+        if outcond and str(filename) in excfiles:
+            # only do this condition if last modified was defined
+            if lmodcond:
+                # get last modified time
+                ftime = filename.stat().st_mtime
+                # only continue if ftime is equal to the one given
+                if ftime == lmod[filename]:
                     continue
+            # else if we do not have a last modified vector just skip
+            #    this file
+            else:
+                continue
         # add file to valid file list
         valid_files.append(filename.absolute())
     # return valid files

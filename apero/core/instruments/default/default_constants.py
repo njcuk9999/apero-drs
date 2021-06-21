@@ -330,7 +330,7 @@ __all__ = [
     'REPROCESS_OBJ_DPRTYPES',
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
-    'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE',
+    'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_REINDEX_BLOCKS',
 ]
 
 # set name
@@ -4907,6 +4907,17 @@ POST_HDREXT_COMMENT_KEY = Const('POST_HDREXT_COMMENT_KEY', value=None,
 # TOOLS SETTINGS
 # =============================================================================
 cgroup = 'TOOLS SETTING'
+
+# Define which block kinds to reindex (warning can take a long time)
+#    only select block kinds that have (or could be) manually changed
+REPROCESS_REINDEX_BLOCKS = Const('REPROCESS_REINDEX_BLOCKS', value=None,
+                                 dtype=str, source=__NAME__, group=cgroup,
+                                 user=True, active=True,
+                                 description='Define which block kinds to '
+                                             'reindex (warning can take a '
+                                             'long time) only select block '
+                                             'kinds that have (or could be) '
+                                             'manually changed')
 
 # Define whether to use multiprocess Pool or Process
 REPROCESS_MP_TYPE = Const('REPROCESS_MP_TYPE', value=None, dtype=str,
