@@ -121,6 +121,7 @@ def __main__(recipe, params):
         # ---------------------------------------------------------------------
         includelist = params['INCLUDE_OBS_DIRS']
         excludelist = params['EXCLUDE_OBS_DIRS']
+        reindexlist = params.listp('REPROCESS_REINDEX_BLOCKS', dtype='str')
         # get all block kinds
         block_kinds = drs_file.DrsPath.get_block_names(params=params,
                                                        block_filter='indexing')
@@ -133,6 +134,9 @@ def __main__(recipe, params):
         #    we have to loop around block kinds to prevent recipe from updating
         #    the index database every time a new recipe starts
         for block_kind in block_kinds:
+            # deal with reindexing
+            if block_kind not in reindexlist:
+                continue
             # log block update
             WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
             # update index database for block kind
