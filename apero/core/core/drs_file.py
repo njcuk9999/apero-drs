@@ -546,7 +546,7 @@ class DrsPath:
         # loop around directories and see if absolute path belongs to one
         for block in self.blocks:
             # look for directory path in absolute path
-            if block.path in self.abspath:
+            if str(block.path) in str(self.abspath):
                 # set dirkind
                 self.block_kind = str(block.name)
                 # set dirpath
