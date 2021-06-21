@@ -1916,14 +1916,16 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     # -------------------------------------------------------------------------
     # filter files
     for filename in tqdm(allfiles):
+        # str filename
+        strfilename = str(filename)
         # do not include directories
         if not filename.is_file():
             continue
         # include files (if include files defined) and filename in incfiles
-        if incond and str(filename) not in incfiles:
+        if incond and strfilename not in incfiles:
             continue
         # exclude files (if exclude files defined) and filename in excfiles
-        if outcond and str(filename) in excfiles:
+        if outcond and strfilename in excfiles:
             # only do this condition if last modified was defined
             if lmodcond:
                 # get last modified time
