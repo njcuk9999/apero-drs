@@ -232,9 +232,16 @@ def __main__(recipe, params):
         # correct image
         # ------------------------------------------------------------------
         # correct cosmic rays
-        WLOG(params, '', textentry('40-010-00018'))
-        image, cprops = prep.correct_cosmics(params, image, intercept,
-                                             errslope, inttime)
+        # TODO: Etienne WILL fix this some time
+        #    - problem with the intercept correction for NIRPS only
+        # WLOG(params, '', textentry('40-010-00018'))
+        # image, cprops = prep.correct_cosmics(params, image, intercept,
+        #                                      errslope, inttime)
+        cprops = dict()
+        cprops['NUM_BAD_INTERCEPT'] = 'Not Implemented'
+        cprops['NUM_BAD_SLOPE'] = 'Not Implemented'
+        cprops['NUM_BAD_BOTH'] = 'Not Implemented'
+
         # nirps correction for preprocessing (specific to NIRPS)
         image = prep.nirps_correction(params, image)
 
