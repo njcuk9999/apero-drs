@@ -362,6 +362,58 @@ def get_all_non_empty_subdirs(path: Union[Path, str],
     return subdirs
 
 
+def listdirs(rootdir: str) -> List[str]:
+    """
+    Fast recursive listing of directories
+    :param rootdir: str, the root path to search
+
+    :return: list of strings, the directories under root dir
+    """
+    directories = []
+    # loop around items in rootdir
+    for it in os.scandir(rootdir):
+        # check if it 1. is a directory 2. is not empty
+        if it.is_dir():
+            # add to paths
+            if not nofiles(it):
+                directories.append(it.path)
+            # add sub directories
+            directories += listdirs(it)
+
+    return directories
+
+
+def nofiles(rootdir: str) -> bool:
+    """
+    Test wether a a rootdir is empty (if it is a directory at all)
+
+    return True if rootdir is not a directory or is empty
+    else return False
+
+    :param rootdir: str, root directory to test
+
+    :return: bool, True if not a directory or empty
+    """
+    if not os.path.isdir(rootdir):
+        return True
+    if len(listfiles(rootdir)) == 0:
+        return True
+    else:
+        return False
+
+
+def listfiles(rootdir) -> List[str]:
+    """
+    Fast listing of files in a directory
+    :param rootdir: str, the root path to search
+    :return:
+    """
+    files = []
+    for it in os.scandir(rootdir):
+        if it.is_file():
+            files.append(it.path)
+    # return file list
+    return files
 
 
 # =============================================================================
