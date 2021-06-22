@@ -806,9 +806,9 @@ def percentile_bin(image: np.ndarray, bx: int, by: int,
             ystart, yend = b_it * nbypix//by, (b_it+1) * nbypix//by
             xstart, xend = b_jt * nbxpix//bx, (b_jt+1) * nbxpix//bx
             # slice the image
-            slice = image[ystart:yend, xstart:xend]
+            imslice = image[ystart:yend, xstart:xend]
             # get the nan percentile
-            outimage[b_it, b_jt] = np.nanpercentile(slice, percentile)
+            outimage[b_it, b_jt] = np.nanpercentile(imslice, percentile)
     # return out image
     return outimage
 
