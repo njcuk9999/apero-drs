@@ -1100,10 +1100,9 @@ class DatabaseColumns:
         self.dtypes = []
         self.unique_cols = []
         self.index_cols = []
-        self.name_prefix = None
+        self.name_prefix = name_prefix
         self.altnames = []
         self.comments = []
-
 
     def add(self, name: str, datatype: str, is_unique: bool = False,
             is_index: bool = False, comment: Optional[str] = None):
@@ -1139,14 +1138,17 @@ class DatabaseColumns:
 
         :return: None
         """
+        new = DatabaseColumns(name_prefix=self.name_prefix)
         # add to names
-        self.names += other.names
-        self.datatypes += other.datatypes
-        self.dtypes += other.dtypes
-        self.unique_cols += other.unique_cols
-        self.index_cols += other.index_cols
-        self.comments += other.comments
-        self.altnames += other.altnames
+        new.names = self.names + other.names
+        new.datatypes = self.datatypes + other.datatypes
+        new.dtypes = self.dtypes + other.dtypes
+        new.unique_cols = self.unique_cols + other.unique_cols
+        new.index_cols = self.index_cols + other.index_cols
+        new.comments = self.comments + other.comments
+        new.altnames = self.altnames + other.altnames
+        # return the new
+        return new
 
     @staticmethod
     def _dtyper(datatype):
@@ -1163,7 +1165,6 @@ class DatabaseColumns:
             return str
         # default is to cast to string
         return str
-
 
 
 class SQLiteDatabase(Database):
@@ -2288,8 +2289,16 @@ class LanguageDatabase(BaseDatabaseManager):
         # set name
         self.name = 'language'
         self.kind = 'LANG'
-        self.columns = base.LANG_COLS
-        self.ctypes = base.LANG_CTYPES
+        # define columns
+        self.columns = DatabaseColumns()
+        # add key columns
+        self.columns.add(name='KEYNAME', datatype='VARCHAR(50)', is_index=True)
+        self.columns.add(name='KIND', datatype='VARCHAR(10)')
+        self.columns.add(name='KEYDESC', datatype='TEXT')
+        self.columns.add(name='ARGUMENTS', datatype='TEXT')
+        # add language columns
+        for lang in base.LANGUAGES:
+            self.columns.add(name=lang, datatype='TEXT')
         # other paths
         self.databasefile = ''
         self.resetfile = ''

@@ -618,8 +618,7 @@ def index_files(params, recipe):
     pconst = constants.pload()
     # load index header keys
     iheader_cols = pconst.INDEX_HEADER_COLS()
-    rkeys = iheader_cols.names
-    rtypes = iheader_cols.dtypes
+    rkeys = list(iheader_cols.names)
     # loop around output_files
     for okey in recipe.output_files:
         # get output dict for okey

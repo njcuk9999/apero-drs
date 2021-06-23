@@ -12,7 +12,7 @@ Created on 2019-01-18 at 14:44
 import numpy as np
 import sys
 import os
-from typing import Any, Dict, List, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from apero.base import base
 from apero.base import drs_db
@@ -59,12 +59,12 @@ class PseudoConstants:
         # set instrument name
         self.instrument = instrument
         # storage of things we don't want to compute twice without need
-        self.header_cols = None
-        self.index_cols = None
-        self.calibration_cols = None
-        self.telluric_cols = None
-        self.lopgdb_cols = None
-        self.objdb_cols = None
+        self.header_cols: Optional[DatabaseColumns] = None
+        self.index_cols: Optional[DatabaseColumns] = None
+        self.calibration_cols: Optional[DatabaseColumns] = None
+        self.telluric_cols: Optional[DatabaseColumns] = None
+        self.logdb_cols: Optional[DatabaseColumns] = None
+        self.objdb_cols: Optional[DatabaseColumns] = None
 
     def __getstate__(self) -> dict:
         """
@@ -1145,7 +1145,7 @@ class PseudoConstants:
         calib_columns.add(name='FIBER', datatype='VARCHAR(5)')
         calib_columns.add(name='SUPERCAL', datatype='INT')
         calib_columns.add(name='FILENAME', datatype='VARCHAR(200)')
-        calib_columns.add(name='HUMANTIME', datatype='VARCHAR(20)')
+        calib_columns.add(name='HUMANTIME', datatype='VARCHAR(50)')
         calib_columns.add(name='UNIXTIME', datatype='FLOAT', is_index=True)
         calib_columns.add(name='USED', datatype='INT')
         # return columns
@@ -1169,7 +1169,7 @@ class PseudoConstants:
         tellu_columns.add(name='FIBER', datatype='VARCHAR(5)')
         tellu_columns.add(name='SUPERCAL', datatype='INT')
         tellu_columns.add(name='FILENAME', datatype='VARCHAR(200)')
-        tellu_columns.add(name='HUMANTIME', datatype='VARCHAR(20)')
+        tellu_columns.add(name='HUMANTIME', datatype='VARCHAR(50)')
         tellu_columns.add(name='UNIXTIME', datatype='FLOAT', is_index=True)
         tellu_columns.add(name='OBJECT', datatype='VARCHAR(80)', is_index=True)
         tellu_columns.add(name='AIRMASS', datatype='FLOAT')
@@ -1239,8 +1239,8 @@ class PseudoConstants:
         _ = display_func('LOG_DB_COLUMNS', __NAME__,
                          self.class_name)
         # check for pre-existing values
-        if self.lopgdb_cols is not None:
-            return self.lopgdb_cols
+        if self.logdb_cols is not None:
+            return self.logdb_cols
         # set columns (dictionary form for clarity
         log_columns = DatabaseColumns(name_prefix='rlog.')
         log_columns.add(name='RECIPE', datatype='VARCHAR(200)',
@@ -1257,7 +1257,7 @@ class PseudoConstants:
                         comment='Recipe Program Name')
         log_columns.add(name='PID', datatype='VARCHAR(80)',
                         comment='Recipe drs process id number')
-        log_columns.add(name='HUMANTIME', datatype='VARCHAR(20)',
+        log_columns.add(name='HUMANTIME', datatype='VARCHAR(50)',
                         comment='Recipe process time (human format)')
         log_columns.add(name='UNIXTIME', datatype='FLOAT', is_index=True,
                         comment='Recipe process time (unix format)')
@@ -1313,7 +1313,7 @@ class PseudoConstants:
         log_columns.add(name='USED', datatype='INT',
                         comment='Whether file should be used (always true)')
         # return columns and ctypes
-        self.lopgdb_cols = log_columns
+        self.logdb_cols = log_columns
         return log_columns
 
     # noinspection PyPep8Naming

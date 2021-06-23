@@ -115,10 +115,10 @@ class DatabaseHolder:
         if 'INDEX' in database.tname:
             # get unique columns
             idb_cols = self.pconst.INDEX_DB_COLUMNS()
-            ucols = idb_cols.unique_cols
+            ucols = list(idb_cols.unique_cols)
         elif 'OBJECT' in database.tname:
             odb_cols = self.pconst.OBJECT_DB_COLUMNS()
-            ucols = odb_cols.unique_cols
+            ucols = list(odb_cols.unique_cols)
         else:
             ucols = None
         # push dataframe to replace SQL table
