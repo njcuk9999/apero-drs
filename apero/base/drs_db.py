@@ -698,7 +698,8 @@ class Database:
     # table methods
     def add_table(self, name: str, field_names: List[str],
                   field_types: List[Union[str, type]],
-                  unique_cols: Union[List[str], None] = None):
+                  unique_cols: Optional[List[str]] = None,
+                  index_cols: Optional[List[str]] = None):
         """
         Adds a table to the database file.
 
@@ -721,6 +722,9 @@ class Database:
         translator = {str: "TEXT", int: "INTEGER", float: "REAL"}
         # storage for fields
         fields = []
+        # deal with index columns
+        if index_cols is None:
+            index_cols = []
         # make sure field_names and field_types are the same size
         if len(field_names) != len(field_types):
             # log error: field_names and field_types must be the same length
@@ -788,12 +792,17 @@ class Database:
         # ---------------------------------------------------------------------
         # unique columns become a 255 hash
         if unique_cols is not None:
-            unique_str = ', {0} VARCHAR(64), UNIQUE({0})'.format(UHASH_COL)
+            extra_str = ', {0} VARCHAR(64), UNIQUE({0})'.format(UHASH_COL)
         else:
-            unique_str = ''
+            extra_str = ''
+        # ---------------------------------------------------------------------
+        # deal with indexes
+        for index_col in index_cols:
+            if index_col in field_names:
+                extra_str += ', INDEX ({0})'.format(index_col)
         # ---------------------------------------------------------------------
         # now create sql command
-        cargs = [name, ", ".join(fields) + unique_str]
+        cargs = [name, ", ".join(fields) + extra_str]
         command = "CREATE TABLE IF NOT EXISTS {}({});".format(*cargs)
         # ---------------------------------------------------------------------
         # execute command
