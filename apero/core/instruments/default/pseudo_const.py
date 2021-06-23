@@ -1141,8 +1141,8 @@ class PseudoConstants:
             return self.calibration_cols
         # set columns
         calib_columns = DatabaseColumns()
-        calib_columns.add(name='KEYNAME', datatype='VARCHAR(10)', is_index=True)
-        calib_columns.add(name='FIBER', datatype='VARCHAR(5)')
+        calib_columns.add(name='KEYNAME', datatype='VARCHAR(20)', is_index=True)
+        calib_columns.add(name='FIBER', datatype='VARCHAR(10)')
         calib_columns.add(name='SUPERCAL', datatype='INT')
         calib_columns.add(name='FILENAME', datatype='VARCHAR(200)')
         calib_columns.add(name='HUMANTIME', datatype='VARCHAR(50)')
@@ -1165,7 +1165,7 @@ class PseudoConstants:
             return self.telluric_cols
         # set columns
         tellu_columns = DatabaseColumns()
-        tellu_columns.add(name='KEYNAME', datatype='VARCHAR(10)', is_index=True)
+        tellu_columns.add(name='KEYNAME', datatype='VARCHAR(20)', is_index=True)
         tellu_columns.add(name='FIBER', datatype='VARCHAR(5)')
         tellu_columns.add(name='SUPERCAL', datatype='INT')
         tellu_columns.add(name='FILENAME', datatype='VARCHAR(200)')

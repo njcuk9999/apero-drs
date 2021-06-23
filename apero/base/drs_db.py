@@ -1104,6 +1104,26 @@ class DatabaseColumns:
         self.altnames = []
         self.comments = []
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
     def add(self, name: str, datatype: str, is_unique: bool = False,
             is_index: bool = False, comment: Optional[str] = None):
         """

@@ -110,7 +110,9 @@ database_mgr.recipe_kind = 'admin'
 database_mgr.set_kwarg(name='--kill', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_KILLARG_HELP'))
 database_mgr.set_kwarg(name='--objdb', dtype=str, default='None',
-                       helpstr='Update the object reset database')
+                       helpstr='[True] or [str Path to dfits output]. '
+                               'Update the object reset database using raw '
+                               'directory [True] or a dfits output [str]')
 database_mgr.set_kwarg(name='--update', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_UPDATE_HELP'))
 database_mgr.set_kwarg(name='--csv', dtype=str, default='None',

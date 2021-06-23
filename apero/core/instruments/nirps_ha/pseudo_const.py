@@ -83,8 +83,14 @@ class PseudoConstants(DefaultConstants):
         """
         # set function name
         _ = display_func('__getstate__', __NAME__, self.class_name)
-        # set state to __dict__
-        state = dict(self.__dict__)
+        # what to exclude from state
+        exclude = ['header_cols', 'index_cols', 'calibration_cols',
+                   'telluric_cols', 'logdb_cols', 'objdb_cols']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__.items():
+            if key not in exclude:
+                state[key] = item
         # return dictionary state
         return state
 
@@ -99,6 +105,13 @@ class PseudoConstants(DefaultConstants):
         _ = display_func('__setstate__', __NAME__, self.class_name)
         # update dict with state
         self.__dict__.update(state)
+        # storage of things we don't want to compute twice without need
+        self.header_cols = None
+        self.index_cols = None
+        self.calibration_cols = None
+        self.telluric_cols = None
+        self.logdb_cols = None
+        self.objdb_cols = None
 
     def __str__(self) -> str:
         """

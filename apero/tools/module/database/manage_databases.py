@@ -473,7 +473,7 @@ def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
     # -------------------------------------------------------------------------
     # make database
     langdb = drs_db.database_wrapper(langdbm.kind, langdbm.path)
-    lang_cols = list(langdbm.columns)
+    lang_cols = langdbm.columns
     columns = list(lang_cols.names)
     ctypes = list(lang_cols.datatypes)
     cicols = list(lang_cols.index_cols)
