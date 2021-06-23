@@ -460,7 +460,8 @@ def _log_update(pconst: PseudoConstants,
     for row, key in enumerate(ptable[logmask]['NAME']):
         logdict[key] = ptable[logmask]['VALUE'][row]
     # get log keys and types
-    logcols, _ = pconst.LOG_DB_COLUMNS()
+    ldb_cols = pconst.LOG_DB_COLUMNS()
+    logcols = ldb_cols.names
     # loop around log keys and add them to values
     logvalues = []
     for logkey in logcols:

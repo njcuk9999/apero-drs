@@ -15,6 +15,7 @@ import os
 from typing import Any, Dict, List, Tuple, Type, Union
 
 from apero.base import base
+from apero.base import drs_db
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_misc
 from apero.core.core import drs_exceptions
@@ -34,6 +35,8 @@ __release__ = base.__release__
 NOT_IMPLEMENTED = ('Definition Error: Must be overwritten in instrument '
                    'pseudo_const not {0} \n\t i.e. in apero.core.'
                    'instruments.spirou.pseudoconst.py \n\t method = {1}')
+# get database columns
+DatabaseColumns = drs_db.DatabaseColumns
 # get display func
 display_func = drs_misc.display_func
 
@@ -55,6 +58,13 @@ class PseudoConstants:
         _ = display_func('__init__', __NAME__, self.class_name)
         # set instrument name
         self.instrument = instrument
+        # storage of things we don't want to compute twice without need
+        self.header_cols = None
+        self.index_cols = None
+        self.calibration_cols = None
+        self.telluric_cols = None
+        self.lopgdb_cols = None
+        self.objdb_cols = None
 
     def __getstate__(self) -> dict:
         """
@@ -422,7 +432,7 @@ class PseudoConstants:
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
-    def INDEX_HEADER_KEYS(self) -> Tuple[List[str], List[Type]]:
+    def INDEX_HEADER_COLS(self) -> DatabaseColumns:
         """
         Which header keys should we have in the index database.
 
@@ -433,15 +443,19 @@ class PseudoConstants:
 
         :return:
         """
-        keys = []
-        ctypes = []
+        # check for pre-existing values
+        if self.header_cols is not None:
+            return self.header_cols
+        # set keyts
+        header_cols = DatabaseColumns()
         # check that filedef keys are present
         for fkey in self.FILEDEF_HEADER_KEYS():
-            if fkey not in keys:
-                emsg = __NAME__ + '.INDEX_HEADER_KEYS() missing key "{0}"'
+            if fkey not in header_cols.names:
+                emsg = __NAME__ + '.INDEX_HEADER_COLS() missing key "{0}"'
                 raise AttributeError(emsg.format(fkey))
         # return index header keys
-        return keys, ctypes
+        self.header_cols = header_cols
+        return header_cols
 
     def FILEDEF_HEADER_KEYS(self) -> List[str]:
         """
@@ -451,6 +465,7 @@ class PseudoConstants:
         """
         keys = []
         return keys
+
 
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
@@ -1113,7 +1128,7 @@ class PseudoConstants:
     # DATABASE SETTINGS
     # =========================================================================
     # noinspection PyPep8Naming
-    def CALIBRATION_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+    def CALIBRATION_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns used in the calibration database
         :return: list of columns (strings)
@@ -1121,51 +1136,52 @@ class PseudoConstants:
         # set function name
         _ = display_func('CALIBRATION_DB_COLUMNS', __NAME__,
                          self.class_name)
+        # check for pre-existing values
+        if self.calibration_cols is not None:
+            return self.calibration_cols
         # set columns
-        calib_columns = dict()
-        calib_columns['KEYNAME'] = str
-        calib_columns['FIBER'] = str
-        calib_columns['SUPERCAL'] = str
-        calib_columns['FILENAME'] = str
-        calib_columns['HUMANTIME'] = str
-        calib_columns['UNIXTIME'] = float
-        calib_columns['USED'] = int
-        # get break down
-        columns = list(calib_columns.keys())
-        ctypes = list(calib_columns.values())
-        # return columns and ctypes
-        return columns, ctypes
+        calib_columns = DatabaseColumns()
+        calib_columns.add(name='KEYNAME', datatype='VARCHAR(10)', is_index=True)
+        calib_columns.add(name='FIBER', datatype='VARCHAR(5)')
+        calib_columns.add(name='SUPERCAL', datatype='INT')
+        calib_columns.add(name='FILENAME', datatype='VARCHAR(200)')
+        calib_columns.add(name='HUMANTIME', datatype='VARCHAR(20)')
+        calib_columns.add(name='UNIXTIME', datatype='FLOAT', is_index=True)
+        calib_columns.add(name='USED', datatype='INT')
+        # return columns
+        self.calibration_cols= calib_columns
+        return calib_columns
 
     # noinspection PyPep8Naming
-    def TELLURIC_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+    def TELLURIC_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns used in the telluric database
         :return: list of columns (strings)
         """
         # set function name
-        _ = display_func('TELLURIC_DB_COLUMNS', __NAME__,
-                         self.class_name)
+        _ = display_func('TELLURIC_DB_COLUMNS', __NAME__, self.class_name)
+        # check for pre-existing values
+        if self.telluric_cols is not None:
+            return self.telluric_cols
         # set columns
-        tellu_columns = dict()
-        tellu_columns['KEYNAME'] = str
-        tellu_columns['FIBER'] = str
-        tellu_columns['SUPERCAL'] = int
-        tellu_columns['FILENAME'] = str
-        tellu_columns['HUMANTIME'] = str
-        tellu_columns['UNIXTIME'] = float
-        tellu_columns['OBJECT'] = str
-        tellu_columns['AIRMASS'] = float
-        tellu_columns['TAU_WATER'] = float
-        tellu_columns['TAU_OTHERS'] = float
-        tellu_columns['USED'] = int
-        # get break down
-        columns = list(tellu_columns.keys())
-        ctypes = list(tellu_columns.values())
+        tellu_columns = DatabaseColumns()
+        tellu_columns.add(name='KEYNAME', datatype='VARCHAR(10)', is_index=True)
+        tellu_columns.add(name='FIBER', datatype='VARCHAR(5)')
+        tellu_columns.add(name='SUPERCAL', datatype='INT')
+        tellu_columns.add(name='FILENAME', datatype='VARCHAR(200)')
+        tellu_columns.add(name='HUMANTIME', datatype='VARCHAR(20)')
+        tellu_columns.add(name='UNIXTIME', datatype='FLOAT', is_index=True)
+        tellu_columns.add(name='OBJECT', datatype='VARCHAR(80)', is_index=True)
+        tellu_columns.add(name='AIRMASS', datatype='FLOAT')
+        tellu_columns.add(name='TAU_WATER', datatype='FLOAT')
+        tellu_columns.add(name='TAU_OTHERS', datatype='FLOAT')
+        tellu_columns.add(name='USED', datatype='INT')
         # return columns and ctypes
-        return columns, ctypes
+        self.telluric_cols = tellu_columns
+        return tellu_columns
 
     # noinspection PyPep8Naming
-    def INDEX_DB_COLUMNS(self) -> Tuple[List[str], List[type], List[str]]:
+    def INDEX_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns used in the index database
 
@@ -1185,35 +1201,36 @@ class PseudoConstants:
                  columns that should be unique
         """
         # set function name
-        _ = display_func('INDEX_DB_COLUMNS', __NAME__,
-                         self.class_name)
+        _ = display_func('INDEX_DB_COLUMNS', __NAME__, self.class_name)
+        # check for pre-existing values
+        if self.index_cols is not None:
+            return self.index_cols
+        # column definitions
+        index_cols = DatabaseColumns()
+
+        index_cols.add(name='ABSPATH', datatype='TEXT', is_unique=True)
+        index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)',
+                       is_index=True)
+        index_cols.add(name='FILENAME', is_index=True, datatype='VARCHAR(200)')
+        index_cols.add(name='BLOCK_KIND', is_index=True, datatype='VARCHAR(20)')
+        index_cols.add(name='LAST_MODIFIED', datatype='FLOAT')
+        index_cols.add(name='RECIPE', datatype='VARCHAR(200)')
+        index_cols.add(name='RUNSTRING', datatype='TEXT')
+        index_cols.add(name='INFILES', datatype='TEXT')
         # get header keys
-        hkeys, htypes = self.INDEX_HEADER_KEYS()
-        # set columns
-        index_columns = dict()
-        index_columns['ABSPATH'] = str
-        index_columns['OBS_DIR'] = str
-        index_columns['FILENAME'] = str
-        index_columns['BLOCK_KIND'] = str
-        index_columns['LAST_MODIFIED'] = float
-        index_columns['RUNSTRING'] = str
-        # split names and types and add header keys
-        columns = list(index_columns.keys()) + hkeys
-        ctypes = list(index_columns.values()) + htypes
+        header_columns = self.INDEX_HEADER_COLS()
+
+        # add header columns to index columns
+        index_cols += header_columns
         # add extra columns
-        extra_columns = dict()
-        extra_columns['USED'] = int
-        extra_columns['RAWFIX'] = int
-        columns += list(extra_columns.keys())
-        ctypes += list(extra_columns.values())
-        # define columns that should be unique
-        # unique_cols = ['DIRECTORY,FILENAME']
-        unique_cols = ['ABSPATH']
+        index_cols.add(name='USED', datatype='INT')
+        index_cols.add(name='RAWFIX', datatype='INT')
         # return columns and column types
-        return columns, ctypes, unique_cols
+        self.index_cols = index_cols
+        return index_cols
 
     # noinspection PyPep8Naming
-    def LOG_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+    def LOG_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns use in the log database
         :return: list of columns (strings)
@@ -1221,50 +1238,86 @@ class PseudoConstants:
         # set function name
         _ = display_func('LOG_DB_COLUMNS', __NAME__,
                          self.class_name)
+        # check for pre-existing values
+        if self.lopgdb_cols is not None:
+            return self.lopgdb_cols
         # set columns (dictionary form for clarity
-        log_columns = dict()
-        log_columns['RECIPE'] = str
-        log_columns['SHORTNAME'] = str
-        log_columns['BLOCK_KIND'] = str
-        log_columns['RECIPE_TYPE'] = str
-        log_columns['RECIPE_KIND'] = str
-        log_columns['PROGRAM_NAME'] = str
-        log_columns['PID'] = str
-        log_columns['HUMANTIME'] = str
-        log_columns['UNIXTIME'] = float
-        log_columns['GROUPNAME'] = str
-        log_columns['LEVEL'] = int
-        log_columns['SUBLEVEL'] = int
-        log_columns['LEVELCRIT'] = str
-        log_columns['INPATH'] = str
-        log_columns['OUTPATH'] = str
-        log_columns['OBS_DIR'] = str
-        log_columns['LOGFILE'] = str
-        log_columns['PLOTDIR'] = str
-        log_columns['RUNSTRING'] = str
-        log_columns['ARGS'] = str
-        log_columns['KWARGS'] = str
-        log_columns['SKWARGS'] = str
-        log_columns['STARTED'] = int
-        log_columns['PASSED_ALL_QC'] = int
-        log_columns['QC_STRING'] = str
-        log_columns['QC_NAMES'] = str
-        log_columns['QC_VALUES'] = str
-        log_columns['QC_LOGIC'] = str
-        log_columns['QC_PASS'] = str
-        log_columns['ERRORMSGS'] = str
-        log_columns['IN_PARALLEL'] = int
-        log_columns['RUNNING'] = int
-        log_columns['ENDED'] = int
-        log_columns['USED'] = int
-        # get break down
-        columns = list(log_columns.keys())
-        ctypes = list(log_columns.values())
+        log_columns = DatabaseColumns(name_prefix='rlog.')
+        log_columns.add(name='RECIPE', datatype='VARCHAR(200)',
+                        comment='Recipe name from recipe log')
+        log_columns.add(name='SHORTNAME', datatype='VARCHAR(20)',
+                        comment='Recipe shortname from recipe log')
+        log_columns.add(name='BLOCK_KIND', is_index=True,
+                        datatype='VARCHAR(20)', comment='Recipe block type')
+        log_columns.add(name='RECIPE_TYPE', datatype='VARCHAR(80)',
+                        comment='Recipe type')
+        log_columns.add(name='RECIPE_KIND', datatype='VARCHAR(80)',
+                        comment='Recipe kind')
+        log_columns.add(name='PROGRAM_NAME', datatype='VARCHAR(80)',
+                        comment='Recipe Program Name')
+        log_columns.add(name='PID', datatype='VARCHAR(80)',
+                        comment='Recipe drs process id number')
+        log_columns.add(name='HUMANTIME', datatype='VARCHAR(20)',
+                        comment='Recipe process time (human format)')
+        log_columns.add(name='UNIXTIME', datatype='FLOAT', is_index=True,
+                        comment='Recipe process time (unix format)')
+        log_columns.add(name='GROUPNAME', datatype='VARCHAR(200)',
+                        comment='Recipe group name')
+        log_columns.add(name='LEVEL', datatype='INT',
+                        comment='Recipe level name')
+        log_columns.add(name='SUBLEVEL', datatype='INT',
+                        comment='Recipe sub-level name')
+        log_columns.add(name='LEVELCRIT', datatype='VARCHAR(80)',
+                        comment='Recipe level/sub level description')
+        log_columns.add(name='INPATH', datatype='TEXT',
+                        comment='Recipe inputs path')
+        log_columns.add(name='OUTPATH', datatype='TEXT',
+                        comment='Recipe outputs path')
+        log_columns.add(name='OBS_DIR', datatype='VARCHAR(200)', is_index=True,
+                        comment='Recipe observation directory')
+        log_columns.add(name='LOGFILE', datatype='TEXT',
+                        comment='Recipe log file path')
+        log_columns.add(name='PLOTDIR', datatype='TEXT',
+                        comment='Recipe plot file path')
+        log_columns.add(name='RUNSTRING', datatype='TEXT',
+                        comment='Recipe run string')
+        log_columns.add(name='ARGS', datatype='TEXT',
+                        comment='Recipe argument list')
+        log_columns.add(name='KWARGS', datatype='TEXT',
+                        comment='Recipe keyword argument list')
+        log_columns.add(name='SKWARGS', datatype='TEXT',
+                        comment='Recipe special argument list')
+        log_columns.add(name='STARTED', datatype='INT',
+                        comment='flag recipe started')
+        log_columns.add(name='PASSED_ALL_QC', datatype='INT',
+                        comment='flag recipe passed all quality control')
+        log_columns.add(name='QC_STRING', datatype='TEXT',
+                        comment='full quality control string')
+        log_columns.add(name='QC_NAMES', datatype='TEXT',
+                        comment='full quality control names')
+        log_columns.add(name='QC_VALUES', datatype='TEXT',
+                        comment='full quality control values')
+        log_columns.add(name='QC_LOGIC', datatype='TEXT',
+                        comment='full quality control logic')
+        log_columns.add(name='QC_PASS', datatype='TEXT',
+                        comment='full quality control pass/fail')
+        log_columns.add(name='ERRORMSGS', datatype='TEXT',
+                        comment='recipe errors')
+        log_columns.add(name='IN_PARALLEL', datatype='INT',
+                        comment='Whether recipe was run in parellel')
+        log_columns.add(name='RUNNING', datatype='INT',
+                        comment='whether the recipe was still running')
+        log_columns.add(name='ENDED', datatype='INT',
+                        comment='flag for recipe ended '
+                                '(false at time of writing)')
+        log_columns.add(name='USED', datatype='INT',
+                        comment='Whether file should be used (always true)')
         # return columns and ctypes
-        return columns, ctypes
+        self.lopgdb_cols = log_columns
+        return log_columns
 
     # noinspection PyPep8Naming
-    def OBJECT_DB_COLUMNS(self) -> Tuple[List[str], List[type], List[str]]:
+    def OBJECT_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns use in the object database
         :return: list of columns (strings)
@@ -1272,44 +1325,45 @@ class PseudoConstants:
         # set function name
         _ = display_func('OBJECT_DB_COLUMNS', __NAME__,
                          self.class_name)
+        # check for pre-existing values
+        if self.objdb_cols is not None:
+            return self.objdb_cols
         # set columns
-        obj_columns = dict()
-        obj_columns['OBJNAME'] = str
-        obj_columns['OBJNAME_SOURCE'] = str
-        obj_columns['GAIADR2ID'] = str
-        obj_columns['GAIAID_SOURCE'] = str
-        obj_columns['RA_DEG'] = float
-        obj_columns['RA_SOURCE'] = str
-        obj_columns['DEC_DEG'] = float
-        obj_columns['DEC_SOURCE'] = str
-        obj_columns['PMRA'] = float
-        obj_columns['PMRA_SOURCE'] = str
-        obj_columns['PMDE'] = float
-        obj_columns['PMDE_SOURCE'] = str
-        obj_columns['PLX'] = float
-        obj_columns['PLX_SOURCE'] = str
-        obj_columns['RV'] = float
-        obj_columns['RV_SOURCE'] = str
-        obj_columns['GMAG'] = float
-        obj_columns['GMAG_SOURCE'] = str
-        obj_columns['BPMAG'] = float
-        obj_columns['BPMAG_SOURCE'] = str
-        obj_columns['RPMAG'] = float
-        obj_columns['RPMAG_SOURCE'] = str
-        obj_columns['EPOCH'] = float
-        obj_columns['EPOCH_SOURCE'] = str
-        obj_columns['TEFF'] = float
-        obj_columns['TEFF_SOURCE'] = str
-        obj_columns['ALIASES'] = str
-        obj_columns['ALIASES_SOURCE'] = str
-        obj_columns['USED'] = int
-        # get break down
-        columns = list(obj_columns.keys())
-        ctypes = list(obj_columns.values())
-        # define unique columns
-        unique_cols = ['OBJNAME', 'GAIADR2ID']
+        obj_columns = DatabaseColumns()
+        obj_columns.add(name='OBJNAME', datatype='VARCHAR(80)', is_index=True,
+                        is_unique=True)
+        obj_columns.add(name='OBJNAME_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='GAIADR2ID', datatype='VARCHAR(80)',
+                        is_index=True, is_unique=True)
+        obj_columns.add(name='GAIAID_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='RA_DEG', datatype='FLOAT')
+        obj_columns.add(name='RA_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='DEC_DEG', datatype='FLOAT')
+        obj_columns.add(name='DEC_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='PMRA', datatype='FLOAT')
+        obj_columns.add(name='PMRA_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='PMDE', datatype='FLOAT')
+        obj_columns.add(name='PMDE_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='PLX', datatype='FLOAT')
+        obj_columns.add(name='PLX_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='RV', datatype='FLOAT')
+        obj_columns.add(name='RV_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='GMAG', datatype='FLOAT')
+        obj_columns.add(name='GMAG_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='BPMAG', datatype='FLOAT')
+        obj_columns.add(name='BPMAG_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='RPMAG', datatype='FLOAT')
+        obj_columns.add(name='RPMAG_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='EPOCH', datatype='FLOAT')
+        obj_columns.add(name='EPOCH_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='TEFF', datatype='FLOAT')
+        obj_columns.add(name='TEFF_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='ALIASES', datatype='TEXT')
+        obj_columns.add(name='ALIASES_SOURCE', datatype='TEXT')
+        obj_columns.add(name='USED', datatype='INT')
         # return columns and ctypes
-        return columns, ctypes, unique_cols
+        self.objdb_cols = obj_columns
+        return obj_columns
 
 
 # =============================================================================

@@ -1815,7 +1815,9 @@ class DrsInputFile:
         self.check_params(func_name)
         pconst = constants.pload()
         # get required keys for index database
-        hkeys, htypes = pconst.INDEX_HEADER_KEYS()
+        iheader_cols = pconst.INDEX_HEADER_COLS()
+        hkeys = iheader_cols.names
+        htypes = iheader_cols.dtypes
         # deal with absolute path of file
         self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file
@@ -3651,7 +3653,10 @@ class DrsFitsFile(DrsInputFile):
         params = self.params
         pconst = constants.pload()
         # get required keys for index database
-        hkeys, htypes = pconst.INDEX_HEADER_KEYS()
+        iheader_cols = pconst.INDEX_HEADER_COLS()
+        hkeys = iheader_cols.names
+        htypes = iheader_cols.dtypes
+        
         # deal with absolute path of file
         self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file
@@ -5679,7 +5684,9 @@ class DrsOutFileExtension:
         """
         # get allowed header keys
         pconst = constants.pload()
-        rkeys, rtypes = pconst.INDEX_HEADER_KEYS()
+        iheader_cols = pconst.INDEX_HEADER_COLS()
+        rkeys = iheader_cols.names
+        rtypes = iheader_cols.dtypes
         # define table column parameters
         drsfiles = self.table_drsfiles
         incolumns = self.table_in_colnames
@@ -6099,7 +6106,9 @@ class DrsOutFile(DrsInputFile):
         index_cols = indexdbm.database.colnames('*', indexdbm.database.tname)
         # get allowed header keys
         pconst = constants.pload()
-        rkeys, rtypes = pconst.INDEX_HEADER_KEYS()
+        iheader_cols = pconst.INDEX_HEADER_COLS()
+        hkeys = iheader_cols.names
+        htypes = iheader_cols.dtypes
         # must have primary filename set
         if self.extensions[0].filename is None:
             emsg = 'Error cannot link infile not set for primary extension'
@@ -6635,7 +6644,9 @@ class DrsOutFile(DrsInputFile):
         params = self.params
         pconst = constants.pload()
         # get required keys for index database
-        hkeys, htypes = pconst.INDEX_HEADER_KEYS()
+        iheader_cols = pconst.INDEX_HEADER_COLS()
+        hkeys = iheader_cols.names
+        htypes = iheader_cols.dtypes
         # deal with absolute path of file
         self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file

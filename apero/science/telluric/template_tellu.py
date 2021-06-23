@@ -179,7 +179,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
         wargs = [infile.filename]
         WLOG(params, '', textentry('40-019-00033', args=wargs))
         # read data
-        infile.read_file()
+        infile.read_file(copy=True)
         # get image and set up shifted image
         image = infile.get_data(copy=True)
         # normalise image by the normalised blaze
@@ -476,7 +476,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         wargs = [infile.filename]
         WLOG(params, '', textentry('40-019-00033', args=wargs))
         # read data
-        infile.read_file()
+        infile.read_file(copy=True)
         # get image and set up shifted image
         image = np.array(infile.get_data()['flux'])
         wavemap = np.array(infile.get_data()['wavelength'])

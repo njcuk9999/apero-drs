@@ -52,8 +52,6 @@ LogDatabase = drs_database.LogDatabase
 # get header classes from io.drs_fits
 Header = drs_fits.Header
 FitsHeader = drs_fits.fits.Header
-# set a variable to stop multiple tests when not required
-PARAM_SNAPSHOT_CHECKED = False
 
 
 # =============================================================================
@@ -561,8 +559,6 @@ class RecipeLog:
 
         :return: tuple of lists (name/kinds/values/sources/descriptions/counts)
         """
-        # global
-        global PARAM_SNAPSHOT_CHECKED
         # set function name
         func_name = display_func('get_param_table', __NAME__, self.class_name)
         # storage arrays
@@ -572,246 +568,31 @@ class RecipeLog:
         source = []
         description = []
         count = []
-        # recipe
-        names.append('rlog.recipe')
-        param_kinds.append('rlog')
-        values.append(self.name)
-        source.append(func_name)
-        description.append('Recipe name from recipe log')
-        count.append(1)
-        # short name
-        names.append('rlog.shortname')
-        param_kinds.append('rlog')
-        values.append(self.sname)
-        source.append(func_name)
-        description.append('Recipe shortname from recipe log')
-        count.append(1)
-        # block kind
-        names.append('rlog.block_kind')
-        param_kinds.append('rlog')
-        values.append(self.block_kind)
-        source.append(func_name)
-        description.append('Recipe block type')
-        count.append(1)
-        # recipe type
-        names.append('rlog.recipe_type')
-        param_kinds.append('rlog')
-        values.append(self.recipe_type)
-        source.append(func_name)
-        description.append('Recipe type')
-        count.append(1)
-        # recipe kind
-        names.append('rlog.recipe_kind')
-        param_kinds.append('rlog')
-        values.append(self.recipe_kind)
-        source.append(func_name)
-        description.append('Recipe kind')
-        count.append(1)
-        # recipe drs process id number
-        names.append('rlog.pid')
-        param_kinds.append('rlog')
-        values.append(self.pid)
-        source.append(func_name)
-        description.append('Recipe drs process id number')
-        count.append(1)
-        # Recipe process time (human format)
-        names.append('rlog.humantime')
-        param_kinds.append('rlog')
-        values.append(self.htime)
-        source.append(func_name)
-        description.append('Recipe process time (human format)')
-        count.append(1)
-        # Recipe process time (unix format)
-        names.append('rlog.unixtime')
-        param_kinds.append('rlog')
-        values.append(float(Time(self.htime).unix))
-        source.append(func_name)
-        description.append('Recipe process time (unix format)')
-        count.append(1)
-        # Recipe group name
-        names.append('rlog.groupname')
-        param_kinds.append('rlog')
-        values.append(self.group)
-        source.append(func_name)
-        description.append('Recipe group name')
-        count.append(1)
-        # Recipe level name
-        names.append('rlog.level')
-        param_kinds.append('rlog')
-        values.append(self.level)
-        source.append(func_name)
-        description.append('Recipe level name')
-        count.append(1)
-        # Recipe sub-level name
-        names.append('rlog.sublevel')
-        param_kinds.append('rlog')
-        values.append(self.level_iteration)
-        source.append(func_name)
-        description.append('Recipe sub-level name')
-        count.append(1)
-        # Recipe level/sub level description
-        names.append('rlog.levelcrit')
-        param_kinds.append('rlog')
-        values.append(self.level_criteria)
-        source.append(func_name)
-        description.append('Recipe level/sub level description')
-        count.append(1)
-        # Recipe inputs path
-        names.append('rlog.inpath')
-        param_kinds.append('rlog')
-        values.append(self.inputdir)
-        source.append(func_name)
-        description.append('Recipe inputs path')
-        count.append(1)
-        # Recipe outputs path
-        names.append('rlog.outpath')
-        param_kinds.append('rlog')
-        values.append(self.outputdir)
-        source.append(func_name)
-        description.append('Recipe outputs path')
-        count.append(1)
-        # Recipe observation directory
-        names.append('rlog.obs_dir')
-        param_kinds.append('rlog')
-        values.append(self.obs_dir)
-        source.append(func_name)
-        description.append('Recipe observation directory')
-        count.append(1)
-        # Recipe log file path
-        names.append('rlog.logfile')
-        param_kinds.append('rlog')
-        values.append(self.log_file)
-        source.append(func_name)
-        description.append('Recipe log file path')
-        count.append(1)
-        # Recipe plot file path
-        names.append('rlog.plotdir')
-        param_kinds.append('rlog')
-        values.append(self.plot_dir)
-        source.append(func_name)
-        description.append('Recipe plot file path')
-        count.append(1)
-        # Recipe run string
-        names.append('rlog.runstring')
-        param_kinds.append('rlog')
-        values.append(self.runstring)
-        source.append(func_name)
-        description.append('Recipe run string')
-        count.append(1)
-        # Recipe argument list
-        names.append('rlog.args')
-        param_kinds.append('rlog')
-        values.append(self.args)
-        source.append(func_name)
-        description.append('Recipe argument list')
-        count.append(1)
-        # Recipe keyword argument list
-        names.append('rlog.kwargs')
-        param_kinds.append('rlog')
-        values.append(self.kwargs)
-        source.append(func_name)
-        description.append('Recipe keyword argument list')
-        count.append(1)
-        # Recipe special argument list
-        names.append('rlog.skwargs')
-        param_kinds.append('rlog')
-        values.append(self.skwargs)
-        source.append(func_name)
-        description.append('Recipe special argument list')
-        count.append(1)
-        # flag recipe started
-        names.append('rlog.started')
-        param_kinds.append('rlog')
-        values.append(self.started)
-        source.append(func_name)
-        description.append('flag recipe started')
-        count.append(1)
-        # flag recipe passed all quality control
-        names.append('rlog.passed_all_qc')
-        param_kinds.append('rlog')
-        values.append(self.passed_qc)
-        source.append(func_name)
-        description.append('flag recipe passed all quality control')
-        count.append(1)
-        # full quality control string
-        names.append('rlog.qc_string')
-        param_kinds.append('rlog')
-        values.append(self.qc_string)
-        source.append(func_name)
-        description.append('full quality control string')
-        count.append(1)
-        # full quality control names
-        names.append('rlog.qc_names')
-        param_kinds.append('rlog')
-        values.append(self.qc_name)
-        source.append(func_name)
-        description.append('full quality control names')
-        count.append(1)
-        # full quality control values
-        names.append('rlog.qc_values')
-        param_kinds.append('rlog')
-        values.append(self.qc_value)
-        source.append(func_name)
-        description.append('full quality control values')
-        count.append(1)
-        # full quality control logic
-        names.append('rlog.qc_logic')
-        param_kinds.append('rlog')
-        values.append(self.qc_logic)
-        source.append(func_name)
-        description.append('full quality control logic')
-        count.append(1)
-        # full quality control pass/fail
-        names.append('rlog.qc_pass')
-        param_kinds.append('rlog')
-        values.append(self.qc_pass)
-        source.append(func_name)
-        description.append('full quality control pass/fail')
-        count.append(1)
-        # recipe errors
-        names.append('rlog.errormsgs')
-        param_kinds.append('rlog')
-        values.append(self.errors)
-        source.append(func_name)
-        description.append('recipe errors')
-        count.append(1)
-        # recipe still running
-        names.append('rlog.running')
-        param_kinds.append('rlog')
-        values.append(0)
-        source.append(func_name)
-        description.append('whether the recipe was still running')
-        count.append(1)
-        # flag for recipe ended (false at time of writing)
-        names.append('rlog.ended')
-        param_kinds.append('rlog')
-        values.append(self.ended)
-        source.append(func_name)
-        description.append('flag for recipe ended (false at time of writing)')
-        count.append(1)
+        # get log keys
+        ldb_cols = constants.pload().LOG_DB_COLUMNS()
+        log_keys = ldb_cols.altnames
+        log_comments= ldb_cols.comments
         # ---------------------------------------------------------------------
-        # check names against current database list (must work)
-        # only do this once per import
-        if not PARAM_SNAPSHOT_CHECKED:
-            # get log keys
-            log_keys, _ = constants.pload().LOG_DB_COLUMNS()
-            # loop around names
-            for name in names:
-                # check name starts with rlog
-                if not name.startswith('rlog.'):
-                    # TODO: move to language database
-                    emsg = 'ParamTable rlog parameter {0} must start with rlog.'
-                    raise ValueError(emsg.format(name))
-                # get log name as it should be in log db columns
-                logname = name[5:].upper()
-                # check that it exists in log database columns
-                if logname not in log_keys:
-                    # TODO: move to language database
-                    emsg = ('ParamTable rlog parameter {0} must be in '
-                            'LOG_DB_COLUMNS')
-                    raise ValueError(emsg.format(name))
-            # update PARAM_SNAPSHOT_CHECKED to True --> i.e. do not check again
-            PARAM_SNAPSHOT_CHECKED = True
+        # define the values for each column (must be same length as
+        #    LOG_DB_COLUMNS
+        log_values = [self.name, self.sname, self.block_kind,
+                      self.recipe_type, self.recipe_kind, self.program_name,
+                      self.pid, self.htime, float(Time(self.htime).unix),
+                      self.group, self.level, self.level_iteration,
+                      self.level_criteria, self.inputdir, self.outputdir,
+                      self.obs_dir, self.log_file, self.plot_dir,
+                      self.runstring, self.args, self.kwargs, self.skwargs,
+                      self.started, self.passed_qc, self.qc_string,
+                      self.qc_name, self.qc_value, self.qc_logic, self.qc_pass,
+                      self.errors, self.parallel, 0, 0, 1]
+        # ---------------------------------------------------------------------
+        # loop around all rows and add to params
+        for it in range(len(log_keys)):
+            names.append(log_keys[it])
+            values.append(log_values[it])
+            source.append(func_name)
+            description.append(log_comments[it])
+            count.append(1)
         # ---------------------------------------------------------------------
         # return lists
         return names, param_kinds, values, source, description, count
