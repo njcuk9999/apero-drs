@@ -1374,11 +1374,11 @@ class IndexDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # get allowed header keys
         iheader_cols = self.pconst.INDEX_HEADER_COLS()
-        rkeys = iheader_cols.names
-        rtypes = iheader_cols.dtypes
+        rkeys = list(iheader_cols.names)
+        rtypes = list(iheader_cols.dtypes)
         # get unique columns
         idb_cols = self.pconst.INDEX_DB_COLUMNS()
-        ucols = idb_cols.unique_cols
+        ucols = list(idb_cols.unique_cols)
         # store values in correct order for database.add_row
         hvalues = []
         # deal with no hkeys
@@ -1527,8 +1527,8 @@ class IndexDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # get allowed header keys
         iheader_cols = self.pconst.INDEX_HEADER_COLS()
-        rkeys = iheader_cols.names
-        rtypes = iheader_cols.dtypes
+        rkeys = list(iheader_cols.names)
+        rtypes = list(iheader_cols.dtypes)
         # deal with filter by header keys
         if hkeys is not None and isinstance(hkeys, dict):
             # loop around each valid header key in index database
@@ -1675,11 +1675,13 @@ class IndexDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         # get allowed header keys
         iheader_cols = self.pconst.INDEX_HEADER_COLS()
-        rkeys = iheader_cols.names
+        rkeys = list(iheader_cols.names)
         # get unique columns
         idb_cols = self.pconst.INDEX_DB_COLUMNS()
-        ikeys = idb_cols.names
-        ucols = idb_cols.unique_cols
+        ikeys = list(idb_cols.names)
+        itypes = list(idb_cols.datatypes)
+        ucols = list(idb_cols.unique_cols)
+        icols = list(idb_cols.index_cols)
         # need to add hash key if required
         if len(ucols) > 0:
             ikeys += [drs_db.UHASH_COL]
@@ -1701,7 +1703,7 @@ class IndexDatabase(DatabaseManager):
                 self.database.delete_table(self.database.tname)
                 # add new empty table
                 self.database.add_table(self.database.tname, ikeys, itypes,
-                                        unique_cols=iunique)
+                                        unique_cols=ucols, index_cols=icols)
                 # reload database
                 self.load_db()
                 # update all entries for raw index entries
@@ -1759,7 +1761,7 @@ class IndexDatabase(DatabaseManager):
         # get allowed header keys
         # get allowed header keys
         iheader_cols = self.pconst.INDEX_HEADER_COLS()
-        rkeys = iheader_cols.names
+        rkeys = list(iheader_cols.names)
         # get columns
         columns = ['ABSPATH', 'RAWFIX'] + rkeys
         # get data for columns
@@ -2117,7 +2119,7 @@ class LogDatabase(DatabaseManager):
                 clean_error, running, parallel, ended, used]
         # get column names and column datatypes
         ldb_cols = self.pconst.LOG_DB_COLUMNS()
-        coltypes = ldb_cols.dtypes
+        coltypes = list(ldb_cols.dtypes)
         # storage of values
         values = []
         # loop around values
@@ -2447,7 +2449,7 @@ class ObjectDatabase(DatabaseManager):
                   teff, teff_s]
         # get unique columns
         objdb_cols = self.pconst.OBJECT_DB_COLUMNS()
-        ucols = objdb_cols.unique_cols
+        ucols = list(objdb_cols.unique_cols)
         # deal with null values
         for it, value in enumerate(values):
             if value is None:

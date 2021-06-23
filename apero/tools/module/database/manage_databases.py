@@ -190,8 +190,9 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     reset_path = params['DATABASE_DIR']
     # get columns and ctypes from pconst
     cdb_cols = pconst.CALIBRATION_DB_COLUMNS()
-    columns = cdb_cols.names
-    ctypes = cdb_cols.datatypes
+    columns = list(cdb_cols.names)
+    ctypes = list(cdb_cols.datatypes)
+    cicols = list(cdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
     calibdbm = databases['calib']
@@ -204,7 +205,7 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
         calibdb.backup()
         calibdb.delete_table(calibdb.tname)
     # add main table
-    calibdb.add_table(calibdb.tname, columns, ctypes)
+    calibdb.add_table(calibdb.tname, columns, ctypes, index_cols=cicols)
     # ---------------------------------------------------------------------
     # construct reset file
     reset_abspath = os.path.join(asset_dir, reset_path, calibdbm.dbreset)
@@ -228,8 +229,9 @@ def create_telluric_database(pconst: PseudoConst,
     """
     # get columns and ctypes from pconst
     tdb_cols = pconst.TELLURIC_DB_COLUMNS()
-    columns = tdb_cols.names
-    ctypes = tdb_cols.datatypes
+    columns = list(tdb_cols.names)
+    ctypes = list(tdb_cols.datatypes)
+    cicols = list(tdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
     telludbm = databases['tellu']
@@ -242,7 +244,7 @@ def create_telluric_database(pconst: PseudoConst,
         telludb.backup()
         telludb.delete_table(telludb.tname)
     # add main table
-    telludb.add_table(telludb.tname, columns, ctypes)
+    telludb.add_table(telludb.tname, columns, ctypes, index_cols=cicols)
     # -------------------------------------------------------------------------
     return telludb
 
@@ -259,9 +261,10 @@ def create_index_database(pconst: PseudoConst,
     """
     # get columns and ctypes from pconst
     idb_cols = pconst.INDEX_DB_COLUMNS()
-    columns = idb_cols.names
-    ctypes = idb_cols.datatypes
-    cuniques = idb_cols.unique_cols
+    columns = list(idb_cols.names)
+    ctypes = list(idb_cols.datatypes)
+    cuniques = list(idb_cols.unique_cols)
+    cicols = list(idb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
     indexdbm = databases['index']
@@ -274,7 +277,8 @@ def create_index_database(pconst: PseudoConst,
         indexdb.backup()
         indexdb.delete_table(indexdb.tname)
     # add main table
-    indexdb.add_table(indexdb.tname, columns, ctypes, unique_cols=cuniques)
+    indexdb.add_table(indexdb.tname, columns, ctypes, unique_cols=cuniques,
+                      index_cols=cicols)
     # -------------------------------------------------------------------------
     return indexdb
 
@@ -291,8 +295,9 @@ def create_log_database(pconst: PseudoConst,
     """
     # get columns and ctypes from pconst
     ldb_cols = pconst.LOG_DB_COLUMNS()
-    columns = ldb_cols.names
-    ctypes = ldb_cols.datatypes
+    columns = list(ldb_cols.names)
+    ctypes = list(ldb_cols.datatypes)
+    cicols = list(ldb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
     logdbm = databases['log']
@@ -305,7 +310,7 @@ def create_log_database(pconst: PseudoConst,
         logdb.backup()
         logdb.delete_table(logdb.tname)
     # add main table
-    logdb.add_table(logdb.tname, columns, ctypes)
+    logdb.add_table(logdb.tname, columns, ctypes, index_cols=cicols)
     # -------------------------------------------------------------------------
     return logdb
 
@@ -326,8 +331,10 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     reset_path = params['DATABASE_DIR']
     # get columns and ctypes from pconst
     objdb_cols = pconst.OBJECT_DB_COLUMNS()
-    columns = objdb_cols.names
-    ctypes = objdb_cols.datatypes
+    columns = list(objdb_cols.names)
+    ctypes = list(objdb_cols.datatypes)
+    cuniques = list(objdb_cols.unique_cols)
+    cindexs = list(objdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
     objectdbm = databases['object']
@@ -340,7 +347,8 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
         objectdb.backup()
         objectdb.delete_table(objectdb.tname)
     # add main table
-    objectdb.add_table(objectdb.tname, columns, ctypes, unique_cols=cuniques)
+    objectdb.add_table(objectdb.tname, columns, ctypes, unique_cols=cuniques,
+                       index_cols=cindexs)
     # ---------------------------------------------------------------------
     # construct reset file
     reset_abspath = os.path.join(asset_dir, reset_path, objectdbm.dbreset)
@@ -378,12 +386,13 @@ def make_object_reset(params: ParamDict):
         objdbm.database.delete_table(objdbm.database.tname)
     # get columns and ctypes from pconst
     objdb_cols = pconst.OBJECT_DB_COLUMNS()
-    columns = objdb_cols.names
-    ctypes = objdb_cols.datatypes
-    cuniques = objdb_cols.unique_cols
+    columns = list(objdb_cols.names)
+    ctypes = list(objdb_cols.datatypes)
+    cuniques = list(objdb_cols.unique_cols)
+    cicols = list(objdb_cols.index_cols)
     # add main table
     objdbm.database.add_table(objdbm.database.tname, columns, ctypes,
-                              unique_cols=cuniques)
+                              unique_cols=cuniques, index_cols=cicols)
     # get google sheets
     gtable = gen_pp.get_google_sheet(params,
                                      params['OBJ_LIST_GOOGLE_SHEET_URL'],
@@ -464,14 +473,16 @@ def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
     # -------------------------------------------------------------------------
     # make database
     langdb = drs_db.database_wrapper(langdbm.kind, langdbm.path)
-    columns = langdbm.columns
-    ctypes = langdbm.ctypes
+    lang_cols = list(langdbm.columns)
+    columns = list(lang_cols.names)
+    ctypes = list(lang_cols.datatypes)
+    cicols = list(lang_cols.index_cols)
     # -------------------------------------------------------------------------
     if langdb.tname in langdb.tables:
         langdb.backup()
         langdb.delete_table(langdb.tname)
     # add main table
-    langdb.add_table(langdb.tname, columns, ctypes)
+    langdb.add_table(langdb.tname, columns, ctypes, index_cols=cicols)
     # ---------------------------------------------------------------------
     # add rows from reset text file for default file
     # ---------------------------------------------------------------------
@@ -620,10 +631,10 @@ def import_database(params: ParamDict, database_name: str,
     # get unique columns
     if 'INDEX' in db.database.tname:
         idb_cols = pconst.INDEX_DB_COLUMNS()
-        ucols = idb_cols.unique_cols
+        ucols = list(idb_cols.unique_cols)
     elif 'OBJECT' in db.database.tname:
         odb_cols = pconst.OBJECT_DB_COLUMNS()
-        ucols = odb_cols.unique_cols
+        ucols = list(odb_cols.unique_cols)
     else:
         ucols = None
     # -------------------------------------------------------------------

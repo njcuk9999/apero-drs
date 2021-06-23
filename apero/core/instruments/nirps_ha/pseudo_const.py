@@ -12,7 +12,7 @@ Created on 2019-01-18 at 14:44
 import numpy as np
 from pathlib import Path
 import string
-from typing import Any, List, Tuple, Type, Union
+from typing import Any, List, Optional, Tuple, Type, Union
 
 from apero.base import base
 from apero.base import drs_db
@@ -68,6 +68,13 @@ class PseudoConstants(DefaultConstants):
         _ = display_func('__init__', __NAME__, self.class_name)
         # set instrument name
         self.instrument = instrument
+        # storage of things we don't want to compute twice without need
+        self.header_cols: Optional[DatabaseColumns] = None
+        self.index_cols: Optional[DatabaseColumns] = None
+        self.calibration_cols: Optional[DatabaseColumns] = None
+        self.telluric_cols: Optional[DatabaseColumns] = None
+        self.logdb_cols: Optional[DatabaseColumns] = None
+        self.objdb_cols: Optional[DatabaseColumns] = None
 
     def __getstate__(self) -> dict:
         """

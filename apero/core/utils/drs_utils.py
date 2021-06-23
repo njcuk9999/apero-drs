@@ -570,8 +570,8 @@ class RecipeLog:
         count = []
         # get log keys
         ldb_cols = constants.pload().LOG_DB_COLUMNS()
-        log_keys = ldb_cols.altnames
-        log_comments= ldb_cols.comments
+        log_keys = list(ldb_cols.altnames)
+        log_comments= list(ldb_cols.comments)
         # ---------------------------------------------------------------------
         # define the values for each column (must be same length as
         #    LOG_DB_COLUMNS

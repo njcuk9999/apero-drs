@@ -93,8 +93,6 @@ LANG_XLS_FILE = 'language.xls'
 LANG_DB_FILE = 'lang.db'
 LANG_DB_RESET = 'reset.lang.csv'
 LANG_DB_RESET_INST = 'reset.lang.{0}.csv'
-LANG_COLS = ['KEYNAME', 'KIND', 'KEYDESC', 'ARGUMENTS'] + LANGUAGES
-LANG_CTYPES = [str, str, str, str] + [str] * len(LANGUAGES)
 # -----------------------------------------------------------------------------
 # types definitions
 # -----------------------------------------------------------------------------
