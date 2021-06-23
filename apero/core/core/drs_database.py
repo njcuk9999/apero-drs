@@ -33,6 +33,7 @@ from apero.core.core import drs_text
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.io import drs_fits
+from apero.io import drs_path
 
 
 # =============================================================================
@@ -1372,9 +1373,12 @@ class IndexDatabase(DatabaseManager):
             infiles = 'NULL'
         # ------------------------------------------------------------------
         # get allowed header keys
-        rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
+        iheader_cols = self.pconst.INDEX_HEADER_COLS()
+        rkeys = iheader_cols.names
+        rtypes = iheader_cols.dtypes
         # get unique columns
-        _, _, ucols = self.pconst.INDEX_DB_COLUMNS()
+        idb_cols = self.pconst.INDEX_DB_COLUMNS()
+        ucols = idb_cols.unique_cols
         # store values in correct order for database.add_row
         hvalues = []
         # deal with no hkeys
@@ -1410,30 +1414,38 @@ class IndexDatabase(DatabaseManager):
         obs_dir = str(basefile.obs_dir)
         basename = str(basefile.basename)
         # ------------------------------------------------------------------
-        # TODO: this need changing
-        #   step 1: filter database by "obs_dir" + block_kind
-        #   step 2: find whether hash is in filtered database
-        #   step 3: if it is use "set" else use "add_row"
-
-        try:
+        # check for entry already in database
+        condition = '(OBS_DIR="{0}")'.format(obs_dir)
+        condition += ' AND (BLOCK_KIND="{0}")'.format(block_kind)
+        condition += ' AND (ABSPATH="{0}")'.format(path)
+        # count number of entries for this
+        num_rows = self.database.count(self.database.tname, condition=condition)
+        # if we don't have an entry we add a row
+        if num_rows == 0:
             # add new entry to database
             values = [path, obs_dir, basename, block_kind, float(last_modified),
                       str(recipe), str(runstring), str(infiles)]
             values += hvalues + [used, rawfix]
             # add row
-            self.database.add_row(values, table=self.database.tname,
-                                  unique_cols=ucols)
-        # if this is called we need to set instead of adding
-        except drs_db.UniqueEntryException:
-            # add new entry to database
-            values = [path, obs_dir, basename, block_kind, float(last_modified),
-                      str(recipe), str(runstring), str(infiles)]
-            values += hvalues + [used, rawfix]
-            # condition comes from uhash - so set to None here (to remember)
-            condition = None
-            # update row in database
-            self.database.set('*', values=values, condition=condition,
-                              table=self.database.tname, unique_cols=ucols)
+            try:
+                self.database.add_row(values, table=self.database.tname,
+                                      unique_cols=ucols)
+                return
+            # if this is called we need to set instead of adding
+            except drs_db.UniqueEntryException:
+                # if and only if this error we can pass and try using set
+                pass
+
+        # else we update the row using "set" instead of adding
+        # add new entry to database
+        values = [path, obs_dir, basename, block_kind, float(last_modified),
+                  str(recipe), str(runstring), str(infiles)]
+        values += hvalues + [used, rawfix]
+        # condition comes from uhash - so set to None here (to remember)
+        condition = None
+        # update row in database
+        self.database.set('*', values=values, condition=condition,
+                          table=self.database.tname, unique_cols=ucols)
 
     def remove_entries(self, condition):
         # set function
@@ -1514,7 +1526,9 @@ class IndexDatabase(DatabaseManager):
             sql['condition'] += ' AND FILENAME = "{0}"'.format(filename)
         # ------------------------------------------------------------------
         # get allowed header keys
-        rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
+        iheader_cols = self.pconst.INDEX_HEADER_COLS()
+        rkeys = iheader_cols.names
+        rtypes = iheader_cols.dtypes
         # deal with filter by header keys
         if hkeys is not None and isinstance(hkeys, dict):
             # loop around each valid header key in index database
@@ -1659,11 +1673,15 @@ class IndexDatabase(DatabaseManager):
                               include_directories, exclude_directories,
                               include_files, exclude_files, suffix, last_mod)
         # ---------------------------------------------------------------------
-        # get a list of keys
-        rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
-        ikeys, itypes, iunique = self.pconst.INDEX_DB_COLUMNS()
+        # get allowed header keys
+        iheader_cols = self.pconst.INDEX_HEADER_COLS()
+        rkeys = iheader_cols.names
+        # get unique columns
+        idb_cols = self.pconst.INDEX_DB_COLUMNS()
+        ikeys = idb_cols.names
+        ucols = idb_cols.unique_cols
         # need to add hash key if required
-        if iunique is not None:
+        if len(ucols) > 0:
             ikeys += [drs_db.UHASH_COL]
         # ---------------------------------------------------------------------
         # deal with database having wrong columns (if we have added / remove a
@@ -1739,7 +1757,9 @@ class IndexDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # get allowed header keys
-        rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
+        # get allowed header keys
+        iheader_cols = self.pconst.INDEX_HEADER_COLS()
+        rkeys = iheader_cols.names
         # get columns
         columns = ['ABSPATH', 'RAWFIX'] + rkeys
         # get data for columns
@@ -1859,23 +1879,27 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     path_inst = drs_file.DrsPath(params, _update=False)
     # get blocks with obs_dirs
     block_names = path_inst.blocks_with_obs_dirs()
+    # print progress
+    # TODO: add to language database
+    msg = '\tSearching all directories'
+    WLOG(params, '', msg)
+    # get conditions (so we don't repeat them)
+    incdircond = incdirs is not None
+    excdircond = excdirs is not None
     # only use sub-directories for the following kinds
     if block_kind.lower() in block_names:
         # ---------------------------------------------------------------------
-        # get directory path
-        all_items = path.rglob('*')
+        # get all sub directory path
+        all_dirs = drs_path.listdirs(str(path))
         # loop around directories
         subdirs = []
-        for item in all_items:
-            # skip non-directories
-            if not item.is_dir():
-                continue
+        for item in all_dirs:
             # skip directories not in included directories
-            if incdirs is not None:
+            if incdircond:
                 if item not in incdirs:
                     continue
             # skip directories in excluded directories
-            if excdirs is not None:
+            if excdircond:
                 if item in excdirs:
                     continue
             # if we have reached here then append subdirs
@@ -1897,7 +1921,7 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
             # processing sub-directories
             TLOG(params, '', 'Analysing {0}...'.format(subdir))
             # append to filenames
-            allfiles += list(subdir.glob('*{0}'.format(suffix)))
+            allfiles += list(Path(subdir).glob('*{0}'.format(suffix)))
     # clear loading message
     TLOG(params, '', '')
     # -------------------------------------------------------------------------
@@ -2092,7 +2116,8 @@ class LogDatabase(DatabaseManager):
                 qc_string, qc_names, qc_values, qc_logic, qc_pass,
                 clean_error, running, parallel, ended, used]
         # get column names and column datatypes
-        colnames, coltypes = self.pconst.LOG_DB_COLUMNS()
+        ldb_cols = self.pconst.LOG_DB_COLUMNS()
+        coltypes = ldb_cols.dtypes
         # storage of values
         values = []
         # loop around values
@@ -2421,7 +2446,8 @@ class ObjectDatabase(DatabaseManager):
                   gmag_s, bpmag, bpmag_s, rpmag, rpmag_s, epoch, epoch_s,
                   teff, teff_s]
         # get unique columns
-        _, _, ucols = self.pconst.OBJECT_DB_COLUMNS()
+        objdb_cols = self.pconst.OBJECT_DB_COLUMNS()
+        ucols = objdb_cols.unique_cols
         # deal with null values
         for it, value in enumerate(values):
             if value is None:

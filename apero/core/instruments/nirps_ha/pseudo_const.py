@@ -15,6 +15,7 @@ import string
 from typing import Any, List, Tuple, Type, Union
 
 from apero.base import base
+from apero.base import drs_db
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
@@ -36,6 +37,8 @@ __release__ = base.__release__
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get Parmeter Dictionary class
 ParamDict = constants.ParamDict
+# Get the Database Columns class
+DatabaseColumns = drs_db.DatabaseColumns
 # get default Constant class
 DefaultConstants = pseudo_const.PseudoConstants
 # get error
@@ -345,7 +348,7 @@ class PseudoConstants(DefaultConstants):
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
-    def INDEX_HEADER_KEYS(self) -> Tuple[List[str], List[Type]]:
+    def INDEX_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Which header keys should we have in the index database.
 
@@ -360,41 +363,38 @@ class PseudoConstants(DefaultConstants):
         :return:
         """
         # set keyts
-        index_keys = dict()
-        # note unlike spirou date-obs for nirps is YYYY-MM-DDThh:mm:ss
-        index_keys['KW_DATE_OBS'] = str
-        index_keys['KW_MJDATE'] = float
-        index_keys['KW_TARGET_TYPE'] = str
-        index_keys['KW_MID_OBS_TIME'] = float
-        index_keys['KW_OBJECTNAME'] = str
-        index_keys['KW_OBJNAME'] = str
-        index_keys['KW_OBSTYPE'] =str
-        index_keys['KW_EXPTIME'] = float
-        index_keys['KW_INSTRUMENT'] = str
-        index_keys['KW_INST_MODE'] = str
-        index_keys['KW_RAW_DPRTYPE'] = str
-        index_keys['KW_RAW_DPRCATG'] = str
-        index_keys['KW_DPRTYPE'] = str
-        index_keys['KW_DRS_MODE'] = str
-        index_keys['KW_OUTPUT'] = str
-        index_keys['KW_CMPLTEXP'] = int
-        index_keys['KW_NEXP'] = int
-        index_keys['KW_VERSION'] = str
-        index_keys['KW_PPVERSION'] = str
-        index_keys['KW_PI_NAME'] = str
-        index_keys['KW_PID'] = str
-        index_keys['KW_FIBER'] = str
-        index_keys['KW_IDENTIFIER'] = str
-        # split names and types and add header keys
-        keys = list(index_keys.keys())
-        ctypes = list(index_keys.values())
+        header_cols = DatabaseColumns()
+        header_cols.add(name='KW_DATE_OBS', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_MJDATE', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_TARGET_TYPE', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_MID_OBS_TIME', datatype='FLOAT')
+        header_cols.add(name='KW_OBJECTNAME', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_OBJNAME', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_OBSTYPE', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_EXPTIME', datatype='FLOAT')
+        header_cols.add(name='KW_INSTRUMENT', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_INST_MODE', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_RAW_DPRTYPE', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_RAW_DPRCATG', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_DPRTYPE', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_DRS_MODE', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_OUTPUT', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_CMPLTEXP', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_NEXP', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_VERSION', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_PPVERSION', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_PI_NAME', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_PID', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_FIBER', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_IDENTIFIER', datatype='VARCHAR(80)')
         # check that filedef keys are present
         for fkey in self.FILEDEF_HEADER_KEYS():
-            if fkey not in keys:
-                emsg = __NAME__ + '.INDEX_HEADER_KEYS() missing key "{0}"'
+            if fkey not in header_cols.names:
+                emsg = __NAME__ + '.INDEX_HEADER_COLS() missing key "{0}"'
                 raise AttributeError(emsg.format(fkey))
         # return index header keys
-        return keys, ctypes
+        self.header_cols = header_cols
+        return header_cols
 
     def FILEDEF_HEADER_KEYS(self) -> List[str]:
         """
@@ -783,7 +783,7 @@ class PseudoConstants(DefaultConstants):
     # DATABASE SETTINGS
     # =========================================================================
     # noinspection PyPep8Naming
-    def INDEX_DB_COLUMNS(self) -> Tuple[List[str], List[type], List[str]]:
+    def INDEX_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns used in the index database
 
@@ -796,41 +796,38 @@ class PseudoConstants(DefaultConstants):
                              (for sorting)
             - RUNSTRING: the arguments entered to make this file
                          (used for checksum)
-            - {HKEYS}: see INDEX_HEADER_KEYS()
+            - {HKEYS}: see INDEX_HEADER_COLS()
             - USED: int, whether entry should be used or ignored
             - RAW: int, whether raw data has been fixed for the header
 
-        :return: tuple, list of columns (strings), list of types, list of
-                 columns (strings) that should be unique
+        :return: list of database columns
         """
         # set function name
-        _ = display_func('INDEX_DB_COLUMNS', __NAME__,
-                         self.class_name)
+        _ = display_func('INDEX_DB_COLUMNS', __NAME__, self.class_name)
+        # check for pre-existing values
+        if self.index_cols is not None:
+            return self.index_cols
+        # column definitions
+        index_cols = DatabaseColumns()
+
+        index_cols.add(name='ABSPATH', datatype='TEXT', is_unique=True)
+        index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)', is_index=True)
+        index_cols.add(name='FILENAME', is_index=True, datatype='VARCHAR(200)')
+        index_cols.add(name='BLOCK_KIND', is_index=True, datatype='VARCHAR(20)')
+        index_cols.add(name='LAST_MODIFIED', datatype='FLOAT')
+        index_cols.add(name='RECIPE', datatype='VARCHAR(200)')
+        index_cols.add(name='RUNSTRING', datatype='TEXT')
+        index_cols.add(name='INFILES', datatype='TEXT')
         # get header keys
-        hkeys, htypes = self.INDEX_HEADER_KEYS()
-        # set columns
-        index_columns = dict()
-        index_columns['ABSPATH'] = str
-        index_columns['OBS_DIR'] = str
-        index_columns['FILENAME'] = str
-        index_columns['BLOCK_KIND'] = str
-        index_columns['LAST_MODIFIED'] = float
-        index_columns['RECIPE'] = str
-        index_columns['RUNSTRING'] = str
-        index_columns['INFILES'] = str
-        # split names and types and add header keys
-        columns = list(index_columns.keys()) + hkeys
-        ctypes = list(index_columns.values()) + htypes
+        header_columns = self.INDEX_HEADER_COLS()
+        # add header columns to index columns
+        index_cols += header_columns
         # add extra columns
-        extra_columns = dict()
-        extra_columns['USED'] = int
-        extra_columns['RAWFIX'] = int
-        columns += list(extra_columns.keys())
-        ctypes += list(extra_columns.values())
-        # define columns that should be unique
-        unique_cols = ['ABSPATH']
+        index_cols.add(name='USED', datatype='INT')
+        index_cols.add(name='RAWFIX', datatype='INT')
         # return columns and column types
-        return columns, ctypes, unique_cols
+        self.index_cols = index_cols
+        return index_cols
 
 
 # =============================================================================

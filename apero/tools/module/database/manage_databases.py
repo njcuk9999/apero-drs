@@ -189,7 +189,9 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     asset_dir = params['DRS_DATA_ASSETS']
     reset_path = params['DATABASE_DIR']
     # get columns and ctypes from pconst
-    columns, ctypes = pconst.CALIBRATION_DB_COLUMNS()
+    cdb_cols = pconst.CALIBRATION_DB_COLUMNS()
+    columns = cdb_cols.names
+    ctypes = cdb_cols.datatypes
     # -------------------------------------------------------------------------
     # construct directory
     calibdbm = databases['calib']
@@ -225,7 +227,9 @@ def create_telluric_database(pconst: PseudoConst,
     :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
-    columns, ctypes = pconst.TELLURIC_DB_COLUMNS()
+    tdb_cols = pconst.TELLURIC_DB_COLUMNS()
+    columns = tdb_cols.names
+    ctypes = tdb_cols.datatypes
     # -------------------------------------------------------------------------
     # construct directory
     telludbm = databases['tellu']
@@ -254,7 +258,10 @@ def create_index_database(pconst: PseudoConst,
     :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
-    columns, ctypes, cuniques = pconst.INDEX_DB_COLUMNS()
+    idb_cols = pconst.INDEX_DB_COLUMNS()
+    columns = idb_cols.names
+    ctypes = idb_cols.datatypes
+    cuniques = idb_cols.unique_cols
     # -------------------------------------------------------------------------
     # construct directory
     indexdbm = databases['index']
@@ -283,7 +290,9 @@ def create_log_database(pconst: PseudoConst,
     :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
-    columns, ctypes = pconst.LOG_DB_COLUMNS()
+    ldb_cols = pconst.LOG_DB_COLUMNS()
+    columns = ldb_cols.names
+    ctypes = ldb_cols.datatypes
     # -------------------------------------------------------------------------
     # construct directory
     logdbm = databases['log']
@@ -316,7 +325,9 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     asset_dir = params['DRS_DATA_ASSETS']
     reset_path = params['DATABASE_DIR']
     # get columns and ctypes from pconst
-    columns, ctypes, cuniques = pconst.OBJECT_DB_COLUMNS()
+    objdb_cols = pconst.OBJECT_DB_COLUMNS()
+    columns = objdb_cols.names
+    ctypes = objdb_cols.datatypes
     # -------------------------------------------------------------------------
     # construct directory
     objectdbm = databases['object']
@@ -366,7 +377,10 @@ def make_object_reset(params: ParamDict):
         objdbm.database.backup()
         objdbm.database.delete_table(objdbm.database.tname)
     # get columns and ctypes from pconst
-    columns, ctypes, cuniques = pconst.OBJECT_DB_COLUMNS()
+    objdb_cols = pconst.OBJECT_DB_COLUMNS()
+    columns = objdb_cols.names
+    ctypes = objdb_cols.datatypes
+    cuniques = objdb_cols.unique_cols
     # add main table
     objdbm.database.add_table(objdbm.database.tname, columns, ctypes,
                               unique_cols=cuniques)
@@ -605,9 +619,11 @@ def import_database(params: ParamDict, database_name: str,
     # -------------------------------------------------------------------
     # get unique columns
     if 'INDEX' in db.database.tname:
-        _, _, ucols = pconst.INDEX_DB_COLUMNS()
+        idb_cols = pconst.INDEX_DB_COLUMNS()
+        ucols = idb_cols.unique_cols
     elif 'OBJECT' in db.database.tname:
-        _, _, ucols = pconst.OBJECT_DB_COLUMNS()
+        odb_cols = pconst.OBJECT_DB_COLUMNS()
+        ucols = odb_cols.unique_cols
     else:
         ucols = None
     # -------------------------------------------------------------------

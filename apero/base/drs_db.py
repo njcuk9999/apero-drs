@@ -24,7 +24,7 @@ import pandas as pd
 from pathlib import Path
 import sqlite3
 import time
-from typing import Any, Dict, List, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from apero.base import base
 from apero.base import drs_base
@@ -1078,6 +1078,83 @@ class Database:
         """
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
+
+
+class DatabaseColumns:
+    def __init__(self, name_prefix: Optional[str] = None):
+        """
+        SQL database columns definition
+
+        """
+        self.names = []
+        self.datatypes = []
+        self.dtypes = []
+        self.unique_cols = []
+        self.index_cols = []
+        self.name_prefix = None
+        self.altnames = []
+        self.comments = []
+
+
+    def add(self, name: str, datatype: str, is_unique: bool = False,
+            is_index: bool = False, comment: Optional[str] = None):
+        """
+        Add a column to the database
+
+        :param name: str, the name of the column
+        :param datatype: str, the sql data type e.g. FLOAT, REAL, INT, CHAR,
+                         VARCHAR, TEXT, BLOB
+        :param is_unique: bool, if True this column is flagged as unique
+        :param is_index: bool, if True this column is indexed
+        :param comment: str (optional), if set this is the comment associated
+                        with this column
+
+        :return: None
+        """
+        self.names.append(name)
+        self.datatypes.append(datatype)
+        self.dtypes.append(self._dtyper(datatype))
+        if is_unique:
+            self.unique_cols.append(name)
+        if is_index:
+            self.index_cols.append(name)
+        self.comments.append(comment)
+        if self.name_prefix is not None:
+            self.altnames.append('{0}{1}'.format(self.name_prefix, name))
+
+    def __add__(self, other: 'DatabaseColumns'):
+        """
+        Add one Database Column list to another
+
+        :param other: DatabaseColumns instance to be added to self
+
+        :return: None
+        """
+        # add to names
+        self.names += other.names
+        self.datatypes += other.datatypes
+        self.dtypes += other.dtypes
+        self.unique_cols += other.unique_cols
+        self.index_cols += other.index_cols
+        self.comments += other.comments
+        self.altnames += other.altnames
+
+    @staticmethod
+    def _dtyper(datatype):
+        """
+        Translate sql data types into python data types
+        """
+        if datatype == 'INT':
+            return int
+        if datatype == 'FLOAT':
+            return float
+        if datatype in ['TEXT', 'BLOB']:
+            return str
+        if datatype.startswith('VARCHAR'):
+            return str
+        # default is to cast to string
+        return str
+
 
 
 class SQLiteDatabase(Database):
