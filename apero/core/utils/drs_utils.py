@@ -589,6 +589,7 @@ class RecipeLog:
         # loop around all rows and add to params
         for it in range(len(log_keys)):
             names.append(log_keys[it])
+            param_kinds.append('rlog')
             values.append(log_values[it])
             source.append(func_name)
             description.append(log_comments[it])
