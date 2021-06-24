@@ -10,13 +10,9 @@ Version 0.0.1
 """
 import sys
 import os
-
-if sys.version_info.major == 3:
-    import tkinter as tk
-    from tkinter import Tk as ThemedTk
-    from tkinter import ttk
-else:
-    import Tkinter as tk
+import tkinter as tk
+from tkinter import Tk as ThemedTk
+from tkinter import ttk
 from ttkthemes import ThemedTk
 
 from apero.base import base
@@ -87,7 +83,7 @@ class TestApp(ThemedTk):
                     self.page_settings[key] = results[key]
 
     def execute(self):
-
+        self.update()
         print('Settings Entered:')
         for key in self.page_settings:
             print('\n{0} = {1}'.format(key, self.page_settings[key]))
@@ -224,7 +220,7 @@ def test(instrument=None):
     # get parameters from apero
     recipe, params = drs_startup.setup('None', instrument, quiet=True)
     # Log that we are running indexing
-    WLOG(params, '', 'Running file explorer application')
+    WLOG(params, '', 'Running generic app')
     # Main code here
     app = TestApp()
     app.geometry("1024x768")

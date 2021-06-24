@@ -6107,8 +6107,8 @@ class DrsOutFile(DrsInputFile):
         # get allowed header keys
         pconst = constants.pload()
         iheader_cols = pconst.INDEX_HEADER_COLS()
-        hkeys = list(iheader_cols.names)
-        htypes = list(iheader_cols.dtypes)
+        rkeys = list(iheader_cols.names)
+        rtypes = list(iheader_cols.dtypes)
         # must have primary filename set
         if self.extensions[0].filename is None:
             emsg = 'Error cannot link infile not set for primary extension'

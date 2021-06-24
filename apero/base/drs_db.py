@@ -1988,7 +1988,12 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
         # get mysql params
         sparams = dparams['MYSQL']
         # create table name
-        tablename = '{0}_{1}'.format(kind, sparams[kind]['PROFILE'])
+        if kind == 'NONE':
+            tablename = None
+            abs_tname = True
+        else:
+            tablename = '{0}_{1}'.format(kind, sparams[kind]['PROFILE'])
+            abs_tname = False
         # return the MySQLDatabase instance
         return MySQLDatabase(path=path,
                              host=sparams['HOST'],
@@ -1996,7 +2001,7 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
                              passwd=sparams['PASSWD'],
                              database=sparams['DATABASE'],
                              tablename=tablename,
-                             verbose=verbose)
+                             verbose=verbose, absolute_table_name=abs_tname)
     # else default to sqlite3
     else:
         sparams = dparams['SQLITE3']
@@ -2487,7 +2492,6 @@ class LanguageDatabase(BaseDatabaseManager):
             storage[rowdata['KEYNAME']] = rowtext
         # return dictionary storage
         return storage
-
 
 
 # =============================================================================
