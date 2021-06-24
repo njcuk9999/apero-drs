@@ -27,8 +27,8 @@ else:
 from PIL import Image, ImageTk
 
 from apero.base import base
-from apero .core.core import drs_log
-
+from apero.core.core import drs_log
+from apero.core.core import drs_misc
 
 # =============================================================================
 # Define variables
@@ -42,7 +42,9 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
-
+# Get resource path
+RESOURCE_PATH = drs_misc.get_relative_folder(__PACKAGE__, 'tools/resources')
+IMAGEDIR = os.path.join(RESOURCE_PATH, 'images')
 
 # =============================================================================
 # Define widget classes
@@ -147,19 +149,25 @@ class PageButtonPanel(ttk.Frame):
         self.button_panel(number)
 
     def button_panel(self, number=0):
-        if number != 0:
-            self.button1 = ttk.Button(self, text='Previous',
-                                      command=self.__previouspage)
-            self.button1.grid(row=0, column=0)
-        if number != (self.num_pages - 1):
-            self.button2 = ttk.Button(self, text='Next',
-                                      command=self.__nextpage)
-            self.button2.grid(row=0, column=1)
 
-        if number == (self.num_pages - 1):
-            self.button3 = ttk.Button(self, text='Finish',
+        if self.num_pages == 1:
+            self.button3 = ttk.Button(self, text='Submit',
                                       command=self.controller.execute)
             self.button3.grid(row=0, column=2)
+        else:
+            if number != 0:
+                self.button1 = ttk.Button(self, text='Previous',
+                                          command=self.__previouspage)
+                self.button1.grid(row=0, column=0)
+            if number != (self.num_pages - 1):
+                self.button2 = ttk.Button(self, text='Next',
+                                          command=self.__nextpage)
+                self.button2.grid(row=0, column=1)
+
+            if number == (self.num_pages - 1):
+                self.button3 = ttk.Button(self, text='Submit',
+                                          command=self.controller.execute)
+                self.button3.grid(row=0, column=2)
 
         # exit button
         self.button4 = ttk.Button(self, text='Exit',
@@ -197,8 +205,7 @@ class PageLogo(ttk.Frame):
     def __init__(self, parent, logo_path=None):
         # TODO: remove with full path
         if logo_path is None:
-            IMAGEDIR = './tools/resources/images'
-            logo_path = os.path.join(IMAGEDIR, 'terrapipe_logo.png')
+            logo_path = os.path.join(IMAGEDIR, 'apero_logo.png')
         ttk.Frame.__init__(self, parent)
         self.image = Image.open(logo_path)
         self.logo = ImageTk.PhotoImage(master=self, image=self.image)
