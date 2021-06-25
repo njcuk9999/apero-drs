@@ -1,0 +1,149 @@
+commit 8a43e5705b6d0d0d92526e3d7620d5e9746ffd1a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Jun 25 10:17:28 2021 -0400
+
+    finish delete table app for apero_database.py (--delete)
+
+commit 95cf3324369f8961d34bb3dc014c3ba3093c149f
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Jun 24 11:45:30 2021 -0400
+
+    apero.tools.module.database.manage_db_gui.py - work on app to delete / manage tables
+
+commit ed425b3d9513a0d9d2e5666faccf6ca093dc410b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Jun 23 16:35:06 2021 -0400
+
+    few fixes for database indexing
+
+commit 64d51e8602e6670ebbc4fefa5ee0c8b643cc3182
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 22 23:16:13 2021 -0400
+
+    apero.core.utils.drs_utils.py - forgot param_kind in log key loop
+
+commit 398f085654b3c528f3f5de73a90aff94c8b60dcb
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 22 22:57:06 2021 -0400
+
+    continue database indexing overhaul
+
+commit 2c754567bc4be1558a648247cb2f5a0f77d39bc8
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 22 22:11:08 2021 -0400
+
+    apero.base.drs_db.py - add index column
+
+commit afba64c21f6acb84163413654a54a1ccfeaad1af
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 22 22:01:41 2021 -0400
+
+    optimize database using index columns and define all sql data types properly (to aid speed up + indexing)
+
+commit 506e3d3e1084881ec1e35da99249f3e17526d9f7
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 22 16:23:32 2021 -0400
+
+    apero.io.drs_path.py - add listdirs, nofiles and listfiles functions (for quick directory/file listings)
+
+commit 7853f0420e0c2335fd65b1c0dcf3acfca8cf14ab
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 22 16:20:29 2021 -0400
+
+    apero.core.math.gen_math.py - rename 'slice' to 'imslace' (avoid using standard name)
+
+commit ccc7659cbf8bf88708752b57fe1dc428ad7aaf70
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 22 16:20:02 2021 -0400
+
+    apero_wave_night_nirps_ha.py - do not update smart_fp_mask here (only in master)
+
+commit 5617c82f18801eeef17df06c261bf730261516a5
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 22 16:19:43 2021 -0400
+
+    apero_wave_night_spirou.py - do not update smart_fp_mask here (only in master)
+
+commit 9157420544aea40dbc37fb484ec1628423331c09
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 22 16:19:17 2021 -0400
+
+    turn off cosmic correction for NIRPS - broken (Etienne will fix later)
+
+commit d0d1a1c375b4fdb4ca5f5d9a92163f94c0fefbe9
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jun 21 19:03:35 2021 -0400
+
+    apero.core.core.drs_database - add todo on how we deal with unique columns
+
+commit 8d7b3d0f1a2a06365b607c3f54391a71bd3b721c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jun 21 18:32:25 2021 -0400
+
+    try to speed up processing pre-indexing
+
+commit 2a14b7e9f637b7ed08550799de066377ecac85e7
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jun 21 18:30:17 2021 -0400
+
+    try to speed up processing pre-indexing
+
+commit 5afb061e40baf1d6651542407241abd40e0cf168
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jun 21 15:46:07 2021 -0400
+
+    try to speed up processing pre-indexing
+
+commit 2ab95d6b1428a8a6fa07bf384b69eedb4109528e
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jun 21 11:17:55 2021 -0400
+
+    apero.core.core.drs_file.py - self.abspath should be a string here
+
+commit 9a0f2e900fe8aa503ef5681e1e84368374d19422
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Jun 18 19:49:25 2021 -0400
+
+    apero.core.core.drs_database.py - last modified date a problem with many files
+
+commit 21504d34ee4836338607d95303a22d86c2ccb295
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Jun 18 19:49:00 2021 -0400
+
+    update nirps preprocessing
+
+commit 1bb5a868c0b3fc381f2b462b6710479fa4001487
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Jun 17 22:24:34 2021 -0400
+
+    apero_preprocess_nirps_ha.py - need to add etiennes code for fixing first pixel in amp
+
+commit f48c34d336e28eec642e749bb4daf29c56783cb0
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Jun 17 22:23:19 2021 -0400
+
+    update version/date/changelog/update notes
+
+commit cc65232a1443a194007ab38439aadf70f65fc5da
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Jun 17 22:22:39 2021 -0400
+
+    fix apero_postprocess_spirou.py  - fix db infiles
+
+commit badb391d1b8a592431db522628dda52238d2ae6e
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Jun 16 22:59:16 2021 -0400
+
+    keep adding drs output files with infiles (for the database) - brute force approach --> find blanks in database (we missed some)
+
+commit d6cf686ab533710e78ea8186b0886ec1b014d29b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Jun 16 17:18:39 2021 -0400
+
+    keep adding drs output files with infiles (for the database) - brute force approach --> find blanks in database (we missed some)
+
+commit bc0be245929098dcffae7783fc3188dda0a103a1
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Jun 16 11:20:25 2021 -0400
+
+    add KW_INSTRUMENT + add infiles column to the index database

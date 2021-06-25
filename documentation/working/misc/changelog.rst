@@ -2,6 +2,56 @@ Changelog
 =========
 
 
+0.7.137 (2021-06-25)
+--------------------
+- Finish delete table app for `apero_database.py` (--delete) [Neil Cook]
+- `Apero.tools.module.database.manage_db_gui.py` - work on app to delete /
+  manage tables. [Neil Cook]
+- Few fixes for database indexing. [Neil Cook]
+
+
+0.7.136 (2021-06-23)
+--------------------
+- `Apero.core.utils.drs_utils.py` - forgot `param_kind` in log key loop.
+  [Neil Cook]
+- Continue database indexing overhaul. [Neil Cook]
+- `Apero.base.drs_db.py` - add index column. [Neil Cook]
+- Optimize database using index columns and define all sql data types
+  properly (to aid speed up + indexing) [Neil Cook]
+- `Apero.io.drs_path.py` - add listdirs, nofiles and listfiles functions
+  (for quick directory/file listings) [Neil Cook]
+- `Apero.core.math.gen_math.py` - rename 'slice' to 'imslace' (avoid using
+  standard name) [Neil Cook]
+- `Apero_wave_night_nirps_ha.py` - do not update `smart_fp_mask` here (only
+  in master) [Neil Cook]
+- `Apero_wave_night_spirou.py` - do not update `smart_fp_mask` here (only in
+  master) [Neil Cook]
+- Turn off cosmic correction for NIRPS - broken (Etienne will fix later)
+  [Neil Cook]
+
+
+0.7.135 (2021-06-21)
+--------------------
+- `Apero.core.core.drs_database` - add todo on how we deal with unique
+  columns. [Neil Cook]
+- Try to speed up processing pre-indexing. [Neil Cook]
+- Try to speed up processing pre-indexing. [Neil Cook]
+- Try to speed up processing pre-indexing. [Neil Cook]
+- `Apero.core.core.drs_file.py` - self.abspath should be a string here.
+  [Neil Cook]
+
+
+0.7.134 (2021-06-18)
+--------------------
+- `Apero.core.core.drs_database.py` - last modified date a problem with
+  many files. [Neil Cook]
+- Update nirps preprocessing. [Neil Cook]
+- `Apero_preprocess_nirps_ha.py` - need to add etiennes code for fixing
+  first pixel in amp. [Neil Cook]
+- Update version/date/changelog/update notes. [Neil Cook]
+- Fix `apero_postprocess_spirou.py`  - fix db infiles. [Neil Cook]
+
+
 0.7.133 (2021-06-17)
 --------------------
 - Keep adding drs output files with infiles (for the database) - brute
