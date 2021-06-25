@@ -13,7 +13,7 @@ import sys
 import os
 import tkinter as tk
 from tkinter import Tk as ThemedTk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from ttkthemes import ThemedTk
 
 from apero.base import base
@@ -47,7 +47,7 @@ StartPage = gen_gui.StartPage
 # =============================================================================
 # Define functions
 # =============================================================================
-class ManageTables(ThemedTk):
+class DeleteTables(ThemedTk):
     def __init__(self, *args, **kwargs):
         # run the super
         ThemedTk.__init__(self, themebg=True)
@@ -57,21 +57,32 @@ class ManageTables(ThemedTk):
         # store options
         self.page_settings = dict()
         # this container contains all the pages
-        container = tk.Frame(self)
-        container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        container.grid_rowconfigure(0,  weight=1)
-        container.grid_columnconfigure(0, weight=1)
+        self.container = tk.Frame(self)
+        self.container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.container.grid_rowconfigure(0,  weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
         # the pages
         self.current = 0
         self.all_pages = [Page1]
         self.num_pages = len(self.all_pages)
         self.pages = dict()
+        # create pages
+        self.create_pages()
+
+    def create_pages(self):
         for it, F in enumerate(self.all_pages):
-            page = F(container, self)
+            page = F(self.container, self)
             self.pages[it] = page
             page.grid(row=0, column=0, sticky="NSEW")
         # show the first page
         self.pages[0].show()
+
+    def destroy_pages(self):
+        for it in range(len(self.pages)):
+            self.pages[it].destroy()
+            # items = self.pages[it].grid_slaves()
+            # for item in items:
+            #     item.destroy()
 
     def update(self):
         for page in self.pages:
@@ -84,32 +95,35 @@ class ManageTables(ThemedTk):
 
     def execute(self):
         self.update()
-        print('Settings Entered:')
-        for key in self.page_settings:
-            print('\n{0} = {1}'.format(key, self.page_settings[key]))
-
-
-
+        # delete table
         if 'delete' in self.page_settings:
             # get full list of tables (again)
             all_tables = get_db_tables()
-
-
+            # only delete if one or more tables were selected
             if len(self.page_settings['delete']) > 0:
                 tables = self.page_settings['delete']
-
+                # store tables to delete
+                delete_tables = []
+                # loop around and ask for confirmation
                 for table in tables:
                     if table in all_tables:
                         # only delete those that are Tru
                         if tables[table]:
-                            # TODO: warn user (pop up)
+                            # get table name
+                            # ask user to confirm
+                            tmargs = ['Delete database Table?',
+                                      'Delete table "{0}"?'.format(table)]
+                            # ask to delete table
+                            delete_table = messagebox.askokcancel(*tmargs)
+                            # If confirmed add to selection to delete
+                            if delete_table:
+                                delete_tables.append(table)
 
-                            # TODO: delete table
-                            pass
+                # now delete the tables
+                delete_db_tables(delete_tables)
 
-
-
-        self.close()
+            # recreate page (remove deleted database(s))
+            self.create_pages()
 
     def close(self):
         self.destroy()
@@ -170,7 +184,25 @@ def get_db_tables():
         return []
 
 
-def run_app():
+def delete_db_tables(tables):
+    # get the database settings
+    dparams = base.DPARAMS
+    # if we are dealing with mysql we have tables to delete
+    if dparams['USE_MYSQL']:
+        # get generic database access
+        db = drs_db.database_wrapper('None', path='None')
+        # clean up the output
+        out_tables = []
+        for table in tables:
+            # delete the table
+            db.delete_table(table)
+        # return these tables
+        return out_tables
+    else:
+        return []
+
+
+def run_delete_table_app(recipe, params):
     """
     Main function - takes the instrument name, index the databases and python
     script (in real time due to any changes in code) and then runs the
@@ -181,16 +213,12 @@ def run_app():
     :return: returns the local namespace as a dictionary
     :rtype: dict
     """
-    # get parameters from apero
-    recipe, params = drs_startup.setup('None', __INSTRUMENT__, quiet=True)
     # Log that we are running indexing
-    WLOG(params, '', 'Running generic app')
+    WLOG(params, '', 'Running delete table app')
     # Main code here
-    app = ManageTables()
+    app = DeleteTables()
     app.geometry("1024x768")
     app.mainloop()
-
-    llmain = dict(params=params)
     # return a copy of locally defined variables in the memory
     # return core.end_main(params, llmain, recipe, True)
     return app
@@ -200,8 +228,8 @@ def run_app():
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
-    # print hello world
-    ll = run_app()
+    # get args
+    ll = run_delete_table_app()
 
 # =============================================================================
 # End of code

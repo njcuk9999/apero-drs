@@ -18,6 +18,7 @@ from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.tools.module.database import manage_databases
 from apero.tools.module.database import database_update
+from apero.tools.module.database import manage_db_gui
 
 # =============================================================================
 # Define variables
@@ -94,9 +95,20 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # deal with update
     # ----------------------------------------------------------------------
-    if not drs_text.null_text(params['INPUTS']['OBJDB']):
+    if not drs_text.null_text(params['INPUTS']['OBJDB'], ['None', '', 'Null']):
         # update database
         database_update.update_obj_reset(params)
+        # ------------------------------------------------------------------
+        # End of main code
+        # ------------------------------------------------------------------
+        return drs_startup.return_locals(params, locals())
+
+    # ----------------------------------------------------------------------
+    # deal with delete gui
+    # ----------------------------------------------------------------------
+    if params['INPUTS']['DELETE']:
+        # load delete database app
+        manage_db_gui.run_delete_table_app(recipe, params)
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------

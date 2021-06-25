@@ -126,6 +126,9 @@ database_mgr.set_kwarg(name='--importdb', dtype=str, default='None',
 database_mgr.set_kwarg(name='--join', dtype=str, default='replace',
                        options=['replace', 'append'],
                        helpstr=textentry('DBMGR_JOIN_HELP'))
+database_mgr.set_kwarg(name='--delete', dtype='switch', default=False,
+                       helpstr='Load up the delete table GUI (MySQL only)')
+
 
 # -----------------------------------------------------------------------------
 # apero_documentation.py
