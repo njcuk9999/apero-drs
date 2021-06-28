@@ -606,6 +606,9 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
                     if len(filenames) == 0:
                         valid = False
                         continue
+                    # # if we have a group limit only accept the first N files
+                    # if group_limit is not None:
+                    #     filenames = filenames[:group_limit]
                     # in each dictionary we will have arguments
                     run_inst.dictionary[argname] = filenames
                 # add to run instances
