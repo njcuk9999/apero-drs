@@ -368,7 +368,7 @@ class PseudoConstants(DefaultConstants):
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
-    def INDEX_DB_COLUMNS(self) -> DatabaseColumns:
+    def INDEX_HEADER_COLS(self) -> DatabaseColumns:
         """
         Which header keys should we have in the index database.
 
