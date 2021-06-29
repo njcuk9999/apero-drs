@@ -9,14 +9,22 @@ Created on 2020-01-07 at 14:59
 
 @author: cook
 """
+from astropy.table import Table
+import numpy as np
 import os
 import shutil
+from typing import List, Tuple
 
-from apero.base import base
-from apero.core.core import drs_misc
 from apero import lang
+from apero.base import base
+from apero.core import constants
+from apero.core.core import drs_misc
 from apero.core.core import drs_log
+from apero.core.core import drs_file
+from apero.core.core import drs_text
+from apero.core.utils import drs_recipe
 from apero.io import drs_path
+from apero.tools.module.documentation import drs_markdown
 
 
 # =============================================================================
@@ -31,6 +39,11 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get drs classes
+ParamDict = constants.ParamDict
+PseudoConst = constants.PseudoConstants
+DrsRecipe = drs_recipe.DrsRecipe
+DrsInputFile = drs_file.DrsInputFile
 # Get the text types
 textentry = lang.textentry
 # --------------------------------------------------------------------------
@@ -47,11 +60,99 @@ SSH_OPTIONS = 'ssh -oport=5822'
 SSH_USER = 'cook'
 SSH_HOST = 'venus.astro.umontreal.ca'
 SSH_PATH = '/home/cook/www/apero-drs/'
+# -----------------------------------------------------------------------------
+# definitions dirs
+DEF_DIR = '../documentation/working/dev/definitions/'
 
 
 # =============================================================================
-# Define functions
+# Define user functions
 # =============================================================================
+def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
+
+    # load file mod
+    filemod = recipe.filemod.get()
+    # load pseudo constants
+    pconst = constants.pload()
+    # get instrument name
+    instrument = params['INSTRUMENT']
+    # define file types to add
+    sectionnames = ['Raw Files', 'Preprocesed files', 'Reduced Files',
+                    'Calibration files', 'Telluric files']
+    filetypes = ['raw_file', 'pp_file', 'red_file', 'calib_file', 'tellu_file']
+    # list of columns to be flagged as modified by the DRS
+    mod_cols = ['TRG_TYPE', 'DRSMODE']
+    # dict of columns to remove if present
+    remove_cols = dict()
+    remove_cols['raw_file'] = ['FILETYPE']
+    remove_cols['red_file'] = ['DBNAME', 'DBKEY']
+    # storage of output tables
+    table_storage = dict()
+    mod_storage = dict()
+    # -------------------------------------------------------------------------
+    # loop around file types
+    for filetype in filetypes:
+        # log progress
+        WLOG(params, '', 'Processing {0}'.format(filetype))
+        # get file set
+        files = getattr(filemod, filetype).fileset
+        # get raw table
+        table = _compile_files(params, pconst, files)
+        # remove empty columns
+        table = _remove_empty_cols(table)
+        # remove columns
+        if filetype in remove_cols:
+            table = _remove_cols(table, remove_cols[filetype])
+        # modifiy column names
+        table, modded = _modify_cols(table, mod_cols, fmt='{0} *')
+        # push to storage
+        table_storage[filetype] = table
+        mod_storage[filetype] = modded
+    # -------------------------------------------------------------------------
+    # get directory to save file to
+    def_dir = drs_misc.get_relative_folder(__PACKAGE__, DEF_DIR)
+    # storage file names
+    filenames = dict()
+    # save tables as csv
+    for filetype in table_storage:
+        # construct filename
+        fargs = [instrument.lower(), filetype]
+        filename = os.path.join(def_dir, '{0}_{1}.csv'.format(*fargs))
+        # save table
+        table_storage[filetype].write(filename, format='csv', overwrite=True)
+        # store filename
+        filenames[filetype] = filename
+    # -------------------------------------------------------------------------
+    # make markdown document
+    markdown = drs_markdown.MarkDownPage()
+    # add page title
+    markdown.add_title('{0} file definitions'.format(instrument))
+    # loop around table section names
+    for it in range(len(sectionnames)):
+        # get filetype and name
+        filetype = filetypes[it]
+        name = sectionnames[it]
+        # get filename as just a filename (assume they are in the same
+        #     directory)
+        filename = os.path.basename(filenames[filetype])
+        # add section
+        markdown.add_section(name)
+        # add table
+        markdown.add_csv_table(title='{0} file definition table'.format(name),
+                               csv_file=filename)
+        # add text if required
+        if mod_storage[filetype]:
+            # construct text to add
+            modtext = '* columns may be added/updated by APERO before use.'
+            markdown.add_text(text=modtext)
+    # -------------------------------------------------------------------------
+    # construct markdown filename
+    markdown_basename = '{0}_file_definitions.rst'.format(instrument.lower())
+    markdown_filename = os.path.join(def_dir, markdown_basename)
+    # write markdown to file
+    markdown.write_page(markdown_filename)
+
+
 def compile_docs(params):
     # get package
     package = params['DRS_PACKAGE']
@@ -167,6 +268,117 @@ def upload(params):
     rdict['OUTPATH'] = SSH_PATH
     # run command (will require password)
     os.system(RSYNC_CMD.format(**rdict))
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def _compile_files(params: ParamDict, pconst: PseudoConst,
+                   fileset: List[DrsInputFile]) -> Table:
+    """
+    Compile a table of parameters based on an input fileset (list of Drs
+    Input Files), one row per input file
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PsuedoConst, the pseudo constant class
+    :param fileset: list of DrsInputFile instances, to make the table
+
+    :return: astropy.table.Table, the astropy table, one row per input file
+    """
+    # dictionary storage for file summary parameters
+    storage = dict()
+    # loop around file sets
+    for filedef in fileset:
+        # get the summary for this file
+        filedict = filedef.summary(params, pconst)
+        # add to storage
+        for key in filedict:
+            if key in storage:
+                storage[key].append(filedict[key])
+            else:
+                storage[key] = [filedict[key]]
+    # convert storage to table
+    table = Table()
+    # loop around dictionary keys and add to table
+    for key in storage:
+        table[key] = storage[key]
+    # return the astropy table
+    return table
+
+
+def _remove_empty_cols(table: Table) -> Table:
+    """
+    Remove empty columns from a table
+
+    :param table: astropy.table.Table
+
+    :return: astropy.table.Table, the updated table without empty columns
+    """
+    # new table
+    newtable = Table()
+    # loop around original column names
+    for col in table.colnames:
+        # empty col
+        empty_col = True
+        # get unique values for col
+        uvalues = np.unique(np.array(table[col]))
+        # loop around unique values and see if they are nulls
+        for uvalue in uvalues:
+            if not drs_text.null_text(uvalue, ['None', '--', '', 'Null']):
+                empty_col = False
+        # only add non-empty columns
+        if not empty_col:
+            newtable[col] = np.array(table[col])
+    # return new table
+    return newtable
+
+
+def _remove_cols(table: Table, cols: List[str]) -> Table:
+    """
+    Remove certain columns from table
+
+    :param table: astropy.table.Table - the input astropy
+    :param cols: list of strings, the columns to remove
+
+    :return: astropy.table.Table - the update table
+    """
+    # loop around columns
+    for col in cols:
+        # only deal with columns in this table
+        if col in table.colnames:
+            # remove column
+            del table[col]
+    # return table
+    return table
+
+
+def _modify_cols(table: Table, cols: List[str],
+                 fmt: str = '{0}') -> Tuple[Table, bool]:
+    """
+    Modify column names by given format for "cols"
+
+    :param table: astropy.table.Table - the input astropy
+    :param cols: list of strings, the columns to modify
+    :param fmt: str, the format by which to modify the columns
+
+    :return: Tuple, 1. astropy.table.Table - the updated table, 2. bool, whether
+             table was updated
+    """
+    modified = False
+    # loop around columns
+    for col in cols:
+        # only deal with columns in this table
+        if col in table.colnames:
+            # copy values for column
+            values = np.array(table[col])
+            # remove column
+            del table[col]
+            # add new column (updated)
+            table[fmt.format(col)] = values
+            # change modified to True
+            modified = True
+    # return table
+    return table, modified
 
 
 # =============================================================================

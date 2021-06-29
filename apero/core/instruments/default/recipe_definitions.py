@@ -141,6 +141,9 @@ remake_doc.recipe_type = 'nolog-tool'
 remake_doc.recipe_kind = 'admin'
 remake_doc.set_kwarg(name='--upload', dtype='bool', default=False,
                      helpstr=textentry('REMAKE_DOC_UPLOADARG_HELP'))
+# TODO: move to language database
+remake_doc.set_kwarg(name='--filedef', dtype='switch', default=False,
+                     helpstr='Compile a list of current file definitions')
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py
