@@ -6,17 +6,17 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Preprocessing Recipe &#8212; APERO 0.7.073 documentation</title>
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bizstyle.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Preprocessing Recipe &#8212; APERO 0.7.137 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
-    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/language_data.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="../recipes_spirou.html" title="SPIRou Recipes"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.073 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.137 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../recipes_spirou.html" accesskey="U">SPIRou Recipes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Preprocessing Recipe</a></li> 
@@ -153,7 +153,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="preprocessing-recipe">
+  <section id="preprocessing-recipe">
 <span id="recipes-spirou-preprocessing"></span><h1>Preprocessing Recipe<a class="headerlink" href="#preprocessing-recipe" title="Permalink to this headline">¶</a></h1>
 <p>Cleans file of detector effects, fixes headers and produces ‘pre-processed’
 files.</p>
@@ -174,42 +174,42 @@ Read about this <a class="reference internal" href="../../science/preprocessing.
 <p>Our final step is to rotate the image into the standard APERO
 <a class="reference internal" href="../../../misc/glossary.html#term-pre-processing-coordinate-system"><span class="xref std std-term">pre-processing-coordinate-system</span></a>.</p>
 <p>We then save the image with the “{odometer code}_pp.fits” suffix.</p>
-<div class="section" id="schematic">
+<section id="schematic">
 <h2>Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
 <a class="reference internal image-reference" href="../../../_images/cal_preproces_spirou_schematic.jpg"><img alt="../../../_images/cal_preproces_spirou_schematic.jpg" class="align-center" src="../../../_images/cal_preproces_spirou_schematic.jpg" style="width: 100%;" /></a>
-</div>
-<div class="section" id="run">
+</section>
+<section id="run">
 <h2>Run<a class="headerlink" href="#run" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cal_preprocess_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> <span class="o">[</span>RAW_FILES<span class="o">]</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="optional-arguments">
+</section>
+<section id="optional-arguments">
 <h2>Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>--skip, --debug, --listing, --listingall, --version, --info,
 --program, --idebug, --breakpoints, --quiet, --help
 </pre></div>
 </div>
-</div>
-<div class="section" id="output-dir">
+</section>
+<section id="output-dir">
 <h2>Output Dir:<a class="headerlink" href="#output-dir" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>DRS_DATA_WORKING   <span class="se">\\</span> default: <span class="s2">&quot;tmp&quot;</span> directory
 </pre></div>
 </div>
-</div>
-<div class="section" id="output-files">
+</section>
+<section id="output-files">
 <h2>Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp.fits  <span class="se">\\</span> preprocessed files <span class="o">(</span>4096x4096<span class="o">)</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="plots">
+</section>
+<section id="plots">
 <h2>Plots<a class="headerlink" href="#plots" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>None
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -230,7 +230,7 @@ Read about this <a class="reference internal" href="../../science/preprocessing.
         <li class="right" >
           <a href="../recipes_spirou.html" title="SPIRou Recipes"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.073 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.137 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../recipes_spirou.html" >SPIRou Recipes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Preprocessing Recipe</a></li> 
@@ -238,7 +238,7 @@ Read about this <a class="reference internal" href="../../science/preprocessing.
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.3.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
     </div>
   </body>
 </html>

@@ -38,7 +38,7 @@ Run
 
 .. code-block:: bash
 
-    cal_dark_master_spirou.py
+    apero_dark_master_spirou.py
 
 ===========================================
 Optional Arguments

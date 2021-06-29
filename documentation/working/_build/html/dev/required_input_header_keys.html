@@ -6,21 +6,21 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Required Input Header Keys &#8212; APERO 0.7.073 documentation</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Required Input Header Keys &#8212; APERO 0.7.137 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../_static/apero.css" />
     
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     <script src="../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Python installation" href="../misc/pythoninstallation.html" />
+    <link rel="next" title="SPIROU file definitions" href="definitions/spirou_file_definitions.html" />
     <link rel="prev" title="Adding a new plot" href="adding_new_plot.html" />
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
@@ -96,12 +96,12 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../misc/pythoninstallation.html" title="Python installation"
+          <a href="definitions/spirou_file_definitions.html" title="SPIROU file definitions"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="adding_new_plot.html" title="Adding a new plot"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.7.073 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.7.137 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="developer_guide.html" accesskey="U">Developer how to guide</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Required Input Header Keys</a></li> 
       </ul>
@@ -121,8 +121,8 @@
   <p class="topless"><a href="adding_new_plot.html"
                         title="previous chapter">Adding a new plot</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="../misc/pythoninstallation.html"
-                        title="next chapter">Python installation</a></p>
+  <p class="topless"><a href="definitions/spirou_file_definitions.html"
+                        title="next chapter">SPIROU file definitions</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -148,9 +148,9 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="required-input-header-keys">
+  <section id="required-input-header-keys">
 <span id="required-input-hkeys"></span><h1>Required Input Header Keys<a class="headerlink" href="#required-input-header-keys" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="main">
+<section id="main">
 <span id="required-input-hkeys-main"></span><h2>Main<a class="headerlink" href="#main" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OBSTYPE</span> <span class="o">=</span> <span class="s1">&#39;OBJECT  &#39;</span>           <span class="o">/</span> <span class="n">Observation</span> <span class="o">/</span> <span class="n">Exposure</span> <span class="nb">type</span> <span class="p">[</span><span class="s1">&#39;DARK&#39;</span><span class="p">,</span> <span class="s1">&#39;FLAT&#39;</span><span class="p">,</span> <span class="s1">&#39;ALIGN&#39;</span><span class="p">,</span> <span class="s1">&#39;COMPARISON&#39;</span><span class="p">,</span> <span class="s1">&#39;OBJECT&#39;</span><span class="p">]</span>
 <span class="n">TRG_TYPE</span><span class="o">=</span> <span class="s1">&#39;TARGET  &#39;</span>           <span class="o">/</span> <span class="n">target</span> <span class="ow">or</span> <span class="n">sky</span> <span class="nb">object</span> <span class="p">[</span><span class="s1">&#39;TARGET&#39;</span><span class="p">,</span> <span class="s1">&#39;SKY&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
@@ -197,8 +197,8 @@ SBCDEN_P=                 1.96 / SPIRou Calib-Reference density (0 to 3.3)  [ONL
 SBCALI_P= &#39;P5      &#39;           / SPIRou calibwh predefined position or angle
 </pre></div>
 </div>
-</div>
-<div class="section" id="other">
+</section>
+<section id="other">
 <span id="required-input-hkeys-other"></span><h2>Other<a class="headerlink" href="#other" title="Permalink to this headline">¶</a></h2>
 <p>Used to report the air temperature [used in dark master – logging only?]:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TEMPERAT</span><span class="o">=</span>                 <span class="mf">2.33</span> <span class="o">/</span> <span class="mi">86</span> <span class="n">temp</span><span class="p">,</span> <span class="n">air</span><span class="p">,</span> <span class="n">weather</span> <span class="n">tower</span> <span class="n">deg</span> <span class="n">C</span>
@@ -212,8 +212,8 @@ SBCALI_P= &#39;P5      &#39;           / SPIRou calibwh predefined position or a
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">RELHUMID</span><span class="o">=</span>                 <span class="mf">6.48</span> <span class="o">/</span> <span class="mi">87</span> <span class="n">relative</span> <span class="n">humidity</span><span class="p">,</span> <span class="n">weather</span> <span class="n">tower</span> <span class="o">%</span>
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -229,19 +229,19 @@ SBCALI_P= &#39;P5      &#39;           / SPIRou calibwh predefined position or a
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../misc/pythoninstallation.html" title="Python installation"
+          <a href="definitions/spirou_file_definitions.html" title="SPIROU file definitions"
              >next</a> |</li>
         <li class="right" >
           <a href="adding_new_plot.html" title="Adding a new plot"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.7.073 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.7.137 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="developer_guide.html" >Developer how to guide</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Required Input Header Keys</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.3.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
     </div>
   </body>
 </html>

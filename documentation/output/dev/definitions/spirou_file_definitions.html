@@ -1,0 +1,1391 @@
+
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>SPIROU file definitions &#8212; APERO 0.7.137 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Python installation" href="../../misc/pythoninstallation.html" />
+    <link rel="prev" title="Required Input Header Keys" href="../required_input_header_keys.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
+
+
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a title="Home" href="../../index.html">
+        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="install" href="../../user/general/installation.html">
+        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
+        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="download pdf" href="../../apero-docs.pdf">
+        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+  </ul>
+    <div>
+    <a href="../../index.html">
+      <img src="../../_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../misc/pythoninstallation.html" title="Python installation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../required_input_header_keys.html" title="Required Input Header Keys"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.137 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../developer_guide.html" accesskey="U">Developer how to guide</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">SPIROU file definitions</a></li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">SPIROU file definitions</a><ul>
+<li><a class="reference internal" href="#raw-files">Raw Files</a></li>
+<li><a class="reference internal" href="#preprocesed-files">Preprocesed files</a></li>
+<li><a class="reference internal" href="#reduced-files">Reduced Files</a></li>
+<li><a class="reference internal" href="#calibration-files">Calibration files</a></li>
+<li><a class="reference internal" href="#telluric-files">Telluric files</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../required_input_header_keys.html"
+                        title="previous chapter">Required Input Header Keys</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../../misc/pythoninstallation.html"
+                        title="next chapter">Python installation</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/definitions/spirou_file_definitions.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="spirou-file-definitions">
+<h1>SPIROU file definitions<a class="headerlink" href="#spirou-file-definitions" title="Permalink to this headline">¶</a></h1>
+<section id="raw-files">
+<h2>Raw Files<a class="headerlink" href="#raw-files" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Raw Files file definition table</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>NAME</p></td>
+<td><p>OBSTYPE</p></td>
+<td><p>SBCCAS_P</p></td>
+<td><p>SBCREF_P</p></td>
+<td><p>SBCALI_P</p></td>
+<td><p>INSTRUME</p></td>
+<td><p>TRG_TYPE*</p></td>
+<td><p>DRSMODE*</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_DARK_DARK_INT</p></td>
+<td><p>DARK</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_pk</p></td>
+<td><p>P4</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_DARK_DARK_TEL</p></td>
+<td><p>DARK</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_pk</p></td>
+<td><p>P5</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_DARK_DARK_SKY</p></td>
+<td><p>OBJECT</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_pk</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>SKY</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_DARK_FP_SKY</p></td>
+<td><p>OBJECT</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_fp</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>SKY</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_DARK_FLAT</p></td>
+<td><p>FLAT</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_wl</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_FLAT_DARK</p></td>
+<td><p>FLAT</p></td>
+<td><p>pos_wl</p></td>
+<td><p>pos_pk</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_FLAT_FLAT</p></td>
+<td><p>FLAT</p></td>
+<td><p>pos_wl</p></td>
+<td><p>pos_wl</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_FLAT_FP</p></td>
+<td><p>FLAT</p></td>
+<td><p>pos_wl</p></td>
+<td><p>pos_fp</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_DARK_FP</p></td>
+<td><p>ALIGN</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_fp</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_FP_DARK</p></td>
+<td><p>ALIGN</p></td>
+<td><p>pos_fp</p></td>
+<td><p>pos_pk</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_FP_FLAT</p></td>
+<td><p>ALIGN</p></td>
+<td><p>pos_fp</p></td>
+<td><p>pos_wl</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_FP_FP</p></td>
+<td><p>ALIGN</p></td>
+<td><p>pos_fp</p></td>
+<td><p>pos_fp</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_LFC_LFC</p></td>
+<td><p>ALIGN</p></td>
+<td><p>pos_rs</p></td>
+<td><p>pos_rs</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_LFC_FP</p></td>
+<td><p>ALIGN</p></td>
+<td><p>pos_rs</p></td>
+<td><p>pos_fp</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_FP_LFC</p></td>
+<td><p>ALIGN</p></td>
+<td><p>pos_fp</p></td>
+<td><p>pos_rs</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_OBJ_DARK</p></td>
+<td><p>OBJECT</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_pk</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>TARGET</p></td>
+<td><p>SPECTROSCOPY</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_OBJ_FP</p></td>
+<td><p>OBJECT</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_fp</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>TARGET</p></td>
+<td><p>SPECTROSCOPY</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_OBJ_HCONE</p></td>
+<td><p>OBJECT</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_hc1</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>TARGET</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_OBJ_HCTWO</p></td>
+<td><p>OBJECT</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_hc2</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>TARGET</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_POLAR_DARK</p></td>
+<td><p>OBJECT</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_pk</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>TARGET</p></td>
+<td><p>POLAR</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_POLAR_FP</p></td>
+<td><p>OBJECT</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_fp</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>TARGET</p></td>
+<td><p>POLAR</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_DARK_HCONE</p></td>
+<td><p>COMPARISON</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_hc1</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_DARK_HCTWO</p></td>
+<td><p>COMPARISON</p></td>
+<td><p>pos_pk</p></td>
+<td><p>pos_hc2</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_FP_HCONE</p></td>
+<td><p>COMPARISON</p></td>
+<td><p>pos_fp</p></td>
+<td><p>pos_hc1</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_FP_HCTWO</p></td>
+<td><p>COMPARISON</p></td>
+<td><p>pos_fp</p></td>
+<td><p>pos_hc2</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_HCONE_FP</p></td>
+<td><p>COMPARISON</p></td>
+<td><p>pos_hc1</p></td>
+<td><p>pos_fp</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_HCTWO_FP</p></td>
+<td><p>COMPARISON</p></td>
+<td><p>pos_hc2</p></td>
+<td><p>pos_fp</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_HCONE_HCONE</p></td>
+<td><p>COMPARISON</p></td>
+<td><p>pos_hc1</p></td>
+<td><p>pos_hc1</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_HCTWO_HCTWO</p></td>
+<td><p>COMPARISON</p></td>
+<td><p>pos_hc2</p></td>
+<td><p>pos_hc2</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>RAW_HCONE_DARK</p></td>
+<td><p>COMPARISON</p></td>
+<td><p>pos_hc1</p></td>
+<td><p>pos_pk</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>RAW_HCTWO_DARK</p></td>
+<td><p>COMPARISON</p></td>
+<td><p>pos_hc2</p></td>
+<td><p>pos_pk</p></td>
+<td><p>–</p></td>
+<td><p>SPIRou</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+</tbody>
+</table>
+<p>* these columns may be added/updated by APERO before use.</p>
+</section>
+<section id="preprocesed-files">
+<h2>Preprocesed files<a class="headerlink" href="#preprocesed-files" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default" id="id2">
+<caption><span class="caption-text">Preprocesed files file definition table</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>NAME</p></td>
+<td><p>DPRTYPE</p></td>
+<td><p>FILETYPE</p></td>
+<td><p>SUFFIX</p></td>
+</tr>
+<tr class="row-even"><td><p>DARK_DARK_INT</p></td>
+<td><p>DARK_DARK_INT</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>DARK_DARK_TEL</p></td>
+<td><p>DARK_DARK_TEL</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>DARK_DARK_SKY</p></td>
+<td><p>DARK_DARK_SKY</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>DARK_FP_SKY</p></td>
+<td><p>DARK_FP_SKY</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>FLAT_DARK</p></td>
+<td><p>FLAT_DARK</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>DARK_FLAT</p></td>
+<td><p>DARK_FLAT</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>FLAT_FLAT</p></td>
+<td><p>FLAT_FLAT</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>FLAT_FP</p></td>
+<td><p>FLAT_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>DARK_FP</p></td>
+<td><p>DARK_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>FP_DARK</p></td>
+<td><p>FP_DARK</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>FP_FLAT</p></td>
+<td><p>FP_FLAT</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>FP_FP</p></td>
+<td><p>FP_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>LFC_LFC</p></td>
+<td><p>LFC_LFC</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>LFC_FP</p></td>
+<td><p>LFC_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>FP_LFC</p></td>
+<td><p>FP_LFC</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>OBJ_DARK</p></td>
+<td><p>OBJ_DARK</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>OBJ_FP</p></td>
+<td><p>OBJ_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>OBJ_HC1</p></td>
+<td><p>OBJ_HCONE</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>OBJ_HC2</p></td>
+<td><p>OBJ_HCTWO</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>POLAR_DARK</p></td>
+<td><p>POLAR_DARK</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>POLAR_FP</p></td>
+<td><p>POLAR_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>DARK_HCONE</p></td>
+<td><p>DARK_HCONE</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>DARK_HCTW0</p></td>
+<td><p>DARK_HCTW0</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>FP_HCONE</p></td>
+<td><p>FP_HCONE</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>FP_HCTWO</p></td>
+<td><p>FP_HCTWO</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>HCONE_FP</p></td>
+<td><p>HCONE_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>HCTWO_FP</p></td>
+<td><p>HCTWO_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>HCONE_HCONE</p></td>
+<td><p>HCONE_HCONE</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>HCTWO_HCTWO</p></td>
+<td><p>HCTWO_HCTWO</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-odd"><td><p>HCONE_DARK</p></td>
+<td><p>HCONE_DARK</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+<tr class="row-even"><td><p>HCTWO_DARK</p></td>
+<td><p>HCTWO_DARK</p></td>
+<td><p>.fits</p></td>
+<td><p>_pp</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reduced-files">
+<h2>Reduced Files<a class="headerlink" href="#reduced-files" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default" id="id3">
+<caption><span class="caption-text">Reduced Files file definition table</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>NAME</p></td>
+<td><p>DRSOUTID</p></td>
+<td><p>FILETYPE</p></td>
+<td><p>SUFFIX</p></td>
+</tr>
+<tr class="row-even"><td><p>DARKI</p></td>
+<td><p>DARKI</p></td>
+<td><p>.fits</p></td>
+<td><p>_darki</p></td>
+</tr>
+<tr class="row-odd"><td><p>DARKT</p></td>
+<td><p>DARKT</p></td>
+<td><p>.fits</p></td>
+<td><p>_darkt</p></td>
+</tr>
+<tr class="row-even"><td><p>DARKS</p></td>
+<td><p>DARKS</p></td>
+<td><p>.fits</p></td>
+<td><p>_darks</p></td>
+</tr>
+<tr class="row-odd"><td><p>DARKM</p></td>
+<td><p>DARKM</p></td>
+<td><p>.fits</p></td>
+<td><p>_dark_master</p></td>
+</tr>
+<tr class="row-even"><td><p>BADPIX</p></td>
+<td><p>BADPIX</p></td>
+<td><p>.fits</p></td>
+<td><p>_badpixel</p></td>
+</tr>
+<tr class="row-odd"><td><p>BKGRD_MAP</p></td>
+<td><p>BKGRD_MAP</p></td>
+<td><p>.fits</p></td>
+<td><p>_bmap.fits</p></td>
+</tr>
+<tr class="row-even"><td><p>DEBUG_BACK</p></td>
+<td><p>DEBUG_BACK</p></td>
+<td><p>.fits</p></td>
+<td><p>_background.fits</p></td>
+</tr>
+<tr class="row-odd"><td><p>LOC_ORDERP</p></td>
+<td><p>LOC_ORDERP</p></td>
+<td><p>.fits</p></td>
+<td><p>_order_profile</p></td>
+</tr>
+<tr class="row-even"><td><p>LOC_LOCO</p></td>
+<td><p>LOC_LOCO</p></td>
+<td><p>.fits</p></td>
+<td><p>_loco</p></td>
+</tr>
+<tr class="row-odd"><td><p>LOC_FWHM</p></td>
+<td><p>LOC_FWHM</p></td>
+<td><p>.fits</p></td>
+<td><p>_fwhm-order</p></td>
+</tr>
+<tr class="row-even"><td><p>LOC_SUP</p></td>
+<td><p>LOC_SUP</p></td>
+<td><p>.fits</p></td>
+<td><p>_with-order</p></td>
+</tr>
+<tr class="row-odd"><td><p>SHAPE_X</p></td>
+<td><p>SHAPE_X</p></td>
+<td><p>.fits</p></td>
+<td><p>_shapex</p></td>
+</tr>
+<tr class="row-even"><td><p>SHAPE_Y</p></td>
+<td><p>SHAPE_Y</p></td>
+<td><p>.fits</p></td>
+<td><p>_shapey</p></td>
+</tr>
+<tr class="row-odd"><td><p>MASTER_FP</p></td>
+<td><p>MASTER_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_fpmaster</p></td>
+</tr>
+<tr class="row-even"><td><p>SHAPE_IN_FP</p></td>
+<td><p>SHAPE_IN_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_shape_in_fp</p></td>
+</tr>
+<tr class="row-odd"><td><p>SHAPE_OUT_FP</p></td>
+<td><p>SHAPE_OUT_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_shape_out_fp</p></td>
+</tr>
+<tr class="row-even"><td><p>SHAPE_IN_HC</p></td>
+<td><p>SHAPE_IN_HC</p></td>
+<td><p>.fits</p></td>
+<td><p>_shape_in_hc</p></td>
+</tr>
+<tr class="row-odd"><td><p>SHAPE_OUT_HC</p></td>
+<td><p>SHAPE_OUT_HC</p></td>
+<td><p>.fits</p></td>
+<td><p>_shape_out_hc</p></td>
+</tr>
+<tr class="row-even"><td><p>SHAPE_BDX</p></td>
+<td><p>SHAPE_BDX</p></td>
+<td><p>.fits</p></td>
+<td><p>_shape_out_bdx</p></td>
+</tr>
+<tr class="row-odd"><td><p>SHAPEL</p></td>
+<td><p>SHAPEL</p></td>
+<td><p>.fits</p></td>
+<td><p>_shapel</p></td>
+</tr>
+<tr class="row-even"><td><p>SHAPEL_IN_FP</p></td>
+<td><p>SHAPEL_IN_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_shapel_in_fp.fits</p></td>
+</tr>
+<tr class="row-odd"><td><p>SHAPEL_OUT_FP</p></td>
+<td><p>SHAPEL_OUT_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_shapel_out_fp.fits</p></td>
+</tr>
+<tr class="row-even"><td><p>FF_BLAZE</p></td>
+<td><p>FF_BLAZE</p></td>
+<td><p>.fits</p></td>
+<td><p>_blaze</p></td>
+</tr>
+<tr class="row-odd"><td><p>FF_FLAT</p></td>
+<td><p>FF_FLAT</p></td>
+<td><p>.fits</p></td>
+<td><p>_flat</p></td>
+</tr>
+<tr class="row-even"><td><p>ORDERP_STRAIGHT</p></td>
+<td><p>–</p></td>
+<td><p>.npy</p></td>
+<td><p>_orderps</p></td>
+</tr>
+<tr class="row-odd"><td><p>EXT_E2DS</p></td>
+<td><p>EXT_E2DS</p></td>
+<td><p>.fits</p></td>
+<td><p>_e2ds</p></td>
+</tr>
+<tr class="row-even"><td><p>EXT_E2DS_FF</p></td>
+<td><p>EXT_E2DS_FF</p></td>
+<td><p>.fits</p></td>
+<td><p>_e2dsff</p></td>
+</tr>
+<tr class="row-odd"><td><p>EXT_E2DS_LL</p></td>
+<td><p>EXT_E2DS_LL</p></td>
+<td><p>.fits</p></td>
+<td><p>_e2dsll</p></td>
+</tr>
+<tr class="row-even"><td><p>EXT_LOCO</p></td>
+<td><p>EXT_LOCO</p></td>
+<td><p>.fits</p></td>
+<td><p>_e2dsloco</p></td>
+</tr>
+<tr class="row-odd"><td><p>EXT_S1D_W</p></td>
+<td><p>EXT_S1D_W</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_w</p></td>
+</tr>
+<tr class="row-even"><td><p>EXT_S1D_V</p></td>
+<td><p>EXT_S1D_V</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_v</p></td>
+</tr>
+<tr class="row-odd"><td><p>EXT_FPLIST</p></td>
+<td><p>EXT_FPLIST</p></td>
+<td><p>.fits</p></td>
+<td><p>_ext_fplines</p></td>
+</tr>
+<tr class="row-even"><td><p>THERMALI_E2DS</p></td>
+<td><p>THERMALI_E2DS</p></td>
+<td><p>.fits</p></td>
+<td><p>_thermal_e2ds_int</p></td>
+</tr>
+<tr class="row-odd"><td><p>THERMALT_E2DS</p></td>
+<td><p>THERMALT_E2DS</p></td>
+<td><p>.fits</p></td>
+<td><p>_thermal_e2ds_tel</p></td>
+</tr>
+<tr class="row-even"><td><p>LEAKM_E2DS</p></td>
+<td><p>LEAKM_E2DS</p></td>
+<td><p>.fits</p></td>
+<td><p>_leak_master</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVESOL_MASTER</p></td>
+<td><p>WAVESOL_MASTER</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavesol_master_</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVE_HCLIST_MASTER</p></td>
+<td><p>WAVE_HCLIST_MASTER</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavem_hclines</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVE_FPLIST_MASTER</p></td>
+<td><p>WAVE_FPLIST_MASTER</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavem_fplines</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVEM_CAV</p></td>
+<td><p>WAVEM_CAV</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavecav_</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVEM_D</p></td>
+<td><p>WAVEM_SOL</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavem</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVEM_FP</p></td>
+<td><p>WAVEM_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavem_fp</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVEM_HC</p></td>
+<td><p>WAVEM_HC</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavem_hc</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVERES</p></td>
+<td><p>WAVE_RES</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavemres</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVE_FPRESTAB</p></td>
+<td><p>–</p></td>
+<td><p>.tbl</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVE_FPLLTABL</p></td>
+<td><p>–</p></td>
+<td><p>.tbl</p></td>
+<td><p>_mhc_lines</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVE_HC</p></td>
+<td><p>WAVE_HC</p></td>
+<td><p>.fits</p></td>
+<td><p>_wave_hc</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVE_FP</p></td>
+<td><p>WAVE_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_wave_fp</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVE_NIGHT</p></td>
+<td><p>WAVE_NIGHT</p></td>
+<td><p>.fits</p></td>
+<td><p>_wave_night</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVEHCLL</p></td>
+<td><p>–</p></td>
+<td><p>.dat</p></td>
+<td><p>_linelist</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVERES</p></td>
+<td><p>WAVE_RES</p></td>
+<td><p>.fits</p></td>
+<td><p>_waveres</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVE_FPRESTAB</p></td>
+<td><p>–</p></td>
+<td><p>.tbl</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVE_FPLLTABL</p></td>
+<td><p>–</p></td>
+<td><p>.tbl</p></td>
+<td><p>_hc_lines</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVE_HCLIST</p></td>
+<td><p>WAVE_HCLIST</p></td>
+<td><p>.fits</p></td>
+<td><p>_wave_hclines</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVE_FPLIST</p></td>
+<td><p>WAVE_FPLIST</p></td>
+<td><p>.fits</p></td>
+<td><p>_wave_fplines</p></td>
+</tr>
+<tr class="row-even"><td><p>TELLU_PCLEAN</p></td>
+<td><p>TELLU_PCLEAN</p></td>
+<td><p>.fits</p></td>
+<td><p>_tellu_pclean</p></td>
+</tr>
+<tr class="row-odd"><td><p>TELLU_CONV</p></td>
+<td><p>–</p></td>
+<td><p>.npy</p></td>
+<td><p>_tellu_conv</p></td>
+</tr>
+<tr class="row-even"><td><p>TELLU_TRANS</p></td>
+<td><p>TELLU_TRANS</p></td>
+<td><p>.fits</p></td>
+<td><p>_tellu_trans</p></td>
+</tr>
+<tr class="row-odd"><td><p>TELLU_TAPAS</p></td>
+<td><p>–</p></td>
+<td><p>.npy</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>ABSO_NPY</p></td>
+<td><p>–</p></td>
+<td><p>.npy</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>TELLU_OBJ</p></td>
+<td><p>TELLU_OBJ</p></td>
+<td><p>.fits</p></td>
+<td><p>_e2dsff_tcorr</p></td>
+</tr>
+<tr class="row-even"><td><p>SC1D_W_FILE</p></td>
+<td><p>SC1D_W_FILE</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_w_tcorr</p></td>
+</tr>
+<tr class="row-odd"><td><p>SC1D_V_FILE</p></td>
+<td><p>SC1D_V_FILE</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_v_tcorr</p></td>
+</tr>
+<tr class="row-even"><td><p>TELLU_RECON</p></td>
+<td><p>TELLU_RECON</p></td>
+<td><p>.fits</p></td>
+<td><p>_e2dsff_recon</p></td>
+</tr>
+<tr class="row-odd"><td><p>RC1D_W_FILE</p></td>
+<td><p>RC1D_W_FILE</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_w_recon</p></td>
+</tr>
+<tr class="row-even"><td><p>RC1D_V_FILE</p></td>
+<td><p>RC1D_V_FILE</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_v_recon</p></td>
+</tr>
+<tr class="row-odd"><td><p>TELLU_TEMP</p></td>
+<td><p>TELLU_TEMP</p></td>
+<td><p>.fits</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>TELLU_BIGCUBE</p></td>
+<td><p>TELLU_BIGCUBE</p></td>
+<td><p>.fits</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>TELLU_BIGCUBE0</p></td>
+<td><p>TELLU_BIGCUBE0</p></td>
+<td><p>.fits</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>TELLU_TEMP_S1D</p></td>
+<td><p>TELLU_TEMP_S1D</p></td>
+<td><p>.fits</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>TELLU_BIGCUBE_S1D</p></td>
+<td><p>TELLU_BIGCUBE_S1D</p></td>
+<td><p>.fits</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>CCF_RV</p></td>
+<td><p>CCF_RV</p></td>
+<td><p>.fits</p></td>
+<td><p>_ccf</p></td>
+</tr>
+<tr class="row-odd"><td><p>POL_DEG</p></td>
+<td><p>POL_DEG</p></td>
+<td><p>.fits</p></td>
+<td><p>_pol</p></td>
+</tr>
+<tr class="row-even"><td><p>STOKESI_POL</p></td>
+<td><p>STOKESI_POL</p></td>
+<td><p>.fits</p></td>
+<td><p>_StokesI</p></td>
+</tr>
+<tr class="row-odd"><td><p>NULL_POL1</p></td>
+<td><p>NULL_POL1</p></td>
+<td><p>.fits</p></td>
+<td><p>_null1_pol</p></td>
+</tr>
+<tr class="row-even"><td><p>NULL_POL2</p></td>
+<td><p>NULL_POL2</p></td>
+<td><p>.fits</p></td>
+<td><p>_null2_pol</p></td>
+</tr>
+<tr class="row-odd"><td><p>LSD_POL</p></td>
+<td><p>LSD_POL</p></td>
+<td><p>.fits</p></td>
+<td><p>_lsd_pol</p></td>
+</tr>
+<tr class="row-even"><td><p>S1DW_POL</p></td>
+<td><p>S1DW_POL</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_w_pol</p></td>
+</tr>
+<tr class="row-odd"><td><p>S1DV_POL</p></td>
+<td><p>S1DV_POL</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_v_pol</p></td>
+</tr>
+<tr class="row-even"><td><p>S1DW_NULL1</p></td>
+<td><p>S1DW_NULL1</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_w_null1</p></td>
+</tr>
+<tr class="row-odd"><td><p>S1DV_NULL1</p></td>
+<td><p>S1DV_NULL1</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_v_null1</p></td>
+</tr>
+<tr class="row-even"><td><p>S1DW_NULL2</p></td>
+<td><p>S1DW_NULL1</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_w_null2</p></td>
+</tr>
+<tr class="row-odd"><td><p>S1DV_NULL2</p></td>
+<td><p>S1DV_NULL2</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_v_null2</p></td>
+</tr>
+<tr class="row-even"><td><p>S1DW_STOKESI</p></td>
+<td><p>S1DW_STOKESI</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_w_stokesi</p></td>
+</tr>
+<tr class="row-odd"><td><p>S1DV_STOKESI</p></td>
+<td><p>S1DV_STOKESI</p></td>
+<td><p>.fits</p></td>
+<td><p>_s1d_v_stokesi</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="calibration-files">
+<h2>Calibration files<a class="headerlink" href="#calibration-files" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default" id="id4">
+<caption><span class="caption-text">Calibration files file definition table</span><a class="headerlink" href="#id4" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>NAME</p></td>
+<td><p>DRSOUTID</p></td>
+<td><p>FILETYPE</p></td>
+<td><p>SUFFIX</p></td>
+<td><p>DBNAME</p></td>
+<td><p>DBKEY</p></td>
+</tr>
+<tr class="row-even"><td><p>DARKI</p></td>
+<td><p>DARKI</p></td>
+<td><p>.fits</p></td>
+<td><p>_darki</p></td>
+<td><p>calibration</p></td>
+<td><p>DARKI</p></td>
+</tr>
+<tr class="row-odd"><td><p>DARKT</p></td>
+<td><p>DARKT</p></td>
+<td><p>.fits</p></td>
+<td><p>_darkt</p></td>
+<td><p>calibration</p></td>
+<td><p>DARKT</p></td>
+</tr>
+<tr class="row-even"><td><p>DARKS</p></td>
+<td><p>DARKS</p></td>
+<td><p>.fits</p></td>
+<td><p>_darks</p></td>
+<td><p>calibration</p></td>
+<td><p>DARKS</p></td>
+</tr>
+<tr class="row-odd"><td><p>DARKM</p></td>
+<td><p>DARKM</p></td>
+<td><p>.fits</p></td>
+<td><p>_dark_master</p></td>
+<td><p>calibration</p></td>
+<td><p>DARKM</p></td>
+</tr>
+<tr class="row-even"><td><p>BADPIX</p></td>
+<td><p>BADPIX</p></td>
+<td><p>.fits</p></td>
+<td><p>_badpixel</p></td>
+<td><p>calibration</p></td>
+<td><p>BADPIX</p></td>
+</tr>
+<tr class="row-odd"><td><p>BKGRD_MAP</p></td>
+<td><p>BKGRD_MAP</p></td>
+<td><p>.fits</p></td>
+<td><p>_bmap.fits</p></td>
+<td><p>calibration</p></td>
+<td><p>BKGRDMAP</p></td>
+</tr>
+<tr class="row-even"><td><p>LOC_ORDERP</p></td>
+<td><p>LOC_ORDERP</p></td>
+<td><p>.fits</p></td>
+<td><p>_order_profile</p></td>
+<td><p>calibration</p></td>
+<td><p>ORDER_PROFILE</p></td>
+</tr>
+<tr class="row-odd"><td><p>LOC_LOCO</p></td>
+<td><p>LOC_LOCO</p></td>
+<td><p>.fits</p></td>
+<td><p>_loco</p></td>
+<td><p>calibration</p></td>
+<td><p>LOC</p></td>
+</tr>
+<tr class="row-even"><td><p>SHAPE_X</p></td>
+<td><p>SHAPE_X</p></td>
+<td><p>.fits</p></td>
+<td><p>_shapex</p></td>
+<td><p>calibration</p></td>
+<td><p>SHAPEX</p></td>
+</tr>
+<tr class="row-odd"><td><p>SHAPE_Y</p></td>
+<td><p>SHAPE_Y</p></td>
+<td><p>.fits</p></td>
+<td><p>_shapey</p></td>
+<td><p>calibration</p></td>
+<td><p>SHAPEY</p></td>
+</tr>
+<tr class="row-even"><td><p>MASTER_FP</p></td>
+<td><p>MASTER_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_fpmaster</p></td>
+<td><p>calibration</p></td>
+<td><p>FPMASTER</p></td>
+</tr>
+<tr class="row-odd"><td><p>SHAPEL</p></td>
+<td><p>SHAPEL</p></td>
+<td><p>.fits</p></td>
+<td><p>_shapel</p></td>
+<td><p>calibration</p></td>
+<td><p>SHAPEL</p></td>
+</tr>
+<tr class="row-even"><td><p>FF_BLAZE</p></td>
+<td><p>FF_BLAZE</p></td>
+<td><p>.fits</p></td>
+<td><p>_blaze</p></td>
+<td><p>calibration</p></td>
+<td><p>BLAZE</p></td>
+</tr>
+<tr class="row-odd"><td><p>FF_FLAT</p></td>
+<td><p>FF_FLAT</p></td>
+<td><p>.fits</p></td>
+<td><p>_flat</p></td>
+<td><p>calibration</p></td>
+<td><p>FLAT</p></td>
+</tr>
+<tr class="row-even"><td><p>THERMALI_E2DS</p></td>
+<td><p>THERMALI_E2DS</p></td>
+<td><p>.fits</p></td>
+<td><p>_thermal_e2ds_int</p></td>
+<td><p>calibration</p></td>
+<td><p>THERMALI</p></td>
+</tr>
+<tr class="row-odd"><td><p>THERMALT_E2DS</p></td>
+<td><p>THERMALT_E2DS</p></td>
+<td><p>.fits</p></td>
+<td><p>_thermal_e2ds_tel</p></td>
+<td><p>calibration</p></td>
+<td><p>THERMALT</p></td>
+</tr>
+<tr class="row-even"><td><p>LEAKM_E2DS</p></td>
+<td><p>LEAKM_E2DS</p></td>
+<td><p>.fits</p></td>
+<td><p>_leak_master</p></td>
+<td><p>calibration</p></td>
+<td><p>LEAKM</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVESOL_MASTER</p></td>
+<td><p>WAVESOL_MASTER</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavesol_master_</p></td>
+<td><p>calibration</p></td>
+<td><p>WAVESOL_MASTER</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVE_HCLIST_MASTER</p></td>
+<td><p>WAVE_HCLIST_MASTER</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavem_hclines</p></td>
+<td><p>calibration</p></td>
+<td><p>WAVEHCL</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVE_FPLIST_MASTER</p></td>
+<td><p>WAVE_FPLIST_MASTER</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavem_fplines</p></td>
+<td><p>calibration</p></td>
+<td><p>WAVEFPL</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVEM_CAV</p></td>
+<td><p>WAVEM_CAV</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavecav_</p></td>
+<td><p>calibration</p></td>
+<td><p>WAVECAV</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVEM_D</p></td>
+<td><p>WAVEM_SOL</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavem</p></td>
+<td><p>calibration</p></td>
+<td><p>WAVEM_D</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVEM_FP</p></td>
+<td><p>WAVEM_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavem_fp</p></td>
+<td><p>calibration</p></td>
+<td><p>WAVESOL_MASTER</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVEM_HC</p></td>
+<td><p>WAVEM_HC</p></td>
+<td><p>.fits</p></td>
+<td><p>_wavem_hc</p></td>
+<td><p>calibration</p></td>
+<td><p>WAVEM</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVE_HC</p></td>
+<td><p>WAVE_HC</p></td>
+<td><p>.fits</p></td>
+<td><p>_wave_hc</p></td>
+<td><p>calibration</p></td>
+<td><p>WAVE</p></td>
+</tr>
+<tr class="row-odd"><td><p>WAVE_FP</p></td>
+<td><p>WAVE_FP</p></td>
+<td><p>.fits</p></td>
+<td><p>_wave_fp</p></td>
+<td><p>calibration</p></td>
+<td><p>WAVE</p></td>
+</tr>
+<tr class="row-even"><td><p>WAVE_NIGHT</p></td>
+<td><p>WAVE_NIGHT</p></td>
+<td><p>.fits</p></td>
+<td><p>_wave_night</p></td>
+<td><p>calibration</p></td>
+<td><p>WAVE</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="telluric-files">
+<h2>Telluric files<a class="headerlink" href="#telluric-files" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default" id="id5">
+<caption><span class="caption-text">Telluric files file definition table</span><a class="headerlink" href="#id5" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>NAME</p></td>
+<td><p>DRSOUTID</p></td>
+<td><p>FILETYPE</p></td>
+<td><p>SUFFIX</p></td>
+<td><p>DBNAME</p></td>
+<td><p>DBKEY</p></td>
+</tr>
+<tr class="row-even"><td><p>TELLU_PCLEAN</p></td>
+<td><p>TELLU_PCLEAN</p></td>
+<td><p>.fits</p></td>
+<td><p>_tellu_pclean</p></td>
+<td><p>telluric</p></td>
+<td><p>TELLU_PCLEAN</p></td>
+</tr>
+<tr class="row-odd"><td><p>TELLU_CONV</p></td>
+<td><p>–</p></td>
+<td><p>.npy</p></td>
+<td><p>_tellu_conv</p></td>
+<td><p>telluric</p></td>
+<td><p>TELLU_CONV</p></td>
+</tr>
+<tr class="row-even"><td><p>TELLU_TRANS</p></td>
+<td><p>TELLU_TRANS</p></td>
+<td><p>.fits</p></td>
+<td><p>_tellu_trans</p></td>
+<td><p>telluric</p></td>
+<td><p>TELLU_TRANS</p></td>
+</tr>
+<tr class="row-odd"><td><p>TELLU_TAPAS</p></td>
+<td><p>–</p></td>
+<td><p>.npy</p></td>
+<td><p>–</p></td>
+<td><p>telluric</p></td>
+<td><p>TELLU_TAPAS</p></td>
+</tr>
+<tr class="row-even"><td><p>TELLU_OBJ</p></td>
+<td><p>TELLU_OBJ</p></td>
+<td><p>.fits</p></td>
+<td><p>_e2dsff_tcorr</p></td>
+<td><p>telluric</p></td>
+<td><p>TELLU_OBJ</p></td>
+</tr>
+<tr class="row-odd"><td><p>TELLU_RECON</p></td>
+<td><p>TELLU_RECON</p></td>
+<td><p>.fits</p></td>
+<td><p>_e2dsff_recon</p></td>
+<td><p>telluric</p></td>
+<td><p>TELLU_RECON</p></td>
+</tr>
+<tr class="row-even"><td><p>TELLU_TEMP</p></td>
+<td><p>TELLU_TEMP</p></td>
+<td><p>.fits</p></td>
+<td><p>–</p></td>
+<td><p>telluric</p></td>
+<td><p>TELLU_TEMP</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../misc/pythoninstallation.html" title="Python installation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../required_input_header_keys.html" title="Required Input Header Keys"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.137 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../developer_guide.html" >Developer how to guide</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">SPIROU file definitions</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+  </body>
+</html>

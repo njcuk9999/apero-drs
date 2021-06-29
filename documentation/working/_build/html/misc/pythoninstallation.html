@@ -6,22 +6,22 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Python installation &#8212; APERO 0.7.073 documentation</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Python installation &#8212; APERO 0.7.137 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../_static/apero.css" />
     
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     <script src="../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Glossary" href="glossary.html" />
-    <link rel="prev" title="Required Input Header Keys" href="../dev/required_input_header_keys.html" />
+    <link rel="prev" title="SPIROU file definitions" href="../dev/definitions/spirou_file_definitions.html" />
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
     <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
@@ -99,9 +99,9 @@
           <a href="glossary.html" title="Glossary"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../dev/required_input_header_keys.html" title="Required Input Header Keys"
+          <a href="../dev/definitions/spirou_file_definitions.html" title="SPIROU file definitions"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.7.073 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.7.137 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Python installation</a></li> 
       </ul>
     </div>
@@ -120,8 +120,8 @@
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../dev/required_input_header_keys.html"
-                        title="previous chapter">Required Input Header Keys</a></p>
+  <p class="topless"><a href="../dev/definitions/spirou_file_definitions.html"
+                        title="previous chapter">SPIROU file definitions</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="glossary.html"
                         title="next chapter">Glossary</a></p>
@@ -150,7 +150,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="python-installation">
+  <section id="python-installation">
 <span id="id1"></span><h1>Python installation<a class="headerlink" href="#python-installation" title="Permalink to this headline">¶</a></h1>
 <p>You can install the modules required to run APERO in three ways (eventually
 there will be a <cite>setup.py</cite> but not yet!</p>
@@ -164,7 +164,7 @@ there will be a <cite>setup.py</cite> but not yet!</p>
 </ul>
 <p>Once python and the required modules are correctly installed you can
 install APERO - see <a class="reference internal" href="../user/general/installation.html#installation"><span class="std std-ref">here</span></a>.</p>
-<div class="section" id="installing-miniconda-with-supplied-environment">
+<section id="installing-miniconda-with-supplied-environment">
 <span id="python-install-miniconda-env"></span><h2>Installing miniconda (with supplied environment)<a class="headerlink" href="#installing-miniconda-with-supplied-environment" title="Permalink to this headline">¶</a></h2>
 <p>This is recommended for maximum compatibility</p>
 <p>If you already use miniconda (with python 3) skip to step 3</p>
@@ -215,8 +215,8 @@ bash apero-pip-<span class="o">{</span>EXT<span class="o">}</span>.txt
 </div>
 </div></blockquote>
 <p><a class="reference internal" href="#python-installation"><span class="std std-ref">Back to top</span></a></p>
-</div>
-<div class="section" id="using-miniconda-conda-pip-install-packages">
+</section>
+<section id="using-miniconda-conda-pip-install-packages">
 <span id="python-install-miniconda-manual"></span><h2>Using miniconda (conda/pip install packages)<a class="headerlink" href="#using-miniconda-conda-pip-install-packages" title="Permalink to this headline">¶</a></h2>
 <p>If you already use miniconda (with python 3) skip to step 3</p>
 <div class="admonition note">
@@ -259,8 +259,8 @@ conda install <span class="nv">numpy</span><span class="o">=</span><span class="
 <p class="admonition-title">Note</p>
 <p>Some packages must be installed via pip</p>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">astroquery</span><span class="o">=</span><span class="mf">0.3</span><span class="o">.</span><span class="mi">10</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="n">barycorrpy</span><span class="o">=</span><span class="mf">0.3</span><span class="o">.</span><span class="mi">1</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">astroquery</span><span class="o">=</span><span class="mf">0.3.10</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">barycorrpy</span><span class="o">=</span><span class="mf">0.3.1</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -282,8 +282,8 @@ conda install <span class="nv">numpy</span><span class="o">=</span><span class="
 </div>
 </div></blockquote>
 <p><a class="reference internal" href="#python-installation"><span class="std std-ref">Back to top</span></a></p>
-</div>
-<div class="section" id="using-anaconda-with-supplied-environment">
+</section>
+<section id="using-anaconda-with-supplied-environment">
 <span id="python-install-anaconda-env"></span><h2>Using anaconda (with supplied environment)<a class="headerlink" href="#using-anaconda-with-supplied-environment" title="Permalink to this headline">¶</a></h2>
 <p>If you already use anaconda (with python 3) skip to step 3</p>
 <div class="admonition note">
@@ -333,8 +333,8 @@ bash apero-pip-<span class="o">{</span>EXT<span class="o">}</span>.txt
 </div>
 </div></blockquote>
 <p><a class="reference internal" href="#python-installation"><span class="std std-ref">Back to top</span></a></p>
-</div>
-<div class="section" id="using-anaconda-conda-pip-install-packages">
+</section>
+<section id="using-anaconda-conda-pip-install-packages">
 <span id="python-install-anaconda-manual"></span><h2>Using anaconda (conda/pip install packages)<a class="headerlink" href="#using-anaconda-conda-pip-install-packages" title="Permalink to this headline">¶</a></h2>
 <p>If you already use anaconda (with python 3) skip to step 3</p>
 <div class="admonition note">
@@ -377,8 +377,8 @@ conda install <span class="nv">numpy</span><span class="o">=</span><span class="
 <p class="admonition-title">Note</p>
 <p>Some packages must be installed via pip</p>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">astroquery</span><span class="o">=</span><span class="mf">0.3</span><span class="o">.</span><span class="mi">10</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="n">barycorrpy</span><span class="o">=</span><span class="mf">0.3</span><span class="o">.</span><span class="mi">1</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">astroquery</span><span class="o">=</span><span class="mf">0.3.10</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">barycorrpy</span><span class="o">=</span><span class="mf">0.3.1</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -400,8 +400,8 @@ conda install <span class="nv">numpy</span><span class="o">=</span><span class="
 </div>
 </div></blockquote>
 <p><a class="reference internal" href="#python-installation"><span class="std std-ref">Back to top</span></a></p>
-</div>
-<div class="section" id="manually-using-pip">
+</section>
+<section id="manually-using-pip">
 <span id="python-install-pip"></span><h2>Manually using pip<a class="headerlink" href="#manually-using-pip" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic">
 <li><p>install python 3.7 (install, via virtual environment etc)</p></li>
@@ -409,8 +409,8 @@ conda install <span class="nv">numpy</span><span class="o">=</span><span class="
 currently supported packages in the <cite>apero-drs/requirements_current.txt</cite> file
 or for developers <cite>apero-drs/requirements_developer.txt</cite> file.</p>
 <blockquote>
-<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">astroquery</span><span class="o">=</span><span class="mf">0.3</span><span class="o">.</span><span class="mi">10</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="n">barycorrpy</span><span class="o">=</span><span class="mf">0.3</span><span class="o">.</span><span class="mi">1</span>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">astroquery</span><span class="o">=</span><span class="mf">0.3.10</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">barycorrpy</span><span class="o">=</span><span class="mf">0.3.1</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -425,8 +425,8 @@ or for developers <cite>apero-drs/requirements_developer.txt</cite> file.</p>
 </div>
 </div>
 <p><a class="reference internal" href="#python-installation"><span class="std std-ref">Back to top</span></a></p>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -445,15 +445,15 @@ or for developers <cite>apero-drs/requirements_developer.txt</cite> file.</p>
           <a href="glossary.html" title="Glossary"
              >next</a> |</li>
         <li class="right" >
-          <a href="../dev/required_input_header_keys.html" title="Required Input Header Keys"
+          <a href="../dev/definitions/spirou_file_definitions.html" title="SPIROU file definitions"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.7.073 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.7.137 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Python installation</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.3.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
     </div>
   </body>
 </html>

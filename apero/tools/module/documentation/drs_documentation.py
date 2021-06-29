@@ -104,7 +104,13 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         if filetype in remove_cols:
             table = _remove_cols(table, remove_cols[filetype])
         # modifiy column names
-        table, modded = _modify_cols(table, mod_cols, fmt='{0} *')
+        table, modded = _modify_cols(table, mod_cols, fmt='{0}\*')
+        # print progress - number of file types
+        msg = '\tAdding {0} file types'
+        WLOG(params, '', msg.format(len(table)))
+        # print progress - number of columns
+        msg = '\tAdding {0} columns'
+        WLOG(params, '', msg.format(len(table.colnames)))
         # push to storage
         table_storage[filetype] = table
         mod_storage[filetype] = modded
@@ -118,6 +124,9 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         # construct filename
         fargs = [instrument.lower(), filetype]
         filename = os.path.join(def_dir, '{0}_{1}.csv'.format(*fargs))
+        # print progress
+        margs = [filetype, filename]
+        WLOG(params, '', 'Saving {0} csv to: {1}'.format(*margs))
         # save table
         table_storage[filetype].write(filename, format='csv', overwrite=True)
         # store filename
@@ -143,12 +152,15 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         # add text if required
         if mod_storage[filetype]:
             # construct text to add
-            modtext = '* columns may be added/updated by APERO before use.'
+            modtext = ('\* these columns may be added/updated by APERO '
+                       'before use.')
             markdown.add_text(text=modtext)
     # -------------------------------------------------------------------------
     # construct markdown filename
     markdown_basename = '{0}_file_definitions.rst'.format(instrument.lower())
     markdown_filename = os.path.join(def_dir, markdown_basename)
+    # log progress
+    WLOG(params, '', 'Writing markdown file: {0}'.format(markdown_filename))
     # write markdown to file
     markdown.write_page(markdown_filename)
 

@@ -68,7 +68,7 @@ Other
     :maxdepth: 1
 
     required_input_header_keys.rst
-    defitions/spirou_file_definitions.rst
+    definitions/spirou_file_definitions.rst
 
 
 
