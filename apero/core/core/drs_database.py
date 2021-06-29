@@ -1914,7 +1914,6 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     if subdirs is None:
         # get all files in path
         allfiles = list(path.rglob('*{0}'.format(suffix)))
-    # -------------------------------------------------------------------------
     # else we have subdirs
     else:
         allfiles = []
@@ -1927,10 +1926,6 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     # clear loading message
     TLOG(params, '', '')
     # -------------------------------------------------------------------------
-    # print progress
-    # TODO: add to language database
-    msg = '\tChecking last modified date for all files'
-    WLOG(params, '', msg)
     # store valid files
     valid_files = []
     # include files condition
@@ -1940,19 +1935,20 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     # last mod condition
     lmodcond = last_modified is not None
     # -------------------------------------------------------------------------
-    # make incfiles and exfiles sets (quicker than lists)
-    if incond:
-        incfiles = set(incfiles)
-    if outcond:
-        excfiles = set(excfiles)
     # convert last modifi
     if last_modified is not None:
         lmod = dict(zip(excfiles, last_modified))
     else:
         lmod = dict()
     # -------------------------------------------------------------------------
+    # make incfiles and exfiles sets (quicker than lists)
+    if incond:
+        incfiles = set(incfiles)
+    if outcond:
+        excfiles = set(excfiles)
+    # -------------------------------------------------------------------------
     # filter files
-    for filename in tqdm(allfiles):
+    for filename in allfiles:
         # str filename
         strfilename = str(filename)
         # do not include directories

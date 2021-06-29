@@ -1089,7 +1089,7 @@ apero_pol.set_kwarg(name='--exposures', dtype='files',
                     files=[files.out_ext_e2dsff, files.out_tellu_obj],
                     filelogic='exclusive', default='None',
                     helpstr='List of exposures to add (order determined by '
-                            'recipe)', reprocess=True)
+                            'recipe)', reprocess=True, required=True)
 apero_pol.set_kwarg(name='--exp1', altnames=['-1'], dtype='file',
                     files=[files.out_ext_e2dsff, files.out_tellu_obj],
                     filelogic='exclusive', default='None',

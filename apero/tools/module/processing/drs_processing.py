@@ -97,7 +97,7 @@ SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
 # get list of obj name cols
 OBJNAMECOL = 'KW_OBJNAME'
 # list of arguments to remove from skip check
-SKIP_REMOVE_ARGS = ['--skip', '--program', '--prog', '--debug',  '--d',
+SKIP_REMOVE_ARGS = ['--skip', '--program', '--prog', '--debug',
                     '--verbose' '--plot', '--shortname', '--short'
                     '--rkind', '--recipe_kind', '--parallel']
 # keep a global copy of plt
@@ -130,6 +130,7 @@ class Run:
         self.kwargs = dict()
         self.fileargs = dict()
         self.required_args = []
+        self.reprocess_args = []
         # get number of cores and set parallelisation
         self.parallel = True
         # set parameters
@@ -316,6 +317,9 @@ class Run:
             # only add required arguments
             if self.recipe.kwargs[kwarg].required:
                 self.required_args.append(kwarg)
+            # add check reprocess arguments
+            if self.recipe.kwargs[kwarg].reprocess:
+                self.reprocess_args.append(kwarg)
 
     def prerun_test(self):
         """
@@ -736,7 +740,8 @@ def skip_remove_non_required_args(runstrings, runobj):
     :return:
     """
     # get list of required args
-    reqargs = runobj.required_args
+    req_args = runobj.required_args
+    reprocess_args = runobj.reprocess_args
     # deasl with runstrings as a string
     if isinstance(runstrings, str):
         runstrings = [runstrings]
@@ -756,7 +761,11 @@ def skip_remove_non_required_args(runstrings, runobj):
             if arg.startswith('--'):
                 keep = False
                 # loop around keep arguments
-                for keep_arg in reqargs:
+                for keep_arg in req_args:
+                    if arg.startswith('--{0}'.format(keep_arg)):
+                        keep = True
+                # loop around reprocess arguments
+                for keep_arg in reprocess_args:
                     if arg.startswith('--{0}'.format(keep_arg)):
                         keep = True
             mask[it] = keep
@@ -2795,9 +2804,11 @@ def convert_to_command(params: ParamDict, recipe: DrsRecipe,
         for argname in runorder:
             # get raw value
             rawvalue = runarg[argname]
-            # deal with lists
+            # deal with lists (sort them)
             if isinstance(rawvalue, list):
-                value = ' '.join(runarg[argname])
+                rawvalue = list(rawvalue)
+                rawvalue.sort()
+                value = ' '.join(rawvalue)
             else:
                 value = str(rawvalue)
             # deal with arguments
