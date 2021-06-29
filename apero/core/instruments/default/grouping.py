@@ -695,6 +695,10 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
         sort = np.argsort(table[path_col])
         table1 = table[sort]
         masks = []
+        # get correct columns (in correct sorted order)
+        seq_arr = np.array(table1[seq_col]).astype(int)
+        num_arr = np.array(table1[num_col]).astype(int)
+        obs_dir_arr = np.array(table1[obs_dir_col])
         # make our zero group mask
         zero_mask = np.zeros(len(table1)).astype(bool)
         # start a counter
@@ -704,9 +708,9 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
         # loop around each row and group by KW_CMPLTEXP
         for row in range(len(table1)):
             # set the current value to this sequence's value
-            current = table1[seq_col][row]
+            current = seq_arr[row]
             # different observation directories cannot be in the same group
-            if table1[obs_dir_col][row] != obs_dir:
+            if obs_dir_arr[row] != obs_dir:
                 # if we have a new group copy the mask
                 current_mask = np.array(zero_mask)
                 # reset the current sequence present for this group
@@ -714,7 +718,7 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
                 # add this row to current group
                 current_mask[row] = True
                 # set group obs dir
-                obs_dir = table1[obs_dir_col][row]
+                obs_dir = obs_dir_arr[row]
             # if current number if already in current group
             elif current in current_seqs:
                 # set the current row to True
@@ -726,31 +730,31 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
                 current_mask[current_mask][pos] = False
             # append to current file if current number is less than
             #   total number in sequence
-            elif current < table1[num_col][row]:
+            elif current < num_arr[row]:
                 # add this row to current group
                 current_mask[row] = True
                 # append row to current group
                 current_seqs.append(current)
                 # set group obs dir
-                obs_dir = table1[obs_dir_col][row]
+                obs_dir = obs_dir_arr[row]
             # if we have reached the end of a group append the masks
             #   and set the current mask to zero and reset the current number
             #   to zero
-            elif current == table1[num_col][row]:
+            elif current == num_arr[row]:
                 # add this row to current group
                 current_mask[row] = True
                 # append group to masks - only if we have NEXP sequences
-                if np.sum(current_mask) == table1[num_col][row]:
+                if np.sum(current_mask) == num_arr[row]:
                     masks.append(current_mask)
                 # if we have a new group copy the mask
                 current_mask = np.array(zero_mask)
                 # reset the current sequence present for this group
                 current_seqs = []
                 # set group obs dir
-                obs_dir = table1[obs_dir_col][row]
+                obs_dir = obs_dir_arr[row]
             else:
                 # append group to masks - only if we have NEXP sequences
-                if np.sum(current_mask) == table1[num_col][row]:
+                if np.sum(current_mask) == num_arr[row]:
                     masks.append(current_mask)
                 # if we have a new group copy the mask
                 current_mask = np.array(zero_mask)

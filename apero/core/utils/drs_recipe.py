@@ -1374,7 +1374,10 @@ class DrsRecipe(object):
                 if isinstance(strfiles, str):
                     strfiles = [strfiles]
                     drsfiles = [drsfiles]
-
+                # need to sort strfiles
+                sorted = np.argsort(strfiles)
+                strfiles = np.array(strfiles)[sorted]
+                drsfiles = np.array(drsfiles)[sorted]
                 # add argname to run string
                 if kind != 'arg':
                     self.runstring += '{0} '.format(argname)

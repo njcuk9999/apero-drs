@@ -555,9 +555,9 @@ class PseudoConstants(DefaultConstants):
         header_cols = DatabaseColumns()
         header_cols.add(name='KW_DATE_OBS', datatype='VARCHAR(80)')
         header_cols.add(name='KW_UTC_OBS', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_ACQTIME', datatype='FLOAT')
+        header_cols.add(name='KW_ACQTIME', datatype='DOUBLE')
         header_cols.add(name='KW_TARGET_TYPE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_MID_OBS_TIME', datatype='FLOAT')
+        header_cols.add(name='KW_MID_OBS_TIME', datatype='DOUBLE')
         # cleaned object name
         header_cols.add(name='KW_OBJNAME', datatype='VARCHAR(80)')
         # raw object name
@@ -565,7 +565,7 @@ class PseudoConstants(DefaultConstants):
         # other raw object name
         header_cols.add(name='KW_OBJECTNAME2', datatype='VARCHAR(80)')
         header_cols.add(name='KW_OBSTYPE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_EXPTIME', datatype='FLOAT')
+        header_cols.add(name='KW_EXPTIME', datatype='DOUBLE')
         header_cols.add(name='KW_INSTRUMENT', datatype='VARCHAR(80)')
         header_cols.add(name='KW_CCAS', datatype='VARCHAR(80)')
         header_cols.add(name='KW_CREF', datatype='VARCHAR(80)')
@@ -1039,7 +1039,7 @@ class PseudoConstants(DefaultConstants):
                               is_index=True)
         index_cols.add(name='FILENAME', is_index=True, datatype='VARCHAR(200)')
         index_cols.add(name='BLOCK_KIND', is_index=True, datatype='VARCHAR(20)')
-        index_cols.add(name='LAST_MODIFIED', datatype='FLOAT')
+        index_cols.add(name='LAST_MODIFIED', datatype='DOUBLE')
         index_cols.add(name='RECIPE', datatype='VARCHAR(200)')
         index_cols.add(name='RUNSTRING', datatype='TEXT')
         index_cols.add(name='INFILES', datatype='TEXT')

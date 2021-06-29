@@ -2781,7 +2781,10 @@ class DrsArgument(object):
             else:
                 self.required = required
         # get whether we need this arguement for processing scripts
-        self.reprocess = reprocess
+        if reprocess is None:
+            self.reprocess = False
+        else:
+            self.reprocess = reprocess
         # set empty
         self.props = OrderedDict()
         self.value = None
