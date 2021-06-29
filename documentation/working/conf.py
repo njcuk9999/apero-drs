@@ -68,7 +68,7 @@ html_static_path = ['_static']
 
 # add custom css
 def setup(app):
-   app.add_stylesheet('apero.css')  # give a filename you created.
+   app.add_css_file('apero.css')  # give a filename you created.
    
 # -- Options for LaTeX output ---------------------------------------------
 latex_title = r'''

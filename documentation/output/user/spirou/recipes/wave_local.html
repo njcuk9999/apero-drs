@@ -6,17 +6,17 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nightly wavelength solution Recipe &#8212; APERO 0.7.073 documentation</title>
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bizstyle.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Nightly wavelength solution Recipe &#8212; APERO 0.7.137 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
-    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/language_data.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="wave_master.html" title="Master wavelength solution Recipe"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.073 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.137 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../recipes_spirou.html" accesskey="U">SPIRou Recipes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Nightly wavelength solution Recipe</a></li> 
@@ -153,17 +153,17 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="nightly-wavelength-solution-recipe">
+  <section id="nightly-wavelength-solution-recipe">
 <span id="recipes-spirou-wave-local"></span><h1>Nightly wavelength solution Recipe<a class="headerlink" href="#nightly-wavelength-solution-recipe" title="Permalink to this headline">¶</a></h1>
 <p>Calculates corrections to the master wavelength solution as a nightly wavelength
 solution and measures drifts (via CCF) of the FP relative to the FP master</p>
-<div class="section" id="run">
+<section id="run">
 <h2>Run<a class="headerlink" href="#run" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cal_wave_night_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> -hcfiles <span class="o">[</span>HCONE_HCONE<span class="o">]</span> -fpfiles <span class="o">[</span>FP_FP<span class="o">]</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="optional-arguments">
+</section>
+<section id="optional-arguments">
 <h2>Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>--database, --badpixfile, --badcorr, --backsub, --blazefile,
 --combine, --darkfile, --darkcorr,  --fiber, --flipimage,
@@ -174,25 +174,25 @@ solution and measures drifts (via CCF) of the FP relative to the FP master</p>
 --program, --idebug, --breakpoints, --quiet, --help
 </pre></div>
 </div>
-</div>
-<div class="section" id="output-dir">
+</section>
+<section id="output-dir">
 <h2>Output Dir<a class="headerlink" href="#output-dir" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>DRS_DATA_REDUC   <span class="se">\\</span> default <span class="s2">&quot;reduced&quot;</span> directory
 </pre></div>
 </div>
-</div>
-<div class="section" id="calibration-database-entry">
+</section>
+<section id="calibration-database-entry">
 <h2>Calibration database entry<a class="headerlink" href="#calibration-database-entry" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>WAVE_<span class="o">{</span>FIBER<span class="o">}</span> <span class="o">{</span>NIGHT_NAME<span class="o">}</span> <span class="o">{</span>FILENAME<span class="o">}</span> <span class="o">{</span>HUMAN DATE<span class="o">}</span> <span class="o">{</span>UNIX DATE<span class="o">}</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="output-files">
+</section>
+<section id="output-files">
 <h2>Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_e2ds_<span class="o">{</span>FIBER<span class="o">}</span>.fits              <span class="se">\\</span> extracted + flat field file <span class="o">(</span>49x4088<span class="o">)</span>
 <span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_e2dsff_<span class="o">{</span>FIBER<span class="o">}</span>.fits            <span class="se">\\</span> extracted + flat field file <span class="o">(</span>49x4088<span class="o">)</span>
-<span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_s1d_w_<span class="o">{</span>FIBER<span class="o">}</span>.fits             <span class="se">\\</span> s1d constant in pixel space <span class="o">(</span>FITS-TABLE<span class="o">)</span>
-<span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_s1d_v_<span class="o">{</span>FIBER<span class="o">}</span>.fits             <span class="se">\\</span> s1d constant in velocity space <span class="o">(</span>FITS-TABLE<span class="o">)</span>
+<span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_s1d_w_<span class="o">{</span>FIBER<span class="o">}</span>.fits             <span class="se">\\</span> s1d constant <span class="k">in</span> pixel space <span class="o">(</span>FITS-TABLE<span class="o">)</span>
+<span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_s1d_v_<span class="o">{</span>FIBER<span class="o">}</span>.fits             <span class="se">\\</span> s1d constant <span class="k">in</span> velocity space <span class="o">(</span>FITS-TABLE<span class="o">)</span>
 DEBUG_<span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_e2dsll_<span class="o">{</span>FIBER<span class="o">}</span>.fits      <span class="se">\\</span> debug pre extract file <span class="o">(</span>7x3100x4088<span class="o">)</span>
 DEBUG_<span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_background.fits          <span class="se">\\</span> debug background file <span class="o">(</span>7x3100x4088<span class="o">)</span>
 
@@ -202,15 +202,15 @@ DEBUG_<span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_backgroun
 <span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_e2dsff_ccf_<span class="o">{</span>FIBER<span class="o">}</span>.fits          <span class="se">\\</span> ccf code <span class="o">[</span>FITS-TABLE<span class="o">]</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="plots">
+</section>
+<section id="plots">
 <h2>Plots<a class="headerlink" href="#plots" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>WAVENIGHT_ITERPLOT WAVENIGHT_HISTPLOT WAVEREF_EXPECTED
 CCF_RV_FIT CCF_RV_FIT_LOOP EXTRACT_S1D EXTRACT_S1D_WEIGHT
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -231,7 +231,7 @@ CCF_RV_FIT CCF_RV_FIT_LOOP EXTRACT_S1D EXTRACT_S1D_WEIGHT
         <li class="right" >
           <a href="wave_master.html" title="Master wavelength solution Recipe"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.073 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.137 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../recipes_spirou.html" >SPIRou Recipes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Nightly wavelength solution Recipe</a></li> 
@@ -239,7 +239,7 @@ CCF_RV_FIT CCF_RV_FIT_LOOP EXTRACT_S1D EXTRACT_S1D_WEIGHT
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.3.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
     </div>
   </body>
 </html>

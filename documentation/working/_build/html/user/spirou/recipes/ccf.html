@@ -6,17 +6,17 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CCF Recipe &#8212; APERO 0.7.073 documentation</title>
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bizstyle.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>CCF Recipe &#8212; APERO 0.7.137 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
-    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/language_data.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="make_template.html" title="Make Template Recipe"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.073 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.137 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../recipes_spirou.html" accesskey="U">SPIRou Recipes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">CCF Recipe</a></li> 
@@ -152,13 +152,13 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="ccf-recipe">
+  <section id="ccf-recipe">
 <span id="recipes-spirou-ccf"></span><h1>CCF Recipe<a class="headerlink" href="#ccf-recipe" title="Permalink to this headline">¶</a></h1>
 <p>Cross correlates the input image against a mask and measures a radial velocity
 per order, and combines to give an over all radial velocity measurement.
 Also (where possible) takes into account the FP drift measured by a CCF in the
 wave solution (when wave solution used a FP)</p>
-<div class="section" id="run">
+<section id="run">
 <h2>Run<a class="headerlink" href="#run" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cal_ccf_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> <span class="o">[</span>E2DS <span class="p">&amp;</span> OBJ_FP<span class="o">]</span>
 cal_ccf_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> <span class="o">[</span>E2DSFF <span class="p">&amp;</span> OBJ_FP<span class="o">]</span>
@@ -170,8 +170,8 @@ cal_ccf_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> <spa
 cal_ccf_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> <span class="o">[</span>E2DSFF_CORR <span class="p">&amp;</span> OBJ_DARK<span class="o">]</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="optional-arguments">
+</section>
+<section id="optional-arguments">
 <h2>Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>--mask, --rv, --width, --step
 --database, --blazefile, --plot
@@ -179,27 +179,27 @@ cal_ccf_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> <spa
 --program, --idebug, --breakpoints, --quiet, --help
 </pre></div>
 </div>
-</div>
-<div class="section" id="output-dir">
+</section>
+<section id="output-dir">
 <h2>Output Dir<a class="headerlink" href="#output-dir" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>DRS_DATA_REDUC   <span class="se">\\</span> default <span class="s2">&quot;reduced&quot;</span> directory
 </pre></div>
 </div>
-</div>
-<div class="section" id="output-files">
+</section>
+<section id="output-files">
 <h2>Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_<span class="o">{</span>INTYPE<span class="o">}</span>_<span class="o">{</span>FIBER<span class="o">}</span>_ccf_<span class="o">{</span>mask<span class="o">}</span>_<span class="o">{</span>FIBER<span class="o">}</span>.fits  <span class="se">\\</span> CCF <span class="k">for</span> science channel file <span class="o">(</span>FITS-TABLE<span class="o">)</span>
 <span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_<span class="o">{</span>INTYPE<span class="o">}</span>_<span class="o">{</span>FIBER<span class="o">}</span>_ccf_fp_<span class="o">{</span>FIBER<span class="o">}</span>.fits      <span class="se">\\</span> CCF <span class="k">for</span> reference channel file <span class="o">(</span>FITS-TABLE<span class="o">)</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="plots">
+</section>
+<section id="plots">
 <h2>Plots<a class="headerlink" href="#plots" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>CCF_RV_FIT, CCF_RV_FIT_LOOP, CCF_SWAVE_REF, CCF_PHOTON_UNCERT
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -220,7 +220,7 @@ cal_ccf_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> <spa
         <li class="right" >
           <a href="make_template.html" title="Make Template Recipe"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.073 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.137 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../recipes_spirou.html" >SPIRou Recipes</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">CCF Recipe</a></li> 
@@ -228,7 +228,7 @@ cal_ccf_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> <spa
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.3.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
     </div>
   </body>
 </html>
