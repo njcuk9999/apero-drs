@@ -201,6 +201,26 @@ raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', outfunc=out.blank,
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_obj_hc1)
 
+
+raw_obj_sky = drs_finput('RAW_OBJ_SKY', outfunc=out.blank,
+                         filetype='.fits', suffix='', inext='.fits',
+                         hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
+                                    KW_RAW_DPRCATG='SCIENCE',
+                                    KW_TARGET_TYPE='TARGET',
+                                    KW_INST_MODE='HA',
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_obj_sky)
+
+
+raw_obj_tun = drs_finput('RAW_OBJ_TUN', outfunc=out.blank,
+                         filetype='.fits', suffix='', inext='.fits',
+                         hkeys=dict(KW_RAW_DPRTYPE='OBJECT,TUN',
+                                    KW_RAW_DPRCATG='SCIENCE',
+                                    KW_TARGET_TYPE='TARGET',
+                                    KW_INST_MODE='HA',
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_obj_tun)
+
 # -----------------------------------------------------------------------------
 # raw comparison files
 raw_dark_hc1 = drs_finput('RAW_DARK_HCONE', outfunc=out.blank,
@@ -266,6 +286,15 @@ raw_calib_flat_dark = drs_finput('RAW_CALIB_FLAT_DARK', outfunc=out.blank,
                                             KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_calib_flat_dark)
 
+# raw test dark fp
+raw_test_dark_fp = drs_finput('RAW_TEST_DARK_FP', outfunc=out.blank,
+                              filetype='.fits', suffix='',
+                              hkeys=dict(KW_RAW_DPRTYPE='CONTAM,DARK,FP',
+                                         KW_RAW_DPRCATG='TEST',
+                                         KW_INST_MODE='HA',
+                                         KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_test_dark_fp)
+
 # raw test dark flat file
 raw_test_dark_flat = drs_finput('RAW_TEST_DARK_FLAT', outfunc=out.blank,
                                 filetype='.fits', suffix='',
@@ -300,6 +329,32 @@ raw_test_led_led = drs_finput('RAW_TEST_LED_LED', filetype='.fits', suffix='',
                                          KW_INST_MODE='HA',
                                          KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_test_led_led)
+
+
+raw_test_hc1_hc1 = drs_finput('RAW_TEST_HCONE_HCONE', filetype='.fits',
+                              suffix='', outfunc=out.blank,
+                              hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN1,UN1',
+                                         KW_RAW_DPRCATG='TEST',
+                                         KW_INST_MODE='HA',
+                                         KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_test_hc1_hc1)
+
+
+raw_test_fp_hc1 = drs_finput('RAW_TEST_FP_HCONE', outfunc=out.blank,
+                             filetype='.fits', suffix='',
+                             hkeys=dict(KW_RAW_DPRTYPE='WAVE,FP,UN1',
+                                        KW_RAW_DPRCATG='TEST',
+                                        KW_INST_MODE='HA',
+                                        KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_test_fp_hc1)
+
+raw_test_hc1_fp = drs_finput('RAW_TEST_HCONE_FP', outfunc=out.blank,
+                             filetype='.fits', suffix='',
+                             hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN1,FP',
+                                        KW_RAW_DPRCATG='TEST',
+                                        KW_INST_MODE='HA',
+                                        KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_test_hc1_fp)
 
 # =============================================================================
 # Preprocessed Files
@@ -395,6 +450,7 @@ pp_file.addset(pp_led_led)
 pp_flat_led = drs_finput('FLAT_LED', hkeys=dict(KW_DPRTYPE='FLAT_LED'),
                          filetype='.fits', suffix='_pp', intype=raw_flat_led,
                          inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_flat_led)
 
 # -----------------------------------------------------------------------------
 #  object
@@ -413,6 +469,19 @@ pp_obj_hc1 = drs_finput('OBJ_HC1', hkeys=dict(KW_DPRTYPE='OBJ_HCONE'),
                         suffix='_pp', intype=raw_obj_hc1,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_obj_hc1)
+
+pp_obj_sky = drs_finput('OBJ_SKY', hkeys=dict(KW_DPRTYPE='OBJ_SKY'),
+                        filetype='.fits',
+                        suffix='_pp', intype=raw_obj_sky,
+                        inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_obj_sky)
+
+pp_obj_tun = drs_finput('OBJ_TUN', hkeys=dict(KW_DPRTYPE='OBJ_TUN'),
+                        filetype='.fits',
+                        suffix='_pp', intype=raw_obj_tun,
+                        inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_obj_tun)
+
 # -----------------------------------------------------------------------------
 #  comparison
 pp_dark_hc1 = drs_finput('DARK_HCONE', hkeys=dict(KW_DPRTYPE='DARK_HCONE'),
@@ -479,6 +548,13 @@ pp_test_flat_dark = drs_finput('TEST_FLAT_DARK', filetype='.fits',
                                inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_test_flat_dark)
 
+# raw test dark fp
+pp_test_dark_fp = drs_finput('TEST_DARK_FP', filetype='.fits',
+                        suffix='_pp', intype=raw_test_dark_fp,
+                        inext='.fits', outfunc=out.general_file,
+                        hkeys=dict(KW_DPRTYPE='TEST_DARK_FP'))
+pp_file.addset(pp_test_dark_fp)
+
 # raw test wave fp fp file
 pp_test_fp_fp = drs_finput('TEST_FP_FP', filetype='.fits',
                            hkeys=dict(KW_DPRTYPE='TEST_FP_FP'),
@@ -492,6 +568,29 @@ pp_test_led_led = drs_finput('TEST_LED_LED', filetype='.fits',
                              suffix='_pp', intype=raw_test_led_led,
                              inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_test_led_led)
+
+# raw test hc1 hc1
+pp_test_hc1_hc1 = drs_finput('TEST_HCONE_HCONE', filetype='.fits',
+                             hkeys=dict(KW_DPRTYPE='TEST_HCONE_HCONE'),
+                             suffix='_pp', intype=raw_test_led_led,
+                             inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_test_hc1_hc1)
+
+# test fp hc
+pp_test_fp_hc1 = drs_finput('TEST_FP_HCONE',
+                            hkeys=dict(KW_DPRTYPE='TEST_FP_HCONE'),
+                            filetype='.fits',
+                            suffix='_pp', intype=raw_test_fp_hc1,
+                            inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_test_fp_hc1)
+
+# test hc fp
+pp_test_hc1_fp = drs_finput('TEST_HCONE_FP',
+                            hkeys=dict(KW_DPRTYPE='TEST_HCONE_FP'),
+                            filetype='.fits',
+                            suffix='_pp', intype=raw_test_hc1_fp,
+                            inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_test_hc1_fp)
 
 # =============================================================================
 # Reduced Files
