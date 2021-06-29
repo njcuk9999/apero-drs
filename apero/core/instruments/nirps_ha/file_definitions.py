@@ -572,7 +572,7 @@ pp_file.addset(pp_test_led_led)
 # raw test hc1 hc1
 pp_test_hc1_hc1 = drs_finput('TEST_HCONE_HCONE', filetype='.fits',
                              hkeys=dict(KW_DPRTYPE='TEST_HCONE_HCONE'),
-                             suffix='_pp', intype=raw_test_led_led,
+                             suffix='_pp', intype=raw_test_hc1_hc1,
                              inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_test_hc1_hc1)
 

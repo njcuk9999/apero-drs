@@ -62,7 +62,18 @@ def main(**kwargs):
 
 
 def __main__(recipe, params):
-    # Note: no instrument defined so do not use instrument only features
+    # ----------------------------------------------------------------------
+    # deal with documenting file definitions
+    if params['INPUTS']['FILEDEF']:
+        # get file definitions
+        drs_documentation.compile_file_definitions(params, recipe)
+        # ------------------------------------------------------------------
+        # End of main code
+        # ------------------------------------------------------------------
+        return drs_startup.return_locals(params, locals())
+
+
+    # TODO: add compile recipe definitions
 
     # ----------------------------------------------------------------------
     # compile documentation

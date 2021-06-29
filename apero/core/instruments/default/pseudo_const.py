@@ -1255,7 +1255,7 @@ class PseudoConstants:
                         comment='Recipe kind')
         log_columns.add(name='PROGRAM_NAME', datatype='VARCHAR(80)',
                         comment='Recipe Program Name')
-        log_columns.add(name='PID', datatype='VARCHAR(80)',
+        log_columns.add(name='PID', datatype='VARCHAR(80)', is_index=True,
                         comment='Recipe drs process id number')
         log_columns.add(name='HUMANTIME', datatype='VARCHAR(50)',
                         comment='Recipe process time (human format)')

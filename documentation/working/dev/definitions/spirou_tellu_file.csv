@@ -1,0 +1,8 @@
+NAME,DRSOUTID,FILETYPE,SUFFIX,DBNAME,DBKEY
+TELLU_PCLEAN,TELLU_PCLEAN,.fits,_tellu_pclean,telluric,TELLU_PCLEAN
+TELLU_CONV,--,.npy,_tellu_conv,telluric,TELLU_CONV
+TELLU_TRANS,TELLU_TRANS,.fits,_tellu_trans,telluric,TELLU_TRANS
+TELLU_TAPAS,--,.npy,--,telluric,TELLU_TAPAS
+TELLU_OBJ,TELLU_OBJ,.fits,_e2dsff_tcorr,telluric,TELLU_OBJ
+TELLU_RECON,TELLU_RECON,.fits,_e2dsff_recon,telluric,TELLU_RECON
+TELLU_TEMP,TELLU_TEMP,.fits,--,telluric,TELLU_TEMP

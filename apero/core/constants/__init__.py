@@ -31,6 +31,9 @@ load = param_functions.load_config
 # load the pseudo constants (based on instrument)
 pload = param_functions.load_pconfig
 
+# load the psuedo constants typing
+PseudoConstants = param_functions.pseudo_const.PseudoConstants
+
 # pchcek
 PCheck = param_functions.PCheck
 

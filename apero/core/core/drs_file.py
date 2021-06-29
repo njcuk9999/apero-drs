@@ -33,7 +33,7 @@ from pathlib import Path
 from scipy.stats import pearsonr
 import textwrap
 import time
-from typing import Any, Dict, List, Union, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import warnings
 
 from apero import lang
@@ -87,7 +87,7 @@ DrsCodedException = drs_exceptions.DrsCodedException
 # get header comment card from drs_fits
 HCC = drs_fits.HeaderCommentCards
 # get default psuedo constants class
-PseudoConstants = pseudo_const.PseudoConstants
+PseudoConstants = constants.PseudoConstants
 # get numpy masked constant
 MaskedConstant = np.ma.core.MaskedConstant
 # -----------------------------------------------------------------------------
@@ -938,6 +938,72 @@ class DrsInputFile:
         _ = display_func('__repr__', __NAME__, self.class_name)
         # return the string representation of DrsInputFile
         return 'DrsInputFile[{0}]'.format(self.name)
+
+    def summary(self, params: ParamDict,
+                pconst: Optional[PseudoConstants]) -> Dict[str, str]:
+        """
+        Create a dictionary sumamry representation of the file definition
+
+        :param params: ParamDict, the paramater dictionary of constants
+        :param pconst: PseudoConst, the psuedo constants class
+
+        :return: dictionary, the parameters that define this file definition
+        """
+        # deal with no pconst given
+        if pconst is None:
+            pconst = constants.pload()
+                # ---------------------------------------------------------------------
+        # get header columns
+        header_columns = list(pconst.FILEDEF_HEADER_KEYS())
+        header_names = []
+        # ---------------------------------------------------------------------
+        # get real names for header columns
+        for hdr_col in header_columns:
+            if hdr_col in params:
+                header_names.append(params[hdr_col][0])
+            else:
+                header_names.append(hdr_col)
+        # ---------------------------------------------------------------------
+        # construct all columns
+        columns = []
+        values = []
+        # ---------------------------------------------------------------------
+        # add name
+        columns.append('NAME')
+        values.append(self.name)
+        # ---------------------------------------------------------------------
+        # add header columns
+        for it, hdr_col in enumerate(header_columns):
+            columns.append(header_names[it])
+            if hdr_col in self.required_header_keys:
+                values.append(self.required_header_keys[hdr_col])
+            else:
+                values.append('--')
+        # ---------------------------------------------------------------------
+        # add file type and suffix
+        columns += ['FILETYPE', 'SUFFIX']
+        if drs_text.null_text(self.filetype, ['None', '', 'Null']):
+            values.append('--')
+        else:
+            values.append(self.filetype)
+        if drs_text.null_text(self.suffix, ['None', '', 'Null']):
+            values.append('--')
+        else:
+            values.append(self.suffix)
+        # ---------------------------------------------------------------------
+        # add database columns
+        columns += ['DBNAME', 'DBKEY']
+        if drs_text.null_text(self.dbname, ['None', '', 'Null']):
+            values.append('--')
+        else:
+            values.append(self.dbname)
+        if drs_text.null_text(self.dbkey, ['None', '', 'Null']):
+            values.append('--')
+        else:
+            values.append(self.dbkey)
+        # ---------------------------------------------------------------------
+        # return a dictionary of values
+        return dict(zip(columns, values))
 
     def set_filename(self, filename: str):
         """
