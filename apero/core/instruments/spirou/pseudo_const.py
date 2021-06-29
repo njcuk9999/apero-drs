@@ -604,7 +604,6 @@ class PseudoConstants(DefaultConstants):
                 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_DRS_MODE']
         return keys
 
-
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
     # =========================================================================
