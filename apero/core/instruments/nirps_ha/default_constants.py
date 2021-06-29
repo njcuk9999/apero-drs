@@ -599,7 +599,7 @@ LOC_YDET_MIN.author = base.AUTHORS['EA']
 # define the maximum detector position where the centers of the orders should
 #   fall (across order direction)
 LOC_YDET_MAX = LOC_YDET_MAX.copy(__NAME__)
-LOC_YDET_MAX.value = 4060
+LOC_YDET_MAX.value = 4050
 LOC_YDET_MAX.author = base.AUTHORS['EA']
 
 # =============================================================================
