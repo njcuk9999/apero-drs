@@ -165,6 +165,14 @@ raw_led_led = drs_finput('RAW_LED_LED', filetype='.fits', suffix='',
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_led_led)
 
+# raw FLAT LED file
+raw_flat_led = drs_finput('RAW_FLAT_LED', filetype='.fits', suffix='',
+                          hkeys=dict(KW_RAW_DPRTYPE='FLAT,LED',
+                                     KW_RAW_DPRCATG='CALIB',
+                                     KW_INST_MODE='HA',
+                                     KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_flat_led)
+
 # -----------------------------------------------------------------------------
 # raw object files
 raw_obj_dark = drs_finput('RAW_OBJ_DARK', outfunc=out.blank,
@@ -382,6 +390,11 @@ pp_led_led = drs_finput('LED_LED', hkeys=dict(KW_DPRTYPE='LED_LED'),
                         filetype='.fits', suffix='_pp', intype=raw_led_led,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_led_led)
+
+# FLAT LED
+pp_flat_led = drs_finput('FLAT_LED', hkeys=dict(KW_DPRTYPE='FLAT_LED'),
+                         filetype='.fits', suffix='_pp', intype=raw_flat_led,
+                         inext='.fits', outfunc=out.general_file)
 
 # -----------------------------------------------------------------------------
 #  object
