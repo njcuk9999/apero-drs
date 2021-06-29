@@ -7288,6 +7288,8 @@ def id_drs_file(params: ParamDict, recipe: Any,
     """
     # set function
     func_name = display_func('id_drs_file', __NAME__)
+    # get pconst
+    pconst = constants.pload()
     # ----------------------------------------------------------------------
     # deal with list vs no list for drs_file_sets
     if isinstance(drs_file_sets, list):
@@ -7383,15 +7385,18 @@ def id_drs_file(params: ParamDict, recipe: Any,
     # ----------------------------------------------------------------------
     # deal with no files found
     if len(kinds) == 0 and required:
-        # get header keys for info purposes
-        keys = ['KW_CCAS', 'KW_CREF', 'KW_OBSTYPE', 'KW_TARGET_TYPE',
-                'KW_OBJNAME']
+        # get header keys for info purposes (file definition keys)
+        keys = pconst.FILEDEF_HEADER_KEYS()
         argstr = ''
+        # loop around keys and add to error (if they exist)
+        #   if they don't the value will be set to None
         for key in keys:
+            # set value to None
+            value = None
+            # if file set is not None and header is not None
+            #   then we can try to get key from file_set
             if file_set is not None and file_set.header is not None:
-                value = file_set.get_hkey(key)
-            else:
-                value = None
+                value = file_set.get_hkey(key, required=False)
             argstr += '\t{0}: {1}\n'.format(key, value)
 
         eargs = [' '.join(names), file_set.filename, argstr, func_name]
