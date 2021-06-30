@@ -1454,7 +1454,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # copy header from outfile1
     outfile2.copy_hdict(outfile1)
     # add in files
-    outfile2.infiles = list(rawhcfiles) + list(rawfpfiles)
+    outfile2.infiles = list(outfile1.infiles)
     # set output key
     outfile2.add_hkey('KW_OUTPUT', value=outfile2.name)
     # copy data
@@ -1484,7 +1484,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # copy header from outfile1
     outfile3.copy_hdict(outfile1)
     # add in files
-    outfile3.infiles = list(rawhcfiles) + list(rawfpfiles)
+    outfile3.infiles = list(outfile1.infiles)
     # set output key
     outfile3.add_hkey('KW_OUTPUT', value=outfile3.name)
     # copy data
@@ -1517,7 +1517,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile0.construct_filename(infile=fpfile)
         debugfile0.copy_hdict(outfile1)
         # add in files
-        debugfile0.infiles = list(rawhcfiles) + list(rawfpfiles)
+        debugfile0.infiles = list(outfile1.infiles)
         # add output type
         debugfile0.add_hkey('KW_OUTPUT', value=debugfile0.name)
         # add data
@@ -1543,7 +1543,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile1.construct_filename(infile=fpfile)
         debugfile1.copy_hdict(outfile1)
         # add in files
-        debugfile1.infiles = list(rawhcfiles) + list(rawfpfiles)
+        debugfile1.infiles = list(outfile1.infiles)
         # add output type
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         # add output type
@@ -1566,7 +1566,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile2.construct_filename(infile=fpfile)
         debugfile2.copy_hdict(outfile1)
         # add in files
-        debugfile2.infiles = list(rawhcfiles) + list(rawfpfiles)
+        debugfile2.infiles = list(outfile1.infiles)
         # add output type
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
         # add data
@@ -1594,7 +1594,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
             debugfile3.construct_filename(infile=hcfile)
             debugfile3.copy_original_keys(hcfile)
             # add in files
-            debugfile3.infiles = list(rawhcfiles) + list(rawfpfiles)
+            debugfile3.infiles = list(outfile1.infiles)
             # add version
             debugfile3.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
             # add dates
@@ -1636,7 +1636,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
                 # copy debug file 3
                 debugfile4.copy_hdict(debugfile3)
                 # add in files
-                debugfile4.infiles = list(rawhcfiles) + list(rawfpfiles)
+                debugfile4.infiles = list(outfile1.infiles)
                 # add output key
                 debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
                 debugfile4.data = hcimage2
