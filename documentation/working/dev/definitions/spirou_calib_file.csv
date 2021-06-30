@@ -1,28 +1,28 @@
-NAME,DRSOUTID,FILETYPE,SUFFIX,DBNAME,DBKEY
-DARKI,DARKI,.fits,_darki,calibration,DARKI
-DARKT,DARKT,.fits,_darkt,calibration,DARKT
-DARKS,DARKS,.fits,_darks,calibration,DARKS
-DARKM,DARKM,.fits,_dark_master,calibration,DARKM
-BADPIX,BADPIX,.fits,_badpixel,calibration,BADPIX
-BKGRD_MAP,BKGRD_MAP,.fits,_bmap.fits,calibration,BKGRDMAP
-LOC_ORDERP,LOC_ORDERP,.fits,_order_profile,calibration,ORDER_PROFILE
-LOC_LOCO,LOC_LOCO,.fits,_loco,calibration,LOC
-SHAPE_X,SHAPE_X,.fits,_shapex,calibration,SHAPEX
-SHAPE_Y,SHAPE_Y,.fits,_shapey,calibration,SHAPEY
-MASTER_FP,MASTER_FP,.fits,_fpmaster,calibration,FPMASTER
-SHAPEL,SHAPEL,.fits,_shapel,calibration,SHAPEL
-FF_BLAZE,FF_BLAZE,.fits,_blaze,calibration,BLAZE
-FF_FLAT,FF_FLAT,.fits,_flat,calibration,FLAT
-THERMALI_E2DS,THERMALI_E2DS,.fits,_thermal_e2ds_int,calibration,THERMALI
-THERMALT_E2DS,THERMALT_E2DS,.fits,_thermal_e2ds_tel,calibration,THERMALT
-LEAKM_E2DS,LEAKM_E2DS,.fits,_leak_master,calibration,LEAKM
-WAVESOL_MASTER,WAVESOL_MASTER,.fits,_wavesol_master_,calibration,WAVESOL_MASTER
-WAVE_HCLIST_MASTER,WAVE_HCLIST_MASTER,.fits,_wavem_hclines,calibration,WAVEHCL
-WAVE_FPLIST_MASTER,WAVE_FPLIST_MASTER,.fits,_wavem_fplines,calibration,WAVEFPL
-WAVEM_CAV,WAVEM_CAV,.fits,_wavecav_,calibration,WAVECAV
-WAVEM_D,WAVEM_SOL,.fits,_wavem,calibration,WAVEM_D
-WAVEM_FP,WAVEM_FP,.fits,_wavem_fp,calibration,WAVESOL_MASTER
-WAVEM_HC,WAVEM_HC,.fits,_wavem_hc,calibration,WAVEM
-WAVE_HC,WAVE_HC,.fits,_wave_hc,calibration,WAVE
-WAVE_FP,WAVE_FP,.fits,_wave_fp,calibration,WAVE
-WAVE_NIGHT,WAVE_NIGHT,.fits,_wave_night,calibration,WAVE
+name,HDR[DRSOUTID],file type,suffix,fibers,dbname,dbkey,input file
+DARKI,DARKI,.fits,_darki,--,calibration,DARKI,DARK_DARK_INT
+DARKT,DARKT,.fits,_darkt,--,calibration,DARKT,DARK_DARK_TEL
+DARKS,DARKS,.fits,_darks,--,calibration,DARKS,DARK_DARK_SKY
+DARKM,DARKM,.fits,_dark_master,--,calibration,DARKM,"DARK_DARK_TEL, DARK_DARK_INT"
+BADPIX,BADPIX,.fits,_badpixel,--,calibration,BADPIX,FLAT_FLAT
+BKGRD_MAP,BKGRD_MAP,.fits,_bmap.fits,--,calibration,BKGRDMAP,FLAT_FLAT
+LOC_ORDERP,LOC_ORDERP,.fits,_order_profile,"AB, A, B, C",calibration,ORDER_PROFILE,"FLAT_DARK, DARK_FLAT"
+LOC_LOCO,LOC_LOCO,.fits,_loco,"AB, A, B, C",calibration,LOC,"FLAT_DARK, DARK_FLAT"
+SHAPE_X,SHAPE_X,.fits,_shapex,--,calibration,SHAPEX,FP_FP
+SHAPE_Y,SHAPE_Y,.fits,_shapey,--,calibration,SHAPEY,FP_FP
+MASTER_FP,MASTER_FP,.fits,_fpmaster,--,calibration,FPMASTER,FP_FP
+SHAPEL,SHAPEL,.fits,_shapel,--,calibration,SHAPEL,FP_FP
+FF_BLAZE,FF_BLAZE,.fits,_blaze,"AB, A, B, C",calibration,BLAZE,FLAT_FLAT
+FF_FLAT,FF_FLAT,.fits,_flat,"AB, A, B, C",calibration,FLAT,FLAT_FLAT
+THERMALI_E2DS,THERMALI_E2DS,.fits,_thermal_e2ds_int,"AB, A, B, C",calibration,THERMALI,DARK_DARK_INT
+THERMALT_E2DS,THERMALT_E2DS,.fits,_thermal_e2ds_tel,"AB, A, B, C",calibration,THERMALT,DARK_DARK_TEL
+LEAKM_E2DS,LEAKM_E2DS,.fits,_leak_master,"AB, A, B, C",calibration,LEAKM,"EXT_E2DS, EXT_E2DS_FF"
+WAVESOL_MASTER,WAVESOL_MASTER,.fits,_wavesol_master_,"AB, A, B, C",calibration,WAVESOL_MASTER,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_HCLIST_MASTER,WAVE_HCLIST_MASTER,.fits,_wavem_hclines,"AB, A, B, C",calibration,WAVEHCL,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLIST_MASTER,WAVE_FPLIST_MASTER,.fits,_wavem_fplines,"AB, A, B, C",calibration,WAVEFPL,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_CAV,WAVEM_CAV,.fits,_wavecav_,--,calibration,WAVECAV,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_D,WAVEM_SOL,.fits,_wavem,"AB, A, B, C",calibration,WAVEM_D,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_FP,WAVEM_FP,.fits,_wavem_fp,"AB, A, B, C",calibration,WAVESOL_MASTER,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_HC,WAVEM_HC,.fits,_wavem_hc,"AB, A, B, C",calibration,WAVEM,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_HC,WAVE_HC,.fits,_wave_hc,"AB, A, B, C",calibration,WAVE,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_FP,WAVE_FP,.fits,_wave_fp,"AB, A, B, C",calibration,WAVE,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_NIGHT,WAVE_NIGHT,.fits,_wave_night,"AB, A, B, C",calibration,WAVE,"EXT_E2DS, EXT_E2DS_FF"

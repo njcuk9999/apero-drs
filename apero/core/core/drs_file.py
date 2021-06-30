@@ -969,19 +969,19 @@ class DrsInputFile:
         values = []
         # ---------------------------------------------------------------------
         # add name
-        columns.append('NAME')
+        columns.append('name')
         values.append(self.name)
         # ---------------------------------------------------------------------
         # add header columns
         for it, hdr_col in enumerate(header_columns):
-            columns.append(header_names[it])
+            columns.append('HDR[{0}]'.format(header_names[it]))
             if hdr_col in self.required_header_keys:
                 values.append(self.required_header_keys[hdr_col])
             else:
                 values.append('--')
         # ---------------------------------------------------------------------
         # add file type and suffix
-        columns += ['FILETYPE', 'SUFFIX']
+        columns += ['file type', 'suffix']
         if drs_text.null_text(self.filetype, ['None', '', 'Null']):
             values.append('--')
         else:
@@ -991,8 +991,22 @@ class DrsInputFile:
         else:
             values.append(self.suffix)
         # ---------------------------------------------------------------------
+        # add basename
+        columns += ['basename']
+        if self.basename is None:
+            values.append('--')
+        else:
+            values.append(self.basename)
+        # ---------------------------------------------------------------------
+        # add fibers
+        columns += ['fibers']
+        if self.fibers is not None:
+            values.append(', '.join(self.fibers))
+        else:
+            values.append('--')
+        # ---------------------------------------------------------------------
         # add database columns
-        columns += ['DBNAME', 'DBKEY']
+        columns += ['dbname', 'dbkey']
         if drs_text.null_text(self.dbname, ['None', '', 'Null']):
             values.append('--')
         else:
@@ -1001,6 +1015,17 @@ class DrsInputFile:
             values.append('--')
         else:
             values.append(self.dbkey)
+        # ---------------------------------------------------------------------
+        # add input file link
+        columns += ['input file']
+        if self.intype is not None:
+            if isinstance(self.intype, list):
+                names = list(map(lambda x: x.name, self.intype))
+                values.append(', '.join(names))
+            else:
+                values.append(self.intype.name)
+        else:
+            values.append('--')
         # ---------------------------------------------------------------------
         # return a dictionary of values
         return dict(zip(columns, values))

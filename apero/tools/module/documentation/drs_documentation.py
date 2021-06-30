@@ -77,15 +77,21 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     # get instrument name
     instrument = params['INSTRUMENT']
     # define file types to add
-    sectionnames = ['Raw Files', 'Preprocesed files', 'Reduced Files',
-                    'Calibration files', 'Telluric files']
+    sectionnames = ['1. Raw Files', '2. Preprocesed files', '3. Reduced Files',
+                    '4. Calibration files', '5 Telluric files']
     filetypes = ['raw_file', 'pp_file', 'red_file', 'calib_file', 'tellu_file']
     # list of columns to be flagged as modified by the DRS
-    mod_cols = ['TRG_TYPE', 'DRSMODE']
+    mod_cols = ['HDR[TRG_TYPE]', 'HDR[DRSMODE]']
     # dict of columns to remove if present
     remove_cols = dict()
-    remove_cols['raw_file'] = ['FILETYPE']
-    remove_cols['red_file'] = ['DBNAME', 'DBKEY']
+    remove_cols['raw_file'] = ['file type']
+    remove_cols['red_file'] = ['dbname', 'dbkey']
+
+    # add text to sections
+    add_texts = dict()
+    # add text for instruments add_text[key] = [instrument, txt file]
+    add_texts['raw_file'] = dict(SPIROU='spirou_raw_file_text.rst',
+                                 NIRPS_HA='nirps_ha_raw_file_text.rst')
     # storage of output tables
     table_storage = dict()
     mod_storage = dict()
@@ -133,28 +139,68 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         filenames[filetype] = filename
     # -------------------------------------------------------------------------
     # make markdown document
-    markdown = drs_markdown.MarkDownPage()
+    page_ref = '{0}_file_def'.format(instrument.lower())
+    markdown = drs_markdown.MarkDownPage(page_ref)
     # add page title
     markdown.add_title('{0} file definitions'.format(instrument))
+    # -------------------------------------------------------------------------
+    # get refnames
+    refnames = dict()
+    for filetype in filetypes:
+        refnames[filetype] = '{0}_{1}'.format(instrument.lower(), filetype)
+    # add table of contents
+    markdown.add_table_of_contents(sectionnames, list(refnames.values()))
+    # -------------------------------------------------------------------------
     # loop around table section names
     for it in range(len(sectionnames)):
         # get filetype and name
         filetype = filetypes[it]
         name = sectionnames[it]
+        # ------------------------------------------------------------------
         # get filename as just a filename (assume they are in the same
         #     directory)
         filename = os.path.basename(filenames[filetype])
+        # ------------------------------------------------------------------
         # add section
         markdown.add_section(name)
+        # add reference
+        markdown.add_reference(refnames[filetype])
+        # ------------------------------------------------------------------
+        # add sub-section
+        markdown.add_sub_section('{0}.1  File definition table'.format(it + 1))
         # add table
         markdown.add_csv_table(title='{0} file definition table'.format(name),
                                csv_file=filename)
+        # ------------------------------------------------------------------
         # add text if required
         if mod_storage[filetype]:
             # construct text to add
             modtext = ('\* these columns may be added/updated by APERO '
                        'before use.')
             markdown.add_text(text=modtext)
+        # ------------------------------------------------------------------
+        # add HDR text
+        hdrtext = '"HDR[XXX]" denotes key from file header'
+        markdown.add_text(text=hdrtext)
+        # ------------------------------------------------------------------
+        # add additional text for this section
+        if filetype in add_texts:
+            # based on instrument
+            if instrument in add_texts[filetype]:
+                # construct filename
+                basename = add_texts[filetype][instrument]
+                filepath = os.path.join(def_dir, basename)
+                # add text via filename
+                if os.path.exists(filepath):
+                    markdown.include_file(filename=filepath)
+                else:
+                    wmsg = 'Section text "{0}" does not exist'
+                    wargs = [filepath]
+                    WLOG(params, 'warning', wmsg.format(*wargs))
+        # ------------------------------------------------------------------
+        # add a back to top
+        markdown.add_back_to_top()
+
     # -------------------------------------------------------------------------
     # construct markdown filename
     markdown_basename = '{0}_file_definitions.rst'.format(instrument.lower())

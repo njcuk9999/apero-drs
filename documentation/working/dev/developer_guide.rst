@@ -67,8 +67,8 @@ Other
 .. toctree::
     :maxdepth: 1
 
-    required_input_header_keys.rst
     definitions/spirou_file_definitions.rst
+    definitions/nirps_ha_file_definitions.rst
 
 
 
