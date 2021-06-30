@@ -1050,52 +1050,6 @@ class PseudoConstants:
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     # =========================================================================
-    # BERV_KEYS
-    # =========================================================================
-    # noinspection PyPep8Naming
-    def BERV_INKEYS(self):
-        """
-        Define how we get (INPUT) BERV parameters
-        stored as a dictionary of list where each list has format:
-
-        [in_key, out_key, kind, default]
-
-           Where 'in_key' is the header key or param key to use
-           Where 'out_key' is the output header key to save to
-           Where 'kind' is 'header' or 'const'
-           Where default is the default value to assign
-
-           Must include ra and dec
-
-        :return: dictionary of list with above format
-        """
-        # set function name
-        func_name = display_func('BERV_INKEYS', __NAME__, self.class_name)
-        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
-
-    # noinspection PyPep8Naming
-    def BERV_OUTKEYS(self):
-        """
-        Define how we store (OUTPUT) BERV parameters
-        stored as a dictionary of list where each list has format:
-
-        [in_key, out_key, kind, default]
-
-           Where 'in_key' is the header key or param key to use
-           Where 'out_key' is the output header key to save to
-           Where 'kind' is 'header' or 'const'
-           Where default is the default value to assign
-
-           Must include ra and dec
-
-        :return: dictionary of list with above format
-        """
-        # set function name
-        func_name = display_func('BERV_OUTKEYS', __NAME__,
-                                 self.class_name)
-        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
-
-    # =========================================================================
     # PLOT SETTINGS
     # =========================================================================
     # noinspection PyPep8Naming

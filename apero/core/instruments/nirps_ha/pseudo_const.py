@@ -69,12 +69,17 @@ class PseudoConstants(DefaultConstants):
         # set instrument name
         self.instrument = instrument
         # storage of things we don't want to compute twice without need
+        self.exclude = ['header_cols', 'index_cols', 'calibration_cols',
+                        'telluric_cols', 'logdb_cols', 'objdb_cols',
+                        'filemod', 'recipemod']
         self.header_cols: Optional[DatabaseColumns] = None
         self.index_cols: Optional[DatabaseColumns] = None
         self.calibration_cols: Optional[DatabaseColumns] = None
         self.telluric_cols: Optional[DatabaseColumns] = None
         self.logdb_cols: Optional[DatabaseColumns] = None
         self.objdb_cols: Optional[DatabaseColumns] = None
+        self.filemod: Optional[base_class.ImportModule] = None
+        self.recipemod: Optional[base_class.ImportModule] = None
 
     def __getstate__(self) -> dict:
         """
@@ -83,13 +88,10 @@ class PseudoConstants(DefaultConstants):
         """
         # set function name
         _ = display_func('__getstate__', __NAME__, self.class_name)
-        # what to exclude from state
-        exclude = ['header_cols', 'index_cols', 'calibration_cols',
-                   'telluric_cols', 'logdb_cols', 'objdb_cols']
         # need a dictionary for pickle
         state = dict()
         for key, item in self.__dict__.items():
-            if key not in exclude:
+            if key not in self.exclude:
                 state[key] = item
         # return dictionary state
         return state
@@ -105,13 +107,9 @@ class PseudoConstants(DefaultConstants):
         _ = display_func('__setstate__', __NAME__, self.class_name)
         # update dict with state
         self.__dict__.update(state)
-        # storage of things we don't want to compute twice without need
-        self.header_cols = None
-        self.index_cols = None
-        self.calibration_cols = None
-        self.telluric_cols = None
-        self.logdb_cols = None
-        self.objdb_cols = None
+        # reset excluded values to None
+        for item in self.exclude:
+            setattr(self, item, None)
 
     def __str__(self) -> str:
         """
@@ -147,12 +145,16 @@ class PseudoConstants(DefaultConstants):
         """
         # set function name
         func_name = display_func('FILEMOD', __NAME__, self.class_name)
+        # deal with already having this defined
+        if self.filemod is not None:
+            return self.filemod
         # set module name
         module_name = 'apero.core.instruments.nirps_ha.file_definitions'
         # try to import module
         try:
-            return base_class.ImportModule('nirps_ha.file_definitions',
-                                           module_name)
+            self.filemod = base_class.ImportModule('nirps_ha.file_definitions',
+                                                   module_name)
+            return self.filemod
         except Exception as e:
             # raise coded exception
             eargs = [module_name, 'system', func_name, type(e), str(e), '']
@@ -168,12 +170,16 @@ class PseudoConstants(DefaultConstants):
         """
         # set function name
         func_name = display_func('RECIPEMOD', __NAME__, self.class_name)
+        # deal with already having this defined
+        if self.recipemod is not None:
+            return self.recipemod
         # set module name
         module_name = 'apero.core.instruments.nirps_ha.recipe_definitions'
         # try to import module
         try:
-            return base_class.ImportModule('nirps_ha.recipe_definitions',
-                                           module_name)
+            strmod = 'nirps_ha.recipe_definitions'
+            self.recipemod = base_class.ImportModule(strmod, module_name)
+            return self.recipemod
         except Exception as e:
             # raise coded exception
             eargs = [module_name, 'system', func_name, type(e), str(e), '']
@@ -382,6 +388,9 @@ class PseudoConstants(DefaultConstants):
 
         :return:
         """
+        # check for pre-existing values
+        if self.header_cols is not None:
+            return self.header_cols
         # set keyts
         header_cols = DatabaseColumns()
         header_cols.add(name='KW_DATE_OBS', datatype='VARCHAR(80)')
@@ -709,97 +718,6 @@ class PseudoConstants(DefaultConstants):
         return ['A', 'B']
 
     # =========================================================================
-    # BERV_KEYS
-    # =========================================================================
-    def BERV_INKEYS(self) -> base_class.ListDict:
-        """
-        Define how we get (INPUT) BERV parameters
-        stored as a dictionary of list where each list has format:
-
-        [in_key, out_key, kind, default]
-
-           Where 'in_key' is the header key or param key to use
-           Where 'out_key' is the output header key to save to
-           Where 'kind' is 'header' or 'const'
-           Where default is the default value to assign
-
-           Must include ra and dec
-
-        :return: dictionary of list with above format
-        """
-        # set function name
-        _ = display_func('BERV_INKEYS', __NAME__, self.class_name)
-        # set up storage
-        #     [in_key, out_key, kind, default]
-        inputs = base_class.ListDict()
-        inputs['gaiaid'] = ['KW_GAIA_ID', 'KW_BERVGAIA_ID', 'header', 'None']
-        inputs['objname'] = ['KW_OBJNAME', 'KW_BERVOBJNAME', 'header', 'None']
-        inputs['ra'] = ['KW_OBJRA', 'KW_BERVRA', 'header', None]
-        inputs['dec'] = ['KW_OBJDEC', 'KW_BERVDEC', 'header', None]
-        inputs['epoch'] = ['KW_OBJEQUIN', 'KW_BERVEPOCH', 'header', None]
-        inputs['pmra'] = ['KW_OBJRAPM', 'KW_BERVPMRA', 'header', None]
-        inputs['pmde'] = ['KW_OBJDECPM', 'KW_BERVPMDE', 'header', None]
-        inputs['lat'] = ['OBS_LAT', 'KW_BERVLAT', 'const', None]
-        inputs['long'] = ['OBS_LONG', 'KW_BERVLONG', 'const', None]
-        inputs['alt'] = ['OBS_ALT', 'KW_BERVALT', 'const', None]
-        inputs['plx'] = ['KW_PLX', 'KW_BERVPLX', 'header', 0.0]
-        inputs['rv'] = ['KW_RV', 'KW_BERVRV', 'header', np.nan]
-
-        inputs['inputsource'] = ['KW_BERV_POS_SOURCE', 'KW_BERV_POS_SOURCE',
-                                 'header', 'None']
-        inputs['gmag'] = ['KW_BERV_GAIA_GMAG', 'KW_BERV_GAIA_GMAG', 'header',
-                          np.nan]
-        inputs['bpmag'] = ['KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_BPMAG', 'header',
-                           np.nan]
-        inputs['rpmag'] = ['KW_BERV_GAIA_RPMAG', 'KW_BERV_GAIA_RPMAG', 'header',
-                           np.nan]
-        inputs['gaia_mag_lim'] = ['KW_BERV_GAIA_MAGLIM', 'KW_BERV_GAIA_MAGLIM',
-                                  'header', np.nan]
-        inputs['gaia_plx_lim'] = ['KW_BERV_GAIA_PLXLIM', 'KW_BERV_GAIA_PLXLIM',
-                                  'header', np.nan]
-        # return inputs
-        return inputs
-
-    def BERV_OUTKEYS(self) -> base_class.ListDict:
-        """
-        Define how we store (OUTPUT) BERV parameters
-        stored as a dictionary of list where each list has format:
-
-        [in_key, out_key, kind, default]
-
-           Where 'in_key' is the header key or param key to use
-           Where 'out_key' is the output header key to save to
-           Where 'kind' is 'header' or 'const'
-           Where default is the default value to assign
-
-           Must include ra and dec
-
-        :return: dictionary of list with above format
-        """
-        # set function name
-        _ = display_func('BERV_OUTKEYS', __NAME__, self.class_name)
-        # set up storage
-        #     [in_key, out_key, kind, default]
-        outputs = base_class.ListDict()
-        outputs['berv'] = ['BERV', 'KW_BERV', 'header', float]
-        outputs['bjd'] = ['BJD', 'KW_BJD', 'header', float]
-        outputs['bervmax'] = ['BERV_MAX', 'KW_BERVMAX', 'header', float]
-        outputs['dberv'] = ['DBERV', 'KW_DBERV', 'header', float]
-        outputs['source'] = ['BERV_SOURCE', 'KW_BERVSOURCE', 'header', str]
-        outputs['bervest'] = ['BERV_EST', 'KW_BERV_EST', 'header', float]
-        outputs['bjdest'] = ['BJD_EST', 'KW_BJD_EST', 'header', float]
-        outputs['bervmaxest'] = ['BERV_MAX_EST', 'KW_BERVMAX_EST', 'header',
-                                 float]
-        outputs['dbervest'] = ['DBERV_EST', 'KW_DBERV_EST', 'header', float]
-        # add KW_MID_OBS_TIME as KW_BERV_OBSTIME
-        outputs['obs_time'] = ['OBS_TIME', 'KW_BERV_OBSTIME', 'header', float]
-        # add KW_MID_OBSTIME_METHOD as KW_BERV_OBSTIME_METHOD
-        outputs['obs_time_method'] = ['OBS_TIME_METHOD',
-                                      'KW_BERV_OBSTIME_METHOD', 'header', str]
-        # return outputs
-        return outputs
-
-    # =========================================================================
     # DATABASE SETTINGS
     # =========================================================================
     # noinspection PyPep8Naming
@@ -1089,8 +1007,7 @@ def get_header_time(params: ParamDict, header: Any,
     return Time(timetype(rawtime), format=timefmt)
 
 
-def get_drs_mode(params: ParamDict, header: Any, hdict: Any,
-                 filename: Union[str, None, Path] = None) -> Tuple[Any, Any]:
+def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     """
     Assign the drs mode to the drs (for nirps_ha this is HA)
 
@@ -1173,6 +1090,7 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     hdict[kwdprtype] = (dprtype, kwdprcomment)
     # return header
     return header, hdict
+
 
 # =============================================================================
 # End of code
