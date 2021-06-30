@@ -1,8 +1,8 @@
-NAME,DRSOUTID,FILETYPE,SUFFIX,DBNAME,DBKEY
-TELLU_PCLEAN,TELLU_PCLEAN,.fits,_tellu_pclean,telluric,TELLU_PCLEAN
-TELLU_CONV,--,.npy,_tellu_conv,telluric,TELLU_CONV
-TELLU_TRANS,TELLU_TRANS,.fits,_tellu_trans,telluric,TELLU_TRANS
-TELLU_TAPAS,--,.npy,--,telluric,TELLU_TAPAS
-TELLU_OBJ,TELLU_OBJ,.fits,_e2dsff_tcorr,telluric,TELLU_OBJ
-TELLU_RECON,TELLU_RECON,.fits,_e2dsff_recon,telluric,TELLU_RECON
-TELLU_TEMP,TELLU_TEMP,.fits,--,telluric,TELLU_TEMP
+name,HDR[DRSOUTID],file type,suffix,basename,fibers,dbname,dbkey,input file
+TELLU_PCLEAN,TELLU_PCLEAN,.fits,_tellu_pclean,--,"AB, A, B, C",telluric,TELLU_PCLEAN,EXT_E2DS_FF
+TELLU_CONV,--,.npy,_tellu_conv,--,"AB, A, B, C",telluric,TELLU_CONV,"WAVEM_FP, WAVEM_HC"
+TELLU_TRANS,TELLU_TRANS,.fits,_tellu_trans,--,"AB, A, B, C",telluric,TELLU_TRANS,EXT_E2DS_FF
+TELLU_TAPAS,--,.npy,--,tapas_spl.npy,--,telluric,TELLU_TAPAS,--
+TELLU_OBJ,TELLU_OBJ,.fits,_e2dsff_tcorr,--,"AB, A, B, C",telluric,TELLU_OBJ,EXT_E2DS_FF
+TELLU_RECON,TELLU_RECON,.fits,_e2dsff_recon,--,"AB, A, B, C",telluric,TELLU_RECON,EXT_E2DS_FF
+TELLU_TEMP,TELLU_TEMP,.fits,--,Template,"AB, A, B, C",telluric,TELLU_TEMP,"EXT_E2DS_FF, TELLU_OBJ"

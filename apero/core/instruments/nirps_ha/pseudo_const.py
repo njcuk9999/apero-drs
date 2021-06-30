@@ -883,13 +883,13 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
         raise drs_exceptions.DrsCodedException('01-001-00027', 'error',
                                                targs=eargs)
     obstype = header[kwobstype]
-    # obstype might be in form "TYPE,DPRTYPE[0], DPRTYPE[1]"
-    obstype = obstype.split(',')[0]
     # deal with setting value
-    if obstype in ['OBJECT', 'STAR']:
-        trg_type = 'TARGET'
-    elif obstype in ['SKY']:
+    if 'SKY' in obstype:
         trg_type = 'SKY'
+    elif 'OBJECT' in obstype:
+        trg_type = 'TARGET'
+    elif 'STAR' in obstype:
+        trg_type = 'TARGET'
     else:
         trg_type = ''
     # update header

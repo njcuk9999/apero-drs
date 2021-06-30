@@ -1,9 +1,9 @@
 
-.. _spirou_file_def:
+.. _nirps_ha_file_def:
 
 
 ################################################################################
-SPIROU file definitions
+NIRPS_HA file definitions
 ################################################################################
 
 
@@ -11,18 +11,18 @@ SPIROU file definitions
 Contents
 ********************************************************************************
 
-* :ref:`1. Raw Files <spirou_raw_file>`
-* :ref:`2. Preprocesed files <spirou_pp_file>`
-* :ref:`3. Reduced Files <spirou_red_file>`
-* :ref:`4. Calibration files <spirou_calib_file>`
-* :ref:`5 Telluric files <spirou_tellu_file>`
+* :ref:`1. Raw Files <nirps_ha_raw_file>`
+* :ref:`2. Preprocesed files <nirps_ha_pp_file>`
+* :ref:`3. Reduced Files <nirps_ha_red_file>`
+* :ref:`4. Calibration files <nirps_ha_calib_file>`
+* :ref:`5 Telluric files <nirps_ha_tellu_file>`
 
 ********************************************************************************
 1. Raw Files
 ********************************************************************************
 
 
-.. _spirou_raw_file:
+.. _nirps_ha_raw_file:
 
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -31,7 +31,7 @@ Contents
 
 
 .. csv-table:: 1. Raw Files file definition table
-   :file: spirou_raw_file.csv
+   :file: nirps_ha_raw_file.csv
    :header-rows: 1
 
 
@@ -41,18 +41,18 @@ Contents
 "HDR[XXX]" denotes key from file header
 
 
-.. include:: spirou_raw_file_text.rst
+.. include:: nirps_ha_raw_file_text.rst
 
 .. only:: html
 
-  :ref:`Back to top <spirou_file_def>`
+  :ref:`Back to top <nirps_ha_file_def>`
 
 ********************************************************************************
 2. Preprocesed files
 ********************************************************************************
 
 
-.. _spirou_pp_file:
+.. _nirps_ha_pp_file:
 
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -61,7 +61,7 @@ Contents
 
 
 .. csv-table:: 2. Preprocesed files file definition table
-   :file: spirou_pp_file.csv
+   :file: nirps_ha_pp_file.csv
    :header-rows: 1
 
 
@@ -69,14 +69,14 @@ Contents
 
 .. only:: html
 
-  :ref:`Back to top <spirou_file_def>`
+  :ref:`Back to top <nirps_ha_file_def>`
 
 ********************************************************************************
 3. Reduced Files
 ********************************************************************************
 
 
-.. _spirou_red_file:
+.. _nirps_ha_red_file:
 
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -85,7 +85,7 @@ Contents
 
 
 .. csv-table:: 3. Reduced Files file definition table
-   :file: spirou_red_file.csv
+   :file: nirps_ha_red_file.csv
    :header-rows: 1
 
 
@@ -93,14 +93,14 @@ Contents
 
 .. only:: html
 
-  :ref:`Back to top <spirou_file_def>`
+  :ref:`Back to top <nirps_ha_file_def>`
 
 ********************************************************************************
 4. Calibration files
 ********************************************************************************
 
 
-.. _spirou_calib_file:
+.. _nirps_ha_calib_file:
 
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -109,7 +109,7 @@ Contents
 
 
 .. csv-table:: 4. Calibration files file definition table
-   :file: spirou_calib_file.csv
+   :file: nirps_ha_calib_file.csv
    :header-rows: 1
 
 
@@ -117,14 +117,14 @@ Contents
 
 .. only:: html
 
-  :ref:`Back to top <spirou_file_def>`
+  :ref:`Back to top <nirps_ha_file_def>`
 
 ********************************************************************************
 5 Telluric files
 ********************************************************************************
 
 
-.. _spirou_tellu_file:
+.. _nirps_ha_tellu_file:
 
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -133,7 +133,7 @@ Contents
 
 
 .. csv-table:: 5 Telluric files file definition table
-   :file: spirou_tellu_file.csv
+   :file: nirps_ha_tellu_file.csv
    :header-rows: 1
 
 
@@ -141,4 +141,4 @@ Contents
 
 .. only:: html
 
-  :ref:`Back to top <spirou_file_def>`
+  :ref:`Back to top <nirps_ha_file_def>`
