@@ -300,24 +300,23 @@
 \contentsline {subsubsection}{\numberline {1.3.2.5}Adding a new plot}{45}{subsubsection.1.3.2.5}%
 \contentsline {subsection}{\numberline {1.3.3}Full tutorials}{45}{subsection.1.3.3}%
 \contentsline {subsection}{\numberline {1.3.4}Other}{45}{subsection.1.3.4}%
-\contentsline {subsubsection}{\numberline {1.3.4.1}Required Input Header Keys}{45}{subsubsection.1.3.4.1}%
-\contentsline {paragraph}{Main}{45}{paragraph*.222}%
-\contentsline {paragraph}{Other}{46}{paragraph*.223}%
-\contentsline {subsubsection}{\numberline {1.3.4.2}SPIROU file definitions}{47}{subsubsection.1.3.4.2}%
-\contentsline {paragraph}{Contents}{47}{paragraph*.224}%
-\contentsline {paragraph}{1. Raw Files}{47}{paragraph*.225}%
-\contentsline {subparagraph}{1.1 File definition table}{47}{subparagraph*.226}%
-\contentsline {subparagraph}{1.2 APERO definition of DRSMODE}{48}{subparagraph*.227}%
-\contentsline {subparagraph}{1.3 APERO definition of TRG\_TYPE}{48}{subparagraph*.228}%
-\contentsline {paragraph}{2. Preprocesed files}{48}{paragraph*.229}%
-\contentsline {subparagraph}{2.1 File definition table}{48}{subparagraph*.230}%
-\contentsline {paragraph}{3. Reduced Files}{49}{paragraph*.231}%
-\contentsline {subparagraph}{3.1 File definition table}{49}{subparagraph*.232}%
-\contentsline {paragraph}{4. Calibration files}{51}{paragraph*.233}%
-\contentsline {subparagraph}{4.1 File definition table}{52}{subparagraph*.234}%
-\contentsline {paragraph}{5 Telluric files}{53}{paragraph*.235}%
-\contentsline {subparagraph}{5.1 File definition table}{53}{subparagraph*.236}%
-\contentsline {subsubsection}{\numberline {1.3.4.3}NIRPS\_HA file definitions}{53}{subsubsection.1.3.4.3}%
+\contentsline {subsubsection}{\numberline {1.3.4.1}SPIROU file definitions}{45}{subsubsection.1.3.4.1}%
+\contentsline {paragraph}{Contents}{45}{paragraph*.222}%
+\contentsline {paragraph}{1. Raw Files}{46}{paragraph*.223}%
+\contentsline {subparagraph}{1.1 File definition table}{46}{subparagraph*.224}%
+\contentsline {subparagraph}{1.2 APERO definition of DRSMODE}{46}{subparagraph*.225}%
+\contentsline {subparagraph}{1.3 APERO definition of TRG\_TYPE}{47}{subparagraph*.226}%
+\contentsline {paragraph}{2. Preprocesed files}{47}{paragraph*.227}%
+\contentsline {subparagraph}{2.1 File definition table}{47}{subparagraph*.228}%
+\contentsline {paragraph}{3. Reduced Files}{48}{paragraph*.229}%
+\contentsline {subparagraph}{3.1 File definition table}{48}{subparagraph*.230}%
+\contentsline {paragraph}{4. Calibration files}{49}{paragraph*.231}%
+\contentsline {subparagraph}{4.1 File definition table}{50}{subparagraph*.232}%
+\contentsline {paragraph}{5. Telluric files}{51}{paragraph*.233}%
+\contentsline {subparagraph}{5.1 File definition table}{51}{subparagraph*.234}%
+\contentsline {paragraph}{6. Post\sphinxhyphen {}processed files}{51}{paragraph*.235}%
+\contentsline {subparagraph}{6.1 File definition table}{52}{subparagraph*.236}%
+\contentsline {subsubsection}{\numberline {1.3.4.2}NIRPS\_HA file definitions}{53}{subsubsection.1.3.4.2}%
 \contentsline {paragraph}{Contents}{53}{paragraph*.237}%
 \contentsline {paragraph}{1. Raw Files}{53}{paragraph*.238}%
 \contentsline {subparagraph}{1.1 File definition table}{53}{subparagraph*.239}%
@@ -326,10 +325,12 @@
 \contentsline {subparagraph}{2.1 File definition table}{54}{subparagraph*.242}%
 \contentsline {paragraph}{3. Reduced Files}{55}{paragraph*.243}%
 \contentsline {subparagraph}{3.1 File definition table}{55}{subparagraph*.244}%
-\contentsline {paragraph}{4. Calibration files}{57}{paragraph*.245}%
-\contentsline {subparagraph}{4.1 File definition table}{58}{subparagraph*.246}%
-\contentsline {paragraph}{5 Telluric files}{59}{paragraph*.247}%
-\contentsline {subparagraph}{5.1 File definition table}{59}{subparagraph*.248}%
+\contentsline {paragraph}{4. Calibration files}{56}{paragraph*.245}%
+\contentsline {subparagraph}{4.1 File definition table}{57}{subparagraph*.246}%
+\contentsline {paragraph}{5. Telluric files}{58}{paragraph*.247}%
+\contentsline {subparagraph}{5.1 File definition table}{58}{subparagraph*.248}%
+\contentsline {paragraph}{6. Post\sphinxhyphen {}processed files}{58}{paragraph*.249}%
+\contentsline {subparagraph}{6.1 File definition table}{59}{subparagraph*.250}%
 \contentsline {chapter}{\numberline {2}Other}{60}{chapter.2}%
 \contentsline {section}{\numberline {2.1}Python installation}{60}{section.2.1}%
 \contentsline {subsection}{\numberline {2.1.1}Installing miniconda (with supplied environment)}{60}{subsection.2.1.1}%
@@ -1049,8 +1050,8 @@
 \contentsline {subsubsection}{\numberline {2.3.1.702}0.2.0097 (2018\sphinxhyphen {}04\sphinxhyphen {}25)}{339}{subsubsection.2.3.1.702}%
 \contentsline {subsubsection}{\numberline {2.3.1.703}0.2.006 (2018\sphinxhyphen {}04\sphinxhyphen {}23)}{340}{subsubsection.2.3.1.703}%
 \contentsline {subsubsection}{\numberline {2.3.1.704}0.2.005 (2018\sphinxhyphen {}04\sphinxhyphen {}20)}{340}{subsubsection.2.3.1.704}%
-\contentsline {paragraph}{Fix}{340}{paragraph*.1343}%
-\contentsline {paragraph}{Other}{341}{paragraph*.1344}%
+\contentsline {paragraph}{Fix}{340}{paragraph*.1345}%
+\contentsline {paragraph}{Other}{341}{paragraph*.1346}%
 \contentsline {subsubsection}{\numberline {2.3.1.705}0.2.004 (2018\sphinxhyphen {}04\sphinxhyphen {}19)}{341}{subsubsection.2.3.1.705}%
 \contentsline {subsubsection}{\numberline {2.3.1.706}0.2.003 (2018\sphinxhyphen {}04\sphinxhyphen {}18)}{341}{subsubsection.2.3.1.706}%
 \contentsline {subsubsection}{\numberline {2.3.1.707}0.2.001 (2018\sphinxhyphen {}04\sphinxhyphen {}17)}{341}{subsubsection.2.3.1.707}%

@@ -3559,94 +3559,6 @@ Writing documentation
 \subsection{Other}
 \label{\detokenize{dev/developer_guide:other}}\label{\detokenize{dev/developer_guide:dev-main-other}}
 
-\subsubsection{Required Input Header Keys}
-\label{\detokenize{dev/required_input_header_keys:required-input-header-keys}}\label{\detokenize{dev/required_input_header_keys:required-input-hkeys}}\label{\detokenize{dev/required_input_header_keys::doc}}
-
-\paragraph{Main}
-\label{\detokenize{dev/required_input_header_keys:main}}\label{\detokenize{dev/required_input_header_keys:required-input-hkeys-main}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{OBSTYPE} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{OBJECT  }\PYG{l+s+s1}{\PYGZsq{}}           \PYG{o}{/} \PYG{n}{Observation} \PYG{o}{/} \PYG{n}{Exposure} \PYG{n+nb}{type} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{DARK}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{FLAT}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{ALIGN}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{COMPARISON}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{OBJECT}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
-\PYG{n}{TRG\PYGZus{}TYPE}\PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{TARGET  }\PYG{l+s+s1}{\PYGZsq{}}           \PYG{o}{/} \PYG{n}{target} \PYG{o+ow}{or} \PYG{n}{sky} \PYG{n+nb}{object} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{TARGET}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{SKY}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
-\PYG{n}{OBJECT} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{HD159170}\PYG{l+s+s1}{\PYGZsq{}}            \PYG{o}{/} \PYG{n}{Target} \PYG{n}{name}
-\PYG{n}{OBJNAME} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{HD159170}\PYG{l+s+s1}{\PYGZsq{}}           \PYG{o}{/} \PYG{n}{Target} \PYG{n}{name}   \PYG{p}{[}\PYG{n}{DUPLICATE}\PYG{p}{,} \PYG{n}{should} \PYG{o+ow}{not} \PYG{n}{be} \PYG{n}{used} \PYG{n+nb}{any} \PYG{n}{more} \PYG{n}{use} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{OBJECT}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
-\end{sphinxVerbatim}
-
-\sphinxAtStartPar
-object specific parameters
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{OBJRA}   \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{17:33:29.84}\PYG{l+s+s1}{\PYGZsq{}}        \PYG{o}{/} \PYG{n}{Target} \PYG{n}{right} \PYG{n}{ascension} \PYG{p}{[}\PYG{n}{HH}\PYG{p}{:}\PYG{n}{MM}\PYG{p}{:}\PYG{n}{SS}\PYG{o}{.}\PYG{n}{SSSS}\PYG{p}{]}
-\PYG{n}{OBJDEC}  \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZhy{}5:44:41.3}\PYG{l+s+s1}{\PYGZsq{}}         \PYG{o}{/} \PYG{n}{Target} \PYG{n}{declination} \PYG{p}{[}\PYG{n}{DD}\PYG{p}{:}\PYG{n}{MM}\PYG{p}{:}\PYG{n}{SS}\PYG{o}{.}\PYG{n}{SSSS}\PYG{p}{]}
-\PYG{n}{OBJEQUIN}\PYG{o}{=}               \PYG{l+m+mf}{2000.0} \PYG{o}{/} \PYG{n}{Target} \PYG{n}{equinox}
-\PYG{n}{OBJRAPM} \PYG{o}{=}                 \PYG{l+m+mf}{0.00} \PYG{o}{/} \PYG{n}{Target} \PYG{n}{right} \PYG{n}{ascension} \PYG{n}{proper} \PYG{n}{motion} \PYG{o+ow}{in} \PYG{k}{as}\PYG{o}{/}\PYG{n}{yr}
-\PYG{n}{OBJDECPM}\PYG{o}{=}                 \PYG{l+m+mf}{0.00} \PYG{o}{/} \PYG{n}{Target} \PYG{n}{declination} \PYG{n}{proper} \PYG{n}{motion} \PYG{o+ow}{in} \PYG{k}{as}\PYG{o}{/}\PYG{n}{yr}
-\PYG{n}{OBJTEMP} \PYG{o}{=}              \PYG{l+m+mf}{9900.00} \PYG{o}{/} \PYG{n}{Object} \PYG{n}{effective} \PYG{n}{temperature} \PYG{p}{[}\PYG{n}{K}\PYG{p}{]}
-\PYG{n}{GAIA\PYGZus{}ID} \PYG{o}{=}  \PYG{l+m+mi}{1958476259155515008} \PYG{o}{/} \PYG{n}{The} \PYG{n}{Gaia} \PYG{n}{ID} \PYG{n}{used} \PYG{k}{for} \PYG{n}{BERV} \PYG{n}{params}  \PYG{p}{[}\PYG{n}{OPTIONAL} \PYG{n}{BUT} \PYG{n}{RECOMMENDED}\PYG{p}{]}
-\PYG{n}{OBJPLX}  \PYG{o}{=}    \PYG{l+m+mf}{12.22203034418218} \PYG{o}{/} \PYG{n}{PLX} \PYG{p}{[}\PYG{n}{mas}\PYG{p}{]} \PYG{n}{used} \PYG{n}{to} \PYG{n}{calc}\PYG{o}{.} \PYG{n}{BERV} \PYG{p}{[}\PYG{n}{OPTIONAL} \PYG{n}{BUT} \PYG{n}{RECOMMENDED}\PYG{p}{]}
-\PYG{n}{OBSRV}   \PYG{o}{=}                  \PYG{l+m+mf}{0.0} \PYG{o}{/} \PYG{n}{RV} \PYG{p}{[}\PYG{n}{km}\PYG{o}{/}\PYG{n}{s}\PYG{p}{]} \PYG{n}{used} \PYG{n}{to} \PYG{n}{calc}\PYG{o}{.} \PYG{n}{BERV} \PYG{p}{[}\PYG{n}{OPTIONAL} \PYG{n}{BUT} \PYG{n}{RECOMMENDED}\PYG{p}{]}
-
-\PYG{n}{AIRMASS} \PYG{o}{=}                \PYG{l+m+mf}{1.151} \PYG{o}{/} \PYG{n}{Airmass} \PYG{n}{at} \PYG{n}{start} \PYG{n}{of} \PYG{n}{observation}
-\PYG{n}{PI\PYGZus{}NAME} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{QSO Team}\PYG{l+s+s1}{\PYGZsq{}}
-\PYG{n}{GAIN}    \PYG{o}{=}                \PYG{l+m+mf}{0.999} \PYG{o}{/} \PYG{n}{Amplifier} \PYG{n}{gain} \PYG{p}{(}\PYG{n}{electrons}\PYG{o}{/}\PYG{n}{ADU}\PYG{p}{)}
-\PYG{n}{RDNOISE} \PYG{o}{=}                 \PYG{l+m+mf}{10.9} \PYG{o}{/} \PYG{n}{Read} \PYG{n}{noise} \PYG{p}{(}\PYG{n}{electrons}\PYG{p}{)}
-\PYG{n}{FRMTIME} \PYG{o}{=}              \PYG{l+m+mf}{5.57192} \PYG{o}{/} \PYG{p}{[}\PYG{n}{sec}\PYG{p}{]} \PYG{n}{Frame} \PYG{n}{time}\PYG{p}{,} \PYG{n}{cadence} \PYG{n}{of} \PYG{n}{IR} \PYG{n}{reads}
-\PYG{n}{EXPTIME} \PYG{o}{=}              \PYG{l+m+mf}{300.884} \PYG{o}{/} \PYG{p}{[}\PYG{n}{sec}\PYG{p}{]} \PYG{n}{Integration} \PYG{n}{time}
-\PYG{n}{SATURATE}\PYG{o}{=}                \PYG{l+m+mi}{60000} \PYG{o}{/} \PYG{n}{Saturation} \PYG{n}{value} \PYG{p}{(}\PYG{n}{ADU}\PYG{p}{)}
-\end{sphinxVerbatim}
-
-\sphinxAtStartPar
-Used to figure out what sequence files should be processed in:
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{CMPLTEXP}\PYG{o}{=}                    \PYG{l+m+mi}{1} \PYG{o}{/} \PYG{n}{Exposure} \PYG{n}{number} \PYG{n}{within} \PYG{n}{the} \PYG{n}{exposure} \PYG{n}{sequence}
-\PYG{n}{NEXP}    \PYG{o}{=}                    \PYG{l+m+mi}{1} \PYG{o}{/} \PYG{n}{Total} \PYG{n}{number} \PYG{n}{of} \PYG{n}{exposures} \PYG{n}{within} \PYG{n}{the} \PYG{n}{sequence}
-\end{sphinxVerbatim}
-
-\sphinxAtStartPar
-Date:
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{MJDATE}  \PYG{o}{=}        \PYG{l+m+mf}{58593.5428846} \PYG{o}{/} \PYG{n}{Modified} \PYG{n}{Julian} \PYG{n}{Date} \PYG{n}{at} \PYG{n}{start} \PYG{n}{of} \PYG{n}{observation}   \PYG{p}{[}\PYG{n}{ONLY} \PYG{n}{USED} \PYG{n}{VISUALLY}\PYG{p}{]}
-\PYG{n}{MJDEND}  \PYG{o}{=}        \PYG{l+m+mf}{58593.5467937} \PYG{o}{/} \PYG{n}{Modified} \PYG{n}{Julian} \PYG{n}{Date} \PYG{n}{at} \PYG{n}{end} \PYG{n}{of} \PYG{n}{observation}
-\PYG{n}{DATE}\PYG{o}{\PYGZhy{}}\PYG{n}{OBS}\PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{2019\PYGZhy{}04\PYGZhy{}20}\PYG{l+s+s1}{\PYGZsq{}}         \PYG{o}{/} \PYG{n}{Date} \PYG{n}{at} \PYG{n}{start} \PYG{n}{of} \PYG{n}{observation} \PYG{p}{(}\PYG{n}{UTC}\PYG{p}{)} \PYG{p}{[}\PYG{n}{YYYY}\PYG{o}{\PYGZhy{}}\PYG{n}{MM}\PYG{o}{\PYGZhy{}}\PYG{n}{DD}\PYG{p}{]}   \PYG{p}{[}\PYG{n}{ONLY} \PYG{n}{USED} \PYG{n}{VISUALLY}\PYG{p}{]}
-\PYG{n}{UTC}\PYG{o}{\PYGZhy{}}\PYG{n}{OBS} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{13:01:45.23}\PYG{l+s+s1}{\PYGZsq{}}        \PYG{o}{/} \PYG{n}{Time} \PYG{n}{at} \PYG{n}{start} \PYG{n}{of} \PYG{n}{observation} \PYG{p}{(}\PYG{n}{UTC}\PYG{p}{)} \PYG{p}{[}\PYG{n}{HH}\PYG{p}{:}\PYG{n}{MM}\PYG{p}{:}\PYG{n}{SS}\PYG{o}{.}\PYG{n}{SS}\PYG{p}{]}   \PYG{p}{[}\PYG{n}{ONLY} \PYG{n}{USED} \PYG{n}{VISUALLY}\PYG{p}{]}
-\end{sphinxVerbatim}
-
-\sphinxAtStartPar
-Used to know what position fibers/wheel where in:
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-SBCREF\PYGZus{}P= \PYGZsq{}pos\PYGZus{}pk  \PYGZsq{}           / SPIRou Reference Fiber Position (predefined)
-SBCCAS\PYGZus{}P= \PYGZsq{}pos\PYGZus{}pk  \PYGZsq{}           / SPIRou Cassegrain Fiber Position (predefined)
-SBCDEN\PYGZus{}P=                 1.96 / SPIRou Calib\PYGZhy{}Reference density (0 to 3.3)  [ONLY USED FOR LOGGING?]
-SBCALI\PYGZus{}P= \PYGZsq{}P5      \PYGZsq{}           / SPIRou calibwh predefined position or angle
-\end{sphinxVerbatim}
-
-
-\paragraph{Other}
-\label{\detokenize{dev/required_input_header_keys:other}}\label{\detokenize{dev/required_input_header_keys:required-input-hkeys-other}}
-\sphinxAtStartPar
-Used to report the air temperature {[}used in dark master \textendash{} logging only?{]}:
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{TEMPERAT}\PYG{o}{=}                 \PYG{l+m+mf}{2.33} \PYG{o}{/} \PYG{l+m+mi}{86} \PYG{n}{temp}\PYG{p}{,} \PYG{n}{air}\PYG{p}{,} \PYG{n}{weather} \PYG{n}{tower} \PYG{n}{deg} \PYG{n}{C}
-\end{sphinxVerbatim}
-
-\sphinxAtStartPar
-Used to report the cassigrain temperature {[}used in dark master \textendash{} logging only?{]}:
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{SB\PYGZus{}POL\PYGZus{}T}\PYG{o}{=}                 \PYG{l+m+mf}{4.03} \PYG{o}{/} \PYG{n}{SPIRou} \PYG{n}{tpolar} \PYG{n}{temp} \PYG{n}{at} \PYG{n}{start} \PYG{n}{of} \PYG{n}{exp} \PYG{p}{(}\PYG{n}{deg} \PYG{n}{C}
-\end{sphinxVerbatim}
-
-\sphinxAtStartPar
-used in dark master \textendash{} logging only?:
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{RELHUMID}\PYG{o}{=}                 \PYG{l+m+mf}{6.48} \PYG{o}{/} \PYG{l+m+mi}{87} \PYG{n}{relative} \PYG{n}{humidity}\PYG{p}{,} \PYG{n}{weather} \PYG{n}{tower} \PYG{o}{\PYGZpc{}}
-\end{sphinxVerbatim}
-
-
 \subsubsection{SPIROU file definitions}
 \label{\detokenize{dev/definitions/spirou_file_definitions:spirou-file-definitions}}\label{\detokenize{dev/definitions/spirou_file_definitions:spirou-file-def}}\label{\detokenize{dev/definitions/spirou_file_definitions::doc}}
 
@@ -3670,7 +3582,11 @@ used in dark master \textendash{} logging only?:
 
 \item {} 
 \sphinxAtStartPar
-{\hyperref[\detokenize{dev/definitions/spirou_file_definitions:spirou-tellu-file}]{\sphinxcrossref{\DUrole{std,std-ref}{5 Telluric files}}}}
+{\hyperref[\detokenize{dev/definitions/spirou_file_definitions:spirou-tellu-file}]{\sphinxcrossref{\DUrole{std,std-ref}{5. Telluric files}}}}
+
+\item {} 
+\sphinxAtStartPar
+{\hyperref[\detokenize{dev/definitions/spirou_file_definitions:spirou-post-file}]{\sphinxcrossref{\DUrole{std,std-ref}{6. Post\sphinxhyphen{}processed files}}}}
 
 \end{itemize}
 
@@ -3683,7 +3599,7 @@ used in dark master \textendash{} logging only?:
 
 \begin{savenotes}\sphinxatlongtablestart\begin{longtable}[c]{|l|l|l|l|l|l|l|l|}
 \sphinxthelongtablecaptionisattop
-\caption{1. Raw Files file definition table\strut}\label{\detokenize{dev/definitions/spirou_file_definitions:id5}}\\*[\sphinxlongtablecapskipadjust]
+\caption{1. Raw Files file definition table\strut}\label{\detokenize{dev/definitions/spirou_file_definitions:id6}}\\*[\sphinxlongtablecapskipadjust]
 \hline
 \sphinxstyletheadfamily 
 \sphinxAtStartPar
@@ -4653,7 +4569,7 @@ else if OBSTYPE is “OBJECT” then TRG\_TYPE = ‘TARGET’
 
 \begin{savenotes}\sphinxatlongtablestart\begin{longtable}[c]{|l|l|l|l|l|}
 \sphinxthelongtablecaptionisattop
-\caption{2. Preprocesed files file definition table\strut}\label{\detokenize{dev/definitions/spirou_file_definitions:id6}}\\*[\sphinxlongtablecapskipadjust]
+\caption{2. Preprocesed files file definition table\strut}\label{\detokenize{dev/definitions/spirou_file_definitions:id7}}\\*[\sphinxlongtablecapskipadjust]
 \hline
 \sphinxstyletheadfamily 
 \sphinxAtStartPar
@@ -5212,7 +5128,7 @@ RAW\_HCTWO\_DARK
 
 \begin{savenotes}\sphinxatlongtablestart\begin{longtable}[c]{|l|l|l|l|l|l|l|}
 \sphinxthelongtablecaptionisattop
-\caption{3. Reduced Files file definition table\strut}\label{\detokenize{dev/definitions/spirou_file_definitions:id7}}\\*[\sphinxlongtablecapskipadjust]
+\caption{3. Reduced Files file definition table\strut}\label{\detokenize{dev/definitions/spirou_file_definitions:id8}}\\*[\sphinxlongtablecapskipadjust]
 \hline
 \sphinxstyletheadfamily 
 \sphinxAtStartPar
@@ -7137,7 +7053,7 @@ EXT\_E2DS\_FF, TELLU\_OBJ
 \centering
 \sphinxcapstartof{table}
 \sphinxthecaptionisattop
-\sphinxcaption{4. Calibration files file definition table}\label{\detokenize{dev/definitions/spirou_file_definitions:id8}}
+\sphinxcaption{4. Calibration files file definition table}\label{\detokenize{dev/definitions/spirou_file_definitions:id9}}
 \sphinxaftertopcaption
 \begin{tabulary}{\linewidth}[t]{|T|T|T|T|T|T|T|T|}
 \hline
@@ -7850,7 +7766,7 @@ EXT\_E2DS, EXT\_E2DS\_FF
 “HDR{[}XXX{]}” denotes key from file header
 
 
-\paragraph{5 Telluric files}
+\paragraph{5. Telluric files}
 \label{\detokenize{dev/definitions/spirou_file_definitions:telluric-files}}
 
 \subparagraph{5.1  File definition table}
@@ -7860,7 +7776,7 @@ EXT\_E2DS, EXT\_E2DS\_FF
 \centering
 \sphinxcapstartof{table}
 \sphinxthecaptionisattop
-\sphinxcaption{5 Telluric files file definition table}\label{\detokenize{dev/definitions/spirou_file_definitions:id9}}
+\sphinxcaption{5. Telluric files file definition table}\label{\detokenize{dev/definitions/spirou_file_definitions:id10}}
 \sphinxaftertopcaption
 \begin{tabulary}{\linewidth}[t]{|T|T|T|T|T|T|T|T|T|}
 \hline
@@ -8097,6 +8013,161 @@ EXT\_E2DS\_FF, TELLU\_OBJ
 “HDR{[}XXX{]}” denotes key from file header
 
 
+\paragraph{6. Post\sphinxhyphen{}processed files}
+\label{\detokenize{dev/definitions/spirou_file_definitions:post-processed-files}}
+
+\subparagraph{6.1  File definition table}
+\label{\detokenize{dev/definitions/spirou_file_definitions:spirou-post-file}}\label{\detokenize{dev/definitions/spirou_file_definitions:id5}}
+
+\begin{savenotes}\sphinxattablestart
+\centering
+\sphinxcapstartof{table}
+\sphinxthecaptionisattop
+\sphinxcaption{6. Post\sphinxhyphen{}processed files file definition table}\label{\detokenize{dev/definitions/spirou_file_definitions:id11}}
+\sphinxaftertopcaption
+\begin{tabulary}{\linewidth}[t]{|T|T|T|T|T|T|T|}
+\hline
+\sphinxstyletheadfamily 
+\sphinxAtStartPar
+NAME
+&\sphinxstyletheadfamily 
+\sphinxAtStartPar
+HDR{[}KW\_DPRTYPE{]}
+&\sphinxstyletheadfamily 
+\sphinxAtStartPar
+suffix
+&\sphinxstyletheadfamily 
+\sphinxAtStartPar
+ext name
+&\sphinxstyletheadfamily 
+\sphinxAtStartPar
+ext input
+&\sphinxstyletheadfamily 
+\sphinxAtStartPar
+col names
+&\sphinxstyletheadfamily 
+\sphinxAtStartPar
+col input
+\\
+\hline
+\sphinxAtStartPar
+DRS\_POST\_E
+&
+\sphinxAtStartPar
+OBJ\_FP  OBJ\_DARK  POLAR\_FP  POLAR\_DARK
+&
+\sphinxAtStartPar
+e.fits
+&
+\sphinxAtStartPar
+ Primary: PP  FluxAB  FluxA  FluxB  FluxC  WaveAB  WaveA  WaveB  WaveC  BlazeAB  BlazeA  BlazeB  BlazeC
+&
+\sphinxAtStartPar
+ DRS\_PP  EXT\_E2DS\_FF  EXT\_E2DS\_FF  EXT\_E2DS\_FF  EXT\_E2DS\_FF  WAVEM\_FP  WAVEM\_FP  WAVEM\_FP  WAVEM\_FP  FF\_BLAZE  FF\_BLAZE  FF\_BLAZE  FF\_BLAZE
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}
+\\
+\hline
+\sphinxAtStartPar
+DRS\_POST\_S
+&
+\sphinxAtStartPar
+OBJ\_FP  OBJ\_DARK  POLAR\_FP  POLAR\_DARK
+&
+\sphinxAtStartPar
+s.fits
+&
+\sphinxAtStartPar
+ Primary: PP  S1D\_W  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  S1D\_V  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}
+&
+\sphinxAtStartPar
+ DRS\_PP  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}
+&
+\sphinxAtStartPar
+ \textendash{}  Wave  FluxAB  FluxErrAB  FluxA  FluxErrA  FluxB  FluxErrB  FluxC  FluxErrC  FluxABTelluCorrected  FluxErrABTelluCorrected  FluxATelluCorrected  FluxErrATelluCorrected  FluxBTelluCorrected  FluxErrBTelluCorrected  Wave  FluxAB  FluxErrAB  FluxA  FluxErrA  FluxB  FluxErrB  FluxC  FluxErrC  FluxABTelluCorrected  FluxErrABTelluCorrected  FluxATelluCorrected  FluxErrATelluCorrected  FluxBTelluCorrected  FluxErrBTelluCorrected
+&
+\sphinxAtStartPar
+ \textendash{}  EXT\_S1D\_W  EXT\_S1D\_W  EXT\_S1D\_W  EXT\_S1D\_W  EXT\_S1D\_W  EXT\_S1D\_W  EXT\_S1D\_W  EXT\_S1D\_W  EXT\_S1D\_W  SC1D\_W\_FILE  SC1D\_W\_FILE  SC1D\_W\_FILE  SC1D\_W\_FILE  SC1D\_W\_FILE  SC1D\_W\_FILE  EXT\_S1D\_V  EXT\_S1D\_V  EXT\_S1D\_V  EXT\_S1D\_V  EXT\_S1D\_V  EXT\_S1D\_V  EXT\_S1D\_V  EXT\_S1D\_V  EXT\_S1D\_V  SC1D\_V\_FILE  SC1D\_V\_FILE  SC1D\_V\_FILE  SC1D\_V\_FILE  SC1D\_V\_FILE  SC1D\_V\_FILE
+\\
+\hline
+\sphinxAtStartPar
+DRS\_POST\_T
+&
+\sphinxAtStartPar
+OBJ\_FP  OBJ\_DARK  POLAR\_FP  POLAR\_DARK
+&
+\sphinxAtStartPar
+t.fits
+&
+\sphinxAtStartPar
+ Primary: PP  FluxAB  WaveAB  BlazeAB  Recon  OHLine  FluxA  WaveA  BlazeA  FluxB  WaveB  BlazeB
+&
+\sphinxAtStartPar
+ DRS\_PP  TELLU\_OBJ  WAVEM\_FP  FF\_BLAZE  TELLU\_RECON  TELLU\_PCLEAN  TELLU\_OBJ  WAVEM\_FP  FF\_BLAZE  TELLU\_OBJ  WAVEM\_FP  FF\_BLAZE
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}
+\\
+\hline
+\sphinxAtStartPar
+DRS\_POST\_V
+&
+\sphinxAtStartPar
+OBJ\_FP  OBJ\_DARK  POLAR\_FP  POLAR\_DARK
+&
+\sphinxAtStartPar
+v.fits
+&
+\sphinxAtStartPar
+ Primary: PP  CCF
+&
+\sphinxAtStartPar
+ DRS\_PP  CCF\_RV
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}
+\\
+\hline
+\sphinxAtStartPar
+DRS\_POST\_P
+&
+\sphinxAtStartPar
+POLAR\_FP  POLAR\_DARK
+&
+\sphinxAtStartPar
+p.fits
+&
+\sphinxAtStartPar
+ Primary: PP  Pol  PolErr  StokesI  StokesIErr  Null1  Null2  WaveAB  BlazeAB  S1D\_W  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  S1D\_V  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  PolTable
+&
+\sphinxAtStartPar
+ DRS\_PP  POL\_DEG  POL\_DEG  STOKESI\_POL  STOKESI\_POL  NULL\_POL1  NULL\_POL2  WAVEM\_FP  FF\_BLAZE  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  POL\_DEG
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  Wave  FluxPol  FluxErrPol  FluxStokesI  FluxErrStokesI  FluxNull1  FluxErrNull1  FluxNull2  FluxErrNull2  Wave  FluxPol  FluxErrPol  FluxStokesI  FluxErrStokesI  FluxNull1  FluxErrNull1  FluxNull2  FluxErrNull2  \textendash{}
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  S1DW\_POL  S1DW\_POL  S1DW\_POL  S1DW\_STOKESI  S1DW\_STOKESI  S1DW\_NULL1  S1DW\_NULL1  S1DW\_NULL2  S1DW\_NULL2  S1DV\_POL  S1DV\_POL  S1DV\_POL  S1DV\_STOKESI  S1DV\_STOKESI  S1DV\_NULL1  S1DV\_NULL1  S1DV\_NULL2  S1DV\_NULL2  \textendash{}
+\\
+\hline
+\end{tabulary}
+\par
+\sphinxattableend\end{savenotes}
+
+\sphinxAtStartPar
+“HDR{[}XXX{]}” denotes key from file header
+
+
 \subsubsection{NIRPS\_HA file definitions}
 \label{\detokenize{dev/definitions/nirps_ha_file_definitions:nirps-ha-file-definitions}}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:nirps-ha-file-def}}\label{\detokenize{dev/definitions/nirps_ha_file_definitions::doc}}
 
@@ -8120,7 +8191,11 @@ EXT\_E2DS\_FF, TELLU\_OBJ
 
 \item {} 
 \sphinxAtStartPar
-{\hyperref[\detokenize{dev/definitions/nirps_ha_file_definitions:nirps-ha-tellu-file}]{\sphinxcrossref{\DUrole{std,std-ref}{5 Telluric files}}}}
+{\hyperref[\detokenize{dev/definitions/nirps_ha_file_definitions:nirps-ha-tellu-file}]{\sphinxcrossref{\DUrole{std,std-ref}{5. Telluric files}}}}
+
+\item {} 
+\sphinxAtStartPar
+{\hyperref[\detokenize{dev/definitions/nirps_ha_file_definitions:nirps-ha-post-file}]{\sphinxcrossref{\DUrole{std,std-ref}{6. Post\sphinxhyphen{}processed files}}}}
 
 \end{itemize}
 
@@ -8133,7 +8208,7 @@ EXT\_E2DS\_FF, TELLU\_OBJ
 
 \begin{savenotes}\sphinxatlongtablestart\begin{longtable}[c]{|l|l|l|l|l|l|}
 \sphinxthelongtablecaptionisattop
-\caption{1. Raw Files file definition table\strut}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:id5}}\\*[\sphinxlongtablecapskipadjust]
+\caption{1. Raw Files file definition table\strut}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:id6}}\\*[\sphinxlongtablecapskipadjust]
 \hline
 \sphinxstyletheadfamily 
 \sphinxAtStartPar
@@ -8864,7 +8939,7 @@ Else TRG\_TYPE = ‘’
 
 \begin{savenotes}\sphinxatlongtablestart\begin{longtable}[c]{|l|l|l|l|l|}
 \sphinxthelongtablecaptionisattop
-\caption{2. Preprocesed files file definition table\strut}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:id6}}\\*[\sphinxlongtablecapskipadjust]
+\caption{2. Preprocesed files file definition table\strut}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:id7}}\\*[\sphinxlongtablecapskipadjust]
 \hline
 \sphinxstyletheadfamily 
 \sphinxAtStartPar
@@ -9455,7 +9530,7 @@ RAW\_TEST\_HCONE\_FP
 
 \begin{savenotes}\sphinxatlongtablestart\begin{longtable}[c]{|l|l|l|l|l|l|l|}
 \sphinxthelongtablecaptionisattop
-\caption{3. Reduced Files file definition table\strut}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:id7}}\\*[\sphinxlongtablecapskipadjust]
+\caption{3. Reduced Files file definition table\strut}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:id8}}\\*[\sphinxlongtablecapskipadjust]
 \hline
 \sphinxstyletheadfamily 
 \sphinxAtStartPar
@@ -11006,7 +11081,7 @@ EXT\_E2DS\_FF, TELLU\_OBJ
 \centering
 \sphinxcapstartof{table}
 \sphinxthecaptionisattop
-\sphinxcaption{4. Calibration files file definition table}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:id8}}
+\sphinxcaption{4. Calibration files file definition table}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:id9}}
 \sphinxaftertopcaption
 \begin{tabulary}{\linewidth}[t]{|T|T|T|T|T|T|T|T|}
 \hline
@@ -11669,7 +11744,7 @@ EXT\_E2DS, EXT\_E2DS\_FF
 “HDR{[}XXX{]}” denotes key from file header
 
 
-\paragraph{5 Telluric files}
+\paragraph{5. Telluric files}
 \label{\detokenize{dev/definitions/nirps_ha_file_definitions:telluric-files}}
 
 \subparagraph{5.1  File definition table}
@@ -11679,7 +11754,7 @@ EXT\_E2DS, EXT\_E2DS\_FF
 \centering
 \sphinxcapstartof{table}
 \sphinxthecaptionisattop
-\sphinxcaption{5 Telluric files file definition table}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:id9}}
+\sphinxcaption{5. Telluric files file definition table}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:id10}}
 \sphinxaftertopcaption
 \begin{tabulary}{\linewidth}[t]{|T|T|T|T|T|T|T|T|T|}
 \hline
@@ -11906,6 +11981,139 @@ TELLU\_TEMP
 &
 \sphinxAtStartPar
 EXT\_E2DS\_FF, TELLU\_OBJ
+\\
+\hline
+\end{tabulary}
+\par
+\sphinxattableend\end{savenotes}
+
+\sphinxAtStartPar
+“HDR{[}XXX{]}” denotes key from file header
+
+
+\paragraph{6. Post\sphinxhyphen{}processed files}
+\label{\detokenize{dev/definitions/nirps_ha_file_definitions:post-processed-files}}
+
+\subparagraph{6.1  File definition table}
+\label{\detokenize{dev/definitions/nirps_ha_file_definitions:nirps-ha-post-file}}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:id5}}
+
+\begin{savenotes}\sphinxattablestart
+\centering
+\sphinxcapstartof{table}
+\sphinxthecaptionisattop
+\sphinxcaption{6. Post\sphinxhyphen{}processed files file definition table}\label{\detokenize{dev/definitions/nirps_ha_file_definitions:id11}}
+\sphinxaftertopcaption
+\begin{tabulary}{\linewidth}[t]{|T|T|T|T|T|T|T|}
+\hline
+\sphinxstyletheadfamily 
+\sphinxAtStartPar
+NAME
+&\sphinxstyletheadfamily 
+\sphinxAtStartPar
+HDR{[}KW\_DPRTYPE{]}
+&\sphinxstyletheadfamily 
+\sphinxAtStartPar
+suffix
+&\sphinxstyletheadfamily 
+\sphinxAtStartPar
+ext name
+&\sphinxstyletheadfamily 
+\sphinxAtStartPar
+ext input
+&\sphinxstyletheadfamily 
+\sphinxAtStartPar
+col names
+&\sphinxstyletheadfamily 
+\sphinxAtStartPar
+col input
+\\
+\hline
+\sphinxAtStartPar
+DRS\_POST\_E
+&
+\sphinxAtStartPar
+OBJ\_FP  OBJ\_DARK  POLAR\_FP  POLAR\_DARK
+&
+\sphinxAtStartPar
+e.fits
+&
+\sphinxAtStartPar
+ Primary: PP  FluxA  FluxB  WaveA  WaveB  BlazeA  BlazeB
+&
+\sphinxAtStartPar
+ DRS\_PP  EXT\_E2DS\_FF  EXT\_E2DS\_FF  WAVEM\_FP  WAVEM\_FP  FF\_BLAZE  FF\_BLAZE
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}
+\\
+\hline
+\sphinxAtStartPar
+DRS\_POST\_S
+&
+\sphinxAtStartPar
+OBJ\_FP  OBJ\_DARK  POLAR\_FP  POLAR\_DARK
+&
+\sphinxAtStartPar
+s.fits
+&
+\sphinxAtStartPar
+ Primary: PP  S1D\_W  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  S1D\_V  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}
+&
+\sphinxAtStartPar
+ DRS\_PP  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}
+&
+\sphinxAtStartPar
+ \textendash{}  Wave  FluxA  FluxErrA  FluxB  FluxErrB  FluxATelluCorrected  FluxErrATelluCorrected  Wave  FluxA  FluxErrA  FluxB  FluxErrB  FluxATelluCorrected  FluxErrATelluCorrected
+&
+\sphinxAtStartPar
+ \textendash{}  EXT\_S1D\_W  EXT\_S1D\_W  EXT\_S1D\_W  EXT\_S1D\_W  EXT\_S1D\_W  SC1D\_W\_FILE  SC1D\_W\_FILE  EXT\_S1D\_V  EXT\_S1D\_V  EXT\_S1D\_V  EXT\_S1D\_V  EXT\_S1D\_V  SC1D\_V\_FILE  SC1D\_V\_FILE
+\\
+\hline
+\sphinxAtStartPar
+DRS\_POST\_T
+&
+\sphinxAtStartPar
+OBJ\_FP  OBJ\_DARK  POLAR\_FP  POLAR\_DARK
+&
+\sphinxAtStartPar
+t.fits
+&
+\sphinxAtStartPar
+ Primary: PP  FluxA  WaveA  BlazeA  Recon
+&
+\sphinxAtStartPar
+ DRS\_PP  TELLU\_OBJ  WAVEM\_FP  FF\_BLAZE  TELLU\_RECON
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}  \textendash{}  \textendash{}  \textendash{}
+\\
+\hline
+\sphinxAtStartPar
+DRS\_POST\_V
+&
+\sphinxAtStartPar
+OBJ\_FP  OBJ\_DARK
+&
+\sphinxAtStartPar
+v.fits
+&
+\sphinxAtStartPar
+ Primary: PP  CCF
+&
+\sphinxAtStartPar
+ DRS\_PP  CCF\_RV
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}
+&
+\sphinxAtStartPar
+ \textendash{}  \textendash{}
 \\
 \hline
 \end{tabulary}

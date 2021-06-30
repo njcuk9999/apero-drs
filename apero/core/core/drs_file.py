@@ -931,6 +931,7 @@ class DrsInputFile:
     def __repr__(self) -> str:
         """
         Defines the print(DrsInputFile) return for DrsInputFile
+
         :return str: the string representation of DrsInputFile
                      i.e. DrsInputFile[name]
         """
@@ -952,7 +953,7 @@ class DrsInputFile:
         # deal with no pconst given
         if pconst is None:
             pconst = constants.pload()
-                # ---------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # get header columns
         header_columns = list(pconst.FILEDEF_HEADER_KEYS())
         header_names = []
@@ -5593,6 +5594,60 @@ class DrsOutFileExtension:
         self.table_clears = []
         self.table_clear_files = []
 
+    def summary(self, extkey: int
+                ) -> Tuple[List[str], List[str], List[str], List[str]]:
+        """
+        Summary entries for ext name, ext input, col name, col input columns
+        of summary table
+
+        :param extkey: int, the key position in extensions dictionary
+
+        :return: Tuple,
+        """
+        # define storage for outputting
+        ext_name, ext_input = [], []
+        col_name, col_input = [], []
+        # ---------------------------------------------------------------------
+        # get extension tag
+        if self.tag is not None:
+            etag = self.tag
+        else:
+            etag = self.name
+        # ---------------------------------------------------------------------
+        # deal with tables (columns) --> table
+        # ---------------------------------------------------------------------
+        if self.drsfile == 'table':
+            # set column names
+            col_name = list(self.table_out_colnames)
+            # set column input files
+            col_input = list(map(lambda x: x.name, self.table_drsfiles))
+            # loop around ext name and inputs and make correct length
+            for col in range(len(col_name)):
+                # first time we have extension name
+                if col == 0:
+                    ext_name.append(etag)
+                # else we have a space (for columns)
+                else:
+                    ext_name.append('--')
+                # extension input is null
+                ext_input.append('--')
+        # ---------------------------------------------------------------------
+        # deal with standard extensions (no columns) --> image
+        # ---------------------------------------------------------------------
+        else:
+            # deal with primary extension slightly differently named
+            if extkey == 0:
+                ext_name.append('Primary: {0}'.format(etag))
+            else:
+                ext_name.append('{0}'.format(etag))
+            ext_input.append(self.drsfile.name)
+            col_name.append('--')
+            col_input.append('--')
+        # ---------------------------------------------------------------------
+        # return table column lists
+        return ext_name, ext_input, col_name, col_input
+
+
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
@@ -5954,6 +6009,70 @@ class DrsOutFile(DrsInputFile):
         self.infiles = []
         # store reduced files
         self.clear_files = []
+
+    def summary(self, params: ParamDict,
+                pconst: Optional[PseudoConstants]) -> Dict[str, str]:
+        """
+        Custom summary for out files
+
+        :param params: ParamDict, the paramater dictionary of constants
+        :param pconst: PseudoConst, the psuedo constants class
+
+        :return: dictionary, the parameters that define this file definition
+        """
+        # define the columns and values for returned dictionary
+        columns = []
+        values = []
+        # we don't use params or pconst here but they are used in parent
+        #   function - so we keep them here
+        _ = params, pconst
+        # ---------------------------------------------------------------------
+        # add name of out file
+        columns += ['NAME']
+        values += [self.name]
+        # ---------------------------------------------------------------------
+        # get header keys
+        header_keys = dict()
+        for extnum in self.extensions:
+            # get extension
+            extension = self.extensions[extnum]
+            # if we have hkeys add them to header keys dict
+            if extension.hkeys is not None:
+                for hkey in extension.hkeys:
+                    header_keys[hkey] = ' |br| '.join(extension.hkeys[hkey])
+        # get columns for header keys
+        for hkey in header_keys:
+            # add the column names
+            columns.append('HDR[{0}]'.format(hkey))
+            # add the value names
+            values.append(header_keys[hkey])
+        # ---------------------------------------------------------------------
+        # add suffix
+        columns += ['suffix']
+        values += [self.suffix]
+        # ---------------------------------------------------------------------
+        # get extension names
+        ext_names, ext_inputs = '', ''
+        col_names, col_inputs = '', ''
+        # loop around extensions
+        for extnum in self.extensions:
+            # get extension
+            extension = self.extensions[extnum]
+            # -----------------------------------------------------------------
+            ext_name, ext_input, col_name, col_input = extension.summary(extnum)
+            # add rows to entry
+            for col in range(len(col_name)):
+                ext_names += ' |br| {0}'.format(ext_name[col])
+                ext_inputs += ' |br| {0}'.format(ext_input[col])
+                col_names += ' |br| {0}'.format(col_name[col])
+                col_inputs += ' |br| {0}'.format(col_input[col])
+        # ---------------------------------------------------------------------
+        # add extensions
+        columns += ['ext name', 'ext input', 'col names', 'col input']
+        values += [ext_names, ext_inputs, col_names, col_inputs]
+        # ---------------------------------------------------------------------
+        # return a dictionary of values
+        return dict(zip(columns, values))
 
     def __getstate__(self) -> dict:
         """

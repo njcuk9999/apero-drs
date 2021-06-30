@@ -134,6 +134,7 @@ class MarkDownPage:
         self.lines += ['.. csv-table:: {0}'.format(title)]
         self.lines += ['   :file: {0}'.format(csv_file)]
         self.lines += ['   :header-rows: 1']
+        self.lines += ['   :class: csvtable']
         self.add_newline()
 
     def add_text(self, text: str):

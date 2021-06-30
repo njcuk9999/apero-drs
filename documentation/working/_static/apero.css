@@ -50,13 +50,24 @@ body {
     text-shadow: none;
 }
 
+table.csvtable tr.row-odd {
+    background-color: #aabbcc;
+}
+
+table.csvtable tr.row-even {
+    background-color: #bbbbbb;
+}
+
 
 /*div.sphinxsidebar {
     max-height: 100%;
     overflow-y: auto;
 } */
 
-
+div.documentwrapper {
+    float: none;
+    width: 100%;
+}
 
 div.sphinxsidebarwrapper {
     position: relative;
