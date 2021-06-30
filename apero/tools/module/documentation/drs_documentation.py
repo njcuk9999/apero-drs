@@ -69,7 +69,14 @@ DEF_DIR = '../documentation/working/dev/definitions/'
 # Define user functions
 # =============================================================================
 def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
+    """
+    Compile file definitions as an rst file for sphinx documentation
 
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe instance, the recipe that called this function
+
+    :return: None writes to file definition rst files
+    """
     # load file mod
     filemod = recipe.filemod.get()
     # load pseudo constants
@@ -78,20 +85,23 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     instrument = params['INSTRUMENT']
     # define file types to add
     sectionnames = ['1. Raw Files', '2. Preprocesed files', '3. Reduced Files',
-                    '4. Calibration files', '5 Telluric files']
-    filetypes = ['raw_file', 'pp_file', 'red_file', 'calib_file', 'tellu_file']
+                    '4. Calibration files', '5. Telluric files',
+                    '6. Post-processed files']
+    filetypes = ['raw_file', 'pp_file', 'red_file', 'calib_file', 'tellu_file',
+                 'post_file']
     # list of columns to be flagged as modified by the DRS
     mod_cols = ['HDR[TRG_TYPE]', 'HDR[DRSMODE]']
     # dict of columns to remove if present
     remove_cols = dict()
     remove_cols['raw_file'] = ['file type']
     remove_cols['red_file'] = ['dbname', 'dbkey']
-
     # add text to sections
     add_texts = dict()
     # add text for instruments add_text[key] = [instrument, txt file]
     add_texts['raw_file'] = dict(SPIROU='spirou_raw_file_text.rst',
                                  NIRPS_HA='nirps_ha_raw_file_text.rst')
+    add_texts['post_file'] = dict(SPIROU='spirou_post_file_text.rst',
+                                  NIRPS_HA='nirps_ha_post_file_text.rst')
     # storage of output tables
     table_storage = dict()
     mod_storage = dict()
