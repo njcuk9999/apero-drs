@@ -285,8 +285,7 @@ class PseudoConstants(DefaultConstants):
         # ------------------------------------------------------------------
         # Deal with drs mode
         # ------------------------------------------------------------------
-        header, hdict = get_drs_mode(params, header, hdict,
-                                     filename=filename)
+        header, hdict = get_drs_mode(params, header, hdict)
         # ------------------------------------------------------------------
         # Deal with dprtype
         # ------------------------------------------------------------------
