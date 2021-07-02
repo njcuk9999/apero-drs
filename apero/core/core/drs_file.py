@@ -126,6 +126,7 @@ class BlockPath:
             eargs = [key, params[key], type(e), str(e)]
             WLOG(params, 'error', emsg.format(*eargs))
         # now set path
+        self.key = key
         self.path = block_path
         self.name = name
         self.has_obs_dirs = False

@@ -71,10 +71,15 @@ def __main__(recipe, params):
         # End of main code
         # ------------------------------------------------------------------
         return drs_startup.return_locals(params, locals())
-
-
-    # TODO: add compile recipe definitions
-
+    # ----------------------------------------------------------------------
+    # deal with documenting file definitions
+    if params['INPUTS']['RECIPEDEF']:
+        # get file definitions
+        drs_documentation.compile_recipe_definitions(params, recipe)
+        # ------------------------------------------------------------------
+        # End of main code
+        # ------------------------------------------------------------------
+        return drs_startup.return_locals(params, locals())
     # ----------------------------------------------------------------------
     # compile documentation
     drs_documentation.compile_docs(params)

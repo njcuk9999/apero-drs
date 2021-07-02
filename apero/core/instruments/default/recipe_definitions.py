@@ -117,13 +117,13 @@ database_mgr.set_kwarg(name='--update', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_UPDATE_HELP'))
 database_mgr.set_kwarg(name='--csv', dtype=str, default='None',
                        helpstr=textentry('DBMGR_CSVARG_HELP'))
-database_mgr.set_kwarg(name='--exportdb', dtype=str, default='None',
+database_mgr.set_kwarg(name='--exportdb', dtype='options', default='None',
                        options=base.DATABASE_NAMES,
                        helpstr=textentry('DBMGR_EXPORTDB_HELP'))
-database_mgr.set_kwarg(name='--importdb', dtype=str, default='None',
+database_mgr.set_kwarg(name='--importdb', dtype='options', default='None',
                        options=base.DATABASE_NAMES,
                        helpstr=textentry('DBMGR_IMPORTDB_HELP'))
-database_mgr.set_kwarg(name='--join', dtype=str, default='replace',
+database_mgr.set_kwarg(name='--join', dtype='options', default='replace',
                        options=['replace', 'append'],
                        helpstr=textentry('DBMGR_JOIN_HELP'))
 database_mgr.set_kwarg(name='--delete', dtype='switch', default=False,
@@ -143,7 +143,9 @@ remake_doc.set_kwarg(name='--upload', dtype='bool', default=False,
                      helpstr=textentry('REMAKE_DOC_UPLOADARG_HELP'))
 # TODO: move to language database
 remake_doc.set_kwarg(name='--filedef', dtype='switch', default=False,
-                     helpstr='Compile a list of current file definitions')
+                     helpstr='Compile the docs for file definitions')
+remake_doc.set_kwarg(name='--recipedef', dtype='switch', default=False,
+                     helpstr='Compile the docs for recipe definitions')
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py
@@ -211,7 +213,7 @@ listing.recipe_type = 'nolog-tool'
 listing.recipe_kind = 'user'
 listing.set_kwarg(name='--obs_dir', dtype=str, default='',
                   helpstr=textentry('LISTING_HELP_OBS_DIR'))
-listing.set_kwarg(name='--kind', dtype=str, default='raw',
+listing.set_kwarg(name='--kind', dtype='options', default='raw',
                   options=['raw', 'tmp', 'red'],
                   helpstr=textentry('LISTING_HELP_KIND'))
 listing.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
@@ -232,7 +234,7 @@ logstats.set_debug_plots('LOGSTATS_BAR')
 logstats.set_summary_plots()
 logstats.set_kwarg(name='--obs_dir', dtype=str, default='',
                    helpstr=textentry('LOGSTAT_HELP_OBS_DIR'))
-logstats.set_kwarg(name='--kind', dtype=str, default='red',
+logstats.set_kwarg(name='--kind', dtype='options', default='red',
                    options=['tmp', 'red'],
                    helpstr=textentry('LOGSTAT_HELP_KIND'))
 logstats.set_kwarg(name='--recipe', dtype=str, default='None',
@@ -266,7 +268,7 @@ processing.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
                      helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
 processing.set_kwarg(name='--cores', dtype=str, default='None',
                      helpstr=textentry('PROCESS_CORES_HELP'))
-processing.set_kwarg(name='--test', dtype=str, default='None',
+processing.set_kwarg(name='--test', dtype='options', default='None',
                      options=['True', 'False', '1', '0', 'None'],
                      helpstr=textentry('PROCESS_TEST_HELP'))
 processing.set_kwarg(name='--trigger', dtype='bool', default=False,
