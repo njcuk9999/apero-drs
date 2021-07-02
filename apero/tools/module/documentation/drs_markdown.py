@@ -149,6 +149,32 @@ class MarkDownPage:
         self.lines += text.split('\n')
         self.add_newline()
 
+    def add_image(self, filename: str, width: Optional[int] = None,
+                  align: str = 'center'):
+        """
+        Add image to the markdown page
+
+        :param filename: str, the filename to the image (relative to this
+                         directory)
+        :param width: int, the percentage of the page to take up
+        :param align: str, either 'center', 'left' or 'right'
+
+        :return: None, updates page
+        """
+        basename = os.path.basename(filename)
+        self.add_newline()
+        self.lines += ['.. only:: html']
+        self.add_newline()
+        self.lines += ['    .. image:: {0}'.format(basename)]
+        if width is not None:
+            self.lines += ['    :width: {0}%'.format(width)]
+        if align is not None:
+            self.lines += ['    :align: {0}'.format(align)]
+        self.add_newline()
+        self.lines += ['.. only:: latex']
+        self.lines += ['This section can only currently be viewed in the '
+                       'html documentation.']
+
     def include_file(self, filename: str):
         """
         Include a rst file
@@ -161,6 +187,24 @@ class MarkDownPage:
         self.add_newline()
         self.lines += ['.. include:: {0}'.format(basename)]
         self.add_newline()
+
+    def add_code_block(self, codetype: str, codetext: List[str]):
+        """
+        Add a code block
+
+        :param codetype: str, the code type (i.e. bash, python etc)
+        :param codetext: List of strings, the code text to add
+
+        :return: None, updates page
+        """
+        self.add_newline()
+        self.lines += ['.. code-block:: {0}'.format(codetype)]
+        self.add_newline()
+        # loop around lines of code
+        for codeit in codetext:
+            self.lines += ['    {0}'.format(codeit)]
+        self.add_newline()
+
 
 # =============================================================================
 # Define functions

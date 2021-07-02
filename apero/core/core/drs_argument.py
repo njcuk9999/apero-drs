@@ -206,7 +206,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         _ = display_func('format_usage', __NAME__, 'DRSArgumentParser')
         # noinspection PyProtectedMember
         return_string = (' ' + textentry('USAGE_TEXT') + ' ' +
-                         self.recipe._drs_usage())
+                         self.recipe.drs_usage())
         # return messages
         return return_string
 
@@ -223,7 +223,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         hmsgs = []
         # noinspection PyProtectedMember
         hmsgs += [' ' + textentry('USAGE_TEXT') + ' ' +
-                  self.recipe._drs_usage()]
+                  self.recipe.drs_usage()]
         # add description
         if self.recipe.description is not None:
             # add header line
@@ -1819,7 +1819,7 @@ class _DisplayInfo(DrsAction):
             print(imsg)
         print()
         # noinspection PyProtectedMember
-        print(blue + ' ' + etext['40-002-00007'] + recipe._drs_usage() + end)
+        print(blue + ' ' + etext['40-002-00007'] + recipe.drs_usage() + end)
         # print description
         print()
         print(blue + params['DRS_HEADER'] + end)
@@ -3054,6 +3054,69 @@ class DrsArgument(object):
         else:
             raise DrsCodedException('00-006-00023', 'error', targs=[message],
                                     func_name=func_name)
+
+    def summary(self) -> str:
+        """
+        Produce a summary of an argument
+
+        :return: str, the summary of the argument
+        """
+        # ---------------------------------------------------------------------
+        # get arg/kwarg format txt
+        if self.kind == 'arg' and self.dtype in ['file', 'files']:
+            fmt = ' {1}'
+        elif self.kind == 'arg':
+            fmt = ' {{{0}}}{1}'
+        else:
+            fmt = ' --{0}{1}'
+        # define the arguments
+        fargs = [self.name]
+        # ---------------------------------------------------------------------
+        # deal with types
+        # ---------------------------------------------------------------------
+        # 1. files
+        if self.dtype in ['file', 'files']:
+            # get a list of file types
+            filetypes = list(map(lambda x: x.name, self.files))
+            # add to arguments
+            fargs += ['[FILE:{0}]'.format(','.join(filetypes))]
+        # ---------------------------------------------------------------------
+        # 2. bool
+        elif self.dtype == 'bool':
+            fargs += ['[True/False]']
+        # 3. switch
+        elif self.dtype == 'switch':
+            fargs += ['']
+        # 4. options
+        elif self.dtype == 'options':
+            options = list(map(lambda x: str(x), self.options))
+            fargs += '[{0}]'.format(','.join(options))
+        # 5. int or float
+        elif self.dtype in ['int', int, 'float', float]:
+            # get the name of the variable
+            if self.dtype in ['int', int]:
+                name = 'INT'
+            elif self.dtype in ['float', float]:
+                name = 'FLOAT'
+            else:
+                name = 'VALUE'
+            # get the limits
+            if self.minimum is not None and self.maximum is not None:
+                value = '{0}>{1}>{2}'.format(self.minimum, name, self.maximum)
+            elif self.minimum is not None:
+                value = '{0}>{1}'.format(name, self.minimum)
+            elif self.maximum is not None:
+                value = '{0}<{1}'.format(name, self.maximum)
+            else:
+                value = str(name)
+            # add to fargs
+            fargs += '[{0}]'.format(value)
+        # 7. str
+        else:
+            fargs += ['[{0}]'.format('STRING')]
+        # ---------------------------------------------------------------------
+        # return the format string for this argument
+        return fmt.format(*fargs)
 
 
 # =============================================================================

@@ -13,7 +13,7 @@ from astropy.table import Table
 import numpy as np
 import os
 import shutil
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from apero import lang
 from apero.base import base
@@ -62,7 +62,9 @@ SSH_HOST = 'venus.astro.umontreal.ca'
 SSH_PATH = '/home/cook/www/apero-drs/'
 # -----------------------------------------------------------------------------
 # definitions dirs
-DEF_DIR = '../documentation/working/dev/definitions/'
+FILE_DEF_DIR = '../documentation/working/dev/file_definitions/'
+RECIPE_DEF_DIR = '../documentation/working/dev/recipe_definitions/'
+RD_REL_PATH = '../../dev/recipe_definitions/'
 
 
 # =============================================================================
@@ -132,7 +134,7 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         mod_storage[filetype] = modded
     # -------------------------------------------------------------------------
     # get directory to save file to
-    def_dir = drs_misc.get_relative_folder(__PACKAGE__, DEF_DIR)
+    def_dir = drs_misc.get_relative_folder(__PACKAGE__, FILE_DEF_DIR)
     # storage file names
     filenames = dict()
     # save tables as csv
@@ -210,7 +212,6 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         # ------------------------------------------------------------------
         # add a back to top
         markdown.add_back_to_top()
-
     # -------------------------------------------------------------------------
     # construct markdown filename
     markdown_basename = '{0}_file_definitions.rst'.format(instrument.lower())
@@ -219,6 +220,131 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     WLOG(params, '', 'Writing markdown file: {0}'.format(markdown_filename))
     # write markdown to file
     markdown.write_page(markdown_filename)
+
+
+def compile_recipe_definitions(params: ParamDict, recipe: DrsRecipe):
+    """
+    Compile recipe definitions as an rst file for sphinx documentation
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe instance, the recipe that called this function
+
+    :return: None writes to file definition rst files
+    """
+    # load file mod
+    recipemod = recipe.recipemod.get()
+    # load pseudo constants
+    pconst = constants.pload()
+    # get instrument name
+    instrument = params['INSTRUMENT']
+    # get a list of recipe instances
+    srecipes = recipemod.recipes
+    # get directory to save file to
+    def_dir = drs_misc.get_relative_folder(__PACKAGE__, RECIPE_DEF_DIR)
+    # store list of recipe definitions
+    recipe_definitions = []
+    # loop around recipes
+    for srecipe in srecipes:
+        # print we are analysing recipe
+        margs = [srecipe.name, srecipe.shortname]
+        WLOG(params, 'info', 'Processing {0} [{1}]'.format(*margs))
+        # get summary parameters
+        summary = _compile_recipe(params, pconst, instrument, srecipe)
+        # create page ref
+        pargs = [instrument.lower(), summary['SHORTNAME'].lower()]
+        page_ref = 'recipes_{0}_{1}'.format(*pargs)
+        # start markdown page
+        markdown = drs_markdown.MarkDownPage(page_ref)
+        # add title
+        markdown.add_title('{0} Recipe'.format(summary['NAME']))
+        # ---------------------------------------------------------------------
+        # add section: description
+        markdown.add_section('1. Description')
+        # add shortname
+        markdown.add_text('SHORTNAME: {0}'.format(summary['SHORTNAME']))
+        # add description
+        if summary['DESCRIPTION_FILE'] is not None:
+            # include a file
+            markdown.include_file(summary['DESCRIPTION_FILE'])
+        else:
+            markdown.add_text('No description set')
+        # ---------------------------------------------------------------------
+        # add section: schematic
+        markdown.add_section('2. Schematic')
+        # add schematic image
+        if summary['SCHEMATIC_FILE'] is not None:
+            # include a file
+            markdown.add_image(summary['SCHEMATIC_FILE'], width=100,
+                               align='center')
+        else:
+            markdown.add_text('No schematic set')
+        # ---------------------------------------------------------------------
+        # add section: usage
+        markdown.add_section('3. Usage')
+        # add code block for run
+        markdown.add_code_block('bash', [summary['USAGE']])
+        # ---------------------------------------------------------------------
+        # add section: optional arguments
+        markdown.add_section('4. Optional Arguments')
+        # add code block for run
+        if len(summary['OPT']) > 0:
+            markdown.add_code_block('bash', summary['OPT'])
+        else:
+            markdown.add_text('No optional arguments')
+        # ---------------------------------------------------------------------
+        # add section: special arguments
+        markdown.add_section('5. Special Arguments')
+        # add code block for run
+        if len(summary['SOPT']) > 0:
+            markdown.add_code_block('bash', summary['SOPT'])
+        else:
+            markdown.add_text('No special arguments')
+        # ---------------------------------------------------------------------
+        # add section: output directory
+        markdown.add_section('6. Output directory')
+        # add code block for run
+        markdown.add_code_block('bash', [summary['OUTDIR']])
+        # ---------------------------------------------------------------------
+        # add section: output directory
+        markdown.add_section('7. Output files')
+        # add code block for run
+        markdown.add_csv_table('Outputs', summary['OUTTABLE'])
+        # ---------------------------------------------------------------------
+        # add section: output directory
+        markdown.add_section('8. Debug plots')
+        # add code block for run
+        if len(summary['DEBUG_PLOTS']) > 0:
+            markdown.add_code_block('bash', summary['DEBUG_PLOTS'])
+        else:
+            markdown.add_text('No debug plots.')
+        # ---------------------------------------------------------------------
+        # add section: output directory
+        markdown.add_section('9. Summary plots')
+        # add code block for run
+        if len(summary['SUMMARY_PLOTS']) > 0:
+            markdown.add_code_block('bash', summary['SUMMARY_PLOTS'])
+        else:
+            markdown.add_text('No summary plots.')
+        # ---------------------------------------------------------------------
+        # construct markdown filename
+        margs = [instrument.lower(), summary['SHORTNAME']]
+        markdown_basename = '{0}_recipe_definition_{1}.rst'.format(*margs)
+        markdown_filename = os.path.join(def_dir, markdown_basename)
+        # log progress
+        WLOG(params, '', 'Writing markdown file: {0}'.format(markdown_filename))
+        # write markdown to file
+        markdown.write_page(markdown_filename)
+        # add to list
+        recipe_definitions.append(os.path.basename(markdown_filename))
+    # -------------------------------------------------------------------------
+    # construct filename
+    rd_basename = '{0}_recipe_definitions.txt'.format(instrument.lower())
+    rd_filename = os.path.join(def_dir, rd_basename)
+    # save recipe definition list to file
+    with open(rd_filename, 'w') as rdfile:
+        # loop around recipe definitions and write to file
+        for recipe_definition in recipe_definitions:
+            rdfile.write('{0}/{1}\n'.format(RD_REL_PATH, recipe_definition))
 
 
 def compile_docs(params):
@@ -447,6 +573,39 @@ def _modify_cols(table: Table, cols: List[str],
             modified = True
     # return table
     return table, modified
+
+
+def _compile_recipe(params: ParamDict, pconst: PseudoConst, instrument: str,
+                    recipe: DrsRecipe) -> Dict[str, Any]:
+    """
+    Compile recipe
+
+    :param params:
+    :param pconst:
+    :param recipe:
+    :return:
+    """
+    # get summary information
+    summary = recipe.summary(params)
+    # get table for outputs
+    table = _compile_files(params, pconst, summary['OUTPUTS'])
+    # remove empty columns
+    table = _remove_empty_cols(table)
+    # get directory to save file to
+    def_dir = drs_misc.get_relative_folder(__PACKAGE__, RECIPE_DEF_DIR)
+    # construct filename
+    fargs = [instrument.lower(), summary['SHORTNAME'].lower()]
+    basename = '{0}_rout_{1}_.csv'
+    filename = os.path.join(def_dir, basename.format(*fargs))
+    # print progress
+    margs = [summary['NAME'], filename]
+    WLOG(params, '', 'Saving {0} csv to: {1}'.format(*margs))
+    # save outtable to file
+    table.write(filename, format='csv', overwrite=True)
+    # save table filename to out table
+    summary['OUTTABLE'] = filename
+    # return the summary dictionary
+    return summary
 
 
 # =============================================================================

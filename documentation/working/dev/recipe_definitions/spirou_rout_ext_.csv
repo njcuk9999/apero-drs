@@ -1,0 +1,11 @@
+name,HDR[DRSOUTID],file type,suffix,fibers,input file
+EXT_E2DS,EXT_E2DS,.fits,_e2ds,"AB, A, B, C",DRS_PP
+EXT_E2DS_FF,EXT_E2DS_FF,.fits,_e2dsff,"AB, A, B, C",DRS_PP
+EXT_E2DS_LL,EXT_E2DS_LL,.fits,_e2dsll,"AB, A, B, C","DRS_PP, FLAT_FLAT"
+EXT_S1D_W,EXT_S1D_W,.fits,_s1d_w,"AB, A, B, C",DRS_PP
+EXT_S1D_V,EXT_S1D_V,.fits,_s1d_v,"AB, A, B, C",DRS_PP
+ORDERP_STRAIGHT,--,.npy,_orderps,"AB, A, B, C",SHAPEL
+DEBUG_BACK,DEBUG_BACK,.fits,_background.fits,--,DRS_PP
+EXT_FPLIST,EXT_FPLIST,.fits,_ext_fplines,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+QL_E2DS,QL_E2DS,.fits,_q2ds,"AB, A, B, C",DRS_PP
+QL_E2DS_FF,QL_E2DS_FF,.fits,_q2dsff,"AB, A, B, C",DRS_PP

@@ -826,7 +826,7 @@ apero_ccf.set_kwarg(name='--width', dtype=float, default_ref='CCF_DEFAULT_WIDTH'
                     helpstr=textentry('CCF_WIDTH_HELP'))
 apero_ccf.set_kwarg(name='--step', dtype=float, default_ref='CCF_DEFAULT_STEP',
                     helpstr=textentry('CCF_STEP_HELP'))
-apero_ccf.set_kwarg(name='--masknormmode', dtype=str,
+apero_ccf.set_kwarg(name='--masknormmode', dtype='options',
                     default_ref='CCF_MASK_NORMALIZATION',
                     options=['None', 'all', 'order'],
                     helpstr=textentry('CCF_MASK_NORM_HELP'))
@@ -899,15 +899,15 @@ apero_mk_tellu_db.epilog = textentry('MKTELLDB_EXAMPLE')
 apero_mk_tellu_db.set_outputs()
 apero_mk_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
                             helpstr=textentry('MKTELLDB_CORES'))
-apero_mk_tellu_db.set_kwarg(name='--filetype', dtype=str,
+apero_mk_tellu_db.set_kwarg(name='--filetype', dtype='options',
                             default_ref='TELLURIC_FILETYPE',
                             helpstr=textentry('MKTELLDB_FILETYPE'),
                             options=['EXT_E2DS', 'EXT_E2DS_FF'])
-apero_mk_tellu_db.set_kwarg(name='--fiber', dtype=str,
+apero_mk_tellu_db.set_kwarg(name='--fiber', dtype='options',
                             default_ref='TELLURIC_FIBER_TYPE',
                             helpstr=textentry('MKTELLDB_FIBER'),
                             options=['AB', 'A', 'B', 'C'])
-apero_mk_tellu_db.set_kwarg(name='--test', dtype=str, default='None',
+apero_mk_tellu_db.set_kwarg(name='--test', dtype='options', default='None',
                             options=['True', 'False', '1', '0', 'None'],
                             helpstr=textentry('PROCESS_TEST_HELP'))
 apero_mk_tellu_db.set_kwarg(**add_db)
@@ -1001,7 +1001,7 @@ apero_fit_tellu_db.set_kwarg(name='--objname', dtype=str, default='None',
 apero_fit_tellu_db.set_kwarg(name='--dprtype', dtype=str,
                              default_ref='TELLU_ALLOWED_DPRTYPES',
                              helpstr=textentry('FTELLUDB_DPRTYPES'))
-apero_fit_tellu_db.set_kwarg(name='--test', dtype=str, default='None',
+apero_fit_tellu_db.set_kwarg(name='--test', dtype='options', default='None',
                              options=['True', 'False', '1', '0', 'None'],
                              helpstr=textentry('PROCESS_TEST_HELP'))
 apero_fit_tellu_db.set_kwarg(**add_db)
@@ -1036,11 +1036,11 @@ apero_mk_template.set_debug_plots('EXTRACT_S1D', 'MKTEMP_BERV_COV')
 apero_mk_template.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_MKTEMP_BERV_COV')
 apero_mk_template.set_arg(name='objname', pos=0, dtype=str,
                           helpstr=textentry('MKTEMP_OBJNAME_HELP'))
-apero_mk_template.set_kwarg(name='--filetype', dtype=str,
+apero_mk_template.set_kwarg(name='--filetype', dtype='options',
                             default_ref='MKTEMPLATE_FILETYPE',
                             helpstr=textentry('MKTEMP_FILETYPE'),
                             options=['EXT_E2DS', 'EXT_E2DS_FF'])
-apero_mk_template.set_kwarg(name='--fiber', dtype=str,
+apero_mk_template.set_kwarg(name='--fiber', dtype='options',
                             default_ref='MKTEMPLATE_FIBER_TYPE',
                             helpstr=textentry('MKTEMP_FIBER'),
                             options=['AB', 'A', 'B', 'C'])
@@ -1240,7 +1240,8 @@ apero_wave_master_old.set_kwarg(name='--hcmode', dtype='options',
                                 helpstr=textentry('HCMODE_HELP'), options=['0'],
                                 default_ref='WAVE_MODE_HC')
 apero_wave_master_old.set_kwarg(name='--fpmode', dtype='options',
-                                helpstr=textentry('FPMODE_HELP'), options=['0', '1'],
+                                helpstr=textentry('FPMODE_HELP'),
+                                options=['0', '1'],
                                 default_ref='WAVE_MODE_FP')
 apero_wave_master_old.group_func = grouping.group_by_dirname
 apero_wave_master_old.group_column = 'REPROCESS_OBSDIR_COL'

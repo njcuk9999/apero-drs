@@ -15,7 +15,7 @@ import copy
 import numpy as np
 from pathlib import Path
 import sys
-from typing import Any, Dict, List, Type, Union
+from typing import Any, Dict, List, Tuple, Type, Union
 
 from apero import lang
 from apero.base import base
@@ -188,6 +188,9 @@ class DrsRecipe(object):
         self.get_drs_params()
         # make special arguments
         self._make_specials()
+        # parameters for summary documentation
+        self.schematic = None
+        self.description_file = None
 
     def __getstate__(self) -> dict:
         """
@@ -245,6 +248,38 @@ class DrsRecipe(object):
                          self.class_name)
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.name)
+
+    def summary(self, params: ParamDict) -> Dict[str, Any]:
+        """
+        Get summary plots
+
+        :param params: ParamDict, the parameter dictionary of constants
+
+        :return: dictionary of summary parameters
+        """
+        # storage for output
+        storage = dict()
+        # get recipe name
+        storage['NAME'] = self.name
+        storage['SHORTNAME'] = self.shortname
+        # get schematic diagram for this recipe
+        storage['SCHEMATIC_FILE'] = self.schematic
+        storage['DESCRIPTION_FILE'] = self.description_file
+        # get usage string
+        sout = self.drs_usage(output='all')
+        storage['USAGE'], storage['OPT'], storage['SOPT'] = sout
+        # get output directory
+        drs_path = drs_file.DrsPath(params, block_kind=self.out_block_str)
+        oargs = [drs_path.get_block().key, drs_path.block_kind]
+        storage['OUTDIR'] = '{0} \\ Default: "{1}" directory'.format(*oargs)
+        # get output files
+        storage['OUTPUTS'] = list(self.outputs.values())
+        # get plots
+        storage['DEBUG_PLOTS'] = list(self.debug_plots)
+        storage['SUMMARY_PLOTS'] = list(self.summary_plots)
+        # return summary storage
+        return storage
+
 
     def get_drs_params(self, **kwargs):
         """
@@ -308,7 +343,7 @@ class DrsRecipe(object):
         parser = DrsArgumentParser(recipe=self, indexdb=indexdb,
                                    description=desc, epilog=epilog,
                                    formatter_class=fmt_class,
-                                   usage=self._drs_usage())
+                                   usage=self.drs_usage())
         # get the drs params from recipe
         drs_params = self.params
         # ---------------------------------------------------------------------
@@ -1258,7 +1293,8 @@ class DrsRecipe(object):
         spec.helpstr = props['help']
         self.specialargs[name] = spec
 
-    def _drs_usage(self) -> str:
+    def drs_usage(self, output: str = 'default'
+                   ) -> Union[str, Tuple[str, List[str], List[str]]]:
         """
         Create a string that shows this recipes usage
 
@@ -1305,17 +1341,26 @@ class DrsRecipe(object):
             else:
                 self.special_args.append(self.specialargs[rarg])
         # ---------------------------------------------------------------------
-        # get positional arguments
-        pos_args = []
+        usage = '{0}.py'.format(self.name)
+        # loop around required arguments
         for rarg in self.required_args:
-            pos_args.append(rarg.names[0])
-        # deal with no positional arguments
-        if len(pos_args) == 0:
-            pos_args = ['[{0}]'.format(textentry('POS_ARG_TEXT'))]
-        # define usage
-        uargs = [self.name, ' '.join(pos_args), textentry('OPTIONS_TEXT')]
-        usage = '{0}.py {1} [{2}]'.format(*uargs)
-        return usage
+            # add argument to the usage
+            usage += '{0}'.format(rarg.summary())
+        # add options to end
+        usage += ' {' + textentry('OPTIONS_TEXT').strip() + '}'
+
+        # if we are using this in default mode stop here and return usage
+        if output == 'default':
+            return usage
+        # otherwise we need to also generate options and special options
+        #    strings
+        options, soptions = [], []
+        for opt in self.optional_args:
+            options.append(opt.summary())
+        for opt in self.special_args:
+            soptions.append(opt.summary())
+        # return u
+        return usage, options, soptions
 
     def _input_str(self, inputs: Union[ParamDict, dict],
                    argdict: Dict[str, Any], kind: str = 'arg') -> str:

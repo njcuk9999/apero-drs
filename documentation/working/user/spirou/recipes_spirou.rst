@@ -15,24 +15,30 @@ processing tools) see :ref:`here <using_apero_default>`.
     :maxdepth: 1
     :caption: SPIROU recipes
 
-    recipes/preprocessing.rst
-    recipes/dark_master.rst
-    recipes/bad_pixel.rst
-    recipes/localisation.rst
-    recipes/shape_master.rst
-    recipes/shape_local.rst
-    recipes/flat_blaze.rst
-    recipes/thermal.rst
-    recipes/leak_master.rst
-    recipes/wave_master.rst
-    recipes/wave_local.rst
-    recipes/extraction.rst
-    recipes/leak_corr.rst
-    recipes/make_tellu.rst
-    recipes/fit_tellu.rst
-    recipes/make_template.rst
-    recipes/ccf.rst
-    recipes/polar.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_PP.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_BAD.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_DARK.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_DARKM.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_LOC.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_SHAPEM.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_SHAPE.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_FF.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_THERM.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_LEAKM.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_LEAK.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_EXT.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_WAVEM.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_WAVE.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_CCF.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_MKTELL.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_MKTELLDB.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_FTELLU.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_FTELLDB.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_MKTEMP.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_POLAR.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_OBJPOST.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_WAVEM.rst
+    ../../dev/recipe_definitions//spirou_recipe_definition_WAVE.rst
 
 
 .. only:: html

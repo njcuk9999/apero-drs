@@ -1,0 +1,4 @@
+name,HDR[DRSOUTID],file type,suffix,fibers,dbname,dbkey,input file
+EXT_E2DS_FF,EXT_E2DS_FF,.fits,_e2dsff,"AB, A, B, C",--,--,DRS_PP
+THERMALI_E2DS,THERMALI_E2DS,.fits,_thermal_e2ds_int,"AB, A, B, C",calibration,THERMALI,DARK_DARK_INT
+THERMALT_E2DS,THERMALT_E2DS,.fits,_thermal_e2ds_tel,"AB, A, B, C",calibration,THERMALT,DARK_DARK_TEL
