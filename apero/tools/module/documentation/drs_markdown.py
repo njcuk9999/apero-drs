@@ -161,18 +161,18 @@ class MarkDownPage:
 
         :return: None, updates page
         """
-        basename = os.path.basename(filename)
         self.add_newline()
         self.lines += ['.. only:: html']
         self.add_newline()
-        self.lines += ['    .. image:: {0}'.format(basename)]
+        self.lines += ['    .. image:: {0}'.format(filename)]
         if width is not None:
-            self.lines += ['    :width: {0}%'.format(width)]
+            self.lines += ['        :width: {0}%'.format(width)]
         if align is not None:
-            self.lines += ['    :align: {0}'.format(align)]
+            self.lines += ['        :align: {0}'.format(align)]
         self.add_newline()
         self.lines += ['.. only:: latex']
-        self.lines += ['This section can only currently be viewed in the '
+        self.add_newline()
+        self.lines += ['    This section can only currently be viewed in the '
                        'html documentation.']
 
     def include_file(self, filename: str):

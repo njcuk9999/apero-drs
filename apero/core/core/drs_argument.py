@@ -3055,9 +3055,11 @@ class DrsArgument(object):
             raise DrsCodedException('00-006-00023', 'error', targs=[message],
                                     func_name=func_name)
 
-    def summary(self) -> str:
+    def summary(self, full: bool = False) -> Union[str, Tuple[str, str]]:
         """
         Produce a summary of an argument
+
+        :param full: bool, if True returns name and help as tuple
 
         :return: str, the summary of the argument
         """
@@ -3090,7 +3092,7 @@ class DrsArgument(object):
         # 4. options
         elif self.dtype == 'options':
             options = list(map(lambda x: str(x), self.options))
-            fargs += '[{0}]'.format(','.join(options))
+            fargs += ['[{0}]'.format(','.join(options))]
         # 5. int or float
         elif self.dtype in ['int', int, 'float', float]:
             # get the name of the variable
@@ -3110,13 +3112,16 @@ class DrsArgument(object):
             else:
                 value = str(name)
             # add to fargs
-            fargs += '[{0}]'.format(value)
+            fargs += ['[{0}]'.format(value)]
         # 7. str
         else:
             fargs += ['[{0}]'.format('STRING')]
         # ---------------------------------------------------------------------
         # return the format string for this argument
-        return fmt.format(*fargs)
+        if full:
+            return (fmt.format(*fargs), str(self.helpstr))
+        else:
+            return fmt.format(*fargs)
 
 
 # =============================================================================
