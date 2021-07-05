@@ -1472,7 +1472,7 @@ WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
 #    fiber and other fibers, above this limit fails QC [m/s]
 # TODO: We should really think about this a bit more
 WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
-WAVE_CCF_RV_THRES_QC.value = 2.0    # 0.5 (spirou value)
+WAVE_CCF_RV_THRES_QC.value = 15.0    # 0.5 (spirou value)
 
 # TODO: Sort out wave constants below here
 # =============================================================================
