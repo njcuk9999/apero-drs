@@ -2653,7 +2653,7 @@ REPROCESS_TIMECOL.value = 'KW_ACQTIME'
 
 # define the dprtypes for objects (for getting non telluric stars)
 REPROCESS_OBJ_DPRTYPES = REPROCESS_OBJ_DPRTYPES.copy(__NAME__)
-REPROCESS_OBJ_DPRTYPES.value = 'OBJ_FP, OBJ_DARK, POLAR_FP, POLAR_DARK'
+REPROCESS_OBJ_DPRTYPES.value = 'OBJ_FP, OBJ_DARK'
 
 # Define whether we try to create a latex summary pdf
 #   (turn this off if you have any problems with latex/pdflatex)
