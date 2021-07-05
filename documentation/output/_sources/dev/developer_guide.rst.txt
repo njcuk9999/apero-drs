@@ -67,10 +67,8 @@ Other
 .. toctree::
     :maxdepth: 1
 
-    definitions/spirou_file_definitions.rst
-    definitions/nirps_ha_file_definitions.rst
-
-
+    file_definitions/spirou_file_definitions.rst
+    file_definitions/nirps_ha_file_definitions.rst
 
 .. only:: html
 

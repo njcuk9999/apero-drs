@@ -65,6 +65,7 @@ SSH_PATH = '/home/cook/www/apero-drs/'
 FILE_DEF_DIR = '../documentation/working/dev/file_definitions/'
 RECIPE_DEF_DIR = '../documentation/working/dev/recipe_definitions/'
 RD_REL_PATH = '../../dev/recipe_definitions/'
+RD_REL_SCHEMATIC_PATH = '../../_static/yed/spirou/'
 
 
 # =============================================================================
@@ -256,7 +257,8 @@ def compile_recipe_definitions(params: ParamDict, recipe: DrsRecipe):
         # start markdown page
         markdown = drs_markdown.MarkDownPage(page_ref)
         # add title
-        markdown.add_title('{0} Recipe'.format(summary['NAME']))
+        name = summary['NAME'].strip('.py')
+        markdown.add_title('{0} recipe'.format(name))
         # ---------------------------------------------------------------------
         # add section: description
         markdown.add_section('1. Description')
@@ -273,37 +275,44 @@ def compile_recipe_definitions(params: ParamDict, recipe: DrsRecipe):
         markdown.add_section('2. Schematic')
         # add schematic image
         if summary['SCHEMATIC_FILE'] is not None:
+            # get schematic path
+            basename = summary['SCHEMATIC_FILE']
+            schpath = os.path.join(RD_REL_SCHEMATIC_PATH, basename)
             # include a file
-            markdown.add_image(summary['SCHEMATIC_FILE'], width=100,
-                               align='center')
+            markdown.add_image(schpath, width=100, align='center')
         else:
             markdown.add_text('No schematic set')
         # ---------------------------------------------------------------------
         # add section: usage
         markdown.add_section('3. Usage')
         # add code block for run
-        markdown.add_code_block('bash', [summary['USAGE']])
+        markdown.add_code_block('', [summary['USAGE']])
+        # add code block for positional arguments
+        if len(summary['LPOS']) > 0:
+            markdown.add_code_block('', summary['LPOS'])
+        else:
+            markdown.add_text('No optional arguments')
         # ---------------------------------------------------------------------
         # add section: optional arguments
         markdown.add_section('4. Optional Arguments')
         # add code block for run
-        if len(summary['OPT']) > 0:
-            markdown.add_code_block('bash', summary['OPT'])
+        if len(summary['LOPT']) > 0:
+            markdown.add_code_block('', summary['LOPT'])
         else:
             markdown.add_text('No optional arguments')
         # ---------------------------------------------------------------------
         # add section: special arguments
         markdown.add_section('5. Special Arguments')
         # add code block for run
-        if len(summary['SOPT']) > 0:
-            markdown.add_code_block('bash', summary['SOPT'])
+        if len(summary['LSOPT']) > 0:
+            markdown.add_code_block('', summary['LSOPT'])
         else:
             markdown.add_text('No special arguments')
         # ---------------------------------------------------------------------
         # add section: output directory
         markdown.add_section('6. Output directory')
         # add code block for run
-        markdown.add_code_block('bash', [summary['OUTDIR']])
+        markdown.add_code_block('', [summary['OUTDIR']])
         # ---------------------------------------------------------------------
         # add section: output directory
         markdown.add_section('7. Output files')
@@ -314,7 +323,7 @@ def compile_recipe_definitions(params: ParamDict, recipe: DrsRecipe):
         markdown.add_section('8. Debug plots')
         # add code block for run
         if len(summary['DEBUG_PLOTS']) > 0:
-            markdown.add_code_block('bash', summary['DEBUG_PLOTS'])
+            markdown.add_code_block('', summary['DEBUG_PLOTS'])
         else:
             markdown.add_text('No debug plots.')
         # ---------------------------------------------------------------------
@@ -322,7 +331,7 @@ def compile_recipe_definitions(params: ParamDict, recipe: DrsRecipe):
         markdown.add_section('9. Summary plots')
         # add code block for run
         if len(summary['SUMMARY_PLOTS']) > 0:
-            markdown.add_code_block('bash', summary['SUMMARY_PLOTS'])
+            markdown.add_code_block('', summary['SUMMARY_PLOTS'])
         else:
             markdown.add_text('No summary plots.')
         # ---------------------------------------------------------------------
@@ -580,10 +589,12 @@ def _compile_recipe(params: ParamDict, pconst: PseudoConst, instrument: str,
     """
     Compile recipe
 
-    :param params:
-    :param pconst:
-    :param recipe:
-    :return:
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: Pseudo Constant instance, the pseudo consts instances for
+                   this instrument
+    :param recipe: DrsRecipe instance, the recipe that called this function
+
+    :return: dictionary, Recipe summary dictionary
     """
     # get summary information
     summary = recipe.summary(params)

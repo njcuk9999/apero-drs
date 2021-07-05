@@ -267,11 +267,31 @@ class DrsRecipe(object):
         storage['DESCRIPTION_FILE'] = self.description_file
         # get usage string
         sout = self.drs_usage(output='all')
-        storage['USAGE'], storage['OPT'], storage['SOPT'] = sout
+        storage['USAGE'], storage['POS'], storage['OPT'], storage['SOPT'] = sout
+        # ---------------------------------------------------------------------
+        # convert pos list for output
+        storage['LPOS'] = []
+        for item in storage['POS']:
+            # get line for markdown
+            key, value = storage['POS'][item]
+            storage['LPOS'].append('{0} // {1}'.format(key, value))
+        # convert opt list for output
+        storage['LOPT'] = []
+        for item in storage['OPT']:
+            # get line for markdown
+            key, value = storage['OPT'][item]
+            storage['LOPT'].append('{0} // {1}'.format(key, value))
+        # convert opt list for output
+        storage['LSOPT'] = []
+        for item in storage['SOPT']:
+            # get line for markdown
+            key, value = storage['SOPT'][item]
+            storage['LSOPT'].append('{0} // {1}'.format(key, value))
+        # ---------------------------------------------------------------------
         # get output directory
         drs_path = drs_file.DrsPath(params, block_kind=self.out_block_str)
         oargs = [drs_path.get_block().key, drs_path.block_kind]
-        storage['OUTDIR'] = '{0} \\ Default: "{1}" directory'.format(*oargs)
+        storage['OUTDIR'] = '{0} // Default: "{1}" directory'.format(*oargs)
         # get output files
         storage['OUTPUTS'] = list(self.outputs.values())
         # get plots
@@ -1294,7 +1314,7 @@ class DrsRecipe(object):
         self.specialargs[name] = spec
 
     def drs_usage(self, output: str = 'default'
-                   ) -> Union[str, Tuple[str, List[str], List[str]]]:
+                   ) -> Union[str, Tuple[str, dict, dict, dict]]:
         """
         Create a string that shows this recipes usage
 
@@ -1342,10 +1362,13 @@ class DrsRecipe(object):
                 self.special_args.append(self.specialargs[rarg])
         # ---------------------------------------------------------------------
         usage = '{0}.py'.format(self.name)
+        uhelp = dict()
         # loop around required arguments
         for rarg in self.required_args:
             # add argument to the usage
             usage += '{0}'.format(rarg.summary())
+            # get full description
+            uhelp[rarg.name] = rarg.summary(full=True)
         # add options to end
         usage += ' {' + textentry('OPTIONS_TEXT').strip() + '}'
 
@@ -1354,13 +1377,14 @@ class DrsRecipe(object):
             return usage
         # otherwise we need to also generate options and special options
         #    strings
-        options, soptions = [], []
+        options, soptions = dict(), dict()
         for opt in self.optional_args:
-            options.append(opt.summary())
+            options[opt.name] = opt.summary(full=True)
+
         for opt in self.special_args:
-            soptions.append(opt.summary())
-        # return u
-        return usage, options, soptions
+            soptions[opt.name] = opt.summary(full=True)
+        # return all outputs
+        return usage, uhelp, options, soptions
 
     def _input_str(self, inputs: Union[ParamDict, dict],
                    argdict: Dict[str, Any], kind: str = 'arg') -> str:
