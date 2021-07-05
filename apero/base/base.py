@@ -52,7 +52,7 @@ DATABASE_YAML = 'database.yaml'
 USER_ENV = 'DRS_UCONFIG'
 
 # Define instruments
-INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'None']
+INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE', 'None']
 # -----------------------------------------------------------------------------
 # constants/parameter settings
 # -----------------------------------------------------------------------------

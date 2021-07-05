@@ -196,6 +196,8 @@ apero_preprocess.set_kwarg(name='--skip', dtype='bool', default=False,
                            helpstr=textentry('PPSKIP_HELP'), default_ref='SKIP_DONE_PP')
 apero_preprocess.group_func = grouping.group_individually
 apero_preprocess.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+apero_preprocess.schematic = 'apero_preproces_spirou_schematic.jpg'
 # add to recipe
 recipes.append(apero_preprocess)
 
@@ -233,6 +235,8 @@ apero_badpix.set_kwarg(**plot)
 apero_badpix.set_kwarg(**resize)
 apero_badpix.group_func = grouping.group_by_dirname
 apero_badpix.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+apero_badpix.schematic = 'apero_badpix_spirou_schematic.jpg'
 # add to recipe
 recipes.append(apero_badpix)
 
@@ -292,6 +296,8 @@ apero_dark_master.set_kwarg(**add_db)
 apero_dark_master.set_kwarg(**plot)
 apero_dark_master.group_func = grouping.no_group
 apero_dark_master.group_column = None
+# documentation
+apero_dark_master.schematic = 'apero_dark_master_spirou_schematic.jpg'
 # add to recipe
 recipes.append(apero_dark_master)
 
@@ -334,6 +340,8 @@ apero_loc.set_kwarg(**plot)
 apero_loc.set_kwarg(**resize)
 apero_loc.group_func = grouping.group_by_dirname
 apero_loc.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+apero_loc.schematic = 'apero_loc_spirou_schematic.jpg'
 # add to recipe
 recipes.append(apero_loc)
 
@@ -390,6 +398,8 @@ apero_shape_master.set_kwarg(name='--fpmaster', dtype='files',
                              helpstr=textentry('SHAPE_FPMASTER_HELP'))
 apero_shape_master.group_func = grouping.group_by_dirname
 apero_shape_master.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+apero_shape_master.schematic = 'apero_shape_master_spirou_schematic.jpg'
 # add to recipe
 recipes.append(apero_shape_master)
 
@@ -432,6 +442,8 @@ apero_shape.set_kwarg(**shapexfile)
 apero_shape.set_kwarg(**shapeyfile)
 apero_shape.group_func = grouping.group_by_dirname
 apero_shape.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+apero_shape.schematic = 'apero_shape_spirou_schematic.jpg'
 # add to recipe
 recipes.append(apero_shape)
 
@@ -480,6 +492,8 @@ apero_flat.set_kwarg(**shapeyfile)
 apero_flat.set_kwarg(**shapelfile)
 apero_flat.group_func = grouping.group_by_dirname
 apero_flat.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+apero_flat.schematic = 'apero_flat_spirou_schematic.jpg'
 # add to recipe
 recipes.append(apero_flat)
 
@@ -532,6 +546,8 @@ apero_thermal.set_kwarg(name='--forceext', dtype='bool', default=False,
                         helpstr='THERMAL_EXTRACT_HELP')
 apero_thermal.group_func = grouping.group_by_dirname
 apero_thermal.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+apero_thermal.schematic = 'apero_thermal_spirou_schematic.jpg'
 # add to recipe
 recipes.append(apero_thermal)
 
@@ -729,6 +745,8 @@ apero_wave_master.set_kwarg(name='--cavityfile', dtype='file', default='None',
                             helpstr=textentry('WAVEM_CAVFILE_HELP'))
 apero_wave_master.group_func = grouping.group_by_dirname
 apero_wave_master.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+apero_wave_master.schematic = 'apero_wave_master_spirou_schematic.jpg'
 # add to recipe
 recipes.append(apero_wave_master)
 
