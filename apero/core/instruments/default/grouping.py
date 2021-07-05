@@ -450,6 +450,7 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
     # group column
     group_column = kwargs.get('group_column', None)
     group_filter = kwargs.get('group_filter', None)
+    limit = kwargs.get('limit', None)
     # ----------------------------------------------------------------------
     # first we need to find the file arguments
     # ----------------------------------------------------------------------
@@ -606,9 +607,10 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
                     if len(filenames) == 0:
                         valid = False
                         continue
-                    # # if we have a group limit only accept the first N files
-                    # if group_limit is not None:
-                    #     filenames = filenames[:group_limit]
+                    # # if we have a group limit only accept the last N files
+                    if limit is not None:
+                        if len(filenames) >= limit:
+                            filenames = filenames[-limit:]
                     # in each dictionary we will have arguments
                     run_inst.dictionary[argname] = filenames
                 # add to run instances

@@ -7349,7 +7349,7 @@ def combine_headers(params: ParamDict, headers: List[Header],
     combine_table['KEYS'] = table_keys
     # add the columns
     for col in table_dict:
-        combine_table[col] = np.array(table_dict[col])
+        combine_table[col] = np.array(table_dict[col]).astype(str)
     # add the comments
     combine_table['COMMENTS'] = table_comments
     # -------------------------------------------------------------------------

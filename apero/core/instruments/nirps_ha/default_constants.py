@@ -1478,6 +1478,10 @@ WAVE_CCF_RV_THRES_QC.value = 15.0    # 0.5 (spirou value)
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
+# Define the maximum number of files that can be used in a group
+GROUP_FILE_LIMIT = GROUP_FILE_LIMIT.copy(__NAME__)
+GROUP_FILE_LIMIT.value = 20
+
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
 WAVE_LINELIST_FILE.value = 'catalogue_UNe.csv'  # 'catalogue_UNe.dat'
