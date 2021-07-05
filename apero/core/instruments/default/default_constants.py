@@ -45,7 +45,7 @@ __all__ = [
     'OBJ_LIST_RESOLVE_FROM_GLIST', 'OBJ_LIST_RESOLVE_FROM_COORDS',
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'ODOCODE_REJECT_GSHEET_ID',
-    'ODOCODE_REJECT_GSHEET_NUM',
+    'ODOCODE_REJECT_GSHEET_NUM', 'GROUP_FILE_LIMIT',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
     'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -486,6 +486,12 @@ ALL_POLAR_RHOMB_POS = Const('ALL_POLAR_RHOMB_POS', value=None, dtype=str,
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: GENERAL SETTINGS'
+
+# Define the maximum number of files that can be used in a group
+GROUP_FILE_LIMIT = Const('GROUP_FILE_LIMIT', value=None, dtype=int,
+                         source=__NAME__, group=cgroup, minimum=1,
+                         description='Define the maximum number of files that '
+                                     'can be used in a group')
 
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)

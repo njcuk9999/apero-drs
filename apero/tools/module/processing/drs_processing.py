@@ -2747,6 +2747,8 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
 
     :return:
     """
+    # get hard upper limit for number of files in a group
+    limit = params['GROUP_FILE_LIMIT']
     # get grouping function
     group_function = recipe.group_func
     # deal with master
@@ -2764,7 +2766,7 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
         return group_function(recipe.args, recipe.kwargs,
                               argdict, kwargdict,
                               group_column=group_column,
-                              master=master)
+                              master=master, limit=limit)
     # if we don't have one give warning
     else:
         # Log warning: No runs produced for {0} - No group function given'

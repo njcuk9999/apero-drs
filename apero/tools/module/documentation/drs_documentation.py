@@ -258,7 +258,7 @@ def compile_recipe_definitions(params: ParamDict, recipe: DrsRecipe):
         markdown = drs_markdown.MarkDownPage(page_ref)
         # add title
         name = summary['NAME'].strip('.py')
-        markdown.add_title('{0} recipe'.format(name))
+        markdown.add_title('{0}'.format(name))
         # ---------------------------------------------------------------------
         # add section: description
         markdown.add_section('1. Description')

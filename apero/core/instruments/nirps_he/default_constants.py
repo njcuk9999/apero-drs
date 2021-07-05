@@ -109,6 +109,10 @@ IMAGE_FRAME_TIME.value = 5.57192
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
+# Define the maximum number of files that can be used in a group
+GROUP_FILE_LIMIT = GROUP_FILE_LIMIT.copy(__NAME__)
+GROUP_FILE_LIMIT.value = 20
+
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
 COMBINE_METRIC_THRESHOLD1 = COMBINE_METRIC_THRESHOLD1.copy(__NAME__)
