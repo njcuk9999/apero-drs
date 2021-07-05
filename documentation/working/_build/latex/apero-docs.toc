@@ -104,7 +104,7 @@
 \contentsline {section}{\numberline {1.2}SPIRou documentation}{19}{section.1.2}%
 \contentsline {subsection}{\numberline {1.2.1}Using APERO with SPIRou}{19}{subsection.1.2.1}%
 \contentsline {subsection}{\numberline {1.2.2}SPIRou Recipes}{19}{subsection.1.2.2}%
-\contentsline {subsubsection}{\numberline {1.2.2.1}apero\_preprocess\_spirou recipe}{19}{subsubsection.1.2.2.1}%
+\contentsline {subsubsection}{\numberline {1.2.2.1}apero\_preprocess\_spirou}{19}{subsubsection.1.2.2.1}%
 \contentsline {paragraph}{1. Description}{19}{paragraph*.64}%
 \contentsline {paragraph}{2. Schematic}{19}{paragraph*.65}%
 \contentsline {paragraph}{3. Usage}{20}{paragraph*.66}%
@@ -114,7 +114,7 @@
 \contentsline {paragraph}{7. Output files}{21}{paragraph*.70}%
 \contentsline {paragraph}{8. Debug plots}{21}{paragraph*.71}%
 \contentsline {paragraph}{9. Summary plots}{21}{paragraph*.72}%
-\contentsline {subsubsection}{\numberline {1.2.2.2}apero\_badpix\_spirou recipe}{21}{subsubsection.1.2.2.2}%
+\contentsline {subsubsection}{\numberline {1.2.2.2}apero\_badpix\_spirou}{21}{subsubsection.1.2.2.2}%
 \contentsline {paragraph}{1. Description}{21}{paragraph*.73}%
 \contentsline {paragraph}{2. Schematic}{21}{paragraph*.74}%
 \contentsline {paragraph}{3. Usage}{21}{paragraph*.75}%
@@ -124,7 +124,7 @@
 \contentsline {paragraph}{7. Output files}{22}{paragraph*.79}%
 \contentsline {paragraph}{8. Debug plots}{23}{paragraph*.80}%
 \contentsline {paragraph}{9. Summary plots}{23}{paragraph*.81}%
-\contentsline {subsubsection}{\numberline {1.2.2.3}apero\_dark\_spirou recipe}{23}{subsubsection.1.2.2.3}%
+\contentsline {subsubsection}{\numberline {1.2.2.3}apero\_dark\_spirou}{23}{subsubsection.1.2.2.3}%
 \contentsline {paragraph}{1. Description}{23}{paragraph*.82}%
 \contentsline {paragraph}{2. Schematic}{23}{paragraph*.83}%
 \contentsline {paragraph}{3. Usage}{23}{paragraph*.84}%
@@ -134,7 +134,7 @@
 \contentsline {paragraph}{7. Output files}{24}{paragraph*.88}%
 \contentsline {paragraph}{8. Debug plots}{24}{paragraph*.89}%
 \contentsline {paragraph}{9. Summary plots}{24}{paragraph*.90}%
-\contentsline {subsubsection}{\numberline {1.2.2.4}apero\_dark\_master\_spirou recipe}{24}{subsubsection.1.2.2.4}%
+\contentsline {subsubsection}{\numberline {1.2.2.4}apero\_dark\_master\_spirou}{24}{subsubsection.1.2.2.4}%
 \contentsline {paragraph}{1. Description}{24}{paragraph*.91}%
 \contentsline {paragraph}{2. Schematic}{25}{paragraph*.92}%
 \contentsline {paragraph}{3. Usage}{25}{paragraph*.93}%
@@ -144,7 +144,7 @@
 \contentsline {paragraph}{7. Output files}{26}{paragraph*.97}%
 \contentsline {paragraph}{8. Debug plots}{26}{paragraph*.98}%
 \contentsline {paragraph}{9. Summary plots}{26}{paragraph*.99}%
-\contentsline {subsubsection}{\numberline {1.2.2.5}apero\_loc\_spirou recipe}{26}{subsubsection.1.2.2.5}%
+\contentsline {subsubsection}{\numberline {1.2.2.5}apero\_loc\_spirou}{26}{subsubsection.1.2.2.5}%
 \contentsline {paragraph}{1. Description}{26}{paragraph*.100}%
 \contentsline {paragraph}{2. Schematic}{26}{paragraph*.101}%
 \contentsline {paragraph}{3. Usage}{26}{paragraph*.102}%
@@ -154,7 +154,7 @@
 \contentsline {paragraph}{7. Output files}{28}{paragraph*.106}%
 \contentsline {paragraph}{8. Debug plots}{28}{paragraph*.107}%
 \contentsline {paragraph}{9. Summary plots}{28}{paragraph*.108}%
-\contentsline {subsubsection}{\numberline {1.2.2.6}apero\_shape\_master\_spirou recipe}{28}{subsubsection.1.2.2.6}%
+\contentsline {subsubsection}{\numberline {1.2.2.6}apero\_shape\_master\_spirou}{28}{subsubsection.1.2.2.6}%
 \contentsline {paragraph}{1. Description}{28}{paragraph*.109}%
 \contentsline {paragraph}{2. Schematic}{29}{paragraph*.110}%
 \contentsline {paragraph}{3. Usage}{29}{paragraph*.111}%
@@ -164,7 +164,7 @@
 \contentsline {paragraph}{7. Output files}{30}{paragraph*.115}%
 \contentsline {paragraph}{8. Debug plots}{30}{paragraph*.116}%
 \contentsline {paragraph}{9. Summary plots}{30}{paragraph*.117}%
-\contentsline {subsubsection}{\numberline {1.2.2.7}apero\_shape\_spirou recipe}{31}{subsubsection.1.2.2.7}%
+\contentsline {subsubsection}{\numberline {1.2.2.7}apero\_shape\_spirou}{31}{subsubsection.1.2.2.7}%
 \contentsline {paragraph}{1. Description}{31}{paragraph*.118}%
 \contentsline {paragraph}{2. Schematic}{31}{paragraph*.119}%
 \contentsline {paragraph}{3. Usage}{31}{paragraph*.120}%
@@ -174,7 +174,7 @@
 \contentsline {paragraph}{7. Output files}{32}{paragraph*.124}%
 \contentsline {paragraph}{8. Debug plots}{32}{paragraph*.125}%
 \contentsline {paragraph}{9. Summary plots}{32}{paragraph*.126}%
-\contentsline {subsubsection}{\numberline {1.2.2.8}apero\_flat\_spirou recipe}{33}{subsubsection.1.2.2.8}%
+\contentsline {subsubsection}{\numberline {1.2.2.8}apero\_flat\_spirou}{33}{subsubsection.1.2.2.8}%
 \contentsline {paragraph}{1. Description}{33}{paragraph*.127}%
 \contentsline {paragraph}{2. Schematic}{33}{paragraph*.128}%
 \contentsline {paragraph}{3. Usage}{33}{paragraph*.129}%
@@ -184,7 +184,7 @@
 \contentsline {paragraph}{7. Output files}{34}{paragraph*.133}%
 \contentsline {paragraph}{8. Debug plots}{35}{paragraph*.134}%
 \contentsline {paragraph}{9. Summary plots}{35}{paragraph*.135}%
-\contentsline {subsubsection}{\numberline {1.2.2.9}apero\_thermal\_spirou recipe}{35}{subsubsection.1.2.2.9}%
+\contentsline {subsubsection}{\numberline {1.2.2.9}apero\_thermal\_spirou}{35}{subsubsection.1.2.2.9}%
 \contentsline {paragraph}{1. Description}{35}{paragraph*.136}%
 \contentsline {paragraph}{2. Schematic}{35}{paragraph*.137}%
 \contentsline {paragraph}{3. Usage}{35}{paragraph*.138}%
@@ -194,7 +194,7 @@
 \contentsline {paragraph}{7. Output files}{37}{paragraph*.142}%
 \contentsline {paragraph}{8. Debug plots}{37}{paragraph*.143}%
 \contentsline {paragraph}{9. Summary plots}{37}{paragraph*.144}%
-\contentsline {subsubsection}{\numberline {1.2.2.10}apero\_leak\_master\_spirou recipe}{37}{subsubsection.1.2.2.10}%
+\contentsline {subsubsection}{\numberline {1.2.2.10}apero\_leak\_master\_spirou}{37}{subsubsection.1.2.2.10}%
 \contentsline {paragraph}{1. Description}{37}{paragraph*.145}%
 \contentsline {paragraph}{2. Schematic}{37}{paragraph*.146}%
 \contentsline {paragraph}{3. Usage}{37}{paragraph*.147}%
@@ -204,7 +204,7 @@
 \contentsline {paragraph}{7. Output files}{38}{paragraph*.151}%
 \contentsline {paragraph}{8. Debug plots}{39}{paragraph*.152}%
 \contentsline {paragraph}{9. Summary plots}{39}{paragraph*.153}%
-\contentsline {subsubsection}{\numberline {1.2.2.11}apero\_leak\_spirou recipe}{39}{subsubsection.1.2.2.11}%
+\contentsline {subsubsection}{\numberline {1.2.2.11}apero\_leak\_spirou}{39}{subsubsection.1.2.2.11}%
 \contentsline {paragraph}{1. Description}{39}{paragraph*.154}%
 \contentsline {paragraph}{2. Schematic}{39}{paragraph*.155}%
 \contentsline {paragraph}{3. Usage}{39}{paragraph*.156}%
@@ -214,7 +214,7 @@
 \contentsline {paragraph}{7. Output files}{40}{paragraph*.160}%
 \contentsline {paragraph}{8. Debug plots}{40}{paragraph*.161}%
 \contentsline {paragraph}{9. Summary plots}{40}{paragraph*.162}%
-\contentsline {subsubsection}{\numberline {1.2.2.12}apero\_extract\_spirou recipe}{40}{subsubsection.1.2.2.12}%
+\contentsline {subsubsection}{\numberline {1.2.2.12}apero\_extract\_spirou}{40}{subsubsection.1.2.2.12}%
 \contentsline {paragraph}{1. Description}{40}{paragraph*.163}%
 \contentsline {paragraph}{2. Schematic}{41}{paragraph*.164}%
 \contentsline {paragraph}{3. Usage}{41}{paragraph*.165}%
@@ -224,7 +224,7 @@
 \contentsline {paragraph}{7. Output files}{43}{paragraph*.169}%
 \contentsline {paragraph}{8. Debug plots}{43}{paragraph*.170}%
 \contentsline {paragraph}{9. Summary plots}{43}{paragraph*.171}%
-\contentsline {subsubsection}{\numberline {1.2.2.13}apero\_wave\_master\_old\_spirou recipe}{44}{subsubsection.1.2.2.13}%
+\contentsline {subsubsection}{\numberline {1.2.2.13}apero\_wave\_master\_old\_spirou}{44}{subsubsection.1.2.2.13}%
 \contentsline {paragraph}{1. Description}{44}{paragraph*.172}%
 \contentsline {paragraph}{2. Schematic}{44}{paragraph*.173}%
 \contentsline {paragraph}{3. Usage}{44}{paragraph*.174}%
@@ -234,7 +234,7 @@
 \contentsline {paragraph}{7. Output files}{46}{paragraph*.178}%
 \contentsline {paragraph}{8. Debug plots}{46}{paragraph*.179}%
 \contentsline {paragraph}{9. Summary plots}{47}{paragraph*.180}%
-\contentsline {subsubsection}{\numberline {1.2.2.14}apero\_wave\_night\_old\_spirou recipe}{47}{subsubsection.1.2.2.14}%
+\contentsline {subsubsection}{\numberline {1.2.2.14}apero\_wave\_night\_old\_spirou}{47}{subsubsection.1.2.2.14}%
 \contentsline {paragraph}{1. Description}{47}{paragraph*.181}%
 \contentsline {paragraph}{2. Schematic}{47}{paragraph*.182}%
 \contentsline {paragraph}{3. Usage}{47}{paragraph*.183}%
@@ -244,7 +244,7 @@
 \contentsline {paragraph}{7. Output files}{49}{paragraph*.187}%
 \contentsline {paragraph}{8. Debug plots}{49}{paragraph*.188}%
 \contentsline {paragraph}{9. Summary plots}{49}{paragraph*.189}%
-\contentsline {subsubsection}{\numberline {1.2.2.15}apero\_ccf\_spirou recipe}{50}{subsubsection.1.2.2.15}%
+\contentsline {subsubsection}{\numberline {1.2.2.15}apero\_ccf\_spirou}{50}{subsubsection.1.2.2.15}%
 \contentsline {paragraph}{1. Description}{50}{paragraph*.190}%
 \contentsline {paragraph}{2. Schematic}{50}{paragraph*.191}%
 \contentsline {paragraph}{3. Usage}{50}{paragraph*.192}%
@@ -254,7 +254,7 @@
 \contentsline {paragraph}{7. Output files}{51}{paragraph*.196}%
 \contentsline {paragraph}{8. Debug plots}{51}{paragraph*.197}%
 \contentsline {paragraph}{9. Summary plots}{51}{paragraph*.198}%
-\contentsline {subsubsection}{\numberline {1.2.2.16}apero\_mk\_tellu\_spirou recipe}{51}{subsubsection.1.2.2.16}%
+\contentsline {subsubsection}{\numberline {1.2.2.16}apero\_mk\_tellu\_spirou}{51}{subsubsection.1.2.2.16}%
 \contentsline {paragraph}{1. Description}{51}{paragraph*.199}%
 \contentsline {paragraph}{2. Schematic}{52}{paragraph*.200}%
 \contentsline {paragraph}{3. Usage}{52}{paragraph*.201}%
@@ -264,7 +264,7 @@
 \contentsline {paragraph}{7. Output files}{53}{paragraph*.205}%
 \contentsline {paragraph}{8. Debug plots}{53}{paragraph*.206}%
 \contentsline {paragraph}{9. Summary plots}{53}{paragraph*.207}%
-\contentsline {subsubsection}{\numberline {1.2.2.17}apero\_mk\_tellu\_db\_spirou recipe}{53}{subsubsection.1.2.2.17}%
+\contentsline {subsubsection}{\numberline {1.2.2.17}apero\_mk\_tellu\_db\_spirou}{53}{subsubsection.1.2.2.17}%
 \contentsline {paragraph}{1. Description}{53}{paragraph*.208}%
 \contentsline {paragraph}{2. Schematic}{53}{paragraph*.209}%
 \contentsline {paragraph}{3. Usage}{54}{paragraph*.210}%
@@ -274,7 +274,7 @@
 \contentsline {paragraph}{7. Output files}{55}{paragraph*.214}%
 \contentsline {paragraph}{8. Debug plots}{55}{paragraph*.215}%
 \contentsline {paragraph}{9. Summary plots}{55}{paragraph*.216}%
-\contentsline {subsubsection}{\numberline {1.2.2.18}apero\_fit\_tellu\_spirou recipe}{55}{subsubsection.1.2.2.18}%
+\contentsline {subsubsection}{\numberline {1.2.2.18}apero\_fit\_tellu\_spirou}{55}{subsubsection.1.2.2.18}%
 \contentsline {paragraph}{1. Description}{55}{paragraph*.217}%
 \contentsline {paragraph}{2. Schematic}{55}{paragraph*.218}%
 \contentsline {paragraph}{3. Usage}{55}{paragraph*.219}%
@@ -284,7 +284,7 @@
 \contentsline {paragraph}{7. Output files}{56}{paragraph*.223}%
 \contentsline {paragraph}{8. Debug plots}{57}{paragraph*.224}%
 \contentsline {paragraph}{9. Summary plots}{57}{paragraph*.225}%
-\contentsline {subsubsection}{\numberline {1.2.2.19}apero\_fit\_tellu\_db\_spirou recipe}{57}{subsubsection.1.2.2.19}%
+\contentsline {subsubsection}{\numberline {1.2.2.19}apero\_fit\_tellu\_db\_spirou}{57}{subsubsection.1.2.2.19}%
 \contentsline {paragraph}{1. Description}{57}{paragraph*.226}%
 \contentsline {paragraph}{2. Schematic}{57}{paragraph*.227}%
 \contentsline {paragraph}{3. Usage}{57}{paragraph*.228}%
@@ -294,7 +294,7 @@
 \contentsline {paragraph}{7. Output files}{58}{paragraph*.232}%
 \contentsline {paragraph}{8. Debug plots}{58}{paragraph*.233}%
 \contentsline {paragraph}{9. Summary plots}{59}{paragraph*.234}%
-\contentsline {subsubsection}{\numberline {1.2.2.20}apero\_mk\_template\_spirou recipe}{59}{subsubsection.1.2.2.20}%
+\contentsline {subsubsection}{\numberline {1.2.2.20}apero\_mk\_template\_spirou}{59}{subsubsection.1.2.2.20}%
 \contentsline {paragraph}{1. Description}{59}{paragraph*.235}%
 \contentsline {paragraph}{2. Schematic}{59}{paragraph*.236}%
 \contentsline {paragraph}{3. Usage}{59}{paragraph*.237}%
@@ -304,7 +304,7 @@
 \contentsline {paragraph}{7. Output files}{60}{paragraph*.241}%
 \contentsline {paragraph}{8. Debug plots}{60}{paragraph*.242}%
 \contentsline {paragraph}{9. Summary plots}{60}{paragraph*.243}%
-\contentsline {subsubsection}{\numberline {1.2.2.21}apero\_pol\_spirou recipe}{61}{subsubsection.1.2.2.21}%
+\contentsline {subsubsection}{\numberline {1.2.2.21}apero\_pol\_spirou}{61}{subsubsection.1.2.2.21}%
 \contentsline {paragraph}{1. Description}{61}{paragraph*.244}%
 \contentsline {paragraph}{2. Schematic}{61}{paragraph*.245}%
 \contentsline {paragraph}{3. Usage}{61}{paragraph*.246}%
@@ -314,7 +314,7 @@
 \contentsline {paragraph}{7. Output files}{62}{paragraph*.250}%
 \contentsline {paragraph}{8. Debug plots}{62}{paragraph*.251}%
 \contentsline {paragraph}{9. Summary plots}{63}{paragraph*.252}%
-\contentsline {subsubsection}{\numberline {1.2.2.22}apero\_postprocess\_spirou recipe}{63}{subsubsection.1.2.2.22}%
+\contentsline {subsubsection}{\numberline {1.2.2.22}apero\_postprocess\_spirou}{63}{subsubsection.1.2.2.22}%
 \contentsline {paragraph}{1. Description}{63}{paragraph*.253}%
 \contentsline {paragraph}{2. Schematic}{63}{paragraph*.254}%
 \contentsline {paragraph}{3. Usage}{63}{paragraph*.255}%
