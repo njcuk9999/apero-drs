@@ -2,6 +2,65 @@ Changelog
 =========
 
 
+0.7.142 (2021-07-05)
+--------------------
+- Update documentation. [Neil Cook]
+- Change grouping to only allow a maximum number of files in a group.
+  [Neil Cook]
+- Update documentation. [Neil Cook]
+- Add `nirps_he` mode. [Neil Cook]
+- Update wave solution. [Neil Cook]
+
+
+0.7.141 (2021-07-02)
+--------------------
+- Add auto-doc recipe definitions. [Neil Cook]
+- `Apero.core.instruments.nirps_ha.pseudo_const.py` - correct typo remove
+  filename from `get_drs_mode`. [Neil Cook]
+
+
+0.7.140 (2021-06-30)
+--------------------
+- Apero.tools.module.documentation - add css + table formatting. [Neil
+  Cook]
+- Apero.tools.module.documentation - add to file definitions
+  documentation nirps + spirou. [Neil Cook]
+- `Apero.core.instruments.*.pseudo_const.py` - expand `psuedo_consts`
+  loading certain variables only once. [Neil Cook]
+- `Apero.science.calib.shape.py` - correctiong for infiles for outfile3+
+  (nirps hcfiles None) [Neil Cook]
+
+
+0.7.139 (2021-06-29)
+--------------------
+- Update documentation based on `file_definitions` page. [Neil Cook]
+- Add way to compile list of file definitions. [Neil Cook]
+- `Apero.core.instruments.nirps_ha.default_constants.py` - change the
+  localisation ydet max value limit from 4060-->4050. [Neil Cook]
+- `Apero.core.utils.drs_startup.py` - add DrsCodedException as known error
+  type (expected) [Neil Cook]
+- `Apero.core.instruments.nirps_ha.file_definitions.py` - add `OBJ_SKY`,
+  `OBJ_TUN`, `TEST_HCONE_HCONE`, `TEST_FP_HCONE`, `TEST_HCONE_FP`, `TEST_DARK_FP`.
+  [Neil Cook]
+- `Apero.core.core.drs_file.py` - get id file error keys from psuedo
+  const. [Neil Cook]
+- `Apero.core.instruments.nirps_ha.file_definitions.py` - add FLAT,LED to
+  known raw file types. [Neil Cook]
+- Update reset.object.csv file based on current googlesheet (so we don't
+  have to recheck we supply this as default) [Neil Cook]
+
+
+0.7.138 (2021-06-29)
+--------------------
+- Database fixes - FLOAT-->DOUBLE, order file names for skipping, fix
+  grouping for polar files (pol not running) [Neil Cook]
+- Remove PPM from nirps run.ini files. [Neil Cook]
+- Update requirements (no longer a test) [Neil Cook]
+- Update master night for nirps. [Neil Cook]
+- Update pseudo const for nirps. [Neil Cook]
+- Update date/version/changelog/docs. [Neil Cook]
+
+
 0.7.137 (2021-06-25)
 --------------------
 - Finish delete table app for `apero_database.py` (--delete) [Neil Cook]

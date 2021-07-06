@@ -1,149 +1,155 @@
+commit 65ee6bcdaeded38aa37dc85bd345038ab353d501
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jul 5 19:55:10 2021 -0400
+
+    update documentation
+
+commit b4b2ab7d79d1aeee7f716c6fe18996d4e6eb3aea
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jul 5 19:54:09 2021 -0400
+
+    change grouping to only allow a maximum number of files in a group
+
+commit f1e58eb29463689b80fe0e663386d3b307d3c23a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jul 5 15:31:42 2021 -0400
+
+    update documentation
+
+commit fbc3d7d819a3cb2b61af230836912cc2566c10eb
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jul 5 15:16:18 2021 -0400
+
+    add nirps_he mode
+
+commit 7c73ce76c8990d70ad779f288c240dd05ad5ef01
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jul 5 13:12:14 2021 -0400
+
+    update wave solution
+
+commit 1581bfeb509e8d62f9c289b64e9a821809267f80
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Jul 2 15:19:43 2021 -0400
+
+    add auto-doc recipe definitions
+
+commit 007c7031dbfe8801c402102319ddbe540cbc5a39
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Jul 2 10:46:42 2021 -0400
+
+    apero.core.instruments.nirps_ha.pseudo_const.py - correct typo remove filename from get_drs_mode
+
+commit d2540f09ead284be3ba918ad8b878152e5e50d23
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Jun 30 18:55:28 2021 -0400
+
+    apero.tools.module.documentation - add css + table formatting
+
+commit 2ec978300122229cbb967d5f559d03afc8cde778
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Jun 30 15:38:29 2021 -0400
+
+    apero.tools.module.documentation - add to file definitions documentation nirps + spirou
+
+commit b804a7eb7939761f95e7eca028677de9d8255372
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Jun 30 11:21:44 2021 -0400
+
+    apero.core.instruments.*.pseudo_const.py - expand psuedo_consts loading certain variables only once
+
+commit 70e4ef01ac973fca791e2ae1ce2188bdb8c83670
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Jun 30 09:47:54 2021 -0400
+
+    apero.science.calib.shape.py - correctiong for infiles for outfile3+ (nirps hcfiles None)
+
+commit 3abbef217d77065a74d996e7c227854df9a162c6
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 29 19:25:43 2021 -0400
+
+    update documentation based on file_definitions page
+
+commit 46c0f24607c490df896deaa948f9f8ef09950066
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 29 18:22:41 2021 -0400
+
+    add way to compile list of file definitions
+
+commit a0492e1f11d3d5074609fb84160746752e3a059a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 29 14:30:47 2021 -0400
+
+    apero.core.instruments.nirps_ha.default_constants.py - change the localisation ydet max value limit from 4060-->4050
+
+commit 3e0c5877edf5965122de4ad576d1e7a7c57d4b66
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 29 14:30:20 2021 -0400
+
+    apero.core.utils.drs_startup.py - add DrsCodedException as known error type (expected)
+
+commit 7025a658f5c64663a794547bf432d07d0c753467
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 29 13:42:47 2021 -0400
+
+    apero.core.instruments.nirps_ha.file_definitions.py - add OBJ_SKY, OBJ_TUN, TEST_HCONE_HCONE, TEST_FP_HCONE, TEST_HCONE_FP, TEST_DARK_FP
+
+commit 1c9b4a6c5881a059af63d297deee888d87af19e9
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 29 12:13:28 2021 -0400
+
+    apero.core.core.drs_file.py - get id file error keys from psuedo const
+
+commit 368e0f1e3346ebced0cf17b646ef8b310978f074
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 29 12:12:51 2021 -0400
+
+    apero.core.instruments.nirps_ha.file_definitions.py - add FLAT,LED to known raw file types
+
+commit 4f3e0a49dae22cbfeee406ffb17763b4835010ae
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jun 29 12:11:04 2021 -0400
+
+    update reset.object.csv file based on current googlesheet (so we don't have to recheck we supply this as default)
+
+commit 2be6959406d4c94e097ba595c5b90d8cf3913538
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jun 28 21:04:39 2021 -0400
+
+    database fixes - FLOAT-->DOUBLE, order file names for skipping, fix grouping for polar files (pol not running)
+
+commit f97c417e2b208aa84705b15a7a257a76285d97ac
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jun 28 13:50:26 2021 -0400
+
+    remove PPM from nirps run.ini files
+
+commit d4af5f8613514fc95034cf8ce2e5900b11793ca9
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jun 28 11:29:34 2021 -0400
+
+    update requirements (no longer a test)
+
+commit f604c01d1ce6ec833b32dfca1065b1df417f7a2d
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jun 28 11:26:05 2021 -0400
+
+    update master night for nirps
+
+commit 4964c3bc2a6023df865e49daddc2069d4689fbcd
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jun 28 11:05:23 2021 -0400
+
+    update pseudo const for nirps
+
+commit 8d1889cbf522cf371170f1d44b8c88c2000be79c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Jun 25 10:48:52 2021 -0400
+
+    update date/version/changelog/docs
+
 commit 8a43e5705b6d0d0d92526e3d7620d5e9746ffd1a
 Author: Neil Cook <neil.james.cook@gmail.com>
 Date:   Fri Jun 25 10:17:28 2021 -0400
 
     finish delete table app for apero_database.py (--delete)
-
-commit 95cf3324369f8961d34bb3dc014c3ba3093c149f
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Thu Jun 24 11:45:30 2021 -0400
-
-    apero.tools.module.database.manage_db_gui.py - work on app to delete / manage tables
-
-commit ed425b3d9513a0d9d2e5666faccf6ca093dc410b
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Wed Jun 23 16:35:06 2021 -0400
-
-    few fixes for database indexing
-
-commit 64d51e8602e6670ebbc4fefa5ee0c8b643cc3182
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 22 23:16:13 2021 -0400
-
-    apero.core.utils.drs_utils.py - forgot param_kind in log key loop
-
-commit 398f085654b3c528f3f5de73a90aff94c8b60dcb
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 22 22:57:06 2021 -0400
-
-    continue database indexing overhaul
-
-commit 2c754567bc4be1558a648247cb2f5a0f77d39bc8
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 22 22:11:08 2021 -0400
-
-    apero.base.drs_db.py - add index column
-
-commit afba64c21f6acb84163413654a54a1ccfeaad1af
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 22 22:01:41 2021 -0400
-
-    optimize database using index columns and define all sql data types properly (to aid speed up + indexing)
-
-commit 506e3d3e1084881ec1e35da99249f3e17526d9f7
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 22 16:23:32 2021 -0400
-
-    apero.io.drs_path.py - add listdirs, nofiles and listfiles functions (for quick directory/file listings)
-
-commit 7853f0420e0c2335fd65b1c0dcf3acfca8cf14ab
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 22 16:20:29 2021 -0400
-
-    apero.core.math.gen_math.py - rename 'slice' to 'imslace' (avoid using standard name)
-
-commit ccc7659cbf8bf88708752b57fe1dc428ad7aaf70
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 22 16:20:02 2021 -0400
-
-    apero_wave_night_nirps_ha.py - do not update smart_fp_mask here (only in master)
-
-commit 5617c82f18801eeef17df06c261bf730261516a5
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 22 16:19:43 2021 -0400
-
-    apero_wave_night_spirou.py - do not update smart_fp_mask here (only in master)
-
-commit 9157420544aea40dbc37fb484ec1628423331c09
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 22 16:19:17 2021 -0400
-
-    turn off cosmic correction for NIRPS - broken (Etienne will fix later)
-
-commit d0d1a1c375b4fdb4ca5f5d9a92163f94c0fefbe9
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Mon Jun 21 19:03:35 2021 -0400
-
-    apero.core.core.drs_database - add todo on how we deal with unique columns
-
-commit 8d7b3d0f1a2a06365b607c3f54391a71bd3b721c
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Mon Jun 21 18:32:25 2021 -0400
-
-    try to speed up processing pre-indexing
-
-commit 2a14b7e9f637b7ed08550799de066377ecac85e7
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Mon Jun 21 18:30:17 2021 -0400
-
-    try to speed up processing pre-indexing
-
-commit 5afb061e40baf1d6651542407241abd40e0cf168
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Mon Jun 21 15:46:07 2021 -0400
-
-    try to speed up processing pre-indexing
-
-commit 2ab95d6b1428a8a6fa07bf384b69eedb4109528e
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Mon Jun 21 11:17:55 2021 -0400
-
-    apero.core.core.drs_file.py - self.abspath should be a string here
-
-commit 9a0f2e900fe8aa503ef5681e1e84368374d19422
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Fri Jun 18 19:49:25 2021 -0400
-
-    apero.core.core.drs_database.py - last modified date a problem with many files
-
-commit 21504d34ee4836338607d95303a22d86c2ccb295
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Fri Jun 18 19:49:00 2021 -0400
-
-    update nirps preprocessing
-
-commit 1bb5a868c0b3fc381f2b462b6710479fa4001487
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Thu Jun 17 22:24:34 2021 -0400
-
-    apero_preprocess_nirps_ha.py - need to add etiennes code for fixing first pixel in amp
-
-commit f48c34d336e28eec642e749bb4daf29c56783cb0
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Thu Jun 17 22:23:19 2021 -0400
-
-    update version/date/changelog/update notes
-
-commit cc65232a1443a194007ab38439aadf70f65fc5da
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Thu Jun 17 22:22:39 2021 -0400
-
-    fix apero_postprocess_spirou.py  - fix db infiles
-
-commit badb391d1b8a592431db522628dda52238d2ae6e
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Wed Jun 16 22:59:16 2021 -0400
-
-    keep adding drs output files with infiles (for the database) - brute force approach --> find blanks in database (we missed some)
-
-commit d6cf686ab533710e78ea8186b0886ec1b014d29b
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Wed Jun 16 17:18:39 2021 -0400
-
-    keep adding drs output files with infiles (for the database) - brute force approach --> find blanks in database (we missed some)
-
-commit bc0be245929098dcffae7783fc3188dda0a103a1
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Wed Jun 16 11:20:25 2021 -0400
-
-    add KW_INSTRUMENT + add infiles column to the index database
