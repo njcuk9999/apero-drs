@@ -62,7 +62,7 @@ class BaryCorrpyException(Exception):
 
 def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
              header: Union[drs_fits.Header, None] = None, log: bool = True,
-             warn: bool = False, force: bool = False,
+             warn: bool = True, force: bool = False,
              dprtypes: Union[List[str], None] = None,
              kind: Union[str, None] = None) -> ParamDict:
     """
