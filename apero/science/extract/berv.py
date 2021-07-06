@@ -98,7 +98,7 @@ mode2['alt'] = Property(name='obs_alt', unit=uu.deg)
 # Define user functions
 # =============================================================================
 def get_berv(params, infile=None, header=None, props=None, log=True,
-             warn=False, force=False, **kwargs):
+             warn=True, force=False, **kwargs):
     func_name = __NAME__ + '.get_berv()'
     # log progress
     if log:
