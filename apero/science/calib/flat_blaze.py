@@ -264,7 +264,8 @@ def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
     # ------------------------------------------------------------------------
     # load flat file
     cout = gen_calib.load_calib_file(params, key, header, filename=filename,
-                                     userinputkey='FLATFILE', database=calibdbm)
+                                     userinputkey='FLATFILE', database=calibdbm,
+                                     fiber=fiber)
     flat, _, flat_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
