@@ -2610,6 +2610,7 @@ def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
     fp_wave_meas2 = kwargs['fp_wave_meas2']
     fp_cavity1 = fp_wave_meas1 * kwargs['fp_peak_num_1']
     fp_cavity2 = fp_wave_meas2 * kwargs['fp_peak_num_2']
+    iteration = kwargs.get('iteration', 0)
     # work out residuals (when compared to the model)
     res = fp_cavity2 - np.polyval(cavity, kwargs['fp_wave_ref_2'])
     # ------------------------------------------------------------------
@@ -2631,8 +2632,9 @@ def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
     # add labels
     frames[0].set(xlabel='Wavelength [nm]', ylabel='Cavity length [nm]')
     frames[1].set(xlabel='Wavelength [nm]', ylabel='Cavity length [nm]')
-
-    plt.suptitle('Comparison between guess and final cavity length fit')
+    # set title
+    plt.suptitle('Comparison between guess and final cavity length fit. '
+                 'Iteration {0}'.format(iteration))
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -2657,6 +2659,7 @@ def plot_wave_hc_diff_hist(plotter: Plotter, graph: Graph,
     # get the arguments from kwargs
     diff_hc = np.array(kwargs['diff_hc'])
     error = np.array(kwargs['error'])
+    iteration = kwargs.get('iteration', 0)
     # filter by 5 and 95 percentiles
     low, high = np.percentile(diff_hc, [5, 95])
     mask = (diff_hc > low) & (diff_hc < high)
@@ -2678,7 +2681,8 @@ def plot_wave_hc_diff_hist(plotter: Plotter, graph: Graph,
     # plot histogram for nsig
     frames[1].hist(nsig[np.abs(nsig) < 5], bins=nbins)
     # add axis labels + title
-    frames[1].set(xlabel='Sigma', ylabel='Number', title='HC diff / error')
+    frames[1].set(xlabel='Sigma', ylabel='Number',
+                  title='HC diff / error. Iteration {0}'.format(iteration))
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)

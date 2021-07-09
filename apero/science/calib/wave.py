@@ -937,7 +937,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # length relative to the master observation directory. By construction,
         # this is always an integer.
         cavfit = np.polyval(cavity_length_poly, list_waves)
-        peak_number = np.array(cavfit / list_waves, dtype=int)
+        peak_number = np.round(cavfit / list_waves, 0).astype(int)
     # ----------------------------------------------------------------------
     # else we break
     # ----------------------------------------------------------------------
@@ -972,6 +972,9 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         order_waves = list_waves[good]
         order_pixels = list_pixels[good]
         order_wfit = list_wfit[good]
+        # we have a wavelength value, we get an approximate pixel
+        # value by fitting wavelength to pixel
+        owave = wavemap[order_num]
         # ------------------------------------------------------------------
         # loop around lines
         valid_lines = 0
@@ -1035,6 +1038,12 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                     if cond1 and cond2:
                         amp[good[it]] = popt[0]
                         pixel_m[good[it]] = popt[1]
+                        # fit to get the measured wavelength for the center
+                        #   of our FP peak
+                        midpoint = int(popt[1])
+                        wcoeffs = np.polyfit([midpoint, midpoint+1],
+                                             owave[[midpoint, midpoint+1]], 1)
+                        wave_m[good[it]] = np.polyval(wcoeffs, popt[1])
                         ewidth[good[it]] = popt[2]
                         nsig[good[it]] = np.abs(popt[0]) / rms
                         # line is valid
@@ -1076,6 +1085,16 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     recipe.plot('WAVEREF_EXPECTED', orders=list_orders, wavemap=list_waves,
                 diff=diffpix, fiber=fiber, nbo=nbo, fibtype=fibtype,
                 iteration=iteration)
+
+    if recipe.plot.plotoption == 2:
+        import matplotlib.pyplot as plt
+        fig, frames = plt.subplots(ncols=1, nrows=2)
+        frames[0].plot(list_waves - wave_m, 'k.')
+        frames[1].plot(list_waves, peak_number * list_waves)
+        frames[1].plot(list_waves, peak_number * wave_m, 'g.')
+        frames[1].set(title='Iteration = {0}'.format(iteration))
+        plt.show()
+        plt.close()
     # ----------------------------------------------------------------------
     # Create table to store them in
     # ----------------------------------------------------------------------
@@ -1129,7 +1148,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                   cavity_update: Union[np.ndarray, None] = None,
                   wavesol_fit_degree: Union[int, None] = None,
                   cavity_fit_degree: Union[int, None] = None,
-                  nsig_cut: Union[float, None] = None):
+                  nsig_cut: Union[float, None] = None,
+                  iteration: Union[str, int, None] = None):
     """
     Calculate the wave solution using a table of hclines and fplines
 
@@ -1172,8 +1192,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                                wave solution fit
     :param cavity_fit_degree: int, the polynomial degree fit order for the
                               cavity fit
-
     :param nsig_cut: int, the number of sigmas to cut in the robust polyfits
+    :param iteration: int or str, the iteration number
 
     :return: ParamDict, the wave properties
     """
@@ -1501,7 +1521,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     recipe.plot('WAVE_WL_CAV', cavity=cavity,
                 fp_wave_meas1=fp_wave_meas_1, fp_peak_num_1=fp_peak_num_1,
                 fp_wave_meas2=fp_wave_meas_2, fp_peak_num_2=fp_peak_num_2,
-                fp_wave_ref_1=fp_wave_ref_1, fp_wave_ref_2=fp_wave_ref_2)
+                fp_wave_ref_1=fp_wave_ref_1, fp_wave_ref_2=fp_wave_ref_2,
+                iteration=iteration)
     # -------------------------------------------------------------------------
     # if fit_cavity is False and a file exists we load this file
     # (otherwise we save this cavity file later)
@@ -1602,7 +1623,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     WLOG(params, '', textentry('40-017-00058', args=margs))
     # -------------------------------------------------------------------------
     # plot the wavelength hc diff histograms
-    recipe.plot('WAVE_HC_DIFF_HIST', diff_hc=diff_hc, error=hcsigma)
+    recipe.plot('WAVE_HC_DIFF_HIST', diff_hc=diff_hc, error=hcsigma,
+                iteration=iteration)
     # -------------------------------------------------------------------------
     # update wave solution for fplines
     fpl_wave_ref = np.polyval(cavity, fpl_wave_ref) / fpl_peak_num
@@ -2831,6 +2853,11 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     hcfile.data = hclines
     hcfile.datatype = 'table'
     # ------------------------------------------------------------------
+    # TODO: remove later
+    if file_kind is not None:
+        path = hcfile.filename.split(hcfile.basename)[0]
+        hcfile.basename = '{0}_{1}'.format(file_kind, hcfile.basename)
+        hcfile.filename = os.path.join(path, hcfile.basename)
     # log that we are saving rotated image
     wargs = [fiber, hcfile.filename]
     WLOG(params, '', textentry('40-017-00039', args=wargs))
@@ -2870,15 +2897,14 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     fpfile.data = fplines
     fpfile.datatype = 'table'
     # ------------------------------------------------------------------
-    # log that we are saving rotated image
-    wargs = [fiber, fpfile.filename]
-    WLOG(params, '', textentry('40-017-00039', args=wargs))
-
     # TODO: remove later
     if file_kind is not None:
         path = fpfile.filename.split(fpfile.basename)[0]
         fpfile.basename = '{0}_{1}'.format(file_kind, fpfile.basename)
         fpfile.filename = os.path.join(path, fpfile.basename)
+    # log that we are saving rotated image
+    wargs = [fiber, fpfile.filename]
+    WLOG(params, '', textentry('40-017-00039', args=wargs))
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
