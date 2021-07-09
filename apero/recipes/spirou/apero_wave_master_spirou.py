@@ -244,30 +244,45 @@ def __main__(recipe, params):
             fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
                           cavity_poly=wprops['CAVITY'], iteration=iteration + 1)
             fplines = wave.calc_wave_lines(params, recipe, **fpargs)
+
+            # -----------------------------------------------------------------
+            # TODO: remove later debug file save
+            wmargs = [hc_e2ds_file, fp_e2ds_file, hc_e2ds_file, hclines,
+                      fplines, master_fiber]
+            out = wave.write_wave_lines(params, recipe, *wmargs, master=True,
+                                        file_kind='DEBUG_IT{0}'.format(iteration))
             # -----------------------------------------------------------------
             # Calculate the wave solution for master fiber
             # master fiber + master wave setup
             fit_cavity = True
-            fit_achromatic = False
+            fit_achromatic = True
             # calculate wave solution
             wprops = wave.calc_wave_sol(params, recipe, hclines, fplines,
                                         nbo=hc_e2ds_file.shape[0],
                                         nbxpix=hc_e2ds_file.shape[1],
                                         fit_cavity=fit_cavity,
                                         fit_achromatic=fit_achromatic,
-                                        cavity_update=wprops['CAVITY'])
+                                        cavity_update=wprops['CAVITY'],
+                                        iteration=iteration + 1)
 
         # =================================================================
         # Recalculate HC + FP line reference files for master_fiber
         # =================================================================
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
-                      iteration=3)
+                      iteration=4)
         hclines = wave.calc_wave_lines(params, recipe, **hcargs)
         # generate the fp reference lines
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
-                      cavity_poly=wprops['CAVITY'], iteration=3)
+                      cavity_poly=wprops['CAVITY'], iteration=4)
         fplines = wave.calc_wave_lines(params, recipe, **fpargs)
+        # ---------------------------------------------------------------------
+        # TODO: remove later debug file save
+        wmargs = [hc_e2ds_file, fp_e2ds_file, hc_e2ds_file, hclines,
+                  fplines, master_fiber]
+        out = wave.write_wave_lines(params, recipe, *wmargs, master=True,
+                                    file_kind='DEBUG_IT{0}'.format(4))
+        # ---------------------------------------------------------------------
         # add lines to wave properties
         wprops['HCLINES'] = hclines
         wprops['FPLINES'] = fplines
