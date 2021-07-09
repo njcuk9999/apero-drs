@@ -1202,6 +1202,10 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     """
     # set function name
     func_name = display_func('calc_wave_sol', __NAME__)
+    # log progress
+    msg = 'Calculating wave solution. Iteration {0}'
+    margs = [iteration]
+    WLOG(params, 'info', msg.format(*margs))
     # -------------------------------------------------------------------------
     # get parameters from params / inputs
     # -------------------------------------------------------------------------
@@ -1758,11 +1762,11 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
         # ---------------------------------------------------------------------
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=mprops['WAVEMAP'],
-                      iteration=1)
+                      iteration='1 fiber {0}'.format(fiber))
         hclines = calc_wave_lines(params, recipe, **hcargs)
         # generate the fp reference lines
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=mprops['WAVEMAP'],
-                      cavity_poly=cavity, iteration=1)
+                      cavity_poly=cavity, iteration='1 fiber {0}'.format(fiber))
         fplines = calc_wave_lines(params, recipe, **fpargs)
         # ---------------------------------------------------------------------
         # calculate wave solution
@@ -1771,15 +1775,16 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
                                nbxpix=hc_e2ds_file.shape[1],
                                fit_cavity=fit_cavity,
                                fit_achromatic=fit_achromatic,
-                               cavity_update=cavity)
+                               cavity_update=cavity,
+                               iteration='1 fiber {0}'.format(fiber))
         # ---------------------------------------------------------------------
         # regenerate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
-                      iteration=2)
+                      iteration='2 fiber {0}'.format(fiber))
         hclines = calc_wave_lines(params, recipe, **hcargs)
         # re generate the fp reference lines
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
-                      cavity_poly=cavity, iteration=2)
+                      cavity_poly=cavity, iteration='2 fiber {0}'.format(fiber))
         fplines = calc_wave_lines(params, recipe, **fpargs)
         # add lines to wave properties
         wprops['HCLINES'] = hclines
