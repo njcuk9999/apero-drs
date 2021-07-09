@@ -139,13 +139,17 @@ remake_doc.shortname = 'DOC'
 remake_doc.description = textentry('REMAKE_DOC_DESCRIPTION')
 remake_doc.recipe_type = 'nolog-tool'
 remake_doc.recipe_kind = 'admin'
-remake_doc.set_kwarg(name='--upload', dtype='bool', default=False,
-                     helpstr=textentry('REMAKE_DOC_UPLOADARG_HELP'))
 # TODO: move to language database
+remake_doc.set_kwarg(name='--compile', dtype='switch', default=False,
+                     helpstr='Compile all rst pages')
+remake_doc.set_kwarg(name='--upload', dtype='switch', default=False,
+                     helpstr=textentry('REMAKE_DOC_UPLOADARG_HELP'))
 remake_doc.set_kwarg(name='--filedef', dtype='switch', default=False,
                      helpstr='Compile the docs for file definitions')
 remake_doc.set_kwarg(name='--recipedef', dtype='switch', default=False,
                      helpstr='Compile the docs for recipe definitions')
+remake_doc.set_kwarg(name='--recipeseq', dtype='switch', default=False,
+                     helpstr='Compile the docs for recipe sequences')
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py

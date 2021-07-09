@@ -22,6 +22,8 @@ This section provides a general guide to using APERO.
 For instrument specific guide see:
 
 * :ref:`SPIROU <spirou_main>`
+* :ref:`NIRPS HA <nirps_ha_main>`
+* :ref:`NIRPS HE <nirps_he_main>`
 
 .. only:: html
 

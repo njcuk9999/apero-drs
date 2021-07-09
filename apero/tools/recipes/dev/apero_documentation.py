@@ -67,26 +67,24 @@ def __main__(recipe, params):
     if params['INPUTS']['FILEDEF']:
         # get file definitions
         drs_documentation.compile_file_definitions(params, recipe)
-        # ------------------------------------------------------------------
-        # End of main code
-        # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
     # ----------------------------------------------------------------------
     # deal with documenting file definitions
     if params['INPUTS']['RECIPEDEF']:
         # get file definitions
         drs_documentation.compile_recipe_definitions(params, recipe)
-        # ------------------------------------------------------------------
-        # End of main code
-        # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+    # ----------------------------------------------------------------------
+    # deal with documenting the recipe sequences
+    if params['INPUTS']['RECIPESEQ']:
+        # get the recipe sequences
+        drs_documentation.compile_recipe_sequences(params, recipe)
     # ----------------------------------------------------------------------
     # compile documentation
-    drs_documentation.compile_docs(params)
+    if params['INPUTS']['COMPILE']:
+        drs_documentation.compile_docs(params)
 
-    # upload to server
-    if params['INPUTS']['UPLOAD']:
-        drs_documentation.upload(params)
+        # upload to server
+        if params['INPUTS']['UPLOAD']:
+            drs_documentation.upload(params)
 
     # ----------------------------------------------------------------------
     # End of main code

@@ -43,6 +43,7 @@ WLOG = drs_log.wlog
 ParamDict = constants.ParamDict
 PseudoConst = constants.PseudoConstants
 DrsRecipe = drs_recipe.DrsRecipe
+DrsRunSequence = drs_recipe.DrsRunSequence
 DrsInputFile = drs_file.DrsInputFile
 # Get the text types
 textentry = lang.textentry
@@ -61,12 +62,19 @@ SSH_USER = 'cook'
 SSH_HOST = 'venus.astro.umontreal.ca'
 SSH_PATH = '/home/cook/www/apero-drs/'
 # -----------------------------------------------------------------------------
-# definitions dirs
+# file definitions dirs
 FILE_DEF_DIR = '../documentation/working/dev/file_definitions/'
+# recipe definitions dirs
 RECIPE_DEF_DIR = '../documentation/working/dev/recipe_definitions/'
 RD_REL_PATH = '../../dev/recipe_definitions/'
 RD_REL_SCHEMATIC_PATH = '../../_static/yed/spirou/'
-
+RD_REL_DOC_PATH = '../documentation/working/user/{0}/'
+RD_REL_DOC_FILE = 'recipes_{0}.rst'
+# recipe sequences dirs
+SEQUENCE_DEF_DIR = '../documentation/working/dev/recipe_sequences/'
+RS_REL_PATH = '../../dev/recipe_sequences/'
+RS_REL_DOC_PATH = '../documentation/working/user/{0}/'
+RS_REL_DOC_FILE = 'using_apero_{0}.rst'
 
 # =============================================================================
 # Define user functions
@@ -162,7 +170,7 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     for filetype in filetypes:
         refnames[filetype] = '{0}_{1}'.format(instrument.lower(), filetype)
     # add table of contents
-    markdown.add_table_of_contents(sectionnames, list(refnames.values()))
+    markdown.add_table_of_contents(list(refnames.values()), sectionnames)
     # -------------------------------------------------------------------------
     # loop around table section names
     for it in range(len(sectionnames)):
@@ -225,7 +233,7 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
 
 def compile_recipe_definitions(params: ParamDict, recipe: DrsRecipe):
     """
-    Compile recipe definitions as an rst file for sphinx documentation
+    Compile recipe definitions as rst files for sphinx documentation
 
     :param params: ParamDict, parameter dictionary of constants
     :param recipe: DrsRecipe instance, the recipe that called this function
@@ -346,17 +354,129 @@ def compile_recipe_definitions(params: ParamDict, recipe: DrsRecipe):
         # add to list
         recipe_definitions.append(os.path.basename(markdown_filename))
     # -------------------------------------------------------------------------
+    # Write recipe_{instrument}.rst (list of recipes)
+    # -------------------------------------------------------------------------
     # construct filename
-    rd_basename = '{0}_recipe_definitions.txt'.format(instrument.lower())
-    rd_filename = os.path.join(def_dir, rd_basename)
-    # save recipe definition list to file
-    with open(rd_filename, 'w') as rdfile:
-        # loop around recipe definitions and write to file
-        for recipe_definition in recipe_definitions:
-            rdfile.write('{0}/{1}\n'.format(RD_REL_PATH, recipe_definition))
+    doc_path = os.path.join(RD_REL_DOC_PATH + RD_REL_DOC_FILE)
+    rd_filename = doc_path.format(instrument.lower())
+    rs_basename = RS_REL_DOC_FILE.format(instrument.lower())
+    # get page reference
+    page_ref = 'recipes_{0}'.format(instrument.lower())
+    # start markdown page
+    markdown = drs_markdown.MarkDownPage(page_ref)
+    # add title
+    markdown.add_title('{0} recipes'.format(instrument))
+    # add text
+    text = ('This section describes all the SPIROU recipes to use with '
+            'APERO. \n For information on how to run these recipes (either '
+            'individually or with the processing tools) see :ref:`here '
+            '<{0}>`.').format(rs_basename)
+    markdown.add_text(text)
+    # construct items for table of contents
+    items = []
+    # loop around recipe definitions and write to file
+    for recipe_definition in recipe_definitions:
+        items.append(os.path.join(RD_REL_PATH, recipe_definition))
+    # add urls
+    markdown.add_table_of_contents(items,
+                                   sectionname='{0} recipes'.format(instrument),
+                                   maxdepth=1)
+    # add back to top
+    markdown.add_back_to_top()
+    # write file
+    abs_path = drs_misc.get_relative_folder(__PACKAGE__, rd_filename)
+    markdown.write_page(abs_path)
 
 
-def compile_docs(params):
+def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
+    """
+    Compile recipes sequences as rst files for sphinx documentation
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe instance, the recipe that called this function
+
+    :return: None writes to file definition rst files
+    :return:
+    """
+    # load file mod
+    recipemod = recipe.recipemod.get()
+    # get instrument name
+    instrument = params['INSTRUMENT']
+    # get a list of sequences
+    sequences = recipemod.sequences
+    # get directory to save file to
+    def_dir = drs_misc.get_relative_folder(__PACKAGE__, SEQUENCE_DEF_DIR)
+    # store list of recipe sequences
+    recipe_sequences = []
+    # loop around recipes
+    for sequence in sequences:
+        # print we are analysing recipe
+        WLOG(params, 'info', 'Processing {0}'.format(sequence.name))
+        # get summary parameters for sequence
+        summary = _compile_sequence(params, instrument, sequence)
+        # ---------------------------------------------------------------------
+        # make page
+        pargs = [instrument.lower(), summary['NAME']]
+        page_ref = '{0}_sequence_{1}'.format(*pargs)
+        markdown = drs_markdown.MarkDownPage(page_ref)
+        # ---------------------------------------------------------------------
+        # add title
+        name = summary['NAME']
+        markdown.add_title('{0}'.format(name))
+        # ---------------------------------------------------------------------
+        # add section: output directory
+        markdown.add_section('1. Recipes in sequence')
+        # add code block for run
+        markdown.add_csv_table('Recipes', summary['OUTTABLE'])
+        # allow multiple lines in table
+        markdown.enable_multiline_table()
+        # ---------------------------------------------------------------------
+        # construct markdown filename
+        margs = [instrument.lower(), summary['NAME']]
+        markdown_basename = '{0}_recipe_sequence_{1}.rst'.format(*margs)
+        markdown_filename = os.path.join(def_dir, markdown_basename)
+        # log progress
+        WLOG(params, '', 'Writing markdown file: {0}'.format(markdown_filename))
+        # write markdown to file
+        markdown.write_page(markdown_filename)
+        # add to list
+        recipe_sequences.append(os.path.basename(markdown_filename))
+
+    # -------------------------------------------------------------------------
+    # Write using_apero_{instrument}.rst (list of sequences + more)
+    # -------------------------------------------------------------------------
+    # construct filename
+    doc_path = os.path.join(RS_REL_DOC_PATH + RS_REL_DOC_FILE)
+    rs_filename = doc_path.format(instrument.lower())
+    rd_basename = RD_REL_DOC_FILE.format(instrument.lower())
+    # get page reference
+    page_ref = 'using_apero_{0}'.format(instrument.lower())
+    # start markdown page
+    markdown = drs_markdown.MarkDownPage(page_ref)
+    # add title
+    markdown.add_title('{0} sequences'.format(instrument))
+    # add text
+    text = ('This section describes all the recipe sequences to use with '
+            'APERO. \nFor information on individual recipes see :ref:`here '
+            '<{0}>`.').format(rd_basename.replace('.rst', ''))
+    markdown.add_text(text)
+    # construct items for table of contents
+    items = []
+    # loop around recipe definitions and write to file
+    for recipe_sequence in recipe_sequences:
+        items.append(os.path.join(RS_REL_PATH, recipe_sequence))
+    # add urls
+    markdown.add_table_of_contents(items,
+                                   sectionname='{0} recipes'.format(instrument),
+                                   maxdepth=1)
+    # add back to top
+    markdown.add_back_to_top()
+    # write file
+    abs_path = drs_misc.get_relative_folder(__PACKAGE__, rs_filename)
+    markdown.write_page(abs_path)
+
+
+def compile_docs(params: ParamDict):
     # get package
     package = params['DRS_PACKAGE']
     # get paths
@@ -454,7 +574,7 @@ def compile_docs(params):
         raise e
 
 
-def upload(params):
+def upload(params: ParamDict):
     # get package
     package = params['DRS_PACKAGE']
     # get paths
@@ -592,7 +712,7 @@ def _compile_recipe(params: ParamDict, pconst: PseudoConst, instrument: str,
     :param params: ParamDict, parameter dictionary of constants
     :param pconst: Pseudo Constant instance, the pseudo consts instances for
                    this instrument
-    :param recipe: DrsRecipe instance, the recipe that called this function
+    :param recipe: DrsRecipe instance, the recipe that we are compiling
 
     :return: dictionary, Recipe summary dictionary
     """
@@ -613,6 +733,42 @@ def _compile_recipe(params: ParamDict, pconst: PseudoConst, instrument: str,
     WLOG(params, '', 'Saving {0} csv to: {1}'.format(*margs))
     # save outtable to file
     table.write(filename, format='csv', overwrite=True)
+    # save table filename to out table
+    summary['OUTTABLE'] = filename
+    # return the summary dictionary
+    return summary
+
+
+def _compile_sequence(params: ParamDict, instrument: str,
+                      sequence: DrsRunSequence) -> Dict[str, Any]:
+    """
+    Compile sequence
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param sequence: DrsRunSequence instance, the sequence for which we are
+                     compiling
+
+    :return: dictionary, Sequence summary dictionary
+    """
+    # store parameters in dictionary
+    summary = dict()
+    # get sequence name
+    summary['NAME'] = sequence.name
+    # get summary information
+    stable = sequence.summary_table()
+    # remove empty columns
+    stable = _remove_empty_cols(stable)
+    # get directory to save file to
+    def_dir = drs_misc.get_relative_folder(__PACKAGE__, SEQUENCE_DEF_DIR)
+    # construct table filename
+    fargs = [instrument.lower(), summary['NAME'].lower()]
+    basename = '{0}_sequence_{1}.csv'
+    filename = os.path.join(def_dir, basename.format(*fargs))
+    # print progress
+    margs = [summary['NAME'], filename]
+    WLOG(params, '', 'Saving {0} csv to: {1}'.format(*margs))
+    # save outtable to file
+    stable.write(filename, format='csv', overwrite=True)
     # save table filename to out table
     summary['OUTTABLE'] = filename
     # return the summary dictionary
