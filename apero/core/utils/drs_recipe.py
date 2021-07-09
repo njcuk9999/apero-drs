@@ -9,6 +9,7 @@ Created on 2019-01-19 at 12:02
 
 @author: cook
 """
+from astropy.table import Table
 import argparse
 from collections import OrderedDict
 import copy
@@ -1847,6 +1848,108 @@ class DrsRunSequence:
         # return the arguments
         return arguments
 
+    def summary_table(self) -> Table:
+        """
+        Create a summary table of parameters
+
+        :return:
+        """
+        # ---------------------------------------------------------------------
+        # construct recipe table
+        # ---------------------------------------------------------------------
+        # define table columns
+        columns = ['ORDER', 'RECIPE', 'SHORTNAME', 'RECIPE KIND',
+                   'MASTER RECIPE', 'FIBER', 'FILTERS', 'ARGS', 'KWARGS']
+        # ---------------------------------------------------------------------
+        # storage dictionary (to be turned into table after)
+        table_dict = dict()
+        for col in columns:
+            table_dict[col] = []
+        # ---------------------------------------------------------------------
+        # make a table for items in the sequence
+        for it, item in enumerate(self.adds):
+            # get the recipe (contains the default values for this recipe)
+            recipe = item['recipe']
+            # -----------------------------------------------------------------
+            # add order
+            table_dict['ORDER'].append(it + 1)
+            # -----------------------------------------------------------------
+            # add recipe
+            table_dict['RECIPE'].append(recipe.name)
+            # -----------------------------------------------------------------
+            # add short name
+            if item['name'] is not None:
+                table_dict['SHORTNAME'].append(item['name'])
+            else:
+                table_dict['SHORTNAME'].append(recipe.shortname)
+            # -----------------------------------------------------------------
+            # add recipe kind
+            if item['recipe_kind'] is not None:
+                table_dict['RECIPE KIND'].append(item['recipe_kind'])
+            else:
+                table_dict['RECIPE KIND'].append(recipe.recipe_kind)
+            # -----------------------------------------------------------------
+            # add master column
+            if item['master'] is not None:
+                master_recipe = item['master']
+            else:
+                master_recipe = recipe.master
+            if drs_text.true_text(master_recipe):
+                table_dict['MASTER RECIPE'].append('Yes')
+            else:
+                table_dict['MASTER RECIPE'].append('No')
+            # -----------------------------------------------------------------
+            # add fiber columns
+            if item['fiber'] is not None:
+                table_dict['FIBER'].append(item['fiber'])
+            else:
+                table_dict['FIBER'].append('--')
+            # -----------------------------------------------------------------
+            # need to compile filters
+            if item['filters'] is not None:
+                filters = item['filters']
+            else:
+                filters = dict()
+
+            filters_str = ''
+            # add list of filters
+            for it, _filter in enumerate(filters):
+                # get value
+                value = filters[_filter]
+                if isinstance(value, list):
+                    valuestr = ', '.join(value)
+                else:
+                    valuestr = str(value)
+                # deal with first iteration
+                if it == 0:
+                    filters_str += '{0}: {1}'.format(_filter, valuestr)
+                else:
+                    filters_str += ' |br| {0}: {1}'.format(_filter, valuestr)
+            if len(filters_str) == 0:
+                filters_str = '--'
+            # add to table dictionary
+            table_dict['FILTERS'].append(filters_str)
+            # -----------------------------------------------------------------
+            # deal with args
+            if item['args'] is None:
+                table_dict['ARGS'].append('')
+            else:
+                arg_str = _summary_args(item['args'], 'pos')
+                table_dict['ARGS'].append(arg_str)
+            # -----------------------------------------------------------------
+            if item['kwargs'] is None:
+                table_dict['KWARGS'].append('')
+            else:
+                kwarg_str = _summary_args(item['kwargs'], 'optional')
+                table_dict['KWARGS'].append(kwarg_str)
+        # ---------------------------------------------------------------------
+        # convert to a table
+        table = Table()
+        for col in table_dict:
+            table[col] = np.array(table_dict[col]).astype(str)
+        # ---------------------------------------------------------------------
+        return table
+
 
 # TODO: Move to drs_exceptions?
 # Drs Recipe Exception
@@ -1898,6 +2001,46 @@ def filter_values(values: List[str], filter_list: List[str],
                 valid_values.append(value)
     # return values
     return valid_values
+
+
+def _summary_args(args: Dict[str, Any], argkind: str = 'pos') -> str:
+    """
+    A string representation for args or kwargs for DrsRunSequence.summary
+
+    :param args: dictionary, a dictionary of arguments
+    :param argkind: str, either 'pos' or 'optional'
+
+    :return: str, a string representation of a set of added arguments
+    """
+    args_str = ''
+    # loop around arguments
+    for it, argname in enumerate(args):
+        # get this arg string
+        if argkind == 'pos':
+            arg_str = '{{{0}}}='.format(argname)
+        else:
+            arg_str = '--{0}='.format(argname)
+        # store arg inputs
+        arg_inputs = []
+        # make argument value a list
+        if not isinstance(args[argname], list):
+            values = [args[argname]]
+        else:
+            values = args[argname]
+        # loop around values
+        for value in values:
+            if isinstance(value, DrsInputFile):
+                arg_inputs.append(value.name)
+        # join arg inputs
+        arg_str += '[{0}]'.format(', '.join(arg_inputs))
+        # add to args_str
+        if len(arg_inputs) > 0:
+            if it == 0:
+                args_str += arg_str
+            else:
+                args_str += ' |br| {0}'.format(arg_str)
+
+    return args_str
 
 
 # =============================================================================

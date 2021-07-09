@@ -51,14 +51,30 @@ class MarkDownPage:
         for _ in range(nlines):
             self.lines += ['']
 
-    def add_table_of_contents(self, names: List[str], items: List[str]):
+    def add_table_of_contents(self, items: List[str],
+                              names: Optional[List[str]] = None,
+                              sectionname: str = 'Contents',
+                              maxdepth: int = 1):
 
-        # add contents section
-        self.add_section('Contents')
-        # loop around names and items and add to contents list
-        for it in range(len(names)):
-            lineref = '* :ref:`{0} <{1}>`'.format(names[it], items[it])
-            self.lines += [lineref]
+        self.add_newline()
+        # no names means items are url links to other pages
+        if names is None:
+            self.lines += ['.. toctree::']
+            self.lines += ['    :maxdepth: {0}'.format(maxdepth)]
+            self.lines += ['    :caption: {0}'.format(sectionname)]
+            self.add_newline()
+            for it in range(len(items)):
+                self.lines += ['    {0}'.format(items[it])]
+        # names means we have references to other pages
+        else:
+            # add contents section
+            self.add_section(sectionname)
+            # loop around names and items and add to contents list
+            for it in range(len(names)):
+                lineref = '* :ref:`{0} <{1}>`'.format(names[it], items[it])
+                self.lines += [lineref]
+        self.add_newline()
+
 
     def add_back_to_top(self):
         """
@@ -136,6 +152,16 @@ class MarkDownPage:
         self.lines += ['   :header-rows: 1']
         self.lines += ['   :class: csvtable']
         self.add_newline()
+
+    def enable_multiline_table(self):
+        """
+        If table uses the |br| tag must add these lines
+
+        :return: None, updates page
+        """
+        self.lines += ['.. |br| raw:: html']
+        self.lines += ['']
+        self.lines += ['     <br>']
 
     def add_text(self, text: str):
         """
