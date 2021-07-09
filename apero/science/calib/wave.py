@@ -1086,15 +1086,17 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                 diff=diffpix, fiber=fiber, nbo=nbo, fibtype=fibtype,
                 iteration=iteration)
 
-    if recipe.plot.plotoption == 2:
-        import matplotlib.pyplot as plt
-        fig, frames = plt.subplots(ncols=1, nrows=2)
-        frames[0].plot(list_waves - wave_m, 'k.')
-        frames[1].plot(list_waves, peak_number * list_waves)
-        frames[1].plot(list_waves, peak_number * wave_m, 'g.')
-        frames[1].set(title='Iteration = {0}'.format(iteration))
-        plt.show()
-        plt.close()
+    # TODO: move to plotting recipe or remove?
+    if fibtype in fpfibtypes:
+        if recipe.plot.plotoption == 2:
+            import matplotlib.pyplot as plt
+            fig, frames = plt.subplots(ncols=1, nrows=2)
+            frames[0].plot(list_waves - wave_m, 'k.')
+            frames[1].plot(list_waves, peak_number * list_waves)
+            frames[1].plot(list_waves, peak_number * wave_m, 'g.')
+            frames[1].set(title='Iteration = {0}'.format(iteration))
+            plt.show()
+            plt.close()
     # ----------------------------------------------------------------------
     # Create table to store them in
     # ----------------------------------------------------------------------
@@ -1107,6 +1109,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     table = drs_table.make_table(params, columnnames, columnvalues)
     # return table
     return table
+
 
 def hc_wave_sol_offset(params: ParamDict, inwavemap: np.ndarray,
                        hclines: Table) -> np.ndarray:

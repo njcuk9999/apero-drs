@@ -2655,6 +2655,8 @@ def plot_wave_hc_diff_hist(plotter: Plotter, graph: Graph,
     # start the plotting process
     if not plotter.plotstart(graph):
         return
+    # get plt
+    plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     diff_hc = np.array(kwargs['diff_hc'])
@@ -2681,8 +2683,9 @@ def plot_wave_hc_diff_hist(plotter: Plotter, graph: Graph,
     # plot histogram for nsig
     frames[1].hist(nsig[np.abs(nsig) < 5], bins=nbins)
     # add axis labels + title
-    frames[1].set(xlabel='Sigma', ylabel='Number',
-                  title='HC diff / error. Iteration {0}'.format(iteration))
+    frames[1].set(xlabel='Sigma', ylabel='Number', title='HC diff / error')
+    # plot super title
+    plt.suptitle('Iteration {0}'.format(iteration))
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
