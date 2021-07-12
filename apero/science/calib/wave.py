@@ -1086,17 +1086,17 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                 diff=diffpix, fiber=fiber, nbo=nbo, fibtype=fibtype,
                 iteration=iteration)
 
-    # TODO: move to plotting recipe or remove?
-    if fibtype in fpfibtypes:
-        if recipe.plot.plotoption == 2:
-            import matplotlib.pyplot as plt
-            fig, frames = plt.subplots(ncols=1, nrows=2)
-            frames[0].plot(list_waves - wave_m, 'k.')
-            frames[1].plot(list_waves, peak_number * list_waves)
-            frames[1].plot(list_waves, peak_number * wave_m, 'g.')
-            frames[1].set(title='Iteration = {0}'.format(iteration))
-            plt.show()
-            plt.close()
+    # # TODO: move to plotting recipe or remove?
+    # if fibtype in fpfibtypes:
+    #     if recipe.plot.plotoption == 2:
+    #         import matplotlib.pyplot as plt
+    #         fig, frames = plt.subplots(ncols=1, nrows=2)
+    #         frames[0].plot(list_waves, peak_number * (list_waves - wave_m), 'k.')
+    #         frames[1].plot(list_waves, peak_number * list_waves)
+    #         frames[1].plot(list_waves, peak_number * wave_m, 'g.')
+    #         frames[1].set(title='Iteration = {0}'.format(iteration))
+    #         plt.show()
+    #         plt.close()
     # ----------------------------------------------------------------------
     # Create table to store them in
     # ----------------------------------------------------------------------
@@ -1509,7 +1509,6 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         count += 1
     # update all peaks with current best offset
     fpl_peak_num += bulk_offset[np.argmin(rms)]
-
     # -------------------------------------------------------------------------
     # Find cavity width now peak offsets have been found
     # -------------------------------------------------------------------------
@@ -1518,18 +1517,6 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     wavepeak = fpl_wave_meas * fpl_peak_num
     cavity, _ = mp.robust_polyfit(fpl_wave_meas, wavepeak,
                                   cavity_fit_degree, nsig_cut)
-    # -------------------------------------------------------------------------
-    # save some information for plotting later
-    fp_peak_num_2 = np.array(fpl_peak_num)
-    fp_wave_meas_2 = np.array(fpl_wave_meas)
-    fp_wave_ref_2 = np.array(fpl_wave_ref)
-    # -------------------------------------------------------------------------
-    # plot the wavelength vs cavity width plot
-    recipe.plot('WAVE_WL_CAV', cavity=cavity,
-                fp_wave_meas1=fp_wave_meas_1, fp_peak_num_1=fp_peak_num_1,
-                fp_wave_meas2=fp_wave_meas_2, fp_peak_num_2=fp_peak_num_2,
-                fp_wave_ref_1=fp_wave_ref_1, fp_wave_ref_2=fp_wave_ref_2,
-                iteration=iteration)
     # -------------------------------------------------------------------------
     # if fit_cavity is False and a file exists we load this file
     # (otherwise we save this cavity file later)
@@ -1628,6 +1615,18 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     cavlen0 = np.polyval(cavity0, fpl_wave_ref)
     margs = [mp.nanmean(cavlen1) - mp.nanmean(cavlen0)]
     WLOG(params, '', textentry('40-017-00058', args=margs))
+    # -------------------------------------------------------------------------
+    # save some information for plotting later
+    fp_peak_num_2 = np.array(fpl_peak_num)
+    fp_wave_meas_2 = np.array(fpl_wave_meas)
+    fp_wave_ref_2 = np.array(fpl_wave_ref)
+    # -------------------------------------------------------------------------
+    # plot the wavelength vs cavity width plot
+    recipe.plot('WAVE_WL_CAV', cavity=cavity, orders=fpl_order,
+                fp_wave_meas1=fp_wave_meas_1, fp_peak_num_1=fp_peak_num_1,
+                fp_wave_meas2=fp_wave_meas_2, fp_peak_num_2=fp_peak_num_2,
+                fp_wave_ref_1=fp_wave_ref_1, fp_wave_ref_2=fp_wave_ref_2,
+                iteration=iteration)
     # -------------------------------------------------------------------------
     # plot the wavelength hc diff histograms
     recipe.plot('WAVE_HC_DIFF_HIST', diff_hc=diff_hc, error=hcsigma,
@@ -2557,6 +2556,52 @@ def get_echelle_orders(params: ParamDict, wprops: ParamDict) -> ParamDict:
     return wprops
 
 
+def wave_meas_diff(params: ParamDict, master_fiber: str,
+                   wprops_all: Dict[str, ParamDict],
+                   rvs_all: Dict[str, ParamDict]) -> Dict[str, ParamDict]:
+    """
+    Work out the difference in wave measured as a dv (in m/s)
+
+    :param params:
+    :param master_fiber:
+    :param wprops_all:
+    :param rvs_all:
+    :return:
+    """
+    # set function name
+    func_name = display_func('wave_meas_diff', __NAME__)
+    # set for consistency
+    ref_wmeas = 0.0
+    # loop around each fiber
+    for fiber in rvs_all:
+        # choose which wprops to use
+        wprops = wprops_all[fiber]
+        # deal with master fiber
+        if fiber == master_fiber:
+            # get wave meas for fplines
+            ref_wmeas = np.array(wprops['FPLINES']['WAVE_MEAS'])
+            # dv of master fiber is zero by definition
+            wm_dv = 0.0
+        else:
+            # get wave meas for fplines
+            wmeas = np.array(wprops['FPLINES']['WAVE_MEAS'])
+            # get dv for wave meas between master fiber and this fiber
+            wratio = np.nanmedian(ref_wmeas / wmeas)
+            # wave meas dv in m/s
+            wm_dv = (1 - wratio) * speed_of_light_ms
+            # -----------------------------------------------------------------
+            # print progress
+            # TODO: move to language database
+            msg = 'DV {0} - {1}: {2:.3f} m/s'
+            margs = [master_fiber, fiber, wm_dv]
+            WLOG(params, 'info', msg.format(*margs))
+        # ---------------------------------------------------------------------
+        # add to rv props
+        rvs_all[fiber].set('WM_DV', value=wm_dv, source=func_name)
+    # return all rv props
+    return rvs_all
+
+
 # =============================================================================
 # Define writing functions
 # =============================================================================
@@ -2622,27 +2667,23 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
     # --------------------------------------------------------------
     # rv quality controls between fibers
     # --------------------------------------------------------------
-    # get master RV [km/s] --> [m/s]
-    master_rv = rvprops[master_fiber]['MEAN_RV'] * 1000
-    # loop around fibers
     for fiber in fiber_types:
         # do not compare master to master
         if fiber == master_fiber:
             continue
-        # get rv for this fiber [km/s] --> [m/s]
-        rvfiber = rvprops[fiber]['MEAN_RV'] * 1000
+        # get wave measured rv difference
+        rvdiff = rvprops[fiber]['WM_DV']
         # add to qc header lists
-        qc_values.append(master_rv - rvfiber)
+        qc_values.append(rvdiff)
         qc_names.append('RV[{0} - {1}]'.format(master_fiber, fiber))
         qargs = [master_fiber, fiber, rv_thres]
         qc_logic.append('abs(RV[{0} - {1}]) > {2} m/s'.format(*qargs))
         # deal with rv threshold
-        if np.abs(master_rv - rvfiber) > rv_thres:
+        if np.abs(rvdiff) > rv_thres:
             qc_pass.append(0)
             fail_msg.append('abs(RV[{0} - {1}]) > {2} m/s'.format(*qargs))
         else:
             qc_pass.append(1)
-
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control

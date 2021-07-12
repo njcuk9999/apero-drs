@@ -9,6 +9,8 @@ Created on 2019-08-16 at 09:23
 
 @author: cook
 """
+from astropy import constants as cc
+from astropy import units as uu
 import numpy as np
 
 from apero.base import base
@@ -42,6 +44,9 @@ ParamDict = constants.ParamDict
 textentry = lang.textentry
 # define extraction code to use
 EXTRACT_NAME = 'apero_extract_spirou.py'
+# Speed of light
+# noinspection PyUnresolvedReferences
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 
 
 # =============================================================================
@@ -218,8 +223,6 @@ def __main__(recipe, params):
         # set cavity solution to None initially
         wprops['CAVITY'] = None
         wprops.set_source('CAVITY', mainname)
-        # TODO: Note in night solution we will load cavity file
-        #  cavity = wave2.get_cavity_file(params, recipe, infile=fp_e2ds_file)
 
         # iterate twice so we have a good cavity length to start
         for iteration in range(3):
@@ -244,13 +247,6 @@ def __main__(recipe, params):
             fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
                           cavity_poly=wprops['CAVITY'], iteration=iteration + 1)
             fplines = wave.calc_wave_lines(params, recipe, **fpargs)
-
-            # -----------------------------------------------------------------
-            # TODO: remove later debug file save
-            wmargs = [hc_e2ds_file, fp_e2ds_file, hc_e2ds_file, hclines,
-                      fplines, master_fiber]
-            out = wave.write_wave_lines(params, recipe, *wmargs, master=True,
-                                        file_kind='DEBUG_IT{0}'.format(iteration))
             # -----------------------------------------------------------------
             # Calculate the wave solution for master fiber
             # master fiber + master wave setup
@@ -276,12 +272,6 @@ def __main__(recipe, params):
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
                       cavity_poly=wprops['CAVITY'], iteration=4)
         fplines = wave.calc_wave_lines(params, recipe, **fpargs)
-        # ---------------------------------------------------------------------
-        # TODO: remove later debug file save
-        wmargs = [hc_e2ds_file, fp_e2ds_file, hc_e2ds_file, hclines,
-                  fplines, master_fiber]
-        out = wave.write_wave_lines(params, recipe, *wmargs, master=True,
-                                    file_kind='DEBUG_IT{0}'.format(4))
         # ---------------------------------------------------------------------
         # add lines to wave properties
         wprops['HCLINES'] = hclines
@@ -334,10 +324,16 @@ def __main__(recipe, params):
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
             # update ccf properties and push into wprops for wave sol outputs
             wprops, rvprops = wave.update_w_rv_props(wprops, rvprops, mainname)
+            # -----------------------------------------------------------------
             # update correct wprops
             wprops_all[fiber] = wprops
             # add to rv storage
             rvs_all[fiber] = rvprops
+
+        # ==================================================================
+        # DV from wave measured in the FP line files
+        # ==================================================================
+        rvs_all = wave.wave_meas_diff(params, master_fiber, wprops_all, rvs_all)
 
         # =================================================================
         # Quality control
