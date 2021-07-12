@@ -2610,6 +2610,7 @@ def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
     fp_wave_meas2 = kwargs['fp_wave_meas2']
     fp_cavity1 = fp_wave_meas1 * kwargs['fp_peak_num_1']
     fp_cavity2 = fp_wave_meas2 * kwargs['fp_peak_num_2']
+    orders = kwargs['orders']
     iteration = kwargs.get('iteration', 0)
     # work out residuals (when compared to the model)
     res = fp_cavity2 - np.polyval(cavity, kwargs['fp_wave_ref_2'])
@@ -2624,8 +2625,17 @@ def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
     frames[0].plot(fp_wave_meas2, fp_cavity2, color='g', marker='.',
                    linestyle='None', alpha=0.4, label='after')
     # plot the residuals
-    frames[1].plot(fp_wave_meas2, res, color='k', marker='.',
-                   linestyle='None', alpha=0.5)
+    for order_num in set(orders):
+        # get mask for this order
+        order_mask = orders == order_num
+        # get colour for this order
+        if order_num % 2 == 0:
+            color = 'purple'
+        else:
+            color = 'orange'
+        # plot
+        frames[1].plot(fp_wave_meas2[order_mask], res[order_mask], color=color,
+                       marker='.', linestyle='None', alpha=0.5, ms=2)
     # -----------------------------------------------------------------
     # add legend
     frames[0].legend(loc=0)

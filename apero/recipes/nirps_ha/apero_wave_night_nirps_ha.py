@@ -9,6 +9,8 @@ Created on 2019-08-16 at 09:23
 
 @author: cook
 """
+from astropy import constants as cc
+from astropy import units as uu
 import numpy as np
 
 from apero.base import base
@@ -42,6 +44,9 @@ ParamDict = constants.ParamDict
 textentry = lang.textentry
 # define extraction code to use
 EXTRACT_NAME = 'apero_extract_nirps_ha.py'
+# Speed of light
+# noinspection PyUnresolvedReferences
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 
 
 # =============================================================================
@@ -293,10 +298,16 @@ def __main__(recipe, params):
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
             # update ccf properties and push into wprops for wave sol outputs
             wprops, rvprops = wave.update_w_rv_props(wprops, rvprops, mainname)
+            # -----------------------------------------------------------------
             # update correct wprops
             wprops_all[fiber] = wprops
             # add to rv storage
             rvs_all[fiber] = rvprops
+
+        # ==================================================================
+        # DV from wave measured in the FP line files
+        # ==================================================================
+        rvs_all = wave.wave_meas_diff(params, master_fiber, wprops_all, rvs_all)
 
         # =================================================================
         # Quality control
