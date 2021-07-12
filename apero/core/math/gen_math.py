@@ -482,7 +482,7 @@ def robust_nanstd(x: np.ndarray) -> float:
 
 
 def sinc(x: np.ndarray, amp: float, period: float, lin_center: float,
-         quad_scale: float, cube_scale: float, slope: float,
+         slope: float, quad_scale: float = 0.0, cube_scale: float = 0.0,
          peak_cut: float = 0.0) -> np.ndarray:
     """
     Calculates the sinc function with a slope (and position threshold cut)

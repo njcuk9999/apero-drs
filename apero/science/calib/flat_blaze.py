@@ -172,8 +172,8 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
     # bounds = [(thres * 0.5, 0.0, 0.0, -np.inf, -np.inf, -1e-2),
     #           (thres * 1.5, np.inf, np.max(xpix), np.inf, np.inf, 1e-2)]
     # pass without DC and SLOPE
-    bounds = [(0, 0.0, 0.0, -np.inf, -1e-20, -np.inf),
-              (thres * 1.5, np.inf, np.max(xpix), np.inf, 1e-20, np.inf)]
+    bounds = [(0, 0.0, 0.0, -np.inf, -np.inf, -1e-20),
+              (thres * 1.5, np.inf, np.max(xpix), np.inf, np.inf, 1e-20)]
     # set a counter
     n_it = -1
     # ------------------------------------------------------------------
@@ -186,26 +186,6 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
         #   a second time seemed to fix this - when the guess is off)
         popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt,
                                bounds=bounds)
-
-        # ------------------------------------------------------------------
-        # set the model to zeros at first
-        blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
-                        popt[5], peak_cut=peak_cut)
-
-        # # now we iterate using a sigma clip
-        # for n_it in range(niter):
-        #     # we construct a model with the peak cut-off
-        #     blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
-        #                     popt[5], peak_cut=peak_cut)
-        #     # we find residuals to the fit and normalize them
-        #     residual = (e2ds - blaze)
-        #     residual /= mp.nanmedian(np.abs(residual))
-        #     # we keep only non-NaN model points (i.e. above peak_cut) and
-        #     # within +- Nsigfit dispersion elements
-        #     with warnings.catch_warnings(record=True) as _:
-        #         keep = (np.abs(residual) < nsigfit) & np.isfinite(blaze)
-        #     popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
-        #                            p0=fit_guess) #, bounds=bounds)
     except RuntimeError as _:
         # if it failed with bounds try without bounds
         try:
@@ -215,21 +195,27 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
             # we then re-fit to avoid local minima (this has happened - fitting
             #   a second time seemed to fix this - when the guess is off)
             popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt)
-            # ------------------------------------------------------------------
-            # set the model to zeros at first
-            blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
-                            popt[5], peak_cut=peak_cut)
-
-        except RuntimeError as e:
-            strlist = 'amp={0} period={1} lin={2} quad={3} cube={4} slope={5}'
-            strguess = strlist.format(*fit_guess)
-            strlower = strlist.format(*bounds[0])
-            strupper = strlist.format(*bounds[1])
-            eargs = [order_num, fiber, n_it, strguess, strlower, strupper,
-                     type(e), str(e), func_name]
-            WLOG(params, 'error', textentry('40-015-00009', args=eargs))
-            blaze = None
-
+        except RuntimeError as _:
+            # finally try without the cubic term
+            try:
+                fit_guess = fit_guess[:5]
+                # we optimize over pixels that are not NaN (this time with
+                #    no bounds)
+                popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
+                                       p0=fit_guess)
+            except RuntimeError as e:
+                strlist = ('amp={0} period={1} lin={2} slope={3} quad={4} '
+                           'cube={5} ')
+                strguess = strlist.format(*fit_guess)
+                strlower = strlist.format(*bounds[0])
+                strupper = strlist.format(*bounds[1])
+                eargs = [order_num, fiber, n_it, strguess, strlower, strupper,
+                         type(e), str(e), func_name]
+                WLOG(params, 'error', textentry('40-015-00009', args=eargs))
+                return
+    # ------------------------------------------------------------------
+    # calculate the blaze from the curve_fit coefficients
+    blaze = mp.sinc(xpix, *popt, peak_cut=peak_cut)
     # ----------------------------------------------------------------------
     # remove nan in the blaze also in the e2ds
     # ----------------------------------------------------------------------
