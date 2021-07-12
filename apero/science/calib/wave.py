@@ -800,7 +800,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         # always an integer. The factor 2 comes from the FP equation.
         # It arrises from the back-and-forth within the FP cavity
         cavfit = np.polyval(cavity_length_poly, list_waves)
-        peak_number = np.array(cavfit * 2 / list_waves, dtype=int)
+        peak_number = np.round(cavfit * 2 / list_waves).astype(int)
 
     # ----------------------------------------------------------------------
     # else we break
