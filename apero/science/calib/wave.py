@@ -2571,8 +2571,7 @@ def wave_meas_diff(params: ParamDict, master_fiber: str,
     # set function name
     func_name = display_func('wave_meas_diff', __NAME__)
     # set for consistency
-    ref_wmeas = []
-    ref_peakn = []
+    ref_wmeas, ref_peakn, ref_orders = [], [], []
     # loop around each fiber
     for fiber in rvs_all:
         # choose which wprops to use
