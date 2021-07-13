@@ -2571,7 +2571,8 @@ def wave_meas_diff(params: ParamDict, master_fiber: str,
     # set function name
     func_name = display_func('wave_meas_diff', __NAME__)
     # set for consistency
-    ref_wmeas = 0.0
+    ref_wmeas = []
+    ref_peakn = []
     # loop around each fiber
     for fiber in rvs_all:
         # choose which wprops to use
@@ -2580,13 +2581,20 @@ def wave_meas_diff(params: ParamDict, master_fiber: str,
         if fiber == master_fiber:
             # get wave meas for fplines
             ref_wmeas = np.array(wprops['FPLINES']['WAVE_MEAS'])
+            ref_peakn = np.array(wprops['FPLINES']['PEAK_NUMBER'])
             # dv of master fiber is zero by definition
             wm_dv = 0.0
         else:
             # get wave meas for fplines
             wmeas = np.array(wprops['FPLINES']['WAVE_MEAS'])
+            peakn = np.array(wprops['FPLINES']['PEAK_NUMBER'])
+            # -----------------------------------------------------------------
+            # deal with matching lines
+            #    assumes 1. they are sorted by peakn 2. there are no duplicates
+            mask1, mask2 = match_fplines(ref_peakn, peakn)
+            # -----------------------------------------------------------------
             # get dv for wave meas between master fiber and this fiber
-            wratio = np.nanmedian(ref_wmeas / wmeas)
+            wratio = np.nanmedian(ref_wmeas[mask1] / wmeas[mask2])
             # wave meas dv in m/s
             wm_dv = (1 - wratio) * speed_of_light_ms
             # -----------------------------------------------------------------
@@ -2600,6 +2608,23 @@ def wave_meas_diff(params: ParamDict, master_fiber: str,
         rvs_all[fiber].set('WM_DV', value=wm_dv, source=func_name)
     # return all rv props
     return rvs_all
+
+
+def match_fplines(peakn1, peakn2) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Match two sets of peak numbers based on the peak numbers
+
+    :param peakn1:
+    :param peakn2:
+    :return:
+    """
+    # assumes these are in peak number order
+    # get those in mask 1 that are in mask 2
+    mask1 = np.array(np.in1d(peakn1, peakn2))
+    # get those in mask 2 that are in mask 1
+    mask2 = np.array(np.in1d(peakn2, peakn1))
+    # return masks
+    return mask1, mask2
 
 
 # =============================================================================
@@ -2671,17 +2696,17 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         # do not compare master to master
         if fiber == master_fiber:
             continue
-        # get wave measured rv difference
+        # get wave measured rv difference in wave meas
         rvdiff = rvprops[fiber]['WM_DV']
         # add to qc header lists
         qc_values.append(rvdiff)
-        qc_names.append('RV[{0} - {1}]'.format(master_fiber, fiber))
+        qc_names.append('DV[{0} - {1}]'.format(master_fiber, fiber))
         qargs = [master_fiber, fiber, rv_thres]
-        qc_logic.append('abs(RV[{0} - {1}]) > {2} m/s'.format(*qargs))
+        qc_logic.append('abs(DV[{0} - {1}]) > {2} m/s'.format(*qargs))
         # deal with rv threshold
         if np.abs(rvdiff) > rv_thres:
             qc_pass.append(0)
-            fail_msg.append('abs(RV[{0} - {1}]) > {2} m/s'.format(*qargs))
+            fail_msg.append('abs(DV[{0} - {1}]) > {2} m/s'.format(*qargs))
         else:
             qc_pass.append(1)
     # --------------------------------------------------------------
