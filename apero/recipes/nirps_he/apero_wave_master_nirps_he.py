@@ -223,8 +223,9 @@ def __main__(recipe, params):
         # set cavity solution to None initially
         wprops['CAVITY'] = None
         wprops.set_source('CAVITY', mainname)
+
         # iterate twice so we have a good cavity length to start
-        for iteration in range(2):
+        for iteration in range(3):
             # -----------------------------------------------------------------
             # generate the hc reference lines
             hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
@@ -257,19 +258,21 @@ def __main__(recipe, params):
                                         nbxpix=hc_e2ds_file.shape[1],
                                         fit_cavity=fit_cavity,
                                         fit_achromatic=fit_achromatic,
-                                        cavity_update=wprops['CAVITY'])
+                                        cavity_update=wprops['CAVITY'],
+                                        iteration=iteration + 1)
 
         # =================================================================
         # Recalculate HC + FP line reference files for master_fiber
         # =================================================================
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
-                      iteration=3)
+                      iteration=4)
         hclines = wave.calc_wave_lines(params, recipe, **hcargs)
         # generate the fp reference lines
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
-                      cavity_poly=wprops['CAVITY'], iteration=3)
+                      cavity_poly=wprops['CAVITY'], iteration=4)
         fplines = wave.calc_wave_lines(params, recipe, **fpargs)
+        # ---------------------------------------------------------------------
         # add lines to wave properties
         wprops['HCLINES'] = hclines
         wprops['FPLINES'] = fplines
@@ -343,7 +346,8 @@ def __main__(recipe, params):
         log1.add_qc(qc_params, passed)
         # proxy cavity file
         cavityfile = None
-
+        # store global passed
+        global_passed = bool(passed)
         # =================================================================
         # Write all files to disk
         # =================================================================
@@ -427,7 +431,15 @@ def __main__(recipe, params):
                 calibdbm.add_calib_file(hclinefile)
                 # copy the fp line ref file to the calibDB
                 calibdbm.add_calib_file(fplinefile)
+            # update global passed
+            global_passed &= passed
 
+        # -----------------------------------------------------------------
+        # if recipe is a master and QC fail we generate an error
+        # -----------------------------------------------------------------
+        if not global_passed:
+            eargs = [recipe.name]
+            WLOG(params, 'error', textentry('09-000-00011', args=eargs))
         # -----------------------------------------------------------------
         # Construct summary document
         # -----------------------------------------------------------------

@@ -245,7 +245,8 @@ def __main__(recipe, params):
                                     nbxpix=hc_e2ds_file.shape[1],
                                     fit_cavity=fit_cavity,
                                     fit_achromatic=fit_achromatic,
-                                    cavity_update=wprops['CAVITY'])
+                                    cavity_update=wprops['CAVITY'],
+                                    iteration=1)
 
         # =================================================================
         # Recalculate HC + FP line reference files for master_fiber
@@ -322,6 +323,8 @@ def __main__(recipe, params):
         # =================================================================
         # Write all files to disk
         # =================================================================
+        # store global passed
+        global_passed = bool(passed)
         # loop around all fibers
         for fiber in fiber_types:
             # get the wprops for this fiber
@@ -382,6 +385,16 @@ def __main__(recipe, params):
             if passed and params['INPUTS']['DATABASE']:
                 # copy the hc wave solution file to the calibDB
                 calibdbm.add_calib_file(wavefile)
+
+            # update global passed
+            global_passed &= passed
+
+        # ---------------------------------------------------------------------
+        # if recipe is a master and QC fail we generate an error
+        # ---------------------------------------------------------------------
+        if not global_passed and params['INPUTS']['MASTER']:
+            eargs = [recipe.name]
+            WLOG(params, 'error', textentry('09-000-00011', args=eargs))
 
         # -----------------------------------------------------------------
         # Construct summary document
