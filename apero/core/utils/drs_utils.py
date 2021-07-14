@@ -649,14 +649,22 @@ def update_index_db(params: ParamDict, block_kind: str,
         return indexdbm
     # -------------------------------------------------------------------------
     # deal with white list and black list
-    if not drs_text.null_text(includelist, ['None', 'All', '']):
-        include_dirs = list(includelist)
-    else:
+    # no include dirs
+    if drs_text.null_text(includelist, ['None', 'All', '']):
         include_dirs = None
-    if not drs_text.null_text(excludelist, ['None', 'All', '']):
-        exclude_dirs = list(excludelist)
+    elif includelist in [['All'], ['None'], ['']]:
+        include_dirs = None
+    # else use include list dirs
     else:
+        include_dirs = list(includelist)
+    # no exclude dirs
+    if drs_text.null_text(excludelist, ['None', 'All', '']):
         exclude_dirs = None
+    elif excludelist in [['All'], ['None'], ['']]:
+        exclude_dirs = None
+    # else exclude dirs
+    else:
+        exclude_dirs = list(excludelist)
     # -------------------------------------------------------------------------
     # update index database with raw files
     indexdbm.update_entries(block_kind=block_kind,

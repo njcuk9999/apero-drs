@@ -119,9 +119,9 @@ def __main__(recipe, params):
         # ---------------------------------------------------------------------
         # find all files via index database
         # ---------------------------------------------------------------------
-        includelist = params['INCLUDE_OBS_DIRS']
-        excludelist = params['EXCLUDE_OBS_DIRS']
-        reindexlist = params.listp('REPROCESS_REINDEX_BLOCKS', dtype='str')
+        includelist = params.listp('INCLUDE_OBS_DIRS', dtype=str)
+        excludelist = params.listp('EXCLUDE_OBS_DIRS', dtype=str)
+        reindexlist = params.listp('REPROCESS_REINDEX_BLOCKS', dtype=str)
         # get all block kinds
         block_kinds = drs_file.DrsPath.get_block_names(params=params,
                                                        block_filter='indexing')

@@ -1640,6 +1640,8 @@ class IndexDatabase(DatabaseManager):
                                        filename=filename)
             # if we are not updating return here
             if not cond:
+                # TODO: Add to language database
+                WLOG(self.params, '', '\tSkipping search (already run)')
                 return None
         # ---------------------------------------------------------------------
         # deal with no database loaded
@@ -1881,6 +1883,7 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     path_inst = drs_file.DrsPath(params, _update=False)
     # get blocks with obs_dirs
     block_names = path_inst.blocks_with_obs_dirs()
+    # -------------------------------------------------------------------------
     # print progress
     # TODO: add to language database
     msg = '\tSearching all directories'
@@ -1888,6 +1891,23 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     # get conditions (so we don't repeat them)
     incdircond = incdirs is not None
     excdircond = excdirs is not None
+    # -------------------------------------------------------------------------
+    # get absolute path for all incdirs
+    incdirs1 = []
+    if incdircond:
+        for incdir in incdirs:
+            ipath = drs_file.DrsPath(params, block_kind=block_kind,
+                                     obs_dir=incdir)
+            incdirs1.append(ipath.abspath)
+    # -------------------------------------------------------------------------
+    # get absolute path for all excdirs
+    excdirs1 = []
+    if excdircond:
+        for excdir in excdirs:
+            epath = drs_file.DrsPath(params, block_kind=block_kind,
+                                     obs_dir=excdir)
+            excdirs1.append(epath.abspath)
+    # -------------------------------------------------------------------------
     # only use sub-directories for the following kinds
     if block_kind.lower() in block_names:
         # ---------------------------------------------------------------------
@@ -1898,11 +1918,11 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
         for item in all_dirs:
             # skip directories not in included directories
             if incdircond:
-                if item not in incdirs:
+                if item not in incdirs1:
                     continue
             # skip directories in excluded directories
             if excdircond:
-                if item in excdirs:
+                if item in excdirs1:
                     continue
             # if we have reached here then append subdirs
             subdirs.append(item)

@@ -1808,7 +1808,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
         # add to conditions
         condition += ' AND ({0})'.format(' OR '.join(subconditions))
         # log whitelist
-        wargs = [' ,'.join(whitelist_nights)]
+        wargs = [', '.join(whitelist_nights)]
         WLOG(params, '', textentry('40-503-00027', args=wargs))
         # get length of database at this point
         idb_len = indexdb.database.count(indexdb.database.tname,
