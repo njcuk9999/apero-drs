@@ -1,3 +1,111 @@
+commit a0c2a81e3dd0f363443c9715f4ae1332e5bfe707
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Jul 14 10:30:13 2021 -0400
+
+    update language database
+
+commit c3277f45d5b7d1e75f9fd339e89f414510c5ee75
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Jul 14 10:28:32 2021 -0400
+
+    apero.science.calib.wave.py - update echelle orders calculation + up limits on WAVE_CCF_RV_THRES_QC
+
+commit 00022f0205cb0fadaaebe55bb28ad8972757c593
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Jul 14 10:27:24 2021 -0400
+
+    force recipes that are master to give error on qc failure
+
+commit c55709abda5ca7c18b0737de0b23a4fac7b33836
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jul 13 12:01:43 2021 -0400
+
+    apero.core.instruments.nirps_ha.default_constants.py - up the nirps qc limit to 20 m/s
+
+commit af784706d7dda710bd15ef71bc74fe26072477be
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jul 13 10:14:37 2021 -0400
+
+    apero.science.calib.wave.py - match_fplines to get dv from wave meas
+
+commit 041a9ed010dafbf04d9ffde2e26e53250b132fd0
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jul 12 22:13:24 2021 -0400
+
+    apero.science.calib.wave.py - need to sort both to the same length (assumes 1. they are sorted by peakn 2. there are no duplicates)
+
+commit 0da17a3f228db9b6db1485fa428593df13d75ae7
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jul 12 17:06:14 2021 -0400
+
+    apero.science.calib.flat_blaze.py - deal with blaze failing even simple fix (remove cubic term)
+
+commit db98358cd7ccad78ddea5ca12c675dfcc4079a00
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jul 12 17:05:31 2021 -0400
+
+    update wave sol to fix problem with dv measurement between A,B and C rel to AB
+
+commit 77fc580d1d934e50be6c5ba99222d55b1e868c38
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Jul 9 19:11:01 2021 -0400
+
+    try to fix wave master solution
+
+commit edd7074912bb231d431df3a181b063ac9e320558
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Jul 9 18:54:25 2021 -0400
+
+    try to fix wave master solution
+
+commit e4c6a4a714ba143caeeed0596909226ec31b91b7
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Jul 9 18:50:21 2021 -0400
+
+    try to fix wave master solution
+
+commit 1ade707c6d6668a832c8ac51bfb5b418fc0d48ea
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Jul 9 18:50:00 2021 -0400
+
+    update documentation + add recipe sequence auto doc
+
+commit 4e3ebceda546561a15188d115a08836004552958
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Jul 9 18:49:47 2021 -0400
+
+    update documentation + add recipe sequence auto doc
+
+commit a4c1290a91e64b52b711c8a3a47fb4aa49a72e7a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Jul 8 17:52:26 2021 -0400
+
+    update documentation
+
+commit e48c13d40dd5030f611d7d32e8438df373be9f97
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Jul 8 17:52:11 2021 -0400
+
+    apero.science.calib.flat_blaze.py - load_calib_file must use fiber argument!!
+
+commit cb1c76b5f7fe7c566ffb469c09ad7ae2bc35c2f9
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Jul 8 17:51:44 2021 -0400
+
+    apero.core.instruments.spirou.default_constants.py - WAVE_CAVITY_FIT_DEGREE too high, change from 11 --> 7
+
+commit 125390c4b5a2d49d63c57935d4ed792db0f8f5c0
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Jul 6 12:30:13 2021 -0400
+
+    apero.science.extract.berv.py - make sure berv warning is on by default
+
+commit d14ad3011bfa62d0d572db0cb7cf081f7cc75415
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Jul 5 21:23:27 2021 -0400
+
+    update date / version / documentation
+
 commit 65ee6bcdaeded38aa37dc85bd345038ab353d501
 Author: Neil Cook <neil.james.cook@gmail.com>
 Date:   Mon Jul 5 19:55:10 2021 -0400
@@ -27,129 +135,3 @@ Author: Neil Cook <neil.james.cook@gmail.com>
 Date:   Mon Jul 5 13:12:14 2021 -0400
 
     update wave solution
-
-commit 1581bfeb509e8d62f9c289b64e9a821809267f80
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Fri Jul 2 15:19:43 2021 -0400
-
-    add auto-doc recipe definitions
-
-commit 007c7031dbfe8801c402102319ddbe540cbc5a39
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Fri Jul 2 10:46:42 2021 -0400
-
-    apero.core.instruments.nirps_ha.pseudo_const.py - correct typo remove filename from get_drs_mode
-
-commit d2540f09ead284be3ba918ad8b878152e5e50d23
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Wed Jun 30 18:55:28 2021 -0400
-
-    apero.tools.module.documentation - add css + table formatting
-
-commit 2ec978300122229cbb967d5f559d03afc8cde778
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Wed Jun 30 15:38:29 2021 -0400
-
-    apero.tools.module.documentation - add to file definitions documentation nirps + spirou
-
-commit b804a7eb7939761f95e7eca028677de9d8255372
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Wed Jun 30 11:21:44 2021 -0400
-
-    apero.core.instruments.*.pseudo_const.py - expand psuedo_consts loading certain variables only once
-
-commit 70e4ef01ac973fca791e2ae1ce2188bdb8c83670
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Wed Jun 30 09:47:54 2021 -0400
-
-    apero.science.calib.shape.py - correctiong for infiles for outfile3+ (nirps hcfiles None)
-
-commit 3abbef217d77065a74d996e7c227854df9a162c6
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 29 19:25:43 2021 -0400
-
-    update documentation based on file_definitions page
-
-commit 46c0f24607c490df896deaa948f9f8ef09950066
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 29 18:22:41 2021 -0400
-
-    add way to compile list of file definitions
-
-commit a0492e1f11d3d5074609fb84160746752e3a059a
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 29 14:30:47 2021 -0400
-
-    apero.core.instruments.nirps_ha.default_constants.py - change the localisation ydet max value limit from 4060-->4050
-
-commit 3e0c5877edf5965122de4ad576d1e7a7c57d4b66
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 29 14:30:20 2021 -0400
-
-    apero.core.utils.drs_startup.py - add DrsCodedException as known error type (expected)
-
-commit 7025a658f5c64663a794547bf432d07d0c753467
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 29 13:42:47 2021 -0400
-
-    apero.core.instruments.nirps_ha.file_definitions.py - add OBJ_SKY, OBJ_TUN, TEST_HCONE_HCONE, TEST_FP_HCONE, TEST_HCONE_FP, TEST_DARK_FP
-
-commit 1c9b4a6c5881a059af63d297deee888d87af19e9
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 29 12:13:28 2021 -0400
-
-    apero.core.core.drs_file.py - get id file error keys from psuedo const
-
-commit 368e0f1e3346ebced0cf17b646ef8b310978f074
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 29 12:12:51 2021 -0400
-
-    apero.core.instruments.nirps_ha.file_definitions.py - add FLAT,LED to known raw file types
-
-commit 4f3e0a49dae22cbfeee406ffb17763b4835010ae
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Tue Jun 29 12:11:04 2021 -0400
-
-    update reset.object.csv file based on current googlesheet (so we don't have to recheck we supply this as default)
-
-commit 2be6959406d4c94e097ba595c5b90d8cf3913538
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Mon Jun 28 21:04:39 2021 -0400
-
-    database fixes - FLOAT-->DOUBLE, order file names for skipping, fix grouping for polar files (pol not running)
-
-commit f97c417e2b208aa84705b15a7a257a76285d97ac
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Mon Jun 28 13:50:26 2021 -0400
-
-    remove PPM from nirps run.ini files
-
-commit d4af5f8613514fc95034cf8ce2e5900b11793ca9
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Mon Jun 28 11:29:34 2021 -0400
-
-    update requirements (no longer a test)
-
-commit f604c01d1ce6ec833b32dfca1065b1df417f7a2d
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Mon Jun 28 11:26:05 2021 -0400
-
-    update master night for nirps
-
-commit 4964c3bc2a6023df865e49daddc2069d4689fbcd
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Mon Jun 28 11:05:23 2021 -0400
-
-    update pseudo const for nirps
-
-commit 8d1889cbf522cf371170f1d44b8c88c2000be79c
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Fri Jun 25 10:48:52 2021 -0400
-
-    update date/version/changelog/docs
-
-commit 8a43e5705b6d0d0d92526e3d7620d5e9746ffd1a
-Author: Neil Cook <neil.james.cook@gmail.com>
-Date:   Fri Jun 25 10:17:28 2021 -0400
-
-    finish delete table app for apero_database.py (--delete)

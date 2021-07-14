@@ -2,6 +2,54 @@ Changelog
 =========
 
 
+0.7.147 (2021-07-14)
+--------------------
+- Update language database. [Neil Cook]
+- Apero.science.calib.wave.py - update echelle orders calculation + up
+  limits on WAVE_CCF_RV_THRES_QC. [Neil Cook]
+- Force recipes that are master to give error on qc failure. [Neil Cook]
+
+
+0.7.146 (2021-07-13)
+--------------------
+- Apero.core.instruments.nirps_ha.default_constants.py - up the nirps qc
+  limit to 20 m/s. [Neil Cook]
+- Apero.science.calib.wave.py - match_fplines to get dv from wave meas.
+  [Neil Cook]
+
+
+0.7.145 (2021-07-13)
+--------------------
+- Apero.science.calib.wave.py - need to sort both to the same length
+  (assumes 1. they are sorted by peakn 2. there are no duplicates) [Neil
+  Cook]
+- Apero.science.calib.flat_blaze.py - deal with blaze failing even
+  simple fix (remove cubic term) [Neil Cook]
+- Update wave sol to fix problem with dv measurement between A,B and C
+  rel to AB. [Neil Cook]
+
+
+0.7.144 (2021-07-09)
+--------------------
+- Try to fix wave master solution. [Neil Cook]
+- Try to fix wave master solution. [Neil Cook]
+- Try to fix wave master solution. [Neil Cook]
+- Update documentation + add recipe sequence auto doc. [Neil Cook]
+- Update documentation + add recipe sequence auto doc. [Neil Cook]
+- Update documentation. [Neil Cook]
+- Apero.science.calib.flat_blaze.py - load_calib_file must use fiber
+  argument!! [Neil Cook]
+- Apero.core.instruments.spirou.default_constants.py -
+  WAVE_CAVITY_FIT_DEGREE too high, change from 11 --> 7. [Neil Cook]
+
+
+0.7.143 (2021-07-06)
+--------------------
+- Apero.science.extract.berv.py - make sure berv warning is on by
+  default. [Neil Cook]
+- Update date / version / documentation. [Neil Cook]
+
+
 0.7.142 (2021-07-05)
 --------------------
 - Update documentation. [Neil Cook]
