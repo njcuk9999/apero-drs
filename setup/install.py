@@ -39,6 +39,7 @@ module_translation = dict()
 module_translation['Pillow'] = 'PIL'
 module_translation['pyyaml'] = 'yaml'
 module_translation['mysql-connector-python'] = 'mysql.connector'
+module_translation['scikit-image'] = 'skimage'
 
 
 # =============================================================================
