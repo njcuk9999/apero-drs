@@ -2537,10 +2537,21 @@ def get_echelle_orders(params: ParamDict, wprops: ParamDict) -> ParamDict:
     echelle_orders = (central_waveval[1:] / np.diff(central_waveval)) - 1
     # are slightly off integers due to non-perfect wave solution
     echelle_orders = np.round(echelle_orders).astype(int)
+    # correction for "weird" orders
+    sign = np.median(np.sign(np.gradient(echelle_orders)))
+    # get the deviation
+    dev = sign * np.arange(len(echelle_orders))
+    # recalculate the echelle orders using the median (assuming most orders
+    #   are good)
+    echelle_orders = np.median(echelle_orders - dev) + dev
+    # are slightly off integers due to non-perfect wave solution
+    echelle_orders = np.round(echelle_orders).astype(int)
     # -------------------------------------------------------------------------
     # need to add the first order
     diff = np.mean(np.diff(echelle_orders))
     echelle_orders = np.append(echelle_orders[0] - diff, echelle_orders)
+    # are slightly off integers due to non-perfect wave solution
+    echelle_orders = np.round(echelle_orders).astype(int)
     # -------------------------------------------------------------------------
     # sanity check that we have the correct number of orders
     if len(echelle_orders) != wavemap.shape[0]:
