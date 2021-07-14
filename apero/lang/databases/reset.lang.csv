@@ -616,7 +616,7 @@
 "{0} = header key; {1} = dimension of 1d list; {2} = filename; {3} = function name","Cannot find key '{0}' with dim={1} in header for file={2} \n\t function = {3}","","Means 'key' was not found in the header of 'file' for the read_key_1d_list function","09-000-00008","ERROR"
 "{0} = header key; {1} = input key; {2} = dimension 1 of 2d list; {3} = dimension 2 of 2d list; {4} = filename; {5} = function name","Cannot find key '{0}' (input={1}) with dim1={2} dim2={3} in header for file={4} \n\t function = {5}","","Means 'key' was not found in the header of 'file' for the read_key_2d_list function","09-000-00009","ERROR"
 "{0} = function name","No FP files passed 2D quality control. \n\t Function = {0}","","Means that all FP files were not valid","09-000-00010","ERROR"
-"","","","","",""
+"{0} = recipe name","QC failure of master recipe: {0}","","Means a master recipe failed QC - this is not allowed","09-000-00011","ERROR"
 "","","","","",""
 "None","User Error: Argument Error","","User Argument Error","09-001-00000","ERROR"
 "{0} = message; {1} = program","Argument Error (Error from ArgParse): \n\t {0} \n\t Use: '{1}.py --help' for help.  ","","User Argument Error in DRSArgumentParser message is an internal ArgParse error message","09-001-00001","ERROR"
