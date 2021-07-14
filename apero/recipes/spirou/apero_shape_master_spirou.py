@@ -299,6 +299,12 @@ def __main__(recipe, params):
         calibdbm.add_calib_file(outfile2)
         # add master fp file
         calibdbm.add_calib_file(outfile3)
+    # ---------------------------------------------------------------------
+    # if recipe is a master and QC fail we generate an error
+    # ---------------------------------------------------------------------
+    if not passed:
+        eargs = [recipe.name]
+        WLOG(params, 'error', textentry('09-000-00011', args=eargs))
     # ------------------------------------------------------------------
     # Construct summary document
     # ------------------------------------------------------------------

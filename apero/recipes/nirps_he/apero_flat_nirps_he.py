@@ -237,6 +237,12 @@ def __main__(recipe, params):
                 calibdbm.add_calib_file(blazefile)
                 # copy the flat file to the calibDB
                 calibdbm.add_calib_file(flatfile)
+            # ---------------------------------------------------------------------
+            # if recipe is a master and QC fail we generate an error
+            # ---------------------------------------------------------------------
+            if not passed and params['INPUTS']['MASTER']:
+                eargs = [recipe.name]
+                WLOG(params, 'error', textentry('09-000-00011', args=eargs))
             # ------------------------------------------------------------------
             # Summary plots
             # ------------------------------------------------------------------

@@ -217,6 +217,12 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         if passed and params['INPUTS']['DATABASE']:
             calibdbm.add_calib_file(outfile)
+        # ---------------------------------------------------------------------
+        # if recipe is a master and QC fail we generate an error
+        # ---------------------------------------------------------------------
+        if not passed and params['INPUTS']['MASTER']:
+            eargs = [recipe.name]
+            WLOG(params, 'error', textentry('09-000-00011', args=eargs))
         # ------------------------------------------------------------------
         # Summary plots
         # ------------------------------------------------------------------

@@ -177,6 +177,12 @@ def __main__(recipe, params):
         if passed and params['INPUTS']['DATABASE']:
             # add shapel transforms
             calibdbm.add_calib_file(outfile)
+        # ---------------------------------------------------------------------
+        # if recipe is a master and QC fail we generate an error
+        # ---------------------------------------------------------------------
+        if not passed and params['INPUTS']['MASTER']:
+            eargs = [recipe.name]
+            WLOG(params, 'error', textentry('09-000-00011', args=eargs))
         # ------------------------------------------------------------------
         # plot a zoom in of non-shifted vs shifted
         # ------------------------------------------------------------------
