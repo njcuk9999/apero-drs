@@ -47,64 +47,6 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Define functions
 # =============================================================================
-# TODO: not used!
-def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
-    """
-    do not use -- old function here for comparison
-    :param e2ds:
-    :param flux:
-    :param blaze_cut:
-    :param blaze_deg:
-    :return:
-    """
-    # do not use -- old function here for comparison
-    args = [__NAME__ + '.calculate_blaze_flat_sinc()']
-    warnings.warn('Do not use - Use {0} instead'.format(*args))
-    # ----------------------------------------------------------------------
-    # remove edge of orders at low S/N
-    # ----------------------------------------------------------------------
-    with warnings.catch_warnings(record=True) as _:
-        blazemask = e2ds < (flux / blaze_cut)
-        e2ds[blazemask] = np.nan
-    # ----------------------------------------------------------------------
-    # measure the blaze (with polynomial fit)
-    # ----------------------------------------------------------------------
-    # get x position values
-    xpix = np.arange(len(e2ds))
-    # find all good pixels
-    good = np.isfinite(e2ds)
-    # do poly fit on good values
-    coeffs = mp.nanpolyfit(xpix[good], e2ds[good], deg=blaze_deg)
-    # fit all positions based on these fit coefficients
-    blaze = np.polyval(coeffs, xpix)
-    # blaze is not usable outside mask range to do this we convole with a
-    #   width=1 tophat (this will remove any cluster of pixels that has 2 or
-    #   less points and is surrounded by NaN values
-    # find minimum/maximum position of convolved blaze
-    nanxpix = np.array(xpix).astype(float)
-    nanxpix[~good] = np.nan
-    minpos, maxpos = mp.nanargmin(nanxpix), mp.nanargmax(nanxpix)
-
-    # set these bad values to NaN
-    blaze[:minpos] = np.nan
-    blaze[maxpos:] = np.nan
-
-    # ----------------------------------------------------------------------
-    #  calcaulte the flat
-    # ----------------------------------------------------------------------
-    with warnings.catch_warnings(record=True) as _:
-        flat = e2ds / blaze
-
-    # ----------------------------------------------------------------------
-    # calculate the rms
-    # ----------------------------------------------------------------------
-    rms = mp.nanstd(flat)
-
-    # ----------------------------------------------------------------------
-    # return values
-    return e2ds, flat, blaze, rms
-
-
 def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
                               peak_cut: float, badpercentile: float,
                               order_num: int, fiber: str,

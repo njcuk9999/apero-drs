@@ -617,9 +617,6 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                         func_name)
     noise_thres = pcheck(params, 'CCF_NOISE_THRES', 'noise_thres', kwargs,
                          func_name)
-    # TODO: Remove this (not used any more)
-    mask_min = pcheck(params, 'CCF_MASK_MIN_WEIGHT', 'mask_min', kwargs,
-                      func_name)
     mask_width = pcheck(params, 'CCF_MASK_WIDTH', 'mask_width', kwargs,
                         func_name)
     mask_units = pcheck(params, 'CCF_MASK_UNITS', 'mask_units', kwargs,
@@ -772,12 +769,11 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     props['CCF_BOXSIZE'] = noise_size
     props['CCF_MAXFLUX'] = noise_thres
     props['CCF_NMAX'] = ccfnmax
-    props['MASK_MIN'] = mask_min
     props['MASK_WIDTH'] = mask_width
     props['MASK_UNITS'] = mask_units
     # set source
     keys = ['CCF_MASK', 'CCF_STEP', 'CCF_WIDTH', 'TARGET_RV', 'CCF_SIGDET',
-            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_NMAX', 'MASK_MIN', 'MASK_WIDTH',
+            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_NMAX', 'MASK_WIDTH',
             'MASK_UNITS']
     props.set_sources(keys, func_name)
 
@@ -822,8 +818,6 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     ccfmask = pcheck(params, 'WAVE_CCF_MASK', 'ccfmask', kwargs, func_name)
     ccfnmax = pcheck(params, 'WAVE_CCF_N_ORD_MAX', 'ccfnmax', kwargs,
                      func_name)
-    mask_min = pcheck(params, 'WAVE_CCF_MASK_MIN_WEIGHT', 'mask_min', kwargs,
-                      func_name)
     mask_width = pcheck(params, 'WAVE_CCF_MASK_WIDTH', 'mask_width', kwargs,
                         func_name)
     mask_units = pcheck(params, 'WAVE_CCF_MASK_UNITS', 'mask_units', kwargs,
@@ -905,12 +899,11 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     props['CCF_BOXSIZE'] = noise_size
     props['CCF_MAXFLUX'] = noise_thres
     props['CCF_NMAX'] = ccfnmax
-    props['MASK_MIN'] = mask_min
     props['MASK_WIDTH'] = mask_width
     props['MASK_UNITS'] = mask_units
     # set source
     keys = ['CCF_MASK', 'CCF_STEP', 'CCF_WIDTH', 'TARGET_RV', 'CCF_SIGDET',
-            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_NMAX', 'MASK_MIN', 'MASK_WIDTH',
+            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_NMAX', 'MASK_WIDTH',
             'MASK_UNITS']
     props.set_sources(keys, func_name)
 
@@ -1348,7 +1341,6 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     ccf_file.add_hkey('KW_CCF_BOXSIZE', value=props['CCF_BOXSIZE'])
     ccf_file.add_hkey('KW_CCF_MAXFLUX', value=props['CCF_MAXFLUX'])
     ccf_file.add_hkey('KW_CCF_NMAX', value=props['CCF_NMAX'])
-    ccf_file.add_hkey('KW_CCF_MASK_MIN', value=props['MASK_MIN'])
     ccf_file.add_hkey('KW_CCF_MASK_WID', value=props['MASK_WIDTH'])
     ccf_file.add_hkey('KW_CCF_MASK_UNITS', value=props['MASK_UNITS'])
     # ----------------------------------------------------------------------

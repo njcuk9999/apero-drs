@@ -203,7 +203,6 @@ class PageButtonPanel(ttk.Frame):
 
 class PageLogo(ttk.Frame):
     def __init__(self, parent, logo_path=None):
-        # TODO: remove with full path
         if logo_path is None:
             logo_path = os.path.join(IMAGEDIR, 'apero_logo.png')
         ttk.Frame.__init__(self, parent)

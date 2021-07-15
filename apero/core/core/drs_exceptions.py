@@ -310,6 +310,14 @@ class DrsCodedWarning:
             return default
 
 
+class DrsRecipeException(DrsCodedException):
+    """
+    Special instance of DrsCodedException which we want to catch
+    and handle separately that other DrsCodedExceptions
+    """
+    pass
+
+
 # =============================================================================
 # Define functions
 # =============================================================================

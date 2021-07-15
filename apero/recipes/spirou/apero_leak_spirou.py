@@ -14,6 +14,7 @@ from apero import lang
 from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.science.extract import gen_ext as extgen
@@ -169,10 +170,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Check for previous correction
         # ------------------------------------------------------------------
-        # TODO: Eventually this should be required
         leakcorr = infile.get_hkey('KW_LEAK_CORR', required=False)
         if leakcorr is not None:
-            if leakcorr in ['True', True, 1, '1']:
+            if drs_text.true_text(leakcorr):
                 # print warning
                 wargs = [infile.filename]
                 WLOG(params, 'warning', textentry('10-016-00023', args=wargs))

@@ -32,7 +32,8 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # -----------------------------------------------------------------------------
-# TODO: move recipe definition to instrument set up when testing is finished
+# Note: move recipe definition to instrument set up when testing is finished
+# -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
 # define a recipe for this tool
@@ -75,9 +76,11 @@ def main(**kwargs):
     """
     # assign function calls (must add positional)
     fkwargs = dict(**kwargs)
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    # TODO: remove rmod when put into full recipe
+    # -------------------------------------------------------------------------
+    # Note: remove rmod when put into full recipe
+    # -------------------------------------------------------------------------
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,
                                        rmod=RMOD)
     # solid debug mode option

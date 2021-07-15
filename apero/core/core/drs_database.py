@@ -1640,8 +1640,8 @@ class IndexDatabase(DatabaseManager):
                                        filename=filename)
             # if we are not updating return here
             if not cond:
-                # TODO: Add to language database
-                WLOG(self.params, '', '\tSkipping search (already run)')
+                # print skipping: Skipping search (already run)
+                WLOG(self.params, '', textentry('40-001-00031'))
                 return None
         # ---------------------------------------------------------------------
         # deal with no database loaded
@@ -1727,10 +1727,9 @@ class IndexDatabase(DatabaseManager):
             # return
             return
         # ---------------------------------------------------------------------
-        # TODO: add to language database
-        msg = '\tReading headers of {0} files (to be updated)'
+        # log: Reading headers of {0} files (to be updated)
         margs = [len(reqfiles)]
-        WLOG(self.params, '', msg.format(*margs))
+        WLOG(self.params, '', textentry('40-001-00032', args=margs))
         # add required files to the database
         for reqfile in tqdm(reqfiles):
             # get a drs path for required file
@@ -1884,10 +1883,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     # get blocks with obs_dirs
     block_names = path_inst.blocks_with_obs_dirs()
     # -------------------------------------------------------------------------
-    # print progress
-    # TODO: add to language database
-    msg = '\tSearching all directories'
-    WLOG(params, '', msg)
+    # print progress: Searching all directories'
+    WLOG(params, '', textentry('40-001-00033'))
     # get conditions (so we don't repeat them)
     incdircond = incdirs is not None
     excdircond = excdirs is not None

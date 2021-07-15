@@ -36,7 +36,8 @@ WLOG = drs_log.wlog
 # Get the text types
 textentry = lang.textentry
 # -----------------------------------------------------------------------------
-# TODO: move recipe definition to instrument set up when testing is finished
+# Note: move recipe definition to instrument set up when testing is finished
+# -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
 # define a recipe for this tool
@@ -55,7 +56,7 @@ demo_recipe.set_kwarg(name='--text', dtype=str, default='None',
                       helpstr='Enter text here to print it')
 # add recipe to recipe definition
 RMOD.add(demo_recipe)
-# demo functions (TODO: remove anywhere that is not a demo)
+# demo functions (Note: remove anywhere that is not a demo)
 demo = drs_dev.Demo(constants.load())
 
 
@@ -85,7 +86,9 @@ def main(**kwargs):
     fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    # TODO: remove rmod when put into full recipe
+    # -------------------------------------------------------------------------
+    # Note: remove rmod when put into full recipe
+    # -------------------------------------------------------------------------
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,
                                        rmod=RMOD)
     # solid debug mode option
@@ -269,7 +272,7 @@ def __main__(recipe, params):
 # Start of code
 # =============================================================================
 # This is the classic start up:
-# TODO: Uncomment if not a demo
+# Note: Uncomment if not a demo
 
 # if __name__ == "__main__":
 #         # run main with no arguments (get from command line - sys.argv)

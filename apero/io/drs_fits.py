@@ -58,12 +58,8 @@ pcheck = constants.PCheck(wlog=WLOG)
 display_func = drs_log.display_func
 # Get the text types
 textentry = lang.textentry
-# TODO: This should be changed for astropy -> 2.0.1
-# bug that hdu.scale has bug before version 2.0.1
-if av.major < 2 or (av.major == 2 and av.minor < 1):
-    SCALEARGS = dict(bscale=(1.0 + 1.0e-8), bzero=1.0e-8)
-else:
-    SCALEARGS = dict(bscale=1, bzero=0)
+# set scale args for astropy >3.0
+SCALEARGS = dict(bscale=1, bzero=0)
 # Define any simple type for typing
 AnySimple = Union[int, float, str, bool]
 # get header comment cards
@@ -349,8 +345,6 @@ class Header(fits.Header):
 # =============================================================================
 # Define read functions
 # =============================================================================
-# TODO: Got to here with the python typing
-
 # define complex typing for readfits
 DataHdrType = Union[Tuple[np.ndarray, fits.Header], np.ndarray, None,
                     Tuple[np.ndarray, fits.Header, str], Tuple[np.ndarray, str],

@@ -14,6 +14,7 @@ from scipy import ndimage
 from typing import Tuple, Union
 import warnings
 
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
@@ -42,6 +43,8 @@ ParamDict = constants.ParamDict
 display_func = drs_misc.display_func
 # get the calibration database
 CalibrationDatabase = drs_database.CalibrationDatabase
+# Get the text types
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -569,9 +572,8 @@ def nirps_correction(params: ParamDict, image: np.ndarray) -> np.ndarray:
     # -------------------------------------------------------------------------
     # copy the image
     image2 = np.array(image)
-    # TODO: move to language database
-    msg = 'Masking bright pixels'
-    WLOG(params, '', msg)
+    # log progress: Masking bright pixels
+    WLOG(params, '', textentry('40-010-00019'))
     # define the bright mask
     bright_mask = np.ones_like(image, dtype=bool)
     # loop around all pixels in the y-direction
@@ -588,9 +590,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray) -> np.ndarray:
     # smaller than the order footprint on the array
     # as it would lead to a set of NaNs in the downsized
     # image and chaos afterward
-    # TODO: move to language database
-    msg = 'Finding low frequencies'
-    WLOG(params, '', msg)
+    WLOG(params, '', textentry('40-010-00020'))
     # find 25th percentile, more robust against outliers
     tmp = mp.percentile_bin(image2, binsize, binsize, percentile=25)
     # set NaN pixels to zero (for the zoom)
