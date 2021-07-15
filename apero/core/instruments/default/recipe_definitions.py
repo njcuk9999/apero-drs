@@ -139,17 +139,16 @@ remake_doc.shortname = 'DOC'
 remake_doc.description = textentry('REMAKE_DOC_DESCRIPTION')
 remake_doc.recipe_type = 'nolog-tool'
 remake_doc.recipe_kind = 'admin'
-# TODO: move to language database
 remake_doc.set_kwarg(name='--compile', dtype='switch', default=False,
-                     helpstr='Compile all rst pages')
+                     helpstr=textentry('REMAKE_DOC_COMPILE_HELP'))
 remake_doc.set_kwarg(name='--upload', dtype='switch', default=False,
                      helpstr=textentry('REMAKE_DOC_UPLOADARG_HELP'))
 remake_doc.set_kwarg(name='--filedef', dtype='switch', default=False,
-                     helpstr='Compile the docs for file definitions')
+                     helpstr=textentry('REMAKE_DOC_FILEDEF_HELP'))
 remake_doc.set_kwarg(name='--recipedef', dtype='switch', default=False,
-                     helpstr='Compile the docs for recipe definitions')
+                     helpstr=textentry('REMAKE_DOC_RECIPEDEF_HELP'))
 remake_doc.set_kwarg(name='--recipeseq', dtype='switch', default=False,
-                     helpstr='Compile the docs for recipe sequences')
+                     helpstr=textentry('REMAKE_DOC_RECIPESEQ_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py
@@ -167,7 +166,6 @@ explorer.set_kwarg(name='--hash', default=False, dtype='switch',
 # -----------------------------------------------------------------------------
 # apero_get.py
 # -----------------------------------------------------------------------------
-# TODO: move strings to language db
 get_files.anme = 'apero_get.py'
 get_files.shortname = 'GET'
 get_files.instrument = __INSTRUMENT__
@@ -175,36 +173,21 @@ get_files.description = 'Use database to search and copy any files quickly'
 get_files.recipe_type = 'nolog-tool'
 get_files.recipe_kind = 'user'
 get_files.set_kwarg(name='--gui', default=False, dtype='switch',
-                    helpstr='Use a gui to filter files (Currently not ready)')
+                    helpstr=textentry('GET_GUI_HELP'))
 get_files.set_kwarg(name='--objnames', dtype=str, default='None',
-                    helpstr='The object names separated by a comma. Use "" for'
-                            'objects with whitespaces i.e "obj1,obj2,obj 3"')
+                    helpstr=textentry('GET_OBJNAME_HELP'))
 get_files.set_kwarg(name='--dprtypes', dtype=str, default='None',
-                    helpstr='The DPRTYPES to use (multiple dprtypes combined '
-                            'with OR logic) separate dprtypes with commas.'
-                            'Leaving blank will not use DPRTYPE to filter '
-                            'files.')
+                    helpstr=textentry('GET_DPRTYPES_HELP'))
 get_files.set_kwarg(name='--outtypes', dtype=str, default='None',
-                    helpstr='The drs output file types to use (multiple '
-                            'output type combined  with OR logic) separate '
-                            'output types with commas.'
-                            'Leaving blank will not use output type to filter'
-                            'files.')
+                    helpstr=textentry('GET_OUTTYPES_HELP'))
 get_files.set_kwarg(name='--fibers', dtype=str, default='None',
-                    helpstr='The fibres to use (multiple '
-                            'output type combined  with OR logic) separate '
-                            'fibers with commas. Leaving blank will not use '
-                            'fiber to filter files.')
+                    helpstr=textentry('GET_FIBERS_HELP'))
 get_files.set_kwarg(name='--outpath', dtype=str, default='None',
-                    helpstr='This is the directory where copied files will be'
-                            'placed. Must be a valid path and must have '
-                            'permission be able to'
-                            'writ.')
+                    helpstr=textentry('GET_OUTPATH_HELP'))
 get_files.set_kwarg(name='--symlinks', default=False, dtype='switch',
-                    helpstr='Create symlinks to the file instead of copying')
+                    helpstr=textentry('GET_SYMLINKS_HELP'))
 get_files.set_kwarg(name='--test', default=False, dtype='switch',
-                    helpstr='Does not copy files - prints copy as a debug test.'
-                            'Recommended for first time use.')
+                    helpstr=textentry('GET_TEST_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_listing.py

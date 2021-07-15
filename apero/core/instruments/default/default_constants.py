@@ -281,6 +281,7 @@ __all__ = [
     # debug loc plot settings
     'PLOT_LOC_WIDTH_REGIONS', 'PLOT_LOC_FIBER_DOUBLET_PARITY',
     'PLOT_LOC_GAP_ORDERS', 'PLOT_LOC_IMAGE_FIT', 'PLOT_LOC_IM_CORNER',
+    'PLOT_LOC_IM_REGIONS',
     # debug shape plot settings
     'PLOT_SHAPE_DX', 'PLOT_SHAPE_ANGLE_OFFSET_ALL', 'PLOT_SHAPE_ANGLE_OFFSET',
     'PLOT_SHAPEL_ZOOM_SHIFT', 'PLOT_SHAPE_LINEAR_TPARAMS',
@@ -4440,7 +4441,15 @@ PLOT_LOC_IMAGE_FIT = Const('PLOT_LOC_IMAGE_FIT', value=False, dtype=bool,
 PLOT_LOC_IM_CORNER = Const('PLOT_LOC_IM_CORNER', value=False, dtype=bool,
                             source=__NAME__, user=True,  active=False,
                             group=cgroup,
-                            description='turn on localisation image corners plot')
+                            description='turn on localisation image corners '
+                                        'plot')
+
+# turn on localisation iamge regions plot
+PLOT_LOC_IM_REGIONS = Const('PLOT_LOC_IM_REGIONS', value=False, dtype=bool,
+                            source=__NAME__, user=True,  active=False,
+                            group=cgroup,
+                            description='turn on localisation iamge regions '
+                                        'plot')
 
 # turn on the shape dx debug plot
 PLOT_SHAPE_DX = Const('PLOT_SHAPE_DX', value=False, dtype=bool, source=__NAME__,

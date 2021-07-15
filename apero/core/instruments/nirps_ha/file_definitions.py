@@ -206,7 +206,7 @@ raw_obj_sky = drs_finput('RAW_OBJ_SKY', outfunc=out.blank,
                          filetype='.fits', suffix='', inext='.fits',
                          hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
                                     KW_RAW_DPRCATG='SCIENCE',
-                                    KW_TARGET_TYPE='TARGET',
+                                    KW_TARGET_TYPE='SKY',
                                     KW_INST_MODE='HA',
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_obj_sky)

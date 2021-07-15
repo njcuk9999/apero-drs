@@ -2361,6 +2361,10 @@ PLOT_LOC_IMAGE_FIT.value = True
 PLOT_LOC_IM_CORNER = PLOT_LOC_IM_CORNER.copy(__NAME__)
 PLOT_LOC_IM_CORNER.value = True
 
+# turn on localisation iamge regions plot
+PLOT_LOC_IM_REGIONS = PLOT_LOC_IM_REGIONS.copy(__NAME__)
+PLOT_LOC_IM_REGIONS.value = True
+
 # turn on the shape dx debug plot
 PLOT_SHAPE_DX = PLOT_SHAPE_DX.copy(__NAME__)
 PLOT_SHAPE_DX.value = True
