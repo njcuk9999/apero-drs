@@ -13,6 +13,7 @@ from astropy.table import Table
 import glob
 import numpy as np
 import os
+import shutil
 from typing import Dict, List, Union
 
 from apero.base import base
@@ -123,8 +124,11 @@ class HtmlDocument:
 
         :return: None runs firefox on the html filename
         """
-        # TODO: does this need to able to change for other users / OSs?
-        os.system('firefox {0}'.format(self.htmlfilename))
+        command = 'firefox {0}'.format(self.htmlfilename)
+        if shutil.which('firefox') is not None:
+            os.system(command)
+        else:
+            print('Cannot run command: {0}'.format(command))
 
     def cleanup(self):
         """

@@ -1053,8 +1053,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                     pass
         # log that we skippec an order
         if order_num in remove_orders:
-            # TODO: move to language database
-            WLOG(params, '', 'Skipped Order {0}'.format(order_num))
+            # log we are skipping order: Skipped Order {0}
+            WLOG(params, '', textentry('40-017-00063', args=[order_num]))
         else:
             # log progress: Order {0}/{1} Fiber {2} Valid lines: {3}/{4}
             eargs = [order_num, nbo - 1, fiber, valid_lines, len(order_waves),
@@ -1133,11 +1133,9 @@ def hc_wave_sol_offset(params: ParamDict, inwavemap: np.ndarray,
     opart2 = np.nanmedian(hclines['DIFF'])
     # fractional offset of wavelengths (re-expressed as a scaling)
     offset = opart1 * opart2
-    # print offset added
-    # TODO: move to language database
-    msg = 'Appling global fraction offset of wavemap: {0}'
+    # print offset added: Appling global fraction offset of wavemap
     margs = [1 - offset]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-017-00064', args=margs))
     # update the initial wave map
     wavemap = inwavemap * (1 - offset)
     # return offset wavemap
@@ -1287,17 +1285,16 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         good_hc = hcl_order == order_num
         # skip bad orders
         if np.sum(good_fp) < min_fp_lines:
-            # TODO: move to language database
-            msg = '\tSkipped Order {0} (too few {1} lines {2} < {3})'
+            # log that we are skipping order: Skipped Order {0}
+            #     (too few {1} lines {2} < {3})'
             margs = [order_num, 'FP', np.sum(good_fp), min_fp_lines]
-            WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', textentry('40-017-00065', args=margs))
             continue
         # skip orders flagged for removal
         if order_num in remove_orders:
-            # TODO: move to language database
-            msg = '\tSkipped Order {0} (in removed orders)'
+            # log skipping order: Skipped Order {0} (in removed orders)'
             margs = [order_num]
-            WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', textentry('40-017-00066', args=margs))
             continue
         # get the fplines for this order
         ordfp_pix_meas = fpl_pix_meas[good_fp]
@@ -1337,10 +1334,9 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # put into the table
             fpl_pix_meas[good_fp] = ordfp_pix_meas
             fpl_peak_num[good_fp] = ordfp_peak_num
-            # TODO: move to language database
-            msg = '\tSkipped Order {0} (too few {1} lines {2} < {3})'
+            # log skipping orders: Skipped Order {0} (too few {1} lines)
             margs = [order_num, 'HC', np.sum(good_hc), min_hc_lines]
-            WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', textentry('40-017-00065', args=margs))
             # skip to next order
             continue
         # ---------------------------------------------------------------------
@@ -2555,11 +2551,10 @@ def get_echelle_orders(params: ParamDict, wprops: ParamDict) -> ParamDict:
     # -------------------------------------------------------------------------
     # sanity check that we have the correct number of orders
     if len(echelle_orders) != wavemap.shape[0]:
-        # TODO: move to language database
-        emsg = ('Number of Echelle orders (={0}) must be the same as '
-                'number of orders (={1}) \n\t Function = {2}')
+        # log error:  Number of Echelle orders (={0}) must be the same as
+        #             number of orders (={1}) \n\t Function = {2}
         eargs = [len(echelle_orders), wavemap.shape[0], func_name]
-        WLOG(params, 'error', emsg.format(*eargs))
+        WLOG(params, 'error', textentry('00-017-00013', args=eargs))
     # -------------------------------------------------------------------------
     # add back to wprops
     wprops['EORDERS'] = echelle_orders.astype(int)
@@ -2610,11 +2605,9 @@ def wave_meas_diff(params: ParamDict, master_fiber: str,
             # wave meas dv in m/s
             wm_dv = (1 - wratio) * speed_of_light_ms
             # -----------------------------------------------------------------
-            # print progress
-            # TODO: move to language database
-            msg = 'DV({0} - {1}): {2:.3f} m/s'
+            # print dv measurement: DV({0} - {1}): {2:.3f} m/s'
             margs = [master_fiber, fiber, wm_dv]
-            WLOG(params, 'info', msg.format(*margs))
+            WLOG(params, 'info', textentry('40-017-00067', args=margs))
         # ---------------------------------------------------------------------
         # add to rv props
         rvs_all[fiber].set('WM_DV', value=wm_dv, source=func_name)

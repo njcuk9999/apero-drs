@@ -1205,11 +1205,9 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
     try:
         rawdata = requests.get(url)
     except Exception as e:
-        # TODO: Add to language database
-        emsg = ('Could not load table from url: {0}'
-                '\n\t Error {1}: {2} \n\t Function = {3}')
+        # log error: Could not load table from url
         eargs = [url, type(e), str(e), func_name]
-        WLOG(params, 'error', emsg.format(*eargs))
+        WLOG(params, 'error', textentry('00-010-00009', args=eargs))
         return Table()
     # convert rawdata input table
     with warnings.catch_warnings(record=True) as _:
@@ -1226,11 +1224,9 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
                 time.sleep(2)
     # need to deal with too many tries
     if tries >= 10:
-        # TODO: Add to language database
-        emsg = ('Could not load table from url: {0}'
-                '\n\t (Tried 10 times) Function = {1}')
+        # log error: Could not load table from url: (Tried 10 times)
         eargs = [url, func_name]
-        WLOG(params, 'error', emsg.format(*eargs))
+        WLOG(params, 'error', textentry('00-010-00010', args=eargs))
     # add to cached storage
     GOOGLE_TABLES[url] = table
     # return table

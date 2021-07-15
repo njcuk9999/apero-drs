@@ -452,8 +452,6 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             _, blaze = flat_blaze.get_blaze(params, infile.header, fiber,
                                             database=calibdb)
             # get normalized blaze data
-            # TODO: Question: why is this blaze normalized but the blaze you
-            # TODO: Question: save later is not? polar_dict['GLOBAL_BLAZE']
             blaze = blaze / np.nanmax(blaze)
             # -----------------------------------------------------------------
             # load wave for file
@@ -2484,8 +2482,6 @@ def _continuum_polarization(params: ParamDict, xarr: np.ndarray,
         xbin,ybin: numpy arrays (1D) containing the bins used to interpolate
                    data for obtaining the continuum
     """
-    # TODO: this function is almost identical to _continuum
-    # TODO:   Question: Can we combine?
     # set function name
     func_name = display_func('_continuum_polarization', __NAME__)
     # -------------------------------------------------------------------------

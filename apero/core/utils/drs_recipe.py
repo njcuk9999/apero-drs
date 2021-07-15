@@ -1951,12 +1951,6 @@ class DrsRunSequence:
         return table
 
 
-# TODO: Move to drs_exceptions?
-# Drs Recipe Exception
-class DrsRecipeException(Exception):
-    pass
-
-
 # =============================================================================
 # Define file check functions
 # =============================================================================

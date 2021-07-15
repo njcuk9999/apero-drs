@@ -1083,6 +1083,36 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     plotter.plotend(graph)
 
 
+def plot_loc_im_regions(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation image "corners" plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    mask0 = kwargs['mask0']
+    mask1 = kwargs['mask1']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, ncols=1, nrows=1)
+    # ------------------------------------------------------------------
+    # plot the images
+    frame.imshow(mask0, aspect='auto', origin='lower')
+    frame.imshow(mask1, alpha=0.5, aspect='auto', origin='lower')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 loc_width_regions = Graph('LOC_WIDTH_REGIONS', kind='debug',
                           func=plot_loc_width_regions)
 loc_fiber_doublet_parity = Graph('LOC_FIBER_DOUBLET_PARITY', kind='debug',
@@ -1091,6 +1121,7 @@ loc_gap_orders = Graph('LOC_GAP_ORDERS', kind='debug',
                        func=plot_loc_gap_orders)
 loc_image_fit = Graph('LOC_IMAGE_FIT', kind='debug', func=plot_loc_image_fit)
 loc_im_corner = Graph('LOC_IM_CORNER', kind='debug', func=plot_loc_im_corner)
+loc_im_regions = Graph('LOC_IM_REGIONS', kind='debug', func=plot_loc_im_regions)
 sum_desc = ('Polynomial fits for localisation (overplotted on '
             'pre-processed image)')
 sum_plot_loc_im_fit = Graph('SUM_LOC_IM_FIT', kind='summary',
@@ -1104,8 +1135,8 @@ sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
 
 # add to definitions
 definitions += [loc_width_regions, loc_fiber_doublet_parity, loc_gap_orders,
-                loc_image_fit, loc_im_corner, sum_plot_loc_im_fit,
-                sum_plot_loc_im_corner]
+                loc_image_fit, loc_im_corner, loc_im_regions,
+                sum_plot_loc_im_fit, sum_plot_loc_im_corner]
 
 
 # =============================================================================

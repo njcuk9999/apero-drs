@@ -638,8 +638,7 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
     # set the function name
     func_name = __NAME__ + '.check_fp()'
     # log: Validating FP file
-    # TODO: Add to language database
-    WLOG(params, '', 'Validating FP file: {0}'.format(filename))
+    WLOG(params, '', textentry('40-014-00043', args=[filename]))
     # get properties from params
     percentile = pcheck(params, 'CALIB_CHECK_FP_PERCENTILE', func=func_name,
                         override=percentile)

@@ -742,8 +742,6 @@ def _remove_edges(vector: np.ndarray, remove_edges: bool = True,
 
     :return: np.ndarray, the updated vector
     """
-    # TODO: Question:  Why [1: -2]??? surely you want to remove equal from
-    #                  each side?
     if remove_edges:
         return np.array(vector[size:-(size + 1)])
     else:

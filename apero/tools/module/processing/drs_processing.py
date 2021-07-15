@@ -60,7 +60,7 @@ display_func = drs_log.display_func
 ParamDict = constants.ParamDict
 # get drs recipe
 DrsRecipe = drs_recipe.DrsRecipe
-DrsRecipeException = drs_recipe.DrsRecipeException
+DrsRecipeException = drs_exceptions.DrsRecipeException
 # get drs argument
 DrsArgument = drs_argument.DrsArgument
 DrsInputFile = drs_file.DrsInputFile
@@ -2201,8 +2201,8 @@ def _multi_process_pool(params, runlist, cores, groupname=None):
         _group_progress(params, g_it, grouplist, groupnames[groupnum])
         # skip groups if event is set
         if event is not None and event.is_set():
-            # TODO: Add to language db
-            WLOG(params, 'warning', '\tSkipping group')
+            # log that we are skipping group
+            WLOG(params, 'warning', textentry('10-000-00001'))
             continue
         # list of params for each entry
         params_per_process = []
@@ -3926,7 +3926,7 @@ def _match_group(params: ParamDict, argname: str,
             valid_groups.append([group, drsfile, groumeandate])
     # if we have no valid groups we cannot continue (time to stop)
     if len(valid_groups) == 0:
-        raise DrsRecipeException('No valid groups')
+        raise DrsRecipeException('00-007-00003', 'error', targs=[func_name])
     # for all valid_groups find the one closest intime to meantime of first
     #   argument
     valid_groups = np.array(valid_groups)
@@ -3944,13 +3944,13 @@ def _match_group(params: ParamDict, argname: str,
     table_s = rundict[argname][drsfile_s]
     # deal with table still being None
     if table_s is None:
-        raise DrsRecipeException('No valid groups')
+        raise DrsRecipeException('00-007-00003', 'error', targs=[func_name])
     # mask by group
     mask_s = np.array(table_s['GROUPS']).astype(int) == group_s
     # ----------------------------------------------------------------------
     # make sure mask has entries
     if np.sum(mask_s) == 0:
-        raise DrsRecipeException('No valid groups')
+        raise DrsRecipeException('00-007-00003', 'error', targs=[func_name])
     # ----------------------------------------------------------------------
     # return files for min position
     return list(table_s['OUT'][mask_s])

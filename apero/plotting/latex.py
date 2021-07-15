@@ -14,6 +14,7 @@ from collections import OrderedDict
 import glob
 import numpy as np
 import os
+import shutil
 from typing import Dict, List, Union
 
 from apero.base import base
@@ -119,8 +120,11 @@ class LatexDocument:
 
         :return: None runs firefox on the html filename
         """
-        # TODO: does this need to able to change for other users / OSs?
-        os.system('okular {0}'.format(self.pdffilename))
+        command = 'okular {0}'.format(self.pdffilename)
+        if shutil.which('okular') is not None:
+            os.system(command)
+        else:
+            print('Cannot run command: {0}'.format(command))
 
     def cleanup(self):
         """

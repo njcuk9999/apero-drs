@@ -19,6 +19,14 @@ textentry = drs_lang.textentry
 # the text class
 Text = drs_lang.Text
 
+# Common text
+YES = drs_lang.textentry('C_YES')
+NO = drs_lang.textentry('C_NO')
+YES_OR_NO = drs_lang.textentry('C_YES_OR_NO')
+OPTIONS_ARE = drs_lang.textentry('C_OPTIONS_ARE')
+DEFAULT_IS = drs_lang.textentry(('C_DEFAULT_IS'))
+OR = drs_lang.textentry('C_OR')
+AND = drs_lang.textentry('C_AND')
 
 # =============================================================================
 # End of code

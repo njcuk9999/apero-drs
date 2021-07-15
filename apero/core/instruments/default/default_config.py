@@ -233,7 +233,6 @@ ALLOW_BREAKPOINTS = Const('ALLOW_BREAKPOINTS', value=False, dtype=bool,
                           output=False)
 
 # Currently supported instruments
-# TODO: This needs to be updated with new instruments
 DRS_INSTRUMENTS = Const('DRS_INSTRUMENTS',
                         value=base.INSTRUMENTS,
                         dtype=list, source=__NAME__, group=cgroup,

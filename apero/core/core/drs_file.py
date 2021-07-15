@@ -40,6 +40,7 @@ from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.constants import path_definitions as pathdef
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
 from apero.core.core import drs_text
@@ -94,174 +95,14 @@ MaskedConstant = np.ma.core.MaskedConstant
 # define complex typing
 QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
                     List[Union[List[str], List[int], List[Any]]]]
+# -----------------------------------------------------------------------------
+# path definitions
+BlockPath = pathdef.BlockPath
 
 
 # =============================================================================
-# Define Path classes
+# Define DrsPath class
 # =============================================================================
-class BlockPath:
-    def __init__(self, params: ParamDict, name: str, key: str,
-                 indexing: bool, logging: bool):
-        """
-        Construct the block path
-
-        :param params: ParamDict, the parameter dictionary of constants
-        :param name: str, the name of the block path
-        :param key: str, the key in params where block path absolute path
-                    stored
-        :param indexing: bool, if True this block is indexed
-        :param logging: bool, if True this block is logged
-        """
-        # convert block path to real path (remove symbolic links)
-        block_path = None
-        try:
-            block_path = params[key]
-            # check that block path exists
-            if not os.path.exists(block_path):
-                emsg = 'BlockPathError: Key {0} does not exist\n\tPath={1}'
-                eargs = [key, params[key]]
-                WLOG(params, 'error', emsg.format(*eargs))
-        except Exception as e:
-            emsg = 'BlockPathError: Key {0}\n\tPath={1}\n\t{2}: {3}'
-            eargs = [key, params[key], type(e), str(e)]
-            WLOG(params, 'error', emsg.format(*eargs))
-        # now set path
-        self.key = key
-        self.path = block_path
-        self.name = name
-        self.has_obs_dirs = False
-        self.fileset = None
-        self.indexing = indexing
-        self.logging = logging
-
-    def __str__(self) -> str:
-        """
-        String Representation of the BlockPath
-
-        :return: str, the string representation of the block path
-        """
-        return 'BlockPath[{0}]'.format(self.name)
-
-    def __repr__(self) -> str:
-        """
-        String Representation of the BlockPath
-
-        :return: str, the string representation of the block path
-        """
-        return self.__str__()
-
-    def __getstate__(self) -> dict:
-        """
-        For when we have to pickle the class
-        :return:
-        """
-        # set state to __dict__
-        state = dict(self.__dict__)
-        # return dictionary state
-        return state
-
-    def __setstate__(self, state: dict):
-        """
-        For when we have to unpickle the class
-
-        :param state: dictionary from pickle
-        :return:
-        """
-        # update dict with state
-        self.__dict__.update(state)
-
-
-class RawPath(BlockPath):
-    def __init__(self, params):
-        """
-        Construct the raw block path (input data)
-
-        :param params: ParamDict, the parameter dictionary of constants
-        """
-        super().__init__(params, 'raw', 'DRS_DATA_RAW', indexing=True,
-                         logging=False)
-        self.fileset = 'raw_file'
-        self.has_obs_dirs = True
-
-
-class TmpPath(BlockPath):
-    def __init__(self, params):
-        """
-        Construct the tmp block path (preprocessing data)
-
-        :param params: ParamDict, the parameter dictionary of constants
-        """
-        super().__init__(params, 'tmp', 'DRS_DATA_WORKING', indexing=True,
-                         logging=True)
-        self.fileset = 'pp_file'
-        self.has_obs_dirs = True
-
-
-class ReducedPath(BlockPath):
-    def __init__(self, params):
-        """
-        Construct the reduced block path (reduced data)
-
-        :param params: ParamDict, the parameter dictionary of constants
-        """
-        super().__init__(params, 'red', 'DRS_DATA_REDUC', indexing=True,
-                         logging=True)
-        self.has_obs_dirs = True
-        self.fileset = 'red_file'
-
-
-class AssetPath(BlockPath):
-    def __init__(self, params):
-        """
-        Construct the assets block path (default data supplied with apero)
-
-        :param params: ParamDict, the parameter dictionary of constants
-        """
-        super().__init__(params, 'asset', 'DRS_DATA_ASSETS', indexing=False,
-                         logging=False)
-        self.has_obs_dirs = False
-
-
-class CalibPath(BlockPath):
-    def __init__(self, params):
-        """
-        Construct the calibration block path (calibration data)
-
-        :param params: ParamDict, the parameter dictionary of constants
-        """
-        super().__init__(params, 'calib', 'DRS_CALIB_DB', indexing=False,
-                         logging=False)
-        self.has_obs_dirs = False
-        self.fileset = 'calib_file'
-
-
-class TelluPath(BlockPath):
-    def __init__(self, params):
-        """
-        Construct the telluric block path (telluric data)
-
-        :param params: ParamDict, the parameter dictionary of constants
-        """
-        super().__init__(params, 'tellu', 'DRS_TELLU_DB', indexing=False,
-                         logging=False)
-        self.has_obs_dirs = False
-        self.fileset = 'tellu_file'
-
-
-class OutPath(BlockPath):
-    def __init__(self, params):
-        """
-        Construct the postprocess path (post processed data)
-
-        :param params: ParamDict, the parameter dictionary of constants
-        """
-        # TODO: no PARAM_SNAPSHOT --> can't redo log
-        super().__init__(params, 'out', 'DRS_DATA_OUT', indexing=True,
-                         logging=False)
-        self.has_obs_dirs = True
-        self.fileset = 'out_file'
-
-
 class DrsPath:
 
     blocks: List[BlockPath] = None
@@ -322,9 +163,10 @@ class DrsPath:
         :param params:
         :return:
         """
-        blocks = [RawPath(params), TmpPath(params), ReducedPath(params),
-                  AssetPath(params), CalibPath(params),
-                  TelluPath(params), OutPath(params)]
+        blocks = [pathdef.RawPath(params), pathdef.TmpPath(params),
+                  pathdef.ReducedPath(params), pathdef.AssetPath(params),
+                  pathdef.CalibPath(params), pathdef.TelluPath(params),
+                  pathdef.OutPath(params)]
 
         return blocks
 

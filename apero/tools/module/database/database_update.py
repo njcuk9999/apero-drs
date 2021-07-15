@@ -76,27 +76,27 @@ def update_database(params: ParamDict, recipe: DrsRecipe):
     # load pconst
     pconst = constants.pload()
     # update calibration database
-    # TODO: move to language database
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    WLOG(params, 'info', 'Updating calibraiton database', colour='magenta')
+    WLOG(params, 'info', textentry('40-006-00007', args=['calibration']),
+         colour='magenta')
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
     calib_tellu_update(params, recipe, pconst, 'calibration')
     # update telluric database
-    # TODO: move to language database
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    WLOG(params, 'info', 'Updating telluric database', colour='magenta')
+    WLOG(params, 'info', textentry('40-006-00007', args=['telluric']),
+         colour='magenta')
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
     calib_tellu_update(params, recipe, pconst, 'telluric')
     # update log and index database
-    # TODO: move to language database
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    WLOG(params, 'info', 'Updating log database', colour='magenta')
+    WLOG(params, 'info', textentry('40-006-00007', args=['log']),
+         colour='magenta')
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
     log_update(params, pconst)
     # update index database
-    # TODO: move to language database
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    WLOG(params, 'info', 'Updating index database', colour='magenta')
+    WLOG(params, 'info', textentry('40-006-00007', args=['index']),
+         colour='magenta')
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
     index_update(params)
 
@@ -150,18 +150,14 @@ def update_obj_reset(params: ParamDict):
         # get master table from these files
         master_table = _master_obj_table_from_dfits(files)
     # print how many objects files found
-    # TODO: add to langauge database
-    msg = 'Found {0} object observations'
     margs = [len(master_table)]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-006-00008', args=margs))
     # -------------------------------------------------------------------------
     # get unique objects
     utable = _unique_obj_table(params, master_table)
-    # print how many objects found
-    # TODO: add to langauge database
-    msg = 'Found {0} unique object names'
+    # print how many unique objects found
     margs = [len(utable)]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-006-00009', args=margs))
     # -------------------------------------------------------------------------
     # Load temporary new database
     # -------------------------------------------------------------------------
@@ -193,17 +189,14 @@ def update_obj_reset(params: ParamDict):
         # get objname for this row
         rawobjname = utable[rawobjcol][row]
         # ---------------------------------------------------------------------
-        # print progress
-        # TODO: move to language database
-        msg = 'Analysing {0}={1}   ({2}/{3})'
+        # print progress: Analysing {0}={1}   ({2}/{3})
         margs = [rawobjcol, rawobjname, row+1, len(utable)]
-        WLOG(params, '', msg.format(*margs))
+        WLOG(params, '', textentry('40-006-00010', args=margs))
         # ---------------------------------------------------------------------
         # make a fake header
         header = drs_fits.Header()
         for col in utable.colnames:
             header[col] = utable[col][row]
-
         # need to add columns
         header[objcol] = pconst.DRS_OBJ_NAME(rawobjname)
         # ---------------------------------------------------------------------
@@ -218,18 +211,14 @@ def update_obj_reset(params: ParamDict):
     # get dataframe
     df = objdbm.database.get('*', objdbm.database.tname, condition=condition,
                              return_pandas=True)
-    # print update
-    # TODO: add to language database
-    msg = 'Found {0} objects with Gaia entries'
+    # print update: Found {0} objects with Gaia entries
     margs = [len(df)]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-006-00011', args=margs))
     # sort by objname
     df = df.sort_values('OBJNAME')
-    # print saving of file
-    # TODO: add to langauge database
-    msg = 'Saving reset file to: {0}'
+    # print saving of file: Saving reset file to: {0}
     margs = [obj_reset_file]
-    WLOG(params, 'info', msg.format(*margs))
+    WLOG(params, '', textentry('40-006-00012', args=margs))
     # save to csv file
     df.to_csv(obj_reset_file, index=False)
 
@@ -519,11 +508,9 @@ def _master_obj_table_from_raw(params: ParamDict) -> Table:
     # add empty columns to fill
     for rcol in rcols:
         dict_table[rcol] = []
-    # print progress
-    # TODO: move to lanugage database
-    msg = 'Reading {0} object headers...'
+    # print progress: Reading {0} object headers...
     margs = [len(obj_files)]
-    WLOG(params, 'info', msg.format(*margs))
+    WLOG(params, 'info', textentry('40-006-00013', args=margs))
     # loop around fits files and get header keys
     for filename in tqdm(obj_files):
         # load header

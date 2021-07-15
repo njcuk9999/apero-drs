@@ -18,8 +18,10 @@ import string
 import sys
 from typing import Any, List, Dict, Tuple, Union
 
+from apero import lang
 from apero.base import base
 from apero.core.core import drs_misc
+from apero.core.constants import path_definitions as pathdef
 from apero.core import constants
 
 # =============================================================================
@@ -39,6 +41,8 @@ Colors = drs_misc.Colors()
 ParamDict = constants.ParamDict
 # define bad characters for profile name (alpha numeric + "_")
 BAD_CHARS = [' '] + list(string.punctuation.replace('_', ''))
+# Get the text types
+textentry = lang.textentry
 # -----------------------------------------------------------------------------
 HOME = Path('~').expanduser()
 DEFAULT_USER_PATH = HOME.joinpath('apero', 'default')
@@ -59,128 +63,20 @@ SETUP_PATH = Path('.').joinpath('tools', 'resources', 'setup')
 VALIDATE_CODE = Path('bin').joinpath('apero_validate.py')
 RESET_CODE = 'apero_reset'
 # set descriptions for data paths
-# TODO: these should be in the constants file?
+DATA_CLASSES = [pathdef.RawPath, pathdef.TmpPath, pathdef.ReducedPath,
+                pathdef.OutPath, pathdef.CalibPath, pathdef.TelluPath,
+                pathdef.PlotPath, pathdef.RunPath, pathdef.LogPath]
+# push into dictionary
 DATA_PATHS = dict()
-DATA_PATHS['DRS_DATA_RAW'] = ['Raw data directory', 'raw']
-DATA_PATHS['DRS_DATA_WORKING'] = ['Temporary data directory', 'tmp']
-DATA_PATHS['DRS_DATA_REDUC'] = ['Reduced data directory', 'reduced']
-DATA_PATHS['DRS_DATA_OUT'] = ['Post process directory', 'out']
-DATA_PATHS['DRS_CALIB_DB'] = ['Calibration DB data directory', 'calibDB']
-DATA_PATHS['DRS_TELLU_DB'] = ['Telluric DB data directory', 'telluDB']
-DATA_PATHS['DRS_DATA_PLOT'] = ['Plotting directory', 'plot']
-DATA_PATHS['DRS_DATA_RUN'] = ['Run directory', 'runs']
-DATA_PATHS['DRS_DATA_ASSETS'] = ['Assets directory', 'assets']
-DATA_PATHS['DRS_DATA_MSG'] = ['Log directory', 'msg']
-# set the reset paths (must be checked for empty)
-RESET_PATHS = ['DRS_CALIB_DB', 'DRS_TELLU_DB', 'DRS_DATA_RUN']
 # set cmdline args expected for each
 DATA_ARGS = dict()
-DATA_ARGS['DRS_DATA_RAW'] = 'rawdir'
-DATA_ARGS['DRS_DATA_WORKING'] = 'tmpdir'
-DATA_ARGS['DRS_DATA_REDUC'] = 'reddir'
-DATA_ARGS['DRS_DATA_OUT'] = 'outdir'
-DATA_ARGS['DRS_CALIB_DB'] = 'calibdir'
-DATA_ARGS['DRS_TELLU_DB'] = 'telludir'
-DATA_ARGS['DRS_DATA_PLOT'] = 'plotdir'
-DATA_ARGS['DRS_DATA_RUN'] = 'rundir'
-DATA_ARGS['DRS_DATA_ASSETS'] = 'assetsdir'
-DATA_ARGS['DRS_DATA_MSG'] = 'logdir'
+# loop around data classes and fill data_paths and data_args
+for data_class in DATA_CLASSES:
+    DATA_PATHS[data_class.key] = [data_class.description, data_class.name]
+    DATA_ARGS[data_class.key] = data_class.argname
 
-
-# Messages for user interface
-message0 = """
-APERO profile name:
-
-    This is the profile name to associate with this installation
-    Do not include spaces or wildcards (alpha-numeric only)
-
-    Note you can create multiple profiles for different instruments
-    so the name should be logical and unique
-
-"""
-
-message1 = """
-User config path:
-
-    This is the path where your user configuration will be saved.
-    If it doesn't exist you will be prompted to create it.
-
-    Note please make sure directory is EMPTY.
-
-    Note the "profile name" sub-directory will be created under this path.
-"""
-
-message2 = """
-Setup paths invidiually? [Y]es or [N]o
-
-    If [Y]es it will allow you to set each path separately
-    (i.e. for raw, tmp, reduced, calibDB etc).
-    If [N]o you will just set one path and all folders
-    (raw, tmp, reduced, calibDB etc) will be created under this
-    directory.
-"""
-
-message3 = """
-Clean install? [Y]es or [N]o
-
-    WARNING: If you type [Y]es you will be prompted (later) to reset
-    the directories this means any previous data in these directories
-    will be removed.
-
-Note you can always say later to individual cases.
-
-Note if you have given empty directories you MUST run a clean install to copy
-the required files to the given directories.
-"""
-
-message4 = """
-
-    i) Add an alias in your ~/.bashrc or ~/.bash_profile or
-       ~/.tcshrc or ~/.profile or ~/.zshrc or ~/.zprofile
-       and then type "{NAME}" every time you wish to run apero.
-       i.e. for bash
-            alias {NAME}="source {DRS_UCONFIG}{NAME}.bash.setup"
-       i.e. for sh
-            alias {NAME} "source {DRS_UCONFIG}{NAME}.sh.setup"
-       i.e. for zsh
-            alias {NAME} "source {DRS_UCONFIG}{NAME}.zsh.setup"
-
-
-    ii) Add the contents of {DRS_UCONFIG}{NAME}.{SYSTEM}.setup
-        to your ~/.bashrc or ~/.bash_profile or ~/.tcshrc or ~/.profile
-        or ~/.zshrc or ~/.zprofile
-
-
-    iii) type "source {DRS_UCONFIG}{NAME}.{SYSTEM}.setup" every
-         time you wish to run apero.
-           i.e. for bash
-                source {DRS_UCONFIG}{NAME}.bash.setup
-           i.e. for sh
-                source {DRS_UCONFIG}{NAME}.sh.setup
-           i.e. for zsh
-                source {DRS_UCONFIG}{NAME}.zsh.setup
-
-
-Note: here {SYSTEM} is "bash" or "sh" or "zsh" or "win" depending on your system.
-
-
-"""
-
-message5 = """
-
-ds9 not found (optional).
-
-Please enter path to ds9 or leave blank to skip
-
-"""
-
-message6 = """
-
-pdflatex not found (optional).
-
-Please enter path to pdflatex or leave blank to skip
-
-"""
+# set the reset paths (must be checked for empty)
+RESET_PATHS = ['DRS_CALIB_DB', 'DRS_TELLU_DB', 'DRS_DATA_RUN']
 
 prompt1 = r"""
 
@@ -200,7 +96,7 @@ unset RED BLUE YELLOW WHITE END
 # =============================================================================
 # Define setup/general functions
 # =============================================================================
-def cprint(message: str, colour: str = 'g'):
+def cprint(message: Union[lang.Text, str], colour: str = 'g'):
     """
     print coloured message
 
@@ -208,7 +104,7 @@ def cprint(message: str, colour: str = 'g'):
     :param colour: str, colour to print
     :return:
     """
-    print(Colors.print(message, colour))
+    print(Colors.print(str(message), colour))
 
 
 def ask(question: str, dtype: Union[str, type, None] = None,
@@ -234,8 +130,8 @@ def ask(question: str, dtype: Union[str, type, None] = None,
     uinput = None
     # deal with yes/no dtype
     if isinstance(dtype, str) and dtype.upper() == 'YN':
-        options = ['Y', 'N']
-        optiondesc = ['[Y]es or [N]o']
+        options = [lang.YES, lang.NO]
+        optiondesc = [lang.YES_OR_NO]
     # deal with paths (expand)
     dcond = isinstance(dtype, str) or isinstance(dtype, Path)
     if dcond and dtype.upper() == 'PATH':
@@ -248,10 +144,10 @@ def ask(question: str, dtype: Union[str, type, None] = None,
         cprint(question, 'g')
         # print options
         if options is not None:
-            cprint('Options are:', 'b')
+            cprint(lang.OPTIONS_ARE + ':', 'b')
             print('   ' + '\n   '.join(np.array(optiondesc, dtype=str)))
         if default is not None:
-            cprint('   Default is: {0}'.format(default), 'b')
+            cprint('   {0}: {1}'.format(lang.DEFAULT_IS, default), 'b')
         # record response
         uinput = input(' >>   ')
         # deal with string ints, floats, logic
@@ -265,7 +161,8 @@ def ask(question: str, dtype: Union[str, type, None] = None,
                 if uinput == '' and default is not None:
                     check = False
                 else:
-                    cprint('Response must be valid {0}'.format(dtype), 'y')
+                    cargs = [dtype]
+                    cprint(textentry('40-001-00034', args=cargs), 'y')
                     check = True
                     continue
         # deal with int/float/logic
@@ -275,7 +172,8 @@ def ask(question: str, dtype: Union[str, type, None] = None,
                 uinput = dtype(uinput)
                 check = False
             except Exception as _:
-                cprint('Response must be valid {0}'.format(dtype.__name__), 'y')
+                cargs = [dtype.__name__]
+                cprint(textentry('40-001-00034', args=cargs), 'y')
                 check = True
                 continue
         # deal with paths
@@ -293,7 +191,7 @@ def ask(question: str, dtype: Union[str, type, None] = None,
                 return None
             # otherwise 'None and '' are not valid
             elif uinput in ['None', '']:
-                cprint('Response invalid', 'y')
+                cprint(textentry('40-001-00035'), 'y')
                 check = True
                 continue
             # --------------------------------------------------------------
@@ -303,11 +201,11 @@ def ask(question: str, dtype: Union[str, type, None] = None,
                 upath = Path(uinput)
             except Exception as _:
                 if not required:
-                    cprint('Response must be a valid path or "None"', 'y')
+                    cprint(textentry('40-001-00036'), 'y')
                     check = True
                     continue
                 else:
-                    cprint('Response must be a valid path', 'y')
+                    cprint(textentry('40-001-00037'), 'y')
                     check = True
                     continue
             # get rid of expansions
@@ -319,30 +217,30 @@ def ask(question: str, dtype: Union[str, type, None] = None,
             # if path does not exist ask to make it (if create)
             else:
                 # check whether to create path
-                pathquestion = 'Path "{0}" does not exist. Create?'
-                create = ask(pathquestion.format(uinput), dtype='YN')
+                pathquestion = textentry('40-001-00038', args=[uinput])
+                create = ask(pathquestion, dtype='YN')
                 if create:
                     if not upath.exists():
                         # noinspection PyBroadException
                         try:
                             os.makedirs(upath)
                         except Exception as _:
-                            cprint('Response must be a valid path', 'y')
+                            cprint(textentry('40-001-00037'), 'y')
                             check = True
                             continue
                     return upath
                 else:
-                    cprint('Response must be a valid path', 'y')
+                    cprint(textentry('40-001-00037'), 'y')
                     check = True
                     continue
         # deal with Yes/No questions
         elif dtype == 'YN':
-            if 'Y' in uinput.upper():
+            if lang.YES in uinput.upper():
                 return True
-            elif 'N' in uinput.upper():
+            elif lang.NO in uinput.upper():
                 return False
             else:
-                cprint('Response must be [Y]es or [N]o', 'y')
+                cprint(textentry('40-001-00039', args=[lang.YES_OR_NO]), 'y')
                 check = True
                 continue
         # deal with options
@@ -356,8 +254,9 @@ def ask(question: str, dtype: Union[str, type, None] = None,
                 check = False
                 continue
             else:
-                optionstr = ' or '.join(np.array(options, dtype=str))
-                cprint('Response must be {0}'.format(optionstr), 'y')
+                ortxt = ' {0} '.format(lang.OR)
+                optionstr = ortxt.join(np.array(options, dtype=str))
+                cprint(textentry('40-001-00039', args=[optionstr]), 'y')
                 check = True
 
     # deal with returning default
@@ -381,14 +280,14 @@ def check_path_arg(name: str, value: Union[str, Path]) -> Tuple[bool, Path]:
     promptuser = True
     # check if user config is None (i.e. set from cmd line)
     if value is not None:
-        cprint('\t - {0} set from cmd ({1})'.format(name, value))
+        cprint(textentry('40-001-00040', args=[name, value]))
         # create path
         value = Path(value)
         # check if value exists
         if not value.exists():
             # check whether to create path
-            pathquestion = 'Path "{0}" does not exist. Create?'
-            promptuser = not ask(pathquestion.format(value), dtype='YN')
+            pathquestion = textentry('40-001-00038', args=[value])
+            promptuser = not ask(pathquestion, dtype='YN')
             # make the directory if we are not going to prompt the user
             if not promptuser:
                 os.makedirs(value)
@@ -420,7 +319,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     all_params = ParamDict()
     # title
     cprint(printheader(), 'm')
-    cprint('Installation for {0}'.format(package), 'm')
+    cprint(textentry('40-001-00041', args=[package]), 'm')
     cprint(printheader(), 'm')
     print('\n')
     # ------------------------------------------------------------------
@@ -433,7 +332,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # ------------------------------------------------------------------
     # deal with having a profile name
     if args.name in ['None', None, '']:
-        profilename = ask(message0, str, default='apero')
+        profilename = ask(textentry('INSTALL_PROFILE_MSG'), str,
+                          default='apero')
         # clean profile name
         profilename = clean_profile_name(profilename)
         # update args.name
@@ -455,7 +355,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     promptuser, userconfig = check_path_arg('config', args.config)
     # if we still need to get user config ask user to get it
     if promptuser:
-        userconfig = ask(message1, 'path', default=default_upath)
+        userconfig = ask(textentry('INSTALL_CONFIG_PATH_MSG'), 'path',
+                         default=default_upath)
     # add profile name to userconfig
     userconfig = userconfig.joinpath(profilename)
     # add user config to all_params
@@ -464,7 +365,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # ------------------------------------------------------------------
     # Step 2: Ask for instrument (from valid instruments)
     # ------------------------------------------------------------------
-    prompt_inst = 'Choose instrument to install '
+    prompt_inst = textentry('40-001-00042')
     inst_options, prompt_options = [], []
     # loop around instruments
     icount, valid_instruments = 1, []
@@ -550,7 +451,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # ------------------------------------------------------------------
 
     if promptuser and data_promptuser:
-        advanced = ask(message2, dtype='YN')
+        advanced = ask(textentry('INSTALL_DATA_PATH_MSG'), dtype='YN')
         cprint(printheader(), 'g')
     else:
         advanced = False
@@ -647,7 +548,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # Step 5: Ask whether we want a clean install
     # ------------------------------------------------------------------
     if args.clean is None:
-        all_params['CLEAN_INSTALL'] = ask(message3, dtype='YN')
+        all_params['CLEAN_INSTALL'] = ask(textentry('INSTALL_CLEAN_MSG'),
+                                          dtype='YN')
         all_params.set_source('CLEAN_INSTALL', func_name)
     else:
         cprint('\t - CLEAN set from cmd ({0})'.format(args.clean))
@@ -1322,7 +1224,7 @@ def print_options(params: ParamDict, all_params: ParamDict):
     cprint(printheader(), 'm')
     cprint(' To run apero do one of the following:', 'm')
     cprint(printheader(), 'm')
-    cprint(message4.format(**text), 'g')
+    cprint(textentry('INSTALL_ALIAS_MSG').format(**text), 'g')
 
 
 def reset_paths_empty(all_params: ParamDict) -> bool:
@@ -1638,7 +1540,8 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
     # ----------------------------------------------------------------------
     # deal with having a profile name
     if args.name in ['None', None, '']:
-        profilename = ask(message0, str, default='apero')
+        profilename = ask(textentry('INSTALL_PROFILE_MSG'), str,
+                          default='apero')
         # clean profile name
         profilename = clean_profile_name(profilename)
         # update args.name
