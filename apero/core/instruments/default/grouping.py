@@ -28,6 +28,7 @@ import numpy as np
 from typing import Any, Dict, List, Tuple, Union
 
 from apero.base import base
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_argument
 from apero.core.core import drs_log
 from apero.tools.module.processing import drs_grouping_functions as drsgf
@@ -506,12 +507,12 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
             continue
         # else we have to deal with an error
         else:
-            # TODO: move to language DB
-            emsg = ('alldict[{0}][{1}] is not a valid Table '
-                    '\n\tFilename: {2}')
+            # raise error: alldict[{0}][{1}] is not a valid astropy table
             eargs = [first_arg, drsfile_group[0], func_name]
-            # TODO: Change to DrsCoded exception when in langdb
-            raise ValueError(emsg.format(*eargs))
+            raise drs_exceptions.DrsCodedException('00-006-00024', 'error',
+                                                   targs=eargs,
+                                                   func_name=func_name)
+        # ---------------------------------------------------------------------
         # deal with no table
         if table0 is None:
             continue
@@ -531,9 +532,11 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
         # if we have a group filter defined and more than 1 file argument we
         #   have to crash - we can't deal with this
         elif group_filter is not None:
-            # TODO: move to language database
-            raise ValueError('Cannot use group filter with more than 1 file '
-                             'argument')
+            # raise exception: Cannot use group filter with more than
+            #                  1 file argument
+            raise drs_exceptions.DrsCodedException('00-006-00025', 'error',
+                                                   targs=[func_name],
+                                                   func_name=func_name)
         else:
             # else we just have one mask and it is all Trues --> i.e. no
             #   filter mask
@@ -573,12 +576,13 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
                     elif isinstance(rawtab, Table):
                         table1 = rawtab
                     else:
-                        # TODO: move to language DB
-                        emsg = ('alldict[{0}][{1}] is not a valid Table '
-                                '\n\tFilename: {2}')
+                        # raise error: alldict[{0}][{1}] is not a valid
+                        #     astropy table
                         eargs = [argname, drsfiletype, func_name]
-                        # TODO: Change to DrsCoded exception when in langdb
-                        raise ValueError(emsg.format(*eargs))
+                        ekwargs = dict(targs=eargs, func_name=func_name)
+                        raise drs_exceptions.DrsCodedException('00-006-00024',
+                                                               'error',
+                                                               **ekwargs)
                     # deal with no table --> no files for this argument
                     if table1 is None:
                         valid = False

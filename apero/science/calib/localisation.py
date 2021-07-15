@@ -170,11 +170,8 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # the parity of the fiber i.e. A = -1, B = +1
     fiber_doublet_parity = pconst.FIBER_DOUBLET_PARITY(fiber)
     # -------------------------------------------------------------------------
-    # print progress
-    # TODO: move to language database
-    msg = 'Finding and fitting orders for fiber = {0}'
-    margs = [fiber]
-    WLOG(params, 'info', msg.format(*margs))
+    # print progress: Finding and fitting orders for fiber = {0}'
+    WLOG(params, 'info', textentry('40-013-00028', args=[fiber]))
     # -------------------------------------------------------------------------
     # get the shape of the image
     nbypix, nbxpix  = image.shape
@@ -183,9 +180,8 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # set up an array of pixel values along order direction (x)
     xpix = np.arange(nbxpix)
     # -------------------------------------------------------------------------
-    # print progress
-    # TODO: move to language database
-    WLOG(params, '', '\tMasking orders')
+    # print progress: Masking orders
+    WLOG(params, '', textentry('40-013-00029'))
     # empty array to hold the value above which a pixel is considered
     #     illuminated for the purpose of order localisation
     threshold = np.zeros_like(image)
@@ -259,10 +255,8 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     else:
         mask_orders = binary_dilation(mask_orders)
     # -------------------------------------------------------------------------
-    # TODO: Add plot
-    #recipe.plot('')
-    #plt.imshow(mask_orders0, aspect='auto', origin='lower')
-    #plt.imshow(mask_orders, alpha=0.5, aspect='auto', origin='lower')
+    # add image plot of mask orders
+    recipe.plot('LOC_IM_REGIONS', mask0=mask_orders0, mask1=mask_orders)
     # -------------------------------------------------------------------------
     # find the regions that define the orders (again now we have
     # the map contains integer values that are common to all pixels that form
