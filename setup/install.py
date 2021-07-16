@@ -10,6 +10,7 @@ Created on 2019-11-26 at 15:54
 @author: cook
 """
 import argparse
+import getopt
 import importlib
 import os
 from pathlib import Path
@@ -18,14 +19,49 @@ import sys
 from typing import Any, List, Tuple, Union
 
 
+# need this argument before anything else
+def get_sys_arg(name, kind=None):
+    args = sys.argv[1:]
+
+    for it, arg in enumerate(args):
+        if name in arg:
+            if kind == 'switch':
+                return True
+            elif '=' in arg:
+                return arg.split('=')[-1]
+            elif len(args) > it + 1:
+                return args[it + 1]
+            else:
+                return None
+    if kind == 'switch':
+        return False
+
+
 # =============================================================================
 # Define variables
 # =============================================================================
 # define the drs name (and module name)
 DRS_PATH = 'apero'
-# LANGUAGE
-# TODO: allow as argument (This will then change all text)
-LANGUAGE = 'ENG'
+# set up language path
+path = Path(__file__)
+APERO_MODULE = os.path.join(str(path.parent.parent), DRS_PATH)
+sys.path.append(APERO_MODULE)
+# get language proxy database
+drs_base = importlib.import_module('apero.base.drs_base', DRS_PATH)
+# -----------------------------------------------------------------------------
+# LANGUAGE (must add manually)
+LANGUAGES = ['ENG', 'FR']
+# get language argument
+langarg = get_sys_arg('lang')
+if langarg in LANGUAGES:
+    lang = drs_base.lang_db_proxy(langarg)
+    LANGUAGE = str(langarg)
+else:
+    lang = drs_base.lang_db_proxy()
+    LANGUAGE = 'ENG'
+# -----------------------------------------------------------------------------
+# instruments
+INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE']
 # define the place where the constant recipes are
 CONSTANTS_PATH = 'core.constants'
 # define the place where the installation recipes are
@@ -33,7 +69,6 @@ INSTALL_PATH = 'tools.module.setup.drs_installation'
 # Requirement files
 REQ_USER = 'requirements_current.txt'
 REQ_DEV = 'requirements_developer.txt'
-
 # modules that don't install like their name
 module_translation = dict()
 module_translation['Pillow'] = 'PIL'
@@ -45,193 +80,231 @@ module_translation['scikit-image'] = 'skimage'
 # =============================================================================
 # Define functions
 # =============================================================================
+def catch_sigint(signal_received: Any, frame: Any):
+    """
+    Deal with Keyboard interupt --> do a sys.exit
+
+    :param signal_received: Any, not used (but expected)
+    :param frame: Any, not used (but expected)
+
+    :return: None, exits if this function is called
+    """
+    # we don't use these we just exit
+    _ = signal_received, frame
+    # print: Exiting installation script
+    print(lang['40-001-00075'])
+    # raise Keyboard Interrupt
+    sys.exit()
+
+
+def validate():
+    """
+    Check whether users system satisfies all python module requirements
+
+    :raises SystemExit: if modules are not correct
+    :return: None
+    """
+    # python version check
+    if sys.version_info.major < 3:
+        # log error: Fatal Error: Python 2 is not supported
+        print(lang['00-000-00009'])
+        sys.exit()
+    # ------------------------------------------------------------------
+    # load requirement files
+    # ------------------------------------------------------------------
+    filepath = os.path.abspath(__file__)
+    # get files
+    user_req_file = Path(filepath).parent.parent.joinpath(REQ_USER)
+    dev_req_file = Path(filepath).parent.parent.joinpath(REQ_DEV)
+    # get lists of modules
+    user_req = load_requirements(user_req_file)
+    dev_mode = [False] * len(user_req)
+    dev_req = load_requirements(dev_req_file)
+    dev_mode += [True] * len(dev_req)
+    modules = user_req + dev_req
+    # storage of checked modules
+    checked = []
+    # log check: Module check
+    print(lang['40-001-00076'])
+    # ------------------------------------------------------------------
+    # loop around required modules to check
+    # ------------------------------------------------------------------
+    for m_it, module in enumerate(modules):
+        # remove end of lines
+        module = module.replace('\n', '')
+        # get module name
+        try:
+            modname = module.split('==')[0]
+            modversion = module.split('==')[1].split('.')
+        except Exception as e:
+            # Module name "{0}" error {1}: {2}'
+            emsg = lang['00-000-00010']
+            eargs = [module, type(e), str(e)]
+            raise IndexError(emsg.format(*eargs))
+        # get suggested installation module
+        suggested = lang['40-001-00077'].format(module)
+        # deal with modules with different import name
+        if modname in module_translation:
+            modname = module_translation[modname]
+        # deal with checked
+        if modname in checked:
+            continue
+        else:
+            checked.append(modname)
+        # ------------------------------------------------------------------
+        # test importing module
+        # noinspection PyBroadException
+        try:
+            imod = importlib.import_module(modname)
+            # --------------------------------------------------------------
+            # check the version
+            check_version(module, imod, modversion, suggested,
+                          required=not dev_mode[m_it])
+        # --------------------------------------------------------------
+        except Exception as _:
+            if dev_mode[m_it]:
+                # {0} recommends {1} to be installed (dev only)'
+                print(lang['40-001-00078'].format(DRS_PATH, module, suggested))
+            else:
+                # Fatal Error: {0} requires module {1} to be installed
+                print(lang['00-000-00011'].format(DRS_PATH, module, suggested))
+                sys.exit()
+
+
+def check_install() -> Tuple[Any, Any]:
+    """
+    Check for apero installation directory
+
+    :raises ImportError: if unable to find apero installation
+    :return: tuple, 1. the apero.constants sub-module, 2. the apero.installation
+             module
+    """
+    # start with file definition
+    start = Path(__file__).absolute()
+    # get apero working directory
+    drs_path = start.parent.parent
+    # make aboslute
+    drs_path = drs_path.absolute()
+    # try to import to raise exception
+    try:
+        # add drs path to sys
+        sys.path.append(str(drs_path))
+        _ = importlib.import_module(DRS_PATH)
+    except Exception as _:
+        path = drs_path.joinpath(DRS_PATH)
+        raise ImportError(lang['00-000-00012'].format(path))
+    # construct module names
+    constants_mod = '{0}.{1}'.format(DRS_PATH, CONSTANTS_PATH)
+    install_mod = '{0}.{1}'.format(DRS_PATH, INSTALL_PATH)
+    # try to import the modules
+    try:
+        constants = importlib.import_module(constants_mod)
+    except Exception as _:
+        # raise error
+        raise ImportError(lang['00-000-00013'].format(constants_mod))
+    try:
+        install = importlib.import_module(install_mod)
+    except Exception as _:
+        # raise error
+        raise ImportError(lang['00-000-00013'].format(install_mod))
+    # add apero to the PYTHONPATH
+    if 'PYTHONPATH' in os.environ:
+        oldpath = os.environ['PYTHONPATH']
+        os.environ['PYTHONPATH'] = str(drs_path) + os.pathsep + oldpath
+    # else we just add it to current PYTHON PATH
+    else:
+        os.environ['PYTHONPATH'] = str(drs_path)
+        # add to active path
+        os.sys.path = [str(drs_path)] + os.sys.path
+    # if we have reached this point we can break out of the while loop
+    return constants, install
+
+
 def get_args() -> argparse.Namespace:
     """
     Define the command line arguments (via argparse) for this recipe
     :return:
     """
     # get parser
-    description = ' Install {0} software for reducing observational data'
+    description = lang['INSTALL_DESCRIPTION']
     parser = argparse.ArgumentParser(description=description.format(DRS_PATH))
-
+    # add arguments
     parser.add_argument('--update', '--upgrade', action='store_true',
                         default=False, dest='update',
-                        help=' updates installation (not clean install) and '
-                             'checks for updates to your current config files')
+                        help=lang['INSTALL_UPDATE_HELP'])
     parser.add_argument('--skip', action='store_true', default=False,
-                        dest='skip',
-                        help='skip the python module checks '
-                             '(Not recommended for first time installation)')
+                        dest='skip', help=lang['INSTALL_SKIP_HELP'])
     parser.add_argument('--dev', action='store_true', default=False,
-                        dest='devmode',
-                        help='activate developer mode (prompts for all '
-                             'config/constant groups and add them to your '
-                             'config/constant files)')
-    parser.add_argument('--gui', action='store_true', default=False,
-                        dest='gui',
-                        help='use GUI to install (Not yet supported) ')
+                        dest='devmode', help=lang['INSTALL_DEV_HELP'])
+    parser.add_argument('--gui', action='store_true', default=False, dest='gui',
+                        help=lang['INSTALL_GUI_HELP'])
     parser.add_argument('--name', action='store', dest='name',
-                        help='The name for this specific installation'
-                             '(Allows the creation of multiple profiles with'
-                             ' different settings)')
-
+                        help=lang['INSTALL_NAME_HELP'])
     # add directory args
     parser.add_argument('--root', action='store', dest='root',
-                        help='The installation directory (if not given tries'
-                             'to find the path and if not found prompts '
-                             'the user)')
+                        help=lang['INSTALL_ROOT_HELP'])
     parser.add_argument('--config', action='store', dest='config',
-                        help='The user configuration path (if not given '
-                             'prompts the user)')
+                        help=lang['INSTALL_CONFIG_HELP'])
     parser.add_argument('--instrument', action='store', dest='instrument',
-                        help='The instrument to install (if not given '
-                             'prompts the user for each available instrument).'
-                             'THIS ARGUMENT IS REQUIRED TO SET --datadir, '
-                             '--rawdir, --tmpdir, --reddir, --calibdir, '
-                             '--telludir, --plotdir, --rundir, --assetdir, '
-                             '--logdir',
-                        choices=['SPIROU'])
+                        help=lang['INSTALL_INSTRUMENT_HELP'],
+                        choices=INSTRUMENTS)
     parser.add_argument('--datadir', action='store', dest='datadir',
-                        help='The data directory (if given overrides all '
-                             'sub-data directories - i.e. raw/tmp/red/plot) '
-                             'if not given and other paths not given prompts'
-                             'the user for input.')
+                        help=lang['INSTALL_DATADIR_HELP'])
     parser.add_argument('--rawdir', action='store', dest='rawdir',
-                        help='The raw directory where input files are stored.'
-                             '(if not given and --datadir not given prompts'
-                             'the user to input if user chooses to install '
-                             'each directory separately)')
+                        help=lang['INSTALL_RAWDIR_HELP'])
     parser.add_argument('--tmpdir', action='store', dest='tmpdir',
-                        help='The tmp directory where preprocessed files are '
-                             'stored.'
-                             '(if not given and --datadir not given prompts'
-                             'the user to input if user chooses to install '
-                             'each directory separately)')
+                        help=lang['INSTALL_TMPDIR_HELP'])
     parser.add_argument('--reddir', action='store', dest='reddir',
-                        help='The reduced directory where output files are '
-                             'stored.'
-                             '(if not given and --datadir not given prompts'
-                             'the user to input if user chooses to install '
-                             'each directory separately)')
+                        help=lang['INSTALL_REDDIR_HELP'])
     parser.add_argument('--outdir', action='store', dest='outdir',
-                        help='The post process directory where output files are '
-                             'stored.'
-                             '(if not given and --datadir not given prompts'
-                             'the user to input if user chooses to install '
-                             'each directory separately)')
+                        help=lang['INSTALL_OUTDIR_HELP'])
     parser.add_argument('--calibdir', action='store', dest='calibdir',
-                        help='The calibration database directory where '
-                             'calibrations used in the database files '
-                             'are stored.'
-                             '(if not given and --datadir not given prompts'
-                             'the user to input if user chooses to install '
-                             'each directory separately)')
+                        help=lang['INSTALL_CALIBDIR_HELP'])
     parser.add_argument('--telludir', action='store', dest='telludir',
-                        help='The telluric database directory where telluric '
-                             'database files are stored.'
-                             '(if not given and --datadir not given prompts'
-                             'the user to input if user chooses to install '
-                             'each directory separately)')
+                        help=lang['INSTALL_TELLUDIR_HELP'])
     parser.add_argument('--plotdir', action='store', dest='plotdir',
-                        help='The plot directory where plots/summary documents '
-                             'are stored.'
-                             '(if not given and --datadir not given prompts'
-                             'the user to input if user chooses to install '
-                             'each directory separately)')
+                        help=lang['INSTALL_PLOTDIR_HELP'])
     parser.add_argument('--rundir', action='store', dest='rundir',
-                        help='The run directory where run/batch files are '
-                             'stored.'
-                             '(if not given and --datadir not given prompts'
-                             'the user to input if user chooses to install '
-                             'each directory separately)')
+                        help=lang['INSTALL_RUNDIR_HELP'])
     parser.add_argument('--assetsdir', action='store', dest='assetsdir',
-                        help='The assets directory where assets files are '
-                             'stored.'
-                             '(if not given and --datadir not given prompts'
-                             'the user to input if user chooses to install '
-                             'each directory separately)')
+                        help=lang['INSTALL_ASSETDIR_HELP'])
     parser.add_argument('--logdir', action='store', dest='logdir',
-                        help='The log directory where log and lock files are '
-                             'stored.'
-                             '(if not given and --datadir not given prompts'
-                             'the user to input if user chooses to install '
-                             'each directory separately)')
+                        help=lang['INSTALL_LOGDIR_HELP'])
     # add plot mode argument
     parser.add_argument('--plotmode', action='store', dest='plotmode',
-                        help='The plot mode. 0=Summary plots only '
-                             '1=Plot at end of run 2=Plot at creation '
-                             '(pauses code). If unset user is prompted for '
-                             'choice.',
+                        help=lang['INSTALL_PLOTMODE_HELP'],
                         choices=['0', '1', '2'])
     # add cleaning argument
     parser.add_argument('--clean', action='store', dest='clean',
-                        help='Whether to run from clean directories - '
-                             'RECOMMENDED - clears out old files and copies'
-                             'over all required default data files. '
-                             'If unset user is prompted for  choice.')
+                        help=lang['INSTALL_CLEAN_HELP'])
     # add argument to skip cleaning check
     parser.add_argument('--clean_no_warning', action='store', dest='cleanwarn',
-                        help='Whether to warn about cleaning populated '
-                             'directories - WARNING if set to True will delete '
-                             'all tmp/reduced/calibDB etc. data without prompt')
-    # add argument with ds9 path
-    parser.add_argument('--ds9path', action='store', dest='ds9path',
-                        help='Optionally set the ds9 path (used in some tools)')
-    # add argument with pdf latex path
-    parser.add_argument('--pdflatexpath', action='store', dest='pdfpath',
-                        help='Optionally set the pdf latex path (used to '
-                             'produce summary plots. '
-                             'If unset user is prompted for choice.'
-                             'If still unset user will only have html summary'
-                             'document not a pdf one.')
+                        help=lang['INSTALL_CLEAN_NO_WARNING_HELP'])
     # add database mode argument
     parser.add_argument('--database_mode', action='store', dest='database_mode',
-                        help='Database mode (1: sqlite, 2: mysql). '
-                             'If unset user is prompted for choice.',
-                        choices=[1, 2], type=int)
+                        help=lang['INSTALL_DBMODE_HELP'], choices=[1, 2],
+                        type=int)
     # add MySQL database arguements (database_mode = 2)
     parser.add_argument('--database_host', action='store', dest='database_host',
-                        help='MySQL database hostname '
-                             '(Only required if --databasemode=2. '
-                             'If unset user is prompted for choice.')
+                        help=lang['INSTALL_DB_HOST_HELP'])
     parser.add_argument('--database_user', action='store', dest='database_user',
-                        help='MySQL database username '
-                             '(Only required if --databasemode=2. '
-                             'If unset user is prompted for choice.')
+                        help=lang['INSTALL_DB_USER_HELP'])
     parser.add_argument('--database_pass', action='store', dest='database_pass',
-                        help='MySQL database password '
-                             '(Only required if --databasemode=2. '
-                             'If unset user is prompted for choice.')
+                        help=lang['INSTALL_DB_PASS_HELP'])
     parser.add_argument('--database_name', action='store', dest='database_name',
-                        help='MySQL database name '
-                             '(Only required if --databasemode=2. '
-                             'If unset user is prompted for choice.')
+                        help=lang['INSTALL_DB_NAME_HELP'])
     parser.add_argument('--calib-table', action='store', dest='calibtable',
-                        help='APERO database table name suffix for the'
-                             'calibration database (default is the APERO '
-                             'profile name). If unset user is prompted for '
-                             'choice.')
+                        help=lang['INSTALL_CALIBTABLE_HELP'])
     parser.add_argument('--tellu-table', action='store', dest='tellutable',
-                        help='APERO database table name suffix for the'
-                             'telluric database (default is the APERO '
-                             'profile name). If unset user is prompted for '
-                             'choice.')
+                        help=lang['INSTALL_TELLUTABLE_HELP'])
     parser.add_argument('--index-table', action='store', dest='indextable',
-                        help='APERO database table name suffix for the'
-                             'index database (default is the APERO '
-                             'profile name).')
+                        help=lang['INSTALL_INDEXTABLE_HELP'])
     parser.add_argument('--log-table', action='store', dest='logtable',
-                        help='APERO database table name suffix for the'
-                             'log database (default is the APERO '
-                             'profile name).')
+                        help=lang['INSTALL_LOGTABLE_HELP'])
     parser.add_argument('--obj-table', action='store', dest='objtable',
-                        help='APERO database table name suffix for the'
-                             'object database (default is the APERO '
-                             'profile name).')
+                        help=lang['INSTALL_OBJTABLE_HELP'])
     parser.add_argument('--lang-table', action='store', dest='langtable',
-                        help='APERO database table name suffix for the'
-                             'language database (default is the APERO '
-                             'profile name).')
+                        help=lang['INSTALL_LANGTABLE_HELP'])
     # parse arguments
     args = parser.parse_args()
     return args
@@ -259,78 +332,6 @@ def load_requirements(filename: Union[str, Path]) -> List[str]:
             modules.append(line)
     # return modules
     return modules
-
-
-def validate():
-    """
-    Check whether users system satisfies all python module requirements
-
-    :raises SystemExit: if modules are not correct
-    :return: None
-    """
-    # python version check
-    if sys.version_info.major < 3:
-        print('\tFatal Error: Python 2 is not supported')
-        sys.exit()
-    # ------------------------------------------------------------------
-    # load requirement files
-    # ------------------------------------------------------------------
-    filepath = os.path.abspath(__file__)
-    # get files
-    user_req_file = Path(filepath).parent.parent.joinpath(REQ_USER)
-    dev_req_file = Path(filepath).parent.parent.joinpath(REQ_DEV)
-    # get lists of modules
-    user_req = load_requirements(user_req_file)
-    dev_mode = [False] * len(user_req)
-    dev_req = load_requirements(dev_req_file)
-    dev_mode += [True] * len(dev_req)
-    modules = user_req + dev_req
-    # storage of checked modules
-    checked = []
-    # log check
-    print('Module check:')
-    # ------------------------------------------------------------------
-    # loop around required modules to check
-    # ------------------------------------------------------------------
-    for m_it, module in enumerate(modules):
-        # remove end of lines
-        module = module.replace('\n', '')
-        # get module name
-        try:
-            modname = module.split('==')[0]
-            modversion = module.split('==')[1].split('.')
-        except Exception as e:
-            emsgs = 'Module name "{0}" error {1}: {2}'
-            eargs = [module, type(e), str(e)]
-            raise IndexError(emsgs.format(*eargs))
-
-        suggested = 'pip install {0}'.format(module)
-        # deal with modules with different import name
-        if modname in module_translation:
-            modname = module_translation[modname]
-        # deal with checked
-        if modname in checked:
-            continue
-        else:
-            checked.append(modname)
-        # ------------------------------------------------------------------
-        # test importing module
-        # noinspection PyBroadException
-        try:
-            imod = importlib.import_module(modname)
-            # --------------------------------------------------------------
-            # check the version
-            check_version(module, imod, modversion, suggested,
-                          required=not dev_mode[m_it])
-        # --------------------------------------------------------------
-        except Exception as _:
-            if dev_mode[m_it]:
-                print('\t{0} recommends {1} to be installed (dev only)'
-                      '\n\t i.e {2}'.format(DRS_PATH, module, suggested))
-            else:
-                print('\tFatal Error: {0} requires module {1} to be installed'
-                      '\n\t i.e {2}'.format(DRS_PATH, module, suggested))
-                sys.exit()
 
 
 def check_version(module: str, imod: Any, rversionlist: Union[List[str], None],
@@ -401,81 +402,20 @@ def check_version(module: str, imod: Any, rversionlist: Union[List[str], None],
                 suggested]
         # if we have not passed print fail message
         if not passed and not required:
-            print('\t{0} recommends {1} to be updated ({3} < {2})'
-                  '\n\t i.e {4}'.format(*args))
+            # print: {0} recommends {1} to be updated ({3} < {2})
+            print(lang['40-001-00079'].format(*args))
         elif not passed:
-            print('\tFatal Error: {0} requires module {1} ({3} < {2})'
-                  '\n\t i.e {4}'.format(*args))
+            # print: Fatal Error: {0} requires module {1} ({3} < {2})
+            print(lang['40-001-00080'].format(*args))
             sys.exit()
         else:
-            print('\tPassed: {1} ({3} >= {2})'.format(*args))
+            # print: Passed: {1} ({3} >= {2})
+            print(lang['40-001-00081'].format(*args))
 
 
-def catch_sigint(signal_received: Any, frame: Any):
-    """
-    Deal with Keyboard interupt --> do a sys.exit
-
-    :param signal_received: Any, not used (but expected)
-    :param frame: Any, not used (but expected)
-
-    :return: None, exits if this function is called
-    """
-    # we don't use these we just exit
-    _ = signal_received, frame
-    print('\n\nExiting installation script')
-    # raise Keyboard Interrupt
-    sys.exit()
-
-
-def check_install() -> Tuple[Any, Any]:
-    """
-    Check for apero installation directory
-
-    :raises ImportError: if unable to find apero installation
-    :return: tuple, 1. the apero.constants sub-module, 2. the apero.installation
-             module
-    """
-    # start with file definition
-    start = Path(__file__).absolute()
-    # get apero working directory
-    drs_path = start.parent.parent
-    # make aboslute
-    drs_path = drs_path.absolute()
-    # try to import to raise exception
-    try:
-        # add drs path to sys
-        sys.path.append(str(drs_path))
-        _ = importlib.import_module(DRS_PATH)
-    except Exception as _:
-        path = drs_path.joinpath(DRS_PATH)
-        raise ImportError('Unable to find {0}'.format(path))
-    # construct module names
-    constants_mod = '{0}.{1}'.format(DRS_PATH, CONSTANTS_PATH)
-    install_mod = '{0}.{1}'.format(DRS_PATH, INSTALL_PATH)
-    # try to import the modules
-    try:
-        constants = importlib.import_module(constants_mod)
-    except Exception as _:
-        # raise error
-        raise ImportError('Cannot import {0}'.format(constants_mod))
-    try:
-        install = importlib.import_module(install_mod)
-    except Exception as _:
-        # raise error
-        raise ImportError('Cannot import {0}'.format(install_mod))
-    # add apero to the PYTHONPATH
-    if 'PYTHONPATH' in os.environ:
-        oldpath = os.environ['PYTHONPATH']
-        os.environ['PYTHONPATH'] = str(drs_path) + os.pathsep + oldpath
-    # else we just add it to current PYTHON PATH
-    else:
-        os.environ['PYTHONPATH'] = str(drs_path)
-        # add to active path
-        os.sys.path = [str(drs_path)] + os.sys.path
-    # if we have reached this point we can break out of the while loop
-    return constants, install
-
-
+# =============================================================================
+# Define main function
+# =============================================================================
 def main():
     """
     Run the installation
@@ -483,15 +423,9 @@ def main():
     :return:
     """
     # ----------------------------------------------------------------------
-    # get arguments
-    args = get_args()
-    # ----------------------------------------------------------------------
     # deal with validation
-    if not args.skip:
+    if not get_sys_arg('--skip'):
         validate()
-    # ----------------------------------------------------------------------
-    # Importing DRS paths
-    # ----------------------------------------------------------------------
     # catch Ctrl+C
     signal.signal(signal.SIGINT, catch_sigint)
     # get install paths
@@ -502,6 +436,11 @@ def main():
         from apero.core import constants
     except Exception as _:
         pass
+    # get text entry for remaining text
+    textentry = install.textentry
+    # ----------------------------------------------------------------------
+    # get arguments
+    args = get_args()
     # ----------------------------------------------------------------------
     # start up
     # ----------------------------------------------------------------------
@@ -512,7 +451,7 @@ def main():
     # ----------------------------------------------------------------------
     # if gui pass for now
     if args.gui:
-        print('GUI features not implemented yet.')
+        install.cprint(textentry('40-001-00066'))
         sys.exit()
     # get parameters from user input
     elif not args.update:
@@ -533,32 +472,32 @@ def main():
     # print installing title
     print('\n\n\n')
     install.cprint(install.printheader(), 'm')
-    install.cprint('Installing', 'm')
+    install.cprint(textentry('40-001-00067'), 'm')
     install.cprint(install.printheader(), 'm')
     print('\n')
     # ----------------------------------------------------------------------
     # get binary paths
-    install.cprint('\n- Getting binary paths', 'm')
+    install.cprint(textentry('40-001-00068'), 'm')
     allparams = install.bin_paths(params, allparams)
     # ----------------------------------------------------------------------
     # copy config files to config dir
-    install.cprint('\n- Creating config files', 'm')
+    install.cprint(textentry('40-001-00069'), 'm')
     allparams = install.create_configs(params, allparams)
     # ----------------------------------------------------------------------
     # update config values from iparams
-    install.cprint('\n- Updating config files', 'm')
+    install.cprint(textentry('40-001-00070'), 'm')
     allparams = install.update_configs(allparams)
     # ----------------------------------------------------------------------
     # create source files to add environmental variables
-    install.cprint('\n- Creating shell script(s)', 'm')
+    install.cprint(textentry('40-001-00071'), 'm')
     allparams = install.create_shell_scripts(params, allparams)
     # ----------------------------------------------------------------------
     # perform clean install on each instrument if requested
-    install.cprint('\n- Copying files\n\n', 'm')
+    install.cprint(textentry('40-001-00072'), 'm')
     allparams = install.clean_install(params, allparams)
     # ----------------------------------------------------------------------
     # create sym links for all recipes
-    install.cprint('\n- Creating symlinks\n', 'm')
+    install.cprint(textentry('40-001-00073'), 'm')
     allparams = install.create_symlinks(params, allparams)
     # ----------------------------------------------------------------------
     # display message
@@ -567,7 +506,7 @@ def main():
     # log that installation is complete
     print('\n\n\n')
     install.cprint(install.printheader(), 'm')
-    install.cprint('Installation complete', 'm')
+    install.cprint(textentry('40-001-00074'), 'm')
     install.cprint(install.printheader(), 'm')
     print('\n')
 
