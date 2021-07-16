@@ -2,6 +2,24 @@ Changelog
 =========
 
 
+0.7.148 (2021-07-16)
+--------------------
+- Update .gitignore. [Neil Cook]
+- Update language database. [Neil Cook]
+- Update language database + add install text to language database
+  (using langdb proxy) [Neil Cook]
+- Add text to language database. [Neil Cook]
+- `Apero.science.localisation.py` -  add loc im regions plot. [Neil Cook]
+- `Setup.install.py` - scikit-image --> skimage in `module_translation`.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Add `pp_ff` and `ext_ff` to runs. [Neil Cook]
+- `Apero.core.core.drs_database` + `apero.core.utils.drs_utils.py` +
+  `apero.tools.module.processing.drs_processing.py` - fix problem with
+  include/exclude list of `obs_dirs`. [Neil Cook]
+- Update documentation, date, version, changelog. [Neil Cook]
+
+
 0.7.147 (2021-07-14)
 --------------------
 - Update language database. [Neil Cook]
