@@ -17,6 +17,7 @@ Import rules:
 - only from apero.base.base.py
 
 """
+import importlib
 from hashlib import blake2b
 import os
 import pandas as pd
@@ -25,6 +26,7 @@ import pkg_resources
 from typing import Any, List, Union
 
 from apero.base import base
+
 
 # =============================================================================
 # Define variables
@@ -43,7 +45,25 @@ REL_CACHE = dict()
 # =============================================================================
 # Define other functions - do not any apero functions in these
 # =============================================================================
-def lang_db_proxy() -> dict:
+def _escape_map(value: Any) -> Any:
+    """
+    Corrects \\n and \\t --> \n and \t  but breaks \\ if required before
+    n and t
+
+    :param value: Any, the value to check
+
+    :return: Any, the checked and/or updated value
+    """
+    if not isinstance(value, str):
+        return value
+    else:
+        if '\\n' in value or '\\t' in value:
+            return value.replace('\\n', '\n').replace('\\t', '\t')
+        else:
+            return value
+
+
+def lang_db_proxy(language=None) -> dict:
     """
     If all else fails (i.e. if the language database has yet to be
     installed - load the default reset file from reset csv files)
@@ -58,7 +78,9 @@ def lang_db_proxy() -> dict:
         # get lang file
         rellangfile = base.LANG_DB_RESET
         # get default language
-        if 'LANGUAGE' in base.IPARAMS:
+        if language is not None:
+            language = str(language)
+        elif 'LANGUAGE' in base.IPARAMS:
             language = base.IPARAMS['LANGUAGE']
         else:
             language = base.DEFAULT_LANG
@@ -68,8 +90,10 @@ def lang_db_proxy() -> dict:
         langfile = _rel_folder(__PACKAGE__, relpath)
         # load language database
         df = pd.read_csv(langfile)
+        # convert \\n and \\t to \n and \t
+        values = list(map(_escape_map, list(df[language])))
         # return dictionary
-        return dict(zip(df['KEYNAME'], df[language]))
+        return dict(zip(df['KEYNAME'], values))
     # if we can't even do this then return an empty dictionary -
     #  all outputs will be the keyname
     except Exception as _:

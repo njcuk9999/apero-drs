@@ -5,8 +5,13 @@
 "None","and","et","","AND_TEXT","TEXT"
 "None","Given a function name will break when this function is found (only if function contains display_func)","","","BREAKFUNC_HELP","HELP"
 "None","If set then any breakpoints in the code are executed","","","BREAKPOINTS_HELP","HELP"
+"None","or","","text for ""or"" logical condition","C_OR","TEXT"
+"None","and","","text for ""and"" logical condition","C_AND","TEXT"
 "None","N","N","character for no","C_NO","TEXT"
 "None","Y","O","character for yes","C_YES","TEXT"
+"None","[Y]es or [N]o","[O]ui ou [N[on","question for yes or no characters","C_YES_OR_NO","TEXT"
+"None","Options are","","options are text","C_OPTIONS_ARE","TEXT"
+"None","Default is","","default is text","C_DEFAULT_IS","TEXT"
 "None","Produces a nicely formatted change log (using git). Requires gitchangelog to be installed via 'pip install gitchangelog'","","","CHANGELOG_DESCRIPTION","HELP"
 "None","Path to csv file. For --importdb this is the csv file you wish to add. For --exportdb this is the csv file that will be saved.","","","DBMGR_CSVARG_HELP","TEXT"
 "None","APERO database manager functionality","","","DBMGR_DESCRIPTION","TEXT"
@@ -114,12 +119,91 @@
 "None","Run directory","","","DATA_RUN_DESC","TEXT"
 "None","Assets directory","","","DATA_ASSETS_DESC","TEXT"
 "None","Log directory","","","DATA_LOG_DESC","TEXT"
-"None","APERO profile name NAME:      
+"None","APERO profile name:      
 
 This is the profile name to associate with this installation
 Do not include spaces or wildcards (alpha-numeric only)
 Note you can create multiple profiles for different instruments
-so the name should be logical and unique","","","INSTALL_MESSAGE0","TEXT"
+so the name should be logical and unique","","","INSTALL_PROFILE_MSG","TEXT"
+"None","User config path:      
+
+This is the path where your user configuration will be saved.     
+If it doesn't exist you will be prompted to create it.      
+Note please make sure directory is EMPTY.      
+Note the ""profile name"" sub-directory will be created under this path.","","","INSTALL_CONFIG_PATH_MSG","TEXT"
+"None","Setup paths invidiually? [Y]es or [N]o        
+
+If [Y]es it will allow you to set each path separately      
+(i.e. for raw, tmp, reduced, calibDB etc).      
+If [N]o you will just set one path and all folders      
+(raw, tmp, reduced, calibDB etc) will be created under this      
+directory.","","","INSTALL_DATA_PATH_MSG","TEXT"
+"None","Clean install? [Y]es or [N]o      
+
+WARNING: If you type [Y]es you will be prompted (later) to reset     
+the directories this means any previous data in these directories     
+will be removed.  
+
+Note you can always say later to individual cases.  
+
+Note if you have given empty directories you MUST run a clean install to copy the required files to the given directories.","","","INSTALL_CLEAN_MSG","TEXT"
+"None","Add an alias in your ~/.bashrc or ~/.bash_profile or ~/.tcshrc or ~/.profile or ~/.zshrc or ~/.zprofile         
+and then type ""{NAME}"" every time you wish to run apero.          
+
+i.e. for bash              
+alias {NAME}=""source {DRS_UCONFIG}{NAME}.bash.setup""          
+
+i.e. for sh             
+alias {NAME} ""source {DRS_UCONFIG}{NAME}.sh.setup""         
+
+i.e. for zsh              
+alias {NAME} ""source {DRS_UCONFIG}{NAME}.zsh.setup""","","","INSTALL_ALIAS_MSG","TEXT"
+"None","For MySQL you must define some parameters, these will take the form:
+
+    >> mysql -h {HOSTNAME} -n {USERNAME} -p {PASSWORD}
+
+- Note the password will be stored as plain text.
+
+You will also need a database name (within mysql) 
+- if it does not exist we will attempt to create it (but may not have permissions to do so)
+
+You may also link the database to a specific apero profile
+by default this is the profile name you set up here
+however you may want to link this database to another apero profile","","","INSTALL_DB_MSG","TEXT"
+"None","updates installation (not clean install) and checks for updates to your current config files","","","INSTALL_UPDATE_HELP","HELP"
+"None","skip the python module checks (Not recommended for first time installation)","","","INSTALL_SKIP_HELP","HELP"
+"None","activate developer mode (prompts for all config/constant groups and add them to your config/constant files)","","","INSTALL_DEV_HELP","HELP"
+"None","use GUI to install (Not yet supported) ","","","INSTALL_GUI_HELP","HELP"
+"None","[STRING] The name for this specific installation (Allows the creation of multiple profiles with different settings)","","","INSTALL_NAME_HELP","HELP"
+"{0} = package name","Install {0} software for reducing observational data","","","INSTALL_DESCRIPTION","HELP"
+"None","[STRING] The installation directory (if not given tries to find the path and if not found prompts the user)","","","INSTALL_ROOT_HELP","HELP"
+"None","[STRING] The user configuration path (if not given prompts the user)","","","INSTALL_CONFIG_HELP","HELP"
+"None","[STRING] The instrument to install (if not given prompts the user for each available instrument). THIS ARGUMENT IS REQUIRED TO SET --datadir, --rawdir, --tmpdir, --reddir, --calibdir, --telludir, --plotdir, --rundir, --assetdir, --logdir","","","INSTALL_INSTRUMENT_HELP","HELP"
+"None","[STRING] The data directory (if given overrides all sub-data directories - i.e. raw/tmp/red/plot) if not given and other paths not given prompts the user for input.","","","INSTALL_DATADIR_HELP","HELP"
+"None","[STRING] The raw directory where input files are stored. (if not given and --datadir not given prompts the user to input if user chooses to install each directory separately)","","","INSTALL_RAWDIR_HELP","HELP"
+"None","[STRING] The tmp directory where preprocessed files are stored. (if not given and --datadir not given prompts the user to input if user chooses to install each directory separately)","","","INSTALL_TMPDIR_HELP","HELP"
+"None","[STRING] The reduced directory where output files are stored. (if not given and --datadir not given prompts the user to input if user chooses to install each directory separately)","","","INSTALL_REDDIR_HELP","HELP"
+"None","[STRING] The post process directory where output files are stored. (if not given and --datadir not given prompts the user to input if user chooses to install each directory separately).","","","INSTALL_OUTDIR_HELP","HELP"
+"None","[STRING] The calibration database directory where calibrations used in the database files are stored. (if not given and --datadir not given prompts the user to input if user chooses to install each directory separately)","","","INSTALL_CALIBDIR_HELP","HELP"
+"None","[STRING] The telluric database directory where telluric database files are stored. (if not given and --datadir not given prompts the user to input if user chooses to install each directory separately)","","","INSTALL_TELLUDIR_HELP","HELP"
+"None","The plot directory where plots/summary documents are stored. (if not given and --datadir not given prompts the user to input if user chooses to install each directory separately)","","","INSTALL_PLOTDIR_HELP","HELP"
+"None","[STRING] The run directory where run/batch files are stored. (if not given and --datadir not given prompts the user to input if user chooses to install each directory separately)","","","INSTALL_RUNDIR_HELP","HELP"
+"None","[STRING] The assets directory where assets files are stored. (if not given and --datadir not given prompts the user to input if user chooses to install each directory separately)","","","INSTALL_ASSETDIR_HELP","HELP"
+"None","The log directory where log and lock files are stored. (if not given and --datadir not given prompts the user to input if user chooses to install  each directory separately)","","","INSTALL_LOGDIR_HELP","HELP"
+"None","[INT] The plot mode. 0=Summary plots only 1=Plot at end of run 2=Plot at creation (pauses code). If unset user is prompted for choice.","","","INSTALL_PLOTMODE_HELP","HELP"
+"None","[BOOLEAN] Whether to run from clean directories -  RECOMMENDED - clears out old files and copies over all required default data files. If unset user is prompted for  choice.","","","INSTALL_CLEAN_HELP","HELP"
+"None","[BOOLEAN] Whether to warn about cleaning populated directories - WARNING if set to True will delete all tmp/reduced/calibDB etc. data without prompt","","","INSTALL_CLEAN_NO_WARNING_HELP","HELP"
+"None","[INTEGER] Database mode (1: sqlite, 2: mysql). If unset user is prompted for choice.","","","INSTALL_DBMODE_HELP","HELP"
+"None","[STRING] MySQL database hostname (Only required if --databasemode=2. If unset user is prompted for choice.","","","INSTALL_DB_HOST_HELP","HELP"
+"None","[STRING] MySQL database username (Only required if --databasemode=2. If unset user is prompted for choice.","","","INSTALL_DB_USER_HELP","HELP"
+"None","[STRING] MySQL database password (Only required if --databasemode=2. If unset user is prompted for choice.","","","INSTALL_DB_PASS_HELP","HELP"
+"None","[STRING] MySQL database name (Only required if --databasemode=2. If unset user is prompted for choice.","","","INSTALL_DB_NAME_HELP","HELP"
+"None","[STRING] APERO database table name suffix for the calibration database (default is the APERO profile name). If unset user is prompted for choice.","","","INSTALL_CALIBTABLE_HELP","HELP"
+"None","[STRING] APERO database table name suffix for the telluric database (default is the APERO profile name). If unset user is prompted for choice.","","","INSTALL_TELLUTABLE_HELP","HELP"
+"None","[STRING] APERO database table name suffix for the index database (default is the APERO profile name).","","","INSTALL_INDEXTABLE_HELP","HELP"
+"None","[STRING] APERO database table name suffix for the log database (default is the APERO profile name).","","","INSTALL_LOGTABLE_HELP","HELP"
+"None","[STRING] APERO database table name suffix for the object database (default is the APERO profile name).","","","INSTALL_OBJTABLE_HELP","HELP"
+"None","[STRING] APERO database table name suffix for the language database (default is the APERO profile name).","","","INSTALL_LANGTABLE_HELP","HELP"
 "None","This is the Default error message","None","None","","ERROR"
 "None","This is a test message","Ceci est un message test","Test message","00-000-99999","None"
 "None","Dev Error: General Error","","Dev Error","","ERROR"
@@ -127,6 +211,15 @@ so the name should be logical and unique","","","INSTALL_MESSAGE0","TEXT"
 "{0} = error type; {1} = error message; {2} = function name","Error {0}: {1} \n\t Function = {2}","","Catch a error pushed out by python","00-000-00002","ERROR"
 "{0} = module name; {1} = package name; {2} = function name; {3} = error type; {4} = error message; {5} = traceback","Cannot import module '{0}' from '{1}' \n\t Function = {2} \n\t Error {3}: {4} \n\n Traceback: \n\n {5}","","Means that cannot import module","00-000-00003","ERROR"
 "{0} = module name; {1} = path to module; {2} = function name","MainError: Module {0} has not attribute 'main' \n\t Path = {1} \n\t Function = {2}","","Means that module does not have main function","00-000-00004","ERROR"
+"{0} = package; {1} = os.name","Error {0} does not support OS (OS = {1})","","Means that setup does not support OS type","00-000-00005","ERROR"
+"{0} = setup file name","Error setup file '{0}' does not exist","","Means that setup file does not exist","00-000-00006","ERROR"
+"{0} = filename","Error: Cannot chmod 777 on file {0}","","Means we cannot make file executable","00-000-00007","ERROR"
+"None","Error: Cannot run update. Must be in an apero environment (i.e. source apero.{SYSTEM}.setup).","","Means we cannot run setup update as we are not in an apero environment","00-000-00008","ERROR"
+"None","\tFatal Error: Python 2 is not supported","","Means that user is using python 2","00-000-00009","ERROR"
+"{0} = module name, {1} = error type; {2} = error message","Module name '{0}' error {1}: {2}","","Means that module name is bad","00-000-00010","ERROR"
+"{0} = drs path; {1} = module name; {2} = suggested module","\tFatal Error: {0} requires module {1} to be installed \n\t i.e. {2}","","Means required module not installed","00-000-00011","ERROR"
+"{0} = apero package","Unable to find {0}","","Means that we were unable to find apero","00-000-00012","ERROR"
+"{0} = module name","Cannot import {0}","","Means we cannot import module","00-000-00013","ERROR"
 "","","","","",""
 "","","","","",""
 "","","","","",""
@@ -895,7 +988,7 @@ so the name should be logical and unique","","","INSTALL_MESSAGE0","TEXT"
 "{0} = database name; {1} = header key; {2} = function name","Database {0}: Header key ""{1}"" invalid for database. \n\t Function = {2}","","Means that header key was not valid for database (and will be skipped)","10-002-00004","WARNING"
 "{0} = length of columns; {1} = length of values","Index database has wrong number of columns \n\t Num columns = {0}   num values = {1}","","Means index database has wrong number of columns","10-002-00005","WARNING"
 "None","Reset database? [Y]es or [N]o?\t","","Reset database user prompt for wrong number of columns","10-002-00006","WARNING"
-"","","","","",""
+"None","\nWarning: Bad profile name changed from '{0}' to '{1}'","","Means that bad profile name was given and it has been changed","10-002-00007","WARNING"
 "","","","","",""
 "","","","","",""
 "","","","","",""
@@ -1183,10 +1276,57 @@ so the name should be logical and unique","","","INSTALL_MESSAGE0","TEXT"
 "None","\tSkipping search (already run)","","Prints that we are skipping search as its already been run","40-001-00031","ALL"
 "{0} = number of files being updated","\tReading headers of {0} files (to be updated)","","Prints that we are reading headers of N files","40-001-00032","ALL"
 "None","\tSearching all directories","","Prints that we are searching all directories for files","40-001-00033","ALL"
-"","","","","",""
-"","","","","",""
-"","","","","",""
-"","","","","",""
+"{0} = datatype","Response must be valid {0}","","Prints that install response must be valid","40-001-00034","ALL"
+"None","Response invalid","","Prints that install response is invalid","40-001-00035","ALL"
+"None","Response must be a valid path or 'None'","","Prints that install response must be valid path or None","40-001-00036","ALL"
+"None","Response must be a valid path","","Prints that install response must be valid path","40-001-00037","ALL"
+"{0} = path to create","Path '{0}' does not exist. Create?","","Prints that path does not exist and we should create it","40-001-00038","ALL"
+"{0} = value","Response must be {0}","","Prints that response must be value","40-001-00039","ALL"
+"{0} = name; {1} = value","\t - {0} set from cmd ({1})","","Print that arg was set from command","40-001-00040","ALL"
+"{0} = package name","Installation for {0}","","Prints this is the installation for package name","40-001-00041","ALL"
+"None","Choose instrument in install","","Prints that the user should choose which instrument to install","40-001-00042","ALL"
+"None","Choose a database mode:","","Prints question about choosing database mode","40-001-00043","ALL"
+"None","1. sqlite (recommended for single machine use) - no setup required","","Database sqlite option","40-001-00044","ALL"
+"None","2. mysql (required for multple core/machine use) - setup required","","Database mysql option","40-001-00045","ALL"
+"{0} = instrument name","Settings for {0}","","Prints settings for instrument","40-001-00046","ALL"
+"None","Data directory","","Prints data directory question","40-001-00047","ALL"
+"{0} = directory name","\n\t - Making directory '{0}'","","Prints that we are making directory","40-001-00048","ALL"
+"{0} = name; {1} = value","\t - {0} set from datadir ({1})","","Prints that arg was set from data dir","40-001-00049","ALL"
+"None","Plot mode required","","Prints question for plot mode","40-001-00050","ALL"
+"None","0: No plotting","","option 1 plot mode","40-001-00051","ALL"
+"None","1: Plots displayed at end of code","","option 2 plot mode","40-001-00052","ALL"
+"None","2: Plots displayed immediately and code paused","","option 3 plot mode","40-001-00053","ALL"
+"{0} = plot mode","\t - DRS_PLOT set from cmd ({0})","","Prints that DRS_PLOT was set from cmd","40-001-00054","ALL"
+"{0} = clean install option","\t - CLEAN set from cmd ({0})","","Prints that CLEAN_INSTALL set from cmd","40-001-00055","ALL"
+"{0} = variable name","Enter database {{{0}}}:","","Print question to ask for database variable","40-001-00056","ALL"
+"None","Enter mysql database name","","Prints question to ask for mysql database name","40-001-00057","ALL"
+"{0} = database type; {1} = database key; {2} = apero profile name","Enter table suffix for {0} database table (leave blank for default: {2})
+
+Note '{1}_{{SUFFIX}}_DB' will be the final table name.
+i.e. by default: '{1}_{2}_DB'","","Prints question to enter table suffix for database","40-001-00058","ALL"
+"None","\t - Empty directory found -- forcing clean install.","","Prints that empty directory was found","40-001-00059","ALL"
+"None","\t - Performing clean installation","","Prints that we are performing clean installation","40-001-00060","ALL"
+"{0} = directory","\n\t Populating {0} directory\n","","Prints that we are populating directory","40-001-00061","ALL"
+"{0} = package name","To run {0} do the following:","","Prints instructions required by user to run apero (title)","40-001-00062","ALL"
+"{0} = constants group; {1} = constant file","DEV MODE: Add all constants in group '{0}' to file: {1}?","","Prints we are in dev mode and should add all constants","40-001-00063","ALL"
+"{0} = constant file; {1} = constant","\n Conflicting line found in current {0} file for constant '{1}'","","Prints that there is a conflicting line found for constants","40-001-00064","ALL"
+"{0} = default value; {1} = current value","Replacing default: \n\t{0} \nwith current:\n\t{1}","","Prints that we are replacing default constant value","40-001-00065","ALL"
+"None","GUI features not implemented yet.","","Prints that GUI features not implemented yet","40-001-00066","ALL"
+"None","Installing","","Prints that we are installing apero","40-001-00067","ALL"
+"None","\n - Getting binary paths","","Prints that we are getting binary paths","40-001-00068","ALL"
+"None","\n - Creating config files","","Prints that we are creating config files","40-001-00069","ALL"
+"None","\n - Updating config files","","Prints that we are updating config file","40-001-00070","ALL"
+"None","\n - Creating shell scripts","","Prints that we are creating shell scripts","40-001-00071","ALL"
+"None","\n - Copying files\n\n","","Prints that we are copying files","40-001-00072","ALL"
+"None","\n - Creating symlinks\n","","Prints that we are creating sym links","40-001-00073","ALL"
+"None","Installation complete","","Prints that installation is complete","40-001-00074","ALL"
+"None","\n\nExiting installation script","","Prints we are exiting installation script","40-001-00075","ALL"
+"None","Module check:","","Prints that we are doing a module check","40-001-00076","ALL"
+"{0} = module name","pip install {0}","","Prints suggested install method","40-001-00077","ALL"
+"{0} = drs path; {1} = module name; {2} = suggested module","\t{0} recommends {1} to be installed (dev only) \n\t i.e. {2}","","Prints that in dev mode we recommend this module to be installed","40-001-00078","ALL"
+"{0} = package name; {1} = module name; {2} = required version; {3} = actual version; {4} = suggested install method","\t{0} recommends {1} to be updated ({3} < {2})\n\t i.e {4}'.format(*args)","","Prints that we recommend module to be updated","40-001-00079","ALL"
+"{0} = package name; {1} = module name; {2} = required version; {3} = actual version; {4} = suggested install method","\tFatal Error: {0} requires module {1} ({3} < {2})\n\t i.e {4}'.format(*args)","","Prints that we require module to be a newer version","40-001-00080","ALL"
+"{0} = package name; {1} = module name; {2} = required version; {3} = actual version; {4} = suggested install method","\tPassed: {1} ({3} >= {2})","","Prints that module passed version check","40-001-00081","ALL"
 "","","","","",""
 "None","\t","","Help Messages","40-002-00000","ALL"
 "{0} = program name","Help for: '{0}.py'","Aide pour: '{0}.py'","Help title","40-002-00001","ALL"

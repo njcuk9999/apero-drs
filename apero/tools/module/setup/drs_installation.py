@@ -145,7 +145,7 @@ def ask(question: str, dtype: Union[str, type, None] = None,
         # print options
         if options is not None:
             cprint(lang.OPTIONS_ARE + ':', 'b')
-            print('   ' + '\n   '.join(np.array(optiondesc, dtype=str)))
+            print('   ' + '\n   '.join(list(np.array(optiondesc, dtype=str))))
         if default is not None:
             cprint('   {0}: {1}'.format(lang.DEFAULT_IS, default), 'b')
         # record response
@@ -389,12 +389,11 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     all_params['LANGUAGE'] = lang
     all_params.set_source('LANGUAGE', lang)
     # ------------------------------------------------------------------
-    # Database settings
-    prompt_db = 'Choose a database mode'
-    options_db = ['1. sqlite (recommended for single machine use) '
-                  '- no setup required',
-                  '\n\t2. mysql (required for multiple machine use)'
-                  ' - setup required']
+    # Database settings: Choose a database mode
+    prompt_db = textentry('40-001-00043')
+    # options are: 1. sqlite 2. mysql
+    options_db = [str(textentry('40-001-00044')),
+                  str(textentry('40-001-00045'))]
     # ask which mode the user wants for databases
     db_type = None
     if hasattr(args, 'database_mode'):
@@ -418,7 +417,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
         all_params = get_sqlite_settings(all_params)
     # ------------------------------------------------------------------
     cprint('\n' + printheader(), 'm')
-    cprint('Settings for {0}'.format(instrument), 'm')
+    cprint(textentry('40-001-00046', args=[instrument]), 'm')
     cprint(printheader(), 'm')
     # ------------------------------------------------------------------
     # set user config
@@ -480,17 +479,16 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
         directory = Path(default_dpath)
         # loop until we have an answer
         while not create:
-            directory = ask('Data directory', 'path',
+            directory = ask(textentry('40-001-00047'), 'path',
                             default=default_dpath)
             # ask to create directory
-            pathquestion = 'Path "{0}" does not exist. Create?'
+            pathquestion = textentry('40-001-00038', args=[directory])
 
             if not directory.exists():
-                create = ask(pathquestion.format(directory), dtype='YN')
+                create = ask(pathquestion, dtype='YN')
                 if create:
+                    cprint(textentry('40-001-00048', args=directory), 'g')
                     os.makedirs(directory)
-                    mkdir = '\n\t - Making directory "{0}"'
-                    cprint(mkdir.format(directory), 'g')
             else:
                 create = True
         # loop around paths and create them
@@ -503,9 +501,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
             all_params.set_source(path, __NAME__)
             # check whether path exists
             if not dpath.exists():
+                cprint(textentry('40-001-00048', args=all_params[path]), 'g')
                 os.makedirs(dpath)
-                mkdir = '\n\t - Making directory "{0}"'
-                cprint(mkdir.format(all_params[path]), 'g')
         cprint(printheader(), 'g')
 
     else:
@@ -517,7 +514,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
                 all_params[path] = datadir.joinpath(default)
                 all_params.set_source(path, 'command line + default')
                 pargs = [path, all_params[path]]
-                cprint('\t - {0} set from datadir ({1})'.format(*pargs))
+                cprint(textentry('40-001-00049', args=pargs))
             else:
                 # assign path
                 all_params[path] = value
@@ -528,19 +525,19 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # ------------------------------------------------------------------
     # find value in args
     if args.plotmode is None:
-
-        plot = ask('Plot mode required', dtype='int', options=[0, 1, 2],
-                   optiondesc=['0: No plotting',
-                               '1: Plots display at end of code',
-                               '2: Plots display immediately and '
-                               'pause code'],
+        # ask about plotting, options are 0. (no plots) 1. (plots at end)
+        #   2. plots at time of creation
+        plot = ask(textentry('40-001-00050'), dtype='int', options=[0, 1, 2],
+                   optiondesc=[textentry('40-001-00051'),
+                               textentry('40-001-00052'),
+                               textentry('40-001-00053')],
                    default=0)
         all_params['DRS_PLOT'] = plot
         all_params.set_source('DRS_PLOT', __NAME__)
         # add header line
         cprint(printheader(), 'g')
     else:
-        cprint('\t - DRS_PLOT set from cmd ({0})'.format(args.plotmode))
+        cprint(textentry('40-001-00054', args=[args.plotmode]))
         all_params['DRS_PLOT'] = args.plotmode
         all_params.set_source('DRS_PLOT', 'command line')
 
@@ -552,7 +549,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
                                           dtype='YN')
         all_params.set_source('CLEAN_INSTALL', func_name)
     else:
-        cprint('\t - CLEAN set from cmd ({0})'.format(args.clean))
+        cprint(textentry('40-001-00055', args=[args.clean]))
         all_params['CLEAN_INSTALL'] = eval(args.clean)
         all_params.set_source('CLEAN_INSTALL', 'command line')
 
@@ -609,28 +606,16 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     if name is None or profile is None:
         prompt_user = True
     # ----------------------------------------------------------------------
-    # Set up statement
-    prompt_db_1 = ('For MySQL you must define some parameters, '
-                   'these will take the form:'
-                   '\n\t>> mysql -h {HOSTNAME} -n {USERNAME} -p {PASSWORD}'
-                   '\n\t - Note the password will be stored as plain text.'
-                   '\n\nYou will also need a database name (within mysql) '
-                   '\n\t- if it does not exist we will attempt to create it '
-                   '(but may not have permissions to do so)'
-                   '\nYou may also link the database to a specific apero profile'
-                   '\n\tby default this is the profile name you set up here'
-                   '\n\thowever you may want to link this database to another '
-                   'apero profile')
     # ask question (if we are prompting user for any option)
     if prompt_user:
-        cprint(prompt_db_1, 'g')
+        cprint(textentry('INSTALL_DB_MSG'), 'g')
     # ----------------------------------------------------------------------
     # ask for the host name
     if host is not None:
         response = str(host)
     # if not set from command line ask user for value
     else:
-        response = ask('Enter database {HOSTNAME}:', dtype=str)
+        response = ask(textentry('40-001-00056', args='HOSTNAME'), dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['HOST'] = response
@@ -640,7 +625,7 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
         response = str(username)
     # if not set from command line ask user for value
     else:
-        response = ask('Enter database {USERNAME}:', dtype=str)
+        response = ask(textentry('40-001-00056', args='USERNAME'), dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['USER'] = response
@@ -650,7 +635,7 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
         response = str(password)
     # if not set from command line ask user for value
     else:
-        response = ask('Enter database {PASSWD}:', dtype=str)
+        response = ask(textentry('40-001-00056', args='PASSWD'), dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['PASSWD'] = response
@@ -660,7 +645,7 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
         response = str(name)
     # if not set from command line ask user for value
     else:
-        response = ask('Enter mysql database name', dtype=str)
+        response = ask(textentry('40-001-00057'), dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['DATABASE'] = response
@@ -718,13 +703,9 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
         if database_ask[db_it] or all_params['DEVMODE']:
             # -----------------------------------------------------------------
             # ask for the database name
-            db_question = ('Enter table suffix for {0} database table'
-                           ' (leave blank for default: {2}) \n\t'
-                           ' Note "{1}_{{SUFFIX}}_DB" will be the final table '
-                           'name. \n\t i.e. by default: {1}_{2}_DB')
             db_qargs = [database_user[db_it], databases_raw[db_it],
                         all_params['PROFILENAME']]
-            db_question = db_question.format(*db_qargs)
+            db_question = textentry('40-001-00058', args=db_qargs)
             # -----------------------------------------------------------------
             response = ask(db_question, dtype=str)
         else:
@@ -775,9 +756,9 @@ def clean_profile_name(inname: str) -> str:
         outname = outname.replace('__', '_')
     # log that we changed the name (if we did)
     if outname != inname:
-        pmsg = '\nWARNING: Bad profile name changed "{0}" --> "{1}"'
+        # log warning: Bad profile name changed
         pargs = [inname, outname]
-        cprint(pmsg.format(*pargs), colour='yellow')
+        cprint(textentry('10-002-00007', args=pargs), colour='yellow')
     # return profile name
     return outname
 
@@ -925,9 +906,9 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
         setup_outfiles += ['{0}.sh.setup'.format(pname.lower())]
     # else generate error message
     else:
-        # print error message
-        emsg = 'Error {0} does not support OS (OS = {0})'
-        cprint(emsg.format(os.name), 'red')
+        # print error message: Error APERO does not support OS
+        eargs = [package, os.name]
+        cprint(textentry('00-000-00005', args=eargs), 'red')
         sys.exit()
     # ----------------------------------------------------------------------
     # construct validation code absolute path
@@ -955,8 +936,8 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
         # ------------------------------------------------------------------
         # make sure in path exists
         if not inpath.exists():
-            emsg = 'Error setup file "{0}" does not exist'
-            cprint(emsg.format(inpath), 'red')
+            # log error: setup file "{0}" does not exist'
+            cprint(textentry('00-000-00006', args=[inpath]), 'red')
             sys.exit()
         # ------------------------------------------------------------------
         # make sure out path does not exist
@@ -1026,9 +1007,9 @@ def clean_install(params: ParamDict, all_params: ParamDict) -> ParamDict:
         return all_params
     # if we are forcing clean install let the user know
     if not cond1:
-        cprint('\t - Empty directory found -- forcing clean install.', 'y')
+        cprint(textentry('40-001-00059'), 'y')
     # log that we are performing clean install
-    cprint('\t - Performing clean installation', 'm')
+    cprint(textentry('40-001-00060'), 'm')
     # add to environment
     add_paths(all_params)
     # construct reset command
@@ -1091,7 +1072,7 @@ def create_symlinks(params: ParamDict, all_params: ParamDict) -> ParamDict:
         out_tools = out_tool_path.joinpath(directory.name)
 
         # log which directory we are populating
-        cprint('\n\t Populating {0} directory\n'.format(out_tools), 'm')
+        cprint(textentry('40-001-00061', args=[out_tools]), 'm')
         # define suffix
         suffix = '*.py'
         # create sym links
@@ -1136,7 +1117,7 @@ def _create_link(recipe_dir: Path, suffix: Union[str, Path], new_dir: Path,
         try:
             newpath.chmod(0o777)
         except Exception as _:
-            cprint('Error: Cannot chmod 777', 'r')
+            cprint(textentry('00-000-00007', args=[filename]), 'r')
 
 
 def add_paths(all_params: ParamDict):
@@ -1222,7 +1203,7 @@ def print_options(params: ParamDict, all_params: ParamDict):
     # print the messages
     print('\n\n')
     cprint(printheader(), 'm')
-    cprint(' To run apero do one of the following:', 'm')
+    cprint(textentry('40-001-00062', args=[__PACKAGE__]), 'm')
     cprint(printheader(), 'm')
     cprint(textentry('INSTALL_ALIAS_MSG').format(**text), 'g')
 
@@ -1312,12 +1293,11 @@ def create_ufiles(params: ParamDict, devmode: bool,
         if devmode and user is False:
             # deal with first time seeing this group
             if group not in dev_groups:
-                umessage = ('DEV MODE: Add all constants in group "{0}" '
-                            'to {1} file?')
                 # ask user for output
                 if ask_user:
                     cprint(printheader(), 'g')
-                    output = ask(umessage.format(group, kind), dtype='YN')
+                    umessage = textentry('40-001-00063', args=[group, kind])
+                    output = ask(umessage, dtype='YN')
                 else:
                     output = True
                 # add to dev groups
@@ -1479,11 +1459,10 @@ def ufile_write(aparams: ParamDict, lines: List[str], upath: Path,
             # deal with line found
             elif cvalue is not None:
                 # display a warning
-                umessage1 = ('\nConflicting line found in current {0} file for'
-                             'constant "{1}"')
-                cprint(umessage1.format(ckind, variable), 'y')
-                umessage2 = 'Replace default:\n\t{0} \n with current:\n\t{1}'
-                output = ask(umessage2.format(value, cvalue), dtype='YN')
+                cargs = [ckind, variable]
+                cprint(textentry('40-001-00064', args=cargs), 'y')
+                cargs = [value, cvalue]
+                output = ask(textentry('40-001-00065', args=cargs), dtype='YN')
                 if output:
                     lines[l_it] = cline
     # ----------------------------------------------------------------------
@@ -1520,8 +1499,7 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
     config_path = os.getenv(config_env)
     # deal with no config path set
     if config_path is None:
-        cprint('Error: Cannot run update. Must be in apero environment '
-               '(i.e. source apero.{SYSTEM}.setup).', 'r')
+        cprint(textentry('00-000-00008'), 'r')
         sys.exit()
     else:
         config_path = Path(config_path)
