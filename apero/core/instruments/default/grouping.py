@@ -25,7 +25,7 @@ from astropy.table import Table
 from collections import OrderedDict
 import itertools
 import numpy as np
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from apero.base import base
 from apero.core.core import drs_exceptions
@@ -701,6 +701,11 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
         sort = np.argsort(table[path_col])
         table1 = table[sort]
         masks = []
+        # mask num col and seq col and keep only rows with numbers
+        seq_mask = _is_numeric(table1[seq_col])
+        num_mask = _is_numeric(table1[num_col])
+        # mask table1
+        table1 = table1[seq_mask & num_mask]
         # get correct columns (in correct sorted order)
         seq_arr = np.array(table1[seq_col]).astype(int)
         num_arr = np.array(table1[num_col]).astype(int)
@@ -780,6 +785,18 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
     # -------------------------------------------------------------------------
     # return the groups
     return runs
+
+
+def _is_numeric(array: Union[list, np.ndarray, Iterable]) -> np.ndarray:
+    """
+    Create a mask of only numerical values in an array
+    :param array:
+    :return:
+    """
+    # mapping function: True for numeric False otherwise
+    func = lambda x: isinstance(x, (int, float))
+    # return map as a numpy array of True and Falses (a mask)
+    return np.array(list(map(func, array)))
 
 
 # =============================================================================
