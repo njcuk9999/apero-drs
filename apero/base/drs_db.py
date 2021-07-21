@@ -809,45 +809,8 @@ class Database:
         :param table: str or None, the table name
         :return:
         """
-        # 1. make tmp table with all columns
-        colnames = self.colnames('*', table)
-
-
-
-
-        # QUESTION: Does this work with sqlite and mysql?
-        # infer table name
-        table = self._infer_table_(table)
-        # need to make sure UHASH is a VARCHAR(64)
-        command = 'ALTER TABLE {0} MODIFY COLUMN {1} VARCHAR(64);'
-        command = command.format(table, UHASH_COL)
-        self.execute(command, fetch=False)
-        # now create sql command
-        command = "ALTER TABLE {0} ADD UNIQUE ({1});"
-        command = command.format(table, UHASH_COL)
-        # execute command
-        self.execute(command, fetch=False)
-
-    def add_unique_uhash_col(self, table: Union[str, None]):
-        """
-        Need a way to update the unique column (uhash) if set -
-        this is because pandas removes uniqueness from the column
-
-        :param table: str or None, the table name
-        :return:
-        """
-        # QUESTION: Does this work with sqlite and mysql?
-        # infer table name
-        table = self._infer_table_(table)
-        # need to make sure UHASH is a VARCHAR(64)
-        command = 'ALTER TABLE {0} MODIFY COLUMN {1} VARCHAR(64);'
-        command = command.format(table, UHASH_COL)
-        self.execute(command, fetch=False)
-        # now create sql command
-        command = "ALTER TABLE {0} ADD UNIQUE ({1});"
-        command = command.format(table, UHASH_COL)
-        # execute command
-        self.execute(command, fetch=False)
+        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
+        NotImplemented(emsg)
 
     def delete_table(self, name: str):
         """
@@ -943,6 +906,18 @@ class Database:
         NotImplemented(emsg)
 
     # other methods
+    def table_info(self,
+                   table: Union[str, None]) -> Tuple[List[str], List[str]]:
+        """
+        Get the table information for a table name
+
+        :param table: str, the name of the Table
+        :return:
+        """
+        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
+        NotImplemented(emsg)
+        return [], []
+
     def colnames(self, columns: str, table: Union[str, None]) -> List[str]:
         """
         Get the column names from table (i.e. deal with * or columns separated
@@ -953,47 +928,55 @@ class Database:
 
         :return: list of strings, the column names
         """
-        func_name = __NAME__ + '.Database.colnames()'
-        # infer the table name if None
-        table = self._infer_table_(table)
-        # set up command
-        command = "SELECT {} from {}".format(columns, table)
-        # get cursor
-        conargs = dict(func=func_name, kind='_execute:colnames')
-        with closing(self.connection(**conargs)) as conn:
-            with closing(self.cursor(conn)) as cursor:
-                # try to execute SQL command
-                try:
-                    # try to execute SQL command
-                    self._execute(cursor, command, fetch=True)
-                    # get columns
-                    colnames = list(map(lambda x: x[0], cursor.description))
-                    # commit and close
-                    conn.commit()
-                    cursor.close()
-                    conn.close()
+        # get all columns names
+        allcolnames, _ = self.table_info(table)
+        # if user wants all columns return them all
+        if columns == '*':
+            # return the out put columns
+            return allcolnames
+        else:
+            # get user columns
+            user_colnames = columns.split(',')
+            user_colnames = list(map(lambda x: x.strip(), user_colnames))
+            # set up storage of output columns
+            out_colnames = []
+            # loop around all the columns in table
+            for col in allcolnames:
+                # if column one of the one user wants add it to return
+                if col in user_colnames:
+                    out_colnames.append(col)
+            # return the out put columns
+            return out_colnames
 
-                # catch all errors and pipe to database error
-                except Exception as e:
-                    # close connection
-                    cursor.close()
-                    conn.close()
-                    # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
-                    ecode = '00-002-00040'
-                    emsg = drs_base.BETEXT[ecode]
-                    eargs = [type(e), str(e)]
-                    exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                              func_name=func_name)
-                    # add code to database message
-                    emsg = 'E[0]: {1}'.format(ecode, emsg)
-                    # log base error
-                    return drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                               exceptionname='DatabaseError',
-                                               exception=exception)
+    def coltypes(self, columns: str, table: Union[str, None]) -> List[str]:
+        """
+        Get the column names from table (i.e. deal with * or columns separated
+        by commas)
 
+        :param columns: str, comma separate set of column names or *
+        :param table: str, the name of the Table
 
-        # return a list of columns
-        return colnames
+        :return: list of strings, the column names
+        """
+        # get all columns names
+        allcolnames, allcoltypes = self.table_info(table)
+        # if user wants all columns return them all
+        if columns == '*':
+            # return the out put columns
+            return allcolnames
+        else:
+            # get user columns
+            user_colnames = columns.split(',')
+            user_colnames = list(map(lambda x: x.strip(), user_colnames))
+            # set up storage of output columns
+            out_coltypes = []
+            # loop around all the columns in table
+            for it, col in enumerate(allcolnames):
+                # if column one of the one user wants add it to return
+                if col in user_colnames:
+                    out_coltypes.append(allcoltypes[it])
+            # return the out put columns
+            return out_coltypes
 
     # private methods
     def _infer_table_(self, table: Union[None, str]) -> str:
@@ -1404,9 +1387,18 @@ class SQLiteDatabase(Database):
         # ---------------------------------------------------------------------
         # unique columns become a 255 hash
         if unique_cols is not None:
-            extra_str = ', {0} VARCHAR(64), UNIQUE({0})'.format(UHASH_COL)
-        else:
-            extra_str = ''
+            # flag we found uhash col
+            found_ucol = False
+            # loop around fields
+            for it, field in enumerate(fields):
+                # if we have the UHASH column replace it
+                if UHASH_COL in field:
+                    fields[it] = field + ' UNIQUE'
+                    found_ucol = True
+                    break
+            # deal with requiring new uhash column
+            if not found_ucol:
+                fields.append('{0} VARCHAR(64) UNIQUE'.format(UHASH_COL))
         # ---------------------------------------------------------------------
         # deal with indexes - extra commands for sqlite
         extra_commands = []
@@ -1417,7 +1409,7 @@ class SQLiteDatabase(Database):
                 extra_commands += [index_cmd.format(*index_args)]
         # ---------------------------------------------------------------------
         # now create sql command
-        cargs = [name, ", ".join(fields) + extra_str]
+        cargs = [name, ", ".join(fields)]
         command = "CREATE TABLE IF NOT EXISTS {0}({1});".format(*cargs)
         # ---------------------------------------------------------------------
         # execute command
@@ -1428,6 +1420,34 @@ class SQLiteDatabase(Database):
             self.execute(extra_command, fetch=False)
         # update the table list
         self._update_table_list_()
+
+    def add_unique_uhash_col(self, table: Union[str, None]):
+        """
+        Need a way to update the unique column (uhash) if set -
+        this is because pandas removes uniqueness from the column
+
+        In sqlite there is no command to do this so we have to create a new
+        table with the correct types and then copy table across
+
+        :param table: str or None, the table name
+        :return:
+        """
+        # get current column names and column types
+        colnames, coltypes = self.table_info(table)
+        # deal with not having uhash column - return
+        if UHASH_COL not in colnames:
+            return
+        # 1. create a temporary table to store these
+        tmp_name = table + '_tmp'
+        self.add_table(tmp_name, colnames, coltypes, unique_cols=[UHASH_COL])
+        # 2. move all data from old table to new temporary table
+        command = 'INSERT INTO {0} SELECT * FROM {1};'.format(tmp_name, table)
+        self.execute(command, fetch=False)
+        # 3. drop original table
+        command = 'DROP TABLE {0};'.format(table)
+        self.execute(command, fetch=False)
+        # 4. rename temporary table
+        self.rename_table(tmp_name, table)
 
     def _execute(self, cursor: sqlite3.Cursor, command: str,
                  fetch: bool = True):
@@ -1568,6 +1588,54 @@ class SQLiteDatabase(Database):
                                        exception=exception)
         # return dataframe
         return df
+
+    def table_info(self,
+                   table: Union[str, None]) -> Tuple[List[str], List[str]]:
+        """
+        Get the table information for a table name
+
+        :param table: str, the name of the Table
+        :return:
+        """
+        func_name = __NAME__ + '.Database.colnames()'
+        # infer the table name if None
+        table = self._infer_table_(table)
+        # set up command
+        command = "PRAGMA table_info({})".format(table)
+        # get cursor
+        conargs = dict(func=func_name, kind='_execute:colnames')
+        conn = self.connection(**conargs)
+        cursor = self.cursor(conn)
+        # try to execute SQL command
+        try:
+            # try to execute SQL command
+            result = self._execute(cursor, command, fetch=True)
+            # get columns
+            colnames = list(map(lambda x: x[1], result))
+            coltypes = list(map(lambda x: x[2], result))
+            # commit and close
+            conn.commit()
+            cursor.close()
+            conn.close()
+        # catch all errors and pipe to database error
+        except Exception as e:
+            # close connection
+            cursor.close()
+            conn.close()
+            # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
+            ecode = '00-002-00040'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [type(e), str(e)]
+            exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                      func_name=func_name)
+            # add code to database message
+            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            # log base error
+            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
+        # return a list of columns
+        return colnames, coltypes
 
     # admin methods
     def backup(self):
@@ -2129,6 +2197,26 @@ class MySQLDatabase(Database):
         # update the table list
         self._update_table_list_()
 
+    def add_unique_uhash_col(self, table: Union[str, None]):
+        """
+        Need a way to update the unique column (uhash) if set -
+        this is because pandas removes uniqueness from the column
+
+        :param table: str or None, the table name
+        :return:
+        """
+        # infer table name
+        table = self._infer_table_(table)
+        # need to make sure UHASH is a VARCHAR(64)
+        command = 'ALTER TABLE {0} MODIFY COLUMN {1} VARCHAR(64);'
+        command = command.format(table, UHASH_COL)
+        self.execute(command, fetch=False)
+        # now create sql command
+        command = "ALTER TABLE {0} ADD UNIQUE ({1});"
+        command = command.format(table, UHASH_COL)
+        # execute command
+        self.execute(command, fetch=False)
+
     def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,
                         unique_cols: Union[List[str], None] = None):
@@ -2238,6 +2326,56 @@ class MySQLDatabase(Database):
         for _table in _tables:
             # append table name
             self.tables.append(_table[0])
+
+    # other methods
+    def table_info(self,
+                   table: Union[str, None]) -> Tuple[List[str], List[str]]:
+        """
+        Get the table information for a table name
+
+        :param table: str, the name of the Table
+        :return:
+        """
+        func_name = __NAME__ + '.Database.colnames()'
+        # infer the table name if None
+        table = self._infer_table_(table)
+        # set up command
+        command = "SHOW columns FROM {}".format(table)
+        # get cursor
+        conargs = dict(func=func_name, kind='_execute:table_info')
+        with closing(self.connection(**conargs)) as conn:
+            with closing(conn.cursor()) as cursor:
+                # try to execute SQL command
+                try:
+                    # try to execute SQL command
+                    result = self._execute(cursor, command, fetch=True)
+                    # get columns
+                    colnames = list(map(lambda x: x[0], result))
+                    coltypes = list(map(lambda x: x[1], result))
+                    # commit and close
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
+                # catch all errors and pipe to database error
+                except Exception as e:
+                    # close connection
+                    cursor.close()
+                    conn.close()
+                    # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
+                    ecode = '00-002-00040'
+                    emsg = drs_base.BETEXT[ecode]
+                    eargs = [type(e), str(e)]
+                    exception = DatabaseError(emsg.format(*eargs),
+                                              path=self.path,
+                                              func_name=func_name)
+                    # add code to database message
+                    emsg = 'E[0]: {1}'.format(ecode, emsg)
+                    # log base error
+                    return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                               exceptionname='DatabaseError',
+                                               exception=exception)
+        # return a list of columns
+        return colnames, coltypes
 
     # admin methods
     def backup(self):
