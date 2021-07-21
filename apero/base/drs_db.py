@@ -233,41 +233,39 @@ class Database:
             print("SQL INPUT: ", command)
         # get cursor
         conargs = dict(func=func_name, kind='execute:_execute')
-        with closing(self.connection(**conargs)) as conn:
-            with closing(self.cursor(conn)) as cursor:
-                # try to execute SQL command
-                try:
-                    result = self._execute(cursor, command, fetch=fetch)
-                    # commit and close
-                    conn.commit()
-                    cursor.close()
-                    conn.close()
-                # pass unique exception upwards
-                except UniqueEntryException as e:
-                    # close
-                    cursor.close()
-                    conn.close()
-                    raise UniqueEntryException(str(e))
-                # catch all errors and pipe to database error
-                except Exception as e:
-                    # close
-                    cursor.close()
-                    conn.close()
-                    # log error: Error Type: Error message \n\t Command:
-                    ecode = '00-002-00032'
-                    emsg = drs_base.BETEXT[ecode]
-                    eargs = [type(e), str(e), command]
-                    exception = DatabaseError(message=emsg.format(*eargs),
-                                              errorobj=e,
-                                              path=self.path,
-                                              func_name=func_name)
-                    # add code to database message
-                    emsg = 'E[0]: {1}'.format(ecode, emsg)
-                    # log base error
-                    return drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                               exceptionname='DatabaseError',
-                                               exception=exception)
-
+        conn = self.connection(**conargs)
+        cursor = self.cursor(conn)
+        # try to execute SQL command
+        try:
+            result = self._execute(cursor, command)
+            # close
+            cursor.close()
+            conn.close()
+        # pass unique exception upwards
+        except UniqueEntryException as e:
+            # close
+            cursor.close()
+            conn.close()
+            raise UniqueEntryException(str(e))
+        # catch all errors and pipe to database error
+        except Exception as e:
+            # close
+            cursor.close()
+            conn.close()
+            # log error: Error Type: Error message \n\t Command:
+            ecode = '00-002-00032'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [type(e), str(e), command]
+            exception = DatabaseError(message=emsg.format(*eargs),
+                                      errorobj=e,
+                                      path=self.path,
+                                      func_name=func_name)
+            # add code to database message
+            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            # log base error
+            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
         # print output of sql command if verbose
         if self._verbose_:
             print("SQL OUTPUT:", result)
@@ -284,7 +282,7 @@ class Database:
         :param command: str, The SQL command to be run.
         :return:
         """
-        cursor = _mysql_exectue(cursor, command)
+        cursor.execute(command)
         if fetch:
             result = cursor.fetchall()
         else:
@@ -723,8 +721,7 @@ class Database:
         # storage for fields
         fields = []
         # deal with index columns
-        if index_cols is None:
-            index_cols = []
+        _ = index_cols
         # make sure field_names and field_types are the same size
         if len(field_names) != len(field_types):
             # log error: field_names and field_types must be the same length
@@ -738,7 +735,6 @@ class Database:
             return drs_base.base_error(ecode, emsg, 'error',
                                        exceptionname='DatabaseError',
                                        exception=exception)
-
         # loop around fields
         for it in range(len(field_names)):
             # get this iterations values
@@ -796,11 +792,6 @@ class Database:
         else:
             extra_str = ''
         # ---------------------------------------------------------------------
-        # deal with indexes
-        for index_col in index_cols:
-            if index_col in field_names:
-                extra_str += ', INDEX ({0})'.format(index_col)
-        # ---------------------------------------------------------------------
         # now create sql command
         cargs = [name, ", ".join(fields) + extra_str]
         command = "CREATE TABLE IF NOT EXISTS {}({});".format(*cargs)
@@ -809,6 +800,33 @@ class Database:
         self.execute(command, fetch=False)
         # update the table list
         self._update_table_list_()
+
+    def add_unique_uhash_col(self, table: Union[str, None]):
+        """
+        Need a way to update the unique column (uhash) if set -
+        this is because pandas removes uniqueness from the column
+
+        :param table: str or None, the table name
+        :return:
+        """
+        # 1. make tmp table with all columns
+        colnames = self.colnames('*', table)
+
+
+
+
+        # QUESTION: Does this work with sqlite and mysql?
+        # infer table name
+        table = self._infer_table_(table)
+        # need to make sure UHASH is a VARCHAR(64)
+        command = 'ALTER TABLE {0} MODIFY COLUMN {1} VARCHAR(64);'
+        command = command.format(table, UHASH_COL)
+        self.execute(command, fetch=False)
+        # now create sql command
+        command = "ALTER TABLE {0} ADD UNIQUE ({1});"
+        command = command.format(table, UHASH_COL)
+        # execute command
+        self.execute(command, fetch=False)
 
     def add_unique_uhash_col(self, table: Union[str, None]):
         """
@@ -1289,6 +1307,128 @@ class SQLiteDatabase(Database):
         # update table list
         self._update_table_list_()
 
+    # table methods
+    def add_table(self, name: str, field_names: List[str],
+                  field_types: List[Union[str, type]],
+                  unique_cols: Optional[List[str]] = None,
+                  index_cols: Optional[List[str]] = None):
+        """
+        Adds a table to the database file.
+
+        :param name: The name of the table to create. This must not already be
+                     in use or a SQL keyword.
+        :param field_names: The names of the fields (columns) in the table as a
+                           list of str objects.  These can't be SQL keywords.
+        :param field_types: The data types of the fields as a list. The list
+                            can contain either SQL type specifiers or the
+                            python int, str, and float types.
+        :param unique_cols: list of str, the field_names that should be unique
+
+        Examples:
+            # "REAL" does the same thing as float
+            db.addTable('planets', ['name', 'mass', 'radius'],
+                        [str, float, "REAL"])
+        """
+        func_name = __NAME__ + '.Database.add_table()'
+        # translator between python types and SQL types
+        translator = {str: "TEXT", int: "INTEGER", float: "REAL"}
+        # storage for fields
+        fields = []
+        # deal with index columns
+        if index_cols is None:
+            index_cols = []
+        # make sure field_names and field_types are the same size
+        if len(field_names) != len(field_types):
+            # log error: field_names and field_types must be the same length
+            ecode = '00-002-00036'
+            emsg = drs_base.BETEXT[ecode]
+            exception = DatabaseError(emsg, path=self.path,
+                                      func_name=func_name)
+            # add code to database message
+            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            # log base error
+            return drs_base.base_error(ecode, emsg, 'error',
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
+
+        # loop around fields
+        for it in range(len(field_names)):
+            # get this iterations values
+            fname, ftype = field_names[it], field_types[it]
+            # make sure names are strings
+            if not isinstance(fname, str):
+                # log error: field_names must be strings
+                ecode = '00-002-00037'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                # add code to database message
+                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                # log base error
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
+            # deal with type
+            if isinstance(ftype, type):
+                # deal with wrong type
+                if ftype not in translator:
+                    # log error: field_types must be string or [int/float/str]
+                    ecode = '00-002-00038'
+                    emsg = drs_base.BETEXT[ecode]
+                    exception = DatabaseError(emsg, path=self.path,
+                                              func_name=func_name)
+                    # add code to database message
+                    emsg = 'E[0]: {1}'.format(ecode, emsg)
+                    # log base error
+                    return drs_base.base_error(ecode, emsg, 'error',
+                                               exceptionname='DatabaseError',
+                                               exception=exception)
+                # set as sql type
+                # noinspection PyTypeChecker
+                ftype = translator[ftype]
+            # else we must have a string --> so break if not
+            elif not isinstance(ftype, str):
+                # log error:field_types must be string or [int/float/str]
+                ecode = '00-002-00038'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                # add code to database message
+                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                # log base error
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
+            # set type
+            fields.append('{0} {1}'.format(fname, ftype))
+        # ---------------------------------------------------------------------
+        # unique columns become a 255 hash
+        if unique_cols is not None:
+            extra_str = ', {0} VARCHAR(64), UNIQUE({0})'.format(UHASH_COL)
+        else:
+            extra_str = ''
+        # ---------------------------------------------------------------------
+        # deal with indexes - extra commands for sqlite
+        extra_commands = []
+        for index_col in index_cols:
+            if index_col in field_names:
+                index_args = [index_col, name]
+                index_cmd = 'CREATE INDEX idx_{0} ON {1} ({0});'
+                extra_commands += [index_cmd.format(*index_args)]
+        # ---------------------------------------------------------------------
+        # now create sql command
+        cargs = [name, ", ".join(fields) + extra_str]
+        command = "CREATE TABLE IF NOT EXISTS {0}({1});".format(*cargs)
+        # ---------------------------------------------------------------------
+        # execute command
+        self.execute(command, fetch=False)
+        # ---------------------------------------------------------------------
+        # execute extra commands
+        for extra_command in extra_commands:
+            self.execute(extra_command, fetch=False)
+        # update the table list
+        self._update_table_list_()
+
     def _execute(self, cursor: sqlite3.Cursor, command: str,
                  fetch: bool = True):
         """
@@ -1304,7 +1444,7 @@ class SQLiteDatabase(Database):
         # while counter is less than maximum wait time
         while time_count < MAXWAIT:
             try:
-                cursor = _mysql_exectue(cursor, command)
+                cursor.execute(command)
                 if fetch:
                     result = cursor.fetchall()
                     return result
@@ -1689,6 +1829,83 @@ class MySQLDatabase(Database):
         # update table list
         self._update_table_list_()
 
+    # get / set / execute / add methods
+    def execute(self, command: str, fetch: bool) -> Any:
+        """
+        Directly execute an SQL command on the database and return
+        any results.
+
+        :param command: str, The SQL command to be run.
+        :param fetch: bool, if True there is a result to fetch
+
+        :returns: The outputs of the command, if any, as a list.
+        """
+        # set function name
+        func_name = __NAME__ + '.Database.execute()'
+        # print input if verbose
+        if self._verbose_:
+            print("SQL INPUT: ", command)
+        # get cursor
+        conargs = dict(func=func_name, kind='execute:_execute')
+        with closing(self.connection(**conargs)) as conn:
+            with closing(self.cursor(conn)) as cursor:
+                # try to execute SQL command
+                try:
+                    result = self._execute(cursor, command, fetch=fetch)
+                    # commit and close
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
+                # pass unique exception upwards
+                except UniqueEntryException as e:
+                    # close
+                    cursor.close()
+                    conn.close()
+                    raise UniqueEntryException(str(e))
+                # catch all errors and pipe to database error
+                except Exception as e:
+                    # close
+                    cursor.close()
+                    conn.close()
+                    # log error: Error Type: Error message \n\t Command:
+                    ecode = '00-002-00032'
+                    emsg = drs_base.BETEXT[ecode]
+                    eargs = [type(e), str(e), command]
+                    exception = DatabaseError(message=emsg.format(*eargs),
+                                              errorobj=e,
+                                              path=self.path,
+                                              func_name=func_name)
+                    # add code to database message
+                    emsg = 'E[0]: {1}'.format(ecode, emsg)
+                    # log base error
+                    return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                               exceptionname='DatabaseError',
+                                               exception=exception)
+
+        # print output of sql command if verbose
+        if self._verbose_:
+            print("SQL OUTPUT:", result)
+        # return the sql result
+        return result
+
+    def _execute(self, cursor: mysql.connection.MySQLCursor, command: str,
+                 fetch: bool = True):
+        """
+        Dummy function to try to catch database locked errors
+        (up to a max wait time)
+
+        :param cursor: sqlite cursor (self.cursor())
+        :param command: str, The SQL command to be run.
+        :return:
+        """
+        cursor = _mysql_exectue(cursor, command)
+        if fetch:
+            result = cursor.fetchall()
+        else:
+            result = None
+        # return result
+        return result
+
     def add_database(self):
         """
         Check for 'database' in the MySQL Database construct and if not add
@@ -1796,6 +2013,121 @@ class MySQLDatabase(Database):
             # else raise exception
             else:
                 raise mysql.IntegrityError(str(e))
+
+    # table methods
+    def add_table(self, name: str, field_names: List[str],
+                  field_types: List[Union[str, type]],
+                  unique_cols: Optional[List[str]] = None,
+                  index_cols: Optional[List[str]] = None):
+        """
+        Adds a table to the database file.
+
+        :param name: The name of the table to create. This must not already be
+                     in use or a SQL keyword.
+        :param field_names: The names of the fields (columns) in the table as a
+                           list of str objects.  These can't be SQL keywords.
+        :param field_types: The data types of the fields as a list. The list
+                            can contain either SQL type specifiers or the
+                            python int, str, and float types.
+        :param unique_cols: list of str, the field_names that should be unique
+
+        Examples:
+            # "REAL" does the same thing as float
+            db.addTable('planets', ['name', 'mass', 'radius'],
+                        [str, float, "REAL"])
+        """
+        func_name = __NAME__ + '.Database.add_table()'
+        # translator between python types and SQL types
+        translator = {str: "TEXT", int: "INTEGER", float: "REAL"}
+        # storage for fields
+        fields = []
+        # deal with index columns
+        if index_cols is None:
+            index_cols = []
+        # make sure field_names and field_types are the same size
+        if len(field_names) != len(field_types):
+            # log error: field_names and field_types must be the same length
+            ecode = '00-002-00036'
+            emsg = drs_base.BETEXT[ecode]
+            exception = DatabaseError(emsg, path=self.path,
+                                      func_name=func_name)
+            # add code to database message
+            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            # log base error
+            return drs_base.base_error(ecode, emsg, 'error',
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
+
+        # loop around fields
+        for it in range(len(field_names)):
+            # get this iterations values
+            fname, ftype = field_names[it], field_types[it]
+            # make sure names are strings
+            if not isinstance(fname, str):
+                # log error: field_names must be strings
+                ecode = '00-002-00037'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                # add code to database message
+                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                # log base error
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
+            # deal with type
+            if isinstance(ftype, type):
+                # deal with wrong type
+                if ftype not in translator:
+                    # log error: field_types must be string or [int/float/str]
+                    ecode = '00-002-00038'
+                    emsg = drs_base.BETEXT[ecode]
+                    exception = DatabaseError(emsg, path=self.path,
+                                              func_name=func_name)
+                    # add code to database message
+                    emsg = 'E[0]: {1}'.format(ecode, emsg)
+                    # log base error
+                    return drs_base.base_error(ecode, emsg, 'error',
+                                               exceptionname='DatabaseError',
+                                               exception=exception)
+                # set as sql type
+                # noinspection PyTypeChecker
+                ftype = translator[ftype]
+            # else we must have a string --> so break if not
+            elif not isinstance(ftype, str):
+                # log error:field_types must be string or [int/float/str]
+                ecode = '00-002-00038'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                # add code to database message
+                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                # log base error
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
+            # set type
+            fields.append('{0} {1}'.format(fname, ftype))
+        # ---------------------------------------------------------------------
+        # unique columns become a 255 hash
+        if unique_cols is not None:
+            extra_str = ', {0} VARCHAR(64), UNIQUE({0})'.format(UHASH_COL)
+        else:
+            extra_str = ''
+        # ---------------------------------------------------------------------
+        # deal with indexes
+        for index_col in index_cols:
+            if index_col in field_names:
+                extra_str += ', INDEX ({0})'.format(index_col)
+        # ---------------------------------------------------------------------
+        # now create sql command
+        cargs = [name, ", ".join(fields) + extra_str]
+        command = "CREATE TABLE IF NOT EXISTS {}({});".format(*cargs)
+        # ---------------------------------------------------------------------
+        # execute command
+        self.execute(command, fetch=False)
+        # update the table list
+        self._update_table_list_()
 
     def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,

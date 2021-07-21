@@ -10,13 +10,16 @@ Created on 2019-11-26 at 15:54
 @author: cook
 """
 import argparse
-import getopt
 import importlib
 import os
 from pathlib import Path
 import signal
 import sys
 from typing import Any, List, Tuple, Union
+
+
+# define the drs name (and module name)
+DRS_PATH = 'apero'
 
 
 # need this argument before anything else
@@ -37,15 +40,29 @@ def get_sys_arg(name, kind=None):
         return False
 
 
+def get_apero():
+    # start with file definition
+    start = Path(__file__).absolute()
+    # get apero working directory
+    drs_path = start.parent.parent
+    # make aboslute
+    drs_path = drs_path.absolute()
+    # try to import to raise exception
+    try:
+        # add drs path to sys
+        sys.path.append(str(drs_path))
+        _ = importlib.import_module(DRS_PATH)
+    except Exception as _:
+        path = drs_path.joinpath(DRS_PATH)
+        raise ImportError('Import Error: Cannot find {0}'.format(path))
+    return drs_path
+
+
 # =============================================================================
 # Define variables
 # =============================================================================
-# define the drs name (and module name)
-DRS_PATH = 'apero'
-# set up language path
-path = Path(__file__)
-APERO_MODULE = os.path.join(str(path.parent.parent), DRS_PATH)
-sys.path.append(APERO_MODULE)
+# get apero
+get_apero()
 # get language proxy database
 drs_base = importlib.import_module('apero.base.drs_base', DRS_PATH)
 # -----------------------------------------------------------------------------
@@ -179,20 +196,8 @@ def check_install() -> Tuple[Any, Any]:
     :return: tuple, 1. the apero.constants sub-module, 2. the apero.installation
              module
     """
-    # start with file definition
-    start = Path(__file__).absolute()
-    # get apero working directory
-    drs_path = start.parent.parent
-    # make aboslute
-    drs_path = drs_path.absolute()
-    # try to import to raise exception
-    try:
-        # add drs path to sys
-        sys.path.append(str(drs_path))
-        _ = importlib.import_module(DRS_PATH)
-    except Exception as _:
-        path = drs_path.joinpath(DRS_PATH)
-        raise ImportError(lang['00-000-00012'].format(path))
+    # get apero
+    drs_path = get_apero()
     # construct module names
     constants_mod = '{0}.{1}'.format(DRS_PATH, CONSTANTS_PATH)
     install_mod = '{0}.{1}'.format(DRS_PATH, INSTALL_PATH)

@@ -65,7 +65,8 @@ RESET_CODE = 'apero_reset'
 # set descriptions for data paths
 DATA_CLASSES = [pathdef.RawPath, pathdef.TmpPath, pathdef.ReducedPath,
                 pathdef.OutPath, pathdef.CalibPath, pathdef.TelluPath,
-                pathdef.PlotPath, pathdef.RunPath, pathdef.LogPath]
+                pathdef.AssetPath, pathdef.PlotPath, pathdef.RunPath,
+                pathdef.LogPath]
 # push into dictionary
 DATA_PATHS = dict()
 # set cmdline args expected for each
