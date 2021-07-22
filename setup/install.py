@@ -8,6 +8,9 @@
 Created on 2019-11-26 at 15:54
 
 @author: cook
+
+Import Rules: Cannot use anything other than standard python 3 packages
+(i.e. no numpy, no astropy etc)
 """
 import argparse
 import importlib
@@ -17,30 +20,77 @@ import signal
 import sys
 from typing import Any, List, Tuple, Union
 
+import setup_lang
 
+# =============================================================================
+# Define variables
+# =============================================================================
 # define the drs name (and module name)
 DRS_PATH = 'apero'
+# instruments
+INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE']
+# define the place where the constant recipes are
+CONSTANTS_PATH = 'core.constants'
+# define the place where the installation recipes are
+INSTALL_PATH = 'tools.module.setup.drs_installation'
+# define the drs_base path for language dict
+BASE_PATH = 'base.drs_base'
+# Requirement files
+REQ_USER = 'requirements_current.txt'
+REQ_DEV = 'requirements_developer.txt'
+# modules that don't install like their name
+module_translation = dict()
+module_translation['Pillow'] = 'PIL'
+module_translation['pyyaml'] = 'yaml'
+module_translation['mysql-connector-python'] = 'mysql.connector'
+module_translation['scikit-image'] = 'skimage'
+# start the language dictionary
+lang = setup_lang.LangDict()
 
 
+# =============================================================================
+# Define functions
+# =============================================================================
 # need this argument before anything else
 def get_sys_arg(name, kind=None):
-    args = sys.argv[1:]
+    """
+    A prescreening for arguments needed before argparse
 
+    :param name:
+    :param kind:
+    :return:
+    """
+    # get the command line arguments from sys.argv
+    args = sys.argv[1:]
+    # loop around arguments and look for argument "name"
     for it, arg in enumerate(args):
+        # if "name" is in the arguments
         if name in arg:
+            # if we have a switch return True
             if kind == 'switch':
                 return True
+            # if we have an equals the value of the arg is the second half
             elif '=' in arg:
                 return arg.split('=')[-1]
+            # if we have arguments after the value is the next argument
             elif len(args) > it + 1:
                 return args[it + 1]
+            # else we return None --> no argument
             else:
                 return None
+    # if we have a switch and argument not found we return False
     if kind == 'switch':
         return False
+    # else we return None --> no argument
+    else:
+        return None
 
 
 def get_apero():
+    """
+    Get the apero module (sounds like a given but need to check)
+    :return:
+    """
     # start with file definition
     start = Path(__file__).absolute()
     # get apero working directory
@@ -58,45 +108,6 @@ def get_apero():
     return drs_path
 
 
-# =============================================================================
-# Define variables
-# =============================================================================
-# get apero
-get_apero()
-# get language proxy database
-drs_base = importlib.import_module('apero.base.drs_base', DRS_PATH)
-# -----------------------------------------------------------------------------
-# LANGUAGE (must add manually)
-LANGUAGES = ['ENG', 'FR']
-# get language argument
-langarg = get_sys_arg('lang')
-if langarg in LANGUAGES:
-    lang = drs_base.lang_db_proxy(langarg)
-    LANGUAGE = str(langarg)
-else:
-    lang = drs_base.lang_db_proxy()
-    LANGUAGE = 'ENG'
-# -----------------------------------------------------------------------------
-# instruments
-INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE']
-# define the place where the constant recipes are
-CONSTANTS_PATH = 'core.constants'
-# define the place where the installation recipes are
-INSTALL_PATH = 'tools.module.setup.drs_installation'
-# Requirement files
-REQ_USER = 'requirements_current.txt'
-REQ_DEV = 'requirements_developer.txt'
-# modules that don't install like their name
-module_translation = dict()
-module_translation['Pillow'] = 'PIL'
-module_translation['pyyaml'] = 'yaml'
-module_translation['mysql-connector-python'] = 'mysql.connector'
-module_translation['scikit-image'] = 'skimage'
-
-
-# =============================================================================
-# Define functions
-# =============================================================================
 def catch_sigint(signal_received: Any, frame: Any):
     """
     Deal with Keyboard interupt --> do a sys.exit
@@ -188,7 +199,7 @@ def validate():
                 sys.exit()
 
 
-def check_install() -> Tuple[Any, Any]:
+def check_install() -> Tuple[Any, Any, Any]:
     """
     Check for apero installation directory
 
@@ -201,6 +212,7 @@ def check_install() -> Tuple[Any, Any]:
     # construct module names
     constants_mod = '{0}.{1}'.format(DRS_PATH, CONSTANTS_PATH)
     install_mod = '{0}.{1}'.format(DRS_PATH, INSTALL_PATH)
+    base_mod = '{0}.{1}'.format(DRS_PATH, BASE_PATH)
     # try to import the modules
     try:
         constants = importlib.import_module(constants_mod)
@@ -212,6 +224,11 @@ def check_install() -> Tuple[Any, Any]:
     except Exception as _:
         # raise error
         raise ImportError(lang['00-000-00013'].format(install_mod))
+    try:
+        drs_base = importlib.import_module(base_mod)
+    except Exception as _:
+        # raise error
+        raise ImportError(lang['00-000-00013'].format(base_mod))
     # add apero to the PYTHONPATH
     if 'PYTHONPATH' in os.environ:
         oldpath = os.environ['PYTHONPATH']
@@ -222,7 +239,7 @@ def check_install() -> Tuple[Any, Any]:
         # add to active path
         os.sys.path = [str(drs_path)] + os.sys.path
     # if we have reached this point we can break out of the while loop
-    return constants, install
+    return constants, install, drs_base
 
 
 def get_args() -> argparse.Namespace:
@@ -427,6 +444,15 @@ def main():
 
     :return:
     """
+    global lang
+    # -----------------------------------------------------------------------------
+    # get language argument
+    langarg = get_sys_arg('lang')
+    if langarg in setup_lang.LANGUAGES:
+        lang = setup_lang.LangDict(langarg)
+    else:
+        lang = setup_lang.LangDict()
+    LANGUAGE = lang.language
     # ----------------------------------------------------------------------
     # deal with validation
     if not get_sys_arg('--skip'):
@@ -434,13 +460,17 @@ def main():
     # catch Ctrl+C
     signal.signal(signal.SIGINT, catch_sigint)
     # get install paths
-    constants, install = check_install()
+    constants, install, drs_base = check_install()
+    # this is so we have direct access in IDE to modules
     # noinspection PyBroadException
     try:
         from apero.tools.module.setup import drs_installation as install
         from apero.core import constants
+        from apero.base import drs_base
     except Exception as _:
         pass
+    # update the language dict to use the full proxy database
+    lang = drs_base.lang_db_proxy()
     # get text entry for remaining text
     textentry = install.textentry
     # ----------------------------------------------------------------------
