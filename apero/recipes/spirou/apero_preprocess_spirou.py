@@ -186,6 +186,13 @@ def __main__(recipe, params):
                 wargs = [infile.filename]
                 WLOG(params, 'info', textentry('40-010-00012', args=wargs))
                 continue
+        # ----------------------------------------------------------------------
+        # Correct for cosmic rays before the possible pixel shift
+        # ----------------------------------------------------------------------
+        # correct cosmic rays
+        WLOG(params, '', textentry('40-010-00018'))
+        image, cprops = prep.correct_cosmics(params, image, intercept,
+                                             errslope, inttime)
 
         # ----------------------------------------------------------------------
         # Check for pixel shift and/or corrupted files
@@ -232,11 +239,6 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # correct image
         # ------------------------------------------------------------------
-        # correct cosmic rays
-        WLOG(params, '', textentry('40-010-00018'))
-        image, cprops = prep.correct_cosmics(params, image, intercept,
-                                             errslope, inttime)
-
         # correct for the top and bottom reference pixels
         WLOG(params, '', textentry('40-010-00003'))
         image = prep.correct_top_bottom(params, image)
