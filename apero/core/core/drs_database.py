@@ -2053,6 +2053,8 @@ class LogDatabase(DatabaseManager):
                     args: Union[str, None] = None,
                     kwargs: Union[str, None] = None,
                     skwargs: Union[str, None] = None,
+                    start_time: Union[str, None] = None,
+                    end_time: Union[str, None] = None,
                     started: Union[bool, int, None] = None,
                     passed_all_qc: Union[bool, int, None] = None,
                     qc_string: Union[str, None] = None,
@@ -2127,7 +2129,8 @@ class LogDatabase(DatabaseManager):
         keys = [recipe, sname, block_kind, recipe_type, recipe_kind,
                 program_name, pid, htime, unixtime, group, level, sublevel,
                 levelcrit, inpath, outpath, obs_dir, logfile, plotdir,
-                runstring, args, kwargs, skwargs, started, passed_all_qc,
+                runstring, args, kwargs, skwargs, start_time, end_time,
+                started, passed_all_qc,
                 qc_string, qc_names, qc_values, qc_logic, qc_pass,
                 clean_error, running, parallel, ended, used]
         # get column names and column datatypes
