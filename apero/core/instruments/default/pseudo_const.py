@@ -1211,7 +1211,7 @@ class PseudoConstants:
                         comment='Recipe Program Name')
         log_columns.add(name='PID', datatype='VARCHAR(80)', is_index=True,
                         comment='Recipe drs process id number')
-        log_columns.add(name='HUMANTIME', datatype='VARCHAR(50)',
+        log_columns.add(name='HUMANTIME', datatype='VARCHAR(25)',
                         comment='Recipe process time (human format)')
         log_columns.add(name='UNIXTIME', datatype='DOUBLE', is_index=True,
                         comment='Recipe process time (unix format)')
@@ -1241,6 +1241,10 @@ class PseudoConstants:
                         comment='Recipe keyword argument list')
         log_columns.add(name='SKWARGS', datatype='TEXT',
                         comment='Recipe special argument list')
+        log_columns.add(name='START_TIME', datatype='VARCHAR(25)',
+                        comment='Recipe start time YYYY-mm-dd HH:MM:SS.SSS')
+        log_columns.add(name='END_TIME', datatype='VARCHAR(25)',
+                        comment='Recipe end time YYYY-mm-dd HH:MM:SS.SSS')
         log_columns.add(name='STARTED', datatype='INT',
                         comment='flag recipe started')
         log_columns.add(name='PASSED_ALL_QC', datatype='INT',

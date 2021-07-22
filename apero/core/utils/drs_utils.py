@@ -103,6 +103,8 @@ class RecipeLog:
         # set the human time
         self.htime = str(params['DATE_NOW'])
         self.utime = Time(self.htime).unix
+        self.start_time = str(params['DATE_NOW'])
+        self.end_time = 'None'
         # set the group name
         self.group = str(params['DRS_GROUP'])
         # set the night name directory (and deal with no value)
@@ -213,6 +215,8 @@ class RecipeLog:
         self.args = str(rlog.args)
         self.kwargs = str(rlog.kwargs)
         self.skwargs = str(rlog.skwargs)
+        self.start_time = str(rlog.start_time)
+        self.end_time = str(rlog.end_time)
         self.level_criteria = str(rlog.level_criteria)
 
     def set_log_file(self, logfile: Union[str, Path]):
@@ -413,6 +417,8 @@ class RecipeLog:
         """
         # set function name
         _ = drs_misc.display_func('end', __NAME__, self.class_name)
+        # add the end time
+        self.end_time = str(Time.now().iso)
         # set the ended parameter to True
         if success:
             self.ended = True
@@ -457,10 +463,10 @@ class RecipeLog:
                                     obs_dir=inst.obs_dir,
                                     logfile=inst.log_file,
                                     plotdir=inst.plot_dir,
-                                    runstring=inst.runstring,
-                                    args=inst.args,
-                                    kwargs=inst.kwargs,
-                                    skwargs=inst.skwargs,
+                                    runstring=inst.runstring, args=inst.args,
+                                    kwargs=inst.kwargs, skwargs=inst.skwargs,
+                                    start_time=inst.start_time,
+                                    end_time=inst.end_time,
                                     started=inst.started,
                                     passed_all_qc=inst.passed_qc,
                                     qc_string=inst.qc_string,
@@ -471,8 +477,7 @@ class RecipeLog:
                                     errors=inst.errors,
                                     parallel=inst.parallel,
                                     running=inst.running,
-                                    ended=inst.ended,
-                                    used=1)
+                                    ended=inst.ended, used=1)
 
     def _make_row(self) -> OrderedDict:
         """
@@ -503,6 +508,9 @@ class RecipeLog:
         row['ARGS'] = self.args
         row['KWARGS'] = self.kwargs
         row['SKWARGS'] = self.skwargs
+        # add timings
+        row['START_TIME'] = self.start_time
+        row['END_TIME'] = self.end_time
         # add whether recipe started
         row['STARTED'] = self.started
         # add whether all qc passed
@@ -582,7 +590,8 @@ class RecipeLog:
                       self.level_criteria, self.inputdir, self.outputdir,
                       self.obs_dir, self.log_file, self.plot_dir,
                       self.runstring, self.args, self.kwargs, self.skwargs,
-                      self.started, self.passed_qc, self.qc_string,
+                      self.start_time, self.end_time, self.started,
+                      self.passed_qc, self.qc_string,
                       self.qc_name, self.qc_value, self.qc_logic, self.qc_pass,
                       self.errors, self.parallel, 0, 0, 1]
         # ---------------------------------------------------------------------
