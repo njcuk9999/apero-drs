@@ -238,7 +238,8 @@ class Database:
         # try to execute SQL command
         try:
             result = self._execute(cursor, command)
-            # close
+            # commit and close
+            conn.commit()
             cursor.close()
             conn.close()
         # pass unique exception upwards
