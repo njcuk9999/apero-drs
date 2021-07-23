@@ -2723,7 +2723,7 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         qc_logic.append('MIN XWAVE DIFF {0} < 0'.format(fiber))
 
     # --------------------------------------------------------------
-    # rv quality controls between fibers
+    # rv quality controls between fibers from fplines file
     # --------------------------------------------------------------
     for fiber in fiber_types:
         # do not compare master to master
@@ -2742,6 +2742,32 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
             fail_msg.append('abs(DV[{0} - {1}]) > {2} m/s'.format(*qargs))
         else:
             qc_pass.append(1)
+
+    # --------------------------------------------------------------
+    # rv quality controls between fibers (from ccf)
+    # --------------------------------------------------------------
+    # get master RV [km/s] --> [m/s]
+    master_rv = rvprops[master_fiber]['MEAN_RV'] * 1000
+    # get the fiber types from a list parameter (or from inputs)
+    fiber_types = drs_image.get_fiber_types(params)
+    # loop around fibers
+    for fiber in fiber_types:
+        # do not compare master to master
+        if fiber == master_fiber:
+            continue
+        # get rv for this fiber [km/s] --> [m/s]
+        rvfiber = rvprops[fiber]['MEAN_RV'] * 1000
+        # deal with rv threshold
+        if np.abs(master_rv - rvfiber) > rv_thres:
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(master_rv - rvfiber)
+        qc_names.append('CCFRV[{0} - {1}]'.format(master_fiber, fiber))
+        qargs = [master_fiber, fiber, rv_thres]
+        qc_logic.append('abs(CCFRV[{0} - {1}]) > {2} m/s'.format(*qargs))
+
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
