@@ -183,4 +183,7 @@ fabric.properties
 # Ignore everythign in apero data except readme
 /apero-data/*
 !/apero-data/*.md
+# Ignore backup files
 *.backup
+# Ignore database files
+*.db
