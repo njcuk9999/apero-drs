@@ -168,20 +168,6 @@ def __main__(recipe, params):
             errslope = np.sqrt(np.abs(image * inttime) + readout_noise**2)
             errslope = errslope / np.sqrt(inttime)
 
-        # ----------------------------------------------------------------------
-        # Correct for cosmic rays before the possible pixel shift
-        # ----------------------------------------------------------------------
-        # correct cosmic rays
-        # TODO: Etienne WILL fix this some time
-        #    - problem with the intercept correction for NIRPS only
-        # WLOG(params, '', textentry('40-010-00018'))
-        # image, cprops = prep.correct_cosmics(params, image, intercept,
-        #                                      errslope, inttime)
-        cprops = dict()
-        cprops['NUM_BAD_INTERCEPT'] = 'Not Implemented'
-        cprops['NUM_BAD_SLOPE'] = 'Not Implemented'
-        cprops['NUM_BAD_BOTH'] = 'Not Implemented'
-
         # ------------------------------------------------------------------
         # Get out file and check skip
         # ------------------------------------------------------------------
@@ -214,13 +200,38 @@ def __main__(recipe, params):
             shiftdx, shiftdy = int(cout[2]), int(cout[3])
             # use dx/dy to shift the image back to where the engineering flat
             #    is located
-            if shiftdx != 0 or shiftdy != 0:
+            if shiftdx != 0 and shiftdy != 0:
                 # log process
                 wmsg = textentry('40-010-00013', args=[shiftdx, shiftdy])
                 WLOG(params, '', wmsg)
-                # shift image
+                # roll on the y axis
                 image = np.roll(image, [shiftdy], axis=0)
+                intercept = np.roll(intercept, [shiftdy], axis=0)
+                errslope = np.roll(errslope, [shiftdy], axis=0)
+                inttime = np.roll(inttime, [shiftdy], axis=0)
+                # roll on the x axis
                 image = np.roll(image, [shiftdx], axis=1)
+                intercept = np.roll(intercept, [shiftdx], axis=1)
+                errslope = np.roll(errslope, [shiftdx], axis=1)
+                inttime = np.roll(inttime, [shiftdx], axis=1)
+            elif shiftdx != 0:
+                # log process
+                wmsg = textentry('40-010-00013', args=[shiftdx, shiftdy])
+                WLOG(params, '', wmsg)
+                # roll on the x axis
+                image = np.roll(image, [shiftdx], axis=1)
+                intercept = np.roll(intercept, [shiftdx], axis=1)
+                errslope = np.roll(errslope, [shiftdx], axis=1)
+                inttime = np.roll(inttime, [shiftdx], axis=1)
+            elif shiftdy != 0:
+                # log process
+                wmsg = textentry('40-010-00013', args=[shiftdx, shiftdy])
+                WLOG(params, '', wmsg)
+                # roll on the y axis
+                image = np.roll(image, [shiftdy], axis=0)
+                intercept = np.roll(intercept, [shiftdy], axis=0)
+                errslope = np.roll(errslope, [shiftdy], axis=0)
+                inttime = np.roll(inttime, [shiftdy], axis=0)
             # work out QC here
             qargs = [snr_hotpix, infile, rms_list]
             qc_params, passed = prep.quality_control(params, *qargs, log=False)
@@ -247,6 +258,27 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # nirps correction for preprocessing (specific to NIRPS)
         image = prep.nirps_correction(params, image)
+
+        # ----------------------------------------------------------------------
+        # Correct for cosmic rays before the possible pixel shift
+        # ----------------------------------------------------------------------
+        # TODO: Etienne WILL fix this some time
+        #    - problem with the intercept correction for NIRPS only
+        #    - do we need the correction for intercept and error slope?
+        # # correct the intercept
+        # WLOG(params, '', textentry('40-010-00021'))
+        # intercept = prep.intercept_correct(intercept)
+        # # correct error slope
+        # WLOG(params, '', textentry('40-010-00022'))
+        # errslope1 = prep.errslope_correct(errslope)
+        # correct cosmic rays
+        # WLOG(params, '', textentry('40-010-00018'))
+        # image, cprops = prep.correct_cosmics(params, image, intercept,
+        #                                      errslope, inttime)
+        cprops = dict()
+        cprops['NUM_BAD_INTERCEPT'] = 'Not Implemented'
+        cprops['NUM_BAD_SLOPE'] = 'Not Implemented'
+        cprops['NUM_BAD_BOTH'] = 'Not Implemented'
 
         # ------------------------------------------------------------------
         # calculate mid observation time

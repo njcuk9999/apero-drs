@@ -167,8 +167,6 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     # mask of where variance is bad
     WLOG(params, '', '\tExpanding intercept deviation mask')
     mask_intercept_deviation = mp.xpand_mask(mask1, mask2)
-    # mask_intercept_deviation = mask1
-
     # do not mask the reference pixels (intercept is different from rest of
     #  the detector)
     mask_intercept_deviation[ref_pix] = False
@@ -417,6 +415,45 @@ def median_one_over_f_noise(params: ParamDict, image: np.ndarray) -> np.ndarray:
         image[:, pixel] -= residual_low_f
     # return the corrected image
     return image
+
+
+def intercept_correct(intercept: np.ndarray) -> np.ndarray:
+    """
+    Correction applied to the intercept to remove bad columns at start / end
+    of amplifiers
+
+    :param intercept: np.ndarray, the intercept image
+
+    :return: np.ndarray, the corrected intercept image
+    """
+    # loop around each column and correct intercept by median of that column
+    for it in range(intercept.shape[1]):
+        intercept[:, it] = intercept[:, it] - np.nanmedian(intercept[:, it])
+    # return the intercept
+    return intercept
+
+
+def errslope_correct(errslope):
+    """
+    Correction applied to the errslope to remove bad columns at start / end
+    of amplifiers
+
+    :param intercept: np.ndarray, the errslope image
+
+    :return: np.ndarray, the corrected errslope image
+    """
+    # get the median across the x-direction
+    emed0 = np.nanmedian(errslope, axis=0)
+    # get the total median
+    emed = np.nanmedian(errslope)
+    # find the bad columns of pixels
+    emask = np.where(emed0 > 2 * emed)[0]
+    # set the bad columns of pixels to the median error slope value
+    errslope1 = np.array(errslope)
+    for it in emask:
+        errslope1[:, it] = emed
+    # return the corrected error slope
+    return errslope1
 
 
 # Define complex return typing for tesT_for_corrupt_files

@@ -763,16 +763,13 @@ def xpand_mask(mask1: np.ndarray, mask2: np.ndarray) -> np.ndarray:
 
     :return: a mask of all pixels within mask2 that include a mask1 pixel
     """
-    # TODO: This can take a large amount of time - need to fix this
     increment = 1
     sum_prev = 0
-    it = 0
     # loop until increment is zero
     while increment != 0:
         mask1 = np.array((mask2) * (binary_dilation(mask1)))
         increment = np.sum(mask1) - sum_prev
         sum_prev = np.sum(mask1)
-        it += 1
     # return mask1
     return mask1
 
