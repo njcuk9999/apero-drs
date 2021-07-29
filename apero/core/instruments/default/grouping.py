@@ -697,9 +697,10 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
         obs_dir_col = 'OBS_DIR'
         num_col = 'KW_NEXP'
         seq_col = 'KW_CMPLTEXP'
+        obj_col = 'KW_OBJNAME'
         # sort by filename (assume filename should put files in order)
         sort = np.argsort(table[path_col])
-        table1 = table[sort]
+        table1 = Table(table[sort])
         masks = []
         # mask num col and seq col and keep only rows with numbers
         seq_mask = _is_numeric(table1[seq_col])
@@ -710,27 +711,46 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
         seq_arr = np.array(table1[seq_col]).astype(int)
         num_arr = np.array(table1[num_col]).astype(int)
         obs_dir_arr = np.array(table1[obs_dir_col])
+        obj_name_arr = np.array(table1[obj_col])
         # make our zero group mask
         zero_mask = np.zeros(len(table1)).astype(bool)
         # start a counter
         obs_dir = None
+        obj_name = None
         current_mask = np.array(zero_mask)
         current_seqs = []
         # loop around each row and group by KW_CMPLTEXP
         for row in range(len(table1)):
             # set the current value to this sequence's value
             current = seq_arr[row]
-            # different observation directories cannot be in the same group
-            if obs_dir_arr[row] != obs_dir:
+            # different observations cannot have different object names
+            # ---> start a new group
+            if obj_name_arr[row] != obj_name:
                 # if we have a new group copy the mask
                 current_mask = np.array(zero_mask)
                 # reset the current sequence present for this group
                 current_seqs = []
                 # add this row to current group
                 current_mask[row] = True
-                # set group obs dir
-                obs_dir = obs_dir_arr[row]
+                # set current group obs dir
+                obs_dir = str(obs_dir_arr[row])
+                # set current object name
+                obj_name = str(obj_name_arr[row])
+            # different observation directories cannot be in the same group
+            # ---> start a new group
+            elif obs_dir_arr[row] != obs_dir:
+                # if we have a new group copy the mask
+                current_mask = np.array(zero_mask)
+                # reset the current sequence present for this group
+                current_seqs = []
+                # add this row to current group
+                current_mask[row] = True
+                # set current group obs dir
+                obs_dir = str(obs_dir_arr[row])
+                # set current object name
+                obj_name = str(obj_name_arr[row])
             # if current number if already in current group
+            # ----> replace this row with the previously found one
             elif current in current_seqs:
                 # set the current row to True
                 current_mask[row] = True
@@ -741,16 +761,21 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
                 current_mask[current_mask][pos] = False
             # append to current file if current number is less than
             #   total number in sequence
+            # ----> add to current group
             elif current < num_arr[row]:
                 # add this row to current group
                 current_mask[row] = True
                 # append row to current group
                 current_seqs.append(current)
-                # set group obs dir
-                obs_dir = obs_dir_arr[row]
+                # set current group obs dir
+                obs_dir = str(obs_dir_arr[row])
+                # set current object name
+                obj_name = str(obj_name_arr[row])
             # if we have reached the end of a group append the masks
             #   and set the current mask to zero and reset the current number
             #   to zero
+            # ----> add to current group
+            # if we have enough entres (==nexp) ----> start new group after add
             elif current == num_arr[row]:
                 # add this row to current group
                 current_mask[row] = True
@@ -761,8 +786,12 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
                 current_mask = np.array(zero_mask)
                 # reset the current sequence present for this group
                 current_seqs = []
-                # set group obs dir
-                obs_dir = obs_dir_arr[row]
+                # set current group obs dir
+                obs_dir = str(obs_dir_arr[row])
+                # set current object name
+                obj_name = str(obj_name_arr[row])
+            # if we have enough entries ----> add mask to list of masks
+            # ----> start new group
             else:
                 # append group to masks - only if we have NEXP sequences
                 if np.sum(current_mask) == num_arr[row]:
@@ -771,6 +800,10 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
                 current_mask = np.array(zero_mask)
                 # reset the current sequence present for this group
                 current_seqs = []
+                # reset the observation directory
+                obs_dir = None
+                # rest the object name
+                obj_name = None
         # return list of masks
         return table1, masks
 
@@ -794,9 +827,15 @@ def _is_numeric(array: Union[list, np.ndarray, Iterable]) -> np.ndarray:
     :return:
     """
     # mapping function: True for numeric False otherwise
-    func = lambda x: isinstance(x, (int, float))
+    def test_float(x):
+        try:
+            _ = float(x)
+            return True
+        except Exception as _:
+            return False
+
     # return map as a numpy array of True and Falses (a mask)
-    return np.array(list(map(func, array)))
+    return np.array(list(map(test_float, array)))
 
 
 # =============================================================================
