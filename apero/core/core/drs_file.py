@@ -3721,6 +3721,7 @@ class DrsFitsFile(DrsInputFile):
         # cube data (filter)
         datacube, headers = [], []
         basenames, basenames_used = [], []
+        basecolnames = []
         # store count of rejected files
         reject_count = 0
         # loop around all files
@@ -3762,6 +3763,8 @@ class DrsFitsFile(DrsInputFile):
             headers.append(header)
             # add all basenames (for when we combine headers)
             basenames.append(basename)
+            # add basename column names (no extension)
+            basecolnames.append(basename.replace('.fits', ''))
         # log how many files were rejected (if any)
         if reject_count > 0:
             wargs = [reject_count]
@@ -3840,7 +3843,7 @@ class DrsFitsFile(DrsInputFile):
         # --------------------------------------------------------------------
         # Need to create new header and combine header table
         # --------------------------------------------------------------------
-        chout = combine_headers(params, headers, basenames, math)
+        chout = combine_headers(params, headers, basecolnames, math)
         self.header, self.hdict, combinetable = chout
 
         # --------------------------------------------------------------------
@@ -5967,7 +5970,7 @@ class DrsOutFile(DrsInputFile):
                 hlink: Union[str, None] = None,
                 header_only: bool = False, data_only: bool = False,
                 remove_drs_hkeys: bool = False,
-                remove_std_hkeys: bool = False,
+                remove_std_hkeys: bool = True,
                 clear_file: bool = False,
                 tag: Union[str, None] = None,
                 extname: Union[str, None] = None,
@@ -6002,7 +6005,7 @@ class DrsOutFile(DrsInputFile):
         :param tag: str, the extension name tag to give this extension in the
                     final post process file
         :param extname: str, if set this is the extension name from the
-                        file to take the image/table from
+                        input file to take the image/table from
         :param datatype: str, image or table - the data type of the file
 
         :return:
