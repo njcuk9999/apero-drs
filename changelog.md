@@ -15766,16 +15766,6 @@ Changelog
 
   call to plt should come via ```sPlt``` i.e.:
   instead of:
-  ```python
-  import matplotlib.pyplot as plt
-  ```
-
-  use
-
-  ```python
-  from SpirouDRS.spirouCore import sPlt
-  plt = sPlt.plt
-  ```
 
   This avoids all errors with matplotlib backends.
 - Change. [njcuk9999]
