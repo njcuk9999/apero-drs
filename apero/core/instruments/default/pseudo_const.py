@@ -200,13 +200,21 @@ class PseudoConstants:
 
     def FORBIDDEN_OUT_KEYS(self) -> List[str]:
         """
-        Post process primary extension should not have these keys
+        Defines the keys in a HEADER file not to copy when copying over all
+        HEADER keys to a new fits file
+
+        :return forbidden_keys: list of strings, the keys in a HEADER file not
+                                to copy from and old fits file
         """
         # set function name
-        _ = display_func('FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
+        _ = display_func('FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
         # set forbidden keys
-        forbidden_keys = []
-        # return forbiiden keys
+        forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
+                          'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
+                          'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
+                          'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB',
+                          'NEXTEND']
+        # return keys
         return forbidden_keys
 
     # noinspection PyPep8Naming
