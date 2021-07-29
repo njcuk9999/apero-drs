@@ -1358,7 +1358,7 @@ post_e_file = drs_oinput('DRS_POST_E', filetype='.fits', suffix='e.fits',
 post_e_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
                                            'POLAR_DARK']),
-                    remove_drs_hkeys=True, remove_std_hkeys=True)
+                    remove_drs_hkeys=True)
 post_e_file.add_ext('EXT_AB', out_ext_e2dsff, pos=1, fiber='AB', block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='FluxAB')
@@ -1409,7 +1409,7 @@ post_s_file = drs_oinput('DRS_POST_S', filetype='.fits', suffix='s.fits',
 post_s_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
                                            'POLAR_DARK']),
-                    remove_drs_hkeys=True, remove_std_hkeys=True)
+                    remove_drs_hkeys=True)
 # s1d w is a composite table
 post_s_file.add_ext('S1D_W', 'table', pos=1, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER',
@@ -1463,6 +1463,12 @@ post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
                        incol='eflux', outcol='FluxErrBTelluCorrected',
                        fiber='B', required=False,
                        block_kind='red', clear_file=True)
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
+                       incol='flux', outcol='Recon',
+                       required=False, block_kind='red', clear_file=True)
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
+                       incol='eflux', outcol='ReconErr',
+                       required=False, block_kind='red', clear_file=True)
 
 # s1d w is a composite table
 post_s_file.add_ext('S1D_V', 'table', pos=2, block_kind='red',
@@ -1517,6 +1523,13 @@ post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='eflux', outcol='FluxErrBTelluCorrected',
                        fiber='B', required=False,
                        block_kind='red', clear_file=True)
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
+                       incol='flux', outcol='Recon',
+                       required=False, block_kind='red', clear_file=True)
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
+                       incol='eflux', outcol='ReconErr',
+                       required=False, block_kind='red', clear_file=True)
+
 # move header keys
 post_s_file.add_hkey('KW_VERSION', inheader='S1D_W', outheader='PP')
 post_s_file.add_hkey('KW_DRS_DATE_NOW', inheader='S1D_W', outheader='PP')
@@ -1532,7 +1545,7 @@ post_t_file = drs_oinput('DRS_POST_T', filetype='.fits', suffix='t.fits',
 post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
                                            'POLAR_DARK']),
-                    remove_drs_hkeys=True, remove_std_hkeys=True)
+                    remove_drs_hkeys=True)
 post_t_file.add_ext('TELLU_AB', out_tellu_obj, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='FluxAB')
@@ -1581,8 +1594,7 @@ post_v_file = drs_oinput('DRS_POST_V', filetype='.fits', suffix='v.fits',
 post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
                                            'POLAR_DARK']),
-                    clear_file=True, remove_drs_hkeys=True,
-                    remove_std_hkeys=True)
+                    clear_file=True, remove_drs_hkeys=True)
 post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='CCF')
@@ -1602,8 +1614,7 @@ post_p_file = drs_oinput('DRS_POST_P', filetype='.fits', suffix='p.fits',
 # add extensions
 post_p_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK']),
-                    clear_file=True, remove_drs_hkeys=True,
-                    remove_std_hkeys=True)
+                    clear_file=True, remove_drs_hkeys=True)
 post_p_file.add_ext('POL', out_pol_deg, pos=1, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='Pol', extname='POL_DEG')
@@ -1631,7 +1642,7 @@ post_p_file.add_ext('BLAZE_AB', out_ff_blaze, pos=8, fiber='AB',
 # s1d w table
 post_p_file.add_ext('S1D_W', 'table', pos=9, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER',
-                    extname='UniformWavelength')
+                    extname='UniformWavelength', tag='UniformWavelength')
 # add s1d w columns (all linked via PP file)
 post_p_file.add_column('S1D_W', out_pol_s1dw,
                        incol='wavelength', outcol='Wave', fiber='None',
@@ -1663,7 +1674,7 @@ post_p_file.add_column('S1D_W', out_null2_s1dw,
 # s1d v table
 post_p_file.add_ext('S1D_V', 'table', pos=10, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER',
-                    extname='UniformWavelength')
+                    extname='UniformVelocity', tag='UniformVelocity')
 # add s1d w columns (all linked via PP file)
 post_p_file.add_column('S1D_V', out_pol_s1dv,
                        incol='wavelength', outcol='Wave', fiber='None',
