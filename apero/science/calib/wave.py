@@ -441,6 +441,10 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
         # get the wave map
         wavemap = get_wavemap_from_coeffs(wave_coeffs, nbo, nbx)
     # -------------------------------------------------------------------------
+    # deal with no target rv
+    if wfp_target_rv is None:
+        wfp_target_rv = 0.0
+    # -------------------------------------------------------------------------
     # store wave properties in parameter dictionary
     wprops = ParamDict()
     wprops['WAVEFILE'] = wavefile.filename
