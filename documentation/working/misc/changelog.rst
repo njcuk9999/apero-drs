@@ -2,6 +2,51 @@ Changelog
 =========
 
 
+0.7.151 (2021-07-29)
+--------------------
+- `Apero.science.calib.wave.py` - `wfp_target_rv` None --> 0.0 (so not Null
+  in header) [Neil Cook]
+- `Apero.core.instruments.spirou.file_definitions.py` - `remove_std_hkeys`
+  True by default + add Recon/ReconErr to s.fits file + add tag for
+  UniformWavelength and UniformVelocity. [Neil Cook]
+- `Apero.core.instruments.*.pseudo_const.py` - update `FORBIDDEN_KEYS`
+  definitions. [Neil Cook]
+- `Apero.core.instruments.default.grouping.py` - polar sequences must be
+  for same object + correct `_is_numeric` function. [Neil Cook]
+- `Apero.core.core.drs_file.py` - combine filename column names should not
+  end in .fits + remove std hkeys by default. [Neil Cook]
+
+
+0.7.150 (2021-07-24)
+--------------------
+- `Apero.science.preprocessing.detector.py` - fix issue with cosmic
+  correction being slow - need to correct intercept + errslope. [Neil
+  Cook]
+- Remove databases and update gitignore. [Neil Cook]
+- `Apero.science.calib.wave.py` - update wave qc (limit to 2 m/s between
+  fibers) and add back in the ccf rv qc (again qc at 2 m/s) [Neil Cook]
+- `Apero.core.math.gen_math.py` - add todo to fix this function (can take
+  a long time) [Neil Cook]
+- Add `start_time` and `end_time` to log database. [Neil Cook]
+- `Apero.base.drs_db.py` - fix commit problem with sqlite3. [Neil Cook]
+- `Apero.recipes.*.apero_preprocess_*.py` - move cosmic ray correction
+  before shift. [Neil Cook]
+- `Apero-drs-full.setup.install.py` + `setup_lang.py` - add way to get lang
+  code without using apero (so we can check modules) otherwise if
+  modules don't exist we can't import apero.base. [Neil Cook]
+
+
+0.7.149 (2021-07-21)
+--------------------
+- `Apero.base.drs_db.py` - add changes to make sqlite work again. [Neil
+  Cook]
+- Sqlite3 no longer works - test it. [Neil Cook]
+- `Apero.core.instruments.default.grouping.py` - need to deal with NUMEXP
+  and CMPLTEXP being blank - remove them (adds 3 ms to polar grouping)
+  [Neil Cook]
+- Update date/version/changelog/update notes. [Neil Cook]
+
+
 0.7.148 (2021-07-16)
 --------------------
 - Update .gitignore. [Neil Cook]
