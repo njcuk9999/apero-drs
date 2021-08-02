@@ -7100,7 +7100,7 @@ def combine_headers(params: ParamDict, headers: List[Header],
     """
 
     # -------------------------------------------------------------------------
-    # step 1. fine header keys that need combining
+    # step 1. find header keys that need combining
     # -------------------------------------------------------------------------
     ckeys, cmethods = [], []
     # need to get keywords with combine methods
@@ -7245,6 +7245,10 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
             # elif if median
             elif math in ['median', 'med']:
                 return mp.nanmedian(values) / np.sqrt(len(values))
+            # deal with math == None
+            elif math == 'None':
+                return values[0]
+            # else return an empty value
             else:
                 return None
         # if method is in None --> return None
