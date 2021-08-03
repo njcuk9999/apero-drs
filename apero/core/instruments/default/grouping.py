@@ -701,12 +701,19 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
         # sort by filename (assume filename should put files in order)
         sort = np.argsort(table[path_col])
         table1 = Table(table[sort])
-        masks = []
+        # remove masked values (if table has masks)
+        if hasattr(table1, 'mask'):
+            seq_mask = ~table1[seq_col].mask
+            num_mask = ~table1[num_col].mask
+            # mask table1
+            table1 = table1[seq_mask & num_mask]
         # mask num col and seq col and keep only rows with numbers
         seq_mask = _is_numeric(table1[seq_col])
         num_mask = _is_numeric(table1[num_col])
         # mask table1
         table1 = table1[seq_mask & num_mask]
+        # set up list if masks
+        masks = []
         # get correct columns (in correct sorted order)
         seq_arr = np.array(table1[seq_col]).astype(int)
         num_arr = np.array(table1[num_col]).astype(int)
