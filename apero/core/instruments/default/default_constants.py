@@ -4444,11 +4444,11 @@ PLOT_LOC_IM_CORNER = Const('PLOT_LOC_IM_CORNER', value=False, dtype=bool,
                             description='turn on localisation image corners '
                                         'plot')
 
-# turn on localisation iamge regions plot
+# turn on localisation image regions plot
 PLOT_LOC_IM_REGIONS = Const('PLOT_LOC_IM_REGIONS', value=False, dtype=bool,
                             source=__NAME__, user=True,  active=False,
                             group=cgroup,
-                            description='turn on localisation iamge regions '
+                            description='turn on localisation image regions '
                                         'plot')
 
 # turn on the shape dx debug plot

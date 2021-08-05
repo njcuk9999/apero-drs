@@ -2618,7 +2618,7 @@ PLOT_LOC_IMAGE_FIT.value = True
 PLOT_LOC_IM_CORNER = PLOT_LOC_IM_CORNER.copy(__NAME__)
 PLOT_LOC_IM_CORNER.value = True
 
-# turn on localisation iamge regions plot
+# turn on localisation image regions plot
 PLOT_LOC_IM_REGIONS = PLOT_LOC_IM_REGIONS.copy(__NAME__)
 PLOT_LOC_IM_REGIONS.value = True
 

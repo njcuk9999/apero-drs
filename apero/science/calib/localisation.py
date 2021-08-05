@@ -215,21 +215,21 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # find the regions that define the orders
     # the map contains integer values that are common to all pixels that form
     # a region in the binary mask
-    all_labels = measure.label(mask_orders, connectivity=2)
-    label_props = measure.regionprops(all_labels)
+    all_labels1 = measure.label(mask_orders, connectivity=2)
+    label_props1 = measure.regionprops(all_labels1)
     # find the area of all regions, we know that orders cover many pixels
-    area = []
-    for label_prop in label_props:
-        area.append(label_prop.area)
+    area1 = []
+    for label_prop in label_props1:
+        area1.append(label_prop.area)
     # these areas are considered orders. This is just a first guess we will
     #   confirm these later - we have to add 1 as measure.label defines "0" as
     #   the "background" - this is not an order
-    is_order = np.where(np.array(area) > min_area)[0] + 1
+    is_order1 = np.where(np.array(area1) > min_area)[0] + 1
     # -------------------------------------------------------------------------
     # loop around orders
-    for order_num in is_order:
+    for order_num in is_order1:
         # get this orders pixels
-        mask_region = (all_labels == order_num)
+        mask_region = (all_labels1 == order_num)
         # get the flux values of the pixels for this order
         value = image[mask_region]
         # get the low flux bound (more than 5% of peak flux)
@@ -261,33 +261,33 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # find the regions that define the orders (again now we have
     # the map contains integer values that are common to all pixels that form
     # a region in the binary mask
-    all_labels = measure.label(mask_orders, connectivity=2)
-    label_props = measure.regionprops(all_labels)
+    all_labels2 = measure.label(mask_orders, connectivity=2)
+    label_props2 = measure.regionprops(all_labels2)
     # find the area of all regions, we know that orders cover many pixels
-    area = []
-    for label_prop in label_props:
-        area.append(label_prop.area)
+    area2 = []
+    for label_prop in label_props2:
+        area2.append(label_prop.area)
     # these areas are considered orders. This is just a first guess we will
     #   confirm these later - we have to add 1 as measure.label defines "0" as
     #   the "background" - this is not an order
-    is_order = np.where(np.array(area) > min_area)[0] + 1
+    is_order2 = np.where(np.array(area2) > min_area)[0] + 1
     # log how many blobs were found: Found {0} order blobs'
-    margs = [len(is_order)]
+    margs = [len(is_order2)]
     WLOG(params, '', textentry('40-013-00030', args=margs))
     # -------------------------------------------------------------------------
     # storage for fit the x vs y position per region
-    all_fits = np.zeros([len(is_order), cent_order_fit + 1])
+    all_fits = np.zeros([len(is_order2), cent_order_fit + 1])
     # storage for position of fit at center of images
-    order_centers = np.zeros(len(is_order))
+    order_centers = np.zeros(len(is_order2))
     # storage for the width of orcer
-    order_widths = np.zeros([len(is_order), num_wid_samples])
+    order_widths = np.zeros([len(is_order2), num_wid_samples])
     # storage for valid labels
-    valid_labels = np.array(is_order)
+    valid_labels = np.array(is_order2)
     # loop through orders
-    for order_num in range(len(is_order)):
+    for order_num in range(len(is_order2)):
         # ---------------------------------------------------------------------
         # find x y position of the region considered to be an order
-        xy = label_props[is_order[order_num] - 1].coords
+        xy = label_props2[is_order2[order_num] - 1].coords
         # extract the positions
         ypos, xpos = xy[:, 0], xy[:, 1]
         # determine if order overlaps with image center, if not it is not good
