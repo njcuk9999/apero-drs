@@ -1085,7 +1085,7 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
 
 def plot_loc_im_regions(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     """
-    Graph: Localisation image "corners" plot
+    Graph: Localisation image regions plot
 
     :param plotter: core.plotting.Plotter instance
     :param graph: Graph instance
@@ -1111,6 +1111,7 @@ def plot_loc_im_regions(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
+
 
 
 loc_width_regions = Graph('LOC_WIDTH_REGIONS', kind='debug',
