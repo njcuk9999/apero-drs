@@ -222,10 +222,10 @@ def __main__(recipe, params):
         WLOG(params, 'warning', 'Not Implemented yet')
         return drs_startup.return_locals(params, locals())
     # get filters from user inputs
-    kw_objnames = inputs.listp('objnames', dtype=str)
-    kw_dprtypes = inputs.listp('dprtypes', dtype=str)
-    kw_outputs = inputs.listp('outtypes', dtype=str)
-    kw_fibers = inputs.listp('fibers', dtype=str)
+    kw_objnames = inputs.listp('objnames', dtype=str, required=False)
+    kw_dprtypes = inputs.listp('dprtypes', dtype=str, required=False)
+    kw_outputs = inputs.listp('outtypes', dtype=str, required=False)
+    kw_fibers = inputs.listp('fibers', dtype=str, required=False)
     # get outpath from user inputs
     user_outdir = params['INPUTS']['OUTPATH']
     if drs_text.null_text(user_outdir, ['None', '', 'Null']):

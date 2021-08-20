@@ -841,7 +841,8 @@ class ParamDict(CaseInDict):
         return return_string + '\n'
 
     def listp(self, key: str, separator: str = ',',
-              dtype: Union[None, Type, str] = None) -> list:
+              dtype: Union[None, Type, str] = None,
+              required: bool = True) -> Union[list, None]:
         """
         Turn a string list parameter (separated with `separator`) into a list
         of objects (of data type `dtype`)
@@ -866,6 +867,8 @@ class ParamDict(CaseInDict):
         # if key is present attempt str-->list
         if key in self.data.keys():
             item = self.__getitem__(key)
+        elif not required:
+            return None
         else:
             # log error: parameter not found in parameter dict (via listp)
             raise DrsCodedException('00-003-00030', targs=[key], level='error',
@@ -878,12 +881,15 @@ class ParamDict(CaseInDict):
                                       dtype=dtype)
         elif isinstance(item, list):
             return item
+        elif not required:
+            return None
         else:
             # log error: parameter not found in parameter dict (via listp)
             raise DrsCodedException('00-003-00032', targs=[key], level='error',
                                     func_name=func_name)
 
-    def dictp(self, key: str, dtype: Union[str, Type, None] = None) -> dict:
+    def dictp(self, key: str, dtype: Union[str, Type, None] = None,
+              required: bool = True) -> Union[dict, None]:
         """
         Turn a string dictionary parameter into a python dictionary
         of objects (of data type `dtype`)
@@ -909,6 +915,8 @@ class ParamDict(CaseInDict):
         # if key is present attempt str-->dict
         if key in self.data.keys():
             item = self.__getitem__(key)
+        elif not required:
+            return None
         else:
             # log error message: parameter not found in param dict (via dictp)
             raise DrsCodedException('00-003-00031', targs=[key], level='error',
@@ -920,6 +928,8 @@ class ParamDict(CaseInDict):
             return _map_dictparameter(str(item), dtype=dtype)
         elif isinstance(item, dict):
             return item
+        elif not required:
+            return None
         else:
             # log error message: parameter not found in param dict (via dictp)
             raise DrsCodedException('00-003-00033', targs=[key], level='error',
