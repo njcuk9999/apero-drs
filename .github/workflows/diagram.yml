@@ -14,4 +14,5 @@ jobs:
       - name: Update diagram
         uses: githubocto/repo-visualizer@main
         with:
+          root_path: "apero"
           excluded_paths: "ignore,.github,documentation" 
