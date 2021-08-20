@@ -34,6 +34,8 @@ Last updated: 2020-07-04
     - [polarimetry](#818-polarimetry-recipe)
 
 
+## Code Diagram
+
 ![Visualization of the codebase](./diagram.svg)
 
 ##  1 Latest version
