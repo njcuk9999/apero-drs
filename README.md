@@ -33,6 +33,9 @@ Last updated: 2020-07-04
     - [ccf](#817-ccf-recipe)
     - [polarimetry](#818-polarimetry-recipe)
 
+
+![Visualization of the codebase](./diagram.svg)
+
 ##  1 Latest version
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
