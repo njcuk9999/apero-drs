@@ -36,7 +36,7 @@ Last updated: 2020-07-04
 
 ## Code Diagram
 
-![Visualization of the codebase](./diagram.svg)
+![Visualization of the codebase](./documentation/working/_static/)
 
 ##  1 Latest version
 [Back to top](#apero---a-pipeline-to-reduce-observations)
