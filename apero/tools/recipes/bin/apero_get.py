@@ -108,6 +108,9 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         subconditions = []
         # get filter items
         filter_items = filters[_filter]
+        # skip Nones
+        if filter_items is None:
+            continue
         # loop around object names
         for item in filter_items:
             subcondition = '({0}="{1}")'.format(_filter, item)
