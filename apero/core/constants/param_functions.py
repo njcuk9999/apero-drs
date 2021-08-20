@@ -865,7 +865,7 @@ class ParamDict(CaseInDict):
         # set function name
         func_name = display_func('listp', __NAME__, self.class_name)
         # if key is present attempt str-->list
-        if key in self.data.keys():
+        if key.upper() in self.data.keys():
             item = self.__getitem__(key)
         elif not required:
             return None
@@ -876,7 +876,7 @@ class ParamDict(CaseInDict):
         if item is None:
             return []
         # convert string
-        if key in self.data.keys() and isinstance(item, str):
+        if key.upper() in self.data.keys() and isinstance(item, str):
             return _map_listparameter(str(item), separator=separator,
                                       dtype=dtype)
         elif isinstance(item, list):

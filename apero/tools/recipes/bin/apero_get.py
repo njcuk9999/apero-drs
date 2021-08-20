@@ -109,12 +109,19 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         # get filter items
         filter_items = filters[_filter]
         # skip Nones
-        if filter_items is None:
+        if drs_text.null_text(filter_items, ['None', '', 'Null']):
             continue
         # loop around object names
         for item in filter_items:
+            # skip Nones
+            if drs_text.null_text(item, ['None', '', 'Null']):
+                continue
+            # add to sub conditions
             subcondition = '({0}="{1}")'.format(_filter, item)
             subconditions.append(subcondition)
+        # deal with no valid sub-conditions
+        if len(subconditions) == 0:
+            continue
         # add to condition
         if len(master_condition) == 0:
             master_condition += '({0})'.format(' OR '.join(subconditions))
