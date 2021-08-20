@@ -17,4 +17,4 @@ jobs:
           root_path: "apero"
           excluded_paths: "ignore,.github,documentation" 
           output_file: "documentation/working/_static/diagram.svg"
-          excluded_globs: "**/!(*.py)"
+          excluded_globs: "**/*.{dat,meta,md,ini,json,csv,io,txt,mas,setup,png,svg,profile}"
