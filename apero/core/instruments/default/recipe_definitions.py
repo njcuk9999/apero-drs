@@ -166,7 +166,7 @@ explorer.set_kwarg(name='--hash', default=False, dtype='switch',
 # -----------------------------------------------------------------------------
 # apero_get.py
 # -----------------------------------------------------------------------------
-get_files.anme = 'apero_get.py'
+get_files.name = 'apero_get.py'
 get_files.shortname = 'GET'
 get_files.instrument = __INSTRUMENT__
 get_files.description = 'Use database to search and copy any files quickly'
