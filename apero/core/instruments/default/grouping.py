@@ -703,8 +703,8 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
         table1 = Table(table[sort])
         # remove masked values (if table has masks)
         if hasattr(table1, 'mask'):
-            seq_mask = ~table1[seq_col].mask
-            num_mask = ~table1[num_col].mask
+            seq_mask = ~np.array(table1.mask[seq_col])
+            num_mask = ~np.array(table1.mask[num_col])
             # mask table1
             table1 = table1[seq_mask & num_mask]
         # mask num col and seq col and keep only rows with numbers
