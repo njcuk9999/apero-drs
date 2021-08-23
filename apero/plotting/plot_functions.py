@@ -2189,7 +2189,7 @@ def plot_flat_order_fit_edges(plotter: Plotter, graph: Graph,
                             hspace=0.05)
         # ------------------------------------------------------------------
         # update filename (adding order_num to end)
-        suffix = 'order{0}'.format(order_num)
+        suffix = 'order{0}_{1}'.format(order_num, fiber)
         graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
@@ -2265,7 +2265,7 @@ def plot_flat_blaze_order(plotter: Plotter, graph: Graph,
                             wspace=0, hspace=0)
         # ------------------------------------------------------------------
         # update filename (adding order_num to end)
-        suffix = 'order{0}'.format(order_num)
+        suffix = 'order{0}_{1}'.format(order_num, fiber)
         graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
@@ -2342,6 +2342,10 @@ def plot_thermal_background(plotter: Plotter, graph: Graph,
     frame.legend(loc=0)
     title = 'Thermal scaled background ({0}Fiber {1})'.format(kind, fiber)
     frame.set(xlabel='Wavelength [nm]', ylabel='Flux', title=title)
+    # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = '{0}'.format(fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -2424,7 +2428,7 @@ def plot_extract_spectral_order(plotter: Plotter, graph: Graph,
                             wspace=0, hspace=0)
         # ------------------------------------------------------------------
         # update filename (adding order_num to end)
-        suffix = 'order{0}'.format(order_num)
+        suffix = 'order{0}_{1}'.format(order_num, fiber)
         graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
@@ -2497,7 +2501,7 @@ def plot_extract_s1d(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
             frame.set_xlabel('Wavelength [nm]')
     # update filename (adding order_num to end)
     if kind is not None:
-        suffix = kind.lower()
+        suffix = '{0}_{1}'.format(kind.lower(), fiber)
         graph.set_filename(plotter.params, plotter.location, suffix=suffix)
     # ------------------------------------------------------------------
     # adjust plot
@@ -2582,7 +2586,7 @@ def plot_extract_s1d_weights(plotter: Plotter, graph: Graph,
         if row == len(zoom1) - 1:
             frame.set_xlabel('Wavelength [nm]')
     # update filename (adding order_num to end)
-    suffix = stype.lower()
+    suffix = '{0}_{1}'.format(stype.lower(), fiber)
     graph.set_filename(plotter.params, plotter.location, suffix=suffix)
     # ------------------------------------------------------------------
     # adjust plot
@@ -2802,7 +2806,7 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
             frames[it].legend(loc=0)
         # ------------------------------------------------------------------
         # update filename (adding order_num to end)
-        suffix = 'order{0}'.format(order_num)
+        suffix = 'order{0}_{1}'.format(order_num, fiber)
         graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
@@ -3299,6 +3303,10 @@ def plot_wave_littrow_check(plotter: Plotter, graph: Graph,
     # add legend
     frame.legend(loc=0)
     # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = 'L{0}_{1}'.format(iteration, fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
@@ -3358,6 +3366,10 @@ def plot_wave_littrow_extrap(plotter: Plotter, graph: Graph,
     frame.set(xlabel='Pixel number', ylabel='Wavelength [nm]',
               title=title.format(iteration, fiber))
     # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = 'L{0}_{1}'.format(iteration, fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
@@ -3398,6 +3410,10 @@ def plot_wave_fp_final_order(plotter: Plotter, graph: Graph,
     title = 'spectral order {0} fiber {1} (iteration = {2})'
     frame.set(xlabel='Wavelength [nm]', ylabel='flux',
               title=title.format(selected_order, fiber, iteration))
+    # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = 'order{0}_L{1}_{2}'.format(selected_order, iteration, fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -3638,6 +3654,10 @@ def plot_wave_fp_ipt_cwid_llhc(plotter: Plotter, graph: Graph,
     # adjust plot
     fig.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95,
                         hspace=0, wspace=0)
+    # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = fiber
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -5381,7 +5401,6 @@ def plot_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # we don't want fiber in kwargs
     if 'fiber' in kwargs:
         del kwargs['fiber']
-
     # ------------------------------------------------------------------
     # get the xlabel and clean from keyword args
     xlabel = kwargs.get('xlabel', None)
