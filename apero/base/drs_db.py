@@ -1747,7 +1747,11 @@ class MySQLDatabase(Database):
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            '__init__()')
         # set path
-        self.path = '{0}@{1}'.format(user, host)
+        aperohome = os.path.join(os.path.expanduser('~'), '.apero')
+        if not os.path.exists(aperohome):
+            os.makedirs(aperohome)
+        # path is in the home directory (for backups)
+        self.path = os.path.join(aperohome, '{0}_at_{1}'.format(user, host))
         # deal with mysql not being imported
         if mysql is None:
             # log error: Cannot import mysql connector
