@@ -17,3 +17,4 @@ jobs:
           root_path: "apero"
           excluded_paths: "ignore,.github,documentation,data" 
           output_file: "documentation/working/_static/diagram.svg"
+          push: false
