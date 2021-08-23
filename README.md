@@ -34,7 +34,9 @@ Last updated: 2020-07-04
     - [polarimetry](#818-polarimetry-recipe)
 
 
-## Code Diagram
+## APERO module code diagram
+
+Using the Github Action [Repo Visualizer](https://github.com/githubocto/repo-visualizer)
 
 ![Visualization of the codebase](./documentation/working/_static/diagram.svg)
 
