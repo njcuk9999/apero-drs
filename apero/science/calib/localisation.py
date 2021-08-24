@@ -430,7 +430,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # loop around each order
     for wit, valid_label in enumerate(valid_labels):
         # we get back the map of all pixels in this order (from the labelling)
-        ordpixmap = all_labels == valid_label
+        ordpixmap = all_labels2 == valid_label
         # we sum all the pixels in the y direction (this is the width in pixels
         #  we have per x pixel
         sumpixmap_x = np.sum(ordpixmap, axis=0)
