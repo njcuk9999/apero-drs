@@ -20,9 +20,10 @@ only from
 """
 import numpy as np
 import pandas as pd
+from pandasql import sqldf
 from pathlib import Path
 import shutil
-from typing import Any, Dict, List, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from apero import lang
 from apero.base import base
@@ -78,6 +79,9 @@ OBJNAMECOLS = ['KW_OBJNAME']
 GAIA_COL_NAME = 'GAIADR2ID'
 # complex return
 DealFilenameReturn = Union[Tuple[str, str], Tuple[Path, str, str, str]]
+# globals to save time on multiple reads
+OBS_PATHS = dict()
+FILEDBS = dict()
 
 
 # =============================================================================
@@ -2495,6 +2499,136 @@ class ObjectDatabase(DatabaseManager):
             self.database.set('*', values=values, condition=condition,
                               table=self.database.tname, unique_cols=ucols)
 
+
+# =============================================================================
+# Define class for astropy table as database
+# =============================================================================
+class PandasDBStorage():
+    def __init__(self):
+        """
+        Constructs the Pandas database storage class
+        """
+        pass
+
+    def set(self, key: str, value: Any):
+        """
+        Setter function to store value of "key" globally
+
+        :param key: str, the key to store
+        :param value: Any, the value to store for key
+
+        :return: None, updates global variable "key" with value (if found)
+        """
+        if key == 'obs_path':
+            global OBS_PATHS
+            OBS_PATHS = value
+        elif key == 'filedbs':
+            global FILEDBS
+            FILEDBS = value
+
+    def get(self, key: str) -> Any:
+        """
+        Getter function to get value of "key" from global store
+
+        :param key: str, the key to get
+
+        :return: Any, the value stored globally for "key"
+        """
+        if key == 'obs_path':
+            return OBS_PATHS
+        elif key == 'filedbs':
+            return FILEDBS
+
+    def reset(self, key: Optional[str] = None):
+        """
+        Resets "key" globally to default value
+
+        :param key: str or None, the key to reset back to default value
+        :return:
+        """
+        if key == 'obs_path':
+            global OBS_PATHS
+            OBS_PATHS =  dict()
+        elif key == 'filedbs':
+            global FILEDBS
+            FILEDBS = dict()
+        # no key --> reset all
+        if key is None:
+            global OBS_PATHS
+            global FILEDBS
+            OBS_PATHS =  dict()
+            FILEDBS = dict()
+
+
+class PandasLikeDatabase:
+    def __init__(self, data: pd.DataFrame):
+        """
+        Construct a database just using a pandas dataframe stored in the memory
+
+        can be used instead of a database (when we have a static database
+        loading from a dataframe is more efficient and avoids extra reads of
+        the database)
+
+        :param data: pandas.DataFrame, the pandas dataframe - usually taken
+                     from a call to a database
+        """
+        self.namespace = dict(data=data)
+        self.tablename = 'data'
+
+    def execute(self, command: str) -> pd.DataFrame:
+        """
+        How we run an sql query on a pandas database
+
+        Note the table has to be in self.namespace
+
+        i.e. "SELECT * FROM data" requires self.namespace['data'] = self.data
+
+        :param command: str, the sql command to run
+        :return:
+        """
+        return sqldf(command, self.namespace)
+
+    def count(self, condition: str = None) -> int:
+        """
+        Proxy for the drs_database.database count method
+
+        :param condition: Filter results using a SQL conditions string
+                       -- see examples, and possibly this
+                       useful tutorial:
+                           https://www.sqlitetutorial.net/sqlite-where/.
+                       If None, no results will be filtered out.
+
+        :return: int, the count
+        """
+        # construct basic command SELECT COUNT(*) FROM {TABLE}
+        command = "SELECT COUNT(*) FROM {}".format(self.tablename)
+        # deal with condition
+        if condition is not None:
+            command += " WHERE {} ".format(condition)
+        # run command
+        df = self.execute(command)
+        # return result
+        return int(df.iloc[0])
+
+    def get_index_entries(self, columns: str, condition: Optional[str] = None):
+        """
+        Proxy for index database get_entries method
+
+        Currently only supports a columns and condition argument
+
+        :param columns: str, the columns to return ('*' for all)
+        :param condition: str or None, if set the SQL query to add
+        :return:
+        """
+        # construct basic command SELECT {COLUMNS} FROM {TABLE}
+        command = 'SELECT {0} FROM {1}'.format(columns, self.tablename)
+        # deal with condition
+        if condition is not None:
+            command += " WHERE {} ".format(condition)
+        # run command
+        df = self.execute(command)
+        # return the data frame
+        return df
 
 # =============================================================================
 # Start of code
