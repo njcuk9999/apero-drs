@@ -345,7 +345,7 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
         del kind, db_out_file
 
 
-def index_update(params: ParamDict,):
+def index_update(params: ParamDict):
     # get all block kinds
     block_kinds = drs_file.DrsPath.get_block_names(params=params,
                                                    block_filter='indexing')
