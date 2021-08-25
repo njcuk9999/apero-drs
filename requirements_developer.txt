@@ -8,6 +8,7 @@ numba==0.53.1
 numpy==1.20.2
 pandas==1.2.4
 pandastable==0.12.2.post1
+pandasql==0.7.3
 Pillow==8.2.0
 PyQt5==5.15.4
 pyyaml==5.4.1
