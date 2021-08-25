@@ -2539,25 +2539,47 @@ class PandasDBStorage():
         elif key == 'filedbs':
             return FILEDBS
 
-    def reset(self, key: Optional[str] = None):
+    def reset(self, key: Optional[str] = None, subkey: Optional[str] = None):
         """
-        Resets "key" globally to default value
+        Resets "key" globally to default value / remove subkey
 
         :param key: str or None, the key to reset back to default value
-        :return:
+        :param subkey: str or None, if set and subkey in one of our global
+                       dictionaries remove this key instead of resetting
+                       everything
+
+        :return: None, resets the storage global variables
         """
         if key == 'obs_path':
             global OBS_PATHS
-            OBS_PATHS =  dict()
+            # if we have a sub key just delete this
+            if subkey is not None and subkey in OBS_PATHS:
+                del OBS_PATHS[subkey]
+            # else reset entire thing
+            else:
+                OBS_PATHS =  dict()
         elif key == 'filedbs':
             global FILEDBS
-            FILEDBS = dict()
+            # if we have a sub key just delete this
+            if subkey is not None and subkey in FILEDBS:
+                del FILEDBS[subkey]
+            # else reset entire thing
+            else:
+                FILEDBS =  dict()
         # no key --> reset all
         if key is None:
             global OBS_PATHS
             global FILEDBS
-            OBS_PATHS =  dict()
-            FILEDBS = dict()
+            # if we have a sub key just delete this
+            if subkey is not None:
+                if subkey in OBS_PATHS:
+                    OBS_PATHS[subkey]
+                if subkey in FILEDBS:
+                    del FILEDBS[subkey]
+            # else reset entire thing
+            else:
+                OBS_PATHS =  dict()
+                FILEDBS = dict()
 
 
 class PandasLikeDatabase:
