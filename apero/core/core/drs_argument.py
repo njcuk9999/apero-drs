@@ -3147,6 +3147,9 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
              (if passed) or None if failed, 3. the reason for failure (or None
              if passed)
     """
+    # set global
+    store = drs_database.PandasDBStorage()
+    obs_paths = store.get('obs_paths')
     # set function name
     func_name = display_func('valid_obs_dir', __NAME__)
     # get block directory
@@ -3154,6 +3157,8 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
     # check whether we are updating the index
     update_index = True
     if 'INPUTS' in params:
+        # if we are in parallel do not update here - assume parent has updated
+        #    index database
         if params['INPUTS']['PARALLEL']:
             update_index = False
     # -------------------------------------------------------------------------
@@ -3170,23 +3175,34 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
     # -------------------------------------------------------------------------
     # deal with database
     # -------------------------------------------------------------------------
-    # deal with instrument == 'None'
-    if indexdb.instrument == 'None':
-        eargs = [argname, indexdb.name, func_name]
-        WLOG(params, 'error', textentry('09-001-00032', args=eargs))
-    elif indexdb.database is None:
-        # try to load database
-        indexdb.load_db()
-    # update database with entries
+    # deal with not update index
+    if not update_index:
+        if block_inst.block_kind not in obs_paths:
+            update_index = True
+    # if we need up update index do it now
     if update_index:
+        # deal with instrument == 'None'
+        if indexdb.instrument == 'None':
+            eargs = [argname, indexdb.name, func_name]
+            WLOG(params, 'error', textentry('09-001-00032', args=eargs))
+        elif indexdb.database is None:
+            # try to load database
+            indexdb.load_db()
+        # update database with entries
         indexdb.update_entries(block_kind=block_inst.block_kind)
-    # assert database is in indexdb
-    assert isinstance(indexdb.database, drs_db.Database)
-    # set up condition
-    condition = 'BLOCK_KIND="{0}"'.format(block_inst.block_kind)
-    # load directory names
-    obs_dirs = indexdb.database.unique('OBS_DIR', condition=condition,
-                                       table=indexdb.database.tname)
+        # assert database is in indexdb
+        assert isinstance(indexdb.database, drs_db.Database)
+        # set up condition
+        condition = 'BLOCK_KIND="{0}"'.format(block_inst.block_kind)
+        # load directory names
+        obs_dirs = indexdb.database.unique('OBS_DIR', condition=condition,
+                                           table=indexdb.database.tname)
+        # update globally
+        obs_paths[block_inst.block_kind] = obs_dirs
+        store.set('obs_paths', obs_paths)
+    # else get from store
+    else:
+        obs_dirs = obs_paths[block_inst.block_kind]
 
     # -------------------------------------------------------------------------
     # 2. check for directory in database
@@ -3235,6 +3251,9 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     :param forced_dir: str, if set the path to use for files, else uses
                        kind to determine path
     """
+    # get globals
+    store = drs_database.PandasDBStorage()
+    filedbs = store.get('filedbs')
     # set function name
     func_name = display_func('_valid_file', __NAME__)
     # get the argument that we are checking the file of
@@ -3245,6 +3264,8 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     # check whether we are updating the index
     update_index = True
     if 'INPUTS' in params:
+        # if we are in parallel do not update here - assume parent has updated
+        #    index database
         if params['INPUTS']['PARALLEL']:
             update_index = False
     # deal with arg.path set
@@ -3260,22 +3281,39 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     # clean up
     filename = filename.strip()
     # -------------------------------------------------------------------------
-    # deal with database
+    # deal with database (either gettings + updating or coming from stored)
     # -------------------------------------------------------------------------
-    # deal with instrument == 'None'
-    if indexdb.instrument == 'None':
-        eargs = [argname, indexdb.name, func_name]
-        WLOG(params, 'error', textentry('09-001-00032', args=eargs))
-    elif indexdb.database is None:
-        # try to load database
-        indexdb.load_db()
-    # update database with entries
+    # deal with not update index
+    if not update_index:
+        if obs_dir.block_kind not in filedbs:
+            update_index = True
+    # if we need up update index do it now
     if update_index:
-        indexdb.update_entries(block_kind=obs_dir.block_kind)
-    # assert database is in indexdb
-    assert isinstance(indexdb.database, drs_db.Database)
-    # set up condition
-    condition = 'BLOCK_KIND="{0}"'.format(obs_dir.block_kind)
+        # deal with instrument == 'None'
+        if indexdb.instrument == 'None':
+            eargs = [argname, indexdb.name, func_name]
+            WLOG(params, 'error', textentry('09-001-00032', args=eargs))
+        elif indexdb.database is None:
+            # try to load database
+            indexdb.load_db()
+        # update database with entries
+        if update_index:
+            indexdb.update_entries(block_kind=obs_dir.block_kind)
+        # assert database is in indexdb
+        assert isinstance(indexdb.database, drs_db.Database)
+        # set up condition
+        condition = 'BLOCK_KIND="{0}"'.format(obs_dir.block_kind)
+        # get filedb
+        dbtable = indexdb.get_entries('*', condition=condition)
+        filedb = drs_database.PandasLikeDatabase(dbtable)
+        # add to global
+        filedbs[obs_dir.block_kind] = filedb
+        store.set('filedbs', filedbs)
+    else:
+        # get saved database (as pandas style database)
+        filedb = filedbs[obs_dir.block_kind]
+        # set up condition
+        condition = 'BLOCK_KIND="{0}"'.format(obs_dir.block_kind)
     # deal with wildcards
     if '*' in filename:
         # make filename sql-like
@@ -3291,9 +3329,9 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     # check for filename in paths
     condition1 = condition + ' AND ' + pathcond.format(filename)
     # count number of paths that meet this condition
-    if indexdb.database.count(indexdb.database.tname, condition=condition1) > 0:
+    if filedb.count(condition=condition1) > 0:
         # now check fits keys (or pass if not fits)
-        filenames, filetypes = _fits_database_query(params, drsfiles, indexdb,
+        filenames, filetypes = _fits_database_query(params, drsfiles, filedb,
                                                     condition1, argname,
                                                     obs_dir)
         # now check drs logic [if exclusive must be same file type]
@@ -3312,9 +3350,9 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     # check for filename in paths
     condition1 = condition + ' AND ' + pathcond.format(abspath)
     # count number of paths that meet this condition
-    if indexdb.database.count(indexdb.database.tname, condition=condition1) > 0:
+    if filedb.count(condition=condition1) > 0:
         # now check fits keys (or pass if not fits)
-        filenames, filetypes = _fits_database_query(params, drsfiles, indexdb,
+        filenames, filetypes = _fits_database_query(params, drsfiles, filedb,
                                                     condition1, argname,
                                                     file_inst)
         # now check drs logic [if exclusive must be same file type]
@@ -3331,7 +3369,8 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
 
 
 def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
-                         indexdb: IndexDatabase, condition: str,
+                         filedb: drs_database.PandasLikeDatabase,
+                         condition: str,
                          argname: str, obs_dir: drs_file.DrsPath,
                          ) -> Tuple[List[str], List[DrsInputFile]]:
     """
@@ -3349,7 +3388,7 @@ def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
     # set function name
     _ = display_func('_check_fits_keys', __NAME__)
     # get data for this condition (must be greater than 0)
-    table = indexdb.get_entries('*', condition=condition)
+    table = filedb.get_index_entries('*', condition=condition)
     # storage for output
     files, types = [], []
     # loop around rows in table
