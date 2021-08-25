@@ -306,7 +306,7 @@ class Database:
                            https://www.sqlitetutorial.net/sqlite-where/.
                        If None, no results will be filtered out.
 
-        :return:
+        :return: int, the count
         """
         # set function name
         func_name = __NAME__ + '.Database.get()'
