@@ -680,6 +680,11 @@ def update_index_db(params: ParamDict, block_kind: str,
                             exclude_directories=exclude_dirs,
                             include_directories=include_dirs,
                             filename=filename, suffix=suffix)
+    # -------------------------------------------------------------------------
+    # we need to reset some globally stored variables - these should be
+    #   recalculated when used
+    store = drs_database.PandasDBStorage()
+    store.reset(subkey=block_kind)
     # return the database
     return indexdbm
 
