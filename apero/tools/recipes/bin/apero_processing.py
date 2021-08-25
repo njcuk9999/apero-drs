@@ -15,10 +15,8 @@ import traceback
 from apero import lang
 from apero.base import base
 from apero.core.core import drs_log
-from apero.core.core import drs_file
 from apero.core.core import drs_database
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_utils
 from apero.tools.module.processing import drs_processing
 from apero.tools.module.database import manage_databases
 
@@ -119,31 +117,20 @@ def __main__(recipe, params):
         # ---------------------------------------------------------------------
         # find all files via index database
         # ---------------------------------------------------------------------
-        includelist = params.listp('INCLUDE_OBS_DIRS', dtype=str)
-        excludelist = params.listp('EXCLUDE_OBS_DIRS', dtype=str)
-        reindexlist = params.listp('REPROCESS_REINDEX_BLOCKS', dtype=str)
-        # get all block kinds
-        block_kinds = drs_file.DrsPath.get_block_names(params=params,
-                                                       block_filter='indexing')
+
         # construct the index database instance
         indexdbm = IndexDatabase(params)
+        indexdbm.load_db()
         # force the parallel key to False here (should not be True before we
         #   run processing)
         params['INPUTS']['PARALLEL'] = False
         # update the index database (taking into account include/exclude lists)
         #    we have to loop around block kinds to prevent recipe from updating
         #    the index database every time a new recipe starts
-        for block_kind in block_kinds:
-            # deal with reindexing
-            if block_kind not in reindexlist:
-                continue
-            # log block update
-            WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
-            # update index database for block kind
-            indexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
-                                                 includelist=includelist,
-                                                 excludelist=excludelist,
-                                                 indexdbm=indexdbm)
+        # this is really important as we have disabled updating for parallel
+        #  runs to make it more efficient
+        drs_processing.update_index_db(params)
+
         # fix the header data (object name, dprtype, mjdmid and trg_type etc)
         WLOG(params, '', textentry('40-503-00043'))
         indexdbm.update_header_fix(recipe)
@@ -166,7 +153,8 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Process run list
         # ----------------------------------------------------------------------
-        out = drs_processing.process_run_list(params, recipe, rlist, groupname)
+        out = drs_processing.process_run_list(params, rlist, groupname,
+                                              indexdbm)
         outlist, has_errors, ptime = out
 
         # ----------------------------------------------------------------------
