@@ -20,7 +20,7 @@ import numpy as np
 import os
 import sys
 import time
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 import warnings
 
 from apero.base import base
@@ -32,6 +32,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_argument
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
+from apero.core.utils import drs_utils
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero import lang
@@ -41,6 +42,7 @@ from apero.io import drs_lock
 from apero.science.preprocessing import gen_pp
 from apero.science import telluric
 from apero.tools.module.setup import drs_reset
+
 
 # =============================================================================
 # Define variables
@@ -420,7 +422,7 @@ def run_process(params: ParamDict, recipe: DrsRecipe, indexdbm: IndexDatabase,
     # Generate run list
     rlist = generate_run_list(params, indexdbm, runtable, None)
     # Process run list
-    outlist, has_errors, _ = process_run_list(params, recipe, rlist)
+    outlist, has_errors, _ = process_run_list(params, rlist)
     # display errors
     if has_errors:
         # terminate here
@@ -957,6 +959,46 @@ def reset_files(params):
             WLOG(params, '', textentry('40-502-00013', args=['Plot']))
 
 
+def update_index_db(params: ParamDict,
+                    indexdbm: Optional[IndexDatabase] = None):
+    """
+    Update the index database
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param indexdbm: IndexDatabase instance, avoids loading this twice if
+                     already present
+
+    :return: None, updates index database
+    """
+    # get include list
+    includelist = params.listp('INCLUDE_OBS_DIRS', dtype=str)
+    # get exclude list
+    excludelist = params.listp('EXCLUDE_OBS_DIRS', dtype=str)
+    # get re-index list
+    reindexlist = params.listp('REPROCESS_REINDEX_BLOCKS', dtype=str)
+    # get all block kinds
+    block_kinds = drs_file.DrsPath.get_block_names(params=params,
+                                                   block_filter='indexing')
+    # deal with not having database currently
+    if indexdbm is None:
+        # construct the index database instance
+        indexdbm = IndexDatabase(params)
+        indexdbm.load_db()
+    # this is really important as we have disabled updating for parallel
+    #  runs to make it more efficient
+    for block_kind in block_kinds:
+        # deal with reindexing
+        if block_kind not in reindexlist:
+            continue
+        # log block update
+        WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
+        # update index database for block kind
+        indexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
+                                             includelist=includelist,
+                                             excludelist=excludelist,
+                                             indexdbm=indexdbm)
+
+
 def generate_run_list(params, indexdbm: IndexDatabase, runtable,
                       skiptable):
     # print progress: generating run list
@@ -992,7 +1034,8 @@ def generate_run_list(params, indexdbm: IndexDatabase, runtable,
                         rlist)
 
 
-def process_run_list(params, recipe, runlist, group=None):
+def process_run_list(params: ParamDict, runlist, group=None,
+                     indexdbm: Optional[IndexDatabase] = None):
     # start a timer
     process_start = time.time()
     # get number of cores
@@ -1010,14 +1053,14 @@ def process_run_list(params, recipe, runlist, group=None):
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process_pool(params, runlist, cores=cores,
-                                    groupname=group)
+                                    groupname=group, indexdbm=indexdbm)
     # use Process to continue parallelization
     else:
         # log process: Running with N cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process_process(params, runlist, cores=cores,
-                                       groupname=group)
+                                       groupname=group, indexdbm=indexdbm)
     # end a timer
     process_end = time.time()
     # remove lock files
@@ -2134,7 +2177,8 @@ def _linear_process(params, runlist, number=0, cores=1, event=None,
     return return_dict
 
 
-def _multi_process_process(params, runlist, cores, groupname=None):
+def _multi_process_process(params, runlist, cores, groupname=None,
+                           indexdbm: Optional[IndexDatabase] = None):
     # first try to group tasks
     grouplist, groupnames = _group_tasks1(runlist, cores)
     # import multiprocessing
@@ -2171,12 +2215,19 @@ def _multi_process_process(params, runlist, cores, groupname=None):
             # debug log: MULTIPROCESS - joining job {0}
             WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
             proc.join()
+        # update the index database (taking into account include/exclude lists)
+        #    we have to loop around block kinds to prevent recipe from updating
+        #    the index database every time a new recipe starts
+        # this is really important as we have disabled updating for parallel
+        #  runs to make it more efficient
+        update_index_db(params)
 
     # return return_dict
     return dict(return_dict)
 
 
-def _multi_process_pool(params, runlist, cores, groupname=None):
+def _multi_process_pool(params, runlist, cores, groupname=None,
+                        indexdbm: Optional[IndexDatabase] = None):
     # first try to group tasks (now just by recipe)
     grouplist, groupnames = _group_tasks2(runlist, cores)
     # deal with Pool specific imports
@@ -2218,6 +2269,13 @@ def _multi_process_pool(params, runlist, cores, groupname=None):
         for row in range(len(results)):
             for key in results[row]:
                 return_dict[key] = results[row][key]
+
+        # update the index database (taking into account include/exclude lists)
+        #    we have to loop around block kinds to prevent recipe from updating
+        #    the index database every time a new recipe starts
+        # this is really important as we have disabled updating for parallel
+        #  runs to make it more efficient
+        update_index_db(params)
 
     # return return_dict
     return dict(return_dict)
