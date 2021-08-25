@@ -152,9 +152,9 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
     """
     # ------------------------------------------------------------------------
     # get file definitions (wave solution FP and wave solution HC)
-    out_wave_fp = drs_file.get_file_definition(params, 'WAVEM_FP',
+    out_wave_fp = drs_file.get_file_definition(params, 'WAVE_FP',
                                                block_kind='red')
-    out_wave_hc = drs_file.get_file_definition(params, 'WAVEM_HC',
+    out_wave_hc = drs_file.get_file_definition(params, 'WAVE_HC',
                                                block_kind='red')
     # ------------------------------------------------------------------------
     # deal with master = True
