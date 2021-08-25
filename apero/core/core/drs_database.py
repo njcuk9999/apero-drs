@@ -2504,6 +2504,8 @@ class ObjectDatabase(DatabaseManager):
 # Define class for astropy table as database
 # =============================================================================
 class PandasDBStorage():
+    classname: str = 'PandasDBStorage'
+
     def __init__(self):
         """
         Constructs the Pandas database storage class
@@ -2519,11 +2521,13 @@ class PandasDBStorage():
 
         :return: None, updates global variable "key" with value (if found)
         """
+        # set globals
+        global OBS_PATHS
+        global FILEDBS
+
         if key == 'obs_path':
-            global OBS_PATHS
             OBS_PATHS = value
         elif key == 'filedbs':
-            global FILEDBS
             FILEDBS = value
 
     def get(self, key: str) -> Any:
@@ -2534,10 +2538,13 @@ class PandasDBStorage():
 
         :return: Any, the value stored globally for "key"
         """
-        if key == 'obs_path':
+        if key == 'obs_paths':
             return OBS_PATHS
         elif key == 'filedbs':
             return FILEDBS
+        else:
+            emsg = 'Key "{0}" not found in {1}'
+            raise KeyError(emsg.format(key, self.classname))
 
     def reset(self, key: Optional[str] = None, subkey: Optional[str] = None):
         """
@@ -2550,8 +2557,11 @@ class PandasDBStorage():
 
         :return: None, resets the storage global variables
         """
+        # set globals
+        global OBS_PATHS
+        global FILEDBS
+
         if key == 'obs_path':
-            global OBS_PATHS
             # if we have a sub key just delete this
             if subkey is not None and subkey in OBS_PATHS:
                 del OBS_PATHS[subkey]
@@ -2559,7 +2569,6 @@ class PandasDBStorage():
             else:
                 OBS_PATHS =  dict()
         elif key == 'filedbs':
-            global FILEDBS
             # if we have a sub key just delete this
             if subkey is not None and subkey in FILEDBS:
                 del FILEDBS[subkey]
@@ -2568,12 +2577,10 @@ class PandasDBStorage():
                 FILEDBS =  dict()
         # no key --> reset all
         if key is None:
-            global OBS_PATHS
-            global FILEDBS
             # if we have a sub key just delete this
             if subkey is not None:
                 if subkey in OBS_PATHS:
-                    OBS_PATHS[subkey]
+                    del OBS_PATHS[subkey]
                 if subkey in FILEDBS:
                     del FILEDBS[subkey]
             # else reset entire thing
