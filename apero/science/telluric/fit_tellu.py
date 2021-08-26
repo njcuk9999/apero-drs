@@ -739,7 +739,8 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
 
 def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
                           combine, pca_props, sprops, qc_params,
-                          template_props, tpreprops, database=None):
+                          template_props, tpreprops, nprops,
+                          database=None):
     # get the header
     header = infile.get_header()
     # ------------------------------------------------------------------
@@ -762,18 +763,21 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     # load the blaze file for this fiber
     blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
-    # fake nprop dict
-    nprops = dict()
-    nprops['BLAZE_FILE'] = blaze_file
     # ------------------------------------------------------------------
     # Correct spectrum with simple division
     # ------------------------------------------------------------------
     # corrected data is just input data / recon
-    scorr = image * blaze / cprops['RECON_ABSO_SP']
+    # recon here was multiplied by the blazeAB so this needs to be taken into
+    #   account again by multipling image by blazeAB (from nprops)
+    scorr = image * nprops['BLAZE'] / cprops['RECON_ABSO_SP']
+    # ------------------------------------------------------------------
+    # fake nprop dict
+    nprops = dict()
+    nprops['BLAZE_FILE'] = blaze_file
     # ------------------------------------------------------------------
     # Create 1d spectra (s1d) of the corrected E2DS file
     # ------------------------------------------------------------------
-    scargs = [wprops['WAVEMAP'], scorr,blaze]
+    scargs = [wprops['WAVEMAP'], scorr, blaze]
     scwprops = extract.e2ds_to_s1d(params, recipe, *scargs, wgrid='wave',
                                    fiber=fiber, s1dkind='corrected sp')
     scvprops = extract.e2ds_to_s1d(params, recipe, *scargs,
