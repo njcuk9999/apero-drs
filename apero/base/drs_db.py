@@ -1779,8 +1779,8 @@ class MySQLDatabase(Database):
         else:
             self.tname = _proxy_table(tablename)
         # re-set path after call to super
-        self.path = '{0}@{1}'.format(self.user, self.host)
-        self.backup_path = str(path) + '.mysql.backup'
+        self.path = os.path.join(aperohome, '{0}_at_{1}'.format(user, host))
+        self.backup_path = self.path + '.{0}.mysql.backup'.format(tablename)
         # deal with database for sql
         self.add_database()
         # update table list
