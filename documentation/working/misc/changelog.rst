@@ -2,6 +2,110 @@ Changelog
 =========
 
 
+0.7.155 (2021-08-25)
+--------------------
+- `Apero.core.core.drs_database.py` - update reset + add key error for
+  PandasDBStorage.get. [Neil Cook]
+- `Apero.tools.recipes.bin.apero_processing.py` - move update index db
+  stuff to function (for use elsewhere as well) + add indexdbm to args
+  of `process_run_list`. [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - add an
+  `update_index_db` function to deal with updates to block kinds (add it
+  to multiprocesses so that after recipe finished all block kinds are
+  updated) [Neil Cook]
+- `Apero.database.database_update.py` - correct inputs for `index_update`.
+  [Neil Cook]
+- `A[erp/cpre/cpre/drs_database.py` - add subkey option to reset. [Neil
+  Cook]
+- `Apero.core.core.drs_database.py` - add classes PandasDBStorage (for
+  storage) and PandasLikeDatabase (proxy pandas dataframe as database)
+  to allow re-use of same databases / arrays instead of re-querying sql
+  databases. [Neil Cook]
+- `Apero.base.drs_db.py` - add to doc string. [Neil Cook]
+- `Apero.core.core.drs_argument.py` - only read database once if in
+  parallel mode and store in global way for other iterations. [Neil
+  Cook]
+- Update requirements - now require pandasql for efficiency. [Neil Cook]
+- `Apero.science.calib.wave.py` - wave solution should use `WAVE_FP` and
+  `WAVE_HC` not `WAVEM_FP` and `WAVEM_HC`. [Neil Cook]
+- `Apero.science.calib.localisation.py` - `all_labels` --> `all_labels2`.
+  [Neil Cook]
+
+
+0.7.154 (2021-08-23)
+--------------------
+- `Apero.core.instruments.default.grouping.py` - better handle masked
+  table: table.mask[colname]  not table[colname].mask. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.151-working' into
+  v0.7.151-working. [Neil Cook]
+- Repo visualizer: updated diagram. [repo-visualizer]
+- Workflows.diagram.yml - avoid making new commit on push. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.151-working' into
+  v0.7.151-working. [Neil Cook]
+- Repo visualizer: updated diagram. [repo-visualizer]
+- `Apero.base.drs_db.py` - update path for sql to be in ~/.apero/ (for
+  backups only) [Neil Cook]
+- `Apero.plotting.plot_functions.py` - plots using fiber should have fiber
+  in the suffix. [Neil Cook]
+- README.md - update code diagram description. [Neil Cook]
+
+
+0.7.153 (2021-08-20)
+--------------------
+- Repo visualizer: updated diagram. [repo-visualizer]
+- Update readme and diagram.yml. [Neil Cook]
+- Repo visualizer: updated diagram. [repo-visualizer]
+- Update readme and diagram.yml. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.151-working' into
+  v0.7.151-working. [Neil Cook]
+- Repo visualizer: updated diagram. [repo-visualizer]
+- Update readme and diagram.yml. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.151-working' into
+  v0.7.151-working. [Neil Cook]
+- Repo visualizer: updated diagram. [repo-visualizer]
+- Update readme and diagram.yml. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.151-working' into
+  v0.7.151-working. [Neil Cook]
+- Repo visualizer: updated diagram. [repo-visualizer]
+- Update diagram yaml. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.151-working' into
+  v0.7.151-working. [Neil Cook]
+- Repo visualizer: updated diagram. [repo-visualizer]
+- Update diagram yaml. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.151-working' into
+  v0.7.151-working. [Neil Cook]
+- Repo visualizer: updated diagram. [repo-visualizer]
+- Update diagram yaml. [Neil Cook]
+- Add diagram. [Neil Cook]
+
+  add diagram
+- Update diagram yaml. [Neil Cook]
+- Try adding codebase diagram. [Neil Cook]
+- `Apero.tools.recipes.bin.apero_get.py` - fix problems with blank fields.
+  [Neil Cook]
+- `Apero.tools.recipes.bin.apero_get.py` - deal with `filter_items` equal to
+  None. [Neil Cook]
+- Param func listp and listd need 'required' keyword argument. [Neil
+  Cook]
+- Merge remote-tracking branch 'origin/v0.7.151-working' into
+  v0.7.151-working. [Neil Cook]
+- `Apero.core.instruments.defualt.recipe_definitions.py` - name of
+  `apero_get` typo anme --> name. [Neil Cook]
+
+
+0.7.152 (2021-08-05)
+--------------------
+- Update loc regions text. [Neil Cook]
+- `Apero.core.instruments.default.grouping.py` - pol group must remove
+  masked rows. [Neil Cook]
+- `Apero.core.core.drs_file.py` - deal with math = "None" (for polar
+  combine --> return first header value) [Neil Cook]
+- Update date/version/changelog/docs. [Neil Cook]
+- Update date/version/changelog/docs. [Neil Cook]
+- `Apero.science.calib.wave.py` - `wfp_target_rv` None --> 0.0 (so not Null
+  in header) [Neil Cook]
+
+
 0.7.151 (2021-07-29)
 --------------------
 - `Apero.science.calib.wave.py` - `wfp_target_rv` None --> 0.0 (so not Null
