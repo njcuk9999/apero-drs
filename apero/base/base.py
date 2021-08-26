@@ -30,7 +30,7 @@ import yaml
 __PACKAGE__ = 'apero'
 __PATH__ = Path(__file__).parent.parent
 __INSTRUMENT__ = 'None'
-__version__ = '0.7.155'
+__version__ = '0.7.156'
 __author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
               'I. Boisse', 'E. Martioli']
 __date__ = '2021-08-26'

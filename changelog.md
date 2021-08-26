@@ -2,6 +2,15 @@ Changelog
 =========
 
 
+0.7.156 (2021-08-26)
+--------------------
+- Apero.base.drs_db.py - fix backup db directory. [Neil Cook]
+- Apero.science.telluric.fit_tellu.py - correct scaling on tcorr A and B
+  (needed blazeAB for reconAB not blazeA or blazeB) [Neil Cook]
+- Apero.science.calib.wave.py - fix master wave. [Neil Cook]
+- Update date/version/changelog/documents. [Neil Cook]
+
+
 0.7.155 (2021-08-25)
 --------------------
 - Apero.core.core.drs_database.py - update reset + add key error for
