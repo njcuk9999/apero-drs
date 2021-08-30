@@ -5603,7 +5603,7 @@ class DrsOutFileExtension:
         # return new copy
         return new
 
-    def set_infile(self, row: Union[int, None] = None,
+    def set_infile(self, params: ParamDict, row: Union[int, None] = None,
                    table: Union[Table, None] = None,
                    filename: Union[str, None] = None):
         """
@@ -5624,7 +5624,35 @@ class DrsOutFileExtension:
         if self.drsfile == 'table':
             self.datatype = 'table'
         elif self.datatype is None:
-            self.datatype = self.drsfile.datatype
+            # deal with no data type
+            # if self.drsfile is a single DrsFitsFile data type is easy
+            if isinstance(self.drsfile, DrsFitsFile):
+                self.datatype = self.drsfile.datatype
+            # if we have multiple drsfiles we have to find the correct one
+            #   it must be one of these by definition
+            elif isinstance(self.drsfile, list):
+                # loop around all drs files
+                for drsfile in self.drsfile:
+                    # check we have a drs file
+                    if isinstance(drsfile, DrsFitsFile):
+                        # make a copy of the drs file
+                        tmpdrsfile = drsfile.newcopy()
+                        # set the drs file with the filename found in index db
+                        tmpdrsfile.set_filename(self.filename)
+                        # set params
+                        tmpdrsfile.params = params
+                        # check if this drs file is correct for filename
+                        correct, _ = tmpdrsfile.check_file()
+                        # if correct we set the drs file name
+                        if correct:
+                            self.datatype = drsfile
+                            break
+                    else:
+                        continue
+            # worst case we don't have a data type - do we need an exception
+            #   here?
+            else:
+                self.datatype = None
 
     def load_infile(self, params: ParamDict):
         """
@@ -5962,8 +5990,9 @@ class DrsOutFile(DrsInputFile):
         # return the string representation of DrsInputFile
         return 'DrsOutFile[{0}]'.format(self.name)
 
-    def add_ext(self, name, drsfile: Union[DrsFitsFile, str], pos: int,
-                fiber: Union[str, None] = None,
+    def add_ext(self, name: str,
+                drsfile: Union[List[DrsFitsFile], DrsFitsFile, str],
+                pos: int, fiber: Union[str, None] = None,
                 block_kind: Union[str, None] = None,
                 hkeys: Union[dict, None] = None,
                 link: Union[list, str, None] = None,
@@ -6170,10 +6199,8 @@ class DrsOutFile(DrsInputFile):
             emsg = 'Error cannot link infile not set for primary extension'
 
             WLOG(params, 'error', emsg)
-
         # get information about loaded files
         has_hdr, valid_names = self.has_header()
-
         # loop around extensions
         for pos in self.extensions:
             # get ext
@@ -6199,8 +6226,24 @@ class DrsOutFile(DrsInputFile):
             # get drsfile hkeys
             if isinstance(ext.drsfile, str):
                 hkeys = None
-            else:
+            if isinstance(ext.drsfile, list):
+                hkeys = dict()
+                for drsfile in ext.drsfile:
+                    if isinstance(drsfile, DrsFitsFile):
+                        # get required keys
+                        tmp_hkeys = drsfile.required_header_keys
+                        # loop around keys
+                        for key in tmp_hkeys:
+                            # deal with key already existing
+                            if key in hkeys:
+                                hkeys[key].append(tmp_hkeys[key])
+                            # deal with no key existing
+                            else:
+                                hkeys[key] = [tmp_hkeys[key]]
+            elif isinstance(ext.drsfile, DrsFitsFile):
                 hkeys = ext.drsfile.required_header_keys
+            else:
+                hkeys = dict()
             # -----------------------------------------------------------------
             # get link position
             if ext.link not in valid_names:
@@ -6286,7 +6329,7 @@ class DrsOutFile(DrsInputFile):
                 # use first row that has a runstring (if any)
                 extrow = decide_on_table_row(exttable)
                 # add extension file properties
-                ext.set_infile(extrow, exttable)
+                ext.set_infile(params, extrow, exttable)
                 # log progress
                 msg = '\tAdding EXT={0} ({1}) [TABLE]'
                 margs = [pos, name]
@@ -6300,7 +6343,7 @@ class DrsOutFile(DrsInputFile):
                 # use first row that has a runstring (if any)
                 extrow = decide_on_table_row(exttable)
                 # add extension file properties
-                ext.set_infile(extrow, exttable)
+                ext.set_infile(params, extrow, exttable)
                 # load the extension file
                 ext.load_infile(params)
                 # deal with reduced data
