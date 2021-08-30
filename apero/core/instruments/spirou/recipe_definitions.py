@@ -128,7 +128,7 @@ thermalfile = dict(name='--thermalfile', dtype='file', default='None',
                    helpstr=textentry('THERMALFILE_HELP'))
 # -----------------------------------------------------------------------------
 wavefile = dict(name='--wavefile', dtype='file', default='None',
-                files=[files.out_wave_hc, files.out_wave_fp,
+                files=[files.out_wavem_sol, files.out_wave_night,
                        files.out_wave_master],
                 helpstr=textentry('WAVEFILE_HELP'))
 
@@ -698,7 +698,7 @@ apero_wave_master.epilog = textentry('WAVE_EXAMPLE')
 apero_wave_master.recipe_type = 'recipe'
 apero_wave_master.recipe_kind = 'calib-master'
 apero_wave_master.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
-                              WAVESOL_MASTER=files.out_wavem_fp,
+                              WAVESOL_MASTER=files.out_wavem_sol,
                               WAVEM_CAVITY=files.out_wavem_cavity,
                               WAVEM_HCLIST=files.out_wave_hclist_master,
                               WAVEM_FPLIST=files.out_wave_fplist_master,
@@ -1174,160 +1174,6 @@ apero_postprocess.group_func = grouping.group_individually
 apero_postprocess.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(apero_postprocess)
-
-# =============================================================================
-# Graveyard - old scripts
-# =============================================================================
-
-# -----------------------------------------------------------------------------
-# apero_wave_master_old
-# -----------------------------------------------------------------------------
-apero_wave_master_old = DrsRecipe(__INSTRUMENT__)
-apero_wave_master_old.name = 'apero_wave_master_old_{0}.py'.format(INSTRUMENT_ALIAS)
-apero_wave_master_old.shortname = 'WAVEM'
-apero_wave_master_old.instrument = __INSTRUMENT__
-apero_wave_master_old.in_block_str = 'tmp'
-apero_wave_master_old.out_block_str = 'red'
-apero_wave_master_old.extension = 'fits'
-apero_wave_master_old.description = textentry('WAVE_DESC')
-apero_wave_master_old.epilog = textentry('WAVE_EXAMPLE')
-apero_wave_master_old.recipe_type = 'recipe'
-apero_wave_master_old.recipe_kind = 'calib-master'
-apero_wave_master_old.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
-                                  WAVE_HCLL=files.out_wave_hcline,
-                                  WAVEM_HCRES=files.out_wavem_hcres,
-                                  WAVEM_HCMAP=files.out_wavem_hc,
-                                  WAVEM_FPMAP=files.out_wavem_fp,
-                                  WAVEM_FPRESTAB=files.out_wavem_res_table,
-                                  WAVEM_FPLLTAB=files.out_wavem_ll_table,
-                                  WAVEM_HCLIST=files.out_wave_hclist_master,
-                                  WAVEM_FPLIST=files.out_wave_fplist_master,
-                                  CCF_RV=files.out_ccf_fits)
-apero_wave_master_old.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
-                                      'WAVE_HC_TFIT_GRID', 'WAVE_HC_RESMAP',
-                                      'WAVE_LITTROW_CHECK1', 'WAVE_LITTROW_EXTRAP1',
-                                      'WAVE_LITTROW_CHECK2', 'WAVE_LITTROW_EXTRAP2',
-                                      'WAVE_FP_FINAL_ORDER', 'WAVE_FP_LWID_OFFSET',
-                                      'WAVE_FP_WAVE_RES', 'WAVE_FP_M_X_RES',
-                                      'WAVE_FP_IPT_CWID_1MHC',
-                                      'WAVE_FP_IPT_CWID_LLHC',
-                                      'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
-                                      'WAVE_FP_SINGLE_ORDER',
-                                      'CCF_RV_FIT', 'CCF_RV_FIT_LOOP',
-                                      'WAVEREF_EXPECTED', 'EXTRACT_S1D',
-                                      'EXTRACT_S1D_WEIGHT', 'WAVE_FIBER_COMPARISON',
-                                      'WAVE_FIBER_COMP', 'WAVENIGHT_ITERPLOT',
-                                      'WAVENIGHT_HISTPLOT')
-apero_wave_master_old.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
-                                        'SUM_WAVE_LITTROW_CHECK',
-                                        'SUM_WAVE_LITTROW_EXTRAP',
-                                        'SUM_CCF_RV_FIT', 'SUM_WAVE_FIBER_COMP',
-                                        'SUM_WAVENIGHT_ITERPLOT',
-                                        'SUM_WAVENIGHT_HISTPLOT', )
-apero_wave_master_old.set_arg(pos=0, **obs_dir)
-apero_wave_master_old.set_kwarg(name='--hcfiles', dtype='files',
-                                files=[files.pp_hc1_hc1],
-                                filelogic='exclusive', required=True,
-                                helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
-apero_wave_master_old.set_kwarg(name='--fpfiles', dtype='files',
-                                files=[files.pp_fp_fp],
-                                filelogic='exclusive', required=True,
-                                helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
-apero_wave_master_old.set_kwarg(**add_db)
-apero_wave_master_old.set_kwarg(**badfile)
-apero_wave_master_old.set_kwarg(**dobad)
-apero_wave_master_old.set_kwarg(**backsub)
-apero_wave_master_old.set_kwarg(**blazefile)
-apero_wave_master_old.set_kwarg(default=True, **combine)
-apero_wave_master_old.set_kwarg(**darkfile)
-apero_wave_master_old.set_kwarg(**dodark)
-apero_wave_master_old.set_kwarg(**fiber)
-apero_wave_master_old.set_kwarg(**flipimage)
-apero_wave_master_old.set_kwarg(**fluxunits)
-apero_wave_master_old.set_kwarg(**locofile)
-apero_wave_master_old.set_kwarg(**orderpfile)
-apero_wave_master_old.set_kwarg(**plot)
-apero_wave_master_old.set_kwarg(**resize)
-apero_wave_master_old.set_kwarg(**shapexfile)
-apero_wave_master_old.set_kwarg(**shapeyfile)
-apero_wave_master_old.set_kwarg(**shapelfile)
-apero_wave_master_old.set_kwarg(**wavefile)
-apero_wave_master_old.set_kwarg(name='--forceext', dtype='bool',
-                                default_ref='WAVE_ALWAYS_EXTRACT',
-                                helpstr='WAVE_EXTRACT_HELP')
-apero_wave_master_old.set_kwarg(name='--hcmode', dtype='options',
-                                helpstr=textentry('HCMODE_HELP'), options=['0'],
-                                default_ref='WAVE_MODE_HC')
-apero_wave_master_old.set_kwarg(name='--fpmode', dtype='options',
-                                helpstr=textentry('FPMODE_HELP'),
-                                options=['0', '1'],
-                                default_ref='WAVE_MODE_FP')
-apero_wave_master_old.group_func = grouping.group_by_dirname
-apero_wave_master_old.group_column = 'REPROCESS_OBSDIR_COL'
-# add to recipe
-recipes.append(apero_wave_master_old)
-
-# -----------------------------------------------------------------------------
-# apero_wave_night_old
-# -----------------------------------------------------------------------------
-apero_wave_night_old = DrsRecipe(__INSTRUMENT__)
-apero_wave_night_old.name = 'apero_wave_night_old_{0}.py'.format(INSTRUMENT_ALIAS)
-apero_wave_night_old.shortname = 'WAVE'
-apero_wave_night_old.instrument = __INSTRUMENT__
-apero_wave_night_old.in_block_str = 'tmp'
-apero_wave_night_old.out_block_str = 'red'
-apero_wave_night_old.extension = 'fits'
-apero_wave_night_old.description = textentry('WAVE_DESC')
-apero_wave_night_old.epilog = textentry('WAVE_EXAMPLE')
-apero_wave_night_old.recipe_type = 'recipe'
-apero_wave_night_old.recipe_kind = 'calib-night'
-apero_wave_night_old.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
-                                 WAVEMAP_NIGHT=files.out_wave_night,
-                                 WAVE_HCLIST=files.out_wave_hclist,
-                                 WAVE_FPLIST=files.out_wave_fplist,
-                                 CCF_RV=files.out_ccf_fits)
-apero_wave_night_old.set_debug_plots('WAVENIGHT_ITERPLOT', 'WAVENIGHT_HISTPLOT',
-                                     'WAVEREF_EXPECTED', 'CCF_RV_FIT',
-                                     'CCF_RV_FIT_LOOP', 'EXTRACT_S1D',
-                                     'EXTRACT_S1D_WEIGHT')
-apero_wave_night_old.set_summary_plots('SUM_WAVENIGHT_ITERPLOT',
-                                       'SUM_WAVENIGHT_HISTPLOT',
-                                       'SUM_CCF_RV_FIT')
-apero_wave_night_old.set_arg(pos=0, **obs_dir)
-apero_wave_night_old.set_kwarg(name='--hcfiles', dtype='files',
-                               files=[files.pp_hc1_hc1],
-                               filelogic='exclusive', required=True,
-                               helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
-apero_wave_night_old.set_kwarg(name='--fpfiles', dtype='files',
-                               files=[files.pp_fp_fp],
-                               filelogic='exclusive', required=True,
-                               helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
-apero_wave_night_old.set_kwarg(**add_db)
-apero_wave_night_old.set_kwarg(**badfile)
-apero_wave_night_old.set_kwarg(**dobad)
-apero_wave_night_old.set_kwarg(**backsub)
-apero_wave_night_old.set_kwarg(**blazefile)
-apero_wave_night_old.set_kwarg(default=True, **combine)
-apero_wave_night_old.set_kwarg(**darkfile)
-apero_wave_night_old.set_kwarg(**dodark)
-apero_wave_night_old.set_kwarg(**fiber)
-apero_wave_night_old.set_kwarg(**flipimage)
-apero_wave_night_old.set_kwarg(**fluxunits)
-apero_wave_night_old.set_kwarg(**locofile)
-apero_wave_night_old.set_kwarg(**orderpfile)
-apero_wave_night_old.set_kwarg(**plot)
-apero_wave_night_old.set_kwarg(**resize)
-apero_wave_night_old.set_kwarg(**shapexfile)
-apero_wave_night_old.set_kwarg(**shapeyfile)
-apero_wave_night_old.set_kwarg(**shapelfile)
-apero_wave_night_old.set_kwarg(**wavefile)
-apero_wave_night_old.set_kwarg(name='--forceext', dtype='bool',
-                               default_ref='WAVE_ALWAYS_EXTRACT',
-                               helpstr='WAVE_EXTRACT_HELP')
-apero_wave_night_old.group_func = grouping.group_by_dirname
-apero_wave_night_old.group_column = 'REPROCESS_OBSDIR_COL'
-# add to recipe
-recipes.append(apero_wave_night_old)
 
 # =============================================================================
 # Run order
