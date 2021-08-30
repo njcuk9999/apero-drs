@@ -153,10 +153,8 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
     """
     # ------------------------------------------------------------------------
     # get file definitions (wave solution FP and wave solution HC)
-    out_wave_fp = drs_file.get_file_definition(params, 'WAVE_FP',
-                                               block_kind='red')
-    out_wave_hc = drs_file.get_file_definition(params, 'WAVE_HC',
-                                               block_kind='red')
+    out_wave = drs_file.get_file_definition(params, 'WAVE_NIGHT',
+                                            block_kind='red')
     # ------------------------------------------------------------------------
     # deal with master = True
     if master is True:
@@ -164,18 +162,14 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
         inwavefile, out_wave = get_masterwave_filename(params, fiber=usefiber,
                                                        database=database)
         # deal with out_wave from master
-        if out_wave_fp.suffix in str(inwavefile):
-            out_wave_fp = out_wave
-        else:
-            out_wave_hc = out_wave
+        out_wave = out_wave
         source = 'master'
     else:
         # ---------------------------------------------------------------------
         # setup calib db keys
         # ---------------------------------------------------------------------
         # get calibration key
-        key_fp = out_wave_fp.get_dbkey()
-        key_hc = out_wave_hc.get_dbkey()
+        key = out_wave.get_dbkey()
         # ---------------------------------------------------------------------
         if database is None:
             # load the calibration database
@@ -186,7 +180,7 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
         # ---------------------------------------------------------------------
         # load filename from inputs/calibDB
         # ---------------------------------------------------------------------
-        lkwargs = dict(userinputkey='WAVEFILE', database=calibdbm, key=key_fp,
+        lkwargs = dict(userinputkey='WAVEFILE', database=calibdbm, key=key,
                        inheader=header, filename=inwavefile, fiber=usefiber,
                        return_filename=True, required=False, return_source=True)
         # load wave fp file
@@ -194,19 +188,7 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
         # get filename and source from outputs
         inwavefile, source = fout
         if isinstance(source, str):
-            source += '[FP]'
-        # ---------------------------------------------------------------------
-        # then check hc solution (if we don't have an fp solution filename
-        if inwavefile is None:
-            # need to re-add filename (may have changed value)
-            lkwargs['filename'] = inwavefile
-            lkwargs['key'] = key_hc
-            # load wave hc file
-            fout = gen_calib.load_calib_file(params, **lkwargs)
-            # get filename and source from outputs
-            filename, source = fout
-            if isinstance(source, str):
-                source += '[FP]'
+            source += '[night]'
         # ---------------------------------------------------------------------
         # if inwavefile is still None
         if inwavefile is None:
@@ -215,19 +197,11 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
                                                            fiber=usefiber,
                                                            database=database)
             # deal with out_wave from master
-            if out_wave_fp.suffix in str(inwavefile):
-                out_wave_fp = out_wave
-            else:
-                out_wave_hc = out_wave
             source = 'master'
     # -------------------------------------------------------------------------
     # construct new infile instance (first fp solution then hc solutions)
-    if out_wave_fp.suffix in str(inwavefile):
-        wavefile = out_wave_fp.newcopy(filename=inwavefile, params=params,
-                                       fiber=usefiber)
-    else:
-        wavefile = out_wave_hc.newcopy(filename=inwavefile, params=params,
-                                       fiber=usefiber)
+    wavefile = out_wave.newcopy(filename=inwavefile, params=params,
+                                fiber=usefiber)
     # read data/header
     wavefile.read_file()
     # get wave map
