@@ -139,7 +139,7 @@ def __main__(recipe, params):
         filepostfile.out_filename = outfile
         filepostfile.out_dirname = outdir
         # add extension 0 file properties
-        filepostfile.extensions[0].set_infile(filename=infile.filename)
+        filepostfile.extensions[0].set_infile(params, filename=infile.filename)
         # load the extension 0 file
         filepostfile.extensions[0].load_infile(params)
         # -----------------------------------------------------------------
