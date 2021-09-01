@@ -91,8 +91,8 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get files
     infile = params['INPUTS']['FILES'][1][0]
-    # get whether we are overwriting files
-    overwrite = params['INPUTS']['OVERWRITE']
+    # get whether we are skipping files that exist on disk
+    skip = params['INPUTS']['SKIP']
     # get whether we are to clean the reduced inputs
     clear = params['INPUTS']['CLEAR']
     # ---------------------------------------------------------------------
@@ -122,7 +122,7 @@ def __main__(recipe, params):
         # generate out file name
         outfile, outdir = outfunc(params, postfile, identifier, obs_dir)
         # skip existing files
-        if (not overwrite) and os.path.exists(outfile):
+        if skip and os.path.exists(outfile):
             continue
         # -----------------------------------------------------------------
         # log process: Processing {0}'
