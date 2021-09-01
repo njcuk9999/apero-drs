@@ -1164,7 +1164,7 @@ apero_postprocess.set_arg(name='files', dtype='files', pos='1+',
                           filelogic='exclusive',
                           helpstr=(textentry('FILES_HELP')),
                           limit=1)
-apero_postprocess.set_kwarg(name='--overwrite', dtype='switch',
+apero_postprocess.set_kwarg(name='--skip', dtype='switch',
                             default_ref='POST_OVERWRITE',
                             helpstr=textentry('OUT_OVERWRITE_HELP'))
 apero_postprocess.set_kwarg(name='--clear', dtype='switch',
