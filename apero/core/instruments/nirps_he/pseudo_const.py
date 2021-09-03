@@ -399,26 +399,32 @@ class PseudoConstants(DefaultConstants):
         header_cols.add(name='KW_DATE_OBS', datatype='VARCHAR(80)')
         header_cols.add(name='KW_MJDATE', datatype='VARCHAR(80)')
         header_cols.add(name='KW_TARGET_TYPE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_MID_OBS_TIME', datatype='DOUBLE')
+        header_cols.add(name='KW_MID_OBS_TIME', datatype='DOUBLE',
+                        is_index=True)
         header_cols.add(name='KW_OBJECTNAME', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_OBJNAME', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_OBJNAME', datatype='VARCHAR(80)',
+                        is_index=True)
         header_cols.add(name='KW_OBSTYPE', datatype='VARCHAR(80)')
         header_cols.add(name='KW_EXPTIME', datatype='DOUBLE')
         header_cols.add(name='KW_INSTRUMENT', datatype='VARCHAR(80)')
         header_cols.add(name='KW_INST_MODE', datatype='VARCHAR(80)')
         header_cols.add(name='KW_RAW_DPRTYPE', datatype='VARCHAR(80)')
         header_cols.add(name='KW_RAW_DPRCATG', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_DPRTYPE', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_DPRTYPE', datatype='VARCHAR(80)',
+                        is_index=True)
         header_cols.add(name='KW_DRS_MODE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_OUTPUT', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_OUTPUT', datatype='VARCHAR(80)',
+                        is_index=True)
         header_cols.add(name='KW_CMPLTEXP', datatype='VARCHAR(80)')
         header_cols.add(name='KW_NEXP', datatype='VARCHAR(80)')
         header_cols.add(name='KW_VERSION', datatype='VARCHAR(80)')
         header_cols.add(name='KW_PPVERSION', datatype='VARCHAR(80)')
         header_cols.add(name='KW_PI_NAME', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_PID', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_PID', datatype='VARCHAR(80)',
+                        is_index=True)
         header_cols.add(name='KW_FIBER', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_IDENTIFIER', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_IDENTIFIER', datatype='VARCHAR(80)',
+                        is_index=True)
         # check that filedef keys are present
         for fkey in self.FILEDEF_HEADER_KEYS():
             if fkey not in header_cols.names:
