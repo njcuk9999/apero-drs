@@ -943,12 +943,13 @@ out_wavem_cavity = drs_finput('WAVEM_CAV', hkeys=dict(KW_OUTPUT='WAVEM_CAV'),
                               outfunc=out.calib_file)
 
 # the default wave master
-out_wave_master = drs_finput('WAVEM_D', hkeys=dict(KW_OUTPUT='WAVEM_SOL'),
+out_wave_master = drs_finput('WAVESOL_DEFAULT',
+                             hkeys=dict(KW_OUTPUT='WAVESOL_DEFAULT'),
                              fibers=['A', 'B'],
                              filetype='.fits',
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_wavem',
-                             dbname='calibration', dbkey='WAVEM_D',
+                             dbname='calibration', dbkey='WAVESOL_DEFAULT',
                              outfunc=out.calib_file)
 
 # add wave outputs to output fileset
