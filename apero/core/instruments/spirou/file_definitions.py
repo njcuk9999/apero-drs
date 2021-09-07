@@ -840,7 +840,7 @@ out_wavem_sol = drs_finput('WAVESOL_MASTER',
                            filetype='.fits',
                            intype=[out_ext_e2ds, out_ext_e2dsff],
                            suffix='_wavesol_master_',
-                           dbname='calibration', dbkey='WAVESOL_MASTER',
+                           dbname='calibration', dbkey='WAVEM_D',
                            outfunc=out.calib_file)
 
 # hc line file from master
@@ -874,12 +874,13 @@ out_wavem_cavity = drs_finput('WAVEM_CAV', hkeys=dict(KW_OUTPUT='WAVEM_CAV'),
                               outfunc=out.calib_file)
 
 # the default wave master
-out_wave_master = drs_finput('WAVEM_D', hkeys=dict(KW_OUTPUT='WAVEM_SOL'),
+out_wave_master = drs_finput('WAVESOL_DEFAULT',
+                             hkeys=dict(KW_OUTPUT='WAVESOL_DEFAULT'),
                              fibers=['AB', 'A', 'B', 'C'],
                              filetype='.fits',
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_wavem',
-                             dbname='calibration', dbkey='WAVEM_D',
+                             dbname='calibration', dbkey='WAVESOL_DEFAULT',
                              outfunc=out.calib_file)
 
 # add wave outputs to output fileset
@@ -887,10 +888,12 @@ red_file.addset(out_wavem_sol)
 red_file.addset(out_wave_hclist_master)
 red_file.addset(out_wave_fplist_master)
 red_file.addset(out_wavem_cavity)
+red_file.addset(out_wave_master)
 calib_file.addset(out_wavem_sol)
 calib_file.addset(out_wave_hclist_master)
 calib_file.addset(out_wave_fplist_master)
 calib_file.addset(out_wavem_cavity)
+calib_file.addset(out_wave_master)
 
 # -----------------------------------------------------------------------------
 # wave files (master) old

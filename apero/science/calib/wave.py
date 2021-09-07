@@ -79,7 +79,7 @@ def get_masterwave_filename(params: ParamDict, fiber: str,
     """
     Load the master wave solution
 
-    Order of preference: WAVEM_FP >> WAVEM_HC >> WAVEM_D
+    Order of preference: WAVESOL_MASTER >> WAVESOL_DEFAULT
 
     :param params:
     :param fiber:
@@ -101,7 +101,7 @@ def get_masterwave_filename(params: ParamDict, fiber: str,
         calibdbm = database
     # ------------------------------------------------------------------------
     # get file definition (order of preference)
-    keys = ['WAVEM_FP', 'WAVEM_HC', 'WAVEM_D']
+    keys = ['WAVESOL_MASTER', 'WAVESOL_DEFAULT']
     filename, out_wave = None, None
     # loop around possible wave master keys
     for k_it in range(len(keys)):
