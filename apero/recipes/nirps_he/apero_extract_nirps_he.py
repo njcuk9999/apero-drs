@@ -247,9 +247,13 @@ def __main__(recipe, params):
             # log progress: extracting image
             WLOG(params, 'info', textentry('40-016-00011'))
             # extract spectrum
-            eprops = extract.extract2d(params, image2, orderp, lcoeffs2, nframes,
-                                       props, inflat=flat, inblaze=blaze,
-                                       fiber=fiber)
+            eprops = extract.extract2d(params, image2, orderp, lcoeffs2,
+                                       nframes, props, fiber=fiber)
+            # leak correction
+            eprops = extract.manage_leak_correction(params, eprops, infile,
+                                                    fiber)
+            # flat correction for e2dsff
+            eprops = extract.flat_blaze_correction(eprops, flat, blaze)
             # --------------------------------------------------------------
             if not quicklook:
                 s1dextfile = params['EXT_S1D_INTYPE']

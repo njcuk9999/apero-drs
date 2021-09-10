@@ -194,6 +194,9 @@ def __main__(recipe, params):
             # extract spectrum
             eprops = extract.extract2d(params, image2, orderp, lcoeffs2,
                                        nframes, props, kind='flat', fiber=fiber)
+            # fit blaze and get flat
+            eprops = extract.extract_blaze_flat(params, eprops, fiber)
+
             # --------------------------------------------------------------
             # Plots
             # --------------------------------------------------------------
