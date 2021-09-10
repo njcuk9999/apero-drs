@@ -26,7 +26,13 @@ e2ds_to_s1d = gen_ext.e2ds_to_s1d
 
 extract2d = extraction.extraction_twod
 
+extract_blaze_flat = extraction.extract_blaze_flat
+
+flat_blaze_correction = extraction.flat_blaze_correction
+
 get_berv = berv.get_berv
+
+manage_leak_correction = gen_ext.manage_leak_correction
 
 order_profiles = gen_ext.order_profiles
 

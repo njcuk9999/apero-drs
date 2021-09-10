@@ -586,6 +586,204 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
     return outputs, props
 
 
+
+def manage_leak_correction(params: ParamDict, eprops: ParamDict,
+                           infile: DrsFitsFile, fiber: str) -> ParamDict:
+    """
+    Manage the leak correction
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param eprops: ParamDict, parameter dictionary of extraction data
+    :param infile: DrsFitsFile, the input drs file instance (for header)
+    :param fiber: str, the fiber we are correcting (we only correct science
+                  fibers)
+
+    :return: ParamDict, the updated extraction data parameter dictionary
+    """
+    # set the function name
+    func_name = __NAME__ + '.manage_leak_correction()'
+    # get allowed infile types
+    allowed_filetypes = params.listp('ALLOWED_LEAK_TYPES', dtype=str)
+    # get dprtype
+    dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
+    # get the ut file header
+    inheader = infile.header
+    # get this instruments science fibers and reference fiber
+    pconst = constants.pload()
+    # science fibers should be list of strings, reference fiber should be string
+    sci_fibers, ref_fiber = pconst.FIBER_KINDS()
+    # get vectors from eprops
+    uncorr_e2ds = np.array(eprops['E2DS'])
+    e2ds = np.array(eprops['E2DS'])
+    # ----------------------------------------------------------------------
+    # deal with quick look
+    quicklook = params['EXT_QUICK_LOOK']
+    # deal with correct dprtype
+    cond1 = dprtype not in allowed_filetypes
+    # deal with correct fiber
+    cond2 = fiber not in sci_fibers
+    # if any of these conditions are true do not correct for dark_fp
+    if quicklook or cond1 or cond2:
+        # add used parameters
+        eprops['LEAK_2D_EXTRACT_FILES_USED'] = 'No leak'
+        eprops['LEAK_EXTRACT_FILE_USED'] = 'No leak'
+        eprops['LEAK_BCKGRD_PERCENTILE_USED'] = 'No leak'
+        eprops['LEAK_NORM_PERCENTILE_USED'] = 'No leak'
+        eprops['LEAK_LOW_PERCENTILE_USED'] = 'No leak'
+        eprops['LEAK_HIGH_PERCENTILE_USED'] = 'No leak'
+        eprops['LEAK_BAD_RATIO_OFFSET_USED'] = 'No leak'
+        # set sources
+        keys = ['LEAK_2D_EXTRACT_FILES_USED', 'LEAK_EXTRACT_FILE_USED',
+                'LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
+                'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
+                'LEAK_BAD_RATIO_OFFSET_USED']
+        eprops.set_sources(keys, func_name)
+        # add updated e2ds
+        eprops['UNCORR_E2DS'] = uncorr_e2ds
+        eprops['E2DS'] = e2ds
+        eprops['LEAKCORR'] = np.full_like(e2ds.shape, np.nan)
+        # return update extraction properties
+        return eprops
+    # ----------------------------------------------------------------------
+    # correct for leak
+    e2ds, leakcorr, props = correct_ext_dark_fp(params, e2ds, inheader, fiber,
+                                         database=None)
+    # add used parameters
+    for key in props:
+        eprops.set(key, props[key], source=props.sources[key])
+    # add updated e2ds
+    eprops['UNCORR_E2DS'] = uncorr_e2ds
+    eprops['E2DS'] = e2ds
+    eprops['LEAKCORR'] = leakcorr
+    # return update extraction properties
+    return eprops
+
+
+# TODO: Check function with Etienne before use
+def correct_ext_dark_fp(params, image, header, fiber, database=None, **kwargs):
+    # set the function name
+    func_name = __NAME__ + '.correct_ext_dark_fp()'
+    # get properties from parameters
+    leak2dext = pcheck(params, 'LEAK_2D_EXTRACT_FILES', 'leak2dext', kwargs,
+                       func_name, mapf='list')
+    extfiletype = pcheck(params, 'LEAK_EXTRACT_FILE', 'extfiletype', kwargs,
+                         func_name)
+    bckgrd_percentile = pcheck(params, 'LEAK_BCKGRD_PERCENTILE',
+                               'bckgrd_percentile', kwargs, func_name)
+    norm_percentile = pcheck(params, 'LEAK_NORM_PERCENTILE', 'norm_percentile',
+                             kwargs, func_name)
+    low_percentile = pcheck(params, 'LEAK_LOW_PERCENTILE', 'low_percentile',
+                            kwargs, func_name)
+    high_percentile = pcheck(params, 'LEAK_HIGH_PERCENTILE', 'high_percentile',
+                             kwargs, func_name)
+    bad_ratio = pcheck(params, 'LEAK_BAD_RATIO_OFFSET', 'bad_ratio')
+    # group bounding percentiles
+    bpercents = [low_percentile, high_percentile]
+    # get size of reference image
+    nbo, nbpix = image.shape
+    # copy image
+    image1 = np.array(image)
+    image2 = np.array(image)
+    # ----------------------------------------------------------------------
+    # get leak master for file
+    _, leakmaster = get_leak_master(params, header, fiber,
+                                    'LEAKM_E2DS', database=database)
+    # ----------------------------------------------------------------------
+    # store the ratio of observe to master reference
+    ref_ratio_arr = np.zeros(nbo)
+    dot_ratio_arr = np.zeros(nbo)
+    approx_ratio_arr = np.zeros(nbo)
+    # store the method used (either "dot" or "approx")
+    method = []
+    # loop around reference image orders and normalise by percentile
+    for order_num in range(nbo):
+        # get order values for master
+        master_ref_ord = leakmaster[order_num]
+        # remove the pedestal from the FP to avoid an offset from
+        #     thermal background
+        background = np.nanpercentile(image1[order_num], bckgrd_percentile)
+        image1[order_num] = image1[order_num] - background
+        # only perform the measurement of the amplitude of the leakage signal
+        #  on the lower and upper percentiles. This allows for a small number
+        #  of hot/dark pixels along the order. Without this, we end up with
+        #  some spurious amplitude values in the frames
+        with warnings.catch_warnings(record=True) as _:
+            # get percentiles
+            low, high = np.nanpercentile(image1[order_num], bpercents)
+            lowm, highm = np.nanpercentile(master_ref_ord, bpercents)
+            # translate this into a mask
+            mask = image1[order_num] > low
+            mask &= image1[order_num] < high
+            mask &= master_ref_ord > lowm
+            mask &= master_ref_ord < highm
+        # approximate ratio, we know that frames were normalized with their
+        #  "norm_percentile" percentile prior to median combining
+        amplitude = np.nanpercentile(image1[order_num], norm_percentile)
+        approx_ratio = 1 / amplitude
+        # save to storage
+        approx_ratio_arr[order_num] = float(approx_ratio)
+        # much more accurate ratio from a dot product
+        part1 = mp.nansum(master_ref_ord[mask] * image1[order_num][mask])
+        part2 = mp.nansum(image1[order_num][mask] ** 2)
+        ratio = part1 / part2
+        # save to storage
+        dot_ratio_arr[order_num] = float(ratio)
+        # deal with spurious ref FP ratio
+        cond1 = (ratio / approx_ratio) < (1 - bad_ratio)
+        cond2 = (ratio / approx_ratio) > (1 + bad_ratio)
+        # Ratio must be within (1-badratio) to (1+badratio) of the approximate
+        #   ratio -- otherwise ratio is bad
+        if cond1 or cond2:
+            # log warning that ref FP ratio is spurious
+            wargs = [order_num, ratio, approx_ratio, ratio / approx_ratio,
+                     1 - bad_ratio, 1 + bad_ratio]
+            WLOG(params, 'warning', textentry('10-016-00024', args=wargs))
+            # set the ratio to the approx ratio
+            ratio = float(approx_ratio)
+            # set the ratio method
+            method.append('approx')
+        else:
+            # set method
+            method.append('dot')
+        # save ratios to storage
+        ref_ratio_arr[order_num] = float(ratio)
+    # --------------------------------------------------------------
+    # storage for the ratio of leakage
+    ratio_leak = np.zeros(nbo)
+    # loop around orders
+    for order_num in range(nbo):
+        # scale the leakage for that order to the observed amplitude
+        scale = leakmaster[order_num] / ref_ratio_arr[order_num]
+        # apply leakage scaling
+        image2[order_num] = image[order_num] - scale
+        # calculate the ratio of the leakage
+        rpart1 = np.nanpercentile(image1[order_num], norm_percentile)
+        rpart2 = mp.nanmedian(image2[order_num])
+        ratio_leak[order_num] = rpart1 / rpart2
+
+    # ----------------------------------------------------------------------
+    # generate a properties dictionary
+    props = ParamDict()
+    # ----------------------------------------------------------------------
+    # add used parameters
+    props['LEAK_2D_EXTRACT_FILES_USED'] = leak2dext
+    props['LEAK_EXTRACT_FILE_USED'] = extfiletype
+    props['LEAK_BCKGRD_PERCENTILE_USED'] = bckgrd_percentile
+    props['LEAK_NORM_PERCENTILE_USED'] = norm_percentile
+    props['LEAK_LOW_PERCENTILE_USED'] = low_percentile
+    props['LEAK_HIGH_PERCENTILE_USED'] = high_percentile
+    props['LEAK_BAD_RATIO_OFFSET_USED'] = bad_ratio
+    # set sources
+    keys = ['LEAK_2D_EXTRACT_FILES_USED', 'LEAK_EXTRACT_FILE_USED',
+            'LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
+            'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
+            'LEAK_BAD_RATIO_OFFSET_USED']
+    props.set_sources(keys, func_name)
+    # ----------------------------------------------------------------------
+    # return properties
+    return image2, ratio_leak, props
+
+
 def correct_dark_fp(params, extractdict, database=None, **kwargs):
     # set the function name
     func_name = __NAME__ + '.correct_dark_fp()'
