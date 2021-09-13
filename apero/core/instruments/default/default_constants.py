@@ -121,10 +121,10 @@ __all__ = [
     'FF_BLAZE_NITER', 'FF_BLAZE_SINC_MED_SIZE',
     # leakage constants
     'ALLOWED_LEAKM_TYPES', 'LEAKM_ALWAYS_EXTRACT', 'LEAKM_EXTRACT_TYPE',
-    'ALLOWED_LEAK_TYPES', 'LEAK_EXTRACT_FILE', 'LEAK_2D_EXTRACT_FILES',
+    'CORRECT_LEAKAGE', 'LEAK_EXTRACT_FILE', 'LEAK_2D_EXTRACT_FILES',
     'LEAK_1D_EXTRACT_FILES', 'LEAK_BCKGRD_PERCENTILE', 'LEAK_NORM_PERCENTILE',
     'LEAKM_WSMOOTH', 'LEAKM_KERSIZE', 'LEAK_LOW_PERCENTILE',
-    'LEAK_HIGH_PERCENTILE', 'LEAK_BAD_RATIO_OFFSET',
+    'LEAK_HIGH_PERCENTILE', 'LEAK_BAD_RATIO_OFFSET', 'LEAKAGE_REF_TYPES',
     # extract constants
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
     'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
@@ -1935,11 +1935,17 @@ LEAKM_EXTRACT_TYPE = Const('LEAKM_EXTRACT_TYPE', value=None, dtype=str,
                                         'allowed are E2DSFF) - must match with '
                                         'LEAK_EXTRACT_FILE'))
 
-# Define the types of input extracted files to correct for leakage
-ALLOWED_LEAK_TYPES = Const('ALLOWED_LEAK_TYPES', value=None, dtype=str,
-                           source=__NAME__, group=cgroup,
-                           description=('Define the types of input extracted '
-                                        'files to correct for leakage'))
+# Define whether we want to correct leakage by default
+CORRECT_LEAKAGE = Const('CORRECT_LEAKAGE', value=None, dtype=str,
+                        source=__NAME__, group=cgroup,
+                        description='Define whether we want to correct '
+                                    'leakage by default')
+
+# Define DPRTYPE in reference fiber to do correction
+LEAKAGE_REF_TYPES = Const('LEAKAGE_REF_TYPES', value=None, dtype=str,
+                        source=__NAME__, group=cgroup,
+                        description='Define DPRTYPE in reference fiber to do '
+                                    'correction')
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
