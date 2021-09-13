@@ -515,7 +515,7 @@ apero_leak_master.description = textentry('LEAKM_DESC')
 apero_leak_master.epilog = textentry('LEAKM_EXAMPLE')
 apero_leak_master.recipe_type = 'recipe'
 apero_leak_master.recipe_kind = 'calib-master'
-apero_leak_master.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2dsff,
+apero_leak_master.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2ds,
                             LEAK_MASTER=files.out_leak_master)
 apero_leak_master.set_arg(pos=0, **obs_dir)
 apero_leak_master.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
