@@ -1540,13 +1540,19 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     for srecipe in srecipelist:
         # deal with skip
         runname = 'RUN_{0}'.format(srecipe.shortname)
-        # skip if runname is not True
+        # skip if run name is not True
         if runname in params:
             if not params[runname]:
                 wargs = [srecipe.name, srecipe.shortname]
                 WLOG(params, '', textentry('40-503-00021', args=wargs),
                      colour='yellow')
                 continue
+        # deal with run name not in params (means not selected)
+        if runname not in params:
+            wargs = [srecipe.name, srecipe.shortname]
+            WLOG(params, '', textentry('40-503-00045', args=wargs),
+                 colour='yellow')
+            continue
         # print progress
         wargs = [srecipe.name, srecipe.shortname]
         WLOG(params, '', textentry('40-503-00012', args=wargs))
