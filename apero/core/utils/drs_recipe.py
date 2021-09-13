@@ -1694,7 +1694,8 @@ class DrsRunSequence:
             if drs_text.true_text(add['template_required']):
                 frecipe.template_required = True
             # add filters
-            frecipe = self.add_filters(frecipe, infilters=add['filters'])
+            frecipe = self.add_filters(frecipe, infilters=add['filters'],
+                                       files=add['files'])
             # update file definitions
             frecipe = self.update_args(frecipe, arguments=add['arguments'],
                                        rargs=add['args'], rkwargs=add['kwargs'],
