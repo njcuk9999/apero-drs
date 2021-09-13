@@ -1011,9 +1011,13 @@ LEAKM_ALWAYS_EXTRACT.value = False
 LEAKM_EXTRACT_TYPE = LEAKM_EXTRACT_TYPE.copy(__NAME__)
 LEAKM_EXTRACT_TYPE.value = 'E2DSFF'
 
-# Define the types of input extracted files to correct for leakage
-ALLOWED_LEAK_TYPES = ALLOWED_LEAK_TYPES.copy(__NAME__)
-ALLOWED_LEAK_TYPES.value = 'OBJ_FP'
+# Define whether we want to correct leakage by default
+CORRECT_LEAKAGE = CORRECT_LEAKAGE.copy(__NAME__)
+CORRECT_LEAKAGE.value = True
+
+# Define DPRTYPE in reference fiber to do correction
+LEAKAGE_REF_TYPES = LEAKAGE_REF_TYPES.copy(__NAME__)
+LEAKAGE_REF_TYPES.value = 'FP'
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
