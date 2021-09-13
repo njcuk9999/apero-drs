@@ -602,8 +602,6 @@ def manage_leak_correction(params: ParamDict, eprops: ParamDict,
     """
     # set the function name
     func_name = __NAME__ + '.manage_leak_correction()'
-    # get allowed infile types
-    allowed_filetypes = params.listp('ALLOWED_LEAK_TYPES', dtype=str)
     # get dprtype
     dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
     # get the ut file header
@@ -612,18 +610,39 @@ def manage_leak_correction(params: ParamDict, eprops: ParamDict,
     pconst = constants.pload()
     # science fibers should be list of strings, reference fiber should be string
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
+    # get the type of data for each fiber
+    ref_type = pconst.FIBER_DATA_TYPE(dprtype, ref_fiber)
     # get vectors from eprops
     uncorr_e2ds = np.array(eprops['E2DS'])
     e2ds = np.array(eprops['E2DS'])
     # ----------------------------------------------------------------------
+    # set reason not corrected
+    reason = ''
     # deal with quick look
     quicklook = params['EXT_QUICK_LOOK']
-    # deal with correct dprtype
-    cond1 = dprtype not in allowed_filetypes
+    # add to reason
+    if quicklook:
+        reason += 'QUICKLOOK=True '
+    # deal with wanting to do leak correction
+    cond1 = not params['INPUTS']['LEAKCORR']
+    # add to reason
+    if cond1:
+        if params['CORRECT_LEAKAGE']:
+            reason += '--leakcorr=False '
+        else:
+            reason += 'CORRECT_LEAKAGE=False '
     # deal with correct fiber
     cond2 = fiber not in sci_fibers
+    # add to reason
+    if cond2:
+        reason += 'FIBER={0} '.format(fiber)
+    # make sure reference fiber is a FP
+    cond3 = ref_type not in params.listp('LEAKAGE_REF_TYPES', dtype=str)
+    # add to reason
+    if cond3:
+        reason += 'REFTYPE={0} '.format(ref_type)
     # if any of these conditions are true do not correct for dark_fp
-    if quicklook or cond1 or cond2:
+    if quicklook or cond1 or cond2 or cond3:
         # add used parameters
         eprops['LEAK_2D_EXTRACT_FILES_USED'] = 'No leak'
         eprops['LEAK_EXTRACT_FILE_USED'] = 'No leak'
@@ -642,9 +661,13 @@ def manage_leak_correction(params: ParamDict, eprops: ParamDict,
         eprops['UNCORR_E2DS'] = uncorr_e2ds
         eprops['E2DS'] = e2ds
         eprops['LEAKCORR'] = np.full_like(e2ds.shape, np.nan)
+        # print progress
+        WLOG(params, 'info', textentry('40-016-00034', args=[reason]))
         # return update extraction properties
         return eprops
     # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, 'info', textentry('40-016-00033', args=[reason]))
     # correct for leak
     e2ds, leakcorr, props = correct_ext_dark_fp(params, e2ds, inheader, fiber,
                                          database=None)

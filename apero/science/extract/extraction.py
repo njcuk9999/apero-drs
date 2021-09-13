@@ -240,21 +240,20 @@ def extract_blaze_flat(params: ParamDict, eprops: ParamDict, fiber: str,
         rms[order_num] = rmsi
     # ----------------------------------------------------------------------
     # store extraction properties in parameter dictionary
-    props = ParamDict()
-    props['E2DS'] = e2ds
-    props['RMS'] = rms
-    props['FLAT'] = float
-    props['BLAZE'] = blaze
+    eprops['E2DS'] = e2ds
+    eprops['RMS'] = rms
+    eprops['FLAT'] = flat
+    eprops['BLAZE'] = blaze
     # add setup properties
-    props['FIBER'] = fiber
-    props['BLAZE_SCUT'] = blaze_scut
-    props['BLAZE_BPERCENTILE'] = blaze_bpercentile
+    eprops['FIBER'] = fiber
+    eprops['BLAZE_SCUT'] = blaze_scut
+    eprops['BLAZE_BPERCENTILE'] = blaze_bpercentile
     # add source
     keys = ['E2DS', 'RMS', 'FLAT', 'BLAZE', 'FIBER',
-            'BLAZE_CUT', 'BLAZE_BPERCENTILE']
-    props.set_sources(keys, func_name)
+            'BLAZE_SCUT', 'BLAZE_BPERCENTILE']
+    eprops.set_sources(keys, func_name)
     # return property parameter dictionary
-    return props
+    return eprops
 
 
 def flat_blaze_correction(eprops: ParamDict, flat: Optional[np.ndarray] = None,
