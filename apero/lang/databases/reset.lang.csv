@@ -1903,7 +1903,7 @@ i.e. by default: '{1}_{2}_DB'","","Prints question to enter table suffix for dat
 "{0} = number of runs added","\t\tAdded {0} runs","","print how many runs we are adding","40-503-00042","ALL"
 "None","Updating database with header fixes","","print that we are updating database with header fixes","40-503-00043","ALL"
 "{0} = block kind","Updating index database with new {0} files","","print that we are updating index database with block kind","40-503-00044","ALL"
-"","","","","",""
+"{0} = recipe name; {1} = short name","\t skipping recipe '{0}' (RUN_{1} missing from ini file)","","prints that we are skipping group due to run=False","40-503-00045","ALL"
 "","","","","",""
 "","","","","",""
 "","","","","",""
