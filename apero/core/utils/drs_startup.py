@@ -374,17 +374,6 @@ def run(func: Any, recipe: DrsRecipe,
             llmain = func(recipe, params)
             llmain['e'], llmain['tb'] = None, None
             success = True
-        except drs_exceptions.DebugExit as e:
-            WLOG(params, 'error', e.errormessage, raise_exception=False)
-            # on debug exit was not a success
-            success = False
-            # save params to llmain
-            llmain = dict(e=e, tb='', params=params, recipe=recipe)
-            # add error to log file
-            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
-                recipe.log.add_error('Debug Exit', '')
-            # reset the lock directory
-            drs_lock.reset_lock_dir(params)
         except KeyboardInterrupt as e:
             # get trace back
             string_trackback = traceback.format_exc()
@@ -420,7 +409,6 @@ def run(func: Any, recipe: DrsRecipe,
                 recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
-
         except drs_exceptions.DrsCodedException as e:
             # get trace back
             string_trackback = traceback.format_exc()
@@ -428,7 +416,7 @@ def run(func: Any, recipe: DrsRecipe,
             success = False
             # log the error
             WLOG(params, 'error', string_trackback,
-                 raise_exception=False, wrap=False, logonly=True)
+                 raise_exception=False, wrap=False, logonly=False)
             # save params to llmain
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
@@ -437,7 +425,17 @@ def run(func: Any, recipe: DrsRecipe,
                 recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
-
+        except drs_exceptions.DebugExit as e:
+            WLOG(params, 'error', e.errormessage, raise_exception=False)
+            # on debug exit was not a success
+            success = False
+            # save params to llmain
+            llmain = dict(e=e, tb='', params=params, recipe=recipe)
+            # add error to log file
+            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+                recipe.log.add_error('Debug Exit', '')
+            # reset the lock directory
+            drs_lock.reset_lock_dir(params)
         except Exception as e:
             # get the trace back
             string_trackback = traceback.format_exc()
