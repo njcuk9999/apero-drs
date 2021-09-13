@@ -118,6 +118,7 @@
 "None","Define a list (comma separated no spaces) of nights to produce post processed files for","","","OUT_WNIGHTLIST_HELP","HELP",""
 "None","Define a list (comma separated no spaces) of nights to NOT produce post processed files for","","","OUT_BNIGHTLIST_HELP","HELP",""
 "None","[STRING] Define a custom cavity file (overrides default)","","","WAVEM_CAVFILE_HELP","HELP",""
+"None","[BOOLEAN] Sets whether to do the leak correction (else defaults to CORRECT_LEAKAGE value in constants)","","","LEAKCORR_HELP","HELP",""
 "None","This is the NIRPS error message","None","None","","ERROR",""
 "None","Dev Error: General Error","","Dev Error","00-000-00000","ERROR",""
 "","","","","","",""
