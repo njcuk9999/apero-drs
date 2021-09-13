@@ -134,42 +134,45 @@ raw_lfc_lfc = drs_finput('RAW_LFC_LFC', filetype='.fits', suffix='',
                          outfunc=out.blank,
                          hkeys=dict(KW_RAW_DPRTYPE='WAVE,LFC,LFC',
                                     KW_RAW_DPRCATG='CALIB',
-                                    KW_INST_MODE='HE',
+                                    KW_INST_MODE='HA',
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_lfc_lfc)
 
 # NIRPS-CHANGE: Not defined - this is a guess
-raw_lfc_fp = drs_finput('RAW_LFC_FP',
-                        filetype='.fits', suffix='',
+raw_lfc_fp = drs_finput('RAW_LFC_FP', filetype='.fits', suffix='',
+                        outfunc=out.blank,
                         hkeys=dict(KW_RAW_DPRTYPE='WAVE,LFC,FP',
                                    KW_RAW_DPRCATG='CALIB',
-                                   KW_INST_MODE='HE',
+                                   KW_INST_MODE='HA',
                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_lfc_fp)
 
 # NIRPS-CHANGE: Not defined - this is a guess
 raw_fp_lfc = drs_finput('RAW_FP_LFC',
                         filetype='.fits', suffix='',
+                        outfunc=out.blank,
                         hkeys=dict(KW_RAW_DPRTYPE='WAVE,FP,LFC',
                                    KW_RAW_DPRCATG='CALIB',
-                                   KW_INST_MODE='HE',
+                                   KW_INST_MODE='HA',
                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_fp_lfc)
 
 # -----------------------------------------------------------------------------
 # raw LED LED file
 raw_led_led = drs_finput('RAW_LED_LED', filetype='.fits', suffix='',
+                         outfunc=out.blank,
                          hkeys=dict(KW_RAW_DPRTYPE='LED,LAMP',
                                     KW_RAW_DPRCATG='CALIB',
-                                    KW_INST_MODE='HE',
+                                    KW_INST_MODE='HA',
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_led_led)
 
 # raw FLAT LED file
 raw_flat_led = drs_finput('RAW_FLAT_LED', filetype='.fits', suffix='',
+                          outfunc=out.blank,
                           hkeys=dict(KW_RAW_DPRTYPE='FLAT,LED',
                                      KW_RAW_DPRCATG='CALIB',
-                                     KW_INST_MODE='HE',
+                                     KW_INST_MODE='HA',
                                      KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_flat_led)
 
