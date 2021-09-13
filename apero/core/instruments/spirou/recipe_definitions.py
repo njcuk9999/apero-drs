@@ -1458,7 +1458,7 @@ pp_seq_opt.add(apero_preprocess, name='PP_HC1HC1', files=[files.raw_hc1_hc1],
                recipe_kind='pre-hchc')
 pp_seq_opt.add(apero_preprocess, name='PP_FPFP', files=[files.raw_fp_fp],
                recipe_kind='pre-fpfp')
-pp_seq_opt.add(apero_extract, name='PP_FF', files=[files.raw_flat_flat],
+pp_seq_opt.add(apero_preprocess, name='PP_FF', files=[files.raw_flat_flat],
                recipe_kind='pre-ff')
 pp_seq_opt.add(apero_preprocess, name='PP_DFP', files=[files.raw_dark_fp],
                recipe_kind='pre-dfp')
