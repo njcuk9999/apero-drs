@@ -115,9 +115,9 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
 def extract_leak_files(params, recipe, extname, darkfpfile, **kwargs):
     func_name = __NAME__ + '.extract_leak_files()'
     # get parameters from params/kwargs
-    therm_always_extract = pcheck(params, 'LEAKM_ALWAYS_EXTRACT',
+    leak_always_extract = pcheck(params, 'LEAKM_ALWAYS_EXTRACT',
                                   'always_extract', kwargs, func_name)
-    therm_extract_type = pcheck(params, 'LEAKM_EXTRACT_TYPE', 'extract_type',
+    leak_extract_type = pcheck(params, 'LEAKM_EXTRACT_TYPE', 'extract_type',
                                 kwargs, func_name)
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
@@ -129,8 +129,8 @@ def extract_leak_files(params, recipe, extname, darkfpfile, **kwargs):
     fileinst = recipe.outputs['LEAK_E2DS_FILE']
     # get outputs
     darkfp_outputs = extract_files(params, recipe, darkfpfile, fileinst,
-                                   therm_always_extract, extrecipe,
-                                   therm_extract_type, kind='leakage',
+                                   leak_always_extract, extrecipe,
+                                   leak_extract_type, kind='leakage',
                                    func_name=func_name)
     
     # ----------------------------------------------------------------------

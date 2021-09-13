@@ -331,18 +331,9 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     blazefile.add_hkey('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'])
     blazefile.add_hkey('KW_COSMIC_THRES',
                        value=eprops['COSMIC_THRESHOLD'])
-    # add blaze parameter used
-    # TODO: is blaze_size needed with sinc function?
-    blazefile.add_hkey('KW_BLAZE_WID', value=eprops['BLAZE_SIZE'])
-    # TODO: is blaze_cut needed with sinc function?
-    blazefile.add_hkey('KW_BLAZE_CUT', value=eprops['BLAZE_CUT'])
-    # TODO: is blaze_deg needed with sinc function?
-    blazefile.add_hkey('KW_BLAZE_DEG', value=eprops['BLAZE_DEG'])
     # add blaze sinc parameters used
     blazefile.add_hkey('KW_BLAZE_SCUT', value=eprops['BLAZE_SCUT'])
-    blazefile.add_hkey('KW_BLAZE_SIGFIG', value=eprops['BLAZE_SIGFIT'])
     blazefile.add_hkey('KW_BLAZE_BPRCNTL', value=eprops['BLAZE_BPERCENTILE'])
-    blazefile.add_hkey('KW_BLAZE_NITER', value=eprops['BLAZE_NITER'])
     # add saturation parameters used
     blazefile.add_hkey('KW_SAT_QC', value=eprops['SAT_LEVEL'])
     with warnings.catch_warnings(record=True) as _:
@@ -455,24 +446,10 @@ def flat_blaze_summary(recipe, params, qc_params, eprops, fiber):
                          fiber=fiber)
     recipe.plot.add_stat('KW_COSMIC_THRES', fiber=fiber,
                          value=epp['COSMIC_THRESHOLD'])
-    # add blaze parameter used
-    # TODO: is blaze_size needed with sinc function?
-    recipe.plot.add_stat('KW_BLAZE_WID', value=eprops['BLAZE_SIZE'],
-                         fiber=fiber)
-    # TODO: is blaze_cut needed with sinc function?
-    recipe.plot.add_stat('KW_BLAZE_CUT', value=eprops['BLAZE_CUT'],
-                         fiber=fiber)
-    # TODO: is blaze_deg needed with sinc function?
-    recipe.plot.add_stat('KW_BLAZE_DEG', value=eprops['BLAZE_DEG'],
-                         fiber=fiber)
     # add blaze sinc parameters used
     recipe.plot.add_stat('KW_BLAZE_SCUT', value=eprops['BLAZE_SCUT'],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_BLAZE_SIGFIG', value=eprops['BLAZE_SIGFIT'],
-                         fiber=fiber)
     recipe.plot.add_stat('KW_BLAZE_BPRCNTL', value=eprops['BLAZE_BPERCENTILE'],
-                         fiber=fiber)
-    recipe.plot.add_stat('KW_BLAZE_NITER', value=eprops['BLAZE_NITER'],
                          fiber=fiber)
 
 
