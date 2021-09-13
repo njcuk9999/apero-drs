@@ -673,6 +673,9 @@ apero_extract.set_kwarg(**resize)
 apero_extract.set_kwarg(**shapexfile)
 apero_extract.set_kwarg(**shapeyfile)
 apero_extract.set_kwarg(**shapelfile)
+apero_extract.set_kwarg(name='--leakcorr', dtype='bool', default=True,
+                        helpstr=textentry('LEAKCORR_HELP'),
+                        default_ref='CORRECT_LEAKAGE')
 apero_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
                         helpstr=textentry('THERMAL_HELP'),
                         default_ref='THERMAL_CORRECT')
