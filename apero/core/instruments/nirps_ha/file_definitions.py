@@ -1068,8 +1068,6 @@ out_wave_fplist = drs_finput('WAVE_FPLIST', hkeys=dict(KW_OUTPUT='WAVE_FPLIST'),
                              outfunc=out.calib_file)
 
 # add wave outputs to output fileset
-red_file.addset(out_wave_hc)
-red_file.addset(out_wave_fp)
 red_file.addset(out_wave_night)
 red_file.addset(out_wave_hcline)
 red_file.addset(out_wave_hcres)
@@ -1077,8 +1075,6 @@ red_file.addset(out_wave_res_table)
 red_file.addset(out_wave_ll_table)
 red_file.addset(out_wave_hclist)
 red_file.addset(out_wave_fplist)
-calib_file.addset(out_wave_hc)
-calib_file.addset(out_wave_fp)
 calib_file.addset(out_wave_night)
 
 # -----------------------------------------------------------------------------
