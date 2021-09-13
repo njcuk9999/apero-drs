@@ -1629,6 +1629,8 @@ class DrsRunSequence:
         # make sure we add files to positional arguments
         if files is not None:
             rargs['files'] = files
+        # add files
+        add_set['files'] = files
         # now add arguments to set
         add_set['args'] = rargs
         # add kwargs (optional arguments) to set
