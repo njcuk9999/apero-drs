@@ -1197,6 +1197,8 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
     """
     # set function name
     func_name = display_func('_get_hdict', __NAME__)
+    # get pseudo constants
+    pconst = constants.pload()
     # deal with having hdict input
     if hdict is not None:
         return hdict, None
@@ -1227,12 +1229,11 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
         header = drsfile.header
         # add keys from hdict to header
         for key in hdict:
-            # deal with COMMENT cards
-            if isinstance(hdict[key], drs_fits.HeaderCommentCards):
-                header[key] = (hdict[key][0], hdict.comments[key][0])
-            # just set them to  header[key] = (VALUE, COMMENT)
-            else:
-                header[key] = (hdict[key], hdict.comments[key])
+            # do not look at forbidden keys
+            if key in pconst.FORBIDDEN_OUT_KEYS():
+                continue
+            # else set key from hdict with the comment
+            header[key] = (hdict[key], hdict.comments[key])
         # now set hdict to None
         hdict = None
     # deal with only having hdict
