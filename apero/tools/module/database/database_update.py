@@ -455,17 +455,17 @@ def _log_update(pconst: PseudoConstants,
     logvalues = []
     for logkey in logcols:
         # construct keys
-        key = 'rlog.{0}'.format(logkey.lower())
+        key = 'rlog.{0}'.format(logkey)
         # get value
         logvalue = logdict.get(key, 'NULL')
         # append value to values
         logvalues.append(logvalue)
     # generate unique log code
-    largs = [logdict['rlog.pid'], logdict['rlog.level'],
-             logdict['rlog.sublevel']]
+    largs = [logdict['rlog.PID'], logdict['rlog.LEVEL'],
+             logdict['rlog.SUBLEVEL']]
     logcode = '{0} {1} {2}'.format(*largs)
     # return the log values and the log code
-    return logvalues, logcode, logdict['rlog.pid']
+    return logvalues, logcode, logdict['rlog.PID']
 
 
 def _clear_obj_reset_file(filename: str):
