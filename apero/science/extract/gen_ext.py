@@ -587,12 +587,14 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
 
 
 
-def manage_leak_correction(params: ParamDict, eprops: ParamDict,
-                           infile: DrsFitsFile, fiber: str) -> ParamDict:
+def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
+                           eprops: ParamDict, infile: DrsFitsFile,
+                           fiber: str) -> ParamDict:
     """
     Manage the leak correction
 
     :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
     :param eprops: ParamDict, parameter dictionary of extraction data
     :param infile: DrsFitsFile, the input drs file instance (for header)
     :param fiber: str, the fiber we are correcting (we only correct science
@@ -651,6 +653,7 @@ def manage_leak_correction(params: ParamDict, eprops: ParamDict,
         eprops['LEAK_LOW_PERCENTILE_USED'] = 'No leak'
         eprops['LEAK_HIGH_PERCENTILE_USED'] = 'No leak'
         eprops['LEAK_BAD_RATIO_OFFSET_USED'] = 'No leak'
+        eprops['LEAK_CORRECTED'] = False
         # set sources
         keys = ['LEAK_2D_EXTRACT_FILES_USED', 'LEAK_EXTRACT_FILE_USED',
                 'LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
@@ -678,6 +681,13 @@ def manage_leak_correction(params: ParamDict, eprops: ParamDict,
     eprops['UNCORR_E2DS'] = uncorr_e2ds
     eprops['E2DS'] = e2ds
     eprops['LEAKCORR'] = leakcorr
+    eprops['LEAK_CORRECTED'] = True
+
+    # ------------------------------------------------------------------
+    # Add debugs for all uncorrected file
+    # ------------------------------------------------------------------
+    save_uncorrected_ext_fp(params, recipe, infile, eprops, fiber)
+
     # return update extraction properties
     return eprops
 
@@ -1143,34 +1153,62 @@ def get_extraction_files(params, recipe, infile, extname):
     return outputs
 
 
-def save_uncorrected_ext_fp(params, extractdict):
+def save_uncorrected_ext_fp(params: ParamDict, recipe: DrsRecipe,
+                            infile: DrsFitsFile, eprops: ParamDict,
+                            fiber: str):
     # -------------------------------------------------------------------------
     # check we want to save uncorrected
     if not params['DEBUG_UNCORR_EXT_FILES']:
         return
-    # -------------------------------------------------------------------------
-    # loop around fibers
-    for fiber in extractdict:
-        # loop around file type
-        for extname in extractdict[fiber]:
-            # get ext file
-            extfile = extractdict[fiber][extname]
-            # -----------------------------------------------------------------
-            # check that file exists - if it doesn't generate exception
-            if not os.path.exists(extfile.filename):
-                eargs = [fiber, extname, extfile.filename]
-                WLOG(params, 'error', textentry('00-016-00027', args=eargs))
-            # -----------------------------------------------------------------
-            # get basename
-            infile = extfile.basename
-            inpath = extfile.filename
-            indir = inpath.split(infile)[0]
-            # add prefix
-            outfile = 'DEBUG-uncorr-{0}'.format(infile)
-            # construct full path
-            outpath = os.path.join(indir, outfile)
-            # copy files
-            drs_path.copyfile(params, inpath, outpath)
+    # check that we have corrected leak
+    if not params['LEAK_CORRECTED']:
+        return
+    # get a new copy of the e2ds file
+    e2dsfile = recipe.outputs['E2DS_FILE'].newcopy(params=params,
+                                                   fiber=fiber)
+    # construct the filename from file instance
+    e2dsfile.construct_filename(infile=infile)
+    # define header keys for output file
+    # copy keys from input file (excluding loc)
+    e2dsfile.copy_original_keys(infile, exclude_groups=['loc'])
+    # add version
+    e2dsfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    e2dsfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    e2dsfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    e2dsfile.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    e2dsfile.add_hkey('KW_OUTPUT', value=e2dsfile.name)
+    e2dsfile.add_hkey('KW_FIBER', value=fiber)
+    # copy data
+    e2dsfile.data = eprops['LEAKCORR']
+    # -----------------------------------------------------------------
+    # get basename
+    infile = e2dsfile.basename
+    inpath = e2dsfile.filename
+    indir = inpath.split(infile)[0]
+    # add prefix
+    outfile = 'DEBUG-uncorr-{0}'.format(infile)
+    # construct full path
+    outpath = os.path.join(indir, outfile)
+    # set filename
+    e2dsfile.set_filename(outpath)
+    # log that we are saving e2ds uncorrected debug file
+    wargs = [e2dsfile.filename]
+    WLOG(params, '', textentry('40-016-00005', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfile)]
+        name_list += ['PARAM_TABLE']
+    # write image to file
+    e2dsfile.write_multi(data_list=data_list, name_list=name_list,
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(e2dsfile)
 
 
 def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
@@ -1545,8 +1583,20 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # add berv properties to header
     e2dsfile = berv.add_berv_keys(params, e2dsfile, bprops)
-    # add leakage switch to header (leakage currently not corrected)
-    e2dsfile.add_hkey('KW_LEAK_CORR', value=0)
+    # add whether we corrected FP leakage
+    if eprops['LEAK_CORRECTED']:
+        e2dsfile.add_hkey('KW_LEAK_CORR', value=1)
+    else:
+        e2dsfile.add_hkey('KW_LEAK_CORR', value=0)
+    # set leak corr header keys to add
+    keys = ['KW_LEAK_BP_U', 'KW_LEAK_NP_U', 'KW_LEAK_LP_U', 'KW_LEAK_UP_U',
+            'KW_LEAK_BADR_U']
+    values = ['LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
+              'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
+              'LEAK_BAD_RATIO_OFFSET_USED']
+    # loop around leak keys to add
+    for it in range(len(keys)):
+        e2dsfile.add_hkey(keys[it], value=eprops[values[it]])
     # ----------------------------------------------------------------------
     # copy data
     e2dsfile.data = eprops['E2DS']
@@ -1794,6 +1844,8 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     with warnings.catch_warnings(record=True) as _:
         max_sat_level = mp.nanmax(eprops['FLUX_VAL'])
     e2dsfile.add_hkey('KW_SAT_LEVEL', value=max_sat_level)
+    # add whether we corrected FP leakage (quick mode = False)
+    e2dsfile.add_hkey('KW_LEAK_CORR', value=0)
     # ----------------------------------------------------------------------
     # copy data
     e2dsfile.data = eprops['E2DS']
