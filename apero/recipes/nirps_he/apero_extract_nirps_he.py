@@ -250,8 +250,8 @@ def __main__(recipe, params):
             eprops = extract.extract2d(params, image2, orderp, lcoeffs2,
                                        nframes, props, fiber=fiber)
             # leak correction
-            eprops = extract.manage_leak_correction(params, eprops, infile,
-                                                    fiber)
+            eprops = extract.manage_leak_correction(params, recipe, eprops,
+                                                    infile, fiber)
             # flat correction for e2dsff
             eprops = extract.flat_blaze_correction(eprops, flat, blaze)
             # --------------------------------------------------------------
