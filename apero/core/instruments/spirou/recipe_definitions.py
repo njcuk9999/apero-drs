@@ -582,36 +582,36 @@ recipes.append(apero_leak_master)
 # -----------------------------------------------------------------------------
 # apero_leak
 # -----------------------------------------------------------------------------
-apero_leak = DrsRecipe(__INSTRUMENT__)
-apero_leak.name = 'apero_leak_{0}.py'.format(INSTRUMENT_ALIAS)
-apero_leak.shortname = 'LEAK'
-apero_leak.instrument = __INSTRUMENT__
-apero_leak.in_block_str = 'red'
-apero_leak.out_block_str = 'red'
-apero_leak.extension = 'fits'
-apero_leak.description = textentry('LEAK_DESC')
-apero_leak.epilog = textentry('LEAK_EXAMPLE')
-apero_leak.recipe_type = 'recipe'
-apero_leak.recipe_kind = 'leak'
-apero_leak.set_outputs(E2DS_FILE=files.out_ext_e2ds,
-                       E2DSFF_FILE=files.out_ext_e2dsff,
-                       E2DSLL_FILE=files.out_ext_e2dsll,
-                       S1D_W_FILE=files.out_ext_s1d_w,
-                       S1D_V_FILE=files.out_ext_s1d_v)
-apero_leak.set_arg(pos=0, **obs_dir)
-apero_leak.set_arg(name='files', dtype='files', pos='1+',
-                   files=[files.out_ext_e2dsff],
-                   helpstr=textentry('FILES_HELP') + textentry('LEAK_FILES_HELP'),
-                   limit=1)
-apero_leak.set_kwarg(**add_db)
-apero_leak.set_kwarg(**plot)
-apero_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
-                     files=[files.out_leak_master],
-                     helpstr=textentry('LEAK_LEAKFILE_HELP'))
-apero_leak.group_func = grouping.group_individually
-apero_leak.group_column = 'REPROCESS_OBSDIR_COL'
-# add to recipe
-recipes.append(apero_leak)
+# apero_leak = DrsRecipe(__INSTRUMENT__)
+# apero_leak.name = 'apero_leak_{0}.py'.format(INSTRUMENT_ALIAS)
+# apero_leak.shortname = 'LEAK'
+# apero_leak.instrument = __INSTRUMENT__
+# apero_leak.in_block_str = 'red'
+# apero_leak.out_block_str = 'red'
+# apero_leak.extension = 'fits'
+# apero_leak.description = textentry('LEAK_DESC')
+# apero_leak.epilog = textentry('LEAK_EXAMPLE')
+# apero_leak.recipe_type = 'recipe'
+# apero_leak.recipe_kind = 'leak'
+# apero_leak.set_outputs(E2DS_FILE=files.out_ext_e2ds,
+#                        E2DSFF_FILE=files.out_ext_e2dsff,
+#                        E2DSLL_FILE=files.out_ext_e2dsll,
+#                        S1D_W_FILE=files.out_ext_s1d_w,
+#                        S1D_V_FILE=files.out_ext_s1d_v)
+# apero_leak.set_arg(pos=0, **obs_dir)
+# apero_leak.set_arg(name='files', dtype='files', pos='1+',
+#                    files=[files.out_ext_e2dsff],
+#                    helpstr=textentry('FILES_HELP') + textentry('LEAK_FILES_HELP'),
+#                    limit=1)
+# apero_leak.set_kwarg(**add_db)
+# apero_leak.set_kwarg(**plot)
+# apero_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
+#                      files=[files.out_leak_master],
+#                      helpstr=textentry('LEAK_LEAKFILE_HELP'))
+# apero_leak.group_func = grouping.group_individually
+# apero_leak.group_column = 'REPROCESS_OBSDIR_COL'
+# # add to recipe
+# recipes.append(apero_leak)
 
 # -----------------------------------------------------------------------------
 # apero_extract
@@ -1256,9 +1256,9 @@ full_seq.add(apero_extract, name='EXTALL', recipe_kind='extract-ALL',
              files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
                     files.pp_polar_fp])
 # correct leakage
-full_seq.add(apero_leak, name='LEAKALL', files=[files.out_ext_e2dsff],
-             fiber='AB', filters=dict(KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']),
-             recipe_kind='leak-ALL')
+# full_seq.add(apero_leak, name='LEAKALL', files=[files.out_ext_e2dsff],
+#              fiber='AB', filters=dict(KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']),
+#              recipe_kind='leak-ALL')
 # telluric recipes
 full_seq.add(apero_mk_tellu, name='MKTELLU1', recipe_kind='tellu-hotstar',
              files=[files.out_ext_e2dsff], fiber='AB',
@@ -1367,16 +1367,16 @@ limited_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
 
 # correct leakage for any telluric targets that are OBJ_FP
-limited_seq.add(apero_leak, name='LEAKTELL', recipe_kind='leak-hotstar',
-                files=[files.out_ext_e2dsff], fiber='AB',
-                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
+# limited_seq.add(apero_leak, name='LEAKTELL', recipe_kind='leak-hotstar',
+#                 files=[files.out_ext_e2dsff], fiber='AB',
+#                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+#                              KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
 
 # correct leakage for any science targets that are OBJ_FP
-limited_seq.add(apero_leak, name='LEAKOBJ', recipe_kind='leak-science',
-                files=[files.out_ext_e2dsff], fiber='AB',
-                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
+# limited_seq.add(apero_leak, name='LEAKOBJ', recipe_kind='leak-science',
+#                 files=[files.out_ext_e2dsff], fiber='AB',
+#                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+#                              KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
 
 # other telluric recipes
 limited_seq.add(apero_mk_tellu, name='MKTELLU1', recipe_kind='tellu-hotstar',
@@ -1528,10 +1528,10 @@ tellu_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
                                        'POLAR_FP']))
 
 # correct leakage for any telluric targets that are OBJ_FP
-tellu_seq.add(apero_leak, name='LEAKTELL', recipe_kind='leak-hotstar',
-              files=[files.out_ext_e2dsff], fiber='AB',
-              filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
+# tellu_seq.add(apero_leak, name='LEAKTELL', recipe_kind='leak-hotstar',
+#               files=[files.out_ext_e2dsff], fiber='AB',
+#               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+#                            KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
 
 # other telluric recipes
 tellu_seq.add(apero_mk_tellu, name='MKTELLU1', recipe_kind='tellu-hotstar',
@@ -1581,10 +1581,10 @@ science_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
                                          'POLAR_FP']))
 
 # correct leakage for any science targets that are OBJ_FP
-science_seq.add(apero_leak, name='LEAKOBJ', recipe_kind='leak-science',
-                files=[files.out_ext_e2dsff], fiber='AB',
-                filters=dict(KW_DPRTYPE=['OBJ_FP', 'POLAR_FP'],
-                             KW_OBJNAME='SCIENCE_TARGETS'))
+# science_seq.add(apero_leak, name='LEAKOBJ', recipe_kind='leak-science',
+#                 files=[files.out_ext_e2dsff], fiber='AB',
+#                 filters=dict(KW_DPRTYPE=['OBJ_FP', 'POLAR_FP'],
+#                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 science_seq.add(apero_fit_tellu, name='FTELLU1', recipe_kind='tellu-science',
                 files=[files.out_ext_e2dsff], fiber='AB',
