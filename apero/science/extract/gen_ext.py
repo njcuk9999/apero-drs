@@ -665,12 +665,12 @@ def manage_leak_correction(params: ParamDict, eprops: ParamDict,
         WLOG(params, 'info', textentry('40-016-00034', args=[reason]))
         # return update extraction properties
         return eprops
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, 'info', textentry('40-016-00033', args=[reason]))
+    WLOG(params, 'info', textentry('40-016-00033', args=[fiber, dprtype]))
     # correct for leak
     e2ds, leakcorr, props = correct_ext_dark_fp(params, e2ds, inheader, fiber,
-                                         database=None)
+                                                database=None)
     # add used parameters
     for key in props:
         eprops.set(key, props[key], source=props.sources[key])
