@@ -105,8 +105,11 @@ def __main__(recipe, params):
 
     # deal with input data from function
     if 'files' in params['DATA_DICT']:
+        # get list of in files from data dict (passed in)
         infiles = params['DATA_DICT']['files']
+        # get list of raw files from data dict (passed in)
         rawfiles = params['DATA_DICT']['rawfiles']
+        # get combine parameter from data dict (passed in)
         combine = params['DATA_DICT']['combine']
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
@@ -121,6 +124,10 @@ def __main__(recipe, params):
 
     # get quick look mode
     quicklook = params['EXT_QUICK_LOOK']
+    # deal with leak corr
+    if 'leakcorr' in params['DATA_DICT']:
+        # add leak corr to params from data dict (passed in)
+        params['INPUTS']['LEAKCORR'] = params['DATA_DICT']['LEAKCORR']
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()

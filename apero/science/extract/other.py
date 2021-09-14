@@ -10,7 +10,7 @@ Created on 2019-08-16 at 11:18
 @author: cook
 """
 import os
-from typing import Union
+from typing import Optional, Union
 
 from apero.base import base
 from apero import lang
@@ -131,7 +131,7 @@ def extract_leak_files(params, recipe, extname, darkfpfile, **kwargs):
     darkfp_outputs = extract_files(params, recipe, darkfpfile, fileinst,
                                    leak_always_extract, extrecipe,
                                    leak_extract_type, kind='leakage',
-                                   func_name=func_name)
+                                   func_name=func_name, leakcorr=False)
     
     # ----------------------------------------------------------------------
     # return extraction outputs
@@ -194,7 +194,8 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
                   infile: DrsFitsFile, outfile: DrsFitsFile,
                   always_extract: bool, extrecipe: Union[DrsRecipe, None],
                   extract_type: str, kind: str = 'gen',
-                  func_name: Union[str, None] = None):
+                  func_name: Union[str, None] = None,
+                  leakcorr: Optional[bool] = None):
     if func_name is None:
         func_name = __NAME__ + '.extract_files()'
     # get the fiber types from a list parameter
@@ -253,6 +254,8 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         data_dict['files'] = [infile]
         data_dict['rawfiles'] = [infile.basename]
         data_dict['combine'] = params['INPUT_COMBINE_IMAGES']
+        if leakcorr is not None and isinstance(leakcorr, bool):
+            data_dict['LEAKCORR'] = leakcorr
         kwargs['DATA_DICT'] = data_dict
         # ------------------------------------------------------------------
         # deal with adding group name
