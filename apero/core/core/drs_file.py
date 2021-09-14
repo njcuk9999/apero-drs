@@ -7141,7 +7141,8 @@ def combine_headers(params: ParamDict, headers: List[Header],
                  combine_methods)
     :return:
     """
-
+    # get psuedo constants
+    pconst = constants.pload()
     # -------------------------------------------------------------------------
     # step 1. find header keys that need combining
     # -------------------------------------------------------------------------
@@ -7179,6 +7180,9 @@ def combine_headers(params: ParamDict, headers: List[Header],
     table_keys, table_comments, constant_keys = [], [], []
     # loop around unique header keys
     for k_it, key in enumerate(all_header_keys):
+        # skip forbidden keys
+        if key in pconst.FORBIDDEN_OUT_KEYS():
+            continue
         # storage of values
         values = []
         # loop around headers
