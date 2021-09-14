@@ -241,7 +241,7 @@ class PseudoConstants(DefaultConstants):
                           'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
                           'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
                           'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB',
-                          'NEXTEND']
+                          'NEXTEND', '', 'HISTORY']
         # return keys
         return forbidden_keys
 
