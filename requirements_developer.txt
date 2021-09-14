@@ -27,4 +27,5 @@ gitchangelog==3.0.4
 ipdb==0.13.7
 ipython==7.23.1
 sphinx==4.0.1
+ttkthemes==3.2.2
 xlrd==2.0.1
