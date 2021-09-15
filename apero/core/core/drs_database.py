@@ -19,6 +19,7 @@ only from
 - apero.io.drs_fits
 """
 import numpy as np
+import os
 import pandas as pd
 from pandasql import sqldf
 from pathlib import Path
@@ -1667,18 +1668,60 @@ class IndexDatabase(DatabaseManager):
         # deal with files we don't need (already have)
         etable = self.get_entries('ABSPATH, LAST_MODIFIED',
                                   block_kind=block_kind)
-        exclude_files = list(etable['ABSPATH'])
+        raw_exclude_files = list(etable['ABSPATH'])
+        # ---------------------------------------------------------------------
         # only check last modified for raw files (we assume that any other
         #   file has been correctly updated by the drs)
         if block_kind.lower() == 'raw':
-            last_mod = list(etable['LAST_MODIFIED'])
+            raw_last_mod = list(etable['LAST_MODIFIED'])
         else:
-            last_mod = None
+            raw_last_mod = None
+        # ---------------------------------------------------------------------
+        # must check exclude files are on disk unless we are in parellel mode
+        parallel = False
+        if 'PARALLEL' in self.params['INPUTS']:
+            if self.params['INPUTS']['PARALLEL']:
+                parallel = True
+        # only check for deletions on disk if not in a parellel loop
+        if not parallel:
+            exclude_files, remove_files = [], []
+            # deal with updating last modified date
+            if raw_last_mod is not None:
+                elast_mod = []
+            else:
+                elast_mod = None
+            # loop around files to exclude
+            for r_it, raw_exclude_file in enumerate(raw_exclude_files):
+                if os.path.exists(raw_exclude_file):
+                    exclude_files.append(raw_exclude_file)
+                    if elast_mod is not None:
+                        elast_mod.append(raw_last_mod[r_it])
+                else:
+                    remove_files.append(raw_exclude_file)
+            # remove entries from database where file does not exist
+            rm_conditions = []
+            # loop around files to remove
+            for remove_file in remove_files:
+                rm_conditions.append('ABSPATH="{0}"'.format(remove_file))
+                # print removing file
+                # TODO: move to language database
+                msg = ('\t\tFile no longer on disk - removing from '
+                       'index database: {0}')
+                WLOG(self.params, 'warning', msg.format(remove_file))
+
+            # remove entries which no longer exist on disk
+            if len(rm_conditions) > 0:
+                self.remove_entries(condition=' OR '.join(rm_conditions))
+        # else we just use the raw list
+        else:
+            exclude_files = list(raw_exclude_files)
+            elast_mod = raw_last_mod
+
         # ---------------------------------------------------------------------
         # locate all files within path
         reqfiles = _get_files(self.params, block_inst.abspath, block_kind,
                               include_directories, exclude_directories,
-                              include_files, exclude_files, suffix, last_mod)
+                              include_files, exclude_files, suffix, elast_mod)
         # ---------------------------------------------------------------------
         # get allowed header keys
         iheader_cols = self.pconst.INDEX_HEADER_COLS()
