@@ -84,8 +84,15 @@ class Logger:
             self.pin = paramdict
         else:
             self.pin = constants.load()
-        self.language = base.IPARAMS['LANGUAGE']
-        self.instrument = base.IPARAMS['INSTRUMENT']
+        try:
+            self.language = base.IPARAMS['LANGUAGE']
+            self.instrument = base.IPARAMS['INSTRUMENT']
+        # re-try or get proper error
+        except Exception as _:
+            base.DPARAMS = base.load_database_yaml()
+            base.IPARAMS = base.load_install_yaml()
+            self.language = base.IPARAMS['LANGUAGE']
+            self.instrument = base.IPARAMS['INSTRUMENT']
         # load additional resources based on instrument/language
         self.pconstant = constants.pload()
         # ---------------------------------------------------------------------
