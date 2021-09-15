@@ -149,12 +149,17 @@ def load_database_yaml() -> dict:
         path = os.environ[USER_ENV]
         # add filename
         path = os.path.join(path, DATABASE_YAML)
-        # load yaml file
-        return load_yaml(path)
+        # check that path exists
+        if os.path.exists(path):
+            # load yaml file
+            return load_yaml(path)
+        else:
+            # raise an error
+            emsg = 'Core Error: {0}={1} does not exist'
+            raise EnvironmentError(emsg.format(USER_ENV, path))
     # else raise except (cannot come from database)
-    else:
-        emsg = 'Core Error: {0} must be set (please run setup script)'
-        raise EnvironmentError(emsg.format(USER_ENV))
+    emsg = 'Core Error: {0} must be set (please run setup script)'
+    raise EnvironmentError(emsg.format(USER_ENV))
 
 
 def load_install_yaml():
@@ -164,12 +169,17 @@ def load_install_yaml():
         path = os.environ[USER_ENV]
         # add filename
         path = os.path.join(path, INSTALL_YAML)
-        # load yaml file
-        return load_yaml(path)
+        # check that path exists
+        if os.path.exists(path):
+            # load yaml file
+            return load_yaml(path)
+        else:
+            # raise an error
+            emsg = 'Core Error: {0}={1} does not exist'
+            raise EnvironmentError(emsg.format(USER_ENV, path))
     # else raise except (cannot come from database)
-    else:
-        emsg = 'Core Error: {0} must be set (please run setup script)'
-        raise EnvironmentError(emsg.format(USER_ENV))
+    emsg = 'Core Error: {0} must be set (please run setup script)'
+    raise EnvironmentError(emsg.format(USER_ENV))
 
 
 def load_yaml(filename: str) -> dict:
