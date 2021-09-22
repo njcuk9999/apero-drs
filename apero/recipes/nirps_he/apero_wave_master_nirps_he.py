@@ -135,11 +135,11 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cond1 = drs_file.combine(params, recipe, hcfiles, math='median')
+        cond1 = drs_file.combine(params, recipe, hcfiles, math='sum')
         hcfiles = [cond1[0]]
         # get combined file
         if fpfiles is not None:
-            cond2 = drs_file.combine(params, recipe, fpfiles, math='median')
+            cond2 = drs_file.combine(params, recipe, fpfiles, math='sum')
             fpfiles = [cond2[0]]
         combine = True
     else:
