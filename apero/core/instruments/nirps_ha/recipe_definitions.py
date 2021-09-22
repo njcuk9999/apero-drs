@@ -169,7 +169,7 @@ raw_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # -----------------------------------------------------------------------------
-# apero_pp_master_nirps_ha
+# apero_pp_master
 # -----------------------------------------------------------------------------
 # TODO: remove
 apero_pp_master = DrsRecipe(__INSTRUMENT__)

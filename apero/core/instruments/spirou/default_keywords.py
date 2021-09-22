@@ -405,10 +405,10 @@ KW_DRS_TEFF_S.set(key='DR_TEFFS',
 # -----------------------------------------------------------------------------
 # DRS version
 KW_VERSION = KW_VERSION.copy(__NAME__)
-KW_VERSION.set(key='VERSION', comment='DRS version', group='pp')
+KW_VERSION.set(key='VERSION', comment='APERO version', group='pp')
 
 KW_PPVERSION = KW_PPVERSION.copy(__NAME__)
-KW_PPVERSION.set(key='PVERSION', comment='DRS Pre-Processing version',
+KW_PPVERSION.set(key='PVERSION', comment='APERO Pre-Processing version',
                  group='pp')
 
 # DRS process ID

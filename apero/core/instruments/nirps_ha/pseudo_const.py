@@ -221,7 +221,6 @@ class PseudoConstants(DefaultConstants):
         # set function name
         _ = display_func('FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
         # set forbidden keys
-        # set forbidden keys
         forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
                           'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
                           'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
