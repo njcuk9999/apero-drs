@@ -1643,6 +1643,11 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         # deal with filters defined in recipe
         # ------------------------------------------------------------------
         filters = _get_filters(params, srecipe)
+
+        # TODO: we only want raw filters here - how do we define raw filters?
+        #       via keywords source? raw or KW_OBJNAME
+
+
         # get fiber filter
         allowedfibers = srecipe.allowedfibers
         # ------------------------------------------------------------------
@@ -3062,7 +3067,8 @@ def _check_runtable(params, runtable, recipemod):
             WLOG(params, 'error', textentry('00-503-00011', args=eargs))
 
 
-def _get_filters(params: ParamDict, srecipe: DrsRecipe) -> Dict[str, Any]:
+def _get_filters(params: ParamDict, srecipe: DrsRecipe,
+                 filter_kind: str = 'raw') -> Dict[str, Any]:
     """
     Using srecipe (the input recipe) create a list of filters to apply to the
     database
@@ -3164,6 +3170,20 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe) -> Dict[str, Any]:
         # add filter
         if len(dprtype_allowed) > 0:
             filters['KW_DPRTYPE'] = dprtype_allowed
+
+    # -------------------------------------------------------------------------
+    # filter out non-raw filters
+    if filter_kind == 'raw':
+        for _filter in filters:
+            # check any filter that is in filters and is a header key
+            if _filter in params and _filter.startswith('KW_'):
+                # if it doesn't have an instance skip
+                if params.instances is None:
+                    continue
+                # if it does check the group
+                elif params.instances[_filter].group not in  ['raw', 'ppraw']:
+                    # delete if not raw
+                    del filters[_filter]
     # -------------------------------------------------------------------------
     # return filters
     return filters
