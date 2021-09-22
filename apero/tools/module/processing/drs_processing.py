@@ -1643,11 +1643,6 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         # deal with filters defined in recipe
         # ------------------------------------------------------------------
         filters = _get_filters(params, srecipe)
-
-        # TODO: we only want raw filters here - how do we define raw filters?
-        #       via keywords source? raw or KW_OBJNAME
-
-
         # get fiber filter
         allowedfibers = srecipe.allowedfibers
         # ------------------------------------------------------------------
@@ -3170,11 +3165,13 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
         # add filter
         if len(dprtype_allowed) > 0:
             filters['KW_DPRTYPE'] = dprtype_allowed
-
     # -------------------------------------------------------------------------
     # filter out non-raw filters
     if filter_kind == 'raw':
-        for _filter in filters:
+        # get the keys (as the dictionary size will change)
+        fkeys = list(filters.keys())
+        # loop around the keys in filters
+        for _filter in fkeys:
             # check any filter that is in filters and is a header key
             if _filter in params and _filter.startswith('KW_'):
                 # if it doesn't have an instance skip
@@ -3183,6 +3180,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                 # if it does check the group
                 elif params.instances[_filter].group not in  ['raw', 'ppraw']:
                     # delete if not raw
+                    print('\t\tRemoving filter: {0}'.format(_filter))
                     del filters[_filter]
     # -------------------------------------------------------------------------
     # return filters
