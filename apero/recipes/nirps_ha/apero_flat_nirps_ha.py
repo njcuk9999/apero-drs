@@ -106,7 +106,7 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cond = drs_file.combine(params, recipe, infiles, math='median')
+        cond = drs_file.combine(params, recipe, infiles, math='sum')
         infiles = [cond[0]]
         combine = True
     else:
