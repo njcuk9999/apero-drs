@@ -1646,7 +1646,7 @@ class IndexDatabase(DatabaseManager):
             # if we are not updating return here
             if not cond:
                 # print skipping: Skipping search (already run)
-                WLOG(self.params, '', textentry('40-001-00031'))
+                WLOG(self.params, 'debug', textentry('40-001-00031'))
                 return None
         # ---------------------------------------------------------------------
         # deal with no database loaded
