@@ -2748,8 +2748,10 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
             continue
         # get rv for this fiber [km/s] --> [m/s]
         rvfiber = rvprops[fiber]['MEAN_RV'] * 1000
+
+        rvdiff = master_rv - rvfiber
         # deal with rv threshold
-        if np.abs(master_rv - rvfiber) > rv_thres:
+        if np.abs(rvdiff) > rv_thres:
             qc_pass.append(0)
         else:
             qc_pass.append(1)
@@ -2758,6 +2760,9 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         qc_names.append('CCFRV[{0} - {1}]'.format(master_fiber, fiber))
         qargs = [master_fiber, fiber, rv_thres]
         qc_logic.append('abs(CCFRV[{0} - {1}]) > {2} m/s'.format(*qargs))
+        # print to screen
+        pargs = [master_fiber, fiber, rvdiff]
+        WLOG(params, textentry('40-017-00068', args=pargs))
 
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
