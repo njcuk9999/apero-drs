@@ -1322,7 +1322,7 @@ WAVE_HC_VEL_ODD_RATIO.author = base.AUTHORS['EA']
 
 # Define orders that we cannot fit HC or FP lines to (list of strings)
 WAVE_REMOVE_ORDERS = WAVE_REMOVE_ORDERS.copy(__NAME__)
-WAVE_REMOVE_ORDERS.value = '48'
+WAVE_REMOVE_ORDERS.value = ''  # '48'
 
 # Define the number of iterations required to do the final fplines
 #   wave solution
