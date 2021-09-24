@@ -70,8 +70,8 @@ display_func = drs_log.display_func
 # =============================================================================
 # Define general functions
 # =============================================================================
-def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
-                   shapey, shapelocalfile, filenames=None, database=None):
+def order_profiles(params, recipe, infile, fibertypes, sprops,
+                   filenames=None, database=None):
     func_name = __NAME__ + '.order_profiles()'
     # filenames must be a dictionary
     if not isinstance(filenames, dict):
@@ -99,7 +99,8 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
     # ------------------------------------------------------------------------
     # storage for order profiles
     orderprofiles = dict()
-    orderprofilefiles = dict()
+    orderfiles = dict()
+    ordertimes = dict()
     # loop around fibers
     for fiber in fibertypes:
         # log progress (straightening orderp)
@@ -118,7 +119,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
         else:
             # infile of opderpsfile should be a shape local file
             oinfile = slocalfile.newcopy(params=params, fiber=fiber)
-            oinfile.set_filename(shapelocalfile)
+            oinfile.set_filename(sprops['SHAPELFILE'])
             # construct order profile straightened
             orderpsfile = ospfile.newcopy(params=params, fiber=fiber)
             orderpsfile.construct_filename(infile=oinfile)
@@ -127,7 +128,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
         if orderpsfile.file_exists():
             # load the numpy temporary file
             #    Note: NpyFitsFile needs arguments params!
-            if isinstance(orderpsfile, DrsNpyFile):
+            if isinstance(orderpsfile, DrsFitsFile):
                 # log progress (read file)
                 wargs = [orderpsfile.filename]
                 WLOG(params, '', textentry('40-013-00023', args=wargs))
@@ -139,6 +140,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             # push data into orderp
             orderp = orderpsfile.get_data()
             orderpfilename = orderpsfile.filename
+            orderptime = orderpsfile.get_hkey('KW_CDTORDP')
         # if straighted order profile doesn't exist and we have no filename
         #   defined then we need to figure out the order profile file -
         #   load it and then save it as a straighted version (orderpsfile)
@@ -150,31 +152,43 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             # get fiber to use for ORDERPFILE (i.e. AB,A,B --> AB  and C-->C)
             usefiber = pconst.FIBER_LOC_TYPES(fiber)
             # get the order profile filename
-            filename = gen_calib.load_calib_file(params, key, header,
-                                                 filename=filename,
-                                                 userinputkey='ORDERPFILE',
-                                                 database=calibdbm,
-                                                 fiber=usefiber,
-                                                 return_filename=True)
+            fout = gen_calib.load_calib_file(params, key, header,
+                                             filename=filename,
+                                             userinputkey='ORDERPFILE',
+                                             database=calibdbm, fiber=usefiber,
+                                             return_filename=True,
+                                             return_time=True)
+            filename, orderptime = fout
             # load order profile
-            orderp = drs_fits.readfits(params, filename)
+            orderp, orderhdr = drs_fits.readfits(params, filename, getdata=True,
+                                                 gethdr=True)
             orderpfilename = filename
             # straighten orders
-            orderp = shape.ea_transform(params, orderp, shapelocal,
-                                        dxmap=shapex, dymap=shapey)
+            orderp = shape.ea_transform(params, orderp, sprops['SHAPEL'],
+                                        dxmap=sprops['SHAPEX'],
+                                        dymap=sprops['SHAPEY'],)
+            # copy full header from order profile
+            orderpsfile.copy_header(header=orderhdr)
+            orderpsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
+            orderpsfile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
+            orderpsfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
+            orderpsfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
+            orderpsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
+            orderpsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
             # push into orderpsfile
             orderpsfile.data = orderp
             # log progress (saving to file)
             wargs = [orderpsfile.filename]
             WLOG(params, '', textentry('40-013-00024', args=wargs))
             # save for use later (as .npy)
-            orderpsfile.write_npy(block_kind=recipe.out_block_str,
-                                  runstring=recipe.runstring)
+            orderpsfile.write_file(block_kind=recipe.out_block_str,
+                                   runstring=recipe.runstring)
         # store in storage dictionary
         orderprofiles[fiber] = orderp
-        orderprofilefiles[fiber] = orderpfilename
+        orderfiles[fiber] = orderpfilename
+        ordertimes[fiber] = orderptime
     # return order profiles
-    return orderprofiles, orderprofilefiles
+    return orderprofiles, orderfiles, ordertimes
 
 
 # =============================================================================
