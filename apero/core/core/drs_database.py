@@ -1809,6 +1809,9 @@ class IndexDatabase(DatabaseManager):
             # do not re-fix is rawfix is 1
             if table['RAWFIX'].iloc[row] == 1:
                 continue
+            # do not fix headers of non-fits files
+            if not table['ABSPATH'].iloc[row].endswith('.fits'):
+                continue
             # get new header to push keys into
             header = drs_fits.Header()
             # add keys to header
