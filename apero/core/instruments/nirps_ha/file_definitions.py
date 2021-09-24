@@ -807,12 +807,12 @@ out_ff_flat = drs_finput('FF_FLAT', hkeys=dict(KW_OUTPUT='FF_FLAT'),
                          dbname='calibration', dbkey='FLAT',
                          outfunc=out.calib_file)
 
-out_orderp_straight = drs_ninput('ORDERP_STRAIGHT',
+out_orderp_straight = drs_finput('ORDERP_STRAIGHT',
                                  hkeys=dict(KW_OUTPUT='ORDERP_STRAIGHT'),
                                  fibers=['A', 'B'],
-                                 filetype='.npy', intype=out_shape_local,
+                                 filetype='.fits', intype=out_shape_local,
                                  suffix='_orderps',
-                                 outfunc=out.npy_file)
+                                 outfunc=out.general_file)
 
 # add flat outputs to output fileset
 red_file.addset(out_ff_blaze)
