@@ -246,18 +246,17 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     # ----------------------------------------------------------------------
     # get thermal (only if in one of the correction lists)
     if fibertype in corrtype1:
-        thermalfile, thermal = get_thermal(params, header, fiber=fiber,
-                                           filename=thermal_file,
-                                           kind='THERMALT_E2DS',
-                                           database=database)
+        tout = get_thermal(params, header, fiber=fiber, filename=thermal_file,
+                           kind='THERMALT_E2DS', database=database)
+        thermalfile, thermaltime, thermal = tout
     elif fibertype in corrtype2:
-        thermalfile, thermal = get_thermal(params, header, fiber=fiber,
-                                           filename=thermal_file,
-                                           kind='THERMALI_E2DS',
-                                           database=database)
+        tout = get_thermal(params, header, fiber=fiber, filename=thermal_file,
+                           kind='THERMALI_E2DS', database=database)
+        thermalfile, thermaltime, thermal = tout
     else:
         thermal = None
         thermalfile = 'None'
+        thermaltime = np.nan
     # ----------------------------------------------------------------------
     # thermal correction kwargs
     tkwargs = dict(header=header, fiber=fiber, wavemap=wavemap,
@@ -265,7 +264,6 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
                    filter_wid=filter_wid, torder=torder,
                    red_limit=red_limt, blue_limit=blue_limit,
                    thermal=thermal, database=database)
-
     # base thermal correction on fiber type
     if fibertype in corrtype1:
         # log progress: doing thermal correction
@@ -285,14 +283,16 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
         # log that we are not correcting thermal
         WLOG(params, 'info', textentry('40-016-00013', args=[fibertype]))
         thermalfile = 'None'
+        thermaltime = np.nan
     # ----------------------------------------------------------------------
     # add / update eprops
     eprops['E2DS'] = e2ds
     eprops['E2DSFF'] = e2dsff
     eprops['FIBERTYPE'] = fibertype
     eprops['THERMALFILE'] = thermalfile
+    eprops['THERMALTIME'] = thermaltime
     # update source
-    keys = ['E2DS', 'E2DSFF', 'FIBERTYPE', 'THERMALFILE']
+    keys = ['E2DS', 'E2DSFF', 'FIBERTYPE', 'THERMALFILE', 'THERMALTIME']
     eprops.set_sources(keys, func_name)
     # return eprops
     return eprops
@@ -314,12 +314,14 @@ def get_thermal(params, header, fiber, kind, filename=None,
     # ------------------------------------------------------------------------
     # load calib file
     ckwargs = dict(key=key, userinputkey='THERMALFILE', filename=filename,
-                   inheader=header, database=calibdbm, fiber=fiber)
-    thermal, thdr, thermal_file = gen_calib.load_calib_file(params, **ckwargs)
+                   inheader=header, database=calibdbm, fiber=fiber,
+                   return_time=True)
+    tout = gen_calib.load_calib_file(params, **ckwargs)
+    thermal, thdr, thermal_file, thermaltime = tout
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-016-00027', args=[thermal_file]))
     # return the master image
-    return thermal_file, thermal
+    return thermal_file, thermaltime, thermal
 
 
 def tcorrect1(params, recipe, image, header, fiber, wavemap, thermal=None,
@@ -1018,7 +1020,8 @@ def dark_fp_regen_s1d(params, recipe, props, database=None, **kwargs):
         extfile = outputs[fiber][s1dextfile]
         # --------------------------------------------------------------
         # load the blaze file for this fiber
-        blaze_file, blaze = flat_blaze.get_blaze(params, extfile.header, fiber)
+        bout = flat_blaze.get_blaze(params, extfile.header, fiber)
+        blaze_file, blaze_time, blaze = bout
         # --------------------------------------------------------------
         # load wavelength solution for this fiber (must be from the e2ds file)
         wprops = wave.get_wavesolution(params, recipe, infile=extfile,
@@ -1491,9 +1494,7 @@ def qc_extraction(params, eprops):
 
 def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
                            orderpfile, props, lprops, wprops, eprops, bprops,
-                           swprops, svprops, shapelocalfile, shapexfile,
-                           shapeyfile, shapelocal, flat_file, blaze_file,
-                           qc_params):
+                           swprops, svprops, sprops, fbprops, qc_params):
     # ----------------------------------------------------------------------
     # Store E2DS in file
     # ----------------------------------------------------------------------
@@ -1527,16 +1528,25 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile = gen_calib.add_calibs_to_header(e2dsfile, props)
     # ----------------------------------------------------------------------
     # add the other calibration files used
-    e2dsfile.add_hkey('KW_CDBORDP', value=orderpfile)
+    e2dsfile.add_hkey('KW_CDBORDP', value=lprops['ORDERPFILE'])
+    e2dsfile.add_hkey('KW_CDTORDP', value=lprops['ORDERPTIME'])
     e2dsfile.add_hkey('KW_CDBLOCO', value=lprops['LOCOFILE'])
-    e2dsfile.add_hkey('KW_CDBSHAPEL', value=shapelocalfile)
-    e2dsfile.add_hkey('KW_CDBSHAPEDX', value=shapexfile)
-    e2dsfile.add_hkey('KW_CDBSHAPEDY', value=shapeyfile)
-    e2dsfile.add_hkey('KW_CDBFLAT', value=flat_file)
-    e2dsfile.add_hkey('KW_CDBBLAZE', value=blaze_file)
+    e2dsfile.add_hkey('KW_CDTLOCO', value=lprops['LOCOTIME'])
+    e2dsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
+    e2dsfile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
+    e2dsfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
+    e2dsfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
+    e2dsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
+    e2dsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
+    e2dsfile.add_hkey('KW_CDBFLAT', value=fbprops['FLATFILE'])
+    e2dsfile.add_hkey('KW_CDTFLAT', value=fbprops['FLATTIME'])
+    e2dsfile.add_hkey('KW_CDBBLAZE', value=fbprops['BLAZEFILE'])
+    e2dsfile.add_hkey('KW_CDTBLAZE', value=fbprops['BLAZETIME'])
     if 'THERMALFILE' in eprops:
         e2dsfile.add_hkey('KW_CDBTHERMAL', value=eprops['THERMALFILE'])
+        e2dsfile.add_hkey('KW_CDTTHERMAL', value=eprops['THERMALTIME'])
     e2dsfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
+    e2dsfile.add_hkey('KW_CDTWAVE', value=wprops['WAVETIME'])
     # additional calibration keys
     if 'FIBERTYPE' in eprops:
         e2dsfile.add_hkey('KW_C_FTYPE', value=eprops['FIBERTYPE'])
@@ -1545,12 +1555,12 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile.add_qckeys(qc_params)
     # ----------------------------------------------------------------------
     # add shape transform parameters
-    e2dsfile.add_hkey('KW_SHAPE_DX', value=shapelocal[0])
-    e2dsfile.add_hkey('KW_SHAPE_DY', value=shapelocal[1])
-    e2dsfile.add_hkey('KW_SHAPE_A', value=shapelocal[2])
-    e2dsfile.add_hkey('KW_SHAPE_B', value=shapelocal[3])
-    e2dsfile.add_hkey('KW_SHAPE_C', value=shapelocal[4])
-    e2dsfile.add_hkey('KW_SHAPE_D', value=shapelocal[5])
+    e2dsfile.add_hkey('KW_SHAPE_DX', value=sprops['SHAPEL'][0])
+    e2dsfile.add_hkey('KW_SHAPE_DY', value=sprops['SHAPEL'][1])
+    e2dsfile.add_hkey('KW_SHAPE_A', value=sprops['SHAPEL'][2])
+    e2dsfile.add_hkey('KW_SHAPE_B', value=sprops['SHAPEL'][3])
+    e2dsfile.add_hkey('KW_SHAPE_C', value=sprops['SHAPEL'][4])
+    e2dsfile.add_hkey('KW_SHAPE_D', value=sprops['SHAPEL'][5])
     # ----------------------------------------------------------------------
     # add extraction type (does not change for future files)
     e2dsfile.add_hkey('KW_EXT_TYPE', value=e2dsfile.name)
@@ -1765,9 +1775,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
 
 
 def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
-                              orderpfile, props, lprops, eprops, shapelocalfile,
-                              shapexfile, shapeyfile, shapelocal, flat_file,
-                              blaze_file, qc_params):
+                              props, lprops, eprops, sprops, fbprops,
+                              qc_params):
     # ----------------------------------------------------------------------
     # Store E2DS in file
     # ----------------------------------------------------------------------
@@ -1801,13 +1810,20 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile = gen_calib.add_calibs_to_header(e2dsfile, props)
     # ----------------------------------------------------------------------
     # add the other calibration files used
-    e2dsfile.add_hkey('KW_CDBORDP', value=orderpfile)
+    e2dsfile.add_hkey('KW_CDBORDP', value=lprops['ORDERPFILE'])
+    e2dsfile.add_hkey('KW_CDTORDP', value=lprops['ORDERPTIME'])
     e2dsfile.add_hkey('KW_CDBLOCO', value=lprops['LOCOFILE'])
-    e2dsfile.add_hkey('KW_CDBSHAPEL', value=shapelocalfile)
-    e2dsfile.add_hkey('KW_CDBSHAPEDX', value=shapexfile)
-    e2dsfile.add_hkey('KW_CDBSHAPEDY', value=shapeyfile)
-    e2dsfile.add_hkey('KW_CDBFLAT', value=flat_file)
-    e2dsfile.add_hkey('KW_CDBBLAZE', value=blaze_file)
+    e2dsfile.add_hkey('KW_CDTLOCO', value=lprops['LOCOTIME'])
+    e2dsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
+    e2dsfile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
+    e2dsfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
+    e2dsfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
+    e2dsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
+    e2dsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
+    e2dsfile.add_hkey('KW_CDBFLAT', value=fbprops['FLATFILE'])
+    e2dsfile.add_hkey('KW_CDTFLAT', value=fbprops['FLATTIME'])
+    e2dsfile.add_hkey('KW_CDBBLAZE', value=fbprops['BLAZEFILE'])
+    e2dsfile.add_hkey('KW_CDTBLAZE', value=fbprops['BLAZETIME'])
     # additional calibration keys
     if 'FIBERTYPE' in eprops:
         e2dsfile.add_hkey('KW_C_FTYPE', value=eprops['FIBERTYPE'])
@@ -1816,12 +1832,12 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile.add_qckeys(qc_params)
     # ----------------------------------------------------------------------
     # add shape transform parameters
-    e2dsfile.add_hkey('KW_SHAPE_DX', value=shapelocal[0])
-    e2dsfile.add_hkey('KW_SHAPE_DY', value=shapelocal[1])
-    e2dsfile.add_hkey('KW_SHAPE_A', value=shapelocal[2])
-    e2dsfile.add_hkey('KW_SHAPE_B', value=shapelocal[3])
-    e2dsfile.add_hkey('KW_SHAPE_C', value=shapelocal[4])
-    e2dsfile.add_hkey('KW_SHAPE_D', value=shapelocal[5])
+    e2dsfile.add_hkey('KW_SHAPE_DX', value=sprops['SHAPEL'][0])
+    e2dsfile.add_hkey('KW_SHAPE_DY', value=sprops['SHAPEL'][1])
+    e2dsfile.add_hkey('KW_SHAPE_A', value=sprops['SHAPEL'][2])
+    e2dsfile.add_hkey('KW_SHAPE_B', value=sprops['SHAPEL'][3])
+    e2dsfile.add_hkey('KW_SHAPE_C', value=sprops['SHAPEL'][4])
+    e2dsfile.add_hkey('KW_SHAPE_D', value=sprops['SHAPEL'][5])
     # ----------------------------------------------------------------------
     # add extraction type (does not change for future files)
     e2dsfile.add_hkey('KW_EXT_TYPE', value=e2dsfile.name)
@@ -1904,7 +1920,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     return e2dsfile, e2dsfffile
 
 
-def extract_summary(recipe, params, qc_params, e2dsfile, shapelocal, eprops,
+def extract_summary(recipe, params, qc_params, e2dsfile, sprops, eprops,
                     fiber):
     # add qc params (fiber specific)
     recipe.plot.add_qc_params(qc_params, fiber=fiber)
@@ -1915,17 +1931,17 @@ def extract_summary(recipe, params, qc_params, e2dsfile, shapelocal, eprops,
                          fiber=fiber)
     recipe.plot.add_stat('KW_EXT_TYPE', value=e2dsfile.name,
                          fiber=fiber)
-    recipe.plot.add_stat('KW_SHAPE_DX', value=shapelocal[0],
+    recipe.plot.add_stat('KW_SHAPE_DX', value=sprops['SHAPEL'][0],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_SHAPE_DY', value=shapelocal[1],
+    recipe.plot.add_stat('KW_SHAPE_DY', value=sprops['SHAPEL'][1],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_SHAPE_A', value=shapelocal[2],
+    recipe.plot.add_stat('KW_SHAPE_A', value=sprops['SHAPEL'][2],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_SHAPE_B', value=shapelocal[3],
+    recipe.plot.add_stat('KW_SHAPE_B', value=sprops['SHAPEL'][3],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_SHAPE_C', value=shapelocal[4],
+    recipe.plot.add_stat('KW_SHAPE_C', value=sprops['SHAPEL'][4],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_SHAPE_D', value=shapelocal[5],
+    recipe.plot.add_stat('KW_SHAPE_D', value=sprops['SHAPEL'][5],
                          fiber=fiber)
     recipe.plot.add_stat('KW_EXT_START', value=eprops['START_ORDER'],
                          fiber=fiber)

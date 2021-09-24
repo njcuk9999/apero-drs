@@ -587,6 +587,7 @@ def ea_transform(params, image, lin_transform_vect=None,
 
     c) a shift in y position (dymap) where a shift is defined for each pixel
 
+    :param params: ParamDict, the parameter dictionary of constants
     :param image: numpy array (2D), the image to transform
     :param lin_transform_vect: np.ndarray [size=6], the linear transform
                                parameters (dx, dy, A, B, C, D)
@@ -625,15 +626,16 @@ def ea_transform(params, image, lin_transform_vect=None,
     image = np.array(image)
     # transforming an image with the 6 linear transform terms
     # Be careful with NaN values, there should be none
-    dx, dy, A, B, C, D = list(lin_transform_vect)
+    lout = list(lin_transform_vect)
+    shape_dx, shape_dy, shape_a, shape_b, shape_c, shape_d = lout
     # get the pixel locations for the image
     yy, xx = np.indices(image.shape, dtype=float)
     # get the shifted x pixel locations
-    xx2 = dx + xx * A + yy * B
+    xx2 = shape_dx + xx * shape_a + yy * shape_b
     if dxmap is not None:
         xx2 += dxmap
     # get the shifted y pixel locations
-    yy2 = dy + xx * C + yy * D
+    yy2 = shape_dy + xx * shape_c + yy * shape_d
     if dymap is not None:
         yy2 += dymap
     # get the valid (non Nan) pixels
@@ -683,7 +685,7 @@ def ea_transform_coeff(image, coeffs, lin_transform_vect):
     return coeffs2
 
 
-def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
+def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, **kwargs):
     func_name = __NAME__ + '.calculate_dxmap()'
 
     # get parameters from params/kwargs
@@ -717,8 +719,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     # get properties from property dictionaries
     nbo = lprops['NBO']
     acc = lprops['CENT_COEFFS']
-    poly_wave_ref = wprops['COEFFS']
-    une_lines, une_amps = drs_data.load_linelist(params)
+    # poly_wave_ref = wprops['COEFFS']
+    # une_lines, une_amps = drs_data.load_linelist(params)
     _, poly_cavity = drs_data.load_cavity_files(params)
     # get the dimensions
     dim1, dim2 = fpdata.shape
@@ -773,7 +775,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         slope_deg_arr_i, slope_arr_i, skeep_arr_i = [], [], []
         xsec_arr_i, ccor_arr_i, ddx_arr_i, dx_arr_i = [], [], [], []
         dypix_arr_i, cckeep_arr_i, dxrms_arr_i = [], [], []
-        corr_dx_from_fp = np.zeros((nbo, dim2))
+        # corr_dx_from_fp = np.zeros((nbo, dim2))
         shifts_all = np.zeros((nbo, dim2))
         # get dx array (NaN)
         dx = np.zeros((nbo, width)) + np.nan
@@ -962,11 +964,11 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
             # -------------------------------------------------------------
             # get the median values of the fp and hc
-            sp_fp = mp.nanmedian(ribbon_fp2, axis=0)
-            sp_hc = mp.nanmedian(ribbon_hc2, axis=0)
+            # sp_fp = mp.nanmedian(ribbon_fp2, axis=0)
+            # sp_hc = mp.nanmedian(ribbon_hc2, axis=0)
 
-            pargs = [params, sp_fp, sp_hc, order_num, hcdata,
-                     poly_wave_ref, une_lines, poly_cavity]
+            # pargs = [params, sp_fp, sp_hc, order_num, hcdata,
+            #          poly_wave_ref, une_lines, poly_cavity]
             # out = get_offset_sp(*pargs)
             # # get and save offest outputs into lists
             # corr_dx_from_fp[order_num] = out[0]
@@ -1211,9 +1213,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     return master_dxmap, max_dxmap_std, max_dxmap_info, dxrms
 
 
-def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
+def calculate_dymap(params, fpimage, fpheader, **kwargs):
     func_name = __NAME__ + '.calculate_dymap()'
-
     # get properties from property dictionaries
     fibers = pcheck(params, 'SHAPE_UNIQUE_FIBERS', 'fibers', kwargs, func_name)
     # get the dimensions
@@ -1230,8 +1231,8 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
         # log progress
         WLOG(params, '', textentry('40-014-00024', args=[fiber]))
         # get coefficients
-        lprops = localisation.get_coefficients(params, recipe, fpheader,
-                                               fiber=fiber, merge=True)
+        lprops = localisation.get_coefficients(params, fpheader, fiber=fiber,
+                                               merge=True)
         # update nbo
         nbo = lprops['NBO']
         # add to array
@@ -1302,6 +1303,38 @@ def get_master_fp(params, header, filename=None, database=None):
     return fpmaster_file, fpmaster
 
 
+def get_shape_calibs(params, header, database):
+    # set function name
+    func_name = __NAME__ + '.get_shape_calibs()'
+    # get shape x
+    sout = get_shapex(params, header, database=database)
+    shapexfile, shapextime, shapex = sout
+    # get shape y
+    sout = get_shapey(params, header, database=database)
+    shapeyfile, shapeytime, shapey = sout
+    # get shape local
+    sout = get_shapelocal(params, header, database=database)
+    shapelocalfile, shapelocaltime, shapelocal = sout
+    # out to parameter dictionary
+    sprops = ParamDict()
+    sprops['SHAPEX'] = shapex
+    sprops['SHAPEXFILE'] = shapexfile
+    sprops['SHAPEXTIME'] = shapextime
+    sprops['SHAPEY'] = shapey
+    sprops['SHAPEYFILE'] = shapeyfile
+    sprops['SHAPEYTIME'] = shapeytime
+    sprops['SHAPEL'] = shapelocal
+    sprops['SHAPELFILE'] = shapelocalfile
+    sprops['SHAPELTIME'] = shapelocaltime
+    # set source
+    keys = ['SHAPEX', 'SHAPEXFILE', 'SHAPEXTIME',
+            'SHAPEY', 'SHAPEYFILE', 'SHAPEYTIME',
+            'SHAPEL', 'SHAPELFILE', 'SHAPELTIME']
+    sprops.set_sources(keys, func_name)
+    # return shape properties
+    return sprops
+
+
 def get_shapex(params, header, filename=None, database=None):
     # get file definition
     out_shape_dxmap = drs_file.get_file_definition(params, 'SHAPE_X',
@@ -1317,13 +1350,14 @@ def get_shapex(params, header, filename=None, database=None):
     # ----------------------------------------------------------------------
     # load shape x file
     cout = gen_calib.load_calib_file(params, key, header, filename=filename,
-                                     userinputkey='SHAPEX', database=calibdbm)
-    dxmap, fhdr, shapex_file = cout
+                                     userinputkey='SHAPEX', database=calibdbm,
+                                     return_time=True)
+    dxmap, fhdr, shapex_file, shapetime = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-014-00031', args=[shapex_file]))
     # return the master image
-    return shapex_file, dxmap
+    return shapex_file, shapetime, dxmap
 
 
 def get_shapey(params, header, filename=None, database=None):
@@ -1341,13 +1375,14 @@ def get_shapey(params, header, filename=None, database=None):
     # ----------------------------------------------------------------------
     # load shape x file
     cout = gen_calib.load_calib_file(params, key, header, filename=filename,
-                                     userinputkey='SHAPEY', database=calibdbm)
-    dymap, fhdr, shapey_file = cout
+                                     userinputkey='SHAPEY', database=calibdbm,
+                                     return_time=True)
+    dymap, fhdr, shapey_file, shapetime = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-014-00032', args=[shapey_file]))
     # return the master image
-    return shapey_file, dymap
+    return shapey_file, shapetime, dymap
 
 
 def get_shapelocal(params, header, filename=None, database=None):
@@ -1366,13 +1401,14 @@ def get_shapelocal(params, header, filename=None, database=None):
     # ----------------------------------------------------------------------
     # load shape x file
     cout = gen_calib.load_calib_file(params, key, header, filename=filename,
-                                     userinputkey='SHAPEL', database=calibdbm)
-    shapel, fhdr, shapel_file = cout
+                                     userinputkey='SHAPEL', database=calibdbm,
+                                     return_time=True)
+    shapel, fhdr, shapel_file, shapetime = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-014-00039', args=[shapel_file]))
     # return the master image
-    return shapel_file, shapel.flatten()
+    return shapel_file, shapetime, shapel.flatten()
 
 
 # =============================================================================

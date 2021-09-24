@@ -187,7 +187,6 @@ def __main__(recipe, params):
                 WLOG(params, 'info', textentry('40-010-00012', args=wargs))
                 continue
 
-
         # ----------------------------------------------------------------------
         # Check for pixel shift and/or corrupted files
         # ----------------------------------------------------------------------

@@ -342,9 +342,9 @@ PP_COSMIC_NOISE_ESTIMATE.value = 30.0
 
 # define the cuts in sigma where we should look for cosmics (variance)
 PP_COSMIC_VARCUT1 = PP_COSMIC_VARCUT1.copy(__NAME__)
-PP_COSMIC_VARCUT1.value = 100.0
+PP_COSMIC_VARCUT1.value = 3000.0
 PP_COSMIC_VARCUT2 = PP_COSMIC_VARCUT2.copy(__NAME__)
-PP_COSMIC_VARCUT2.value = 50.0
+PP_COSMIC_VARCUT2.value = 1000.0
 
 # define the cuts in sigma where we should look for cosmics (intercept)
 PP_COSMIC_INTCUT1 = PP_COSMIC_INTCUT1.copy(__NAME__)

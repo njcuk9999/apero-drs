@@ -58,8 +58,8 @@ def drs_infile_id(params, recipe, given_drs_file):
     """
     _ = __NAME__ + '.drs_file_id()'
     # ID DRS FILE
-    found, kind = drs_file.id_drs_file(params, recipe, given_drs_file,
-                                       nentries=1, use_input_file=True)
+    found, kind = drs_file.id_drs_file(params, given_drs_file, nentries=1,
+                                       use_input_file=True)
     # return found and drs file that matches the correct type
     return found, kind
 

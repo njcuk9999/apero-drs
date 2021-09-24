@@ -438,7 +438,7 @@ def errslope_correct(errslope):
     Correction applied to the errslope to remove bad columns at start / end
     of amplifiers
 
-    :param intercept: np.ndarray, the errslope image
+    :param errslope: np.ndarray, the errslope image
 
     :return: np.ndarray, the corrected errslope image
     """
@@ -605,7 +605,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray) -> np.ndarray:
         # get correction
         tb_corr = bottom_med[namp] + ypix * (top_med[namp] - bottom_med[namp])
         # correct iamge
-        image[:, start:end] = image[:, start:end]  - tb_corr
+        image[:, start:end] = image[:, start:end] - tb_corr
     # -------------------------------------------------------------------------
     # copy the image
     image2 = np.array(image)
@@ -774,10 +774,10 @@ def nirps_order_mask(params: ParamDict,
     sig_image = mp.nanmedian(np.abs(image))
     # find pixels that are more than nsig absolute deviations from the image
     # median
-    with warnings.catch_warnings(record=True):
-        mask = image > nsig * sig_image
+    # with warnings.catch_warnings(record=True):
+    #     mask = image > nsig * sig_image
     # correct the image (as in preprocessing)
-    image, _ = nirps_correction(params, image, mask)
+    image, _ = nirps_correction(params, image)
     # generate a better estimate of the mask (after correction)
     with warnings.catch_warnings(record=True):
         mask = image > nsig * sig_image

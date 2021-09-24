@@ -405,10 +405,13 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # load the blaze file
             bout = flat_blaze.get_blaze(params, expfile.header,
                                         expfile.fiber, database=calibdb)
-            blazefile, blaze = bout
-            # add the global wave solution to polar dict
+            blazefile, blazetime, blaze = bout
+            # add the global blaze solution to polar dict
             polar_dict['GLOBAL_BLAZE'] = blaze
+            # add the global blaze filename to polar dict
             polar_dict['GLOBAL_BLAZEFILE'] = blazefile
+            # add the global blaze MJDMID time to polar dict
+            polar_dict['GLOBAL_BLAZETIME'] = blazetime
 
     # -------------------------------------------------------------------------
     # Load all exposures for each polar fiber
@@ -449,8 +452,9 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             polar_dict['INPUTS'][key_str] = infile.newcopy(params=params)
             # -----------------------------------------------------------------
             # load the blaze file
-            _, blaze = flat_blaze.get_blaze(params, infile.header, fiber,
-                                            database=calibdb)
+            bout = flat_blaze.get_blaze(params, infile.header, fiber,
+                                        database=calibdb)
+            _, _, blaze = bout
             # get normalized blaze data
             blaze = blaze / np.nanmax(blaze)
             # -----------------------------------------------------------------
@@ -1833,7 +1837,9 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     polfile.infiles = list(rawfiles1) + list(rawfiles2)
     # add wave and blaze used
     polfile.add_hkey('KW_CDBWAVE', value=props['GLOBAL_WAVEFILE'])
+    polfile.add_hkey('KW_CDTWAVE', value=props['GLOBAL_WAVETIME'])
     polfile.add_hkey('KW_CDBBLAZE', value=props['GLOBAL_BLAZEFILE'])
+    polfile.add_hkey('KW_CDTBLAZE', value=props['GLOBAL_BLAZETIME'])
     # add qc parameters
     polfile.add_qckeys(qc_params)
     # add polar header keys
