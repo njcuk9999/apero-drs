@@ -309,7 +309,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
         # load the pad pix file
         badout = load_calib_file(params, badkey, header, filename=badpixfile,
                                  userinputkey='BADPIXFILE', database=calibdbm,
-                                 return_filename=True)
+                                 return_filename=True, return_time=True)
         badpfile, badtime = badout
         # correct the image
         image3 = badpix.correction(params, image2, badpixfile=badpfile)
