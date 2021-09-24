@@ -135,11 +135,11 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cond1 = drs_file.combine(params, recipe, hcfiles, math='median')
+        cond1 = drs_file.combine(params, recipe, hcfiles, math='sum')
         hcfiles = [cond1[0]]
         # get combined file
         if fpfiles is not None:
-            cond2 = drs_file.combine(params, recipe, fpfiles, math='median')
+            cond2 = drs_file.combine(params, recipe, fpfiles, math='sum')
             fpfiles = [cond2[0]]
         combine = True
     else:
@@ -203,8 +203,8 @@ def __main__(recipe, params):
         hcheader = hc_e2ds_file.get_header()
         # -----------------------------------------------------------------
         # load the blaze file for this fiber
-        blaze_file, blaze = flat_blaze.get_blaze(params, hcheader,
-                                                 master_fiber)
+        bout = flat_blaze.get_blaze(params, hcheader, master_fiber)
+        blaze_file, blaze_time, blaze = bout
         # -----------------------------------------------------------------
         # load initial wavelength solution (start point) for this fiber
         #    this should only be a master wavelength solution

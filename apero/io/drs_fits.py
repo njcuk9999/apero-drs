@@ -22,7 +22,6 @@ import numpy as np
 from astropy.io import fits
 from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
-from astropy import version as av
 from copy import deepcopy
 import os
 from pathlib import Path
@@ -376,6 +375,7 @@ def readfits(params: ParamDict, filename: Union[str, Path],
     :param log: bool, if True logs that we read file
     :param copy: bool, if True copies the HDU[i].data and/or HDU[i].header so
                  HDU can be closed properly
+    :param return_names: bool, if True returns extension names
 
     :returns: if getdata and gethdr: returns data, header, if getdata return
               data, if gethdr returns header.
@@ -1075,7 +1075,7 @@ def update_extension(params: ParamDict, filename: str, extension: int,
             WLOG(params, 'error', textentry('00-004-00014', args=eargs))
             return
         # write to file
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as _:
             try:
                 nhdulist = fits.HDUList(new_hdu_list)
                 nhdulist.writeto(filename, overwrite=True)

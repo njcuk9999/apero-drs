@@ -130,7 +130,8 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
     image1 = np.array(image)
     # ----------------------------------------------------------------------
     # load the blaze file for this fiber
-    blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
+    bout = flat_blaze.get_blaze(params, header, fiber)
+    blaze_file, blaze_time, blaze = bout
     # copy blaze
     blaze_norm = np.array(blaze)
     # loop through blaze orders, normalize blaze by its peak amplitude
@@ -162,9 +163,10 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
     nprops['BLAZE_PERCENTILE'] = blaze_p
     nprops['BLAZE_CUT_NORM'] = cut_blaze_norm
     nprops['BLAZE_FILE'] = blaze_file
+    nprops['BLAZE_TIME'] = blaze_time
     # set sources
     keys = ['BLAZE', 'NBLAZE', 'BLAZE_PERCENTILE', 'BLAZE_CUT_NORM',
-            'BLAZE_FILE']
+            'BLAZE_FILE', 'BLAZE_TIME']
     nprops.set_sources(keys, func_name)
     # return the normalised image and the properties
     return image1, nprops

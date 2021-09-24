@@ -261,7 +261,8 @@ def __main__(recipe, params):
                                            database=calibdbm)
             # -----------------------------------------------------------------
             # load the blaze file for this fiber
-            blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
+            bout = flat_blaze.get_blaze(params, header, fiber)
+            blaze_file, blaze_time, blaze = bout
 
             # =================================================================
             # FP CCF COMPUTATION

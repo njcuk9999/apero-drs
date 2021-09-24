@@ -34,9 +34,12 @@ __all__ = [  # input keys
     'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE',
     'KW_MID_OBS_TIME', 'KW_MID_OBSTIME_METHOD',
     # calibration file header keys
-    'KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK', 'KW_CDBORDP', 'KW_CDBLOCO',
-    'KW_CDBSHAPEL', 'KW_CDBSHAPEDX', 'KW_CDBSHAPEDY', 'KW_CDBFLAT',
-    'KW_CDBBLAZE', 'KW_CDBWAVE', 'KW_CDBTHERMAL',
+    'KW_CDBDARK', 'KW_CDTDARK', 'KW_CDBBAD', 'KW_CDTBAD',
+    'KW_CDBBACK', 'KW_CDTBACK', 'KW_CDBORDP', 'KW_CDTORDP',
+    'KW_CDBLOCO', 'KW_CDTLOCO', 'KW_CDBSHAPEL', 'KW_CDTSHAPEL',
+    'KW_CDBSHAPEDX', 'KW_CDTSHAPEDX', 'KW_CDBSHAPEDY', 'KW_CDTSHAPEDY',
+    'KW_CDBFLAT', 'KW_CDTFLAT', 'KW_CDBBLAZE', 'KW_CDTBLAZE',
+    'KW_CDBWAVE', 'KW_CDTWAVE', 'KW_CDBTHERMAL', 'KW_CDTTHERMAL',
     # preprocess keys
     'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PPMSTR_NSIG', 'KW_PPMSTR_FILE',
     'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE', 'KW_PPC_NBAD_BOTH',
@@ -594,40 +597,77 @@ KW_INFILE3 = Keyword('KW_INFILE3', key='', dtype=str, source=__NAME__,
 # -----------------------------------------------------------------------------
 # dark calibration file used
 KW_CDBDARK = Keyword('KW_CDBDARK', key='', dtype=str, source=__NAME__,
-                     description='dark calibration file used')
+                     description='dark cal file used in extract')
+# time of dark calibration file used
+KW_CDTDARK = Keyword('KW_CDTDARK', key='', dtype=float, source=__NAME__,
+                     description='time of dark cal file used in extract')
 # bad pixel calibration file used
 KW_CDBBAD = Keyword('KW_CDBBAD', key='', dtype=str, source=__NAME__,
-                    description='bad pixel calibration file used')
+                    description='bad pixel cal file used in extract')
+# time of bad pixel calibration file used
+KW_CDTBAD = Keyword('KW_CDBBAD', key='', dtype=float, source=__NAME__,
+                    description='time of bad pixel cal file used in extract')
 # background calibration file used
 KW_CDBBACK = Keyword('KW_CDBBACK', key='', dtype=str, source=__NAME__,
-                     description='background calibration file used')
+                     description='background cal file used in extract')
+# time of background calibration file used
+KW_CDTBACK = Keyword('KW_CDTBACK', key='', dtype=float, source=__NAME__,
+                     description='time of background cal file used in extract')
 # order profile calibration file used
 KW_CDBORDP = Keyword('KW_CDBORDP', key='', dtype=str, source=__NAME__,
                      description='order profile calibration file used')
+# time of order profile calibration file used
+KW_CDTORDP = Keyword('KW_CDTORDP', key='', dtype=float, source=__NAME__,
+                     description='time of orderp cal file used in extract')
 # localisation calibration file used
 KW_CDBLOCO = Keyword('KW_CDBLOCO', key='', dtype=str, source=__NAME__,
-                     description='localisation calibration file used')
+                     description='loco cal file used')
+# localisation calibration file used
+KW_CDTLOCO = Keyword('KW_CDTLOCO', key='', dtype=float, source=__NAME__,
+                     description='time of loco cal file used in extract')
 # shape local calibration file used
 KW_CDBSHAPEL = Keyword('KW_CDBSHAPEL', key='', dtype=str, source=__NAME__,
-                       description='shape local calibration file used')
+                       description='shapel cal file used in extract')
+# time of shape local calibration file used
+KW_CDTSHAPEL = Keyword('KW_CDTSHAPEL', key='', dtype=float, source=__NAME__,
+                       description='time of shapel cal file used in extract')
 # shape dy calibration file used
 KW_CDBSHAPEDY = Keyword('KW_CDBSHAPEDY', key='', dtype=str, source=__NAME__,
-                        description='shape dy calibration file used')
+                        description='shape dy cal file used in extract')
+# time of shape dy calibration file used
+KW_CDTSHAPEDY = Keyword('KW_CDTSHAPEDY', key='', dtype=str, source=__NAME__,
+                        description='time of shape dy cal file used in extract')
 # shape dx calibration file used
 KW_CDBSHAPEDX = Keyword('KW_CDBSHAPEDX', key='', dtype=str, source=__NAME__,
                         description='shape dx calibration file used')
+# time of shape dx calibration file used
+KW_CDTSHAPEDX = Keyword('KW_CDTSHAPEDX', key='', dtype=str, source=__NAME__,
+                        description='time of shape dx cal file used in extract')
 # flat calibration file used
 KW_CDBFLAT = Keyword('KW_CDBFLAT', key='', dtype=str, source=__NAME__,
-                     description='flat calibration file used')
+                     description='flat calibration file used in extract')
+# time of flat calibration file used
+KW_CDTFLAT = Keyword('KW_CDTFLAT', key='', dtype=str, source=__NAME__,
+                     description='flat cal file used in extract')
 # blaze calibration file used
 KW_CDBBLAZE = Keyword('KW_CDBBLAZE', key='', dtype=str, source=__NAME__,
-                      description='blaze calibration file used')
+                      description='blaze cal file used in extract')
+# time of blaze calibration file used
+KW_CDTBLAZE = Keyword('KW_CDTBLAZE', key='', dtype=str, source=__NAME__,
+                      description='blaze cal file used in extract')
 # wave solution calibration file used
 KW_CDBWAVE = Keyword('KW_CDBWAVE', key='', dtype=str, source=__NAME__,
-                     description='wave solution calibration file used')
+                     description='wave sol cal file used in extract')
+# time of wave solution calibration file used
+KW_CDTWAVE = Keyword('KW_CDTWAVE', key='', dtype=str, source=__NAME__,
+                     description='time of wave sol cal file used in extract')
 # thermal calibration file used
 KW_CDBTHERMAL = Keyword('KW_CDBTHERMAL', key='', dtype=str, source=__NAME__,
-                        description='thermal calibration file used')
+                        description='thermal cal file used in extract')
+# time of thermal calibration file used
+KW_CDTTHERMAL = Keyword('KW_CDTTHERMAL', key='', dtype=str, source=__NAME__,
+                        description='time of thermal cal file used in extract')
+
 
 # additional properties of calibration
 

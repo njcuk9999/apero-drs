@@ -109,6 +109,10 @@ IMAGE_FRAME_TIME.value = 5.57192
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
+# Define the maximum number of files that can be used in a group
+GROUP_FILE_LIMIT = GROUP_FILE_LIMIT.copy(__NAME__)
+GROUP_FILE_LIMIT.value = 20
+
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
 COMBINE_METRIC_THRESHOLD1 = COMBINE_METRIC_THRESHOLD1.copy(__NAME__)
@@ -337,9 +341,9 @@ PP_COSMIC_VARCUT2.value = 50.0
 
 # define the cuts in sigma where we should look for cosmics (intercept)
 PP_COSMIC_INTCUT1 = PP_COSMIC_INTCUT1.copy(__NAME__)
-PP_COSMIC_INTCUT1.value = 50.0
+PP_COSMIC_INTCUT1.value = 100.0    # 50.0
 PP_COSMIC_INTCUT2 = PP_COSMIC_INTCUT2.copy(__NAME__)
-PP_COSMIC_INTCUT2.value = 10.0
+PP_COSMIC_INTCUT2.value = 50.0    # 10.0
 
 # random box size [in pixels] to speed-up low-frequency band computation
 PP_COSMIC_BOXSIZE = PP_COSMIC_BOXSIZE.copy(__NAME__)
@@ -1474,17 +1478,15 @@ WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
 
 # define the quality control threshold from RV of CCF FP between master
 #    fiber and other fibers, above this limit fails QC [m/s]
+# TODO: We should really think about this a bit more
 WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
 # TODO: address this later - should be much lower
 WAVE_CCF_RV_THRES_QC.value = 20.0    # 0.5 (spirou value)
 
+# TODO: Sort out wave constants below here
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
-# Define the maximum number of files that can be used in a group
-GROUP_FILE_LIMIT = GROUP_FILE_LIMIT.copy(__NAME__)
-GROUP_FILE_LIMIT.value = 20
-
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
 WAVE_LINELIST_FILE.value = 'catalogue_UNe.csv'  # 'catalogue_UNe.dat'

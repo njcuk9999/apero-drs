@@ -341,9 +341,9 @@ PP_COSMIC_VARCUT2.value = 50.0
 
 # define the cuts in sigma where we should look for cosmics (intercept)
 PP_COSMIC_INTCUT1 = PP_COSMIC_INTCUT1.copy(__NAME__)
-PP_COSMIC_INTCUT1.value = 50.0
+PP_COSMIC_INTCUT1.value = 100.0    # 50.0
 PP_COSMIC_INTCUT2 = PP_COSMIC_INTCUT2.copy(__NAME__)
-PP_COSMIC_INTCUT2.value = 10.0
+PP_COSMIC_INTCUT2.value = 50.0    # 10.0
 
 # random box size [in pixels] to speed-up low-frequency band computation
 PP_COSMIC_BOXSIZE = PP_COSMIC_BOXSIZE.copy(__NAME__)
@@ -1010,6 +1010,11 @@ ALLOWED_LEAKM_TYPES.value = 'DARK_FP'
 LEAKM_ALWAYS_EXTRACT = LEAKM_ALWAYS_EXTRACT.copy(__NAME__)
 LEAKM_ALWAYS_EXTRACT.value = False
 
+# define the type of file to use for leak master solution
+#    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
+LEAKM_EXTRACT_TYPE = LEAKM_EXTRACT_TYPE.copy(__NAME__)
+LEAKM_EXTRACT_TYPE.value = 'E2DSFF'
+
 # Define whether we want to correct leakage by default
 CORRECT_LEAKAGE = CORRECT_LEAKAGE.copy(__NAME__)
 CORRECT_LEAKAGE.value = True
@@ -1475,6 +1480,7 @@ WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
 #    fiber and other fibers, above this limit fails QC [m/s]
 # TODO: We should really think about this a bit more
 WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
+# TODO: address this later - should be much lower
 WAVE_CCF_RV_THRES_QC.value = 20.0    # 0.5 (spirou value)
 
 # TODO: Sort out wave constants below here

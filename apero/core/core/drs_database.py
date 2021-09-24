@@ -137,7 +137,9 @@ class DatabaseManager:
 
         :param kind: str, the kind of datatable
         :param check: bool, if True the filename has to exist
-        :return:
+        :param dparams: dict or None, if set this is the database dictionary
+
+        :return: None, sets self.path
         """
         # set function
         func_name = display_func('set_path', __NAME__,
@@ -376,7 +378,6 @@ class CalibrationDatabase(DatabaseManager):
             drsfile.update_param_table('CALIB_DB_ENTRY',
                                        param_kind='calib', values=values)
 
-
     def get_calib_entry(self, columns: str, key: str,
                         fiber: Union[str, None] = None,
                         filetime: Union[Time, None] = None,
@@ -485,14 +486,17 @@ class CalibrationDatabase(DatabaseManager):
             # return pandas table
             return entries
 
+    CALIB_FILE_RTN = Union[None, Path, List[Path], Tuple[Path, float],
+                           Tuple[List[Path], List[float]]]
+
     def get_calib_file(self, key: str, drsfile=None, header=None, hdict=None,
                        filetime: Union[None, Time] = None,
                        timemode: Union[str, None] = None,
                        nentries: Union[str, int] = 1,
                        required: bool = True,
                        no_times: bool = False,
-                       fiber: Union[str, None] = None
-                       ) -> Union[None, Path, List[Path]]:
+                       fiber: Union[str, None] = None,
+                       return_time: bool = False) -> CALIB_FILE_RTN:
         """
         Handles getting a filename from calibration database (from filename,
         user input, or key in SQL database
@@ -520,6 +524,8 @@ class CalibrationDatabase(DatabaseManager):
                          files
         :param fiber: str or None, if set sets the fiber to use - if no fiber
                       required do not set
+        :param return_time: bool, if True returns time as well as file
+
         :return:
         """
         # set function
@@ -558,8 +564,13 @@ class CalibrationDatabase(DatabaseManager):
         # get calibration database entries --> FILENAME
         #   if nentries = 1 : str or None
         #   if nentries > 1 : 1d numpy array
-        filenames = self.get_calib_entry('FILENAME', key, fiber, filetime,
-                                         timemode, nentries)
+        ctable = self.get_calib_entry('FILENAME, UNIXTIME', key, fiber,
+                                      filetime, timemode, nentries)
+        # get filenames
+        filenames = np.array(ctable['FILENAME'])
+        # get file times (unix ---> mjdtime)
+        unixtimes = np.array(ctable['UNIXTIME'])
+        filetimes = np.array(Time(unixtimes, format='unix').mjd).astype(float)
         # ---------------------------------------------------------------------
         # return absolute paths
         # ---------------------------------------------------------------------
@@ -587,18 +598,27 @@ class CalibrationDatabase(DatabaseManager):
             WLOG(self.params, 'error', textentry('00-002-00015', args=eargs))
         # make all files absolute paths
         if isinstance(filenames, str):
-            return Path(self.filedir).joinpath(filenames).absolute()
+            # set output
+            outputs = Path(self.filedir).joinpath(filenames).absolute()
+            # deal with returning time
+            if return_time:
+                outputs = [outputs, list(filetimes)]
+            # return outputs
+            return outputs
         # else loop around them (assume they are iterable)
         else:
             # set output storage
             outfilenames = []
             # loop around filenames
-            for filename in filenames:
+            for it, filename in enumerate(filenames):
                 outfilename = Path(self.filedir).joinpath(filename).absolute()
                 # append to storage
                 outfilenames.append(outfilename)
             # return outfilenames
-            return outfilenames
+            if return_time:
+                return outfilenames, list(filetimes)
+            else:
+                return outfilenames
 
     def remove_entries(self, condition):
         # set function
@@ -1293,7 +1313,6 @@ class IndexDatabase(DatabaseManager):
         :param params: ParamDict, parameter dictionary of constants
         :param check: bool, if True makes sure database file exists (otherwise
                       assumes it is)
-        :param log: bool, if False does not log
 
         :return: None
         """
@@ -1338,8 +1357,6 @@ class IndexDatabase(DatabaseManager):
                             here (see pseudo_constants.INDEX_HEADER_KEYS)
                             any that are not set here are set to 'None'
 
-        :param fullpath: str or None, if set means there is already a 'path'
-                         parameter
         :param used: int or None, if set overrides the default "used" parameter
         :param rawfix: int or None, if set overrides the default "rawfix"
                        parameter
@@ -1482,7 +1499,7 @@ class IndexDatabase(DatabaseManager):
         :param columns: str, the columns to return ('*' for all)
         :param obs_dir: str or None, if set filters results by directory name
         :param filename: str or None, if set filters results by filename
-        :param kind: str or None, if set filters results by kind
+        :param block_kind: str or None, if set filters results by kind
         :param hkeys: dict or None, if set is a dictionary of strings
                             where each string is one of the index database
                             header keys (see pseudo_constants.INDEX_HEADER_KEYS)
@@ -1647,7 +1664,7 @@ class IndexDatabase(DatabaseManager):
             # if we are not updating return here
             if not cond:
                 # print skipping: Skipping search (already run)
-                WLOG(self.params, '', textentry('40-001-00031'))
+                WLOG(self.params, 'debug', textentry('40-001-00031'))
                 return None
         # ---------------------------------------------------------------------
         # deal with no database loaded
@@ -1822,7 +1839,7 @@ class IndexDatabase(DatabaseManager):
         for row in tqdm(range(len(table))):
             # do not re-fix is rawfix is 1
             if table['RAWFIX'].iloc[row] == 1:
-               continue
+                continue
             # get new header to push keys into
             header = drs_fits.Header()
             # add keys to header
@@ -2147,6 +2164,8 @@ class LogDatabase(DatabaseManager):
                        recipe run - divided by ||
         :param skwargs: str, the special arguments (named) used for this
                         recipe run - divided by ||
+        :param start_time: str, the human time recipe started
+        :param end_time: str, the human time recipe ended
         :param started: bool or int, whether a recipe run was started (should
                         always be 1 or True)
         :param passed_all_qc: bool or int, whether all qc passed on this run
@@ -2547,7 +2566,7 @@ class ObjectDatabase(DatabaseManager):
 # =============================================================================
 # Define class for astropy table as database
 # =============================================================================
-class PandasDBStorage():
+class PandasDBStorage:
     classname: str = 'PandasDBStorage'
 
     def __init__(self):
@@ -2611,14 +2630,14 @@ class PandasDBStorage():
                 del OBS_PATHS[subkey]
             # else reset entire thing
             else:
-                OBS_PATHS =  dict()
+                OBS_PATHS = dict()
         elif key == 'filedbs':
             # if we have a sub key just delete this
             if subkey is not None and subkey in FILEDBS:
                 del FILEDBS[subkey]
             # else reset entire thing
             else:
-                FILEDBS =  dict()
+                FILEDBS = dict()
         # no key --> reset all
         if key is None:
             # if we have a sub key just delete this
@@ -2629,7 +2648,7 @@ class PandasDBStorage():
                     del FILEDBS[subkey]
             # else reset entire thing
             else:
-                OBS_PATHS =  dict()
+                OBS_PATHS = dict()
                 FILEDBS = dict()
 
 
@@ -2702,6 +2721,7 @@ class PandasLikeDatabase:
         df = self.execute(command)
         # return the data frame
         return df
+
 
 # =============================================================================
 # Start of code

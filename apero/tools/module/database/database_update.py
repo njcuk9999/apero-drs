@@ -326,7 +326,7 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
         db_out_file = file_set.newcopy(params=params)
         # ------------------------------------------------------------------
         # try to find cdb_file
-        found, kind = drs_file.id_drs_file(params, recipe, db_out_file,
+        found, kind = drs_file.id_drs_file(params, db_out_file,
                                            filename=db_file, nentries=1,
                                            required=False)
         # ------------------------------------------------------------------

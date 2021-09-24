@@ -169,7 +169,7 @@ raw_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # -----------------------------------------------------------------------------
-# apero_pp_master_nirps_he
+# apero_pp_master
 # -----------------------------------------------------------------------------
 # TODO: remove
 apero_pp_master = DrsRecipe(__INSTRUMENT__)
@@ -1434,7 +1434,6 @@ science_seq.add(apero_postprocess, files=[files.pp_file],
 # -----------------------------------------------------------------------------
 # science sequence (for trigger)
 # -----------------------------------------------------------------------------
-# TODO: TEST THIS
 quick_seq = drs_recipe.DrsRunSequence('quick_seq', __INSTRUMENT__)
 # extract science
 quick_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-quick',
@@ -1446,7 +1445,6 @@ quick_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-quick',
 # -----------------------------------------------------------------------------
 # blank sequence (for trigger)
 # -----------------------------------------------------------------------------
-# TODO: TEST THIS
 blank_seq = drs_recipe.DrsRunSequence('blank_seq', __INSTRUMENT__)
 
 # -----------------------------------------------------------------------------

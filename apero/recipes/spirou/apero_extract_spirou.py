@@ -168,10 +168,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Load shape components
         # ------------------------------------------------------------------
-        shapexfile, shapex = shape.get_shapex(params, header, database=calibdbm)
-        shapeyfile, shapey = shape.get_shapey(params, header, database=calibdbm)
-        shapelocalfile, shapelocal = shape.get_shapelocal(params, header,
-                                                          database=calibdbm)
+        sprops = shape.get_shape_calibs(params, header, database=calibdbm)
 
         # ------------------------------------------------------------------
         # Correction of file
@@ -182,10 +179,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Load and straighten order profiles
         # ------------------------------------------------------------------
-        sargs = [infile, fibertypes, shapelocal, shapex, shapey,
-                 shapelocalfile]
-        orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs,
-                                                      database=calibdbm)
+        sargs = [infile, fibertypes, sprops['SHAPEL'], sprops['SHAPEX'],
+                 sprops['SHAPEY'], sprops['SHAPELFILE']]
+        oout = extract.order_profiles(params, recipe, *sargs, database=calibdbm)
+        orderps, orderpfiles, orderptimes = oout
 
         # ------------------------------------------------------------------
         # Apply shape transformations
@@ -193,8 +190,9 @@ def __main__(recipe, params):
         # log progress (straightening orderp)
         WLOG(params, 'info', textentry('40-016-00004'))
         # straighten image
-        image2 = shape.ea_transform(params, image, shapelocal, dxmap=shapex,
-                                    dymap=shapey)
+        image2 = shape.ea_transform(params, image, sprops['SHAPEL'],
+                                    dxmap=sprops['SHAPEX'],
+                                    dymap=sprops['SHAPEY'])
         # ------------------------------------------------------------------
         # Calculate Barycentric correction
         # ------------------------------------------------------------------
@@ -228,40 +226,54 @@ def __main__(recipe, params):
                 wprops = ParamDict()
             # --------------------------------------------------------------
             # load the localisation properties for this fiber
-            lprops = localisation.get_coefficients(params, recipe, header,
-                                                   fiber=fiber, merge=True,
+            lprops = localisation.get_coefficients(params, header, fiber=fiber,
+                                                   merge=True,
                                                    database=calibdbm)
             # get the localisation center coefficients for this fiber
             lcoeffs = lprops['CENT_COEFFS']
             # shift the coefficients
-            lcoeffs2 = shape.ea_transform_coeff(image2, lcoeffs, shapelocal)
+            lcoeffs2 = shape.ea_transform_coeff(image2, lcoeffs,
+                                                sprops['SHAPEL'])
             # --------------------------------------------------------------
             # load the flat file for this fiber
-            flat_file, flat = flat_blaze.get_flat(params, header, fiber,
-                                                  database=calibdbm)
+            fout = flat_blaze.get_flat(params, header, fiber, database=calibdbm)
             # --------------------------------------------------------------
             # load the blaze file for this fiber
-            blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber,
-                                                     database=calibdbm)
+            bout = flat_blaze.get_blaze(params, header, fiber,
+                                        database=calibdbm)
+            # add blaze and flat to parameter dictionary
+            fbprops = ParamDict()
+            fbprops['FLAT'] = fout[3]
+            fbprops['FLATFILE'] = fout[1]
+            fbprops['FLATTIME'] = fout[2]
+            fbprops['BLAZE'] = bout[3]
+            fbprops['BLAZEFILE'] = bout[1]
+            fbprops['BLAZETIME'] = bout[2]
+            # add keys
+            keys = ['FLAT', 'FLATFILE', 'FLATTIME', 'BLAZE', 'BLAZEFILE',
+                    'BLAZETIME']
+            fbprops.set_sources(keys, mainname)
             # --------------------------------------------------------------
             # get the number of frames used
             nframes = infile.numfiles
             # --------------------------------------------------------------
             # get the order profile for this fiber
-            orderp = orderps[fiber]
-            orderpfile = orderpfiles[fiber]
+            lprops['ORDERP'] = orderps[fiber]
+            lprops['ORDERPFILE'] = orderpfiles[fiber]
+            lprops['ORDERPTIME'] = orderptimes[fiber]
+            lprops.set_sources(['ORDERP', 'ORDERPFILE', 'ORDERPTIME'], mainname)
             # --------------------------------------------------------------
             # log progress: extracting image
             WLOG(params, 'info', textentry('40-016-00011'))
             # extract spectrum
-            eprops = extract.extract2d(params, image2, orderp, lcoeffs2,
-                                       nframes, props, fiber=fiber)
+            eprops = extract.extract2d(params, image2, lprops['ORDERP'],
+                                       lcoeffs2, nframes, props, fiber=fiber)
             # leak correction
             eprops = extract.manage_leak_correction(params, recipe, eprops,
                                                     infile, fiber)
             # flat correction for e2dsff
-            eprops = extract.flat_blaze_correction(eprops, flat, blaze)
-
+            eprops = extract.flat_blaze_correction(eprops, fbprops['FLAT'],
+                                                   fbprops['BLAZE'])
             # --------------------------------------------------------------
             # thermal correction of spectrum
             if not quicklook:
@@ -319,17 +331,13 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             if quicklook:
                 fargs = [params, recipe, infile, rawfiles, combine, fiber,
-                         orderpfile, props, lprops, eprops, shapelocalfile,
-                         shapexfile, shapeyfile, shapelocal, flat_file,
-                         blaze_file, qc_params]
+                         props, lprops, eprops, sprops, fbprops, qc_params]
                 outfiles = extract.write_extraction_files_ql(*fargs)
                 e2dsfile, e2dsfffile = outfiles
             else:
                 fargs = [params, recipe, infile, rawfiles, combine, fiber,
-                         orderpfile, props, lprops, wprops, eprops, bprops,
-                         swprops, svprops, shapelocalfile, shapexfile,
-                         shapeyfile, shapelocal, flat_file, blaze_file,
-                         qc_params]
+                         props, lprops, wprops, eprops, bprops,
+                         swprops, svprops, sprops, fbprops, qc_params]
                 outfiles = extract.write_extraction_files(*fargs)
                 e2dsfile, e2dsfffile = outfiles
 
@@ -378,7 +386,7 @@ def __main__(recipe, params):
             # ------------------------------------------------------------------
             if not quicklook:
                 extract.extract_summary(recipe, params, qc_params, e2dsfile,
-                                        shapelocal, eprops, fiber)
+                                        sprops, eprops, fiber)
             # ------------------------------------------------------------------
             # update recipe log file
             # ------------------------------------------------------------------

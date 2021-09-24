@@ -34,6 +34,7 @@ Date: 2021-06-02
     - problem with number of TCP connections we are making (TCP conection can
       only be used every 60s - with many cores we get a pile up) - current
       hack is to wait and try to reconnect
+    - indexing certain columns for more efficient sql querying
 
 - processing
     - moving to use multiprocess.Pool instead of multiprocess.Process (should
@@ -114,6 +115,13 @@ Date: 2021-06-02
 - extraction
     - modify cosmic rejection in extraction code (now use Etienne's sigma clip)
     - LL file has new extension showing where cosmic rays were rejected
+    - leak correction now moved into extraction recipe (will save a lot of time)
+        - leak correction done on e2ds before e2dsff created
+        - debug-uncorr now only for e2ds
+        - will now correct all observations with FP in ref fiber
+            - before only did OBJ_FP, POLAR_FP
+        - added --leakcorr to extraction (for DARK_FP in leak master don't want
+          to correct FP on extraction)
 
 - tellurics
     - added header keys to template file:

@@ -55,7 +55,6 @@ def main(runfile=None, **kwargs):
     :param runfile: str, the run file to run (see the /run/ folder)
     :param kwargs: additional keyword arguments
 
-    :type instrument: str
     :type runfile: str
 
     :keyword debug: int, debug level (0 for None)

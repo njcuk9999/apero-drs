@@ -502,7 +502,6 @@ def get_cavity_file(params: ParamDict, header: HeaderType = None,
     Get the cavity file
 
     :param params: ParamDict, parameter dictionary of constants
-    :param recipe: Drs Recipe instance, the recipe running this function
     :param header: the header from an input file (required because we may have
                    multiple cavity files in the calibration database)
     :param infile: DrsFitsFile, instead of header + filename you can give a
@@ -519,7 +518,7 @@ def get_cavity_file(params: ParamDict, header: HeaderType = None,
     # deal with infile (instead of header/filename)
     if infile is not None:
         header = infile.header
-        filename = infile.filename
+        # filename = infile.filename
     # ---------------------------------------------------------------------
     # setup calib db keys
     # ---------------------------------------------------------------------
@@ -1111,6 +1110,7 @@ def hc_wave_sol_offset(params: ParamDict, inwavemap: np.ndarray,
     default wave map might be off by too many pixels therefore we
     calculate a global offset and re-calculate
 
+    :param params: ParamDict, parameter dictionary of constants
     :param inwavemap: np.ndarray, the input wave map
     :param hclines: astropy.table.Table, the hclines table
 
@@ -1504,6 +1504,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     wavepeak = fpl_wave_meas * fpl_peak_num
     cavity, _ = mp.robust_polyfit(fpl_wave_meas, wavepeak,
                                   cavity_fit_degree, nsig_cut)
+    cavity = np.array(cavity)
     # -------------------------------------------------------------------------
     # if fit_cavity is False and a file exists we load this file
     # (otherwise we save this cavity file later)
@@ -1712,6 +1713,8 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
     :param mprops: ParamDict, the wave properties of the master file
     :param fp_outputs: Dict of fp file inputs (e2ds files) for each fiber
     :param hc_outputs: Dict of hc file inputs (e2ds files) for each fiber
+    :param fit_cavity: bool, if True fits the cavity width
+    :param fit_achromatic: bool, if True fits the achromaticity
 
     :return: Dict of wave properties (ParamDict) for each fiber
     """
@@ -1725,8 +1728,8 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
     # get the cavity file
     cavity = mprops['CAVITY']
     # get the master fiber lines
-    mhcl = mprops['HCLINES']
-    mfpl = mprops['FPLINES']
+    # mhcl = mprops['HCLINES']
+    # mfpl = mprops['FPLINES']
     # get the fiber types from a list parameter (or from inputs)
     fiber_types = drs_image.get_fiber_types(params)
     # loop around fibers
@@ -2049,8 +2052,9 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # Need to re-calculate the s1d files
     # ----------------------------------------------------------------------
     # load the blaze file for this fiber
-    blaze_file, blaze = flat_blaze.get_blaze(params, e2dsff_file.get_header(),
-                                             fiber, database=calibdbm)
+    bout = flat_blaze.get_blaze(params, e2dsff_file.get_header(), fiber,
+                                database=calibdbm)
+    blaze_file, blaze_time, blaze = bout
     # calculate s1d file
     sargs = [wprops['WAVEMAP'], e2dsff_file.get_data(), blaze]
     swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
@@ -2191,7 +2195,7 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # storage for plotting / outputs
     map_dvs, map_fluxes, map_fits = dict(), dict(), dict()
     map_waves, map_orders, map_res_eff = dict(), dict(), dict()
-    map_fwhm, map_amp, map_expo  = dict(), dict(), dict()
+    map_fwhm, map_amp, map_expo = dict(), dict(), dict()
     map_lower_ords, map_high_ords = dict(), dict()
     map_lower_pix, map_high_pix = dict(), dict()
     # get all orders and pixels
@@ -2329,7 +2333,7 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     wprops['RES_MAP_EFFRES'] = map_res_eff
     wprops['RES_MAP_NBIN_ORD'] = n_order_bin
     wprops['RES_MAP_NBIN_PIX'] = n_spatial_bin
-    wprops['RES_NBO']  = nbo
+    wprops['RES_NBO'] = nbo
     wprops['RES_NBPIX'] = nbpix
     # set source
     keys = ['RES_MAP_DVS', 'RES_MAP_LINES', 'RES_MAP_FITS', 'RES_MAP_LOW_ORD',
@@ -2500,7 +2504,6 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
             all_wave, all_order]
 
     return fout
-
 
 
 def get_echelle_orders(params: ParamDict, wprops: ParamDict) -> ParamDict:
@@ -2748,8 +2751,10 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
             continue
         # get rv for this fiber [km/s] --> [m/s]
         rvfiber = rvprops[fiber]['MEAN_RV'] * 1000
+
+        rvdiff = master_rv - rvfiber
         # deal with rv threshold
-        if np.abs(master_rv - rvfiber) > rv_thres:
+        if np.abs(rvdiff) > rv_thres:
             qc_pass.append(0)
         else:
             qc_pass.append(1)
@@ -2758,6 +2763,9 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         qc_names.append('CCFRV[{0} - {1}]'.format(master_fiber, fiber))
         qargs = [master_fiber, fiber, rv_thres]
         qc_logic.append('abs(CCFRV[{0} - {1}]) > {2} m/s'.format(*qargs))
+        # print to screen
+        pargs = [master_fiber, fiber, rvdiff]
+        WLOG(params, textentry('40-017-00068', args=pargs))
 
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
@@ -2947,6 +2955,7 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     :param hclines: Table
     :param fplines: Table
     :param fiber: str, the fiber that we are processing
+    :param master: bool, if this is a master recipe
     :param file_kind: str temp file naming override (remove later)
 
     :return: None - writes to file
@@ -3098,7 +3107,6 @@ def write_fplines(params: ParamDict, recipe: DrsRecipe, rfpl: Table,
                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(fplfile)
-
 
 
 def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
@@ -3262,7 +3270,7 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # set output key
     resfile.add_hkey('KW_OUTPUT', value=resfile.name)
     # add some basic keys to know whats in this file
-    resfile.add_hkey('KW_RESMAP_NBO' ,value=nbo)
+    resfile.add_hkey('KW_RESMAP_NBO', value=nbo)
     resfile.add_hkey('KW_RESMAP_NBPIX', value=nbpix)
     resfile.add_hkey('KW_RESMAP_NBINORD', value=n_order_bin)
     resfile.add_hkey('KW_RESMAP_NBINPIX', value=n_spatial_bin)
