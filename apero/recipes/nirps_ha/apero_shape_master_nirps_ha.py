@@ -124,7 +124,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
     # ----------------------------------------------------------------------
-    lprops = localisation.get_coefficients(params, recipe, fpheader, fiber,
+    lprops = localisation.get_coefficients(params, fpheader, fiber,
                                            database=calibdbm)
 
     # ----------------------------------------------------------------------
@@ -204,7 +204,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Calculate dy shape map
     # ----------------------------------------------------------------------
-    dymap = shape.calculate_dymap(params, recipe, master_fp, fpheader)
+    dymap = shape.calculate_dymap(params, master_fp, fpheader)
 
     # ----------------------------------------------------------------------
     # Need to straighten the dxmap

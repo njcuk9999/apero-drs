@@ -260,15 +260,18 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     if correctdark:
         # load dark file
-        darkfile = load_calib_file(params, darkkey, header, filename=darkfile,
-                                   userinputkey='DARKFILE', database=calibdbm,
-                                   return_filename=True)
+        darkfile, darktime = load_calib_file(params, darkkey, header,
+                                             filename=darkfile,
+                                             userinputkey='DARKFILE',
+                                             database=calibdbm,
+                                             return_filename=True,
+                                             return_time=True)
         # correct image
         image1 = dark.correction(params, image, nfiles=nfiles,
                                  darkfile=darkfile)
     else:
         image1 = np.array(image)
-        darkfile = 'None'
+        darkfile, darktime = 'None', np.nan
     # ----------------------------------------------------------------------
     # flip image
     # ----------------------------------------------------------------------
@@ -304,28 +307,30 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     if correctbad:
         # load the pad pix file
-        badpfile = load_calib_file(params, badkey, header, filename=badpixfile,
-                                   userinputkey='BADPIXFILE', database=calibdbm,
-                                   return_filename=True)
+        badout = load_calib_file(params, badkey, header, filename=badpixfile,
+                                 userinputkey='BADPIXFILE', database=calibdbm,
+                                 return_filename=True)
+        badpfile, badtime = badout
         # correct the image
         image3 = badpix.correction(params, image2, badpixfile=badpfile)
     else:
         image3 = np.array(image2)
-        badpfile = 'None'
+        badpfile, badtime = 'None', np.nan
     # ----------------------------------------------------------------------
     # image 4 is corrected for background
     # ----------------------------------------------------------------------
     if correctback:
         # load background file from inputs/calibdb
-        bkgrdfile = load_calib_file(params, backkey, header, filename=backfile,
-                                    userinputkey='BACKFILE',
-                                    return_filename=True, database=calibdbm)
+        bkout = load_calib_file(params, backkey, header, filename=backfile,
+                                userinputkey='BACKFILE', return_filename=True,
+                                return_time=True, database=calibdbm)
+        bkgrdfile, backtime = bkout
         # correct image for background
         image4 = background.correction(recipe, params, infile, image3,
                                        bkgrdfile=bkgrdfile)
     else:
         image4 = np.array(image3)
-        bkgrdfile = 'None'
+        bkgrdfile, backtime = 'None', np.nan
     # ----------------------------------------------------------------------
     # image 4 may need to normalise by a percentile
     # ----------------------------------------------------------------------
@@ -342,9 +347,10 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
         # log progress
         WLOG(params, '', textentry('40-014-00012'))
         # load the bad pix file
-        badpfile = load_calib_file(params, badkey, header, filename=badpixfile,
-                                   userinputkey='BADPIXFILE', database=calibdbm,
-                                   return_filename=True)
+        badout = load_calib_file(params, badkey, header, filename=badpixfile,
+                                 userinputkey='BADPIXFILE', database=calibdbm,
+                                 return_filename=True, return_time=True)
+        badpfile, badtime = badout
         # get bad pixel mask
         badpixmask = badpix.correction(params, None, badpixfile=badpfile,
                                        return_map=True)
@@ -379,8 +385,11 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # get
     props['SHAPE'] = image5.shape
     props['DARKFILE'] = darkfile
+    props['DARKTIME'] = darktime
     props['BADPFILE'] = badpfile
+    props['BADTIME'] = badtime
     props['BACKFILE'] = bkgrdfile
+    props['BACKTIME'] = backtime
     props['FLIPPED'] = flip
     props['CONVERT_E'] = converte
     props['RESIZED'] = resize
@@ -391,8 +400,9 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     props['CLEANED'] = cleanhotpix
     # set source
     keys = ['FILENAME', 'BASENAME', 'SIGDET', 'EXPTIME', 'GAIN', 'DPRTYPE',
-            'SHAPE', 'DARKFILE', 'BADPFILE', 'BACKFILE', 'FLIPPED',
-            'CONVERT_E', 'RESIZED', 'NORMALISED', 'CLEANED']
+            'SHAPE', 'DARKFILE', 'DARKTIME', 'BADPFILE', 'BADTIME', 'BACKFILE',
+            'BACKTIME', 'FLIPPED', 'CONVERT_E', 'RESIZED', 'NORMALISED',
+            'CLEANED']
     props.set_sources(keys, func_name)
 
     # ----------------------------------------------------------------------
@@ -419,11 +429,12 @@ def add_calibs_to_header(outfile: DrsFitsFile,
     :return: outfile, DrsFitsFile, the input outfile with updated header
     """
     # define property keys (must be in calibrate_ppfile function)
-    propkeys = ['DARKFILE', 'BADPFILE', 'BACKFILE', 'FLIPPED', 'CONVERT_E',
-                'RESIZED']
+    propkeys = ['DARKFILE', 'DARKTIME', 'BADPFILE', 'BADTIME',
+                'BACKFILE', 'BACKTIME', 'FLIPPED', 'CONVERT_E', 'RESIZED']
     # define the header keywords to use for each
-    headerkeys = ['KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK', 'KW_C_FLIP',
-                  'KW_C_CVRTE', 'KW_C_RESIZE']
+    headerkeys = ['KW_CDBDARK', 'KW_CDTDARK', 'KW_CDBBAD', 'KW_CDTBAD',
+                  'KW_CDBBACK', 'KW_CDTBACK', 'KW_C_FLIP', 'KW_C_CVRTE',
+                  'KW_C_RESIZE']
     # loop around property keys
     for it in range(len(propkeys)):
         # get header key
@@ -443,31 +454,67 @@ def add_calibs_to_header(outfile: DrsFitsFile,
 
 
 # for: load_calib_file
-LoadCalibFileReturn = Union[None,
+LoadCalibFileReturn = Union[None,    # null return
+                            # -------------------------------------------------
                             # if return filename
                             str,
+                            # if return_filename + return_time + return_source
+                            Tuple[str, float, str],
+                            # if return_filename + return_time
+                            Tuple[str, float],
                             # if return_filename + return_source
                             Tuple[str, str],
+                            # -------------------------------------------------
                             # default
                             Tuple[Union[np.ndarray, Table, None],
                                   Union[drs_fits.Header, None],
                                   str],
+                            # if return_time + return_source
+                            Tuple[Union[np.ndarray, Table, None],
+                                  Union[drs_fits.Header, None],
+                                  str,
+                                  float,
+                                  str],
+                            # if return_time
+                            Tuple[Union[np.ndarray, Table, None],
+                                  Union[drs_fits.Header, None],
+                                  str,
+                                  float],
                             # if return_source
                             Tuple[Union[np.ndarray, Table, None],
                                   Union[drs_fits.Header, None],
-                                  str, str],
+                                  str,
+                                  str],
+                            # -------------------------------------------------
                             # if nentries > 1
                             List[str],
+                            # if nentries > 1 + return time + return source
+                            Tuple[List[str], float, str],
+                            # if nentries > 1 + return time
+                            Tuple[List[str], float],
                             # if nentries > 1 + return source
                             Tuple[List[str], str],
+                            # -------------------------------------------------
                             # if nentries > 1 + default
                             Tuple[List[Union[np.ndarray, Table, None]],
                                   List[Union[drs_fits.Header, None]],
                                   List[str]],
+                            # if nentries > 1 + return time + return source
+                            Tuple[List[Union[np.ndarray, Table, None]],
+                                  List[Union[drs_fits.Header, None]],
+                                  Union[List[str], str, None],
+                                  Union[List[float], float],
+                                  str],
+                            # if nentries > 1 + return time
+                            Tuple[List[Union[np.ndarray, Table, None]],
+                                  List[Union[drs_fits.Header, None]],
+                                  Union[List[str], str, None],
+                                  Union[List[float], float]],
                             # if nentries > 1 + return source
                             Tuple[List[Union[np.ndarray, None]],
                                   List[Union[drs_fits.Header, None]],
-                                  List[str], str]
+                                  Union[List[str], str, None],
+                                  str]
                             ]
 
 
@@ -478,7 +525,9 @@ def load_calib_file(params: ParamDict, key: str,
                     fiber: Union[str, None] = None,
                     userinputkey: Union[str, None] = None,
                     database: Union[CalibDatabase, None] = None,
-                    return_filename: bool = False, return_source: bool = False,
+                    return_filename: bool = False,
+                    return_time: bool = False,
+                    return_source: bool = False,
                     mode: Union[str, None] = None,
                     n_entries: Union[int, str] = 1,
                     required: bool = True, ext: Union[int, None] = None,
@@ -507,6 +556,7 @@ def load_calib_file(params: ParamDict, key: str,
     :param database: drs calibration database instance - set this if calibration
                      database already loaded (if unset will reload the database)
     :param return_filename: bool, if True returns the filename only
+    :param return_time: bool, if True return the time of the calib file(s) used
     :param return_source: bool, if True returns the source of the calib file(s)
     :param mode: str or None, the time mode for getting from sql
                  ('closest'/'newer'/'older')
@@ -542,13 +592,24 @@ def load_calib_file(params: ParamDict, key: str,
     fout = drs_data.get_file_from_inputs(params, 'calibration', userinputkey,
                                          filename, return_source=return_source)
     if return_source:
-        filename, source = fout
+        filename, filetime, source = fout[0], np.nan, fout[1]
     else:
-        filename, source = fout, 'None'
+        filename, filetime, source = fout, np.nan, 'None'
     # ------------------------------------------------------------------------
     # if filename is defined this is the filename we should return
     if filename is not None and return_filename:
-        if return_source:
+        # we need to get file time
+        hdr = drs_fits.read_header(params, filename)
+        if params['KW_MID_OBS_TIME'] in hdr:
+            filetime = float(hdr[params['KW_MID_OBS_TIME']])
+        else:
+            filetime = np.nan
+        # deal with returning
+        if return_time and return_source:
+            return str(filename), filetime, source
+        elif return_time:
+            return str(filename), filetime
+        elif return_source:
             return str(filename), source
         else:
             return str(filename)
@@ -562,9 +623,10 @@ def load_calib_file(params: ParamDict, key: str,
             # load the database
             database.load_db()
         # load filename from database
-        filename = database.get_calib_file(key, header=inheader,
-                                           timemode=mode, nentries=n_entries,
-                                           required=required, fiber=fiber)
+        fout = database.get_calib_file(key, header=inheader, timemode=mode,
+                                       nentries=n_entries, required=required,
+                                       fiber=fiber, return_time=True)
+        filename, filetime = fout
         source = 'calibDB'
     # -------------------------------------------------------------------------
     # deal with filename being a path --> string (unless None)
@@ -576,10 +638,15 @@ def load_calib_file(params: ParamDict, key: str,
     # -------------------------------------------------------------------------
     # if we are just returning filename return here
     if return_filename:
-        if return_source:
-            return filename, source
+        # deal with returning
+        if return_time and return_source:
+            return str(filename), filetime, source
+        elif return_time:
+            return str(filename), filetime
+        elif return_source:
+            return str(filename), source
         else:
-            return filename
+            return str(filename)
     # deal with not return filename
     elif filename is None and not required:
         return None
@@ -596,8 +663,17 @@ def load_calib_file(params: ParamDict, key: str,
             # append to storage
             images.append(image)
             headers.append(headers)
+        # make sure filetimes is a list
+        if isinstance(filetime, float):
+            filetimes = [filetime]
+        else:
+            filetimes = list(filetime)
         # return all
-        if return_source:
+        if return_time and return_source:
+            return images, headers, filename, filetimes, source
+        elif return_time:
+            return images, headers, filename, filetimes
+        elif return_source:
             return images, headers, filename, source
         else:
             return images, headers, filename
@@ -606,8 +682,14 @@ def load_calib_file(params: ParamDict, key: str,
         # now read the calibration file
         image, header = drs_data.read_db_file(params, filename, get_image,
                                               get_header, kind, fmt, ext)
+        # make sure file time is float (MJDMID)
+        filetime = float(filetime)
         # return all
-        if return_source:
+        if return_time and return_source:
+            return image, header, filename, filetime, source
+        elif return_time:
+            return image, header, filename, filetime
+        elif return_source:
             return image, header, filename, source
         else:
             return image, header, filename

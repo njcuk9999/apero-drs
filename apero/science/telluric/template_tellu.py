@@ -225,17 +225,39 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
         b_cols['VERSION'].append(infile.get_hkey('KW_VERSION', dtype=str))
         b_cols['Process_Date'].append(drs_date_now)
         b_cols['DRS_Date'].append(infile.get_hkey('KW_DRS_DATE', dtype=str))
+        # add the dark file and dark file time (MJDMID)
         b_cols['DARKFILE'].append(infile.get_hkey('KW_CDBDARK', **bkwargs))
+        b_cols['DARKTIME'].append(infile.get_hkey('KW_CDTDARK', **bkwargs))
+        # add the bad file and bad file time (MJDMID)
         b_cols['BADFILE'].append(infile.get_hkey('KW_CDBBAD', **bkwargs))
+        b_cols['BADTIME'].append(infile.get_hkey('KW_CDTBAD', **bkwargs))
+        # add the background file and background file time (MJDMID)
         b_cols['BACKFILE'].append(infile.get_hkey('KW_CDBBACK', **bkwargs))
+        b_cols['BACKTIME'].append(infile.get_hkey('KW_CDTBACK', **bkwargs))
+        # add the loco file and loco time (MJDMID)
         b_cols['LOCOFILE'].append(infile.get_hkey('KW_CDBLOCO', **bkwargs))
+        b_cols['LOCOTIME'].append(infile.get_hkey('KW_CDTLOCO', **bkwargs))
+        # add the blaze file and blaze time (MJDMID)
         b_cols['BLAZEFILE'].append(infile.get_hkey('KW_CDBBLAZE', **bkwargs))
+        b_cols['BLAZETIME'].append(infile.get_hkey('KW_CDTBLAZE', **bkwargs))
+        # add the flat file and flat time (MJDMID)
         b_cols['FLATFILE'].append(infile.get_hkey('KW_CDBFLAT', **bkwargs))
+        b_cols['FLATTIME'].append(infile.get_hkey('KW_CDTFLAT', **bkwargs))
+        # add the shape x file and shape x time (MJDMID)
         b_cols['SHAPEXFILE'].append(infile.get_hkey('KW_CDBSHAPEDX', **bkwargs))
+        b_cols['SHAPEXTIME'].append(infile.get_hkey('KW_CDTSHAPEDX', **bkwargs))
+        # add the shape y file and shape y time (MJDMID)
         b_cols['SHAPEYFILE'].append(infile.get_hkey('KW_CDBSHAPEDY', **bkwargs))
+        b_cols['SHAPEYTIME'].append(infile.get_hkey('KW_CDTSHAPEDY', **bkwargs))
+        # add the shape local file and shape local time (MJDMID)
         b_cols['SHAPELFILE'].append(infile.get_hkey('KW_CDBSHAPEL', **bkwargs))
-        b_cols['THERMALFILE'].append(infile.get_hkey('KW_CDBTHERMAL', **bkwargs))
+        b_cols['SHAPELTIME'].append(infile.get_hkey('KW_CDTSHAPEL', **bkwargs))
+        # add the thermal file and thermal time (MJDMID)
+        b_cols['THERMFILE'].append(infile.get_hkey('KW_CDTTHERMAL', **bkwargs))
+        b_cols['THERMTIME'].append(infile.get_hkey('KW_CDTTHERMAL', **bkwargs))
+        # add the wave file and wave time (MJDMID)
         b_cols['WAVEFILE'].append(os.path.basename(wprops['WAVEFILE']))
+        b_cols['WAVETIME'].append(wprops['WAVETIME'])
         # remove the infile
         del infile
         # ------------------------------------------------------------------
@@ -514,17 +536,39 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         b_cols['VERSION'].append(infile.get_hkey('KW_VERSION', dtype=str))
         b_cols['Process_Date'].append(drs_date_now)
         b_cols['DRS_Date'].append(infile.get_hkey('KW_DRS_DATE', dtype=str))
+        # add dark file and time
         b_cols['DARKFILE'].append(infile.get_hkey('KW_CDBDARK', **bkwargs))
+        b_cols['DARKTIME'].append(infile.get_hkey('KW_CDTDARK', **bkwargs))
+        # add bad file and time
         b_cols['BADFILE'].append(infile.get_hkey('KW_CDBBAD', **bkwargs))
+        b_cols['BADTIME'].append(infile.get_hkey('KW_CDTBAD', **bkwargs))
+        # add back file and time
         b_cols['BACKFILE'].append(infile.get_hkey('KW_CDBBACK', **bkwargs))
+        b_cols['BACKTIME'].append(infile.get_hkey('KW_CDTBACK', **bkwargs))
+        # add loco file and time
         b_cols['LOCOFILE'].append(infile.get_hkey('KW_CDBLOCO', **bkwargs))
+        b_cols['LOCOTIME'].append(infile.get_hkey('KW_CDTLOCO', **bkwargs))
+        # add blaze file and time
         b_cols['BLAZEFILE'].append(infile.get_hkey('KW_CDBBLAZE', **bkwargs))
+        b_cols['BLAZETIME'].append(infile.get_hkey('KW_CDTBLAZE', **bkwargs))
+        # add flat file and time
         b_cols['FLATFILE'].append(infile.get_hkey('KW_CDBFLAT', **bkwargs))
+        b_cols['FLATTIME'].append(infile.get_hkey('KW_CDTFLAT', **bkwargs))
+        # add shape x file and time
         b_cols['SHAPEXFILE'].append(infile.get_hkey('KW_CDBSHAPEDX', **bkwargs))
+        b_cols['SHAPEXTIME'].append(infile.get_hkey('KW_CDTSHAPEDX', **bkwargs))
+        # add shape y file and time
         b_cols['SHAPEYFILE'].append(infile.get_hkey('KW_CDBSHAPEDY', **bkwargs))
+        b_cols['SHAPEYTIME'].append(infile.get_hkey('KW_CDTSHAPEDY', **bkwargs))
+        # add shape local file and time
         b_cols['SHAPELFILE'].append(infile.get_hkey('KW_CDBSHAPEL', **bkwargs))
-        b_cols['THERMALFILE'].append(infile.get_hkey('KW_CDBTHERMAL', **bkwargs))
-        b_cols['WAVEFILE'].append(os.path.basename(filename))
+        b_cols['SHAPELTIME'].append(infile.get_hkey('KW_CDTSHAPEL', **bkwargs))
+        # add thermal file and time
+        b_cols['THERMFILE'].append(infile.get_hkey('KW_CDBTHERMAL', **bkwargs))
+        b_cols['THERMTIME'].append(infile.get_hkey('KW_CDTTHERMAL', **bkwargs))
+        # add wave file and time
+        b_cols['WAVEFILE'].append(infile.get_hkey('KW_CDBWAVE', **bkwargs))
+        b_cols['WAVETIME'].append(infile.get_hkey('KW_CDTWAVE', **bkwargs))
         # ------------------------------------------------------------------
         # skip if bad snr object
         # ------------------------------------------------------------------

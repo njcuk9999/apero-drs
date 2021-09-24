@@ -275,7 +275,6 @@ def load_full_flat_badpix(params: ParamDict,
     return image
 
 
-
 def load_hotpix(params: ParamDict,
                 assetsdir: Union[str, None] = None,
                 eng_dir: Union[str, None] = None,
@@ -322,7 +321,6 @@ def load_hotpix(params: ParamDict,
                             datastart=datastart, func_name=func_name)
     WLOG(params, '', textentry('40-010-00011', args=absfilename))
     return table
-
 
 
 def load_tapas(params: ParamDict,
@@ -421,7 +419,6 @@ def load_object_list(params: ParamDict,
     return table
 
 
-
 def load_ccf_mask(params: ParamDict,
                   assetsdir: Union[str, None] = None,
                   mask_dir: Union[str, None] = None,
@@ -470,7 +467,6 @@ def load_ccf_mask(params: ParamDict,
                             func_name=func_name)
     WLOG(params, '', textentry('40-020-00002', args=absfilename))
     return table, absfilename
-
 
 
 def load_sp_mask_lsd(params: ParamDict, temperature: float,
@@ -632,7 +628,6 @@ def load_order_mask(params: ParamDict,
                             colnames=['order', 'lower', 'upper'])
     WLOG(params, '', textentry('40-020-00002', args=absfilename))
     return table, absfilename
-
 
 
 # =============================================================================

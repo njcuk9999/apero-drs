@@ -135,7 +135,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
     # ----------------------------------------------------------------------
-    lprops = localisation.get_coefficients(params, recipe, fpheader, fiber,
+    lprops = localisation.get_coefficients(params, fpheader, fiber,
                                            database=calibdbm)
 
     # ----------------------------------------------------------------------
@@ -218,7 +218,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Calculate dx shape map
     # ----------------------------------------------------------------------
-    cargs = [hcimage, master_fp, wprops, lprops]
+    cargs = [hcimage, master_fp, lprops]
     dout = shape.calculate_dxmap(params, recipe, *cargs)
     dxmap, max_dxmap_std, max_dxmap_info, dxrms = dout
     # if dxmap is None we shouldn't continue as quality control have failed
@@ -228,9 +228,9 @@ def __main__(recipe, params):
         WLOG(params, 'warning', textentry('10-014-00003', args=fargs))
         # quality control
         qc_values = [max_dxmap_std]
-        qc_names= ['max_dxmap_std']
-        qc_logic= ['max_dxmap_std > {0:.5f}'.format(max_dxmap_info[2])]
-        qc_pass= [0]
+        qc_names = ['max_dxmap_std']
+        qc_logic = ['max_dxmap_std > {0:.5f}'.format(max_dxmap_info[2])]
+        qc_pass = [0]
         # store in qc_params
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # update recipe log
@@ -245,16 +245,16 @@ def __main__(recipe, params):
     else:
         # no quality control currently
         qc_values = [max_dxmap_std]
-        qc_names= ['max_dxmap_std']
-        qc_logic= ['max_dxmap_std > {0:.5f}'.format(max_dxmap_info[2])]
-        qc_pass= [1]
+        qc_names = ['max_dxmap_std']
+        qc_logic = ['max_dxmap_std > {0:.5f}'.format(max_dxmap_info[2])]
+        qc_pass = [1]
         # store in qc_params
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
     # ----------------------------------------------------------------------
     # Calculate dy shape map
     # ----------------------------------------------------------------------
-    dymap = shape.calculate_dymap(params, recipe, master_fp, fpheader)
+    dymap = shape.calculate_dymap(params, master_fp, fpheader)
 
     # ----------------------------------------------------------------------
     # Need to straighten the dxmap

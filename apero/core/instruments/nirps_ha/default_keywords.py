@@ -26,35 +26,39 @@ __release__ = base.__release__
 #     (i.e. an odometer code)
 KW_IDENTIFIER = KW_IDENTIFIER.copy(__NAME__)
 KW_IDENTIFIER.set(key='FILENAME',
-                  comment='filename anticipated by fitspipe server')
+                  comment='filename anticipated by fitspipe server', 
+                  group='raw')
 
 # define the MJ date HEADER key (only used for logging)
 KW_MJDATE = KW_MJDATE.copy(__NAME__)
 KW_MJDATE.set(key='MJD-OBS', datatype='mjd', dataformat=float,
               comment='Observation Start (Modified Julian Date)',
-              combine_method='minimum')
+              combine_method='minimum', group='raw')
 
 # define the observation date HEADER key
 KW_DATE_OBS = KW_DATE_OBS.copy(__NAME__)
 KW_DATE_OBS.set(key='DATE-OBS', datatype='fits', dataformat=str,
-                comment='Observation Start (YYYY-MM-DDThh:mm:ss UTC)')
+                comment='Observation Start (YYYY-MM-DDThh:mm:ss UTC)', 
+                group='raw')
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 KW_RDNOISE = KW_RDNOISE.copy(__NAME__)
 KW_RDNOISE.set(key='HIERARCH ESO DET OUT1 RON',
-               comment='Read noise (electrons)', combine_method='flux')
+               comment='Read noise (electrons)', combine_method='flux', 
+               group='raw')
 
 # define the gain HEADER key (used to get value only)
 KW_GAIN = KW_GAIN.copy(__NAME__)
 KW_GAIN.set(key='HIERARCH ESO DET OUT1 GAIN',
-            comment='Amplifier gain (electrons/ADU)', combine_method='mean')
+            comment='Amplifier gain (electrons/ADU)', combine_method='mean', 
+            group='raw')
 
 # define the exposure time HEADER key (used to get value only)
 # TODO: This value should change
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
 KW_EXPTIME.set(key='HIERARCH ESO DET SEQ1 DIT', unit=uu.s,
                comment='[sec] Integration time',
-               combine_method='sum')
+               combine_method='sum', group='raw')
 
 # define the required exposure time HEADER key (used to get value only)
 # NIRPS-CHANGE: Do we have this for NIRPS?
@@ -62,145 +66,159 @@ KW_EXPTIME.set(key='HIERARCH ESO DET SEQ1 DIT', unit=uu.s,
 KW_EXPREQ = KW_EXPREQ.copy(__NAME__)
 KW_EXPREQ.set(key='HIERARCH ESO DET SEQ1 DIT', unit=uu.s,
               comment='[sec] Requested integration time',
-              combine_method='sum')
+              combine_method='sum', group='raw')
 
 # define the observation type HEADER key
 KW_OBSTYPE = KW_OBSTYPE.copy(__NAME__)
 KW_OBSTYPE.set(key='HIERARCH ESO DPR TYPE',
-               comment='Observation / Exposure type')
+               comment='Observation / Exposure type', group='raw')
 
 # define the science fiber type HEADER key
 # KW_CCAS = KW_CCAS.copy(__NAME__)
 # KW_CCAS.set(key='SBCCAS_P',
-#             comment='SPIRou Cassegrain Fiber Position (predefined)')
+#             comment='SPIRou Cassegrain Fiber Position (predefined)',
+#             group='raw')
 
 # define the reference fiber type HEADER key
 # KW_CREF = KW_CREF.copy(__NAME__)
 # KW_CREF.set(key='SBCREF_P',
-#             comment='SPIRou Reference Fiber Position (predefined)')
+#             comment='SPIRou Reference Fiber Position (predefined)',
+#             group='raw')
 
 # define the calibration wheel position
 # KW_CALIBWH = KW_CALIBWH.copy(__NAME__)
 # KW_CALIBWH.set(key='SBCALI_P',
-#                comment='SPIRou calibwh predefined position or angle')
+#                comment='SPIRou calibwh predefined position or angle',
+#                group='raw')
 
 # define the target type (object/sky)
 KW_TARGET_TYPE = KW_TARGET_TYPE.copy(__NAME__)
-KW_TARGET_TYPE.set(key='TRG_TYPE', comment='target or sky object')
+KW_TARGET_TYPE.set(key='TRG_TYPE', comment='target or sky object', group='raw')
 
 # define the density HEADER key
 # KW_CDEN = KW_CDEN.copy(__NAME__)
 # KW_CDEN.set(key='SBCDEN_P',
-#             comment='SPIRou Calib-Reference density (0 to 3.3)')
+#             comment='SPIRou Calib-Reference density (0 to 3.3)', group='raw')
 
 # define polarisation HEADER key
 # KW_CMMTSEQ = KW_CMMTSEQ.copy(__NAME__)
-# KW_CMMTSEQ.set(key='CMMTSEQ')
+# KW_CMMTSEQ.set(key='CMMTSEQ', group='raw')
 
 # define the exposure number within sequence HEADER key
 KW_CMPLTEXP = KW_CMPLTEXP.copy(__NAME__)
 KW_CMPLTEXP.set(key='HIERARCH ESO TPL EXPNO',
                 comment='Exposure number within the exposure sequence ',
-                combine_method='1')
+                combine_method='1', group='raw')
 
 # define the total number of exposures HEADER key
 KW_NEXP = KW_NEXP.copy(__NAME__)
 KW_NEXP.set(key='HIERARCH ESO TPL NEXP',
             comment='Total number of exposures within the sequence',
-            combine_method='1')
+            combine_method='1', group='raw')
 
 # define the pi name HEADER key
 KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
 KW_PI_NAME.set(key='HIERARCH ESO OBS PI-COI NAME',
-               comment='The PI of the program')
+               comment='The PI of the program', group='raw')
 
 # define the instrument HEADER key
 KW_INSTRUMENT = KW_INSTRUMENT.copy(__NAME__)
-KW_INSTRUMENT.set(key='INSTRUME', comment='Instrument Name')
+KW_INSTRUMENT.set(key='INSTRUME', comment='Instrument Name', group='raw')
 
 # define the instrument mode header key
 KW_INST_MODE = KW_INST_MODE.copy(__NAME__)
-KW_INST_MODE.set(key='HIERARCH ESO INS MODE', comment='Instrument mode used')
+KW_INST_MODE.set(key='HIERARCH ESO INS MODE', comment='Instrument mode used', 
+                 group='raw')
 
 # define the raw dprtype from the telescope
 KW_RAW_DPRTYPE = KW_RAW_DPRTYPE.copy(__NAME__)
-KW_RAW_DPRTYPE.set(key='HIERARCH ESO DPR TYPE', comment='Observation type')
+KW_RAW_DPRTYPE.set(key='HIERARCH ESO DPR TYPE', comment='Observation type', 
+                   group='raw')
 
 # define the raw dpr category
 KW_RAW_DPRCATG = KW_RAW_DPRCATG.copy(__NAME__)
-KW_RAW_DPRCATG.set(key='HIERARCH ESO DPR CATG', comment='Observation category')
+KW_RAW_DPRCATG.set(key='HIERARCH ESO DPR CATG', comment='Observation category', 
+                   group='raw')
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)
 # -----------------------------------------------------------------------------
 # define the observation ra HEADER key
 KW_OBJRA = KW_OBJRA.copy(__NAME__)
-KW_OBJRA.set(key='RA_DEG', unit=uu.deg, comment='Target right ascension')
+KW_OBJRA.set(key='RA_DEG', unit=uu.deg, comment='Target right ascension', 
+             group='raw')
 
 # define the observation dec HEADER key
 KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
-KW_OBJDEC.set(key='DEC_DEG', unit=uu.deg, comment='Target declination ')
+KW_OBJDEC.set(key='DEC_DEG', unit=uu.deg, comment='Target declination ', 
+              group='raw')
 
 # define the observation name
 KW_OBJECTNAME = KW_OBJECTNAME.copy(__NAME__)
-KW_OBJECTNAME.set(key='OBJECT', comment='Target name')
+KW_OBJECTNAME.set(key='OBJECT', comment='Target name', group='raw')
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
 KW_OBJEQUIN.set(key='OBJEQUIN', datatype='decimalyear',
-                comment='Target equinox ')
+                comment='Target equinox ', group='raw')
 
 # define the observation proper motion in ra HEADER key
 KW_OBJRAPM = KW_OBJRAPM.copy(__NAME__)
 KW_OBJRAPM.set(key='OBJRAPM', unit=uu.arcsec / uu.yr,
-               comment='Target right ascension proper motion in as/yr ')
+               comment='Target right ascension proper motion in as/yr ', 
+               group='raw')
 
 # define the observation proper motion in dec HEADER key
 KW_OBJDECPM = KW_OBJDECPM.copy(__NAME__)
 KW_OBJDECPM.set(key='OBJDECPM', unit=uu.arcsec / uu.yr,
-                comment='Target declination proper motion in as/yr')
+                comment='Target declination proper motion in as/yr', 
+                group='raw')
 
 # define the airmass HEADER key
 KW_AIRMASS = KW_AIRMASS.copy(__NAME__)
-KW_AIRMASS.set(key='AIRMASS', comment='Airmass at start of observation')
+KW_AIRMASS.set(key='AIRMASS', comment='Airmass at start of observation', 
+               group='raw')
 
 # define the weather tower temperature HEADER key
-KW_WEATHER_TOWER_TEMP = KW_WEATHER_TOWER_TEMP.copy(__NAME__)
-KW_WEATHER_TOWER_TEMP.set(key='TEMPERAT',
-                          comment='86 temp, air, weather tower deg C  ')
+# KW_WEATHER_TOWER_TEMP = KW_WEATHER_TOWER_TEMP.copy(__NAME__)
+# KW_WEATHER_TOWER_TEMP.set(key='TEMPERAT',
+#                           comment='86 temp, air, weather tower deg C  ', 
+#                           group='raw')
 
 # define the cassegrain temperature HEADER key
-KW_CASS_TEMP = KW_CASS_TEMP.copy(__NAME__)
-KW_CASS_TEMP.set(key='SB_POL_T',
-                 comment='SPIRou tpolar temp at start of exp (deg C)  ')
+# KW_CASS_TEMP = KW_CASS_TEMP.copy(__NAME__)
+# KW_CASS_TEMP.set(key='SB_POL_T',
+#                  comment='SPIRou tpolar temp at start of exp (deg C)  ', 
+#                  group='raw')
 
 # define the humidity HEADER key
-KW_HUMIDITY = KW_HUMIDITY.copy(__NAME__)
-KW_HUMIDITY.set(key='RELHUMID',
-                comment='87 relative humidity, weather tower % ')
+# KW_HUMIDITY = KW_HUMIDITY.copy(__NAME__)
+# KW_HUMIDITY.set(key='RELHUMID',
+#                 comment='87 relative humidity, weather tower % ', group='raw')
 
 # -----------------------------------------------------------------------------
 # Wanted header keys (related to science object)
 # -----------------------------------------------------------------------------
 # define the gaia id
 KW_GAIA_ID = KW_GAIA_ID.copy(__NAME__)
-KW_GAIA_ID.set(key='GAIAID', comment='Gaia catalog target identifier')
+KW_GAIA_ID.set(key='GAIAID', comment='Gaia catalog target identifier', 
+               group='raw')
 
 # define the gaia data release key
 KW_GAIA_DR = KW_GAIA_DR.copy(__NAME__)
-KW_GAIA_DR.set(key='GAIADR', comment='Gaia catalog data release')
+KW_GAIA_DR.set(key='GAIADR', comment='Gaia catalog data release', group='raw')
 
 # define the parallax HEADER key
 KW_PLX = KW_PLX.copy(__NAME__)
-KW_PLX.set(key='OBJPLX', unit=uu.mas)
+KW_PLX.set(key='OBJPLX', unit=uu.mas, group='raw')
 
 # define the rv HEADER key
 KW_INPUTRV = KW_INPUTRV.copy(__NAME__)
-KW_INPUTRV.set(key='OBJRV', unit=uu.km / uu.s)
+KW_INPUTRV.set(key='OBJRV', unit=uu.km / uu.s, group='raw')
 
 # define the object temperature HEADER key
 KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
-KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K)
+KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K, group='raw')
 
 # -----------------------------------------------------------------------------
 # Object resolution keys
@@ -366,24 +384,25 @@ KW_DRS_TEFF_S.set(key='HIERARCH DRS RES TEFF_S',
 # -----------------------------------------------------------------------------
 # DRS version
 KW_VERSION = KW_VERSION.copy(__NAME__)
-KW_VERSION.set(key='VERSION', comment='DRS version')
+KW_VERSION.set(key='VERSION', comment='APERO version', group='pp')
 
 KW_PPVERSION = KW_PPVERSION.copy(__NAME__)
-KW_PPVERSION.set(key='PVERSION', comment='DRS Pre-Processing version')
+KW_PPVERSION.set(key='PVERSION', comment='APERO Pre-Processing version',
+                 group='pp')
 
 # DRS process ID
 KW_PID = KW_PID.copy(__NAME__)
 KW_PID.set(key='DRSPID', comment='The process ID that outputted this file.',
-           post_exclude=True)
+           post_exclude=True, group='pp')
 
 # Processed date keyword
 KW_DRS_DATE_NOW = KW_DRS_DATE_NOW.copy(__NAME__)
 KW_DRS_DATE_NOW.set(key='DRSPDATE', comment='DRS Processed date',
-                    post_exclude=True)
+                    post_exclude=True, group='pp')
 
 # DRS version date keyword
 KW_DRS_DATE = KW_DRS_DATE.copy(__NAME__)
-KW_DRS_DATE.set(key='DRSVDATE', comment='DRS Release date')
+KW_DRS_DATE.set(key='DRSVDATE', comment='DRS Release date', group='pp')
 
 # root keys (for use below and in finding keys later)
 #     - must only be 2 characters long
@@ -393,27 +412,32 @@ root_hc = 'HC'
 
 # define the observation name
 KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
-KW_OBJNAME.set(key='DRSOBJN', comment='Target name')
+KW_OBJNAME.set(key='DRSOBJN', comment='APERO-cleaned Target name',
+               group='ppraw')
 
 # Define the key to get the data fits file type
 KW_DPRTYPE = KW_DPRTYPE.copy(__NAME__)
-KW_DPRTYPE.set(key='DPRTYPE', comment='The type of file (from pre-process)')
+KW_DPRTYPE.set(key='DPRTYPE', comment='APERO-type of file (from pre-process)',
+               group='ppraw')
 
 # Define the key to get the drs mode
 KW_DRS_MODE = KW_DRS_MODE.copy(__NAME__)
-KW_DRS_MODE.set(key='DRSMODE', comment='DRS Mode (Spectroscopy or Polar[N])')
+KW_DRS_MODE.set(key='DRSMODE', comment='APERO-mode (Spectroscopy or Polar)',
+                group='ppraw')
 
 # Define the mid exposure time
 # Note: must change INDEX_HEADER_KEYS data type definition if changing this
 KW_MID_OBS_TIME = KW_MID_OBS_TIME.copy(__NAME__)
-KW_MID_OBS_TIME.set(key='MJDMID', comment='Mid Observation time [mjd]',
+KW_MID_OBS_TIME.set(key='MJDMID',
+                    comment='APERO calculated Mid Observation time [mjd]',
                     datatype='mjd', dataformat=float,
-                    combine_method='mean')
+                    combine_method='mean', group='ppraw')
 
 # Define the method by which the MJD was calculated
 KW_MID_OBSTIME_METHOD = KW_MID_OBSTIME_METHOD.copy(__NAME__)
 KW_MID_OBSTIME_METHOD.set(key='MJDMIDMD',
-                          comment='Mid Observation time calc method')
+                          comment='Mid Observation time calc method',
+                          group='ppraw')
 
 # -----------------------------------------------------------------------------
 # Define DRS input keywords
@@ -432,30 +456,79 @@ KW_INFILE3.set(key='INF3{0:03d}', comment='Input file used to create output',
 # -----------------------------------------------------------------------------
 # Define database input keywords
 # -----------------------------------------------------------------------------
+# dark calibration file used
 KW_CDBDARK = KW_CDBDARK.copy(__NAME__)
-KW_CDBDARK.set(key='CDBDARK', comment='The calibration DARK file used')
+KW_CDBDARK.set(key='CDBDARK', comment='The cal DARK file for extract')
+# time of dark calibration file used
+KW_CDTDARK = KW_CDTDARK.copy(__NAME__)
+KW_CDTDARK.set(key='CDTDARK', comment='MJDMID of cal DARK file used')
+# bad pixel calibration file used
 KW_CDBBAD = KW_CDBBAD.copy(__NAME__)
-KW_CDBBAD.set(key='CDBBAD', comment='The calibration BADPIX file used')
+KW_CDBBAD.set(key='CDBBAD', comment='The cal BADPIX file for extract')
+# time of bad pixel calibration file used
+KW_CDTBAD = KW_CDTBAD.copy(__NAME__)
+KW_CDTBAD.set(key='CDTBAD', comment='MJDMID of cal BADPIX file used')
+# background calibration file used
 KW_CDBBACK = KW_CDBBACK.copy(__NAME__)
-KW_CDBBACK.set(key='CDBBACK', comment='The calibration BKGRDMAP file used')
+KW_CDBBACK.set(key='CDBBACK', comment='The cal BKGRDMAP file for extract')
+# time of background calibration file used
+KW_CDTBACK = KW_CDTBACK.copy(__NAME__)
+KW_CDTBACK.set(key='CDTBACK',
+               comment='MJDMID of cal BKGRDMAP file used')
+# order profile calibration file used
 KW_CDBORDP = KW_CDBORDP.copy(__NAME__)
-KW_CDBORDP.set(key='CDBORDP', comment='The calibration ORDER_PROFILE file used')
+KW_CDBORDP.set(key='CDBORDP', comment='The cal ORDER_PROFILE file for extract')
+# time of order profile calibration file used
+KW_CDTORDP = KW_CDTORDP.copy(__NAME__)
+KW_CDTORDP.set(key='CDTORDP', comment='MJDMID of cal ORDER_PROFILE file used')
+# localisation calibration file used
 KW_CDBLOCO = KW_CDBLOCO.copy(__NAME__)
-KW_CDBLOCO.set(key='CDBLOCO', comment='The calibration LOC file used')
+KW_CDBLOCO.set(key='CDBLOCO', comment='The cal LOC file for extract')
+# localisation calibration file used
+KW_CDTLOCO = KW_CDTLOCO.copy(__NAME__)
+KW_CDTLOCO.set(key='CDTLOCO', comment='MJDMID of cal LOC file used')
+# shape local calibration file used
 KW_CDBSHAPEL = KW_CDBSHAPEL.copy(__NAME__)
-KW_CDBSHAPEL.set(key='CDBSHAPL', comment='The calibration SHAPEL file used')
-KW_CDBSHAPEDX = KW_CDBSHAPEDX.copy(__NAME__)
-KW_CDBSHAPEDX.set(key='CDBSHAPX', comment='The calibration SHAPE DX file used')
+KW_CDBSHAPEL.set(key='CDBSHAPL', comment='The cal SHAPEL file for extract')
+# time of shape local calibration file used
+KW_CDTSHAPEL = KW_CDTSHAPEL.copy(__NAME__)
+KW_CDTSHAPEL.set(key='CDTSHAPL', comment='MJDMID of cal SHAPEL file used')
+# shape dy calibration file used
 KW_CDBSHAPEDY = KW_CDBSHAPEDY.copy(__NAME__)
-KW_CDBSHAPEDY.set(key='CDBSHAPY', comment='The calibration SHAPE DX file used')
+KW_CDBSHAPEDY.set(key='CDBSHAPY', comment='The cal SHAPE DX file for extract')
+# time of shape dy calibration file used
+KW_CDTSHAPEDY = KW_CDTSHAPEDY.copy(__NAME__)
+KW_CDTSHAPEDY.set(key='CDTSHAPY', comment='MJDMID of cal SHAPE DX file used')
+# shape dx calibration file used
+KW_CDBSHAPEDX = KW_CDBSHAPEDX.copy(__NAME__)
+KW_CDBSHAPEDX.set(key='CDBSHAPX', comment='The cal SHAPE DX file for extract')
+# time of shape dx calibration file used
+KW_CDTSHAPEDX = KW_CDTSHAPEDX.copy(__NAME__)
+KW_CDTSHAPEDX.set(key='CDTSHAPX', comment='MJDMID of cal SHAPE DX file used')
+# flat calibration file used
 KW_CDBFLAT = KW_CDBFLAT.copy(__NAME__)
-KW_CDBFLAT.set(key='CDBFLAT', comment='The calibration FLAT file used')
+KW_CDBFLAT.set(key='CDBFLAT', comment='The cal FLAT file for extract')
+# time of flat calibration file used
+KW_CDTFLAT = KW_CDBFLAT.copy(__NAME__)
+KW_CDTFLAT.set(key='CDTFLAT', comment='MJDMID of cal FLAT file used')
+# blaze calibration file used
 KW_CDBBLAZE = KW_CDBBLAZE.copy(__NAME__)
-KW_CDBBLAZE.set(key='CDBBLAZE', comment='The calibration BLAZE file used')
+KW_CDBBLAZE.set(key='CDBBLAZE', comment='The cal BLAZE file for extract')
+# time of blaze calibration file used
+KW_CDTBLAZE = KW_CDTBLAZE.copy(__NAME__)
+KW_CDTBLAZE.set(key='CDTBLAZE', comment='MJDMID of cal BLAZE file used')
+# wave solution calibration file used
 KW_CDBWAVE = KW_CDBWAVE.copy(__NAME__)
-KW_CDBWAVE.set(key='CDBWAVE', comment='The calibration WAVE file used')
+KW_CDBWAVE.set(key='CDBWAVE', comment='The cal WAVE file for extract')
+# time of wave solution calibration file used
+KW_CDTWAVE = KW_CDTWAVE.copy(__NAME__)
+KW_CDTWAVE.set(key='CDTWAVE', comment='MJDMID of cal WAVE file used')
+# thermal calibration file used
 KW_CDBTHERMAL = KW_CDBTHERMAL.copy(__NAME__)
-KW_CDBTHERMAL.set(key='CDBTHERM', comment='The calibration THERMAL file used')
+KW_CDBTHERMAL.set(key='CDBTHERM', comment='The cal THERMAL file for extract')
+# time of thermal calibration file used
+KW_CDTTHERMAL = KW_CDTTHERMAL.copy(__NAME__)
+KW_CDTTHERMAL.set(key='CDTTHERM', comment='MJDMID of cal THERMAL file used')
 
 # additional properties of calibration
 KW_C_FLIP = KW_C_FLIP.copy(__NAME__)
@@ -498,22 +571,27 @@ KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='Quality control param passed QC',
 # -----------------------------------------------------------------------------
 # The shift in pixels so that image is at same location as engineering flat
 KW_PPSHIFTX = KW_PPSHIFTX.copy(__NAME__)
-KW_PPSHIFTX.set(key='DETOFFDX', comment='Pixel offset in x from readout lag')
+KW_PPSHIFTX.set(key='DETOFFDX', comment='Pixel offset in x from readout lag',
+                post_exclude=True)
 # The shift in pixels so that image is at same location as engineering flat
 KW_PPSHIFTY = KW_PPSHIFTY.copy(__NAME__)
-KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag')
+KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag',
+                post_exclude=True)
 
 # the number of bad pixels found via the intercept (cosmic ray rejection)
 KW_PPC_NBAD_INTE = KW_PPC_NBAD_INTE.copy(__NAME__)
-KW_PPC_NBAD_INTE.set('NBADINTE', comment='No. bad px intercept cosmic reject')
+KW_PPC_NBAD_INTE.set('NBADINTE', comment='No. bad px intercept cosmic reject',
+                post_exclude=True)
 
 # the number of bad pixels found via the slope (cosmic ray rejection)
 KW_PPC_NBAD_SLOPE = KW_PPC_NBAD_SLOPE.copy(__NAME__)
-KW_PPC_NBAD_SLOPE.set('NBADSLOP', comment='No. bad px slope cosmic reject')
+KW_PPC_NBAD_SLOPE.set('NBADSLOP', comment='No. bad px slope cosmic reject',
+                post_exclude=True)
 
 # the number of bad pixels found with both intercept and slope (cosmic ray)
 KW_PPC_NBAD_BOTH = KW_PPC_NBAD_BOTH.copy(__NAME__)
-KW_PPC_NBAD_BOTH.set('NBADBATH', comment='No. bad px both cosmic reject')
+KW_PPC_NBAD_BOTH.set('NBADBOTH', comment='No. bad px both cosmic reject',
+                post_exclude=True)
 
 # The number of sigma used to construct pp master mask
 KW_PPMSTR_NSIG = KW_PPMSTR_NSIG.copy(__NAME__)
@@ -804,7 +882,8 @@ KW_BERVGAIA_ID.set(key='BC_GAIA', comment='The Gaia ID used for BERV params')
 
 # the OBJNAME used to identify KW_BERV_POS_SOURCE for BERV calculation
 KW_BERVOBJNAME = KW_BERVOBJNAME.copy(__NAME__)
-KW_BERVOBJNAME.set(key='BC_OBJNM', comment='The OBJNAME used for BERV params')
+KW_BERVOBJNAME.set(key='BC_OBJNM',
+                   comment='The OBJECT NAME used for BERV params')
 
 # the epoch (jd) used to calculate the BERV
 KW_BERVEPOCH = KW_BERVEPOCH.copy(__NAME__)

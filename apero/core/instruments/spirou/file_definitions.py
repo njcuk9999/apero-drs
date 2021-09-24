@@ -1330,8 +1330,6 @@ post_e_file.add_ext('EXT_B', out_ext_e2dsff, pos=3, fiber='B', block_kind='red',
 post_e_file.add_ext('EXT_C', out_ext_e2dsff, pos=4, fiber='C', block_kind='red',
                     link='EXT_AB', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='FluxC')
-
-
 post_e_file.add_ext('WAVE_AB', wave_files, pos=5, fiber='AB', block_kind='red',
                     link='EXT_AB', hlink='KW_CDBWAVE', tag='WaveAB')
 post_e_file.add_ext('WAVE_A', wave_files, pos=6, fiber='A', block_kind='red',

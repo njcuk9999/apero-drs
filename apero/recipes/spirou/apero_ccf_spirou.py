@@ -175,7 +175,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Get blaze
         # ------------------------------------------------------------------
-        blazefile, blaze = flat_blaze.get_blaze(params, header, fiber)
+        bout = flat_blaze.get_blaze(params, header, fiber)
+        blazefile, blazetime, blaze = bout
 
         # ------------------------------------------------------------------
         #   Remove domain with telluric > 50%

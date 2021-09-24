@@ -2,6 +2,107 @@ Changelog
 =========
 
 
+0.7.161 (2021-09-15)
+--------------------
+- `Apero.base.base.py` + `apero.core.core.drs_loy.py` - make sure use of
+  DPARAMS and IPARAMS give correct exception. [Neil Cook]
+- `Apero.core.core.data.*.databases.reset*` - `WAVEM_D` --> `WAVESOL_DEFAULT`.
+  [Neil Cook]
+- Update `UPDATE_NOTES.txt`. [Neil Cook]
+- `Apero.core.core.drs_database.py` - need to deal with forbidden keys
+  better (comment, history and '' included) [Neil Cook]
+- `Apero.data.*.reset.runs/master_calib_run.ini` - typo `calib_seq` -->
+  `master_seq`. [Neil Cook]
+- `Requirements_developer.txt` - ttkthemes required. [Neil Cook]
+- `Apero.tools.module.database.database_update.py` - fix rlog values (now
+  attributes are upper case) [Neil Cook]
+- `Apero.science.extract.gen_ext.py` - add debug saving of e2ds
+  uncorrected. [Neil Cook]
+- `Apero.recipes.*.apero_extract_*.py` - add recipe to
+  `manage_leak_correction` arguments. [Neil Cook]
+- `Apero.core.instruments.*.pseudo_const.py` - add '' and 'HISTORY' to
+  forbidden keys. [Neil Cook]
+- Remove `apero_leak` as recipe. [Neil Cook]
+- `Apero.core.core.drs_file.py` - skip forbidden header keys. [Neil Cook]
+
+
+0.7.160 (2021-09-14)
+--------------------
+- `Apero.recipe.spirou.apero_extract_spirou.py` - get leakcorr from
+  `data_dict` (i.e. via `science.extract.other.py` `extract_files())` [Neil
+  Cook]
+- `Apero.science.calib.flat_blaze` and apero.science.extract.extraction +
+  `gen_ext` + other  - fix blaze keys. [Neil Cook]
+- Language database update. [Neil Cook]
+- `Apero.core.utils.drs_startup.py` - fix logging of DrsCodedException.
+  [Neil Cook]
+- `Apero.core.instruments.*.recipe_definitions.py` - add argument
+  --leakcorr to `apero_extract`. [Neil Cook]
+- `Apero.core.instruments.*.default_constants.py` - remove
+  `ALLOWED_LEAK_TYPES` add `CORRECT_LEAKAGE` and `LEAKAGE_REF_TYPES`. [Neil
+  Cook]
+- `Apero.tools.module.processing.drs_processing.py` - must not update
+  database in test run for Pool and Process. [Neil Cook]
+- Update language database. [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - deal with runs not
+  in ini files (now skips by default) [Neil Cook]
+- `Apero.core.instruments.*.recipe_definitions.py` - for nirps `KW_OBJNAME`
+  not Calibration use `RAW_DPRCATG` as CALIB. [Neil Cook]
+- `Apero.data.*.reset.runs.calib_run.ini` - add `PP_FF` to `RUN_` and `SKIP_`
+  menus. [Neil Cook]
+- `Apero.core.utils.drs_recipe.py` - add files to set. [Neil Cook]
+- `Apero.core.utils.drs_recipe.py` - need to filter by files (why was this
+  removed?) [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - do not update
+  database in test run mode. [Neil Cook]
+- `Apero.core.instruments.*.recipe_definitions.py` - `pp_seq_opt` typo
+  `add(apero_extract` --> `add(apero_preprocess`. [Neil Cook]
+- `Apero.core.instruments.*.file_definitions.py` - make sure types have
+  outfunc set. [Neil Cook]
+- `Apero.core.instruments.*.recipe_definitions.py` - `leak_master` should
+  use E2DS not E2DSFF (change in where we do leak correction in
+  extraction process) [Neil Cook]
+- `Apero.core.instruments.nirps_ha.file_definitions.py` - remove
+  `out_wave_hc` and `out_wave_fp` references. [Neil Cook]
+
+
+0.7.159 (2021-09-10)
+--------------------
+- Add leak to extraction recipe (break up flat blaze corr) [Neil Cook]
+- `Apero.core.instruments.*.pseudo_const.py` - add `DRS_DATE_NOW` (DRSPDATE)
+  to index database. [Neil Cook]
+- Revert UNe catalogue list. [Neil Cook]
+- Wave - fix default and master wave solution names. [Neil Cook]
+
+
+0.7.158 (2021-09-03)
+--------------------
+- Update indexing (index `KW_MID_OBS_TIME`, `KW_OBJNAME`, `KW_DPRTYPE`,
+  `KW_OUTPUT`, `KW_PID`, `KW_IDENTIFIER)` [Neil Cook]
+- `Apero.core.instruments.spirou.recipe_definitions.py` +
+  `apero_postprocess_spirou.py` - change overwrite to skip - default is
+  now to overwrite. [Neil Cook]
+- `Apero.data.*.reset.runs.complete_run.ini` - `full_seq` should use EXTALL
+  and LEAKALL. [Neil Cook]
+- `Apero.data.spirou.reset.runs.*.ini` - update master nights. [Neil Cook]
+
+
+0.7.157 (2021-08-30)
+--------------------
+- `Apero.recipes.spirou.apero_postprocess_spirou.py` - `set_infile` must
+  take params (dealing with multiple possible DrsFitsFiles for single
+  extension) [Neil Cook]
+- `Apero.science.calib.wave.py` - remove references to `WAVE_FP` and `WAVE_HC`
+  (use `WAVE_NIGHT)`   and `WAVEM_FP` and `WAVEM_HC` (use master wave sol)
+  [Neil Cook]
+- `Apero.core.instruments.*.file_definitions.py` + `recipe_definitions.py` -
+  remove old definitions and make sure recipes use the new ones. [Neil
+  Cook]
+- `Apero.core.core.drs_file.py` - need to allow multiple drsfiles for some
+  outfile extensions. [Neil Cook]
+- Update version/date/changelog/documentation. [Neil Cook]
+
+
 0.7.156 (2021-08-26)
 --------------------
 - `Apero.base.drs_db.py` - fix backup db directory. [Neil Cook]

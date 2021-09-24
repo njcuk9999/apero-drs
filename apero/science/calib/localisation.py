@@ -9,12 +9,11 @@ Created on 2019-05-15 at 13:48
 
 @author: cook
 """
-from collections import OrderedDict
 import numpy as np
 from skimage import measure
 from scipy.ndimage import percentile_filter, binary_dilation
 from scipy.ndimage.filters import median_filter
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple
 import warnings
 
 from apero.base import base
@@ -63,6 +62,7 @@ def calculate_order_profile(params, image, **kwargs):
         pixel values less than 0 are given a weight of 1e-6, pixel values
         above 0 are given a weight of 1
 
+    :param params: ParamDict, the parameter dictionary of constants
     :param image: numpy array (2D), the image
     :param kwargs: keyword arguments
 
@@ -153,7 +153,6 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     ydet_min = pcheck(params, 'LOC_YDET_MIN', func=func_name)
     ydet_max = pcheck(params, 'LOC_YDET_MAX', func=func_name)
 
-
     num_wid_samples = 10
 
     # -------------------------------------------------------------------------
@@ -174,7 +173,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     WLOG(params, 'info', textentry('40-013-00028', args=[fiber]))
     # -------------------------------------------------------------------------
     # get the shape of the image
-    nbypix, nbxpix  = image.shape
+    nbypix, nbxpix = image.shape
     # set NaN pixels to zero to avoid warnings later on
     image[~np.isfinite(image)] = 0
     # set up an array of pixel values along order direction (x)
@@ -198,7 +197,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
         zp = percentile_filter(tmp, box_perc_low, size=perc_filter_size)
         tmp = percentile_filter(tmp, box_perc_high, size=perc_filter_size)
         # adding the foot after the division by 2
-        tmp = tmp  / 2.0 + zp
+        tmp = tmp / 2.0 + zp
         # pad the threshold map
         maptmp = np.repeat(tmp, binsize).reshape([nbypix, binsize])
         threshold[:, bin_it:bin_it + binsize] = maptmp
@@ -329,14 +328,14 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     WLOG(params, '', textentry('40-013-00031', args=margs))
     # apply keep mask to centers and widths
     order_centers = order_centers[keep]
-    order_widths = order_widths[keep]
+    # order_widths = order_widths[keep]
     all_fits = all_fits[keep]
     valid_labels = valid_labels[keep]
     # -------------------------------------------------------------------------
     # sort all regions in increasing y value
     sortmask = np.argsort(order_centers)
     order_centers = order_centers[sortmask]
-    order_widths = order_widths[sortmask]
+    # order_widths = order_widths[sortmask]
     all_fits = all_fits[sortmask]
     # -------------------------------------------------------------------------
     # if orders come in doublets the gap between orders will therefore be nearly
@@ -357,7 +356,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
                     centers=order_centers, residuals=residuals, fit=cent_fit)
         # remove the other fibers orders
         order_centers = order_centers[keep]
-        other_widths = order_widths[keep]
+        # other_widths = order_widths[keep]
         all_fits = all_fits[keep]
         valid_labels = valid_labels[keep]
     # -------------------------------------------------------------------------
@@ -480,8 +479,9 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # -------------------------------------------------------------------------
     # Calculate RMS of fit
     # -------------------------------------------------------------------------
+    # TODO: Calculate RMS of fit
     # lets look at the rms
-    rms_per_order = np.zeros(final_cent_fit.shape[0])
+    # rms_per_order = np.zeros(final_cent_fit.shape[0])
     # loop around each order
     for order_num in range(final_cent_fit.shape[0]):
 
@@ -604,7 +604,7 @@ def image_superimp(image, coeffs):
     return newimage
 
 
-def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
+def get_coefficients(params, header, fiber, database=None, **kwargs):
     func_name = __NAME__ + '.get_coefficients()'
     # get pseudo constants
     pconst = constants.pload()
@@ -626,11 +626,11 @@ def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
     else:
         calibdbm = database
     # load loco file
-    locofilepath = gen_calib.load_calib_file(params, key, header,
-                                             filename=filename,
-                                             userinputkey='LOCOFILE',
-                                             database=calibdbm, fiber=usefiber,
-                                             return_filename=True)
+    lout = gen_calib.load_calib_file(params, key, header, filename=filename,
+                                     userinputkey='LOCOFILE', database=calibdbm,
+                                     fiber=usefiber, return_filename=True,
+                                     return_time=True)
+    locofilepath, locotime = lout
     # ------------------------------------------------------------------------
     # construct new infile instance and read data/header
     locofile = locofile.newcopy(filename=locofilepath, params=params,
@@ -656,6 +656,7 @@ def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
     # store localisation properties in parameter dictionary
     props = ParamDict()
     props['LOCOFILE'] = locofilepath
+    props['LOCOTIME'] = locotime
     props['LOCOOBJECT'] = locofile
     props['NBO'] = int(nbo // nset)
     props['DEG_C'] = int(deg_c)
@@ -891,11 +892,11 @@ def loc_quality_control(params: ParamDict, lprops: ParamDict):
 def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
                              infile: DrsFitsFile, image: np.ndarray,
                              rawfiles: List[str], combine: bool,
-                             fiber:str , props: ParamDict,
+                             fiber: str, props: ParamDict,
                              order_profile: np.ndarray, lprops: ParamDict,
                              qc_params: list):
     # set function name
-    func_name = display_func('write_localisation_files', __NAME__)
+    _ = display_func('write_localisation_files', __NAME__)
     # get qc parameters
     # max_removed_cent = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_CTR',
     #                           func=func_name)
@@ -1366,9 +1367,9 @@ def sigmaclip_order_fit(params, recipe, x, y, fitdata, f_order, max_rmpts,
         or max_ptp_frac > 'ic_max_ptp_frac'     [kind='fwhm'
 
     :param params:
+    :param recipe:
     :param x:
     :param y:
-
     :param fitdata: dictionary, contains the fit data key value pairs for this
                      initial fit. keys are as follows:
 
@@ -1385,13 +1386,15 @@ def sigmaclip_order_fit(params, recipe, x, y, fitdata, f_order, max_rmpts,
             max_ptp = maximum residual value max(res)
             max_ptp_frac = max_ptp / rms  [kind='center']
                          = max(abs_res/y) * 100   [kind='fwhm']
-
     :param f_order:
-
+    :param max_rmpts:
     :param rnum: int, order number (running number of successful order
                  iterations only)
-    :param kind: string, 'center' or 'fwhm', if 'center' then this fit is for
-                 the central p
+    :param ic_max_ptp:
+    :param ic_max_ptp_frac:
+    :param ic_ptporms:
+    :param ic_max_rms:
+    :param kind:
 
     :return fitdata: dictionary, contains the fit data key value pairs for this
                      initial fit. keys are as follows:

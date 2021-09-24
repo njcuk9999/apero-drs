@@ -19,7 +19,6 @@ from apero.core import constants
 from apero import lang
 from apero.core import math as mp
 from apero.core.core import drs_log, drs_file
-from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.science.calib import gen_calib
 
@@ -95,9 +94,9 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
     with warnings.catch_warnings(record=True) as _:
         pospeak = mp.nanmedian(xpix[e2ds > thres])
     # bounds
-    with warnings.catch_warnings(record=True) as _:
-        xlower = mp.nanmin(xpix[e2ds > thres])
-        xupper = mp.nanmax(xpix[e2ds > thres])
+    # with warnings.catch_warnings(record=True) as _:
+    #     xlower = mp.nanmin(xpix[e2ds > thres])
+    #     xupper = mp.nanmax(xpix[e2ds > thres])
     # ------------------------------------------------------------------
     # starting point for the fit to the blaze sinc model
     # we start with :
@@ -193,14 +192,14 @@ def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
     # load flat file
     cout = gen_calib.load_calib_file(params, key, header, filename=filename,
                                      userinputkey='FLATFILE', database=calibdbm,
-                                     fiber=fiber)
-    flat, _, flat_file = cout
+                                     fiber=fiber, return_time=True)
+    flat, _, flat_file, flat_time = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     if not quiet:
         WLOG(params, '', textentry('40-015-00006', args=[flat_file]))
     # return the master image
-    return flat_file, flat
+    return flat_file, flat_time, flat
 
 
 def get_blaze(params, header, fiber, filename=None, database=None):
@@ -219,13 +218,13 @@ def get_blaze(params, header, fiber, filename=None, database=None):
     # load blaze file
     cout = gen_calib.load_calib_file(params, key, header, filename=filename,
                                      userinputkey='BLAZEFILE', database=calibdbm,
-                                     fiber=fiber)
-    blaze, _, blaze_file = cout
+                                     fiber=fiber, return_time=True)
+    blaze, _, blaze_file, blaze_time = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-015-00007', args=[blaze_file]))
     # return the master image
-    return blaze_file, blaze
+    return blaze_file, blaze_time, blaze
 
 
 # =============================================================================
@@ -273,8 +272,7 @@ def flat_blaze_qc(params, eprops, fiber):
 
 
 def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
-                     props, lprops, orderpfile, shapelocalfile, shapexfile,
-                     shapeyfile, qc_params):
+                     props, lprops, sprops, qc_params):
     # --------------------------------------------------------------
     # Store Blaze in file
     # --------------------------------------------------------------
@@ -311,11 +309,16 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     blazefile = gen_calib.add_calibs_to_header(blazefile, props)
     # --------------------------------------------------------------
     # add the other calibration files used
-    blazefile.add_hkey('KW_CDBORDP', value=orderpfile)
+    blazefile.add_hkey('KW_CDBORDP', value=lprops['ORDERPFILE'])
+    blazefile.add_hkey('KW_CDTORDP', value=lprops['ORDERPTIME'])
     blazefile.add_hkey('KW_CDBLOCO', value=lprops['LOCOFILE'])
-    blazefile.add_hkey('KW_CDBSHAPEL', value=shapelocalfile)
-    blazefile.add_hkey('KW_CDBSHAPEDX', value=shapexfile)
-    blazefile.add_hkey('KW_CDBSHAPEDY', value=shapeyfile)
+    blazefile.add_hkey('KW_CDTLOCO', value=lprops['LOCOTIME'])
+    blazefile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
+    blazefile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
+    blazefile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
+    blazefile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
+    blazefile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
+    blazefile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
     # --------------------------------------------------------------
     # add SNR parameters to header
     blazefile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],

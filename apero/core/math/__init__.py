@@ -35,7 +35,7 @@ fwhm = gen_math.fwhm
 
 gauss_fit_nn = gauss.gauss_fit_nn
 
-gaussian_function_nn =  gauss.gaussian_function_nn
+gaussian_function_nn = gauss.gaussian_function_nn
 
 gauss_function = gauss.gauss_function
 

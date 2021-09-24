@@ -762,7 +762,8 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # Normalize image by peak blaze
     # ------------------------------------------------------------------
     # load the blaze file for this fiber
-    blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
+    bout = flat_blaze.get_blaze(params, header, fiber)
+    blaze_file, blaze_time, blaze = bout
     # ------------------------------------------------------------------
     # Correct spectrum with simple division
     # ------------------------------------------------------------------
@@ -774,6 +775,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # fake nprop dict
     nprops = dict()
     nprops['BLAZE_FILE'] = blaze_file
+    nprops['BLAZE_TIME'] = blaze_time
     # ------------------------------------------------------------------
     # Create 1d spectra (s1d) of the corrected E2DS file
     # ------------------------------------------------------------------
@@ -949,7 +951,9 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.infiles = list(hfiles)
     # add  calibration files used
     corrfile.add_hkey('KW_CDBBLAZE', value=nprops['BLAZE_FILE'])
+    corrfile.add_hkey('KW_CDTBLAZE', value=nprops['BLAZE_TIME'])
     corrfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
+    corrfile.add_hkey('KW_CDTWAVE', value=wprops['WAVETIME'])
     # ----------------------------------------------------------------------
     # add qc parameters
     corrfile.add_qckeys(qc_params)

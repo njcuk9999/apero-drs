@@ -30,10 +30,10 @@ import yaml
 __PACKAGE__ = 'apero'
 __PATH__ = Path(__file__).parent.parent
 __INSTRUMENT__ = 'None'
-__version__ = '0.7.156'
+__version__ = '0.7.161'
 __author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
               'I. Boisse', 'E. Martioli']
-__date__ = '2021-08-26'
+__date__ = '2021-09-17'
 __release__ = 'alpha pre-release'
 # do this once per drs import
 __now__ = Time.now()
@@ -149,12 +149,17 @@ def load_database_yaml() -> dict:
         path = os.environ[USER_ENV]
         # add filename
         path = os.path.join(path, DATABASE_YAML)
-        # load yaml file
-        return load_yaml(path)
+        # check that path exists
+        if os.path.exists(path):
+            # load yaml file
+            return load_yaml(path)
+        else:
+            # raise an error
+            emsg = 'Core Error: {0}={1} does not exist'
+            raise EnvironmentError(emsg.format(USER_ENV, path))
     # else raise except (cannot come from database)
-    else:
-        emsg = 'Core Error: {0} must be set (please run setup script)'
-        raise EnvironmentError(emsg.format(USER_ENV))
+    emsg = 'Core Error: {0} must be set (please run setup script)'
+    raise EnvironmentError(emsg.format(USER_ENV))
 
 
 def load_install_yaml():
@@ -164,12 +169,17 @@ def load_install_yaml():
         path = os.environ[USER_ENV]
         # add filename
         path = os.path.join(path, INSTALL_YAML)
-        # load yaml file
-        return load_yaml(path)
+        # check that path exists
+        if os.path.exists(path):
+            # load yaml file
+            return load_yaml(path)
+        else:
+            # raise an error
+            emsg = 'Core Error: {0}={1} does not exist'
+            raise EnvironmentError(emsg.format(USER_ENV, path))
     # else raise except (cannot come from database)
-    else:
-        emsg = 'Core Error: {0} must be set (please run setup script)'
-        raise EnvironmentError(emsg.format(USER_ENV))
+    emsg = 'Core Error: {0} must be set (please run setup script)'
+    raise EnvironmentError(emsg.format(USER_ENV))
 
 
 def load_yaml(filename: str) -> dict:
