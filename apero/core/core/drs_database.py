@@ -566,11 +566,23 @@ class CalibrationDatabase(DatabaseManager):
         #   if nentries > 1 : 1d numpy array
         ctable = self.get_calib_entry('FILENAME, UNIXTIME', key, fiber,
                                       filetime, timemode, nentries)
-        # get filenames
-        filenames = np.array(ctable['FILENAME'])
-        # get file times (unix ---> mjdtime)
-        unixtimes = np.array(ctable['UNIXTIME'])
-        filetimes = np.array(Time(unixtimes, format='unix').mjd).astype(float)
+        # deal with return of two columns (tulpe or pandas table)
+        if ctable is None:
+            filenames = None
+        elif isinstance(ctable, tuple):
+            # get filename
+            filenames = str(ctable[0])
+            # get file time (unix)
+            utimes = float(ctable[1])
+            # get file times in MJD
+            filetimes = float(Time(utimes, format='unix').mjd)
+        else:
+            # get filenames
+            filenames = np.array(ctable['FILENAME'])
+            # get file times (unix)
+            utimes = np.array(ctable['UNIXTIME'])
+            # get file times in MJD
+            filetimes = np.array(Time(utimes, format='unix').mjd).astype(float)
         # ---------------------------------------------------------------------
         # return absolute paths
         # ---------------------------------------------------------------------
@@ -599,12 +611,12 @@ class CalibrationDatabase(DatabaseManager):
         # make all files absolute paths
         if isinstance(filenames, str):
             # set output
-            outputs = Path(self.filedir).joinpath(filenames).absolute()
-            # deal with returning time
+            outfilename = Path(self.filedir).joinpath(filenames).absolute()
+            # return outfilenames
             if return_time:
-                outputs = [outputs, list(filetimes)]
-            # return outputs
-            return outputs
+                return outfilename, float(filetimes)
+            else:
+                return outfilename
         # else loop around them (assume they are iterable)
         else:
             # set output storage
