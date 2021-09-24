@@ -46,7 +46,6 @@ from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.core import drs_misc
 from apero.core.instruments.default import output_filenames as outf
-from apero.core.instruments.default import pseudo_const
 from apero.io import drs_fits
 from apero.io import drs_table
 from apero.io import drs_path
@@ -1752,7 +1751,7 @@ class DrsInputFile:
         # get required keys for index database
         iheader_cols = pconst.INDEX_HEADER_COLS()
         hkeys = list(iheader_cols.names)
-        htypes = list(iheader_cols.dtypes)
+        # htypes = list(iheader_cols.dtypes)
         # deal with absolute path of file
         self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file
@@ -4928,6 +4927,7 @@ class DrsNpyFile(DrsInputFile):
         _ = display_func('__init__', __NAME__, self.class_name)
         # define a name
         self.name = name
+        _ = infiles
         # get super init
         DrsInputFile.__init__(self, name, filetype, suffix, remove_insuffix,
                               prefix, fibers, fiber, params, filename, intype,
@@ -5493,7 +5493,6 @@ class DrsOutFileExtension:
         # return table column lists
         return ext_name, ext_input, col_name, col_input
 
-
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
@@ -5610,6 +5609,7 @@ class DrsOutFileExtension:
         Set infile name from "filename" or from "row" in table (note table
         must have column "ABSPATH"
 
+        :param params: ParamDict, the parameter dictionary of constants
         :param row: int or None, the row in "table" to set the filename
         :param table: Table or None, the table to get the row from
         :param filename: str or None, the filename to set the filename from
@@ -6226,7 +6226,7 @@ class DrsOutFile(DrsInputFile):
             # get drsfile hkeys
             if isinstance(ext.drsfile, str):
                 hkeys = None
-            if isinstance(ext.drsfile, list):
+            elif isinstance(ext.drsfile, list):
                 hkeys = dict()
                 for drsfile in ext.drsfile:
                     if isinstance(drsfile, DrsFitsFile):
@@ -6387,13 +6387,12 @@ class DrsOutFile(DrsInputFile):
         # add extension names as comments
         self._add_extensions_names_to_primary(params)
 
-    def set_db_infiles(self, params: ParamDict, database: Any):
+    def set_db_infiles(self, database: Any):
         """
         Set the "infiles" for use in indexing - this takes the
         index database entry for extension 1 (or 0 if 1 not present) and
         puts the "INFILES" column into self.infiles
 
-        :param params: ParamDict, the parameter dictionary of constants
         :param database: IndexDatabase, the database instance
 
         :return: None, updates self.infiles
@@ -7358,7 +7357,7 @@ def fix_header(params: ParamDict, recipe: Any,
         return header, hdict
 
 
-def id_drs_file(params: ParamDict, recipe: Any,
+def id_drs_file(params: ParamDict,
                 drs_file_sets: Union[List[DrsFitsFile], DrsFitsFile],
                 filename: Union[List[str], str, None] = None,
                 nentries: Union[int, None] = None,

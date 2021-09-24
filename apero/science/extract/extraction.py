@@ -412,7 +412,7 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
     #       critical pixel values > sigcut * extraction
     #    or
     #       the loop exceeds "cosmic_threshold"
-    cond1 = mp.nanmax(crit) > mp.nanmax((sigcut * spe[ic], 1000.))
+    cond1 = mp.nanmax(crit) > mp.nanmax([sigcut * spe[ic], 1000.0])
     cond2 = nbloop < cosmic_threshold
     while cond1 and cond2:
         # define the cosmic ray mask (True where not cosmic ray)
@@ -428,7 +428,7 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
         # increase the loop counter
         nbloop += 1
         # recalculate conditions
-        cond1 = mp.nanmax(crit) > mp.nanmax((sigcut * spe[ic], 1000.))
+        cond1 = mp.nanmax(crit) > mp.nanmax([sigcut * spe[ic], 1000.0])
         cond2 = nbloop < cosmic_threshold
 
     # finally return spe and cpt

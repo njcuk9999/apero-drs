@@ -121,6 +121,7 @@ class Run:
         self.args = []
         self.recipename = ''
         self.runname = None
+        self.shortname = None
         self.skipname = None
         self.recipe = inrecipe
         if mod is not None:
@@ -934,8 +935,7 @@ def reset_files(params):
     # check if we need to reset directory
     if params['RESET_LOG']:
         # deal with files to skip
-        exclude_files = []
-        exclude_files.append(drs_log.get_logfilepath(WLOG, params))
+        exclude_files = [drs_log.get_logfilepath(WLOG, params)]
         reset = drs_reset.reset_confirmation(params, 'Log',
                                              params['DRS_DATA_MSG'])
         # reset directory using reset module
@@ -1530,7 +1530,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         eargs = [master_condition, func_name]
         WLOG(params, 'error', textentry('00-503-00018', args=eargs))
         # get response for how to continue (skip or exit)
-        response = prompt(params)
+        response = prompt()
         if not response:
             sys.exit()
     # log that we are processing recipes
@@ -1608,7 +1608,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                 wargs = [obs_dir]
                 WLOG(params, 'warning', textentry('10-503-00004', args=wargs))
                 # get response for how to continue (skip or exit)
-                response = prompt(params)
+                response = prompt()
                 if response:
                     continue
                 else:
@@ -1634,7 +1634,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             wargs = [obs_dir]
             WLOG(params, 'warning', textentry('10-503-00003', args=wargs))
             # get response for how to continue (skip or exit)
-            response = prompt(params)
+            response = prompt()
             if response:
                 continue
             else:
@@ -1722,7 +1722,7 @@ def generate_runs(params: ParamDict, recipe: DrsRecipe,
     #   arguments and construct the runs
     runargs = group_run_files2(params, recipe, argdict, kwargdict)
     # now we have the runargs we can convert to a runlist
-    runlist = convert_to_command(params, recipe, runargs)
+    runlist = convert_to_command(recipe, runargs)
     # clear printer
     drs_log.Printer(None, None, '')
     # return the runlist
@@ -1759,9 +1759,9 @@ def update_run_table(sequence, runtable, newruns, rlist=None):
     return outruntable, recipe_list
 
 
-def prompt(params):
+def prompt():
     # prompt the user for response
-    uinput = input(textentry(('40-503-00022')))
+    uinput = input(textentry('40-503-00022'))
     # get the True/False responses
     true = textentry('40-503-00023')
     false = textentry('40-503-00024')
@@ -1810,7 +1810,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00016'))
             # get response for how to continue (skip or exit)
-            response = prompt(params)
+            response = prompt()
             if response:
                 pass
             else:
@@ -1836,7 +1836,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00006'))
             # get response for how to continue (skip or exit)
-            response = prompt(params)
+            response = prompt()
             if response:
                 pass
             else:
@@ -1866,7 +1866,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00007'))
             # get response for how to continue (skip or exit)
-            response = prompt(params)
+            response = prompt()
             if response:
                 pass
             else:
@@ -1896,7 +1896,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00015'))
             # get response for how to continue (skip or exit)
-            response = prompt(params)
+            response = prompt()
             if response:
                 pass
             else:
@@ -2210,8 +2210,8 @@ def _multi_process_process(params, runlist, cores, groupname=None,
         #    - there are "number of cores" number of these subgroups
         for r_it, runlist_group in enumerate(group):
             # get args
-            args = [params, runlist_group, r_it + 1,
-                    cores, event, groupname, return_dict]
+            args = (params, runlist_group, r_it + 1,
+                    cores, event, groupname, return_dict)
             # get parallel process
             process = Process(target=_linear_process, args=args)
             process.start()
@@ -2229,7 +2229,7 @@ def _multi_process_process(params, runlist, cores, groupname=None,
         #  runs to make it more efficient
         # do not update if we are running a test
         if not params['TEST_RUN']:
-            update_index_db(params)
+            update_index_db(params, indexdbm=indexdbm)
 
     # return return_dict
     return dict(return_dict)
@@ -2238,7 +2238,7 @@ def _multi_process_process(params, runlist, cores, groupname=None,
 def _multi_process_pool(params, runlist, cores, groupname=None,
                         indexdbm: Optional[IndexDatabase] = None):
     # first try to group tasks (now just by recipe)
-    grouplist, groupnames = _group_tasks2(runlist, cores)
+    grouplist, groupnames = _group_tasks2(runlist)
     # deal with Pool specific imports
     from multiprocessing import Manager
     from multiprocessing import get_context
@@ -2286,7 +2286,7 @@ def _multi_process_pool(params, runlist, cores, groupname=None,
         #  runs to make it more efficient
         # do not update if we are running a test
         if not params['TEST_RUN']:
-            update_index_db(params)
+            update_index_db(params, indexdbm=indexdbm)
 
     # return return_dict
     return dict(return_dict)
@@ -2343,8 +2343,6 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
                     be columns in 'table'
     :param allowedfibers: str, the allowed fiber(s) (should be in KW_FIBER
                           column in 'table'
-    :param absfile_col: str, the absolute file column name (if not set is taken
-                        from params['REPROCESS_ABSFILECOL'] - recommended
     :param check_required: bool, if True checks whether parameter is required
                            (set in argument definition - in recipe definition)
 
@@ -2521,7 +2519,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
             tablelist = filedict[argname][name]
             # deal with combining tablelist
             with warnings.catch_warnings(record=True) as _:
-                outfiledict[argname][name] = vstack_cols(params, tablelist)
+                outfiledict[argname][name] = vstack_cols(tablelist)
     # return filedict
     return outfiledict
 
@@ -2728,12 +2726,12 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
             return []
     # ----------------------------------------------------------------------
     # find first file argument
-    fout = _find_first_filearg(params, runorder, argdict, kwargdict)
+    fout = _find_first_filearg(runorder, argdict, kwargdict)
     # if fout is None means we have no file arguments
     if fout is None:
         # get new run
         new_runs = _gen_run(params, rundict=rundict, runorder=runorder,
-                            masternight=recipe.master)
+                            master_obs_dir=recipe.master)
         # finally add new_run to runs
         runs += new_runs
         run_score += [[0] * len(new_runs)]
@@ -2844,13 +2842,12 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
         return []
 
 
-def convert_to_command(params: ParamDict, recipe: DrsRecipe,
+def convert_to_command(recipe: DrsRecipe,
                        runargs: List[Dict[str, Any]]) -> List[str]:
     """
     Converts our list of dictionaries (for each run) to a list of strings,
     each string representing what would be entered on the command line
 
-    :param params: ParamDict, the parameter dictionary of constants
     :param recipe: DrsRecipe, the recipe instance this is for
     :param runargs: a list of dictionaries, each dictionary is a different run.
                     each 'run' is a dictionary of arguments each with the
@@ -2896,13 +2893,11 @@ def convert_to_command(params: ParamDict, recipe: DrsRecipe,
     return outputs
 
 
-def vstack_cols(params: ParamDict, tablelist: List[Table]
-                ) -> Union[Table, None]:
+def vstack_cols(tablelist: List[Table]) -> Union[Table, None]:
     """
     Take a list of Astropy Tables and stack into single Astropy Table
     Note same as io.drs_table.vstack_cols
 
-    :param params: ParamDict, the parameter dictionary of constants
     :param tablelist: a list of astropy.table.Table to stack
 
     :return: the stacked astropy.table
@@ -2995,11 +2990,10 @@ def _get_non_telluric_stars(params, indexdb: IndexDatabase,
     return list(np.sort(other_objects))
 
 
-def _update_table_objnames(params, table):
+def _update_table_objnames(table):
     """
     Takes a table and forces updates to object name columns
 
-    :param params:
     :param table:
     :return:
     """
@@ -3178,7 +3172,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                 if params.instances is None:
                     continue
                 # if it does check the group
-                elif params.instances[_filter].group not in  ['raw', 'ppraw']:
+                elif params.instances[_filter].group not in ['raw', 'ppraw']:
                     # delete if not raw
                     print('\t\tRemoving filter: {0}'.format(_filter))
                     del filters[_filter]
@@ -3258,9 +3252,6 @@ def _get_dprtype_from_drsfile(arg: DrsArgument) -> Union[List[str], None]:
     # -------------------------------------------------------------------------
     # return dprtypes
     return dprtypes
-
-
-
 
 
 def _split_string_list(string: str, allow_whitespace: bool = True):
@@ -3447,7 +3438,7 @@ def _group_tasks1(runlist, cores):
 
 
 # TODO: Remove or replace with _group_tasks
-def _group_tasks2(runlist, cores):
+def _group_tasks2(runlist):
     # individual runs of the same recipe are independent of each other
 
     # get all recipe names
@@ -3862,7 +3853,7 @@ def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
     return new_runs
 
 
-def _find_first_filearg(params: ParamDict, runorder: List[str],
+def _find_first_filearg(runorder: List[str],
                         argdict: Dict[str, Dict[str, Table]],
                         kwargdict: Dict[str, Dict[str, Table]]
                         ) -> Union[Tuple[str, Dict[str, Table]], None]:
@@ -3871,7 +3862,6 @@ def _find_first_filearg(params: ParamDict, runorder: List[str],
     If none exist return None, else return the argument name of the first
     file-type argument, and the values it can have (from argdict/kwargdict)
 
-    :param params: ParamDict, parameter dictionary of constants
     :param runorder: list of strings, the argument names in the correct run
                      order
     :param argdict: dictionary of positional arguments (key = argument name,

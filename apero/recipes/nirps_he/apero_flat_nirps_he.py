@@ -138,10 +138,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Load shape components
         # ------------------------------------------------------------------
-        shapexfile, shapex = shape.get_shapex(params, header, database=calibdbm)
-        shapeyfile, shapey = shape.get_shapey(params, header, database=calibdbm)
-        shapelocalfile, shapelocal = shape.get_shapelocal(params, header,
-                                                          database=calibdbm)
+        sprops = shape.get_shape_calibs(params, header, database=calibdbm)
 
         # ------------------------------------------------------------------
         # Correction of file
@@ -152,19 +149,19 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Load and straighten order profiles
         # ------------------------------------------------------------------
-        sargs = [infile, fibertypes, shapelocal, shapex, shapey,
-                 shapelocalfile]
-        orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs,
-                                                      database=calibdbm)
-
+        sargs = [infile, fibertypes, sprops['SHAPEL'], sprops['SHAPEX'],
+                 sprops['SHAPEY'], sprops['SHAPELFILE']]
+        oout = extract.order_profiles(params, recipe, *sargs, database=calibdbm)
+        orderps, orderpfiles, orderptimes = oout
         # ------------------------------------------------------------------
         # Apply shape transformations
         # ------------------------------------------------------------------
         # log progress (straightening orderp)
         WLOG(params, 'info', textentry('40-016-00004'))
         # straighten image
-        image2 = shape.ea_transform(params, image, shapelocal, dxmap=shapex,
-                                    dymap=shapey)
+        image2 = shape.ea_transform(params, image, sprops['SHAPEL'],
+                                    dxmap=sprops['SHAPEX'],
+                                    dymap=sprops['SHAPEY'])
 
         # ------------------------------------------------------------------
         # Fiber loop
@@ -176,24 +173,28 @@ def __main__(recipe, params):
             log2 = log1.add_level(params, 'fiber', fiber)
             # --------------------------------------------------------------
             # load the localisation properties for this fiber
-            lprops = localisation.get_coefficients(params, recipe, header,
-                                                   fiber=fiber, merge=True,
+            lprops = localisation.get_coefficients(params, header, fiber=fiber,
+                                                   merge=True,
                                                    database=calibdbm)
             # get the localisation center coefficients for this fiber
             lcoeffs = lprops['CENT_COEFFS']
             # shift the coefficients
-            lcoeffs2 = shape.ea_transform_coeff(image2, lcoeffs, shapelocal)
+            lcoeffs2 = shape.ea_transform_coeff(image2, lcoeffs,
+                                                sprops['SHAPEL'])
             # --------------------------------------------------------------
             # get the number of frames used
             nframes = infile.numfiles
             # --------------------------------------------------------------
             # get the order profile for this fiber
-            orderp = orderps[fiber]
-            orderpfile = orderpfiles[fiber]
+            lprops['ORDERP'] = orderps[fiber]
+            lprops['ORDERPFILE'] = orderpfiles[fiber]
+            lprops['ORDERPTIME'] = orderptimes[fiber]
+            lprops.set_sources(['ORDERP', 'ORDERPFILE', 'ORDERPTIME'], mainname)
             # --------------------------------------------------------------
             # extract spectrum
-            eprops = extract.extract2d(params, image2, orderp, lcoeffs2,
-                                       nframes, props, kind='flat', fiber=fiber)
+            eprops = extract.extract2d(params, image2, lprops['ORDERP'],
+                                       lcoeffs2, nframes, props,
+                                       kind='flat', fiber=fiber)
             # fit blaze and get flat
             eprops = extract.extract_blaze_flat(params, eprops, fiber)
             # --------------------------------------------------------------
@@ -226,8 +227,7 @@ def __main__(recipe, params):
             # write files
             # --------------------------------------------------------------
             wargs = [infile, eprops, fiber, rawfiles, combine, props, lprops,
-                     orderpfile, shapelocalfile, shapexfile, shapeyfile,
-                     qc_params]
+                     sprops, qc_params]
             outfiles = flat_blaze.flat_blaze_write(params, recipe, *wargs)
             blazefile, flatfile = outfiles
 

@@ -206,8 +206,9 @@ def __main__(recipe, params):
             # define the header as being from the hc e2ds file
             hcheader = hc_e2ds_file.get_header()
             # load the blaze file for this fiber
-            blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber,
-                                                     database=calibdbm)
+            bout = flat_blaze.get_blaze(params, hcheader, fiber,
+                                        database=calibdbm)
+            blaze_file, blaze_time, blaze = bout
             # --------------------------------------------------------------
             # calculate the night wavelength solution
             wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines,

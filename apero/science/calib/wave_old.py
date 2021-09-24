@@ -6451,8 +6451,9 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # Need to re-calculate the s1d files
     # ----------------------------------------------------------------------
     # load the blaze file for this fiber
-    blaze_file, blaze = flat_blaze.get_blaze(params, e2dsff_file.get_header(),
-                                             fiber, database=calibdbm)
+    bout = flat_blaze.get_blaze(params, e2dsff_file.get_header(), fiber,
+                                database=calibdbm)
+    blaze_file, blaze_time, blaze = bout
     # calculate s1d file
     sargs = [wprops['WAVEMAP'], e2dsff_file.get_data(), blaze]
     swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',

@@ -477,30 +477,79 @@ KW_INFILE3.set(key='INF3{0:03d}', comment='Input file used to create output',
 # -----------------------------------------------------------------------------
 # Define database input keywords
 # -----------------------------------------------------------------------------
+# dark calibration file used
 KW_CDBDARK = KW_CDBDARK.copy(__NAME__)
-KW_CDBDARK.set(key='CDBDARK', comment='The calibration DARK file used')
+KW_CDBDARK.set(key='CDBDARK', comment='The cal DARK file for extract')
+# time of dark calibration file used
+KW_CDTDARK = KW_CDTDARK.copy(__NAME__)
+KW_CDTDARK.set(key='CDTDARK', comment='MJDMID of cal DARK file used')
+# bad pixel calibration file used
 KW_CDBBAD = KW_CDBBAD.copy(__NAME__)
-KW_CDBBAD.set(key='CDBBAD', comment='The calibration BADPIX file used')
+KW_CDBBAD.set(key='CDBBAD', comment='The cal BADPIX file for extract')
+# time of bad pixel calibration file used
+KW_CDTBAD = KW_CDTBAD.copy(__NAME__)
+KW_CDTBAD.set(key='CDTBAD', comment='MJDMID of cal BADPIX file used')
+# background calibration file used
 KW_CDBBACK = KW_CDBBACK.copy(__NAME__)
-KW_CDBBACK.set(key='CDBBACK', comment='The calibration BKGRDMAP file used')
+KW_CDBBACK.set(key='CDBBACK', comment='The cal BKGRDMAP file for extract')
+# time of background calibration file used
+KW_CDTBACK = KW_CDTBACK.copy(__NAME__)
+KW_CDTBACK.set(key='CDTBACK',
+               comment='MJDMID of cal BKGRDMAP file used')
+# order profile calibration file used
 KW_CDBORDP = KW_CDBORDP.copy(__NAME__)
-KW_CDBORDP.set(key='CDBORDP', comment='The calibration ORDER_PROFILE file used')
+KW_CDBORDP.set(key='CDBORDP', comment='The cal ORDER_PROFILE file for extract')
+# time of order profile calibration file used
+KW_CDTORDP = KW_CDTORDP.copy(__NAME__)
+KW_CDTORDP.set(key='CDTORDP', comment='MJDMID of cal ORDER_PROFILE file used')
+# localisation calibration file used
 KW_CDBLOCO = KW_CDBLOCO.copy(__NAME__)
-KW_CDBLOCO.set(key='CDBLOCO', comment='The calibration LOC file used')
+KW_CDBLOCO.set(key='CDBLOCO', comment='The cal LOC file for extract')
+# localisation calibration file used
+KW_CDTLOCO = KW_CDTLOCO.copy(__NAME__)
+KW_CDTLOCO.set(key='CDTLOCO', comment='MJDMID of cal LOC file used')
+# shape local calibration file used
 KW_CDBSHAPEL = KW_CDBSHAPEL.copy(__NAME__)
-KW_CDBSHAPEL.set(key='CDBSHAPL', comment='The calibration SHAPEL file used')
-KW_CDBSHAPEDX = KW_CDBSHAPEDX.copy(__NAME__)
-KW_CDBSHAPEDX.set(key='CDBSHAPX', comment='The calibration SHAPE DX file used')
+KW_CDBSHAPEL.set(key='CDBSHAPL', comment='The cal SHAPEL file for extract')
+# time of shape local calibration file used
+KW_CDTSHAPEL = KW_CDTSHAPEL.copy(__NAME__)
+KW_CDTSHAPEL.set(key='CDTSHAPL', comment='MJDMID of cal SHAPEL file used')
+# shape dy calibration file used
 KW_CDBSHAPEDY = KW_CDBSHAPEDY.copy(__NAME__)
-KW_CDBSHAPEDY.set(key='CDBSHAPY', comment='The calibration SHAPE DX file used')
+KW_CDBSHAPEDY.set(key='CDBSHAPY', comment='The cal SHAPE DX file for extract')
+# time of shape dy calibration file used
+KW_CDTSHAPEDY = KW_CDTSHAPEDY.copy(__NAME__)
+KW_CDTSHAPEDY.set(key='CDTSHAPY', comment='MJDMID of cal SHAPE DX file used')
+# shape dx calibration file used
+KW_CDBSHAPEDX = KW_CDBSHAPEDX.copy(__NAME__)
+KW_CDBSHAPEDX.set(key='CDBSHAPX', comment='The cal SHAPE DX file for extract')
+# time of shape dx calibration file used
+KW_CDTSHAPEDX = KW_CDTSHAPEDX.copy(__NAME__)
+KW_CDTSHAPEDX.set(key='CDTSHAPX', comment='MJDMID of cal SHAPE DX file used')
+# flat calibration file used
 KW_CDBFLAT = KW_CDBFLAT.copy(__NAME__)
-KW_CDBFLAT.set(key='CDBFLAT', comment='The calibration FLAT file used')
+KW_CDBFLAT.set(key='CDBFLAT', comment='The cal FLAT file for extract')
+# time of flat calibration file used
+KW_CDTFLAT = KW_CDBFLAT.copy(__NAME__)
+KW_CDTFLAT.set(key='CDTFLAT', comment='MJDMID of cal FLAT file used')
+# blaze calibration file used
 KW_CDBBLAZE = KW_CDBBLAZE.copy(__NAME__)
-KW_CDBBLAZE.set(key='CDBBLAZE', comment='The calibration BLAZE file used')
+KW_CDBBLAZE.set(key='CDBBLAZE', comment='The cal BLAZE file for extract')
+# time of blaze calibration file used
+KW_CDTBLAZE = KW_CDTBLAZE.copy(__NAME__)
+KW_CDTBLAZE.set(key='CDTBLAZE', comment='MJDMID of cal BLAZE file used')
+# wave solution calibration file used
 KW_CDBWAVE = KW_CDBWAVE.copy(__NAME__)
-KW_CDBWAVE.set(key='CDBWAVE', comment='The calibration WAVE file used')
+KW_CDBWAVE.set(key='CDBWAVE', comment='The cal WAVE file for extract')
+# time of wave solution calibration file used
+KW_CDTWAVE = KW_CDTWAVE.copy(__NAME__)
+KW_CDTWAVE.set(key='CDTWAVE', comment='MJDMID of cal WAVE file used')
+# thermal calibration file used
 KW_CDBTHERMAL = KW_CDBTHERMAL.copy(__NAME__)
-KW_CDBTHERMAL.set(key='CDBTHERM', comment='The calibration THERMAL file used')
+KW_CDBTHERMAL.set(key='CDBTHERM', comment='The cal THERMAL file for extract')
+# time of thermal calibration file used
+KW_CDTTHERMAL = KW_CDTTHERMAL.copy(__NAME__)
+KW_CDTTHERMAL.set(key='CDTTHERM', comment='MJDMID of cal THERMAL file used')
 
 # additional properties of calibration
 KW_C_FLIP = KW_C_FLIP.copy(__NAME__)

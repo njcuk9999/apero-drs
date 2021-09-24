@@ -203,8 +203,8 @@ def __main__(recipe, params):
         hcheader = hc_e2ds_file.get_header()
         # ---------------------------------------------------------------------
         # load the blaze file for this fiber
-        blaze_file, blaze = flat_blaze.get_blaze(params, hcheader,
-                                                 master_fiber)
+        bout = flat_blaze.get_blaze(params, hcheader, master_fiber)
+        blaze_file, blaze_time, blaze = bout
         # ---------------------------------------------------------------------
         # load initial wavelength solution (start point) for this fiber
         #    this should only be a master wavelength solution

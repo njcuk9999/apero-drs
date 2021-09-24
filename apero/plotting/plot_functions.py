@@ -1113,7 +1113,6 @@ def plot_loc_im_regions(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     plotter.plotend(graph)
 
 
-
 loc_width_regions = Graph('LOC_WIDTH_REGIONS', kind='debug',
                           func=plot_loc_width_regions)
 loc_fiber_doublet_parity = Graph('LOC_FIBER_DOUBLET_PARITY', kind='debug',
@@ -1126,8 +1125,8 @@ loc_im_regions = Graph('LOC_IM_REGIONS', kind='debug', func=plot_loc_im_regions)
 sum_desc = ('Polynomial fits for localisation (overplotted on '
             'pre-processed image)')
 sum_plot_loc_im_fit = Graph('SUM_LOC_IM_FIT', kind='summary',
-                             func=plot_loc_image_fit, figsize=(12, 8),
-                             dpi=300, description=sum_desc)
+                            func=plot_loc_image_fit, figsize=(12, 8),
+                            dpi=300, description=sum_desc)
 sum_desc = ('Zoom in polynomial fits for localisation (overplotted on '
             'pre-processed image)')
 sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
@@ -2806,7 +2805,7 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
             frames[it].legend(loc=0)
         # ------------------------------------------------------------------
         # update filename (adding order_num to end)
-        suffix = 'order{0}_{1}'.format(order_num, fiber)
+        suffix = 'order{0}'.format(order_num)
         graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
