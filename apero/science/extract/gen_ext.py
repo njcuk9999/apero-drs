@@ -140,7 +140,8 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
             # push data into orderp
             orderp = orderpsfile.get_data()
             orderpfilename = orderpsfile.filename
-            orderptime = orderpsfile.get_hkey('KW_CDTORDP')
+            # time is the MJDMID of the order profile
+            orderptime = orderpsfile.get_hkey('KW_MID_OBS_TIME')
         # if straighted order profile doesn't exist and we have no filename
         #   defined then we need to figure out the order profile file -
         #   load it and then save it as a straighted version (orderpsfile)
