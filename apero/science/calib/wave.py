@@ -2765,7 +2765,7 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         qc_logic.append('abs(CCFRV[{0} - {1}]) > {2} m/s'.format(*qargs))
         # print to screen
         pargs = [master_fiber, fiber, rvdiff]
-        WLOG(params, textentry('40-017-00068', args=pargs))
+        WLOG(params, '', textentry('40-017-00068', args=pargs))
 
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
