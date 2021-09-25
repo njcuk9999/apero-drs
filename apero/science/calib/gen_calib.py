@@ -626,8 +626,12 @@ def load_calib_file(params: ParamDict, key: str,
         fout = database.get_calib_file(key, header=inheader, timemode=mode,
                                        nentries=n_entries, required=required,
                                        fiber=fiber, return_time=True)
-        filename, filetime = fout
-        source = 'calibDB'
+        if fout is None:
+            filename, filetime = None, np.nan
+            source = 'None'
+        else:
+            filename, filetime = fout
+            source = 'calibDB'
     # -------------------------------------------------------------------------
     # deal with filename being a path --> string (unless None)
     if filename is not None:
