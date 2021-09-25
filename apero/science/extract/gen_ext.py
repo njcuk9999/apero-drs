@@ -1508,7 +1508,7 @@ def qc_extraction(params, eprops):
 
 
 def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
-                           orderpfile, props, lprops, wprops, eprops, bprops,
+                           props, lprops, wprops, eprops, bprops,
                            swprops, svprops, sprops, fbprops, qc_params):
     # ----------------------------------------------------------------------
     # Store E2DS in file
