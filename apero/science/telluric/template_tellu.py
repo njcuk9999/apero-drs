@@ -148,7 +148,11 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     b_cols['DARKFILE'], b_cols['BADFILE'], b_cols['BACKFILE'] = [], [], []
     b_cols['LOCOFILE'], b_cols['BLAZEFILE'], b_cols['FLATFILE'] = [], [], []
     b_cols['SHAPEXFILE'], b_cols['SHAPEYFILE'] = [], []
-    b_cols['SHAPELFILE'], b_cols['THERMALFILE'], b_cols['WAVEFILE'] = [], [], []
+    b_cols['SHAPELFILE'], b_cols['THERMFILE'], b_cols['WAVEFILE'] = [], [], []
+    b_cols['DARKTIME'], b_cols['BADTIME'], b_cols['BACKTIME'] = [], [], []
+    b_cols['LOCOTIME'], b_cols['BLAZETIME'], b_cols['FLATTIME'] = [], [], []
+    b_cols['SHAPEXTIME'], b_cols['SHAPEYTIME'] = [], []
+    b_cols['SHAPELTIME'], b_cols['THERMTIME'], b_cols['WAVETIME'] = [], [], []
     # ----------------------------------------------------------------------
     # Set up storage for cubes (NaN arrays)
     # ----------------------------------------------------------------------
@@ -471,7 +475,11 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
     b_cols['DARKFILE'], b_cols['BADFILE'], b_cols['BACKFILE'] = [], [], []
     b_cols['LOCOFILE'], b_cols['BLAZEFILE'], b_cols['FLATFILE'] = [], [], []
     b_cols['SHAPEXFILE'], b_cols['SHAPEYFILE'] = [], []
-    b_cols['SHAPELFILE'], b_cols['THERMALFILE'], b_cols['WAVEFILE'] = [], [], []
+    b_cols['SHAPELFILE'], b_cols['THERMFILE'], b_cols['WAVEFILE'] = [], [], []
+    b_cols['DARKTIME'], b_cols['BADTIME'], b_cols['BACKTIME'] = [], [], []
+    b_cols['LOCOTIME'], b_cols['BLAZETIME'], b_cols['FLATTIME'] = [], [], []
+    b_cols['SHAPEXTIME'], b_cols['SHAPEYTIME'] = [], []
+    b_cols['SHAPELTIME'], b_cols['THERMTIME'], b_cols['WAVETIME'] = [], [], []
     # ----------------------------------------------------------------------
     # Set up storage for cubes (NaN arrays)
     # ----------------------------------------------------------------------
