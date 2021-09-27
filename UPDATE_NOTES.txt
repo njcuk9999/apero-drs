@@ -96,6 +96,8 @@ Date: 2021-06-02
       files bound for combining (warning given when calibration is removed)
       in the combine table CMETRIC, CTHRES and CPASS are given for all files
       (passed and failed) to show criteria
+    - can now set a delta time limit (default = 7 days) between observation
+      and calibration [DO_CALIB_DTIME_CHECK and MAX_CALIB_DTIME constants]
 
 - localisation
     - added new fits table extensions - the central position coefficients and
