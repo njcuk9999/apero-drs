@@ -2,6 +2,81 @@ Changelog
 =========
 
 
+0.7.166 (2021-09-27)
+--------------------
+- Update language database. [Neil Cook]
+- `Apero.science.calib.wave.py` - replace mean rv fit diff with mean of
+  difference of rvs in orders. [Neil Cook]
+- `Apero.core.instruemnts.default.default_keywords.py` - the default
+  key='' should be key='NULL' (otherwise get comments list) [Neil Cook]
+- `Apero.science.telluric.template_tellu.py` - correct `b_cols`. [Neil Cook]
+
+
+0.7.165 (2021-09-25)
+--------------------
+- `Apero.science.calib.wave.py` - fix typo WLOG(params, msg) -->
+  WLOG(params, '', msg) [Neil Cook]
+- `Apero.science.calib.gen_calib.py` - deal with returning None (cannot
+  case filename to string) [Neil Cook]
+- `Apero.recipes.spirou.apero_extract_spirou.py` - correct indices on
+  fbprops. [Neil Cook]
+- `Apero.science.calib.gen_calib.py` + `apero.science.extract.gen_ext.py` -
+  fix calib file being None in wave sol + orderp does n ot have CDTORDP
+  (use MJDMID) [Neil Cook]
+- `Apero.science.calib.shape.py` + `apero.science.extract.gen_ext.py` - use
+  sprops. [Neil Cook]
+- `Apero.recipes.*.apero_extract/flat*.py` - push sprops into
+  `order_profiles`. [Neil Cook]
+- `Apero.recipes.*.apero_shape_*.py` - poush sprops into write. [Neil
+  Cook]
+- `Apero.core.instruments.*.file_definitions.py` - change `orderp_straight`
+  to DrsFitsFile. [Neil Cook]
+- `Apero.core.core.drs_file.py` - allow coping of hdict / header without
+  drsfile instance. [Neil Cook]
+- `Apero.core.core.drs_database.py` - do not fix headers for non fits
+  files. [Neil Cook]
+- `Apero.science.calib.gen_calib.py` - fix `load_calib_file` (add
+  `return_time=True)` [Neil Cook]
+- `Apero.core.core.drs_database.py` - fix ctable output. [Neil Cook]
+- Add calibration MJDMID to all files that use CDBXXXX (as CBTXXXX)
+  [Neil Cook]
+
+
+0.7.164 (2021-09-23)
+--------------------
+- Apero.science.calib - `wave.py` - print out CCFRV as well as DV tests.
+  [Neil Cook]
+- `Apero.core.core.drs_database.py` - change message 40-001-00031 from
+  general to debug print out ("Skipping search") [Neil Cook]
+- `Apero.core.instruments.*.default_constants.py` - change cosmic intcut
+  from 10-50 to 50-100. [Neil Cook]
+- `Apero.data.spirou.calib.catalogue_UNe.csv` - add red most lines [EA]
+  from large catalogue. [Neil Cook]
+- `Apero.core.instruments.spirou.default_constants.py` - add back in order
+  48 to wave solution. [Neil Cook]
+
+
+0.7.163 (2021-09-22)
+--------------------
+- Update requirements (untested) [Neil Cook]
+- `Apero.core.instruments.*` - make all instruments consistent (groups +
+  other) [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - deal with non raw
+  filter keys on raw files (ignore) [Neil Cook]
+- Update catalogues from Etienne. [Neil Cook]
+- Flat + wave - combine with sum not median. [Neil Cook]
+
+
+0.7.162 (2021-09-22)
+--------------------
+- Need to deal with raw keys only. [Neil Cook]
+- `Apero.recipes.spirou.apero_flat_spirou.py` - [REVERT] flats should be
+  summed not medianed [EA] [Neil Cook]
+- `Apero.recipes.spirou.apero_flat_spirou.py` - flats should be summed not
+  medianed [EA] [Neil Cook]
+- Update version/date/changelog/documentation. [Neil Cook]
+
+
 0.7.161 (2021-09-15)
 --------------------
 - `Apero.base.base.py` + `apero.core.core.drs_loy.py` - make sure use of
