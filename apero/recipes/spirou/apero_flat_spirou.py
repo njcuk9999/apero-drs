@@ -149,8 +149,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Load and straighten order profiles
         # ------------------------------------------------------------------
-        sargs = [infile, fibertypes, sprops['SHAPEL'], sprops['SHAPEX'],
-                 sprops['SHAPEY'], sprops['SHAPELFILE']]
+        sargs = [infile, fibertypes, sprops]
         oout = extract.order_profiles(params, recipe, *sargs, database=calibdbm)
         orderps, orderpfiles, orderptimes = oout
         # ------------------------------------------------------------------

@@ -1652,7 +1652,7 @@ i.e. by default: '{1}_{2}_DB'","","Prints question to enter table suffix for dat
 "{0} = order number; {1} = fiber data type; {2} = number of lines; {3} = minimum allowed number of lines","\tSkipped Order {0} (too few {1} lines: {2} < {3})","","prints that we are skipping order too few lines","40-017-00065","ALL"
 "{0} = order number","\tSkipped Order {0} (in removed orders)","","prints that we are skipping order as this is a removed order","40-017-00066","ALL"
 "{0} = first fiber name; {1} = second fiber name; {2} = DV in m/s","DV({0} - {1}): {2:.4f} m/s","","prints the dv from wave meas between fibers","40-017-00067","ALL"
-"{0} = first fiber name; {1} = second fiber name; {2} = CCF RV in m/s","CCFRV[{0} - {1}] : {2:.4f} m/s","","prints the ccf rv from wave meas with smart fp mask","40-017-00068","ALL"
+"{0} = first fiber name; {1} = second fiber name; {2} = CCF RV in m/s","CCFRV[{0} ]- CCFRV[{1}] : {2:.4f} m/s","","prints the ccf rv from wave meas with smart fp mask","40-017-00068","ALL"
 "","","","","40-017-00069","ALL"
 "","","","","",""
 "","","","","",""

@@ -143,8 +143,12 @@ def __main__(recipe, params):
         fkwargs = dict(database=calibdbm)
         masterfp_file, masterfp_image = shape.get_master_fp(params, header,
                                                             **fkwargs)
-        dxmap_file, dxmap = shape.get_shapex(params, header, **fkwargs)
-        dymap_file, dymap = shape.get_shapey(params, header, **fkwargs)
+        # get shape x and shape x mjdmid
+        sout = shape.get_shapex(params, header, **fkwargs)
+        dxmap_file, dxtime, dxmap = sout
+        # get shape y and shape y mjdmid
+        sout = shape.get_shapey(params, header, **fkwargs)
+        dymap_file, dytime, dymap = sout
         # ----------------------------------------------------------------------
         # Get transform parameters (transform image onto fpmaster)
         # ----------------------------------------------------------------------
@@ -168,8 +172,13 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Writing shape to file
         # ------------------------------------------------------------------
+        # push shape properties into dictionary
+        sprops = dict(SHAPEX_FILE=dxmap_file, SHAPEX_TIME=dxtime,
+                      SHAPEY_FILE=dymap_file, SHAPEY_TIME=dytime,
+                      TRANSFORM=transform)
+        # write to file
         outfile = shape.write_shape_local_files(params, recipe, infile, combine,
-                                                rawfiles, props, transform,
+                                                rawfiles, props, sprops,
                                                 image, image2, qc_params)
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
