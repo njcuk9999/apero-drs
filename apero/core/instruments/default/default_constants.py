@@ -45,7 +45,8 @@ __all__ = [
     'OBJ_LIST_RESOLVE_FROM_GLIST', 'OBJ_LIST_RESOLVE_FROM_COORDS',
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'ODOCODE_REJECT_GSHEET_ID',
-    'ODOCODE_REJECT_GSHEET_NUM', 'GROUP_FILE_LIMIT',
+    'ODOCODE_REJECT_GSHEET_NUM', 'GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
+    'DO_CALIB_DTIME_CHECK',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
     'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -493,6 +494,21 @@ GROUP_FILE_LIMIT = Const('GROUP_FILE_LIMIT', value=None, dtype=int,
                          source=__NAME__, group=cgroup, minimum=1,
                          description='Define the maximum number of files that '
                                      'can be used in a group')
+
+# Define whether we check the calibration and observation separation
+DO_CALIB_DTIME_CHECK = Const('DO_CALIB_DTIME_CHECK', value=None, dtype=bool,
+                             source=__NAME__, group=cgroup,
+                             description='Define whether we check the '
+                                         'calibration and observation '
+                                         'separation')
+
+# Define the maximum time (in days) that a calibration can be separated from
+#   an observation in order to use it
+MAX_CALIB_DTIME = Const('MAX_CALIB_DTIME', value=None, dtype=float,
+                        source=__NAME__, group=cgroup, minimum=1.0,
+                        description='Define the maximum time (in days) that a '
+                                    'calibration can be separated from an '
+                                    'observation in order to use it')
 
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
