@@ -453,6 +453,60 @@ def add_calibs_to_header(outfile: DrsFitsFile,
     return outfile
 
 
+def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
+                           calib_time: float, calib_filename: str):
+    """
+    Check that the delta time between calibration and observation is
+    valid (as defined by MAX_CALIB_DTIME)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param inheader: Header, the header associated with the observation
+    :param calib_time: float, the time of the calibration in MJD
+    :param calib_filename: str, the name of the calibration file (for logging)
+
+    :raises: DrsLogException if DO_CALIB_DTIME_CHECK = True and delta time is
+             greater than MAX_CALIB_DTIME
+
+    :return: None, raises an error or just returns
+    """
+    # set function ame
+    func_name = display_func('calib_delta_time_check', __NAME__)
+    # ---------------------------------------------------------------------
+    # get parameters from params
+    do_check = params['DO_CALIB_DTIME_CHECK']
+    max_dtime = params['MAX_CALIB_DTIME']
+    timekey = params['KW_MID_OBS_TIME'][0]
+    # extra skip if we are in quick look mode
+    quicklook = params['EXT_QUICK_LOOK']
+    # ---------------------------------------------------------------------
+    # deal with check (if check is False we do not check)
+    if not do_check:
+        return
+    # deal with quick look mode (extraction only)
+    if quicklook:
+        return
+    # ---------------------------------------------------------------------
+    # get and check observation time
+    if timekey in inheader:
+        # observation time (MJDMID)
+        obstime = inheader[timekey]
+    else:
+        return
+    # ---------------------------------------------------------------------
+    # check calibration time is finite (if it isn't we can't check this)
+    if not np.isfinite(calib_time):
+        return
+    # ---------------------------------------------------------------------
+    # work out delta time
+    delta_time = np.abs(obstime - calib_time)
+    # now check delta time
+    if delta_time > max_dtime:
+        eargs = [calib_filename, max_dtime, func_name]
+        WLOG(params, 'error', textentry('09-002-00004', args=eargs))
+    else:
+        WLOG(params, '', textentry('40-005-10003', args=[max_dtime]))
+
+
 # for: load_calib_file
 LoadCalibFileReturn = Union[None,    # null return
                             # -------------------------------------------------
@@ -640,6 +694,16 @@ def load_calib_file(params: ParamDict, key: str,
             filename = list(map(lambda strfile: str(strfile), filename))
         else:
             filename = str(filename)
+    # -------------------------------------------------------------------------
+    # deal with checking delta time between this observation (header) and
+    #  the calibration
+    if inheader is not None:
+        if isinstance(filename, list):
+            for it in range(len(filename)):
+                calib_delta_time_check(params, inheader, filetime[it],
+                                       filename[it])
+        else:
+            calib_delta_time_check(params, inheader, filetime, filename)
     # -------------------------------------------------------------------------
     # if we are just returning filename return here
     if return_filename:

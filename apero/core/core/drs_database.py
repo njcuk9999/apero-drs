@@ -540,7 +540,7 @@ class CalibrationDatabase(DatabaseManager):
         # else we get it from database
         # ---------------------------------------------------------------------
         if no_times or header is None:
-            filetime = None
+            filetime = np.nan
         elif filetime is None:
             # need to get hdict/header
             hdict, header = _get_hdict(self.params, self.name, drsfile, hdict,
@@ -568,6 +568,7 @@ class CalibrationDatabase(DatabaseManager):
         # deal with return of two columns (tulpe or pandas table)
         if ctable is None:
             filenames = None
+            filetimes = np.nan
         elif isinstance(ctable, tuple):
             # get filename
             filenames = str(ctable[0])
