@@ -4749,7 +4749,8 @@ class DrsFitsFile(DrsInputFile):
         # return values
         return key, dvalue, comment
 
-    def copy_hdict(self, drsfile: 'DrsFitsFile'):
+    def copy_hdict(self, drsfile: Optional['DrsFitsFile'] = None,
+                   hdict: Optional[dict] = None):
         """
         Copy a hdict entry from drsfile (a DrsFitsFile instance)
 
@@ -4759,9 +4760,13 @@ class DrsFitsFile(DrsInputFile):
         # set function name
         _ = display_func('copy_hdict', __NAME__, self.class_name)
         # set this instance to the hdict instance of another drs fits file
-        self.hdict = drsfile.hdict.copy()
+        if drsfile is not None:
+            self.hdict = drsfile.hdict.copy()
+        elif hdict is not None:
+            self.hdict = hdict.copy()
 
-    def copy_header(self, drsfile: 'DrsFitsFile'):
+    def copy_header(self, drsfile: Optional['DrsFitsFile'] = None,
+                    header: Optional[Header] = None):
         """
         Copy a header entry from drsfile (a DrsFitsFile instance)
         :param drsfile: DrsFitsFile instance (containing drsfile.hdict)
@@ -4770,7 +4775,10 @@ class DrsFitsFile(DrsInputFile):
         # set function name
         _ = display_func('copy_header', __NAME__, self.class_name)
         # set this instance to the header instance of another drs fits file
-        self.header = drsfile.header.copy()
+        if drsfile is not None:
+            self.header = drsfile.header.copy()
+        elif header is not None:
+            self.header = header.copy()
 
     # -------------------------------------------------------------------------
     # database methods

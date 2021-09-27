@@ -2741,7 +2741,8 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
     # rv quality controls between fibers (from ccf)
     # --------------------------------------------------------------
     # get master RV [km/s] --> [m/s]
-    master_rv = rvprops[master_fiber]['MEAN_RV'] * 1000
+    master_rvs = rvprops[master_fiber]['CCF_FIT_COEFFS'][:, 1] * 1000
+
     # get the fiber types from a list parameter (or from inputs)
     fiber_types = drs_image.get_fiber_types(params)
     # loop around fibers
@@ -2750,22 +2751,28 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         if fiber == master_fiber:
             continue
         # get rv for this fiber [km/s] --> [m/s]
-        rvfiber = rvprops[fiber]['MEAN_RV'] * 1000
-
-        rvdiff = master_rv - rvfiber
+        fiber_rvs = rvprops[fiber]['CCF_FIT_COEFFS'][:, 1] * 1000
+        # get the differences for each order
+        rvdiff = master_rvs - fiber_rvs
+        # get the median difference
+        meddiff = np.nanmedian(rvdiff)
         # deal with rv threshold
-        if np.abs(rvdiff) > rv_thres:
+        if np.abs(meddiff) > rv_thres:
             qc_pass.append(0)
         else:
             qc_pass.append(1)
         # add to qc header lists
-        qc_values.append(master_rv - rvfiber)
-        qc_names.append('CCFRV[{0} - {1}]'.format(master_fiber, fiber))
+        qc_values.append(meddiff)
+        qc_names.append('CCFRV[{0}] - CCFRV[{1}]'.format(master_fiber, fiber))
         qargs = [master_fiber, fiber, rv_thres]
-        qc_logic.append('abs(CCFRV[{0} - {1}]) > {2} m/s'.format(*qargs))
+        qc_logic.append('abs(CCFRV[{0}] - CCFRV[{1}]) > {2} m/s'.format(*qargs))
         # print to screen
-        pargs = [master_fiber, fiber, rvdiff]
-        WLOG(params, textentry('40-017-00068', args=pargs))
+        pargs = [master_fiber, fiber, meddiff]
+        # as a warning if QC fails
+        if qc_pass[-1] == 0:
+            WLOG(params, 'warning', textentry('40-017-00068', args=pargs))
+        else:
+            WLOG(params, 'info', textentry('40-017-00068', args=pargs))
 
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the

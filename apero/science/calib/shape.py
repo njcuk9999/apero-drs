@@ -1808,7 +1808,7 @@ def shape_local_qc(params, transform, xres, yres):
 
 
 def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
-                            transform, image, image2, qc_params):
+                            sprops, image, image2, qc_params):
     # define outfile
     outfile = recipe.outputs['LOCAL_SHAPE_FILE'].newcopy(params=params)
     # construct the filename from file instance
@@ -1840,14 +1840,19 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     # add qc parameters
     outfile.add_qckeys(qc_params)
     # add shape transform parameters
-    outfile.add_hkey('KW_SHAPE_DX', value=transform[0])
-    outfile.add_hkey('KW_SHAPE_DY', value=transform[1])
-    outfile.add_hkey('KW_SHAPE_A', value=transform[2])
-    outfile.add_hkey('KW_SHAPE_B', value=transform[3])
-    outfile.add_hkey('KW_SHAPE_C', value=transform[4])
-    outfile.add_hkey('KW_SHAPE_D', value=transform[5])
+    outfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEX_FILE'])
+    outfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEX_TIME'])
+    if 'SHAPEY_FILE' in sprops:
+        outfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEY_FILE'])
+        outfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEY_TIME'])
+    outfile.add_hkey('KW_SHAPE_DX', value=sprops['TRANSFORM'][0])
+    outfile.add_hkey('KW_SHAPE_DY', value=sprops['TRANSFORM'][1])
+    outfile.add_hkey('KW_SHAPE_A', value=sprops['TRANSFORM'][2])
+    outfile.add_hkey('KW_SHAPE_B', value=sprops['TRANSFORM'][3])
+    outfile.add_hkey('KW_SHAPE_C', value=sprops['TRANSFORM'][4])
+    outfile.add_hkey('KW_SHAPE_D', value=sprops['TRANSFORM'][5])
     # copy data
-    outfile.data = [transform]
+    outfile.data = [sprops['TRANSFORM']]
     # ------------------------------------------------------------------
     # log that we are saving dxmap to file
     WLOG(params, '', textentry('40-014-00037', args=[outfile.filename]))
