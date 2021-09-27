@@ -107,6 +107,15 @@ ALL_POLAR_RHOMB_POS.value = 'P2, P4, P14, P16'
 GROUP_FILE_LIMIT = GROUP_FILE_LIMIT.copy(__NAME__)
 GROUP_FILE_LIMIT.value = 20
 
+# Define whether we check the calibration and observation separation
+DO_CALIB_DTIME_CHECK = DO_CALIB_DTIME_CHECK.copy(__NAME__)
+DO_CALIB_DTIME_CHECK.value = True
+
+# Define the maximum time (in days) that a calibration can be separated from
+#   an observation in order to use it
+MAX_CALIB_DTIME = MAX_CALIB_DTIME.copy(__NAME__)
+MAX_CALIB_DTIME.value = 7.0
+
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
 COMBINE_METRIC_THRESHOLD1 = COMBINE_METRIC_THRESHOLD1.copy(__NAME__)
