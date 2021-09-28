@@ -575,6 +575,8 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
                         table1 = Table(rawtab)
                     elif isinstance(rawtab, Table):
                         table1 = rawtab
+                    elif rawtab is None:
+                        table1 = None
                     else:
                         # raise error: alldict[{0}][{1}] is not a valid
                         #     astropy table
