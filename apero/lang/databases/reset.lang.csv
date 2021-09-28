@@ -979,7 +979,7 @@ however you may want to link this database to another apero profile","","","INST
 "{0} = database name; {1} = output file; {2} = error type; {3} = error message; {4} = function name","{0} database: Unable to chmod on file {1} \n\t Error {2}: {3} \n\t function = {4}","","Means that we were unable to do chmod Oo0644 on file","10-001-00007","WARNING"
 "{0} = key; {1} = filename","Cannot fix header, header key '{0}' missing. \n\t Filename = {1}","","Means that key X (to id file) was not found in header","10-001-00008","WARNING"
 "{0} = filename","FP file does not pass 2D quality control. \n\t Filename = {0}","","Means that a file did not pass the 2D FP quality checks","10-001-00009","WARNING"
-"","","","","",""
+"{0} = hdu number; {1} = extension name; {2} = datatype","HDU[{0}]='{1}' has incorrect data type (Must be 'table' or 'image') - skipping extension \n\t data type = '{2}'","","Means that a header extension was not table/image datatype","10-001-00010","WARNING"
 "","","","","",""
 "None","\t","","Constant/Config/Database Warning Messages","10-002-00000","WARNING"
 "{0} = source of constant; {1} = instrument name; {2} = directory name","User config defined in {0} but instrument {1} directory not found. \n\t Directory = {2} \n\t Using default configuration files.","","Means that config file was defined but directory was not found","10-002-00001","WARNING"
