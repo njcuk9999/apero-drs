@@ -961,6 +961,9 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
         elif datatype[it] == 'table':
             fitstype = fits.BinTableHDU
         else:
+            # warn user that extension is being skipped
+            wargs = [it + 1, names[it], datatype[it]]
+            WLOG(params, 'warning', textentry('10-001-00010', args=wargs))
             continue
         # ---------------------------------------------------------------------
         # only add if header is a fits header

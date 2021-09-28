@@ -5653,7 +5653,7 @@ class DrsOutFileExtension:
                         correct, _ = tmpdrsfile.check_file()
                         # if correct we set the drs file name
                         if correct:
-                            self.datatype = drsfile
+                            self.datatype = drsfile.datatype
                             break
                     else:
                         continue
@@ -7606,7 +7606,7 @@ def index_hkey_condition(name, datatype, hkey):
             # add to sub condition
             subconditions.append('{0}="{1}"'.format(name, value))
         # make full condition based on sub conditions
-        condition = 'AND ({0})'.format(' OR '.join(subconditions))
+        condition = ' AND ({0})'.format(' OR '.join(subconditions))
         # return condition
         return condition
     else:
