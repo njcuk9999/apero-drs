@@ -418,30 +418,37 @@ class CalibrationDatabase(DatabaseManager):
         sql['condition'] = 'KEYNAME = "{0}"'.format(key)
         # condition for used
         sql['condition'] += ' AND USED = 1'
+
+        # get unix time
+        if hasattr(filetime, 'unix'):
+            utime = filetime.unix
+        else:
+            utime = None
+
         # condition for fiber
         if fiber is not None:
             sql['condition'] += ' AND FIBER = "{0}"'.format(fiber)
         # sql for time mode
-        if timemode == 'older' and filetime is not None:
+        if timemode == 'older' and utime is not None:
             # condition:
             #       UNIXTIME - FILETIME < 0
             # sort by:
             #       ABS(UNIXTIME - FILETIME)
-            sql['condition'] += ' AND UNIXTIME - {0} < 0'.format(filetime.unix)
-            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['condition'] += ' AND UNIXTIME - {0} < 0'.format(utime)
+            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(utime)
             sql['sort_descending'] = False
-        elif timemode == 'newer' and filetime is not None:
+        elif timemode == 'newer' and utime is not None:
             # condition:
             #       UNIXTIME - FILETIME > 0
             # sort by:
             #       ABS(UNIXTIME - FILETIME)
-            sql['condition'] += ' AND UNIXTIME - {0} > 0'.format(filetime.unix)
-            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['condition'] += ' AND UNIXTIME - {0} > 0'.format(utime)
+            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(utime)
             sql['sort_descending'] = False
-        elif filetime is not None:
+        elif utime is not None:
             # sort by:
             #       ABS(UNIXTIME - FILETIME)
-            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(utime)
             sql['sort_descending'] = False
         else:
             # sort by: UNIXTIME
