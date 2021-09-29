@@ -121,6 +121,10 @@ def __main__(recipe, params):
 
     # get quick look mode
     quicklook = params['EXT_QUICK_LOOK']
+    # deal with leak corr
+    if 'leakcorr' in params['DATA_DICT']:
+        # add leak corr to params from data dict (passed in)
+        params['INPUTS']['LEAKCORR'] = params['DATA_DICT']['LEAKCORR']
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()
@@ -235,12 +239,12 @@ def __main__(recipe, params):
                                         database=calibdbm)
             # add blaze and flat to parameter dictionary
             fbprops = ParamDict()
-            fbprops['FLAT'] = fout[3]
-            fbprops['FLATFILE'] = fout[1]
-            fbprops['FLATTIME'] = fout[2]
-            fbprops['BLAZE'] = bout[3]
-            fbprops['BLAZEFILE'] = bout[1]
-            fbprops['BLAZETIME'] = bout[2]
+            fbprops['FLAT'] = fout[2]
+            fbprops['FLATFILE'] = fout[0]
+            fbprops['FLATTIME'] = fout[1]
+            fbprops['BLAZE'] = bout[2]
+            fbprops['BLAZEFILE'] = bout[0]
+            fbprops['BLAZETIME'] = bout[1]
             # add keys
             keys = ['FLAT', 'FLATFILE', 'FLATTIME', 'BLAZE', 'BLAZEFILE',
                     'BLAZETIME']
