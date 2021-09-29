@@ -662,7 +662,7 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
         reason += 'REFTYPE={0} '.format(ref_type)
     # if any of these conditions are true do not correct for dark_fp
     if quicklook or cond1 or cond2 or cond3:
-        # add used parameters
+        # add used parametersLEAK_CORRECTED
         eprops['LEAK_2D_EXTRACT_FILES_USED'] = 'No leak'
         eprops['LEAK_EXTRACT_FILE_USED'] = 'No leak'
         eprops['LEAK_BCKGRD_PERCENTILE_USED'] = 'No leak'
@@ -1179,7 +1179,7 @@ def save_uncorrected_ext_fp(params: ParamDict, recipe: DrsRecipe,
     if not params['DEBUG_UNCORR_EXT_FILES']:
         return
     # check that we have corrected leak
-    if not params['LEAK_CORRECTED']:
+    if not eprops['LEAK_CORRECTED']:
         return
     # get a new copy of the e2ds file
     e2dsfile = recipe.outputs['E2DS_FILE'].newcopy(params=params,
