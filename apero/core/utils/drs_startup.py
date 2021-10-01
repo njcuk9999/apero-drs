@@ -926,7 +926,11 @@ def read_runfile(params: ParamDict, runfile: str,
     keytable = OrderedDict()
     # ----------------------------------------------------------------------
     # unlock params
-    params.unlock()
+    if params.locked:
+        relock = True
+        params.unlock()
+    else:
+        relock = False
     # ----------------------------------------------------------------------
     # sort out keys into id keys and values for params
     for it in range(len(keys)):
@@ -1097,7 +1101,8 @@ def read_runfile(params: ParamDict, runfile: str,
             params['UPDATE_OBJ_DATABASE'] = _update_objdb
     # ----------------------------------------------------------------------
     # relock params
-    params.lock()
+    if relock:
+        params.lock()
     # ----------------------------------------------------------------------
     # return parameter dictionary and runtable
     return params, runtable
