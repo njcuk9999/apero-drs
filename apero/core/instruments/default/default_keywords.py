@@ -40,7 +40,7 @@ __all__ = [  # input keys
     'KW_CDBSHAPEDX', 'KW_CDTSHAPEDX', 'KW_CDBSHAPEDY', 'KW_CDTSHAPEDY',
     'KW_CDBFLAT', 'KW_CDTFLAT', 'KW_CDBBLAZE', 'KW_CDTBLAZE',
     'KW_CDBWAVE', 'KW_CDTWAVE', 'KW_CDBTHERMAL', 'KW_CDTTHERMAL',
-    'KW_CDBLEAKM', 'KW_CDTLEAKM',
+    'KW_CDBLEAKM', 'KW_CDTLEAKM', 'KW_CDBLEAKR', 'KW_CDTLEAKR',
     # preprocess keys
     'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PPMSTR_NSIG', 'KW_PPMSTR_FILE',
     'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE', 'KW_PPC_NBAD_BOTH',
@@ -93,6 +93,7 @@ __all__ = [  # input keys
     'KW_WAVE_TRP_DVCUTORD', 'KW_WAVE_TRP_DVCUTALL',
     'KW_WAVE_RES_MAPSIZE', 'KW_WAVE_RES_WSIZE',
     'KW_WAVE_RES_MAXDEVTHRES', 'KW_INIT_WAVE', 'KW_WAVETIME',
+    'KW_CAVITY_WIDTH', 'KW_CAVITY_DEG', 'KW_WAVE_MEANHC', 'KW_WAVE_EMEANHC',
     # wave littrow values
     'KW_WAVE_LIT_START_1', 'KW_WAVE_LIT_END_1', 'KW_WAVE_LIT_RORDERS',
     'KW_WAVE_LIT_ORDER_INIT_1', 'KW_WAVE_LIT_ORDER_START_1',
@@ -674,6 +675,13 @@ KW_CDBLEAKM = Keyword('KW_CDBLEAKM', key='NULL', dtype=str, source=__NAME__,
 # time of leak master calibration file used
 KW_CDTLEAKM = Keyword('KW_CDTLEAKM', key='NULL', dtype=str, source=__NAME__,
                         description='time of leak master calibration file used')
+# ref leak master calibration file used
+KW_CDBLEAKR = Keyword('KW_CDBLEAKR', key='NULL', dtype=str, source=__NAME__,
+                        description='ref leak master calibration file used')
+# time of ref leak master calibration file used
+KW_CDTLEAKR = Keyword('KW_CDTLEAKR', key='NULL', dtype=str, source=__NAME__,
+                        description='time of ref leak master calibration file '
+                                    'used')
 
 # additional properties of calibration
 
@@ -1250,6 +1258,27 @@ KW_WAVE_ECHELLE = Keyword('KW_WAVE_ECHELLE', key='NULL', dtype=float,
 KW_INIT_WAVE = Keyword('KW_INIT_WAVE', key='NULL', dtype=str, source=__NAME__,
                        description=('the initial wave file used for wave '
                                     'solution'))
+
+# define the cavity width polynomial key
+KW_CAVITY_WIDTH = Keyword('KW_CAVITY_WIDTH', key='NULL', dtype=float,
+                          source=__NAME__,
+                          description='define the cavity width polynomial key')
+
+# define the cavity fit degree used
+KW_CAVITY_DEG = Keyword('KW_CAVITY_DEG', key='NULL', dtype=int,
+                          source=__NAME__,
+                          description='define the cavity fit degree used')
+
+# define the mean hc velocity calculated
+KW_WAVE_MEANHC = Keyword('KW_WAVE_MEANHC', key='NULL', dtype=float,
+                          source=__NAME__,
+                          description='define the mean hc velocity calculated')
+
+# define the err on mean hc velocity calculated
+KW_WAVE_EMEANHC = Keyword('KW_WAVE_EMEANHC', key='NULL', dtype=float,
+                          source=__NAME__,
+                          description='define the err on mean hc velocity '
+                                      'calculated')
 
 # -----------------------------------------------------------------------------
 # the fit degree for wave solution used
