@@ -626,11 +626,12 @@ def get_coefficients(params, header, fiber, database=None, **kwargs):
     else:
         calibdbm = database
     # load loco file
-    lout = gen_calib.load_calib_file(params, key, header, filename=filename,
-                                     userinputkey='LOCOFILE', database=calibdbm,
-                                     fiber=usefiber, return_filename=True,
-                                     return_time=True)
-    locofilepath, locotime = lout
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key, header, filename=filename,
+                          userinputkey='LOCOFILE', database=calibdbm,
+                          fiber=usefiber, return_filename=True)
+    # get properties from calibration file
+    locofilepath, locotime = cfile.filename, cfile.mjdmid
     # ------------------------------------------------------------------------
     # construct new infile instance and read data/header
     locofile = locofile.newcopy(filename=locofilepath, params=params,

@@ -493,8 +493,9 @@ class CalibrationDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-    CALIB_FILE_RTN = Union[None, Path, List[Path], Tuple[Path, float],
-                           Tuple[List[Path], List[float]]]
+    CALIB_FILE_RTN = Union[Tuple[None, float, bool],
+                           Tuple[Path, float, bool],
+                           Tuple[List[Path], List[float], List[bool]]]
 
     def get_calib_file(self, key: str, drsfile=None, header=None, hdict=None,
                        filetime: Union[None, Time] = None,
@@ -502,8 +503,7 @@ class CalibrationDatabase(DatabaseManager):
                        nentries: Union[str, int] = 1,
                        required: bool = True,
                        no_times: bool = False,
-                       fiber: Union[str, None] = None,
-                       return_time: bool = False) -> CALIB_FILE_RTN:
+                       fiber: Union[str, None] = None) -> CALIB_FILE_RTN:
         """
         Handles getting a filename from calibration database (from filename,
         user input, or key in SQL database
@@ -531,7 +531,6 @@ class CalibrationDatabase(DatabaseManager):
                          files
         :param fiber: str or None, if set sets the fiber to use - if no fiber
                       required do not set
-        :param return_time: bool, if True returns time as well as file
 
         :return:
         """
@@ -571,17 +570,20 @@ class CalibrationDatabase(DatabaseManager):
         # get calibration database entries --> FILENAME
         #   if nentries = 1 : str or None
         #   if nentries > 1 : 1d numpy array
-        ctable = self.get_calib_entry('FILENAME, UNIXTIME', key, fiber,
-                                      filetime, timemode, nentries)
+        ctable = self.get_calib_entry('FILENAME, SUPERCAL, UNIXTIME', key,
+                                      fiber, filetime, timemode, nentries)
         # deal with return of two columns (tulpe or pandas table)
         if ctable is None:
             filenames = None
             filetimes = np.nan
+            master = False
         elif isinstance(ctable, tuple):
             # get filename
             filenames = str(ctable[0])
             # get file time (unix)
-            utimes = float(ctable[1])
+            utimes = float(ctable[2])
+            # get whether calibration is a master
+            master = drs_text.true_text(ctable[1])
             # get file times in MJD
             filetimes = float(Time(utimes, format='unix').mjd)
         else:
@@ -589,6 +591,8 @@ class CalibrationDatabase(DatabaseManager):
             filenames = np.array(ctable['FILENAME'])
             # get file times (unix)
             utimes = np.array(ctable['UNIXTIME'])
+            # get whether calibrations are masters
+            master = np.array(ctable['SUPERCAL']).astype(bool)
             # get file times in MJD
             filetimes = np.array(Time(utimes, format='unix').mjd).astype(float)
         # ---------------------------------------------------------------------
@@ -596,7 +600,7 @@ class CalibrationDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         # deal with no filenames found and not required
         if (filenames is None or len(filenames) == 0) and not required:
-            return None
+            return None, np.nan, False
         # deal with no filenames found elsewise --> error
         if filenames is None or len(filenames) == 0:
             # get unique set of keys
@@ -621,10 +625,7 @@ class CalibrationDatabase(DatabaseManager):
             # set output
             outfilename = Path(self.filedir).joinpath(filenames).absolute()
             # return outfilenames
-            if return_time:
-                return outfilename, float(filetimes)
-            else:
-                return outfilename
+            return outfilename, float(filetimes), bool(master)
         # else loop around them (assume they are iterable)
         else:
             # set output storage
@@ -635,10 +636,7 @@ class CalibrationDatabase(DatabaseManager):
                 # append to storage
                 outfilenames.append(outfilename)
             # return outfilenames
-            if return_time:
-                return outfilenames, list(filetimes)
-            else:
-                return outfilenames
+            return outfilenames, list(filetimes), list(master)
 
     def remove_entries(self, condition):
         # set function

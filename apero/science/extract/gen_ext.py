@@ -153,13 +153,12 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
             # get fiber to use for ORDERPFILE (i.e. AB,A,B --> AB  and C-->C)
             usefiber = pconst.FIBER_LOC_TYPES(fiber)
             # get the order profile filename
-            fout = gen_calib.load_calib_file(params, key, header,
-                                             filename=filename,
-                                             userinputkey='ORDERPFILE',
-                                             database=calibdbm, fiber=usefiber,
-                                             return_filename=True,
-                                             return_time=True)
-            filename, orderptime = fout
+            cfile = gen_calib.CalibFile()
+            cfile.load_calib_file(params, key, header, filename=filename,
+                                  userinputkey='ORDERPFILE', database=calibdbm,
+                                  fiber=usefiber, return_filename=True)
+            # get properties from calibration file
+            filename, orderptime = cfile.filename, cfile.mjdmid
             # load order profile
             orderp, orderhdr = drs_fits.readfits(params, filename, getdata=True,
                                                  gethdr=True)
@@ -331,8 +330,12 @@ def get_thermal(params, header, fiber, kind, filename=None,
     ckwargs = dict(key=key, userinputkey='THERMALFILE', filename=filename,
                    inheader=header, database=calibdbm, fiber=fiber,
                    return_time=True)
-    tout = gen_calib.load_calib_file(params, **ckwargs)
-    thermal, thdr, thermal_file, thermaltime = tout
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, **ckwargs)
+    # get properties from calibration file
+    thermal = cfile.data
+    thermal_file = cfile.filename
+    thermaltime = cfile.mjdmid
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-016-00027', args=[thermal_file]))
     # return the master image
@@ -671,11 +674,13 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
         eprops['LEAK_HIGH_PERCENTILE_USED'] = 'No leak'
         eprops['LEAK_BAD_RATIO_OFFSET_USED'] = 'No leak'
         eprops['LEAK_CORRECTED'] = False
+        eprops['LEAKM_FILE'] = 'No leak'
+        eprops['LEAKM_TIME'] = 'No leak'
         # set sources
         keys = ['LEAK_2D_EXTRACT_FILES_USED', 'LEAK_EXTRACT_FILE_USED',
                 'LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
                 'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
-                'LEAK_BAD_RATIO_OFFSET_USED']
+                'LEAK_BAD_RATIO_OFFSET_USED', 'LEAKM_FILE', 'LEAKM_TIME']
         eprops.set_sources(keys, func_name)
         # add updated e2ds
         eprops['UNCORR_E2DS'] = uncorr_e2ds
@@ -709,7 +714,6 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     return eprops
 
 
-# TODO: Check function with Etienne before use
 def correct_ext_dark_fp(params, image, header, fiber, database=None, **kwargs):
     # set the function name
     func_name = __NAME__ + '.correct_ext_dark_fp()'
@@ -736,8 +740,9 @@ def correct_ext_dark_fp(params, image, header, fiber, database=None, **kwargs):
     image2 = np.array(image)
     # ----------------------------------------------------------------------
     # get leak master for file
-    _, leakmaster = get_leak_master(params, header, fiber,
-                                    'LEAKM_E2DS', database=database)
+    lmout = get_leak_master(params, header, fiber, 'LEAKM_E2DS',
+                            database=database)
+    leakfile, leakmaster, leaktime = lmout
     # ----------------------------------------------------------------------
     # store the ratio of observe to master reference
     ref_ratio_arr = np.zeros(nbo)
@@ -823,11 +828,13 @@ def correct_ext_dark_fp(params, image, header, fiber, database=None, **kwargs):
     props['LEAK_LOW_PERCENTILE_USED'] = low_percentile
     props['LEAK_HIGH_PERCENTILE_USED'] = high_percentile
     props['LEAK_BAD_RATIO_OFFSET_USED'] = bad_ratio
+    props['LEAKM_FILE'] = leakfile
+    props['LEAKM_TIME'] = leaktime
     # set sources
     keys = ['LEAK_2D_EXTRACT_FILES_USED', 'LEAK_EXTRACT_FILE_USED',
             'LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
             'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
-            'LEAK_BAD_RATIO_OFFSET_USED']
+            'LEAK_BAD_RATIO_OFFSET_USED', 'LEAKM_FILE', 'LEAKM_TIME']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return properties
@@ -1076,12 +1083,18 @@ def get_leak_master(params, header, fiber, kind, filename=None,
     # load calib file
     ckwargs = dict(key=key, inheader=header, filename=filename, fiber=fiber,
                    userinputkey='LEAKFILE', database=calibdbm)
-    leak, _, leak_file = gen_calib.load_calib_file(params, **ckwargs)
+
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, **ckwargs)
+    # get properties from calibration file
+    leak = cfile.data
+    leak_file = cfile.filename
+    leak_time = cfile.mjdmid
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-016-00028', args=[leak_file]))
     # return the master image
-    return leak_file, leak
+    return leak_file, leak, leak_time
 
 
 def master_dark_fp_cube(params, recipe, extractdict):
@@ -1542,26 +1555,37 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # add the calibration files use
     e2dsfile = gen_calib.add_calibs_to_header(e2dsfile, props)
     # ----------------------------------------------------------------------
-    # add the other calibration files used
+    # add the order profile used
     e2dsfile.add_hkey('KW_CDBORDP', value=lprops['ORDERPFILE'])
     e2dsfile.add_hkey('KW_CDTORDP', value=lprops['ORDERPTIME'])
+    # add the localisation file used
     e2dsfile.add_hkey('KW_CDBLOCO', value=lprops['LOCOFILE'])
     e2dsfile.add_hkey('KW_CDTLOCO', value=lprops['LOCOTIME'])
+    # add the shape local file used
     e2dsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
     e2dsfile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
+    # add the shape dx file used
     e2dsfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
     e2dsfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
+    # add the shape dy file used
     e2dsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
     e2dsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
+    # add the flat file used
     e2dsfile.add_hkey('KW_CDBFLAT', value=fbprops['FLATFILE'])
     e2dsfile.add_hkey('KW_CDTFLAT', value=fbprops['FLATTIME'])
+    # add the blaze file used
     e2dsfile.add_hkey('KW_CDBBLAZE', value=fbprops['BLAZEFILE'])
     e2dsfile.add_hkey('KW_CDTBLAZE', value=fbprops['BLAZETIME'])
+    # add the thermal file used
     if 'THERMALFILE' in eprops:
         e2dsfile.add_hkey('KW_CDBTHERMAL', value=eprops['THERMALFILE'])
         e2dsfile.add_hkey('KW_CDTTHERMAL', value=eprops['THERMALTIME'])
+    # add the wave file used
     e2dsfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
     e2dsfile.add_hkey('KW_CDTWAVE', value=wprops['WAVETIME'])
+    # add the leak master calibration file used
+    e2dsfile.add_hkey('KW_CDBLEAKM', value=eprops['LEAKM_FILE'])
+    e2dsfile.add_hkey('KW_CDTLEAKM', value=eprops['LEAKM_TIME'])
     # additional calibration keys
     if 'FIBERTYPE' in eprops:
         e2dsfile.add_hkey('KW_C_FTYPE', value=eprops['FIBERTYPE'])

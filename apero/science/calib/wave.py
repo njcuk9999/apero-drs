@@ -24,6 +24,7 @@ from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_database
+from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_data
@@ -34,6 +35,7 @@ from apero.science.calib import gen_calib
 from apero.science.calib import flat_blaze
 from apero.science import extract
 from apero.science import velocity
+
 
 # =============================================================================
 # Define variables
@@ -115,8 +117,9 @@ def get_masterwave_filename(params: ParamDict, fiber: str,
         key = out_wave.get_dbkey()
         # ---------------------------------------------------------------------
         # load master key
-        filename = calibdbm.get_calib_file(key, no_times=True, nentries=1,
-                                           required=False, fiber=usefiber)
+        fout = calibdbm.get_calib_file(key, no_times=True, nentries=1,
+                                       required=False, fiber=usefiber)
+        filename, _, _ = fout
         # stop loop if we have found our master file
         if filename is not None:
             break
@@ -182,16 +185,18 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
         # ---------------------------------------------------------------------
         lkwargs = dict(userinputkey='WAVEFILE', database=calibdbm, key=key,
                        inheader=header, filename=inwavefile, fiber=usefiber,
-                       return_filename=True, required=False, return_source=True)
+                       return_filename=True, required=False)
         # load wave fp file
-        fout = gen_calib.load_calib_file(params, **lkwargs)
+        cfile = gen_calib.CalibFile()
+        cfile.load_calib_file(params, **lkwargs)
         # get filename and source from outputs
-        inwavefile, source = fout
-        if isinstance(source, str):
+        inwavefile = cfile.filename
+        source = cfile.source
+        if not drs_text.null_text(source, ['None']):
             source += '[night]'
         # ---------------------------------------------------------------------
         # if inwavefile is still None
-        if inwavefile is None:
+        if not cfile.found:
             # get master path
             inwavefile, out_wave = get_masterwave_filename(params,
                                                            fiber=usefiber,
@@ -535,14 +540,15 @@ def get_cavity_file(params: ParamDict, header: HeaderType = None,
     # load filename from inputs/calibDB
     # ---------------------------------------------------------------------
     lkwargs = dict(userinputkey='CAVITYFILE', database=calibdbm, key=cavity_key,
-                   inheader=header, return_source=True,
-                   required=True)
+                   inheader=header, required=True)
     # load wave fp file
-    cout = gen_calib.load_calib_file(params, **lkwargs)
-    if cout is None:
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, **lkwargs)
+    # deal with no cavity file
+    if not cfile.found:
         return None
     else:
-        cimage, cheader, cfilename, csource = cout
+        cimage = cfile.data
     # ---------------------------------------------------------------------
     # return cavity image
     return np.array(cimage)
@@ -621,9 +627,12 @@ def get_wavelines(params: ParamDict, fiber: str,
     # ------------------------------------------------------------------------
     lkwargs = dict(database=calibdbm, fiber=usefiber, return_filename=True,
                    inheader=header)
-
-    hclinefile = gen_calib.load_calib_file(params, key_hc, filename=hclinefile,
-                                           userinputkey='HCLINEFILE', **lkwargs)
+    # load the hc lines calib file
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key_hc, filename=hclinefile,
+                          userinputkey='HCLINEFILE', **lkwargs)
+    # get properties from calibration file
+    hclinefile = cfile.filename
     # construct new infile instance
     hclfile = out_wave_fp.newcopy(filename=hclinefile, params=params,
                                   fiber=usefiber)
@@ -636,8 +645,12 @@ def get_wavelines(params: ParamDict, fiber: str,
     # ------------------------------------------------------------------------
     # get fp lines
     # ------------------------------------------------------------------------
-    fplinefile = gen_calib.load_calib_file(params, key_fp, filename=fplinefile,
-                                           userinputkey='FPLINEFILE', **lkwargs)
+    # load the fp lines calib file
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key_fp, filename=fplinefile,
+                          userinputkey='FPLINEFILE', **lkwargs)
+    # get properties from calibration file
+    fplinefile = cfile.filename
     # construct new infile instance
     fplfile = out_wave_fp.newcopy(filename=fplinefile, params=params,
                                   fiber=usefiber)

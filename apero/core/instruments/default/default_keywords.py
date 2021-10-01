@@ -40,6 +40,7 @@ __all__ = [  # input keys
     'KW_CDBSHAPEDX', 'KW_CDTSHAPEDX', 'KW_CDBSHAPEDY', 'KW_CDTSHAPEDY',
     'KW_CDBFLAT', 'KW_CDTFLAT', 'KW_CDBBLAZE', 'KW_CDTBLAZE',
     'KW_CDBWAVE', 'KW_CDTWAVE', 'KW_CDBTHERMAL', 'KW_CDTTHERMAL',
+    'KW_CDBLEAKM', 'KW_CDTLEAKM',
     # preprocess keys
     'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PPMSTR_NSIG', 'KW_PPMSTR_FILE',
     'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE', 'KW_PPC_NBAD_BOTH',
@@ -667,7 +668,12 @@ KW_CDBTHERMAL = Keyword('KW_CDBTHERMAL', key='NULL', dtype=str, source=__NAME__,
 # time of thermal calibration file used
 KW_CDTTHERMAL = Keyword('KW_CDTTHERMAL', key='NULL', dtype=str, source=__NAME__,
                         description='time of thermal cal file used in extract')
-
+# leak master calibration file used
+KW_CDBLEAKM = Keyword('KW_CDBLEAKM', key='NULL', dtype=str, source=__NAME__,
+                        description='leak master calibration file used')
+# time of leak master calibration file used
+KW_CDTLEAKM = Keyword('KW_CDTLEAKM', key='NULL', dtype=str, source=__NAME__,
+                        description='time of leak master calibration file used')
 
 # additional properties of calibration
 
