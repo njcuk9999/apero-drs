@@ -556,6 +556,12 @@ KW_CDBLEAKM.set(key='CDBLEAKM', comment='The cal LEAKM file used')
 # time of the leak master calibration file used
 KW_CDTLEAKM = KW_CDTLEAKM.copy(__NAME__)
 KW_CDTLEAKM.set(key='CDTLEAKM', comment='MJDMID of cal LEAK file used')
+# the ref leak master calibration file used
+KW_CDBLEAKR = KW_CDBLEAKR.copy(__NAME__)
+KW_CDBLEAKR.set(key='CDBLEAKR', comment='The cal ref LEAKM file used')
+# time of the ref leak master calibration file used
+KW_CDTLEAKR = KW_CDTLEAKR.copy(__NAME__)
+KW_CDTLEAKR.set(key='CDTLEAKR', comment='MJDMID of cal ref LEAK file used')
 
 # additional properties of calibration
 KW_C_FLIP = KW_C_FLIP.copy(__NAME__)
@@ -1104,6 +1110,24 @@ KW_WAVE_ECHELLE.set(key='WAVEEC{0:02d}', comment='Echelle order numbers',
 KW_INIT_WAVE = KW_INIT_WAVE.copy(__NAME__)
 KW_INIT_WAVE.set(key='WAVEINIT', comment='Initial wavelength solution used',
                  parent=None, group='wave')
+
+# define the cavity width polynomial key
+KW_CAVITY_WIDTH = KW_CAVITY_WIDTH.copy(__NAME__)
+KW_CAVITY_WIDTH.set(key='WCAV{0:03d}', comment='Wave cavity polynomial',
+                    parent=None, group='wave')
+
+# define the cavity fit degree used
+KW_CAVITY_DEG = KW_CAVITY_DEG.copy(__NAME__)
+KW_CAVITY_DEG.set(key='WCAV_DEG', comment='Wave cavity fit degree',
+                  parent=None, group='wave')
+
+# define the mean hc velocity calculated
+KW_WAVE_MEANHC = KW_WAVE_MEANHC.copy(__NAME__)
+KW_WAVE_MEANHC.set(key='WAVEMHC', comment='Wave mean hc velocity')
+
+# define the err on mean hc velocity calculated
+KW_WAVE_EMEANHC = KW_WAVE_EMEANHC.copy(__NAME__)
+KW_WAVE_EMEANHC.set(key='WAVEEMHC', comment='Wave error mean hc velocity')
 
 # -----------------------------------------------------------------------------
 # the fit degree for wave solution used
