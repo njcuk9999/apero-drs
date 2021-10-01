@@ -210,7 +210,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         # return messages
         return return_string
 
-    def format_help(self) -> str:
+    def format_help(self, extended: bool = False) -> str:
         """
         Generates the string used for the help menu (used from the --help or -h
         argument)
@@ -250,13 +250,17 @@ class DrsArgumentParser(argparse.ArgumentParser):
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # deal with special arguments
         hmsgs += ['', '', textentry('40-002-00004'), '']
-        # loop around each special argument
-        for arg in self.recipe.special_args:
-            # add to help mesasge list
-            hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
+        if extended:
+            # loop around each special argument
+            for arg in self.recipe.special_args:
+                # add to help mesasge list
+                hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # add help
         helpstr = textentry('40-002-00005')
         hmsgs.append(_help_format(['--help', '-h'], helpstr))
+        # add extended help
+        helpstr2 = 'Extended help menu (with all advanced arguments)'
+        hmsgs.append(_help_format(['--xhelp'], helpstr2))
         # add epilog
         if self.recipe.epilog is not None:
             hmsgs += ['', self.recipe.params['DRS_HEADER']]
@@ -1437,6 +1441,103 @@ class _ActivateDebug(DrsAction):
         setattr(namespace, self.dest, value)
 
 
+class _ExtendedHelp(DrsAction):
+    def __init__(self, *args, **kwargs):
+        """
+        Construct the Activate Debug action (for activating debug mode)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_ActivateDebug'
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func('__init__', __NAME__, self.class_name)
+        # define recipe and parser as None (overwritten in __call__)
+        self.recipe = None
+        self.parser = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # set parser to None (Is this a problem?)
+        self.parser = None
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_ActivateDebug[DrsAction]'
+
+    def _print_extended_help(self):
+        """
+        Set the debug mode based on value
+
+        :param values: Any value to ttest whether it is a debug mode
+        :return: int, the debug mode found
+        :raises: drs_exceptions.LogExit
+        """
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func('_print_extended_help', __NAME__,
+                         self.class_name)
+        # construct error message
+        if self.recipe.params['DRS_COLOURED_LOG']:
+            green, end = COLOR.GREEN1, COLOR.ENDC
+            yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
+        else:
+            green, end = COLOR.ENDC, COLOR.ENDC
+            yellow, blue = COLOR.ENDC, COLOR.ENDC
+        # print extended help
+        print(blue + self.parser.format_help(extended=True) + end)
+
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _ActivateDebug() - sets the debug mode
+        to value else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func('__call__', __NAME__, self.class_name)
+        # check for help
+        # noinspection PyProtectedMember
+        parser._has_special()
+        # get drs parameters
+        self.recipe = parser.recipe
+        self.parser = parser
+        # display listing
+        self._print_extended_help()
+        # quit after call
+        parser.exit()
+
+
 class _ForceInputDir(DrsAction):
     def __init__(self, *args, **kwargs):
         """
@@ -2459,6 +2560,99 @@ class _IsMaster(DrsAction):
             value = list(map(self._set_master, values))
         else:
             value = self._set_master(values)
+        # make sure value is not a list
+        if isinstance(value, list):
+            value = value[0]
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
+class _SetCrunFile(DrsAction):
+    def __init__(self, *args, **kwargs):
+        """
+        Construct the Is Master action (for setting a recipe to a master
+        via an argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_SetCrunFile'
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func('__init__', __NAME__, self.class_name)
+        # set recipe as None (overwritten in __call__)
+        self.recipe = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_SetCrunFile[DrsAction]'
+
+    def _set_crun_file(self, value: Any) -> Union[str, None]:
+        """
+        Sets the config run file value to string representation of value
+
+        :param value: Any, value to turn to string representation of value
+
+        :return: str: the valid directory (raises exception if invalid)
+        """
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func('_set_crun_file', __NAME__, self.class_name)
+        # deal with unset value
+        if value is None:
+            return None
+        else:
+            return str(value)
+
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _IsMaster() - sets the _IsMaster.dest
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
+        # get drs parameters
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func('__call__',
+                         __NAME__, self.class_name)
+        # display listing
+        if type(values) == list:
+            value = list(map(self._set_crun_file, values))
+        else:
+            value = self._set_crun_file(values)
         # make sure value is not a list
         if isinstance(value, list):
             value = value[0]
@@ -3891,6 +4085,34 @@ def make_debug(params: ParamDict) -> OrderedDict:
     return props
 
 
+def extended_help(params: ParamDict) -> OrderedDict:
+    """
+    Make a custom special argument: Set the quiet mode
+
+    :param params: ParamDict, Parameter Dictionary of constants
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name (cannot break here --> no access to params)
+    _ = display_func('set_quiet', __NAME__)
+    # set up an output storage dictionary
+    props = OrderedDict()
+    # set the argument name
+    props['name'] = '--xhelp'
+    # set any argument alternative names
+    props['altnames'] = []
+    # set the argument action function
+    props['action'] = _ExtendedHelp
+    # set the number of argument to expect
+    props['nargs'] = 0
+    # set the help message
+    # TODO: add to language database
+    props['help'] = 'Extended help menu (with all advanced arguments)'
+    # return the argument dictionary
+    return props
+
+
 def set_inputdir(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Sets input directory
@@ -4118,7 +4340,6 @@ def set_shortname(params: ParamDict) -> OrderedDict:
     return props
 
 
-
 def set_ipython_return(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Set the use of ipython return after
@@ -4174,6 +4395,34 @@ def is_master(params: ParamDict) -> OrderedDict:
     return props
 
 
+def set_crun_file(params: ParamDict) -> OrderedDict:
+    """
+    Make a custom special argument: Set the quiet mode
+
+    :param params: ParamDict, Parameter Dictionary of constants
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name (cannot break here --> no access to params)
+    _ = display_func('set_crun_file', __NAME__)
+    # set up an output storage dictionary
+    props = OrderedDict()
+    # set the argument name
+    props['name'] = '--crunfile'
+    # set any argument alternative names
+    props['altnames'] = ['--c']
+    # set the argument action function
+    props['action'] = _SetCrunFile
+    # set the number of argument to expect
+    props['nargs'] = 1
+    # set the help message
+    # TODO: move to language database
+    props['help'] = 'Set a run file to override default arguments'
+    # return the argument dictionary
+    return props
+
+
 def set_quiet(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Set the quiet mode
@@ -4199,6 +4448,7 @@ def set_quiet(params: ParamDict) -> OrderedDict:
     props['help'] = textentry('QUIET_HELP')
     # return the argument dictionary
     return props
+
 
 # =============================================================================
 # End of code

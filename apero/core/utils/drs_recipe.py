@@ -1246,6 +1246,9 @@ class DrsRecipe(object):
         _ = display_func('_make_specials', __NAME__,
                          self.class_name)
         # ---------------------------------------------------------------------
+        # extended help
+        self._make_special(drs_argument.extended_help, skip=True)
+        # ---------------------------------------------------------------------
         # make debug functionality
         self._make_special(drs_argument.make_debug, skip=False)
         # ---------------------------------------------------------------------
@@ -1279,12 +1282,16 @@ class DrsRecipe(object):
         # set is_master functionality
         self._make_special(drs_argument.is_master, skip=False)
         # ---------------------------------------------------------------------
+        # set the config run file
+        self._make_special(drs_argument.set_crun_file, skip=False)
+        # ---------------------------------------------------------------------
         # set quiet functionality
         self._make_special(drs_argument.set_quiet, skip=False)
         # ---------------------------------------------------------------------
         # force input and output directories
         self._make_special(drs_argument.set_inputdir, skip=False)
         self._make_special(drs_argument.set_outputdir, skip=False)
+
 
     def _make_special(self, function: Any, skip: bool = False):
         """
