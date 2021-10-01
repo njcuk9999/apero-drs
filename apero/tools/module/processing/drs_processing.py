@@ -72,26 +72,6 @@ textentry = lang.textentry
 pcheck = constants.PCheck(wlog=WLOG)
 # get database
 IndexDatabase = drs_database.IndexDatabase
-# Run keys
-RUN_KEYS = dict()
-RUN_KEYS['RUN_NAME'] = 'Run Unknown'
-RUN_KEYS['SEND_EMAIL'] = False
-RUN_KEYS['EMAIL_ADDRESS'] = None
-RUN_KEYS['OBS_DIR'] = None
-RUN_KEYS['EXCLUDE_OBS_DIRS'] = None
-RUN_KEYS['INCLUDE_OBS_DIRS'] = None
-RUN_KEYS['PI_NAMES'] = None
-RUN_KEYS['MASTER_OBS_DIR'] = None
-RUN_KEYS['UPDATE_OBJ_DATABASE'] = False
-RUN_KEYS['CORES'] = 1
-RUN_KEYS['STOP_AT_EXCEPTION'] = False
-RUN_KEYS['TEST_RUN'] = False
-RUN_KEYS['TRIGGER_RUN'] = False
-RUN_KEYS['USE_ODO_REJECTLIST'] = True
-RUN_KEYS['RECAL_TEMPLATES'] = False
-RUN_KEYS['ENGINEERING'] = False
-RUN_KEYS['TELLURIC_TARGETS'] = None
-RUN_KEYS['SCIENCE_TARGETS'] = None
 # storage for reporting removed engineering directories
 REMOVE_ENG_DIRS = []
 # get special list from recipes
@@ -101,7 +81,7 @@ OBJNAMECOL = 'KW_OBJNAME'
 # list of arguments to remove from skip check
 SKIP_REMOVE_ARGS = ['--skip', '--program', '--prog', '--debug',
                     '--verbose' '--plot', '--shortname', '--short'
-                    '--rkind', '--recipe_kind', '--parallel']
+                    '--rkind', '--recipe_kind', '--parallel', '--crunfile']
 # keep a global copy of plt
 PLT_MOD = None
 
@@ -449,213 +429,6 @@ def combine_outlist(name, goutlist, outlist):
     return goutlist
 
 
-def read_runfile(params, runfile, **kwargs):
-    func_name = __NAME__ + '.read_runfile()'
-    # ----------------------------------------------------------------------
-    # get properties from params
-    run_key = pcheck(params, 'REPROCESS_RUN_KEY', 'run_key', kwargs, func_name)
-    run_dir = pcheck(params, 'DRS_DATA_RUN', 'run_dir', kwargs, func_name)
-    # ----------------------------------------------------------------------
-    # check if run file exists
-    if not os.path.exists(runfile):
-        # construct run file
-        runfile = os.path.join(run_dir, runfile)
-        # check that it exists
-        if not os.path.exists(runfile):
-            WLOG(params, 'error', textentry('09-503-00002', args=[runfile]))
-    # ----------------------------------------------------------------------
-    # try to fix file
-    fix_run_file(runfile)
-    # ----------------------------------------------------------------------
-    # now try to load run file
-    try:
-        keys, values = np.genfromtxt(runfile, delimiter='=', comments='#',
-                                     unpack=True, dtype=str)
-    except Exception as e:
-        # log error
-        eargs = [runfile, type(e), e, func_name]
-        WLOG(params, 'error', textentry('09-503-00003', args=eargs))
-        keys, values = [], []
-    # ----------------------------------------------------------------------
-    # table storage
-    runtable = OrderedDict()
-    keytable = OrderedDict()
-    # ----------------------------------------------------------------------
-    # unlock params
-    params.unlock()
-    # ----------------------------------------------------------------------
-    # sort out keys into id keys and values for params
-    for it in range(len(keys)):
-        # get this iterations values
-        key = keys[it].upper().strip()
-        value = values[it].strip()
-        # find the id keys
-        if key.startswith(run_key):
-            # attempt to read id string
-            try:
-                runid = int(key.replace(run_key, ''))
-            except Exception as e:
-                eargs = [key, value, run_key, type(e), e, func_name]
-                WLOG(params, 'error', textentry('09-503-00004', args=eargs))
-                runid = None
-            # check if we already have this column
-            if runid in runtable:
-                wargs = [runid, keytable[runid], runtable[runid],
-                         keys[it], values[it][:40] + '...']
-                WLOG(params, 'warning', textentry('10-503-00001', args=wargs))
-            # add to table
-            runtable[runid] = value
-            keytable[runid] = key
-        # else add to parameter dictionary
-        else:
-            # deal with special strings
-            if value.upper() == 'TRUE':
-                value = True
-            elif value.upper() == 'FALSE':
-                value = False
-            elif value.upper() == 'NONE':
-                value = None
-            # log if we are overwriting value
-            if key in params:
-                # only log if value was not null before
-                if not drs_text.null_text(params[key], ['', 'None']):
-                    wargs = [key, params[key], value]
-                    wmsg = textentry('10-503-00002', args=wargs)
-                    WLOG(params, 'warning', wmsg)
-            # add to params
-            params[key] = value
-            params.set_source(key, func_name)
-    # ----------------------------------------------------------------------
-    # push default values (in case we don't have values in run file
-    for key in RUN_KEYS:
-        if key not in params:
-            # print that we are using default settings (not a warning)
-            wargs = [key, RUN_KEYS[key]]
-            WLOG(params, '', textentry('10-503-00005', args=wargs))
-            # push keys to params
-            params[key] = RUN_KEYS[key]
-            params.set_source(key, __NAME__ + '.RUN_KEYS')
-
-    # ----------------------------------------------------------------------
-    # deal with arguments from command line (params['INPUTS'])
-    # ----------------------------------------------------------------------
-    # set observation directory
-    if 'OBS_DIR' in params['INPUTS']:
-        # get night name
-        _obs_dir = params['INPUTS']['OBS_DIR']
-        # deal with none nulls
-        if not drs_text.null_text(_obs_dir, ['None', '', 'All']):
-            params['OBS_DIR'] = _obs_dir
-    # make sure observation directory is str or None
-    if drs_text.null_text(params['OBS_DIR'], ['None', '', 'All']):
-        params['OBS_DIR'] = None
-    # ----------------------------------------------------------------------
-    # exclude observation directories
-    if 'EXCLUDE_OBS_DIRS' in params['INPUTS']:
-        # get night name blacklist
-        _ex_obs_dirs = params['INPUTS']['EXCLUDE_OBS_DIRS']
-        # deal with non-null value
-        if not drs_text.null_text(_ex_obs_dirs, ['None', '', 'All']):
-            exclude = params['INPUTS'].listp('EXCLUDE_OBS_DIRS')
-            params['EXCLUDE_OBS_DIRS'] = exclude
-    # ----------------------------------------------------------------------
-    # include observation directories
-    if 'INCLUDE_OBS_DIRS' in params['INPUTS']:
-        # get night name whitelist
-        _inc_obs_dirs = params['INPUTS']['INCLUDE_OBS_DIRS']
-        # deal with non-null value
-        if not drs_text.null_text(_inc_obs_dirs, ['None', '', 'All']):
-            include = params['INPUTS'].listp('INCLUDE_OBS_DIRS')
-            params['INCLUDE_OBS_DIRS'] = include
-    # ----------------------------------------------------------------------
-    # add pi name list
-    if 'PI_NAMES' in params['INPUTS']:
-        # get list of pi names
-        _pinames = params['INPUTS']['PI_NAMES']
-        # deal with non-null value
-        if not drs_text.null_text(_pinames, ['None', '', 'All']):
-            params['PI_NAMES'] = params['INPUTS'].listp('PI_NAMES')
-    # ----------------------------------------------------------------------
-    # deal with having a file specified
-    params['FILENAME'] = None
-    if 'FILENAME' in params['INPUTS']:
-        # get filename arg
-        _filename = params['INPUTS']['FILENAME']
-        # deal with non-null value
-        if not drs_text.null_text(_filename, ['None', '', 'All']):
-            # if it is a string treat it as a list of string (just a string
-            #   works too)
-            if isinstance(params['INPUTS']['FILENAME'], str):
-                params['FILENAME'] = params['INPUTS'].listp('FILENAME')
-            # should really get here but set it to the _filename value anyway
-            else:
-                params['FILENAME'] = _filename
-    # ----------------------------------------------------------------------
-    # deal with getting test run from user input
-    if 'TEST' in params['INPUTS']:
-        # get the value of test
-        _test = params['INPUTS']['TEST']
-        # deal with non null value
-        if not drs_text.null_text(_test, ['', 'None']):
-            # test for true value
-            params['TEST_RUN'] = drs_text.true_text(_test)
-    # ----------------------------------------------------------------------
-    # deal with getting trigger run from user input
-    if 'TRIGGER' in params['INPUTS']:
-        # get the value of trigger
-        _trigger = params['INPUTS']['TRIGGER']
-        # deal with non null values
-        if not drs_text.null_text(_trigger, ['', 'None']):
-            # test for true value
-            params['TRIGGER_RUN'] = drs_text.true_text(_trigger)
-
-        # if trigger if defined night name must be as well
-        if params['OBS_DIR'] is None and params['TRIGGER_RUN']:
-            # cause an error if obs_dir not set
-            WLOG(params, 'error', textentry('09-503-00010'))
-    # ----------------------------------------------------------------------
-    # switch for setting science targets (from user inputs)
-    if 'SCIENCE_TARGETS' in params['INPUTS']:
-        # get the value of science_targets
-        _science_targets = params['INPUTS']['SCIENCE_TARGETS']
-        # deal with non null value
-        if not drs_text.null_text(_science_targets, ['', 'None']):
-            # remove leading/trailing speechmarks
-            _science_targets = drs_text.cull_leading_trailing(_science_targets,
-                                                              ['"', "'"])
-            # set science targets
-            params['SCIENCE_TARGETS'] = _science_targets
-    # ----------------------------------------------------------------------
-    # switch for setting telluric target list (from user inputs)
-    if 'TELLURIC_TARGETS' in params['INPUTS']:
-        # get the value of telluric targets
-        _tellu_targets = params['INPUTS']['TELLURIC_TARGETS']
-        # deal with non null value
-        if not drs_text.null_text(_tellu_targets, ['', 'None']):
-            # remove leading/trailing speechmarks
-            _tellu_targets = drs_text.cull_leading_trailing(_tellu_targets,
-                                                            ['"', "'"])
-            # set telluric targets
-            params['TELLURIC_TARGETS'] = _tellu_targets
-    # ----------------------------------------------------------------------
-    # switch whether we update object database (from user inputs)
-    if 'UPDATE_OBJDB' in params['INPUTS']:
-        # get the value of update obj database from inputs
-        _update_objdb = params['INPUTS']['UPDATE_OBJDB']
-        # deal with non null values only
-        if not drs_text.null_text(_update_objdb, ['', 'None']):
-            # get True/False
-            _update_objdb = drs_text.true_text(_update_objdb)
-            # set value
-            params['UPDATE_OBJ_DATABASE'] = _update_objdb
-    # ----------------------------------------------------------------------
-    # relock params
-    params.lock()
-    # ----------------------------------------------------------------------
-    # return parameter dictionary and runtable
-    return params, runtable
-
-
 def generate_skip_table(params):
     """
     Uses the log.fits files to generate a list of previous run recipes
@@ -776,26 +549,6 @@ def skip_remove_non_required_args(runstrings, runobj):
         new_runstrings.append(' '.join(args[mask]))
     # return new runstrings
     return np.unique(new_runstrings)
-
-
-def fix_run_file(runfile):
-    # only do this if we have a runfile
-    if os.path.exists(runfile):
-        # read the lines
-        with open(runfile, 'r') as f:
-            lines = f.readlines()
-
-        # convert to character array
-        lines = np.char.array(lines)
-        # replace all equal signs
-        lines = lines.replace('=', '@' * 50, 1)
-        lines = lines.replace('=', ' ')
-        lines = lines.replace('@' * 50, '=')
-        # write to file
-        with open(runfile, 'w') as f:
-            # write lines to file
-            for line in lines:
-                f.write(line + '\n')
 
 
 def processing_email(params: ParamDict, position: str, name: str,
@@ -1345,14 +1098,22 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
         # deal with skip
         skip, reason = skip_run_object(params, run_object, skiptable,
                                        skip_storage)
+        # ---------------------------------------------------------------------
         # deal with passing debug
         if params['DRS_DEBUG'] > 0:
             dargs = [run_object.runstring, params['DRS_DEBUG']]
             run_object.runstring = '{0} --debug={1}'.format(*dargs)
+        # ---------------------------------------------------------------------
         # deal with passing master argument
         if input_recipe.master:
             dargs = [run_object.runstring, 'True']
             run_object.runstring = '{0} --master={1}'.format(*dargs)
+        # ---------------------------------------------------------------------
+        # add run file to argument
+        if not drs_text.null_text(params['INPUTS']['RUNFILE']):
+            dargs = [run_object.runstring, params['INPUTS']['RUNFILE']]
+            run_object.runstring = '{0} --crunfile={1}'.format(*dargs)
+        # ---------------------------------------------------------------------
         # update run object (runstring should only be updated once here
         #    otherwise we add arguments multiple times)
         run_object.update(update_runstring=True)
