@@ -96,13 +96,14 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
+    # get pconst
+    pconst = constants.pload()
     # get files
     infiles = params['INPUTS']['FILES'][1]
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
         rawfiles.append(infile.basename)
-
     # deal with input data from function
     if 'files' in params['DATA_DICT']:
         # get list of in files from data dict (passed in)
@@ -164,7 +165,9 @@ def __main__(recipe, params):
         # get header from file instance
         header = infile.get_header()
         # get the fiber types needed
-        fibertypes = drs_image.get_fiber_types(params)
+        sci_fibers, ref_fiber = pconst.FIBER_KINDS()
+        # must do reference fiber first (for leak correction)
+        fibertypes = [ref_fiber] + sci_fibers
         # ------------------------------------------------------------------
         # Load shape components
         # ------------------------------------------------------------------
@@ -200,7 +203,7 @@ def __main__(recipe, params):
         else:
             bprops = None
 
-        # storage for return
+        # storage for return / reference fiber usage
         e2dsoutputs = dict()
         # ------------------------------------------------------------------
         # Fiber loop
@@ -214,6 +217,15 @@ def __main__(recipe, params):
             # log process: processing fiber
             wargs = [fiber, ', '.join(fibertypes)]
             WLOG(params, 'info', textentry('40-016-00014', args=wargs))
+            # ------------------------------------------------------------------
+            # get reference fiber data
+            ref_key = 'E2DS_{0}'.format(ref_fiber)
+            # if we have reference data populate ref_e2ds
+            if ref_key in e2dsoutputs:
+                ref_e2ds = e2dsoutputs[ref_key].data
+            # otherwise this is set to None - and we cannot use it
+            else:
+                ref_e2ds = None
             # --------------------------------------------------------------
             # load wavelength solution for this fiber
             if not quicklook:
@@ -269,7 +281,7 @@ def __main__(recipe, params):
                                        lcoeffs2, nframes, props, fiber=fiber)
             # leak correction
             eprops = extract.manage_leak_correction(params, recipe, eprops,
-                                                    infile, fiber)
+                                                    infile, fiber, ref_e2ds)
             # flat correction for e2dsff
             eprops = extract.flat_blaze_correction(eprops, fbprops['FLAT'],
                                                    fbprops['BLAZE'])
