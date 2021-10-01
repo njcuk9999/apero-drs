@@ -452,6 +452,11 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     wprops['WAVEMAP'] = wavemap
     wprops['WAVEINST'] = wavefile.completecopy(wavefile)
     wprops['WAVETIME'] = wavetime
+    # add the cavity keys
+    wprops['CAVITY'] = wavefile.get_hkey('KW_CAVITY_WIDTH', required=False)
+    wprops['CAVITY_DEG'] = wavefile.get_hkey('KW_CAVITY_DEG', required=False)
+    wprops['MEAN_HC_VEL'] = wavefile.get_hkey('KW_WAVE_MEANHC', required=False)
+    wprops['ERR_HC_VEL'] = wavefile.get_hkey('KW_WAVE_EMEANHC', required=False)
     # add the wfp keys
     wfp_keys = ['WFP_FILE', 'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
                 'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
@@ -465,7 +470,8 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
             wprops[wfp_keys[wfpi]] = wfp_values[wfpi]
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'NBO', 'DEG',
-            'COEFFS', 'WAVETIME', 'WAVEINST', 'NBPIX'] + wfp_keys
+            'COEFFS', 'WAVETIME', 'WAVEINST', 'NBPIX', 'CAVITY',
+            'CAVITY_DEG', 'MEAN_HC_VEL', 'ERR_HC_VEL'] + wfp_keys
     wprops.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # get the echelle order numbers
@@ -1529,6 +1535,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # copy the cavity fit
     cavity0 = np.array(cavity)
+    # store these values for use later
+    mean_hc_vel, err_hc_vel = np.nan, np.nan
     # set the mean2error to infinite
     mean2error = np.inf
     # set up diff_hc and hc sigma
@@ -1703,8 +1711,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     wprops['NBPIX'] = nbxpix
     wprops['CAVITY'] = cavity
     wprops['CAVITY_DEG'] = cavity_fit_degree
+    wprops['MEAN_HC_VEL'] = mean_hc_vel
+    wprops['ERR_HC_VEL'] = err_hc_vel
     # set source
-    keys = ['WAVEMAP', 'NBO', 'DEG', 'COEFFS', 'NBPIX', 'CAVITY', 'CAVITY_DEG']
+    keys = ['WAVEMAP', 'NBO', 'DEG', 'COEFFS', 'NBPIX', 'CAVITY', 'CAVITY_DEG',
+            'MEAN_HC_VEL', 'ERR_HC_VEL']
     wprops.set_sources(keys, func_name)
     # return wave properties
     return wprops
@@ -2421,7 +2432,7 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
                  map_lower_ords[mapkey], map_high_ords[mapkey],
                  map_lower_pix[mapkey], map_high_pix[mapkey],
                  type(e), str(e)]
-        WLOG(params, 'warning', textentry('10-016-00024', wargs))
+        WLOG(params, 'warning', textentry('10-017-00013', wargs))
     except RuntimeError as e:
         # set values to NaN
         fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
@@ -2431,7 +2442,7 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
                  map_lower_ords[mapkey], map_high_ords[mapkey],
                  map_lower_pix[mapkey], map_high_pix[mapkey],
                  type(e), str(e)]
-        WLOG(params, 'warning', textentry('10-016-00024', wargs))
+        WLOG(params, 'warning', textentry('10-017-00013', wargs))
     # return outputs
     fout = [fwhm, amp, expo, res_eff, fluxfit2, all_dv, all_flux,
             all_wave, all_order]
@@ -2501,7 +2512,7 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
                  map_lower_ords[mapkey], map_high_ords[mapkey],
                  map_lower_pix[mapkey], map_high_pix[mapkey],
                  type(e), str(e)]
-        WLOG(params, 'warning', textentry('10-016-00024', wargs))
+        WLOG(params, 'warning', textentry('10-017-00013', wargs))
     except RuntimeError as e:
         # set values to NaN
         fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
@@ -2511,7 +2522,7 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
                  map_lower_ords[mapkey], map_high_ords[mapkey],
                  map_lower_pix[mapkey], map_high_pix[mapkey],
                  type(e), str(e)]
-        WLOG(params, 'warning', textentry('10-016-00024', wargs))
+        WLOG(params, 'warning', textentry('10-017-00013', wargs))
     # return outputs
     fout = [fwhm, amp, 2.0, res_eff, fluxfit2, all_dv, all_flux,
             all_wave, all_order]
@@ -2838,6 +2849,7 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     sargs = [recipe.name, params['DRS_VERSION']]
     wprops['WAVESOURCE'] = '{0} [{1}]'.format(*sargs)
     wprops['WFP_FILE'] = wavefile.basename
+
     # ------------------------------------------------------------------
     # Make wave coefficient table
     # ------------------------------------------------------------------
@@ -2954,6 +2966,12 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
     infile.add_hkey('KW_WFP_TARG_RV', value=props['WFP_TARG_RV'])
     infile.add_hkey('KW_WFP_WIDTH', value=props['WFP_WIDTH'])
     infile.add_hkey('KW_WFP_STEP', value=props['WFP_STEP'])
+    # add some other wave keys
+    infile.add_hkey_1d('KW_CAVITY_WIDTH', values=props['CAVITY'],
+                         dim1name='coeffs')
+    infile.add_hkey('KW_CAVITY_DEG', value=props['CAVITY_DEG'])
+    infile.add_hkey('KW_WAVE_MEANHC', value=props['MEAN_HC_VEL'])
+    infile.add_hkey('KW_WAVE_EMEANHC', value=props['ERR_HC_VEL'])
     # return infile
     return infile
 
