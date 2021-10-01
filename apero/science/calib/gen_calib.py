@@ -10,7 +10,8 @@ Created on 2019-06-27 at 10:48
 from astropy.io import fits
 from astropy.table import Table
 import numpy as np
-from typing import List, Union, Tuple
+import os
+from typing import List, Optional, Tuple, Union
 import warnings
 
 from apero import lang
@@ -54,6 +55,228 @@ textentry = lang.textentry
 pcheck = constants.PCheck(wlog=WLOG)
 # get display func
 display_func = drs_log.display_func
+
+
+# =============================================================================
+# Define classes
+# =============================================================================
+class CalibFile:
+    key: Optional[str]
+    fiber: Optional[str]
+    filename: Optional[Union[List[str], str]]
+    mjdmid: Union[List[float], float]
+    data: Optional[Union[List[np.ndarray], np.ndarray]]
+    header: Optional[Union[drs_fits.Header, drs_fits.Header]]
+    source: str
+    mode: str
+    length: int
+    found: bool
+    master: Union[List[bool], bool]
+    user: bool
+
+    def __init__(self):
+        """
+        Construct the calibration file class (mostly just storage and loading
+        of the calibration file)
+        """
+        # the calibration database key
+        self.key = None
+        # the fiber associated to this calibration
+        self.fiber = None
+        # the filename of this calibration
+        self.filename = None
+        # the modified julian date
+        self.mjdmid = np.nan
+        # the data (if loaded)
+        self.data = None
+        # the header (if loaded)
+        self.header = None
+        # the source of the calibration (user input or calibration database)
+        self.source = 'None'
+        # the select mode of the calibration (None, closest, newer, older)
+        self.mode = 'None'
+        # the length of the number of files (length = 1 is a single file)
+        self.length = 0
+        # whether calibration was found
+        self.found = False
+        # whether calibration is a master
+        self.master = False
+        # whether the calibration is from a user input override
+        self.user = False
+
+    def load_calib_file(self, params: ParamDict, key: str,
+                        inheader: Union[drs_fits.Header, None] = None,
+                        filename: Union[str, None] = None,
+                        get_image: bool = True, get_header: bool = False,
+                        fiber: Union[str, None] = None,
+                        userinputkey: Union[str, None] = None,
+                        database: Union[CalibDatabase, None] = None,
+                        return_filename: bool = False,
+                        mode: Union[str, None] = None,
+                        n_entries: Union[int, str] = 1,
+                        required: bool = True, ext: Union[int, None] = None,
+                        fmt: str = 'fits',
+                        kind: str = 'image'):
+        """
+        Load one or many calibration files
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param key: str, the key from the calibration database to select a
+                    specific calibration with
+        :param inheader: fits.Header - the header file (required to match by
+                         time) if None does not match by a 'zero point' time)
+
+        :param filename: str or None, if set overrides filename from database
+        :param get_image: bool, if True loads image (or images if nentries > 1),
+                          if False image is None (or list of Nones if
+                          nentries > 1)
+        :param get_header: bool, if True loads header (or headers if
+                           nentries > 1)
+                           if False header is None (or list of Nones if
+                           nentries > 1)
+        :param fiber: str or None, if set must be the fiber type - all returned
+                      calibrations are filtered by this fiber type
+        :param userinputkey: str or None, if set checks params['INPUTS'] for
+                             this key and sets filename from here - note
+                             params['INPUTS'] is where command line arguments
+                             are stored
+        :param database: drs calibration database instance - set this if
+                         calibration database already loaded (if unset will
+                         reload the database)
+        :param return_filename: bool, if True returns the filename only
+        :param mode: str or None, the time mode for getting from sql
+                     ('closest'/'newer'/'older')
+        :param n_entries: int or str, maximum number of calibration files to
+                          return for all entries use '*'
+        :param required: bool, whether we require an entry - will raise
+                         exception if required=True and no entries found
+        :param ext: int, valid extension (unset by default) when kind='image'
+        :param fmt: str, astropy.table.Table valid format (when kind='table')
+        :param kind: str, either 'image' for fits image or 'table' for table
+
+        :return: None, updates the attributes of the class
+
+        """
+        # set function
+        _ = display_func('load_calib_file', __NAME__)
+        # ---------------------------------------------------------------------
+        # set properties from load file
+        self.key = key
+        self.fiber = fiber
+        self.mode = mode
+        # ---------------------------------------------------------------------
+        # first try to get file from inputs
+        fout = drs_data.get_file_from_inputs(params, 'calibration',
+                                             userinputkey,
+                                             filename,
+                                             return_source=True)
+        # set filename and source from inputs
+        self.filename, self.source = fout[0], str(fout[1])
+        # ---------------------------------------------------------------------
+        # if filename is defined this is the filename we should return
+        if self.filename is not None:
+            # set filename, filetime and source
+            self.filename = str(self.filename)
+            # deal with non found file
+            if os.path.exists(self.filename):
+                self.found = True
+                # we need to get file time
+                hdr = drs_fits.read_header(params, self.filename)
+                if params['KW_MID_OBS_TIME'] in hdr:
+                    self.mjdmid = float(hdr[params['KW_MID_OBS_TIME']])
+                    self.user = True
+            else:
+                # warn user that input file was not valid
+                # TODO: add to language database
+                wmsg = ('Warning user file: {0} not found. '
+                        'Using calibration database')
+                WLOG(params, 'warning', wmsg.format(self.filename))
+                self.filename = None
+            # we are finished - return here
+            if return_filename:
+                return
+        # -------------------------------------------------------------------------
+        # else we have to load from database
+        if self.filename is None:
+            # check if we have the database
+            if database is None:
+                # construct a new database instance
+                database = CalibDatabase(params)
+                # load the database
+                database.load_db()
+            # load filename from database
+            fout = database.get_calib_file(key, header=inheader, timemode=mode,
+                                           nentries=n_entries,
+                                           required=required, fiber=fiber)
+            # deal with outputs of get calib file
+            self.filename, self.mjdmid, self.master = fout
+            self.source = 'calibDB'
+        # ---------------------------------------------------------------------
+        # deal with filename being a path --> string (unless None)
+        if self.filename is not None:
+            if isinstance(self.filename, list):
+                self.filename = list(map(lambda x: str(x), self.filename))
+            else:
+                self.filename = str(self.filename)
+            # set found
+            self.found = True
+        # ---------------------------------------------------------------------
+        # deal with checking delta time between this observation (header) and
+        #  the calibration
+        if inheader is not None:
+            if isinstance(self.filename, list):
+                for it in range(len(filename)):
+                    calib_delta_time_check(params, inheader, self.mjdmid[it],
+                                           self.filename[it], self.master[it],
+                                           self.user)
+            else:
+                calib_delta_time_check(params, inheader, self.mjdmid,
+                                       self.filename, self.master, self.user)
+        # ---------------------------------------------------------------------
+        # if we are just returning filename return here
+        if return_filename:
+            return
+        # deal with not return filename
+        elif self.filename is None and not required:
+            return
+        # ---------------------------------------------------------------------
+        # need to deal with a list of files
+        if isinstance(self.filename, list):
+            # storage for images and headers
+            images, headers = [], []
+            # loop around files
+            for file_it in self.filename:
+                # now read the calibration file
+                image, header = drs_data.read_db_file(params, file_it,
+                                                      get_image, get_header,
+                                                      kind, fmt, ext)
+                # append to storage
+                images.append(image)
+                headers.append(headers)
+            # make sure filetimes is a list
+            if isinstance(self.mjdmid, float):
+                self.mjdmid = [self.mjdmid]
+            else:
+                self.mjdmid = list(self.mjdmid)
+            # set data and header
+            self.data = images
+            self.header = headers
+            self.length = len(images)
+            # return
+            return
+        else:
+            # now read the calibration file
+            image, header = drs_data.read_db_file(params, self.filename,
+                                                  get_image, get_header,
+                                                  kind, fmt, ext)
+            # make sure file time is float (MJDMID)
+            self.mjdmid = float(self.mjdmid)
+            # set data and header
+            self.data = image
+            self.header = header
+            self.length = 1
+            # return
+            return
 
 
 # =============================================================================
@@ -260,12 +483,12 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     if correctdark:
         # load dark file
-        darkfile, darktime = load_calib_file(params, darkkey, header,
-                                             filename=darkfile,
-                                             userinputkey='DARKFILE',
-                                             database=calibdbm,
-                                             return_filename=True,
-                                             return_time=True)
+        cfile = CalibFile()
+        cfile.load_calib_file(params, darkkey, header, filename=darkfile,
+                              userinputkey='DARKFILE', database=calibdbm,
+                              return_filename=True)
+        # get properties from calibration file
+        darkfile, darktime = cfile.filename, cfile.mjdmid
         # correct image
         image1 = dark.correction(params, image, nfiles=nfiles,
                                  darkfile=darkfile)
@@ -306,11 +529,13 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # image 3 is corrected for bad pixels
     # ----------------------------------------------------------------------
     if correctbad:
-        # load the pad pix file
-        badout = load_calib_file(params, badkey, header, filename=badpixfile,
-                                 userinputkey='BADPIXFILE', database=calibdbm,
-                                 return_filename=True, return_time=True)
-        badpfile, badtime = badout
+        # load the bad pix file
+        cfile = CalibFile()
+        cfile.load_calib_file(params, badkey, header, filename=badpixfile,
+                              userinputkey='BADPIXFILE', database=calibdbm,
+                              return_filename=True)
+        # get properties from calibration file
+        badpfile, badtime = cfile.filename, cfile.mjdmid
         # correct the image
         image3 = badpix.correction(params, image2, badpixfile=badpfile)
     else:
@@ -321,10 +546,11 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     if correctback:
         # load background file from inputs/calibdb
-        bkout = load_calib_file(params, backkey, header, filename=backfile,
-                                userinputkey='BACKFILE', return_filename=True,
-                                return_time=True, database=calibdbm)
-        bkgrdfile, backtime = bkout
+        cfile = CalibFile()
+        cfile.load_calib_file(params, backkey, header, filename=backfile,
+                              userinputkey='BACKFILE', return_filename=True,
+                              database=calibdbm)
+        bkgrdfile, backtime = cfile.filename, cfile.mjdmid
         # correct image for background
         image4 = background.correction(recipe, params, infile, image3,
                                        bkgrdfile=bkgrdfile)
@@ -347,10 +573,12 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
         # log progress
         WLOG(params, '', textentry('40-014-00012'))
         # load the bad pix file
-        badout = load_calib_file(params, badkey, header, filename=badpixfile,
-                                 userinputkey='BADPIXFILE', database=calibdbm,
-                                 return_filename=True, return_time=True)
-        badpfile, badtime = badout
+        cfile = CalibFile()
+        cfile.load_calib_file(params, badkey, header, filename=badpixfile,
+                              userinputkey='BADPIXFILE', database=calibdbm,
+                              return_filename=True)
+        # get properties from calibration file
+        badpfile, badtime = cfile.filename, cfile.mjdmid
         # get bad pixel mask
         badpixmask = badpix.correction(params, None, badpixfile=badpfile,
                                        return_map=True)
@@ -454,7 +682,8 @@ def add_calibs_to_header(outfile: DrsFitsFile,
 
 
 def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
-                           calib_time: float, calib_filename: str):
+                           calib_time: float, calib_filename: str,
+                           master: bool, user: bool):
     """
     Check that the delta time between calibration and observation is
     valid (as defined by MAX_CALIB_DTIME)
@@ -463,6 +692,10 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
     :param inheader: Header, the header associated with the observation
     :param calib_time: float, the time of the calibration in MJD
     :param calib_filename: str, the name of the calibration file (for logging)
+    :param master: bool, if True this is a master recipe and should not be
+                   checked
+    :param user: bool, if True this calib came from the user and should not
+                 be checked
 
     :raises: DrsLogException if DO_CALIB_DTIME_CHECK = True and delta time is
              greater than MAX_CALIB_DTIME
@@ -478,6 +711,10 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
     timekey = params['KW_MID_OBS_TIME'][0]
     # extra skip if we are in quick look mode
     quicklook = params['EXT_QUICK_LOOK']
+    # ---------------------------------------------------------------------
+    # deal with master and user flags
+    if master or user:
+        return
     # ---------------------------------------------------------------------
     # deal with check (if check is False we do not check)
     if not do_check:
@@ -505,263 +742,6 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
         WLOG(params, 'error', textentry('09-002-00004', args=eargs))
     else:
         WLOG(params, '', textentry('40-005-10003', args=[max_dtime]))
-
-
-# for: load_calib_file
-LoadCalibFileReturn = Union[None,    # null return
-                            # -------------------------------------------------
-                            # if return filename
-                            str,
-                            # if return_filename + return_time + return_source
-                            Tuple[str, float, str],
-                            # if return_filename + return_time
-                            Tuple[str, float],
-                            # if return_filename + return_source
-                            Tuple[str, str],
-                            # -------------------------------------------------
-                            # default
-                            Tuple[Union[np.ndarray, Table, None],
-                                  Union[drs_fits.Header, None],
-                                  str],
-                            # if return_time + return_source
-                            Tuple[Union[np.ndarray, Table, None],
-                                  Union[drs_fits.Header, None],
-                                  str,
-                                  float,
-                                  str],
-                            # if return_time
-                            Tuple[Union[np.ndarray, Table, None],
-                                  Union[drs_fits.Header, None],
-                                  str,
-                                  float],
-                            # if return_source
-                            Tuple[Union[np.ndarray, Table, None],
-                                  Union[drs_fits.Header, None],
-                                  str,
-                                  str],
-                            # -------------------------------------------------
-                            # if nentries > 1
-                            List[str],
-                            # if nentries > 1 + return time + return source
-                            Tuple[List[str], float, str],
-                            # if nentries > 1 + return time
-                            Tuple[List[str], float],
-                            # if nentries > 1 + return source
-                            Tuple[List[str], str],
-                            # -------------------------------------------------
-                            # if nentries > 1 + default
-                            Tuple[List[Union[np.ndarray, Table, None]],
-                                  List[Union[drs_fits.Header, None]],
-                                  List[str]],
-                            # if nentries > 1 + return time + return source
-                            Tuple[List[Union[np.ndarray, Table, None]],
-                                  List[Union[drs_fits.Header, None]],
-                                  Union[List[str], str, None],
-                                  Union[List[float], float],
-                                  str],
-                            # if nentries > 1 + return time
-                            Tuple[List[Union[np.ndarray, Table, None]],
-                                  List[Union[drs_fits.Header, None]],
-                                  Union[List[str], str, None],
-                                  Union[List[float], float]],
-                            # if nentries > 1 + return source
-                            Tuple[List[Union[np.ndarray, None]],
-                                  List[Union[drs_fits.Header, None]],
-                                  Union[List[str], str, None],
-                                  str]
-                            ]
-
-
-def load_calib_file(params: ParamDict, key: str,
-                    inheader: Union[drs_fits.Header, None] = None,
-                    filename: Union[str, None] = None,
-                    get_image: bool = True, get_header: bool = False,
-                    fiber: Union[str, None] = None,
-                    userinputkey: Union[str, None] = None,
-                    database: Union[CalibDatabase, None] = None,
-                    return_filename: bool = False,
-                    return_time: bool = False,
-                    return_source: bool = False,
-                    mode: Union[str, None] = None,
-                    n_entries: Union[int, str] = 1,
-                    required: bool = True, ext: Union[int, None] = None,
-                    fmt: str = 'fits',
-                    kind: str = 'image') -> LoadCalibFileReturn:
-    """
-    Load one or many calibration files
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param key: str, the key from the calibration database to select a
-                specific calibration with
-    :param inheader: fits.Header - the header file (required to match by time)
-                     if None does not match by a 'zero point' time)
-
-    :param filename: str or None, if set overrides filename from database
-    :param get_image: bool, if True loads image (or images if nentries > 1),
-                      if False image is None (or list of Nones if nentries > 1)
-    :param get_header: bool, if True loads header (or headers if nentries > 1)
-                       if False header is None (or list of Nones if
-                       nentries > 1)
-    :param fiber: str or None, if set must be the fiber type - all returned
-                  calibrations are filtered by this fiber type
-    :param userinputkey: str or None, if set checks params['INPUTS'] for this
-                         key and sets filename from here - note params['INPUTS']
-                         is where command line arguments are stored
-    :param database: drs calibration database instance - set this if calibration
-                     database already loaded (if unset will reload the database)
-    :param return_filename: bool, if True returns the filename only
-    :param return_time: bool, if True return the time of the calib file(s) used
-    :param return_source: bool, if True returns the source of the calib file(s)
-    :param mode: str or None, the time mode for getting from sql
-                 ('closest'/'newer'/'older')
-    :param n_entries: int or str, maximum number of calibration files to return
-                      for all entries use '*'
-    :param required: bool, whether we require an entry - will raise exception
-                     if required=True and no entries found
-    :param ext: int, valid extension (unset by default) when kind='image'
-    :param fmt: str, astropy.table.Table valid format (when kind='table')
-    :param kind: str, either 'image' for fits image or 'table' for table
-
-    :return:
-             if get_image, also returns image/table or list of images/tables
-             if get_header, also returns header or list of headers
-             if return_filename, returns filename or list of filenames
-             if return_source, also returns source
-
-             i.e. possible returns are:
-                 filename
-                 filename, source
-                 image, header, filename
-                 image, header, filename, source
-                 List[filename]
-                 List[filename], source
-                 List[image], List[header], List[filename]
-                 List[image], List[header], List[filename], source
-
-    """
-    # set function
-    _ = display_func('load_calib_file', __NAME__)
-    # ------------------------------------------------------------------------
-    # first try to get file from inputs
-    fout = drs_data.get_file_from_inputs(params, 'calibration', userinputkey,
-                                         filename, return_source=return_source)
-    if return_source:
-        filename, filetime, source = fout[0], np.nan, fout[1]
-    else:
-        filename, filetime, source = fout, np.nan, 'None'
-    # ------------------------------------------------------------------------
-    # if filename is defined this is the filename we should return
-    if filename is not None and return_filename:
-        # we need to get file time
-        hdr = drs_fits.read_header(params, filename)
-        if params['KW_MID_OBS_TIME'] in hdr:
-            filetime = float(hdr[params['KW_MID_OBS_TIME']])
-        else:
-            filetime = np.nan
-        # deal with returning
-        if return_time and return_source:
-            return str(filename), filetime, source
-        elif return_time:
-            return str(filename), filetime
-        elif return_source:
-            return str(filename), source
-        else:
-            return str(filename)
-    # -------------------------------------------------------------------------
-    # else we have to load from database
-    if filename is None:
-        # check if we have the database
-        if database is None:
-            # construct a new database instance
-            database = CalibDatabase(params)
-            # load the database
-            database.load_db()
-        # load filename from database
-        fout = database.get_calib_file(key, header=inheader, timemode=mode,
-                                       nentries=n_entries, required=required,
-                                       fiber=fiber, return_time=True)
-        # deal with outputs of get calib file
-        if fout is None:
-            filename, filetime = None, np.nan
-            source = 'None'
-        else:
-            filename, filetime = fout
-            source = 'calibDB'
-    # -------------------------------------------------------------------------
-    # deal with filename being a path --> string (unless None)
-    if filename is not None:
-        if isinstance(filename, list):
-            filename = list(map(lambda strfile: str(strfile), filename))
-        else:
-            filename = str(filename)
-    # -------------------------------------------------------------------------
-    # deal with checking delta time between this observation (header) and
-    #  the calibration
-    if inheader is not None:
-        if isinstance(filename, list):
-            for it in range(len(filename)):
-                calib_delta_time_check(params, inheader, filetime[it],
-                                       filename[it])
-        else:
-            calib_delta_time_check(params, inheader, filetime, filename)
-    # -------------------------------------------------------------------------
-    # if we are just returning filename return here
-    if return_filename:
-        # we return filename and/or filetime and/or source
-        if return_time and return_source:
-            return filename, filetime, source
-        elif return_time:
-            return filename, filetime
-        elif return_source:
-            return filename, source
-        else:
-            return filename
-    # deal with not return filename
-    elif filename is None and not required:
-        return None
-    # -------------------------------------------------------------------------
-    # need to deal with a list of files
-    if isinstance(filename, list):
-        # storage for images and headres
-        images, headers = [], []
-        # loop around files
-        for file_it in filename:
-            # now read the calibration file
-            image, header = drs_data.read_db_file(params, file_it, get_image,
-                                                  get_header, kind, fmt, ext)
-            # append to storage
-            images.append(image)
-            headers.append(headers)
-        # make sure filetimes is a list
-        if isinstance(filetime, float):
-            filetimes = [filetime]
-        else:
-            filetimes = list(filetime)
-        # return all
-        if return_time and return_source:
-            return images, headers, filename, filetimes, source
-        elif return_time:
-            return images, headers, filename, filetimes
-        elif return_source:
-            return images, headers, filename, source
-        else:
-            return images, headers, filename
-
-    else:
-        # now read the calibration file
-        image, header = drs_data.read_db_file(params, filename, get_image,
-                                              get_header, kind, fmt, ext)
-        # make sure file time is float (MJDMID)
-        filetime = float(filetime)
-        # return all
-        if return_time and return_source:
-            return image, header, filename, filetime, source
-        elif return_time:
-            return image, header, filename, filetime
-        elif return_source:
-            return image, header, filename, source
-        else:
-            return image, header, filename
 
 
 def check_fp(params: ParamDict, image: np.ndarray, filename: str,

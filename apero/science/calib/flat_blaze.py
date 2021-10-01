@@ -190,10 +190,14 @@ def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
         calibdbm = database
     # ------------------------------------------------------------------------
     # load flat file
-    cout = gen_calib.load_calib_file(params, key, header, filename=filename,
-                                     userinputkey='FLATFILE', database=calibdbm,
-                                     fiber=fiber, return_time=True)
-    flat, _, flat_file, flat_time = cout
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key, header, filename=filename,
+                          userinputkey='FLATFILE', database=calibdbm,
+                          fiber=fiber)
+    # get properties from calibration file
+    flat = cfile.data
+    flat_file = cfile.filename
+    flat_time = cfile.mjdmid
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     if not quiet:
@@ -216,10 +220,14 @@ def get_blaze(params, header, fiber, filename=None, database=None):
         calibdbm = database
     # ------------------------------------------------------------------------
     # load blaze file
-    cout = gen_calib.load_calib_file(params, key, header, filename=filename,
-                                     userinputkey='BLAZEFILE', database=calibdbm,
-                                     fiber=fiber, return_time=True)
-    blaze, _, blaze_file, blaze_time = cout
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key, header, filename=filename,
+                          userinputkey='BLAZEFILE', database=calibdbm,
+                          fiber=fiber)
+    # get properties from calibration file
+    blaze = cfile.data
+    blaze_file = cfile.filename
+    blaze_time = cfile.mjdmid
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-015-00007', args=[blaze_file]))

@@ -1293,9 +1293,10 @@ def get_master_fp(params, header, filename=None, database=None):
         calibdbm = database
     # ----------------------------------------------------------------------
     # load master fp
-    cout = gen_calib.load_calib_file(params, key, header, filename=filename,
-                                     userinputkey='FPMASTER', database=calibdbm)
-    fpmaster, _, fpmaster_file = cout
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key, header, filename=filename,
+                          userinputkey='FPMASTER', database=calibdbm)
+    fpmaster, fpmaster_file = cfile.data, cfile.filename
     # ----------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-014-00030', args=[fpmaster_file]))
@@ -1349,12 +1350,15 @@ def get_shapex(params, header, filename=None, database=None):
         calibdbm = database
     # ----------------------------------------------------------------------
     # load shape x file
-    cout = gen_calib.load_calib_file(params, key, header, filename=filename,
-                                     userinputkey='SHAPEX', database=calibdbm,
-                                     return_time=True)
-    dxmap, fhdr, shapex_file, shapetime = cout
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key, header, filename=filename,
+                          userinputkey='SHAPEX', database=calibdbm)
+    # get properties from calibration file
+    dxmap = cfile.data
+    shapex_file = cfile.filename
+    shapetime = cfile.mjdmid
     # ------------------------------------------------------------------------
-    # log which fpmaster file we are using
+    # log which shape x file we are using
     WLOG(params, '', textentry('40-014-00031', args=[shapex_file]))
     # return the master image
     return shapex_file, shapetime, dxmap
@@ -1373,13 +1377,16 @@ def get_shapey(params, header, filename=None, database=None):
     else:
         calibdbm = database
     # ----------------------------------------------------------------------
-    # load shape x file
-    cout = gen_calib.load_calib_file(params, key, header, filename=filename,
-                                     userinputkey='SHAPEY', database=calibdbm,
-                                     return_time=True)
-    dymap, fhdr, shapey_file, shapetime = cout
+    # load shape y file
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key, header, filename=filename,
+                          userinputkey='SHAPEY', database=calibdbm)
+    # get properties from calibration file
+    dymap = cfile.data
+    shapey_file = cfile.filename
+    shapetime = cfile.mjdmid
     # ------------------------------------------------------------------------
-    # log which fpmaster file we are using
+    # log which shape y file we are using
     WLOG(params, '', textentry('40-014-00032', args=[shapey_file]))
     # return the master image
     return shapey_file, shapetime, dymap
@@ -1400,10 +1407,13 @@ def get_shapelocal(params, header, filename=None, database=None):
         calibdbm = database
     # ----------------------------------------------------------------------
     # load shape x file
-    cout = gen_calib.load_calib_file(params, key, header, filename=filename,
-                                     userinputkey='SHAPEL', database=calibdbm,
-                                     return_time=True)
-    shapel, fhdr, shapel_file, shapetime = cout
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key, header, filename=filename,
+                          userinputkey='SHAPEL', database=calibdbm)
+    # get properties from calibration file
+    shapel = cfile.data
+    shapel_file = cfile.filename
+    shapetime = cfile.mjdmid
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', textentry('40-014-00039', args=[shapel_file]))

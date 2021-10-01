@@ -689,8 +689,9 @@ def get_pp_mask(params: ParamDict, header: drs_fits.Header,
         calibdbm = database
     # ---------------------------------------------------------------------
     # load filename from database
-    ppfile = calibdbm.get_calib_file(ppkey, header=header, nentries=1,
-                                     required=True)
+    fout = calibdbm.get_calib_file(ppkey, header=header, nentries=1,
+                                        required=True)
+    ppfile, _, _ = fout
     # ---------------------------------------------------------------------
     # read file
     mask = drs_fits.readfits(params, ppfile)
