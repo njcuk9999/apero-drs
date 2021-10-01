@@ -1084,7 +1084,7 @@ however you may want to link this database to another apero profile","","","INST
 "{0} = end 1; {1} = end 2; {2} = wavelength 1; {3} = wavelength 2","Missing line estimate miss-match: {0} v {1} from {2:.5f} v {3:.5f}","","prints that there was a missing line estimate miss-match","10-017-00010","WARNING"
 "None","Cavity length fit files missing. Cavity length fits will be created.","","prints that cavity length files do not exist so we have to create them","10-017-00011","WARNING"
 "{0} = multi-wave plot start order; {1} = final order; {2} = plot name","First order for multi-wave plot '{0}' is higher than final wavelength solution order '{1}'. Plotting of {2} skipped.","","means that the multi wave plot start order is larger than final order","10-017-00012","WARNING"
-"{0} = order bin; {1} = spatial bin; {2}=first order; {3} = last order; {4} = first pixel; {5} = last pixel;  {6} = Error type; {7} = Error message","Fit failed for order bin {0} spectral bin {1} \n\t Order {2} to {3}, pixel {4} to {5} \n\t Error {6}: {7}","","Means that the gen res curve fit failed for this bin","10-017-00013","WARNING"
+"{0} = order bin; {1} = spatial bin; {2}=first order; {3} = last order; {4} = first pixel; {5} = last pixel;  {6} = Error type; {7} = Error message","Fit failed for order bin {0} spectral bin {1}  (Nvalid = {2}) \n\t Order {3} to {4}, pixel {5} to {6} \n\t Error {7}: {8}","","Means that the gen res curve fit failed for this bin","10-017-00013","WARNING"
 "","","","","",""
 "","","","","",""
 "","","","","",""
