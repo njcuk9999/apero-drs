@@ -2,6 +2,63 @@ Changelog
 =========
 
 
+0.7.169 (2021-10-01)
+--------------------
+- `Apero.science.extract.gen_ext.py` - leak correction must use reference
+  fiber (not science fiber) to scale `dark_fp` correction. [Neil Cook]
+- `Apero.science.wave.py` - add `cavity/cavity_deg/mean_hc_vel/err_hc_vel`
+  to wprops (for storing in header) [Neil Cook]
+- `Apero.recipes.*.apero_extract_*.py` - reference fiber must be extracted
+  first - other fibers use reference fiber for leak correction. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- `Apero.core.instruments.*.default_keywords.py` - add
+  `CDBLEAKR/CDTLEAKR/WCAV/WCAV_DEG/WAVEMHC/WAVEEMHC` keywords. [Neil Cook]
+- Add leakm (file and time) to the extracted header, do not filter
+  master calibrations by dtime for calib vs obs (now use a CalibFile
+  class to store info) [Neil Cook]
+- Allow run file as an argument to recipes - (--crunfile) this allows
+  passing a constant in the run.ini file when running
+  `apero_processing.py`. [Neil Cook]
+
+
+0.7.168 (2021-09-29)
+--------------------
+- `Apero.core.core.drs_database.py` - deal with unix time better (may be
+  np.nan oir none time --> in these cases set to None) [njcuk9999]
+- `Apero.recipes.*.apero_extract_nirps*.py` - correct position in foout
+  3-->2 2-->1 1-->0. [njcuk9999]
+- `Apero.science.extract.gen_ext.py` - `LEAK_CORRECTED` is in eprops not
+  params. [njcuk9999]
+
+
+0.7.167 (2021-09-28)
+--------------------
+- Merge branch 'v0.7.156-working' into v0.7.166-working. [njcuk9999]
+- `Apero.core.instruments.default.grouping.py` - deal with no table
+  (rawtab = None) [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.156-working' into
+  v0.7.156-working. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.156-working' into
+  v0.7.156-working. [njcuk9999]
+- Merge branch 'v0.7.156-working' of github.com:njcuk9999/apero-drs into
+  v0.7.156-working. [njcuk9999]
+- Merge branch 'v0.7.156-working' of github.com:njcuk9999/apero-drs into
+  v0.7.156-working. [njcuk9999]
+- `Apero.core.core.drs_database.py` - deal with removed files from the
+  database. [njcuk9999]
+- Update language database. [Neil Cook]
+- Fix error in post products not adding wave files. [Neil Cook]
+- Update language database. [Neil Cook]
+- Update update notes. [Neil Cook]
+- `Apero.core.instruments.*.default_constants.py` - add
+  `DO_CALIB_DTIME_CHECK` and `MAX_CALIB_DTIME`. [Neil Cook]
+- `Apero.science.calib.gen_calib.py` - add in a way to check delta time on
+  observation vs calibration. [Neil Cook]
+- Remove log.txt. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
 0.7.166 (2021-09-27)
 --------------------
 - Update language database. [Neil Cook]
