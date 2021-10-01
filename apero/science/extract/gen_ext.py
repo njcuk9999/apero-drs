@@ -14,7 +14,7 @@ from astropy.table import Table
 from astropy import constants as cc
 from astropy import units as uu
 import os
-from typing import Union
+from typing import Optional, Union
 import warnings
 
 from apero.base import base
@@ -328,8 +328,7 @@ def get_thermal(params, header, fiber, kind, filename=None,
     # ------------------------------------------------------------------------
     # load calib file
     ckwargs = dict(key=key, userinputkey='THERMALFILE', filename=filename,
-                   inheader=header, database=calibdbm, fiber=fiber,
-                   return_time=True)
+                   inheader=header, database=calibdbm, fiber=fiber)
     cfile = gen_calib.CalibFile()
     cfile.load_calib_file(params, **ckwargs)
     # get properties from calibration file
@@ -609,7 +608,8 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
 
 def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
                            eprops: ParamDict, infile: DrsFitsFile,
-                           fiber: str) -> ParamDict:
+                           fiber: str,
+                           ref_e2ds: Optional[np.ndarray] = None) -> ParamDict:
     """
     Manage the leak correction
 
@@ -617,6 +617,7 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     :param recipe: DrsRecipe, the recipe instance that called this function
     :param eprops: ParamDict, parameter dictionary of extraction data
     :param infile: DrsFitsFile, the input drs file instance (for header)
+    :param ref_e2ds: np.ndarray, the reference fiber e2ds
     :param fiber: str, the fiber we are correcting (we only correct science
                   fibers)
 
@@ -663,8 +664,12 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     # add to reason
     if cond3:
         reason += 'REFTYPE={0} '.format(ref_type)
+    # deal with no reference image
+    cond4 = ref_e2ds is None
+    if cond4:
+        reason += 'REF_E2DS=None '
     # if any of these conditions are true do not correct for dark_fp
-    if quicklook or cond1 or cond2 or cond3:
+    if quicklook or cond1 or cond2 or cond3 or cond4:
         # add used parametersLEAK_CORRECTED
         eprops['LEAK_2D_EXTRACT_FILES_USED'] = 'No leak'
         eprops['LEAK_EXTRACT_FILE_USED'] = 'No leak'
@@ -676,11 +681,14 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
         eprops['LEAK_CORRECTED'] = False
         eprops['LEAKM_FILE'] = 'No leak'
         eprops['LEAKM_TIME'] = 'No leak'
+        eprops['LEAKM_REFFILE'] = 'No leak'
+        eprops['LEAKM_REFTIME'] = 'No leak'
         # set sources
         keys = ['LEAK_2D_EXTRACT_FILES_USED', 'LEAK_EXTRACT_FILE_USED',
                 'LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
                 'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
-                'LEAK_BAD_RATIO_OFFSET_USED', 'LEAKM_FILE', 'LEAKM_TIME']
+                'LEAK_BAD_RATIO_OFFSET_USED', 'LEAKM_FILE', 'LEAKM_TIME',
+                'LEAKM_REFFILE', 'LEAKM_REFTIME']
         eprops.set_sources(keys, func_name)
         # add updated e2ds
         eprops['UNCORR_E2DS'] = uncorr_e2ds
@@ -694,7 +702,8 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     # print progress
     WLOG(params, 'info', textentry('40-016-00033', args=[fiber, dprtype]))
     # correct for leak
-    e2ds, leakcorr, props = correct_ext_dark_fp(params, e2ds, inheader, fiber,
+    e2ds, leakcorr, props = correct_ext_dark_fp(params, e2ds, ref_e2ds,
+                                                inheader, fiber,
                                                 database=None)
     # add used parameters
     for key in props:
@@ -714,7 +723,8 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     return eprops
 
 
-def correct_ext_dark_fp(params, image, header, fiber, database=None, **kwargs):
+def correct_ext_dark_fp(params, sciimage, refimage, header, fiber,
+                        database=None, **kwargs):
     # set the function name
     func_name = __NAME__ + '.correct_ext_dark_fp()'
     # get properties from parameters
@@ -734,12 +744,21 @@ def correct_ext_dark_fp(params, image, header, fiber, database=None, **kwargs):
     # group bounding percentiles
     bpercents = [low_percentile, high_percentile]
     # get size of reference image
-    nbo, nbpix = image.shape
-    # copy image
-    image1 = np.array(image)
-    image2 = np.array(image)
+    nbo, nbpix = sciimage.shape
+    # copy images
+    refimage = np.array(refimage)
+    sciimage = np.array(sciimage)
     # ----------------------------------------------------------------------
-    # get leak master for file
+    # get this instruments science fibers and reference fiber
+    pconst = constants.pload()
+    # science fibers should be list of strings, reference fiber should be string
+    sci_fibers, ref_fiber = pconst.FIBER_KINDS()
+    # ----------------------------------------------------------------------
+    # get ref leak master for file
+    lmout = get_leak_master(params, header, ref_fiber, 'LEAKM_E2DS',
+                            database=database)
+    rleakfile, rleakmaster, rleaktime = lmout
+    # get leak master for fiber
     lmout = get_leak_master(params, header, fiber, 'LEAKM_E2DS',
                             database=database)
     leakfile, leakmaster, leaktime = lmout
@@ -753,33 +772,33 @@ def correct_ext_dark_fp(params, image, header, fiber, database=None, **kwargs):
     # loop around reference image orders and normalise by percentile
     for order_num in range(nbo):
         # get order values for master
-        master_ref_ord = leakmaster[order_num]
+        master_ref_ord = rleakmaster[order_num]
         # remove the pedestal from the FP to avoid an offset from
         #     thermal background
-        background = np.nanpercentile(image1[order_num], bckgrd_percentile)
-        image1[order_num] = image1[order_num] - background
+        background = np.nanpercentile(refimage[order_num], bckgrd_percentile)
+        refimage[order_num] = refimage[order_num] - background
         # only perform the measurement of the amplitude of the leakage signal
         #  on the lower and upper percentiles. This allows for a small number
         #  of hot/dark pixels along the order. Without this, we end up with
         #  some spurious amplitude values in the frames
         with warnings.catch_warnings(record=True) as _:
             # get percentiles
-            low, high = np.nanpercentile(image1[order_num], bpercents)
+            low, high = np.nanpercentile(refimage[order_num], bpercents)
             lowm, highm = np.nanpercentile(master_ref_ord, bpercents)
             # translate this into a mask
-            mask = image1[order_num] > low
-            mask &= image1[order_num] < high
+            mask = refimage[order_num] > low
+            mask &= refimage[order_num] < high
             mask &= master_ref_ord > lowm
             mask &= master_ref_ord < highm
         # approximate ratio, we know that frames were normalized with their
         #  "norm_percentile" percentile prior to median combining
-        amplitude = np.nanpercentile(image1[order_num], norm_percentile)
+        amplitude = np.nanpercentile(refimage[order_num], norm_percentile)
         approx_ratio = 1 / amplitude
         # save to storage
         approx_ratio_arr[order_num] = float(approx_ratio)
         # much more accurate ratio from a dot product
-        part1 = mp.nansum(master_ref_ord[mask] * image1[order_num][mask])
-        part2 = mp.nansum(image1[order_num][mask] ** 2)
+        part1 = mp.nansum(master_ref_ord[mask] * refimage[order_num][mask])
+        part2 = mp.nansum(refimage[order_num][mask] ** 2)
         ratio = part1 / part2
         # save to storage
         dot_ratio_arr[order_num] = float(ratio)
@@ -810,10 +829,10 @@ def correct_ext_dark_fp(params, image, header, fiber, database=None, **kwargs):
         # scale the leakage for that order to the observed amplitude
         scale = leakmaster[order_num] / ref_ratio_arr[order_num]
         # apply leakage scaling
-        image2[order_num] = image[order_num] - scale
+        sciimage[order_num] = sciimage[order_num] - scale
         # calculate the ratio of the leakage
-        rpart1 = np.nanpercentile(image1[order_num], norm_percentile)
-        rpart2 = mp.nanmedian(image2[order_num])
+        rpart1 = np.nanpercentile(sciimage[order_num], norm_percentile)
+        rpart2 = mp.nanmedian(sciimage[order_num])
         ratio_leak[order_num] = rpart1 / rpart2
 
     # ----------------------------------------------------------------------
@@ -830,15 +849,18 @@ def correct_ext_dark_fp(params, image, header, fiber, database=None, **kwargs):
     props['LEAK_BAD_RATIO_OFFSET_USED'] = bad_ratio
     props['LEAKM_FILE'] = leakfile
     props['LEAKM_TIME'] = leaktime
+    props['LEAKM_REFFILE'] = rleakfile
+    props['LEAKM_REFTIME'] = rleaktime
     # set sources
     keys = ['LEAK_2D_EXTRACT_FILES_USED', 'LEAK_EXTRACT_FILE_USED',
             'LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
             'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
-            'LEAK_BAD_RATIO_OFFSET_USED', 'LEAKM_FILE', 'LEAKM_TIME']
+            'LEAK_BAD_RATIO_OFFSET_USED', 'LEAKM_FILE', 'LEAKM_TIME',
+            'LEAKM_REFFILE', 'LEAKM_REFTIME']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return properties
-    return image2, ratio_leak, props
+    return sciimage, ratio_leak, props
 
 
 def correct_dark_fp(params, extractdict, database=None, **kwargs):
@@ -1586,6 +1608,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # add the leak master calibration file used
     e2dsfile.add_hkey('KW_CDBLEAKM', value=eprops['LEAKM_FILE'])
     e2dsfile.add_hkey('KW_CDTLEAKM', value=eprops['LEAKM_TIME'])
+    e2dsfile.add_hkey('KW_CDBLEAKR', value=eprops['LEAKM_REFFILE'])
+    e2dsfile.add_hkey('KW_CDTLEAKR', value=eprops['LEAKM_REFTIME'])
     # additional calibration keys
     if 'FIBERTYPE' in eprops:
         e2dsfile.add_hkey('KW_C_FTYPE', value=eprops['FIBERTYPE'])
