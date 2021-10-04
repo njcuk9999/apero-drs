@@ -453,8 +453,8 @@ def generate_skip_table(params):
     else:
         exclude_list = params['EXCLUDE_OBS_DIRS']
     # deal with obs_dir set (take precedences over white list)
-    if not drs_text.null_text(params['OBS_DIR'], ['', 'None', 'All']):
-        include_list = [params['OBS_DIR']]
+    if not drs_text.null_text(params['RUN_OBS_DIR'], ['', 'None', 'All']):
+        include_list = [params['RUN_OBS_DIR']]
     # need to remove those that didn't end
     condition = 'ENDED = 1'
     # get runstrings
@@ -1379,9 +1379,9 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         # ------------------------------------------------------------------
         # deal with setting 1 night
         # ------------------------------------------------------------------
-        elif not drs_text.null_text(params['OBS_DIR'], ['', 'All', 'None']):
+        elif not drs_text.null_text(params['RUN_OBS_DIR'], ['', 'All', 'None']):
             # get observation directory
-            obs_dir = params['OBS_DIR']
+            obs_dir = params['RUN_OBS_DIR']
             # mask table by observation directory
             condition += ' AND OBS_DIR="{0}"'.format(obs_dir)
         else:
@@ -1557,7 +1557,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
     # ------------------------------------------------------------------
     # filer out engineering directories
     # ------------------------------------------------------------------
-    if not params['ENGINEERING']:
+    if not params['USE_ENGINEERING']:
         # log that we are checking engineering nights
         WLOG(params, '', textentry('40-503-00035'))
         # get sub condition for engineering nights
