@@ -141,7 +141,7 @@ def extract_leak_files(params, recipe, extname, darkfpfile, **kwargs):
 
 
 def extract_wave_files(params, recipe, extname, hcfile,
-                       fpfile, **kwargs):
+                       fpfile, wprops, **kwargs):
     func_name = __NAME__ + '.extract_wave_files()'
     # get parameters from params/kwargs
     wave_always_extract = pcheck(params, 'WAVE_ALWAYS_EXTRACT',
@@ -162,7 +162,7 @@ def extract_wave_files(params, recipe, extname, hcfile,
     hc_outputs = extract_files(params, recipe, hcfile, hcfileinst,
                                wave_always_extract, extrecipe,
                                wave_extract_type, kind='hc',
-                               func_name=func_name)
+                               func_name=func_name, wavefile=wprops['WAVEFILE'])
     # ----------------------------------------------------------------------
     # extract fp files
     # ----------------------------------------------------------------------
@@ -173,7 +173,8 @@ def extract_wave_files(params, recipe, extname, hcfile,
         fp_outputs = extract_files(params, recipe, fpfile, fpfileinst,
                                    wave_always_extract, extrecipe,
                                    wave_extract_type, kind='fp',
-                                   func_name=func_name)
+                                   func_name=func_name,
+                                   wavefile=wprops['WAVEFILE'])
     else:
         # make storage for fp outputs
         fp_outputs = dict()
@@ -195,7 +196,8 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
                   always_extract: bool, extrecipe: Union[DrsRecipe, None],
                   extract_type: str, kind: str = 'gen',
                   func_name: Union[str, None] = None,
-                  leakcorr: Optional[bool] = None):
+                  leakcorr: Optional[bool] = None,
+                  wavefile: Optional[str] = None):
     if func_name is None:
         func_name = __NAME__ + '.extract_files()'
     # get the fiber types from a list parameter
@@ -254,8 +256,13 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         data_dict['files'] = [infile]
         data_dict['rawfiles'] = [infile.basename]
         data_dict['combine'] = params['INPUT_COMBINE_IMAGES']
+        # add leak correction argument if set
         if leakcorr is not None and isinstance(leakcorr, bool):
             data_dict['LEAKCORR'] = leakcorr
+        # add wave file correction argument if set
+        if wavefile is not None and isinstance(wavefile, str):
+            data_dict['WAVEFILE'] = wavefile
+
         kwargs['DATA_DICT'] = data_dict
         # ------------------------------------------------------------------
         # deal with adding group name
