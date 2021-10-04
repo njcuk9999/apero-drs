@@ -59,6 +59,8 @@ load_tellu_file = gen_tellu.load_tellu_file
 
 make_1d_template_cube = template_tellu.make_1d_template_cube
 
+make_trans_cube = mk_tellu.make_trans_cube
+
 make_template_cubes = template_tellu.make_template_cubes
 
 mk_tellu_quality_control = mk_tellu.mk_tellu_quality_control

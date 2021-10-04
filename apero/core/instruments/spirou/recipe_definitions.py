@@ -904,6 +904,30 @@ apero_mk_tellu.group_column = 'REPROCESS_OBSDIR_COL'
 recipes.append(apero_mk_tellu)
 
 # -----------------------------------------------------------------------------
+# apero_mk_model
+# -----------------------------------------------------------------------------
+apero_mk_model = DrsRecipe(__INSTRUMENT__)
+apero_mk_model.name = 'apero_mk_model_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_mk_model.shortname = 'MKTELL'
+apero_mk_model.instrument = __INSTRUMENT__
+apero_mk_model.in_block_str = 'red'
+apero_mk_model.out_block_str = 'red'
+apero_mk_model.extension = 'fits'
+apero_mk_model.description = textentry('MKTELL_DESC')
+apero_mk_model.epilog = textentry('MKTELL_EXAMPLE')
+apero_mk_model.recipe_type = 'recipe'
+apero_mk_model.recipe_kind = 'tellu-hotstar'
+apero_mk_model.set_outputs(TELLU_CONV=files.out_tellu_conv,
+                           TELLU_TRANS=files.out_tellu_trans,
+                           TELLU_PCLEAN=files.out_tellu_pclean)
+apero_mk_model.set_debug_plots()
+apero_mk_model.set_summary_plots()
+apero_mk_model.group_func = grouping.no_group
+apero_mk_model.group_column = None
+# add to recipe
+recipes.append(apero_mk_tellu)
+
+# -----------------------------------------------------------------------------
 # apero_mk_tellu_db
 # -----------------------------------------------------------------------------
 apero_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
