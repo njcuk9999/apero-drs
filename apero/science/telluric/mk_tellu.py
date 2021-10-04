@@ -8,14 +8,19 @@ Created on 2020-07-2020-07-15 17:56
 @author: cook
 """
 import numpy as np
+from typing import List, Tuple
 
+from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core import math as mp
-from apero import lang
-from apero.core.core import drs_log, drs_file
+from apero.io import drs_fits
+from apero.io import drs_table
 from apero.science.calib import wave
 from apero.science.telluric import gen_tellu
+
 
 # =============================================================================
 # Define variables
@@ -43,6 +48,61 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # General functions
 # =============================================================================
+def make_trans_cube(params: ParamDict, transfiles: List[str]
+                    ) -> Tuple[np.ndarray, drs_fits.Table]:
+
+    # get parameters from params
+    snr_order = params['MKTELLU_QC_SNR_ORDER']
+    water_key = params['KW_TELLUP_EXPO_WATER'][0]
+    others_key = params['KW_TELLUP_EXPO_OTHERS'][0]
+    snr_key = params['KW_EXT_SNR'][0].format(snr_order)
+    objname_key = params['KW_OBJNAME'][0]
+    mjdmid_key = params['KW_MID_OBS_TIME'][0]
+    # load first transfile as reference
+    refimage, refhdr = drs_fits.readfits(params, transfiles[0], gethdr=True)
+    # set up storage for the absorption
+    trans_cube = np.zeros([refimage.shape[0], refimage.shape[1],
+                           len(transfiles)])
+    # get vectors
+    expo_water = np.zeros(len(transfiles), dtype=float)
+    expo_others = np.zeros(len(transfiles), dtype=float)
+    snr = np.zeros(len(transfiles), dtype=float)
+    mjdmids = np.zeros(len(transfiles), dtype=float)
+    objnames = np.array(['NULL'] * len(transfiles))
+    # load all the trans files
+    for it, filename in enumerate(transfiles):
+        # load trans image
+        tout = drs_fits.readfits(params, filename, gethdr=True)
+        transimage, transhdr = tout
+        # make sure we have required header key for expo_water
+        if water_key not in transhdr:
+            wargs = [water_key, transfiles[it]]
+            WLOG(params, '', textentry('40-019-00050', args=wargs))
+        # make sure we have required header key for expo_others
+        elif others_key not in transhdr:
+            wargs = [others_key, transfiles[it]]
+            WLOG(params, '', textentry('40-019-00050', args=wargs))
+        else:
+            # push data into abso array
+            trans_cube[:, :, it] = np.log(transimage)
+            # get header keys
+            expo_water[it] = float(transhdr[water_key])
+            expo_others[it] = float(transhdr[others_key])
+            snr[it] = float(transhdr[snr_key])
+            objnames[it] = str(transhdr[objname_key])
+            mjdmids[it] = float(transhdr[mjdmid_key])
+    # -------------------------------------------------------------------------
+    # setup table
+    columns = ['TRANS_FILE', 'EXPO_H2O', 'EXPO_OTHERS', 'SNR', 'OBJNAME',
+               'MJDMID']
+    values = [transfiles, expo_water, expo_others, snr, objnames, mjdmids]
+    # construct table
+    trans_table = drs_table.make_table(params, columns=columns, values=values)
+    # -------------------------------------------------------------------------
+    # return the vectors
+    return trans_cube, trans_table
+
+
 def calculate_tellu_res_absorption(params, recipe, image, template,
                                    template_props, header, mprops, wprops,
                                    bprops, tpreprops, **kwargs):
