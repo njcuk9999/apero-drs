@@ -119,13 +119,18 @@ def __main__(recipe, params):
         combine = False
     # get the number of infiles
     num_files = len(infiles)
-
+    # ----------------------------------------------------------------------
     # get quick look mode
     quicklook = params['EXT_QUICK_LOOK']
     # deal with leak corr
     if 'leakcorr' in params['DATA_DICT']:
         # add leak corr to params from data dict (passed in)
         params['INPUTS']['LEAKCORR'] = params['DATA_DICT']['LEAKCORR']
+    # deal with wave sol from data dict
+    if 'wavefile' in params['DATA_DICT']:
+        # add wave file to params from data dict (passed in)
+        params['INPUTS']['WAVEFILE'] = params['DATA_DICT']['WAVEFILE']
+    # ----------------------------------------------------------------------
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()

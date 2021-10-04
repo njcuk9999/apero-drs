@@ -181,12 +181,23 @@ def __main__(recipe, params):
         else:
             fpfile = fpfiles[it]
         # -----------------------------------------------------------------
+        # load initial wavelength solution (start point) for this fiber
+        #    this should only be a master wavelength solution
+        iwprops = wave.get_wavesolution(params, recipe, infile=hcfile,
+                                        fiber=master_fiber, master=True,
+                                        database=calibdbm)
+        # check that wave parameters are consistent with required number
+        #   of parameters (from constants)
+        iwprops = wave.check_wave_consistency(params, iwprops)
+        # -----------------------------------------------------------------
         # extract the hc file and fp file
         # -----------------------------------------------------------------
         # set up parameters
         eargs = [params, recipe, EXTRACT_NAME, hcfile, fpfile]
+        ekwargs = dict(wavefile=iwprops['WAVEFILE'])
         # run extraction
-        hc_outputs, fp_outputs = extractother.extract_wave_files(*eargs)
+        hc_outputs, fp_outputs = extractother.extract_wave_files(*eargs,
+                                                                 **ekwargs)
 
         # =================================================================
         # get blaze and initial wave solution
@@ -205,15 +216,6 @@ def __main__(recipe, params):
         # load the blaze file for this fiber
         bout = flat_blaze.get_blaze(params, hcheader, master_fiber)
         blaze_file, blaze_time, blaze = bout
-        # -----------------------------------------------------------------
-        # load initial wavelength solution (start point) for this fiber
-        #    this should only be a master wavelength solution
-        iwprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
-                                        fiber=master_fiber, master=True,
-                                        database=calibdbm)
-        # check that wave parameters are consistent with required number
-        #   of parameters (from constants)
-        iwprops = wave.check_wave_consistency(params, iwprops)
 
         # =================================================================
         # Construct HC + FP line reference files for master_fiber

@@ -327,8 +327,15 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     func_name = display_func('get_wavesolution', __NAME__)
     # get parameters from params/kwargs
     inwavefile = kwargs.get('filename', None)
-    force = pcheck(params, 'CALIB_DB_FORCE_WAVESOL', 'force', kwargs,
-                   func_name)
+    # deal with wave file in the inputs
+    if inwavefile is None and 'WAVEFILE' in params['INPUTS']:
+        inwavefile = params['INPUTS']['WAVEFILE']
+    # if we have an in wave file we are forcing the solution
+    if not drs_text.null_text(inwavefile, ['Null', 'None', '']):
+        force = True
+    else:
+        force = pcheck(params, 'CALIB_DB_FORCE_WAVESOL', 'force', kwargs,
+                       func_name)
     # ------------------------------------------------------------------------
     # get pseudo constants
     pconst = constants.pload()
