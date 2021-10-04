@@ -887,14 +887,17 @@ def group_name(params: ParamDict, suffix: str = 'group') -> str:
 
 
 def read_runfile(params: ParamDict, runfile: str,
+                 rkind: str = 'start',
                  log_overwrite: bool = False) -> Tuple[ParamDict, OrderedDict]:
     """
     Read a provided run file and update params / return the run file sequence
 
     :param params: ParamDict, the parameter dictionary of constants
     :param runfile: str, the path to the run file
+    :param rkind: str, either 'start' for startup or 'run' for processing mode
     :param log_overwrite: bool, if True prevents messages about overwriting
                           param keys
+
     :return:
     """
     func_name = __NAME__ + '.read_runfile()'
@@ -977,133 +980,135 @@ def read_runfile(params: ParamDict, runfile: str,
             params[key] = value
             params.set_source(key, func_name)
     # ----------------------------------------------------------------------
-    # push default values (in case we don't have values in run file
-    for key in RUN_KEYS:
-        if key not in params:
-            # print that we are using default settings (not a warning)
-            wargs = [key, RUN_KEYS[key]]
-            WLOG(params, '', textentry('10-503-00005', args=wargs))
-            # push keys to params
-            params[key] = RUN_KEYS[key]
-            params.set_source(key, __NAME__ + '.RUN_KEYS')
+    if rkind == 'run':
+        # push default values (in case we don't have values in run file
+        for key in RUN_KEYS:
+            if key not in params:
+                # print that we are using default settings (not a warning)
+                wargs = [key, RUN_KEYS[key]]
+                WLOG(params, '', textentry('10-503-00005', args=wargs))
+                # push keys to params
+                params[key] = RUN_KEYS[key]
+                params.set_source(key, __NAME__ + '.RUN_KEYS')
 
-    # ----------------------------------------------------------------------
-    # deal with arguments from command line (params['INPUTS'])
-    # ----------------------------------------------------------------------
-    # set observation directory
-    if 'OBS_DIR' in params['INPUTS']:
-        # get night name
-        _obs_dir = params['INPUTS']['OBS_DIR']
-        # deal with none nulls
-        if not drs_text.null_text(_obs_dir, ['None', '', 'All']):
-            params['OBS_DIR'] = _obs_dir
-    # make sure observation directory is str or None
-    if drs_text.null_text(params['OBS_DIR'], ['None', '', 'All']):
-        params['OBS_DIR'] = None
-    # ----------------------------------------------------------------------
-    # exclude observation directories
-    if 'EXCLUDE_OBS_DIRS' in params['INPUTS']:
-        # get night name blacklist
-        _ex_obs_dirs = params['INPUTS']['EXCLUDE_OBS_DIRS']
-        # deal with non-null value
-        if not drs_text.null_text(_ex_obs_dirs, ['None', '', 'All']):
-            exclude = params['INPUTS'].listp('EXCLUDE_OBS_DIRS')
-            params['EXCLUDE_OBS_DIRS'] = exclude
-    # ----------------------------------------------------------------------
-    # include observation directories
-    if 'INCLUDE_OBS_DIRS' in params['INPUTS']:
-        # get night name whitelist
-        _inc_obs_dirs = params['INPUTS']['INCLUDE_OBS_DIRS']
-        # deal with non-null value
-        if not drs_text.null_text(_inc_obs_dirs, ['None', '', 'All']):
-            include = params['INPUTS'].listp('INCLUDE_OBS_DIRS')
-            params['INCLUDE_OBS_DIRS'] = include
-    # ----------------------------------------------------------------------
-    # add pi name list
-    if 'PI_NAMES' in params['INPUTS']:
-        # get list of pi names
-        _pinames = params['INPUTS']['PI_NAMES']
-        # deal with non-null value
-        if not drs_text.null_text(_pinames, ['None', '', 'All']):
-            params['PI_NAMES'] = params['INPUTS'].listp('PI_NAMES')
-    # ----------------------------------------------------------------------
-    # deal with having a file specified
-    params['FILENAME'] = None
-    if 'FILENAME' in params['INPUTS']:
-        # get filename arg
-        _filename = params['INPUTS']['FILENAME']
-        # deal with non-null value
-        if not drs_text.null_text(_filename, ['None', '', 'All']):
-            # if it is a string treat it as a list of string (just a string
-            #   works too)
-            if isinstance(params['INPUTS']['FILENAME'], str):
-                params['FILENAME'] = params['INPUTS'].listp('FILENAME')
-            # should really get here but set it to the _filename value anyway
-            else:
-                params['FILENAME'] = _filename
-    # ----------------------------------------------------------------------
-    # deal with getting test run from user input
-    if 'TEST' in params['INPUTS']:
-        # get the value of test
-        _test = params['INPUTS']['TEST']
-        # deal with non null value
-        if not drs_text.null_text(_test, ['', 'None']):
-            # test for true value
-            params['TEST_RUN'] = drs_text.true_text(_test)
-    # ----------------------------------------------------------------------
-    # deal with getting trigger run from user input
-    if 'TRIGGER' in params['INPUTS']:
-        # get the value of trigger
-        _trigger = params['INPUTS']['TRIGGER']
-        # deal with non null values
-        if not drs_text.null_text(_trigger, ['', 'None']):
-            # test for true value
-            params['TRIGGER_RUN'] = drs_text.true_text(_trigger)
+        # ---------------------------------------------------------------------
+        # deal with arguments from command line (params['INPUTS'])
+        # ---------------------------------------------------------------------
+        # set observation directory
+        if 'OBS_DIR' in params['INPUTS']:
+            # get night name
+            _obs_dir = params['INPUTS']['OBS_DIR']
+            # deal with none nulls
+            if not drs_text.null_text(_obs_dir, ['None', '', 'All']):
+                params['OBS_DIR'] = _obs_dir
+        # make sure observation directory is str or None
+        if drs_text.null_text(params['OBS_DIR'], ['None', '', 'All']):
+            params['OBS_DIR'] = None
+        # ---------------------------------------------------------------------
+        # exclude observation directories
+        if 'EXCLUDE_OBS_DIRS' in params['INPUTS']:
+            # get night name blacklist
+            _ex_obs_dirs = params['INPUTS']['EXCLUDE_OBS_DIRS']
+            # deal with non-null value
+            if not drs_text.null_text(_ex_obs_dirs, ['None', '', 'All']):
+                exclude = params['INPUTS'].listp('EXCLUDE_OBS_DIRS')
+                params['EXCLUDE_OBS_DIRS'] = exclude
+        # ---------------------------------------------------------------------
+        # include observation directories
+        if 'INCLUDE_OBS_DIRS' in params['INPUTS']:
+            # get night name whitelist
+            _inc_obs_dirs = params['INPUTS']['INCLUDE_OBS_DIRS']
+            # deal with non-null value
+            if not drs_text.null_text(_inc_obs_dirs, ['None', '', 'All']):
+                include = params['INPUTS'].listp('INCLUDE_OBS_DIRS')
+                params['INCLUDE_OBS_DIRS'] = include
+        # ---------------------------------------------------------------------
+        # add pi name list
+        if 'PI_NAMES' in params['INPUTS']:
+            # get list of pi names
+            _pinames = params['INPUTS']['PI_NAMES']
+            # deal with non-null value
+            if not drs_text.null_text(_pinames, ['None', '', 'All']):
+                params['PI_NAMES'] = params['INPUTS'].listp('PI_NAMES')
+        # ---------------------------------------------------------------------
+        # deal with having a file specified
+        params['FILENAME'] = None
+        if 'FILENAME' in params['INPUTS']:
+            # get filename arg
+            _filename = params['INPUTS']['FILENAME']
+            # deal with non-null value
+            if not drs_text.null_text(_filename, ['None', '', 'All']):
+                # if it is a string treat it as a list of string (just a string
+                #   works too)
+                if isinstance(params['INPUTS']['FILENAME'], str):
+                    params['FILENAME'] = params['INPUTS'].listp('FILENAME')
+                # should really get here but set it to the _filename value
+                # anyway
+                else:
+                    params['FILENAME'] = _filename
+        # ---------------------------------------------------------------------
+        # deal with getting test run from user input
+        if 'TEST' in params['INPUTS']:
+            # get the value of test
+            _test = params['INPUTS']['TEST']
+            # deal with non null value
+            if not drs_text.null_text(_test, ['', 'None']):
+                # test for true value
+                params['TEST_RUN'] = drs_text.true_text(_test)
+        # ---------------------------------------------------------------------
+        # deal with getting trigger run from user input
+        if 'TRIGGER' in params['INPUTS']:
+            # get the value of trigger
+            _trigger = params['INPUTS']['TRIGGER']
+            # deal with non null values
+            if not drs_text.null_text(_trigger, ['', 'None']):
+                # test for true value
+                params['TRIGGER_RUN'] = drs_text.true_text(_trigger)
 
-        # if trigger if defined night name must be as well
-        if params['OBS_DIR'] is None and params['TRIGGER_RUN']:
-            # cause an error if obs_dir not set
-            WLOG(params, 'error', textentry('09-503-00010'))
-    # ----------------------------------------------------------------------
-    # switch for setting science targets (from user inputs)
-    if 'SCIENCE_TARGETS' in params['INPUTS']:
-        # get the value of science_targets
-        _science_targets = params['INPUTS']['SCIENCE_TARGETS']
-        # deal with non null value
-        if not drs_text.null_text(_science_targets, ['', 'None']):
-            # remove leading/trailing speechmarks
-            _science_targets = drs_text.cull_leading_trailing(_science_targets,
-                                                              ['"', "'"])
-            # set science targets
-            params['SCIENCE_TARGETS'] = _science_targets
-    # ----------------------------------------------------------------------
-    # switch for setting telluric target list (from user inputs)
-    if 'TELLURIC_TARGETS' in params['INPUTS']:
-        # get the value of telluric targets
-        _tellu_targets = params['INPUTS']['TELLURIC_TARGETS']
-        # deal with non null value
-        if not drs_text.null_text(_tellu_targets, ['', 'None']):
-            # remove leading/trailing speechmarks
-            _tellu_targets = drs_text.cull_leading_trailing(_tellu_targets,
-                                                            ['"', "'"])
-            # set telluric targets
-            params['TELLURIC_TARGETS'] = _tellu_targets
-    # ----------------------------------------------------------------------
-    # switch whether we update object database (from user inputs)
-    if 'UPDATE_OBJDB' in params['INPUTS']:
-        # get the value of update obj database from inputs
-        _update_objdb = params['INPUTS']['UPDATE_OBJDB']
-        # deal with non null values only
-        if not drs_text.null_text(_update_objdb, ['', 'None']):
-            # get True/False
-            _update_objdb = drs_text.true_text(_update_objdb)
-            # set value
-            params['UPDATE_OBJ_DATABASE'] = _update_objdb
-    # ----------------------------------------------------------------------
+            # if trigger if defined night name must be as well
+            if params['OBS_DIR'] is None and params['TRIGGER_RUN']:
+                # cause an error if obs_dir not set
+                WLOG(params, 'error', textentry('09-503-00010'))
+        # ---------------------------------------------------------------------
+        # switch for setting science targets (from user inputs)
+        if 'SCIENCE_TARGETS' in params['INPUTS']:
+            # get the value of science_targets
+            _science_targets = params['INPUTS']['SCIENCE_TARGETS']
+            # deal with non null value
+            if not drs_text.null_text(_science_targets, ['', 'None']):
+                # remove leading/trailing speechmarks
+                sargs = [_science_targets, ['"', "'"]]
+                _science_targets = drs_text.cull_leading_trailing(*sargs)
+                # set science targets
+                params['SCIENCE_TARGETS'] = _science_targets
+        # ---------------------------------------------------------------------
+        # switch for setting telluric target list (from user inputs)
+        if 'TELLURIC_TARGETS' in params['INPUTS']:
+            # get the value of telluric targets
+            _tellu_targets = params['INPUTS']['TELLURIC_TARGETS']
+            # deal with non null value
+            if not drs_text.null_text(_tellu_targets, ['', 'None']):
+                # remove leading/trailing speechmarks
+                targs = [_tellu_targets, ['"', "'"]]
+                _tellu_targets = drs_text.cull_leading_trailing(*targs)
+                # set telluric targets
+                params['TELLURIC_TARGETS'] = _tellu_targets
+        # ---------------------------------------------------------------------
+        # switch whether we update object database (from user inputs)
+        if 'UPDATE_OBJDB' in params['INPUTS']:
+            # get the value of update obj database from inputs
+            _update_objdb = params['INPUTS']['UPDATE_OBJDB']
+            # deal with non null values only
+            if not drs_text.null_text(_update_objdb, ['', 'None']):
+                # get True/False
+                _update_objdb = drs_text.true_text(_update_objdb)
+                # set value
+                params['UPDATE_OBJ_DATABASE'] = _update_objdb
+    # -------------------------------------------------------------------------
     # relock params
     if relock:
         params.lock()
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # return parameter dictionary and runtable
     return params, runtable
 

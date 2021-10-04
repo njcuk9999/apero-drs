@@ -101,7 +101,7 @@ def __main__(recipe, params):
     # Deal with run file
     # ----------------------------------------------------------------------
     # deal with run file
-    params, runtable = drs_startup.read_runfile(params, runfile)
+    params, runtable = drs_startup.read_runfile(params, runfile, rkind='run')
     # reset sys.argv so it doesn't mess with recipes
     sys.argv = [__NAME__]
 
