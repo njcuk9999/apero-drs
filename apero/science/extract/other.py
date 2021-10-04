@@ -141,7 +141,7 @@ def extract_leak_files(params, recipe, extname, darkfpfile, **kwargs):
 
 
 def extract_wave_files(params, recipe, extname, hcfile,
-                       fpfile, wprops, **kwargs):
+                       fpfile, wavefile, **kwargs):
     func_name = __NAME__ + '.extract_wave_files()'
     # get parameters from params/kwargs
     wave_always_extract = pcheck(params, 'WAVE_ALWAYS_EXTRACT',
@@ -162,7 +162,7 @@ def extract_wave_files(params, recipe, extname, hcfile,
     hc_outputs = extract_files(params, recipe, hcfile, hcfileinst,
                                wave_always_extract, extrecipe,
                                wave_extract_type, kind='hc',
-                               func_name=func_name, wavefile=wprops['WAVEFILE'])
+                               func_name=func_name, wavefile=wavefile)
     # ----------------------------------------------------------------------
     # extract fp files
     # ----------------------------------------------------------------------
