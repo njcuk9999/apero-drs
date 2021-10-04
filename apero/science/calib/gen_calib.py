@@ -164,6 +164,8 @@ class CalibFile:
         self.key = key
         self.fiber = fiber
         self.mode = mode
+        # get mjdmid key
+        mjdmid_key = params['KW_MID_OBS_TIME'][0]
         # ---------------------------------------------------------------------
         # first try to get file from inputs
         fout = drs_data.get_file_from_inputs(params, 'calibration',
@@ -182,8 +184,8 @@ class CalibFile:
                 self.found = True
                 # we need to get file time
                 hdr = drs_fits.read_header(params, self.filename)
-                if params['KW_MID_OBS_TIME'] in hdr:
-                    self.mjdmid = float(hdr[params['KW_MID_OBS_TIME']])
+                if mjdmid_key in hdr:
+                    self.mjdmid = float(hdr[mjdmid_key])
                     self.user = True
             else:
                 # warn user that input file was not valid

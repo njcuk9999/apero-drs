@@ -174,7 +174,7 @@ def extract_wave_files(params, recipe, extname, hcfile,
                                    wave_always_extract, extrecipe,
                                    wave_extract_type, kind='fp',
                                    func_name=func_name,
-                                   wavefile=wprops['WAVEFILE'])
+                                   wavefile=wavefile)
     else:
         # make storage for fp outputs
         fp_outputs = dict()
