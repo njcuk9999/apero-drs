@@ -1865,6 +1865,21 @@ KW_MKTELL_TRANS_FIT_UPPER_BAD.set(key='MKTTTMAX',
                                   comment='mktellu max transmission used',
                                   parent='MKTELLU_TRANS_FIT_UPPER_BAD')
 
+# The number of files used in the trans file model
+KW_MKMODEL_NFILES = KW_MKMODEL_NFILES.copy(__NAME__)
+KW_MKMODEL_NFILES.set(key='MKMNFILE',
+                      comment='mkmodel number of trans files')
+
+# The min number of files in the trans file model
+KW_MKMODEL_MIN_FILES = KW_MKMODEL_MIN_FILES.copy(__NAME__)
+KW_MKMODEL_MIN_FILES.set(key='MKMMFILE',
+                         comment='mkmodel min number of trans files')
+
+# The sigma cut for the trans file model
+KW_MKMODEL_SIGCUT = KW_MKMODEL_SIGCUT.copy(__NAME__)
+KW_MKMODEL_SIGCUT.set(key='MKMSIGMA',
+                      comment='mkmodel sigma cut for trans model')
+
 # -----------------------------------------------------------------------------
 # Define fit telluric variables
 # -----------------------------------------------------------------------------

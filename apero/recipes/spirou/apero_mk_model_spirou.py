@@ -34,7 +34,7 @@ from apero.science import telluric
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_mk_tellu_spirou.py'
+__NAME__ = 'apero_mk_model_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -108,12 +108,12 @@ def __main__(recipe, params):
         fiber = params['INPUTS']['FIBER']
     else:
         fiber = params['TELLURIC_FIBER_TYPE']
-
-    # load the calibration and telluric databases
-    calibdbm = drs_database.CalibrationDatabase(params)
-    calibdbm.load_db()
+    # load the telluric database
     telludbm = drs_database.TelluricDatabase(params)
     telludbm.load_db()
+    # set up plotting (no plotting before this) -- must be after setting
+    #   night name
+    recipe.plot.set_location(0)
 
     # ------------------------------------------------------------------
     # Load transmission files and header vectors
@@ -127,19 +127,35 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Calculate the model
     # ------------------------------------------------------------------
-    # TODO: create the residual vectors
+    # create trans model parameter dictionary (with e2ds shaped out vectors)
+    tprops = telluric.make_trans_model(params, transcube, transtable)
+
+    # ----------------------------------------------------------------------
+    # print/log quality control (all assigned previously)
+    # ----------------------------------------------------------------------
+    qc_params, passed = telluric.mk_model_qc(params)
+    # update recipe log
+    recipe.log.add_qc(qc_params, passed)
 
     # ------------------------------------------------------------------
     # Plot and save
     # ------------------------------------------------------------------
-    # TODO: plot residual vectors
+    # plot model (debug)
+    recipe.plot('MKTELLU_MODEL', tprops=tprops)
+    # plot model (summary)
+    recipe.plot('SUM_MKTELLU_MODEL', tprops=tprops)
+    # save model
+    model_file = telluric.mk_write_model(params, recipe, tprops, transtable,
+                                         fiber, qc_params)
+    # add to telluric database
+    if passed:
+        # copy the big cube median to the calibDB
+        telludbm.add_tellu_file(model_file)
 
-    # TODO: save model to file
-    # EXT1 = e2ds zero rediual
-    # EXT2 = e2ds expo water
-    # EXT3 = e2ds expo others
-    # EXT4 = trans table
-    # EXT5 = param table
+    # ----------------------------------------------------------------------
+    # Construct summary document
+    # ----------------------------------------------------------------------
+    telluric.mk_model_summary(recipe, params, qc_params, tprops)
 
     # ----------------------------------------------------------------------
     # End of main code

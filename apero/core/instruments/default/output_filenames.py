@@ -299,7 +299,7 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
     # set function name
     func_name = display_func('set_file', __NAME__)
     # deal with not used
-    _ = fiber, remove_insuffix, prefix
+    _ = remove_insuffix, prefix
     # set function name from args
     if func is None:
         func_name = '{0} [{1}]'.format(func, func_name)

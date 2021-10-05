@@ -7,6 +7,8 @@ Created on 2020-07-2020-07-15 17:56
 
 @author: cook
 """
+import warnings
+
 import numpy as np
 from typing import List, Tuple
 
@@ -50,7 +52,10 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 def make_trans_cube(params: ParamDict, transfiles: List[str]
                     ) -> Tuple[np.ndarray, drs_fits.Table]:
-
+    # -------------------------------------------------------------------------
+    # print progress
+    # TODO: move to language database
+    WLOG(params, '', 'Making Transmission cube')
     # get parameters from params
     snr_order = params['MKTELLU_QC_SNR_ORDER']
     water_key = params['KW_TELLUP_EXPO_WATER'][0]
@@ -84,7 +89,8 @@ def make_trans_cube(params: ParamDict, transfiles: List[str]
             WLOG(params, '', textentry('40-019-00050', args=wargs))
         else:
             # push data into abso array
-            trans_cube[:, :, it] = np.log(transimage)
+            with warnings.catch_warnings(record=True) as _:
+                trans_cube[:, :, it] = np.log(transimage)
             # get header keys
             expo_water[it] = float(transhdr[water_key])
             expo_others[it] = float(transhdr[others_key])
@@ -101,6 +107,92 @@ def make_trans_cube(params: ParamDict, transfiles: List[str]
     # -------------------------------------------------------------------------
     # return the vectors
     return trans_cube, trans_table
+
+
+
+def make_trans_model(params: ParamDict, transcube: np.ndarray,
+                     transtable: drs_fits.Table) -> ParamDict:
+    # set function name
+    func_name = display_func('make_trans_model', __NAME__)
+    # get values from params
+    sigma_cut = params['TELLU_TRANS_MODEL_SIG']
+    # get the minimum number of trans files required
+    min_trans_files = len(transtable) // 10
+    # get vectors from table
+    expo_water = transtable['EXPO_H2O']
+    expo_others = transtable['EXPO_OTHERS']
+    # get a reference trans file from cube (first trans file)
+    ref_trans = transcube[:, :, 0]
+    # -------------------------------------------------------------------------
+    # print progress
+    # TODO: move to language database
+    WLOG(params, '', 'Calculating Transmission model')
+    # -------------------------------------------------------------------------
+    # sample vectors for the reconstruction
+    sample = np.zeros([3, len(expo_water)])
+    # bias level of the residual
+    sample[0] = 1
+    # water abso
+    sample[1] = expo_water
+    # dry abso
+    sample[2] = expo_others
+    # -------------------------------------------------------------------------
+    # create the reference vectors
+    zero_residual = np.full_like(ref_trans, np.nan)
+    expo_water_residual = np.full_like(ref_trans, np.nan)
+    expo_others_residual = np.full_like(ref_trans, np.nan)
+    # loop around all orders
+    for order_num in range(ref_trans.shape[0]):
+        # print progress
+        # TODO: move to language database
+        margs = [order_num, ref_trans.shape[0]]
+        WLOG(params, '', '\tProcessing order {0} / {1}'.format(*margs))
+        # loop around all pixels in order
+        for ix in range(ref_trans.shape[1]):
+            # get one pixel of the trans_cube for all observations
+            trans_slice = transcube[order_num, ix, :]
+            # deal with not having enough pixels (skip)
+            if np.sum(np.isfinite(trans_slice)) < min_trans_files:
+                continue
+            # construct a linear model with offset and water+dry components
+            worst_offender = np.inf
+            # loop until no point is an outlier beyond "sigma cut" sigma
+            while worst_offender > sigma_cut:
+                # get the linear minimization between trans files and our sample
+                amp, recon = mp.linear_minimization(trans_slice, sample)
+                # work out the sigma between trans slice and recon
+                res = trans_slice - recon
+                sigma = res / mp.estimate_sigma(res)
+                # re-calculate worst offender
+                worst_pos = np.nanargmax(sigma)
+                worst_offender = sigma[worst_pos]
+                # deal with worst offender - remove worst
+                if worst_offender > sigma_cut:
+                    trans_slice[worst_pos] = np.nan
+                # else we are good - push values into output vectors
+                else:
+                    zero_residual[order_num, ix] = amp[0]
+                    expo_water_residual[order_num, ix] = amp[1]
+                    expo_others_residual[order_num, ix] = amp[2]
+                # if we have less than the minimum number of points left
+                #   stop here
+                if np.sum(np.isfinite(trans_slice)) < min_trans_files:
+                    break
+    # -------------------------------------------------------------------------
+    # return e2ds shaped vectors in props
+    props = ParamDict()
+    props['ZERO_RES'] = zero_residual
+    props['WATER_RES'] = expo_water_residual
+    props['OTHERS_RES'] = expo_others_residual
+    props['N_TRANS_FILES'] = len(transtable)
+    props['MIN_TRANS_FILES'] = min_trans_files
+    props['SIGMA_CUT'] = sigma_cut
+    # set source
+    keys = ['ZERO_RES', 'WATER_RES', 'OTHERS_RES', 'N_TRANS_FILES',
+            'MIN_TRANS_FILES', 'SIGMA_CUT']
+    props.set_sources(keys, func_name)
+    # return parameter dictionary
+    return props
 
 
 def calculate_tellu_res_absorption(params, recipe, image, template,
@@ -388,6 +480,43 @@ def mk_tellu_summary(recipe, it, params, qc_params, tellu_props, fiber):
     recipe.plot.summary_document(it)
 
 
+def mk_model_qc(params: ParamDict) -> Tuple[list, int]:
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+    # no quality control currently
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # ----------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', textentry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc params and passed
+    return qc_params, passed
+
+
+def mk_model_summary(recipe, params, qc_params, tprops):
+    # add stats
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+
+    recipe.plot.add_stat('KW_MKMODEL_NFILES', value=tprops['N_TRANS_FILES'])
+    recipe.plot.add_stat('KW_MKMODEL_MIN_FILES',
+                         value=tprops['MIN_TRANS_FILES'])
+    recipe.plot.add_stat('KW_MKMODEL_SIGCUT', value=tprops['SIGMA_CUT'])
+    # construct summary (outside fiber loop)
+    recipe.plot.summary_document(0, qc_params)
+
+
 # =============================================================================
 # Write functions
 # =============================================================================
@@ -516,6 +645,57 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     # ------------------------------------------------------------------
     # return transmission file instance
     return transfile
+
+
+def mk_write_model(params, recipe, tprops, transtable, fiber, qc_params):
+        # ------------------------------------------------------------------
+        # write the template file (TELLU_TEMP)
+        # ------------------------------------------------------------------
+        # get copy of instance of file
+        model_file = recipe.outputs['TRANS_MODEL'].newcopy(params=params,
+                                                           fiber=fiber)
+        # construct the filename from file instance
+        filename = model_file.basename.format(fiber)
+        model_file.construct_filename(filename=filename)
+        # ------------------------------------------------------------------
+        # add version
+        model_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+        # add dates
+        model_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+        model_file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+        # add process id
+        model_file.add_hkey('KW_PID', value=params['PID'])
+        # add output tag
+        model_file.add_hkey('KW_OUTPUT', value=model_file.name)
+        # add qc parameters
+        model_file.add_qckeys(qc_params)
+        # add constants
+        model_file.add_hkeys('KW_MKMODEL_NFILES', value=tprops['N_TRANS_FILES'])
+        model_file.add_hkeys('KW_MKMODEL_MIN_FILES',
+                             value=tprops['MIN_TRANS_FILES'])
+        model_file.add_hkeys('KW_MKMODEL_SIGCUT', value=tprops['SIGMA_CUT'])
+        # set data
+        model_file.data = tprops['ZERO_RES']
+        # log that we are saving s1d table
+        WLOG(params, '', textentry('40-019-00029', args=[model_file.filename]))
+        # define multi lists
+        data_list = [tprops['WATER_RES'], tprops['OTHERS_RES'], transtable]
+        datatype_list = ['image', 'image', 'table']
+        name_list = ['ZERO_RES', 'H2O_RES', 'DRY_RES', 'TRANS_TABLE']
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(recipe, drsfitsfile=model_file)]
+            name_list += ['PARAM_TABLE']
+            datatype_list += ['table']
+        # write multi
+        model_file.write_multi(data_list=data_list, name_list=name_list,
+                                  datatype_list=datatype_list,
+                                  block_kind=recipe.out_block_str,
+                                  runstring=recipe.runstring)
+        # add to output files (for indexing)
+        recipe.add_output_file(model_file)
+        # return the template file
+        return model_file
 
 
 # =============================================================================

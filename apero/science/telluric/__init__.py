@@ -61,6 +61,8 @@ make_1d_template_cube = template_tellu.make_1d_template_cube
 
 make_trans_cube = mk_tellu.make_trans_cube
 
+make_trans_model = mk_tellu.make_trans_model
+
 make_template_cubes = template_tellu.make_template_cubes
 
 mk_tellu_quality_control = mk_tellu.mk_tellu_quality_control
@@ -72,6 +74,12 @@ mk_tellu_summary = mk_tellu.mk_tellu_summary
 mk_1d_template_write = template_tellu.mk_1d_template_write
 
 mk_template_qc = template_tellu.mk_template_qc
+
+mk_model_qc = mk_tellu.mk_model_qc
+
+mk_model_summary = mk_tellu.mk_model_summary
+
+mk_write_model = mk_tellu.mk_write_model
 
 mk_template_write = template_tellu.mk_template_write
 

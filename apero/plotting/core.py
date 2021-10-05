@@ -199,7 +199,8 @@ class Plotter:
         if self.recipe is None:
             self.location = './'
         elif self.location is None:
-            WLOG(self.params, 'error', textentry('00-100-00003'))
+            WLOG(self.params, 'error', textentry('00-100-00003',
+                                                 args=[str(func)]))
         # ------------------------------------------------------------------
         # deal with no plot needed
         if self.plotoption == -1:

@@ -1039,21 +1039,30 @@ out_tellu_spl_npy = drs_ninput('TELLU_TAPAS', filetype='.npy',
 
 # transmission map
 out_tellu_trans = drs_finput('TELLU_TRANS', hkeys=dict(KW_OUTPUT='TELLU_TRANS'),
-                             fibers=['AB', 'A', 'B', 'C'],
+                             fibers=['AB', 'A', 'B'],
                              filetype='.fits', intype=out_ext_e2dsff,
                              suffix='_tellu_trans', remove_insuffix=True,
                              dbname='telluric', dbkey='TELLU_TRANS',
                              outfunc=out.general_file)
+
+# transmission model
+out_tellu_model = drs_finput('TRANS_MODEL', hkeys=dict(KW_OUTPUT='TRANS_MODEL'),
+                             fibers=['AB', 'A', 'B'], filetype='.fits',
+                             basename = 'trans_model_{0}', # add fiber manually
+                             dbname='telluric', dbkey='TELLU_TAPAS',
+                             outfunc=out.set_file)
 
 # add make_telluric outputs to output fileset
 red_file.addset(out_tellu_pclean)
 red_file.addset(out_tellu_conv)
 red_file.addset(out_tellu_trans)
 red_file.addset(out_tellu_spl_npy)
+red_file.addset(out_tellu_model)
 tellu_file.addset(out_tellu_pclean)
 tellu_file.addset(out_tellu_conv)
 tellu_file.addset(out_tellu_trans)
 tellu_file.addset(out_tellu_spl_npy)
+tellu_file.addset(out_tellu_model)
 
 # -----------------------------------------------------------------------------
 # fit telluric

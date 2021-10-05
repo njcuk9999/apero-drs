@@ -2148,6 +2148,11 @@ MKTELLU_QC_SNR_MIN.value = 100
 MKTELLU_QC_AIRMASS_DIFF = MKTELLU_QC_AIRMASS_DIFF.copy(__NAME__)
 MKTELLU_QC_AIRMASS_DIFF.value = 0.3
 
+# define the sigma cut for tellu transmission model
+TELLU_TRANS_MODEL_SIG = TELLU_TRANS_MODEL_SIG.copy(__NAME__)
+TELLU_TRANS_MODEL_SIG.value = 5.0
+TELLU_TRANS_MODEL_SIG.author = base.AUTHORS['EA']
+
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
 # =============================================================================
@@ -2813,6 +2818,10 @@ PLOT_MKTELLU_WAVE_FLUX1.value = False
 # turn on the make tellu wave flux debug plot (single order)
 PLOT_MKTELLU_WAVE_FLUX2 = PLOT_MKTELLU_WAVE_FLUX2.copy(__NAME__)
 PLOT_MKTELLU_WAVE_FLUX2.value = True
+
+# turn on the make tellu model plot
+PLOT_MKTELLU_MODEL = PLOT_MKTELLU_MODEL.copy(__NAME__)
+PLOT_MKTELLU_MODEL.value = True
 
 # turn on the fit tellu pca component debug plot (in loop)
 PLOT_FTELLU_PCA_COMP1 = PLOT_FTELLU_PCA_COMP1.copy(__NAME__)
