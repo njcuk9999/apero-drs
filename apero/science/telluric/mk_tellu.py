@@ -670,10 +670,10 @@ def mk_write_model(params, recipe, tprops, transtable, fiber, qc_params):
         # add qc parameters
         model_file.add_qckeys(qc_params)
         # add constants
-        model_file.add_hkeys('KW_MKMODEL_NFILES', value=tprops['N_TRANS_FILES'])
-        model_file.add_hkeys('KW_MKMODEL_MIN_FILES',
-                             value=tprops['MIN_TRANS_FILES'])
-        model_file.add_hkeys('KW_MKMODEL_SIGCUT', value=tprops['SIGMA_CUT'])
+        model_file.add_hkey('KW_MKMODEL_NFILES', value=tprops['N_TRANS_FILES'])
+        model_file.add_hkey('KW_MKMODEL_MIN_FILES',
+                            value=tprops['MIN_TRANS_FILES'])
+        model_file.add_hkey('KW_MKMODEL_SIGCUT', value=tprops['SIGMA_CUT'])
         # set data
         model_file.data = tprops['ZERO_RES']
         # log that we are saving s1d table
