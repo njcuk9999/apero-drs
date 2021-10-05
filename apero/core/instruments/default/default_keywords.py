@@ -141,6 +141,7 @@ __all__ = [  # input keys
     'KW_MKTELL_TEMPTIME', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
     'KW_MKTELL_DEF_CONV_WID', 'KW_MKTELL_TEMP_MEDFILT', 'KW_MKTELL_AIRMASS',
     'KW_MKTELL_WATER', 'KW_MKTELL_THRES_TFIT', 'KW_MKTELL_TRANS_FIT_UPPER_BAD',
+    'KW_MKMODEL_NFILES', 'KW_MKMODEL_MIN_FILES', 'KW_MKMODEL_SIGCUT',
     # fittellu values
     'KW_FTELLU_NPC', 'KW_FTELLU_ADD_DPC', 'KW_FTELLU_FIT_DPC',
     'KW_FTELLU_ABSO_SRC', 'KW_FTELLU_FIT_KEEP_NUM',
@@ -2060,6 +2061,24 @@ KW_MKTELL_TRANS_FIT_UPPER_BAD = Keyword('KW_MKTELL_TRANS_FIT_UPPER_BAD',
                                         description=('The upper limit for '
                                                      'trans fit used in '
                                                      'mktellu/ftellu'))
+
+# The number of files used in the trans file model
+KW_MKMODEL_NFILES = Keyword('KW_MKMODEL_NFILES', key='NULL', dtype=int,
+                            source=__NAME__,
+                            description='The number of files used in the trans '
+                                        'file model')
+
+# The min number of files in the trans file model
+KW_MKMODEL_MIN_FILES = Keyword('KW_MKMODEL_MIN_FILES', key='NULL', dtype=int,
+                            source=__NAME__,
+                            description='The min number of files in the trans '
+                                        'file model')
+
+# The sigma cut for the trans file model
+KW_MKMODEL_SIGCUT = Keyword('KW_MKMODEL_NFILES', key='NULL', dtype=float,
+                            source=__NAME__,
+                            description='The sigma cut for the trans file '
+                                        'model')
 
 # -----------------------------------------------------------------------------
 # Define fit telluric variables

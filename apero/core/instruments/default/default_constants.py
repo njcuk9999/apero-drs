@@ -233,6 +233,7 @@ __all__ = [
     'MKTELLU_QC_SNR_ORDER', 'MKTELLU_QC_SNR_MIN', 'MKTELLU_QC_AIRMASS_DIFF',
     'MKTELLU_TRANS_MAX_WATERCOL', 'MKTELLU_TRANS_MIN_WATERCOL',
     'MKTELLU_THRES_TRANSFIT', 'MKTELLU_TRANS_FIT_UPPER_BAD',
+    'TELLU_TRANS_MODEL_SIG',
     # fit telluric constants,
     'FTELLU_NUM_PRINCIPLE_COMP', 'FTELLU_ADD_DERIV_PC', 'FTELLU_FIT_DERIV_PC',
     'FTELLU_FIT_KEEP_NUM', 'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN',
@@ -312,6 +313,7 @@ __all__ = [
     # debug telluric plot settings
     'PLOT_TELLUP_WAVE_TRANS', 'PLOT_TELLUP_ABSO_SPEC',
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
+    'PLOT_MKTELLU_MODEL',
     'PLOT_FTELLU_PCA_COMP1', 'PLOT_FTELLU_PCA_COMP2',
     'PLOT_FTELLU_RECON_SPLINE1', 'PLOT_FTELLU_RECON_SPLINE2',
     'PLOT_FTELLU_WAVE_SHIFT1', 'PLOT_FTELLU_WAVE_SHIFT2',
@@ -3702,6 +3704,12 @@ MKTELLU_QC_AIRMASS_DIFF = Const('MKTELLU_QC_AIRMASS_DIFF', value=None,
                                              'between recovered and input '
                                              'airmass'))
 
+# define the sigma cut for tellu transmission model
+TELLU_TRANS_MODEL_SIG = Const('TELLU_TRANS_MODEL_SIG', value=None,
+                                dtype=float, source=__NAME__, group=cgroup,
+                                description=('define the sigma cut for tellu '
+                                             'transmission model'))
+
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
 # =============================================================================
@@ -4787,6 +4795,12 @@ PLOT_MKTELLU_WAVE_FLUX2 = Const('PLOT_MKTELLU_WAVE_FLUX2', value=False,
                                 active=False, group=cgroup,
                                 description='turn on the make tellu wave flux '
                                             'debug plot (single order)')
+
+# turn on the make tellu model plot
+PLOT_MKTELLU_MODEL = Const('PLOT_MKTELLU_MODEL', value=False,
+                                dtype=bool, source=__NAME__, user=True,
+                                active=False, group=cgroup,
+                                description='turn on the make tellu model plot')
 
 # turn on the fit tellu pca component debug plot (in loop)
 PLOT_FTELLU_PCA_COMP1 = Const('PLOT_FTELLU_PCA_COMP1', value=False,

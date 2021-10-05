@@ -4339,6 +4339,44 @@ def plot_mktellu_wave_flux(plotter: Plotter, graph: Graph,
         plotter.plotend(graph)
 
 
+def plot_mktellu_model(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Make Telluric Model plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    zero_res = kwargs['tprops']['ZERO_RES']
+    water_res = kwargs['tprops']['WATER_RES']
+    others_res = kwargs['tprops']['OTHERS_RES']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    # plot vectors flat
+    frame.plot(zero_res.ravel(), label='DC component')
+    frame.plot(water_res.ravel(), label='Water component')
+    frame.plot(others_res.ravel(), label='Dry component')
+    # set the limit
+    frame.set(xlabel='Pixel number', ylabel='Residual value',
+              ylim=[-5, 5])
+    # set the legend
+    frame.legend(loc=0)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 def plot_ftellu_pca_comp(plotter: Plotter, graph: Graph,
                          kwargs: Dict[str, Any]):
     """
@@ -4698,6 +4736,14 @@ sum_desc = ('Plot to show the measured transmission (and calcaulted SED) for'
 sum_mktellu_wave_flux = Graph('SUM_MKTELLU_WAVE_FLUX', kind='summary',
                               func=plot_mktellu_wave_flux,
                               figsize=(16, 10), dpi=150, description=sum_desc)
+# make telluric model graph instances
+mktellu_model = Graph('MKTELLU_MODEL', kind='debug', func=plot_mktellu_model)
+
+sum_desc = ('Plot to show the linearized vectors for the transmission model')
+sum_mktellu_model = Graph('SUM_MKTELLU_MODEL', kind='summary',
+                          func=plot_mktellu_model,
+                          figsize=(16, 10), dpi=150, description=sum_desc)
+
 # fit tellu grpah instances
 ftellu_pca_comp1 = Graph('FTELLU_PCA_COMP1', kind='debug',
                          func=plot_ftellu_pca_comp)
@@ -4728,6 +4774,7 @@ sum_mktemp_berv_cov = Graph('SUM_MKTEMP_BERV_COV', kind='summary',
                             dpi=150, description=sum_desc)
 # add to definitions
 definitions += [mktellu_wave_flux1, mktellu_wave_flux2, sum_mktellu_wave_flux,
+                mktellu_model, sum_mktellu_model,
                 ftellu_pca_comp1, ftellu_pca_comp2, ftellu_recon_spline1,
                 ftellu_recon_spline2, ftellu_wave_shift1, ftellu_wave_shift2,
                 ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso,
