@@ -114,16 +114,26 @@ def __main__(recipe, params):
     # set up plotting (no plotting before this) -- must be after setting
     #   night name
     recipe.plot.set_location(0)
-
+    # set observation directory (we have no info about filename)
+    obs_dir = 'other'
+    params.set(key='OBS_DIR', value='other', source=mainname)
     # ------------------------------------------------------------------
     # Load transmission files and header vectors
     # ------------------------------------------------------------------
     # load trans filenames
     transfiles = telluric.get_trans_files(params, None, fiber,
                                           database=telludbm)
+    # get trans file type
+    infiletype = drs_file.get_file_definition(params, 'TELLU_TRANS',
+                                              block_kind='red')
+    # get new copy of file definition
+    infile = infiletype.newcopy(params=params, fiber=fiber)
+    # set reference filename
+    infile.set_filename(transfiles[-1])
+    # read data
+    infile.read_file()
     # get cube and header vectors
     transcube, transtable = telluric.make_trans_cube(params, transfiles)
-
     # ------------------------------------------------------------------
     # Calculate the model
     # ------------------------------------------------------------------
@@ -145,8 +155,8 @@ def __main__(recipe, params):
     # plot model (summary)
     recipe.plot('SUM_MKTELLU_MODEL', tprops=tprops)
     # save model
-    model_file = telluric.mk_write_model(params, recipe, tprops, transtable,
-                                         fiber, qc_params)
+    model_file = telluric.mk_write_model(params, recipe, infile, tprops,
+                                         transtable, fiber, qc_params)
     # add to telluric database
     if passed:
         # copy the big cube median to the calibDB

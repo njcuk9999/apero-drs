@@ -223,28 +223,33 @@ def __main__(recipe, params):
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
                                        infile=infile, database=calibdbm)
-
+        # ------------------------------------------------------------------
+        # Get template file (if available)
+        # ------------------------------------------------------------------
+        tout = telluric.load_templates(params, header, objname, fiber)
+        template, template_props = tout
+        # ------------------------------------------------------------------
+        # Get barycentric corrections (BERV)
+        # ------------------------------------------------------------------
+        bprops = extract.get_berv(params, infile)
+        # ------------------------------------------------------------------
+        # Shift the template from master wave solution --> night wave solution
+        template = telluric.shift_template(params, recipe, image, template,
+                                           mprops, wprops, bprops)
         # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
-                                            fiber, rawfiles, combine)
+                                            fiber, rawfiles, combine,
+                                            template=template)
         # get variables out of tpreprops
         image1 = tpreprops['CORRECTED_E2DS']
         # ------------------------------------------------------------------
         # Normalize image by peak blaze
         # ------------------------------------------------------------------
         nargs = [image1, header, fiber]
-        image, nprops = telluric.normalise_by_pblaze(params, *nargs)
-        # ------------------------------------------------------------------
-        # Get barycentric corrections (BERV)
-        # ------------------------------------------------------------------
-        bprops = extract.get_berv(params, infile)
-        # ------------------------------------------------------------------
-        # Get template file (if available)
-        # ------------------------------------------------------------------
-        tout = telluric.load_templates(params, header, objname, fiber)
-        template, template_props = tout
+        image1, nprops = telluric.normalise_by_pblaze(params, *nargs)
+
         # ------------------------------------------------------------------
         # Calculate telluric absorption
         # ------------------------------------------------------------------

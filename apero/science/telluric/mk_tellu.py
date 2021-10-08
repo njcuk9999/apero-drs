@@ -18,6 +18,7 @@ from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core import math as mp
+from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 from apero.io import drs_table
 from apero.science.calib import wave
@@ -37,6 +38,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
+DrsRecipe = drs_recipe.DrsRecipe
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
@@ -117,7 +119,7 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     # get values from params
     sigma_cut = params['TELLU_TRANS_MODEL_SIG']
     # get the minimum number of trans files required
-    min_trans_files = len(transtable) // 10
+    min_trans_files = len(transtable) // 5
     # get vectors from table
     expo_water = transtable['EXPO_H2O']
     expo_others = transtable['EXPO_OTHERS']
@@ -141,6 +143,8 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     zero_residual = np.full_like(ref_trans, np.nan)
     expo_water_residual = np.full_like(ref_trans, np.nan)
     expo_others_residual = np.full_like(ref_trans, np.nan)
+    # rms_map = np.full_like(ref_trans, np.nan)
+    # num_map = np.full_like(ref_trans, np.nan)
     # loop around all orders
     for order_num in range(ref_trans.shape[0]):
         # print progress
@@ -162,7 +166,9 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
                 amp, recon = mp.linear_minimization(trans_slice, sample)
                 # work out the sigma between trans slice and recon
                 res = trans_slice - recon
-                sigma = res / mp.estimate_sigma(res)
+                est_sig = mp.estimate_sigma(res)
+                sigma = res / est_sig
+                num = np.sum(np.isfinite(trans_slice))
                 # re-calculate worst offender
                 worst_pos = np.nanargmax(sigma)
                 worst_offender = sigma[worst_pos]
@@ -171,12 +177,14 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
                     trans_slice[worst_pos] = np.nan
                 # else we are good - push values into output vectors
                 else:
+                    # num_map[order_num, ix] = num
+                    # rms_map[order_num, ix] = est_sig
                     zero_residual[order_num, ix] = amp[0]
                     expo_water_residual[order_num, ix] = amp[1]
                     expo_others_residual[order_num, ix] = amp[2]
                 # if we have less than the minimum number of points left
                 #   stop here
-                if np.sum(np.isfinite(trans_slice)) < min_trans_files:
+                if num < min_trans_files:
                     break
     # -------------------------------------------------------------------------
     # return e2ds shaped vectors in props
@@ -647,55 +655,59 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     return transfile
 
 
-def mk_write_model(params, recipe, tprops, transtable, fiber, qc_params):
-        # ------------------------------------------------------------------
-        # write the template file (TELLU_TEMP)
-        # ------------------------------------------------------------------
-        # get copy of instance of file
-        model_file = recipe.outputs['TRANS_MODEL'].newcopy(params=params,
-                                                           fiber=fiber)
-        # construct the filename from file instance
-        filename = model_file.basename.format(fiber)
-        model_file.construct_filename(filename=filename)
-        # ------------------------------------------------------------------
-        # add version
-        model_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-        # add dates
-        model_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-        model_file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-        # add process id
-        model_file.add_hkey('KW_PID', value=params['PID'])
-        # add output tag
-        model_file.add_hkey('KW_OUTPUT', value=model_file.name)
-        # add qc parameters
-        model_file.add_qckeys(qc_params)
-        # add constants
-        model_file.add_hkey('KW_MKMODEL_NFILES', value=tprops['N_TRANS_FILES'])
-        model_file.add_hkey('KW_MKMODEL_MIN_FILES',
-                            value=tprops['MIN_TRANS_FILES'])
-        model_file.add_hkey('KW_MKMODEL_SIGCUT', value=tprops['SIGMA_CUT'])
-        # set data
-        model_file.data = tprops['ZERO_RES']
-        # log that we are saving s1d table
-        WLOG(params, '', textentry('40-019-00029', args=[model_file.filename]))
-        # define multi lists
-        data_list = [tprops['WATER_RES'], tprops['OTHERS_RES'], transtable]
-        datatype_list = ['image', 'image', 'table']
-        name_list = ['ZERO_RES', 'H2O_RES', 'DRY_RES', 'TRANS_TABLE']
-        # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
-            data_list += [params.snapshot_table(recipe, drsfitsfile=model_file)]
-            name_list += ['PARAM_TABLE']
-            datatype_list += ['table']
-        # write multi
-        model_file.write_multi(data_list=data_list, name_list=name_list,
-                                  datatype_list=datatype_list,
-                                  block_kind=recipe.out_block_str,
-                                  runstring=recipe.runstring)
-        # add to output files (for indexing)
-        recipe.add_output_file(model_file)
-        # return the template file
-        return model_file
+def mk_write_model(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+                   tprops: ParamDict, transtable: drs_fits.Table, fiber: str,
+                   qc_params: list):
+    # ------------------------------------------------------------------
+    # write the template file (TELLU_TEMP)
+    # ------------------------------------------------------------------
+    # get copy of instance of file
+    model_file = recipe.outputs['TRANS_MODEL'].newcopy(params=params,
+                                                       fiber=fiber)
+    # construct the filename from file instance
+    filename = model_file.basename.format(fiber)
+    model_file.construct_filename(filename=filename)
+    # ------------------------------------------------------------------
+    # copy keys from input file
+    model_file.copy_original_keys(infile, exclude_groups='wave')
+    # add version
+    model_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    model_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    model_file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    model_file.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    model_file.add_hkey('KW_OUTPUT', value=model_file.name)
+    # add qc parameters
+    model_file.add_qckeys(qc_params)
+    # add constants
+    model_file.add_hkey('KW_MKMODEL_NFILES', value=tprops['N_TRANS_FILES'])
+    model_file.add_hkey('KW_MKMODEL_MIN_FILES',
+                        value=tprops['MIN_TRANS_FILES'])
+    model_file.add_hkey('KW_MKMODEL_SIGCUT', value=tprops['SIGMA_CUT'])
+    # set data
+    model_file.data = tprops['ZERO_RES']
+    # log that we are saving s1d table
+    WLOG(params, '', textentry('40-019-00053', args=[model_file.filename]))
+    # define multi lists
+    data_list = [tprops['WATER_RES'], tprops['OTHERS_RES'], transtable]
+    datatype_list = ['image', 'image', 'table']
+    name_list = ['ZERO_RES', 'H2O_RES', 'DRY_RES', 'TRANS_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=model_file)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
+    # write multi
+    model_file.write_multi(data_list=data_list, name_list=name_list,
+                           datatype_list=datatype_list,
+                           block_kind=recipe.out_block_str,
+                           runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(model_file)
+    # return the template file
+    return model_file
 
 
 # =============================================================================

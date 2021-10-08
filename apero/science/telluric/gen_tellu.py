@@ -15,7 +15,7 @@ from astropy.table import Table
 import numpy as np
 import os
 from scipy.optimize import curve_fit
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 import warnings
 
 from apero.base import base
@@ -116,6 +116,25 @@ def get_tellu_exclude_list(params: ParamDict,
     blacklist = pconst.DRS_OBJ_NAMES(blacklist)
     # return the whitelist
     return blacklist, blacklistfile
+
+
+def get_blaze_props(params, header, fiber) -> ParamDict:
+    # set function
+    func_name = display_func('get_blaze_props', __NAME__)
+    # load the blaze file for this fiber
+    bout = flat_blaze.get_blaze(params, header, fiber)
+    blaze_file, blaze_time, blaze = bout
+    # ----------------------------------------------------------------------
+    # parameter dictionary
+    nprops = ParamDict()
+    nprops['BLAZE'] = blaze
+    nprops['BLAZE_FILE'] = blaze_file
+    nprops['BLAZE_TIME'] = blaze_time
+    # set sources
+    keys = ['BLAZE', 'BLAZE_FILE', 'BLAZE_TIME']
+    nprops.set_sources(keys, func_name)
+    # return the normalised image and the properties
+    return nprops
 
 
 def normalise_by_pblaze(params, image, header, fiber, **kwargs):
@@ -315,7 +334,8 @@ def get_sp_linelists(params, **kwargs):
 # pre-cleaning functions
 # =============================================================================
 def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
-                   database: Union[TelluDatabase, None] = None, **kwargs):
+                   database: Union[TelluDatabase, None] = None,
+                   template: Optional[np.ndarray] = None, **kwargs):
     """
     Main telluric pre-cleaning functionality.
 
@@ -351,12 +371,12 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # set the function name
     func_name = __NAME__ + '.tellu_preclean()'
     # ----------------------------------------------------------------------
-    # look for precleaned file
-    loadprops = read_tellu_preclean(params, recipe, infile, fiber,
-                                    database=database)
-    # if precleaned load and return
-    if loadprops is not None:
-        return loadprops
+    # # look for precleaned file
+    # loadprops = read_tellu_preclean(params, recipe, infile, fiber,
+    #                                 database=database)
+    # # if precleaned load and return
+    # if loadprops is not None:
+    #     return loadprops
     # ----------------------------------------------------------------------
     # get parameters from parameter dictionary
     do_precleaning = pcheck(params, 'TELLUP_DO_PRECLEANING', 'do_precleaning',
@@ -534,6 +554,13 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     spectrum = image_e2ds.ravel()[flatkeep]
     spectrum_ini = image_e2ds_ini.ravel()[flatkeep]
     orders = orders.ravel()[flatkeep]
+    # deal with having a template
+    if template is not None:
+        template1 = np.array(template)
+        template2 = template1.ravel()[flatkeep]
+    else:
+        template1 = np.ones_like(wave_e2ds)
+        template2 = np.ones_like(wavemap)
     # ----------------------------------------------------------------------
     # load tapas in correct format
     spl_others, spl_water = load_tapas_spl(params, recipe, header,
@@ -624,7 +651,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                               ker_thres=ker_thres, wavestart=wavestart,
                               waveend=waveend, dvgrid=dvgrid)
         # divide spectrum by transmission
-        spectrum_tmp = spectrum / trans
+        spectrum_tmp = spectrum / (trans * template2)
         # ------------------------------------------------------------------
         # only keep valid pixels (non NaNs)
         valid = np.isfinite(spectrum_tmp)
@@ -876,12 +903,15 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 ccf_water_arr=ccf_water_iterations,
                 ccf_others_arr=ccf_others_iterations)
     # plot to show absorption spectrum
+    # TODO: add switch to change labels based on template = None
     recipe.plot('TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
-                thres=trans_thres, spectrum=spectrum, spectrum_ini=spectrum_ini,
+                thres=trans_thres, spectrum=spectrum/template2,
+                spectrum_ini=spectrum_ini/template2,
                 objname=infile.get_hkey('KW_OBJNAME', dtype=str),
                 clean_ohlines=clean_ohlines)
     recipe.plot('SUM_TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
-                thres=trans_thres, spectrum=spectrum, spectrum_ini=spectrum_ini,
+                thres=trans_thres, spectrum=spectrum/template2,
+                spectrum_ini=spectrum_ini/template2,
                 objname=infile.get_hkey('KW_OBJNAME', dtype=str),
                 clean_ohlines=clean_ohlines)
     # ----------------------------------------------------------------------
@@ -1095,7 +1125,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     # -------------------------------------------------------------------------
     # Plot the clean oh plot
     recipe.plot('TELLUP_CLEAN_OH', wave=wavemap, image=image,
-                skymodel0=sky_model0, sky_model=sky_model,
+                skymodel0=sky_model0, skymodel=sky_model,
                 mask_limits=mask_limits)
     # -------------------------------------------------------------------------
     # return the cleaned image and sky model
@@ -2048,6 +2078,38 @@ def get_transmission_files(params, header, fiber, database=None):
     return list(valid_filenames)
 
 
+def get_trans_model(params: ParamDict, header: drs_fits.Header, fiber: str,
+                    database: Optional[drs_database.TelluricDatabase] = None
+                    ) -> ParamDict:
+    # set function name
+    func_name = display_func('get_trans_model', __NAME__)
+    # get file definition
+    out_trans = drs_file.get_file_definition(params, 'TRANS_MODEL',
+                                             block_kind='red', fiber=fiber)
+    # get key
+    trans_key = out_trans.get_dbkey()
+    # log status
+    WLOG(params, '', textentry('40-019-00046', args=[trans_key]))
+    # load tellu file, header and abspaths
+    trans_model = load_tellu_file(params, trans_key, header, fiber=fiber,
+                                  n_entries=1, get_image=False,
+                                  database=database, return_filename=True)
+    # load extensions
+    exts = drs_fits.readfits(params, trans_model, getdata=True,
+                             fmt='fits-multi')
+    # push into parameter dictionary
+    tprops = ParamDict()
+    tprops['ZERO_RES'] = exts[1]
+    tprops['WATER_RES'] = exts[2]
+    tprops['OTHERS_RES'] = exts[3]
+    tprops['TRANS_TABLE'] = exts[4]
+    # set source
+    keys = ['ZERO_RES', 'WATER_RES', 'OTHERS_RES', 'TRANS_TABLE']
+    tprops.set_sources(keys, func_name)
+    # return all valid sorted in time
+    return tprops
+
+
 # =============================================================================
 # Tapas functions
 # =============================================================================
@@ -2295,7 +2357,7 @@ def _convolve_tapas(params, tapas_table, mprops, tellu_absorbers,
     return tapas_all_species
 
 
-def wave_to_wave(params, spectrum, wave1, wave2, reshape=False):
+def wave_to_wave(params, spectrum, wave1, wave2, reshape=False, splinek=5):
     """
     Shifts a "spectrum" at a given wavelength solution (map), "wave1", to
     another wavelength solution (map) "wave2"
@@ -2334,9 +2396,9 @@ def wave_to_wave(params, spectrum, wave1, wave2, reshape=False):
         if mp.nansum(g) > 6:
             # spline the spectrum
             spline = mp.iuv_spline(wave1[iord, g], spectrum[iord, g],
-                                   k=5, ext=1)
+                                   k=splinek, ext=1)
             # keep track of pixels affected by NaNs
-            splinemask = mp.iuv_spline(wave1[iord, :], g, k=5, ext=1)
+            splinemask = mp.iuv_spline(wave1[iord, :], g, k=1, ext=1)
             # spline the input onto the output
             output_spectrum[iord, :] = spline(wave2[iord, :])
             # find which pixels are not NaNs
@@ -2349,7 +2411,7 @@ def wave_to_wave(params, spectrum, wave1, wave2, reshape=False):
             #    that are not exactly one due to the interpolation scheme.
             #    We just set that >50% of the
             # flux comes from valid pixels
-            bad = (mask <= 0.5)
+            bad = (mask <= 0.9)
             # mask pixels affected by nan
             output_spectrum[iord, bad] = np.nan
     # return the filled output spectrum
