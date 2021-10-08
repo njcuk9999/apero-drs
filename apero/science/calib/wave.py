@@ -1525,20 +1525,43 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # Find cavity width now peak offsets have been found
     # -------------------------------------------------------------------------
-    # now we have valid numbering and best-guess WAVE_MEAS, we find the
-    #    cavity length
-    wavepeak = fpl_wave_meas * fpl_peak_num
-    cavity, _ = mp.robust_polyfit(fpl_wave_meas, wavepeak,
-                                  cavity_fit_degree, nsig_cut)
-    cavity = np.array(cavity)
-    # -------------------------------------------------------------------------
-    # if fit_cavity is False and a file exists we load this file
-    # (otherwise we save this cavity file later)
-    if not fit_cavity:
-        # deal with having a cavity update file only if it existed
+    # There are 3 scenarios:
+    #  1. This is a master night AB, we do not want an achromatic fit and all
+    #      coefficients should be fitted
+    #  2. This is a non-master night AB, we must have an input (the master
+    #      night solution) cavity and only the DC component (the achromatic
+    #      term) will be adjusted
+    #  3. We want to fit only the achromatic but don't provide a cavity.
+    #     This is bad, we cannot change the achromatic term only if we don't
+    #     have the chromatic terms. This produces and error
+
+    if not fit_achromatic and fit_cavity:
+        #  Scenario 1. This is a master night AB, we do not want an achromatic
+        #              fit and all  coefficients should be fitted
+        # now we have valid numbering and best-guess WAVE_MEAS, we find the
+        #    cavity length
+        wavepeak = fpl_wave_meas * fpl_peak_num
+        cavity, _ = mp.robust_polyfit(fpl_wave_meas, wavepeak,
+                                      cavity_fit_degree, nsig_cut)
+        cavity = np.array(cavity)
+    else:
+        # if we have a cavity polynomial supplied as input use it here
         if cavity_update is not None:
-            # update the cavity array
+            #  Scenario 2. This is a non-master night AB, we must have an
+            #              input (the master night solution) cavity and only
+            #              the DC component (the achromatic term) will be
+            #              adjusted update the cavity array
             cavity = np.array(cavity_update)
+        # else we cannot continue (this should not happen)
+        else:
+            #  Scenario 3. We want to fit only the achromatic but don't
+            #              provide a cavity.  This is bad, we cannot change
+            #              the achromatic term only if we don't have the
+            #              chromatic terms. This produces and error
+            # TODO: move to language database
+            emsg = 'Cannot have fit_achromatic=True without cavity_update input'
+            WLOG(params, 'error', emsg)
+            cavity = None
     # -------------------------------------------------------------------------
     # copy the cavity fit
     cavity0 = np.array(cavity)
