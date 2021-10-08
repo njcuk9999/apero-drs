@@ -920,6 +920,8 @@ apero_mk_model.recipe_kind = 'tellu-hotstar'
 apero_mk_model.set_outputs(TRANS_MODEL=files.out_tellu_model)
 apero_mk_model.set_debug_plots('MKTELLU_MODEL')
 apero_mk_model.set_summary_plots('SUM_MKTELLU_MODEL')
+apero_mk_model.set_kwarg(**add_db)
+apero_mk_model.set_kwarg(**plot)
 apero_mk_model.group_func = grouping.no_group
 apero_mk_model.group_column = None
 # add to recipe
@@ -1287,35 +1289,37 @@ full_seq.add(apero_mk_tellu, name='MKTELLU1', recipe_kind='tellu-hotstar',
              filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
                                       'POLAR_DARK']))
-full_seq.add(apero_fit_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
+full_seq.add(apero_mk_model, name='MKTMOD1', recipe_kind='tellu-hotstar')
+full_seq.add(apero_fit_tellu, name='MKTFIT', recipe_kind='tellu-hotstar',
              files=[files.out_ext_e2dsff], fiber='AB',
              filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
                                       'POLAR_DARK']))
-full_seq.add(apero_mk_template, name='MKTELLU3',
+full_seq.add(apero_mk_template, name='MKTEMP',
              fiber='AB', template_required=True, recipe_kind='tellu-hotstar',
              arguments=dict(objname='TELLURIC_TARGETS'),
              filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
                                       'POLAR_DARK']))
-full_seq.add(apero_mk_tellu, name='MKTELLU4', files=[files.out_ext_e2dsff],
+full_seq.add(apero_mk_tellu, name='MKTELLU2', files=[files.out_ext_e2dsff],
              fiber='AB', template_required=True, recipe_kind='tellu-hotstar',
              filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
                                       'POLAR_DARK']))
-full_seq.add(apero_fit_tellu, name='FTELLU1', recipe_kind='tellu-science',
+full_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
+full_seq.add(apero_fit_tellu, name='FTFIT1', recipe_kind='tellu-science',
              files=[files.out_ext_e2dsff], fiber='AB',
              filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
                                       'POLAR_DARK']))
-full_seq.add(apero_mk_template, name='FTELLU2',
+full_seq.add(apero_mk_template, name='FTTEMP',
              fiber='AB',
              arguments=dict(objname='SCIENCE_TARGETS'),
              filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
                                       'POLAR_DARK']),
              template_required=True, recipe_kind='tellu-science')
-full_seq.add(apero_fit_tellu, name='FTELLU3',
+full_seq.add(apero_fit_tellu, name='FTFIT2',
              files=[files.out_ext_e2dsff], fiber='AB',
              filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
@@ -1406,35 +1410,38 @@ limited_seq.add(apero_mk_tellu, name='MKTELLU1', recipe_kind='tellu-hotstar',
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                          'POLAR_FP']))
-limited_seq.add(apero_fit_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
+limited_seq.add(apero_mk_model, name='MKTMOD1', recipe_kind='tellu-hotstar')
+limited_seq.add(apero_fit_tellu, name='MKTFIT', recipe_kind='tellu-hotstar',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                          'POLAR_FP']))
-limited_seq.add(apero_mk_template, name='MKTELLU3', recipe_kind='tellu-hotstar',
+limited_seq.add(apero_mk_template, name='MKTEMP', recipe_kind='tellu-hotstar',
                 fiber='AB', arguments=dict(objname='TELLURIC_TARGETS'),
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                          'POLAR_FP']),
                 template_required=True)
-limited_seq.add(apero_mk_tellu, name='MKTELLU4', recipe_kind='tellu-hotstar',
+limited_seq.add(apero_mk_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                          'POLAR_FP']),
                 template_required=True)
+limited_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
+
 limited_seq.add(apero_fit_tellu, name='FTELLU1', recipe_kind='tellu-science',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                          'POLAR_FP']))
-limited_seq.add(apero_mk_template, name='FTELLU2', recipe_kind='tellu-science',
+limited_seq.add(apero_mk_template, name='FTTEMP', recipe_kind='tellu-science',
                 fiber='AB', arguments=dict(objname='SCIENCE_TARGETS'),
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                          'POLAR_FP']),
                 template_required=True)
-limited_seq.add(apero_fit_tellu, name='FTELLU3', recipe_kind='tellu-science',
+limited_seq.add(apero_fit_tellu, name='FTELLU2', recipe_kind='tellu-science',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
@@ -1561,14 +1568,14 @@ tellu_seq.add(apero_mk_tellu, name='MKTELLU1', recipe_kind='tellu-hotstar',
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                        'POLAR_FP']))
-
-tellu_seq.add(apero_fit_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
+tellu_seq.add(apero_mk_model, name='MKTMOD1', recipe_kind='tellu-hotstar')
+tellu_seq.add(apero_fit_tellu, name='MKTFIT', recipe_kind='tellu-hotstar',
               files=[files.out_ext_e2dsff], fiber='AB',
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                        'POLAR_FP']))
 
-tellu_seq.add(apero_mk_template, name='MKTELLU3', recipe_kind='tellu-hotstar',
+tellu_seq.add(apero_mk_template, name='MKTEMP', recipe_kind='tellu-hotstar',
               fiber='AB', files=[files.out_ext_e2dsff],
               arguments=dict(objname='TELLURIC_TARGETS'),
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
@@ -1576,12 +1583,13 @@ tellu_seq.add(apero_mk_template, name='MKTELLU3', recipe_kind='tellu-hotstar',
                                        'POLAR_FP']),
               template_required=True)
 
-tellu_seq.add(apero_mk_tellu, name='MKTELLU4', recipe_kind='tellu-hotstar',
+tellu_seq.add(apero_mk_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
               fiber='AB', files=[files.out_ext_e2dsff],
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                        'POLAR_FP']),
               template_required=True)
+tellu_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
 
 # post processing
 tellu_seq.add(apero_postprocess, files=[files.pp_file], name='TELLPOST',
@@ -1614,14 +1622,14 @@ science_seq.add(apero_fit_tellu, name='FTELLU1', recipe_kind='tellu-science',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                          'POLAR_FP']))
 
-science_seq.add(apero_mk_template, name='FTELLU2', fiber='AB',
+science_seq.add(apero_mk_template, name='FTTEMP', fiber='AB',
                 recipe_kind='tellu-science',
                 arguments=dict(objname='SCIENCE_TARGETS'),
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                          'POLAR_FP']),
                 template_required=True)
-science_seq.add(apero_fit_tellu, name='FTELLU3', recipe_kind='tellu-science',
+science_seq.add(apero_fit_tellu, name='FTELLU2', recipe_kind='tellu-science',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
