@@ -252,6 +252,11 @@ def __main__(recipe, params):
             # -----------------------------------------------------------------
             # Calculate the wave solution for master fiber
             # master fiber + master wave setup
+            # Master night AB -> we fit all coefficients:
+            #    fit_cavity = True,
+            #    fit_achromatic = False
+            #    (the fact that we fit all coefficients implies that the
+            #     achromatic terms if also adjusted)
             fit_cavity = True
             fit_achromatic = False
             # calculate wave solution
@@ -298,6 +303,8 @@ def __main__(recipe, params):
         # Calculate wave solution for other fibers
         # =================================================================
         # other fiber + master wave setup
+        # Master night A, B and C (not AB) -> we force the coefficients to
+        # be the ones found with AB, fit_cavity = False, fit_achromatic = False
         fit_cavity = False
         fit_achromatic = False
         # get solution for other fibers and save all in a list of param dicts
