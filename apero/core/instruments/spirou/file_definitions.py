@@ -1049,7 +1049,7 @@ out_tellu_trans = drs_finput('TELLU_TRANS', hkeys=dict(KW_OUTPUT='TELLU_TRANS'),
 out_tellu_model = drs_finput('TRANS_MODEL', hkeys=dict(KW_OUTPUT='TRANS_MODEL'),
                              fibers=['AB', 'A', 'B'], filetype='.fits',
                              basename = 'trans_model_{0}', # add fiber manually
-                             dbname='telluric', dbkey='TELLU_TAPAS',
+                             dbname='telluric', dbkey='TELLU_MODEL',
                              outfunc=out.set_file)
 
 # add make_telluric outputs to output fileset
