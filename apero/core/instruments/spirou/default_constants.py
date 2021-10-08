@@ -1203,7 +1203,7 @@ THERMAL_ALWAYS_EXTRACT.value = False
 # define the type of file to use for wave solution (currently allowed are
 #    'E2DS' or 'E2DSFF'
 THERMAL_EXTRACT_TYPE = THERMAL_EXTRACT_TYPE.copy(__NAME__)
-THERMAL_EXTRACT_TYPE.value = 'E2DSFF'
+THERMAL_EXTRACT_TYPE.value = 'E2DS'
 
 # define DPRTYPEs we need to correct thermal background using
 #    telluric absorption (TAPAS)  (must be a string list separated by a comma)
@@ -2001,7 +2001,7 @@ TELLUP_DO_PRECLEANING.value = True
 
 # width in km/s for the ccf scan to determine the abso in pre-cleaning
 TELLUP_CCF_SCAN_RANGE = TELLUP_CCF_SCAN_RANGE.copy(__NAME__)
-TELLUP_CCF_SCAN_RANGE.value = 20
+TELLUP_CCF_SCAN_RANGE.value = 50
 
 # define whether to clean OH lines
 TELLUP_CLEAN_OH_LINES = TELLUP_CLEAN_OH_LINES.copy(__NAME__)
