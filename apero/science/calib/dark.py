@@ -18,7 +18,7 @@ from apero.core import constants
 from apero.core import math as mp
 from apero import lang
 from apero.core.core import drs_log, drs_file
-from apero.core.utils import drs_startup
+from apero.core.utils import drs_utils
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.io import drs_image
@@ -190,6 +190,8 @@ def construct_dark_table(params, filenames, **kwargs):
     # get parameters from params
     time_thres = pcheck(params, 'DARK_MASTER_MATCH_TIME', 'time_thres', kwargs,
                         func_name)
+    max_num_files = pcheck(params, 'DARK_MASTER_MAX_FILES', 'max_num', kwargs,
+                           func_name)
     # define storage for table columns
     dark_time, dark_exp, dark_pp_version = [], [], []
     basenames, obs_dirs, dprtypes = [], [], []
@@ -228,6 +230,22 @@ def construct_dark_table(params, filenames, **kwargs):
         dark_cass_temp.append(float(cass_temp))
         dark_humidity.append(float(humidity))
         dprtypes.append(str(dprtype))
+
+    # ----------------------------------------------------------------------
+    # Only use a certain number of files to limit time taken
+    # ----------------------------------------------------------------------
+    time_mask = drs_utils.uniform_time_list(dark_time, max_num_files)
+    # mask all lists (as numpy arrays)
+    dark_time = np.array(dark_time)[time_mask]
+    dark_exp = np.array(dark_exp)[time_mask]
+    dark_pp_version = np.arary(dark_pp_version)[time_mask]
+    filenames = np.array(filenames)[time_mask]
+    basenames = np.array(basenames)[time_mask]
+    obs_dirs = np.array(obs_dirs)[time_mask]
+    dprtypes = np.array(dprtypes)[time_mask]
+    dark_wt_temp = np.array(dark_wt_temp)[time_mask]
+    dark_cass_temp = np.array(dark_cass_temp)[time_mask]
+    dark_humidity = np.array(dark_humidity)[time_mask]
 
     # ----------------------------------------------------------------------
     # match files by date

@@ -472,6 +472,10 @@ DARK_MASTER_MATCH_TIME.value = 2
 DARK_MASTER_MED_SIZE = DARK_MASTER_MED_SIZE.copy(__NAME__)
 DARK_MASTER_MED_SIZE.value = 4
 
+# define the maximum number of files to use in the dark master
+DARK_MASTER_MAX_FILES = DARK_MASTER_MAX_FILES.copy(__NAME__)
+DARK_MASTER_MAX_FILES.value = 100
+
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
 # =============================================================================
@@ -760,6 +764,10 @@ FP_MASTER_PERCENT_THRES.value = 90.0
 #     x or y when doing the shape master fp linear transform
 SHAPE_QC_LTRANS_RES_THRES = SHAPE_QC_LTRANS_RES_THRES.copy(__NAME__)
 SHAPE_QC_LTRANS_RES_THRES.value = 0.1
+
+# define the maximum number of files to use in the shape master
+SHAPE_MASTER_MAX_FILES = SHAPE_MASTER_MAX_FILES.copy(__NAME__)
+SHAPE_MASTER_MAX_FILES.value = 100
 
 #  Define the percentile which defines a true FP peak [0-100]
 SHAPE_MASTER_VALIDFP_PERCENTILE = SHAPE_MASTER_VALIDFP_PERCENTILE.copy(__NAME__)

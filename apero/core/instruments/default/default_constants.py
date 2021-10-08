@@ -65,7 +65,7 @@ __all__ = [
     'IMAGE_Y_RED_HIGH', 'DARK_CUTLIMIT', 'QC_MAX_DARKLEVEL',
     'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
     'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY', 'ALLOWED_DARK_TYPES',
-    'DARK_MASTER_MATCH_TIME', 'DARK_MASTER_MED_SIZE',
+    'DARK_MASTER_MATCH_TIME', 'DARK_MASTER_MED_SIZE', 'DARK_MASTER_MAX_FILES',
     # badpix constants
     'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
     'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
@@ -96,7 +96,8 @@ __all__ = [
     'SHAPE_MASTER_VALIDFP_PERCENTILE', 'SHAPE_MASTER_VALIDFP_THRESHOLD',
     'SHAPE_MASTER_LINTRANS_NITER', 'SHAPE_MASTER_FP_INI_BOXSIZE',
     'SHAPE_MASTER_FP_SMALL_BOXSIZE', 'SHAPE_FP_MASTER_MIN_IN_GROUP',
-    'SHAPE_MASTER_FIBER', 'SHAPE_NUM_ITERATIONS', 'SHAPE_ORDER_WIDTH',
+    'SHAPE_MASTER_FIBER', 'SHAPE_MASTER_MAX_FILES',
+    'SHAPE_NUM_ITERATIONS', 'SHAPE_ORDER_WIDTH',
     'SHAPE_NSECTIONS', 'SHAPE_SIGMACLIP_MAX', 'SHAPE_MASTER_DX_RMS_QC',
     'SHAPE_LARGE_ANGLE_MIN', 'SHAPE_LARGE_ANGLE_MAX',
     'SHAPE_SMALL_ANGLE_MIN', 'SHAPE_SMALL_ANGLE_MAX',
@@ -1079,6 +1080,12 @@ DARK_MASTER_MED_SIZE = Const('DARK_MASTER_MED_SIZE', value=None, dtype=int,
                              source=__NAME__, group=cgroup,
                              description='median filter size for dark master')
 
+# define the maximum number of files to use in the dark master
+DARK_MASTER_MAX_FILES = Const('DARK_MASTER_MAX_FILES', value=None, dtype=int,
+                             source=__NAME__, group=cgroup,
+                             description='define the maximum number of files '
+                                         'to use in the dark master')
+
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
 # =============================================================================
@@ -1522,6 +1529,13 @@ SHAPE_QC_LTRANS_RES_THRES = Const('SHAPE_QC_LTRANS_RES_THRES', value=None,
                                                'shift in x or y when doing the '
                                                'shape master fp linear '
                                                'transform'))
+
+# define the maximum number of files to use in the shape master
+SHAPE_MASTER_MAX_FILES =  Const('SHAPE_MASTER_MAX_FILES', value=None,
+                                  dtype=int, source=__NAME__, group=cgroup,
+                                  description=('define the maximum number of '
+                                               'files to use in the shape '
+                                               'master'))
 
 #  Define the percentile which defines a true FP peak [0-100]
 SHAPE_MASTER_VALIDFP_PERCENTILE = Const('SHAPE_MASTER_VALIDFP_PERCENTILE',
