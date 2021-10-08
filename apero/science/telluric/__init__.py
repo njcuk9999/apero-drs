@@ -23,6 +23,8 @@ __all__ = ['calculate_tellu_res_absorption', 'get_tellu_exclude_list',
 # =============================================================================
 calc_recon_and_correct = fit_tellu.calc_recon_and_correct
 
+calc_res_model = fit_tellu.calc_res_model
+
 calculate_tellu_res_absorption = mk_tellu.calculate_tellu_res_absorption
 
 correct_other_science = fit_tellu.correct_other_science
@@ -47,7 +49,11 @@ get_trans_files = gen_tellu.get_transmission_files
 
 get_tellu_objs = gen_tellu.get_tellu_objs
 
+get_trans_model = gen_tellu.get_trans_model
+
 get_tellu_include_list = gen_tellu.get_tellu_include_list
+
+get_blaze_props = gen_tellu.get_blaze_props
 
 list_current_templates = template_tellu.list_current_templates
 
@@ -89,7 +95,7 @@ tellu_preclean = gen_tellu.tellu_preclean
 
 normalise_by_pblaze = gen_tellu.normalise_by_pblaze
 
-shift_all_to_frame = fit_tellu.shift_all_to_frame
+shift_template = fit_tellu.shift_template
 
 # =============================================================================
 # End of code

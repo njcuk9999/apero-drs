@@ -11,6 +11,7 @@ import numpy as np
 import os
 import time
 import warnings
+from typing import Optional
 
 from apero.base import base
 from apero.core import constants
@@ -20,6 +21,7 @@ from apero.core.core import drs_log, drs_file
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.io import drs_table
+from apero.core.utils import drs_recipe
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import extract
@@ -39,6 +41,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
+DrsRecipe = drs_recipe.DrsRecipe
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
@@ -291,6 +294,91 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     # ----------------------------------------------------------------------
     # return props
     return props
+
+
+def shift_template(params: ParamDict, recipe: DrsRecipe,
+                   image: Optional[np.ndarray],
+                   e2dsimage: Optional[np.ndarray],
+                   mprops: ParamDict, wprops: ParamDict, bprops: ParamDict,
+                   **kwargs):
+    # set function name
+    func_name = display_func('shift_template', __NAME__)
+
+    # ------------------------------------------------------------------
+    # get constants from params/kwargs
+    # ------------------------------------------------------------------
+    # fit_keep_num = pcheck(params, 'FTELLU_FIT_KEEP_NUM', 'fit_keep_num',
+    #                       kwargs, func_name)
+    # ------------------------------------------------------------------
+    # get data from property dictionaries
+    # ------------------------------------------------------------------
+    # Get the Barycentric correction from berv props
+    dv = bprops['USE_BERV']
+    # deal with bad berv (nan or None)
+    if dv in [np.nan, None] or not isinstance(dv, (int, float)):
+        eargs = [dv, func_name]
+        WLOG(params, 'error', textentry('09-016-00004', args=eargs))
+    # Get the master wavemap from master wave props
+    masterwavemap = mprops['WAVEMAP']
+    masterwavefile = os.path.basename(mprops['WAVEFILE'])
+    # Get the current wavemap from wave props
+    wavemap = wprops['WAVEMAP']
+    wavefile = os.path.basename(wprops['WAVEFILE'])
+    # ------------------------------------------------------------------
+    # Interpolate at shifted wavelengths (if we have a e2dsimage)
+    # ------------------------------------------------------------------
+    if e2dsimage is not None:
+        # Log that we are shifting the template
+        WLOG(params, '', textentry('40-019-00017'))
+        # set up storage for template
+        #e2dsimage2 = np.zeros(np.product(e2dsimage.shape))
+        # ydim, xdim = e2dsimage.shape
+        # # loop around orders
+        # for order_num in range(ydim):
+        #     # find good (not NaN) pixels
+        #     keep = np.isfinite(e2dsimage[order_num, :])
+        #     # if we have enough values spline them
+        #     if mp.nansum(keep) > fit_keep_num:
+        #         # define keep wave
+        #         keepwave = masterwavemap[order_num, keep]
+        #         # define keep temp
+        #         keeptemp = e2dsimage[order_num, keep]
+        #         # calculate interpolation for keep temp at keep wave
+        #         spline = mp.iuv_spline(keepwave, keeptemp, ext=3, k=1)
+        #
+        #         waveshift = masterwavemap[order_num, :] * dvshift
+        #         # interpolate at shifted wavelength
+        #         start = order_num * xdim
+        #         end = order_num * xdim + xdim
+        #         e2dsimage2[start:end] = spline(waveshift)
+
+
+        # interpolate at shifted values
+        dvshift = mp.relativistic_waveshift(dv, units='km/s')
+        # ------------------------------------------------------------------
+        # Shift the e2ds to correct wave frame
+        # ------------------------------------------------------------------
+        # log the shifting of PCA components
+        wargs = [masterwavefile, wavefile]
+        WLOG(params, '', textentry('40-019-00021', args=wargs))
+        # shift template
+        e2dsimage2 = gen_tellu.wave_to_wave(params, e2dsimage,
+                                            masterwavemap / dvshift,
+                                            wavemap, reshape=True)
+
+        # debug plot - reconstructed spline (in loop)
+        recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
+                    template=e2dsimage2.ravel(), order=None)
+        # debug plot - reconstructed spline (selected order)
+        recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
+                    template=e2dsimage2.ravel(),
+                    order=params['FTELLU_SPLOT_ORDER'])
+
+    else:
+        e2dsimage2 = None
+
+    # return the updated e2ds (if present)
+    return e2dsimage2
 
 
 def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
@@ -737,10 +825,119 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     return props
 
 
+def calc_res_model(params, image, image1, trans_props, tpreprops,
+                   mprops, wprops):
+        """
+        Calculate the residual model and apply it to the image
+
+        :param params:
+        :param recipe:
+        :param image1:
+        :param trans_props:
+        :param tpreprops:
+        :param mprops:
+        :param wprops:
+        :param bprops:
+        :return:
+        """
+        # set function name
+        func_name = display_func('calc_res_model', __NAME__)
+        # get vectors from transmission model
+        zero_res = trans_props['ZERO_RES']
+        water_res = trans_props['WATER_RES']
+        others_res = trans_props['OTHERS_RES']
+        # get exponent values for this observation from pre-cleaning
+        expo_water = tpreprops['EXPO_WATER']
+        expo_others = tpreprops['EXPO_OTHERS']
+
+        # calculate model for predicted residuals (in master frame)
+        pwater = expo_water * water_res
+        pothers =  expo_others * others_res
+        res_model = np.exp(zero_res + pwater + pothers)
+
+        # shift model to image frame
+        res_model2 = gen_tellu.wave_to_wave(params, res_model,
+                                            mprops['WAVEMAP'],
+                                            wprops['WAVEMAP'],
+                                            splinek=1)
+
+        # TODO: add plot
+        #      - model
+        #      - image / model
+        #      - image
+        #      - recon_abso
+
+        # ------------------------------------------------------------------
+        # Calculate reconstructed absorption + correct E2DS file
+        # ------------------------------------------------------------------
+        # spectrum is the pre-cleaned image divided by the residual model
+        sp_out = image1 / res_model2
+        # recon is the absorption model from pre-cleaning multipled by the
+        #    residual model
+        recon_abso = tpreprops['ABSO_E2DS'] * res_model2
+        # ------------------------------------------------------------------
+        # Plot wavelength vs vectors
+        # ------------------------------------------------------------------
+        if False:
+            import matplotlib; matplotlib.use('TkAgg'); import matplotlib.pyplot as plt
+
+            plt.close()
+            fig, frames = plt.subplots(ncols=1, nrows=2, sharex='all')
+            frame1, frame2 = frames[0], frames[1]
+
+            for order_num in range(49):
+                wavemap = wprops['WAVEMAP'][order_num]
+                flat_image = image[order_num] / np.nanmedian(image)
+                flat_image1 = image1[order_num] / np.nanmedian(image)
+
+                flat_sp_out = sp_out[order_num] / np.nanmedian(image)
+                flat_abso = tpreprops['ABSO_E2DS'][order_num]
+
+                flat_res_model = res_model2[order_num]
+                flat_res_model[np.isnan(flat_abso)] = np.nan
+
+                flat_recon = recon_abso[order_num]
+                frame1.plot(wavemap, flat_image, color='k', label='e2ds image', alpha=0.25)
+                frame1.plot(wavemap, flat_image1, color='r', label='precleaned_image')
+                frame1.plot(wavemap, flat_sp_out, color='g', label='precleaned_image/res_model')
+
+
+                frame2.plot(wavemap, flat_res_model, color='orange', label='res_model', alpha=0.5)
+                frame2.plot(wavemap, flat_abso, color='b', label='abso_e2ds', alpha=0.5)
+                frame2.plot(wavemap, flat_recon, color='c', label='recon=res_model*abso_e2ds', alpha=0.5)
+
+
+            for frame in frames:
+                rawh, rawl = frame.get_legend_handles_labels()
+                labels, handles = [], []
+                for it in range(len(rawl)):
+                    if rawl[it] not in labels:
+                        labels.append(rawl[it])
+                        handles.append(rawh[it])
+                frame.legend(handles, labels, loc=0)
+                frame.set(xlabel='Wavelength [nm]', ylabel='Normalized flux')
+
+            plt.show()
+
+        # debug plot
+
+        # summary plot
+
+
+        # push into parameter dictionary
+        cprops = ParamDict()
+        cprops['CORRECTED_SP'] = sp_out
+        cprops['RECON_ABSO'] = recon_abso
+
+        # add keys
+        cprops.set_sources(['CORRECTED_SP', 'RECON_ABSO'], func_name)
+
+        return cprops
+
+
 def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
-                          combine, pca_props, sprops, qc_params,
-                          template_props, tpreprops, nprops,
-                          database=None):
+                          combine, qc_params, template_props, tpreprops,
+                          trans_props, database=None):
     # get the header
     header = infile.get_header()
     # ------------------------------------------------------------------
@@ -770,7 +967,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # corrected data is just input data / recon
     # recon here was multiplied by the blazeAB so this needs to be taken into
     #   account again by multipling image by blazeAB (from nprops)
-    scorr = image * nprops['BLAZE'] / cprops['RECON_ABSO_SP']
+    scorr = image / cprops['RECON_ABSO']
     # ------------------------------------------------------------------
     # fake nprop dict
     nprops = dict()
@@ -789,7 +986,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # Save corrected E2DS to file
     # ------------------------------------------------------------------
     fargs = [fiber_infile, rawfiles, fiber, combine, nprops, wprops,
-             pca_props, sprops, cprops, qc_params, template_props, tpreprops]
+             trans_props, cprops, qc_params, template_props, tpreprops]
     fkwargs = dict(CORRECTED_SP=scorr)
     corrfile = fit_tellu_write_corrected(params, recipe, *fargs, **fkwargs)
     # ------------------------------------------------------------------
@@ -860,40 +1057,16 @@ def fit_tellu_quality_control(params, infile, tpreprops, **kwargs):
     return qc_params, passed
 
 
-def fit_tellu_summary(recipe, it, params, qc_params, pca_props, sprops,
-                      cprops, fiber):
+def fit_tellu_summary(recipe, it, params, qc_params, tpreprops, fiber):
     # add qc params (fiber specific)
     recipe.plot.add_qc_params(qc_params, fiber=fiber)
     # add stats
     recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
-    recipe.plot.add_stat('KW_FTELLU_NPC', value=pca_props['NPC'])
-    recipe.plot.add_stat('KW_FTELLU_ADD_DPC',
-                         value=pca_props['ADD_DERIV_PC'])
-    recipe.plot.add_stat('KW_FTELLU_FIT_DPC',
-                         value=pca_props['FIT_DERIV_PC'])
-    recipe.plot.add_stat('KW_FTELLU_ABSO_SRC',
-                         value=pca_props['ABSO_SOURCE'])
-    recipe.plot.add_stat('KW_FTELLU_FIT_KEEP_NUM',
-                         value=sprops['FIT_KEEP_NUM'])
-    recipe.plot.add_stat('KW_FTELLU_FIT_MIN_TRANS',
-                         value=cprops['FIT_MIN_TRANS'])
-    recipe.plot.add_stat('KW_FTELLU_LAMBDA_MIN',
-                         value=cprops['LAMBDA_MIN'])
-    recipe.plot.add_stat('KW_FTELLU_LAMBDA_MAX',
-                         value=cprops['LAMBDA_MAX'])
-    recipe.plot.add_stat('KW_FTELLU_KERN_VSINI',
-                         value=cprops['KERNEL_VSINI'])
-    recipe.plot.add_stat('KW_FTELLU_IM_PX_SIZE',
-                         value=cprops['IMAGE_PIXEL_SIZE'])
-    recipe.plot.add_stat('KW_FTELLU_FIT_ITERS',
-                         value=cprops['FIT_ITERATIONS'])
-    recipe.plot.add_stat('KW_FTELLU_RECON_LIM',
-                         value=cprops['RECON_LIMIT'])
-    recipe.plot.add_stat('KW_MKTELL_THRES_TFIT',
-                         value=cprops['THRES_TRANSFIT'])
-    recipe.plot.add_stat('KW_MKTELL_TRANS_FIT_UPPER_BAD',
-                         value=cprops['TRANS_FIT_UPPER_BAD'])
+    recipe.plot.add_stat('KW_TELLUP_EXPO_WATER',
+                         value=tpreprops['EXPO_WATER'])
+    recipe.plot.add_stat('KW_TELLUP_EXPO_OTHERS',
+                         value=tpreprops['EXPO_OTHERS'])
     # construct summary
     recipe.plot.summary_document(it)
 
@@ -902,28 +1075,16 @@ def fit_tellu_summary(recipe, it, params, qc_params, pca_props, sprops,
 # Write functions
 # =============================================================================
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
-                              nprops, wprops, pca_props, sprops, cprops,
+                              nprops, wprops, trans_props, cprops,
                               qc_params, template_props, tpreprops, **kwargs):
     func_name = __NAME__ + '.fit_tellu_write_corrected()'
-    # get parameters from params
-    abso_prefix_kws = pcheck(params, 'KW_FTELLU_ABSO_PREFIX', 'abso_prefix_kws',
-                             kwargs, func_name)
-    npc = pca_props['NPC']
-    add_deriv_pc = pca_props['ADD_DERIV_PC']
     # get parameters from cprops
     sp_out = kwargs.get('CORRECTED_SP', cprops['CORRECTED_SP'])
-    amps_abso_t = cprops['AMPS_ABSO_TOTAL']
-    tau_molecules = cprops['TAU_MOLECULES']
-
     # ------------------------------------------------------------------
-    # Set up fit_tellu trans table
+    # Set fit_tellu trans table
     # ------------------------------------------------------------------
-    columns = ['TRANS_FILE', 'EXPO_H2O', 'EXPO_OTHERS']
-    values = [pca_props['TRANS_FILE_USED'],
-              pca_props['TRANS_FILE_EH2O'],
-              pca_props['TRANS_FILE_EOTR']]
     # construct table
-    trans_table = drs_table.make_table(params, columns=columns, values=values)
+    trans_table = trans_props['TRANS_TABLE']
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     corrfile = recipe.outputs['TELLU_OBJ'].newcopy(params=params, fiber=fiber)
@@ -957,23 +1118,6 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     # ----------------------------------------------------------------------
     # add qc parameters
     corrfile.add_qckeys(qc_params)
-    # ----------------------------------------------------------------------
-    # add telluric constants used
-    corrfile.add_hkey('KW_FTELLU_NPC', value=npc)
-    corrfile.add_hkey('KW_FTELLU_ADD_DPC', value=add_deriv_pc)
-    corrfile.add_hkey('KW_FTELLU_FIT_DPC', value=pca_props['FIT_DERIV_PC'])
-    corrfile.add_hkey('KW_FTELLU_ABSO_SRC', value=pca_props['ABSO_SOURCE'])
-    corrfile.add_hkey('KW_FTELLU_FIT_KEEP_NUM', value=sprops['FIT_KEEP_NUM'])
-    corrfile.add_hkey('KW_FTELLU_FIT_MIN_TRANS', value=cprops['FIT_MIN_TRANS'])
-    corrfile.add_hkey('KW_FTELLU_LAMBDA_MIN', value=cprops['LAMBDA_MIN'])
-    corrfile.add_hkey('KW_FTELLU_LAMBDA_MAX', value=cprops['LAMBDA_MAX'])
-    corrfile.add_hkey('KW_FTELLU_KERN_VSINI', value=cprops['KERNEL_VSINI'])
-    corrfile.add_hkey('KW_FTELLU_IM_PX_SIZE', value=cprops['IMAGE_PIXEL_SIZE'])
-    corrfile.add_hkey('KW_FTELLU_FIT_ITERS', value=cprops['FIT_ITERATIONS'])
-    corrfile.add_hkey('KW_FTELLU_RECON_LIM', value=cprops['RECON_LIMIT'])
-    corrfile.add_hkey('KW_MKTELL_THRES_TFIT', value=cprops['THRES_TRANSFIT'])
-    corrfile.add_hkey('KW_MKTELL_TRANS_FIT_UPPER_BAD',
-                      value=cprops['TRANS_FIT_UPPER_BAD'])
     # ----------------------------------------------------------------------
     # add tellu pre-clean keys
     corrfile.add_hkey('KW_TELLUP_EXPO_WATER', value=tpreprops['EXPO_WATER'])
@@ -1034,35 +1178,6 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                           value=template_props['TEMP_HASH'])
         corrfile.add_hkey('KW_FTELLU_TEMPTIME',
                           value=template_props['TEMP_TIME'])
-    # ----------------------------------------------------------------------
-    # add the amplitudes (and derivatives)
-    if add_deriv_pc:
-        values = amps_abso_t[:npc - 2]
-        # add the standard keys
-        corrfile.add_hkey_1d('KW_FTELLU_AMP_PC', values=values, dim1name='amp')
-        # add the derivs
-        corrfile.add_hkey('KW_FTELLU_DVTELL1', value=amps_abso_t[npc - 2])
-        corrfile.add_hkey('KW_FTELLU_DVTELL2', value=amps_abso_t[npc - 1])
-    # else just add the amp pc and blank for the dvtells
-    else:
-        # add the standard keys
-        corrfile.add_hkey_1d('KW_FTELLU_AMP_PC', values=amps_abso_t,
-                             dim1name='amp')
-        # add the derivs (blank)
-        corrfile.add_hkey('KW_FTELLU_DVTELL1', value='None')
-        corrfile.add_hkey('KW_FTELLU_DVTELL2', value='None')
-    # ----------------------------------------------------------------------
-    # add the absorbance
-    for molecule in tau_molecules:
-        # construct molecule key
-        molkey = '{0}_{1}'.format(abso_prefix_kws[0], molecule.upper())
-        # construct keyword dict
-        molkws = [molkey, 0.0, abso_prefix_kws[2].format(molecule)]
-        # add to header
-        corrfile.add_hkey(molkws, value=tau_molecules[molecule])
-    # add the tau values
-    corrfile.add_hkey('KW_FTELLU_TAU_H2O', value=cprops['TAU_H2O'])
-    corrfile.add_hkey('KW_FTELLU_TAU_REST', value=cprops['TAU_REST'])
     # ----------------------------------------------------------------------
     # copy data
     corrfile.data = sp_out

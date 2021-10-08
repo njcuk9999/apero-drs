@@ -211,59 +211,48 @@ def __main__(recipe, params):
                                        infile=infile, database=calibdbm)
 
         # ------------------------------------------------------------------
-        # telluric pre-cleaning
-        # ------------------------------------------------------------------
-        tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
-                                            fiber, rawfiles, combine,
-                                            database=telludbm)
-        # get variables out of tpreprops
-        image1 = tpreprops['CORRECTED_E2DS']
-        # ------------------------------------------------------------------
-        # Normalize image by peak blaze
-        # ------------------------------------------------------------------
-        nargs = [image1, header, fiber]
-        _, nprops = telluric.normalise_by_pblaze(params, *nargs)
-        # normalise by the blaze
-        image2 = image1 / nprops['NBLAZE']
-        # ------------------------------------------------------------------
-        # Get barycentric corrections (BERV)
-        # ------------------------------------------------------------------
-        bprops = extract.get_berv(params, infile)
-        # ------------------------------------------------------------------
-        # Load transmission files
-        # ------------------------------------------------------------------
-        trans_files = telluric.get_trans_files(params, header, fiber,
-                                               database=telludbm)
-        # ------------------------------------------------------------------
         # Get template file (if available)
         # ------------------------------------------------------------------
         tout = telluric.load_templates(params, header, objname, fiber,
                                        database=telludbm)
         template, template_props = tout
+
         # ------------------------------------------------------------------
-        # load the expected atmospheric transmission
+        # Load transmission model
         # ------------------------------------------------------------------
-        largs = [header, mprops, fiber]
-        tapas_props = telluric.load_conv_tapas(params, recipe, *largs,
+        trans_props = telluric.get_trans_model(params, header, fiber,
                                                database=telludbm)
+
         # ------------------------------------------------------------------
-        # Generate the absorption map + calculate PCA components
+        # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
-        pargs = [image2, trans_files, fiber, mprops, tpreprops]
-        pca_props = telluric.gen_abso_pca_calc(params, recipe, *pargs)
+        bprops = extract.get_berv(params, infile)
+
         # ------------------------------------------------------------------
-        # Shift the template/pca components and tapas spectrum to correct
-        #     frames
-        #   shift from master wave solution --> night wave solution
+        # Shift the template from master wave solution --> night wave solution
+        template = telluric.shift_template(params, recipe, image, template,
+                                           mprops, wprops, bprops)
+
         # ------------------------------------------------------------------
-        sargs = [image2, template, bprops, mprops, wprops, pca_props,
-                 tapas_props]
-        sprops = telluric.shift_all_to_frame(params, recipe, *sargs)
+        # telluric pre-cleaning
         # ------------------------------------------------------------------
-        # Calculate reconstructed absorption + correct E2DS file
+        tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
+                                            fiber, rawfiles, combine,
+                                            database=telludbm,
+                                            template=template)
+        # get corrected image out of pre-cleaning parameter dictionary
+        image1 = tpreprops['CORRECTED_E2DS']
+
         # ------------------------------------------------------------------
-        cargs = [image2, wprops, pca_props, sprops, nprops, tpreprops]
-        cprops = telluric.calc_recon_and_correct(params, recipe, *cargs)
+        # Get blaze
+        # ------------------------------------------------------------------
+        nprops = telluric.get_blaze_props(params, header, fiber)
+
+        # ------------------------------------------------------------------
+        # Calculate residual model and correct spectrum
+        # ------------------------------------------------------------------
+        cprops = telluric.calc_res_model(params, image, image1, trans_props,
+                                         tpreprops, mprops, wprops)
 
         # ------------------------------------------------------------------
         # Create 1d spectra (s1d) of the corrected E2DS file
@@ -278,7 +267,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Create 1d spectra (s1d) of the reconstructed absorption
         # ------------------------------------------------------------------
-        rcargs = [wprops['WAVEMAP'], cprops['RECON_ABSO_SP'], nprops['BLAZE']]
+        rcargs = [wprops['WAVEMAP'], cprops['RECON_ABSO'], nprops['BLAZE']]
         rcwprops = extract.e2ds_to_s1d(params, recipe, *rcargs, wgrid='wave',
                                        fiber=fiber, s1dkind='recon')
         rcvprops = extract.e2ds_to_s1d(params, recipe, *rcargs,
@@ -305,8 +294,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save corrected E2DS to file
         # ------------------------------------------------------------------
-        fargs = [infile, rawfiles, fiber, combine, nprops, wprops, pca_props,
-                 sprops, cprops, qc_params, template_props, tpreprops]
+        fargs = [infile, rawfiles, fiber, combine, nprops, wprops,
+                 trans_props, cprops, qc_params, template_props, tpreprops]
         corrfile = telluric.fit_tellu_write_corrected(params, recipe, *fargs)
 
         # ------------------------------------------------------------------
@@ -336,8 +325,8 @@ def __main__(recipe, params):
             if sfiber == fiber:
                 continue
             # else correct/create s1d/ and save
-            coargs = [sfiber, infile, cprops, rawfiles, combine, pca_props,
-                      sprops, qc_params, template_props, tpreprops, nprops]
+            coargs = [sfiber, infile, cprops, rawfiles, combine, qc_params,
+                      template_props, tpreprops, trans_props]
             telluric.correct_other_science(params, recipe, *coargs,
                                            database=calibdbm)
 
@@ -361,8 +350,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Construct summary document
         # ------------------------------------------------------------------
-        telluric.fit_tellu_summary(recipe, it, params, qc_params, pca_props,
-                                   sprops, cprops, fiber)
+        telluric.fit_tellu_summary(recipe, it, params, qc_params, tpreprops,
+                                   fiber)
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
