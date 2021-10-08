@@ -24,8 +24,9 @@ from apero import lang
 from apero.core import math as mp
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.utils import drs_data
 from apero.core.core import drs_database
+from apero.core.utils import drs_data
+from apero.core.utils import drs_utils
 from apero.io import drs_path
 from apero.io import drs_fits
 from apero.io import drs_image
@@ -58,7 +59,12 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Define user functions
 # =============================================================================
-def construct_fp_table(params, filenames):
+def construct_fp_table(params, filenames, **kwargs):
+    # define function
+    func_name = __NAME__ + '.construct_fp_table()'
+    # get parameters from params
+    max_num_files = pcheck(params, 'SHAPE_MASTER_MAX_FILES', 'max_num', kwargs,
+                           func_name)
     # define storage for table columns
     fp_time, fp_exp, fp_pp_version = [], [], []
     basenames, obs_dirs = [], []
@@ -94,6 +100,18 @@ def construct_fp_table(params, filenames):
         fp_pp_version.append(ppversion)
         basenames.append(basename)
         obs_dirs.append(obs_dir)
+    # ----------------------------------------------------------------------
+    # Only use a certain number of files to limit time taken
+    # ----------------------------------------------------------------------
+    time_mask = drs_utils.uniform_time_list(fp_time, max_num_files)
+    # mask all lists (as numpy arrays)
+    fp_time = np.array(fp_time)[time_mask]
+    fp_exp = np.array(fp_exp)[time_mask]
+    fp_pp_version = np.array(fp_pp_version)[time_mask]
+    basenames = np.array(basenames)[time_mask]
+    obs_dirs = np.array(obs_dirs)[time_mask]
+    valid_files = np.array(valid_files)[time_mask]
+
     # convert lists to table
     columns = ['OBS_DIR', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
                'PPVERSION']

@@ -719,6 +719,41 @@ def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
                                 condition=condition)
 
 
+def uniform_time_list(times: Union[List[float], np.ndarray], number: int
+                      ) -> np.ndarray:
+    """
+    Create a very uniformly distributed list of times (distributed uniformly in
+    time goes. Takes the full times vector and cuts it down list of positions
+    (lenght "number") that are uniform in time
+
+    :param times: list or numpy 1D array, a 1D vector of times matching the
+    :param number: int, the number elements to have after cut
+
+    :return: np.ndarray, mask, True where time should be used
+    """
+
+    if len(times) <= number:
+        return np.ones_like(times).astype(bool)
+
+    # copy the times to new vector
+    times2 = times[np.argsort(times)]
+    # loop around until we have N files in times2
+    while len(times2) > number:
+        # work out the difference in times between previous and next times
+        dt1 = np.abs(times2 - np.roll(times2, 1))
+        dt2 = np.abs(times2 - np.roll(times2, -1))
+        # find all times larger before than after
+        dmask = dt2 < dt1
+        # push values from before to after if smaller
+        dt1[dmask] = dt2[dmask]
+        # remove smallest delta time
+        times2 = np.delete(times2, np.argmin(dt1))
+    # create a mask of positions of times in times2
+    mask = np.array(np.in1d(times, times2))
+    # return the mask
+    return mask
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
