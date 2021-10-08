@@ -353,8 +353,9 @@ def tcorrect1(params, recipe, image, header, fiber, wavemap, thermal=None,
     # deal with no thermal
     if thermal is None:
         # get thermal
-        _, thermal = get_thermal(params, header, fiber=fiber,
-                                 kind='THERMALT_E2DS', database=database)
+        tout = get_thermal(params, header, fiber=fiber, kind='THERMALT_E2DS',
+                           database=database)
+        thermal_file, thermaltime, thermal = tout
     # ----------------------------------------------------------------------
     # if we have a flat we should apply it to the thermal
     if flat is not None:
@@ -424,8 +425,9 @@ def tcorrect2(params, recipe, image, header, fiber, wavemap, thermal=None,
     # deal with no thermal
     if thermal is None:
         # get thermal
-        _, thermal = get_thermal(params, header, fiber=fiber,
-                                 kind='THERMALI_E2DS', database=database)
+        tout = get_thermal(params, header, fiber=fiber, kind='THERMALI_E2DS',
+                           database=database)
+        thermal_file, thermaltime, thermal = tout
     # ----------------------------------------------------------------------
     # if we have a flat we should apply it to the thermal
     if flat is not None:
