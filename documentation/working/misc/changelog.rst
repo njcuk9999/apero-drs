@@ -2,6 +2,44 @@ Changelog
 =========
 
 
+0.7.171 (2021-10-08)
+--------------------
+- `Apero.science.calib.dark.py` + `apero.science.calib.shape.py` - add
+  limits for the dark master and shape master max number of files. [Neil
+  Cook]
+- `Apero.science.extract.gen_ext.py` - fix output for thermal files. [Neil
+  Cook]
+- Telluric update (EA-210923) - add `apero_mk_model_spirou.py` + add
+  changes to `fit_tellu` + pre-cleaning. [Neil Cook]
+- `Apero.recipes.*.apero_wave_*.py` - deal with and comment `fit_cavity` and
+  `fit_achromatic` better. [Neil Cook]
+- Update language database. [Neil Cook]
+- `Apero.io.drs_fits.py` - read with multifits return better. [Neil Cook]
+- Update run.ini files that use telluric recipes. [Neil Cook]
+- `Apero.core.instruments.*.recipe_definitions.py` - update telluric
+  `recipe_definitions.py`. [Neil Cook]
+- `Apero.core.instruments.*.file_definitions.py` - add `TELLU_MODEL` to
+  `file_definitions.py`. [Neil Cook]
+- `Apero.core.instruments.*.default_constants.py` - update
+  `tellup_ccf_scan_range` + `thermal_extract_type` (e2dsff-->e2ds) [Neil
+  Cook]
+- Continue work on transmission model update [EA 210923] [Neil Cook]
+- Continue work on transmission model update [EA 210923] [Neil Cook]
+
+
+0.7.170 (2021-10-04)
+--------------------
+- Start work on telluric update (EA-210923) [Neil Cook]
+- Unbreak logging system (conflict with `OBS_DIR)` [Neil Cook]
+- Conflict between `obs_dir` from params and `run_file`. [Neil Cook]
+- Wave extraction needs to use master wave sol. [Neil Cook]
+- Wave extraction needs to use master wave sol. [Neil Cook]
+- Wave extraction needs to use master wave sol. [Neil Cook]
+- `Apero.core.utils.drs_startup.py` - deal with locking params better.
+  [Neil Cook]
+- Update date/version/docs/changelog. [Neil Cook]
+
+
 0.7.169 (2021-10-01)
 --------------------
 - `Apero.science.extract.gen_ext.py` - leak correction must use reference
