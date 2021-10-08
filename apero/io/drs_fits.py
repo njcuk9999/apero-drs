@@ -423,8 +423,15 @@ def readfits(params: ParamDict, filename: Union[str, Path],
             if gethdr:
                 header = fits.Header(header)
     elif fmt == 'fits-multi':
-        data, header, name = _read_fitsmulti(params, filename, getdata, gethdr,
-                                             log=log)
+        mout = _read_fitsmulti(params, filename, getdata, gethdr, log=log)
+        if getdata and gethdr:
+            data, header, name = mout
+        elif getdata:
+            data, name = mout
+            header = None
+        else:
+            data = None
+            header, name = mout
         # deal with copying
         if copy:
             data = deepcopy(data)
