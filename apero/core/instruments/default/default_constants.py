@@ -320,6 +320,7 @@ __all__ = [
     'PLOT_FTELLU_WAVE_SHIFT1', 'PLOT_FTELLU_WAVE_SHIFT2',
     'PLOT_FTELLU_RECON_ABSO1', 'PLOT_FTELLU_RECON_ABSO2',
     'PLOT_MKTEMP_BERV_COV', 'PLOT_TELLUP_CLEAN_OH',
+    'PLOT_FTELLU_RES_MODEL',
     # debug ccf plot settings
     'PLOT_CCF_RV_FIT_LOOP', 'PLOT_CCF_RV_FIT', 'PLOT_CCF_SWAVE_REF',
     'PLOT_CCF_PHOTON_UNCERT',
@@ -4875,6 +4876,13 @@ PLOT_FTELLU_RECON_ABSO2 = Const('PLOT_FTELLU_RECON_ABSO12', value=False,
                                 description='turn on the fit tellu '
                                             'reconstructed absorption debug '
                                             'plot (single order)')
+
+# turn on the fit tellu res model debug plot
+PLOT_FTELLU_RES_MODEL = Const('PLOT_FTELLU_RES_MODEL', value=False,
+                              dtype=bool, source=__NAME__, user=True,
+                              active=False, group=cgroup,
+                              description=' turn on the fit tellu res model '
+                                          'debug plot')
 
 # turn on the berv coverage debug plot
 PLOT_MKTEMP_BERV_COV = Const('PLOT_MKTEMP_BERV_COV', value=False,

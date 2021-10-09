@@ -2863,6 +2863,10 @@ PLOT_FTELLU_RECON_ABSO1.value = True
 PLOT_FTELLU_RECON_ABSO2 = PLOT_FTELLU_RECON_ABSO2.copy(__NAME__)
 PLOT_FTELLU_RECON_ABSO2.value = True
 
+# turn on the fit tellu res model debug plot
+PLOT_FTELLU_RES_MODEL = PLOT_FTELLU_RES_MODEL.copy(__NAME__)
+PLOT_FTELLU_RES_MODEL.value = True
+
 # turn on the berv coverage debug plot
 PLOT_MKTEMP_BERV_COV = PLOT_MKTEMP_BERV_COV.copy(__NAME__)
 PLOT_MKTEMP_BERV_COV.value = True

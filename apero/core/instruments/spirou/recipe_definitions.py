@@ -994,9 +994,11 @@ apero_fit_tellu.set_debug_plots('EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT',
                                 'FTELLU_WAVE_SHIFT1', 'FTELLU_WAVE_SHIFT2',
                                 'FTELLU_RECON_ABSO1', 'FTELLU_RECON_ABSO2',
                                 'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
-                                'TELLUP_CLEAN_OH')
+                                'TELLUP_CLEAN_OH', 'FTELLU_RES_MODEL')
 apero_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO',
-                                  'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
+                                  'SUM_TELLUP_WAVE_TRANS',
+                                  'SUM_TELLUP_ABSO_SPEC',
+                                  'SUM_FTELLU_RES_MODEL')
 apero_fit_tellu.set_arg(pos=0, **obs_dir)
 apero_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                         files=[files.out_ext_e2ds, files.out_ext_e2dsff],

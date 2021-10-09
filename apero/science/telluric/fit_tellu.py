@@ -825,114 +825,63 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     return props
 
 
-def calc_res_model(params, image, image1, trans_props, tpreprops,
+def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
                    mprops, wprops):
-        """
-        Calculate the residual model and apply it to the image
+    """
+    Calculate the residual model and apply it to the image
 
-        :param params:
-        :param recipe:
-        :param image1:
-        :param trans_props:
-        :param tpreprops:
-        :param mprops:
-        :param wprops:
-        :param bprops:
-        :return:
-        """
-        # set function name
-        func_name = display_func('calc_res_model', __NAME__)
-        # get vectors from transmission model
-        zero_res = trans_props['ZERO_RES']
-        water_res = trans_props['WATER_RES']
-        others_res = trans_props['OTHERS_RES']
-        # get exponent values for this observation from pre-cleaning
-        expo_water = tpreprops['EXPO_WATER']
-        expo_others = tpreprops['EXPO_OTHERS']
-
-        # calculate model for predicted residuals (in master frame)
-        pwater = expo_water * water_res
-        pothers =  expo_others * others_res
-        res_model = np.exp(zero_res + pwater + pothers)
-
-        # shift model to image frame
-        res_model2 = gen_tellu.wave_to_wave(params, res_model,
-                                            mprops['WAVEMAP'],
-                                            wprops['WAVEMAP'],
-                                            splinek=1)
-
-        # TODO: add plot
-        #      - model
-        #      - image / model
-        #      - image
-        #      - recon_abso
-
-        # ------------------------------------------------------------------
-        # Calculate reconstructed absorption + correct E2DS file
-        # ------------------------------------------------------------------
-        # spectrum is the pre-cleaned image divided by the residual model
-        sp_out = image1 / res_model2
-        # recon is the absorption model from pre-cleaning multipled by the
-        #    residual model
-        recon_abso = tpreprops['ABSO_E2DS'] * res_model2
-        # ------------------------------------------------------------------
-        # Plot wavelength vs vectors
-        # ------------------------------------------------------------------
-        if False:
-            import matplotlib; matplotlib.use('TkAgg'); import matplotlib.pyplot as plt
-
-            plt.close()
-            fig, frames = plt.subplots(ncols=1, nrows=2, sharex='all')
-            frame1, frame2 = frames[0], frames[1]
-
-            for order_num in range(49):
-                wavemap = wprops['WAVEMAP'][order_num]
-                flat_image = image[order_num] / np.nanmedian(image)
-                flat_image1 = image1[order_num] / np.nanmedian(image)
-
-                flat_sp_out = sp_out[order_num] / np.nanmedian(image)
-                flat_abso = tpreprops['ABSO_E2DS'][order_num]
-
-                flat_res_model = res_model2[order_num]
-                flat_res_model[np.isnan(flat_abso)] = np.nan
-
-                flat_recon = recon_abso[order_num]
-                frame1.plot(wavemap, flat_image, color='k', label='e2ds image', alpha=0.25)
-                frame1.plot(wavemap, flat_image1, color='r', label='precleaned_image')
-                frame1.plot(wavemap, flat_sp_out, color='g', label='precleaned_image/res_model')
-
-
-                frame2.plot(wavemap, flat_res_model, color='orange', label='res_model', alpha=0.5)
-                frame2.plot(wavemap, flat_abso, color='b', label='abso_e2ds', alpha=0.5)
-                frame2.plot(wavemap, flat_recon, color='c', label='recon=res_model*abso_e2ds', alpha=0.5)
-
-
-            for frame in frames:
-                rawh, rawl = frame.get_legend_handles_labels()
-                labels, handles = [], []
-                for it in range(len(rawl)):
-                    if rawl[it] not in labels:
-                        labels.append(rawl[it])
-                        handles.append(rawh[it])
-                frame.legend(handles, labels, loc=0)
-                frame.set(xlabel='Wavelength [nm]', ylabel='Normalized flux')
-
-            plt.show()
-
-        # debug plot
-
-        # summary plot
-
-
-        # push into parameter dictionary
-        cprops = ParamDict()
-        cprops['CORRECTED_SP'] = sp_out
-        cprops['RECON_ABSO'] = recon_abso
-
-        # add keys
-        cprops.set_sources(['CORRECTED_SP', 'RECON_ABSO'], func_name)
-
-        return cprops
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe:
+    :param image1:
+    :param trans_props:
+    :param tpreprops:
+    :param mprops:
+    :param wprops:
+    :param bprops:
+    :return:
+    """
+    # set function name
+    func_name = display_func('calc_res_model', __NAME__)
+    # get vectors from transmission model
+    zero_res = trans_props['ZERO_RES']
+    water_res = trans_props['WATER_RES']
+    others_res = trans_props['OTHERS_RES']
+    # get exponent values for this observation from pre-cleaning
+    expo_water = tpreprops['EXPO_WATER']
+    expo_others = tpreprops['EXPO_OTHERS']
+    # calculate model for predicted residuals (in master frame)
+    pwater = expo_water * water_res
+    pothers =  expo_others * others_res
+    res_model = np.exp(zero_res + pwater + pothers)
+    # shift model to image frame
+    wargs = [params, res_model,  mprops['WAVEMAP'], wprops['WAVEMAP']]
+    res_model2 = gen_tellu.wave_to_wave(*wargs, splinek=1)
+    # ------------------------------------------------------------------
+    # Calculate reconstructed absorption + correct E2DS file
+    # ------------------------------------------------------------------
+    # spectrum is the pre-cleaned image divided by the residual model
+    sp_out = image1 / res_model2
+    # recon is the absorption model from pre-cleaning multipled by the
+    #    residual model
+    recon_abso = tpreprops['ABSO_E2DS'] * res_model2
+    # ------------------------------------------------------------------
+    # Plot wavelength vs vectors
+    # ------------------------------------------------------------------
+    # set up plot args
+    pkwargs = dict( wprops=wprops, image=image,
+                image1=image1, sp_out=sp_out, res_model2=res_model2,
+                tpreprops=tpreprops, recon_abso=recon_abso)
+    # debug plot
+    recipe.plot('FTELLU_RES_MODEL', **pkwargs)
+    # summary plot
+    recipe.plot('SUM_FTELLU_RES_MODEL', **pkwargs)
+    # push into parameter dictionary
+    cprops = ParamDict()
+    cprops['CORRECTED_SP'] = sp_out
+    cprops['RECON_ABSO'] = recon_abso
+    # add keys
+    cprops.set_sources(['CORRECTED_SP', 'RECON_ABSO'], func_name)
+    return cprops
 
 
 def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,

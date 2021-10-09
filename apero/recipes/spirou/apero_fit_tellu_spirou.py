@@ -251,8 +251,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate residual model and correct spectrum
         # ------------------------------------------------------------------
-        cprops = telluric.calc_res_model(params, image, image1, trans_props,
-                                         tpreprops, mprops, wprops)
+        cprops = telluric.calc_res_model(params, recipe, image, image1,
+                                         trans_props, tpreprops, mprops, wprops)
 
         # ------------------------------------------------------------------
         # Create 1d spectra (s1d) of the corrected E2DS file

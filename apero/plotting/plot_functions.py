@@ -4671,6 +4671,97 @@ def plot_ftellu_recon_abso(plotter: Plotter, graph: Graph,
         plotter.plotend(graph)
 
 
+def plot_ftellu_res_model(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Fit telluric recon absorption plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # -------------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt from plotter (for matplotlib set up)
+    plt = plotter.plt
+    # -------------------------------------------------------------------------
+    # get the arguments from kwargs
+    wprops = kwargs['wprops']
+    image = kwargs['image']
+    image1 = kwargs['image1']
+    sp_out = kwargs['sp_out']
+    res_model2 = kwargs['res_model2']
+    tpreprops = kwargs['tpreprops']
+    recon_abso = kwargs['recon_abso']
+    # -------------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex='all')
+    frame1, frame2 = frames[0], frames[1]
+    # -------------------------------------------------------------------------
+    # loop around order and plot
+    for order_num in range(image.shape[0]):
+        # get wave solution for this order
+        wavemap = wprops['WAVEMAP'][order_num]
+        # get original uncorrected image for this order
+        flat_image = image[order_num] / np.nanmedian(image)
+        # get pre-cleaned image for this order
+        flat_image1 = image1[order_num] / np.nanmedian(image)
+        # get output image (completely corrected) for this order
+        flat_sp_out = sp_out[order_num] / np.nanmedian(image)
+        # get the pre-cleaned absorption
+        flat_abso = tpreprops['ABSO_E2DS'][order_num]
+        # get the residual model
+        flat_res_model = res_model2[order_num]
+        # remove residual model where absorption is NaN
+        flat_res_model[np.isnan(flat_abso)] = np.nan
+        # get the recon (res_model * abso) for this order
+        flat_recon = recon_abso[order_num]
+        # plot the original uncorrected image
+        frame1.plot(wavemap, flat_image, color='k', label='e2ds image',
+                    alpha=0.25)
+        # plot the pre-cleaned image
+        frame1.plot(wavemap, flat_image1, color='r',
+                    label='precleaned_image')
+        # plot the output image (completely corrected)
+        frame1.plot(wavemap, flat_sp_out, color='g',
+                    label='precleaned_image/res_model')
+        # plot the residual model
+        frame2.plot(wavemap, flat_res_model, color='orange', label='res_model',
+                    alpha=0.5)
+        # plot the pre-cleaned absorption model
+        frame2.plot(wavemap, flat_abso, color='b', label='abso_e2ds',
+                    alpha=0.5)
+        # plot the recon (res_model * abso)
+        frame2.plot(wavemap, flat_recon, color='c',
+                    label='recon=res_model*abso_e2ds', alpha=0.5)
+    # -------------------------------------------------------------------------
+    # loop around and fix the labels
+    for frame in frames:
+        # get the input handles
+        rawh, rawl = frame.get_legend_handles_labels()
+        labels, handles = [], []
+        # only add unique labels
+        for it in range(len(rawl)):
+            if rawl[it] not in labels:
+                labels.append(rawl[it])
+                handles.append(rawh[it])
+        # plot the legend
+        frame.legend(handles, labels, loc=0)
+    # -------------------------------------------------------------------------
+    # set the labels
+    frame1.set(ylabel='Normalized flux')
+    frame2.set(xlabel='Wavelength [nm]', ylabel='Tranmission')
+    # -------------------------------------------------------------------------
+    plt.subplots_adjust(hspace=0.01)
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+
 def plot_mktemp_berv_cov(plotter: Plotter, graph: Graph,
                          kwargs: Dict[str, Any]):
     """
@@ -4765,6 +4856,12 @@ sum_desc = 'Results from the telluric fit'
 sum_ftellu_recon_abso = Graph('SUM_FTELLU_RECON_ABSO', kind='summary',
                               func=plot_ftellu_recon_abso, figsize=(16, 10),
                               dpi=150, description=sum_desc)
+ftellu_res_model = Graph('FTELLU_RES_MODEL', kind='debug',
+                         func=plot_ftellu_res_model)
+sum_desc = 'Results from the telluric residual model fit'
+sum_ftellu_res_model  = Graph('SUM_FTELLU_RES_MODEL', kind='summary',
+                              func=plot_ftellu_res_model, figsize=(16, 10),
+                              dpi=150, description=sum_desc)
 
 mktemp_berv_cov = Graph('MKTEMP_BERV_COV', kind='debug',
                         func=plot_mktemp_berv_cov)
@@ -4780,7 +4877,7 @@ definitions += [mktellu_wave_flux1, mktellu_wave_flux2, sum_mktellu_wave_flux,
                 ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso,
                 tellup_wave_trans, sum_tellup_wave_trans, tellup_abso_spec,
                 tellup_clean_oh, sum_tellup_abso_spec, mktemp_berv_cov,
-                sum_mktemp_berv_cov]
+                sum_mktemp_berv_cov, ftellu_res_model, sum_ftellu_res_model]
 
 
 # =============================================================================
