@@ -234,11 +234,12 @@ def construct_dark_table(params, filenames, **kwargs):
     # ----------------------------------------------------------------------
     # Only use a certain number of files to limit time taken
     # ----------------------------------------------------------------------
+    dark_time = np.array(dark_time)
     time_mask = drs_utils.uniform_time_list(dark_time, max_num_files)
     # mask all lists (as numpy arrays)
     dark_time = np.array(dark_time)[time_mask]
     dark_exp = np.array(dark_exp)[time_mask]
-    dark_pp_version = np.arary(dark_pp_version)[time_mask]
+    dark_pp_version = np.array(dark_pp_version)[time_mask]
     filenames = np.array(filenames)[time_mask]
     basenames = np.array(basenames)[time_mask]
     obs_dirs = np.array(obs_dirs)[time_mask]

@@ -103,6 +103,7 @@ def construct_fp_table(params, filenames, **kwargs):
     # ----------------------------------------------------------------------
     # Only use a certain number of files to limit time taken
     # ----------------------------------------------------------------------
+    fp_time = np.array(fp_time)
     time_mask = drs_utils.uniform_time_list(fp_time, max_num_files)
     # mask all lists (as numpy arrays)
     fp_time = np.array(fp_time)[time_mask]

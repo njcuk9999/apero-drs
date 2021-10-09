@@ -731,7 +731,8 @@ def uniform_time_list(times: Union[List[float], np.ndarray], number: int
 
     :return: np.ndarray, mask, True where time should be used
     """
-
+    # if we have less than the required number of files return a mask of all
+    #    files
     if len(times) <= number:
         return np.ones_like(times).astype(bool)
 
