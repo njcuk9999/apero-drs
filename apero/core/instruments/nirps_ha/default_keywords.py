@@ -1955,7 +1955,8 @@ KW_FTELLU_TEMPLATE.set(key='FTTTEMPL', comment='ftellu template used for sed')
 
 # the number of template files used
 KW_FTELLU_TEMPNUM = KW_FTELLU_TEMPNUM.copy(__NAME__)
-KW_FTELLU_TEMPNUM.set(key='FTTTEMPN', comment='ftellu template used for sed')
+KW_FTELLU_TEMPNUM.set(key='FTTTEMPN',
+                      comment='ftellu number of files used for template')
 
 # the hash for the template generation (unique)
 KW_FTELLU_TEMPHASH = KW_FTELLU_TEMPHASH.copy(__NAME__)
