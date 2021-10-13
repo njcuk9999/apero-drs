@@ -25,7 +25,6 @@ from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_text
-from apero.core.utils import drs_startup
 from apero.core.utils import drs_data
 from apero.core.utils import drs_utils
 from apero.core.core import drs_database
@@ -78,7 +77,7 @@ def get_tellu_include_list(params: ParamDict,
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', func=func_name,
                       override=assets_dir)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
-                      override=tellu_dir)
+                       override=tellu_dir)
     tfilename = pcheck(params, 'TELLU_WHITELIST_NAME', func=func_name,
                        override=tellu_include_file)
     # get absolulte filename
@@ -104,7 +103,7 @@ def get_tellu_exclude_list(params: ParamDict,
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', func=func_name,
                       override=assets_dir)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
-                      override=tellu_dir)
+                       override=tellu_dir)
     tfilename = pcheck(params, 'TELLU_BLACKLIST_NAME', func=func_name,
                        override=tellu_exclude_file)
     # get absolulte filename
@@ -689,17 +688,27 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # subtract the median of the ccf outside the core of the gaussian.
         #     We take this to be the 'external' part of of the scan range
         # work out the external part mask
-        with warnings.catch_warnings(record=True) as _:
-            external_mask = np.abs(drange) > ccf_scan_range / 2
+        # with warnings.catch_warnings(record=True) as _:
+        #     external_mask = np.abs(drange) > ccf_scan_range / 2
         # calculate and subtract external part
-        external_water = np.nanmedian(ccf_water[external_mask])
-        ccf_water = ccf_water - external_water
-        external_others = np.nanmedian(ccf_others[external_mask])
-        ccf_others = ccf_others - external_others
+        # external_water = np.nanmedian(ccf_water[external_mask])
+        # ccf_water = ccf_water - external_water
+        # external_others = np.nanmedian(ccf_others[external_mask])
+        # ccf_others = ccf_others - external_others
+
+        # set ccf scan size
+        ccf_scan_size = int(10 * params['IMAGE_PIXEL_SIZE'])
+        # calculate and subtract external part
+        ccf_water_res = mp.lowpassfilter(ccf_water, ccf_scan_size)
+        ccf_water = ccf_water - ccf_water_res
+        # calculate and subtract external part
+        ccf_others_res = mp.lowpassfilter(ccf_others, ccf_scan_size)
+        ccf_others = ccf_others - ccf_others_res
+
         # ------------------------------------------------------------------
         # get the amplitude of the middle of the CCF
         # work out the internal part mask
-        internal_mask = np.abs(drange) < ccf_scan_range / 4
+        internal_mask = np.abs(drange) < params['IMAGE_PIXEL_SIZE']
         amp_water = np.nansum(ccf_water[internal_mask])
         if not force_airmass:
             amp_others = np.nansum(ccf_others[internal_mask])

@@ -111,7 +111,6 @@ def make_trans_cube(params: ParamDict, transfiles: List[str]
     return trans_cube, trans_table
 
 
-
 def make_trans_model(params: ParamDict, transcube: np.ndarray,
                      transtable: drs_fits.Table) -> ParamDict:
     # set function name
