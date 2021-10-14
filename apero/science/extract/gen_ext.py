@@ -813,7 +813,8 @@ def correct_ext_dark_fp(params, sciimage, refimage, header, fiber,
             # log warning that ref FP ratio is spurious
             wargs = [order_num, ratio, approx_ratio, ratio / approx_ratio,
                      1 - bad_ratio, 1 + bad_ratio]
-            WLOG(params, 'warning', textentry('10-016-00024', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00024', args=wargs),
+                 sublevel=4)
             # set the ratio to the approx ratio
             ratio = float(approx_ratio)
             # set the ratio method
@@ -956,7 +957,8 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
             # log warning that ref FP ratio is spurious
             wargs = [order_num, ratio, approx_ratio, ratio / approx_ratio,
                      1 - bad_ratio, 1 + bad_ratio]
-            WLOG(params, 'warning', textentry('10-016-00024', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00024', args=wargs),
+                 sublevel=4)
             # set the ratio to the approx ratio
             ratio = float(approx_ratio)
             # set the ratio method
@@ -1536,7 +1538,8 @@ def qc_extraction(params, eprops):
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', textentry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -2047,7 +2050,8 @@ def qc_leak_master(params, medcubes):
             passed_fiber = 1
         else:
             for farg in fail_msg:
-                WLOG(params, 'warning', textentry('40-005-10002') + farg)
+                WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                     sublevel=6)
             passed_fiber = 0
         # store in qc_params
         qc_params_fiber = [qc_names, qc_values, qc_logic, qc_pass]
@@ -2090,7 +2094,8 @@ def qc_leak(params, props, **kwargs):
             passed_fiber = 1
         else:
             for farg in fail_msg:
-                WLOG(params, 'warning', textentry('40-005-10002') + farg)
+                WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                     sublevel=6)
             passed_fiber = 0
         # store in qc_params
         qc_params_fiber = [qc_names, qc_values, qc_logic, qc_pass]

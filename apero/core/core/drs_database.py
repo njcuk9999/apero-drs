@@ -1445,7 +1445,7 @@ class IndexDatabase(DatabaseManager):
                     wargs = [self.name, hkey, hkeys[hkey],
                              rtypes[h_it], func_name]
                     wmsg = textentry('10-002-00003', args=wargs)
-                    WLOG(self.params, 'warning', wmsg)
+                    WLOG(self.params, 'warning', wmsg, sublevel=2)
                     hvalues.append('NULL')
             else:
                 hvalues.append('NULL')

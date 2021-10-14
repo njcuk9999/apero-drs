@@ -942,7 +942,8 @@ def fit_gaussian_to_lsd_profile(params: ParamDict, velocities: np.ndarray,
     except Exception as e:
         # Log warning: Failed to fit gaussian to LSD profile\n\t{0}: {1}'
         wargs = [type(e), str(e), func_name]
-        WLOG(params, 'warning', textentry('10-021-00008', args=wargs))
+        WLOG(params, 'warning', textentry('10-021-00008', args=wargs),
+             sublevel=4)
         # set coefficients to guess
         popt = guess
     # -------------------------------------------------------------------------

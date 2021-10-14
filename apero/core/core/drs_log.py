@@ -27,7 +27,7 @@ import numpy as np
 import os
 import sys
 from time import sleep
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from apero import lang
 from apero.base import base
@@ -152,7 +152,8 @@ class Logger:
                  printonly: bool = False,
                  logonly: bool = False, wrap: bool = True,
                  option: str = None, colour: str = None,
-                 raise_exception: bool = True):
+                 raise_exception: bool = True,
+                 sublevel: Optional[int] = None):
         """
         Function-like cal to instance of logger (i.e. WLOG)
         Parses a key (error/warning/info/graph), an option and a message to the
@@ -181,6 +182,9 @@ class Logger:
                        "red", "green", "blue", "yellow", "cyan", "magenta",
                        "black", "white"
         :param raise_exception: bool, If True exits if level is EXIT_LEVELS()
+        :param sublevel: int, required for giving levels sub level
+                         (can filter by this) sets the priority of the message
+                         (0 being the lowest, 9 being the highest)
 
         output to stdout/log is as follows:
 
@@ -205,6 +209,13 @@ class Logger:
         # if in debug mode don't wrap
         if debug > 0 and (key == 'debug'):
             wrap = False
+        # ---------------------------------------------------------------------
+        # deal with sub level
+        if sublevel is not None:
+            if sublevel <= 0:
+                sublevel = 0
+            elif sublevel > 10:
+                sublevel = 9
         # ---------------------------------------------------------------------
         # get character length
         char_len = self.pconstant.CHARACTER_LOG_LENGTH()
@@ -290,6 +301,8 @@ class Logger:
         # Get the key code (default is a whitespace)
         code = self.pconstant.LOG_TRIG_KEYS().get(key, ' ')
         report = self.pconstant.REPORT_KEYS().get(key, False)
+        # deal with warn levels
+        code = self.pconstant.ADJUST_SUBLEVEL(code, sublevel)
         # special case of report
         if debug >= params['DEBUG_MODE_TEXTNAME_PRINT']:
             report = True
@@ -329,7 +342,8 @@ class Logger:
                         self.logger_storage(params, key, human_time,
                                             new_message, printonly)
                         # print to stdout
-                        printlog(self, params, cmd, key, colour)
+                        printlog(self, params, cmd, key, colour,
+                                 sublevel=sublevel)
                 else:
                     cmdargs = [human_time, code, option, mess]
                     cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
@@ -339,7 +353,8 @@ class Logger:
                     self.logger_storage(params, key, human_time, mess,
                                         printonly)
                     # print to stdout
-                    printlog(self, params, cmd, key, colour)
+                    printlog(self, params, cmd, key, colour,
+                                 sublevel=sublevel)
         # ---------------------------------------------------------------------
         # get log parameters (in set language)
         # ---------------------------------------------------------------------
@@ -372,7 +387,7 @@ class Logger:
                 # get logfilepath
                 logfilepath = get_logfilepath(self, params)
                 # write to log file
-                writelog(self, params, cmd, key, logfilepath)
+                writelog(self, params, cmd, key, logfilepath, sublevel=sublevel)
 
         # ---------------------------------------------------------------------
         # deal with errors caused by logging (print)
@@ -552,7 +567,8 @@ class Logger:
         self.pout[processid].set_source('LOGGER_FULL', func_name)
 
     def printmessage(self, params: ParamDict, messages: Union[str, List[str]],
-                     colour: Union[str, None] = None):
+                     colour: Union[str, None] = None,
+                     sublevel: Optional[int] = None):
         """
         Print the log message(s) in a certain colour (not at a certain level)
 
@@ -560,6 +576,9 @@ class Logger:
                        required to get levels to print at etc
         :param messages: list of strings or string, the message(s) to print
         :param colour: string, the colour wanted for the printed message
+        :param sublevel: int or None, the sub-level to add this "this level"
+                     final level is level + sub-level/10.0
+
         :return: None
         """
         # check whether message is string (if so make a list)
@@ -567,15 +586,19 @@ class Logger:
             messages = [messages]
         # loop around messages
         for message in messages:
-            printlog(self, params, message, key='all', colour=colour)
+            printlog(self, params, message, key='all', colour=colour,
+                     sublevel=sublevel)
 
-    def logmessage(self, params: ParamDict, messages: Union[str, List[str]]):
+    def logmessage(self, params: ParamDict, messages: Union[str, List[str]],
+                   sublevel: Optional[int] = None):
         """
         Writes the log message(s) to disk
 
         :param params: ParamDict, the parameter dictionary of constants,
                        required to get levels to print at etc
         :param messages: list of strings or string, the message(s) to print
+        :param sublevel: int or None, the sub-level to add this "this level"
+                         final level is level + sub-level/10.0
 
         :return: None
         """
@@ -586,7 +609,8 @@ class Logger:
             messages = [messages]
         # loop around messages
         for message in messages:
-            writelog(self, params, message, key='all', logfilepath=logfilepath)
+            writelog(self, params, message, key='all', logfilepath=logfilepath,
+                     sublevel=sublevel)
 
 
 class Printer:
@@ -656,7 +680,7 @@ wlog = Logger()
 def printlogandcmd(logobj: Logger, params: ParamDict,
                    message: Union[str, List[str]], key: str,
                    human_time: str, option: str, wrap: bool = True,
-                   colour: str = 'green'):
+                   colour: str = 'green', sublevel: Optional[int] = None):
     """
     Prints log to standard output/screen (for internal use only when
     logger cannot be used)
@@ -677,6 +701,8 @@ def printlogandcmd(logobj: Logger, params: ParamDict,
                    currently supported colours are:
                    "red", "green", "blue", "yellow", "cyan", "magenta",
                    "black", "white"
+    :param sublevel: int or None, the sub-level to add this "this level"
+                     final level is level + sub-level/10.0
 
     :return None:
     """
@@ -699,11 +725,11 @@ def printlogandcmd(logobj: Logger, params: ParamDict,
             for new_message in new_messages:
                 cmdargs = [human_time, code, option, new_message]
                 cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
-                printlog(logobj, params, cmd, key, colour)
+                printlog(logobj, params, cmd, key, colour, sublevel)
         else:
             cmdargs = [human_time, code, option, mess]
             cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
-            printlog(logobj, params, cmd, key, colour)
+            printlog(logobj, params, cmd, key, colour, sublevel)
 
 
 def debug_start(logobj: Logger, params: ParamDict,
@@ -848,7 +874,7 @@ def warninglogger(params: ParamDict, warnlist: Any,
             if wmsg in displayed_warnings:
                 continue
             else:
-                wlog(params, 'warning', wmsg)
+                wlog(params, 'warning', wmsg, sublevel=1)
                 displayed_warnings.append(wmsg)
 
 
@@ -888,7 +914,8 @@ def get_logfilepath(logobj: Logger, params: ParamDict,
     return lpath
 
 
-def correct_level(logobj: Logger, key: str, level: str):
+def correct_level(logobj: Logger, key: str, level: str,
+                  sublevel: Optional[int]=None):
     """
     Decides (based on WRITE_LEVEL) whether this level ("key") is to be printed/
     logged (based on the level "level"), return True if we should log key based
@@ -904,6 +931,8 @@ def correct_level(logobj: Logger, key: str, level: str):
     :param level: string, write key (must be in
                 SpirouConfig.SpirouConst.LOG_TRIG_KEYS() and
                 SpirouConfig.SpirouConst.WRITE_LEVEL()
+    :param sublevel: int or None, the sub-level to add this "this level"
+                     final level is level + sub-level/10.0
 
     :return test: bool, True if: thislevel >= outlevel  else False
                     where:
@@ -923,6 +952,8 @@ def correct_level(logobj: Logger, key: str, level: str):
     # get numeric value for this level
     try:
         thislevel = logobj.pconstant.WRITE_LEVEL()[key]
+        if sublevel is not None:
+            thislevel += sublevel / 10.0
     except KeyError:
         eargs = [key, func_name]
         raise DrsCodedException('00-005-00012', 'error', targs=eargs,
@@ -932,7 +963,8 @@ def correct_level(logobj: Logger, key: str, level: str):
 
 
 def printlog(logobj: Logger, params: ParamDict, message: str,
-             key: str = 'all', colour: str = None):
+             key: str = 'all', colour: str = None,
+             sublevel: Optional[int] = None):
     """
     print message to stdout (if level is correct - set by PRINT_LEVEL)
     is coloured unless spirouConfig.Constants.COLOURED_LOG() is False
@@ -946,13 +978,15 @@ def printlog(logobj: Logger, params: ParamDict, message: str,
                    currently supported colours are:
                    "red", "green", "blue", "yellow", "cyan", "magenta",
                    "black", "white"
+    :param sublevel: int or None, the sub-level to add this "this level"
+                     final level is level + sub-level/10.0
 
     :return None:
     """
     func_name = __NAME__ + '.printlog()'
     # get the colours for the "key"
     c1, c2 = printcolour(logobj, params, key, func_name=func_name,
-                         colour=colour)
+                         colour=colour, sublevel=sublevel)
     # if the colours are not None then print the message
     if c1 is not None and c2 is not None:
         print(c1 + message + c2)
@@ -960,7 +994,8 @@ def printlog(logobj: Logger, params: ParamDict, message: str,
 
 def printcolour(logobj: Logger, params: ParamDict, key: str = 'all',
                 func_name: Union[str, None] = None,
-                colour: Union[str, None] = None) -> Tuple[str, str]:
+                colour: Union[str, None] = None,
+                sublevel: Optional[int] = None) -> Tuple[str, str]:
     """
     Get the print colour (start and end) based on "key".
     This should be used as follows:
@@ -977,6 +1012,8 @@ def printcolour(logobj: Logger, params: ParamDict, key: str = 'all',
                    currently supported colours are:
                    "red", "green", "blue", "yellow", "cyan", "magenta",
                    "black", "white"
+    :param sublevel: int or None, the sub-level to add this "this level"
+                     final level is level + sub-level/10.0
 
     :return colour1: string or None, if key is found and we are using coloured
                      log returns the starting colour, if not returns empty
@@ -1003,12 +1040,13 @@ def printcolour(logobj: Logger, params: ParamDict, key: str = 'all',
         eargs = [level, func_name]
         raise DrsCodedException('00-005-00012', 'error', eargs,
                                 func_name=func_name)
-
+    # get correct level condition
+    level_is_correct = correct_level(logobj, key, level, sublevel)
     # if this level is greater than or equal to out level then print to stdout
-    if correct_level(logobj, key, level) and (key in clevels) and addcolour:
+    if level_is_correct and (key in clevels) and addcolour:
         colour1 = clevels[key]
         colour2 = nocol
-    elif correct_level(logobj, key, level):
+    elif level_is_correct:
         colour1 = ''
         colour2 = ''
     else:
@@ -1087,7 +1125,7 @@ def override_colour(params: ParamDict, colour: str) -> Tuple[str, str]:
 
 
 def writelog(logobj: Logger, params: ParamDict, message: str, key: str,
-             logfilepath: str):
+             logfilepath: str, sublevel: Optional[int] = None):
     """
     write message to log file (if level is correct - set by LOG_LEVEL)
 
@@ -1097,6 +1135,8 @@ def writelog(logobj: Logger, params: ParamDict, message: str, key: str,
     :param key: string, either "error" or "warning" or "info" or graph, this
                 gives a character code in output
     :param logfilepath: string, the file name to write the log to
+    :param sublevel: int or None, the sub-level to add this "this level"
+                     final level is level + sub-level/10.0
 
     :return:
     """
@@ -1105,7 +1145,7 @@ def writelog(logobj: Logger, params: ParamDict, message: str, key: str,
     # get out level key
     level = params.get('LOG_LEVEL', 'all')
     # if this level is less than out level then do not log
-    if not correct_level(logobj, key, level):
+    if not correct_level(logobj, key, level, sublevel):
         return 0
     # -------------------------------------------------------------------------
     # Check if logfile path exists

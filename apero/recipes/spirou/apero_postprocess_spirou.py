@@ -166,13 +166,14 @@ def __main__(recipe, params):
                 for filename in filepostfile.clear_files:
                     # log progress: Removing {0}'
                     wargs = [filename]
-                    WLOG(params, 'warning', textentry('10-090-00001',
-                                                      args=wargs))
+                    WLOG(params, 'warning',
+                         textentry('10-090-00001', args=wargs), sublevel=2)
                     os.remove(filename)
         else:
             # \tSkipping output {0} - files not found \n\tFile: {1}'
             wargs = [post_file.name, infile.filename]
-            WLOG(params, 'warning', textentry('10-090-00002', args=wargs))
+            WLOG(params, 'warning',
+                 textentry('10-090-00002', args=wargs), sublevel=2)
             # flag we have skipped some files
             has_skipped = True
 

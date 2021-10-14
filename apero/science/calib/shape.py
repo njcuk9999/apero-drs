@@ -351,13 +351,15 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             if transforms is None:
                 # log that image quality too poor
                 wargs = [g_it + 1]
-                WLOG(params, 'warning', textentry('10-014-00001', args=wargs))
+                WLOG(params, 'warning', textentry('10-014-00001', args=wargs),
+                     sublevel=6)
                 # skip adding to group
                 continue
             if (xres > qc_res) or (yres > qc_res):
                 # log that xres and yres too larger
                 wargs = [xres, yres, qc_res]
-                WLOG(params, 'warning', textentry('10-014-00002', args=wargs))
+                WLOG(params, 'warning', textentry('10-014-00002', args=wargs),
+                     sublevel=6)
                 # skip adding to group
                 continue
             # perform a final transform on the group
@@ -1766,7 +1768,8 @@ def shape_master_qc(params, dxrms=None, qc_params=None, **kwargs):
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', textentry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -1828,7 +1831,8 @@ def shape_local_qc(params, transform, xres, yres):
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', textentry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -2286,7 +2290,8 @@ def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata, poly_wave_ref,
         good = (xpos_predict > 0) & (xpos_predict < dim2)
         # doing this for order where there are no UNe lines
         if np.sum(good) == 0:
-            WLOG(params, 'warning', textentry('40-014-00040', args=[order_num]))
+            WLOG(params, 'warning', textentry('40-014-00040', args=[order_num]),
+                 sublevel=4)
             best_zp = fp_peak0_est - fpindex[0]
             break
         # mask

@@ -145,7 +145,8 @@ def __main__(recipe, params):
             allowed_dprtypes = ', '.join(params.listp('CCF_ALLOWED_DPRTYPES'))
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
-            WLOG(params, 'warning', textentry('10-019-00001', args=wargs))
+            WLOG(params, 'warning', textentry('10-019-00001', args=wargs),
+                 sublevel=4)
             # continue
             continue
         # flag whether calibration fiber is FP
@@ -222,7 +223,8 @@ def __main__(recipe, params):
                 # log warning
                 wargs = [wprops_r['WAVETIME'], wprops['WAVETIME'],
                          wprops_r['WAVEFILE'], wprops['WAVEFILE']]
-                WLOG(params, 'warning', textentry('10-020-00003', args=wargs))
+                WLOG(params, 'warning', textentry('10-020-00003', args=wargs),
+                     sublevel=2)
                 # set the reference wave solution to the science wave solution
                 wprops_r = wprops
             # log progress: Computing CCF on fiber
@@ -323,7 +325,8 @@ def __main__(recipe, params):
             passed = 1
         else:
             for farg in fail_msg:
-                WLOG(params, 'warning', textentry('40-005-10002') + farg)
+                WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                     sublevel=6)
             passed = 0
         # store in qc_params
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]

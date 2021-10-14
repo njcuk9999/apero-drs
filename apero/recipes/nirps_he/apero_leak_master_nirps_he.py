@@ -136,7 +136,8 @@ def __main__(recipe, params):
     if num_files == 0:
         # log that no dark fp were found for this night
         wargs = [params['OBS_DIR']]
-        WLOG(params, 'warning', textentry('10-016-00025', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00025', args=wargs),
+             sublevel=4)
         # update recipe log file
         recipe.log.end()
         # End of main code

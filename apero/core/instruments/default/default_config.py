@@ -505,7 +505,7 @@ DRS_PRINT_LEVEL = Const('DRS_PRINT_LEVEL', value='all', dtype=str,
 #       'warning' - to print warning/error events
 #       'error' - to print only error events
 DRS_LOG_LEVEL = Const('DRS_LOG_LEVEL', value='all', dtype=str,
-                      options=['all', 'info', 'warning', 'error'],
+                      options=['all', 'info', 'majorwarn', 'minorwarn', 'error'],
                       source=__NAME__, group=cgroup,
                       description=('Level at which to log in log file, '
                                    'values can be: '

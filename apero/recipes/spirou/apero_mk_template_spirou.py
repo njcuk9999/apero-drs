@@ -143,7 +143,8 @@ def __main__(recipe, params):
     # deal with no files being present
     if len(object_filenames) == 0:
         wargs = [objname, filetype]
-        WLOG(params, 'warning', textentry('10-019-00005', args=wargs))
+        WLOG(params, 'warning', textentry('10-019-00005', args=wargs),
+             sublevel=2)
         # no object files --> qc failure
         qc_params = [['HAS_OBJ'], ['False'], ['HAS_OBJ==False'], [0]]
         # update recipe log

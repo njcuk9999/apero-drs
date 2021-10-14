@@ -177,7 +177,7 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
 
         except BaryCorrpyException as bce:
             if warn:
-                WLOG(params, 'warning', str(bce))
+                WLOG(params, 'warning', str(bce), sublevel=8)
             else:
                 pass
         # check if we have berv a good berv
@@ -454,14 +454,15 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
         iers_a_file = os.path.join(bc_dir, iersfile)
         iers.IERS.iers_table = iers.IERS_A.open(iers_a_file)
     except Exception as e:
-        WLOG(params, 'warning', 'IERS_A_FILE Warning:' + str(e))
+        WLOG(params, 'warning', 'IERS_A_FILE Warning:' + str(e), sublevel=8)
     # try to import barycorrpy
     try:
         with warnings.catch_warnings(record=True) as _:
             import barycorrpy
     except Exception as _:
         wargs = [estimate, func_name]
-        WLOG(params, 'warning', textentry('10-016-00003', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00003', args=wargs),
+             sublevel=8)
         raise BaryCorrpyException(textentry('10-016-00003', args=wargs))
     # must lock here (barcorrpy is not parallisable yet)
     lpath = params['DRS_DATA_REDUC']
@@ -483,7 +484,8 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
         except Exception as e:
             # log error
             wargs = [type(e), str(e), estimate, func_name]
-            WLOG(params, 'warning', textentry('10-016-00004', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00004', args=wargs),
+                 sublevel=8)
             raise BaryCorrpyException(textentry('10-016-00004', args=wargs))
         # return the bervs and bjds
         bervs = out1[0] / 1000.0
@@ -525,7 +527,8 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
                       override=berv_est)
     # print warning that we are using estimate
     if not quiet:
-        WLOG(params, 'warning', textentry('10-016-00005', args=[estimate]))
+        WLOG(params, 'warning', textentry('10-016-00005', args=[estimate]),
+             sublevel=8)
     # get args
     bkwargs = dict(ra2000=props['DRS_RA'], dec2000=props['DRS_DEC'],
                    obs_long=props['DRS_LONG'], obs_lat=props['DRS_LAT'],

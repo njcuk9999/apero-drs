@@ -225,7 +225,8 @@ def __main__(recipe, params):
     if dxmap is None:
         fargs = [max_dxmap_info[0], max_dxmap_info[1], max_dxmap_std,
                  max_dxmap_info[2]]
-        WLOG(params, 'warning', textentry('10-014-00003', args=fargs))
+        WLOG(params, 'warning', textentry('10-014-00003', args=fargs),
+             sublevel=6)
         # quality control
         qc_values = [max_dxmap_std]
         qc_names = ['max_dxmap_std']

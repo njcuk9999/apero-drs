@@ -143,7 +143,7 @@ def __main__(recipe, params):
         WLOG(params, '', 'Message types:')
         WLOG(params, '', '\'\':\tGeneral message')
         WLOG(params, 'info', '\'info\':\tInfo message')
-        WLOG(params, 'warning', '\'warning\':\tWarning message')
+        WLOG(params, 'warning', '\'warning\':\tWarning message', sublevel=1)
         # Note that error messages will end the code
         #    (uncomment below to use)
         # WLOG(params, 'error', '\'error\':\tError message')
@@ -172,7 +172,7 @@ def __main__(recipe, params):
         # following:
         wmsg = 'Change to the database must be updated with command: \n\t{0}'
         wargs = ['tools/dev/apero_langdb.py --update']
-        WLOG(params, 'warning', wmsg.format(*wargs))
+        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=2)
 
         # examples of these codes are as follows:
         wargs = ['SPIROU']

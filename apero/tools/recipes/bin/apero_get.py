@@ -229,7 +229,8 @@ def __main__(recipe, params):
     inputs = params['INPUTS']
     use_gui = params['INPUTS']['GUI']
     if use_gui:
-        WLOG(params, 'warning', 'Not Implemented yet')
+        WLOG(params, 'warning', 'Not Implemented yet',
+             sublevel=2)
         return drs_startup.return_locals(params, locals())
     # get filters from user inputs
     kw_objnames = inputs.listp('objnames', dtype=str, required=False)

@@ -273,7 +273,8 @@ def inlookuptable(params, table, gaiaid=None, objname=None, ra=None, dec=None,
                 intable, row = False, None
         except Exception as e:
             wargs = [ra, dec, radius, type(e), e, func_name]
-            WLOG(params, 'warning', textentry('10-016-00006', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00006', args=wargs),
+                 sublevel=8)
             intable, row = False
     # ------------------------------------------------------------------
     # return
@@ -320,7 +321,8 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None,
             from astroquery.utils.tap.core import TapPlus
     except Exception as e:
         eargs = [type(e), str(e), func_name]
-        WLOG(params, 'warning', textentry('10-016-00009', args=eargs))
+        WLOG(params, 'warning', textentry('10-016-00009', args=eargs),
+             sublevel=8)
         return None, True
     # ------------------------------------------------------------------
     # create TAP query based on gaia id
@@ -356,7 +358,8 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None,
     # ------------------------------------------------------------------
     # deal with no query
     if query is None:
-        WLOG(params, 'warning', textentry('10-016-00007', args=[func_name]))
+        WLOG(params, 'warning', textentry('10-016-00007', args=[func_name]),
+             sublevel=8)
         return None, True
     # ------------------------------------------------------------------
     # try running gaia query
@@ -370,14 +373,16 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None,
             table = job.get_results()
     except Exception as e:
         wargs = [url, query, type(e), e, func_name]
-        WLOG(params, 'warning', textentry('10-016-00008', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00008', args=wargs),
+             sublevel=8)
         # return No row and True to fail
         return None, True
     # ------------------------------------------------------------------
     # if we have no entries we did not find object
     if len(table) == 0:
         # warn that no rows were found
-        WLOG(params, 'warning', textentry('10-016-00011', args=[func_name]))
+        WLOG(params, 'warning', textentry('10-016-00011', args=[func_name]),
+             sublevel=8)
         # return No row and True to fail
         return None, True
     # ------------------------------------------------------------------
@@ -415,7 +420,8 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None,
                 return None, True
         except Exception as e:
             wargs = [ra, dec, radius, type(e), e, func_name]
-            WLOG(params, 'warning', textentry('10-016-00010', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00010', args=wargs),
+                 sublevel=8)
             # return no row and True to Fail
             return None, True
 
@@ -443,7 +449,8 @@ def query_simbad(params, object_name):
         if results is None:
             # log that we have no results for object name from simbad
             wargs = [object_name]
-            WLOG(params, 'warning', textentry('10-016-00015', args=[wargs]))
+            WLOG(params, 'warning', textentry('10-016-00015', args=[wargs]),
+                 sublevel=8)
             # return unset ra/dec
             return None, None
         # ------------------------------------------------------------------
@@ -454,7 +461,8 @@ def query_simbad(params, object_name):
         else:
             # log that we have no RA column for object name
             wargs = [object_name, ', '.join(results.colnames)]
-            WLOG(params, 'warning', textentry('10-016-00016', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00016', args=wargs),
+                 sublevel=8)
             # return unset ra/dec
             return None, None
         # ------------------------------------------------------------------
@@ -465,7 +473,8 @@ def query_simbad(params, object_name):
         else:
             # log that we have no DEC column for object name
             wargs = [object_name, ', '.join(results.colnames)]
-            WLOG(params, 'warning', textentry('10-016-00017', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00017', args=wargs),
+                 sublevel=8)
             # return unset ra/dec
             return None, None
         # ------------------------------------------------------------------
@@ -476,7 +485,8 @@ def query_simbad(params, object_name):
             else:
                 # log that we have not ra unit
                 wargs = [object_name, str(ra_unit)]
-                WLOG(params, 'warning', textentry('10-016-00018', args=wargs))
+                WLOG(params, 'warning', textentry('10-016-00018', args=wargs),
+                     sublevel=8)
                 # return unset ra/dec
                 return None, None
         # ------------------------------------------------------------------
@@ -487,7 +497,8 @@ def query_simbad(params, object_name):
             else:
                 # log that we have not ra unit
                 wargs = [object_name, str(dec_unit)]
-                WLOG(params, 'warning', textentry('10-016-00019', args=wargs))
+                WLOG(params, 'warning', textentry('10-016-00019', args=wargs),
+                     sublevel=8)
                 # return unset ra/dec
                 return None, None
         # ------------------------------------------------------------------
@@ -499,7 +510,8 @@ def query_simbad(params, object_name):
     except Exception as e:
         # log that there was an error with astroquery
         wargs = [object_name, type(e), str(e)]
-        WLOG(params, 'warning', textentry('10-016-00020', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00020', args=wargs),
+             sublevel=8)
         # return unset ra/dec
         return None, None
 

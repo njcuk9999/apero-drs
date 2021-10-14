@@ -593,7 +593,7 @@ def deal_with_missing_end_card(params: ParamDict, filename: str,
         data = None
     # print warning
     wargs = [type(exception), exception, ext, filename, func_name]
-    WLOG(params, 'warning', textentry('10-001-00006', args=wargs))
+    WLOG(params, 'warning', textentry('10-001-00006', args=wargs), sublevel=2)
     # convert data to astropy table
     astropy_table = Table()
     for col in data.columns.names:

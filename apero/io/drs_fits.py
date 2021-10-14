@@ -529,7 +529,8 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
     try:
         n_ext = len(hdulist)
     except Exception as e:
-        WLOG(params, 'warning', textentry('10-001-00005', args=[type(e), e]))
+        WLOG(params, 'warning', textentry('10-001-00005', args=[type(e), e]),
+             sublevel=2)
         n_ext = None
     # deal with unknown number of extensions
     if n_ext is None:
@@ -970,7 +971,8 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
         else:
             # warn user that extension is being skipped
             wargs = [it + 1, names[it], datatype[it]]
-            WLOG(params, 'warning', textentry('10-001-00010', args=wargs))
+            WLOG(params, 'warning', textentry('10-001-00010', args=wargs),
+                 sublevel=4)
             continue
         # ---------------------------------------------------------------------
         # only add if header is a fits header
@@ -1139,7 +1141,8 @@ def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
     # print message
     if len(datastore) > 0:
         dargs = [it - 1, filename]
-        WLOG(params, 'warning', textentry('10-001-00001', args=dargs))
+        WLOG(params, 'warning', textentry('10-001-00001', args=dargs),
+             sublevel=4)
     # find the first one that contains equal shaped array
     valid = []
     for d_it in range(len(datastore)):

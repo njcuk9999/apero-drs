@@ -627,8 +627,9 @@ class PseudoConstants:
         _ = display_func('LOG_STORAGE_KEYS', __NAME__, self.class_name)
         # The storage key to use for each key
         storekey = dict(all='LOGGER_ALL', error='LOGGER_ERROR',
-                        warning='LOGGER_WARNING', info='LOGGER_INFO',
-                        graph='LOGGER_ALL', debug='LOGGER_DEBUG')
+                        warning='LOGGER_WARNING',
+                        info='LOGGER_INFO', graph='LOGGER_ALL',
+                        debug='LOGGER_DEBUG')
         return storekey
 
     # noinspection PyPep8Naming
@@ -669,9 +670,28 @@ class PseudoConstants:
         # set function name
         _ = display_func('LOG_TRIG_KEYS', __NAME__, self.class_name)
         # The trigger character to display for each
-        trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~',
-                        debug='+')
+        trig_key = dict(all=' ', error='!', warning='@',
+                        info='*', graph='~', debug='+')
         return trig_key
+
+    def ADJUST_SUBLEVEL(self, code: str, sublevel: Optional[int] = None):
+        """
+        Adjust the log code based on sub level (minor and major)
+
+        :param code: str, the default code for logging
+        :param sublevel: float, required for giving levels sub level
+                         (can filter by this) sets the priority of the message
+                         (0 being the lowest, 9 being the highest)
+
+        :return:
+        """
+        if sublevel is None:
+            return code
+        # deal with major and minor codes
+        if sublevel > 5:
+            return '{0}!'.format(code[0])
+        else:
+            return '{0}@'.format(code[0])
 
     # noinspection PyPep8Naming
     def WRITE_LEVEL(self) -> Dict[str, str]:
@@ -700,8 +720,8 @@ class PseudoConstants:
         # set function name
         _ = display_func('WRITE_LEVEL', __NAME__, self.class_name)
         # set the write levels
-        write_level = dict(error=3, warning=2, info=1, graph=0, all=0,
-                           debug=0)
+        write_level = dict(error=3, warning=2, info=1,
+                           graph=0, all=0, debug=0)
         return write_level
 
     # noinspection PyPep8Naming
@@ -718,8 +738,8 @@ class PseudoConstants:
         # set function name
         _ = display_func('REPORT_KEYS', __NAME__, self.class_name)
         # set the report level
-        report_level = dict(error=True, warning=True, info=False, graph=False,
-                            all=False, debug=False)
+        report_level = dict(error=True, warning=True,
+                            info=False, graph=False, all=False, debug=False)
         return report_level
 
     # noinspection PyPep8Naming

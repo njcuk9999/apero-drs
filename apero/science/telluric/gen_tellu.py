@@ -896,7 +896,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         for qit in range(len(qc_pass)):
             if qc_pass[qit] == 0:
                 wargs = [qc_logic[qit], qc_names[qit], qc_values[qit]]
-                WLOG(params, 'warning', textentry('10-019-00010', args=wargs))
+                WLOG(params, 'warning', textentry('10-019-00010', args=wargs),
+                     sublevel=8)
 
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean

@@ -183,7 +183,8 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
                 # log progress: Removing/Writing abso npy file failed.
                 #     Trying again
                 eargs = [func_name, type(e), str(e)]
-                WLOG(params, 'warning', textentry('10-019-00012', eargs))
+                WLOG(params, 'warning', textentry('10-019-00012', eargs),
+                     sublevel=2)
 
     # ----------------------------------------------------------------------
     # use abso1 (water/others exponent) to create a mask for abso
@@ -998,7 +999,8 @@ def fit_tellu_quality_control(params, infile, tpreprops, **kwargs):
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', textentry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
