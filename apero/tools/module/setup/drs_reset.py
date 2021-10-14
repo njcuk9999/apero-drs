@@ -579,7 +579,8 @@ def remove_all(params, path, log=True, skipfiles=None):
     # Check that directory exists
     if not os.path.exists(path):
         # display error and ask to create directory
-        WLOG(params, 'warning', textentry('40-502-00005', args=[path]))
+        WLOG(params, 'warning', textentry('40-502-00005', args=[path]),
+             sublevel=2)
         # user input
         if sys.version_info.major < 3:
             # noinspection PyUnresolvedReferences
@@ -635,7 +636,8 @@ def remove_files(params, path, log=True, skipfiles=None):
         except Exception as e:
             # Log warning: Cannot remove path: {0} \n\t {1}: {2}'
             wargs = [path, type(e), str(e)]
-            WLOG(params, 'warning', textentry('10-502-00002', args=wargs))
+            WLOG(params, 'warning', textentry('10-502-00002', args=wargs),
+                 sublevel=2)
 
 # =============================================================================
 # Start of code

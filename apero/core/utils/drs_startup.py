@@ -592,7 +592,7 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
             wargs = [str(params['RECIPE'])]
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
             WLOG(params, 'warning', textentry('40-003-00005', args=wargs),
-                 colour='red')
+                 colour='red', sublevel=8)
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
         # ---------------------------------------------------------------------
         # deal with logging (if log exists in recipe)
@@ -953,7 +953,8 @@ def read_runfile(params: ParamDict, runfile: str,
             if runid in runtable:
                 wargs = [runid, keytable[runid], runtable[runid],
                          keys[it], values[it][:40] + '...']
-                WLOG(params, 'warning', textentry('10-503-00001', args=wargs))
+                WLOG(params, 'warning', textentry('10-503-00001', args=wargs),
+                     sublevel=2)
             # add to table
             runtable[runid] = value
             keytable[runid] = key
@@ -975,7 +976,7 @@ def read_runfile(params: ParamDict, runfile: str,
                 if not drs_text.null_text(params[key], ['', 'None']):
                     wargs = [key, params[key], value]
                     wmsg = textentry('10-503-00002', args=wargs)
-                    WLOG(params, 'warning', wmsg)
+                    WLOG(params, 'warning', wmsg, sublevel=2)
             # add to params
             params[key] = value
             params.set_source(key, func_name)

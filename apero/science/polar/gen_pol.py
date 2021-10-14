@@ -134,7 +134,8 @@ def set_polar_exposures(params: ParamDict) -> List[DrsFitsFile]:
             # log warning: Exposure {0} in spectroscopic mode, set exposure
             #     number = {1}
             wargs = [exp.basename, exp_pos]
-            WLOG(params, 'warning', textentry('10-021-00006', wargs))
+            WLOG(params, 'warning', textentry('10-021-00006', wargs),
+                 sublevel=2)
         # exposure 1
         elif cond1a or cond1b or cond1c:
             # add to position 1
@@ -356,13 +357,14 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # deal with multiple temperatures
     if len(np.unique(objtemps)) != 1:
+        # TODO: Add to language database
         wmsgs = 'Object temperatures do not match - taking finite median'
         for it in range(len(objtemps)):
             wmsg = '\n\tFile {0}\t{1}={2}'
             wargs = [basenames[it], params['KW_OBJ_TEMP'][0], objtemps[it]]
             wmsg = wmsg.format(*wargs)
             wmsgs += wmsg
-        WLOG(params, 'warning', wmsgs)
+        WLOG(params, 'warning', wmsgs, sublevel=4)
         # set the object temperature
         object_temperature = np.nanmedian(objtemps)
     else:
@@ -1752,7 +1754,8 @@ def quality_control(params) -> Tuple[List[List[Any]], bool]:
         WLOG(params, 'info', textentry('40-005-10001'))
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', textentry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc_params
@@ -2402,8 +2405,8 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
             if np.sum(~mspec1) < min_points:
                 if verbose:
                     # Log warning: Minimum points {0} reached
-                    wmsg = textentry('10-021-00007', arg=[min_points])
-                    WLOG(params, 'warning', wmsg)
+                    wmsg = textentry('10-021-00007', args=[min_points])
+                    WLOG(params, 'warning', wmsg, sublevel=2)
                 break
             # copy mask 1 back to primary mask
             mspec = np.array(mspec1)

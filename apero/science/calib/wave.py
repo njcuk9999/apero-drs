@@ -706,7 +706,8 @@ def check_wave_consistency(params: ParamDict, props: ParamDict,
     else:
         # log that fit degrees don't match
         wargs = [deg, required_deg]
-        WLOG(params, 'warning', textentry('10-017-00003', args=wargs))
+        WLOG(params, 'warning', textentry('10-017-00003', args=wargs),
+             sublevel=2)
         # setup output storage
         output_coeffs = np.zeros([nbo, required_deg + 1])
         output_map = np.zeros_like(props['WAVEMAP'])
@@ -1012,7 +1013,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             #    catching before an exception happens in fit_gauss_with_slope)
             if len(ypix) < 5:
                 eargs = [order_num, it, index, ypix, func_name]
-                WLOG(params, 'warning', textentry('09-017-00006', args=eargs))
+                WLOG(params, 'warning', textentry('09-017-00006', args=eargs),
+                     sublevel=4)
                 continue
             # --------------------------------------------------------------
             # only continue if we have all finite values
@@ -2462,7 +2464,8 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
                  map_lower_ords[mapkey], map_high_ords[mapkey],
                  map_lower_pix[mapkey], map_high_pix[mapkey],
                  type(e), str(e)]
-        WLOG(params, 'warning', textentry('10-017-00013', wargs))
+        WLOG(params, 'warning', textentry('10-017-00013', wargs),
+             sublevel=4)
     except RuntimeError as e:
         # set values to NaN
         fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
@@ -2472,7 +2475,8 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
                  map_lower_ords[mapkey], map_high_ords[mapkey],
                  map_lower_pix[mapkey], map_high_pix[mapkey],
                  type(e), str(e)]
-        WLOG(params, 'warning', textentry('10-017-00013', wargs))
+        WLOG(params, 'warning', textentry('10-017-00013', wargs),
+             sublevel=4)
     # return outputs
     fout = [fwhm, amp, expo, res_eff, fluxfit2, all_dv, all_flux,
             all_wave, all_order]
@@ -2542,7 +2546,8 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
                  map_lower_ords[mapkey], map_high_ords[mapkey],
                  map_lower_pix[mapkey], map_high_pix[mapkey],
                  type(e), str(e)]
-        WLOG(params, 'warning', textentry('10-017-00013', wargs))
+        WLOG(params, 'warning', textentry('10-017-00013', wargs),
+             sublevel=4)
     except RuntimeError as e:
         # set values to NaN
         fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
@@ -2552,7 +2557,8 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
                  map_lower_ords[mapkey], map_high_ords[mapkey],
                  map_lower_pix[mapkey], map_high_pix[mapkey],
                  type(e), str(e)]
-        WLOG(params, 'warning', textentry('10-017-00013', wargs))
+        WLOG(params, 'warning', textentry('10-017-00013', wargs),
+             sublevel=4)
     # return outputs
     fout = [fwhm, amp, 2.0, res_eff, fluxfit2, all_dv, all_flux,
             all_wave, all_order]
@@ -2824,7 +2830,8 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         pargs = [master_fiber, fiber, meddiff]
         # as a warning if QC fails
         if qc_pass[-1] == 0:
-            WLOG(params, 'warning', textentry('40-017-00068', args=pargs))
+            WLOG(params, 'warning', textentry('40-017-00068', args=pargs),
+                 sublevel=6)
         else:
             WLOG(params, 'info', textentry('40-017-00068', args=pargs))
 
@@ -2835,7 +2842,8 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         WLOG(params, 'info', textentry('40-005-10001'))
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', textentry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc_params

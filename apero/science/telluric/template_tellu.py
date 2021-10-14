@@ -270,7 +270,8 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
         if it in bad_snr_objects:
             # log skipping
             wargs = [it + 1, len(vfilenames), snr_order, snr_all[it], snr_thres]
-            WLOG(params, 'warning', textentry('10-019-00006', args=wargs))
+            WLOG(params, 'warning', textentry('10-019-00006', args=wargs),
+                 sublevel=4)
             # skip
             continue
 
@@ -583,7 +584,8 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         if it in bad_snr_objects:
             # log skipping
             wargs = [it + 1, len(vfilenames), snr_order, snr_all[it], snr_thres]
-            WLOG(params, 'warning', textentry('10-019-00006', args=wargs))
+            WLOG(params, 'warning', textentry('10-019-00006', args=wargs),
+                 sublevel=4)
             # skip
             continue
         # ------------------------------------------------------------------
@@ -759,7 +761,8 @@ def mk_template_qc(params, qc_params, fail_msg=None):
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', textentry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]

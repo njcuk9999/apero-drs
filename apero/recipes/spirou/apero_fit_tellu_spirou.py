@@ -167,7 +167,8 @@ def __main__(recipe, params):
             allowed_dprtypes = ', '.join(params.listp('TELLU_ALLOWED_DPRTYPES'))
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
-            WLOG(params, 'warning', textentry('10-019-00001', args=wargs))
+            WLOG(params, 'warning', textentry('10-019-00001', args=wargs),
+                 sublevel=4)
             # end log correctly
             log1.end()
             # continue
@@ -182,7 +183,8 @@ def __main__(recipe, params):
         if objname in tellu_exclude_list:
             # log that we are skipping
             wargs = [infile.basename, params['KW_OBJNAME'][0], objname]
-            WLOG(params, 'warning', textentry('10-019-00002', args=wargs))
+            WLOG(params, 'warning', textentry('10-019-00002', args=wargs),
+                 sublevel=2)
             # end log correctly
             log1.end()
             # continue

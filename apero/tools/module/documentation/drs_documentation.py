@@ -215,9 +215,10 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
                 if os.path.exists(filepath):
                     markdown.include_file(filename=filepath)
                 else:
+                    # TODO: move to language database
                     wmsg = 'Section text "{0}" does not exist'
                     wargs = [filepath]
-                    WLOG(params, 'warning', wmsg.format(*wargs))
+                    WLOG(params, 'warning', wmsg.format(*wargs), sublevel=4)
         # ------------------------------------------------------------------
         # add a back to top
         markdown.add_back_to_top()

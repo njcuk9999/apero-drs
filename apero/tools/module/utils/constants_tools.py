@@ -119,7 +119,8 @@ def deal_with_clean(params) -> bool:
     # set function name
     func_name = display_func('deal_with_clean', __NAME__)
     # warn user this could screw things up
-    WLOG(params, 'warning', 'Cleaning constants changes core python files')
+    WLOG(params, 'warning', 'Cleaning constants changes core python files',
+         sublevel=2)
     uinput = input('Do you wish to continue? [Y]es or [N]o:\t')
     # do not continue
     if 'Y' not in uinput.upper():

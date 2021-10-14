@@ -192,7 +192,7 @@ class CalibFile:
                 # TODO: add to language database
                 wmsg = ('Warning user file: {0} not found. '
                         'Using calibration database')
-                WLOG(params, 'warning', wmsg.format(self.filename))
+                WLOG(params, 'warning', wmsg.format(self.filename), sublevel=2)
                 self.filename = None
             # we are finished - return here
             if return_filename:
@@ -821,7 +821,8 @@ def check_fp_files(params: ParamDict,
         else:
             # log a warning that file removed
             wargs = [fpfile.filename]
-            WLOG(params, 'warning', textentry('10-001-00009', args=wargs))
+            WLOG(params, 'warning', textentry('10-001-00009', args=wargs),
+                 sublevel=4)
     # deal with having no files left
     if len(newfpfiles) == 0:
         # log: No FP files passed 2D quality control. \n\t Function = {0}

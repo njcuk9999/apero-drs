@@ -295,7 +295,7 @@ def search_recipes(params, recipe, recipename):
 
     # log that we did not find recipe
     wargs = [recipename]
-    WLOG(params, 'warning', textentry('10-508-00001', args=wargs))
+    WLOG(params, 'warning', textentry('10-508-00001', args=wargs), sublevel=2)
 
     # if we have got to this point return None
     return None
@@ -390,7 +390,8 @@ def calculate_recipe_stats(params, mastertable, recipename):
             # if not found report warning
             if not found:
                 wargs = [logfile]
-                WLOG(params, 'warning', textentry('10-508-00002', args=wargs))
+                WLOG(params, 'warning', textentry('10-508-00002', args=wargs),
+                     sublevel=2)
                 errors += 'No log file'
                 continue
         WLOG(params, '', textentry('40-508-00004', args=[logfile]))
@@ -629,7 +630,8 @@ def _create_log_objs(params, logfile):
         except Exception as e:
             # log warning: Skipping Line(E): {0}\n{1}:{2}
             wargs = ['E', line, type(e), str(e)]
-            WLOG(params, 'warning', textentry('10-508-00003', args=wargs))
+            WLOG(params, 'warning', textentry('10-508-00003', args=wargs),
+                 sublevel=2)
             continue
         # find if we have a warning string
         try:
@@ -639,7 +641,8 @@ def _create_log_objs(params, logfile):
         except Exception as e:
             # log warning: Skipping Line(W): {0}\n{1}:{2}'
             wargs = ['W', line, type(e), str(e)]
-            WLOG(params, 'warning', textentry('10-508-00003', args=wargs))
+            WLOG(params, 'warning', textentry('10-508-00003', args=wargs),
+                 sublevel=2)
     # return errors and warnings
     return errorlines, warnlines
 

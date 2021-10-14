@@ -225,7 +225,7 @@ class AstroObject(object):
                 # log warning
                 wargs = [type(e), str(e)]
                 wmsg = textentry('10-010-00001', args=wargs)
-                WLOG(self.params, 'warning', wmsg)
+                WLOG(self.params, 'warning', wmsg, sublevel=8)
         # ---------------------------------------------------------------------
         # 2. try gaia id against gaia query (only if gaia_id is still None)
         # ---------------------------------------------------------------------
@@ -236,7 +236,7 @@ class AstroObject(object):
                 # log warning
                 wargs = [type(e), str(e)]
                 wmsg = textentry('10-010-00002', args=wargs)
-                WLOG(self.params, 'warning', wmsg)
+                WLOG(self.params, 'warning', wmsg, sublevel=8)
         # ---------------------------------------------------------------------
         # 3. try to get gaia id from google sheet of gaia id (with object name)
         # ---------------------------------------------------------------------
@@ -247,7 +247,7 @@ class AstroObject(object):
                 # log warning
                 wargs = [type(e), str(e)]
                 wmsg = textentry('10-010-00003', args=wargs)
-                WLOG(self.params, 'warning', wmsg)
+                WLOG(self.params, 'warning', wmsg, sublevel=8)
         # ---------------------------------------------------------------------
         # 4. use ra + dec to get gaia id (only if gaia_id is still None)
         # ---------------------------------------------------------------------
@@ -259,7 +259,7 @@ class AstroObject(object):
                     # log warning
                     wargs = [type(e), str(e)]
                     wmsg = textentry('10-010-00004', args=wargs)
-                    WLOG(self.params, 'warning', wmsg)
+                    WLOG(self.params, 'warning', wmsg, sublevel=8)
         # ---------------------------------------------------------------------
         # Finally fill in any missing parameters from inputs/defaults
         # ---------------------------------------------------------------------
@@ -1007,7 +1007,8 @@ def query_gaia(params: ParamDict, url: str,
             from astroquery.utils.tap.core import TapPlus
     except Exception as e:
         eargs = [type(e), str(e), func_name]
-        WLOG(params, 'warning', textentry('10-016-00009', args=eargs))
+        WLOG(params, 'warning', textentry('10-016-00009', args=eargs),
+             sublevel=8)
         return None
     # ------------------------------------------------------------------
     # try running gaia query
@@ -1025,7 +1026,8 @@ def query_gaia(params: ParamDict, url: str,
             table = job.get_results()
     except Exception as e:
         wargs = [url, query, type(e), e, func_name]
-        WLOG(params, 'warning', textentry('10-016-00008', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00008', args=wargs),
+             sublevel=8)
         # return No row and True to fail
         return None
     # ------------------------------------------------------------------
@@ -1057,7 +1059,8 @@ def query_simbad_id(params: ParamDict, obj_id: str) -> Union[Table, None]:
     except Exception as e:
         # log that there was an error with astroquery
         wargs = [obj_id, type(e), str(e)]
-        WLOG(params, 'warning', textentry('10-016-00020', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00020', args=wargs),
+             sublevel=8)
         # return unset ra/dec
         return None
 
@@ -1137,7 +1140,8 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
         kw_header = params[header_col][0]
     else:
         wargs = [header_col]
-        WLOG(params, 'warning', textentry('10-503-00019', args=wargs))
+        WLOG(params, 'warning', textentry('10-503-00019', args=wargs),
+             sublevel=4)
         return False
     # -------------------------------------------------------------------------
     # get header key value
@@ -1145,7 +1149,8 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
         value = header[kw_header]
     else:
         wargs = [kw_header, header_col]
-        WLOG(params, 'warning', textentry('10-503-00020', args=wargs))
+        WLOG(params, 'warning', textentry('10-503-00020', args=wargs),
+             sublevel=4)
         return False
     # -------------------------------------------------------------------------
     # get bad list table
@@ -1155,7 +1160,8 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
         # construct url for worksheet
         url = GOOGLE_BASE_URL.format(sheet_id, worksheet)
         wargs = [url, type(e), str(e), func_name]
-        WLOG(params, 'warning', textentry('10-503-00021', args=wargs))
+        WLOG(params, 'warning', textentry('10-503-00021', args=wargs),
+             sublevel=4)
         return False
     # if we have no entries return False
     if len(table[mask_col]) == 0:
@@ -1466,7 +1472,8 @@ def quality_control(params, snr_hotpix, infile, rms_list, log=True):
     else:
         if log:
             for farg in fail_msg:
-                WLOG(params, 'warning', textentry('40-005-10002') + farg)
+                WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                     sublevel=6)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]

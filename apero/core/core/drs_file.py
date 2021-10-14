@@ -3040,7 +3040,8 @@ class DrsFitsFile(DrsInputFile):
             else:
                 # Log that key was not found
                 dargs = [key, filedict['OUT'], ', '.join(list(filedict.keys()))]
-                WLOG(params, 'warning', textentry('90-008-00002', args=dargs))
+                WLOG(params, 'warning', textentry('90-008-00002', args=dargs),
+                     sublevel=2)
         # return valid
         return valid
 
@@ -3748,7 +3749,9 @@ class DrsFitsFile(DrsInputFile):
                 header['CPASS'] = 'FILE {0} = FAILED'.format(row)
                 # log warning
                 wargs = [basename]
-                WLOG(params, 'warning', textentry('10-003-00001', args=wargs))
+                # warning level 3: File was rejected from combining process
+                WLOG(params, 'warning', textentry('10-003-00001', args=wargs),
+                     sublevel=3)
                 # add to reject count
                 reject_count += 1
             else:
@@ -3767,7 +3770,9 @@ class DrsFitsFile(DrsInputFile):
         # log how many files were rejected (if any)
         if reject_count > 0:
             wargs = [reject_count]
-            WLOG(params, 'warning', textentry('10-003-00002', args=wargs))
+            # warning level 4: {0} file(s) were rejected from combining process
+            WLOG(params, 'warning', textentry('10-003-00002', args=wargs),
+                 sublevel=4)
         # need to deal with no files left
         if len(datacube) == 0:
             # storage for stat message (pushed into error message)
@@ -5034,7 +5039,7 @@ class DrsNpyFile(DrsInputFile):
                     # some time file is locked by other process
                     else:
                         wmsg = '{0} locked'.format(self.filename)
-                        WLOG(params, 'warning', wmsg)
+                        WLOG(params, 'warning', wmsg, sublevel=1)
                         # sleep 5 seconds and then try again
                         time.sleep(5)
                         # add to the attempts and loop again
@@ -6322,9 +6327,12 @@ class DrsOutFile(DrsInputFile):
             exttable = indexdbm.get_entries('*', condition=condition)
             # deal with no entries and not required
             if len(exttable) == 0 and not required:
+                # TODO: add to language database
                 msg = '\t\tFile not found for ext {0} ({1})'
                 margs = [pos, name]
-                WLOG(params, 'warning', msg.format(*margs))
+                # file not found - this can be expected for some extension
+                #   types
+                WLOG(params, 'warning', msg.format(*margs), sublevel=2)
                 return False
             # deal with no entries and required
             if len(exttable) == 0:
@@ -6621,10 +6629,13 @@ class DrsOutFile(DrsInputFile):
                 #  (this shouldn't happen)
                 else:
                     # log warning
+                    # TODO: add to language database
                     wmsg = ('Header key {0} expected in extension {1} ({2})'
                             ' but value changed.')
                     wargs = [key, pos, self.extensions[pos].name]
-                    WLOG(params, 'warning', wmsg.format(*wargs))
+                    # header key changed - this is should not happen but
+                    #   isn't a big problem
+                    WLOG(params, 'warning', wmsg.format(*wargs), sublevel=2)
 
     def _add_extensions_names_to_primary(self, params: ParamDict):
         """

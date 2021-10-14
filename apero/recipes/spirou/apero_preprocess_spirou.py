@@ -124,7 +124,7 @@ def __main__(recipe, params):
         reject_file = prep.reject_infile(params, file_instance.get_header())
         # deal with bad files
         if reject_file:
-            WLOG(params, 'warning', textentry('10-503-00022'))
+            WLOG(params, 'warning', textentry('10-503-00022'), sublevel=2)
 
         # ------------------------------------------------------------------
         # Fix the header

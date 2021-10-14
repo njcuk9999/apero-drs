@@ -321,7 +321,8 @@ class Run:
         # check whether input directory exists
         if not os.path.exists(input_dir):
             wargs = [input_dir]
-            WLOG(params, 'warning', textentry('10-503-00008', args=wargs))
+            WLOG(params, 'warning', textentry('10-503-00008', args=wargs),
+                 sublevel=4)
             return False
         # ------------------------------------------------------------------
         # if we have a directory add it to the input dir
@@ -330,7 +331,8 @@ class Run:
             # check whether directory exists (if present)
             if not os.path.exists(input_dir):
                 wargs = [self.kwargs['obs_dir'], input_dir]
-                WLOG(params, 'warning', textentry('10-503-00009', args=wargs))
+                WLOG(params, 'warning', textentry('10-503-00009', args=wargs),
+                     sublevel=4)
                 return False
         # ------------------------------------------------------------------
         # loop around positional arguments
@@ -355,7 +357,7 @@ class Run:
                         # log warning
                         wargs = [argname, abspath]
                         wmsg = textentry('10-503-00010', args=wargs)
-                        WLOG(params, 'warning', wmsg)
+                        WLOG(params, 'warning', wmsg, sublevel=4)
                         return False
         # ------------------------------------------------------------------
         # loop around optional arguments
@@ -380,7 +382,7 @@ class Run:
                         # log warning
                         wargs = [kwargname, abspath]
                         wmsg = textentry('10-503-00010', args=wargs)
-                        WLOG(params, 'warning', wmsg)
+                        WLOG(params, 'warning', wmsg, sublevel=4)
                         return False
         # ------------------------------------------------------------------
         # if all have passed we return True
@@ -413,7 +415,8 @@ def run_process(params: ParamDict, recipe: DrsRecipe, indexdbm: IndexDatabase,
             WLOG(params, 'error', textentry('00-001-00043', args=eargs))
         else:
             eargs = [module.name, recipe.name]
-            WLOG(params, 'warning', textentry('00-001-00043', args=eargs))
+            WLOG(params, 'warning', textentry('00-001-00043', args=eargs),
+                 sublevel=6)
     # return outlist
     return outlist
 
@@ -890,9 +893,9 @@ def display_errors(params, outlist):
             WLOG(params, '', '', colour='red')
             WLOG(params, '', params['DRS_HEADER'], colour='red')
             WLOG(params, 'warning', textentry('40-503-00019', args=[key]),
-                 colour='red', wrap=False)
+                 colour='red', wrap=False, sublevel=8)
             WLOG(params, 'warning', '\t{0}'.format(outlist[key]['RUNSTRING']),
-                 colour='red', wrap=False)
+                 colour='red', wrap=False, sublevel=8)
             WLOG(params, '', params['DRS_HEADER'], colour='red')
             WLOG(params, '', '', colour='red')
             # --------------------------------------------------------------
@@ -936,7 +939,8 @@ def save_stats(params, outlist):
             os.mkdir(save_dir)
         except Exception as e:
             eargs = [save_dir, type(e), e, func_name]
-            WLOG(params, 'warning', textentry('10-503-00011', args=eargs))
+            WLOG(params, 'warning', textentry('10-503-00011', args=eargs),
+                 sublevel=4)
             return
     # get log file name
     log_abs_file = drs_log.get_logfilepath(WLOG, params)
@@ -985,7 +989,8 @@ def save_stats(params, outlist):
         drs_table.write_table(params, out_fits_table, out_fits_path)
     except Exception as e:
         eargs = [out_fits_path, type(e), e, func_name]
-        WLOG(params, 'warning', textentry('10-503-00012', args=eargs))
+        WLOG(params, 'warning', textentry('10-503-00012', args=eargs),
+             sublevel=4)
 
     # make txt table
     try:
@@ -994,7 +999,8 @@ def save_stats(params, outlist):
                 f.write(value + '\n')
     except Exception as e:
         eargs = [out_txt_path, type(e), e, func_name]
-        WLOG(params, 'warning', textentry('10-503-00012', args=eargs))
+        WLOG(params, 'warning', textentry('10-503-00012', args=eargs),
+             sublevel=4)
 
 
 def generate_run_table(params, recipe, *args, **kwargs):
@@ -1367,7 +1373,8 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             # check if master observation directory is valid (in table)
             if obs_dir not in obs_dirs:
                 wargs = [obs_dir]
-                WLOG(params, 'warning', textentry('10-503-00004', args=wargs))
+                WLOG(params, 'warning', textentry('10-503-00004', args=wargs),
+                     sublevel=8)
                 # get response for how to continue (skip or exit)
                 response = prompt()
                 if response:
@@ -1393,7 +1400,8 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         # deal with empty database (after conditions)
         if idb_len == 0:
             wargs = [obs_dir]
-            WLOG(params, 'warning', textentry('10-503-00003', args=wargs))
+            WLOG(params, 'warning', textentry('10-503-00003', args=wargs),
+                 sublevel=8)
             # get response for how to continue (skip or exit)
             response = prompt()
             if response:
@@ -1569,7 +1577,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
                                          condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
-            WLOG(params, 'warning', textentry('10-503-00016'))
+            WLOG(params, 'warning', textentry('10-503-00016'), sublevel=8)
             # get response for how to continue (skip or exit)
             response = prompt()
             if response:
@@ -1595,7 +1603,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
                                          condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
-            WLOG(params, 'warning', textentry('10-503-00006'))
+            WLOG(params, 'warning', textentry('10-503-00006'), sublevel=8)
             # get response for how to continue (skip or exit)
             response = prompt()
             if response:
@@ -1625,7 +1633,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
                                          condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
-            WLOG(params, 'warning', textentry('10-503-00007'))
+            WLOG(params, 'warning', textentry('10-503-00007'), sublevel=8)
             # get response for how to continue (skip or exit)
             response = prompt()
             if response:
@@ -1655,7 +1663,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
                                          condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
-            WLOG(params, 'warning', textentry('10-503-00015'))
+            WLOG(params, 'warning', textentry('10-503-00015'), sublevel=8)
             # get response for how to continue (skip or exit)
             response = prompt()
             if response:
@@ -1864,7 +1872,7 @@ def _linear_process(params, runlist, number=0, cores=1, event=None,
                 emsgs = [textentry('00-503-00005', args=[priority])]
                 for emsg in e.errormessage.split('\n'):
                     emsgs.append('\n' + emsg)
-                WLOG(params, 'warning', emsgs)
+                WLOG(params, 'warning', emsgs, sublevel=8)
                 pp['PID'] = None
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
@@ -1888,7 +1896,7 @@ def _linear_process(params, runlist, number=0, cores=1, event=None,
                 emsgs = [textentry('00-503-00004', args=[priority])]
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
-                WLOG(params, 'warning', emsgs)
+                WLOG(params, 'warning', emsgs, sublevel=8)
                 pp['PID'] = None
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
@@ -1911,7 +1919,7 @@ def _linear_process(params, runlist, number=0, cores=1, event=None,
                 emsgs = [textentry('00-503-00015', args=[priority])]
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
-                WLOG(params, 'warning', emsgs)
+                WLOG(params, 'warning', emsgs, sublevel=8)
                 pp['PID'] = None
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
@@ -1935,7 +1943,8 @@ def _linear_process(params, runlist, number=0, cores=1, event=None,
         if stop_at_exception and not finished:
             if event is not None:
                 wargs = [run_item.recipename]
-                WLOG(params, 'debug', textentry('90-503-00008', args=wargs))
+                WLOG(params, 'debug', textentry('90-503-00008', args=wargs),
+                     sublevel=6)
                 event.set()
         # ------------------------------------------------------------------
         # append to return dict
@@ -1964,7 +1973,7 @@ def _multi_process_process(params, runlist, cores, groupname=None,
         # skip groups if event is set
         if event.is_set():
             # Log warnings: Skipping group
-            WLOG(params, 'warning', textentry('10-503-00017'))
+            WLOG(params, 'warning', textentry('10-503-00017'), sublevel=6)
             continue
         # loop around sub groups
         #    - each sub group is a set of runs of the same recipe
@@ -2023,7 +2032,7 @@ def _multi_process_pool(params, runlist, cores, groupname=None,
         # skip groups if event is set
         if event is not None and event.is_set():
             # log that we are skipping group
-            WLOG(params, 'warning', textentry('10-000-00001'))
+            WLOG(params, 'warning', textentry('10-000-00001'), sublevel=6)
             continue
         # list of params for each entry
         params_per_process = []
@@ -2599,7 +2608,8 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
     else:
         # Log warning: No runs produced for {0} - No group function given'
         wargs = [recipe.shortname]
-        WLOG(params, 'warning', textentry('10-503-00018', args=wargs))
+        WLOG(params, 'warning', textentry('10-503-00018', args=wargs),
+             sublevel=6)
         return []
 
 
@@ -3081,7 +3091,8 @@ def _get_cores(params):
         WLOG(params, 'error', textentry('00-503-00008', args=[cores]))
     if cores >= cpus:
         eargs = [cpus, cores]
-        WLOG(params, 'warning', textentry('00-503-00009', args=eargs))
+        WLOG(params, 'warning', textentry('00-503-00009', args=eargs),
+             sublevel=2)
     # return number of cores
     return cores
 
@@ -3263,7 +3274,7 @@ def _remove_engineering(params, indexdb, condition):
             if obs_dir not in REMOVE_ENG_DIRS:
                 # log message
                 wmsg = textentry('10-503-00014', args=[obs_dir])
-                WLOG(params, 'warning', wmsg)
+                WLOG(params, 'warning', wmsg, sublevel=2)
                 # add to remove eng nights (so log message not produced again)
                 REMOVE_ENG_DIRS.append(obs_dir)
     # return condition

@@ -148,7 +148,8 @@ def __main__(recipe, params):
         if dprtype not in allowed_filetypes:
             # print warning
             wargs = [dprtype, ', '.join(allowed_filetypes), infile.filename]
-            WLOG(params, 'warning', textentry('10-016-00021', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00021', args=wargs),
+                 sublevel=4)
             # update recipe log file
             log1.end()
             # continue to next file
@@ -162,7 +163,8 @@ def __main__(recipe, params):
         if fiber not in sci_fibers:
             # print warning
             wargs = [fiber, ', '.join(sci_fibers), infile.filename]
-            WLOG(params, 'warning', textentry('10-016-00022', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00022', args=wargs),
+                 sublevel=4)
             # update recipe log file
             log1.end()
             # continue to next file
@@ -175,7 +177,8 @@ def __main__(recipe, params):
             if drs_text.true_text(leakcorr):
                 # print warning
                 wargs = [infile.filename]
-                WLOG(params, 'warning', textentry('10-016-00023', args=wargs))
+                WLOG(params, 'warning', textentry('10-016-00023', args=wargs),
+                     sublevel=2)
                 # update recipe log file
                 log1.end()
                 # continue to next file

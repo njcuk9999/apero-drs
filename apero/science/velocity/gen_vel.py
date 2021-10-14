@@ -213,7 +213,8 @@ def measure_fp_peaks(params: ParamDict, props: ParamDict, limit: float,
         # print warnings
         for key in list(warn_dict.keys()):
             wargs = [warn_dict[key], key]
-            WLOG(params, 'warning', textentry('00-018-00001', args=wargs))
+            WLOG(params, 'warning', textentry('00-018-00001', args=wargs),
+                 sublevel=2)
         # ------------------------------------------------------------------
         # add values to all storage (and sort by xpeak)
         indsort = np.argsort(xpeak)
@@ -553,7 +554,7 @@ def fill_e2ds_nans(params, image, **kwargs):
     kernel = np.exp(-0.5 * (xker ** 2))
     kernel /= np.sum(kernel)
     # log that NaNs were found
-    WLOG(params, 'warning', textentry('10-020-00002'))
+    WLOG(params, 'warning', textentry('10-020-00002'), sublevel=2)
     # copy original image
     image2 = np.array(image)
     # loop around orders
@@ -645,11 +646,13 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
         # set target rv to zero if we don't have a value
         if targetrv is None:
             wargs = [params['KW_INPUTRV'][0], infile.filename]
-            WLOG(params, 'warning', textentry('09-020-00006', args=wargs))
+            WLOG(params, 'warning', textentry('09-020-00006', args=wargs),
+                 sublevel=2)
             targetrv = 0.0
         elif np.abs(targetrv) > null_targetrv:
             wargs = [params['KW_INPUTRV'][0], null_targetrv, infile.filename]
-            WLOG(params, 'warning', textentry('09-020-00007', args=wargs))
+            WLOG(params, 'warning', textentry('09-020-00007', args=wargs),
+                 sublevel=2)
             targetrv = 0.0
     # ----------------------------------------------------------------------
     # need to deal with mask coming from inputs
@@ -1010,7 +1013,8 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         if np.sum(mask_wave_mask) == 0:
             # log all NaN
             wargs = [order_num, min_ord_wav, max_ord_wav]
-            WLOG(params, 'warning', textentry('10-020-00006', args=wargs))
+            WLOG(params, 'warning', textentry('10-020-00006', args=wargs),
+                 sublevel=4)
             # set all values to NaN
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
@@ -1025,7 +1029,8 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         if np.sum(nanmask) == nbpix:
             # log all NaN
             wargs = [order_num]
-            WLOG(params, 'warning', textentry('10-020-00004', args=wargs))
+            WLOG(params, 'warning', textentry('10-020-00004', args=wargs),
+                 sublevel=4)
             # set all values to NaN
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
@@ -1072,7 +1077,8 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         if np.sum(keep) == 0:
             # log all NaN
             wargs = [order_num]
-            WLOG(params, 'warning', textentry('10-020-00007', args=wargs))
+            WLOG(params, 'warning', textentry('10-020-00007', args=wargs),
+                 sublevel=4)
             # set all values to NaN
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
@@ -1099,7 +1105,8 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # we can't calculate wnoise for negative values --> set to inf
         if (wsum <= 0) or (wsum2 <= 0):
             wargs = [order_num]
-            WLOG(params, 'warning', textentry('10-020-00008', args=wargs))
+            WLOG(params, 'warning', textentry('10-020-00008', args=wargs),
+                 sublevel=4)
             wsum, wnoise = 0.0, np.inf
         else:
             wnoise = np.sqrt(wsum2)
@@ -1123,7 +1130,8 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         if np.sum(np.isnan(ccf_ord)) > 0:
             # log all NaN
             wargs = [order_num]
-            WLOG(params, 'warning', textentry('10-020-00005', args=wargs))
+            WLOG(params, 'warning', textentry('10-020-00005', args=wargs),
+                 sublevel=4)
             # set all values to NaN
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))

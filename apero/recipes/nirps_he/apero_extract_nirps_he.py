@@ -155,10 +155,12 @@ def __main__(recipe, params):
         if skip:
             if 'DPRTYPE' in skip_conditions[0]:
                 wargs = skip_conditions[1]
-                WLOG(params, 'warning', textentry('10-016-00012', args=wargs))
+                WLOG(params, 'warning', textentry('10-016-00012', args=wargs),
+                     sublevel=2)
             if 'OBJNAME' in skip_conditions[0]:
                 wargs = skip_conditions[2]
-                WLOG(params, 'warning', textentry('10-016-00013', args=wargs))
+                WLOG(params, 'warning', textentry('10-016-00013', args=wargs),
+                     sublevel=2)
             # write log here
             log1.write_logfile()
             # skip this file
