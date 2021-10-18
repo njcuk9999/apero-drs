@@ -2,6 +2,25 @@ Changelog
 =========
 
 
+0.7.173 (2021-10-18)
+--------------------
+- Update language database. [Neil Cook]
+- `Apero.core.core.drs_log.py` - update log. [Neil Cook]
+- Update warning messages to have sublevel. [Neil Cook]
+
+
+0.7.172 (2021-10-13)
+--------------------
+- `Science.telluric.gen_tellu.py` - fix the width of the preclean ccf (now
+  a low pass filter) [Neil Cook]
+- `Apero.core.utils.drs_utils.py+` `apero.science.calib.dark.py` + shape.py
+  - fix the down selection of master files (selected by time) [Neil
+  Cook]
+- Update the run.ini files + add the `fit_tellu` `res_plot` in the plotter
+  functions. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.7.171 (2021-10-08)
 --------------------
 - `Apero.science.calib.dark.py` + `apero.science.calib.shape.py` - add
