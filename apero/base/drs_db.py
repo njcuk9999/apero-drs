@@ -2793,7 +2793,7 @@ class LanguageDatabase(BaseDatabaseManager):
         self.columns = DatabaseColumns()
         # add key columns
         self.columns.add(name='KEYNAME', datatype='VARCHAR(50)', is_index=True)
-        self.columns.add(name='KIND', datatype='VARCHAR(10)')
+        self.columns.add(name='KIND', datatype='VARCHAR(25)')
         self.columns.add(name='KEYDESC', datatype='TEXT')
         self.columns.add(name='ARGUMENTS', datatype='TEXT')
         # add language columns
