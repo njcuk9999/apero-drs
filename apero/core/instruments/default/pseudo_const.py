@@ -670,8 +670,8 @@ class PseudoConstants:
         # set function name
         _ = display_func('LOG_TRIG_KEYS', __NAME__, self.class_name)
         # The trigger character to display for each
-        trig_key = dict(all=' ', error='!', warning='@',
-                        info='*', graph='~', debug='+')
+        trig_key = dict(all='  ', error='!!', warning='@@',
+                        info='**', graph='~~', debug='++')
         return trig_key
 
     def ADJUST_SUBLEVEL(self, code: str, sublevel: Optional[int] = None):
@@ -691,7 +691,7 @@ class PseudoConstants:
         if sublevel > 5:
             return '{0}!'.format(code[0])
         else:
-            return '{0}@'.format(code[0])
+            return '{0}$'.format(code[0])
 
     # noinspection PyPep8Naming
     def WRITE_LEVEL(self) -> Dict[str, str]:

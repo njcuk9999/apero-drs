@@ -360,6 +360,8 @@ class Logger:
         # ---------------------------------------------------------------------
         # Get the key code (default is a whitespace)
         code = self.pconstant.LOG_TRIG_KEYS().get(key, ' ')
+        # deal with warn levels
+        code = self.pconstant.ADJUST_SUBLEVEL(code, sublevel)
         # report = self.pconstant.REPORT_KEYS().get(key, False)
         # get messages
         if isinstance(msg_obj, lang.Text):
