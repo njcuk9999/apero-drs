@@ -724,7 +724,7 @@ def uniform_time_list(times: Union[List[float], np.ndarray], number: int
     """
     Create a very uniformly distributed list of times (distributed uniformly in
     time goes. Takes the full times vector and cuts it down list of positions
-    (lenght "number") that are uniform in time
+    (length "number") that are uniform in time
 
     :param times: list or numpy 1D array, a 1D vector of times matching the
     :param number: int, the number elements to have after cut
