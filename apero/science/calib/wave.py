@@ -460,8 +460,9 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     wprops['WAVEINST'] = wavefile.completecopy(wavefile)
     wprops['WAVETIME'] = wavetime
     # add the cavity keys
-    wprops['CAVITY'] = wavefile.get_hkey('KW_CAVITY_WIDTH', required=False)
-    wprops['CAVITY_DEG'] = wavefile.get_hkey('KW_CAVITY_DEG', required=False)
+    cavdeg = int(wavefile.get_hkey('KW_CAVITY_DEG', required=False))
+    wprops['CAVITY'] = wavefile.get_hkey_1d('KW_CAVITY_WIDTH', cavdeg + 1)
+    wprops['CAVITY_DEG'] = cavdeg
     wprops['MEAN_HC_VEL'] = wavefile.get_hkey('KW_WAVE_MEANHC', required=False)
     wprops['ERR_HC_VEL'] = wavefile.get_hkey('KW_WAVE_EMEANHC', required=False)
     # add the wfp keys

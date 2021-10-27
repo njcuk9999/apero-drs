@@ -4007,7 +4007,7 @@ class DrsFitsFile(DrsInputFile):
         # return values
         return values
 
-    def get_hkey_1d(self, key: str, dim1: Union[str, None] = None,
+    def get_hkey_1d(self, key: str, dim1: Union[int, None] = None,
                     dtype: Type = float, start: int = 0,
                     excludes: Union[None, List[str], str] = None,
                     includes: Union[None, List[str], str] = None,
