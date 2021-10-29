@@ -459,9 +459,17 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     wprops['WAVEMAP'] = wavemap
     wprops['WAVEINST'] = wavefile.completecopy(wavefile)
     wprops['WAVETIME'] = wavetime
-    # add the cavity keys
-    cavdeg = int(wavefile.get_hkey('KW_CAVITY_DEG', required=False))
-    wprops['CAVITY'] = wavefile.get_hkey_1d('KW_CAVITY_WIDTH', cavdeg + 1)
+    # add the cavity polynomial degree (if present)
+    cavdeg = wavefile.get_hkey('KW_CAVITY_DEG', required=False)
+    # deal with no cavity key (i.e. the default master file)
+    if cavdeg is None:
+        cavdeg = params['WAVE_CAVITY_FIT_DEGREE']
+        cav_coeffs = np.full(cavdeg + 1, np.nan)
+    else:
+        cavdeg = int(cavdeg)
+        cav_coeffs = wavefile.get_hkey_1d('KW_CAVITY_WIDTH', cavdeg + 1)
+    # add cavity keys to wprops
+    wprops['CAVITY'] = cav_coeffs
     wprops['CAVITY_DEG'] = cavdeg
     wprops['MEAN_HC_VEL'] = wavefile.get_hkey('KW_WAVE_MEANHC', required=False)
     wprops['ERR_HC_VEL'] = wavefile.get_hkey('KW_WAVE_EMEANHC', required=False)
