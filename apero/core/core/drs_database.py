@@ -2040,7 +2040,7 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     # last mod condition
     lmodcond = last_modified is not None
     # -------------------------------------------------------------------------
-    # convert last modifi
+    # convert last modified
     if last_modified is not None:
         lmod = dict(zip(excfiles, last_modified))
     else:
@@ -2079,6 +2079,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
                 continue
         # add file to valid file list
         valid_files.append(filename.absolute())
+    # clear loading message
+    TLOG(params, '', '')
     # return valid files
     return valid_files
 
