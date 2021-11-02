@@ -1975,7 +1975,7 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     incdircond = incdirs is not None
     excdircond = excdirs is not None
     # -------------------------------------------------------------------------
-    # get absolute path for all incdirs
+    # get absolute path for all included dirs
     incdirs1 = []
     if incdircond:
         for incdir in incdirs:
@@ -1983,7 +1983,7 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
                                      obs_dir=incdir)
             incdirs1.append(ipath.abspath)
     # -------------------------------------------------------------------------
-    # get absolute path for all excdirs
+    # get absolute path for all excluded dirs
     excdirs1 = []
     if excdircond:
         for excdir in excdirs:
@@ -2016,7 +2016,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     # deal with no subdirs
     if subdirs is None:
         # get all files in path
-        allfiles = list(path.rglob('*{0}'.format(suffix)))
+        # allfiles = list(path.rglob('*{0}'.format(suffix)))
+        allfiles = drs_path.recursive_path_glob(path, suffix=suffix)
     # else we have subdirs
     else:
         allfiles = []
@@ -2025,7 +2026,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
             # processing sub-directories
             TLOG(params, '', 'Analysing {0}...'.format(subdir))
             # append to filenames
-            allfiles += list(Path(subdir).glob('*{0}'.format(suffix)))
+            # allfiles += list(Path(subdir).glob('*{0}'.format(suffix)))
+            allfiles += drs_path.recursive_path_glob(subdir, suffix=suffix)
     # clear loading message
     TLOG(params, '', '')
     # -------------------------------------------------------------------------
@@ -2052,6 +2054,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     # -------------------------------------------------------------------------
     # filter files
     for filename in allfiles:
+        # processing sub-directories
+        TLOG(params, '', 'Check filter {0}...'.format(filename))
         # str filename
         strfilename = str(filename)
         # do not include directories
