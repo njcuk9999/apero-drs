@@ -3369,12 +3369,10 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
     # -------------------------------------------------------------------------
     # deal with database
     # -------------------------------------------------------------------------
-    # deal with not update index
-    if not update_index:
-        if block_inst.block_kind not in obs_paths:
-            update_index = True
-    # if we need up update index do it now
-    if update_index:
+    # deal with store
+    update_store = block_inst.block_kind not in obs_paths
+    # deal with updating index and/or store
+    if update_store or update_index:
         # deal with instrument == 'None'
         if indexdb.instrument == 'None':
             eargs = [argname, indexdb.name, func_name]
@@ -3383,7 +3381,9 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
             # try to load database
             indexdb.load_db()
         # update database with entries
-        indexdb.update_entries(block_kind=block_inst.block_kind)
+        # if we need up update index do it now
+        if update_index:
+            indexdb.update_entries(block_kind=block_inst.block_kind)
         # assert database is in indexdb
         assert isinstance(indexdb.database, drs_db.Database)
         # set up condition
@@ -3477,12 +3477,10 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     # -------------------------------------------------------------------------
     # deal with database (either gettings + updating or coming from stored)
     # -------------------------------------------------------------------------
-    # deal with not update index
-    if not update_index:
-        if obs_dir.block_kind not in filedbs:
-            update_index = True
+    # deal with updating storage
+    update_store = obs_dir.block_kind not in filedbs
     # if we need up update index do it now
-    if update_index:
+    if update_store or update_index:
         # deal with instrument == 'None'
         if indexdb.instrument == 'None':
             eargs = [argname, indexdb.name, func_name]
