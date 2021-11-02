@@ -23,7 +23,7 @@ from astropy import units as uu
 import os
 import shutil
 from pathlib import Path
-from typing import Any, List, Union
+from typing import Any, List, Optional, Union
 
 from apero.base import base
 from apero.core.core import drs_exceptions
@@ -414,6 +414,37 @@ def listfiles(rootdir) -> List[str]:
             files.append(it.path)
     # return file list
     return files
+
+
+def recursive_path_glob(path: Union[Path, str],
+                        prefix: Optional[str] = None,
+                        suffix: Optional[str] = None) -> List[Path]:
+    """
+    Recursively get all files from a directory with
+    a specific prefix / suffix
+    """
+    valid_files = []
+    # whether we need to check prefix and / or suffix
+    check_prefix = prefix is not None
+    check_suffix = suffix is not None
+    # use os walk to loop around files
+    for root, dirs, files in os.walk(str(path)):
+        # get the root as a Pathlib instance
+        root_instant = Path(root)
+        # loop around all files
+        for filename in files:
+            # check file prefix
+            if check_prefix:
+                if not filename.startswith(prefix):
+                    continue
+            # check file suffix
+            if check_suffix:
+                if not filename.endswith(suffix):
+                    continue
+            # if we get to here file is valid
+            valid_files.append(root_instant.joinpath(filename))
+    # return valid files
+    return valid_files
 
 
 # =============================================================================
