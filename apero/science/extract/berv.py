@@ -431,7 +431,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
                    epoch=props['EPOCH'], px=props['PLX'],
                    pmra=props['PMRA'], pmdec=props['PMDE'],
                    lat=props['DRS_LAT'], longi=props['DRS_LONG'],
-                   alt=props['DRS_ALT'], rv=props['RV'] * 1000,
+                   alt=props['DRS_ALT'], rv=props['RV'],
                    leap_update=False)
     # try to set iers file
     try:

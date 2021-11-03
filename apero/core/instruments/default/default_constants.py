@@ -257,7 +257,7 @@ __all__ = [
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
     'CCF_MAX_CCF_WID_STEP_RATIO', 'CCF_BLAZE_NORM_PERCENTILE',
-    'CCF_OBJRV_NULL_VAL', 'CCF_MASK_NORMALIZATION',
+    'OBJRV_NULL_VAL', 'CCF_MASK_NORMALIZATION',
     # general polar constants
     'POLAR_FIBERS', 'POLAR_STOKES_PARAMS', 'POLAR_BERV_CORRECT',
     'POLAR_SOURCE_RV_CORRECT', 'POLAR_METHOD', 'POLAR_INTERPOLATE_FLUX',
@@ -4023,11 +4023,11 @@ CCF_NO_RV_VAL = Const('CCF_NO_RV_VAL', value=np.nan, dtype=float,
 
 # Define target rv header null value
 #     (values greater than absolute value are set to zero)
-CCF_OBJRV_NULL_VAL = Const('CCF_OBJRV_NULL_VAL', value=1000, dtype=float,
-                           source=__NAME__, group=cgroup,
-                           description=('Define target rv header null value '
-                                        '(values greater than absolute value '
-                                        'are set to zero)'))
+OBJRV_NULL_VAL = Const('OBJRV_NULL_VAL', value=1000, dtype=float,
+                       source=__NAME__, group=cgroup,
+                       description=('Define target rv header null value '
+                                    '(values greater than absolute value '
+                                      'are set to zero)'))
 
 # Define the default CCF MASK to use
 CCF_DEFAULT_MASK = Const('CCF_DEFAULT_MASK', value=None, dtype=str,

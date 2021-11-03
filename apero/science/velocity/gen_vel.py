@@ -627,7 +627,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                      func_name)
     image_pixel_size = pcheck(params, 'IMAGE_PIXEL_SIZE', 'image_pixel_size',
                               kwargs, func_name)
-    null_targetrv = pcheck(params, 'CCF_OBJRV_NULL_VAL', 'null_targetrv',
+    null_targetrv = pcheck(params, 'OBJRV_NULL_VAL', 'null_targetrv',
                            kwargs, func_name)
     maxwsr = pcheck(params, 'CCF_MAX_CCF_WID_STEP_RATIO', 'maxwsr', kwargs,
                     func_name)
