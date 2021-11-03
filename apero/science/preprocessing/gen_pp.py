@@ -891,6 +891,8 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
 
     :return: None - updates object database
     """
+    # get the null rv criteria
+    null_rv = params['OBJRV_NULL_VAL']
     # get object name in header keyword
     hdr_objname = params['KW_OBJNAME'][0]
     # load database
@@ -979,16 +981,30 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
         pmra_source = str(table['PMRA_SOURCE'].iloc[0])
         pmde = float(table['PMDE'].iloc[0])
         pmde_source = str(table['PMDE_SOURCE'].iloc[0])
-        plx = float(_target_set_value(table, 'PLX'))
+        plx = float(_target_set_value(table, 'PLX', null_value=np.nan))
         plx_source = str(table['PLX_SOURCE'].iloc[0])
-        rv = float(_target_set_value(table, 'RV'))
+        rv = float(_target_set_value(table, 'RV', null_value=np.nan))
         rv_source = str(table['RV_SOURCE'].iloc[0])
-        teff = float(_target_set_value(table, 'TEFF'))
+        teff = float(_target_set_value(table, 'TEFF', null_value=np.nan))
         teff_source = str(table['TEFF_SOURCE'].iloc[0])
         sp_type = str(table['SP_TYPE'].iloc[0])
         sp_source = str(table['SP_SOURCE'].iloc[0])
         data_source = 'database'
         data_date = str(table['DATE_ADDED'].iloc[0])
+    # -------------------------------------------------------------------------
+    # deal with bad values here
+    #   We trust RA/Dec/PMRA/PMDE have been entered correctly
+    #     - if any of these values are missing they should not be in the
+    #       database
+    # -------------------------------------------------------------------------
+    # parallax - if non-finite or negative - set to zero
+    if not np.isfinite(plx) or plx < 0:
+        plx = 0.0
+    # rv - if non-finite or out of bounds (>1000) - set to zero
+    if not np.isfinite(rv) or np.abs(rv) > null_rv:
+        rv = 0.0
+    # BERV must be in m/s [header and database values in km/s]
+    rv = rv * 1000
     # -------------------------------------------------------------------------
     # update header
     header = drs_fits.Header(header)

@@ -13,7 +13,7 @@ __all__ = [  # input keys
     'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND', 'KW_MJDATE',
     'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
     'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
-    'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_GAIA_DR', 'KW_INPUTRV', 'KW_OBJ_TEMP',
+    'KW_HUMIDITY', 'KW_INPUTRV', 'KW_OBJ_TEMP',
     'KW_POLAR_KEY_1', 'KW_POLAR_KEY_2', 'KW_SATURATE', 'KW_FRMTIME',
     'KW_OBJECTNAME', 'KW_OBJECTNAME2', 'KW_IDENTIFIER',
     'KW_INSTRUMENT', 'KW_INST_MODE', 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG',
@@ -30,7 +30,7 @@ __all__ = [  # input keys
     'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
     'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
     'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
-    'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE',
+    'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE', 'KW_FIBER',
     'KW_MID_OBS_TIME', 'KW_MID_OBSTIME_METHOD',
     # calibration file header keys
     'KW_CDBDARK', 'KW_CDTDARK', 'KW_CDBBAD', 'KW_CDTBAD',
@@ -65,16 +65,10 @@ __all__ = [  # input keys
     'KW_EXT_RANGE1', 'KW_EXT_RANGE2', 'KW_COSMIC', 'KW_COSMIC_CUT',
     'KW_COSMIC_THRES', 'KW_SAT_QC', 'KW_SAT_LEVEL', 'KW_S1D_WAVESTART',
     'KW_S1D_WAVEEND', 'KW_S1D_KIND', 'KW_S1D_BWAVE', 'KW_S1D_BVELO',
-    'KW_S1D_SMOOTH', 'KW_S1D_BLAZET', 'KW_BERVRA', 'KW_BERVDEC',
-    'KW_BERVEPOCH', 'KW_BERVPMRA', 'KW_BERVPMDE', 'KW_BERVPLX',
-    'KW_BERV_POS_SOURCE', 'KW_BERVLAT', 'KW_BERVLONG', 'KW_BERVALT',
+    'KW_S1D_SMOOTH', 'KW_S1D_BLAZET', 'KW_BERVLAT', 'KW_BERVLONG', 'KW_BERVALT',
     'KW_BERV', 'KW_BJD', 'KW_BERVMAX', 'KW_BERVSOURCE',
     'KW_BERV_EST', 'KW_BJD_EST', 'KW_BERVMAX_EST',
-    'KW_BERV_OBSTIME', 'KW_BERV_OBSTIME_METHOD',
-    'KW_BERVGAIA_ID', 'KW_FIBER', 'KW_BERVOBJNAME', 'KW_BERVRV',
-    'KW_BERV_GAIA_GMAG', 'KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_RPMAG',
-    'KW_BERV_GAIA_MAGLIM', 'KW_BERV_GAIA_PLXLIM', 'KW_DBERV',
-    'KW_DBERV_EST',
+    'KW_BERV_OBSTIME', 'KW_BERV_OBSTIME_METHOD', 'KW_DBERV', 'KW_DBERV_EST',
     # leakage values
     'KW_LEAK_CORR', 'KW_LEAK_BP_U', 'KW_LEAK_NP_U', 'KW_LEAK_WSMOOTH',
     'KW_LEAK_KERSIZE', 'KW_LEAK_LP_U', 'KW_LEAK_UP_U', 'KW_LEAK_BADR_U',
@@ -344,14 +338,6 @@ KW_OBJECTNAME = Keyword('KW_OBJECTNAME', key='NULL', dtype=str, source=__NAME__,
 KW_OBJECTNAME2 = Keyword('KW_OBJECTNAME2', key='NULL', dtype=str, source=__NAME__,
                         description='another object name which may need to be'
                                     'checked')
-
-# define the gaia id
-KW_GAIA_ID = Keyword('KW_GAIA_ID', key='NULL', dtype=str, source=__NAME__,
-                     description='define the gaia id')
-
-# define the gaia data release key
-KW_GAIA_DR = Keyword('KW_GAIA_DR', key='NULL', dtype=str, source=__NAME__,
-                     description='define the gaia data release key')
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = Keyword('KW_OBJEQUIN', key='NULL', dtype=float, source=__NAME__,
@@ -1005,85 +991,6 @@ KW_S1D_SMOOTH = Keyword('KW_S1D_SMOOTH', key='NULL', dtype=float, source=__NAME_
 # the blaze threshold used for the s1d
 KW_S1D_BLAZET = Keyword('KW_S1D_BLAZET', key='NULL', dtype=float, source=__NAME__,
                         description='the blaze threshold used for the s1d')
-
-# the Right Ascension used to calculate the BERV
-KW_BERVRA = Keyword('KW_BERVRA', key='NULL', dtype=float, source=__NAME__,
-                    description=('the Right Ascension used to calculate '
-                                 'the BERV'))
-
-# the Declination used to calculate the BERV
-KW_BERVDEC = Keyword('KW_BERVDEC', key='NULL', dtype=float, source=__NAME__,
-                     description='the Declination used to calculate the BERV')
-
-# the Gaia ID used to identify KW_BERV_POS_SOURCE for BERV calculation
-KW_BERVGAIA_ID = Keyword('KW_BERVGAIA_ID', key='NULL', dtype=str, source=__NAME__,
-                         description=('the Gaia ID used to identify '
-                                      'KW_BERV_POS_SOURCE for BERV calculation'))
-
-# the OBJNAME used to identify KW_BERV_POS_SOURCE for BERV calculation
-KW_BERVOBJNAME = Keyword('KW_BERVOBJNAME', key='NULL', dtype=str, source=__NAME__,
-                         description=('the OBJNAME used to identify '
-                                      'KW_BERV_POS_SOURCE for BERV calculation'))
-
-# the epoch (jd) used to calculate the BERV
-KW_BERVEPOCH = Keyword('KW_BERVEPOCH', key='NULL', dtype=float, source=__NAME__,
-                       description=('the epoch (jd) used to calculate '
-                                    'the BERV'))
-
-# the pmra [mas/yr] used to calculate the BERV
-KW_BERVPMRA = Keyword('KW_BERVPMRA', key='NULL', dtype=float, source=__NAME__,
-                      description=('the pmra [mas/yr] used to calculate '
-                                   'the BERV'))
-
-# the pmde [mas/yr] used to calculate the BERV
-KW_BERVPMDE = Keyword('KW_BERVPMDE', key='NULL', dtype=float, source=__NAME__,
-                      description=('the pmde [mas/yr] used to calculate '
-                                   'the BERV'))
-
-# the parallax [mas] used to calculate the BERV
-KW_BERVPLX = Keyword('KW_BERVPLX', key='NULL', dtype=float, source=__NAME__,
-                     description=('the parallax [mas] used to calculate '
-                                  'the BERV'))
-
-# the rv [km/s] used to calculate the BERV
-KW_BERVRV = Keyword('KW_BERVRV', key='NULL', dtype=float, source=__NAME__,
-                    description='the rv [km/s] used to calculate the BERV')
-
-# the source of the BERV star parameters (header or gaia)
-KW_BERV_POS_SOURCE = Keyword('KW_BERV_POS_SOURCE', key='NULL', dtype=str,
-                             source=__NAME__,
-                             description=('the source of the BERV star '
-                                          'parameters (header or gaia)'))
-
-# the Gaia G mag (if present) for the gaia query
-KW_BERV_GAIA_GMAG = Keyword('KW_BERV_GAIA_GMAG', key='NULL', dtype=float,
-                            source=__NAME__,
-                            description=('the Gaia G mag (if present) for '
-                                         'the gaia query'))
-
-# the Gaia BP mag (if present) for the gaia query
-KW_BERV_GAIA_BPMAG = Keyword('KW_BERV_GAIA_BPMAG', key='NULL', dtype=float,
-                             source=__NAME__,
-                             description=('the Gaia BP mag (if present) for '
-                                          'the gaia query'))
-
-# the Gaia RP mag (if present) for the gaia query
-KW_BERV_GAIA_RPMAG = Keyword('KW_BERV_GAIA_RPMAG', key='NULL', dtype=float,
-                             source=__NAME__,
-                             description=('the Gaia RP mag (if present) for '
-                                          'the gaia query'))
-
-# the Gaia G mag limit used for the gaia query
-KW_BERV_GAIA_MAGLIM = Keyword('KW_BERV_GAIA_MAGLIM', key='NULL', dtype=float,
-                              source=__NAME__,
-                              description=('the Gaia G mag limit used for '
-                                           'the gaia query'))
-
-# the Gaia parallax limit used the gaia query
-KW_BERV_GAIA_PLXLIM = Keyword('KW_BERV_GAIA_PLXLIM', key='NULL', dtype=float,
-                              source=__NAME__,
-                              description=('the Gaia parallax limit used the '
-                                           'gaia query'))
 
 # the observatory latitude used to calculate the BERV
 KW_BERVLAT = Keyword('KW_BERVLAT', key='NULL', dtype=float, source=__NAME__,

@@ -199,15 +199,6 @@ KW_AIRMASS.set(key='AIRMASS', comment='Airmass at start of observation',
 # -----------------------------------------------------------------------------
 # Wanted header keys (related to science object)
 # -----------------------------------------------------------------------------
-# define the gaia id
-KW_GAIA_ID = KW_GAIA_ID.copy(__NAME__)
-KW_GAIA_ID.set(key='GAIAID', comment='Gaia catalog target identifier',
-               group='raw')
-
-# define the gaia data release key
-KW_GAIA_DR = KW_GAIA_DR.copy(__NAME__)
-KW_GAIA_DR.set(key='GAIADR', comment='Gaia catalog data release', group='raw')
-
 # define the parallax HEADER key
 KW_PLX = KW_PLX.copy(__NAME__)
 KW_PLX.set(key='OBJPLX', unit=uu.mas, group='raw')
@@ -849,67 +840,6 @@ KW_S1D_SMOOTH.set(key='S1DSMOOT', comment='Smoothing scale for s1d edge mask')
 # the blaze threshold used for the s1d
 KW_S1D_BLAZET = KW_S1D_BLAZET.copy(__NAME__)
 KW_S1D_BLAZET.set(key='S1DBLAZT', comment='Blaze threshold for s1d')
-
-# the Right Ascension used to calculate the BERV
-KW_BERVRA = KW_BERVRA.copy(__NAME__)
-KW_BERVRA.set(key='BC_RA', comment='Right Ascension used to calc. BERV')
-
-# the Declination used to calculate the BERV
-KW_BERVDEC = KW_BERVDEC.copy(__NAME__)
-KW_BERVDEC.set(key='BC_DEC', comment='Declination used to calc. BERV')
-
-# the Gaia ID used to identify KW_BERV_POS_SOURCE for BERV calculation
-KW_BERVGAIA_ID = KW_BERVGAIA_ID.copy(__NAME__)
-KW_BERVGAIA_ID.set(key='BC_GAIA', comment='The Gaia ID used for BERV params')
-
-# the OBJNAME used to identify KW_BERV_POS_SOURCE for BERV calculation
-KW_BERVOBJNAME = KW_BERVOBJNAME.copy(__NAME__)
-KW_BERVOBJNAME.set(key='BC_OBJNM',
-                   comment='The OBJECT NAME used for BERV params')
-
-# the epoch (jd) used to calculate the BERV
-KW_BERVEPOCH = KW_BERVEPOCH.copy(__NAME__)
-KW_BERVEPOCH.set(key='BC_EPOCH', comment='Epoch [JD] used to calc. BERV')
-
-# the pmra [mas/yr] used to calculate the BERV
-KW_BERVPMRA = KW_BERVPMRA.copy(__NAME__)
-KW_BERVPMRA.set(key='BC_PMRA', comment='PMRA [mas/yr] used to calc. BERV')
-
-# the pmde [mas/yr] used to calculate the BERV
-KW_BERVPMDE = KW_BERVPMDE.copy(__NAME__)
-KW_BERVPMDE.set(key='BC_PMDE', comment='PMDE [mas/yr] used to calc. BERV')
-
-# the parallax [mas] used to calculate the BERV
-KW_BERVPLX = KW_BERVPLX.copy(__NAME__)
-KW_BERVPLX.set(key='BC_PLX', comment='PLX [mas] used to calc. BERV')
-
-# the rv [km/s] used to calculate the BERV
-KW_BERVRV = KW_BERVRV.copy(__NAME__)
-KW_BERVRV.set(key='BC_RV', comment='RV [km/s] used to calc. BERV')
-
-# the source of the BERV star parameters (header or gaia)
-KW_BERV_POS_SOURCE = KW_BERV_POS_SOURCE.copy(__NAME__)
-KW_BERV_POS_SOURCE.set(key='BC_PSRCE', comment='Source of BERV star params')
-
-# the Gaia G mag (if present) for the gaia query
-KW_BERV_GAIA_GMAG = KW_BERV_GAIA_GMAG.copy(__NAME__)
-KW_BERV_GAIA_GMAG.set(key='BC_GMAG', comment='Gaia G mag for BERV calc.')
-
-# the Gaia BP mag (if present) for the gaia query
-KW_BERV_GAIA_BPMAG = KW_BERV_GAIA_BPMAG.copy(__NAME__)
-KW_BERV_GAIA_BPMAG.set(key='BC_BPMAG', comment='Gaia BP mag for BERV calc.')
-
-# the Gaia RP mag (if present) for the gaia query
-KW_BERV_GAIA_RPMAG = KW_BERV_GAIA_RPMAG.copy(__NAME__)
-KW_BERV_GAIA_RPMAG.set(key='BC_RPMAG', comment='Gaia RP mag for BERV calc.')
-
-# the Gaia G mag limit used for the gaia query
-KW_BERV_GAIA_MAGLIM = KW_BERV_GAIA_MAGLIM.copy(__NAME__)
-KW_BERV_GAIA_MAGLIM.set(key='BC_MAG_L', comment='Gaia mag lim for BERV calc.')
-
-# the Gaia parallax limit used the gaia query
-KW_BERV_GAIA_PLXLIM = KW_BERV_GAIA_PLXLIM.copy(__NAME__)
-KW_BERV_GAIA_PLXLIM.set(key='BC_PLX_L', comment='Gaia plx lim for BERV calc.')
 
 # the observatory latitude used to calculate the BERV
 KW_BERVLAT = KW_BERVLAT.copy(__NAME__)
