@@ -76,8 +76,6 @@ DrsFileTypes = Union[drs_file.DrsInputFile, drs_file.DrsFitsFile,
 pcheck = constants.PCheck(wlog=WLOG)
 # get list of obj name cols
 OBJNAMECOLS = ['KW_OBJNAME']
-# gaia col name
-GAIA_COL_NAME = 'GAIADR2ID'
 # complex return
 DealFilenameReturn = Union[Tuple[str, str], Tuple[Path, str, str, str]]
 # globals to save time on multiple reads
@@ -2455,8 +2453,6 @@ class ObjectDatabase(DatabaseManager):
         # set up sql kwargs
         sql['sort_by'] = None
         sql['sort_descending'] = True
-        # sort by last modified
-        sql['sort_by'] = GAIA_COL_NAME
         # condition for used
         sql['condition'] = 'USED = 1'
         # ------------------------------------------------------------------
@@ -2588,6 +2584,12 @@ class ObjectDatabase(DatabaseManager):
             # update row in database
             self.database.set('*', values=values, condition=condition,
                               table=self.database.tname, unique_cols=ucols)
+
+    def count(self, condition: Union[str, None] = None) -> int:
+        """
+        Count the number of rows in the object database
+        """
+        return self.database.count(self.database.tname, condition=condition)
 
 
 # =============================================================================

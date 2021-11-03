@@ -1318,14 +1318,13 @@ class PseudoConstants:
         obj_columns = DatabaseColumns()
         obj_columns.add(name='OBJNAME', datatype='VARCHAR(80)', is_index=True,
                         is_unique=True)
-        obj_columns.add(name='OBJNAME_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='GAIADR2ID', datatype='VARCHAR(80)',
-                        is_index=True, is_unique=True)
-        obj_columns.add(name='GAIAID_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='ORIGINAL_NAME', datatype='VARCHAR(80)')
+        obj_columns.add(name='ALIASES', datatype='TEXT')
         obj_columns.add(name='RA_DEG', datatype='DOUBLE')
         obj_columns.add(name='RA_SOURCE', datatype='VARCHAR(80)')
         obj_columns.add(name='DEC_DEG', datatype='DOUBLE')
         obj_columns.add(name='DEC_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='EPOCH', datatype='DOUBLE')
         obj_columns.add(name='PMRA', datatype='DOUBLE')
         obj_columns.add(name='PMRA_SOURCE', datatype='VARCHAR(80)')
         obj_columns.add(name='PMDE', datatype='DOUBLE')
@@ -1334,22 +1333,24 @@ class PseudoConstants:
         obj_columns.add(name='PLX_SOURCE', datatype='VARCHAR(80)')
         obj_columns.add(name='RV', datatype='DOUBLE')
         obj_columns.add(name='RV_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='GMAG', datatype='DOUBLE')
-        obj_columns.add(name='GMAG_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='BPMAG', datatype='DOUBLE')
-        obj_columns.add(name='BPMAG_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='RPMAG', datatype='DOUBLE')
-        obj_columns.add(name='RPMAG_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='EPOCH', datatype='DOUBLE')
-        obj_columns.add(name='EPOCH_SOURCE', datatype='VARCHAR(80)')
         obj_columns.add(name='TEFF', datatype='DOUBLE')
         obj_columns.add(name='TEFF_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='ALIASES', datatype='TEXT')
-        obj_columns.add(name='ALIASES_SOURCE', datatype='TEXT')
+        obj_columns.add(name='SP_TYPE', datatype='VARCHAR(80)')
+        obj_columns.add(name='SP_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='NOTES', datatype='TEXT')
         obj_columns.add(name='USED', datatype='INT')
+        obj_columns.add(name='DATE_ADDED', datatype='VARCHAR(26)')
         # return columns and ctypes
         self.objdb_cols = obj_columns
         return obj_columns
+
+    def GET_EPOCH(self, params, header):
+        """
+        Get the EPOCH in JD from a input header file (instrument specific)
+        """
+        _ = params, header
+        # raise implementation error
+        self._not_implemented('GET_EPOCH')
 
 
 # =============================================================================

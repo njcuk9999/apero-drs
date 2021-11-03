@@ -246,159 +246,130 @@ KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K, group='raw')
 # -----------------------------------------------------------------------------
 # the object name to be used by the drs (after preprocessing)
 KW_DRS_OBJNAME = KW_DRS_OBJNAME.copy(__NAME__)
-KW_DRS_OBJNAME.set(key='DR_OBJN',
+KW_DRS_OBJNAME.set(key='PP_OBJN',
                    comment='cleaned object name to be used by the DRS',
                    group='resolve', post_exclude=True)
 
-# the source of the object name used by the drs
+# the original name of the object name used by the drs
 KW_DRS_OBJNAME_S = KW_DRS_OBJNAME_S.copy(__NAME__)
-KW_DRS_OBJNAME_S.set(key='DR_OBJNS',
-                     comment='Source of cleaned object name used by the DRS',
+KW_DRS_OBJNAME_S.set(key='PP_OBJNS',
+                     comment='Original object name as in header',
                      group='resolve', post_exclude=True)
-
-# the gaia id to be used by the drs (after preprocessing)
-KW_DRS_GAIAID = KW_DRS_GAIAID.copy(__NAME__)
-KW_DRS_GAIAID.set(key='DR_GAIA2',
-                  comment='Gaia id to be used by the DRS',
-                  group='resolve', post_exclude=True)
-
-# the source of the gaia id to be used by the drs (after preprocessing)
-KW_DRS_GAIAID_S = KW_DRS_GAIAID_S.copy(__NAME__)
-KW_DRS_GAIAID_S.set(key='DR_GAIAS',
-                    comment='Source of the gaiaid used by the DRS',
-                    group='resolve', post_exclude=True)
 
 # the right ascension to be used by the drs (after preprocessing)
 KW_DRS_RA = KW_DRS_RA.copy(__NAME__)
-KW_DRS_RA.set(key='DR_RA', unit=uu.deg,
+KW_DRS_RA.set(key='PP_RA', unit=uu.deg,
               comment='The RA [in deg] used by the DRS',
               group='resolve', post_exclude=True)
 
 # the source of the ra to be used by the drs (after preprocessing)
 KW_DRS_RA_S = KW_DRS_RA_S.copy(__NAME__)
-KW_DRS_RA_S.set(key='DR_RA_S',
+KW_DRS_RA_S.set(key='PP_RAS',
                 comment='Source of the ra used by the DRS',
                 group='resolve', post_exclude=True)
 
 # the declination to be used by the drs (after preprocessing)
 KW_DRS_DEC = KW_DRS_DEC.copy(__NAME__)
-KW_DRS_DEC.set(key='DR_DEC', unit=uu.deg,
+KW_DRS_DEC.set(key='PP_DEC', unit=uu.deg,
                comment='The dec [in deg] used by the DRS',
                group='resolve', post_exclude=True)
 
 # the source of the dec to be used by the drs (after preprocessing)
 KW_DRS_DEC_S = KW_DRS_DEC_S.copy(__NAME__)
-KW_DRS_DEC_S.set(key='DR_DEC_S',
+KW_DRS_DEC_S.set(key='PP_DECS',
                  comment='Source of the dec used by the DRS',
                  group='resolve', post_exclude=True)
 
 # the proper motion in ra to be used by the drs (after preprocessing)
 KW_DRS_PMRA = KW_DRS_PMRA.copy(__NAME__)
-KW_DRS_PMRA.set(key='DR_PMRA', unit=uu.mas / uu.yr,
+KW_DRS_PMRA.set(key='PP_PMRA', unit=uu.mas / uu.yr,
                 comment='The pmra [mas/yr] used by the DRS',
                 group='resolve', post_exclude=True)
 
 # the source of the pmra used by the drs (afer prepreocessing)
 KW_DRS_PMRA_S = KW_DRS_PMRA_S.copy(__NAME__)
-KW_DRS_PMRA_S.set(key='DR_PMRAS',
+KW_DRS_PMRA_S.set(key='PP_PMRAS',
                   comment='Source of the pmra used by the DRS',
                   group='resolve', post_exclude=True)
 
 # the proper motion in dec to be used by the drs (after preprocessing)
 KW_DRS_PMDE = KW_DRS_PMDE.copy(__NAME__)
-KW_DRS_PMDE.set(key='DR_PMDE', unit=uu.mas / uu.yr,
+KW_DRS_PMDE.set(key='PP_PMDE', unit=uu.mas / uu.yr,
                 comment='The pmdec [mas/yr] used by the DRS',
                 group='resolve', post_exclude=True)
 
 # the source of the pmde used by the drs (after preprocessing)
 KW_DRS_PMDE_S = KW_DRS_PMDE_S.copy(__NAME__)
-KW_DRS_PMDE_S.set(key='DR_PMDES',
+KW_DRS_PMDE_S.set(key='PP_PMDES',
                   comment='Source of the pmde used by the DRS',
                   group='resolve', post_exclude=True)
 
 # the parallax to be used by the drs (after preprocessing)
 KW_DRS_PLX = KW_DRS_PLX.copy(__NAME__)
-KW_DRS_PLX.set(key='DR_PLX', unit=uu.mas,
+KW_DRS_PLX.set(key='PP_PLX', unit=uu.mas,
                comment='The parallax [mas] used by the DRS',
                group='resolve', post_exclude=True)
 
 # the source of the parallax used by the drs (after preprocessing)
 KW_DRS_PLX_S = KW_DRS_PLX_S.copy(__NAME__)
-KW_DRS_PLX_S.set(key='DR_PLX_S',
+KW_DRS_PLX_S.set(key='PP_PLXS',
                  comment='Source of the plx used by the DRS',
                  group='resolve', post_exclude=True)
 
 # the radial velocity to be used by the drs (after preprocessing)
 KW_DRS_RV = KW_DRS_RV.copy(__NAME__)
-KW_DRS_RV.set(key='DR_RV', unit=uu.km / uu.s,
+KW_DRS_RV.set(key='PP_RV', unit=uu.km / uu.s,
               comment='The RV [km/s] used by the DRS',
               group='resolve', post_exclude=True)
 
 # the source of the radial velocity used by the drs (after preprocessing)
 KW_DRS_RV_S = KW_DRS_RV_S.copy(__NAME__)
-KW_DRS_RV_S.set(key='DR_RV_S',
+KW_DRS_RV_S.set(key='PP_RVS',
                 comment='Source of the rv used by the DRS',
                 group='resolve', post_exclude=True)
 
-# the Gaia G magnitude to be used by the drs (after preprocessing)
-KW_DRS_GMAG = KW_DRS_GMAG.copy(__NAME__)
-KW_DRS_GMAG.set(key='HDR_GMAG',
-                comment='The Gaia G mag used by the DRS',
-                group='resolve', post_exclude=True)
-
-# the source of the gmag used by the drs (after preprocessing)
-KW_DRS_GMAG_S = KW_DRS_GMAG_S.copy(__NAME__)
-KW_DRS_GMAG_S.set(key='DR_GMAGS',
-                  comment='Source of the gmag used by the DRS',
-                  group='resolve', post_exclude=True)
-
-# the Gaia BP magnitude to be used by the drs (after preprocessing)
-KW_DRS_BPMAG = KW_DRS_BPMAG.copy(__NAME__)
-KW_DRS_BPMAG.set(key='DR_BMAG',
-                 comment='The Gaia BP mag used by the DRS',
-                 group='resolve', post_exclude=True)
-
-# the source of the bpmag used by the drs (after preprocessing)
-KW_DRS_BPMAG_S = KW_DRS_BPMAG_S.copy(__NAME__)
-KW_DRS_BPMAG_S.set(key='DR_BMAGS',
-                   comment='Source of the bpmag used by the DRS',
-                   group='resolve', post_exclude=True)
-
-# the Gaia RP magnitude to be used by the drs (after preprocessing)
-KW_DRS_RPMAG = KW_DRS_RPMAG.copy(__NAME__)
-KW_DRS_RPMAG.set(key='DR_RMAG',
-                 comment='The Gaia RP mag used by the DRS',
-                 group='resolve', post_exclude=True)
-
-# the source of the rpmag used by the drs (after preprocessing)
-KW_DRS_RPMAG_S = KW_DRS_RPMAG_S.copy(__NAME__)
-KW_DRS_RPMAG_S.set(key='DR_RMAGS',
-                   comment='Source of the rpmag used by the DRS',
-                   group='resolve', post_exclude=True)
-
 # the epoch to be used by the drs (after preprocessing)
 KW_DRS_EPOCH = KW_DRS_EPOCH.copy(__NAME__)
-KW_DRS_EPOCH.set(key='DR_EPOC', unit=uu.yr,
+KW_DRS_EPOCH.set(key='PP_EPOCH', unit=uu.yr,
                  comment='The Epoch used by the DRS',
                  group='resolve', post_exclude=True)
 
-# the source of the epoch used by the drs (after preprocessing)
-KW_DRS_EPOCH_S = KW_DRS_EPOCH_S.copy(__NAME__)
-KW_DRS_EPOCH_S.set(key='DR_EPOCS',
-                   comment='Source of the epoch used by the DRS',
-                   group='resolve', post_exclude=True)
-
 # the effective temperature to be used by the drs (after preprocessing)
 KW_DRS_TEFF = KW_DRS_TEFF.copy(__NAME__)
-KW_DRS_TEFF.set(key='DR_TEFF', unit=uu.K,
+KW_DRS_TEFF.set(key='PP_TEFF', unit=uu.K,
                 comment='The Teff [K] used by the DRS',
                 group='resolve', post_exclude=True)
 
 # the source of teff used by the drs (after preprocessing)
 KW_DRS_TEFF_S = KW_DRS_TEFF_S.copy(__NAME__)
-KW_DRS_TEFF_S.set(key='DR_TEFFS',
+KW_DRS_TEFF_S.set(key='PP_TEFFS',
                   comment='Source of the Teff used by the DRS',
                   group='resolve', post_exclude=True)
+
+# the spectral type (if present) used by the drs (after preprocessing)
+KW_DRS_SPTYPE = KW_DRS_SPTYPE.copy(__NAME__)
+KW_DRS_SPTYPE.set(key='PP_SPT', unit=uu.K,
+                  comment='The SpT used by the DRS',
+                  group='resolve', post_exclude=True)
+
+# the source of spectral type (if present) used by the drs (after preprocessing)
+KW_DRS_SPTYPE_S = KW_DRS_SPTYPE_S.copy(__NAME__)
+KW_DRS_SPTYPE_S.set(key='PP_SPTS',
+                    comment='Source of the SpT used by the DRS',
+                    group='resolve', post_exclude=True)
+
+# The source of the DRS object data (after preprocessing)
+KW_DRS_DSOURCE = KW_DRS_DSOURCE.copy(__NAME__)
+KW_DRS_DSOURCE.set(key='PP_SRCE', unit=uu.K,
+                   comment='The source of DRS object data',
+                   group='resolve', post_exclude=True)
+
+# The date of the source of the DRS object data (after preprocessing)
+KW_DRS_DDATE = KW_DRS_DDATE.copy(__NAME__)
+KW_DRS_DDATE.set(key='PP_DDATE', unit=uu.K,
+                  comment='The date of source of DRS object data',
+                  group='resolve', post_exclude=True)
+
 
 # -----------------------------------------------------------------------------
 # Define general keywords

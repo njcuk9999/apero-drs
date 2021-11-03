@@ -178,6 +178,14 @@ class Header(fits.Header):
         value = super().get(key, default)
         return self.__nan_check(value, dtype=float)
 
+    def get_key(self, params: ParamDict, key: str, default=None) -> Any:
+        # deal with key in params
+        if key in params:
+            drs_key, _, drs_comment = params[key]
+        else:
+            drs_key = str(key)
+        return self.get(drs_key, default=default)
+
     def __contains__(self, key: str) -> bool:
         """
         Whether key is in header

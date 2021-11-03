@@ -18,13 +18,12 @@ __all__ = [  # input keys
     'KW_OBJECTNAME', 'KW_OBJECTNAME2', 'KW_IDENTIFIER',
     'KW_INSTRUMENT', 'KW_INST_MODE', 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG',
     # object resolution keys
-    'KW_DRS_OBJNAME', 'KW_DRS_OBJNAME_S', 'KW_DRS_GAIAID', 'KW_DRS_GAIAID_S',
+    'KW_DRS_OBJNAME', 'KW_DRS_OBJNAME_S',
     'KW_DRS_RA', 'KW_DRS_RA_S', 'KW_DRS_DEC', 'KW_DRS_DEC_S',
     'KW_DRS_PMRA', 'KW_DRS_PMRA_S', 'KW_DRS_PMDE', 'KW_DRS_PMDE_S',
     'KW_DRS_PLX', 'KW_DRS_PLX_S', 'KW_DRS_RV', 'KW_DRS_RV_S',
-    'KW_DRS_GMAG', 'KW_DRS_GMAG_S', 'KW_DRS_BPMAG', 'KW_DRS_BPMAG_S',
-    'KW_DRS_RPMAG', 'KW_DRS_RPMAG_S', 'KW_DRS_EPOCH', 'KW_DRS_EPOCH_S',
-    'KW_DRS_TEFF', 'KW_DRS_TEFF_S',
+    'KW_DRS_EPOCH', 'KW_DRS_TEFF', 'KW_DRS_TEFF_S', 'KW_DRS_SPTYPE',
+    'KW_DRS_SPTYPE_S', 'KW_DRS_DSOURCE', 'KW_DRS_DDATE',
     # general output keys
     'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID', 'KW_DRS_MODE',
     'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3', 'KW_DRS_MODE',
@@ -415,21 +414,11 @@ KW_DRS_OBJNAME = Keyword('KW_DRS_OBJNAME', key='NULL', dtype=str, source=__NAME_
                          description=('the object name to be used by the '
                                       'drs (after preprocessing)'))
 
-# the source of the object name used by the drs
+# the original name of the object name used by the drs
 KW_DRS_OBJNAME_S = Keyword('KW_DRS_OBJNAME_S', key='NULL', dtype=str,
                            source=__NAME__,
-                           description=('the source of the object name used '
-                                        'by the drs'))
-
-# the gaia id to be used by the drs (after preprocessing)
-KW_DRS_GAIAID = Keyword('KW_DRS_GAIAID', key='NULL', dtype=str, source=__NAME__,
-                        description=('the gaia id to be used by the drs '
-                                     '(after preprocessing)'))
-
-# the source of the gaia id to be used by the drs (after preprocessing)
-KW_DRS_GAIAID_S = Keyword('KW_DRS_GAIAID_S', key='NULL', dtype=str, source=__NAME__,
-                          description=('the source of the gaia id to be used '
-                                       'by the drs (after preprocessing)'))
+                           description='the original name of the object name '
+                                       'used by the drs')
 
 # the right ascension to be used by the drs (after preprocessing)
 KW_DRS_RA = Keyword('KW_DRS_RA', key='NULL', dtype=float, source=__NAME__,
@@ -491,45 +480,10 @@ KW_DRS_RV_S = Keyword('KW_DRS_RV_S', key='NULL', dtype=str, source=__NAME__,
                       description=('the source of the radial velocity used by '
                                    'the drs (after preprocessing)'))
 
-# the Gaia G magnitude to be used by the drs (after preprocessing)
-KW_DRS_GMAG = Keyword('KW_DRS_GMAG', key='NULL', dtype=float, source=__NAME__,
-                      description=('the Gaia G magnitude to be used by the '
-                                   'drs (after preprocessing)'))
-
-# the source of the gmag used by the drs (after preprocessing)
-KW_DRS_GMAG_S = Keyword('KW_DRS_GMAG_S', key='NULL', dtype=str, source=__NAME__,
-                        description=('the source of the gmag used by the drs '
-                                     '(after preprocessing)'))
-
-# the Gaia BP magnitude to be used by the drs (after preprocessing)
-KW_DRS_BPMAG = Keyword('KW_DRS_BPMAG', key='NULL', dtype=float, source=__NAME__,
-                       description=('the Gaia BP magnitude to be used by the '
-                                    'drs (after preprocessing)'))
-
-# the source of the bpmag used by the drs (after preprocessing)
-KW_DRS_BPMAG_S = Keyword('KW_DRS_BPMAG_S', key='NULL', dtype=str, source=__NAME__,
-                         description=('the source of the bpmag used by the '
-                                      'drs (after preprocessing)'))
-
-# the Gaia RP magnitude to be used by the drs (after preprocessing)
-KW_DRS_RPMAG = Keyword('KW_DRS_RPMAG', key='NULL', dtype=float, source=__NAME__,
-                       description=('the Gaia RP magnitude to be used by the '
-                                    'drs (after preprocessing)'))
-
-# the source of the rpmag used by the drs (after preprocessing)
-KW_DRS_RPMAG_S = Keyword('KW_DRS_RPMAG_S', key='NULL', dtype=str, source=__NAME__,
-                         description=('the source of the rpmag used by the drs '
-                                      '(after preprocessing)'))
-
 # the epoch to be used by the drs (after preprocessing)
 KW_DRS_EPOCH = Keyword('KW_DRS_EPOCH', key='NULL', dtype=float, source=__NAME__,
                        description=('the epoch to be used by the drs (after '
                                     'preprocessing)'))
-
-# the source of the epoch used by the drs (after preprocessing)
-KW_DRS_EPOCH_S = Keyword('KW_DRS_EPOCH_S', key='NULL', dtype=str, source=__NAME__,
-                         description=('the source of the epoch used by the drs '
-                                      '(after preprocessing)'))
 
 # the effective temperature to be used by the drs (after preprocessing)
 KW_DRS_TEFF = Keyword('KW_DRS_TEFF', key='NULL', dtype=float, source=__NAME__,
@@ -540,6 +494,30 @@ KW_DRS_TEFF = Keyword('KW_DRS_TEFF', key='NULL', dtype=float, source=__NAME__,
 KW_DRS_TEFF_S = Keyword('KW_DRS_TEFF_S', key='NULL', dtype=str, source=__NAME__,
                         description=('the source of teff used by the drs '
                                      '(after preprocessing)'))
+
+# the spectral type (if present) used by the drs (after preprocessing)
+KW_DRS_SPTYPE = Keyword('KW_DRS_SPTYPE', key='NULL', dtype=float,
+                        source=__NAME__,
+                        description='the spectral type (if present) used by '
+                                    'the drs (after preprocessing)')
+
+# the source of spectral type (if present) used by the drs (after preprocessing)
+KW_DRS_SPTYPE_S = Keyword('KW_DRS_SPTYPE_S', key='NULL', dtype=str,
+                          source=__NAME__,
+                          description='the source of spectral type (if present)'
+                                      ' used by the drs (after preprocessing)')
+
+# The source of the DRS object data (after preprocessing)
+KW_DRS_DSOURCE = Keyword('KW_DRS_DSOURCE', key='NULL', dtype=str,
+                         source=__NAME__,
+                         description='The source of the DRS object data (after'
+                                     ' preprocessing)')
+
+# The date of the source of the DRS object data (after preprocessing)
+KW_DRS_DDATE = Keyword('KW_DRS_DDATE', key='NULL', dtype=str,
+                       source=__NAME__,
+                       description='The date of the source of the DRS object '
+                                   'data (after preprocessing)')
 
 # -----------------------------------------------------------------------------
 # Define general keywords

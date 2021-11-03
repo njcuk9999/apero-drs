@@ -149,13 +149,34 @@ CALIB_CHECK_FP_CENT_SIZE.value = 100
 OBJ_LIST_GAIA_URL = OBJ_LIST_GAIA_URL.copy(__NAME__)
 OBJ_LIST_GAIA_URL.value = 'https://gea.esac.esa.int/tap-server/tap'
 
-# Define the google sheet to use for crossmatch
+# Define the google sheet to use for crossmatch (may be set to a directory for
+#   completely offline reduction)
 OBJ_LIST_GOOGLE_SHEET_URL = OBJ_LIST_GOOGLE_SHEET_URL.copy(__NAME__)
-OBJ_LIST_GOOGLE_SHEET_URL.value = '1jwlux8AJjBMMVrbg6LszJIpFJrk6alhbT5HA7BiAHD8'
+OBJ_LIST_GOOGLE_SHEET_URL.value = '1dOogfEwC7wAagjVFdouB1Y1JdF9Eva4uDW6CTZ8x2FM'
 
-# Define the google sheet workbook number
-OBJ_LIST_GOOGLE_SHEET_WNUM = OBJ_LIST_GOOGLE_SHEET_WNUM.copy(__NAME__)
-OBJ_LIST_GOOGLE_SHEET_WNUM.value = 0
+# Define the google sheet objname list main list id number (may be set to a
+#     csv file for completely offline reduction)
+OBJ_LIST_GSHEET_MAIN_LIST_ID = OBJ_LIST_GSHEET_MAIN_LIST_ID.copy(__NAME__)
+OBJ_LIST_GSHEET_MAIN_LIST_ID.value = '0'
+
+# Define the google sheet objname list pending list id number (may be set to a
+# #     csv file for completely offline reduction)
+OBJ_LIST_GSHEET_PEND_LIST_ID = OBJ_LIST_GSHEET_PEND_LIST_ID.copy(__NAME__)
+OBJ_LIST_GSHEET_PEND_LIST_ID.value = '623506317'
+
+# Define the google sheet objname list reject list id number
+OBJ_LIST_GSHEET_REJECT_LIST_ID = OBJ_LIST_GSHEET_REJECT_LIST_ID.copy(__NAME__)
+OBJ_LIST_GSHEET_REJECT_LIST_ID.value = '2006484513'
+
+# Define the google sheet user url object list (None for no user list)
+#     (may be set to a directory for completely offline reduction)
+OBJ_LIST_GSHEET_USER_URL = OBJ_LIST_GSHEET_USER_URL.copy(__NAME__)
+OBJ_LIST_GSHEET_USER_URL.value = 'None'
+
+# Define the google sheet user id object list id number (may be set to a
+#      csv file for completely offline reduction)
+OBJ_LIST_GSHEET_USER_ID = OBJ_LIST_GSHEET_USER_ID.copy(__NAME__)
+OBJ_LIST_GSHEET_USER_ID.value = '0'
 
 # Define whether to resolve from local database (via drs_database / drs_db)
 OBJ_LIST_RESOLVE_FROM_DATABASE = OBJ_LIST_RESOLVE_FROM_DATABASE.copy(__NAME__)
@@ -377,7 +398,7 @@ GL_GAIA_COL_NAME = GL_GAIA_COL_NAME.copy(__NAME__)
 GL_GAIA_COL_NAME.value = 'GAIADR2ID'
 # object col name in google sheet
 GL_OBJ_COL_NAME = GL_OBJ_COL_NAME.copy(__NAME__)
-GL_OBJ_COL_NAME.value = 'OBJECT'
+GL_OBJ_COL_NAME.value = 'OBJNAME'
 # alias col name in google sheet
 GL_ALIAS_COL_NAME = GL_ALIAS_COL_NAME.copy(__NAME__)
 GL_ALIAS_COL_NAME.value = 'ALIASES'
