@@ -2945,7 +2945,6 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                 # if it does check the group
                 elif params.instances[_filter].group not in ['raw', 'ppraw']:
                     # delete if not raw
-                    print('\t\tRemoving filter: {0}'.format(_filter))
                     del filters[_filter]
     # -------------------------------------------------------------------------
     # return filters
@@ -3260,6 +3259,7 @@ def _remove_engineering(params, indexdb, condition):
     objmask = obstypes == 'OBJECT'
     # define empty keep mask
     reject_obs_dirs = ''
+    rejected_dirs = []
     # loop around nights
     for obs_dir in u_obs_dirs:
         # get night mask
@@ -3272,11 +3272,15 @@ def _remove_engineering(params, indexdb, condition):
             reject_obs_dirs += ' AND OBS_DIR != "{0}"'.format(obs_dir)
             # add to global variable
             if obs_dir not in REMOVE_ENG_DIRS:
-                # log message
-                wmsg = textentry('10-503-00014', args=[obs_dir])
-                WLOG(params, 'warning', wmsg, sublevel=2)
                 # add to remove eng nights (so log message not produced again)
                 REMOVE_ENG_DIRS.append(obs_dir)
+                # add to list for warning (first time)
+                rejected_dirs.append(obs_dir)
+    # log that we rejected directories
+    if len(rejected_dirs) > 0:
+        # log warning message about rejected directories
+        wmsg = textentry('10-503-00014', args=[', '.join(rejected_dirs)])
+        WLOG(params, 'warning', wmsg, sublevel=2)
     # return condition
     return reject_obs_dirs
 
