@@ -140,6 +140,9 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Update the object database (recommended only for full reprocessing)
         # ----------------------------------------------------------------------
+        # check that we have entries in the object database
+        manage_databases.object_db_populated(params)
+        # update the database if required
         if params['UPDATE_OBJ_DATABASE']:
             manage_databases.update_object_database(params)
 

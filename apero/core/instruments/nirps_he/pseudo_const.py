@@ -777,6 +777,20 @@ class PseudoConstants(DefaultConstants):
         self.index_cols = index_cols
         return index_cols
 
+    def GET_EPOCH(self, params, header) -> float:
+        """
+        Get the EPOCH in JD from a input header file (instrument specific)
+        """
+        # spirou stores the equinox in decimal years
+        key = params['KW_OBJEQUIN'][0]
+        time_fmt = params.instances['KW_OBJEQUIN'].unit
+        # get value from header
+        value = header[key]
+        # get time
+        epoch = Time(value, format=time_fmt)
+        # return epoch in JD
+        return epoch.jd
+
 
 # =============================================================================
 # Functions used by pseudo const (instrument specific)

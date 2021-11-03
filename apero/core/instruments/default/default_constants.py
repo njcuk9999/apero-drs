@@ -40,7 +40,9 @@ __all__ = [
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
     'OBJ_LIST_GAIA_URL', 'CALIB_CHECK_FP_PERCENTILE', 'CALIB_CHECK_FP_THRES',
     'CALIB_CHECK_FP_CENT_SIZE', 'COMBINE_METRIC1_TYPES',
-    'OBJ_LIST_GOOGLE_SHEET_URL', 'OBJ_LIST_GOOGLE_SHEET_WNUM',
+    'OBJ_LIST_GOOGLE_SHEET_URL', 'OBJ_LIST_GSHEET_MAIN_LIST_ID',
+    'OBJ_LIST_GSHEET_PEND_LIST_ID', 'OBJ_LIST_GSHEET_REJECT_LIST_ID',
+    'OBJ_LIST_GSHEET_USER_URL', 'OBJ_LIST_GSHEET_USER_ID',
     'OBJ_LIST_RESOLVE_FROM_DATABASE', 'OBJ_LIST_RESOLVE_FROM_GAIAID',
     'OBJ_LIST_RESOLVE_FROM_GLIST', 'OBJ_LIST_RESOLVE_FROM_COORDS',
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
@@ -570,18 +572,50 @@ OBJ_LIST_GAIA_URL = Const('OBJ_LIST_GAIA_URL', value=None, dtype=str,
                           description=('Define the TAP Gaia URL (for use in '
                                        'crossmatching to Gaia via astroquery)'))
 
-# Define the google sheet to use for crossmatch
+# Define the google sheet to use for crossmatch (may be set to a directory for
+#   completely offline reduction)
 OBJ_LIST_GOOGLE_SHEET_URL = Const('OBJ_LIST_GOOGLE_SHEET_URL', value=None,
                                   dtype=str, source=__NAME__, group=cgroup,
                                   description=('Define the google sheet to use '
                                                'for crossmatch'))
 
-# Define the google sheet workbook number
-OBJ_LIST_GOOGLE_SHEET_WNUM = Const('OBJ_LIST_GOOGLE_SHEET_WNUM', value=0,
-                                   dtype=int, source=__NAME__, group=cgroup,
-                                   minimum=0,
-                                   description=('Define the google sheet '
-                                                'workbook number'))
+# Define the google sheet objname list main list id number (may be set to a
+#     csv file for completely offline reduction)
+OBJ_LIST_GSHEET_MAIN_LIST_ID = Const('OBJ_LIST_GSHEET_MAIN_LIST_ID', value=None,
+                                  dtype=str, source=__NAME__, group=cgroup,
+                                  description='Define the google sheet objname '
+                                              'list main list id number')
+
+# Define the google sheet objname list pending list id number (may be set to a
+# #     csv file for completely offline reduction)
+OBJ_LIST_GSHEET_PEND_LIST_ID = Const('OBJ_LIST_GSHEET_PEND_LIST_ID', value=None,
+                                     dtype=str, source=__NAME__, group=cgroup,
+                                     description='Define the google sheet '
+                                                 'objname list pending list '
+                                                 'id number')
+
+# Define the google sheet objname list reject list id number
+OBJ_LIST_GSHEET_REJECT_LIST_ID = Const('OBJ_LIST_GSHEET_REJECT_LIST_ID',
+                                       value=None, dtype=str, source=__NAME__,
+                                       group=cgroup,
+                                       description='Define the google sheet '
+                                                   'objname list reject list '
+                                                   'id number')
+
+# Define the google sheet user url object list (None for no user list)
+#     (may be set to a directory for completely offline reduction)
+OBJ_LIST_GSHEET_USER_URL = Const('OBJ_LIST_GSHEET_USER_URL', value=None,
+                                 dtype=str, source=__NAME__, group=cgroup,
+                                 description='Define the google sheet user url '
+                                             'object list (None for no user '
+                                             'list)')
+
+# Define the google sheet user id object list id number (may be set to a
+#      csv file for completely offline reduction)
+OBJ_LIST_GSHEET_USER_ID = Const('OBJ_LIST_GSHEET_USER_ID', value=None,
+                                dtype=str, source=__NAME__, group=cgroup,
+                                description='Define the google sheet user id '
+                                            'object list id number')
 
 # Define whether to resolve from local database (via drs_database / drs_db)
 OBJ_LIST_RESOLVE_FROM_DATABASE = Const('OBJ_LIST_RESOLVE_FROM_DATABASE',

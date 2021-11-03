@@ -7,6 +7,7 @@ Created on 2020-08-2020-08-18 17:13
 
 @author: cook
 """
+from astropy.table import Table, vstack
 import numpy as np
 import os
 import pandas as pd
@@ -18,6 +19,7 @@ from apero.core import constants
 from apero.core.instruments.default import pseudo_const
 from apero.core.core import drs_database
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.utils import drs_data
 from apero import lang
 from apero.science.preprocessing import gen_pp
@@ -326,9 +328,6 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
 
     :returns: database - the telluric database
     """
-    # get parameters from params
-    asset_dir = params['DRS_DATA_ASSETS']
-    reset_path = params['DATABASE_DIR']
     # get columns and ctypes from pconst
     objdb_cols = pconst.OBJECT_DB_COLUMNS()
     columns = list(objdb_cols.names)
@@ -350,110 +349,180 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     objectdb.add_table(objectdb.tname, columns, ctypes, unique_cols=cuniques,
                        index_cols=cindexs)
     # ---------------------------------------------------------------------
-    # construct reset file
-    reset_abspath = os.path.join(asset_dir, reset_path, objectdbm.dbreset)
-    # get rows from reset file
-    reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
-    # add rows from reset text file
-    objectdb.add_from_pandas(reset_entries, table=objectdb.tname,
-                             unique_cols=cuniques)
+    # update object database from google sheet(s)
+    update_object_database(params)
     # -------------------------------------------------------------------------
     return objectdb
 
 
-def make_object_reset(params: ParamDict):
+def object_db_populated(params: ParamDict) -> bool:
     """
-    This makes the reset file starting with the googlesheet
-    (must clean the current database)
-
-    :param params: ParamDict, parameter dictionary of constants
-
-    :return: None - makes reset.obj.csv
+    Check that object database is populated
     """
-    # get parameters from params
-    rel_path = os.path.join(params['DRS_RESET_ASSETS_PATH'],
-                            params['INSTRUMENT'].lower())
-    asset_dir = drs_data.construct_path(params, '', rel_path)
-    reset_path = params['DATABASE_DIR']
-    # get pconst
-    pconst = constants.pload()
     # need to load database
     objdbm = drs_database.ObjectDatabase(params)
     objdbm.load_db()
-    # remove table if it already exists
-    if objdbm.database.tname in objdbm.database.tables:
-        objdbm.database.backup()
-        objdbm.database.delete_table(objdbm.database.tname)
-    # get columns and ctypes from pconst
-    objdb_cols = pconst.OBJECT_DB_COLUMNS()
-    columns = list(objdb_cols.names)
-    ctypes = list(objdb_cols.datatypes)
-    cuniques = list(objdb_cols.unique_cols)
-    cicols = list(objdb_cols.index_cols)
-    # add main table
-    objdbm.database.add_table(objdbm.database.tname, columns, ctypes,
-                              unique_cols=cuniques, index_cols=cicols)
-    # get google sheets
-    gtable = gen_pp.get_google_sheet(params,
-                                     params['OBJ_LIST_GOOGLE_SHEET_URL'],
-                                     params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
-    objnames = list(np.unique(gtable['OBJECT']))
-    # resolve targets
-    gen_pp.resolve_targets(params, objnames, database=objdbm)
-    # get table
-    table = objdbm.get_entries('*')
-    # write to csv file
-    table.to_csv(os.path.join(asset_dir, reset_path, objdbm.dbreset),
-                 index=False)
+    # count rows in database
+    count = objdbm.database.count(objdbm.database.tname)
+    # return a boolean for object database populated
+    return count > 0
 
 
 def update_object_database(params: ParamDict):
     """
     Update the local object database - note this overwrites all entries in the
-    local database - i.e. we assume the google sheet is more correct
-    however it does leave entries that are not in the google sheet in the
-    local object database
+    local database
+
+    By default this uses a googlesheet URL (OBJ_LIST_GOOGLE_SHEET_URL)
+    + workbook ids to populate the object database
+    (OBJ_LIST_GSHEET_MAIN_LIST_ID + OBJ_LIST_GSHEET_PEND_LIST_ID)
+
+    however if OBJ_LIST_GOOGLE_SHEET_URL is a local directory one can set the
+    OBJ_LIST_GSHEET_MAIN_LIST_ID + OBJ_LIST_GSHEET_PEND_LIST_ID to csv
+    files for a complete offline reduction
 
     :param params: ParamDict, the parameter dictionary of constants
 
     :return: None, updates local object database
     """
-    # get psuedo constants
+    # get parameters from params
+    gsheet_url = params['OBJ_LIST_GOOGLE_SHEET_URL']
+    main_id = params['OBJ_LIST_GSHEET_MAIN_LIST_ID']
+    pending_id = params['OBJ_LIST_GSHEET_PEND_LIST_ID']
+    user_url = params['OBJ_LIST_GSHEET_USER_URL']
+    user_id = params['OBJ_LIST_GSHEET_USER_ID']
+    # get pconst
     pconst = constants.pload()
+    # get list of databases
+    databases = list_databases(params)
+    # object col name in google sheet
+    gl_objcol = params['GL_OBJ_COL_NAME']
     # print that we are updating object database
     WLOG(params, 'info', textentry('40-503-00039'))
-    # gaia col name in google sheet
-    gl_gaia_colname = params['GL_GAIA_COL_NAME']
-    # object col name in google sheet
-    gl_obj_colname = params['GL_OBJ_COL_NAME']
-    # need to load database
-    objdbm = drs_database.ObjectDatabase(params)
-    objdbm.load_db()
-    # get google sheets
-    gtable = gen_pp.get_google_sheet(params,
-                                     params['OBJ_LIST_GOOGLE_SHEET_URL'],
-                                     params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
-    # update rows in gtable
-    for row in tqdm(range(len(gtable))):
-        # get object name and gaia id
-        objname = gtable[gl_obj_colname][row]
-        gaiaid = gtable[gl_gaia_colname][row]
-        # TODO: Need column in database / reset / google sheet or some way
-        #       to switch between
-        gaiadr = 'Gaia DR2'
-        # clean up object name
-        cobjname = pconst.DRS_OBJ_NAME(objname)
-        # log progress ( as debug )
-        WLOG(params, 'debug', textentry('40-503-00040', args=[objname, gaiaid]))
-        # get astro object (current settings)
-        astro_obj = gen_pp.AstroObject(params, pconst, gaiaid, gaiadr, np.nan,
-                                       np.nan, objdbm, cobjname, np.nan, np.nan,
-                                       np.nan, np.nan, np.nan)
-        # resolve target (with current properties)
-        astro_obj.update_target(gtable)
-        # write to database
-        if astro_obj.gaia_id is not None:
-            astro_obj.write_obj(objdbm)
+    # -------------------------------------------------------------------------
+    # deal with gsheet_url being local csv file
+    if os.path.exists(gsheet_url):
+        mainpath = os.path.join(gsheet_url, main_id)
+        pendpath = os.path.join(gsheet_url, pending_id)
+        try:
+            maintable = Table.read(mainpath, format='csv')
+        except Exception as e:
+            # TODO: move to language database
+            emsg = ('Error: if OBJ_LIST_GOOGLE_SHEET_URL is local directory'
+                    ' main_id must be a valid csv file. \nError {0}: {1}')
+            eargs = [type(e), str(e)]
+            WLOG(params, 'error', emsg.format(*eargs))
+            maintable = Table()
+        try:
+            pendtable = Table.read(pendpath, format='csv')
+        except Exception as _:
+            pendtable = Table()
+    else:
+        # get google sheets
+        maintable = gen_pp.get_google_sheet(params, gsheet_url, main_id)
+        pendtable = gen_pp.get_google_sheet(params, gsheet_url, pending_id)
+    # -------------------------------------------------------------------------
+    # get the user table if defined
+    if not drs_text.null_text(user_url, ['None', 'Null', '']):
+        if os.path.exists(user_url):
+            userpath = os.path.join(user_url, user_id)
+            try:
+                usertable = Table.read(userpath, format='csv')
+            except Exception as _:
+                usertable = Table()
+        else:
+            usertable = gen_pp.get_google_sheet(params, user_url, user_id)
+    else:
+        usertable = Table()
+    # -------------------------------------------------------------------------
+    # update main table with other tables (if we have entries in the pending
+    #   table) and if those object name column not already in main table
+    for _table in [pendtable, usertable]:
+        # only do this if this table has some entries
+        if len(_table) != 0:
+            # make sure we have the object name column
+            if gl_objcol in _table.colnames:
+                pmask = ~np.in1d(_table[gl_objcol], maintable[gl_objcol])
+                # add new columns to main table
+                maintable = vstack([maintable, _table[pmask]])
+    # -------------------------------------------------------------------------
+    # convert main table to a pandas dataframe
+    df = maintable.to_pandas()
+    # add a date added column
+    df['DATE_ADDED'] = np.full(len(df), base.__now__.iso)
+    # -------------------------------------------------------------------------
+    # get columns and ctypes from pconst
+    objdb_cols = pconst.OBJECT_DB_COLUMNS()
+    columns = list(objdb_cols.names)
+    ctypes = list(objdb_cols.datatypes)
+    cuniques = list(objdb_cols.unique_cols)
+    cindexs = list(objdb_cols.index_cols)
+    # -------------------------------------------------------------------------
+    # construct directory
+    objectdbm = databases['object']
+    # -------------------------------------------------------------------------
+    # make database
+    objectdb = drs_db.database_wrapper(objectdbm.kind, objectdbm.path)
+    # -------------------------------------------------------------------------
+    # remove table if it already exists
+    if objectdb.tname in objectdb.tables:
+        objectdb.backup()
+        objectdb.delete_table(objectdb.tname)
+    # add main table
+    objectdb.add_table(objectdb.tname, columns, ctypes, unique_cols=cuniques,
+                       index_cols=cindexs)
+    # ---------------------------------------------------------------------
+    # add rows from pandas dataframe
+    objectdb.add_from_pandas(df, table=objectdb.tname, unique_cols=cuniques)
+
+
+# def update_object_database_old(params: ParamDict):
+#     """
+#     Update the local object database - note this overwrites all entries in the
+#     local database - i.e. we assume the google sheet is more correct
+#     however it does leave entries that are not in the google sheet in the
+#     local object database
+#
+#     :param params: ParamDict, the parameter dictionary of constants
+#
+#     :return: None, updates local object database
+#     """
+#     # get psuedo constants
+#     pconst = constants.pload()
+#     # print that we are updating object database
+#     WLOG(params, 'info', textentry('40-503-00039'))
+#     # gaia col name in google sheet
+#     gl_gaia_colname = params['GL_GAIA_COL_NAME']
+#     # object col name in google sheet
+#     gl_obj_colname = params['GL_OBJ_COL_NAME']
+#     # need to load database
+#     objdbm = drs_database.ObjectDatabase(params)
+#     objdbm.load_db()
+#     # get google sheets
+#     gtable = gen_pp.get_google_sheet(params,
+#                                      params['OBJ_LIST_GOOGLE_SHEET_URL'],
+#                                      params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
+#     # update rows in gtable
+#     for row in tqdm(range(len(gtable))):
+#         # get object name and gaia id
+#         objname = gtable[gl_obj_colname][row]
+#         gaiaid = gtable[gl_gaia_colname][row]
+#         # TODO: Need column in database / reset / google sheet or some way
+#         #       to switch between
+#         gaiadr = 'Gaia DR2'
+#         # clean up object name
+#         cobjname = pconst.DRS_OBJ_NAME(objname)
+#         # log progress ( as debug )
+#         WLOG(params, 'debug', textentry('40-503-00040', args=[objname, gaiaid]))
+#         # get astro object (current settings)
+#         astro_obj = gen_pp.AstroObject(params, pconst, gaiaid, gaiadr, np.nan,
+#                                        np.nan, objdbm, cobjname, np.nan, np.nan,
+#                                        np.nan, np.nan, np.nan)
+#         # resolve target (with current properties)
+#         astro_obj.update_target(gtable)
+#         # write to database
+#         if astro_obj.gaia_id is not None:
+#             astro_obj.write_obj(objdbm)
 
 
 def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
@@ -658,10 +727,6 @@ def import_database(params: ParamDict, database_name: str,
 if __name__ == "__main__":
     # test with spirou
     _params = constants.load()
-
-    # We need to make the object reset
-    make_object_reset(_params)
-
     # install database
     install_databases(_params)
 

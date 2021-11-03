@@ -106,7 +106,7 @@ def __main__(recipe, params):
     output_names = []
     # get object database
     objdbm = ObjectDatabase(params)
-
+    objdbm.load_db()
     # loop around number of files
     for it in range(num_files):
         # ------------------------------------------------------------------
