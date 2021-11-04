@@ -160,16 +160,20 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
         dec_source = 'header'
         # epoch needs to be converted based on instrument (should be in JD)
         epoch = float(pconst.GET_EPOCH(params, header))
-        # pmra and pmde in mas/yr
+        # pmra and pmde
         pmra = float(header[params['KW_OBJRAPM'][0]])
+        pmra = _convert_units(params, 'KW_OBJRAPM', pmra, uu.mas/uu.yr)
         pmra_source = 'header'
         pmde = float(header[params['KW_OBJDECPM'][0]])
+        pmde = _convert_units(params, 'KW_OBJDECPM', pmde, uu.mas/uu.yr)
         pmde_source = 'header'
         # parallax in mas (may not be present)
         plx = float(header.get(params['KW_PLX'][0], np.nan))
+        plx = _convert_units(params, 'KW_PLX', plx, uu.mas)
         plx_source = 'header'
         # RV in km/s (may not be present)
         rv = float(header.get(params['KW_INPUTRV'][0], np.nan))
+        rv = _convert_units(params, 'KW_INPUTRV', rv, uu.km / uu.s)
         rv_source = 'header'
         # Teff in K (may not be present)
         teff = float(header.get(params['KW_OBJ_TEMP'][0], np.nan))
@@ -192,8 +196,8 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
         dec_source = str(table['DEC_SOURCE'].iloc[0])
         # epoch in JD
         epoch = float(table['EPOCH'].iloc[0])
-        pmra = float(table['PMRA'].iloc[0])
         # pmra and pmde in mas/yr
+        pmra = float(table['PMRA'].iloc[0])
         pmra_source = str(table['PMRA_SOURCE'].iloc[0])
         pmde = float(table['PMDE'].iloc[0])
         pmde_source = str(table['PMDE_SOURCE'].iloc[0])
@@ -545,6 +549,39 @@ def _target_set_value(table, column, pos: int = 0,
     else:
         return value
 
+
+def _convert_units(params: ParamDict, key: str, value: float,
+                   desired_unit: uu.Unit) -> float:
+    """
+    Convert units via params.instances[key].unit
+
+    :param params:
+    :param key:
+    :param value:
+    :param desired_unit:
+    :return:
+    """
+    # get current units
+    current_unit = params.instances[key].unit
+    # if value is not finite don't worry about the units
+    if not np.isfinite(value):
+        return value
+    # if our units are None don't worry about units
+    if drs_text.null_text(current_unit, ['None', 'Null', '']):
+        return value
+    # get value with current units
+    value = value * current_unit
+    # try to convert units
+    try:
+        value = value.to(desired_unit)
+    except Exception as _:
+        # log error
+        # TODO: move to language database
+        emsg = 'Units for {0} to not match \nCurrent: {1} Desired: {2}'
+        eargs = [key, current_unit, desired_unit]
+        WLOG(params, 'error', emsg.format(*eargs))
+    # return the updated value
+    return float(value.value)
 
 # =============================================================================
 # Start of code
