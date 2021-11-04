@@ -157,6 +157,16 @@ Date: 2021-06-02
     - add in ccf mask normalization options 'all', 'order', 'None'
       access via user_constants.py (CCF_MASK_NORMALIZATION) or
       cal_ccf_spirou.py --masknormmode
+    - default is to use mask based on TEFF
+        - use teff_mask.csv to define the default mask and temperature ranges
+          current setup is:
+            0 < TEFF < 3000K            GL905_neg.fits
+            3000K < TEFF < 3500K        GL699_neg.fits
+            3500K < TEFF < 50000K       GL846_neg.fits
+            no TEFF or out of bounds    GL846_neg.fits
+
+        - can still revert to filename using 'CCF_DEFAULT_MASK' and adding a
+          mask to assets/data/spirou/ccf_masks
 
 - cal_drift
     - added support for OBJ_FP, DARK_FP, POLAR_FP, FP_DARK files (controlled via

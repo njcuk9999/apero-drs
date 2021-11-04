@@ -311,7 +311,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
         # get the objname
         objname = expfile.get_hkey('KW_OBJNAME', dtype=str)
         # get the obj temperatures
-        objtemp = expfile.get_hkey('KW_OBJ_TEMP', dtype=float, required=False)
+        objtemp = expfile.get_hkey('KW_DRS_TEFF', dtype=float, required=False)
         if objtemp is None:
             objtemp = 0.0
         # deal with being unable to get stokes from header
@@ -361,7 +361,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
         wmsgs = 'Object temperatures do not match - taking finite median'
         for it in range(len(objtemps)):
             wmsg = '\n\tFile {0}\t{1}={2}'
-            wargs = [basenames[it], params['KW_OBJ_TEMP'][0], objtemps[it]]
+            wargs = [basenames[it], params['KW_DRS_TEFF'][0], objtemps[it]]
             wmsg = wmsg.format(*wargs)
             wmsgs += wmsg
         WLOG(params, 'warning', wmsgs, sublevel=4)
