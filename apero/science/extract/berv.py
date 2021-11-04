@@ -313,7 +313,7 @@ def get_keys_from_header(params: ParamDict,
     bprops.set_source('RV', header.get_key(params, 'KW_DRS_RV_S'))
     # add the teff
     bprops['TEFF'] = header.get_key(params, 'KW_DRS_TEFF')
-    bprops.set_sources('TEFF', header.get_key(params, 'KW_DRS_TEFF_S'))
+    bprops.set_source('TEFF', header.get_key(params, 'KW_DRS_TEFF_S'))
     # add the spectral type key
     bprops['SPT'] = header.get_key(params, 'KW_DRS_SPTYPE')
     bprops.set_source('SPT', header.get_key(params, 'KW_DRS_SPTYPE_S'))
