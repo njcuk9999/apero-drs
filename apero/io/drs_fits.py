@@ -625,45 +625,106 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
         try:
             # deal with ext being set
             if ext is not None:
-                data = fits.getdata(filename, ext=ext)
+                # open fits file
+                with fits.open(filename) as hdulist:
+                    if len(hdulist)-1 < ext:
+                        # TODO: move to language database
+                        emsg = ('File {0} does not have extension {1} '
+                                '\n\t File may be corrupted or wrong type')
+                        eargs = [filename, ext]
+                        WLOG(params, 'error', emsg.format(*eargs))
+                    data = np.array(hdulist[ext].data)
             # deal with extname being set
             elif extname is not None:
-                data = fits.getdata(filename, extname=extname)
+                # open fits file
+                with fits.open(filename) as hdulist:
+                    if extname not in hdulist:
+                        # TODO: move to language database
+                        emsg = ('File {0} does not have extension name {1} '
+                                '\n\t File may be corrupted or wrong type')
+                        eargs = [filename, extname]
+                        WLOG(params, 'error', emsg.format(*eargs))
+                    data = np.array(hdulist[extname].data)
             # just load first valid extension
             else:
-                data = fits.getdata(filename)
-        except Exception as e:
-            if log:
-                string_trackback = traceback.format_exc()
-                emsg = textentry('01-001-00014', args=[filename, ext, type(e)])
-                emsg += '\n\n' + textentry(string_trackback)
-                WLOG(params, 'error', emsg)
-                data = None
-            else:
-                raise e
+                data = fits.getheader(filename)
+        except Exception as _:
+            try:
+                # try to deal with corrupted data extensions
+                data = deal_with_bad_file_single(filename, ext=ext,
+                                                 extname=extname,
+                                                 flavour='data')
+            except Exception as e:
+                if log:
+                    if ext is not None:
+                        extstr = 'ext = {0}'.format(ext)
+                    elif extname is not None:
+                        extstr = 'extname = {0}'.format(extname)
+                    else:
+                        extstr = ''
+                    # if we get to this point we cannot open the required
+                    #   extension
+                    string_trackback = traceback.format_exc()
+                    eargs = [filename, extstr, type(e)]
+                    emsg = textentry('01-001-00014', args=eargs)
+                    emsg += '\n\n' + textentry(string_trackback)
+                    WLOG(params, 'error', emsg)
+                    data = None
+                else:
+                    raise e
     else:
         data = None
     # -------------------------------------------------------------------------
     # deal with getting header
     if gethdr:
         try:
-            header = fits.getheader(filename, ext=ext)
-        except Exception as e:
-            if log:
-                if ext is None and extname is None:
-                    strext = 'NO EXT'
-                elif extname is not None:
-                    strext = str(extname)
-                else:
-                    strext = str(ext)
-                string_trackback = traceback.format_exc()
-                eargs = [filename, strext, type(e)]
-                emsg = textentry('01-001-00015', args=eargs)
-                emsg += '\n\n' + textentry(string_trackback)
-                WLOG(params, 'error', emsg)
-                header = None
+            # deal with ext being set
+            if ext is not None:
+                # open fits file
+                with fits.open(filename) as hdulist:
+                    if len(hdulist) - 1 < ext:
+                        # TODO: move to language database
+                        emsg = ('File {0} does not have extension {1} '
+                                '\n\t File may be corrupted or wrong type')
+                        eargs = [filename, ext]
+                        WLOG(params, 'error', emsg.format(*eargs))
+                    header = Header(hdulist[ext].header)
+            # deal with extname being set
+            elif extname is not None:
+                # open fits file
+                with fits.open(filename) as hdulist:
+                    if extname not in hdulist:
+                        # TODO: move to language database
+                        emsg = ('File {0} does not have extension name {1} '
+                                '\n\t File may be corrupted or wrong type')
+                        eargs = [filename, extname]
+                        WLOG(params, 'error', emsg.format(*eargs))
+                    header = Header(hdulist[extname].header)
+            # just load first valid extension
             else:
-                raise e
+                header = fits.getdata(filename)
+        except Exception as _:
+            try:
+                # try to deal with corrupted data extensions
+                header = deal_with_bad_file_single(filename, ext=ext,
+                                                   extname=extname,
+                                                   flavour='header')
+            except Exception as e:
+                if log:
+                    if ext is not None:
+                        extstr = 'ext = {0}'.format(ext)
+                    elif extname is not None:
+                        extstr = 'extname = {0}'.format(extname)
+                    else:
+                        extstr = ''
+                    string_trackback = traceback.format_exc()
+                    eargs = [filename, extstr, type(e)]
+                    emsg = textentry('01-001-00015', args=eargs)
+                    emsg += '\n\n' + textentry(string_trackback)
+                    WLOG(params, 'error', emsg)
+                    header = None
+                else:
+                    raise e
     else:
         header = None
     # -------------------------------------------------------------------------
@@ -1212,6 +1273,40 @@ def check_dtype_for_header(value: Any) -> Any:
         newvalue = str(value)
     # return new value
     return newvalue
+
+
+def deal_with_bad_file_single(filename, ext=None, extname=None,
+                              flavour: str = 'data'):
+    """
+    One last attempt to read data or header but not both, for a single
+    ext or extname
+
+    :param filename:
+    :param ext:
+    :param extname:
+    :return:
+    """
+    # open HDU
+    hdulist = fits.open(filename)
+    # deal with having an extension number
+    if ext is not None:
+        if flavour == 'data':
+            return hdulist[ext].data
+        else:
+            return hdulist[ext].header
+    # deal with having a extension name
+    if extname is not None:
+        if flavour == 'data':
+            return hdulist[extname].data
+        else:
+            return hdulist[extname].header
+    # else loop around until we find the data we are after
+    else:
+        for ext in range(len(hdulist)):
+            if flavour == 'data' and hdulist[ext].data is not None:
+                return hdulist[ext].data
+            elif flavour == 'header' and hdulist[ext].header is not None:
+                return hdulist[ext].header
 
 
 # =============================================================================
