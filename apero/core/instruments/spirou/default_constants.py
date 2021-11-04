@@ -1495,7 +1495,6 @@ WAVE_CCF_DETNOISE.value = 100.0
 #  The filename of the CCF Mask to use for the FP CCF
 #     Note this file is copied over if WAVE_CCF_UPDATE_MASK = True
 WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
-# WAVE_CCF_MASK.value = 'fp.mas'
 WAVE_CCF_MASK.value = 'smart_fp_mask.mas'
 
 # Define the default CCF MASK normalisation mode for FP CCF
@@ -2316,10 +2315,19 @@ MKTEMPLATE_BERVCOV_RES.value = 4.0
 # Define the ccf mask path
 CCF_MASK_PATH = CCF_MASK_PATH.copy(__NAME__)
 CCF_MASK_PATH.value = 'ccf_masks/'
+CCF_MASK_PATH.author = base.AUTHORS['NJC']
 
-# Define the default CCF MASK to use
+# Define the TEFF mask table for when CCF_DEFAULT_MASK is TEFF
+CCF_TEFF_MASK_TABLE = CCF_TEFF_MASK_TABLE.copy(__NAME__)
+CCF_TEFF_MASK_TABLE.value = 'teff_mask.csv'
+CCF_TEFF_MASK_TABLE.datatype = 'csv'
+CCF_TEFF_MASK_TABLE.author = base.AUTHORS['NJC']
+
+# Define the default CCF MASK to use (filename or TEFF to decide based on
+#    object temperature) - for TEFF setup see CCF_TEFF_MASK_TABLE file
 CCF_DEFAULT_MASK = CCF_DEFAULT_MASK.copy(__NAME__)
-CCF_DEFAULT_MASK.value = 'masque_sept18_andres_trans50.mas'
+CCF_DEFAULT_MASK.value = 'TEFF'
+CCF_DEFAULT_MASK.author = base.AUTHORS['NJC']
 
 # Define the default CCF MASK normalisation mode
 #   options are:

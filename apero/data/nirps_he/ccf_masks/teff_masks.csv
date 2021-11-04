@@ -1,0 +1,5 @@
+mask, kind, datatype, teff_min, teff_max
+"GL846_neg.fits","default","fits","",""
+"GL846_neg.fits","range","fits",3500,10000
+"GL699_neg.fits","range","fits",3000,3500
+"GL905_neg.fits","range","fits",0,3000

@@ -15,14 +15,18 @@ from astropy import units as uu
 import numpy as np
 import os
 from scipy.optimize import curve_fit
+from typing import Tuple
 import warnings
 
 from apero.base import base
 from apero import lang
 from apero.core import constants
 from apero.core import math as mp
-from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core.utils import drs_data
+from apero.io import drs_fits
+
 
 # =============================================================================
 # Define variables
@@ -410,10 +414,82 @@ def remove_wide_peaks(params: ParamDict, props: ParamDict,
     return props
 
 
-def get_ccf_mask(params, filename, mask_width, mask_units='nm'):
+def get_ccf_teff_mask(params: ParamDict,
+                      header: drs_fits.Header) -> Tuple[str, str]:
+        """
+        Decide on a mask based on effective temperature (from the header)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits Header, to get temperature from
+
+        :return: tuple, 1. str, the ccf mask to use 2. str, the format
+                 for astropy.table.Table.read
+        """
+        # get temperature header key
+        teff_key = params['KW_DRS_TEFF']
+        # get teff mask file
+        teff_masks_file = params['CCF_TEFF_MASK_TABLE']
+        # get teff mask datatype
+        teff_masks_fmt = params.instances['CCF_TEFF_MASK_TABLE'].datatype
+        # get temperature from header
+        if teff_key in header:
+            teff = float(header[teff_key])
+        else:
+            # TODO: move to language database
+            emsg = 'Object temperature key "{0}" not in header'
+            eargs = [teff_key]
+            WLOG(params, 'error', emsg.format(*eargs))
+            # should never get here
+            return '', ''
+        # ---------------------------------------------------------------------
+        # load teff masks file
+        teff_masks = Table.read(teff_masks_file, format=teff_masks_fmt)
+        # ---------------------------------------------------------------------
+        # find default
+        if 'default' not in teff_masks['kind']:
+            # TODO: move to language database
+            emsg = 'Cannot use {0} - must have default value in kind column'
+            eargs = [teff_masks_file]
+            WLOG(params, 'error', emsg.format(*eargs))
+            return '', ''
+        # get position of defaults
+        default_mask = teff_masks['kind'] == 'default'
+        pos = np.where(default_mask)[0][0]
+        # use mask for default
+        default_maskfile = str(teff_masks['mask'][pos])
+        default_datatype = str(teff_masks['datatype'][pos])
+        # remove default from teff_masks
+        teff_masks = teff_masks[~default_mask]
+        # ---------------------------------------------------------------------
+        # deal with teff choosing mask
+        # ---------------------------------------------------------------------
+        # non finite values should use default mask
+        if not np.isfinite(teff):
+            # return the mask and the file type (i.e. fits, ascii)
+            return default_maskfile, default_datatype
+        # loop around rows in teff_masks
+        for row in range(len(teff_masks)):
+            # get teff limits
+            cond1 = teff >= teff_masks['teff_min'][row]
+            cond2 = teff < teff_masks['teff_max'][row]
+            # if teff satisfies both limits return here
+            if cond1 and cond2:
+                # get this rows mask and data type
+                row_maskfile = str(teff_masks['mask'][row])
+                row_datatype = str(teff_masks['datatype'][row])
+                # return the mask and the file type (i.e. fits, ascii)
+                return row_maskfile, row_datatype
+        # ---------------------------------------------------------------------
+        # else we use the default for anything else
+        return default_maskfile, default_datatype
+
+
+def get_ccf_mask(params, filename, mask_width, mask_units='nm',
+                 fmt=None):
     func_name = __NAME__ + '.get_ccf_mask()'
     # load table
-    table, absfilename = drs_data.load_ccf_mask(params, filename=filename)
+    table, absfilename = drs_data.load_ccf_mask(params, filename=filename,
+                                                fmt=fmt)
     # convert to floats
     ll_mask_e = np.array(table['ll_mask_e']).astype(float)
     ll_mask_s = np.array(table['ll_mask_s']).astype(float)
@@ -638,19 +714,17 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     ccfwidth = params['INPUTS']['WIDTH']
     targetrv = params['INPUTS']['RV']
     # ----------------------------------------------------------------------
-    # TODO: eventually this should come from object database (so that each
-    # TODO: object has a constant target rv
     # need to deal with no target rv step
     if np.isnan(targetrv):
-        targetrv = infile.get_hkey('KW_INPUTRV', required=False, dtype=float)
+        targetrv = infile.get_hkey('KW_DRS_RV', required=False, dtype=float)
         # set target rv to zero if we don't have a value
         if targetrv is None:
-            wargs = [params['KW_INPUTRV'][0], infile.filename]
+            wargs = [params['KW_DRS_RV'][0], infile.filename]
             WLOG(params, 'warning', textentry('09-020-00006', args=wargs),
                  sublevel=2)
             targetrv = 0.0
         elif np.abs(targetrv) > null_targetrv:
-            wargs = [params['KW_INPUTRV'][0], null_targetrv, infile.filename]
+            wargs = [params['KW_DRS_RV'][0], null_targetrv, infile.filename]
             WLOG(params, 'warning', textentry('09-020-00007', args=wargs),
                  sublevel=2)
             targetrv = 0.0
@@ -663,6 +737,15 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
         ccfmask = params['INPUTS']['MASK']
     # get the berv
     berv = bprops['USE_BERV']
+    # ----------------------------------------------------------------------
+    # deal with ccf mask from TEFF
+    if ccfmask == 'TEFF':
+        # load pseudo constants
+        pconst = constants.pload()
+        # load ccf mask using infile header (i.e. from Teff consideration)
+        ccfmask, ccf_fmt = get_ccf_teff_mask(params, infile.header)
+    else:
+        ccf_fmt = params['CCF_MASK_FMT']
     # ----------------------------------------------------------------------
     # need to get ccf normalization mode
     if 'MASKNORMMODE' in params['INPUTS']:
@@ -703,7 +786,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     # get the mask parameters
     mkwargs = dict(filename=ccfmask, mask_width=mask_width,
-                   mask_units=mask_units)
+                   mask_units=mask_units, fmt=ccf_fmt)
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
 
     # calculate the CCF

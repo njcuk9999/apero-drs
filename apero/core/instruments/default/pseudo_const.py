@@ -9,6 +9,7 @@ Created on 2019-01-18 at 14:44
 
 @author: cook
 """
+from astropy.table import Table
 import numpy as np
 import sys
 import os
@@ -1351,6 +1352,55 @@ class PseudoConstants:
         _ = params, header
         # raise implementation error
         self._not_implemented('GET_EPOCH')
+
+    # =========================================================================
+    # OTHER SETTINGS
+    # =========================================================================
+    # noinspection PyPep8Naming
+    def CCF_MASK_FROM_TEFF(self, params: Any, header: Any,
+                           wlog: Any, textentry: Any) -> Tuple[str, str]:
+        """
+        Decide on a mask based on effective temperature (from the header)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits Header, to get temperature from
+        :param wlog: the WLOG instance (for logging)
+        :param textentry: the TextEntry instance (for logging)
+
+        :return: tuple, 1. str, the ccf mask to use 2. str, the format
+                 for astropy.table.Table.read
+        """
+        # get temperature header key
+        teff_key = params['KW_DRS_TEFF']
+        # get temperature from header
+        if teff_key in header:
+            teff = float(header[teff_key])
+        else:
+            # TODO: move to language database
+            emsg = 'Object temperature key "{0}" not in header'
+            eargs = [teff_key]
+            wlog(params, 'error', emsg.format(*eargs))
+            # should never get here
+            return '', ''
+        # ---------------------------------------------------------------------
+        # load teff masks file
+        teff_masks = Table.read(params['CCF_TEFF_MASK_TABLE'],
+                                )
+
+        # ---------------------------------------------------------------------
+        # deal with teff choosing mask
+        if not np.isfinite(teff):
+            # return the mask and the file type (i.e. fits, ascii)
+            return 'GL846_neg.fits', 'fits'
+        if teff >= 3500:
+            # return the mask and the file type (i.e. fits, ascii)
+            return 'GL846_neg.fits', 'fits'
+        if 3000 >= teff > 3500:
+            # return the mask and the file type (i.e. fits, ascii)
+            return 'GL699_neg.fits', 'fits'
+        if teff < 3000:
+            # return the mask and the file type (i.e. fits, ascii)
+            return 'GL905_neg.fits', 'fits'
 
 
 # =============================================================================

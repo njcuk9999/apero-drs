@@ -257,7 +257,7 @@ __all__ = [
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
     'CCF_MAX_CCF_WID_STEP_RATIO', 'CCF_BLAZE_NORM_PERCENTILE',
-    'OBJRV_NULL_VAL', 'CCF_MASK_NORMALIZATION',
+    'OBJRV_NULL_VAL', 'CCF_MASK_NORMALIZATION', 'CCF_TEFF_MASK_TABLE',
     # general polar constants
     'POLAR_FIBERS', 'POLAR_STOKES_PARAMS', 'POLAR_BERV_CORRECT',
     'POLAR_SOURCE_RV_CORRECT', 'POLAR_METHOD', 'POLAR_INTERPOLATE_FLUX',
@@ -4013,7 +4013,13 @@ MKTEMPLATE_BERVCOV_RES = Const('MKTEMPLATE_BERVCOV_RES', value=None,
 cgroup = 'CALIBRATION: CCF SETTINGS'
 # Define the ccf mask path
 CCF_MASK_PATH = Const('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__,
-                      group=cgroup)
+                      group=cgroup, description='Define the ccf mask path')
+
+# Define the TEFF mask table for when CCF_DEFAULT_MASK is TEFF
+CCF_TEFF_MASK_TABLE = Const('CCF_TEFF_MASK_TABLE', value=None, dtype=str,
+                            source=__NAME__, group=cgroup,
+                            description='# Define the TEFF mask table for '
+                                        'when CCF_DEFAULT_MASK is TEFF')
 
 # Define target rv the null value for CCF (only change if changing code)
 CCF_NO_RV_VAL = Const('CCF_NO_RV_VAL', value=np.nan, dtype=float,
@@ -4029,11 +4035,15 @@ OBJRV_NULL_VAL = Const('OBJRV_NULL_VAL', value=1000, dtype=float,
                                     '(values greater than absolute value '
                                       'are set to zero)'))
 
-# Define the default CCF MASK to use
+# Define the default CCF MASK to use (filename or TEFF to decide based on
+#    object temperature) - for TEFF setup see CCF_TEFF_MASK_TABLE file
 CCF_DEFAULT_MASK = Const('CCF_DEFAULT_MASK', value=None, dtype=str,
                          source=__NAME__, user=True, active=False,
                          group=cgroup,
-                         description='Define the default CCF MASK to use')
+                         description='Define the default CCF MASK to use '
+                                     '(filename or TEFF to decide based on '
+                                     'object temperature) - for TEFF setup '
+                                     'see CCF_TEFF_MASK_TABLE file')
 
 # Define the default CCF MASK normalisation mode
 #   options are:
