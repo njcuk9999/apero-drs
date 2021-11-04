@@ -278,8 +278,6 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                            kwargs, func_name)
     qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res', kwargs,
                     func_name)
-    min_num = pcheck(params, 'SHAPE_FP_MASTER_MIN_IN_GROUP', 'min_num', kwargs,
-                     func_name)
     # get temporary output dir
     out_obs_dir = params['INPUTS']['OBS_DIR']
     # get col data from dark_table
@@ -312,80 +310,79 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
         wargs = [g_it + 1, len(u_groups)]
         WLOG(params, 'info', textentry('40-014-00006', args=wargs))
         # find all files for this group
-        fp_ids = filenames[matched_id == group_num]
+        fp_ids = np.array(filenames[matched_id == group_num])
         indices = np.arange(len(filenames))[matched_id == group_num]
-        # only combine if 3 or more images were taken
-        if len(fp_ids) >= min_num:
-            # get infile from filetype
-            file_inst = drs_file.get_file_definition(params, dprtype,
-                                                     block_kind='tmp')
+        # get infile from filetype
+        file_inst = drs_file.get_file_definition(params, dprtype,
+                                                 block_kind='tmp')
+        if len(fp_ids) >= 2:
             # perform a large image median on FP files in this group
             groupfp = drs_image.large_image_combine(params, fp_ids,
                                                     math='median',
                                                     outdir=out_obs_dir,
                                                     fmt='fits')
-            # -------------------------------------------------------------
-            # get first file header
-            # construct new infile instance
-            fpfile0 = file_inst.newcopy(filename=fp_ids[0], params=params)
-            fpfile0.read_header()
-            # --------------------------------------------------------------
-            # calibrate group fp
-            # --------------------------------------------------------------
-            # construct new infile instance
-            groupfile = file_inst.newcopy(params=params)
-            groupfile.data = groupfp
-            groupfile.header = drs_fits.Header(fpfile0.get_header())
-            groupfile.filename = fp_ids[0]
-            groupfile.basename = os.path.basename(fp_ids[0])
-            # get and correct file
-            cargs = [params, recipe, groupfile]
-            ckwargs = dict(n_percentile=percent_thres, correctback=False)
-            props, groupfp = gen_calib.calibrate_ppfile(*cargs, **ckwargs)
-            # --------------------------------------------------------------
-            # shift group to master
-            targs = [image_ref, groupfp]
-            gout = get_linear_transform_params(params, recipe, *targs)
-            transforms, xres, yres = gout
-            # quality control on group
-            if transforms is None:
-                # log that image quality too poor
-                wargs = [g_it + 1]
-                WLOG(params, 'warning', textentry('10-014-00001', args=wargs),
-                     sublevel=6)
-                # skip adding to group
-                continue
-            if (xres > qc_res) or (yres > qc_res):
-                # log that xres and yres too larger
-                wargs = [xres, yres, qc_res]
-                WLOG(params, 'warning', textentry('10-014-00002', args=wargs),
-                     sublevel=6)
-                # skip adding to group
-                continue
-            # perform a final transform on the group
-            groupfp = ea_transform(params, groupfp,
-                                   lin_transform_vect=transforms)
-            # save files for medianing later
-            nargs = ['fp_master_cube', row, groupfp, fp_cube_files, fpsubdir,
-                     out_obs_dir]
-            fp_cube_files, fpsubdir = drs_image.npy_filelist(params, *nargs)
-            # delete groupfp
-            del groupfp
-            # add to row
-            row += 1
-            # append transforms to list
-            for _ in fp_ids:
-                transforms_list.append(transforms)
-                # now add extract properties to main group
-                valid_matched_id.append(group_num)
-                valid_dark_files.append(str(props['DARKFILE']))
-                valid_badpfiles.append(str(props['BADPFILE']))
-                valid_backfiles.append(str(props['BACKFILE']))
-            # validate table mask
-            table_mask[indices] = True
         else:
-            eargs = [g_it + 1, min_num]
-            WLOG(params, '', textentry('40-014-00015', args=eargs))
+            groupfp = drs_fits.readfits(params, fp_ids[0])
+        # -------------------------------------------------------------
+        # get first file header
+        # construct new infile instance
+        fpfile0 = file_inst.newcopy(filename=fp_ids[0], params=params)
+        fpfile0.read_header()
+        # --------------------------------------------------------------
+        # calibrate group fp
+        # --------------------------------------------------------------
+        # construct new infile instance
+        groupfile = file_inst.newcopy(params=params)
+        groupfile.data = groupfp
+        groupfile.header = drs_fits.Header(fpfile0.get_header())
+        groupfile.filename = fp_ids[0]
+        groupfile.basename = os.path.basename(fp_ids[0])
+
+        # get and correct file
+        cargs = [params, recipe, groupfile]
+        ckwargs = dict(n_percentile=percent_thres, correctback=False)
+        props, groupfp = gen_calib.calibrate_ppfile(*cargs, **ckwargs)
+        # --------------------------------------------------------------
+        # shift group to master
+        targs = [image_ref, groupfp]
+        gout = get_linear_transform_params(params, recipe, *targs)
+        transforms, xres, yres = gout
+        # quality control on group
+        if transforms is None:
+            # log that image quality too poor
+            wargs = [g_it + 1]
+            WLOG(params, 'warning', textentry('10-014-00001', args=wargs),
+                 sublevel=6)
+            # skip adding to group
+            continue
+        if (xres > qc_res) or (yres > qc_res):
+            # log that xres and yres too larger
+            wargs = [xres, yres, qc_res]
+            WLOG(params, 'warning', textentry('10-014-00002', args=wargs),
+                 sublevel=6)
+            # skip adding to group
+            continue
+        # perform a final transform on the group
+        groupfp = ea_transform(params, groupfp,
+                               lin_transform_vect=transforms)
+        # save files for medianing later
+        nargs = ['fp_master_cube', row, groupfp, fp_cube_files, fpsubdir,
+                 out_obs_dir]
+        fp_cube_files, fpsubdir = drs_image.npy_filelist(params, *nargs)
+        # delete groupfp
+        del groupfp
+        # add to row
+        row += 1
+        # append transforms to list
+        for _ in fp_ids:
+            transforms_list.append(transforms)
+            # now add extract properties to main group
+            valid_matched_id.append(group_num)
+            valid_dark_files.append(str(props['DARKFILE']))
+            valid_badpfiles.append(str(props['BADPFILE']))
+            valid_backfiles.append(str(props['BACKFILE']))
+        # validate table mask
+        table_mask[indices] = True
     # ----------------------------------------------------------------------
     # produce the large median (write ribbons to disk to save space)
     with warnings.catch_warnings(record=True) as _:

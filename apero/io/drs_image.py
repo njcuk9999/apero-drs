@@ -521,7 +521,7 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
         os.removedirs(filepath)
 
 
-def large_image_combine(params: ParamDict, files: List[str],
+def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
                         math: str = 'median', fmt='fits', nmax: int = 2e7,
                         subdir: Union[str, None] = None,
                         outdir: Union[str, None] = None) -> np.ndarray:
