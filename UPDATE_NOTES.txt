@@ -1,6 +1,6 @@
-# Update Note Summary - Version 0.7.126
+# Update Note Summary - Version 0.7.179
 
-Date: 2021-06-02
+Date: 2021-11-05
 
 ## summary of big cosmetic changes
     - any reference to NIGHT or NIGHTNAME or DIRECTORY will now be "obs_dir"

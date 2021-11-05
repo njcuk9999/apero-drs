@@ -2,6 +2,71 @@ Changelog
 =========
 
 
+0.7.179 (2021-11-04)
+--------------------
+- Merge branch 'v0.7.173-stable-test' into v0.7.173-obj-res-test. [Neil
+  Cook]
+- `Apero.science.calib.shape.py` - deal with shape master having more
+  nights than the max number of shape files (means each group will only
+  have one entry and all were skipped) change to single file groups
+  being kept (just not combined) [njcuk9999]
+- `Apero.io.drs_fits.py` - need to deal with getdata for bad files (maybe
+  corrupted but don't always need all extensions) [Neil Cook]
+- `Science.preprocessing.gen_pp.py` need to deal with converting
+  astrometrics from header to required units (assume database is good)
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Add readme to each `ccf_mask` directory. [Neil Cook]
+- Default ccf mask now uses Teff (via `teff_mask.csv)` to assign masks -
+  can still use old method with filename if desired. [Neil Cook]
+- `Apero.science.extract.berv.py` - typo `set_sources-->set_source`. [Neil
+  Cook]
+
+
+0.7.178 (2021-11-03)
+--------------------
+- Force bad values of plx/rv. [Neil Cook]
+- Preprocessing + berv correction - simplify to use gsheet(s) and do not
+  match. [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - only print about
+  engineering nights once + remove "Removing filters" printout. [Neil
+  Cook]
+
+
+0.7.177 (2021-11-02)
+--------------------
+- Make sure FTFIT1 and FTFIT2 are in the run.ini files. [Neil Cook]
+- `Apero.core.core.drs_database.py` - clear TLOG + typo in comment. [Neil
+  Cook]
+- Try to improve getting file list from disk (avoid glob due to max open
+  file holders) [Neil Cook]
+- Remove env files. [Neil Cook]
+
+
+0.7.176 (2021-10-29)
+--------------------
+- `Apero.science.calib.wave.py` - deal with no cavity degree polynomial
+  (i.e. from the default master wave sol) [Neil Cook]
+- `Apero.science.calib.wave.py` - correct getting cavity polynomial from
+  header. [Neil Cook]
+
+
+0.7.175 (2021-10-22)
+--------------------
+- `Apero.core.math.fast.py` - fix weird typo np.array(guess) -->
+  float(guess) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.173-working' into
+  v0.7.173-working. [Neil Cook]
+- `Apero.core.math.fast.py` - update `odd_ratio_mean` function. [Neil Cook]
+
+
+0.7.174 (2021-10-19)
+--------------------
+- Update schematics for paper. [Neil Cook]
+- Update schematics for paper. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
 0.7.173 (2021-10-18)
 --------------------
 - Update language database. [Neil Cook]
