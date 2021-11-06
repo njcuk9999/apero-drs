@@ -1269,7 +1269,7 @@ limited_seq.add(apero_mk_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
                 template_required=True)
 limited_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
 
-limited_seq.add(apero_fit_tellu, name='FTELLU1', recipe_kind='tellu-science',
+limited_seq.add(apero_fit_tellu, name='FTFIT1', recipe_kind='tellu-science',
                 files=[files.out_ext_e2dsff], fiber='A',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
@@ -1278,7 +1278,7 @@ limited_seq.add(apero_mk_template, name='FTTEMP', recipe_kind='tellu-science',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
                 template_required=True)
-limited_seq.add(apero_fit_tellu, name='FTELLU2', recipe_kind='tellu-science',
+limited_seq.add(apero_fit_tellu, name='FTFIT2', recipe_kind='tellu-science',
                 files=[files.out_ext_e2dsff], fiber='A',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
@@ -1428,7 +1428,7 @@ science_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
 #                 filters=dict(KW_DPRTYPE=['OBJ_FP'],
 #                              KW_OBJNAME='SCIENCE_TARGETS'))
 
-science_seq.add(apero_fit_tellu, name='FTELLU1', recipe_kind='tellu-science',
+science_seq.add(apero_fit_tellu, name='FTFIT1', recipe_kind='tellu-science',
                 files=[files.out_ext_e2dsff], fiber='A',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
@@ -1439,7 +1439,7 @@ science_seq.add(apero_mk_template, name='FTTEMP', fiber='A',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], ),
                 template_required=True)
-science_seq.add(apero_fit_tellu, name='FTELLU2', recipe_kind='tellu-science',
+science_seq.add(apero_fit_tellu, name='FTFIT2', recipe_kind='tellu-science',
                 files=[files.out_ext_e2dsff], fiber='A',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
