@@ -112,8 +112,8 @@ where spec = OBJ_DARK + OBJ_FP
 | apero_fit_tellu [spec; every obs dir; hot stars]                | MKTELLU2   |
 | apero_mk_template [spec; every obs dir; hot stars]              | MKTELLU3   |
 | apero_mk_tellu [spec; every obs dir; hot stars]                 | MKTELLU4   | 
-| apero_fit_tellu [spec; every obs dir; non hot stars]            | FTELLU1    |
-| apero_mk_template [spec; every obs dir; non hot stars]          | FTELLU2    |
+| apero_fit_tellu [spec; every obs dir; non hot stars]            | FTFIT1    |
+| apero_mk_template [spec; every obs dir; non hot stars]          | FTFIT2    |
 | apero_fit_tellu [spec; every obs dir; non hot stars]            | FTELLU3    |
 | apero_ccf [spec; fiber=AB; every obs dir]                       | CCF        |
 | apero_postprocess [spec; fiber=AB; every obs dir]               | POSTALL    |
@@ -160,8 +160,8 @@ where spec = OBJ_DARK + OBJ_FP
 | apero_fit_tellu [spec + pol; every obs dir; TELLURIC_TARGETS]         | MKTELLU2   |
 | apero_mk_template [spec + pol; every obs dir; TELLURIC_TARGETS]       | MKTELLU3   |
 | apero_mk_tellu [spec + pol; every obs dir; TELLURIC_TARGETS]          | MKTELLU4   | 
-| apero_fit_tellu [spec + pol; every obs dir; SCIENCE_TARGETS]          | FTELLU1    |
-| apero_mk_template [spec + pol; every obs dir; SCIENCE_TARGETS]        | FTELLU2    |
+| apero_fit_tellu [spec + pol; every obs dir; SCIENCE_TARGETS]          | FTFIT1    |
+| apero_mk_template [spec + pol; every obs dir; SCIENCE_TARGETS]        | FTFIT2    |
 | apero_fit_tellu [spec + pol; every obs dir; SCIENCE_TARGETS]          | FTELLU3    |
 | apero_ccf [spec + pol; fiber=AB; every obs dir]                       | CCF        |
 | apero_postprocess [spec + pol; fiber=AB; every obs dir; TELLURIC_TARGETS] | TELLPOST   |
@@ -275,8 +275,8 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | --------------------------------------------------------------------------- | ---------- | 
 | apero_extract [spec; every obs dir; SCIENCE_TARGETS]                        | EXTOBJ     |
 | apero_leak [OBJ_FP; every obs dir; SCIENCE_TARGETS]                         | LEAKOBJ    |
-| apero_fit_tellu [spec; every obs dir; SCIENCE_TARGETS]                      | FTELLU1    |
-| apero_mk_template [spec; every obs dir; SCIENCE_TARGETS]                    | FTELLU2    |
+| apero_fit_tellu [spec; every obs dir; SCIENCE_TARGETS]                      | FTFIT1    |
+| apero_mk_template [spec; every obs dir; SCIENCE_TARGETS]                    | FTFIT2    |
 | apero_fit_tellu [spec; every obs dir; SCIENCE_TARGETS]                      | FTELLU3    |
 | apero_ccf [spec; fiber=AB; every obs dir]                                   | CCF        |
 | apero_postprocess [spec; fiber=AB; every obs dir; SCIENCE_TARGETS]          | SCIPOST    |
