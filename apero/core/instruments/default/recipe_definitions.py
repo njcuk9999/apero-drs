@@ -39,6 +39,7 @@ get_files = drs_recipe(__INSTRUMENT__)
 database_mgr = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
 logstats = drs_recipe(__INSTRUMENT__)
+precheck = drs_recipe(__INSTRUMENT__)
 processing = drs_recipe(__INSTRUMENT__)
 remake_db = drs_recipe(__INSTRUMENT__)
 remake_doc = drs_recipe(__INSTRUMENT__)
@@ -47,7 +48,7 @@ reset = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [changelog, database_mgr, explorer, get_files,
+recipes = [changelog, database_mgr, explorer, get_files, precheck,
            processing, listing, logstats, remake_db, remake_doc,
            req_check, reset, validate]
 
@@ -233,6 +234,24 @@ logstats.set_kwarg(name='--before', dtype=str, default='None',
 logstats.set_kwarg(name='--mlog', dtype='bool', default=False,
                    helpstr=textentry('LOGSTAT_HELP_MLOG'))
 logstats.set_kwarg(**plot)
+
+# -----------------------------------------------------------------------------
+# apero_precheck.py
+# -----------------------------------------------------------------------------
+precheck.name = 'apero_precheck.py'
+precheck.shortname = 'PRECHECK'
+precheck.instrument = __INSTRUMENT__
+precheck.description = textentry('PROCESS_DESCRIPTION')
+precheck.recipe_type = 'tool'
+precheck.recipe_kind = 'processing'
+precheck.set_arg(pos=0, name='runfile', dtype=str,
+                 helpstr=textentry('PROCESS_RUNFILE_HELP'))
+precheck.set_kwarg(name='--no_file_check', dtype='switch', default=False,
+                   helpstr='Check the number of files on disk and '
+                           'flag possible errors')
+precheck.set_kwarg(name='--no_obj_check', dtype='switch', default=False,
+                   helpstr='Check the object database with current set of '
+                           'raw files and flag possible problems')
 
 # -----------------------------------------------------------------------------
 # apero_processing.py

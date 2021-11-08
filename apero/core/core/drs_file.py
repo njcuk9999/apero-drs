@@ -7356,7 +7356,6 @@ def fix_header(params: ParamDict, recipe: Any,
         has_infile = False
         hdict = Header()
         filename = None
-
     # load pseudo constants
     pconst = constants.pload()
     # use pseudo constant to apply any header fixes required (specific to
@@ -7391,7 +7390,6 @@ def id_drs_file(params: ParamDict,
     otherwise returns all DrsFitsFile(s) that statisfy the header.
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param recipe: DrsRecipe, the recipe to associate with this DrsFitsFile
     :param drs_file_sets: List[DrsFitsFile] or DrsFitsFile - the file instance
                           containing the filename, fileset (set of DrsinputFiles
                           for this group i.e. raw files) etc

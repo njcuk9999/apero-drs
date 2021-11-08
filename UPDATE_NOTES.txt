@@ -57,6 +57,12 @@ Date: 2021-11-05
     - added polar sequences to processing sequences
     - added out post processing to processing sequences
     - fixed emailing (now recieve email from apero.drs@gmail.com)
+    - apero_precheck tool (check before running apero_processing)
+        - check:
+            - raw calibration files
+            - raw telluric files
+            - raw science files
+            - object names (from object database vs header)
 
 - preprocessing
     - object resolution added to preprocessing (see object resolution section)

@@ -368,7 +368,7 @@ def object_db_populated(params: ParamDict) -> bool:
     return count > 0
 
 
-def update_object_database(params: ParamDict):
+def update_object_database(params: ParamDict, log: bool = True):
     """
     Update the local object database - note this overwrites all entries in the
     local database
@@ -398,7 +398,8 @@ def update_object_database(params: ParamDict):
     # object col name in google sheet
     gl_objcol = params['GL_OBJ_COL_NAME']
     # print that we are updating object database
-    WLOG(params, 'info', textentry('40-503-00039'))
+    if log:
+        WLOG(params, 'info', textentry('40-503-00039'))
     # -------------------------------------------------------------------------
     # deal with gsheet_url being local csv file
     if os.path.exists(gsheet_url):
