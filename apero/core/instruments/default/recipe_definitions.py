@@ -241,7 +241,11 @@ logstats.set_kwarg(**plot)
 precheck.name = 'apero_precheck.py'
 precheck.shortname = 'PRECHECK'
 precheck.instrument = __INSTRUMENT__
-precheck.description = textentry('PROCESS_DESCRIPTION')
+# TODO: add to language database
+precheck.description = ('Run a check before running apero processing to check '
+                        'on the number of calibrations, number of telluric '
+                        'and science raw files and/or check if any objects '
+                        'astrometric data are coming from the header')
 precheck.recipe_type = 'tool'
 precheck.recipe_kind = 'processing'
 precheck.set_arg(pos=0, name='runfile', dtype=str,
