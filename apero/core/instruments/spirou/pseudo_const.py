@@ -54,7 +54,7 @@ NULL_TEXT = ['', 'None', 'Null']
 # =============================================================================
 # Define Constants class (pseudo constants)
 # =============================================================================
-class PseudoConstants(DefaultConstants):
+class PseudoConstants(pseudo_const.PseudoConstants):
     # set class name
     class_name = 'PsuedoConstants'
 
@@ -1357,6 +1357,8 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     # set key
     kwdprtype = params['KW_DPRTYPE'][0]
     kwdprcomment = params['KW_DPRTYPE'][1]
+    kwoutput = params['KW_OUTPUT'][0]
+    kwoutputcomment = params['KW_OUTPUT'][1]
     # deal with output key already in header
     if header is not None:
         if kwdprtype in header:
@@ -1370,6 +1372,7 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     raw_prefix = recipe.filemod.get().raw_prefix
     # set up inname
     dprtype = 'Unknown'
+    drsfile = None
     # loop around drs files
     for drsfile in drsfiles:
         # set recipe
@@ -1386,9 +1389,13 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
                 dprtype = drsfile.name
             # we have found file so break
             break
-    # update header
+    # update header with DPRTYPE
     header[kwdprtype] = (dprtype, kwdprcomment)
     hdict[kwdprtype] = (dprtype, kwdprcomment)
+    # add drs file type (if drs file was found)
+    if drsfile is not None:
+        header[kwoutput] = (drsfile.name, kwoutputcomment)
+        hdict[kwoutput] = (drsfile.name, kwoutputcomment)
     # return header
     return header, hdict
 

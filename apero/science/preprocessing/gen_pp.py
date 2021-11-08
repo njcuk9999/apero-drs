@@ -15,7 +15,7 @@ from astropy.table import Table
 import numpy as np
 import requests
 import time
-from typing import Any, Union
+from typing import Any, List, Union
 import warnings
 
 from apero.base import base
@@ -107,37 +107,11 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
             WLOG(params, 'error', emsg.format(*eargs))
             return
     # -------------------------------------------------------------------------
-    # clean up object name
-    cobjname = pconst.DRS_OBJ_NAME(objname)
+    # find correct name in the database (via objname or aliases)
+    correct_objname, found = database.find_objname(pconst, objname)
     # -------------------------------------------------------------------------
-    # assume we have not found our object name
-    found = False
-    # sql obj condition
-    sql_obj_cond = 'OBJNAME="{0}"'.format(cobjname)
-    # look for object name in database
-    count = database.count(condition=sql_obj_cond)
-    # if we have not found our object we must check aliases
-    if count == 0:
-        # get the full database
-        full_table = database.get_entries('OBJNAME, ALIASES')
-        aliases = full_table['ALIASES']
-        # set row to zero as a place holder
-        row = 0
-        # loop around each row in the table
-        for row in range(len(aliases)):
-            # loop around aliases until we find the alias
-            for alias in aliases[row].split('|'):
-                if pconst.DRS_OBJ_NAME(alias) == cobjname:
-                    found = True
-                    break
-            # stop looping if we have found our object
-            if found:
-                break
-        # get the cobjname for this target if found
-        if found:
-            cobjname = full_table['OBJNAME'][row]
     # update the sql object condition
-    sql_obj_cond = 'OBJNAME="{0}"'.format(cobjname)
+    sql_obj_cond = 'OBJNAME="{0}"'.format(correct_objname)
     # get the full entry for this cobjname
     table = database.get_entries('*', condition=sql_obj_cond)
     # -------------------------------------------------------------------------
@@ -147,11 +121,11 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
         # TODO: add to language database
         wmsg = ('Object {0} is not in the object database. Using header values'
                 ' for astrometric parameters')
-        wargs = [cobjname]
+        wargs = [correct_objname]
         WLOG(params, 'warning', wmsg.format(*wargs), sublevel=7)
         # get properties from parameters
         # object name is the cleaned object name to be inline database sources
-        objname = str(cobjname)
+        objname = str(correct_objname)
         original_name = str(header[params['KW_OBJECTNAME'][0]])
         # right ascension and declination in degrees
         ra_deg = float(header[params['KW_OBJRA'][0]])
@@ -269,6 +243,55 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
     # -------------------------------------------------------------------------
     # return the header
     return header
+
+
+def get_obj_reject_list(params: ParamDict) -> np.ndarray:
+    """
+    Get a list of rejected object names from the googlesheet object database
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: np.array 1D, the list of reject object names
+    """
+    # get psuedo constants
+    pconst = constants.pload()
+    # get parameters from params
+    gsheet_url = params['OBJ_LIST_GOOGLE_SHEET_URL']
+    reject_id = params['OBJ_LIST_GSHEET_REJECT_LIST_ID']
+    # get reject list google sheets
+    try:
+        rejecttable = get_google_sheet(params, gsheet_url, reject_id)
+    # any exception here should return a warning and a empty array
+    except Exception as e:
+        # TODO: move to language database
+        wmsg = ('Cannot read reject list {0}. Skipping rejection'
+                '\n\tError {1}: {2}')
+        wargs = [GOOGLE_BASE_URL.format(gsheet_url, reject_id),
+                 type(e), str(e)]
+        WLOG(params, 'warning', wmsg.format(*wargs))
+        # return empty array
+        return np.array([])
+    # if we have reject entries deal with them (and their aliases)
+    if len(rejecttable) > 0:
+        # only keep rows which should be used
+        mask = rejecttable['USED'] == 1
+        # cut down the reject table
+        rejecttable = rejecttable[mask]
+        # start the reject list with all object names in the reject list
+        reject_objs = list(rejecttable['OBJNAME'])
+        # loop around rows in the reject table
+        for row in range(len(rejecttable)):
+            # add all objects in the alias list
+            aliaslist = rejecttable['ALIASES'][row]
+            # loop around invidiual alias names
+            for alias in aliaslist.split('|'):
+                # clean alias name and add to reject list
+                reject_objs.append(pconst.DRS_OBJ_NAME(alias))
+        # return any unique rows in reject object list
+        return np.unique(reject_objs)
+    # else if we have no objects to reject just return an empty array
+    else:
+        return np.array([])
 
 
 def reject_infile(params: ParamDict, header: drs_fits.Header,
@@ -416,9 +439,9 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
     return table
 
 
-def get_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
+def get_file_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
     """
-    Query the googlesheet for rejectiong odometer codes and return
+    Query the googlesheet for rejection odometer codes and return
     an array of odometer codes to reject
 
     :param params: ParamDict, the parameter dictionary of constants

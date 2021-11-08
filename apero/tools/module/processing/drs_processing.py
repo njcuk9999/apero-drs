@@ -1250,7 +1250,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     # get all telluric stars
     tstars = telluric.get_tellu_include_list(params)
     # get all other stars
-    ostars = _get_non_telluric_stars(params, indexdb, tstars)
+    ostars = get_non_telluric_stars(params, indexdb, tstars)
     # -------------------------------------------------------------------------
     # get odometer reject list (if required)
     # -------------------------------------------------------------------------
@@ -1260,7 +1260,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     odo_reject_list = []
     if not drs_text.null_text(_use_odo_reject, ['', 'None']):
         if drs_text.true_text(_use_odo_reject):
-            odo_reject_list = gen_pp.get_reject_list(params)
+            odo_reject_list = gen_pp.get_file_reject_list(params)
     # -------------------------------------------------------------------------
     # get template list (if required)
     # -------------------------------------------------------------------------
@@ -2711,8 +2711,8 @@ def vstack_cols(tablelist: List[Table]) -> Union[Table, None]:
 # =============================================================================
 # Define working functions
 # =============================================================================
-def _get_non_telluric_stars(params, indexdb: IndexDatabase,
-                            tstars: List[str]) -> List[str]:
+def get_non_telluric_stars(params, indexdb: IndexDatabase,
+                           tstars: List[str]) -> List[str]:
     """
     Takes a table and gets all objects (OBJ_DARK and OBJ_FP) that are not in
     tstars (telluric stars)

@@ -1926,6 +1926,22 @@ class IndexDatabase(DatabaseManager):
         # return whether to update or not
         return update
 
+    def get_unique(self, column: str,
+                   condition: Optional[str] = None) -> np.ndarray:
+        """
+        Get unique entries in a column
+
+        :param column: str, the column name
+        :param condition: optional str, if present a condition to limit the
+                          search to
+
+        :return: list of unique entries from "column"
+        """
+        # use database functionality
+        return self.database.unique(column, condition=condition,
+                                    table=self.database.tname)
+
+
 
 def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
                incdirs: Union[List[Union[str, Path]], None] = None,
@@ -2590,6 +2606,56 @@ class ObjectDatabase(DatabaseManager):
         Count the number of rows in the object database
         """
         return self.database.count(self.database.tname, condition=condition)
+
+    def find_objname(self, pconst: constants.PseudoConstants,
+                     objname: str) -> Tuple[str, bool]:
+        """
+        Find and clean the correct object name (as used by apero) this is
+        either:
+        1. from the OBJNAME column of the database directly
+        2. from the ALIAS column of the database (if not found in OBJNAME)
+        3. the cleaned input name (not found in the database)
+
+        :param pconst: psuedo constants - used to clean the object name
+        :param objname: str, the object name to clean and fimd
+
+        :return: Tuple, 1. str, the "correct" object name to use for the DRS,
+                 2. whether the object was found in the database
+        """
+        # assume we have not found our object name
+        found = False
+        # clean the input objname
+        cobjname = pconst.DRS_OBJ_NAME(objname)
+        # sql obj condition
+        sql_obj_cond = 'OBJNAME="{0}"'.format(cobjname)
+        # look for object name in database
+        count = self.count(condition=sql_obj_cond)
+        # if we have not found our object we must check aliases
+        if count == 0:
+            # get the full database
+            full_table = self.get_entries('OBJNAME, ALIASES')
+            aliases = full_table['ALIASES']
+            # set row to zero as a place holder
+            row = 0
+            # loop around each row in the table
+            for row in range(len(aliases)):
+                # loop around aliases until we find the alias
+                for alias in aliases[row].split('|'):
+                    if pconst.DRS_OBJ_NAME(alias) == cobjname:
+                        found = True
+                        break
+                # stop looping if we have found our object
+                if found:
+                    break
+            # get the cobjname for this target if found
+            if found:
+                cobjname = full_table['OBJNAME'][row]
+        # if there is an entry we found the object
+        else:
+            found = True
+        # return the correct object name
+        return cobjname, found
+
 
 
 # =============================================================================
