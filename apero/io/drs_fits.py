@@ -702,7 +702,7 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
                     header = Header(hdulist[extname].header)
             # just load first valid extension
             else:
-                header = fits.getdata(filename)
+                header = fits.getheader(filename)
         except Exception as _:
             try:
                 # try to deal with corrupted data extensions
