@@ -29,7 +29,7 @@ from apero.tools.module.processing import drs_processing
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_precheck.py'
+__NAME__ = 'drs_precheck.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
