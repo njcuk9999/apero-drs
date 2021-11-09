@@ -136,6 +136,12 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     # if we have a berv and we are not forcing then return values from header
     if berv_props['USE_BERV'] is not None and not force:
         if np.isfinite(berv_props['USE_BERV']):
+            # print progress about berv
+            # TODO: move to language database
+            msg = 'Identified object as {0} with BERV = {1:.4f} km/s'
+            margs = [berv_props['OBJNAME'], berv_props['USE_BERV']]
+            WLOG(params, '', msg.format(*margs))
+            # return the berv properties
             return berv_props
     # -------------------------------------------------------------------------
     # Set up times
@@ -189,6 +195,12 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
         berv_props = assign_use_berv(berv_props)
         if berv_props['USE_BERV'] is not None:
             if np.isfinite(berv_props['USE_BERV']):
+                # print progress about berv
+                # TODO: move to language database
+                msg = 'Identified object as {0} with BERV = {1:.4f} km/s'
+                margs = [berv_props['OBJNAME'], berv_props['USE_BERV']]
+                WLOG(params, '', msg.format(*margs))
+                # return the berv properties
                 return berv_props
     # -------------------------------------------------------------------------
     # if we are still here must use pyasl BERV estimate
@@ -216,7 +228,12 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
                         'BERVSOURCE'], func_name)
     # check if we have berv a good berv
     berv_props = assign_use_berv(berv_props)
-    # return bprops
+    # print progress about berv
+    # TODO: move to language database
+    msg = 'Identified object as {0} with BERV = {1:.4f} km/s'
+    margs = [berv_props['OBJNAME'], berv_props['USE_BERV']]
+    WLOG(params, '', msg.format(*margs))
+    # return the berv properties
     return berv_props
 
 

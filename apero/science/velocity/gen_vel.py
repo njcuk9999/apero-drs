@@ -15,7 +15,7 @@ from astropy import units as uu
 import numpy as np
 import os
 from scipy.optimize import curve_fit
-from typing import Tuple
+from typing import Optional, Tuple
 import warnings
 
 from apero.base import base
@@ -415,7 +415,9 @@ def remove_wide_peaks(params: ParamDict, props: ParamDict,
 
 
 def get_ccf_teff_mask(params: ParamDict,
-                      header: drs_fits.Header) -> Tuple[str, str]:
+                      header: drs_fits.Header,
+                      assetsdir: Optional[str] = None,
+                      mask_dir: Optional[str] = None) -> Tuple[str, str]:
         """
         Decide on a mask based on effective temperature (from the header)
 
@@ -425,8 +427,15 @@ def get_ccf_teff_mask(params: ParamDict,
         :return: tuple, 1. str, the ccf mask to use 2. str, the format
                  for astropy.table.Table.read
         """
+        # set function name
+        func_name = display_func('get_ccf_teff_mask', __NAME__)
+        # get parameters from params/kwargs
+        assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+                          override=assetsdir)
+        relfolder = pcheck(params, 'CCF_MASK_PATH', func=func_name,
+                           override=mask_dir)
         # get temperature header key
-        teff_key = params['KW_DRS_TEFF']
+        teff_key = params['KW_DRS_TEFF'][0]
         # get teff mask file
         teff_masks_file = params['CCF_TEFF_MASK_TABLE']
         # get teff mask datatype
@@ -434,6 +443,11 @@ def get_ccf_teff_mask(params: ParamDict,
         # get temperature from header
         if teff_key in header:
             teff = float(header[teff_key])
+            # log that we are using a Teff key for mask
+            # TODO: move to language database
+            msg = 'Using object temperature = {0} K for mask identification'
+            margs = [teff]
+            WLOG(params, '', msg.format(*margs))
         else:
             # TODO: move to language database
             emsg = 'Object temperature key "{0}" not in header'
@@ -443,7 +457,8 @@ def get_ccf_teff_mask(params: ParamDict,
             return '', ''
         # ---------------------------------------------------------------------
         # load teff masks file
-        teff_masks = Table.read(teff_masks_file, format=teff_masks_fmt)
+        teff_mask_path = os.path.join(assetdir, relfolder, teff_masks_file)
+        teff_masks = Table.read(teff_mask_path, format=teff_masks_fmt)
         # ---------------------------------------------------------------------
         # find default
         if 'default' not in teff_masks['kind']:
@@ -740,8 +755,6 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     # deal with ccf mask from TEFF
     if ccfmask == 'TEFF':
-        # load pseudo constants
-        pconst = constants.pload()
         # load ccf mask using infile header (i.e. from Teff consideration)
         ccfmask, ccf_fmt = get_ccf_teff_mask(params, infile.header)
     else:
