@@ -2319,7 +2319,7 @@ CCF_MASK_PATH.author = base.AUTHORS['NJC']
 
 # Define the TEFF mask table for when CCF_DEFAULT_MASK is TEFF
 CCF_TEFF_MASK_TABLE = CCF_TEFF_MASK_TABLE.copy(__NAME__)
-CCF_TEFF_MASK_TABLE.value = 'teff_mask.csv'
+CCF_TEFF_MASK_TABLE.value = 'teff_masks.csv'
 CCF_TEFF_MASK_TABLE.datatype = 'csv'
 CCF_TEFF_MASK_TABLE.author = base.AUTHORS['NJC']
 

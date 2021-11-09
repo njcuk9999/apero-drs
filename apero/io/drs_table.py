@@ -356,13 +356,17 @@ def read_table(params: ParamDict, filename: str, fmt: str,
 
     # if we have colnames rename the columns
     if colnames is not None:
-        if len(colnames) != len(table.colnames):
+        if len(colnames) > len(table.colnames):
             eargs = [len(colnames), len(table.colnames), filename, func_name]
             WLOG(params, 'error', textentry('01-002-00013', args=eargs))
         # rename old names to new names
         oldcols = table.colnames
         for c_it, col in enumerate(colnames):
             table[oldcols[c_it]].name = col
+        # delete other column names
+        for col in table.colnames:
+            if col not in colnames:
+                del table[col]
 
     # return table
     return table
