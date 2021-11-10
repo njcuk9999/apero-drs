@@ -1820,7 +1820,15 @@ class IndexDatabase(DatabaseManager):
             # load missing files
             if str(reqfile).endswith('.fits'):
                 # load header
-                header = drs_fits.read_header(self.params, str(reqfile))
+                try:
+                    header = drs_fits.read_header(self.params, str(reqfile))
+                except Exception as e:
+                    # TODO: move to language database
+                    wmsg = 'Skipping file {0}\n\tError {1}: {2}'
+                    wargs = [str(reqfile), type(e), str(e)]
+                    WLOG(self.params, 'warning', wmsg.format(*wargs),
+                         sublevel=6)
+                    continue
                 # loop around required keys
                 for rkey in rkeys:
                     # get drs key
