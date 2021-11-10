@@ -45,8 +45,6 @@ DefaultConstants = pseudo_const.PseudoConstants
 DrsCodedException = drs_exceptions.DrsCodedException
 # get display func
 display_func = drs_misc.display_func
-# define bad characters for objects (alpha numeric + "_")
-BAD_OBJ_CHARS = [' '] + list(string.punctuation.replace('_', ''))
 # null text
 NULL_TEXT = ['', 'None', 'Null']
 
@@ -859,16 +857,7 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
         objectname = 'Null'
     # else remove spaces - clean object name
     else:
-        objectname = rawobjname.strip()
-        # now remove bad characters
-        for bad_char in BAD_OBJ_CHARS:
-            objectname = objectname.replace(bad_char, '_')
-        objectname = objectname.upper()
-        # deal with multiple underscores in a row
-        while '__' in objectname:
-            objectname = objectname.replace('__', '_')
-        # strip leading / trailing '_'
-        objectname = objectname.strip('_')
+        objectname = pseudo_const.clean_object(rawobjname)
     # -------------------------------------------------------------------------
     # deal with returning header
     if return_header:
