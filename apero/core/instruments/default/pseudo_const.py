@@ -11,6 +11,7 @@ Created on 2019-01-18 at 14:44
 """
 from astropy.table import Table
 import numpy as np
+import string
 import sys
 import os
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
@@ -40,6 +41,8 @@ NOT_IMPLEMENTED = ('Definition Error: Must be overwritten in instrument '
 DatabaseColumns = drs_db.DatabaseColumns
 # get display func
 display_func = drs_misc.display_func
+# define bad characters for objects (alpha numeric + "_")
+BAD_OBJ_CHARS = [' '] + list(string.punctuation.replace('_', ''))
 
 
 # =============================================================================
@@ -1353,55 +1356,28 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('GET_EPOCH')
 
-    # =========================================================================
-    # OTHER SETTINGS
-    # =========================================================================
-    # noinspection PyPep8Naming
-    def CCF_MASK_FROM_TEFF(self, params: Any, header: Any,
-                           wlog: Any, textentry: Any) -> Tuple[str, str]:
-        """
-        Decide on a mask based on effective temperature (from the header)
 
-        :param params: ParamDict, the parameter dictionary of constants
-        :param header: fits Header, to get temperature from
-        :param wlog: the WLOG instance (for logging)
-        :param textentry: the TextEntry instance (for logging)
+# =============================================================================
+# Functions used by pseudo const
+# =============================================================================
+def clean_object(rawobjname: str) -> str:
 
-        :return: tuple, 1. str, the ccf mask to use 2. str, the format
-                 for astropy.table.Table.read
-        """
-        # get temperature header key
-        teff_key = params['KW_DRS_TEFF']
-        # get temperature from header
-        if teff_key in header:
-            teff = float(header[teff_key])
-        else:
-            # TODO: move to language database
-            emsg = 'Object temperature key "{0}" not in header'
-            eargs = [teff_key]
-            wlog(params, 'error', emsg.format(*eargs))
-            # should never get here
-            return '', ''
-        # ---------------------------------------------------------------------
-        # load teff masks file
-        teff_masks = Table.read(params['CCF_TEFF_MASK_TABLE'],
-                                )
+    # strip spaces off raw object
+    objectname = rawobjname.strip()
+    # replace + and - with "p" and "m"
+    objectname = objectname.replace('+', 'p')
+    objectname = objectname.replace('-', 'm')
+    # now remove bad characters
+    for bad_char in BAD_OBJ_CHARS:
+        objectname = objectname.replace(bad_char, '_')
+    objectname = objectname.upper()
+    # deal with multiple underscores in a row
+    while '__' in objectname:
+        objectname = objectname.replace('__', '_')
+    # strip leading / trailing '_'
+    objectname = objectname.strip('_')
 
-        # ---------------------------------------------------------------------
-        # deal with teff choosing mask
-        if not np.isfinite(teff):
-            # return the mask and the file type (i.e. fits, ascii)
-            return 'GL846_neg.fits', 'fits'
-        if teff >= 3500:
-            # return the mask and the file type (i.e. fits, ascii)
-            return 'GL846_neg.fits', 'fits'
-        if 3000 >= teff > 3500:
-            # return the mask and the file type (i.e. fits, ascii)
-            return 'GL699_neg.fits', 'fits'
-        if teff < 3000:
-            # return the mask and the file type (i.e. fits, ascii)
-            return 'GL905_neg.fits', 'fits'
-
+    return objectname
 
 # =============================================================================
 # End of code
