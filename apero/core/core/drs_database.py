@@ -1821,7 +1821,8 @@ class IndexDatabase(DatabaseManager):
             if str(reqfile).endswith('.fits'):
                 # load header
                 try:
-                    header = drs_fits.read_header(self.params, str(reqfile))
+                    header = drs_fits.read_header(self.params, str(reqfile),
+                                                  log=False)
                 except Exception as e:
                     # TODO: move to language database
                     wmsg = 'Skipping file {0}\n\tError {1}: {2}'
