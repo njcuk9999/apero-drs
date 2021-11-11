@@ -2,6 +2,44 @@ Changelog
 =========
 
 
+0.7.182 (2021-11-10)
+--------------------
+- `Apero.core.core.drs_database.py` - do not log error in `read_header` -
+  pass exception back to handler. [njcuk9999]
+- `Apero.core.core.drs_database.py` - when updating index if we can't get
+  header skip it - bad files should not crash the process here - but we
+  should warn the user. [Neil Cook]
+- `Apero.core.instruments.default.pseudo_const.py` - update cleaning of
+  object name now "+" goes to P and "-" goes to M by default. [Neil
+  Cook]
+
+
+0.7.181 (2021-11-09)
+--------------------
+- Update run.ini files for default skip parameters. [Neil Cook]
+- `Apero.recipes.spirou.apero_ccf_spirou.py` - corrections for teff mask
+  change. [Neil Cook]
+- `Apero.core.instruments.default.recipe_definitions.py` - update precheck
+  descriptions. [Neil Cook]
+- `Apero.tools.module.processing.drs_precheck.py` - update name of
+  precheck module. [Neil Cook]
+- `Apero.tools.recipes.bin.apero_precheck.py` +
+  `apero.tools.module.processing.drs_precheck.py` - add precheck code
+  (check before running `apero_processing)` for checking raw calibration
+  files, raw telluric files, raw science files and object names (from
+  database vs header) [Neil Cook]
+- `Apero.io.drs_fits.py` - correct typo fits.getdata --> fits.getheader.
+  [Neil Cook]
+
+
+0.7.180 (2021-11-06)
+--------------------
+- Make fure all FTELLU1 and FTELLU2 are FTFIT1 and FTFIT2. [Neil Cook]
+- `Apero.io.drs_fits.py` - correct typo fits.getheader --> fits.getdata.
+  [Neil Cook]
+- Update date/version/changelog/docs/update notes. [Neil Cook]
+
+
 0.7.179 (2021-11-04)
 --------------------
 - Merge branch 'v0.7.173-stable-test' into v0.7.173-obj-res-test. [Neil
