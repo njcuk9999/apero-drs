@@ -658,6 +658,10 @@ apero_extract.set_kwarg(**dobad)
 apero_extract.set_kwarg(**backsub)
 apero_extract.set_kwarg(**blazefile)
 apero_extract.set_kwarg(default=False, **combine)
+apero_extract.set_kwarg(name='--combine_method', dtype=str,
+                        options=['sum', 'median', 'mean', 'subtract', 'divide',
+                                 'multiply'], default='sum',
+                        helpstr='Method to combine files (if --combine=True)')
 apero_extract.set_kwarg(**objname)
 apero_extract.set_kwarg(**dprtype)
 apero_extract.set_kwarg(**darkfile)

@@ -240,7 +240,7 @@ def __main__(recipe, params):
         # Calculate the wave solution for master fiber
         # master fiber + master wave setup
         # Random night (not master), AB -> We only allow for changes in the
-        #     achromatic term, fit_cavity = False, fit_achromatic = True
+        #     achromatic term, fit_cavity = True, fit_achromatic = True
         fit_cavity = True
         fit_achromatic = True
         # calculate wave solution
