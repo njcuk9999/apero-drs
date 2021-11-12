@@ -115,7 +115,8 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cond = drs_file.combine(params, recipe, infiles, math='median')
+        cond = drs_file.combine(params, recipe, infiles,
+                                math=params['INPUTS']['COMBINE_METHOD'])
         infiles = [cond[0]]
         combine = True
     else:
@@ -171,10 +172,14 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # get header from file instance
         header = infile.get_header()
-        # get the fiber types needed
-        sci_fibers, ref_fiber = pconst.FIBER_KINDS()
-        # must do reference fiber first (for leak correction)
-        fibertypes = [ref_fiber] + sci_fibers
+
+        if params['INPUTS']['FIBER'] == 'ALL':
+            # get the fiber types needed
+            sci_fibers, ref_fiber = pconst.FIBER_KINDS()
+            # must do reference fiber first (for leak correction)
+            fibertypes = [ref_fiber] + sci_fibers
+        else:
+            fibertypes = [params['INPUTS']['FIBER']]
         # ------------------------------------------------------------------
         # Load shape components
         # ------------------------------------------------------------------
