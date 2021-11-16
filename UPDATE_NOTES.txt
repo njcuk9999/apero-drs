@@ -217,6 +217,8 @@ Date: 2021-11-11
             - DEBUG_UNCORR_EXT_FILES  (default = False)
                     ~ 0.04 % space saving in reduced dir
                     not a lot of savings so left of by default
+    - log messages now go into a obs_dir directory if possible (to avoid huge
+      directories with millions of files)
 
 - polar
     - added polar code
