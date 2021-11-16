@@ -374,6 +374,8 @@ class Logger:
         # deal with logging (in default language)
         # ---------------------------------------------------------------------
         if not printonly:
+            # get logfilepath
+            logfilepath = get_logfilepath(self, params)
             # loop around raw messages
             for mess in raw_messages2:
                 # Get the time now in human readable format
@@ -386,8 +388,6 @@ class Logger:
                 cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
                 # append separate commands for log writing
                 cmds.append(cmd)
-                # get logfilepath
-                logfilepath = get_logfilepath(self, params)
                 # write to log file
                 writelog(self, params, cmd, key, logfilepath, sublevel=sublevel)
 
@@ -1248,9 +1248,9 @@ def get_drs_data_msg(params: ParamDict, group: Union[str, None] = None,
         dir_data_msg = os.path.join(dir_data_msg, group)
     # ----------------------------------------------------------------------
     # add night name dir (if available) - put into sub-directory
-    if ('OBS_DIR' in params) and (dir_data_msg is not None):
-        if params['OBS_DIR'] not in [None, 'None', '']:
-            dir_data_msg = os.path.join(dir_data_msg, params['OBS_DIR'])
+    if ('OBS_SUBDIR' in params) and (dir_data_msg is not None):
+        if params['OBS_SUBDIR'] not in [None, 'None', '']:
+            dir_data_msg = os.path.join(dir_data_msg, params['OBS_SUBDIR'])
     # ----------------------------------------------------------------------
     # try to create directory
     if not os.path.exists(dir_data_msg):
@@ -1276,7 +1276,7 @@ def get_drs_data_msg(params: ParamDict, group: Union[str, None] = None,
         # get the users home directory
         homedir = os.path.expanduser('~')
         # make the default message directory
-        default_msg = os.path.join(homedir, '.terrapipe_msg/')
+        default_msg = os.path.join(homedir, '.apero/msg/')
         # check that deafult message directory exists
         if not os.path.exists(default_msg):
             # noinspection PyBroadException

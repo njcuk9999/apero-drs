@@ -210,6 +210,9 @@ def setup(name: str = 'None', instrument: str = 'None',
     # need to set debug mode now
     recipe = _set_debug_from_input(recipe, fkwargs)
     # -------------------------------------------------------------------------
+    # need to look for observation directory in arguments
+    recipe = _set_obsdir_from_input(recipe, fkwargs)
+    # -------------------------------------------------------------------------
     # need to see if we are forcing input and output block directories
     recipe = _set_force_dirs(recipe, fkwargs)
     # -------------------------------------------------------------------------
@@ -1987,6 +1990,75 @@ def _set_debug_from_input(recipe: DrsRecipe,
         # set the drs debug level to 1
         recipe.params['DRS_DEBUG'] = debug_mode
         recipe.params.set_source('DRS_DEBUG', func_name)
+    # return recipe
+    return recipe
+
+
+def _set_obsdir_from_input(recipe: DrsRecipe,
+                           fkwargs: Union[Dict[str, Any], None] = None
+                           ) -> DrsRecipe:
+    """
+    Get observation directory from inputs
+    """
+    # set function name
+    func_name = display_func('_set_obsdir_from_input', __NAME__)
+    # set default value for obs_dir (blank string)
+    obs_dir = ''
+    check = True
+    # -------------------------------------------------------------------------
+    # check in fkwargs
+    if check and ('obs_dir' in fkwargs):
+        value = fkwargs['obs_dir']
+        if not drs_text.null_text(value, ['None', '', 'Null']):
+            obs_dir = str(value)
+            check = False
+    # -------------------------------------------------------------------------
+    # check in args
+    if check and ('obs_dir' in recipe.args):
+        try:
+            # get position of obs_dir in arguments
+            pos = int(recipe.args['obs_dir'].pos) + 1
+            # get obs_dir from sys.argv
+            if len(sys.argv) >= pos:
+                obs_dir = sys.argv[pos]
+        except Exception as _:
+            pass
+    # -------------------------------------------------------------------------
+    # check keywords
+    if check and ('obs_dir' in recipe.kwargs):
+        # set debug key
+        key = '--obs_dir'
+        # assume debug is not there
+        value = None
+        pos = None
+        # check sys.argv
+        for it, arg in enumerate(sys.argv):
+            if key in arg:
+                if '=' in arg:
+                    pos = None
+                    value = arg.split('=')[-1]
+                else:
+                    pos = it
+                    value = None
+        # deal with position
+        if pos is not None:
+            value = sys.argv[pos + 1]
+        # set to obs_dir only if not None
+        if value is not None:
+            obs_dir = str(value)
+    # -------------------------------------------------------------------------
+    # make sure obs dir is not a full path
+    obs_subdir, stripped = drs_file.DrsPath.strip_path(recipe.params, obs_dir)
+    if not stripped:
+        obs_subdir = os.path.basename(obs_dir)
+    # deal with no sub dir
+    if len(obs_subdir) == 0:
+        obs_subdir = 'other'
+    # -------------------------------------------------------------------------
+    # deal with having a obs_dir set
+    recipe.params['OBS_SUBDIR'] = obs_subdir
+    # set source
+    recipe.params.set_sources(['OBS_SUBDIR'], func_name)
     # return recipe
     return recipe
 
