@@ -204,6 +204,29 @@ class DrsPath:
                 names.append(block.name)
         return names
 
+    @staticmethod
+    def strip_path(params: ParamDict, path: str) -> Tuple[str, bool]:
+        """
+        Strip a path of any block path and return that stripped directory
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param path: str, path to strip
+
+        :return: tuple, 1. the stripped path (sub-dir), 2. whether path was
+                 stripped
+        """
+        # get all blocks
+        blocks = DrsPath.get_blocks(params)
+        # loop around blocks
+        for block in blocks:
+            blockpath = block.path
+            if not blockpath.endswith(os.sep):
+                blockpath = blockpath + os.sep
+            if path.startswith(blockpath):
+                return path.replace(blockpath, ''), True
+        else:
+            return path, False
+
     def __str__(self) -> str:
         """
         String representation of DrsPath

@@ -578,25 +578,25 @@ calib_file.addset(out_backmap)
 # -----------------------------------------------------------------------------
 # localisation
 out_loc_orderp = drs_finput('LOC_ORDERP', hkeys=dict(KW_OUTPUT='LOC_ORDERP'),
-                            fibers=['AB', 'A', 'B', 'C'],
+                            fibers=['AB', 'C'],
                             filetype='.fits',
                             intype=[pp_flat_dark, pp_dark_flat],
                             suffix='_order_profile',
                             outfunc=out.calib_file,
                             dbname='calibration', dbkey='ORDER_PROFILE')
 out_loc_loco = drs_finput('LOC_LOCO', hkeys=dict(KW_OUTPUT='LOC_LOCO'),
-                          fibers=['AB', 'A', 'B', 'C'],
+                          fibers=['AB', 'C'],
                           filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                           suffix='_loco',
                           outfunc=out.calib_file,
                           dbname='calibration', dbkey='LOC')
 out_loc_fwhm = drs_finput('LOC_FWHM', hkeys=dict(KW_OUTPUT='LOC_FWHM'),
-                          fibers=['AB', 'A', 'B', 'C'],
+                          fibers=['AB', 'C'],
                           filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                           suffix='_fwhm-order',
                           outfunc=out.calib_file)
 out_loc_sup = drs_finput('LOC_SUP', hkeys=dict(KW_OUTPUT='LOC_SUP'),
-                         fibers=['AB', 'A', 'B', 'C'],
+                         fibers=['AB', 'C'],
                          filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                          suffix='_with-order',
                          outfunc=out.calib_file)
