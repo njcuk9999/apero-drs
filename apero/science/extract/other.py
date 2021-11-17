@@ -17,6 +17,7 @@ from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.io import drs_image
@@ -211,6 +212,9 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # set up drs group (for logging)
     groupname = drs_startup.group_name(params, suffix='extract')
+    # if we have a obs_dir then add this to the group name path
+    if not drs_text.null_text(params['OBS_SUBDIR'], ['None', '', 'Null']):
+        groupname = os.path.join(params['OBS_SUBDIR'], groupname)
     # ------------------------------------------------------------------
     # Get the output hc e2ds filename (and check if it exists)
     # ------------------------------------------------------------------

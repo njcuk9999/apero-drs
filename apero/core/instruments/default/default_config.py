@@ -18,7 +18,7 @@ __all__ = [  # global settings
     'INSTRUMENT', 'OBS_LONG', 'OBS_LAT', 'OBS_ALT',
     # DRS SETTINGS
     'DRS_PACKAGE', 'DRS_USERENV', 'DRS_GROUP', 'DRS_RECIPE_KIND',
-    'DRS_USER_DEFAULT', 'IS_MASTER', 'DRS_RECIPE_TYPE',
+    'DRS_USER_DEFAULT', 'IS_MASTER', 'DRS_RECIPE_TYPE', 'DRS_GROUP_PATH',
     # DRS INTERNAL PATHS
     'DRS_USER_DEFAULT', 'DRS_MOD_DATA_PATH', 'DRS_MOD_INSTRUMENT_CONFIG',
     'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA',
@@ -243,6 +243,10 @@ DRS_GROUP = Const('DRS_GROUP', value=None, dtype=str, source=__NAME__,
                   group=cgroup,
                   description=('The group this target is set as '
                                '(set in drs_setup)'))
+DRS_GROUP_PATH = Const('DRS_GROUP_PATH', value=None, dtype=str, source=__NAME__,
+                       group=cgroup,
+                       description=('The group path this target is set as '
+                                    '(set in drs_setup)'))
 
 # The recipe kind that this parameter dictionary is associated with
 #   (i.e. master-calib, night-calib, obj-science, obj-tellu)

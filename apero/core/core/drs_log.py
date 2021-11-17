@@ -900,8 +900,8 @@ def get_logfilepath(logobj: Logger, params: ParamDict,
     if not use_group:
         group = None
         reset = True
-    elif 'DRS_GROUP' in params:
-        group = params['DRS_GROUP']
+    elif 'DRS_GROUP_PATH' in params:
+        group = params['DRS_GROUP_PATH']
         reset = False
     else:
         group = None
@@ -1249,8 +1249,13 @@ def get_drs_data_msg(params: ParamDict, group: Union[str, None] = None,
     # ----------------------------------------------------------------------
     # add night name dir (if available) - put into sub-directory
     if ('OBS_SUBDIR' in params) and (dir_data_msg is not None):
-        if params['OBS_SUBDIR'] not in [None, 'None', '']:
-            dir_data_msg = os.path.join(dir_data_msg, params['OBS_SUBDIR'])
+        obs_subdir = params['OBS_SUBDIR']
+        # only add sub-directory if not None
+        if not drs_text.null_text(obs_subdir, ['None', '']):
+            # only add sub-directory if sub-directory not in the log path
+            #   already
+            if obs_subdir not in dir_data_msg:
+                dir_data_msg = os.path.join(dir_data_msg, obs_subdir)
     # ----------------------------------------------------------------------
     # try to create directory
     if not os.path.exists(dir_data_msg):
