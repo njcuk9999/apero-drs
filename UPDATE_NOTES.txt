@@ -63,6 +63,20 @@ Date: 2021-11-11
             - raw telluric files
             - raw science files
             - object names (from object database vs header)
+    - run.ini changes
+        - MKTELLU2, MKTELLU3, MKTELLU4 renamed:
+            MKTELLU1 --> MKTELLU1
+            None     --> MKTMOD1
+            MKTELLU2 --> MKTFIT
+            MKTELLU3 --> MKTEMP
+            MKTELLU4 --> MKTELLU2
+            None     --> MKTMOD2
+
+        - FTELLU1, FTELLU2, FTELLU3 renamed:
+            FTELLU1 --> FTFIT1
+            FTELLU2 --> FTTEMP
+            FTELLU3 --> FTFIT2
+
 
 - preprocessing
     - object resolution added to preprocessing (see object resolution section)
