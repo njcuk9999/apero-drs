@@ -340,7 +340,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     # push display into log (before was print only)
     if not quiet:
         # display title
-        _display_drs_title(recipe.params, drsgroup, logonly=True)
+        _display_drs_title(recipe.params, drsgroupname, logonly=True)
         # display initial parameterisation
         _display_initial_parameterisation(recipe.params, logonly=True)
         # display system info (log only)
