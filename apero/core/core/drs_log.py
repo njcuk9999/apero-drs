@@ -1236,9 +1236,15 @@ def get_drs_data_msg(params: ParamDict, group: Union[str, None] = None,
     if (params['DRS_RECIPE_TYPE'] is not None) and (group is None):
         kind = params['DRS_RECIPE_TYPE'].lower()
         dir_data_msg = os.path.join(dir_data_msg, kind)
-    # if we have a group then put it in processing folder
+    # if we have a group (and we are dealing with a recipe called within
+    #    another then put it in processing folder
+    elif group is not None and params['DRS_RECIPE_TYPE'] == 'sub-recipe':
+        dir_data_msg = os.path.join(dir_data_msg, 'sub-recipe')
+    # if we have a group (and we are not dealing with a recipe called within
+    #    another then put it in processing folder
     elif group is not None:
         dir_data_msg = os.path.join(dir_data_msg, 'processing')
+    # otherwise shove into an "other" directory
     else:
         dir_data_msg = os.path.join(dir_data_msg, 'other')
     # ----------------------------------------------------------------------
