@@ -196,12 +196,15 @@ def setup(name: str = 'None', instrument: str = 'None',
     # -------------------------------------------------------------------------
     # need to deal with drs group
     if 'DRS_GROUP' in fkwargs:
-        drsgroup = fkwargs['DRS_GROUP']
+        drsgrouppath = fkwargs['DRS_GROUP']
+        # only keep the basename for drs group name
+        drsgroupname = os.path.basename(drsgrouppath)
         del fkwargs['DRS_GROUP']
     else:
-        drsgroup = None
+        drsgrouppath, drsgroupname = None, None
     # set DRS_GROUP
-    recipe.params.set('DRS_GROUP', drsgroup, source=func_name)
+    recipe.params.set('DRS_GROUP', drsgroupname, source=func_name)
+    recipe.params.set('DRS_GROUP_PATH', drsgrouppath, source=func_name)
     recipe.params.set('DRS_RECIPE_TYPE', recipe.recipe_type, source=func_name)
     recipe.params.set('DRS_RECIPE_KIND', recipe.recipe_kind, source=func_name)
     # set master
@@ -228,7 +231,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     # display (print only no log)
     if (not quiet) and ('instrument' not in recipe.args):
         # display title
-        _display_drs_title(recipe.params, drsgroup, printonly=True)
+        _display_drs_title(recipe.params, drsgroupname, printonly=True)
     # -------------------------------------------------------------------------
     # display loading message
     TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
@@ -271,7 +274,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     # -------------------------------------------------------------------------
     # We must have DRS_DATA_MSG_FULL (the full path for this recipe)
     drs_data_msg_full = drs_log.get_drs_data_msg(recipe.params, reset=True,
-                                                 group=drsgroup)
+                                                 group=drsgrouppath)
     recipe.params['DRS_DATA_MSG_FULL'] = drs_data_msg_full
     recipe.params.set_source('DRS_DATA_MSG_FULL', func_name)
     # -------------------------------------------------------------------------
