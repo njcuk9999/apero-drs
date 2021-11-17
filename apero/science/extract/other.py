@@ -252,6 +252,7 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         # set the program name (shouldn't be apero_extract)
         kwargs['program'] = '{0}_extract'.format(kind)
         kwargs['recipe_kind'] = '{0}-extract'.format(kind)
+        kwargs['recipe_type'] = 'sub-recipe'
         kwargs['parallel'] = params['INPUTS']['PARALLEL']
         # force the input directory (combined files go to reduced dir)
         kwargs['force_indir'] = path_ins.block_kind

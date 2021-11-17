@@ -202,11 +202,20 @@ def setup(name: str = 'None', instrument: str = 'None',
         del fkwargs['DRS_GROUP']
     else:
         drsgrouppath, drsgroupname = None, None
+    # need to deal with recipe_type and kind from fkwargs
+    recipe_kind = recipe.recipe_kind
+    recipe_type = recipe.recipe_type
+    if 'recipe_kind' in fkwargs:
+        if not drs_text.null_text(fkwargs['recipe_kind'], ['None', '']):
+            recipe_kind = fkwargs['recipe_kind']
+    if 'recipe_type' in fkwargs:
+        if not drs_text.null_text(fkwargs['recipe_type'], ['None', '']):
+            recipe_type = fkwargs['recipe_type']
     # set DRS_GROUP
     recipe.params.set('DRS_GROUP', drsgroupname, source=func_name)
     recipe.params.set('DRS_GROUP_PATH', drsgrouppath, source=func_name)
-    recipe.params.set('DRS_RECIPE_TYPE', recipe.recipe_type, source=func_name)
-    recipe.params.set('DRS_RECIPE_KIND', recipe.recipe_kind, source=func_name)
+    recipe.params.set('DRS_RECIPE_TYPE', recipe_type, source=func_name)
+    recipe.params.set('DRS_RECIPE_KIND', recipe_kind, source=func_name)
     # set master
     recipe.params.set('IS_MASTER', recipe.master, source=func_name)
     # -------------------------------------------------------------------------
