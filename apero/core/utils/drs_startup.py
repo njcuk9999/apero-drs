@@ -79,14 +79,14 @@ RUN_KEYS['EXCLUDE_OBS_DIRS'] = None
 RUN_KEYS['INCLUDE_OBS_DIRS'] = None
 RUN_KEYS['PI_NAMES'] = None
 RUN_KEYS['MASTER_OBS_DIR'] = None
-RUN_KEYS['UPDATE_OBJ_DATABASE'] = False
 RUN_KEYS['CORES'] = 1
 RUN_KEYS['STOP_AT_EXCEPTION'] = False
 RUN_KEYS['TEST_RUN'] = False
+RUN_KEYS['USE_ENGINEERING'] = False
 RUN_KEYS['TRIGGER_RUN'] = False
 RUN_KEYS['USE_ODO_REJECTLIST'] = True
 RUN_KEYS['RECAL_TEMPLATES'] = False
-RUN_KEYS['USE_ENGINEERING'] = False
+RUN_KEYS['UPDATE_OBJ_DATABASE'] = False
 RUN_KEYS['TELLURIC_TARGETS'] = None
 RUN_KEYS['SCIENCE_TARGETS'] = None
 
@@ -140,7 +140,7 @@ def setup(name: str = 'None', instrument: str = 'None',
             quiet = True
         del fkwargs['quiet']
     # set up process id
-    pid, htime = _assign_pid()
+    pid, htime = assign_pid()
     # Clean WLOG
     WLOG.clean_log(pid)
     # get filemod and recipe mod
@@ -1680,7 +1680,7 @@ def _update_input_params(params, args):
                     pargs[parg].params = params.copy()
 
 
-def _assign_pid() -> Tuple[str, str]:
+def assign_pid() -> Tuple[str, str]:
     """
     Assign a process id based on the time now and return it and the
     time now
@@ -1689,7 +1689,7 @@ def _assign_pid() -> Tuple[str, str]:
     :rtype: Tuple[str, str]
     """
     # set function name
-    _ = display_func('_assign_pid', __NAME__)
+    _ = display_func('assign_pid', __NAME__)
     # get unix char code
     unixtime, humantime, rval = drs_misc.unix_char_code()
     # write pid
