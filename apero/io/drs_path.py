@@ -383,6 +383,43 @@ def listdirs(rootdir: str) -> List[str]:
     return directories
 
 
+def get_dirs(path: str, relative=False) -> List[str]:
+    """
+    Get all directories under "path"
+
+    :param path: str, the path to check for sub-directories
+    :param relative: bool, if True send back relative paths otherwise return
+                     absolute path
+
+    :return: list of paths (absolute or relative)
+    """
+    obs_dirs = []
+    for root, dirs, files in os.walk(path):
+        obs_dirs.append(root)
+    # if we need absolute path
+    if not relative:
+        return obs_dirs
+    # store relative obs_dirs
+    rel_obs_dirs = []
+    # convert to relative paths
+    for obs_dir in obs_dirs:
+        # if obs_dir the path remove it
+        if obs_dir == path:
+            continue
+        # make path finish with os.sep
+        if not path.endswith(os.sep):
+            testpath = path + os.sep
+        else:
+            testpath = path
+        if obs_dir.startswith(testpath):
+            rel_obs_dirs.append(obs_dir[len(testpath):])
+        else:
+            rel_obs_dirs.append(obs_dir)
+    # return the relative paths
+    return rel_obs_dirs
+
+
+
 def nofiles(rootdir: str) -> bool:
     """
     Test wether a a rootdir is empty (if it is a directory at all)
