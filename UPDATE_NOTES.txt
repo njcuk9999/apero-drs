@@ -71,7 +71,6 @@ Date: 2021-11-11
             MKTELLU3 --> MKTEMP
             MKTELLU4 --> MKTELLU2
             None     --> MKTMOD2
-
         - FTELLU1, FTELLU2, FTELLU3 renamed:
             FTELLU1 --> FTFIT1
             FTELLU2 --> FTTEMP
