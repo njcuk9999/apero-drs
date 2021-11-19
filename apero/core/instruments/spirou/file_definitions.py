@@ -839,7 +839,7 @@ out_wavem_sol = drs_finput('WAVESOL_MASTER',
                            fibers=['AB', 'A', 'B', 'C'],
                            filetype='.fits',
                            intype=[out_ext_e2ds, out_ext_e2dsff],
-                           suffix='_wavesol_master_',
+                           suffix='_wavesol_master',
                            dbname='calibration', dbkey='WAVEM_D',
                            outfunc=out.calib_file)
 
