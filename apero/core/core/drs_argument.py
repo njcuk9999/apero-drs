@@ -74,6 +74,8 @@ STRTYPE = base.STRTYPE
 NUMBER_TYPES = base.NUMBER_TYPES
 # switch for arg no db
 NO_DB = base.NO_DB
+# load pseudo constants
+pconst = constants.pload()
 # define complex typing for file return
 ValidFileType = Tuple[List[Union[Any, str]],
                       List[Union[DrsInputFile, None]]]
@@ -584,7 +586,7 @@ class _CheckFiles(DrsAction):
         for _value in values:
             # get the filename if valid (else crash)
             if NO_DB:
-                out = valid_file_no_db(params, self.indexdb, argname, _value,
+                out = valid_file_no_db(params, self.recipe, argname, _value,
                                        rargs, rkwargs, obs_dir, types)
             else:
                 out = valid_file(params, self.indexdb, argname, _value,
@@ -3504,7 +3506,7 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
     WLOG(params, 'error', textentry('09-001-00004', args=eargs))
 
 
-def valid_file_no_db(params: ParamDict, indexdb: IndexDatabase,
+def valid_file_no_db(params: ParamDict, recipe: Any,
                argname: str, filename: str, rargs: Dict[str, DrsArgument],
                rkwargs: Dict[str, DrsArgument], obs_dir: drs_file.DrsPath,
                types: List[DrsInputFile]) -> ValidFileType:
@@ -3550,7 +3552,7 @@ def valid_file_no_db(params: ParamDict, indexdb: IndexDatabase,
     # count number of paths that meet this condition
     if len(filenames) > 0:
         # now check fits keys (or pass if not fits)
-        filenames, filetypes = _fits_query(params, drsfiles, filenames,
+        filenames, filetypes = _fits_query(params, recipe, drsfiles, filenames,
                                            argname, obs_dir)
         # now check drs logic [if exclusive must be same file type]
         _check_file_logic(params, argname, drs_logic, filetypes, types)
@@ -3569,8 +3571,8 @@ def valid_file_no_db(params: ParamDict, indexdb: IndexDatabase,
     # count number of paths that meet this condition
     if len(filenames) > 0:
         # now check fits keys (or pass if not fits)
-        filenames, filetypes = _fits_query(params, drsfiles, filenames,
-                                           argname, file_inst)
+        filenames, filetypes = _fits_query(params, recipe, drsfiles,
+                                           filenames, argname, file_inst)
         # now check drs logic [if exclusive must be same file type]
         _check_file_logic(params, argname, drs_logic, filetypes, types)
         # return filename and filetype
@@ -3818,9 +3820,9 @@ def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
     return files, types
 
 
-def _fits_query(params: ParamDict, drsfiles: List[DrsInputFile],
-                filenames: List[str],
-                argname: str, obs_dir: drs_file.DrsPath,
+def _fits_query(params: ParamDict, recipe: Any,
+                drsfiles: List[DrsInputFile],
+                filenames: List[str], argname: str, obs_dir: drs_file.DrsPath,
                 ) -> Tuple[List[str], List[DrsInputFile]]:
     """
     Check that a fits file is in the database and matches the header keys
@@ -3846,6 +3848,11 @@ def _fits_query(params: ParamDict, drsfiles: List[DrsInputFile],
         filename_it = filenames[row]
         # load header
         header = drs_fits.read_header(params, filename_it)
+        # if we have a raw file we must update header
+        if obs_dir.block_kind == 'raw':
+            # fix header for raw files
+            header, _ = pconst.HEADER_FIXES(params, recipe, header, header,
+                                            filename_it)
         # ---------------------------------------------------------------------
         # find file in possible file types
         # ---------------------------------------------------------------------

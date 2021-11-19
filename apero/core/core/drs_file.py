@@ -7481,26 +7481,28 @@ def id_drs_file(params: ParamDict,
             WLOG(params, 'debug', textentry('90-010-00001', args=dargs))
             # --------------------------------------------------------------
             # copy info from given_drsfile into drsfile
-            file_in = drsfile.copyother(file_set, params=params)
+            file_in = drsfile.copyother(file_set, params=params,
+                                        header=file_set.header)
             # --------------------------------------------------------------
             # load the header for this kind
-            # noinspection PyBroadException
-            try:
-                # need to read the file header for this specific drs file
-                file_in.read_header(log=False)
-                # copy in hdict from file_set
-                # - this is the only way to get keys added from file that is
-                #   read above
-                if file_set.hdict is not None:
-                    for key in file_set.hdict:
-                        file_in.header[key] = file_set.hdict[key]
+            if file_in.header is None:
+                # noinspection PyBroadException
+                try:
+                    # need to read the file header for this specific drs file
+                    file_in.read_header(log=False)
+                    # copy in hdict from file_set
+                    # - this is the only way to get keys added from file that is
+                    #   read above
+                    if file_set.hdict is not None:
+                        for key in file_set.hdict:
+                            file_in.header[key] = file_set.hdict[key]
 
-            # if exception occurs continue to next file
-            #    (this is not the correct file)
-            except Exception as _:
-                continue
-            except SystemExit as _:
-                continue
+                # if exception occurs continue to next file
+                #    (this is not the correct file)
+                except Exception as _:
+                    continue
+                except SystemExit as _:
+                    continue
             # --------------------------------------------------------------
             # check this file is valid
             cond, _ = file_in.check_file()
