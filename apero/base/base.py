@@ -50,7 +50,8 @@ AUTHORS['MH'] = 'Melissa Hobson'
 INSTALL_YAML = 'install.yaml'
 DATABASE_YAML = 'database.yaml'
 USER_ENV = 'DRS_UCONFIG'
-
+# switch for no db in args
+NO_DB = True
 # Define instruments
 INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE', 'None']
 # -----------------------------------------------------------------------------

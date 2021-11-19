@@ -25,6 +25,7 @@ only from
 import argparse
 from collections import OrderedDict
 import copy
+import glob
 import numpy as np
 import os
 import sys
@@ -71,7 +72,8 @@ textentry = lang.textentry
 # define display strings for types
 STRTYPE = base.STRTYPE
 NUMBER_TYPES = base.NUMBER_TYPES
-
+# switch for arg no db
+NO_DB = base.NO_DB
 # define complex typing for file return
 ValidFileType = Tuple[List[Union[Any, str]],
                       List[Union[DrsInputFile, None]]]
@@ -430,8 +432,12 @@ class _CheckObsDir(DrsAction):
             print('')
         WLOG(params, 'debug', textentry('90-001-00018', args=[argname]))
         # check whether we have a valid directory
-        obs_dir = valid_obs_dir(params, self.indexdb, argname, value,
-                                block_kind=self.recipe.in_block_str)
+        if NO_DB:
+            obs_dir = valid_obs_dir_no_db(params, self.indexdb, argname, value,
+                                    block_kind=self.recipe.in_block_str)
+        else:
+            obs_dir = valid_obs_dir(params, self.indexdb, argname, value,
+                                    block_kind=self.recipe.in_block_str)
         # if we have found directory return directory
         return obs_dir
 
@@ -577,8 +583,12 @@ class _CheckFiles(DrsAction):
         # loop around files
         for _value in values:
             # get the filename if valid (else crash)
-            out = valid_file(params, self.indexdb, argname, _value,
-                             rargs, rkwargs, obs_dir, types)
+            if NO_DB:
+                out = valid_file_no_db(params, self.indexdb, argname, _value,
+                                       rargs, rkwargs, obs_dir, types)
+            else:
+                out = valid_file(params, self.indexdb, argname, _value,
+                                 rargs, rkwargs, obs_dir, types)
             # append to storage
             files += out[0]
             types += out[1]
@@ -3321,6 +3331,74 @@ class DrsArgument(object):
 # =============================================================================
 # Check functions
 # =============================================================================
+def valid_obs_dir_no_db(params: ParamDict, indexdb: IndexDatabase,
+                  argname: str, input_value: Any,
+                  block_kind: str) -> drs_file.DrsPath:
+    """
+    Find out whether we have a valid obs directory
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param indexdb: IndexDatabase, the index database instance
+    :param argname: str, the argumnet name "directory" came from (for error
+                    logging)
+    :param directory: Any, the value to test whether it is a valid directory)
+    :param kind: str, either raw, tmp, red (where the directory should be
+                 located unless force is True)
+    :param forced_dir: if set this is the forced directory to use, if not set
+                       uses kind to determine path
+
+    :return: tuple: 1. whether directory is valid, 2. the full directory path
+             (if passed) or None if failed, 3. the reason for failure (or None
+             if passed)
+    """
+    # set function name
+    func_name = display_func('valid_obs_dir_no_db', __NAME__)
+    # get block directory
+    block_inst = drs_file.DrsPath(params, block_kind=block_kind)
+    # -------------------------------------------------------------------------
+    # 1. check directory is a valid string
+    # -------------------------------------------------------------------------
+    try:
+        input_value = str(input_value)
+    except Exception as _:
+        eargs = [argname, input_value, type(input_value)]
+        WLOG(params, 'error', textentry('09-001-00003', args=eargs))
+    # clean up
+    input_value = input_value.strip()
+
+    # -------------------------------------------------------------------------
+    # get obs dirs (using disk)
+    # -------------------------------------------------------------------------
+    obs_dirs = drs_file.drs_path.get_dirs(block_inst.abspath, relative=True)
+
+    # -------------------------------------------------------------------------
+    # 2. check for directory in database
+    # -------------------------------------------------------------------------
+    # may need to remove input_path from directory
+    if block_inst.block_path in input_value:
+        # remove input dir from directory
+        input_value = input_value.split(block_inst.block_path)[-1]
+        # remove os separator from directory (at start)
+        while input_value.startswith(os.sep):
+            input_value = input_value[len(os.sep):]
+
+    # return if found
+    if input_value in obs_dirs:
+        # copy drs path
+        obs_dir = drs_file.DrsPath(params, block_path=block_inst.block_path,
+                                   block_kind=block_inst.block_kind,
+                                   obs_dir=input_value)
+        # need full path of directory
+        return obs_dir
+
+    # -------------------------------------------------------------------------
+    # 3. directory is not correct - raise error
+    # -------------------------------------------------------------------------
+    abspath = os.path.join(block_inst.block_path, input_value)
+    eargs = [argname, input_value, input_value, str(abspath)]
+    WLOG(params, 'error', textentry('09-001-00004', args=eargs))
+
+
 def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
                   argname: str, input_value: Any,
                   block_kind: str) -> drs_file.DrsPath:
@@ -3424,6 +3502,85 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
     abspath = os.path.join(block_inst.block_path, input_value)
     eargs = [argname, input_value, input_value, str(abspath)]
     WLOG(params, 'error', textentry('09-001-00004', args=eargs))
+
+
+def valid_file_no_db(params: ParamDict, indexdb: IndexDatabase,
+               argname: str, filename: str, rargs: Dict[str, DrsArgument],
+               rkwargs: Dict[str, DrsArgument], obs_dir: drs_file.DrsPath,
+               types: List[DrsInputFile]) -> ValidFileType:
+    """
+    Test for whether a file is valid
+
+    :param params: ParamDict - parameter dictionary of constants
+    :param indexdb: IndexDatabase instance, the index database
+    :param argname: str, the name of the argument we are testing
+    :param filename: string, the filename to test
+    :param rargs: dictionary of DrsArguments - the positional arguments
+    :param rkwargs: dictionary of DrsArguments - the optional arguments
+    :param obs_dir: DrsPath instance, the observation directory instance
+    :param types: List[DrsInputFile] - the drs file types for all files
+                  currently found
+    :param forced_dir: str, if set the path to use for files, else uses
+                       kind to determine path
+    """
+    # set function name
+    _ = display_func('valid_file_no_db', __NAME__)
+    # get the argument that we are checking the file of
+    arg = _get_arg(rargs, rkwargs, argname)
+    drsfiles = arg.files
+    # get the drs logic
+    drs_logic = arg.filelogic
+    # deal with arg.path set
+    obs_dir = _check_arg_path(params, arg, obs_dir)
+    # ---------------------------------------------------------------------
+    # Step 1: Check filename is a valid string
+    # ---------------------------------------------------------------------
+    try:
+        filename = str(filename)
+    except Exception as _:
+        eargs = [argname, filename, type(filename)]
+        WLOG(params, 'error', textentry('09-001-00005', args=eargs))
+    # clean up
+    filename = filename.strip()
+    # ---------------------------------------------------------------------
+    # Step 2: Check whether filename itself is on disk
+    # ---------------------------------------------------------------------
+    # find files on disk (using glob to account for wildcards)
+    filenames = glob.glob(filename)
+    # count number of paths that meet this condition
+    if len(filenames) > 0:
+        # now check fits keys (or pass if not fits)
+        filenames, filetypes = _fits_query(params, drsfiles, filenames,
+                                           argname, obs_dir)
+        # now check drs logic [if exclusive must be same file type]
+        _check_file_logic(params, argname, drs_logic, filetypes, types)
+        # return filename and filetype
+        return filenames, filetypes
+    # ---------------------------------------------------------------------
+    # Step 3: Check whether directory + filename is in database
+    # ---------------------------------------------------------------------
+    # get file instance
+    file_inst = obs_dir.copy()
+    file_inst.update(basename=filename)
+    # get absolute path
+    abspath = file_inst.abspath
+    # find files on disk (using glob to account for wildcards)
+    filenames = glob.glob(abspath)
+    # count number of paths that meet this condition
+    if len(filenames) > 0:
+        # now check fits keys (or pass if not fits)
+        filenames, filetypes = _fits_query(params, drsfiles, filenames,
+                                           argname, file_inst)
+        # now check drs logic [if exclusive must be same file type]
+        _check_file_logic(params, argname, drs_logic, filetypes, types)
+        # return filename and filetype
+        return filenames, filetypes
+    # ---------------------------------------------------------------------
+    # Step 4: Filename is invalid
+    # ---------------------------------------------------------------------
+    # if we have reached this point we cannot file filename
+    eargs = [argname, filename, abspath]
+    WLOG(params, 'error', textentry('09-001-00005', args=eargs))
 
 
 def valid_file(params: ParamDict, indexdb: IndexDatabase,
@@ -3602,6 +3759,8 @@ def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
         # ---------------------------------------------------------------------
         # get filename
         filename_it = table['ABSPATH'].iloc[row]
+        # load header
+        header = drs_fits.read_header(params, filename_it)
         # ---------------------------------------------------------------------
         # find file in possible file types
         # ---------------------------------------------------------------------
@@ -3615,8 +3774,93 @@ def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
                  wrap=False)
             # -------------------------------------------------------------
             # create an instance of this drs_file with the filename set
-            file_in = drsfile.newcopy(filename=filename_it, params=params)
-            file_in.get_header()
+            file_in = drsfile.newcopy(filename=filename_it, params=params,
+                                      header=header)
+            # set the observation sub-directory
+            file_in.obs_dir = obs_dir.obs_dir
+            # -------------------------------------------------------------
+            # Step 1: Check extension
+            # -------------------------------------------------------------
+            # check the extension
+            valid, error = file_in.has_correct_extension(argname=argname)
+            if not valid:
+                continue
+            # -------------------------------------------------------------
+            # Step 2: Check file header has required keys
+            # -------------------------------------------------------------
+            valid, error = file_in.hkeys_exist(header=header, argname=argname)
+            if not valid:
+                continue
+            # -------------------------------------------------------------
+            # Step 3: Check file header has correct required keys
+            # -------------------------------------------------------------
+            valid, error = file_in.has_correct_hkeys(header=header,
+                                                     argname=argname)
+            if not valid:
+                continue
+            # -------------------------------------------------------------
+            # Step 4: if valid save for later
+            # -------------------------------------------------------------
+            if valid:
+                # get the header
+                file_in.get_header()
+                # add to lists
+                files.append(file_in.filename)
+                types.append(file_in)
+                # flag that row is valid
+                row_valid = True
+                # now stop looping through drs files
+                break
+        # if at the end of all drsfiles this row is not valid print the error
+        if not row_valid and error is not None:
+            WLOG(params, 'error', error)
+    # finally return the list of files
+    return files, types
+
+
+def _fits_query(params: ParamDict, drsfiles: List[DrsInputFile],
+                filenames: List[str],
+                argname: str, obs_dir: drs_file.DrsPath,
+                ) -> Tuple[List[str], List[DrsInputFile]]:
+    """
+    Check that a fits file is in the database and matches the header keys
+    and return the filenames and file types that match input query
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param drsfiles: list of drs files allowed (adds to fits header conditions)
+    :param fileanmes: list of filename to check
+    :param argname: str, the argument name (required for error repoting)
+    :param direcory: str, the aboslute path to the observation sub directory
+    :return:
+    """
+    # set function name
+    _ = display_func('_check_fits_keys', __NAME__)
+    # storage for output
+    files, types = [], []
+    # loop around rows in table
+    for row in range(len(filenames)):
+        # store that row is valid
+        row_valid = False
+        # ---------------------------------------------------------------------
+        # get filename
+        filename_it = filenames[row]
+        # load header
+        header = drs_fits.read_header(params, filename_it)
+        # ---------------------------------------------------------------------
+        # find file in possible file types
+        # ---------------------------------------------------------------------
+        # no error to start with
+        error = None
+        # loop around file types
+        for drsfile in drsfiles:
+            # if in debug mode print progres
+            dargs = [drsfile.name, os.path.basename(filename_it)]
+            WLOG(params, 'debug', textentry('90-001-00008', args=dargs),
+                 wrap=False)
+            # -------------------------------------------------------------
+            # create an instance of this drs_file with the filename set
+            file_in = drsfile.newcopy(filename=filename_it, params=params,
+                                      header=header)
             # set the observation sub-directory
             file_in.obs_dir = obs_dir.obs_dir
             # -------------------------------------------------------------
