@@ -6257,7 +6257,7 @@ class DrsOutFile(DrsInputFile):
         end = time.time()
         # TODO: move to language database
         WLOG(params, '', 'Full database loaded in {0} s'.format(end - start))
-                # get index columns
+        # get index columns
         index_cols = ptable.colnames()
         # ---------------------------------------------------------------------
         # get information about loaded files
