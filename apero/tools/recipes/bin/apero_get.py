@@ -138,12 +138,19 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         clean_obj_name = pconst.DRS_OBJ_NAME(kw_objname)
         WLOG(params, '', 'Processing KW_OBJNAME={0}'.format(clean_obj_name))
         # write condition for this object
-        obj_condition = '(KW_OBJNAME="{0}")'.format(clean_obj_name)
-        # deal with having a master condition
-        if len(master_condition) > 0:
-            condition = '{0} AND {1}'.format(obj_condition, master_condition)
+        if drs_text.null_text(kw_objname, ['None', '', 'Null']):
+            obj_condition = None
         else:
-            condition = str(obj_condition)
+            obj_condition = '(KW_OBJNAME="{0}")'.format(clean_obj_name)
+        # deal with having a master condition
+        condition = ''
+        if obj_condition is not None:
+            condition += str(obj_condition)
+        if len(master_condition) > 0:
+            condition += ' AND {0}'.format(master_condition)
+        # deal with no condition still (set condition to None)
+        if len(condition) == 0:
+            condition = None
         # get inpaths
         inpaths = indexdb.get_entries('ABSPATH', condition=condition)
         # load into file storage
