@@ -45,6 +45,7 @@ from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.core import drs_misc
+from apero.core.core import drs_database
 from apero.core.instruments.default import output_filenames as outf
 from apero.io import drs_fits
 from apero.io import drs_table
@@ -5724,7 +5725,7 @@ class DrsOutFileExtension:
             self.header = drs_fits.readfits(params, self.filename, False, True,
                                             fmt, copy=True)
 
-    def make_table(self, params: ParamDict, indexdbm: Any, linkkind: str,
+    def make_table(self, params: ParamDict, ptable: Any, linkkind: str,
                    criteria: str):
         """
         Make a custom table for post files (using the info given when defined
@@ -5793,7 +5794,7 @@ class DrsOutFileExtension:
                 condition += ' AND KW_FIBER="{0}"'.format(fibers[col])
             # -----------------------------------------------------------------
             # first get entries from index database
-            entries = indexdbm.get_entries('*', condition=condition)
+            entries = ptable.get_index_entries('*', condition=condition)
             # -----------------------------------------------------------------
             # deal with no entries and column not required
             if len(entries) == 0 and not col_required[col]:
@@ -6222,9 +6223,6 @@ class DrsOutFile(DrsInputFile):
 
         :return: bool, whether we successfully linked all extensions
         """
-
-        # get index columns
-        index_cols = indexdbm.database.colnames('*', indexdbm.database.tname)
         # get allowed header keys
         pconst = constants.pload()
         iheader_cols = pconst.INDEX_HEADER_COLS()
@@ -6235,6 +6233,33 @@ class DrsOutFile(DrsInputFile):
             emsg = 'Error cannot link infile not set for primary extension'
 
             WLOG(params, 'error', emsg)
+        # ---------------------------------------------------------------------
+        # get full database (will need it multiple times and should not
+        #   change between reads) and store it as a pandas table
+        pcond = '(BLOCK_KIND="tmp") OR (BLOCK_KIND="red")'
+        # TODO: move to language database
+        obs_dir = 'All'
+        # add to obs_dir if present (as we will only need files from this
+        #   observation directory)
+        if not drs_text.null_text(params['OBS_DIR'], ['None', '', 'Null']):
+            pcond += ' AND (OBS_DIR="{0}")'.format(params['OBS_DIR'])
+            obs_dir = str(params['OBS_DIR'])
+        # this may take some time
+         # TODO: move to language database
+        msg = 'Loading full database. Night={0}. Please wait...'
+        margs = [obs_dir]
+        WLOG(params, '', msg.format(*margs))
+        # start a clock (reading large database is slow - give user feedback)
+        start = time.time()
+        pdataframe = indexdbm.get_entries('*', condition=pcond)
+        ptable = drs_database.PandasLikeDatabase(pdataframe)
+        # end the clock  (reading large database is slow - give user feedback)
+        end = time.time()
+        # TODO: move to language database
+        WLOG(params, '', 'Full database loaded in {0} s'.format(end - start))
+                # get index columns
+        index_cols = ptable.colnames()
+        # ---------------------------------------------------------------------
         # get information about loaded files
         has_hdr, valid_names = self.has_header()
         # loop around extensions
@@ -6347,7 +6372,7 @@ class DrsOutFile(DrsInputFile):
             if ext.fiber is not None:
                 condition += ' AND KW_FIBER="{0}"'.format(ext.fiber)
             # get entries
-            exttable = indexdbm.get_entries('*', condition=condition)
+            exttable = ptable.get_index_entries('*', condition=condition)
             # deal with no entries and not required
             if len(exttable) == 0 and not required:
                 # TODO: add to language database
@@ -6374,7 +6399,7 @@ class DrsOutFile(DrsInputFile):
                 margs = [pos, name]
                 WLOG(params, '', msg.format(*margs))
                 # make the table
-                ext.make_table(params, indexdbm, linkkind, criteria)
+                ext.make_table(params, ptable, linkkind, criteria)
                 # deal with reduced data
                 self._add_to_clear_files(ext)
             # else take the first entry
