@@ -3445,39 +3445,27 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
         WLOG(params, 'error', textentry('09-001-00003', args=eargs))
     # clean up
     input_value = input_value.strip()
-
     # -------------------------------------------------------------------------
     # deal with database
     # -------------------------------------------------------------------------
-    # deal with store
-    update_store = block_inst.block_kind not in obs_paths
-    # deal with updating index and/or store
-    if update_store or update_index:
-        # deal with instrument == 'None'
-        if indexdb.instrument == 'None':
-            eargs = [argname, indexdb.name, func_name]
-            WLOG(params, 'error', textentry('09-001-00032', args=eargs))
-        elif indexdb.database is None:
-            # try to load database
-            indexdb.load_db()
-        # update database with entries
-        # if we need up update index do it now
-        if update_index:
-            indexdb.update_entries(block_kind=block_inst.block_kind)
-        # assert database is in indexdb
-        assert isinstance(indexdb.database, drs_db.Database)
-        # set up condition
-        condition = 'BLOCK_KIND="{0}"'.format(block_inst.block_kind)
-        # load directory names
-        obs_dirs = indexdb.database.unique('OBS_DIR', condition=condition,
-                                           table=indexdb.database.tname)
-        # update globally
-        obs_paths[block_inst.block_kind] = obs_dirs
-        store.set('obs_paths', obs_paths)
-    # else get from store
-    else:
-        obs_dirs = obs_paths[block_inst.block_kind]
-
+    # deal with instrument == 'None'
+    if indexdb.instrument == 'None':
+        eargs = [argname, indexdb.name, func_name]
+        WLOG(params, 'error', textentry('09-001-00032', args=eargs))
+    elif indexdb.database is None:
+        # try to load database
+        indexdb.load_db()
+    # update database with entries
+    # if we need up update index do it now
+    if update_index:
+        indexdb.update_entries(block_kind=block_inst.block_kind)
+    # assert database is in indexdb
+    assert isinstance(indexdb.database, drs_db.Database)
+    # set up condition
+    condition = 'BLOCK_KIND="{0}"'.format(block_inst.block_kind)
+    # load directory names
+    obs_dirs = indexdb.database.unique('OBS_DIR', condition=condition,
+                                       table=indexdb.database.tname)
     # -------------------------------------------------------------------------
     # 2. check for directory in database
     # -------------------------------------------------------------------------
@@ -3604,9 +3592,6 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     :param forced_dir: str, if set the path to use for files, else uses
                        kind to determine path
     """
-    # get globals
-    store = drs_database.PandasDBStorage()
-    filedbs = store.get('filedbs')
     # set function name
     func_name = display_func('_valid_file', __NAME__)
     # get the argument that we are checking the file of
@@ -3636,35 +3621,26 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     # -------------------------------------------------------------------------
     # deal with database (either gettings + updating or coming from stored)
     # -------------------------------------------------------------------------
-    # deal with updating storage
-    update_store = obs_dir.block_kind not in filedbs
-    # if we need up update index do it now
-    if update_store or update_index:
-        # deal with instrument == 'None'
-        if indexdb.instrument == 'None':
-            eargs = [argname, indexdb.name, func_name]
-            WLOG(params, 'error', textentry('09-001-00032', args=eargs))
-        elif indexdb.database is None:
-            # try to load database
-            indexdb.load_db()
-        # update database with entries
-        if update_index:
-            indexdb.update_entries(block_kind=obs_dir.block_kind)
-        # assert database is in indexdb
-        assert isinstance(indexdb.database, drs_db.Database)
-        # set up condition
-        condition = 'BLOCK_KIND="{0}"'.format(obs_dir.block_kind)
-        # get filedb
-        dbtable = indexdb.get_entries('*', condition=condition)
-        filedb = drs_database.PandasLikeDatabase(dbtable)
-        # add to global
-        filedbs[obs_dir.block_kind] = filedb
-        store.set('filedbs', filedbs)
-    else:
-        # get saved database (as pandas style database)
-        filedb = filedbs[obs_dir.block_kind]
-        # set up condition
-        condition = 'BLOCK_KIND="{0}"'.format(obs_dir.block_kind)
+    # deal with instrument == 'None'
+    if indexdb.instrument == 'None':
+        eargs = [argname, indexdb.name, func_name]
+        WLOG(params, 'error', textentry('09-001-00032', args=eargs))
+    elif indexdb.database is None:
+        # try to load database
+        indexdb.load_db()
+    # update database with entries
+    if update_index:
+        indexdb.update_entries(block_kind=obs_dir.block_kind)
+    # assert database is in indexdb
+    assert isinstance(indexdb.database, drs_db.Database)
+    # set up condition
+    condition = 'BLOCK_KIND="{0}"'.format(obs_dir.block_kind)
+    # add obs_dir if present
+    if not drs_text.null_text(obs_dir.obs_dir, ['None', '', 'Null']):
+        condition = ' AND OBS_DIR="{0}"'.format(obs_dir.obs_dir)
+    # get filedb
+    dbtable = indexdb.get_entries('*', condition=condition)
+    filedb = drs_database.PandasLikeDatabase(dbtable)
     # deal with wildcards
     if '*' in filename:
         # make filename sql-like
