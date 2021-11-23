@@ -2826,6 +2826,30 @@ class PandasLikeDatabase:
         # return the data frame
         return df
 
+    def colnames(self, columns: str = '*') -> List[str]:
+        """
+        Return the list of column names
+
+        Proxy for database.colnames
+
+        :return: List of strings (the column names)
+        """
+        cnames = list(self.namespace['data'].columns)
+        # if user requested all columns, return all columns
+        if columns == '*':
+            return cnames
+        # deal with specifying columns (return just columns in database
+        #   that match "columns"
+        else:
+            requested_columns = columns.split(',')
+            # loop around requested columns and search for them in all columns
+            outcolumns = []
+            for rcol in requested_columns:
+                if rcol.strip() in cnames:
+                    outcolumns.append(rcol.strip())
+            # return the output columns
+            return outcolumns
+
 
 # =============================================================================
 # Start of code
