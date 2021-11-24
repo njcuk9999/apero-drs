@@ -132,6 +132,8 @@ class Database:
     def __init__(self, *args, verbose: bool = False, **kwargs):
         # set class name
         self.classname = 'Database'
+        # set a tries criteria
+        self.tries = 1
         # store whether we want to print steps
         self._verbose_ = verbose
         # storage for tables
@@ -1217,6 +1219,8 @@ class SQLiteDatabase(Database):
         func_name = __NAME__ + 'SQLiteDatabase.__init__()'
         # call to super class
         super().__init__(verbose=verbose)
+        # set a tries criteria (not used for sqlite but required)
+        self.tries = 1
         # storage for database path
         self.host = None
         self.user = None
@@ -1764,6 +1768,8 @@ class MySQLDatabase(Database):
         # set function name
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            '__init__()')
+        # set a tries criteria
+        self.tries = 20
         # set path
         aperohome = os.path.join(os.path.expanduser('~'), '.apero')
         if not os.path.exists(aperohome):
@@ -1843,7 +1849,7 @@ class MySQLDatabase(Database):
         # delay processes
         count = 0
         error = None
-        while count <= 20:
+        while count <= self.tries:
             # try to connect
             try:
                 if connect_kind == 'mysql.connect':
