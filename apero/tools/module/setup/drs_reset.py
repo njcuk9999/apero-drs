@@ -11,6 +11,7 @@ Created on 2019-05-07 at 15:22
 """
 import glob
 import os
+import shutil
 import sys
 from typing import Dict, List, Union
 
@@ -593,6 +594,14 @@ def remove_all(params, path, log=True, skipfiles=None):
             os.makedirs(path)
         else:
             WLOG(params, 'error', textentry('00-502-00002', args=[path]))
+    # if we have access to rm and skip files is empty we can do this quickly
+    if len(skipfiles) > 0:
+        success = fast_remove_skip_files(path, skipfiles)
+    else:
+        # remove tree (minus head)
+        success = fast_rm_remove(path)
+    if success:
+        return
     # loop around files and folders in calib_dir
     allfiles = []
     for root, dirs, files in os.walk(path, followlinks=True):
@@ -603,6 +612,87 @@ def remove_all(params, path, log=True, skipfiles=None):
         remove_files(params, filename, log, skipfiles)
     # remove dirs
     drs_lock.__remove_empty__(params, path, log=True, remove_head=False)
+
+
+def fast_remove_skip_files(path: str, skipfiles: List[str],
+                           maxfiles: int = 10) -> bool:
+    """
+    If we have a less than "maxfiles" we copy these file to a temporary
+    directory and remove the content (quicker than search directory)
+
+    :param path:
+    :param skipfiles:
+    :return:
+    """
+    if len(skipfiles) > maxfiles:
+        return False
+    # storage of new skip files
+    newskipfiles = []
+    # loop around files
+    for skipfile in skipfiles:
+        # get a temporary location for file
+        newskipdir = os.path.expanduser('~/.apero/tmp/')
+        newskipfile = os.path.join(newskipdir, os.path.basename(skipfile))
+        # make temporary location
+        if not os.path.exists(newskipdir):
+            try:
+                os.makedirs(newskipdir)
+            except Exception as _:
+                return False
+        # if the skip file exists move it to the new skip dir
+        if os.path.exists(skipfile):
+            shutil.move(skipfile, newskipfile)
+        # store newskipfiles
+        newskipfiles.append(newskipfile)
+    # remove tree (minus head)
+    success = fast_rm_remove(path)
+    # loop around skip files
+    for it in range(len(newskipfiles)):
+        # get this iterations values
+        skipfile, newskipfile = skipfiles[it], newskipfiles[it]
+        # make all paths required for file
+        try:
+            os.makedirs(os.path.dirname(skipfile))
+            # move file
+            shutil.move(newskipfile, skipfile)
+        except Exception as _:
+            success = False
+    # return success (this may break the next step if files were partial
+    #     removed)
+    return success
+
+
+def fast_rm_remove(path: str) -> bool:
+    """
+    Remove files in the fastest possible way
+    :param path:
+    :return:
+    """
+    # -------------------------------------------------------------------------
+    # if empty skip
+    if len(os.listdir(path)) == 0:
+        return True
+    # -------------------------------------------------------------------------
+    # try doing an rm
+    try:
+        os.system('rm -rfv {0}/*'.format(path))
+    except Exception as _:
+        pass
+    # -------------------------------------------------------------------------
+    # if empty we are done
+    if len(os.listdir(path)) == 0:
+        return True
+    # -------------------------------------------------------------------------
+    try:
+        # try to remove using shutil if rm not available
+        shutil.rmtree(path, ignore_errors=False)
+        # remake the path (empty)
+        os.mkdir(path)
+        # return that we were successful
+        return True
+    except Exception as _:
+        # return that we were not successful
+        return False
 
 
 def remove_files(params, path, log=True, skipfiles=None):
