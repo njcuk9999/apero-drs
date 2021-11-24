@@ -276,7 +276,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         if t_missing and s_missing:
             engineering_nights.append(uobsdir)
     # -------------------------------------------------------------------------
-    # Work out possible bad obs
+    # Work out possible bad obs directories
     # -------------------------------------------------------------------------
     # calculate mean obs directory times
     all_obs_dir = []
@@ -286,6 +286,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         all_obs_dir.append(obs_dir)
     # convert to numpy arrays
     all_obs_dir, mean_times = np.array(all_obs_dir), np.array(mean_times)
+    bad_calib_nights = np.array(bad_calib_nights)
     # storage for bad nights
     bad_nights = []
     # loop around flagged bad calibration files
@@ -295,8 +296,10 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             continue
         # get the mean time for this observation directory
         mean_time_it = mean_times[obs_dir == all_obs_dir][0]
+        # mask out other bad nights (shouldn't include these)
+        obs_mask = ~(np.in1d(all_obs_dir, bad_calib_nights))
         # find all other obs dirs with in MAX_CALIB_DTIME of this night
-        diff = abs(mean_times - mean_time_it)[1:]
+        diff = abs(mean_times[obs_mask] - mean_time_it)[1:]
         # check whether there is another night within given time frame
         #   give +/- 0.5 days due to start and end of calibrations
         if np.sum(diff < params['MAX_CALIB_DTIME'] + 0.5) == 0:
@@ -311,16 +314,15 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     if len(bad_nights) > 0:
         msg = 'The following observation directories will causes errors:'
         WLOG(params, 'warning', msg, colour='red')
-        # loop around bad nights
-        for obs_dir in bad_nights:
-            WLOG(params, 'warning', '\t{0}'.format(obs_dir))
+        # display bad directories
+        WLOG(params, 'warning', '{0}'.format(', '.join(bad_nights)),
+             colour='red')
     if len(engineering_nights) > 0:
         msg = ('The following observation directories will be skipped as '
                'engineering directories:')
         WLOG(params, 'warning', msg)
-        # loop around bad nights
-        for obs_dir in engineering_nights:
-            WLOG(params, 'warning', '\t{0}'.format(obs_dir))
+        # display engineering directories
+        WLOG(params, 'warning', '{0}'.format(', '.join(engineering_nights)))
 
     if len(bad_nights) == 0 and len(engineering_nights) == 0:
         WLOG(params, '', 'All observation directories passed prechecks.')
