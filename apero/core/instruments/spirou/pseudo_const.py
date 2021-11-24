@@ -968,6 +968,9 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # add extra columns
         index_cols.add(name='USED', datatype='INT')
         index_cols.add(name='RAWFIX', datatype='INT')
+        # manage index groups
+        index_cols.index_groups.append(['BLOCK_KIND', 'OBS_DIR', 'USED'])
+        index_cols.index_groups.append(['OBS_DIR', 'BLOCK_KIND'])
         # return columns and column types
         self.index_cols = index_cols
         return index_cols

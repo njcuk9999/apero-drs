@@ -2243,7 +2243,7 @@ class MySQLDatabase(Database):
                                                    exception=exception)
                 # construct command
                 cargs = [group_name, name, ', '.join(index_group)]
-                command = 'CREATE INDEX {0} ON {1} ({2});'
+                command = 'CREATE INDEX {0} ON {1} ({2});'.format(*cargs)
                 # execute command
                 self.execute(command, fetch=False)
         # ---------------------------------------------------------------------
