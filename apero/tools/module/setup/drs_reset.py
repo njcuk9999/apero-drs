@@ -13,7 +13,7 @@ import glob
 import os
 import shutil
 import sys
-from typing import Dict, List, Union
+from typing import List, Union
 
 from apero.base import base
 from apero.core import constants
@@ -614,15 +614,18 @@ def remove_all(params, path, log=True, skipfiles=None):
     drs_lock.__remove_empty__(params, path, log=True, remove_head=False)
 
 
+# noinspection PyBroadException
 def fast_remove_skip_files(path: str, skipfiles: List[str],
                            maxfiles: int = 10) -> bool:
     """
     If we have a less than "maxfiles" we copy these file to a temporary
     directory and remove the content (quicker than search directory)
 
-    :param path:
-    :param skipfiles:
-    :return:
+    :param path: str, the path to remove
+    :param skipfiles: list of strings, the file paths to skip
+    :param maxfiles: int, the max number of files to copy (otherwise we do
+                     things a different way)
+    :return: bool, True if successful, False otherwise
     """
     if len(skipfiles) > maxfiles:
         return False
@@ -662,6 +665,7 @@ def fast_remove_skip_files(path: str, skipfiles: List[str],
     return success
 
 
+# noinspection PyBroadException
 def fast_rm_remove(path: str) -> bool:
     """
     Remove files in the fastest possible way
@@ -728,6 +732,7 @@ def remove_files(params, path, log=True, skipfiles=None):
             wargs = [path, type(e), str(e)]
             WLOG(params, 'warning', textentry('10-502-00002', args=wargs),
                  sublevel=2)
+
 
 # =============================================================================
 # Start of code
