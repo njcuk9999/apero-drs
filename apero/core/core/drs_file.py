@@ -45,7 +45,7 @@ from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.core import drs_misc
-from apero.core.core import drs_database
+from apero.core.core import drs_base_classes
 from apero.core.instruments.default import output_filenames as outf
 from apero.io import drs_fits
 from apero.io import drs_table
@@ -91,6 +91,8 @@ HCC = drs_fits.HeaderCommentCards
 PseudoConstants = constants.PseudoConstants
 # get numpy masked constant
 MaskedConstant = np.ma.core.MaskedConstant
+# Get pandas like database class
+PandasLikeDatabase = drs_base_classes.PandasLikeDatabase
 # -----------------------------------------------------------------------------
 # define complex typing
 QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
@@ -6252,7 +6254,7 @@ class DrsOutFile(DrsInputFile):
         # start a clock (reading large database is slow - give user feedback)
         start = time.time()
         pdataframe = indexdbm.get_entries('*', condition=pcond)
-        ptable = drs_database.PandasLikeDatabase(pdataframe)
+        ptable = PandasLikeDatabase(pdataframe)
         # end the clock  (reading large database is slow - give user feedback)
         end = time.time()
         # TODO: move to language database

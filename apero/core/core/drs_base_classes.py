@@ -18,7 +18,9 @@ only from
 """
 from collections import UserDict
 import importlib
-from typing import Any, Union
+import pandas as pd
+from pandasql import sqldf
+from typing import Any, List, Optional, Union
 
 from apero.base import base
 from apero.core.core import drs_misc
@@ -536,6 +538,102 @@ class ImportModule:
             module.mod = self.mod
         # return import module instances
         return module
+
+
+class PandasLikeDatabase:
+    def __init__(self, data: pd.DataFrame):
+        """
+        Construct a database just using a pandas dataframe stored in the memory
+
+        can be used instead of a database (when we have a static database
+        loading from a dataframe is more efficient and avoids extra reads of
+        the database)
+
+        :param data: pandas.DataFrame, the pandas dataframe - usually taken
+                     from a call to a database
+        """
+        self.namespace = dict(data=data)
+        self.tablename = 'data'
+
+    def execute(self, command: str) -> pd.DataFrame:
+        """
+        How we run an sql query on a pandas database
+
+        Note the table has to be in self.namespace
+
+        i.e. "SELECT * FROM data" requires self.namespace['data'] = self.data
+
+        :param command: str, the sql command to run
+        :return:
+        """
+        return sqldf(command, self.namespace)
+
+    def count(self, condition: str = None) -> int:
+        """
+        Proxy for the drs_database.database count method
+
+        :param condition: Filter results using a SQL conditions string
+                       -- see examples, and possibly this
+                       useful tutorial:
+                           https://www.sqlitetutorial.net/sqlite-where/.
+                       If None, no results will be filtered out.
+
+        :return: int, the count
+        """
+        # construct basic command SELECT COUNT(*) FROM {TABLE}
+        command = "SELECT COUNT(*) FROM {}".format(self.tablename)
+        # deal with condition
+        if condition is not None:
+            command += " WHERE {} ".format(condition)
+        # run command
+        df = self.execute(command)
+        # return result
+        return int(df.iloc[0])
+
+    def get_index_entries(self, columns: str,
+                          condition: Optional[str] = None):
+        """
+        Proxy for index database get_entries method
+
+        Currently only supports a columns and condition argument
+
+        :param columns: str, the columns to return ('*' for all)
+        :param condition: str or None, if set the SQL query to add
+        :return:
+        """
+        # construct basic command SELECT {COLUMNS} FROM {TABLE}
+        command = 'SELECT {0} FROM {1}'.format(columns, self.tablename)
+        # deal with condition
+        if condition is not None:
+            command += " WHERE {} ".format(condition)
+        # run command
+        df = self.execute(command)
+        # return the data frame
+        return df
+
+    def colnames(self, columns: str = '*') -> List[str]:
+        """
+        Return the list of column names
+
+        Proxy for database.colnames
+
+        :return: List of strings (the column names)
+        """
+        cnames = list(self.namespace['data'].columns)
+        # if user requested all columns, return all columns
+        if columns == '*':
+            return cnames
+        # deal with specifying columns (return just columns in database
+        #   that match "columns"
+        else:
+            requested_columns = columns.split(',')
+            # loop around requested columns and search for them in all columns
+            outcolumns = []
+            for rcol in requested_columns:
+                if rcol.strip() in cnames:
+                    outcolumns.append(rcol.strip())
+            # return the output columns
+            return outcolumns
 
 
 # =============================================================================
