@@ -41,6 +41,7 @@ from apero.core.core import drs_text
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_database
+from apero.core.core import drs_base_classes
 from apero.io import drs_fits
 
 # =============================================================================
@@ -67,6 +68,8 @@ DrsInputFile = drs_file.DrsInputFile
 IndexDatabase = drs_database.IndexDatabase
 # get the config error
 DrsCodedException = drs_exceptions.DrsCodedException
+# Get pandas like database class
+PandasLikeDatabase = drs_base_classes.PandasLikeDatabase
 # Get the text types
 textentry = lang.textentry
 # define display strings for types
@@ -436,7 +439,7 @@ class _CheckObsDir(DrsAction):
         # check whether we have a valid directory
         if NO_DB:
             obs_dir = valid_obs_dir_no_db(params, self.indexdb, argname, value,
-                                    block_kind=self.recipe.in_block_str)
+                                          block_kind=self.recipe.in_block_str)
         else:
             obs_dir = valid_obs_dir(params, self.indexdb, argname, value,
                                     block_kind=self.recipe.in_block_str)
@@ -1504,7 +1507,6 @@ class _ExtendedHelp(DrsAction):
         """
         Set the debug mode based on value
 
-        :param values: Any value to ttest whether it is a debug mode
         :return: int, the debug mode found
         :raises: drs_exceptions.LogExit
         """
@@ -2139,8 +2141,7 @@ class _SetParallel(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        func_name = display_func('_set_recipe_kind',
-                                 __NAME__, self.class_name)
+        _ = display_func('_set_recipe_kind', __NAME__, self.class_name)
         # get params
         params = self.recipe.params
         # deal with difference datatypes for values
@@ -2347,8 +2348,7 @@ class _SetShortName(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        func_name = display_func('_set_shortname',
-                                 __NAME__, self.class_name)
+        _ = display_func('_set_shortname', __NAME__, self.class_name)
         # deal with difference datatypes for values
         if isinstance(values, list):
             strvalue = values[0]
@@ -3325,7 +3325,7 @@ class DrsArgument(object):
         # ---------------------------------------------------------------------
         # return the format string for this argument
         if full:
-            return (fmt.format(*fargs), str(self.helpstr))
+            return fmt.format(*fargs), str(self.helpstr)
         else:
             return fmt.format(*fargs)
 
@@ -3334,8 +3334,8 @@ class DrsArgument(object):
 # Check functions
 # =============================================================================
 def valid_obs_dir_no_db(params: ParamDict, indexdb: IndexDatabase,
-                  argname: str, input_value: Any,
-                  block_kind: str) -> drs_file.DrsPath:
+                        argname: str, input_value: Any,
+                        block_kind: str) -> drs_file.DrsPath:
     """
     Find out whether we have a valid obs directory
 
@@ -3343,23 +3343,22 @@ def valid_obs_dir_no_db(params: ParamDict, indexdb: IndexDatabase,
     :param indexdb: IndexDatabase, the index database instance
     :param argname: str, the argumnet name "directory" came from (for error
                     logging)
-    :param directory: Any, the value to test whether it is a valid directory)
-    :param kind: str, either raw, tmp, red (where the directory should be
-                 located unless force is True)
-    :param forced_dir: if set this is the forced directory to use, if not set
-                       uses kind to determine path
+    :param input_value: Any, the value to check
+    :param block_kind: str, the block kind for this obs_dir
 
     :return: tuple: 1. whether directory is valid, 2. the full directory path
              (if passed) or None if failed, 3. the reason for failure (or None
              if passed)
     """
     # set function name
-    func_name = display_func('valid_obs_dir_no_db', __NAME__)
+    _ = display_func('valid_obs_dir_no_db', __NAME__)
+    _ = indexdb
     # get block directory
     block_inst = drs_file.DrsPath(params, block_kind=block_kind)
     # -------------------------------------------------------------------------
     # 1. check directory is a valid string
     # -------------------------------------------------------------------------
+    # noinspection PyBroadException
     try:
         input_value = str(input_value)
     except Exception as _:
@@ -3401,6 +3400,7 @@ def valid_obs_dir_no_db(params: ParamDict, indexdb: IndexDatabase,
     WLOG(params, 'error', textentry('09-001-00004', args=eargs))
 
 
+# noinspection PyBroadException
 def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
                   argname: str, input_value: Any,
                   block_kind: str) -> drs_file.DrsPath:
@@ -3411,19 +3411,13 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
     :param indexdb: IndexDatabase, the index database instance
     :param argname: str, the argumnet name "directory" came from (for error
                     logging)
-    :param directory: Any, the value to test whether it is a valid directory)
-    :param kind: str, either raw, tmp, red (where the directory should be
-                 located unless force is True)
-    :param forced_dir: if set this is the forced directory to use, if not set
-                       uses kind to determine path
+    :param input_value: Any, the value to check
+    :param block_kind: str, the block kind for this obs_dir
 
     :return: tuple: 1. whether directory is valid, 2. the full directory path
              (if passed) or None if failed, 3. the reason for failure (or None
              if passed)
     """
-    # set global
-    store = drs_database.PandasDBStorage()
-    obs_paths = store.get('obs_paths')
     # set function name
     func_name = display_func('valid_obs_dir', __NAME__)
     # get block directory
@@ -3493,15 +3487,16 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
     WLOG(params, 'error', textentry('09-001-00004', args=eargs))
 
 
+# noinspection PyBroadException
 def valid_file_no_db(params: ParamDict, recipe: Any,
-               argname: str, filename: str, rargs: Dict[str, DrsArgument],
-               rkwargs: Dict[str, DrsArgument], obs_dir: drs_file.DrsPath,
-               types: List[DrsInputFile]) -> ValidFileType:
+                     argname: str, filename: str, rargs: Dict[str, DrsArgument],
+                     rkwargs: Dict[str, DrsArgument], obs_dir: drs_file.DrsPath,
+                     types: List[DrsInputFile]) -> ValidFileType:
     """
     Test for whether a file is valid
 
     :param params: ParamDict - parameter dictionary of constants
-    :param indexdb: IndexDatabase instance, the index database
+    :param recipe: DrsRecipe instance, recipe that called this function
     :param argname: str, the name of the argument we are testing
     :param filename: string, the filename to test
     :param rargs: dictionary of DrsArguments - the positional arguments
@@ -3509,8 +3504,6 @@ def valid_file_no_db(params: ParamDict, recipe: Any,
     :param obs_dir: DrsPath instance, the observation directory instance
     :param types: List[DrsInputFile] - the drs file types for all files
                   currently found
-    :param forced_dir: str, if set the path to use for files, else uses
-                       kind to determine path
     """
     # set function name
     _ = display_func('valid_file_no_db', __NAME__)
@@ -3572,6 +3565,7 @@ def valid_file_no_db(params: ParamDict, recipe: Any,
     WLOG(params, 'error', textentry('09-001-00005', args=eargs))
 
 
+# noinspection PyBroadException
 def valid_file(params: ParamDict, indexdb: IndexDatabase,
                argname: str, filename: str, rargs: Dict[str, DrsArgument],
                rkwargs: Dict[str, DrsArgument], obs_dir: drs_file.DrsPath,
@@ -3588,8 +3582,6 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     :param obs_dir: DrsPath instance, the observation directory instance
     :param types: List[DrsInputFile] - the drs file types for all files
                   currently found
-    :param forced_dir: str, if set the path to use for files, else uses
-                       kind to determine path
     """
     # set function name
     func_name = display_func('_valid_file', __NAME__)
@@ -3639,7 +3631,7 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
         condition = ' AND OBS_DIR="{0}"'.format(obs_dir.obs_dir)
     # get filedb
     dbtable = indexdb.get_entries('*', condition=condition)
-    filedb = drs_database.PandasLikeDatabase(dbtable)
+    filedb = PandasLikeDatabase(dbtable)
     # deal with wildcards
     if '*' in filename:
         # make filename sql-like
@@ -3695,8 +3687,7 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
 
 
 def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
-                         filedb: drs_database.PandasLikeDatabase,
-                         condition: str,
+                         filedb: PandasLikeDatabase, condition: str,
                          argname: str, obs_dir: drs_file.DrsPath,
                          ) -> Tuple[List[str], List[DrsInputFile]]:
     """
@@ -3705,10 +3696,10 @@ def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
 
     :param params: ParamDict, parameter dictionary of constants
     :param drsfiles: list of drs files allowed (adds to fits header conditions)
-    :param indexdb: index database, the database to check against
     :param condition: str, the conditions to add to the database query
     :param argname: str, the argument name (required for error repoting)
-    :param direcory: str, the aboslute path to the observation sub directory
+    :param obs_dir: DrsPath instance, the aboslute path to the observation
+                    sub directory
     :return:
     """
     # set function name
@@ -3805,9 +3796,10 @@ def _fits_query(params: ParamDict, recipe: Any,
 
     :param params: ParamDict, parameter dictionary of constants
     :param drsfiles: list of drs files allowed (adds to fits header conditions)
-    :param fileanmes: list of filename to check
+    :param filenames: list of filename to check
     :param argname: str, the argument name (required for error repoting)
-    :param direcory: str, the aboslute path to the observation sub directory
+    :param obs_dir: DrsPath instance, the aboslute path to the observation
+                    sub directory
     :return:
     """
     # set function name
@@ -4211,7 +4203,7 @@ def _check_arg_path(params: ParamDict, arg: DrsArgument,
     :return:
     """
     # set function name
-    func_name = display_func('_check_arg_path', __NAME__)
+    _ = display_func('_check_arg_path', __NAME__)
     # set the path as directory if arg.path is None
     if arg.path is None:
         return obs_dir
@@ -4266,6 +4258,7 @@ def make_alllisting(params: ParamDict) -> OrderedDict:
     """
     # set function name
     _ = display_func('make_alllisting', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4293,6 +4286,7 @@ def make_debug(params: ParamDict) -> OrderedDict:
     """
     # set function name
     _ = display_func('make_debug', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4320,6 +4314,7 @@ def extended_help(params: ParamDict) -> OrderedDict:
     """
     # set function name (cannot break here --> no access to params)
     _ = display_func('set_quiet', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4410,6 +4405,7 @@ def make_version(params: ParamDict) -> OrderedDict:
     """
     # set function name
     _ = display_func('make_version', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4437,6 +4433,7 @@ def make_info(params: ParamDict) -> OrderedDict:
     """
     # set function name
     _ = display_func('make_info', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4464,6 +4461,7 @@ def set_program(params: ParamDict) -> OrderedDict:
     """
     # set function name
     _ = display_func('set_program', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4491,6 +4489,7 @@ def set_recipe_kind(params: ParamDict) -> OrderedDict:
     """
     # set function name
     _ = display_func('set_recipe_kind', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4518,6 +4517,7 @@ def set_parallel(params: ParamDict) -> OrderedDict:
     """
     # set function name
     _ = display_func('set_parallel', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4548,6 +4548,7 @@ def set_shortname(params: ParamDict) -> OrderedDict:
     """
     # set function name
     _ = display_func('set_program', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4576,6 +4577,7 @@ def set_ipython_return(params: ParamDict) -> OrderedDict:
     """
     # set function name
     _ = display_func('set_ipython_return', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4603,6 +4605,7 @@ def is_master(params: ParamDict) -> OrderedDict:
     """
     # set function name
     _ = display_func('is_master', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4630,6 +4633,7 @@ def set_crun_file(params: ParamDict) -> OrderedDict:
     """
     # set function name (cannot break here --> no access to params)
     _ = display_func('set_crun_file', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4658,6 +4662,7 @@ def set_quiet(params: ParamDict) -> OrderedDict:
     """
     # set function name (cannot break here --> no access to params)
     _ = display_func('set_quiet', __NAME__)
+    _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4672,7 +4677,6 @@ def set_quiet(params: ParamDict) -> OrderedDict:
     props['help'] = textentry('QUIET_HELP')
     # return the argument dictionary
     return props
-
 
 # =============================================================================
 # End of code
