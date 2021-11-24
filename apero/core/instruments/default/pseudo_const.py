@@ -1205,12 +1205,14 @@ class PseudoConstants:
         index_cols.add(name='INFILES', datatype='TEXT')
         # get header keys
         header_columns = self.INDEX_HEADER_COLS()
-
         # add header columns to index columns
         index_cols += header_columns
         # add extra columns
         index_cols.add(name='USED', datatype='INT')
         index_cols.add(name='RAWFIX', datatype='INT')
+        # manage index groups
+        index_cols.index_groups.append(['BLOCK_KIND', 'OBS_DIR', 'USED'])
+        index_cols.index_groups.append(['OBS_DIR', 'BLOCK_KIND'])
         # return columns and column types
         self.index_cols = index_cols
         return index_cols

@@ -370,7 +370,7 @@ class CalibrationDatabase(DatabaseManager):
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time, used]
         # are allowed duplicate columns --> don't check for unique
-        self.database.add_row(values, table=self.database.tname)
+        self.database.add_row(values)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('CALIB_DB_ENTRY',
@@ -408,7 +408,7 @@ class CalibrationDatabase(DatabaseManager):
         # set up kwargs from database query
         sql = dict()
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns, table=self.database.tname)
+        colnames = self.database.colnames(columns)
         # set up sql kwargs
         sql['sort_by'] = None
         sql['sort_descending'] = True
@@ -459,8 +459,7 @@ class CalibrationDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -474,8 +473,7 @@ class CalibrationDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -486,8 +484,7 @@ class CalibrationDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return pandas table
             return entries
 
@@ -602,7 +599,7 @@ class CalibrationDatabase(DatabaseManager):
         # deal with no filenames found elsewise --> error
         if filenames is None or len(filenames) == 0:
             # get unique set of keys
-            keys = self.database.unique('KEYNAME', table=self.database.tname)
+            keys = self.database.unique('KEYNAME')
             # get file description
             if drsfile is not None:
                 if no_times:
@@ -647,8 +644,7 @@ class CalibrationDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # remove entries
-        self.database.delete_rows(table=self.database.tname,
-                                  condition=condition)
+        self.database.delete_rows(condition=condition)
 
 
 class TelluricDatabase(DatabaseManager):
@@ -775,7 +771,7 @@ class TelluricDatabase(DatabaseManager):
         values = [key, fiber, is_super, filename, human_time, unix_time,
                   objname, airmass, tau_water, tau_others, used]
         # are allowed duplicate rows --> just add (don't check for unique)
-        self.database.add_row(values, table=self.database.tname)
+        self.database.add_row(values)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('TELLU_DB_ENTRY',
@@ -823,7 +819,7 @@ class TelluricDatabase(DatabaseManager):
         if self.instrument == 'None':
             return None
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns, table=self.database.tname)
+        colnames = self.database.colnames(columns)
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
@@ -882,8 +878,7 @@ class TelluricDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -898,8 +893,7 @@ class TelluricDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -910,8 +904,7 @@ class TelluricDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return pandas table
             return entries
 
@@ -1016,7 +1009,7 @@ class TelluricDatabase(DatabaseManager):
         # deal with no filenames found elsewise --> error
         if filenames is None or len(filenames) == 0:
             # get unique set of keys
-            keys = self.database.unique('KEYNAME', table=self.database.tname)
+            keys = self.database.unique('KEYNAME')
             # get file description
             if drsfile is not None:
                 if no_times:
@@ -1058,8 +1051,7 @@ class TelluricDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # remove entries
-        self.database.delete_rows(table=self.database.tname,
-                                  condition=condition)
+        self.database.delete_rows(condition=condition)
 
 
 # =============================================================================
@@ -1458,7 +1450,7 @@ class IndexDatabase(DatabaseManager):
         condition += ' AND (BLOCK_KIND="{0}")'.format(block_kind)
         condition += ' AND (ABSPATH="{0}")'.format(path)
         # count number of entries for this
-        num_rows = self.database.count(self.database.tname, condition=condition)
+        num_rows = self.database.count(condition=condition)
         # if we don't have an entry we add a row
         if num_rows == 0:
             # add new entry to database
@@ -1467,8 +1459,7 @@ class IndexDatabase(DatabaseManager):
             values += hvalues + [used, rawfix]
             # add row
             try:
-                self.database.add_row(values, table=self.database.tname,
-                                      unique_cols=ucols)
+                self.database.add_row(values, unique_cols=ucols)
                 return
             # if this is called we need to set instead of adding
             except drs_db.UniqueEntryException:
@@ -1484,7 +1475,7 @@ class IndexDatabase(DatabaseManager):
         condition = None
         # update row in database
         self.database.set('*', values=values, condition=condition,
-                          table=self.database.tname, unique_cols=ucols)
+                          unique_cols=ucols)
 
     def remove_entries(self, condition):
         # set function
@@ -1497,8 +1488,7 @@ class IndexDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # remove entries
-        self.database.delete_rows(table=self.database.tname,
-                                  condition=condition)
+        self.database.delete_rows(condition=condition)
 
     def get_entries(self, columns: str = '*',
                     obs_dir: Union[str, None] = None,
@@ -1537,7 +1527,7 @@ class IndexDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns, table=self.database.tname)
+        colnames = self.database.colnames(columns)
         # ------------------------------------------------------------------
         # set up kwargs from database query
         sql = dict()
@@ -1594,8 +1584,7 @@ class IndexDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -1606,14 +1595,13 @@ class IndexDatabase(DatabaseManager):
                 return None
         # ------------------------------------------------------------------
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns, table=self.database.tname)
+        colnames = self.database.colnames(columns)
         # if we have one column return a list
         if len(colnames) == 1:
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -1624,8 +1612,7 @@ class IndexDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return pandas table
             return entries
 
@@ -1765,13 +1752,14 @@ class IndexDatabase(DatabaseManager):
         itypes = list(idb_cols.datatypes)
         ucols = list(idb_cols.unique_cols)
         icols = list(idb_cols.index_cols)
+        igroups = list(idb_cols.get_index_groups())
         # need to add hash key if required
         if len(ucols) > 0:
             ikeys += [drs_db.UHASH_COL]
         # ---------------------------------------------------------------------
         # deal with database having wrong columns (if we have added / remove a
         #  column and are updating because of this)
-        columns = self.database.colnames('*', self.database.tname)
+        columns = self.database.colnames('*')
         # check if columns and rkeys agree
         if len(columns) != len(ikeys):
             # prompt user and warn
@@ -1786,7 +1774,8 @@ class IndexDatabase(DatabaseManager):
                 self.database.delete_table(self.database.tname)
                 # add new empty table
                 self.database.add_table(self.database.tname, ikeys, itypes,
-                                        unique_cols=ucols, index_cols=icols)
+                                        unique_cols=ucols, index_cols=icols,
+                                        index_groups=igroups)
                 # reload database
                 self.load_db()
                 # update all entries for raw index entries
@@ -1897,8 +1886,7 @@ class IndexDatabase(DatabaseManager):
                 else:
                     values.append('Null')
             # update this row (should only be one row based on condition)
-            self.database.set(columns, values=values, condition=condition,
-                              table=self.database.tname)
+            self.database.set(columns, values=values, condition=condition)
 
     def _update_params(self, **kwargs) -> bool:
         """
@@ -1947,8 +1935,7 @@ class IndexDatabase(DatabaseManager):
         :return: list of unique entries from "column"
         """
         # use database functionality
-        return self.database.unique(column, condition=condition,
-                                    table=self.database.tname)
+        return self.database.unique(column, condition=condition)
 
 
 
@@ -2143,8 +2130,7 @@ class LogDatabase(DatabaseManager):
         # set up condition
         condition = 'PID="{0}"'.format(pid)
         # delete rows that match this criteria
-        self.database.delete_rows(table=self.database.tname,
-                                  condition=condition)
+        self.database.delete_rows(condition=condition)
 
     def add_entries(self, recipe: Union[str, None] = None,
                     sname: Union[str, None] = None,
@@ -2270,7 +2256,7 @@ class LogDatabase(DatabaseManager):
                 except Exception as _:
                     values.append('None')
         # add row to database
-        self.database.add_row(values, table=self.database.tname)
+        self.database.add_row(values)
 
     def get_entries(self, columns: str = '*',
                     include_obs_dirs: Union[List[str], None] = None,
@@ -2304,7 +2290,7 @@ class LogDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns, table=self.database.tname)
+        colnames = self.database.colnames(columns)
         # ------------------------------------------------------------------
         # set up kwargs from database query
         sql = dict()
@@ -2343,8 +2329,7 @@ class LogDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -2355,14 +2340,13 @@ class LogDatabase(DatabaseManager):
                 return None
         # ------------------------------------------------------------------
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns, table=self.database.tname)
+        colnames = self.database.colnames(columns)
         # if we have one column return a list
         if len(colnames) == 1:
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -2373,8 +2357,7 @@ class LogDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return pandas table
             return entries
 
@@ -2389,8 +2372,7 @@ class LogDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # remove entries
-        self.database.delete_rows(table=self.database.tname,
-                                  condition=condition)
+        self.database.delete_rows(condition=condition)
 
 
 def _clean_error(errors: Union[str, None]) -> Union[str, None]:
@@ -2471,7 +2453,7 @@ class ObjectDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns, table=self.database.tname)
+        colnames = self.database.colnames(columns)
         # ------------------------------------------------------------------
         # set up kwargs from database query
         sql = dict()
@@ -2490,8 +2472,7 @@ class ObjectDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -2506,8 +2487,7 @@ class ObjectDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -2518,8 +2498,7 @@ class ObjectDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, table=self.database.tname,
-                                        **sql)
+            entries = self.database.get(columns, **sql)
             # return pandas table
             return entries
 
@@ -2599,8 +2578,7 @@ class ObjectDatabase(DatabaseManager):
         values.append(used)
         # try to add a new row
         try:
-            self.database.add_row(values, table=self.database.tname,
-                                  columns='*', unique_cols=ucols)
+            self.database.add_row(values, columns='*', unique_cols=ucols)
         # if row already exists then update that row (based on Gaia ID and
         #   objname)
         except drs_db.UniqueEntryException:
@@ -2608,13 +2586,13 @@ class ObjectDatabase(DatabaseManager):
             condition = None
             # update row in database
             self.database.set('*', values=values, condition=condition,
-                              table=self.database.tname, unique_cols=ucols)
+                              unique_cols=ucols)
 
     def count(self, condition: Union[str, None] = None) -> int:
         """
         Count the number of rows in the object database
         """
-        return self.database.count(self.database.tname, condition=condition)
+        return self.database.count(condition=condition)
 
     def find_objname(self, pconst: constants.PseudoConstants,
                      objname: str) -> Tuple[str, bool]:

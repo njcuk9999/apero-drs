@@ -87,8 +87,7 @@ class DatabaseHolder:
             database = drs_db.database_wrapper(self.kind, self.path)
             # try to get database (as a pandas table)
             try:
-                dataframe = database.get('*', table=database.tname,
-                                         return_pandas=True)
+                dataframe = database.get('*', return_pandas=True)
                 # remove uhash column if it exists (if hash_col is False)
                 if not self.hash_col:
                     if drs_db.UHASH_COL in dataframe:
@@ -122,8 +121,7 @@ class DatabaseHolder:
         else:
             ucols = None
         # push dataframe to replace SQL table
-        database.add_from_pandas(df, table=database.tname,
-                                 if_exists='replace', index=False,
+        database.add_from_pandas(df, if_exists='replace', index=False,
                                  unique_cols=ucols)
         # print we are saving database
         print('Saving database {0}'.format(self.name))

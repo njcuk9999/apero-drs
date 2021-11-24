@@ -3464,8 +3464,7 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
     # set up condition
     condition = 'BLOCK_KIND="{0}"'.format(block_inst.block_kind)
     # load directory names
-    obs_dirs = indexdb.database.unique('OBS_DIR', condition=condition,
-                                       table=indexdb.database.tname)
+    obs_dirs = indexdb.database.unique('OBS_DIR', condition=condition)
     # -------------------------------------------------------------------------
     # 2. check for directory in database
     # -------------------------------------------------------------------------
