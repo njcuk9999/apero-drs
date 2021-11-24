@@ -3420,6 +3420,8 @@ def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
     """
     # set function name
     func_name = display_func('valid_obs_dir', __NAME__)
+    # load database if required
+    indexdb.load_db()
     # get block directory
     block_inst = drs_file.DrsPath(params, block_kind=block_kind)
     # check whether we are updating the index
@@ -3585,6 +3587,8 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     """
     # set function name
     func_name = display_func('_valid_file', __NAME__)
+    # load database if required
+    indexdb.load_db()
     # get the argument that we are checking the file of
     arg = _get_arg(rargs, rkwargs, argname)
     drsfiles = arg.files
