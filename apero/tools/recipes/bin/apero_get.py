@@ -142,12 +142,18 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             obj_condition = None
         else:
             obj_condition = '(KW_OBJNAME="{0}")'.format(clean_obj_name)
-        # deal with having a master condition
+        # deal with having an object condition
         condition = ''
         if obj_condition is not None:
             condition += str(obj_condition)
+        # deal with having a master condition
         if len(master_condition) > 0:
-            condition += ' AND {0}'.format(master_condition)
+            # deal with not having an object condition (don't need the AND)
+            if obj_condition is None:
+                condition += str(master_condition)
+            # deal with having an object condition (need an AND)
+            else:
+                condition += ' AND {0}'.format(master_condition)
         # deal with no condition still (set condition to None)
         if len(condition) == 0:
             condition = None
