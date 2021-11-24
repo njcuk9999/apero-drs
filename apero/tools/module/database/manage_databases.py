@@ -93,8 +93,7 @@ def kill(params: ParamDict, timeout: int = 60):
             WLOG(params, '', 'Condition')
             WLOG(params, '', '\t' + condition)
             # get all processes that were started by user
-            table = infodb.get('*', table=tablename, condition=condition,
-                               return_pandas=True)
+            table = infodb.get('*', condition=condition, return_pandas=True)
             # get ids from table
             ids = list(table['ID'].values)
             # log how many ids found
@@ -214,7 +213,7 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     # get rows from reset file
     reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
     # add rows from reset text file
-    calibdb.add_from_pandas(reset_entries, table=calibdb.tname)
+    calibdb.add_from_pandas(reset_entries)
     # -------------------------------------------------------------------------
     return calibdb
 
@@ -267,6 +266,7 @@ def create_index_database(pconst: PseudoConst,
     ctypes = list(idb_cols.datatypes)
     cuniques = list(idb_cols.unique_cols)
     cicols = list(idb_cols.index_cols)
+    cigroups = list(idb_cols.get_index_groups())
     # -------------------------------------------------------------------------
     # construct directory
     indexdbm = databases['index']
@@ -280,7 +280,7 @@ def create_index_database(pconst: PseudoConst,
         indexdb.delete_table(indexdb.tname)
     # add main table
     indexdb.add_table(indexdb.tname, columns, ctypes, unique_cols=cuniques,
-                      index_cols=cicols)
+                      index_cols=cicols, index_groups=cigroups)
     # -------------------------------------------------------------------------
     return indexdb
 
@@ -363,7 +363,7 @@ def object_db_populated(params: ParamDict) -> bool:
     objdbm = drs_database.ObjectDatabase(params)
     objdbm.load_db()
     # count rows in database
-    count = objdbm.database.count(objdbm.database.tname)
+    count = objdbm.database.count()
     # return a boolean for object database populated
     return count > 0
 
@@ -474,7 +474,7 @@ def update_object_database(params: ParamDict, log: bool = True):
                        index_cols=cindexs)
     # ---------------------------------------------------------------------
     # add rows from pandas dataframe
-    objectdb.add_from_pandas(df, table=objectdb.tname, unique_cols=cuniques)
+    objectdb.add_from_pandas(df, unique_cols=cuniques)
 
 
 # def update_object_database_old(params: ParamDict):
@@ -561,7 +561,7 @@ def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
     # remove entries with KEYNAME == nan
     mask0 = np.array(reset_entries0['KEYNAME']).astype(str) == 'nan'
     # add rows from reset text file
-    langdb.add_from_pandas(reset_entries0[~mask0], table=langdb.tname)
+    langdb.add_from_pandas(reset_entries0[~mask0])
     # ---------------------------------------------------------------------
     # add rows from reset text file for instrument file
     # ---------------------------------------------------------------------
@@ -631,7 +631,7 @@ def export_database(params: ParamDict, database_name: str,
         WLOG(params, 'error', textentry('09-506-00002', args=eargs))
     # -------------------------------------------------------------------
     # get all rows as a pandas data frame
-    df = db.database.get('*', table=db.database.tname, return_pandas=True)
+    df = db.database.get('*', return_pandas=True)
     # -------------------------------------------------------------------
     # print that we are saving csv file
     WLOG(params, '', textentry('40-507-00001', args=[outfilename]))
@@ -718,8 +718,7 @@ def import_database(params: ParamDict, database_name: str,
     # log
     WLOG(params, '', wmsg)
     # add pandas table to database
-    db.database.add_from_pandas(df, db.database.tname, if_exists=joinmode,
-                                unique_cols=ucols)
+    db.database.add_from_pandas(df, if_exists=joinmode, unique_cols=ucols)
 
 
 # =============================================================================

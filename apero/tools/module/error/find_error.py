@@ -839,7 +839,7 @@ class LoadData:
         # get language table name
         tablename = langdbm.database.tname
         # get pandas table
-        df = langdbm.database.get('*', tablename, return_pandas=True)
+        df = langdbm.database.get('*', return_pandas=True)
         # storage
         values = dict()
         source = dict()

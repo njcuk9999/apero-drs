@@ -291,8 +291,8 @@ class Database:
         # return result
         return result
 
-    def count(self, table: Union[None, str],
-              condition: Union[None, str] = None) -> int:
+    def count(self, table: Optional[str] = None,
+              condition: Optional[str] = None) -> int:
         """
         Counts the number of rows in table. If condition is set
         counts just these rows
@@ -336,8 +336,8 @@ class Database:
         # return result
         return int(result)
 
-    def unique(self, column: str, table: Union[None, str],
-               condition: Union[None, str] = None) -> np.ndarray:
+    def unique(self, column: str, table: Optional[str] = None,
+               condition: Optional[str] = None) -> np.ndarray:
         """
         Get the unique values for a column (with condition if set)
 
@@ -384,12 +384,11 @@ class Database:
         # return unique result
         return np.unique(result)
 
-    def get(self, columns: str, table: Union[None, str],
-            condition: Union[None, str] = None,
-            sort_by: Union[None, str] = None,
-            sort_descending: bool = True,
-            max_rows: Union[int, None] = None, return_array: bool = False,
-            return_table: bool = False, return_pandas: bool = False
+    def get(self, columns: str, table: Optional[str] = None,
+            condition: Optional[str] = None, sort_by: Optional[str] = None,
+            sort_descending: bool = True, max_rows: Optional[int] = None,
+            return_array: bool = False, return_table: bool = False,
+            return_pandas: bool = False
             ) -> Union[tuple, pd.DataFrame, np.ndarray, Table]:
         """
         Retrieves data from the database with a variety of options.
@@ -506,9 +505,9 @@ class Database:
             # else just return the result as is (a tuple)
             return result
 
-    def set(self, columns: Union[str, List[str]], table: Union[str, None],
-            values: Union[str, List[str]], condition: Union[str, None] = None,
-            unique_cols: Union[List[str], None] = None):
+    def set(self, columns: Union[str, List[str]], values: Union[str, List[str]],
+            table: Optional[str] = None, condition: Optional[str] = None,
+            unique_cols: Optional[List[str]] = None):
         """
         Changes the data in existing rows.
 
@@ -615,9 +614,9 @@ class Database:
         # execute sql command
         self.execute(command, fetch=False)
 
-    def add_row(self, values: List[object], table: Union[None, str],
+    def add_row(self, values: List[object], table: Optional[str]=None,
                 columns: Union[str, List[str]] = "*",
-                unique_cols: Union[List[str], None] = None):
+                unique_cols: Optional[List[str]] = None):
         """
         Adds a row to the specified tables with the given values.
 
@@ -667,8 +666,8 @@ class Database:
         # execute the sql command
         self.execute(command, fetch=False)
 
-    def delete_rows(self, table: Union[None, str],
-                    condition: Union[str, None] = None):
+    def delete_rows(self, table: Optional[str] = None,
+                    condition: Optional[str] = None):
         """
         Delete a row from the table
 
@@ -698,7 +697,8 @@ class Database:
     def add_table(self, name: str, field_names: List[str],
                   field_types: List[Union[str, type]],
                   unique_cols: Optional[List[str]] = None,
-                  index_cols: Optional[List[str]] = None):
+                  index_cols: Optional[List[str]] = None,
+                  index_groups: Optional[List[List[str]]] = None):
         """
         Adds a table to the database file.
 
@@ -710,6 +710,9 @@ class Database:
                             can contain either SQL type specifiers or the
                             python int, str, and float types.
         :param unique_cols: list of str, the field_names that should be unique
+        :param index_cols: optional list of strings, columns to index
+        :param index_groups: optional list of list of strings, column groups
+                             to index together
 
         Examples:
             # "REAL" does the same thing as float
@@ -799,10 +802,11 @@ class Database:
         # ---------------------------------------------------------------------
         # execute command
         self.execute(command, fetch=False)
+        # ---------------------------------------------------------------------
         # update the table list
         self._update_table_list_()
 
-    def add_unique_uhash_col(self, table: Union[str, None]):
+    def add_unique_uhash_col(self, table: Optional[str] = None):
         """
         Need a way to update the unique column (uhash) if set -
         this is because pandas removes uniqueness from the column
@@ -810,6 +814,7 @@ class Database:
         :param table: str or None, the table name
         :return:
         """
+        _ = table
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
@@ -907,19 +912,20 @@ class Database:
         NotImplemented(emsg)
 
     # other methods
-    def table_info(self,
-                   table: Union[str, None]) -> Tuple[List[str], List[str]]:
+    def table_info(self, table: Optional[str] = None
+                   ) -> Tuple[List[str], List[str]]:
         """
         Get the table information for a table name
 
         :param table: str, the name of the Table
         :return:
         """
+        _ = table
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
         return [], []
 
-    def colnames(self, columns: str, table: Union[str, None]) -> List[str]:
+    def colnames(self, columns: str, table: Optional[str] = None) -> List[str]:
         """
         Get the column names from table (i.e. deal with * or columns separated
         by commas)
@@ -949,7 +955,7 @@ class Database:
             # return the out put columns
             return out_colnames
 
-    def coltypes(self, columns: str, table: Union[str, None]) -> List[str]:
+    def coltypes(self, columns: str, table: Optional[str] = None) -> List[str]:
         """
         Get the column names from table (i.e. deal with * or columns separated
         by commas)
@@ -980,7 +986,7 @@ class Database:
             return out_coltypes
 
     # private methods
-    def _infer_table_(self, table: Union[None, str]) -> str:
+    def _infer_table_(self, table: Optional[str] = None) -> str:
         """
         Infer the table name if table is None (if only one table)
 
@@ -1020,7 +1026,7 @@ class Database:
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
-    def _to_astropy_table(self, result, table=None) -> Table:
+    def _to_astropy_table(self, result, table: Optional[str] = None) -> Table:
         """
         Convert result to astropy table
 
@@ -1029,9 +1035,6 @@ class Database:
         """
         # set function name
         func_name = __NAME__ + '.Database._to_astropy_table()'
-        # get table name
-        if table is None:
-            table = self.tname
         # get columns
         columns = self.colnames('*', table=table)
         # set up table
@@ -1055,9 +1058,9 @@ class Database:
         # return astropy table
         return table
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
+    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str] = None,
                         if_exists: str = 'append', index: bool = False,
-                        unique_cols: Union[List[str], None] = None):
+                        unique_cols: Optional[List[str]] = None):
         """
         Use pandas to add rows to database
 
@@ -1105,6 +1108,7 @@ class DatabaseColumns:
         self.name_prefix = name_prefix
         self.altnames = []
         self.comments = []
+        self.index_groups = []
 
     def __getstate__(self) -> dict:
         """
@@ -1187,6 +1191,16 @@ class DatabaseColumns:
             return str
         # default is to cast to string
         return str
+
+    def get_index_groups(self) -> Union[List[List[str]], None]:
+        """
+        get the index groups - return None if empty
+        :return:
+        """
+        if len(self.index_groups) == 0:
+            return None
+        else:
+            return self.index_groups
 
 
 class SQLiteDatabase(Database):
@@ -1295,7 +1309,8 @@ class SQLiteDatabase(Database):
     def add_table(self, name: str, field_names: List[str],
                   field_types: List[Union[str, type]],
                   unique_cols: Optional[List[str]] = None,
-                  index_cols: Optional[List[str]] = None):
+                  index_cols: Optional[List[str]] = None,
+                  index_groups: Optional[List[List[str]]] = None):
         """
         Adds a table to the database file.
 
@@ -1307,6 +1322,9 @@ class SQLiteDatabase(Database):
                             can contain either SQL type specifiers or the
                             python int, str, and float types.
         :param unique_cols: list of str, the field_names that should be unique
+        :param index_cols: optional list of strings, columns to index
+        :param index_groups: optional list of list of strings, column groups
+                             to index together
 
         Examples:
             # "REAL" does the same thing as float
@@ -1422,7 +1440,7 @@ class SQLiteDatabase(Database):
         # update the table list
         self._update_table_list_()
 
-    def add_unique_uhash_col(self, table: Union[str, None]):
+    def add_unique_uhash_col(self, table: Optional[str] = None):
         """
         Need a way to update the unique column (uhash) if set -
         this is because pandas removes uniqueness from the column
@@ -1493,9 +1511,9 @@ class SQLiteDatabase(Database):
         emsg = 'database locked for > {0} s'.format(MAXWAIT)
         raise sqlite3.OperationalError(emsg)
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
+    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str] = None,
                         if_exists: str = 'append', index: bool = False,
-                        unique_cols: Union[List[str], None] = None):
+                        unique_cols: Optional[List[str]] = None):
         """
         Use pandas to add rows to database
 
@@ -1590,8 +1608,8 @@ class SQLiteDatabase(Database):
         # return dataframe
         return df
 
-    def table_info(self,
-                   table: Union[str, None]) -> Tuple[List[str], List[str]]:
+    def table_info(self, table: Optional[str] = None
+                   ) -> Tuple[List[str], List[str]]:
         """
         Get the table information for a table name
 
@@ -2091,7 +2109,8 @@ class MySQLDatabase(Database):
     def add_table(self, name: str, field_names: List[str],
                   field_types: List[Union[str, type]],
                   unique_cols: Optional[List[str]] = None,
-                  index_cols: Optional[List[str]] = None):
+                  index_cols: Optional[List[str]] = None,
+                  index_groups: Optional[List[List[str]]] = None):
         """
         Adds a table to the database file.
 
@@ -2103,6 +2122,9 @@ class MySQLDatabase(Database):
                             can contain either SQL type specifiers or the
                             python int, str, and float types.
         :param unique_cols: list of str, the field_names that should be unique
+        :param index_cols: optional list of strings, columns to index
+        :param index_groups: optional list of list of strings, column groups
+                             to index together
 
         Examples:
             # "REAL" does the same thing as float
@@ -2199,10 +2221,36 @@ class MySQLDatabase(Database):
         # ---------------------------------------------------------------------
         # execute command
         self.execute(command, fetch=False)
+        # ---------------------------------------------------------------------
+        # deal with index groups (if given)
+        if index_groups is not None:
+            for index_group in index_groups:
+                # construct index group name
+                group_name = '_'.join(index_group)
+                # check that all columns are in database
+                for col in index_group:
+                    if col not in field_names:
+                        ecode = ''
+                        emsg = ('Index group error. Column {0} not in {1} '
+                                '(Group={2})')
+                        eargs = [col, name, group_name]
+                        exception = DatabaseError(emsg.format(*eargs),
+                                                  path=self.path,
+                                                  func_name=func_name)
+                        return drs_base.base_error(ecode, emsg.format(*eargs),
+                                                   'error',
+                                                   exceptionname='DBError',
+                                                   exception=exception)
+                # construct command
+                cargs = [group_name, name, ', '.join(index_group)]
+                command = 'CREATE INDEX {0} ON {1} ({2});'
+                # execute command
+                self.execute(command, fetch=False)
+        # ---------------------------------------------------------------------
         # update the table list
         self._update_table_list_()
 
-    def add_unique_uhash_col(self, table: Union[str, None]):
+    def add_unique_uhash_col(self, table: Optional[str] = None):
         """
         Need a way to update the unique column (uhash) if set -
         this is because pandas removes uniqueness from the column
@@ -2222,9 +2270,9 @@ class MySQLDatabase(Database):
         # execute command
         self.execute(command, fetch=False)
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
+    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str] = None,
                         if_exists: str = 'append', index: bool = False,
-                        unique_cols: Union[List[str], None] = None):
+                        unique_cols: Optional[List[str]] = None):
         """
         Use pandas to add rows to database
 
@@ -2333,8 +2381,8 @@ class MySQLDatabase(Database):
             self.tables.append(_table[0])
 
     # other methods
-    def table_info(self,
-                   table: Union[str, None]) -> Tuple[List[str], List[str]]:
+    def table_info(self, table: Optional[str] = None
+                   ) -> Tuple[List[str], List[str]]:
         """
         Get the table information for a table name
 
@@ -2401,7 +2449,7 @@ class MySQLDatabase(Database):
             pass
         # -------------------------------------------------------------------
         # get all rows as a pandas data frame
-        df = self.get('*', table=self.tname, return_pandas=True)
+        df = self.get('*', return_pandas=True)
         # -------------------------------------------------------------------
         # save to csv file
         df.to_csv(self.backup_path)
@@ -2431,8 +2479,7 @@ class MySQLDatabase(Database):
         # load csv file into pandas table
         df = pd.read_csv(self.backup_path)
         # add pandas table to database
-        self.add_from_pandas(df, self.tname, if_exists='replace',
-                             unique_cols=ucols)
+        self.add_from_pandas(df, if_exists='replace', unique_cols=ucols)
 
 
 # =============================================================================
@@ -2832,7 +2879,7 @@ class LanguageDatabase(BaseDatabaseManager):
         if self.instrument == 'None':
             return None
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns, table=self.database.tname)
+        colnames = self.database.colnames(columns)
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
@@ -2843,7 +2890,7 @@ class LanguageDatabase(BaseDatabaseManager):
         # return only 1 row
         sql['max_rows'] = 1
         # do sql query
-        entries = self.database.get(columns, table=self.database.tname, **sql)
+        entries = self.database.get(columns, **sql)
         # return filename
         if len(entries) == 1:
             if len(colnames) == 1:
@@ -2911,17 +2958,16 @@ class LanguageDatabase(BaseDatabaseManager):
             values += ['NULL'] * len(base.LANGUAGES)
         # ---------------------------------------------------------------------
         # get unique keys
-        ukeys = self.database.unique('KEYNAME', table=self.database.tname)
+        ukeys = self.database.unique('KEYNAME')
         # if we have the key update the row
         if key in ukeys:
             # set condition
             condition = 'KEYNAME="{0}"'.format(key)
             # update row in database
-            self.database.set('*', values=values, condition=condition,
-                              table=self.database.tname)
+            self.database.set('*', values=values, condition=condition)
         # if we don't have the key add a new row
         else:
-            self.database.add_row(values, table=self.database.tname)
+            self.database.add_row(values)
 
     def get_dict(self, language: str) -> dict:
         """
@@ -2935,8 +2981,7 @@ class LanguageDatabase(BaseDatabaseManager):
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            'get_dict')
         # get all rows
-        df = self.database.get('*', table=self.database.tname,
-                               return_pandas=True)
+        df = self.database.get('*', return_pandas=True)
         # set up storage
         storage = dict()
         # loop around dataframe rows

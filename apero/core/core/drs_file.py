@@ -6469,8 +6469,7 @@ class DrsOutFile(DrsInputFile):
         # condition on database
         condition = 'ABSPATH="{0}"'.format(filename)
         # get database entries
-        tname = database.database.tname
-        dkwargs = dict(condition=condition, table=tname, return_pandas=True)
+        dkwargs = dict(condition=condition, return_pandas=True)
         # try to get infiles from database
         table = database.database.get('*', **dkwargs)
         # deal with no entries
