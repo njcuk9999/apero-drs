@@ -1219,8 +1219,6 @@ class SQLiteDatabase(Database):
         func_name = __NAME__ + 'SQLiteDatabase.__init__()'
         # call to super class
         super().__init__(verbose=verbose)
-        # set a tries criteria (not used for sqlite but required)
-        self.tries = 1
         # storage for database path
         self.host = None
         self.user = None
@@ -1768,8 +1766,6 @@ class MySQLDatabase(Database):
         # set function name
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            '__init__()')
-        # set a tries criteria
-        self.tries = 20
         # set path
         aperohome = os.path.join(os.path.expanduser('~'), '.apero')
         if not os.path.exists(aperohome):
@@ -1791,6 +1787,8 @@ class MySQLDatabase(Database):
                                 exception=exception)
         # call to super class
         super().__init__(verbose=verbose)
+        # set a tries criteria
+        self.tries = 20
         # storage for database path
         self.host = host
         self.user = user
@@ -1844,8 +1842,6 @@ class MySQLDatabase(Database):
             dbname = None
         elif dbname is None:
             dbname = self.dbname
-        # time
-        start = time.time()
         # delay processes
         count = 0
         error = None
