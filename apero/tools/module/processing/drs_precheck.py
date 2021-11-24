@@ -77,10 +77,13 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     generic_raw_file = filemodule.raw_file
     # store calibs (for each observation directory)
     calib_count = dict()
+    calib_times = dict()
     # store hot stars  (for each observation directory)
     tellu_count = dict()
     # store science targets (for each observation directory)
     science_count = dict()
+    # store a list of possible bad nights
+    bad_calib_nights, engineering_nights = [], []
     # -------------------------------------------------------------------------
     # get telluric stars and non-telluric stars
     # -------------------------------------------------------------------------
@@ -115,11 +118,15 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             WLOG(params, 'info', msg.format(*margs), colour='magenta')
         # ---------------------------------------------------------------------
         # get all raw files for this night
-        drsoutids = indexdbm.get_entries('KW_OUTPUT', obs_dir=uobsdir,
-                                         block_kind='raw')
+        itable = indexdbm.get_entries('KW_OUTPUT,KW_MID_OBS_TIME',
+                                      obs_dir=uobsdir, block_kind='raw')
+        # get columns
+        drsoutids = itable['KW_OUTPUT']
+        mjdmids = itable['KW_MID_OBS_TIME']
         # ---------------------------------------------------------------------
         # storage of the count for this observation directory
         calib_count[uobsdir] = dict()
+        calib_times[uobsdir] = []
         # loop around recipes
         for srecipe in calib_files:
             # -----------------------------------------------------------------
@@ -136,10 +143,14 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             for argname in calib_files[srecipe]:
                 # loop around drs files
                 for drsfile in calib_files[srecipe][argname]:
+                    # mask of current files
+                    dmask = drsfile.name == drsoutids
                     # count the number of files
-                    count = np.sum(drsfile.name == drsoutids)
+                    count = np.sum(dmask)
                     # add to count
                     calib_count[uobsdir][srecipe][drsfile.name] = count
+                    # get the time for this drs file
+                    calib_times[uobsdir] += list(np.unique(mjdmids[dmask]))
                     # ---------------------------------------------------------
                     # print if missing
                     if count == 0:
@@ -150,6 +161,8 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         if not missing:
             msg = '\tMinimum number of calibrations found'
             WLOG(params, '', msg)
+        else:
+            bad_calib_nights.append(uobsdir)
     # -------------------------------------------------------------------------
     # get a list of telluric files and science files
     # -------------------------------------------------------------------------
@@ -258,6 +271,61 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         if s_missing:
             msg = '\tNo science files found for observation directory {0}'
             WLOG(params, 'warning', msg.format(uobsdir))
+        # deal with assumed engineering observation directories
+        #     (no science or tellu)
+        if t_missing and s_missing:
+            engineering_nights.append(uobsdir)
+    # -------------------------------------------------------------------------
+    # Work out possible bad obs
+    # -------------------------------------------------------------------------
+    # calculate mean obs directory times
+    all_obs_dir = []
+    mean_times = []
+    for obs_dir in calib_times:
+        mean_times.append(np.nanmean(calib_times[obs_dir]))
+        all_obs_dir.append(obs_dir)
+    # convert to numpy arrays
+    all_obs_dir, mean_times = np.array(all_obs_dir), np.array(mean_times)
+    # storage for bad nights
+    bad_nights = []
+    # loop around flagged bad calibration files
+    for obs_dir in bad_calib_nights:
+        # skip engineering nights
+        if obs_dir in engineering_nights:
+            continue
+        # get the mean time for this observation directory
+        mean_time_it = mean_times[obs_dir == all_obs_dir][0]
+        # find all other obs dirs with in MAX_CALIB_DTIME of this night
+        diff = abs(mean_times - mean_time_it)[1:]
+        # check whether there is another night within given time frame
+        #   give +/- 0.5 days due to start and end of calibrations
+        if np.sum(diff < params['MAX_CALIB_DTIME'] + 0.5) == 0:
+            bad_nights.append(obs_dir)
+    # -------------------------------------------------------------------------
+    msg = 'File check summary'
+    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', msg)
+    WLOG(params, 'info', params['DRS_HEADER'])
+    # -------------------------------------------------------------------------
+    # finally print a list of possible bad nights
+    if len(bad_nights) > 0:
+        msg = 'The following observation directories will causes errors:'
+        WLOG(params, 'warning', msg, colour='red')
+        # loop around bad nights
+        for obs_dir in bad_nights:
+            WLOG(params, 'warning', '\t{0}'.format(obs_dir))
+    if len(engineering_nights) > 0:
+        msg = ('The following observation directories will be skipped as '
+               'engineering directories:')
+        WLOG(params, 'warning', msg)
+        # loop around bad nights
+        for obs_dir in engineering_nights:
+            WLOG(params, 'warning', '\t{0}'.format(obs_dir))
+
+    if len(bad_nights) == 0 and len(engineering_nights) == 0:
+        WLOG(params, '', 'All observation directories passed prechecks.')
+    else:
+        WLOG(params, '', 'All other observation directories passed prechecks.')
 
 
 def get_raw_seq_files(params: ParamDict, recipemod,
