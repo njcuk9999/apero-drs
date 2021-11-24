@@ -266,7 +266,7 @@ def create_index_database(pconst: PseudoConst,
     ctypes = list(idb_cols.datatypes)
     cuniques = list(idb_cols.unique_cols)
     cicols = list(idb_cols.index_cols)
-    cigroups = list(idb_cols.get_index_groups())
+    cigroups = idb_cols.get_index_groups()
     # -------------------------------------------------------------------------
     # construct directory
     indexdbm = databases['index']

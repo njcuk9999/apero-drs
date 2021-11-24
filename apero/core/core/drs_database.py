@@ -1752,7 +1752,7 @@ class IndexDatabase(DatabaseManager):
         itypes = list(idb_cols.datatypes)
         ucols = list(idb_cols.unique_cols)
         icols = list(idb_cols.index_cols)
-        igroups = list(idb_cols.get_index_groups())
+        igroups = idb_cols.get_index_groups()
         # need to add hash key if required
         if len(ucols) > 0:
             ikeys += [drs_db.UHASH_COL]
