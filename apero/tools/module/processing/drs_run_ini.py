@@ -91,6 +91,10 @@ class RunIniFile:
         self.recipes = []
         self.sequences = []
         self.ids = []
+        # storage for user modified values
+        self.run_keys_user_update = dict()
+        self.run_extras = dict()
+        self.skip_extras = dict()
         # storage of lines in the output file
         self.lines = []
         # storage of outpath
@@ -160,10 +164,33 @@ class RunIniFile:
         WLOG(self.params, 'error', emsg.format(*eargs))
         return None
 
+    def modify(self, key: str, value: Any):
+        """
+        Modify the run_keys or run_text/skip_Text just before they are
+        used (only if present)
+
+        :param key: str, the run_key or run_text or skip_text to modify
+        :param value: Any, the value to push into run_key
+
+        :return: None, updates run key
+        """
+        # deal with run keys
+        if 'RUN_' in key:
+            # get srecipe name
+            srecipe = key.split('RUN_')[-1]
+            # push into run_extras
+            self.run_extras[srecipe] = value
+        # deal with skip keys
+        elif 'SKIP_' in key:
+            # get srecipe name
+            srecipe = key.split('SKIP_')[-1]
+            # push into run_extras
+            self.skip_extras[srecipe] = value
+        # else push into run keys user update
+        else:
+            self.run_keys_user_update[key] = value
+
     def populate_text_file(self, params: ParamDict):
-        # TODO: fill this out using resources/run_ini/run_template.ini
-
-
         # ---------------------------------------------------------------------
         # step 1: construct output filename for this instrument
         # ---------------------------------------------------------------------
@@ -207,8 +234,12 @@ class RunIniFile:
             skip_text += '\n# Skip the {0} recipes\n'.format(group_name)
             # loop around entries in group and add these rows
             for srecipe in group:
-                run_text += 'RUN_{0} = True\n'.format(srecipe)
-                skip_text += 'SKIP_{0} = True\n'.format(srecipe)
+                # get run and skip values
+                run_value = self.run_extras.get(srecipe, True)
+                skip_value = self.skip_extras.get(srecipe, True)
+                # add to run_text and skip_text
+                run_text += 'RUN_{0} = {1}\n'.format(srecipe, run_value)
+                skip_text += 'SKIP_{0} = {1}\n'.format(srecipe, skip_value)
         # deal with blank
         if len(run_text) == 0:
             run_text = '# No sequence recipes to run\n'
@@ -230,6 +261,12 @@ class RunIniFile:
         self.rkey('SEQUENCE_TEXT', id_text)
         # ---------------------------------------------------------------------
         # step 5: populate the lines
+        # ---------------------------------------------------------------------
+        # update run keys from user input (forced)
+        for key in self.run_keys_user_update:
+            self.run_keys[key] = self.run_keys_user_update[key]
+        # ---------------------------------------------------------------------
+        # step 6: populate the lines
         # ---------------------------------------------------------------------
         # loop around lines
         for row in range(len(self.lines)):
@@ -318,14 +355,22 @@ def main(params: ParamDict) -> List[RunIniFile]:
     run_files.append(mini_run1_spirou)
     # mini run 2
     mini_run2_spirou = RunIniFile(params, 'SPIROU', 'mini_run2')
-    mini_run2_spirou.rkey('MASTER_OBS_DIR', '2020-08-31')
     mini_run2_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
     mini_run2_spirou.append_sequence('limited_seq')
     run_files.append(mini_run2_spirou)
     # quick run
-
+    quick_run_spirou = RunIniFile(params, 'SPIROU', 'quick_run')
+    quick_run_spirou.append_sequence('pp_seq_opt')
+    quick_run_spirou.append_sequence('quick_seq')
+    quick_run_spirou.modify('RUN_PP_CAL', False)
+    quick_run_spirou.modify('RUN_PP_TEL', False)
+    run_files.append(quick_run_spirou)
     # calib run
-
+    calib_run_spirou = RunIniFile(params, 'SPIROU', 'calib_run')
+    calib_run_spirou.append_sequence('pp_seq_opt')
+    calib_run_spirou.append_sequence('calib_seq')
+    calib_run_spirou.modify('RUN_PP_SCI', False)
+    calib_run_spirou.modify('RUN_PP_TEL', False)
     # complete run
 
     # master calib run
