@@ -12,6 +12,7 @@ Created on 2019-07-26 at 09:40
 from apero.base import base
 from apero import lang
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.tools.module.processing import drs_run_ini
 
@@ -69,11 +70,32 @@ def main(**kwargs):
 
 def __main__(recipe, params):
 
-
+    # get instrument variable
+    instruments = list(base.INSTRUMENTS)
+    if 'INSTRUMENT' in params['INPUTS']:
+        if not drs_text.null_text(params['INPUTS']['INSTRUMENT'], ['None', '']):
+            instruments = params['INPUTS']['INSTRUMENT'].split(',')
+    # log progress
+    WLOG(params, 'info', 'Generating list of default run.ini files')
     # get default run file instances
-    run_files = drs_run_ini.RUN_FILES
-
-
+    run_files = drs_run_ini.main(params)
+    # loop around run files
+    for run_file in run_files:
+        # skip invalid instruments
+        if run_file.instrument not in instruments:
+            continue
+        # progress report
+        msg = 'Processing file: {0}'
+        margs = [run_file.name]
+        WLOG(params, 'info', msg.format(*margs))
+        # populate the text file
+        run_file.populate_text_file(params)
+        # print message
+        msg = 'Writing file: {0}'
+        margs = [run_file.outpath]
+        WLOG(params, 'info', msg.format(*margs))
+        # write to file
+        run_file.write_text_file()
 
     # ----------------------------------------------------------------------
     # End of main code

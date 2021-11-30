@@ -45,12 +45,13 @@ remake_db = drs_recipe(__INSTRUMENT__)
 remake_doc = drs_recipe(__INSTRUMENT__)
 req_check = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
+run_ini = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
 recipes = [changelog, database_mgr, explorer, get_files, precheck,
            processing, listing, logstats, remake_db, remake_doc,
-           req_check, reset, validate]
+           req_check, reset, run_ini, validate]
 
 # =============================================================================
 # Recipe definitions
@@ -313,6 +314,20 @@ reset.set_kwarg(name='--log', dtype='bool', default=True,
                 helpstr=textentry('RESET_LOG_HELP'))
 reset.set_kwarg(name='--warn', dtype='bool', default=True,
                 helpstr=textentry('RESET_WARN_HELP'))
+
+# -----------------------------------------------------------------------------
+# apero_run_ini.py
+# -----------------------------------------------------------------------------
+run_ini.name = 'apero_run_ini.py'
+run_ini.shortname = 'RUN_INI'
+run_ini.instrument = __INSTRUMENT__
+run_ini.description = 'Create default run.ini files for APERO instrument(s)'
+run_ini.recipe_type = 'nolog-tool'
+run_ini.recipe_kind = 'user'
+run_ini.set_kwarg(name='--instrument', dtype='options', default='None',
+                  options=base.INSTRUMENTS,
+                  helpstr='Instrument or instruments to create run.ini '
+                          'files for')
 
 # -----------------------------------------------------------------------------
 # apero_validate.py

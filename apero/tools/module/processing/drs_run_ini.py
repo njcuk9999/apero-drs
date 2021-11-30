@@ -9,7 +9,8 @@ Created on 2021-11-08
 
 @author: cook
 """
-from typing import Any, Union
+import os
+from typing import Any, Dict, List, Union
 
 from apero import lang
 from apero.base import base
@@ -20,6 +21,7 @@ from apero.core.core import drs_file
 from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
+from apero.io import drs_path
 from apero.science import telluric
 from apero.tools.module.processing import drs_processing
 
@@ -48,25 +50,35 @@ textentry = lang.textentry
 DEFAULT_MASTER_OBSDIR = '2020-08-31'
 # define default number of cores
 DEFAULT_CORES = 5
-# storage of run files
-RUN_FILES = []
+# define relative output path
+OUTPATH = 'data/{instrument}/reset/runs/'
+# template
+TEMPLATE = 'tools/resources/run_ini/run_{instrument}.ini'
+# define groups of recipes
+GROUPS = dict()
+GROUPS['preprocessing'] = ['pre']
+GROUPS['master calibration'] = ['calib-master']
+GROUPS['night calibration'] = ['calib-night']
+GROUPS['extraction'] = ['extract']
+GROUPS['telluric'] = ['tellu']
+GROUPS['radial velocity'] = ['rv']
+GROUPS['polar'] = ['polar']
+GROUPS['postprocessing'] = ['post']
 
 
 # =============================================================================
 # Define classes
 # =============================================================================
 class RunIniFile:
-    def __init__(self, instrument: str, name: str):
+    def __init__(self, params: ParamDict, instrument: str, name: str):
         # core properties
         self.name = name
         self.instrument = instrument
         # load params and pconst for use throughout
-        self.params = constants.load(instrument)
+        self.params = params
         self.pconst = constants.pload(instrument)
         # import the recipe module
         self.recipemod = self.pconst.RECIPEMOD().get()
-        # set a PID for this set up (to avoid error messages)
-        self.params['PID'], _ = drs_startup.assign_pid()
         # get run keys (from startup)
         self.run_keys = dict(drs_startup.RUN_KEYS)
         # modify/add some values
@@ -81,6 +93,8 @@ class RunIniFile:
         self.ids = []
         # storage of lines in the output file
         self.lines = []
+        # storage of outpath
+        self.outpath = None
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -146,12 +160,83 @@ class RunIniFile:
         WLOG(self.params, 'error', emsg.format(*eargs))
         return None
 
-    def populate_text_file(self):
+    def populate_text_file(self, params: ParamDict):
         # TODO: fill this out using resources/run_ini/run_template.ini
-        pass
 
 
-    def generate_recipe_list(self):
+        # ---------------------------------------------------------------------
+        # step 1: construct output filename for this instrument
+        # ---------------------------------------------------------------------
+        # push in instrument name
+        outpath = OUTPATH.format(instrument=self.instrument.lower())
+        # get absolute outpath path
+        outpath = drs_path.get_relative_folder(params, __PACKAGE__, outpath)
+        # store in class
+        self.outpath = os.path.join(outpath, self.name + '.ini')
+        # ---------------------------------------------------------------------
+        # step 2: load the template run.ini file for this instrument
+        # ---------------------------------------------------------------------
+        # push in instrument name
+        template = TEMPLATE.format(instrument=self.instrument.lower())
+        # get absolute template path
+        template = drs_path.get_relative_folder(params, __PACKAGE__, template)
+        # load template
+        if os.path.exists(template):
+            with open(template, 'r') as tfile:
+                self.lines = tfile.readlines()
+        else:
+            emsg = 'Template file does not exist: {0}'
+            eargs = [template]
+            WLOG(params, 'error', emsg.format(*eargs))
+        # ---------------------------------------------------------------------
+        # step 3: generate run text and skip text
+        # ---------------------------------------------------------------------
+        # get list of recipe groups for this set of sequences
+        groups = self.generate_recipe_list()
+        # storage for the run and skip text
+        run_text, skip_text = '', ''
+        # loop around recipes in sequence
+        for group_name in groups:
+            # get group
+            group = groups[group_name]
+            # deal with no entries
+            if len(group) == 0:
+                continue
+            # add group comment
+            run_text += '\n# Run the {0} recipes\n'.format(group_name)
+            skip_text += '\n# Skip the {0} recipes\n'.format(group_name)
+            # loop around entries in group and add these rows
+            for srecipe in group:
+                run_text += 'RUN_{0} = True\n'.format(srecipe)
+                skip_text += 'SKIP_{0} = True\n'.format(srecipe)
+        # deal with blank
+        if len(run_text) == 0:
+            run_text = '# No sequence recipes to run\n'
+            skip_text = '# No sequence recipes to skip\n'
+
+        # push into run_keys
+        self.rkey('RUN_TEXT', run_text)
+        self.rkey('SKIP_TEXT', skip_text)
+        # ---------------------------------------------------------------------
+        # step 4: generate sequence / command text (via ids)
+        # ---------------------------------------------------------------------
+        # storage for id text
+        id_text = '\n'
+        # loop around ids
+        for it in range(len(self.ids)):
+            # add ids (be it sequence or command
+            id_text += 'id{0:05d} = {1}\n'.format(it, self.ids[it])
+        # push into run_keys
+        self.rkey('SEQUENCE_TEXT', id_text)
+        # ---------------------------------------------------------------------
+        # step 5: populate the lines
+        # ---------------------------------------------------------------------
+        # loop around lines
+        for row in range(len(self.lines)):
+            # update lines
+            self.lines[row] = self.lines[row].format(**self.run_keys)
+
+    def generate_recipe_list(self) -> Dict[str, List[str]]:
         # construct the index database instance
         indexdbm = IndexDatabase(self.params)
         indexdbm.load_db()
@@ -164,6 +249,7 @@ class RunIniFile:
                                                        tstars)
         # ----------------------------------------------------------------------
         recipes, shortnames = [], []
+        groups = dict()
         # loop around sequences
         for seq in self.sequences:
             # must process the adds
@@ -178,33 +264,94 @@ class RunIniFile:
                     # add short names
                     shortnames.append(srecipe.shortname)
 
+                recipe_kind = srecipe.recipe_kind
+                shortname = srecipe.shortname
+                # set found to False
+                found = False
+                # loop around processing groups
+                for group in GROUPS:
+                    # if already found break
+                    if found:
+                        break
+                    # loop around text in group
+                    for text in GROUPS[group]:
+                        # if we have found the text in recipe kind it belongs
+                        #   to this group
+                        if text in recipe_kind:
+                            # set found to True - we add it to the first group
+                            #   only that matches some text portion
+                            found = True
+                            # deal with group already present in groups
+                            if group in groups:
+                                groups[group].append(shortname)
+                            # deal with group not present in groups
+                            else:
+                                groups[group] = [shortname]
+        # ---------------------------------------------------------------------
+        return groups
+
+    def write_text_file(self):
+
+        with open(self.outpath, 'w') as ofile:
+            ofile.writelines(self.lines)
+
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
+def main(params: ParamDict) -> List[RunIniFile]:
+    # storage list
+    run_files = []
+    # -------------------------------------------------------------------------
+    # create default runs files for spirou
+    # -------------------------------------------------------------------------
+    # blank run
+    blank_run = RunIniFile(params, 'SPIROU', 'blank_run')
+    blank_run.append_sequence('blank_seq')
+    run_files.append(blank_run)
+    # mini run 1
+    mini_run1_spirou = RunIniFile(params, 'SPIROU', 'mini_run1')
+    mini_run1_spirou.rkey('MASTER_OBS_DIR', '2019-04-20')
+    mini_run1_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
+    mini_run1_spirou.append_sequence('limited_seq')
+    run_files.append(mini_run1_spirou)
+    # mini run 2
+    mini_run2_spirou = RunIniFile(params, 'SPIROU', 'mini_run2')
+    mini_run2_spirou.rkey('MASTER_OBS_DIR', '2020-08-31')
+    mini_run2_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
+    mini_run2_spirou.append_sequence('limited_seq')
+    run_files.append(mini_run2_spirou)
+    # quick run
+
+    # calib run
+
+    # complete run
+
+    # master calib run
+
+    # other run
+
+    # science run
+
+    # trigger night calib run
+
+    # trigger night science run
+
+    # -------------------------------------------------------------------------
+    # create default runs files for nirps_ha
+    # -------------------------------------------------------------------------
+
+
+    # return list of RunIniFile instances
+    return run_files
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
-    # -------------------------------------------------------------------------
-    # create default runs files for spirou
-    # -------------------------------------------------------------------------
-    # mini run 1
-    mini_run1_spirou = RunIniFile('SPIROU', 'mini_run1')
-    mini_run1_spirou.rkey('MASTER_OBS_DIR', '2019-04-20')
-    mini_run1_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
-    mini_run1_spirou.append_sequence('limited_seq')
-    RUN_FILES.append(mini_run1_spirou)
-    # mini run 2
-    mini_run2_spirou = RunIniFile('SPIROU', 'mini_run2')
-    mini_run2_spirou.rkey('MASTER_OBS_DIR', '2020-08-31')
-    mini_run2_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
-    mini_run2_spirou.append_sequence('limited_seq')
-    RUN_FILES.append(mini_run2_spirou)
-
+    _ = main()
 
 
 # =============================================================================
