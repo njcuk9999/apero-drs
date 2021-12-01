@@ -1426,12 +1426,13 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         # ------------------------------------------------------------------
         # if we are in trigger mode we need to stop when we have no
         #   sruns for recipe
-        if params['INPUTS']['TRIGGER'] and len(sruns) == 0:
-            # display message that we stopped here as no files were found
-            wargs = [srecipe.name]
-            WLOG(params, 'info', textentry('40-503-00028', args=wargs))
-            # stop processing recipes
-            break
+        if 'TRIGGER' in params['INPUTS']:
+            if params['INPUTS']['TRIGGER'] and len(sruns) == 0:
+                # display message that we stopped here as no files were found
+                wargs = [srecipe.name]
+                WLOG(params, 'info', textentry('40-503-00028', args=wargs))
+                # stop processing recipes
+                break
         # ------------------------------------------------------------------
         # append runs to output list
         # ------------------------------------------------------------------
@@ -3236,8 +3237,9 @@ def _remove_engineering(params, indexdb, condition):
 
     # if we are dealing with the trigger run do not do this -- user has
     #   specified a night
-    if params['INPUTS']['TRIGGER']:
-        return ''
+    if 'TRIGGER' in params['INPUTS']:
+        if params['INPUTS']['TRIGGER']:
+            return ''
     # get observation directory
     itable = indexdb.get_entries('OBS_DIR, KW_OBSTYPE', condition=condition)
     # get observation directory and observation types

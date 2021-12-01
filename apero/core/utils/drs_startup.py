@@ -74,10 +74,10 @@ RUN_KEYS = dict()
 RUN_KEYS['RUN_NAME'] = 'Run Unknown'
 RUN_KEYS['SEND_EMAIL'] = False
 RUN_KEYS['EMAIL_ADDRESS'] = None
-RUN_KEYS['RUN_OBS_DIR'] = None
-RUN_KEYS['EXCLUDE_OBS_DIRS'] = None
-RUN_KEYS['INCLUDE_OBS_DIRS'] = None
-RUN_KEYS['PI_NAMES'] = None
+RUN_KEYS['RUN_OBS_DIR'] = 'All'
+RUN_KEYS['EXCLUDE_OBS_DIRS'] = 'All'
+RUN_KEYS['INCLUDE_OBS_DIRS'] = 'All'
+RUN_KEYS['PI_NAMES'] = 'All'
 RUN_KEYS['MASTER_OBS_DIR'] = None
 RUN_KEYS['CORES'] = 1
 RUN_KEYS['STOP_AT_EXCEPTION'] = False
@@ -87,8 +87,8 @@ RUN_KEYS['TRIGGER_RUN'] = False
 RUN_KEYS['USE_ODO_REJECTLIST'] = True
 RUN_KEYS['RECAL_TEMPLATES'] = False
 RUN_KEYS['UPDATE_OBJ_DATABASE'] = False
-RUN_KEYS['TELLURIC_TARGETS'] = None
-RUN_KEYS['SCIENCE_TARGETS'] = None
+RUN_KEYS['TELLURIC_TARGETS'] = 'All'
+RUN_KEYS['SCIENCE_TARGETS'] = 'All'
 
 
 # =============================================================================
@@ -997,7 +997,7 @@ def read_runfile(params: ParamDict, runfile: str,
             params.set_source(key, func_name)
     # ----------------------------------------------------------------------
     if rkind == 'run':
-        # push default values (in case we don't have values in run file
+        # push default values (in case we don't have values in run file)
         for key in RUN_KEYS:
             if key not in params:
                 # print that we are using default settings (not a warning)
