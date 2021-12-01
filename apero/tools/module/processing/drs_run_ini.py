@@ -10,7 +10,8 @@ Created on 2021-11-08
 @author: cook
 """
 import os
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
+from collections import OrderedDict
 
 from apero import lang
 from apero.base import base
@@ -41,13 +42,17 @@ ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
+DrsSequence = drs_recipe.DrsRunSequence
 # Get index database
 IndexDatabase = drs_database.IndexDatabase
 ObjectDatabase = drs_database.ObjectDatabase
 # get text entry instance
 textentry = lang.textentry
 # define default master dir
-DEFAULT_MASTER_OBSDIR = '2020-08-31'
+DEFAULT_MASTER_OBSDIR = dict()
+DEFAULT_MASTER_OBSDIR['SPIROU'] = '2020-08-31'
+DEFAULT_MASTER_OBSDIR['NIRPS_HA'] = 'm20210605'
+DEFAULT_MASTER_OBSDIR['NIRPS_HE'] = 'm20210605'
 # define default number of cores
 DEFAULT_CORES = 5
 # define relative output path
@@ -64,6 +69,8 @@ GROUPS['telluric'] = ['tellu']
 GROUPS['radial velocity'] = ['rv']
 GROUPS['polar'] = ['polar']
 GROUPS['postprocessing'] = ['post']
+# define keys which should not be found as recipe RUN_ keys
+EXCLUDE_RUN_KEYS = ['RUN_NAME', 'RUN_OBS_DIR']
 
 
 # =============================================================================
@@ -85,16 +92,19 @@ class RunIniFile:
         self.rkey('VERSION', __version__)
         self.rkey('DATE', __date__)
         self.rkey('RUN_NAME', 'Run {0}'.format(self.name))
-        self.rkey('MASTER_OBS_DIR', DEFAULT_MASTER_OBSDIR)
+        self.rkey('MASTER_OBS_DIR', DEFAULT_MASTER_OBSDIR[self.instrument])
         self.rkey('CORES', DEFAULT_CORES)
         # storage of recipes and sequences
         self.recipes = []
         self.sequences = []
+        self.cmd_sequences = []
         self.ids = []
         # storage for user modified values
         self.run_keys_user_update = dict()
         self.run_extras = dict()
         self.skip_extras = dict()
+        self.run_default = True
+        self.skip_default = True
         # storage of lines in the output file
         self.lines = []
         # storage of outpath
@@ -142,6 +152,19 @@ class RunIniFile:
         """
         self.ids.append(command)
 
+    def add_sequence_as_command(self, seqstr: str):
+        """
+        Add a sequence that generates a set of commands for the ids directly
+
+        :param seqstr: str, the sequence name (must match the name of a
+                       DrsRunSequence)
+        :return:
+        """
+        # get sequence
+        sequence = self.find_sequence(seqstr)
+        # push into command sequence list
+        self.cmd_sequences.append(sequence)
+
     def find_sequence(self, seqstr: str
                       ) -> Union[drs_recipe.DrsRunSequence, None]:
         """
@@ -175,7 +198,7 @@ class RunIniFile:
         :return: None, updates run key
         """
         # deal with run keys
-        if 'RUN_' in key:
+        if 'RUN_' in key and key not in EXCLUDE_RUN_KEYS:
             # get srecipe name
             srecipe = key.split('RUN_')[-1]
             # push into run_extras
@@ -191,6 +214,13 @@ class RunIniFile:
             self.run_keys_user_update[key] = value
 
     def populate_text_file(self, params: ParamDict):
+        """
+        Populate the text file
+
+        :param params: ParamDict, parameter dictionary of constants
+
+        :return:
+        """
         # ---------------------------------------------------------------------
         # step 1: construct output filename for this instrument
         # ---------------------------------------------------------------------
@@ -219,7 +249,7 @@ class RunIniFile:
         # step 3: generate run text and skip text
         # ---------------------------------------------------------------------
         # get list of recipe groups for this set of sequences
-        groups = self.generate_recipe_list()
+        groups = self._generate_recipe_list(mode='group')
         # storage for the run and skip text
         run_text, skip_text = '', ''
         # loop around recipes in sequence
@@ -235,8 +265,8 @@ class RunIniFile:
             # loop around entries in group and add these rows
             for srecipe in group:
                 # get run and skip values
-                run_value = self.run_extras.get(srecipe, True)
-                skip_value = self.skip_extras.get(srecipe, True)
+                run_value = self.run_extras.get(srecipe, self.run_default)
+                skip_value = self.skip_extras.get(srecipe, self.skip_default)
                 # add to run_text and skip_text
                 run_text += 'RUN_{0} = {1}\n'.format(srecipe, run_value)
                 skip_text += 'SKIP_{0} = {1}\n'.format(srecipe, skip_value)
@@ -249,7 +279,17 @@ class RunIniFile:
         self.rkey('RUN_TEXT', run_text)
         self.rkey('SKIP_TEXT', skip_text)
         # ---------------------------------------------------------------------
-        # step 4: generate sequence / command text (via ids)
+        # step 4: deal with sequences to command line ids
+        # ---------------------------------------------------------------------
+        if len(self.cmd_sequences) > 0:
+
+
+
+
+            print('stop')
+
+        # ---------------------------------------------------------------------
+        # step 5: generate sequence / command text (via ids)
         # ---------------------------------------------------------------------
         # storage for id text
         id_text = '\n'
@@ -260,20 +300,23 @@ class RunIniFile:
         # push into run_keys
         self.rkey('SEQUENCE_TEXT', id_text)
         # ---------------------------------------------------------------------
-        # step 5: populate the lines
+        # step 6: populate the lines
         # ---------------------------------------------------------------------
         # update run keys from user input (forced)
         for key in self.run_keys_user_update:
             self.run_keys[key] = self.run_keys_user_update[key]
         # ---------------------------------------------------------------------
-        # step 6: populate the lines
+        # step 7: populate the lines
         # ---------------------------------------------------------------------
         # loop around lines
         for row in range(len(self.lines)):
             # update lines
             self.lines[row] = self.lines[row].format(**self.run_keys)
 
-    def generate_recipe_list(self) -> Dict[str, List[str]]:
+
+    def _generate_recipe_list(self, mode='group',
+                             sequences: Optional[List[DrsSequence]] = None
+                             ) -> Union[Dict[str, List[str]], List[DrsRecipe]]:
         # construct the index database instance
         indexdbm = IndexDatabase(self.params)
         indexdbm.load_db()
@@ -287,8 +330,11 @@ class RunIniFile:
         # ----------------------------------------------------------------------
         recipes, shortnames = [], []
         groups = dict()
+        # deal with having / not having sequence
+        if sequences is None:
+            sequences = self.sequences
         # loop around sequences
-        for seq in self.sequences:
+        for seq in sequences:
             # must process the adds
             seq.process_adds(self.params, tstars=list(tstars),
                              ostars=list(ostars), template_stars=template_olist)
@@ -325,7 +371,56 @@ class RunIniFile:
                             else:
                                 groups[group] = [shortname]
         # ---------------------------------------------------------------------
-        return groups
+        if mode == 'group':
+            return groups
+        else:
+            return recipes
+
+
+    def _add_command_sequences(self):
+        # TODO: finish this
+        # copy params
+        sparams = self.params.copy()
+        # get sequence list
+        sequencelist = []
+        for sequence in self.cmd_sequences:
+            sequencelist.append([sequence.name, sequence])
+        # recipe mod
+        pconst = constants.pload(self.instrument)
+        rmod = pconst.RECIPEMOD()
+        # push run keys into sparams
+        for run_key in self.run_keys:
+            sparams[run_key] = self.run_keys[run_key]
+        # generate run table
+        runtable = OrderedDict()
+        for it, sequence in enumerate(self.cmd_sequences):
+            runtable[it] = sequence.name
+        # get index database
+        indexdbm = drs_database.IndexDatabase(sparams)
+        # set rlist to None (for no sequences)
+        rlist = None
+        # loop around sequences
+        for sequence in sequencelist:
+            # log progress
+            WLOG(sparams, 'info', textentry('40-503-00009',
+                                                args=[sequence[0]]))
+            # generate new runs for sequence
+            newruns = drs_processing._generate_run_from_sequence(sparams,
+                                                                 sequence,
+                                                                 indexdbm)
+            # update runtable with sequence generation
+            runtable, rlist = drs_processing.update_run_table(sequence,
+                                                              runtable,
+                                                              newruns,
+                                                              rlist)
+        # all runtable elements should now be in recipe list
+        drs_processing._check_runtable(sparams, runtable, rmod)
+        # return Run instances for each runtable element
+        ids =  drs_processing.generate_ids(sparams, indexdbm, runtable,
+                                           rmod, None, rlist)
+
+
+
 
     def write_text_file(self):
 
@@ -337,57 +432,216 @@ class RunIniFile:
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(params: ParamDict) -> List[RunIniFile]:
+def get_runfiles(params: ParamDict) -> List[RunIniFile]:
+    """
+    Defines all possible run files
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: list of RunIniFile instances
+    """
     # storage list
     run_files = []
     # -------------------------------------------------------------------------
-    # create default runs files for spirou
+    # create default runs files for SPIROU
     # -------------------------------------------------------------------------
-    # blank run
-    blank_run = RunIniFile(params, 'SPIROU', 'blank_run')
-    blank_run.append_sequence('blank_seq')
-    run_files.append(blank_run)
-    # mini run 1
-    mini_run1_spirou = RunIniFile(params, 'SPIROU', 'mini_run1')
-    mini_run1_spirou.rkey('MASTER_OBS_DIR', '2019-04-20')
-    mini_run1_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
-    mini_run1_spirou.append_sequence('limited_seq')
-    run_files.append(mini_run1_spirou)
-    # mini run 2
-    mini_run2_spirou = RunIniFile(params, 'SPIROU', 'mini_run2')
-    mini_run2_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
-    mini_run2_spirou.append_sequence('limited_seq')
-    run_files.append(mini_run2_spirou)
-    # quick run
-    quick_run_spirou = RunIniFile(params, 'SPIROU', 'quick_run')
-    quick_run_spirou.append_sequence('pp_seq_opt')
-    quick_run_spirou.append_sequence('quick_seq')
-    quick_run_spirou.modify('RUN_PP_CAL', False)
-    quick_run_spirou.modify('RUN_PP_TEL', False)
-    run_files.append(quick_run_spirou)
-    # calib run
-    calib_run_spirou = RunIniFile(params, 'SPIROU', 'calib_run')
-    calib_run_spirou.append_sequence('pp_seq_opt')
-    calib_run_spirou.append_sequence('calib_seq')
-    calib_run_spirou.modify('RUN_PP_SCI', False)
-    calib_run_spirou.modify('RUN_PP_TEL', False)
-    # complete run
-
-    # master calib run
-
-    # other run
-
-    # science run
-
-    # trigger night calib run
-
-    # trigger night science run
+    # # blank run
+    # blank_run_spirou = RunIniFile(params, 'SPIROU', 'blank_run')
+    # blank_run_spirou.append_sequence('blank_seq')
+    # run_files.append(blank_run_spirou)
+    # # mini run 1
+    # mini_run1_spirou = RunIniFile(params, 'SPIROU', 'mini_run1')
+    # mini_run1_spirou.rkey('MASTER_OBS_DIR', '2019-04-20')
+    # mini_run1_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
+    # mini_run1_spirou.append_sequence('limited_seq')
+    # run_files.append(mini_run1_spirou)
+    # # mini run 2
+    # mini_run2_spirou = RunIniFile(params, 'SPIROU', 'mini_run2')
+    # mini_run2_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
+    # mini_run2_spirou.append_sequence('limited_seq')
+    # run_files.append(mini_run2_spirou)
+    # # quick run
+    # quick_run_spirou = RunIniFile(params, 'SPIROU', 'quick_run')
+    # quick_run_spirou.append_sequence('pp_seq_opt')
+    # quick_run_spirou.append_sequence('quick_seq')
+    # quick_run_spirou.modify('RUN_PP_CAL', False)
+    # quick_run_spirou.modify('RUN_PP_TEL', False)
+    # run_files.append(quick_run_spirou)
+    # # calib run
+    # calib_run_spirou = RunIniFile(params, 'SPIROU', 'calib_run')
+    # calib_run_spirou.append_sequence('pp_seq_opt')
+    # calib_run_spirou.append_sequence('calib_seq')
+    # calib_run_spirou.modify('RUN_PP_SCI', False)
+    # calib_run_spirou.modify('RUN_PP_TEL', False)
+    # run_files.append(calib_run_spirou)
+    # # complete run
+    # complete_run_spirou = RunIniFile(params, 'SPIROU', 'complete_run')
+    # complete_run_spirou.append_sequence('full_seq')
+    # run_files.append(complete_run_spirou)
+    # # master calib run
+    # mcalib_run_spirou = RunIniFile(params, 'SPIROU', 'master_calib_run')
+    # mcalib_run_spirou.append_sequence('pp_seq_opt')
+    # mcalib_run_spirou.append_sequence('master_seq')
+    # mcalib_run_spirou.modify('RUN_PP_SCI', False)
+    # mcalib_run_spirou.modify('RUN_PP_TEL', False)
+    # mcalib_run_spirou.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['SPIROU'])
+    # run_files.append(mcalib_run_spirou)
+    # # other run
+    # other_run_spirou = RunIniFile(params, 'SPIROU', 'other_run')
+    # other_run_spirou.append_sequence('pp_seq_opt')
+    # other_run_spirou.append_sequence('eng_seq')
+    # other_run_spirou.run_default = False
+    # run_files.append(other_run_spirou)
+    # # science run
+    # science_run_spirou = RunIniFile(params, 'SPIROU', 'science_run')
+    # science_run_spirou.append_sequence('pp_seq_opt')
+    # science_run_spirou.append_sequence('science_seq')
+    # science_run_spirou.modify('RUN_PP_CAL', False)
+    # science_run_spirou.modify('RUN_PP_TEL', False)
+    # run_files.append(science_run_spirou)
+    # # test run
+    # test_run_spirou = RunIniFile(params, 'SPIROU', 'test_run')
+    # test_run_spirou.append_sequence('limited_seq')
+    # test_run_spirou.run_default = False
+    # test_run_spirou.modify('TEST_RUN', True)
+    # run_files.append(test_run_spirou)
+    # # trigger night calib run
+    # tnc_run_spirou = RunIniFile(params, 'SPIROU', 'trigger_night_calib_run')
+    # tnc_run_spirou.append_sequence('pp_seq_opt')
+    # tnc_run_spirou.append_sequence('calib_seq')
+    # tnc_run_spirou.modify('RUN_PP_SCI', False)
+    # tnc_run_spirou.modify('RUN_PP_TEL', False)
+    # tnc_run_spirou.modify('TRIGGER_RUN', True)
+    # run_files.append(tnc_run_spirou)
+    # # trigger night science run
+    # tns_run_spirou = RunIniFile(params, 'SPIROU', 'trigger_night_science_run')
+    # tns_run_spirou.append_sequence('pp_seq_opt')
+    # tns_run_spirou.append_sequence('science_seq')
+    # tns_run_spirou.modify('RUN_PP_CAL', False)
+    # tns_run_spirou.modify('RUN_PP_TEL', False)
+    # tns_run_spirou.modify('TRIGGER_RUN', True)
+    # run_files.append(tns_run_spirou)
+    # batch run
+    # TODO: Add batch run (generated from limited_seq for master night)
+    # TODO: Add for SPIROU/NIRPS_HA/NIRPS_HE
+    batch_run_spirou = RunIniFile(params, 'SPIROU', 'batch_run')
+    batch_run_spirou.add_sequence_as_command('limited_seq')
+    batch_run_spirou.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['SPIROU'])
+    run_files.append(batch_run_spirou)
+    # # -------------------------------------------------------------------------
+    # # create default runs files for nirps_ha
+    # # -------------------------------------------------------------------------
+    # # blank run
+    # blank_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'blank_run')
+    # blank_run_nirps_ha.append_sequence('blank_seq')
+    # run_files.append(blank_run_nirps_ha)
+    # # mini run
+    # mini_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'mini_run1')
+    # mini_run_nirps_ha.append_sequence('limited_seq')
+    # run_files.append(mini_run_nirps_ha)
+    # # quick run
+    # quick_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'quick_run')
+    # quick_run_nirps_ha.append_sequence('pp_seq_opt')
+    # quick_run_nirps_ha.append_sequence('quick_seq')
+    # quick_run_nirps_ha.modify('RUN_PP_CAL', False)
+    # quick_run_nirps_ha.modify('RUN_PP_TEL', False)
+    # run_files.append(quick_run_nirps_ha)
+    # # calib run
+    # calib_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'calib_run')
+    # calib_run_nirps_ha.append_sequence('pp_seq_opt')
+    # calib_run_nirps_ha.append_sequence('calib_seq')
+    # calib_run_nirps_ha.modify('RUN_PP_SCI', False)
+    # calib_run_nirps_ha.modify('RUN_PP_TEL', False)
+    # run_files.append(calib_run_nirps_ha)
+    # # complete run
+    # complete_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'complete_run')
+    # complete_run_nirps_ha.append_sequence('full_seq')
+    # run_files.append(complete_run_nirps_ha)
+    # # master calib run
+    # mcalib_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'master_calib_run')
+    # mcalib_run_nirps_ha.append_sequence('pp_seq_opt')
+    # mcalib_run_nirps_ha.append_sequence('master_seq')
+    # mcalib_run_nirps_ha.modify('RUN_PP_SCI', False)
+    # mcalib_run_nirps_ha.modify('RUN_PP_TEL', False)
+    # mcalib_run_nirps_ha.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['NIRPS_HA'])
+    # run_files.append(mcalib_run_nirps_ha)
+    # # other run
+    # other_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'other_run')
+    # other_run_nirps_ha.append_sequence('pp_seq_opt')
+    # other_run_nirps_ha.append_sequence('eng_seq')
+    # other_run_nirps_ha.run_default = False
+    # run_files.append(other_run_nirps_ha)
+    # # science run
+    # science_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'science_run')
+    # science_run_nirps_ha.append_sequence('pp_seq_opt')
+    # science_run_nirps_ha.append_sequence('science_seq')
+    # science_run_nirps_ha.modify('RUN_PP_CAL', False)
+    # science_run_nirps_ha.modify('RUN_PP_TEL', False)
+    # run_files.append(science_run_nirps_ha)
+    # # test run
+    # test_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'test_run')
+    # test_run_nirps_ha.append_sequence('limited_seq')
+    # test_run_nirps_ha.run_default = False
+    # test_run_nirps_ha.modify('TEST_RUN', True)
+    # run_files.append(test_run_nirps_ha)
+    # # -------------------------------------------------------------------------
+    # # create default runs files for nirps_he
+    # # -------------------------------------------------------------------------
+    # # blank run
+    # blank_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'blank_run')
+    # blank_run_nirps_he.append_sequence('blank_seq')
+    # run_files.append(blank_run_nirps_he)
+    # # mini run
+    # mini_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'mini_run1')
+    # mini_run_nirps_he.append_sequence('limited_seq')
+    # run_files.append(mini_run_nirps_he)
+    # # quick run
+    # quick_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'quick_run')
+    # quick_run_nirps_he.append_sequence('pp_seq_opt')
+    # quick_run_nirps_he.append_sequence('quick_seq')
+    # quick_run_nirps_he.modify('RUN_PP_CAL', False)
+    # quick_run_nirps_he.modify('RUN_PP_TEL', False)
+    # run_files.append(quick_run_nirps_he)
+    # # calib run
+    # calib_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'calib_run')
+    # calib_run_nirps_he.append_sequence('pp_seq_opt')
+    # calib_run_nirps_he.append_sequence('calib_seq')
+    # calib_run_nirps_he.modify('RUN_PP_SCI', False)
+    # calib_run_nirps_he.modify('RUN_PP_TEL', False)
+    # run_files.append(calib_run_nirps_he)
+    # # complete run
+    # complete_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'complete_run')
+    # complete_run_nirps_he.append_sequence('full_seq')
+    # run_files.append(complete_run_nirps_he)
+    # # master calib run
+    # mcalib_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'master_calib_run')
+    # mcalib_run_nirps_he.append_sequence('pp_seq_opt')
+    # mcalib_run_nirps_he.append_sequence('master_seq')
+    # mcalib_run_nirps_he.modify('RUN_PP_SCI', False)
+    # mcalib_run_nirps_he.modify('RUN_PP_TEL', False)
+    # mcalib_run_nirps_he.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['NIRPS_HE'])
+    # run_files.append(mcalib_run_nirps_he)
+    # # other run
+    # other_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'other_run')
+    # other_run_nirps_he.append_sequence('pp_seq_opt')
+    # other_run_nirps_he.append_sequence('eng_seq')
+    # other_run_nirps_he.run_default = False
+    # run_files.append(other_run_nirps_he)
+    # # science run
+    # science_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'science_run')
+    # science_run_nirps_he.append_sequence('pp_seq_opt')
+    # science_run_nirps_he.append_sequence('science_seq')
+    # science_run_nirps_he.modify('RUN_PP_CAL', False)
+    # science_run_nirps_he.modify('RUN_PP_TEL', False)
+    # run_files.append(science_run_nirps_he)
+    # # test run
+    # test_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'test_run')
+    # test_run_nirps_he.append_sequence('limited_seq')
+    # test_run_nirps_he.run_default = False
+    # test_run_nirps_he.modify('TEST_RUN', True)
+    # run_files.append(test_run_nirps_he)
 
     # -------------------------------------------------------------------------
-    # create default runs files for nirps_ha
-    # -------------------------------------------------------------------------
-
-
     # return list of RunIniFile instances
     return run_files
 
@@ -396,7 +650,7 @@ def main(params: ParamDict) -> List[RunIniFile]:
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
-    _ = main()
+    _ = get_runfiles()
 
 
 # =============================================================================

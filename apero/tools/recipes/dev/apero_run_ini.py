@@ -78,22 +78,24 @@ def __main__(recipe, params):
     # log progress
     WLOG(params, 'info', 'Generating list of default run.ini files')
     # get default run file instances
-    run_files = drs_run_ini.main(params)
+    run_files = drs_run_ini.get_runfiles(params)
+    # print how many found
+    WLOG(params, '', '\tFound {0} run file templates'.format(len(run_files)))
     # loop around run files
-    for run_file in run_files:
+    for it, run_file in enumerate(run_files):
         # skip invalid instruments
         if run_file.instrument not in instruments:
             continue
         # progress report
-        msg = 'Processing file: {0}'
-        margs = [run_file.name]
+        msg = 'Processing file {0} of {1}: {2} [{3}]'
+        margs = [it + 1, len(run_files), run_file.name, run_file.instrument]
         WLOG(params, 'info', msg.format(*margs))
         # populate the text file
         run_file.populate_text_file(params)
         # print message
-        msg = 'Writing file: {0}'
+        msg = '\tWriting file: {0}'
         margs = [run_file.outpath]
-        WLOG(params, 'info', msg.format(*margs))
+        WLOG(params, '', msg.format(*margs))
         # write to file
         run_file.write_text_file()
 
