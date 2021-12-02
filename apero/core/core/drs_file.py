@@ -2838,7 +2838,7 @@ class DrsFitsFile(DrsInputFile):
             filename = outfilename
             bottomfile = cintype
         # ------------------------------------------------------------------
-        # add values to infile
+        # infile is the bottom file
         infile.filename = filename
         infile.basename = os.path.basename(filename)
         infile.filetype = ext
@@ -3035,21 +3035,26 @@ class DrsFitsFile(DrsInputFile):
                     rvalues = [rvalues]
                 # set up aux valid
                 valid1 = False
+                # get this value
+                filedictvalue = filedict[key]
+                # deal with null values
+                if filedictvalue in [None, 'None', '']:
+                    valid1 |= True
+                    continue
+                # special condition on KW_OUTPUT - raw files should not be
+                #   judged based on this condition
+                elif key == 'KW_OUTPUT' and filedictvalue.startswith('RAW_'):
+                    valid1 |= True
+                    continue
+                # deal with masked values
+                if isinstance(filedictvalue, MaskedConstant):
+                    valid1 |= True
+                    continue
+                # make sure there are no white spaces and all upper case
+                if isinstance(filedictvalue, str):
+                    filedictvalue = filedictvalue.strip().upper()
                 # loop around
                 for rvalue in rvalues:
-                    # get this value
-                    filedictvalue = filedict[key]
-                    # deal with null values
-                    if filedictvalue in [None, 'None', '']:
-                        valid1 |= True
-                        continue
-                    # deal with masked values
-                    if isinstance(filedictvalue, MaskedConstant):
-                        valid1 |= True
-                        continue
-                    # make sure there are no white spaces and all upper case
-                    if isinstance(filedictvalue, str):
-                        filedictvalue = filedictvalue.strip().upper()
                     # else make sure there are no end white spaces and all
                     #   upper case for the required value
                     rvalueclean = rvalue.strip().upper()

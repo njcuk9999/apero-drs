@@ -1648,7 +1648,8 @@ class DrsRunSequence:
     def process_adds(self, params: ParamDict,
                      tstars: Union[List[str], None] = None,
                      ostars: Union[List[str], None] = None,
-                     template_stars: Union[List[str], None] = None):
+                     template_stars: Union[List[str], None] = None,
+                     logmsg: bool = True):
         """
         Process the DrsRunSequence.adds list (that have been added/defined
         previous) - this actually creates copies of the recipes and modifies
@@ -1694,8 +1695,9 @@ class DrsRunSequence:
             if add['recipe_kind'] is not None:
                 frecipe.recipe_kind = add['recipe_kind']
             # print out
-            wargs = [frecipe.shortname]
-            WLOG(params, '', textentry('40-503-00038', args=wargs))
+            if logmsg:
+                wargs = [frecipe.shortname]
+                WLOG(params, '', textentry('40-503-00038', args=wargs))
             # set fiber
             if add['fiber'] is not None:
                 frecipe.allowedfibers = add['fiber']

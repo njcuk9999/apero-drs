@@ -279,17 +279,18 @@ class RunIniFile:
         self.rkey('RUN_TEXT', run_text)
         self.rkey('SKIP_TEXT', skip_text)
         # ---------------------------------------------------------------------
-        # step 4: deal with sequences to command line ids
+        # step 4: populate the lines
+        # ---------------------------------------------------------------------
+        # update run keys from user input (forced)
+        for key in self.run_keys_user_update:
+            self.run_keys[key] = self.run_keys_user_update[key]
+        # ---------------------------------------------------------------------
+        # step 5: deal with sequences to command line ids
         # ---------------------------------------------------------------------
         if len(self.cmd_sequences) > 0:
-
-
-
-
-            print('stop')
-
+            self._add_command_sequences()
         # ---------------------------------------------------------------------
-        # step 5: generate sequence / command text (via ids)
+        # step 6: generate sequence / command text (via ids)
         # ---------------------------------------------------------------------
         # storage for id text
         id_text = '\n'
@@ -299,12 +300,7 @@ class RunIniFile:
             id_text += 'id{0:05d} = {1}\n'.format(it, self.ids[it])
         # push into run_keys
         self.rkey('SEQUENCE_TEXT', id_text)
-        # ---------------------------------------------------------------------
-        # step 6: populate the lines
-        # ---------------------------------------------------------------------
-        # update run keys from user input (forced)
-        for key in self.run_keys_user_update:
-            self.run_keys[key] = self.run_keys_user_update[key]
+
         # ---------------------------------------------------------------------
         # step 7: populate the lines
         # ---------------------------------------------------------------------
@@ -333,11 +329,17 @@ class RunIniFile:
         # deal with having / not having sequence
         if sequences is None:
             sequences = self.sequences
+        # deal with logging for group
+        if mode == 'group':
+            logmsg = True
+        else:
+            logmsg = False
         # loop around sequences
         for seq in sequences:
             # must process the adds
             seq.process_adds(self.params, tstars=list(tstars),
-                             ostars=list(ostars), template_stars=template_olist)
+                             ostars=list(ostars), template_stars=template_olist,
+                             logmsg=logmsg)
             # loop around recipe in sequences
             for srecipe in seq.sequence:
                 # only add unique recipes
@@ -385,20 +387,23 @@ class RunIniFile:
         sequencelist = []
         for sequence in self.cmd_sequences:
             sequencelist.append([sequence.name, sequence])
-        # recipe mod
-        pconst = constants.pload(self.instrument)
-        rmod = pconst.RECIPEMOD()
         # push run keys into sparams
         for run_key in self.run_keys:
             sparams[run_key] = self.run_keys[run_key]
+        # get list of recipe groups for this set of sequences
+        srecipes = self._generate_recipe_list(mode='recipes',
+                                             sequences=self.cmd_sequences)
+        # add recipe run keys
+        for srecipe in srecipes:
+            run_key = 'RUN_{0}'.format(srecipe.shortname)
+            sparams[run_key] = True
+
         # generate run table
         runtable = OrderedDict()
         for it, sequence in enumerate(self.cmd_sequences):
             runtable[it] = sequence.name
         # get index database
         indexdbm = drs_database.IndexDatabase(sparams)
-        # set rlist to None (for no sequences)
-        rlist = None
         # loop around sequences
         for sequence in sequencelist:
             # log progress
@@ -408,16 +413,8 @@ class RunIniFile:
             newruns = drs_processing._generate_run_from_sequence(sparams,
                                                                  sequence,
                                                                  indexdbm)
-            # update runtable with sequence generation
-            runtable, rlist = drs_processing.update_run_table(sequence,
-                                                              runtable,
-                                                              newruns,
-                                                              rlist)
-        # all runtable elements should now be in recipe list
-        drs_processing._check_runtable(sparams, runtable, rmod)
-        # return Run instances for each runtable element
-        ids =  drs_processing.generate_ids(sparams, indexdbm, runtable,
-                                           rmod, None, rlist)
+            for newrun in newruns:
+                self.ids.append(newrun[0])
 
 
 
@@ -445,202 +442,233 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     # -------------------------------------------------------------------------
     # create default runs files for SPIROU
     # -------------------------------------------------------------------------
-    # # blank run
-    # blank_run_spirou = RunIniFile(params, 'SPIROU', 'blank_run')
-    # blank_run_spirou.append_sequence('blank_seq')
-    # run_files.append(blank_run_spirou)
-    # # mini run 1
-    # mini_run1_spirou = RunIniFile(params, 'SPIROU', 'mini_run1')
-    # mini_run1_spirou.rkey('MASTER_OBS_DIR', '2019-04-20')
-    # mini_run1_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
-    # mini_run1_spirou.append_sequence('limited_seq')
-    # run_files.append(mini_run1_spirou)
-    # # mini run 2
-    # mini_run2_spirou = RunIniFile(params, 'SPIROU', 'mini_run2')
-    # mini_run2_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
-    # mini_run2_spirou.append_sequence('limited_seq')
-    # run_files.append(mini_run2_spirou)
-    # # quick run
-    # quick_run_spirou = RunIniFile(params, 'SPIROU', 'quick_run')
-    # quick_run_spirou.append_sequence('pp_seq_opt')
-    # quick_run_spirou.append_sequence('quick_seq')
-    # quick_run_spirou.modify('RUN_PP_CAL', False)
-    # quick_run_spirou.modify('RUN_PP_TEL', False)
-    # run_files.append(quick_run_spirou)
-    # # calib run
-    # calib_run_spirou = RunIniFile(params, 'SPIROU', 'calib_run')
-    # calib_run_spirou.append_sequence('pp_seq_opt')
-    # calib_run_spirou.append_sequence('calib_seq')
-    # calib_run_spirou.modify('RUN_PP_SCI', False)
-    # calib_run_spirou.modify('RUN_PP_TEL', False)
-    # run_files.append(calib_run_spirou)
-    # # complete run
-    # complete_run_spirou = RunIniFile(params, 'SPIROU', 'complete_run')
-    # complete_run_spirou.append_sequence('full_seq')
-    # run_files.append(complete_run_spirou)
-    # # master calib run
-    # mcalib_run_spirou = RunIniFile(params, 'SPIROU', 'master_calib_run')
-    # mcalib_run_spirou.append_sequence('pp_seq_opt')
-    # mcalib_run_spirou.append_sequence('master_seq')
-    # mcalib_run_spirou.modify('RUN_PP_SCI', False)
-    # mcalib_run_spirou.modify('RUN_PP_TEL', False)
-    # mcalib_run_spirou.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['SPIROU'])
-    # run_files.append(mcalib_run_spirou)
-    # # other run
-    # other_run_spirou = RunIniFile(params, 'SPIROU', 'other_run')
-    # other_run_spirou.append_sequence('pp_seq_opt')
-    # other_run_spirou.append_sequence('eng_seq')
-    # other_run_spirou.run_default = False
-    # run_files.append(other_run_spirou)
-    # # science run
-    # science_run_spirou = RunIniFile(params, 'SPIROU', 'science_run')
-    # science_run_spirou.append_sequence('pp_seq_opt')
-    # science_run_spirou.append_sequence('science_seq')
-    # science_run_spirou.modify('RUN_PP_CAL', False)
-    # science_run_spirou.modify('RUN_PP_TEL', False)
-    # run_files.append(science_run_spirou)
-    # # test run
-    # test_run_spirou = RunIniFile(params, 'SPIROU', 'test_run')
-    # test_run_spirou.append_sequence('limited_seq')
-    # test_run_spirou.run_default = False
-    # test_run_spirou.modify('TEST_RUN', True)
-    # run_files.append(test_run_spirou)
-    # # trigger night calib run
-    # tnc_run_spirou = RunIniFile(params, 'SPIROU', 'trigger_night_calib_run')
-    # tnc_run_spirou.append_sequence('pp_seq_opt')
-    # tnc_run_spirou.append_sequence('calib_seq')
-    # tnc_run_spirou.modify('RUN_PP_SCI', False)
-    # tnc_run_spirou.modify('RUN_PP_TEL', False)
-    # tnc_run_spirou.modify('TRIGGER_RUN', True)
-    # run_files.append(tnc_run_spirou)
-    # # trigger night science run
-    # tns_run_spirou = RunIniFile(params, 'SPIROU', 'trigger_night_science_run')
-    # tns_run_spirou.append_sequence('pp_seq_opt')
-    # tns_run_spirou.append_sequence('science_seq')
-    # tns_run_spirou.modify('RUN_PP_CAL', False)
-    # tns_run_spirou.modify('RUN_PP_TEL', False)
-    # tns_run_spirou.modify('TRIGGER_RUN', True)
-    # run_files.append(tns_run_spirou)
+    # blank run
+    blank_run_spirou = RunIniFile(params, 'SPIROU', 'blank_run')
+    blank_run_spirou.append_sequence('blank_seq')
+    run_files.append(blank_run_spirou)
+    # mini run 1
+    mini_run1_spirou = RunIniFile(params, 'SPIROU', 'mini_run1')
+    mini_run1_spirou.rkey('MASTER_OBS_DIR', '2019-04-20')
+    mini_run1_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
+    mini_run1_spirou.append_sequence('limited_seq')
+    run_files.append(mini_run1_spirou)
+    # mini run 2
+    mini_run2_spirou = RunIniFile(params, 'SPIROU', 'mini_run2')
+    mini_run2_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
+    mini_run2_spirou.append_sequence('limited_seq')
+    run_files.append(mini_run2_spirou)
+    # quick run
+    quick_run_spirou = RunIniFile(params, 'SPIROU', 'quick_run')
+    quick_run_spirou.append_sequence('pp_seq_opt')
+    quick_run_spirou.append_sequence('quick_seq')
+    quick_run_spirou.modify('RUN_PP_CAL', False)
+    quick_run_spirou.modify('RUN_PP_TEL', False)
+    run_files.append(quick_run_spirou)
+    # calib run
+    calib_run_spirou = RunIniFile(params, 'SPIROU', 'calib_run')
+    calib_run_spirou.append_sequence('pp_seq_opt')
+    calib_run_spirou.append_sequence('calib_seq')
+    calib_run_spirou.modify('RUN_PP_SCI', False)
+    calib_run_spirou.modify('RUN_PP_TEL', False)
+    run_files.append(calib_run_spirou)
+    # complete run
+    complete_run_spirou = RunIniFile(params, 'SPIROU', 'complete_run')
+    complete_run_spirou.append_sequence('full_seq')
+    run_files.append(complete_run_spirou)
+    # master calib run
+    mcalib_run_spirou = RunIniFile(params, 'SPIROU', 'master_calib_run')
+    mcalib_run_spirou.append_sequence('pp_seq_opt')
+    mcalib_run_spirou.append_sequence('master_seq')
+    mcalib_run_spirou.modify('RUN_PP_SCI', False)
+    mcalib_run_spirou.modify('RUN_PP_TEL', False)
+    mcalib_run_spirou.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['SPIROU'])
+    run_files.append(mcalib_run_spirou)
+    # other run
+    other_run_spirou = RunIniFile(params, 'SPIROU', 'other_run')
+    other_run_spirou.append_sequence('pp_seq_opt')
+    other_run_spirou.append_sequence('eng_seq')
+    other_run_spirou.run_default = False
+    run_files.append(other_run_spirou)
+    # tellu run
+    tellu_run_spirou = RunIniFile(params, 'SPIROU', 'tellu_run')
+    tellu_run_spirou.append_sequence('pp_seq_opt')
+    tellu_run_spirou.append_sequence('science_seq')
+    tellu_run_spirou.modify('RUN_PP_CAL', False)
+    tellu_run_spirou.modify('RUN_PP_SCI', False)
+    # science run
+    science_run_spirou = RunIniFile(params, 'SPIROU', 'science_run')
+    science_run_spirou.append_sequence('pp_seq_opt')
+    science_run_spirou.append_sequence('science_seq')
+    science_run_spirou.modify('RUN_PP_CAL', False)
+    science_run_spirou.modify('RUN_PP_TEL', False)
+    science_run_spirou.modify('RECAL_TEMPLATES', False)
+    run_files.append(science_run_spirou)
+    # test run
+    test_run_spirou = RunIniFile(params, 'SPIROU', 'test_run')
+    test_run_spirou.append_sequence('limited_seq')
+    test_run_spirou.run_default = False
+    test_run_spirou.modify('TEST_RUN', True)
+    run_files.append(test_run_spirou)
+    # trigger night calib run
+    tnc_run_spirou = RunIniFile(params, 'SPIROU', 'trigger_night_calib_run')
+    tnc_run_spirou.append_sequence('pp_seq_opt')
+    tnc_run_spirou.append_sequence('calib_seq')
+    tnc_run_spirou.modify('RUN_PP_SCI', False)
+    tnc_run_spirou.modify('RUN_PP_TEL', False)
+    tnc_run_spirou.modify('RECAL_TEMPLATES', False)
+    tnc_run_spirou.modify('TRIGGER_RUN', True)
+    run_files.append(tnc_run_spirou)
+    # trigger night science run
+    tns_run_spirou = RunIniFile(params, 'SPIROU', 'trigger_night_science_run')
+    tns_run_spirou.append_sequence('pp_seq_opt')
+    tns_run_spirou.append_sequence('science_seq')
+    tns_run_spirou.modify('RUN_PP_CAL', False)
+    tns_run_spirou.modify('RUN_PP_TEL', False)
+    tns_run_spirou.modify('RECAL_TEMPLATES', False)
+    tns_run_spirou.modify('TRIGGER_RUN', True)
+    run_files.append(tns_run_spirou)
     # batch run
-    # TODO: Add batch run (generated from limited_seq for master night)
-    # TODO: Add for SPIROU/NIRPS_HA/NIRPS_HE
     batch_run_spirou = RunIniFile(params, 'SPIROU', 'batch_run')
     batch_run_spirou.add_sequence_as_command('limited_seq')
     batch_run_spirou.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['SPIROU'])
     run_files.append(batch_run_spirou)
-    # # -------------------------------------------------------------------------
-    # # create default runs files for nirps_ha
-    # # -------------------------------------------------------------------------
-    # # blank run
-    # blank_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'blank_run')
-    # blank_run_nirps_ha.append_sequence('blank_seq')
-    # run_files.append(blank_run_nirps_ha)
-    # # mini run
-    # mini_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'mini_run1')
-    # mini_run_nirps_ha.append_sequence('limited_seq')
-    # run_files.append(mini_run_nirps_ha)
-    # # quick run
-    # quick_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'quick_run')
-    # quick_run_nirps_ha.append_sequence('pp_seq_opt')
-    # quick_run_nirps_ha.append_sequence('quick_seq')
-    # quick_run_nirps_ha.modify('RUN_PP_CAL', False)
-    # quick_run_nirps_ha.modify('RUN_PP_TEL', False)
-    # run_files.append(quick_run_nirps_ha)
-    # # calib run
-    # calib_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'calib_run')
-    # calib_run_nirps_ha.append_sequence('pp_seq_opt')
-    # calib_run_nirps_ha.append_sequence('calib_seq')
-    # calib_run_nirps_ha.modify('RUN_PP_SCI', False)
-    # calib_run_nirps_ha.modify('RUN_PP_TEL', False)
-    # run_files.append(calib_run_nirps_ha)
-    # # complete run
-    # complete_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'complete_run')
-    # complete_run_nirps_ha.append_sequence('full_seq')
-    # run_files.append(complete_run_nirps_ha)
-    # # master calib run
-    # mcalib_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'master_calib_run')
-    # mcalib_run_nirps_ha.append_sequence('pp_seq_opt')
-    # mcalib_run_nirps_ha.append_sequence('master_seq')
-    # mcalib_run_nirps_ha.modify('RUN_PP_SCI', False)
-    # mcalib_run_nirps_ha.modify('RUN_PP_TEL', False)
-    # mcalib_run_nirps_ha.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['NIRPS_HA'])
-    # run_files.append(mcalib_run_nirps_ha)
-    # # other run
-    # other_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'other_run')
-    # other_run_nirps_ha.append_sequence('pp_seq_opt')
-    # other_run_nirps_ha.append_sequence('eng_seq')
-    # other_run_nirps_ha.run_default = False
-    # run_files.append(other_run_nirps_ha)
-    # # science run
-    # science_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'science_run')
-    # science_run_nirps_ha.append_sequence('pp_seq_opt')
-    # science_run_nirps_ha.append_sequence('science_seq')
-    # science_run_nirps_ha.modify('RUN_PP_CAL', False)
-    # science_run_nirps_ha.modify('RUN_PP_TEL', False)
-    # run_files.append(science_run_nirps_ha)
-    # # test run
-    # test_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'test_run')
-    # test_run_nirps_ha.append_sequence('limited_seq')
-    # test_run_nirps_ha.run_default = False
-    # test_run_nirps_ha.modify('TEST_RUN', True)
-    # run_files.append(test_run_nirps_ha)
-    # # -------------------------------------------------------------------------
-    # # create default runs files for nirps_he
-    # # -------------------------------------------------------------------------
-    # # blank run
-    # blank_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'blank_run')
-    # blank_run_nirps_he.append_sequence('blank_seq')
-    # run_files.append(blank_run_nirps_he)
-    # # mini run
-    # mini_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'mini_run1')
-    # mini_run_nirps_he.append_sequence('limited_seq')
-    # run_files.append(mini_run_nirps_he)
-    # # quick run
-    # quick_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'quick_run')
-    # quick_run_nirps_he.append_sequence('pp_seq_opt')
-    # quick_run_nirps_he.append_sequence('quick_seq')
-    # quick_run_nirps_he.modify('RUN_PP_CAL', False)
-    # quick_run_nirps_he.modify('RUN_PP_TEL', False)
-    # run_files.append(quick_run_nirps_he)
-    # # calib run
-    # calib_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'calib_run')
-    # calib_run_nirps_he.append_sequence('pp_seq_opt')
-    # calib_run_nirps_he.append_sequence('calib_seq')
-    # calib_run_nirps_he.modify('RUN_PP_SCI', False)
-    # calib_run_nirps_he.modify('RUN_PP_TEL', False)
-    # run_files.append(calib_run_nirps_he)
-    # # complete run
-    # complete_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'complete_run')
-    # complete_run_nirps_he.append_sequence('full_seq')
-    # run_files.append(complete_run_nirps_he)
-    # # master calib run
-    # mcalib_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'master_calib_run')
-    # mcalib_run_nirps_he.append_sequence('pp_seq_opt')
-    # mcalib_run_nirps_he.append_sequence('master_seq')
-    # mcalib_run_nirps_he.modify('RUN_PP_SCI', False)
-    # mcalib_run_nirps_he.modify('RUN_PP_TEL', False)
-    # mcalib_run_nirps_he.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['NIRPS_HE'])
-    # run_files.append(mcalib_run_nirps_he)
-    # # other run
-    # other_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'other_run')
-    # other_run_nirps_he.append_sequence('pp_seq_opt')
-    # other_run_nirps_he.append_sequence('eng_seq')
-    # other_run_nirps_he.run_default = False
-    # run_files.append(other_run_nirps_he)
-    # # science run
-    # science_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'science_run')
-    # science_run_nirps_he.append_sequence('pp_seq_opt')
-    # science_run_nirps_he.append_sequence('science_seq')
-    # science_run_nirps_he.modify('RUN_PP_CAL', False)
-    # science_run_nirps_he.modify('RUN_PP_TEL', False)
-    # run_files.append(science_run_nirps_he)
-    # # test run
-    # test_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'test_run')
-    # test_run_nirps_he.append_sequence('limited_seq')
-    # test_run_nirps_he.run_default = False
-    # test_run_nirps_he.modify('TEST_RUN', True)
-    # run_files.append(test_run_nirps_he)
-
+    # -------------------------------------------------------------------------
+    # create default runs files for nirps_ha
+    # -------------------------------------------------------------------------
+    # blank run
+    blank_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'blank_run')
+    blank_run_nirps_ha.append_sequence('blank_seq')
+    run_files.append(blank_run_nirps_ha)
+    # mini run
+    mini_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'mini_run1')
+    mini_run_nirps_ha.append_sequence('limited_seq')
+    run_files.append(mini_run_nirps_ha)
+    # quick run
+    quick_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'quick_run')
+    quick_run_nirps_ha.append_sequence('pp_seq_opt')
+    quick_run_nirps_ha.append_sequence('quick_seq')
+    quick_run_nirps_ha.modify('RUN_PP_CAL', False)
+    quick_run_nirps_ha.modify('RUN_PP_TEL', False)
+    run_files.append(quick_run_nirps_ha)
+    # calib run
+    calib_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'calib_run')
+    calib_run_nirps_ha.append_sequence('pp_seq_opt')
+    calib_run_nirps_ha.append_sequence('calib_seq')
+    calib_run_nirps_ha.modify('RUN_PP_SCI', False)
+    calib_run_nirps_ha.modify('RUN_PP_TEL', False)
+    run_files.append(calib_run_nirps_ha)
+    # complete run
+    complete_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'complete_run')
+    complete_run_nirps_ha.append_sequence('full_seq')
+    run_files.append(complete_run_nirps_ha)
+    # master calib run
+    mcalib_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'master_calib_run')
+    mcalib_run_nirps_ha.append_sequence('pp_seq_opt')
+    mcalib_run_nirps_ha.append_sequence('master_seq')
+    mcalib_run_nirps_ha.modify('RUN_PP_SCI', False)
+    mcalib_run_nirps_ha.modify('RUN_PP_TEL', False)
+    mcalib_run_nirps_ha.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['NIRPS_HA'])
+    run_files.append(mcalib_run_nirps_ha)
+    # other run
+    other_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'other_run')
+    other_run_nirps_ha.append_sequence('pp_seq_opt')
+    other_run_nirps_ha.append_sequence('eng_seq')
+    other_run_nirps_ha.run_default = False
+    run_files.append(other_run_nirps_ha)
+    # science run
+    science_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'science_run')
+    science_run_nirps_ha.append_sequence('pp_seq_opt')
+    science_run_nirps_ha.append_sequence('science_seq')
+    science_run_nirps_ha.modify('RUN_PP_CAL', False)
+    science_run_nirps_ha.modify('RUN_PP_TEL', False)
+    science_run_nirps_ha.modify('RECAL_TEMPLATES', False)
+    run_files.append(science_run_nirps_ha)
+    # tellu run
+    tellu_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'tellu_run')
+    tellu_run_nirps_ha.append_sequence('pp_seq_opt')
+    tellu_run_nirps_ha.append_sequence('science_seq')
+    tellu_run_nirps_ha.modify('RUN_PP_CAL', False)
+    tellu_run_nirps_ha.modify('RUN_PP_SCI', False)
+    run_files.append(tellu_run_nirps_ha)
+    # test run
+    test_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'test_run')
+    test_run_nirps_ha.append_sequence('limited_seq')
+    test_run_nirps_ha.run_default = False
+    test_run_nirps_ha.modify('TEST_RUN', True)
+    run_files.append(test_run_nirps_ha)
+    # batch run
+    # batch_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'batch_run')
+    # batch_run_nirps_ha.add_sequence_as_command('limited_seq')
+    # batch_run_nirps_ha.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['NIRPS_HA'])
+    # run_files.append(batch_run_nirps_ha)
+    # -------------------------------------------------------------------------
+    # create default runs files for nirps_he
+    # -------------------------------------------------------------------------
+    # blank run
+    blank_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'blank_run')
+    blank_run_nirps_he.append_sequence('blank_seq')
+    run_files.append(blank_run_nirps_he)
+    # mini run
+    mini_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'mini_run1')
+    mini_run_nirps_he.append_sequence('limited_seq')
+    run_files.append(mini_run_nirps_he)
+    # quick run
+    quick_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'quick_run')
+    quick_run_nirps_he.append_sequence('pp_seq_opt')
+    quick_run_nirps_he.append_sequence('quick_seq')
+    quick_run_nirps_he.modify('RUN_PP_CAL', False)
+    quick_run_nirps_he.modify('RUN_PP_TEL', False)
+    run_files.append(quick_run_nirps_he)
+    # calib run
+    calib_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'calib_run')
+    calib_run_nirps_he.append_sequence('pp_seq_opt')
+    calib_run_nirps_he.append_sequence('calib_seq')
+    calib_run_nirps_he.modify('RUN_PP_SCI', False)
+    calib_run_nirps_he.modify('RUN_PP_TEL', False)
+    run_files.append(calib_run_nirps_he)
+    # complete run
+    complete_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'complete_run')
+    complete_run_nirps_he.append_sequence('full_seq')
+    run_files.append(complete_run_nirps_he)
+    # master calib run
+    mcalib_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'master_calib_run')
+    mcalib_run_nirps_he.append_sequence('pp_seq_opt')
+    mcalib_run_nirps_he.append_sequence('master_seq')
+    mcalib_run_nirps_he.modify('RUN_PP_SCI', False)
+    mcalib_run_nirps_he.modify('RUN_PP_TEL', False)
+    mcalib_run_nirps_he.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['NIRPS_HE'])
+    run_files.append(mcalib_run_nirps_he)
+    # other run
+    other_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'other_run')
+    other_run_nirps_he.append_sequence('pp_seq_opt')
+    other_run_nirps_he.append_sequence('eng_seq')
+    other_run_nirps_he.run_default = False
+    run_files.append(other_run_nirps_he)
+    # science run
+    science_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'science_run')
+    science_run_nirps_he.append_sequence('pp_seq_opt')
+    science_run_nirps_he.append_sequence('science_seq')
+    science_run_nirps_he.modify('RUN_PP_CAL', False)
+    science_run_nirps_he.modify('RUN_PP_TEL', False)
+    science_run_nirps_he.modify('RECAL_TEMPLATES', False)
+    # tellu run
+    tellu_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'tellu_run')
+    tellu_run_nirps_he.append_sequence('pp_seq_opt')
+    tellu_run_nirps_he.append_sequence('science_seq')
+    tellu_run_nirps_he.modify('RUN_PP_CAL', False)
+    tellu_run_nirps_he.modify('RUN_PP_SCI', False)
+    run_files.append(tellu_run_nirps_ha)
+    # test run
+    test_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'test_run')
+    test_run_nirps_he.append_sequence('limited_seq')
+    test_run_nirps_he.run_default = False
+    test_run_nirps_he.modify('TEST_RUN', True)
+    run_files.append(test_run_nirps_he)
+    # batch run
+    # batch_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'batch_run')
+    # batch_run_nirps_he.add_sequence_as_command('limited_seq')
+    # batch_run_nirps_he.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['NIRPS_HE'])
+    # run_files.append(batch_run_nirps_he)
     # -------------------------------------------------------------------------
     # return list of RunIniFile instances
     return run_files

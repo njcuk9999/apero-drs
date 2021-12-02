@@ -2119,7 +2119,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
     # storage for valid files for each argument
     filedict = OrderedDict()
     # copy condition
-    master_condtion = str(condition)
+    master_condition = str(condition)
     # get valid database column names
     index_colnames = indexdb.database.colnames('*')
     # debug log the number of files found
@@ -2155,7 +2155,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
             continue
         # ------------------------------------------------------------------
         # copy the condition string for this argument
-        argcondition = str(master_condtion)
+        argcondition = str(master_condition)
         # loop around filters
         for tfilter in filters:
             # check if filter is valid
