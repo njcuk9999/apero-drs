@@ -6253,7 +6253,7 @@ class DrsOutFile(DrsInputFile):
             obs_dir = str(params['OBS_DIR'])
         # this may take some time
          # TODO: move to language database
-        msg = 'Loading full database. Night={0}. Please wait...'
+        msg = 'Loading full database. OBS_DIR={0}. Please wait...'
         margs = [obs_dir]
         WLOG(params, '', msg.format(*margs))
         # start a clock (reading large database is slow - give user feedback)
