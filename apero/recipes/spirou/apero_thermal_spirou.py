@@ -97,21 +97,35 @@ def __main__(recipe, params):
     rawfiles = []
     for infile in infiles:
         rawfiles.append(infile.basename)
-    # deal with input data from function
-    if 'files' in params['DATA_DICT']:
-        infiles = params['DATA_DICT']['files']
-        rawfiles = params['DATA_DICT']['rawfiles']
-        combine = params['DATA_DICT']['combine']
-    # combine input images if required
-    elif params['INPUT_COMBINE_IMAGES']:
-        # get combined file
-        cond = drs_file.combine(params, recipe, infiles, math='median')
-        infiles = [cond[0]]
-        combine = True
-    else:
-        combine = False
-    # get the number of infiles
-    num_files = len(infiles)
+    # ----------------------------------------------------------------------
+    # sort thermal files into INT and TEL
+    internal_infiles = []
+    telescope_infiles = []
+    # loop through infiles and add them
+    for infile in infiles:
+        if infile.get_hkey('KW_DPRTYPE') == 'DARK_DARK_INT':
+            internal_infiles.append(infile)
+        else:
+            telescope_infiles.append(infile)
+    # ----------------------------------------------------------------------
+    # combine all files of the same type
+    # ----------------------------------------------------------------------
+    # push into dictionary storage
+    drs_dark_files = dict()
+    # TODO: QUESTION: only use PM calibrations?
+    # deal with combining internal darks
+    if len(internal_infiles) > 0:
+        cond1 = drs_file.combine(params, recipe, internal_infiles,
+                                 math='median')
+        drs_dark_files['internal dark'] = cond1[0]
+    # deal with combining telescope darks
+    if len(telescope_infiles) > 0:
+        cond2 = drs_file.combine(params, recipe, telescope_infiles,
+                                 math='median')
+        drs_dark_files['telescope dark'] = cond2[0]
+    # we are combining files
+    combine = True
+    # ----------------------------------------------------------------------
     # get the fiber types from a list parameter
     fiber_types = drs_image.get_fiber_types(params)
     # load the calibration database
@@ -120,17 +134,17 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
-    for it in range(num_files):
+    for it, drs_type in enumerate(drs_dark_files):
         # ------------------------------------------------------------------
         # add level to recipe log
-        log1 = recipe.log.add_level(params, 'num', it)
+        log1 = recipe.log.add_level(params, 'drs-type', drs_type)
         # ------------------------------------------------------------------
         # set up plotting (no plotting before this)
         recipe.plot.set_location(it)
         # print file iteration progress
-        drs_startup.file_processing_update(params, it, num_files)
-        # ge this iterations file
-        infile = infiles[it]
+        drs_startup.file_processing_update(params, it, len(drs_dark_files))
+        # get either the internal or telescope infile
+        infile = drs_dark_files[drs_type]
         # ------------------------------------------------------------------
         # Get the thermal output e2ds filename and extract/read file
         # ------------------------------------------------------------------
