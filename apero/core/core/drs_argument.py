@@ -3641,15 +3641,16 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
         # make filename sql-like
         filename = filename.replace('*', '%')
         # make a path cond
-        pathcond = 'ABSPATH LIKE "{0}"'
+        pathcond = 'FILENAME LIKE "{0}"'
     else:
         # make a path cond
-        pathcond = 'ABSPATH="{0}"'
+        pathcond = 'FILENAME="{0}"'
     # ---------------------------------------------------------------------
     # Step 2: Check whether filename itself is in database
     # ---------------------------------------------------------------------
     # check for filename in paths
-    condition1 = condition + ' AND ' + pathcond.format(filename)
+    basename = os.path.basename(str(filename))
+    condition1 = condition + ' AND ' + pathcond.format(basename)
     # count number of paths that meet this condition
     if filedb.count(condition=condition1) > 0:
         # now check fits keys (or pass if not fits)
