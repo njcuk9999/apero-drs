@@ -10,7 +10,7 @@ Created on 2021-11-08
 @author: cook
 """
 import numpy as np
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from apero import lang
 from apero.base import base
@@ -19,6 +19,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_text
+from apero.core.core import drs_argument
 from apero.core.utils import drs_recipe
 from apero.science import preprocessing as prep
 from apero.science import telluric
@@ -40,6 +41,7 @@ __release__ = base.__release__
 WLOG = drs_log.wlog
 ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
+DrsArgument = drs_argument.DrsArgument
 DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
 # Get index database
@@ -101,8 +103,9 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     WLOG(params, 'info', msg)
     WLOG(params, 'info', params['DRS_HEADER'])
     # get calibration files grouped by recipe
-    calib_files = get_raw_seq_files(params, recipemodule, tstars, ostars,
-                                    sequence='calib_seq')
+    cout = get_raw_seq_files(params, recipemodule, tstars, ostars,
+                             sequence='calib_seq')
+    calib_files, calib_recipes, calib_args = cout
     # loop around each night and check for all calibration files
     for uobsdir in uobsdirs:
         # assume we are not missing any calibrations
@@ -128,34 +131,66 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         calib_count[uobsdir] = dict()
         calib_times[uobsdir] = []
         # loop around recipes
-        for srecipe in calib_files:
+        for recipe_name in calib_files:
             # -----------------------------------------------------------------
             # get run code
-            runcode = 'RUN_{0}'.format(srecipe)
+            runcode = 'RUN_{0}'.format(recipe_name)
+            # get recipe
+            srecipe = calib_recipes[recipe_name]
             # do not check recipes that do not have RUN_XXXX = True
             if runcode in params:
                 if not params[runcode]:
                     continue
             # -----------------------------------------------------------------
             # storage for this recipe
-            calib_count[uobsdir][srecipe] = dict()
+            calib_count[uobsdir][recipe_name] = dict()
             # loop around arguments
-            for argname in calib_files[srecipe]:
-                # loop around drs files
-                for drsfile in calib_files[srecipe][argname]:
-                    # mask of current files
-                    dmask = drsfile.name == drsoutids
+            for argname in calib_files[recipe_name]:
+                # get argument instance
+                arg = calib_args[recipe_name][argname]
+                # deal with exclusive files
+                if arg.filelogic == 'exclusive':
+                    # loop around drs files
+                    for drsfile in calib_files[recipe_name][argname]:
+                        # mask of current files
+                        dmask = drsfile.name == drsoutids
+                        # count the number of files
+                        count = np.sum(dmask)
+                        # add to count
+                        calib_count[uobsdir][recipe_name][drsfile.name] = count
+                        # get the time for this drs file
+                        calib_times[uobsdir] += list(np.unique(mjdmids[dmask]))
+                        # ---------------------------------------------------------
+                        # print if missing
+                        if count == 0:
+                            msg = '\t\tMISSING {0}\t(OBS_DIR={1} RECIPE={2})'
+                            margs = [drsfile, uobsdir, recipe_name]
+                            WLOG(params, 'warning', msg.format(*margs))
+                            missing = True
+                # deal with inclusive files (combine drsfiles)
+                else:
+                    # store drs file names (for reporting)
+                    drsfiles = []
+                    # set up mask (added via OR statement)
+                    dmask = np.zeros(len(drsoutids), dtype=bool)
+                    # loop around drs files
+                    for drsfile in calib_files[recipe_name][argname]:
+                        # add to inclusive files
+                        drsfiles += [drsfile.name]
+                        # mask of current files
+                        dmask |= (drsfile.name == drsoutids)
+                    # combine drs file names
+                    drsfilenames = ','.join(drsfiles)
                     # count the number of files
                     count = np.sum(dmask)
                     # add to count
-                    calib_count[uobsdir][srecipe][drsfile.name] = count
+                    calib_count[uobsdir][recipe_name][drsfilenames] = count
                     # get the time for this drs file
                     calib_times[uobsdir] += list(np.unique(mjdmids[dmask]))
-                    # ---------------------------------------------------------
                     # print if missing
                     if count == 0:
                         msg = '\t\tMISSING {0}\t(OBS_DIR={1} RECIPE={2})'
-                        margs = [drsfile, uobsdir, srecipe]
+                        margs = [drsfilenames, uobsdir, recipe_name]
                         WLOG(params, 'warning', msg.format(*margs))
                         missing = True
         if not missing:
@@ -170,11 +205,14 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     WLOG(params, 'info', params['DRS_HEADER'])
     WLOG(params, 'info', msg)
     WLOG(params, 'info', params['DRS_HEADER'])
-    tellu_files = get_raw_seq_files(params, recipemodule, tstars, ostars,
-                                    sequence='tellu_seq')
-    sci_files = get_raw_seq_files(params, recipemodule, tstars, ostars,
-                                  sequence='science_seq')
-
+    # get telluric raw files
+    tout = get_raw_seq_files(params, recipemodule, tstars, ostars,
+                             sequence='tellu_seq')
+    tellu_files, tellu_recipes, tellu_args = tout
+    # get science raw files
+    sout = get_raw_seq_files(params, recipemodule, tstars, ostars,
+                             sequence='science_seq')
+    sci_files, sci_recipes, sci_args = sout
     # -------------------------------------------------------------------------
     # if we are not using a telluric run don't include it
     for srecipe in tellu_files:
@@ -330,9 +368,13 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         WLOG(params, '', 'All other observation directories passed prechecks.')
 
 
+RawSeqReturn = Tuple[Dict[str, Dict[str, List[DrsFitsFile]]],
+                     Dict[str, DrsRecipe], Dict[str, Dict[str, DrsArgument]]]
+
+
 def get_raw_seq_files(params: ParamDict, recipemod,
                       tstars: List[str], ostars: List[str],
-                      sequence: str) -> Dict[str, Dict[str, List[DrsFitsFile]]]:
+                      sequence: str) -> RawSeqReturn:
     """
     Get a dictionary of recipes where each entry is a dictionary of arguments
     where each entry is a list of possible raw files
@@ -366,12 +408,14 @@ def get_raw_seq_files(params: ParamDict, recipemod,
     if hasattr(recipemod, sequence):
         seq = getattr(recipemod, sequence)
     else:
-        return dict()
+        return dict(), dict(), dict()
     # generate sequence
     seq.process_adds(params, tstars=list(tstars), ostars=list(ostars),
                      template_stars=template_object_list)
     # storage of calib files
     seq_files = dict()
+    seq_instances = dict()
+    seq_args = dict()
     # get the sequence recipe list
     srecipelist = seq.sequence
     # loop around recipes
@@ -379,7 +423,7 @@ def get_raw_seq_files(params: ParamDict, recipemod,
         # get the short name for this recipe
         srecipe_name = srecipe.shortname
         # get the standard input files for all arguments
-        infiles = _get_infiles(srecipe)
+        infiles, inargs = _get_infiles(srecipe)
         # get all raw files assoicated with these
         rawfiles = dict()
         # loop around arguments
@@ -397,8 +441,10 @@ def get_raw_seq_files(params: ParamDict, recipemod,
                     rawfiles[argname].append(rawfile)
         # append raw files to a list
         seq_files[srecipe_name] = rawfiles
+        seq_instances[srecipe_name] = srecipe
+        seq_args[srecipe_name] = inargs
     # return calibration files
-    return seq_files
+    return seq_files, seq_instances, seq_args
 
 
 def _flatten_raw_seq_filelist(files: Dict[str, Dict[str, List[DrsFitsFile]]],
@@ -429,17 +475,19 @@ def _flatten_raw_seq_filelist(files: Dict[str, Dict[str, List[DrsFitsFile]]],
     return flattened_files
 
 
-def _get_infiles(srecipe: DrsRecipe):
+GetInFileReturn = Tuple[Dict[str, List[DrsFitsFile]], Dict[str, DrsArgument]]
+
+
+def _get_infiles(srecipe: DrsRecipe) -> GetInFileReturn:
     """
     Get all files (grouped by the argument they are required for)
 
     :param srecipe:
     :return:
     """
-
     # store input files
     infiles = dict()
-
+    inargs = dict()
     # look for files in arguments
     for argname in srecipe.args:
         # only deal with required arguments
@@ -450,6 +498,7 @@ def _get_infiles(srecipe: DrsRecipe):
         # if it has files then add this argument
         if len(ifiles) > 0:
             infiles[argname] = ifiles
+            inargs[argname] = srecipe.args[argname]
     # look for files in keyword argumetns
     for kwargname in srecipe.kwargs:
         # only deal with required arguments
@@ -460,8 +509,9 @@ def _get_infiles(srecipe: DrsRecipe):
         # if it has files then add this argument
         if len(ifiles) > 0:
             infiles[kwargname] = ifiles
+            inargs[kwargname] = srecipe.kwargs[kwargname]
     # return the input files
-    return infiles
+    return infiles, inargs
 
 
 def _get_rawfile(drsfile: DrsFitsFile):
