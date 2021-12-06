@@ -43,7 +43,9 @@ nirps_correction = detector.nirps_correction
 
 nirps_order_mask = detector.nirps_order_mask
 
-quality_control = gen_pp.quality_control
+quality_control1 = gen_pp.quality_control1
+
+quality_control2 = gen_pp.quality_control2
 
 reject_infile = gen_pp.reject_infile
 

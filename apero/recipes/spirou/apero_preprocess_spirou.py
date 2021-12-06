@@ -235,7 +235,7 @@ def __main__(recipe, params):
                 inttime = np.roll(inttime, [shiftdy], axis=0)
             # work out QC here
             qargs = [snr_hotpix, infile, rms_list]
-            qc_params, passed = prep.quality_control(params, *qargs, log=False)
+            qc_params, passed = prep.quality_control1(params, *qargs, log=False)
             # if passed break
             if passed:
                 break
@@ -244,8 +244,8 @@ def __main__(recipe, params):
         # Quality control to check for corrupt files
         # ------------------------------------------------------------------
         # re-calculate qc
-        qargs = [snr_hotpix, infile, rms_list]
-        qc_params, passed = prep.quality_control(params, *qargs, log=True)
+        qargs1 = [snr_hotpix, infile, rms_list]
+        qc_params, passed = prep.quality_control1(params, *qargs1, log=True)
         # update recipe log
         log1.add_qc(qc_params, passed)
         if not passed:
@@ -292,6 +292,20 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # rotation to match HARPS orientation (expected by DRS)
         image = drs_image.rotate_image(image, params['RAW_TO_PP_ROTATION'])
+
+        # ------------------------------------------------------------------
+        # Quality control
+        # ------------------------------------------------------------------
+        # more general qc (after correction)
+        qargs2 = [qc_params, image, outfile.name]
+        qc_params, passed = prep.quality_control2(params, *qargs2, log=True)
+        # update recipe log
+        log1.add_qc(qc_params, passed)
+        if not passed:
+            # end log here
+            log1.end()
+            # go to next iteration
+            continue
 
         # ------------------------------------------------------------------
         # Save rotated image
