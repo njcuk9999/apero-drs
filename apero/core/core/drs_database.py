@@ -1448,7 +1448,7 @@ class IndexDatabase(DatabaseManager):
         # check for entry already in database
         condition = '(OBS_DIR="{0}")'.format(obs_dir)
         condition += ' AND (BLOCK_KIND="{0}")'.format(block_kind)
-        condition += ' AND (ABSPATH="{0}")'.format(path)
+        condition += ' AND (FILENAME="{0}")'.format(basename)
         # count number of entries for this
         num_rows = self.database.count(condition=condition)
         # if we don't have an entry we add a row
@@ -1686,9 +1686,10 @@ class IndexDatabase(DatabaseManager):
             include_files = []
         # ---------------------------------------------------------------------
         # deal with files we don't need (already have)
-        etable = self.get_entries('ABSPATH, LAST_MODIFIED',
+        etable = self.get_entries('ABSPATH, OBS_DIR, LAST_MODIFIED',
                                   block_kind=block_kind)
         raw_exclude_files = list(etable['ABSPATH'])
+        raw_exclude_obs_dirs = list(etable['OBS_DIR'])
         # ---------------------------------------------------------------------
         # only check last modified for raw files (we assume that any other
         #   file has been correctly updated by the drs)
@@ -1704,7 +1705,7 @@ class IndexDatabase(DatabaseManager):
                 parallel = True
         # only check for deletions on disk if not in a parellel loop
         if not parallel:
-            exclude_files, remove_files = [], []
+            exclude_files, remove_files, remove_obs_dirs = [], [], []
             # deal with updating last modified date
             if raw_last_mod is not None:
                 elast_mod = []
@@ -1718,11 +1719,16 @@ class IndexDatabase(DatabaseManager):
                         elast_mod.append(raw_last_mod[r_it])
                 else:
                     remove_files.append(raw_exclude_file)
+                    remove_obs_dirs.append(raw_exclude_obs_dirs[r_it])
             # remove entries from database where file does not exist
+            rm_condition_all = 'BLOCK_KIND="{0}" AND '.format(block_kind)
             rm_conditions = []
             # loop around files to remove
-            for remove_file in remove_files:
-                rm_conditions.append('ABSPATH="{0}"'.format(remove_file))
+            for r_it, remove_file in enumerate(remove_files):
+                # add remove file condition with obs_dir + filename
+                rm_cond = '(OBS_DIR="{0}" AND FILENAME="{0}")'
+                rm_args = [remove_obs_dirs[r_it], remove_file]
+                rm_conditions.append(rm_cond.format(*rm_args))
                 # print removing file
                 # TODO: move to language database
                 msg = ('\t\tFile no longer on disk - removing from '
@@ -1731,7 +1737,10 @@ class IndexDatabase(DatabaseManager):
 
             # remove entries which no longer exist on disk
             if len(rm_conditions) > 0:
-                self.remove_entries(condition=' OR '.join(rm_conditions))
+                # add all remove conditions with the OR criteria
+                rm_condition_all += ' OR '.join(rm_conditions)
+                # use database to remove entries
+                self.remove_entries(condition=rm_condition_all)
         # else we just use the raw list
         else:
             exclude_files = list(raw_exclude_files)
@@ -1843,7 +1852,8 @@ class IndexDatabase(DatabaseManager):
         iheader_cols = self.pconst.INDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
         # get columns
-        columns = ['ABSPATH', 'RAWFIX'] + rkeys
+        columns = ['BLOCK_KIND', 'ABSPATH', 'FILENAME', 'OBS_DIR', 'RAWFIX']
+        columns += rkeys
         # get data for columns
         table = self.get_entries(', '.join(columns), block_kind='raw')
         # if all rows have rawfix == 1 then just return now
@@ -1855,7 +1865,7 @@ class IndexDatabase(DatabaseManager):
             if table['RAWFIX'].iloc[row] == 1:
                 continue
             # do not fix headers of non-fits files
-            if not table['ABSPATH'].iloc[row].endswith('.fits'):
+            if not table['FILENAME'].iloc[row].endswith('.fits'):
                 continue
             # get new header to push keys into
             header = drs_fits.Header()
@@ -1873,9 +1883,12 @@ class IndexDatabase(DatabaseManager):
             # fix header (with new keys in)
             header, _ = drs_file.fix_header(self.params, recipe, header=header)
             # condition is that full path is the same
-            condition = 'ABSPATH="{0}"'.format(table['ABSPATH'].iloc[row])
+            ctxt = 'BLOCK_KIND="{0)" AND OBS_DIR="{2}" AND FILENAME="{3}"'
+            cargs = [table['BLOCK_KIND'].iloc[row], table['ABSPATH'].iloc[row],
+                     table['OBS_KIND'].iloc[row], table['FILENAME'].iloc[row]]
+            condition = ctxt.format(*cargs)
             # get values
-            values = [table['ABSPATH'].iloc[row], 1]
+            values = cargs + ['1']
             # add header keys in rkeys
             for rkey in rkeys:
                 # get drs key

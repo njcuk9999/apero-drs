@@ -1212,7 +1212,7 @@ class PseudoConstants:
         index_cols.add(name='RAWFIX', datatype='INT')
         # manage index groups
         index_cols.index_groups.append(['BLOCK_KIND', 'OBS_DIR', 'USED'])
-        index_cols.index_groups.append(['OBS_DIR', 'BLOCK_KIND'])
+        index_cols.index_groups.append(['BLOCK_KIND', 'OBS_DIR', 'FILENAME'])
         # return columns and column types
         self.index_cols = index_cols
         return index_cols

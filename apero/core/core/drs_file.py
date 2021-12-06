@@ -6458,7 +6458,7 @@ class DrsOutFile(DrsInputFile):
         # add extension names as comments
         self._add_extensions_names_to_primary(params)
 
-    def set_db_infiles(self, database: Any):
+    def set_db_infiles(self, block_kind: str, database: Any):
         """
         Set the "infiles" for use in indexing - this takes the
         index database entry for extension 1 (or 0 if 1 not present) and
@@ -6473,8 +6473,12 @@ class DrsOutFile(DrsInputFile):
             filename = self.extensions[1].filename
         else:
             filename = self.extensions[0].filename
+        # observation directory
+        obs_dir = self.obs_dir
         # condition on database
-        condition = 'ABSPATH="{0}"'.format(filename)
+        ctxt = 'BLOCK_KIND="{0}" AND OBS_DIR="{1}" AND FILENAME="{2}"'
+        cargs = [block_kind, obs_dir, os.path.basename(filename)]
+        condition = ctxt.format(*cargs)
         # get database entries
         dkwargs = dict(condition=condition, return_pandas=True)
         # try to get infiles from database

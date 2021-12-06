@@ -138,6 +138,7 @@ def __main__(recipe, params):
         # add output filename
         filepostfile.out_filename = outfile
         filepostfile.out_dirname = outdir
+        filepostfile.obs_dir = obs_dir
         # add extension 0 file properties
         filepostfile.extensions[0].set_infile(params, filename=infile.filename)
         # load the extension 0 file
@@ -151,7 +152,8 @@ def __main__(recipe, params):
             # deal with processing headers
             filepostfile.process_header(params)
             # deal with database infiles
-            filepostfile.set_db_infiles(database=indexdbm)
+            filepostfile.set_db_infiles(block_kind=recipe.out_block_str,
+                                        database=indexdbm)
             # update filename/basename and path
             filepostfile.set_filename(filepostfile.out_filename)
             # write file
