@@ -213,27 +213,19 @@ listing.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
 # -----------------------------------------------------------------------------
 # apero_log_stats.py
 # -----------------------------------------------------------------------------
-logstats.name = 'apero_log_stats.py'
-logstats.shortname = 'LSTAT'
+logstats.name = 'apero_stats.py'
+logstats.shortname = 'STAT'
 logstats.instrument = __INSTRUMENT__
 logstats.description = textentry('LOGSTAT_DESC')
 logstats.recipe_type = 'nolog-tool'
 logstats.recipe_kind = 'user'
-logstats.set_debug_plots('LOGSTATS_BAR')
+logstats.set_debug_plots('STATS_TIMING_PLOT')
 logstats.set_summary_plots()
-logstats.set_kwarg(name='--obs_dir', dtype=str, default='',
-                   helpstr=textentry('LOGSTAT_HELP_OBS_DIR'))
-logstats.set_kwarg(name='--kind', dtype='options', default='red',
-                   options=['tmp', 'red'],
-                   helpstr=textentry('LOGSTAT_HELP_KIND'))
-logstats.set_kwarg(name='--recipe', dtype=str, default='None',
-                   helpstr=textentry('LOGSTAT_HELP_RECIPEARG'))
-logstats.set_kwarg(name='--since', dtype=str, default='None',
-                   helpstr=textentry('LOGSTAT_HELP_SINCEARG'))
-logstats.set_kwarg(name='--before', dtype=str, default='None',
-                   helpstr=textentry('LOGSTAT_HELP_BEFOREARG'))
-logstats.set_kwarg(name='--mlog', dtype='bool', default=False,
-                   helpstr=textentry('LOGSTAT_HELP_MLOG'))
+logstats.set_kwarg(name='--mode', dtype='options', default='red',
+                   options=['timing', 'qc'],
+                   helpstr='Stats mode. '
+                           'For timing statistics use "timing".'
+                           'For quality control statistics use "qc".')
 logstats.set_kwarg(**plot)
 
 # -----------------------------------------------------------------------------
