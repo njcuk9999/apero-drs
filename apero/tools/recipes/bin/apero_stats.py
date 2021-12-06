@@ -12,17 +12,15 @@ Created on 2019-07-26 at 09:39
 from astropy.table import Table
 
 from apero.base import base
-from apero import lang
 from apero.core.core import drs_log
-from apero.core.core import drs_database
 from apero.core.utils import drs_startup
-from apero.tools.module.testing import drs_log_stats as logstats
+from apero.tools.module.testing import drs_stats
 
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_log_stats.py'
+__NAME__ = 'apero_stats.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -85,42 +83,18 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     # get arguments
-    kind = params['INPUTS']['kind']
-    recipename = params['INPUTS']['recipe']
-    since = params['INPUTS']['since']
-    before = params['INPUTS']['before']
-    makemaster = params['INPUTS']['master']
-    # load path from kind
-    if kind == 'red':
-        path = params['DRS_DATA_REDUC']
-    else:
-        path = params['DRS_DATA_WORKING']
-
-    # deal with recipe name
-    recipename = logstats.search_recipes(params, recipe, recipename)
-    # deal with since value
-    since = logstats.get_time(params, since, 'since')
-    # deal with before value
-    before = logstats.get_time(params, before, 'before')
+    mode = params['INPUTS']['MODE']
     # set up plotting (no plotting before this)
-    recipe.plot.set_location(0)
+    recipe.plot.set_location()
+    # deal with timing
+    if mode.upper() == 'TIMING':
+        # add plots to params
+        params.set('STATS_TIMING_PLOT', value=True)
+        # do the timing stats
+        drs_stats.timing_stats(params, recipe)
+    elif mode.upper() == 'QC':
+        drs_stats.qc_stats(params)
 
-    # ----------------------------------------------------------------------
-    # Open log database
-    # ----------------------------------------------------------------------
-    logdbm = drs_database.LogDatabase(params)
-    # get all entries
-    master_dataframe = logdbm.get_entries('*')
-    # convert dataframe to astropy table
-    mastertable = Table.from_pandas(master_dataframe)
-
-    # ----------------------------------------------------------------------
-    # print stats
-    # ----------------------------------------------------------------------
-    if recipename is None:
-        logstats.calculate_stats(params, recipe, mastertable)
-    else:
-        logstats.calculate_recipe_stats(params, mastertable, recipename)
 
     # ----------------------------------------------------------------------
     # End of main code
