@@ -106,13 +106,17 @@ def __main__(recipe, params):
         rawfiles.append(infile.basename)
     # deal with input data from function
     if 'files' in params['DATA_DICT']:
+        # get list of in files from data dict (passed in)
         infiles = params['DATA_DICT']['files']
+        # get list of raw files from data dict (passed in)
         rawfiles = params['DATA_DICT']['rawfiles']
+        # get combine parameter from data dict (passed in)
         combine = params['DATA_DICT']['combine']
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cond = drs_file.combine(params, recipe, infiles, math='median')
+        cond = drs_file.combine(params, recipe, infiles,
+                                math=params['INPUTS']['COMBINE_METHOD'])
         infiles = [cond[0]]
         combine = True
     else:
@@ -156,11 +160,11 @@ def __main__(recipe, params):
             if 'DPRTYPE' in skip_conditions[0]:
                 wargs = skip_conditions[1]
                 WLOG(params, 'warning', textentry('10-016-00012', args=wargs),
-                     sublevel=4)
+                     sublevel=2)
             if 'OBJNAME' in skip_conditions[0]:
                 wargs = skip_conditions[2]
                 WLOG(params, 'warning', textentry('10-016-00013', args=wargs),
-                     sublevel=4)
+                     sublevel=2)
             # write log here
             log1.write_logfile()
             # skip this file
@@ -170,8 +174,12 @@ def __main__(recipe, params):
         header = infile.get_header()
         # get the fiber types needed
         sci_fibers, ref_fiber = pconst.FIBER_KINDS()
-        # must do reference fiber first (for leak correction)
-        fibertypes = [ref_fiber] + sci_fibers
+        # get the fibers
+        if params['INPUTS']['FIBER'] == 'ALL':
+            # must do reference fiber first (for leak correction)
+            fibertypes = [ref_fiber] + sci_fibers
+        else:
+            fibertypes = [params['INPUTS']['FIBER']]
         # ------------------------------------------------------------------
         # Load shape components
         # ------------------------------------------------------------------
@@ -207,7 +215,7 @@ def __main__(recipe, params):
         else:
             bprops = None
 
-        # storage for return
+        # storage for return / reference fiber usage
         e2dsoutputs = dict()
         # ------------------------------------------------------------------
         # Fiber loop
@@ -320,13 +328,11 @@ def __main__(recipe, params):
                 # plot (in a loop) the fitted blaze and calculated flat with the
                 #     e2ds image
                 recipe.plot('EXTRACT_SPECTRAL_ORDER1', order=None,
-                            eprops=eprops,
-                            wave=wprops['WAVEMAP'], fiber=fiber)
+                            eprops=eprops, wave=wprops['WAVEMAP'], fiber=fiber)
                 # plot for sorder the fitted blaze and calculated flat with the
                 #     e2ds image
                 recipe.plot('EXTRACT_SPECTRAL_ORDER2', order=sorder,
-                            eprops=eprops,
-                            wave=wprops['WAVEMAP'], fiber=fiber)
+                            eprops=eprops, wave=wprops['WAVEMAP'], fiber=fiber)
                 # plot the s1d plot
                 recipe.plot('EXTRACT_S1D', params=params, props=svprops,
                             fiber=fiber, kind='E2DSFF')

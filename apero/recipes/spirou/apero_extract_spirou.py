@@ -172,10 +172,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # get header from file instance
         header = infile.get_header()
-
+        # get the fiber types needed
+        sci_fibers, ref_fiber = pconst.FIBER_KINDS()
+        # get the fibers
         if params['INPUTS']['FIBER'] == 'ALL':
-            # get the fiber types needed
-            sci_fibers, ref_fiber = pconst.FIBER_KINDS()
             # must do reference fiber first (for leak correction)
             fibertypes = [ref_fiber] + sci_fibers
         else:

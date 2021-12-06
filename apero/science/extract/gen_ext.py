@@ -14,7 +14,7 @@ from astropy.table import Table
 from astropy import constants as cc
 from astropy import units as uu
 import os
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 import warnings
 
 from apero.base import base
@@ -261,12 +261,26 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     # get thermal (only if in one of the correction lists)
     if fibertype in corrtype1:
         tout = get_thermal(params, header, fiber=fiber, filename=thermal_file,
-                           kind='THERMALT_E2DS', database=database)
+                           kind='THERMALT_E2DS', database=database,
+                           required=False)
         thermalfile, thermaltime, thermal = tout
+        # deal with no thermal file from THERMALT (use THERMALI)
+        if thermalfile is None:
+            # print warning
+            wmsg = 'No telescope dark file found, trying a internal dark file'
+            WLOG(params, 'warning', wmsg, sublevel=6)
+            # get the internal dark e2ds
+            tout = get_thermal(params, header, fiber=fiber,
+                               filename=thermal_file, kind='THERMALI_E2DS',
+                               database=database)
+            thermalfile, thermaltime, thermal = tout
+    # ----------------------------------------------------------------------
     elif fibertype in corrtype2:
         tout = get_thermal(params, header, fiber=fiber, filename=thermal_file,
                            kind='THERMALI_E2DS', database=database)
         thermalfile, thermaltime, thermal = tout
+    # ----------------------------------------------------------------------
+    # else set everything to blank
     else:
         thermal = None
         thermalfile = 'None'
@@ -313,7 +327,8 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
 
 
 def get_thermal(params, header, fiber, kind, filename=None,
-                database=None):
+                database=None, required: bool = True
+                ) -> Tuple[str, float, Union[np.ndarray, None]]:
     # get file definition
     out_thermal = drs_file.get_file_definition(params, kind, block_kind='red')
     # get key
@@ -328,14 +343,18 @@ def get_thermal(params, header, fiber, kind, filename=None,
     # ------------------------------------------------------------------------
     # load calib file
     ckwargs = dict(key=key, userinputkey='THERMALFILE', filename=filename,
-                   inheader=header, database=calibdbm, fiber=fiber)
+                   inheader=header, database=calibdbm, fiber=fiber,
+                   required=required)
     cfile = gen_calib.CalibFile()
     cfile.load_calib_file(params, **ckwargs)
+    # deal with no file and not required
+    if cfile.filename is None and not required:
+        return 'None', np.nan, None
     # get properties from calibration file
     thermal = cfile.data
     thermal_file = cfile.filename
     thermaltime = cfile.mjdmid
-    # log which fpmaster file we are using
+    # log which thermal file we are using
     WLOG(params, '', textentry('40-016-00027', args=[thermal_file]))
     # return the master image
     return thermal_file, thermaltime, thermal
