@@ -390,6 +390,15 @@ PP_COSMIC_BOXSIZE.value = 64
 SKIP_DONE_PP = SKIP_DONE_PP.copy(__NAME__)
 SKIP_DONE_PP.value = False
 
+# Define dark dprtypes for threshold quality control check (PP_DARK_THRES)
+PP_DARK_DPRTYPES = PP_DARK_DPRTYPES.copy(__NAME__)
+PP_DARK_DPRTYPES.value = 'DARK_DARK_INT,DARK_DARK_TEL'
+
+# Define the threshold for a suitable DARK_DARK (above this will not be
+#    processed)
+PP_DARK_THRES = PP_DARK_THRES.copy(__NAME__)
+PP_DARK_THRES.value = 0.5
+
 # =============================================================================
 # CALIBRATION: OBJECT DATABASE SETTINGS
 # =============================================================================

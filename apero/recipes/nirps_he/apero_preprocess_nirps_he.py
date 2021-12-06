@@ -234,7 +234,7 @@ def __main__(recipe, params):
                 inttime = np.roll(inttime, [shiftdy], axis=0)
             # work out QC here
             qargs = [snr_hotpix, infile, rms_list]
-            qc_params, passed = prep.quality_control(params, *qargs, log=False)
+            qc_params, passed = prep.quality_control1(params, *qargs, log=False)
             # if passed break
             if passed:
                 break
@@ -244,7 +244,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # re-calculate qc
         qargs = [snr_hotpix, infile, rms_list]
-        qc_params, passed = prep.quality_control(params, *qargs, log=True)
+        qc_params, passed = prep.quality_control1(params, *qargs, log=True)
         # update recipe log
         log1.add_qc(qc_params, passed)
         if not passed:

@@ -15,7 +15,7 @@ from astropy.table import Table
 import numpy as np
 import requests
 import time
-from typing import Any, List, Union
+from typing import Any, List, Tuple, Union
 import warnings
 
 from apero.base import base
@@ -483,7 +483,7 @@ def get_file_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
 # =============================================================================
 # Define other functions
 # =============================================================================
-def quality_control(params, snr_hotpix, infile, rms_list, log=True):
+def quality_control1(params, snr_hotpix, infile, rms_list, log=True):
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # ----------------------------------------------------------------------
@@ -551,6 +551,55 @@ def quality_control(params, snr_hotpix, infile, rms_list, log=True):
             for farg in fail_msg:
                 WLOG(params, 'warning', textentry('40-005-10002') + farg,
                      sublevel=6)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc_params and passed
+    return qc_params, passed
+
+
+def quality_control2(params: ParamDict, qc_params: list, image: np.ndarray,
+                     dprtype: str) -> Tuple[list, int]:
+    """
+    Second quality control on preprocessing after correction
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param qc_params: list of lists for quality control
+    :param image: np.array (2D), the image to test
+    :param dprtype: str, the DPRTYPE to test
+
+    :return: tuple, 1. updated quality control, 2. int pass/fail
+    """
+    # set passed variable and fail message list
+    fail_msg = []
+    qc_values, qc_names, qc_logic, qc_pass = qc_params
+    # get paramters from params
+    dark_types = params.listp('PP_DARK_DPRTYPES', dtype=str)
+    dark_thres = params['PP_DARK_THRES']
+    # ----------------------------------------------------------------------
+    # check if dark dark it is not science
+    if dprtype in dark_types:
+        # get the 90th percentile for this image
+        value = np.nanpercentile(image, 90)
+        # if above threshold this is not a valid dark
+        if value > dark_thres:
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(value)
+        qc_names.append('DARK_DPRTYPE_P90')
+        qc_logic.append('DARK_DPRTYPE_P90 > {0:.3f}'.format(dark_thres))
+    # ----------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', textentry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]

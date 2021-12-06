@@ -23,7 +23,7 @@ __all__ = [
     'PP_COSMIC_VARCUT2', 'PP_COSMIC_INTCUT1', 'PP_COSMIC_INTCUT2',
     'PP_COSMIC_BOXSIZE', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
     'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
-    'PP_BAD_EXPTIME_FRACTION',
+    'PP_BAD_EXPTIME_FRACTION', 'PP_DARK_DPRTYPES', 'PP_DARK_THRES',
     # object database settings
     'GL_GAIA_COL_NAME', 'GL_OBJ_COL_NAME', 'GL_ALIAS_COL_NAME',
     'GL_RV_COL_NAME', 'GL_RVREF_COL_NAME', 'GL_TEFF_COL_NAME',
@@ -947,6 +947,19 @@ SKIP_DONE_PP = Const('SKIP_DONE_PP', value=None, dtype=bool,
                      source=__NAME__, user=True, active=False, group=cgroup,
                      description='Define whether to skip preprocessed files '
                                  'that have already be processed')
+
+# Define dark dprtypes for threshold quality control check (PP_DARK_THRES)
+PP_DARK_DPRTYPES = Const('PP_DARK_DPRTYPES', value=None, dtype=str,
+                           source=__NAME__, active=False, group=cgroup,
+                           description='Define dark dprtypes for threshold '
+                                       'quality control check (PP_DARK_THRES)')
+
+# Define the threshold for a suitable dark dprtypes (above this will not be
+#    processed)
+PP_DARK_THRES = Const('PP_DARK_THRES', value=None, dtype=float,
+                      source=__NAME__, active=False, group=cgroup,
+                      description='Define the threshold for a suitable dark '
+                                  'dprtypes (above this will not be processed)')
 
 # Define allowed preprocess master file types (PP DPRTYPE)
 ALLOWED_PPM_TYPES = Const('ALLOWED_PPM_TYPES', value=None, dtype=str,
