@@ -5547,6 +5547,75 @@ def plot_stats_timing_plot(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
+def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Log stats bar plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # -------------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # -------------------------------------------------------------------------
+    # get the arguments from kwargs
+    stat_dict = kwargs['stat_dict']
+    stat_crit = kwargs['stat_crit']
+    stat_qc = kwargs['stat_qc']
+
+    # -------------------------------------------------------------------------
+    y_values = dict()
+    x_values = dict()
+    limit_values = dict()
+
+    # loop around criteria
+    for crit in stat_crit:
+        # clean stat str
+        statstr = ''
+        # deal with crit = None
+        if drs_text.null_text(crit, ['None', '']):
+            critstr = ''
+        else:
+            critstr = '::{0}'.format(crit.strip())
+            WLOG(params, '', '\t{0}'.format(crit))
+        # add number run
+        passed = stats[f'NUM_PASSED{critstr}']
+        failed = stats[f'NUM_FAILED{critstr}']
+        total = passed + failed
+        statstr += '\t\tNumber passed: {0}/{1}\n'.format(passed, total)
+        statstr += '\t\tNumber failed: {0}/{1}\n'.format(failed, total)
+
+        for qc_name in stat_qc[crit]:
+
+            name = f'{qc_name}{critstr}'
+            values = stat_dict[f'QCV::{qc_name}{critstr}']
+            logic = stat_dict[f'QCL::{qc_name}{critstr}']
+
+
+            # TODO: finish this
+
+            statstr = _statstr_print(statstr, f'{qc_name}{critstr}', values,
+                                     logic)
+        # print stats
+        WLOG(params, '', statstr)
+    # -------------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=nrows, ncols=ncols)
+    # -------------------------------------------------------------------------
+    # plot graph
+    # -------------------------------------------------------------------------
+
+    # -------------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+
 logstats_bar = Graph('LOGSTATS_BAR', kind='show', func=plot_logstats_bar)
 
 stats_timing = Graph('STATS_TIMING_PLOT', kind='show',
