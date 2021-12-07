@@ -120,11 +120,13 @@ class DatabaseHolder:
             ucols = list(odb_cols.unique_cols)
         else:
             ucols = None
+        # print we are saving database
+        print('Saving database {0}'.format(self.name))
         # push dataframe to replace SQL table
         database.add_from_pandas(df, if_exists='replace', index=False,
                                  unique_cols=ucols)
         # print we are saving database
-        print('Saving database {0}'.format(self.name))
+        print('Saved {0} database'.format(self.name))
 
     def is_openable(self, rows, cols, datamodel):
         """

@@ -93,6 +93,9 @@ def __main__(recipe, params):
         # do the timing stats
         drs_stats.timing_stats(params, recipe)
     elif mode.upper() == 'QC':
+        # add plots to params
+        params.set('STAT_QC_RECIPE_PLOT', value=True)
+        # do the qc stats
         drs_stats.qc_stats(params, recipe)
 
 

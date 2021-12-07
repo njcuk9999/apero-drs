@@ -13,7 +13,7 @@ from astropy import units as uu
 import numpy as np
 from pandasql import sqldf
 import pandas as pd
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from apero.base import base
 from apero.core import constants
@@ -462,6 +462,9 @@ def _sort_sublevel(data) -> List[str]:
             changing_values[key] = all_values[key]
         else:
             static_values += ['{0}={1} '.format(key, all_values[key][0])]
+    # deal with no static values
+    if len(static_values) == 0:
+        return criteria
     # now make new criteria (without the static variables)
     new_criteria = []
     for crit in criteria:
@@ -513,7 +516,9 @@ def get_qc_stats(logs: List[LogEntry]) -> QcStatReturn:
                 critstr = '::{0}'.format(crit.strip())
             # -----------------------------------------------------------------
             # get global qc values
-            passed = np.array(list(map(lambda x: x.passed[crit], rlogs)))
+            pfunc = lambda x: _mapqc(x, 'passed', crit, None, False)
+
+            passed = np.array(list(map(pfunc, rlogs)))
             num_passed = np.sum(passed)
             num_failed = np.sum(~passed)
             # push into stats dict
@@ -525,14 +530,30 @@ def get_qc_stats(logs: List[LogEntry]) -> QcStatReturn:
             qc_names = list(rlogs[0].qc_values[crit].keys())
             qc_dict[recipe][crit] = qc_names
             # get individual qc values
-            for qc_name in qc_names:
-                qcv = list(map(lambda x: x.qc_values[crit][qc_name], rlogs))
-                qcp = list(map(lambda x: x.qc_passes[crit][qc_name], rlogs))
-                qcl = list(map(lambda x: x.qc_logics[crit][qc_name], rlogs))
+            for qcn in qc_names:
+                # define mapping functions
+                qcvfunc = lambda x: _mapqc(x, 'qc_values', crit, qcn, np.nan)
+                qcpfunc = lambda x: _mapqc(x, 'qc_passes', crit, qcn, False)
+                qclfunc = lambda x: _mapqc(x, 'qc_logics', crit, qcn, 'None')
+                # get mapped values
+                qcv = list(map(qcvfunc,  rlogs))
+                qcp = list(map(qcpfunc, rlogs))
+                qcl = list(map(qclfunc, rlogs))
                 # push into stats dict
-                stats[f'QCV::{qc_name}{critstr}'] = qcv
-                stats[f'QCP::{qc_name}{critstr}'] = qcp
-                stats[f'QCL::{qc_name}{critstr}'] = qcl
+                stats[f'QCV::{qcn}{critstr}'] = qcv
+                stats[f'QCP::{qcn}{critstr}'] = qcp
+                stats[f'QCL::{qcn}{critstr}'] = qcl
+            # -----------------------------------------------------------------
+            # get running / ended
+            rfunc = lambda x: _mapqc(x, 'running', crit, None, False)
+            efunc = lambda x: _mapqc(x, 'ended', crit, None, False)
+            running = np.array(list(map(rfunc, rlogs)))
+            ended = np.array(list(map(efunc, rlogs)))
+            # push into stats dict
+            stats[f'RUNNING{critstr}'] = running
+            stats[f'ENDED{critstr}'] = ended
+            stats[f'NUM_RUNNING{critstr}'] = np.sum(running)
+            stats[f'NUM_ENDED{critstr}'] = np.sum(ended)
         # -----------------------------------------------------------------
         stats['MJDMID'] = np.array(list(map(lambda x: x.mjdmid, rlogs)))
         # push to recipe dict storage
@@ -561,14 +582,22 @@ def print_qc_stats(params: ParamDict, recipe_name: str, stats: Dict[str, Any],
         passed = stats[f'NUM_PASSED{critstr}']
         failed = stats[f'NUM_FAILED{critstr}']
         total = passed + failed
+        # add to string
         statstr += '\t\tNumber passed: {0}/{1}\n'.format(passed, total)
         statstr += '\t\tNumber failed: {0}/{1}\n'.format(failed, total)
-
+        # add QC
         for qc_name in stat_qc[crit]:
             values = stats[f'QCV::{qc_name}{critstr}']
             logic = stats[f'QCL::{qc_name}{critstr}']
             statstr = _statstr_print(statstr, f'{qc_name}{critstr}', values,
                                      logic)
+        # add running / ended
+        running = stats[f'NUM_RUNNING{critstr}']
+        ended = stats[f'NUM_ENDED{critstr}']
+        # add to string
+        statstr += '\t\t' + '-' * 50 + '\n'
+        statstr += '\t\tNumber running = {0}/{1}\n'.format(running, total)
+        statstr += '\t\tNumber ended = {0}/{1}\n'.format(ended, total)
         # print stats
         WLOG(params, '', statstr)
 
@@ -586,11 +615,22 @@ def _statstr_print(statstr: str, key: str, values: List[Any],
     # deal with strings
     if not isinstance(values[0], (int, float)):
         return statstr
+    elif isinstance(values[0], int):
+        dtype = 'int'
+    else:
+        dtype = 'float'
+
     # deal with no value or single value
     if len(values) == 0:
         return statstr
     elif len(values) == 1:
-        statstr += '\t\t{0} = {1:.3e}\n'.format(key, values[0])
+        # deal with
+        if dtype == 'int':
+            statstr += '\t\t{0} = {1}\n'.format(key, values[0])
+        elif np.log10(values[0]) > -4:
+            statstr += '\t\t{0} = {1:.4f}\n'.format(key, values[0])
+        else:
+            statstr += '\t\t{0} = {1:.4e}\n'.format(key, values[0])
         return statstr
 
     valid_values = []
@@ -600,17 +640,46 @@ def _statstr_print(statstr: str, key: str, values: List[Any],
         except TypeError:
             continue
 
+    # deal with significant figures
+    if dtype == 'int':
+        fmtstr = '\t\t{0} {1} = {2}\n'
+    elif np.log10(valid_values[0]) > -4:
+        fmtstr = '\t\t{0} {1} = {2:.4f}\n'
+    else:
+        fmtstr = '\t\t{0} {1} = {2:.4e}\n'
+
     mean = np.nanmean(valid_values)
-    med = np.nanmedian(valid_values)
-    max = np.nanmax(valid_values)
-    min = np.nanmin(valid_values)
-    statstr += '\t\t{0} Mean = {1:.3e}\n'.format(key, mean)
-    statstr += '\t\t{0} Med  = {1:.3e}\n'.format(key, med)
-    statstr += '\t\t{0} Max  = {1:.3e}\n'.format(key, max)
-    statstr += '\t\t{0} Min  = {1:.3e}\n'.format(key, min)
-    statstr += '\t\tFail when {1}'.format(key, logic[0])
+    median = np.nanmedian(valid_values)
+    maximum = np.nanmax(valid_values)
+    minimum = np.nanmin(valid_values)
+
+    statstr += '\t\t' + '-' * 50 + '\n'
+    if dtype == 'int':
+        statstr += '\t\t{0} {1} = {2:.4f}\n'.format(key, 'Mean', mean)
+        statstr += '\t\t{0} {1} = {2:.4f}\n'.format(key, 'Med ', median)
+        statstr += fmtstr.format(key, 'Max ', int(maximum))
+        statstr += fmtstr.format(key, 'Min ', int(minimum))
+    else:
+        statstr += fmtstr.format(key, 'Mean', mean)
+        statstr += fmtstr.format(key, 'Med ', median)
+        statstr += fmtstr.format(key, 'Max ', maximum)
+        statstr += fmtstr.format(key, 'Min ', minimum)
+    # add fail criteria
+    statstr += '\t\tFail when {1}\n'.format(key, logic[0])
     # return stat string
     return statstr
+
+
+def _mapqc(x, attribute: str, crit: str, name: Optional[str] = None,
+           default: Optional[Any] = None):
+    if hasattr(x, attribute):
+        avalue = getattr(x, attribute)
+        if crit in avalue:
+            if name is None:
+                return avalue[crit]
+            if name in avalue[crit]:
+                return avalue[crit][name]
+    return default
 
 
 # =============================================================================
