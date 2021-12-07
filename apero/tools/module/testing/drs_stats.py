@@ -13,12 +13,13 @@ from astropy import units as uu
 import numpy as np
 from pandasql import sqldf
 import pandas as pd
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 
 
@@ -40,10 +41,13 @@ tqdm = base.tqdm_module()
 WLOG = drs_log.wlog
 ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
+# define index columns to get
+INDEX_COLS = ['FILENAME', 'OBS_DIR', 'BLOCK_KIND', 'KW_MID_OBS_TIME',
+              'INFILES', 'KW_OUTPUT', 'KW_DPRTYPE']
 
 
 # =============================================================================
-# Define timing stats functions
+# General functions
 # =============================================================================
 class LogEntry:
     def __init__(self, pid: str, dataframe: pd.DataFrame):
@@ -52,19 +56,48 @@ class LogEntry:
         self.dataframe = dataframe
         self.namespace = dict(data=dataframe)
         self.data = None
+        self.index = None
         # define properties
         self.recipe_name = 'None'
         self.shortname = 'None'
         self.block_kind = 'None'
         self.recipe_type = 'None'
         self.recipe_kind = 'None'
+        # get the mjd mid
+        self.mjdmid = np.nan
+        self.obs_dir = 'None'
+        self.infiles = []
+        self.outfiles = []
+        self.outtypes = []
+        self.dprtypes = []
+        # timing variables
         self.start_time = np.nan
         self.end_time = np.nan
         self.duration = np.nan
         # flag for valid log entry
         self.is_valid = False
+        self.is_valid_for_timing = False
+        self.is_valid_for_qc = False
+        # set sublevel criteria
+        self.criteria = []
+        # qc criteria (for each sublevel)
+        self.passed = dict()
+        self.qc_names = dict()
+        self.qc_values = dict()
+        self.qc_passes = dict()
+        self.qc_logics = dict()
+        # running / ended / error criteria
+        self.running = dict()
+        self.ended = dict()
+        self.errormsgs = dict()
 
-    def get_attributes(self):
+    def __str__(self) -> str:
+        return 'LogEntry[{0}|{1}]'.format(self.recipe_name, self.pid)
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def get_attributes(self, params: ParamDict, mode: str):
         """
         Get attributes from dataframe for this object
         :return:
@@ -80,38 +113,116 @@ class LogEntry:
         self.block_kind = self.data.iloc[0]['BLOCK_KIND']
         self.recipe_type = self.data.iloc[0]['RECIPE_TYPE']
         self.recipe_kind = self.data.iloc[0]['RECIPE_KIND']
+        # cross-match with index database
+        self.index = _index_database_crossmatch(params, self.pid,
+                                                ','.join(INDEX_COLS))
+        # add index linked parameters
+        if len(self.index) > 0:
+            # get the mjd mid
+            self.mjdmid = self.index['KW_MID_OBS_TIME'].mean()
+            # get the observation directories (assume all entries equal)
+            self.obs_dir = self.index['OBS_DIR'][0]
+            # get the infiles (assume all entries equal)
+            raw_infiles = self.index['INFILES'][0]
+            if isinstance(raw_infiles, str):
+                self.infiles = self.index['INFILES'][0].split('|')
+            # get outfiles
+            self.outfiles = np.array(self.index['FILENAME'])
+            # get the output file type
+            self.outtypes = np.array(self.index['KW_OUTPUT'])
+            # get the DPRTYPE
+            self.dprtypes = np.array(self.index['KW_DPRTYPE'])
 
+        # check if we are dealing with a recipe (ignore others)
         if self.recipe_type != 'recipe':
-            self.is_valid = False
             return
-
-        try:
-            self.start_time = Time(self.data.iloc[0]['START_TIME']).unix
-            self.end_time = Time(self.data.iloc[0]['END_TIME']).unix
-            self.duration = self.end_time - self.start_time
-            if np.isfinite(self.duration):
+        # get timing criteria
+        if mode == 'timing':
+            try:
+                self.start_time = Time(self.data.iloc[0]['START_TIME']).unix
+                self.end_time = Time(self.data.iloc[0]['END_TIME']).unix
+                self.duration = self.end_time - self.start_time
+                if np.isfinite(self.duration):
+                    self.is_valid = True
+                    self.is_valid_for_timing = True
+            except Exception as e:
+                emsg = 'TIMING ERROR - PID {0}: {1}: {2}'
+                eargs = [self.pid, type(e), str(e)]
+                WLOG(params, 'warning', emsg.format(*eargs))
+        elif mode == 'qc':
+            try:
+                # get sub level criteria and remove static variables
+                subcriteria = _sort_sublevel(self.data)
+                self.criteria = list(subcriteria)
+                # get qc/run/error criteria
+                # must loop around rows
+                for row in range(len(self.data)):
+                    # get this rows datas
+                    row_data = self.data.iloc[row]
+                    # get sublevel
+                    sublevel = subcriteria[row]
+                    # get passed criteria for all qc
+                    passed = drs_text.true_text(row_data['PASSED_ALL_QC'])
+                    # get qc_names
+                    qc_names_raw = _get_list_param(row_data, 'QC_NAMES')
+                    qc_values_raw = _get_list_param(row_data, 'QC_VALUES')
+                    qc_logic_raw = _get_list_param(row_data, 'QC_LOGIC')
+                    qc_pass_raw = _get_list_param(row_data, 'QC_PASS')
+                    # evaluate qc_values
+                    qc_names, qc_values, qc_logic, qc_pass = [], [], [], []
+                    for qc_it in range(len(qc_names_raw)):
+                        # remove any blank criteria
+                        cond1 = len(qc_names_raw[qc_it]) == 0
+                        cond2 = len(qc_values_raw[qc_it]) == 0
+                        if cond1 or cond2:
+                            continue
+                        # evaluate values
+                        try:
+                            qc_values.append(eval(qc_values_raw[qc_it]))
+                        except Exception as _:
+                            qc_values.append(qc_values_raw[qc_it])
+                        # add name as normal
+                        qc_names.append(qc_names_raw[qc_it])
+                        # add logic as normal
+                        qc_logic.append(qc_logic_raw[qc_it])
+                        # convert pass to boolean
+                        qc_pass.append(drs_text.true_text(qc_pass_raw[qc_it]))
+                    # get running critera
+                    running = drs_text.true_text(row_data['RUNNING'])
+                    # get ended critera
+                    ended = drs_text.true_text(row_data['ENDED'])
+                    # get any errors
+                    errors = _get_list_param(row_data, 'ERRORMSGS')
+                    # -----------------------------------------------------------------
+                    # push into storage
+                    self.passed[sublevel] = passed
+                    self.qc_names[sublevel] = qc_names
+                    self.qc_values[sublevel] = dict(zip(qc_names, qc_values))
+                    self.qc_logics[sublevel] = dict(zip(qc_names, qc_logic))
+                    self.qc_passes[sublevel] = dict(zip(qc_names, qc_pass))
+                    self.running[sublevel] = running
+                    self.ended[sublevel] = ended
+                    self.errormsgs[sublevel] = errors
+                # set valid
                 self.is_valid = True
-        except ValueError:
-            self.is_valid = False
+                self.is_valid_for_qc = True
+            except Exception as e:
+                emsg = 'QC ERROR - PID {0}: {1}: {2}'
+                eargs = [self.pid, type(e), str(e)]
+                WLOG(params, 'warning', emsg.format(*eargs))
+                self.is_valid_for_qc = False
 
     def query(self, command: str):
         return sqldf(command, self.namespace)
 
 
 
-def timing_stats(params: ParamDict, recipe: DrsRecipe):
-    """
-    Print and plot timing stats
+def get_log_entries(params: ParamDict,
+                    mode: str) -> List[LogEntry]:
 
-    :param params:
-    :param recipe:
-    :return:
-    """
     # load log database
     logdbm = drs_database.LogDatabase(params)
     logdbm.load_db()
-    # print progress
-    WLOG(params, 'info', 'Running timing code')
     # get all entries from database
     dataframe = logdbm.get_entries('*')
     # -------------------------------------------------------------------------
@@ -125,22 +236,76 @@ def timing_stats(params: ParamDict, recipe: DrsRecipe):
     for upid in tqdm(upids):
         # get a log entry
         log_entry = LogEntry(upid, dataframe)
-        log_entry.get_attributes()
-        # append to log entry storage list
-        if log_entry.is_valid:
+        log_entry.get_attributes(params, mode=mode)
+        # deal with valid data
+        cond = log_entry.is_valid
+        if mode == 'timing':
+            cond &= log_entry.is_valid_for_timing
+        elif mode == 'qc':
+            cond &= log_entry.is_valid_for_qc
+        # append to log entry storage list if conditions met
+        if cond:
             log_entries.append(log_entry)
+    # return list of log entries
+    return log_entries
+
+
+def _index_database_crossmatch(params: ParamDict, pid: str,
+                               columns: str = '*') -> pd.DataFrame:
+    """
+    Get all index entries for a specific pid
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pid: str, the unique pid from the log entry
+    :param columns: str, comma separated list of columns to get
+
+    :return: pandas dataframe - all index entries that match this pid
+    """
+    # load index database
+    indexdbm = drs_database.IndexDatabase(params)
+    indexdbm.load_db()
+    # set up condition
+    condition = 'KW_PID="{0}"'.format(pid)
+    # get data frames
+    dataframe = indexdbm.get_entries(columns, condition=condition)
+    # return the
+    return dataframe
+
+
+# =============================================================================
+# Define timing stats functions
+# =============================================================================
+def timing_stats(params: ParamDict, recipe: DrsRecipe):
+    """
+    Print and plot timing stats
+
+    :param params:
+    :param recipe:
+    :return:
+    """
+    # print progress
+    WLOG(params, 'info', 'Running timing code')
+    # get log entries
+    log_entries = get_log_entries(params, mode='timing')
     # -------------------------------------------------------------------------
     # get stats
-    stat_dict = get_stats(log_entries)
+    stat_dict = get_timing_stats(log_entries)
     # loop around recipe and print stats
     for recipe_name in stat_dict:
-        print_stats(params, recipe_name, stat_dict[recipe_name])
+        print_timing_stats(params, recipe_name, stat_dict[recipe_name])
     # -------------------------------------------------------------------------
     # plot timing graph
     recipe.plot('STATS_TIMING_PLOT', logs=log_entries)
 
 
-def get_stats(logs: List[LogEntry]) -> Dict[str, Dict[str, Any]]:
+def get_timing_stats(logs: List[LogEntry]) -> Dict[str, Dict[str, Any]]:
+    """
+    Compile the timing stats for all log entries
+
+    :param logs: list of LogEntry instances
+
+    :return: dictionary of recipes, each dictionary contains a stats dictionary
+    """
     durations = np.array(list(map(lambda x: x.duration, logs)))
     recipes = np.array(list(map(lambda x: x.shortname, logs)))
     start_times = np.array(list(map(lambda x: x.start_time, logs)))
@@ -187,11 +352,11 @@ def get_stats(logs: List[LogEntry]) -> Dict[str, Dict[str, Any]]:
         stats['TOTALTIME_HR'] = stats['TOTALTIME_SS'] / 3600
         # push to recipe dict storage
         recipe_dict[recipe] = stats
-
+    # return the dictionary of recipes, each with a stats dictionary
     return recipe_dict
 
 
-def print_stats(params: ParamDict, recipe: str, stats: Dict[str, Any]):
+def print_timing_stats(params: ParamDict, recipe: str, stats: Dict[str, Any]):
     WLOG(params, 'info', '='*50)
     WLOG(params, 'info', '\t{0}'.format(recipe))
     WLOG(params, 'info', '='*50)
@@ -206,12 +371,246 @@ def print_stats(params: ParamDict, recipe: str, stats: Dict[str, Any]):
     WLOG(params, '', statstr.format(**stats))
 
 
-
 # =============================================================================
 # Define timing stats functions
 # =============================================================================
-def qc_stats(params: ParamDict):
-    pass
+def qc_stats(params: ParamDict, recipe: DrsRecipe):
+    """
+    Print and plot quality control / running / error stats
+
+    :param params:
+    :param recipe:
+    :return:
+    """
+    # print progress
+    WLOG(params, 'info', 'Running timing code')
+    # get log entries
+    log_entries = get_log_entries(params, mode='qc')
+    # get stats
+    stat_dict, stat_crit, stat_qc = get_qc_stats(log_entries)
+    # loop around recipe and print stats
+    for recipe_name in stat_dict:
+        # print qc stats
+        print_qc_stats(params, recipe_name, stat_dict[recipe_name],
+                       stat_crit[recipe_name], stat_qc[recipe_name])
+        # produce the plots
+        # TODO: finish this
+        recipe.plot('STAT_QC_RECIPE_PLOT', stat_dict=stat_dict[recipe_name],
+                    stat_crit=stat_crit[recipe_name],
+                    stat_qc=stat_qc[recipe_name])
+
+
+
+
+
+def _get_list_param(data, key: str, delimiter='||'):
+    """
+    Get the result of a parameter that is a list separated by some
+    delimiter
+
+    :param data:
+    :param key:
+    :param delimiter:
+    :return:
+    """
+    if data[key] is None:
+        return []
+    else:
+        return data[key].split(delimiter)
+
+
+def _sort_sublevel(data) -> List[str]:
+    """
+    Remove any static variables from the criteria
+
+    :param criteria: pandas data, the sublevel criteria
+
+    :return: list of strings, updated sublevel criteria
+    """
+    # deal with only one row --> no sub levels
+    if len(data) == 1:
+        return ['None']
+    else:
+        criteria = list(data['LEVELCRIT'])
+    # Deal with no level criteria --> no sub levels
+    if criteria[0] is None:
+        return ['None']
+    # separate first entry into categories
+    categories = criteria[0].split()
+    # get keys
+    keys = []
+    # loop around categories
+    for cat in categories:
+        keys.append(cat.split('=')[0])
+    # storage for values
+    all_values = dict()
+    # now get all values for keys
+    for crit in criteria:
+        for key in keys:
+            value = crit.split('{0}='.format(key))[-1].split()[0]
+            if key in all_values:
+                if value not in all_values[key]:
+                    all_values[key].append(value)
+            else:
+                all_values[key] = [value]
+    # remove any constants (non changing criteria)
+    changing_values = dict()
+    static_values = []
+    # loop around all values to remove static variables
+    for key in all_values:
+        if len(all_values[key]) > 1:
+            changing_values[key] = all_values[key]
+        else:
+            static_values += ['{0}={1} '.format(key, all_values[key][0])]
+    # now make new criteria (without the static variables)
+    new_criteria = []
+    for crit in criteria:
+        for static_value in static_values:
+            new_criteria.append(crit.replace(static_value, ''))
+    # return the new criteria for each level
+    return new_criteria
+
+
+QcStatReturn = Tuple[Dict[str, Dict[str, Any]],
+                     Dict[str, List[str]],
+                     Dict[str, Dict[str, List[str]]]]
+
+
+def get_qc_stats(logs: List[LogEntry]) -> QcStatReturn:
+    """
+    Compile the timing stats for all log entries
+
+    :param logs: list of LogEntry instances
+
+    :return: dictionary of recipes, each dictionary contains a stats dictionary
+    """
+    # get list of all recipes
+    recipes = np.array(list(map(lambda x: x.shortname, logs))).astype(str)
+    # storage for recipes
+    recipe_dict = dict()
+    criteria_dict = dict()
+    qc_dict = dict()
+    # loop around recipes
+    for recipe in recipes:
+        # skip done recipes
+        if recipe in recipe_dict:
+            continue
+        # get log list for this recipe
+        rlogs = list(filter(lambda x: x.shortname == recipe, logs))
+        # get criteria for this recipe
+        rcrit = rlogs[0].criteria
+        # push criteria into dictionary
+        criteria_dict[recipe] = rcrit
+        qc_dict[recipe] = dict()
+        # create a stats dictionary
+        stats = dict()
+        # deal with not having to group
+        for crit in rcrit:
+            # deal with crit = None
+            if drs_text.null_text(crit, ['None', '']):
+                critstr = ''
+            else:
+                critstr = '::{0}'.format(crit.strip())
+            # -----------------------------------------------------------------
+            # get global qc values
+            passed = np.array(list(map(lambda x: x.passed[crit], rlogs)))
+            num_passed = np.sum(passed)
+            num_failed = np.sum(~passed)
+            # push into stats dict
+            stats[f'PASSED{critstr}'] = passed
+            stats[f'NUM_PASSED{critstr}'] = num_passed
+            stats[f'NUM_FAILED{critstr}'] = num_failed
+            # -----------------------------------------------------------------
+            # get the names of the qc parameters
+            qc_names = list(rlogs[0].qc_values[crit].keys())
+            qc_dict[recipe][crit] = qc_names
+            # get individual qc values
+            for qc_name in qc_names:
+                qcv = list(map(lambda x: x.qc_values[crit][qc_name], rlogs))
+                qcp = list(map(lambda x: x.qc_passes[crit][qc_name], rlogs))
+                qcl = list(map(lambda x: x.qc_logics[crit][qc_name], rlogs))
+                # push into stats dict
+                stats[f'QCV::{qc_name}{critstr}'] = qcv
+                stats[f'QCP::{qc_name}{critstr}'] = qcp
+                stats[f'QCL::{qc_name}{critstr}'] = qcl
+        # -----------------------------------------------------------------
+        stats['MJDMID'] = np.array(list(map(lambda x: x.mjdmid, rlogs)))
+        # push to recipe dict storage
+        recipe_dict[recipe] = stats
+    # return the dictionary of recipes, each with a stats dictionary
+    return recipe_dict, criteria_dict, qc_dict
+
+
+def print_qc_stats(params: ParamDict, recipe_name: str, stats: Dict[str, Any],
+                   stat_crit: List[str], stat_qc: Dict[str, List[str]]):
+    # print recipe
+    WLOG(params, 'info', '='*50)
+    WLOG(params, 'info', '\t{0}'.format(recipe_name))
+    WLOG(params, 'info', '='*50)
+    # loop around criteria
+    for crit in stat_crit:
+        # clean stat str
+        statstr = ''
+        # deal with crit = None
+        if drs_text.null_text(crit, ['None', '']):
+            critstr = ''
+        else:
+            critstr = '::{0}'.format(crit.strip())
+            WLOG(params, '', '\t{0}'.format(crit))
+        # add number run
+        passed = stats[f'NUM_PASSED{critstr}']
+        failed = stats[f'NUM_FAILED{critstr}']
+        total = passed + failed
+        statstr += '\t\tNumber passed: {0}/{1}\n'.format(passed, total)
+        statstr += '\t\tNumber failed: {0}/{1}\n'.format(failed, total)
+
+        for qc_name in stat_qc[crit]:
+            values = stats[f'QCV::{qc_name}{critstr}']
+            logic = stats[f'QCL::{qc_name}{critstr}']
+            statstr = _statstr_print(statstr, f'{qc_name}{critstr}', values,
+                                     logic)
+        # print stats
+        WLOG(params, '', statstr)
+
+
+def _statstr_print(statstr: str, key: str, values: List[Any],
+                   logic: List[str]) -> str:
+    """
+    Produce qc stat string
+
+    :param statstr:
+    :param key:
+    :param values:
+    :return:
+    """
+    # deal with strings
+    if not isinstance(values[0], (int, float)):
+        return statstr
+    # deal with no value or single value
+    if len(values) == 0:
+        return statstr
+    elif len(values) == 1:
+        statstr += '\t\t{0} = {1:.3e}\n'.format(key, values[0])
+        return statstr
+
+    valid_values = []
+    for value in values:
+        try:
+            valid_values.append(float(value))
+        except TypeError:
+            continue
+
+    mean = np.nanmean(valid_values)
+    med = np.nanmedian(valid_values)
+    max = np.nanmax(valid_values)
+    min = np.nanmin(valid_values)
+    statstr += '\t\t{0} Mean = {1:.3e}\n'.format(key, mean)
+    statstr += '\t\t{0} Med  = {1:.3e}\n'.format(key, med)
+    statstr += '\t\t{0} Max  = {1:.3e}\n'.format(key, max)
+    statstr += '\t\t{0} Min  = {1:.3e}\n'.format(key, min)
+    statstr += '\t\tFail when {1}'.format(key, logic[0])
+    # return stat string
+    return statstr
 
 
 # =============================================================================

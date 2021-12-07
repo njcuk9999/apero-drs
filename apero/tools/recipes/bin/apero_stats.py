@@ -93,7 +93,7 @@ def __main__(recipe, params):
         # do the timing stats
         drs_stats.timing_stats(params, recipe)
     elif mode.upper() == 'QC':
-        drs_stats.qc_stats(params)
+        drs_stats.qc_stats(params, recipe)
 
 
     # ----------------------------------------------------------------------
