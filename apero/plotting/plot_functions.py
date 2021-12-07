@@ -21,7 +21,9 @@ import warnings
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
+
 
 # =============================================================================
 # Define variables
@@ -5548,7 +5550,7 @@ def plot_stats_timing_plot(plotter: Plotter, graph: Graph,
 
 
 def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
+                              kwargs: Dict[str, Any]):
     """
     Graph: Log stats bar plot
 
@@ -5567,10 +5569,11 @@ def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
     stat_dict = kwargs['stat_dict']
     stat_crit = kwargs['stat_crit']
     stat_qc = kwargs['stat_qc']
-
     # -------------------------------------------------------------------------
     y_values = dict()
+    y_labels = dict()
     x_values = dict()
+    x_labels = dict()
     limit_values = dict()
 
     # loop around criteria
@@ -5582,13 +5585,11 @@ def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
             critstr = ''
         else:
             critstr = '::{0}'.format(crit.strip())
-            WLOG(params, '', '\t{0}'.format(crit))
         # add number run
-        passed = stats[f'NUM_PASSED{critstr}']
-        failed = stats[f'NUM_FAILED{critstr}']
-        total = passed + failed
-        statstr += '\t\tNumber passed: {0}/{1}\n'.format(passed, total)
-        statstr += '\t\tNumber failed: {0}/{1}\n'.format(failed, total)
+        x_values[crit] = stat_dict['MJDMID']
+        y_values[crit] = stat_dict[f'PASSED{critstr}']
+
+
 
         for qc_name in stat_qc[crit]:
 
@@ -5599,10 +5600,7 @@ def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
 
             # TODO: finish this
 
-            statstr = _statstr_print(statstr, f'{qc_name}{critstr}', values,
-                                     logic)
-        # print stats
-        WLOG(params, '', statstr)
+
     # -------------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, nrows=nrows, ncols=ncols)
@@ -5621,8 +5619,11 @@ logstats_bar = Graph('LOGSTATS_BAR', kind='show', func=plot_logstats_bar)
 stats_timing = Graph('STATS_TIMING_PLOT', kind='show',
                      func=plot_stats_timing_plot)
 
+stats_qc_recipe = Graph('STAT_QC_RECIPE_PLOT', kind='show',
+                        func=plot_stats_qc_recipe_plot)
+
 # add to definitions
-definitions += [logstats_bar, stats_timing]
+definitions += [logstats_bar, stats_timing, stats_qc_recipe]
 
 
 # =============================================================================

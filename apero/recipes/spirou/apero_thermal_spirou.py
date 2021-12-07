@@ -117,12 +117,12 @@ def __main__(recipe, params):
     if len(internal_infiles) > 0:
         cond1 = drs_file.combine(params, recipe, internal_infiles,
                                  math='median')
-        drs_dark_files['internal dark'] = cond1[0]
+        drs_dark_files['internal_dark'] = cond1[0]
     # deal with combining telescope darks
     if len(telescope_infiles) > 0:
         cond2 = drs_file.combine(params, recipe, telescope_infiles,
                                  math='median')
-        drs_dark_files['telescope dark'] = cond2[0]
+        drs_dark_files['telescope_dark'] = cond2[0]
     # we are combining files
     combine = True
     # ----------------------------------------------------------------------
