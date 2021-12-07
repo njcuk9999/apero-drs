@@ -44,6 +44,7 @@ module_translation['Pillow'] = 'PIL'
 module_translation['pyyaml'] = 'yaml'
 module_translation['mysql-connector-python'] = 'mysql.connector'
 module_translation['scikit-image'] = 'skimage'
+module_translation['pandastable'] = ('pandastable', '0.12.2')
 # start the language dictionary
 lang = setup_lang.LangDict()
 
@@ -173,7 +174,10 @@ def validate():
         suggested = lang['40-001-00077'].format(module)
         # deal with modules with different import name
         if modname in module_translation:
-            modname = module_translation[modname]
+            if isinstance(module_translation[modname], tuple):
+                modname, modversion = module_translation[modname]
+            else:
+                modname = module_translation[modname]
         # deal with checked
         if modname in checked:
             continue
