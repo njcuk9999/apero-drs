@@ -937,6 +937,8 @@ class Database:
 
         :return: list of strings, the column names
         """
+        # get table name
+        table = self._infer_table_(table)
         # get all columns names
         allcolnames, _ = self.table_info(table)
         # if user wants all columns return them all
