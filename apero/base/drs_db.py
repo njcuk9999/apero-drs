@@ -1016,6 +1016,7 @@ class Database:
                 # add code to database message
                 emsg = 'E[0]: {1}'.format(ecode, emsg)
 
+                print('TABLE=', table)
                 print('TABLES=', self.tables)
                 # log base error
                 return drs_base.base_error(ecode, emsg, 'error',
