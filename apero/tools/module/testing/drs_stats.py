@@ -12,6 +12,7 @@ Created on 2021-12-06
 import numpy as np
 from pandasql import sqldf
 import pandas as pd
+import string
 from typing import Any, Dict, List, Optional, Tuple
 import warnings
 
@@ -75,6 +76,7 @@ class LogEntry:
         self.end_time = np.nan
         self.duration = np.nan
         # flag for valid log entry
+        self.has_index = False
         self.is_valid = False
         self.is_valid_for_timing = False
         self.is_valid_for_qc = False
@@ -120,6 +122,8 @@ class LogEntry:
         if len(self.index) > 0:
             # get the mjd mid
             self.mjdmid = self.index['KW_MID_OBS_TIME'].mean()
+            # flag that we have index
+            self.has_index = True
             # get the observation directories (assume all entries equal)
             self.obs_dir = self.index['OBS_DIR'][0]
             # get the infiles (assume all entries equal)
@@ -132,6 +136,8 @@ class LogEntry:
             self.outtypes = np.array(self.index['KW_OUTPUT'])
             # get the DPRTYPE
             self.dprtypes = np.array(self.index['KW_DPRTYPE'])
+        else:
+            self.has_index = False
 
         # check if we are dealing with a recipe (ignore others)
         if self.recipe_type != 'recipe':
@@ -150,6 +156,10 @@ class LogEntry:
                 eargs = [self.pid, type(e), str(e)]
                 WLOG(params, 'warning', emsg.format(*eargs))
         elif mode == 'qc':
+            # if we don't have index can't do qc (need outputs for qc)
+            if not self.has_index:
+                self.is_valid_for_qc = False
+                return
             try:
                 # get sub level criteria and remove static variables
                 subcriteria = _sort_sublevel(self.data)
@@ -393,13 +403,18 @@ def qc_stats(params: ParamDict, recipe: DrsRecipe):
         # print qc stats
         print_qc_stats(params, recipe_name, stat_dict[recipe_name],
                        stat_crit[recipe_name], stat_qc[recipe_name])
-        # produce the plots
-        # TODO: finish this
-        recipe.plot('STAT_QC_RECIPE_PLOT', stats=stat_dict[recipe_name],
-                    crit=stat_crit[recipe_name], qc=stat_qc[recipe_name])
-
-
-
+        # compile vectors for plotting
+        cqcout = _compile_plot_qc_params(stats=stat_dict[recipe_name],
+                                         criteria=stat_crit[recipe_name],
+                                         qcdict=stat_qc[recipe_name])
+        xvalues, yvalues, lvalues, llabels = cqcout
+        # check we have more than one point
+        cond = _check_have_stats(stat_dict[recipe_name])
+        # plot if we have more than one point and we have a qc plot
+        if cond and len(xvalues) > 1 :
+            recipe.plot('STAT_QC_RECIPE_PLOT', xvalues=xvalues,
+                        yvalues=yvalues, lvalues=lvalues, llabels=llabels,
+                        recipe_name=recipe_name)
 
 
 def _get_list_param(data, key: str, delimiter='||'):
@@ -680,6 +695,171 @@ def _mapqc(x, attribute: str, crit: str, name: Optional[str] = None,
             if name in avalue[crit]:
                 return avalue[crit][name]
     return default
+
+
+def _compile_plot_qc_params(stats, criteria, qcdict):
+    # -------------------------------------------------------------------------
+    # plot parameters
+    xvalues = dict()
+    yvalues = dict()
+    lvalues = dict()
+    llabels = dict()
+    # -------------------------------------------------------------------------
+    # loop around criteria
+    for crit in criteria:
+        # deal with crit = None
+        if drs_text.null_text(crit, ['None', '']):
+            critstr = ''
+        else:
+            critstr = '::{0}'.format(crit.strip())
+        # add passed / running / ended
+        xvalues1, yvalues1, _ = _get_qcv(stats, 'MJDMID', f'PASSED{critstr}')
+        xvalues2, yvalues2, _ = _get_qcv(stats, 'MJDMID', f'RUNNING{critstr}')
+        xvalues3, yvalues3, _ = _get_qcv(stats, 'MJDMID', f'ENDED{critstr}')
+        # check valid
+        cond1 = np.sum(np.isfinite(xvalues1)) > 0
+        cond2 = np.sum(np.isfinite(yvalues1)) > 0
+        cond3 = len(xvalues1) > 0 and len(yvalues1) > 0
+        # add to arrays
+        if cond1 and cond2 and cond3:
+            xvalues['Condition'] = [xvalues1, xvalues2, xvalues3]
+            yvalues['Condition'] = [yvalues1, yvalues2, yvalues3]
+            llabels['Condition'] = [f'{critstr} passed', f'{critstr} running',
+                                    f'{critstr} ended']
+            lvalues['Condition'] = [None, None, None]
+        # ---------------------------------------------------------------------
+        # loop around qc parameters
+        for qc_name in qcdict[crit]:
+            # get vectors
+            name = f'{qc_name}{critstr}'
+            qcvout = _get_qcv(stats, 'MJDMID', f'QCV::{qc_name}{critstr}')
+            xvalues_i, yvalues_i, mask_i = qcvout
+            # deal with non number qc (skip)
+            if len(mask_i) == 0:
+                continue
+            # get logic and mask it
+            logic = list(np.array(stats[f'QCL::{qc_name}{critstr}'])[mask_i])
+            # try to get a limit from logic
+            lvalues_i = _get_logic_values(qc_name, logic)
+            # check valid
+            cond1_i = np.sum(np.isfinite(xvalues_i)) > 0
+            cond2_i = np.sum(np.isfinite(yvalues_i)) > 0
+            cond3_i = len(xvalues_i) > 0 and len(yvalues_i) > 0
+            # only add if all values aren't NaN
+            if cond1_i and cond2_i and cond3_i:
+                # add to arrays
+                xvalues[name] = [xvalues_i]
+                yvalues[name] = [yvalues_i]
+                lvalues[name] = [lvalues_i]
+                llabels[name] = [name]
+    # return x, y, logic and labels vectors for plotting
+    return xvalues, yvalues, lvalues, llabels
+
+
+def _check_have_stats(stats: Dict[str, Any]) -> bool:
+    """
+    Check whether we have more than one stat
+
+    :param stats:
+    :return:
+    """
+    num_passed, num_failed = 0, 0
+    # loop around stats
+    for key in stats:
+        if key.startswith('NUM_PASSED'):
+            num_passed = stats[key]
+        if key.startswith('NUM_FAILED'):
+            num_failed = stats[key]
+    # get total number
+    total_number = num_passed + num_failed
+    # return whether we have more than one stat
+    return total_number > 1
+
+
+def _get_logic_values(key: str, logic: List[str]) -> List[List[float]]:
+    """
+    Take the qc logic from all rows and try to construct a logic vector to
+    plot (only if number)
+
+    :param key: str, the variable name (should be contained within logic string)
+    :param logic: list of strings, the logic for each row
+
+    :return:
+    """
+    # punctuation
+    chars = string.punctuation.replace('.', '')
+
+    ldict = dict()
+    # loop around logic
+    for row in range(len(logic)):
+        # remove key
+        logicstr = logic[row].replace(key, '')
+        # strip all punctuation
+        for char in chars:
+            logicstr = logicstr.replace(char, '')
+        # strip whitespaces
+        logicstr = logicstr.strip()
+        # split on spaces (incase we have two numbers)
+        logic_var = logicstr.split()
+        # storage for number
+        logic_nums = []
+        # remove any non numeric "words"
+        for row in range(len(logic_var)):
+            # try to get a int or float out of parameter
+            try:
+                logic_nums.append(float(eval(logic_var[row])))
+            except Exception as _:
+                continue
+        # push numbers into dictionary
+        for row in range(len(logic_nums)):
+            if row in ldict:
+                ldict[row].append(logic_nums[row])
+            else:
+                ldict[row] = [logic_nums[row]]
+    # push into vectors
+    lvalues = []
+    for row in ldict:
+        lvalues.append(ldict[row])
+    # return lvalues
+    return lvalues
+
+
+def _get_qcv(stats: dict, xkey: str, ykey: str, return_mask: bool = False
+             ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Filter out bad values for both x and y in the qc stat dictionary
+
+    :param stats: dict, qc stat dictionary
+    :param xkey: str, the key for x values in the stat dictionary
+    :param ykey: str, the key for y values in the stat dictionary
+    :return:
+    """
+    # get raw values
+    xvalues = stats[xkey]
+    yvalues = stats[ykey]
+    mask = np.arange(len(xvalues))
+    # storage for valid values
+    valid_xvalues = []
+    valid_yvalues = []
+    valid_mask = []
+    # loop around all values
+    for row in range(len(yvalues)):
+        try:
+            valid_xvalues.append(float(xvalues[row]))
+            valid_yvalues.append(float(yvalues[row]))
+            valid_mask.append(mask[row])
+        except Exception as _:
+            continue
+    # deal with no values
+    if len(valid_mask) == 0:
+        return np.array([]), np.array([]), np.array([])
+    # make numpy arrays
+    vxvalues, vyvalues = np.array(valid_xvalues), np.array(valid_yvalues)
+    vmask = np.array(valid_mask)
+    # sort by x values
+    sortmask = np.argsort(vxvalues)
+    # return sorted valid values in x and y
+    return vxvalues[sortmask], vyvalues[sortmask], vmask[sortmask]
 
 
 # =============================================================================
