@@ -9,11 +9,11 @@ Created on 2021-12-06
 
 @author: cook
 """
-from astropy import units as uu
 import numpy as np
 from pandasql import sqldf
 import pandas as pd
 from typing import Any, Dict, List, Optional, Tuple
+import warnings
 
 from apero.base import base
 from apero.core import constants
@@ -395,9 +395,8 @@ def qc_stats(params: ParamDict, recipe: DrsRecipe):
                        stat_crit[recipe_name], stat_qc[recipe_name])
         # produce the plots
         # TODO: finish this
-        recipe.plot('STAT_QC_RECIPE_PLOT', stat_dict=stat_dict[recipe_name],
-                    stat_crit=stat_crit[recipe_name],
-                    stat_qc=stat_qc[recipe_name])
+        recipe.plot('STAT_QC_RECIPE_PLOT', stats=stat_dict[recipe_name],
+                    crit=stat_crit[recipe_name], qc=stat_qc[recipe_name])
 
 
 
@@ -641,12 +640,13 @@ def _statstr_print(statstr: str, key: str, values: List[Any],
             continue
 
     # deal with significant figures
-    if dtype == 'int':
-        fmtstr = '\t\t{0} {1} = {2}\n'
-    elif np.log10(valid_values[0]) > -4:
-        fmtstr = '\t\t{0} {1} = {2:.4f}\n'
-    else:
-        fmtstr = '\t\t{0} {1} = {2:.4e}\n'
+    with warnings.catch_warnings(record=True) as _:
+        if dtype == 'int':
+            fmtstr = '\t\t{0} {1} = {2}\n'
+        elif np.log10(valid_values[0]) > -4:
+            fmtstr = '\t\t{0} {1} = {2:.4f}\n'
+        else:
+            fmtstr = '\t\t{0} {1} = {2:.4e}\n'
 
     mean = np.nanmean(valid_values)
     median = np.nanmedian(valid_values)

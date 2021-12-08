@@ -219,7 +219,7 @@ logstats.instrument = __INSTRUMENT__
 logstats.description = textentry('LOGSTAT_DESC')
 logstats.recipe_type = 'nolog-tool'
 logstats.recipe_kind = 'user'
-logstats.set_debug_plots('STATS_TIMING_PLOT')
+logstats.set_debug_plots('STATS_TIMING_PLOT', 'STAT_QC_RECIPE_PLOT')
 logstats.set_summary_plots()
 logstats.set_kwarg(name='--mode', dtype='options', default='red',
                    options=['timing', 'qc'],
