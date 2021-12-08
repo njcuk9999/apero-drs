@@ -9,13 +9,15 @@ Created on 2019-10-03 at 10:51
 
 @author: cook
 """
+import string
+
 from astropy import constants as cc
 from astropy import units as uu
 from collections.abc import Iterable
 import copy
 import numpy as np
 import os
-from typing import Any, Dict, Generator, Tuple, Union
+from typing import Any, Dict, Generator, List, Tuple, Union
 import warnings
 
 from apero.base import base
@@ -5564,50 +5566,99 @@ def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
     # start the plotting process
     if not plotter.plotstart(graph):
         return
+    # get plt
+    plt = plotter.plt
     # -------------------------------------------------------------------------
     # get the arguments from kwargs
-    stat_dict = kwargs['stat_dict']
-    stat_crit = kwargs['stat_crit']
-    stat_qc = kwargs['stat_qc']
+    stats = kwargs['stats']
+    criteria = kwargs['crit']
+    qcdict = kwargs['qc']
     # -------------------------------------------------------------------------
-    y_values = dict()
-    y_labels = dict()
-    x_values = dict()
-    x_labels = dict()
-    limit_values = dict()
-
+    xvalues = dict()
+    yvalues = dict()
+    lvalues = dict()
+    llabels = dict()
+    # -------------------------------------------------------------------------
     # loop around criteria
-    for crit in stat_crit:
-        # clean stat str
-        statstr = ''
+    for crit in criteria:
         # deal with crit = None
         if drs_text.null_text(crit, ['None', '']):
             critstr = ''
         else:
             critstr = '::{0}'.format(crit.strip())
-        # add number run
-        x_values[crit] = stat_dict['MJDMID']
-        y_values[crit] = stat_dict[f'PASSED{critstr}']
-
-
-
-        for qc_name in stat_qc[crit]:
-
+        # add passed / running / ended
+        xvalues1, yvalues1, _ = _get_qcv(stats, 'MJDMID', f'PASSED{critstr}')
+        xvalues2, yvalues2, _ = _get_qcv(stats, 'MJDMID', f'RUNNING{critstr}')
+        xvalues3, yvalues3, _ = _get_qcv(stats, 'MJDMID', f'ENDED{critstr}')
+        # add to arrays
+        xvalues['Condition'] = [xvalues1, xvalues2, xvalues3]
+        yvalues['Condition'] = [yvalues1, yvalues2, yvalues3]
+        llabels['Condition'] = [f'{critstr} passed', f'{critstr} running',
+                                f'{critstr} ended']
+        lvalues['Condition'] = [None, None, None]
+        # ---------------------------------------------------------------------
+        # loop around qc parameters
+        for qc_name in qcdict[crit]:
+            # get vectors
             name = f'{qc_name}{critstr}'
-            values = stat_dict[f'QCV::{qc_name}{critstr}']
-            logic = stat_dict[f'QCL::{qc_name}{critstr}']
-
-
-            # TODO: finish this
-
-
+            qcvout = _get_qcv(stats, 'MJDMID', f'QCV::{qc_name}{critstr}')
+            xvalues_i, yvalues_i, mask_i = qcvout
+            # deal with non number qc (skip)
+            if len(mask_i) == 0:
+                continue
+            # get logic and mask it
+            logic = list(np.array(stats[f'QCL::{qc_name}{critstr}'])[mask_i])
+            # try to get a limit from logic
+            lvalues_i = _get_logic_values(qc_name, logic)
+            # only add if all values aren't NaN
+            if np.sum(np.isfinite(yvalues_i)) > 0:
+                # add to arrays
+                xvalues[name] = [xvalues_i]
+                yvalues[name] = [yvalues_i]
+                lvalues[name] = [lvalues_i]
+                llabels[name] = [name]
     # -------------------------------------------------------------------------
+    num_plots = len(xvalues)
     # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=nrows, ncols=ncols)
+    fig, frames = graph.set_figure(plotter, nrows=num_plots, ncols=1,
+                                   sharex='all', figsize=(num_plots*10, 16))
     # -------------------------------------------------------------------------
-    # plot graph
-    # -------------------------------------------------------------------------
+    for fnum, name in enumerate(xvalues):
+        xvalues_i, yvalues_i = xvalues[name], yvalues[name]
+        labels_i, lvalues_i = llabels[name], lvalues[name]
 
+        if name == 'Condition':
+            # -----------------------------------------------------------------
+            # plot passed/running/ended
+            frames[fnum].plot(xvalues_i[0], yvalues_i[0], label=labels_i[0])
+            frames[fnum].plot(xvalues_i[1], yvalues_i[1], label=labels_i[1])
+            frames[fnum].plot(xvalues_i[2], yvalues_i[2], label=labels_i[2])
+
+            # -----------------------------------------------------------------
+        else:
+            # -----------------------------------------------------------------
+            # plot the points as a function of time
+            frames[fnum].plot(xvalues_i[0], yvalues_i[0], marker='.', color='b',
+                              label=labels_i[0], linestyle='None')
+            # plot limits
+            for l_it, lvalue in enumerate(lvalues_i[0]):
+                if len(lvalue) == 0:
+                    continue
+                if l_it == 0:
+                    frames[fnum].plot(xvalues_i[0], lvalue, linestyle='--',
+                                      color='r', label='limit')
+                else:
+                    frames[fnum].plot(xvalues_i[0], lvalue, linestyle='--',
+                                      color='r')
+        # plot legend
+        frames[fnum].legend(loc=0)
+        # add xlabel only on last plot
+        if fnum == len(frames) - 1:
+            frames[fnum].set(xlabel='MJD')
+        # -----------------------------------------------------------------
+    # adjust plot
+    plt.subplots_adjust(hspace=0, wspace=0, bottom=0.05, top=0.975,
+                        right=0.975, left=0.05)
     # -------------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -5744,6 +5795,95 @@ general_plot = Graph('PLOT', kind='show', func=plot_plot)
 
 # add to definitions
 definitions += [general_image, general_plot]
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def _get_logic_values(key: str, logic: List[str]) -> List[List[float]]:
+    """
+    Take the qc logic from all rows and try to construct a logic vector to
+    plot (only if number)
+
+    :param key: str, the variable name (should be contained within logic string)
+    :param logic: list of strings, the logic for each row
+
+    :return:
+    """
+    # punctuation
+    chars = string.punctuation.replace('.', '')
+
+    ldict = dict()
+    # loop around logic
+    for row in range(len(logic)):
+        # remove key
+        logicstr = logic[row].replace(key, '')
+        # strip all punctuation
+        for char in chars:
+            logicstr = logicstr.replace(char, '')
+        # strip whitespaces
+        logicstr = logicstr.strip()
+        # split on spaces (incase we have two numbers)
+        logic_var = logicstr.split()
+        # storage for number
+        logic_nums = []
+        # remove any non numeric "words"
+        for row in range(len(logic_var)):
+            # try to get a int or float out of parameter
+            try:
+                logic_nums.append(float(eval(logic_var[row])))
+            except Exception as _:
+                continue
+        # push numbers into dictionary
+        for row in range(len(logic_nums)):
+            if row in ldict:
+                ldict[row].append(logic_nums[row])
+            else:
+                ldict[row] = [logic_nums[row]]
+    # push into vectors
+    lvalues = []
+    for row in ldict:
+        lvalues.append(ldict[row])
+    # return lvalues
+    return lvalues
+
+
+def _get_qcv(stats: dict, xkey: str, ykey: str, return_mask: bool = False
+             ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Filter out bad values for both x and y in the qc stat dictionary
+
+    :param stats: dict, qc stat dictionary
+    :param xkey: str, the key for x values in the stat dictionary
+    :param ykey: str, the key for y values in the stat dictionary
+    :return:
+    """
+    # get raw values
+    xvalues = stats[xkey]
+    yvalues = stats[ykey]
+    mask = np.arange(len(xvalues))
+    # storage for valid values
+    valid_xvalues = []
+    valid_yvalues = []
+    valid_mask = []
+    # loop around all values
+    for row in range(len(yvalues)):
+        try:
+            valid_xvalues.append(float(xvalues[row]))
+            valid_yvalues.append(float(yvalues[row]))
+            valid_mask.append(mask[row])
+        except Exception as _:
+            continue
+    # deal with no values
+    if len(valid_mask) == 0:
+        return np.array([]), np.array([]), np.array([])
+    # make numpy arrays
+    vxvalues, vyvalues = np.array(valid_xvalues), np.array(valid_yvalues)
+    vmask = np.array(valid_mask)
+    # sort by x values
+    sortmask = np.argsort(vxvalues)
+    # return sorted valid values in x and y
+    return vxvalues[sortmask], vyvalues[sortmask], vmask[sortmask]
 
 # =============================================================================
 # Start of code
