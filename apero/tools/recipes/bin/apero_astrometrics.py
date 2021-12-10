@@ -9,11 +9,15 @@ Created on 2021-12-09
 
 @author: cook
 """
-from astroquery.utils.tap.core import TapPlus
+import pandas as pd
 from astroquery.simbad import Simbad
-from astropy.table import Table, Row
-import numpy as np
-from typing import Dict, List, Optional, Tuple
+from astropy.table import Row
+import getpass
+import gspread_pandas as gspd
+import os
+import shutil
+import socket
+from typing import Dict, List, Optional
 import warnings
 
 from apero import lang
@@ -21,10 +25,13 @@ from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_text
+from apero.core.core import drs_misc
 from apero.core.utils import drs_startup
 from apero.science import preprocessing as prep
 from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_installation
+
 
 # =============================================================================
 # Define variables
@@ -36,6 +43,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# get time instance
+Time = base.Time
 # get text entry instance
 textentry = lang.textentry
 # get the parmeter dictionary instance
@@ -50,6 +59,9 @@ SIMBAD_COLUMNS = ['ids', 'pmra', 'pmdec', 'pm_bibcode', 'plx',
                   'plx_bibcode', 'rvz_radvel', 'rvz_bibcode',
                   'sp', 'sp_bibcode', 'coo(d)', 'coo_bibcode', 'flux(J)',
                   'flux(H)', 'flux(K)']
+# define relative path to google token files
+GSPREAD_TOKEN = 'data/core/gspread_pandas'
+
 
 
 # =============================================================================
@@ -77,6 +89,7 @@ class AstroObj:
     teff: Optional[float] = None
     teff_source: str = ''
     mags: Dict[str, float] = dict()
+    notes: str = ''
 
     def __init__(self, name: str):
         """
@@ -138,9 +151,68 @@ class AstroObj:
         self.mags['J'] = table_row['FLUX_J']
         self.mags['H'] = table_row['FLUX_H']
         self.mags['K'] = table_row['FLUX_K']
+        # deal with notes
+        nargs = [Time.now().iso, getpass.getuser(), socket.gethostname(),
+                 __NAME__]
+        note = ' Added on {0} by {1}@{2} using {3}'
+        self.notes += note.format(*nargs)
+
+    def to_dataframe(self) -> pd.DataFrame:
+
+        dataframe = pd.DataFrame()
+        dataframe['OBJNAME'] = [self.objname]
+        dataframe['ORIGINAL_NAME'] = [self.original_name]
+        dataframe['ALIASES'] = [self.aliases]
+        dataframe['RA_DEG'] = [self.ra]
+        dataframe['RA_SOURCE'] = [self.ra_source]
+        dataframe['DEC_DEG'] = [self.dec]
+        dataframe['DEC_SOURCE'] = [self.dec_source]
+        dataframe['EPOCH'] = [self.epoch]
+        dataframe['PMRA'] = [self.pmra]
+        dataframe['PMRA_SOURCE'] = [self.pmra_source]
+        dataframe['PMDE'] = [self.pmde]
+        dataframe['PMDE_SOURCE'] = [self.pmde_source]
+        # deal with no parallax
+        if drs_text.null_text(self.plx, ['None', 'Null', '']):
+            dataframe['PLX'] = ['']
+            dataframe['PLX_SOURCE'] = ['']
+        else:
+            dataframe['PLX'] = [self.plx]
+            dataframe['PLX_SOURCE'] = [self.plx_source]
+        # deal with no rv
+        if drs_text.null_text(self.rv, ['None', 'Null', '']):
+            dataframe['RV'] = ['']
+            dataframe['RV_SOURCE'] = ['']
+        else:
+            dataframe['RV'] = [self.rv]
+            dataframe['RV_SOURCE'] = [self.rv_source]
+        # deal with no teff
+        if drs_text.null_text(self.teff, ['None', 'Null', '']):
+            dataframe['TEFF'] = ['']
+            dataframe['TEFF_SOURCE'] = ['']
+        else:
+            dataframe['TEFF'] = [self.teff]
+            dataframe['TEFF_SOURCE'] = [self.teff_source]
+        # deal with no spt
+        if drs_text.null_text(self.sp_type, ['None', 'Null', '']):
+            dataframe['SP_TYPE'] = ['']
+            dataframe['SP_SOURCE'] = ['']
+        else:
+            dataframe['SP_TYPE'] = [self.sp_type]
+            dataframe['SP_SOURCE'] = [self.sp_source]
+        # add to the notes and used column
+        dataframe['NOTES'] = self.notes
+        dataframe['USED'] = 1
+        # return the populated dataframe
+        return dataframe
+
 
     def display_properties(self):
+        """
+        Display the astrometric object in a human readible way
 
+        :return:
+        """
         # print title
         print(' \n' + '='*50)
         print('\t{0}     [{1}]'.format(self.objname, self.original_name))
@@ -197,10 +269,6 @@ def query_simbad(params: ParamDict, rawobjname: str) -> List[AstroObj]:
     return astroobjs
 
 
-
-
-
-
 def query_database(params, rawobjnames: List[str] ) -> List[str]:
     """
     Find all objects in the object database and return list of unfound
@@ -217,12 +285,10 @@ def query_database(params, rawobjnames: List[str] ) -> List[str]:
     # Update the object database (recommended only for full reprocessing)
     # check that we have entries in the object database
     manage_databases.object_db_populated(params)
-    # update the database if required
-    if params['UPDATE_OBJ_DATABASE']:
-        # log progress
-        WLOG(params, '', textentry('40-503-00039'))
-        # update database
-        manage_databases.update_object_database(params, log=False)
+    # log progress
+    WLOG(params, '', textentry('40-503-00039'))
+    # update database
+    manage_databases.update_object_database(params, log=False)
     # ---------------------------------------------------------------------
     # print progress
     WLOG(params, '', 'Searching local object database for object names...')
@@ -258,6 +324,62 @@ def query_database(params, rawobjnames: List[str] ) -> List[str]:
             unfound.append(rawobjname)
     # return the entry names and the found dictionary
     return unfound
+
+
+def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
+    """
+    Add all listed astrometrics objects to the sheet
+
+    :param params:
+    :param astro_objs:
+    :return:
+    """
+
+    # make sure token is in correct directory
+    inpath = drs_misc.get_relative_folder(__PACKAGE__, GSPREAD_TOKEN)
+    outpath = os.path.join(os.path.expanduser('~'), '.config')
+    # make sure .config exists
+    if not os.path.exists(outpath):
+        os.makedirs(outpath)
+    # add gspread directory to outpath
+    outpath = os.path.join(outpath, os.path.basename(inpath))
+    # if path doesn't exist create it
+    if not os.path.exists(outpath):
+        # copy contents
+        shutil.copytree(inpath, outpath, dirs_exist_ok=True)
+    # define the sheet id and sheet name (pending)
+    SHEET_ID = params['OBJ_LIST_GOOGLE_SHEET_URL']
+    SHEET_NAME = 'pending_list'
+    # load google sheet instance
+    google_sheet = gspd.spread.Spread(SHEET_ID)
+    # convert google sheet to pandas dataframe
+    dataframe = google_sheet.sheet_to_df(index=0, sheet=SHEET_NAME)
+    # add the astro_obj
+    for astro_obj in astro_objs:
+        # print progress
+        msg = 'Adding OBJECT={0} to dataframe'
+        margs = [astro_obj.objname]
+        WLOG(params, '', msg.format(*margs))
+        # add to dataframe
+        dataframe = dataframe.append(astro_obj.to_dataframe())
+    # -------------------------------------------------------------------------
+    # add a few empty rows
+    empty_dataframe = pd.DataFrame()
+    # loop around columns
+    for col in dataframe.columns:
+        # fill empty
+        empty_dataframe[col] = ['']*10
+    # append empty rows to dataframe
+    dataframe = dataframe.append(empty_dataframe)
+    # -------------------------------------------------------------------------
+    # print progress
+    msg = 'Pushing all objects to google-sheet'
+    WLOG(params, '', msg)
+    # push dataframe back to server
+    google_sheet.df_to_sheet(dataframe, index=False, replace=True)
+    # print progress
+    msg = 'All objects added to google-sheet'
+    WLOG(params, '', msg)
 
 
 # =============================================================================
@@ -311,7 +433,6 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
-    params.set('UPDATE_OBJ_DATABASE', False)
     rawobjs = ['Gl699', 'Trappist1', 'Trappist-1', 'WASP107', 'M1']
 
     # ----------------------------------------------------------------------
@@ -328,39 +449,48 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # step 2: Can we find object automatically from simbad?
     # ----------------------------------------------------------------------
+    # store astrometric objects that we need to add to database
+    add_objs = []
+    # loop around unfound objects
     for objname in unfound_objs:
-
-        # construct question
-        question1 = 'Add OBJECT="{0}" to astrometric database?'.format(objname)
+        # construct add object question
+        question1 = '\n\nAdd OBJECT="{0}" to astrometric database?'.format(objname)
         # ask if we want to find object
         cond = drs_installation.ask(question1, dtype='YN')
+        print()
         # if not skip
         if not cond:
             continue
-
         # search in simbad for objects
         astro_objs = query_simbad(params, rawobjname=objname)
-
-
         # deal with 1 object
         if len(astro_objs) == 1:
             # get first object
             astro_obj = astro_objs[0]
             # display the properties for this object
             astro_obj.display_properties()
-
-            # ask the question
+            # construct the object correction question
             question2 = 'Does the data for this object look correct?'
-
             cond = drs_installation.ask(question2, dtype='YN')
-
+            print()
+            # if correct add to add list
             if cond:
-                msg = 'Adding {0} to database'.format(astro_obj.name)
+                msg = 'Adding {0} to object list'.format(astro_obj.name)
                 WLOG(params, '', msg)
+                # append to add list
+                add_objs.append(astro_obj)
+            # else print that we are not adding object to database
             else:
                 WLOG(params, '', 'Not adding object to database')
 
-
+    # add to google sheet
+    if len(add_objs) > 0:
+        # add all objects in add list to google-sheet
+        add_obj_to_sheet(params, add_objs)
+        # log progress
+        WLOG(params, '', textentry('40-503-00039'))
+        # update database
+        manage_databases.update_object_database(params, log=False)
 
     # ----------------------------------------------------------------------
     # End of main code
