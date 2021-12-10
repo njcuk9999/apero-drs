@@ -7,7 +7,7 @@ Created on 2020-08-2020-08-18 17:13
 
 @author: cook
 """
-from astropy.table import Table, vstack
+from astropy.table import Table, vstack, MaskedColumn
 import numpy as np
 import os
 import pandas as pd
@@ -47,7 +47,30 @@ PseudoConst = pseudo_const.PseudoConstants
 WLOG = drs_log.wlog
 # get textentry
 textentry = lang.textentry
-
+# define object column datatypes (force consistency)
+OBJ_DATA_TYPES = dict()
+OBJ_DATA_TYPES['OBJNAME'] = str
+OBJ_DATA_TYPES['ORIGINAL_NAME'] = str
+OBJ_DATA_TYPES['ALIASES'] = str
+OBJ_DATA_TYPES['RA_DEG'] = float
+OBJ_DATA_TYPES['RA_SOURCE'] = str
+OBJ_DATA_TYPES['DEC_DEG'] = float
+OBJ_DATA_TYPES['DEC_SOURCE'] = str
+OBJ_DATA_TYPES['EPOCH'] = float
+OBJ_DATA_TYPES['PMRA'] = float
+OBJ_DATA_TYPES['PMRA_SOURCE'] = str
+OBJ_DATA_TYPES['PMDE'] = float
+OBJ_DATA_TYPES['PMDE_SOURCE'] = str
+OBJ_DATA_TYPES['PLX'] = float
+OBJ_DATA_TYPES['PLX_SOURCE'] = str
+OBJ_DATA_TYPES['RV'] = float
+OBJ_DATA_TYPES['RV_SOURCE'] = str
+OBJ_DATA_TYPES['SP_TYPE'] = str
+OBJ_DATA_TYPES['SP_SOURCE'] = str
+OBJ_DATA_TYPES['TEFF'] = float
+OBJ_DATA_TYPES['TEFF_SOURCE'] = str
+OBJ_DATA_TYPES['NOTES'] = str
+OBJ_DATA_TYPES['USED'] = int
 
 # =============================================================================
 # Define functions
@@ -422,6 +445,9 @@ def update_object_database(params: ParamDict, log: bool = True):
         # get google sheets
         maintable = gen_pp.get_google_sheet(params, gsheet_url, main_id)
         pendtable = gen_pp.get_google_sheet(params, gsheet_url, pending_id)
+    # force types in main table and pend table (so we can join them)
+    maintable = _force_column_dtypes(maintable, OBJ_DATA_TYPES)
+    pendtable = _force_column_dtypes(pendtable, OBJ_DATA_TYPES)
     # -------------------------------------------------------------------------
     # get the user table if defined
     if not drs_text.null_text(user_url, ['None', 'Null', '']):
@@ -435,6 +461,9 @@ def update_object_database(params: ParamDict, log: bool = True):
             usertable = gen_pp.get_google_sheet(params, user_url, user_id)
     else:
         usertable = Table()
+    # force types in user table
+    if len(usertable) > 0:
+        usertable = _force_column_dtypes(usertable, OBJ_DATA_TYPES)
     # -------------------------------------------------------------------------
     # update main table with other tables (if we have entries in the pending
     #   table) and if those object name column not already in main table
@@ -475,6 +504,29 @@ def update_object_database(params: ParamDict, log: bool = True):
     # ---------------------------------------------------------------------
     # add rows from pandas dataframe
     objectdb.add_from_pandas(df, unique_cols=cuniques)
+
+
+def _force_column_dtypes(table: Table, coltype: Dict[str, type]) -> Table:
+    """
+    Force a table to have specific data types
+
+    :param table: astropy.table.Table instance
+    :param coltype: list of types to force columns to
+    :return:
+    """
+    # loop around columns and force types
+    for col in table.colnames:
+        # strings are a pain have to do them manually
+        if hasattr(table[col], 'mask'):
+            mask = table[col].mask
+            values = np.array(table[col]).astype(coltype[col])
+            table[col] = MaskedColumn(values, mask=mask)
+
+        else:
+            table[col] = np.array(table[col]).astype(coltype[col])
+    # return the new table
+    return table
+
 
 
 # def update_object_database_old(params: ParamDict):
