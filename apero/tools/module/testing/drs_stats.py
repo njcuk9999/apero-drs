@@ -882,6 +882,7 @@ class ErrorReportEntry:
         self.error_lines = loglines[start:end]
         self.run_id = -1
         self.runstring = ''
+        self.recipename = ''
         self.error_report = []
         self.error_str = ''
         self.error_codes = []
@@ -917,6 +918,8 @@ class ErrorReportEntry:
         # get run string
         runstring = self.error_lines[1].split('-@!|PROC|\t')[-1]
         self.runstring = runstring.split('\n')[0]
+        # get recipe
+        self.recipename = self.runstring.split()[0].replace('.py', '')
         # ---------------------------------------------------------------------
         # get error report
         report = []
@@ -990,6 +993,30 @@ def error_stats(params: ParamDict):
         # read the log file
         with open(plog_file, 'r') as plogfile:
             lines = plogfile.readlines()
+        # ---------------------------------------------------------------------
+        # get the reports in a directory
+        report_subdir = os.path.basename(plog_file).replace('.log', '')
+        # construct report directory
+        report_dir = os.path.join(params['DRS_DATA_MSG'], 'report',
+                                  report_subdir)
+        # deal with report directory not existing
+        if not os.path.exists(report_dir):
+            os.makedirs(report_dir)
+        # log that we are removing all files from report directory
+        WLOG(params, '', 'Removing all files from : {0}'.formoat(report_dir))
+        # make sure directory is empty
+        for filename in glob.glob(report_dir + '/*'):
+            os.remove(filename)
+        # ---------------------------------------------------------------------
+        # counter for number of runs
+        num_runs = 0
+        # scan through and find how many runs we had
+        for it, line in enumerate(lines):
+            if '|PROC|Validating run ' in line:
+                num_runs += 1
+        # print how many runs there were
+        WLOG(params, '', 'In total there were {0} runs'.format(num_runs))
+        # ---------------------------------------------------------------------
         # scan through and find all error reporting lines - note down the line
         # numbers
         reported_error_lines = []
@@ -1020,12 +1047,28 @@ def error_stats(params: ParamDict):
             error_rentries.append(error_rentry)
         # ---------------------------------------------------------------------
         # print progress
-        WLOG(params, '', 'Counting number of unique errors')
+        WLOG(params, 'info', 'Counting number of errors per recipe')
+        # count number of errors for each recipe
+        recipe_count = dict()
+        # loop around error entries
+        for entry in error_rentries:
+            if entry.recipename in recipe_count:
+                recipe_count[entry.recipename] += 1
+            else:
+                recipe_count[entry.recipename] = 1
+        # print stats
+        for recipename in recipe_count:
+            msg = '\t- There were {0} errors for recipe {1}'
+            WLOG(params, '', msg.format(recipe_count[recipename], recipename))
+        # ---------------------------------------------------------------------
+        # print progress
+        WLOG(params, 'info', 'Counting number of unique errors')
         # count all error code occurrences
         all_error_codes = dict()
         all_error_codes_runstrings = dict()
         all_error_codes_instance = dict()
         all_error_codes_example = dict()
+        all_error_codes_recipe_names = dict()
         known_errors = dict()
         # loop around error entries
         for entry in error_rentries:
@@ -1035,30 +1078,22 @@ def error_stats(params: ParamDict):
                     all_error_codes_runstrings[code] = [entry.runstring]
                     all_error_codes_instance[code] = [entry]
                     all_error_codes_example[code] = entry.error_str
+                    all_error_codes_recipe_names[code] = [entry.recipename]
                     known_errors[code] = dict()
                 else:
                     all_error_codes[code] += 1
                     all_error_codes_runstrings[code] += [entry.runstring]
                     all_error_codes_instance[code] += [entry]
+                    all_error_codes_recipe_names[code] += [entry.recipename]
         # ---------------------------------------------------------------------
-        # get the reports in a directory
-        report_subdir = os.path.basename(plog_file).replace('.log', '')
-        # construct report directory
-        report_dir = os.path.join(params['DRS_DATA_MSG'], 'report',
-                                  report_subdir)
-        # deal with report directory not existing
-        if not os.path.exists(report_dir):
-            os.makedirs(report_dir)
-        # make sure directory is empty
-        for filename in glob.glob(report_dir + '/*'):
-            os.remove(filename)
         # print out error codes into groups
         for code in all_error_codes:
             # skip unhandled errors
             if code == UNHANDLED_ERROR_CODE:
                 continue
             # print progress
-            WLOG(params, '', 'Writing error file for code {0}'.format(code))
+            WLOG(params, '', 'Writing error file for code {0}'.format(code),
+                 colour='magenta')
             # get a new set of lines
             lines = ''
             # clean code
@@ -1068,9 +1103,13 @@ def error_stats(params: ParamDict):
             codestr = codestr.strip('_')
             # get the list of instances
             instances = all_error_codes_instance[code]
+            # get unique recipe names
+            urecipe_names = np.unique(all_error_codes_recipe_names[code])
             # log how many instances found
             msg = '\t Found {0} recipes with this error'
             WLOG(params, '', msg.format(len(instances)))
+            # print unique recipe names
+            WLOG(params, '', '\t({0})'.format(','.join(urecipe_names)))
             # loop around instances
             for it, instance in enumerate(instances):
                 lines += instance.write_entry(it, len(instances))
@@ -1091,7 +1130,7 @@ def error_stats(params: ParamDict):
         # storage
         group_instances = dict()
         # loop around unhandled instances
-        for uinstance in tqdm(uinstances):
+        for uinstance in uinstances:
             # get group name for this instance
             group = uinstance.error_report[-1].strip()
             # get group id
@@ -1105,16 +1144,26 @@ def error_stats(params: ParamDict):
         # ---------------------------------------------------------------------
         # write unhandled groups to log files
         # print progress
-        WLOG(params, '', 'Writing unhandled errors to group log files')
+        WLOG(params, 'info', 'Writing unhandled errors to group log files')
         # loop around groups and save
         for key in group_instances:
             # define the code string
             codestr = 'E_UNHANDLE_{0:05d}'.format(key)
             # print progress
-            WLOG(params, '', '\t - Adding group {0}'.format(codestr))
+            msg = '\t - Writing error file for group {0}'
+            WLOG(params, '', msg.format(codestr), colour='magenta')
             WLOG(params, '', '\t\t{0}'.format(groups[key]))
             # get the instances for this group
             instance_group = group_instances[key]
+            # get all recipes for this group
+            allrecipes = list(map(lambda x: x.recipename, instance_group))
+            # get unique recipe names
+            urecipe_names = np.unique(allrecipes)
+            # log how many instances found
+            msg = '\t\t Found {0} recipes with this error'
+            WLOG(params, '', msg.format(len(instance_group)))
+            # print unique recipe names
+            WLOG(params, '', '\t\t({0})'.format(','.join(urecipe_names)))
             # reset lines
             lines = ''
             # loop around instances
