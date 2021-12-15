@@ -1377,7 +1377,7 @@ post_s_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
 # s1d w is a composite table
 post_s_file.add_ext('S1D_W', 'table', pos=1, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER',
-                    extname='UniformWavelength')
+                    extname='UniformWavelength', tag='UniformWavelength')
 # add s1d w columns (all linked via PP file)
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='wavelength', outcol='Wave', fiber='AB',
@@ -1437,7 +1437,7 @@ post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
 # s1d w is a composite table
 post_s_file.add_ext('S1D_V', 'table', pos=2, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER',
-                    extname='UniformVelocity')
+                    extname='UniformVelocity', tag='UniformVelocity')
 # add s1d w columns (all linked via PP file)
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='wavelength', outcol='Wave', fiber='AB',
