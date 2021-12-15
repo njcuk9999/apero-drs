@@ -1006,6 +1006,8 @@ def error_stats(params: ParamDict):
         WLOG(params, '', 'Removing all files from : {0}'.format(report_dir))
         # make sure directory is empty
         for filename in glob.glob(report_dir + '/*'):
+            msg = '\t - Removing {0}'
+            WLOG(params, '', msg.format(os.path.basename(filename)))
             os.remove(filename)
         # ---------------------------------------------------------------------
         # counter for number of runs
@@ -1015,7 +1017,7 @@ def error_stats(params: ParamDict):
             if '|PROC|Validating run ' in line:
                 num_runs += 1
         # print how many runs there were
-        WLOG(params, '', 'In total there were {0} runs'.format(num_runs))
+        WLOG(params, 'info', 'In total there were {0} runs'.format(num_runs))
         # ---------------------------------------------------------------------
         # scan through and find all error reporting lines - note down the line
         # numbers
@@ -1029,7 +1031,7 @@ def error_stats(params: ParamDict):
         error_rentries = []
         # print progress
         msg = 'Creating error entries for {0} errors'
-        WLOG(params, '', msg.format(len(reported_error_lines)))
+        WLOG(params, 'info', msg.format(len(reported_error_lines)))
         # for each reported error line we can generate an error report entry
         for row in tqdm(range(len(reported_error_lines))):
             # get start and end line numbers
