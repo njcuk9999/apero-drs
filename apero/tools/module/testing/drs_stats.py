@@ -1003,7 +1003,7 @@ def error_stats(params: ParamDict):
         if not os.path.exists(report_dir):
             os.makedirs(report_dir)
         # log that we are removing all files from report directory
-        WLOG(params, '', 'Removing all files from : {0}'.formoat(report_dir))
+        WLOG(params, '', 'Removing all files from : {0}'.format(report_dir))
         # make sure directory is empty
         for filename in glob.glob(report_dir + '/*'):
             os.remove(filename)
