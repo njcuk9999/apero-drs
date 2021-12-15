@@ -97,7 +97,9 @@ def __main__(recipe, params):
         params.set('STAT_QC_RECIPE_PLOT', value=True)
         # do the qc stats
         drs_stats.qc_stats(params, recipe)
-
+    elif mode.upper() == 'ERROR':
+        # do the error stats
+        drs_stats.error_stats(params)
 
     # ----------------------------------------------------------------------
     # End of main code
