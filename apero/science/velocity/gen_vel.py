@@ -1375,20 +1375,20 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     table1['RV'] = props['RV_CCF']
     for order_num in range(len(props['CCF'])):
         table1['ORDER{0:02d}'.format(order_num)] = props['CCF'][order_num]
-    table1['COMBINED'] = props['MEAN_CCF']
+    table1['Combined'] = props['MEAN_CCF']
     # ----------------------------------------------------------------------
     # produce stats table
     table2 = Table()
-    table2['ORDERS'] = np.arange(len(props['CCF'])).astype(int)
-    table2['NLINES'] = props['CCF_LINES']
+    table2['Orders'] = np.arange(len(props['CCF'])).astype(int)
+    table2['NLines'] = props['CCF_LINES']
     # get the coefficients
     coeffs = props['CCF_FIT_COEFFS']
-    table2['CONTRAST'] = np.abs(100 * coeffs[:, 0])
+    table2['Contrast'] = np.abs(100 * coeffs[:, 0])
     table2['RV'] = coeffs[:, 1]
     table2['FWHM'] = coeffs[:, 2]
     table2['DC'] = coeffs[:, 3]
     table2['SNR'] = props['CCF_SNR']
-    table2['NORM'] = props['CCF_NORM']
+    table2['Norm'] = props['CCF_NORM']
     table2['DVRMS_SP'] = props['ORD_SPEC_RMS']
     table2['DVRMS_CC'] = props['CCF_NOISE']
     # ----------------------------------------------------------------------
