@@ -15,7 +15,6 @@ from astropy.table import Row
 import getpass
 import gspread_pandas as gspd
 import os
-import shutil
 import socket
 from typing import Dict, List, Optional
 import warnings
@@ -26,12 +25,10 @@ from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_database
 from apero.core.core import drs_text
-from apero.core.core import drs_misc
 from apero.core.utils import drs_startup
 from apero.science import preprocessing as prep
 from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_installation
-
 
 # =============================================================================
 # Define variables
@@ -60,8 +57,26 @@ SIMBAD_COLUMNS = ['ids', 'pmra', 'pmdec', 'pm_bibcode', 'plx',
                   'sp', 'sp_bibcode', 'coo(d)', 'coo_bibcode', 'flux(J)',
                   'flux(H)', 'flux(K)']
 # define relative path to google token files
-GSPREAD_TOKEN = 'data/core/gspread_pandas'
-
+PARAM1 = ('241559402076-vbo2eu8sl64ehur7'
+          'n1qhqb0q9pfb5hei.apps.googleusercontent.com')
+PARAM2 = ('apero-data-manag-'
+          '1602517149890')
+PARAM3 = ''.join(base.GSPARAM)
+PARAM4 = ('1//0dBWyhNqcGHgdCgYIARAAGA0SNwF-L9IrhXoPCjWJtD4f0EDxA'
+          'gFX75Q-f5TOfO1VQNFgSFQ_89IW7trN3B4I0UYvvbVfrGRXZZg')
+PATH1 = 'gspread_pandas/google_secret.json'
+PATH2 = 'gspread_pandas/creds/default'
+TEXT1 = ('{{"installed":{{"client_id":"{0}","project_id":"{1}","auth_uri":'
+         '"https://accounts.google.com/o/oauth2/auth","token_uri":'
+         '"https://oauth2.googleapis.com/token","auth_provider_x509_cert'
+         '_url":"https://www.googleapis.com/oauth2/v1/certs","client_'
+         'secret":"{2}","redirect_uris":["urn:ietf:wg:oauth:2.0:oob",'
+         '"http://localhost"]}}}}')
+TEXT2 = ('{{"refresh_token": "{0}", "token_uri": "https://oauth2.googleap'
+         'is.com/token", "client_id": "{1}", "client_secret": "{2}", '
+         '"scopes": ["openid", "https://www.googleapis.com/auth/drive", '
+         '"https://www.googleapis.com/auth/userinfo.email", '
+         '"https://www.googleapis.com/auth/spreadsheets"]}}')
 
 
 # =============================================================================
@@ -206,7 +221,6 @@ class AstroObj:
         # return the populated dataframe
         return dataframe
 
-
     def display_properties(self):
         """
         Display the astrometric object in a human readible way
@@ -214,9 +228,9 @@ class AstroObj:
         :return:
         """
         # print title
-        print(' \n' + '='*50)
+        print(' \n' + '=' * 50)
         print('\t{0}     [{1}]'.format(self.objname, self.original_name))
-        print(' ' + '='*50)
+        print(' ' + '=' * 50)
         # loop around aliases
         aliases = self.aliases.split('|')
         print('\tAliases:')
@@ -234,7 +248,7 @@ class AstroObj:
         # add magnitudes
         for mag in self.mags:
             print('\t{0}mag: {1}'.format(mag, self.mags[mag]))
-        print(' ' + '='*50 + '\n')
+        print(' ' + '=' * 50 + '\n')
 
 
 def query_simbad(params: ParamDict, rawobjname: str) -> List[AstroObj]:
@@ -269,7 +283,7 @@ def query_simbad(params: ParamDict, rawobjname: str) -> List[AstroObj]:
     return astroobjs
 
 
-def query_database(params, rawobjnames: List[str] ) -> List[str]:
+def query_database(params, rawobjnames: List[str]) -> List[str]:
     """
     Find all objects in the object database and return list of unfound
     objects
@@ -326,6 +340,27 @@ def query_database(params, rawobjnames: List[str] ) -> List[str]:
     return unfound
 
 
+def gsp_setup():
+    # make sure token is in correct directory
+    outpath = os.path.join(os.path.expanduser('~'), '.config/')
+    # make sure .config exists
+    if not os.path.exists(outpath):
+        os.makedirs(outpath)
+    # construct paths
+    path1 = os.path.join(outpath, PATH1)
+    path2 = os.path.join(outpath, PATH2)
+    # make sure paths exist
+    if not os.path.exists(os.path.dirname(path1)):
+        os.makedirs(os.path.dirname(path1))
+    if not os.path.exists(os.path.dirname(path2)):
+        os.makedirs(os.path.dirname(path2))
+    # make file
+    with open(path1, 'w') as file1:
+        file1.write(TEXT1.format(PARAM1, PARAM2, PARAM3))
+    with open(path2, 'w') as file2:
+        file2.write(TEXT2.format(PARAM4, PARAM1, PARAM3))
+
+
 def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
     """
     Add all listed astrometrics objects to the sheet
@@ -334,19 +369,8 @@ def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
     :param astro_objs:
     :return:
     """
-
-    # make sure token is in correct directory
-    inpath = drs_misc.get_relative_folder(__PACKAGE__, GSPREAD_TOKEN)
-    outpath = os.path.join(os.path.expanduser('~'), '.config')
-    # make sure .config exists
-    if not os.path.exists(outpath):
-        os.makedirs(outpath)
-    # add gspread directory to outpath
-    outpath = os.path.join(outpath, os.path.basename(inpath))
-    # if path doesn't exist create it
-    if not os.path.exists(outpath):
-        # copy contents
-        shutil.copytree(inpath, outpath, dirs_exist_ok=True)
+    # add gspread directory and auth files
+    gsp_setup()
     # define the sheet id and sheet name (pending)
     SHEET_ID = params['OBJ_LIST_GOOGLE_SHEET_URL']
     SHEET_NAME = 'pending_list'
@@ -368,7 +392,7 @@ def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
     # loop around columns
     for col in dataframe.columns:
         # fill empty
-        empty_dataframe[col] = ['']*10
+        empty_dataframe[col] = [''] * 10
     # append empty rows to dataframe
     dataframe = dataframe.append(empty_dataframe)
     # -------------------------------------------------------------------------
@@ -508,4 +532,3 @@ if __name__ == "__main__":
 # =============================================================================
 # End of code
 # =============================================================================
-
