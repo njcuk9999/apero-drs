@@ -443,7 +443,7 @@ pp_dark_hc1 = drs_finput('DARK_HCONE', hkeys=dict(KW_DPRTYPE='DARK_HCONE'),
                          suffix='_pp', intype=raw_dark_hc1,
                          inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_dark_hc1)
-pp_dark_hc2 = drs_finput('DARK_HCTW0', hkeys=dict(KW_DPRTYPE='DARK_HCTW0'),
+pp_dark_hc2 = drs_finput('DARK_HCTWO', hkeys=dict(KW_DPRTYPE='DARK_HCTWO'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_dark_hc2,
                          inext='.fits', outfunc=out.general_file)

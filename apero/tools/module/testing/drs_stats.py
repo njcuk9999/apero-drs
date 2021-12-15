@@ -9,9 +9,12 @@ Created on 2021-12-06
 
 @author: cook
 """
+import glob
 import numpy as np
+import os
 from pandasql import sqldf
 import pandas as pd
+import re
 import string
 from typing import Any, Dict, List, Optional, Tuple
 import warnings
@@ -45,6 +48,12 @@ DrsRecipe = drs_recipe.DrsRecipe
 # define index columns to get
 INDEX_COLS = ['FILENAME', 'OBS_DIR', 'BLOCK_KIND', 'KW_MID_OBS_TIME',
               'INFILES', 'KW_OUTPUT', 'KW_DPRTYPE']
+# reegex code for locating errors
+REGEX_ERROR_CODE = r'E\[\d\d-\d\d\d-\d\d\d\d\d\]'
+# apero processing code for printing error summary entry
+REPORT_ERROR_CODE = 'W[40-503-00019]'
+# apero code for unhandled error
+UNHANDLED_ERROR_CODE = 'E[01-010-00001]'
 
 
 # =============================================================================
@@ -860,6 +869,260 @@ def _get_qcv(stats: dict, xkey: str, ykey: str, return_mask: bool = False
     sortmask = np.argsort(vxvalues)
     # return sorted valid values in x and y
     return vxvalues[sortmask], vyvalues[sortmask], vmask[sortmask]
+
+
+
+
+# =============================================================================
+# Define timing stats functions
+# =============================================================================
+class ErrorReportEntry:
+    def __init__(self, loglines, start, end):
+
+        self.error_lines = loglines[start:end]
+        self.run_id = -1
+        self.runstring = ''
+        self.error_report = []
+        self.error_str = ''
+        self.error_codes = []
+
+    def print_str(self):
+        print(''.join(self.error_lines))
+
+    def print_report(self):
+        print(self.error_str)
+
+    def write_entry(self, iteration, length) -> str:
+        entrystr = ''
+        entrystr += '\n#' + '=' * 80
+        entrystr += '\n#' + ' {0} / {1}'.format(iteration + 1, length)
+        entrystr += '\n#' + ' RUNSTRING = {0}'.format(self.runstring)
+        entrystr += '\n#' + '=' * 80
+        # entrystr around lines in report and add to lines
+        for reportline in self.error_report:
+            entrystr += '\n' + reportline
+        entrystr += '\n\n'
+        return entrystr
+
+    def process(self, params):
+        # ---------------------------------------------------------------------
+        # get run id - should be in line 0
+        try:
+            run_id = self.error_lines[0].split('ID=\'')[-1]
+            run_id = run_id.split('\'')[0]
+            self.run_id = int(run_id)
+        except Exception as _:
+            self.run_id = -2
+        # ---------------------------------------------------------------------
+        # get run string
+        runstring = self.error_lines[1].split('-@!|PROC|\t')[-1]
+        self.runstring = runstring.split('\n')[0]
+        # ---------------------------------------------------------------------
+        # get error report
+        report = []
+        for line in self.error_lines[2:]:
+            # remove \n
+            line = line.replace('\n', '')
+            # remove header
+            line = line.replace(params['DRS_HEADER'], '')
+            # remove timestamp
+            line = line.split('-  |PROC|')[-1]
+            # remove info lines
+            line = line.split('-**|PROC|')[-1]
+            # skip recipe complete message
+            if 'I[40-003-00001]' in line:
+                continue
+            # remove empty lines
+            if len(line.strip()) == 0:
+                continue
+            # if line is not empty add
+            if len(line) != 0:
+                report.append(line)
+        # add to attributes
+        self.error_report = report
+        self.error_str = '\n'.join(report)
+        # ---------------------------------------------------------------------
+        # try to get any error codes
+        error_codes = re.findall(REGEX_ERROR_CODE, ''.join(report))
+        # make unique
+        error_codes = np.unique(error_codes)
+        # add to error codes
+        if len(error_codes) == 0:
+            self.error_codes = [UNHANDLED_ERROR_CODE]
+        else:
+            self.error_codes = error_codes
+
+
+def error_stats(params: ParamDict):
+    """
+    Get the error stats files and sorts logs into files.
+    Files are saved to {DRS_DATA_MSG}/reports/LOG_NAME/
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: None, writes log files to {DRS_DATA_MSG}/reports/LOG_NAME/
+    """
+
+    # deal with plog from arguments
+    plog_files = []
+    if 'INPUTS' in params:
+        if 'PLOG' in params['INPUTS']:
+            plog_files = params['INPUTS'].listp('PLOG', dtype=str)
+    # -------------------------------------------------------------------------
+    if len(plog_files) == 0:
+        # get log directory
+        plog_dir = os.path.join(params['DRS_DATA_MSG'], 'tool')
+        # -------------------------------------------------------------------------
+        # locate all processing logs
+        plog_files = []
+        for _root, _dirs, _files in os.walk(plog_dir):
+            for filename in _files:
+                if filename.endswith('apero_processing.log'):
+                    plog_files.append(os.path.join(_root, filename))
+    # -------------------------------------------------------------------------
+    # loop around log files
+    for p_it, plog_file in enumerate(plog_files):
+        # print progress
+        msg = 'Analysing log file {0} of {1}'
+        WLOG(params, 'info', msg.format(p_it + 1, len(plog_files)))
+        msg = '\tLogfile: {0}'
+        WLOG(params, 'info', msg.format(plog_file), wrap=False)
+        # read the log file
+        with open(plog_file, 'r') as plogfile:
+            lines = plogfile.readlines()
+        # scan through and find all error reporting lines - note down the line
+        # numbers
+        reported_error_lines = []
+        # loop around lines and find all lines containing the report error code
+        for it, line in enumerate(lines):
+            if REPORT_ERROR_CODE in line:
+                reported_error_lines.append(it)
+        # ---------------------------------------------------------------------
+        # storage of error entries
+        error_rentries = []
+        # print progress
+        msg = 'Creating error entries for {0} errors'
+        WLOG(params, '', msg.format(len(reported_error_lines)))
+        # for each reported error line we can generate an error report entry
+        for row in tqdm(range(len(reported_error_lines))):
+            # get start and end line numbers
+            if row != len(reported_error_lines) - 1:
+                start = reported_error_lines[row]
+                end = reported_error_lines[row + 1]
+            # deal with last report
+            else:
+                start = reported_error_lines[row]
+                end = len(lines)
+            # create error report entry instance
+            error_rentry = ErrorReportEntry(lines, start, end)
+            error_rentry.process(params)
+            # append to error entries
+            error_rentries.append(error_rentry)
+        # ---------------------------------------------------------------------
+        # print progress
+        WLOG(params, '', 'Counting number of unique errors')
+        # count all error code occurrences
+        all_error_codes = dict()
+        all_error_codes_runstrings = dict()
+        all_error_codes_instance = dict()
+        all_error_codes_example = dict()
+        known_errors = dict()
+        # loop around error entries
+        for entry in error_rentries:
+            for code in entry.error_codes:
+                if code not in all_error_codes:
+                    all_error_codes[code] = 1
+                    all_error_codes_runstrings[code] = [entry.runstring]
+                    all_error_codes_instance[code] = [entry]
+                    all_error_codes_example[code] = entry.error_str
+                    known_errors[code] = dict()
+                else:
+                    all_error_codes[code] += 1
+                    all_error_codes_runstrings[code] += [entry.runstring]
+                    all_error_codes_instance[code] += [entry]
+        # ---------------------------------------------------------------------
+        # get the reports in a directory
+        report_subdir = os.path.basename(plog_file).replace('.log', '')
+        # construct report directory
+        report_dir = os.path.join(params['DRS_DATA_MSG'], 'report',
+                                  report_subdir)
+        # deal with report directory not existing
+        if not os.path.exists(report_dir):
+            os.makedirs(report_dir)
+        # make sure directory is empty
+        for filename in glob.glob(report_dir + '/*'):
+            os.remove(filename)
+        # print out error codes into groups
+        for code in all_error_codes:
+            # skip unhandled errors
+            if code == UNHANDLED_ERROR_CODE:
+                continue
+            # print progress
+            WLOG(params, '', 'Writing error file for code {0}'.format(code))
+            # get a new set of lines
+            lines = ''
+            # clean code
+            codestr = str(code)
+            for char in ['[', ']', '-']:
+                codestr = codestr.replace(char, '_')
+            codestr = codestr.strip('_')
+            # get the list of instances
+            instances = all_error_codes_instance[code]
+            # log how many instances found
+            msg = '\t Found {0} recipes with this error'
+            WLOG(params, '', msg.format(len(instances)))
+            # loop around instances
+            for it, instance in enumerate(instances):
+                lines += instance.write_entry(it, len(instances))
+            # save to file
+            with open(os.path.join(report_dir, codestr + '.log'), 'w') as rfile:
+                rfile.write(lines)
+        # ---------------------------------------------------------------------
+        # deal with out unhandled errors
+        # ---------------------------------------------------------------------
+        # print progress
+        WLOG(params, '', 'Dealing with unhandled errors')
+        # get unhandled instances
+        uinstances = all_error_codes_instance[UNHANDLED_ERROR_CODE]
+        uerror_reports = list(map(lambda x: x.error_report, uinstances))
+        # group by last line
+        groups = np.unique(list(map(lambda x: x[-1].strip(), uerror_reports)))
+        groupids = list(range(len(groups)))
+        # storage
+        group_instances = dict()
+        # loop around unhandled instances
+        for uinstance in tqdm(uinstances):
+            # get group name for this instance
+            group = uinstance.error_report[-1].strip()
+            # get group id
+            pos = list(groups).index(group)
+            groupid = groupids[pos]
+            # add to storage
+            if groupid in group_instances:
+                group_instances[groupid].append(uinstance)
+            else:
+                group_instances[groupid] = [uinstance]
+        # ---------------------------------------------------------------------
+        # write unhandled groups to log files
+        # print progress
+        WLOG(params, '', 'Writing unhandled errors to group log files')
+        # loop around groups and save
+        for key in group_instances:
+            # define the code string
+            codestr = 'E_UNHANDLE_{0:05d}'.format(key)
+            # print progress
+            WLOG(params, '', '\t - Adding group {0}'.format(codestr))
+            WLOG(params, '', '\t\t{0}'.format(groups[key]))
+            # get the instances for this group
+            instance_group = group_instances[key]
+            # reset lines
+            lines = ''
+            # loop around instances
+            for it, instance in enumerate(instance_group):
+                lines += instance.write_entry(it, len(instance_group))
+            # save to file
+            with open(os.path.join(report_dir, codestr + '.log'), 'w') as rfile:
+                rfile.write(lines)
 
 
 # =============================================================================

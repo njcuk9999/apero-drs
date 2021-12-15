@@ -222,10 +222,12 @@ logstats.recipe_kind = 'user'
 logstats.set_debug_plots('STATS_TIMING_PLOT', 'STAT_QC_RECIPE_PLOT')
 logstats.set_summary_plots()
 logstats.set_kwarg(name='--mode', dtype='options', default='red',
-                   options=['timing', 'qc'],
+                   options=['timing', 'qc', 'error'],
                    helpstr='Stats mode. '
                            'For timing statistics use "timing".'
                            'For quality control statistics use "qc".')
+logstats.set_kwarg(name='--plog', dtype=str, default='None',
+                   helpstr='Specify a certain log file (full path)')
 logstats.set_kwarg(**plot)
 
 # -----------------------------------------------------------------------------
