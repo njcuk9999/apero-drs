@@ -94,6 +94,7 @@ LANG_XLS_FILE = 'language.xls'
 LANG_DB_FILE = 'lang.db'
 LANG_DB_RESET = 'reset.lang.csv'
 LANG_DB_RESET_INST = 'reset.lang.{0}.csv'
+GSPARAM = ('OE4_WF0Btk29', 'Gmb8SrbTJ3UF')
 # -----------------------------------------------------------------------------
 # types definitions
 # -----------------------------------------------------------------------------
