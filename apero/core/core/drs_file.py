@@ -5809,10 +5809,10 @@ class DrsOutFileExtension:
             # deal with no entries and column required
             elif len(entries) == 0:
                 emsg = ('Column file for EXT={0} ({1}) not found. '
-                        '\n\t Condition = {1}')
+                        '\n\t Condition = {2}')
                 eargs = [self.pos, self.name, condition]
                 WLOG(params, 'error', emsg.format(*eargs))
-                continue
+                return
             else:
                 # else take the first entry
                 filename = entries['ABSPATH'][0]
@@ -6263,7 +6263,8 @@ class DrsOutFile(DrsInputFile):
         # end the clock  (reading large database is slow - give user feedback)
         end = time.time()
         # TODO: move to language database
-        WLOG(params, '', 'Full database loaded in {0} s'.format(end - start))
+        msg = 'Full database loaded in {0:.4f} s'
+        WLOG(params, '', msg.format(end - start))
         # get index columns
         index_cols = ptable.colnames()
         # ---------------------------------------------------------------------

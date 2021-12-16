@@ -192,12 +192,29 @@ def __main__(recipe, params):
         # storage
         snr_hotpix, rms_list = [], []
         shiftdx, shiftdy = 0, 0
+        fail, fail_qcparams = False, []
         # do this iteratively as if there is a shift need to re-workout QC
         for iteration in range(2):
             # get pass condition
             cout = prep.test_for_corrupt_files(params, image, hotpixels)
+            # get values from corrupt test output
             snr_hotpix, rms_list = cout[0], cout[1]
+            # -----------------------------------------------------------------
+            # if full image is NaN we stop here
+            if np.isnan(snr_hotpix):
+                farg = 'Full image NaN'
+                WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                     sublevel=6)
+                # log complete failure
+                fail = True
+                qc_values, qc_names = [True], ['Full image']
+                qc_logic, qc_pass = ['Full image == NaN'], [0]
+                fail_qcparams = [qc_names, qc_values, qc_logic, qc_pass]
+                # go to next iteration
+                break
+            # get remaining terms from corrupt test outputs
             shiftdx, shiftdy = int(cout[2]), int(cout[3])
+            # -----------------------------------------------------------------
             # use dx/dy to shift the image back to where the engineering flat
             #    is located
             if shiftdx != 0 and shiftdy != 0:
@@ -242,11 +259,15 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Quality control to check for corrupt files
         # ------------------------------------------------------------------
-        # re-calculate qc
-        qargs = [snr_hotpix, infile, rms_list]
-        qc_params, passed = prep.quality_control1(params, *qargs, log=True)
-        # update recipe log
-        log1.add_qc(qc_params, passed)
+        if not fail:
+            # re-calculate qc
+            qargs1 = [snr_hotpix, infile, rms_list]
+            qc_params, passed = prep.quality_control1(params, *qargs1, log=True)
+            # update recipe log
+            log1.add_qc(qc_params, passed)
+        else:
+            passed = False
+            log1.add_qc(fail_qcparams, passed)
         if not passed:
             # end log here
             log1.end()
@@ -291,6 +312,20 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # rotation to match HARPS orientation (expected by DRS)
         image = drs_image.rotate_image(image, params['RAW_TO_PP_ROTATION'])
+
+        # ------------------------------------------------------------------
+        # Quality control
+        # ------------------------------------------------------------------
+        # more general qc (after correction)
+        qargs2 = [qc_params, image, outfile.name]
+        qc_params, passed = prep.quality_control2(params, *qargs2)
+        # update recipe log
+        log1.add_qc(qc_params, passed)
+        if not passed:
+            # end log here
+            log1.end()
+            # go to next iteration
+            continue
 
         # ------------------------------------------------------------------
         # Save rotated image
