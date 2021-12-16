@@ -120,8 +120,11 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
         start, end = it * ampsize, it * ampsize + ampsize
         # get the box of reference pixels for this amplifier
         box = variance[ref_pix, start:end]
+        # get median of box
+        with warnings.catch_warnings(record=True) as _:
+            boxmed = mp.nanmedian(box)
         # subtract median per-amplifier variance
-        variance[:, start:end] = variance[:, start:end] - mp.nanmedian(box)
+        variance[:, start:end] = variance[:, start:end] - boxmed
     # set all negative pixels to 0 (just for the flagging)
     image2[image2 < 0] = 0
     # get the expected image value (with noise estimate added)
@@ -130,7 +133,8 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     with warnings.catch_warnings(record=True) as _:
         nsig2 = variance / expected
     # number of simga away from bulk of expected-to-observed variance
-    nsig2 = nsig2 / np.nanpercentile(np.abs(nsig2), norm_frac)
+    with warnings.catch_warnings(record=True) as _:
+        nsig2 = nsig2 / np.nanpercentile(np.abs(nsig2), norm_frac)
     # mask the nsigma by the variance cuts
     mask1 = np.array(nsig2 > variance_cut1)
     mask2 = np.array(nsig2 > variance_cut2)
@@ -145,7 +149,11 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     # -------------------------------------------------------------------------
     # remove median per-column intercept
     for it in range(nbx):
-        intercept[:, it] = intercept[:, it] - mp.nanmedian(intercept[:, it])
+        # get intercept median
+        with warnings.catch_warnings(record=True) as _:
+            intmed = mp.nanmedian(intercept[:, it])
+            # subtract off the median
+        intercept[:, it] = intercept[:, it] - intmed
     # remove per-region intercept - loop around the box sizes
     for it in range(intboxsize):
         for jt in range(intboxsize):
@@ -154,11 +162,13 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
             # work out xpix start and end
             startx, endx = jt * intboxsize, jt * intboxsize + intboxsize
             # work out median of intbox
-            intmed = mp.nanmedian(intercept[starty:endy, startx:endx])
+            with warnings.catch_warnings(record=True) as _:
+                intmed = mp.nanmedian(intercept[starty:endy, startx:endx])
             # subtract off the intbox median
             intercept[starty:endy, startx:endx] -= intmed
     # normalize to 1-sigma
-    intercept = intercept / np.nanpercentile(np.abs(intercept), norm_frac)
+    with warnings.catch_warnings(record=True) as _:
+        intercept = intercept / np.nanpercentile(np.abs(intercept), norm_frac)
     # express as varuabce
     nsig2 = intercept ** 2
     # mask the nsigma by the variance cuts
@@ -443,9 +453,10 @@ def errslope_correct(errslope):
     :return: np.ndarray, the corrected errslope image
     """
     # get the median across the x-direction
-    emed0 = np.nanmedian(errslope, axis=0)
-    # get the total median
-    emed = np.nanmedian(errslope)
+    with warnings.catch_warnings(record=True) as _:
+        emed0 = np.nanmedian(errslope, axis=0)
+        # get the total median
+        emed = np.nanmedian(errslope)
     # find the bad columns of pixels
     emask = np.where(emed0 > 2 * emed)[0]
     # set the bad columns of pixels to the median error slope value
@@ -479,6 +490,14 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
     :returns: quality control values to test
     :rtype: tuple[float, float, float, float, float]
     """
+    # -------------------------------------------------------------------------
+    # first basic check: is the full image nans (has happened before)
+    if np.sum(np.isfinite(image)) == 0:
+        # TODO: move to language database
+        WLOG(params, 'warning', 'Full image is NaN - cannot fix')
+        # return nans
+        return np.nan, (np.nan, np.nan, np.nan, np.nan), np.nan, np.nan
+    # -------------------------------------------------------------------------
     # get the med_size
     med_size = params['PP_CORRUPT_MED_SIZE']
     # get hte percentile values

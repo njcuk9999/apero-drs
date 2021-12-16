@@ -13,6 +13,7 @@ from astropy import units as uu
 from astropy.io.ascii.core import InconsistentTableError
 from astropy.table import Table
 import numpy as np
+import pandas as pd
 import requests
 import time
 from typing import Any, List, Tuple, Union
@@ -59,6 +60,8 @@ GOOGLE_BASE_URL = ('https://docs.google.com/spreadsheets/d/{}/gviz/'
                    'tq?tqx=out:csv&gid={}')
 # unit aliases
 masyr = uu.mas / uu.yr
+# Define columns which cannot be null
+NON_NULL_OBJ_COLS = ['OBJNAME', 'RA_DEG', 'DEC_DEG', 'PMRA', 'PMDE', 'EPOCH']
 
 
 # =============================================================================
@@ -115,8 +118,83 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
     # get the full entry for this cobjname
     table = database.get_entries('*', condition=sql_obj_cond)
     # -------------------------------------------------------------------------
+    # check if key columns have null values - if they do remove these rows
+    #   from the table
+    if len(table) != 0:
+        nullmask = np.zeros(len(table), dtype=bool)
+        # loop around columns and look for nulls
+        for col in NON_NULL_OBJ_COLS:
+            nullmask |= table[col].isnull()
+        # filter table
+        table = pd.DataFrame(table[~nullmask])
+    # -------------------------------------------------------------------------
+    # now re-test table length and then use from table
+    if len(table) != 0:
+        # ---------------------------------------------------------------------
+        # try to use table
+        try:
+            # get properties from parameters
+            # object name is the cleaned object name
+            objname = str(table['OBJNAME'].iloc[0])
+            original_name = str(table['ORIGINAL_NAME'].iloc[0])
+            # right ascension and declination in degrees
+            ra_deg = float(table['RA_DEG'].iloc[0])
+            ra_source = str(table['RA_SOURCE'].iloc[0])
+            dec_deg = float(table['DEC_DEG'].iloc[0])
+            dec_source = str(table['DEC_SOURCE'].iloc[0])
+            # epoch in JD
+            epoch = float(table['EPOCH'].iloc[0])
+            # pmra and pmde in mas/yr
+            pmra = float(table['PMRA'].iloc[0])
+            pmra_source = str(table['PMRA_SOURCE'].iloc[0])
+            pmde = float(table['PMDE'].iloc[0])
+            pmde_source = str(table['PMDE_SOURCE'].iloc[0])
+            # parallax in mas (may not be present)
+            plx = float(_target_set_value(table, 'PLX', null_value=np.nan))
+            plx_source = str(table['PLX_SOURCE'].iloc[0])
+            # RV in km/s (may not be present)
+            rv = float(_target_set_value(table, 'RV', null_value=np.nan))
+            rv_source = str(table['RV_SOURCE'].iloc[0])
+            # Teff in K (may not be present)
+            teff = float(_target_set_value(table, 'TEFF', null_value=np.nan))
+            teff_source = str(table['TEFF_SOURCE'].iloc[0])
+            # spectral type (may not be present)
+            sp_type = str(table['SP_TYPE'].iloc[0])
+            sp_source = str(table['SP_SOURCE'].iloc[0])
+            # data source is "database" and no date is the date the database
+            #   was last updated (times added when database downloaded last)
+            data_source = 'database'
+            data_date = str(table['DATE_ADDED'].iloc[0])
+            # mark resolved as complete
+            resolved = True
+
+        except Exception as e:
+            # TODO: move to lanugage database
+            emsg = 'Cannot use object database entry for {0}.\n\t{1}: {2}'
+            eargs = [correct_objname, type(e), str(e)]
+            WLOG(params, 'warning', emsg.format(*eargs))
+            # mark resolved as not complete
+            resolved = False
+            # placeholders to be filled below
+            objname, original_name = '', ''
+            ra_deg, dec_deg, epoch = np.nan, np.nan, np.nan
+            pmra, pmde, plx, rv, teff = np.nan, np.nan, np.nan, np.nan, np.nan
+            ra_source, dec_source, pmra_source, pmde_source, = '', '', '', ''
+            plx_source, rv_source, teff_source = '', '', ''
+            sp_type, sp_source, data_source, data_date = '', '', '', ''
+    else:
+        # mark resolved as not complete
+        resolved = False
+        # placeholders to be filled below
+        objname, original_name = '', ''
+        ra_deg, dec_deg, epoch = np.nan, np.nan, np.nan
+        pmra, pmde, plx, rv, teff = np.nan, np.nan, np.nan, np.nan, np.nan
+        ra_source, dec_source, pmra_source, pmde_source, = '', '', '', ''
+        plx_source, rv_source, teff_source = '', '', ''
+        sp_type, sp_source, data_source, data_date = '', '', '', ''
+    # -------------------------------------------------------------------------
     # if we still do not have a value use the header values (or default values)
-    if len(table) == 0:
+    if not resolved:
         # print warning that we are using the header not the database
         # TODO: add to language database
         wmsg = ('Object {0} is not in the object database. Using header values'
@@ -158,39 +236,6 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
         # data source is just "header" and no associated date
         data_source = 'header'
         data_date = ''
-    else:
-        # get properties from parameters
-        # object name is the cleaned object name
-        objname = str(table['OBJNAME'].iloc[0])
-        original_name = str(table['ORIGINAL_NAME'].iloc[0])
-        # right ascension and declination in degrees
-        ra_deg = float(table['RA_DEG'].iloc[0])
-        ra_source = str(table['RA_SOURCE'].iloc[0])
-        dec_deg = float(table['DEC_DEG'].iloc[0])
-        dec_source = str(table['DEC_SOURCE'].iloc[0])
-        # epoch in JD
-        epoch = float(table['EPOCH'].iloc[0])
-        # pmra and pmde in mas/yr
-        pmra = float(table['PMRA'].iloc[0])
-        pmra_source = str(table['PMRA_SOURCE'].iloc[0])
-        pmde = float(table['PMDE'].iloc[0])
-        pmde_source = str(table['PMDE_SOURCE'].iloc[0])
-        # parallax in mas (may not be present)
-        plx = float(_target_set_value(table, 'PLX', null_value=np.nan))
-        plx_source = str(table['PLX_SOURCE'].iloc[0])
-        # RV in km/s (may not be present)
-        rv = float(_target_set_value(table, 'RV', null_value=np.nan))
-        rv_source = str(table['RV_SOURCE'].iloc[0])
-        # Teff in K (may not be present)
-        teff = float(_target_set_value(table, 'TEFF', null_value=np.nan))
-        teff_source = str(table['TEFF_SOURCE'].iloc[0])
-        # spectral type (may not be present)
-        sp_type = str(table['SP_TYPE'].iloc[0])
-        sp_source = str(table['SP_SOURCE'].iloc[0])
-        # data source is "database" and no date is the date the database
-        #   was last updated (times added when database downloaded last)
-        data_source = 'database'
-        data_date = str(table['DATE_ADDED'].iloc[0])
     # -------------------------------------------------------------------------
     # deal with bad values here
     #   We trust RA/Dec/PMRA/PMDE have been entered correctly
