@@ -158,7 +158,7 @@ class DrsBaseError(DrsBaseException):
             eargs = [self.code, __NAME__]
             raise DrsBaseError('KEYERROR', arguments=eargs)
         # define the message
-        self.message = BETEXT[self.code]
+        self.message = 'E[{0}]: '.format(self.code) + BETEXT[self.code]
         # define the args
         self.arguments = arguments
 
@@ -265,7 +265,7 @@ def base_printer(codeid: str, message: str, level: str,
             program = exceptionname
         # set level
         strlevel = 'E[{0}] '.format(codeid)
-        charlevel = '*'
+        charlevel = '**'
     # -------------------------------------------------------------------------
     elif level == 'warning':
         # set colour
@@ -277,7 +277,7 @@ def base_printer(codeid: str, message: str, level: str,
             program = exceptionname
         # set level
         strlevel = 'W[{0}] '.format(codeid)
-        charlevel = '!'
+        charlevel = '!!'
     # -------------------------------------------------------------------------
     else:
         # set colour
@@ -308,15 +308,20 @@ def base_printer(codeid: str, message: str, level: str,
     return msg
 
 
-def base_error(codeid: str, message: str, level: str,
+def base_error(codeid: str, message: str, level: str = 'error',
                args: Union[str, list, None] = None,
                exceptionname: Union[str, None] = None,
-               exception: Any = None) -> Any:
+               exception: Any = None,
+               exit_flag: bool = False) -> Any:
+    # exit criteria
+    if exception is None:
+        exception = DrsBaseError
     # print error message
-    base_printer(codeid, message, level, args, exceptionname)
+    msg = base_printer(codeid, message, level, args, exceptionname,
+                       printstatement=exit_flag)
     # raise exception
-    if exception is not None:
-        raise exception
+    if not exit_flag:
+        return exception(msg)
     else:
         os._exit(0)
 

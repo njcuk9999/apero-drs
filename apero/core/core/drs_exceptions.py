@@ -362,7 +362,7 @@ def wlogbasic(_: Any, level: Union[str, None] = None,
             codeid = ''
         # print message (and deal with errors)
         if level == 'error' and len(codeid) == 0:
-            drs_base.base_error(codeid, message, level, **kwargs)
+            raise drs_base.base_error(codeid, message, level, **kwargs)
         elif level == 'error':
             raise DrsCodedException(codeid, 'error', message=message)
         else:
