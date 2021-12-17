@@ -296,6 +296,9 @@ def get_args() -> argparse.Namespace:
                         help=lang['INSTALL_ASSETDIR_HELP'])
     parser.add_argument('--logdir', action='store', dest='logdir',
                         help=lang['INSTALL_LOGDIR_HELP'])
+    parser.add_argument('--always_create', action='store', dest='alwayscreate',
+                        help='Always create directories that do not exist. '
+                             'Do not prompt.')
     # add plot mode argument
     parser.add_argument('--plotmode', action='store', dest='plotmode',
                         help=lang['INSTALL_PLOTMODE_HELP'],
@@ -534,6 +537,13 @@ def main():
     # perform clean install on each instrument if requested
     install.cprint(textentry('40-001-00072'), 'm')
     allparams = install.clean_install(params, allparams)
+    if allparams is None:
+        print('\n\n\n')
+        install.cprint(install.printheader(), 'r')
+        install.cprint(textentry('40-001-00075'), 'r')
+        install.cprint(install.printheader(), 'r')
+        print('\n')
+        return
     # ----------------------------------------------------------------------
     # create sym links for all recipes
     install.cprint(textentry('40-001-00073'), 'm')
