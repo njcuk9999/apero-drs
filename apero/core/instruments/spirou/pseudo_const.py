@@ -1363,7 +1363,7 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     drsfiles = recipe.filemod.get().raw_file.fileset
     raw_prefix = recipe.filemod.get().raw_prefix
     # set up inname
-    dprtype = 'Unknown'
+    dprtype, outtype = 'Unknown', 'Unknown'
     drsfile = None
     # loop around drs files
     for drsfile in drsfiles:
@@ -1377,8 +1377,10 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
             # remove prefix if not None
             if raw_prefix is not None:
                 dprtype = drsfile.name.split(raw_prefix)[-1]
+                outtype = drsfile.name
             else:
                 dprtype = drsfile.name
+                outtype = drsfile.name
             # we have found file so break
             break
     # update header with DPRTYPE
@@ -1386,8 +1388,8 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     hdict[kwdprtype] = (dprtype, kwdprcomment)
     # add drs file type (if drs file was found)
     if drsfile is not None:
-        header[kwoutput] = (drsfile.name, kwoutputcomment)
-        hdict[kwoutput] = (drsfile.name, kwoutputcomment)
+        header[kwoutput] = (outtype, kwoutputcomment)
+        hdict[kwoutput] = (outtype, kwoutputcomment)
     # return header
     return header, hdict
 
