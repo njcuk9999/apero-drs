@@ -199,7 +199,8 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None):
 
 
 def create_calibration_database(params: ParamDict, pconst: PseudoConst,
-                                databases: Dict[str, DatabaseM]) -> Database:
+                                databases: Dict[str, DatabaseM],
+                                tries: int = 20) -> Database:
     """
     Setup for the calibration database
 
@@ -222,7 +223,7 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     calibdbm = databases['calib']
     # -------------------------------------------------------------------------
     # make database
-    calibdb = drs_db.database_wrapper(calibdbm.kind, calibdbm.path)
+    calibdb = drs_db.database_wrapper(calibdbm.kind, calibdbm.path, tries=tries)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if calibdb.tname in calibdb.tables:
@@ -242,7 +243,8 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
 
 
 def create_telluric_database(pconst: PseudoConst,
-                             databases: Dict[str, DatabaseM]) -> Database:
+                             databases: Dict[str, DatabaseM],
+                             tries: int = 20) -> Database:
     """
     Setup for the telluric database
 
@@ -261,7 +263,7 @@ def create_telluric_database(pconst: PseudoConst,
     telludbm = databases['tellu']
     # -------------------------------------------------------------------------
     # make database
-    telludb = drs_db.database_wrapper(telludbm.kind, telludbm.path)
+    telludb = drs_db.database_wrapper(telludbm.kind, telludbm.path, tries=tries)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if telludb.tname in telludb.tables:
@@ -274,7 +276,8 @@ def create_telluric_database(pconst: PseudoConst,
 
 
 def create_index_database(pconst: PseudoConst,
-                          databases: Dict[str, DatabaseM]) -> Database:
+                          databases: Dict[str, DatabaseM],
+                          tries: int = 20) -> Database:
     """
     Setup for the index database
 
@@ -295,7 +298,7 @@ def create_index_database(pconst: PseudoConst,
     indexdbm = databases['index']
     # -------------------------------------------------------------------------
     # make database
-    indexdb = drs_db.database_wrapper(indexdbm.kind, indexdbm.path)
+    indexdb = drs_db.database_wrapper(indexdbm.kind, indexdbm.path, tries=tries)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if indexdb.tname in indexdb.tables:
@@ -309,7 +312,8 @@ def create_index_database(pconst: PseudoConst,
 
 
 def create_log_database(pconst: PseudoConst,
-                        databases: Dict[str, DatabaseM]) -> Database:
+                        databases: Dict[str, DatabaseM],
+                        tries: int = 20) -> Database:
     """
     Setup for the index database
 
@@ -328,7 +332,7 @@ def create_log_database(pconst: PseudoConst,
     logdbm = databases['log']
     # -------------------------------------------------------------------------
     # make database
-    logdb = drs_db.database_wrapper(logdbm.kind, logdbm.path)
+    logdb = drs_db.database_wrapper(logdbm.kind, logdbm.path, tries=tries)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if logdb.tname in logdb.tables:
@@ -341,7 +345,8 @@ def create_log_database(pconst: PseudoConst,
 
 
 def create_object_database(params: ParamDict, pconst: PseudoConst,
-                           databases: Dict[str, DatabaseM]) -> Database:
+                           databases: Dict[str, DatabaseM],
+                           tries: int = 20) -> Database:
     """
     Setup for the calibration database
 
@@ -362,7 +367,8 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     objectdbm = databases['object']
     # -------------------------------------------------------------------------
     # make database
-    objectdb = drs_db.database_wrapper(objectdbm.kind, objectdbm.path)
+    objectdb = drs_db.database_wrapper(objectdbm.kind, objectdbm.path,
+                                       tries=tries)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if objectdb.tname in objectdb.tables:
@@ -578,8 +584,8 @@ def _force_column_dtypes(table: Table, coltype: Dict[str, type]) -> Table:
 #             astro_obj.write_obj(objdbm)
 
 
-def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
-                         ) -> Database:
+def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]],
+                         tries: int = 20) -> Database:
     """
     Setup for the index database
 
@@ -594,7 +600,7 @@ def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
     assert isinstance(langdbm, drs_db.LanguageDatabase)
     # -------------------------------------------------------------------------
     # make database
-    langdb = drs_db.database_wrapper(langdbm.kind, langdbm.path)
+    langdb = drs_db.database_wrapper(langdbm.kind, langdbm.path, tries=tries)
     lang_cols = langdbm.columns
     columns = list(lang_cols.names)
     ctypes = list(lang_cols.datatypes)

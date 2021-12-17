@@ -283,14 +283,14 @@ def send_email(params: Any, subject: str, message: Union[List[str], str],
         # close the email connection
         yag.close()
     except ImportError:
-        drs_base.base_error('00-503-00001', str(textentry('00-503-00001')),
-                            'error')
-        return 0
+        raise drs_base.base_error('00-503-00001',
+                                  str(textentry('00-503-00001')),
+                                  'error')
     except Exception as e:
         eargs = [type(e), e, func_name]
-        drs_base.base_error('00-503-00002', str(textentry('00-503-00002')),
-                            'error', args=eargs)
-        return 0
+        raise drs_base.base_error('00-503-00002',
+                                  str(textentry('00-503-00002')),
+                                  'error', args=eargs)
     # ----------------------------------------------------------------------
     # return 1
     return 1

@@ -86,7 +86,7 @@ def __main__(recipe, params):
     # get log and warn from inputs
     log = params['INPUTS']['log']
     warn = params['INPUTS']['warn']
-
+    database_timeout = params['INPUTS']['DATABASE_TIMEOUT']
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
@@ -100,7 +100,7 @@ def __main__(recipe, params):
         reset0 = drs_reset.reset_confirmation(params, 'Assets',
                                               params['DRS_DATA_ASSETS'])
     if reset0:
-        drs_reset.reset_assets(params)
+        drs_reset.reset_assets(params, dtimeout=database_timeout)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Assets']))
     # ----------------------------------------------------------------------
@@ -111,7 +111,7 @@ def __main__(recipe, params):
         reset1 = drs_reset.reset_confirmation(params, 'Working',
                                               params['DRS_DATA_WORKING'])
     if reset1:
-        drs_reset.reset_tmp_folders(params, log)
+        drs_reset.reset_tmp_folders(params, log, dtimeout=database_timeout)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Tmp']))
     # ----------------------------------------------------------------------
@@ -122,7 +122,7 @@ def __main__(recipe, params):
         reset2 = drs_reset.reset_confirmation(params, 'Reduced',
                                               params['DRS_DATA_REDUC'])
     if reset2:
-        drs_reset.reset_reduced_folders(params, log)
+        drs_reset.reset_reduced_folders(params, log, dtimeout=database_timeout)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Reduced']))
     # ----------------------------------------------------------------------
@@ -133,7 +133,7 @@ def __main__(recipe, params):
         reset3 = drs_reset.reset_confirmation(params, 'Calibration',
                                               params['DRS_CALIB_DB'])
     if reset3:
-        drs_reset.reset_calibdb(params, log)
+        drs_reset.reset_calibdb(params, log, dtimeout=database_timeout)
     else:
         WLOG(params, '', '\tNot resetting CalibDB files.')
     # ----------------------------------------------------------------------
@@ -144,7 +144,7 @@ def __main__(recipe, params):
         reset4 = drs_reset.reset_confirmation(params, 'Telluric',
                                               params['DRS_TELLU_DB'])
     if reset4:
-        drs_reset.reset_telludb(params, log)
+        drs_reset.reset_telludb(params, log, dtimeout=database_timeout)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Telluric']))
     # ----------------------------------------------------------------------
@@ -192,7 +192,7 @@ def __main__(recipe, params):
         reset8 = drs_reset.reset_confirmation(params, 'Out',
                                               params['DRS_DATA_OUT'])
     if reset8:
-        drs_reset.reset_out_folders(params, log)
+        drs_reset.reset_out_folders(params, log, dtimeout=database_timeout)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Run']))
     # ----------------------------------------------------------------------

@@ -19,12 +19,14 @@ import sys
 import traceback
 from typing import Any, Dict, List, Tuple, Union
 
+from apero import lang
 from apero.base import base
+from apero.base import drs_db
+from apero.base import drs_base
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero import lang
 from apero.core import constants
 from apero.core.core import drs_argument
 from apero.core.core import drs_file
@@ -453,6 +455,28 @@ def run(func: Any, recipe: DrsRecipe,
                 recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
+        except drs_db.DatabaseError as e:
+            WLOG(params, 'error', e.message, raise_exception=False)
+            # on debug exit was not a success
+            success = False
+            # save params to llmain
+            llmain = dict(e=e, tb='', params=params, recipe=recipe)
+            # add error to log file
+            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+                recipe.log.add_error('DatabaseError Exit', '')
+            # reset the lock directory
+            drs_lock.reset_lock_dir(params)
+        except lang.drs_lang.LanguageError as e:
+            WLOG(params, 'error', e.message, raise_exception=False)
+            # on debug exit was not a success
+            success = False
+            # save params to llmain
+            llmain = dict(e=e, tb='', params=params, recipe=recipe)
+            # add error to log file
+            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+                recipe.log.add_error('LanguageError Exit', '')
+            # reset the lock directory
+            drs_lock.reset_lock_dir(params)
         except drs_exceptions.DrsCodedException as e:
             # get trace back
             string_trackback = traceback.format_exc()
@@ -477,7 +501,18 @@ def run(func: Any, recipe: DrsRecipe,
             llmain = dict(e=e, tb='', params=params, recipe=recipe)
             # add error to log file
             if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
-                recipe.log.add_error('Debug Exit', '')
+                recipe.log.add_error('DebugExit', '')
+            # reset the lock directory
+            drs_lock.reset_lock_dir(params)
+        except drs_base.DrsBaseError as e:
+            WLOG(params, 'error', e.message, raise_exception=False)
+            # on debug exit was not a success
+            success = False
+            # save params to llmain
+            llmain = dict(e=e, tb='', params=params, recipe=recipe)
+            # add error to log file
+            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+                recipe.log.add_error('DrsBaseError Exit', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
         except Exception as e:
