@@ -268,12 +268,14 @@ def ask(question: str, dtype: Union[str, type, None] = None,
         return uinput
 
 
-def check_path_arg(name: str, value: Union[str, Path]) -> Tuple[bool, Path]:
+def check_path_arg(name: str, value: Union[str, Path],
+                   ask_to_create: bool = True) -> Tuple[bool, Path]:
     """
     Check whether path exists and ask user to create it if it doesn't
 
     :param name: str, the path name (description of the path)
     :param value: str or Path, the path to create
+    :param ask_to_create: bool, if True asks user before creation
 
     :return: tuple, 1. whether to prompt the user for another path (i.e. they
              didn't want to create the path, 2. the value of the path
@@ -287,10 +289,14 @@ def check_path_arg(name: str, value: Union[str, Path]) -> Tuple[bool, Path]:
         # check if value exists
         if not value.exists():
             # check whether to create path
-            pathquestion = textentry('40-001-00038', args=[value])
-            promptuser = not ask(pathquestion, dtype='YN')
+            if ask_to_create:
+                pathquestion = textentry('40-001-00038', args=[value])
+                promptuser = not ask(pathquestion, dtype='YN')
+            else:
+                promptuser = False
             # make the directory if we are not going to prompt the user
             if not promptuser:
+                cprint('\tMaking dir {0}: {1}'.format(name, value))
                 os.makedirs(value)
         # if path exists we do not need to prompt user
         else:
@@ -328,6 +334,9 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     all_params['DEVMODE'] = getattr(args, 'devmode', False)
     # add clean warn
     all_params['CLEANWARN'] = getattr(args, 'cleanwarn', False)
+    # get whether to ask user about creating directories
+    askcreate = not getattr(args, 'alwayscreate', True)
+
     # ------------------------------------------------------------------
     # Step 0: Ask for profile name (if not given)
     # ------------------------------------------------------------------
@@ -353,7 +362,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # ------------------------------------------------------------------
     # Step 1: Ask for user config path
     # ------------------------------------------------------------------
-    promptuser, userconfig = check_path_arg('config', args.config)
+    promptuser, userconfig = check_path_arg('config', args.config, askcreate)
     # if we still need to get user config ask user to get it
     if promptuser:
         userconfig = ask(textentry('INSTALL_CONFIG_PATH_MSG'), 'path',
@@ -366,23 +375,29 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # ------------------------------------------------------------------
     # Step 2: Ask for instrument (from valid instruments)
     # ------------------------------------------------------------------
-    prompt_inst = textentry('40-001-00042')
-    inst_options, prompt_options = [], []
-    # loop around instruments
-    icount, valid_instruments = 1, []
-    for it, instrument in enumerate(drs_instruments):
-        if instrument.upper() != 'NONE':
-            inst_options += [icount]
-            prompt_options += ['{0}. {1}'.format(icount, instrument)]
-            # add to the counter
-            icount += 1
-            # add instrument to valid instrument choices
-            valid_instruments.append(instrument)
-    # ask user
-    inst_number = ask(prompt_inst, options=inst_options, dtype='int',
-                      optiondesc=prompt_options)
-    # update instrument based on inst_number
-    instrument = valid_instruments[inst_number - 1]
+    user_instrument = getattr(args, 'instrument', None)
+    # test if we need instrument
+    if user_instrument not in drs_instruments:
+
+        prompt_inst = textentry('40-001-00042')
+        inst_options, prompt_options = [], []
+        # loop around instruments
+        icount, valid_instruments = 1, []
+        for it, instrument in enumerate(drs_instruments):
+            if instrument.upper() != 'NONE':
+                inst_options += [icount]
+                prompt_options += ['{0}. {1}'.format(icount, instrument)]
+                # add to the counter
+                icount += 1
+                # add instrument to valid instrument choices
+                valid_instruments.append(instrument)
+        # ask user
+        inst_number = ask(prompt_inst, options=inst_options, dtype='int',
+                          optiondesc=prompt_options)
+        # update instrument based on inst_number
+        instrument = valid_instruments[inst_number - 1]
+    else:
+        instrument = str(user_instrument)
     # set instrument in all params
     all_params['INSTRUMENT'] = instrument
     all_params.set_source('INSTRUMENT', func_name)
@@ -430,26 +445,21 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
         uconfig.mkdir()
     # ------------------------------------------------------------------
     # check data path
-    promptuser, datadir = check_path_arg('datadir', args.datadir)
+    promptuser, datadir = check_path_arg('datadir', args.datadir, askcreate)
 
     # check for data paths in args
     data_prompts, data_values = dict(), dict()
     data_promptuser = False
     for path in DATA_ARGS:
-        if not promptuser:
-            value = None
-            promptuser1 = False
-        else:
-            value = getattr(args, DATA_ARGS[path])
-            promptuser1, value = check_path_arg(path, value)
-            data_prompts[path] = promptuser1
+        value = getattr(args, DATA_ARGS[path])
+        promptuser1, value = check_path_arg(path, value, askcreate)
+        data_prompts[path] = promptuser1
         data_values[path] = value
         data_promptuser |= promptuser1
 
     # ------------------------------------------------------------------
     # Step 3: Ask for data paths
     # ------------------------------------------------------------------
-
     if promptuser and data_promptuser:
         advanced = ask(textentry('INSTALL_DATA_PATH_MSG'), dtype='YN')
         cprint(printheader(), 'g')
@@ -976,7 +986,8 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
     return all_params
 
 
-def clean_install(params: ParamDict, all_params: ParamDict) -> ParamDict:
+def clean_install(params: ParamDict, all_params: ParamDict
+                  ) -> Union[ParamDict, None]:
     """
     Clean the installation directories and update the installation parameter
     dictionary
@@ -1014,7 +1025,13 @@ def clean_install(params: ParamDict, all_params: ParamDict) -> ParamDict:
     # add to environment
     add_paths(all_params)
     # construct reset command
-    toolmod.main(quiet=True, warn=cleanwarn)
+    reset_args = toolmod.main(quiet=True, warn=cleanwarn, database_timeout=0)
+    # deal with a bad reset
+    if not reset_args['success']:
+        # TODO: Add to language database
+        cprint('\n\nError resetting database (see above) cannot install apero',
+               'r')
+        return None
     # return all params
     return all_params
 

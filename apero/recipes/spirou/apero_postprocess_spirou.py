@@ -145,8 +145,8 @@ def __main__(recipe, params):
         filepostfile.extensions[0].load_infile(params)
         # -----------------------------------------------------------------
         # link all other extensions
-        success = filepostfile.process_links(params, indexdbm,
-                                             filepostfile.out_required)
+        success, reason = filepostfile.process_links(params, indexdbm,
+                                                     filepostfile.out_required)
         # deal with writing file
         if success:
             # deal with processing headers
