@@ -258,17 +258,11 @@ class Database:
             # log error: Error Type: Error message \n\t Command:
             ecode = '00-002-00032'
             emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e), command]
-            exception = DatabaseError(message=emsg.format(*eargs),
-                                      errorobj=e,
-                                      path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = [type(e), str(e), command, self.path, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # print output of sql command if verbose
         if self._verbose_:
             print("SQL OUTPUT:", result)
@@ -323,14 +317,11 @@ class Database:
                 # log error: Get condition must be a string (for WHERE)
                 ecode = '00-002-00031'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [self.path, table, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
-                                           exceptionname='DatabaseError',
-                                           exception=exception)
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
 
             command += " WHERE {} ".format(condition)
         # execute result
@@ -372,14 +363,11 @@ class Database:
                 # log error: Get condition must be a string (for WHERE)
                 ecode = '00-002-00031'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [self.path, table, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
-                                           exceptionname='DatabaseError',
-                                           exception=exception)
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
             command += " WHERE {} ".format(condition)
         # execute result
         result = self.execute(command, fetch=True)
@@ -456,14 +444,11 @@ class Database:
                 # log error: Get condition must be a string (for WHERE)
                 ecode = '00-002-00031'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [self.path, table, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
-                                           exceptionname='DatabaseError',
-                                           exception=exception)
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
             command += " WHERE {} ".format(condition)
         # add ORDER BY if sort_by is set
         if sort_by is not None:
@@ -480,14 +465,11 @@ class Database:
                 # log error: Get max_rows must be an integer (for LIMIT)
                 ecode = '00-002-00033'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [self.path, table, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
-                                           exceptionname='DatabaseError',
-                                           exception=exception)
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
             # add LIMIT command
             command += " LIMIT {}".format(max_rows)
         # if a pandas table is requested use the _to_pandas method to
@@ -565,14 +547,11 @@ class Database:
             # log error: The column list must be same length as the value list
             ecode = '00-002-00034'
             emsg = drs_base.BETEXT[ecode]
-            exception = DatabaseError(emsg, path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = [self.path, table, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error',
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # loop around the rows
         for it in range(len(columns)):
             # get this rows column/value
@@ -583,14 +562,11 @@ class Database:
                 # log error: The column to set must be a string
                 ecode = '00-002-00035'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [self.path, table, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                            exceptionname='DatabaseError',
-                                           exception=exception)
+                                           exception=DatabaseError)
             # deal with value
             set_str.append('{0} = {1}'.format(column, _decode_value(value)))
 
@@ -603,14 +579,11 @@ class Database:
                 # log error: Get condition must be a string (for WHERE)
                 ecode = '00-002-00031'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [self.path, table, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
-                                           exceptionname='DatabaseError',
-                                           exception=exception)
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
             # add to command
             command += " WHERE {}".format(condition)
         # execute sql command
@@ -733,14 +706,11 @@ class Database:
             # log error: field_names and field_types must be the same length
             ecode = '00-002-00036'
             emsg = drs_base.BETEXT[ecode]
-            exception = DatabaseError(emsg, path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = [self.path, name, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error',
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # loop around fields
         for it in range(len(field_names)):
             # get this iterations values
@@ -750,14 +720,11 @@ class Database:
                 # log error: field_names must be strings
                 ecode = '00-002-00037'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [self.path, name, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                            exceptionname='DatabaseError',
-                                           exception=exception)
+                                           exception=DatabaseError)
             # deal with type
             if isinstance(ftype, type):
                 # deal with wrong type
@@ -765,30 +732,24 @@ class Database:
                     # log error: field_types must be string or [int/float/str]
                     ecode = '00-002-00038'
                     emsg = drs_base.BETEXT[ecode]
-                    exception = DatabaseError(emsg, path=self.path,
-                                              func_name=func_name)
-                    # add code to database message
-                    emsg = 'E[0]: {1}'.format(ecode, emsg)
+                    eargs = [self.path, name, func_name]
                     # log base error
-                    return drs_base.base_error(ecode, emsg, 'error',
-                                               exceptionname='DatabaseError',
-                                               exception=exception)
+                    raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                              exceptionname='DatabaseError',
+                                              exception=DatabaseError)
                 # set as sql type
                 # noinspection PyTypeChecker
                 ftype = translator[ftype]
             # else we must have a string --> so break if not
             elif not isinstance(ftype, str):
-                # log error:field_types must be string or [int/float/str]
+                # log error: field_types must be string or [int/float/str]
                 ecode = '00-002-00038'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [self.path, name, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
-                                           exceptionname='DatabaseError',
-                                           exception=exception)
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
             # set type
             fields.append('{0} {1}'.format(fname, ftype))
         # ---------------------------------------------------------------------
@@ -834,14 +795,11 @@ class Database:
             # log error: table 'name' must be a string
             ecode = '00-002-00039'
             emsg = drs_base.BETEXT[ecode]
-            exception = DatabaseError(emsg, path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = [self.path, name, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error',
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # execute a sql drop table
         self.execute("DROP TABLE {}".format(name), fetch=False)
         # update the table list
@@ -1011,18 +969,11 @@ class Database:
                 # log error: pick one -- table cannot be None
                 ecode = '00-002-00041'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
-
-                print('TNAME=', self.tname)
-                print('TABLE=', table)
-                print('TABLES=', self.tables)
+                eargs = [self.path, ','.join(self.tables), func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                            exceptionname='DatabaseError',
-                                           exception=exception)
+                                           exception=DatabaseError)
             return self.tables[0]
         return table
 
@@ -1051,18 +1002,15 @@ class Database:
             # noinspection PyBroadException
             try:
                 table[col] = list(map(lambda x: x[it], result))
-            except Exception as _:
+            except Exception as e:
                 # log error: Cannot convert command to astropy table
                 ecode = '00-002-00042'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [type(e), str(e), self.path, table, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                            exceptionname='DatabaseError',
-                                           exception=exception)
+                                           exception=DatabaseError)
         # return astropy table
         return table
 
@@ -1267,15 +1215,11 @@ class SQLiteDatabase(Database):
             # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
             ecode = '00-002-00043'
             emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e), func_name]
-            exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = [type(e), str(e), 'sqlite3.connect', self.path, func_name]
             # log base error
-            drs_base.base_error(ecode, emsg, 'error', args=eargs,
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                 exceptionname='DatabaseError',
-                                exception=exception)
+                                exception=DatabaseError)
 
     def __str__(self):
         """
@@ -1352,15 +1296,11 @@ class SQLiteDatabase(Database):
             # log error: field_names and field_types must be the same length
             ecode = '00-002-00036'
             emsg = drs_base.BETEXT[ecode]
-            exception = DatabaseError(emsg, path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = [self.path, name, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error',
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
-
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # loop around fields
         for it in range(len(field_names)):
             # get this iterations values
@@ -1370,14 +1310,11 @@ class SQLiteDatabase(Database):
                 # log error: field_names must be strings
                 ecode = '00-002-00037'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [self.path, name, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                            exceptionname='DatabaseError',
-                                           exception=exception)
+                                           exception=DatabaseError)
             # deal with type
             if isinstance(ftype, type):
                 # deal with wrong type
@@ -1385,30 +1322,24 @@ class SQLiteDatabase(Database):
                     # log error: field_types must be string or [int/float/str]
                     ecode = '00-002-00038'
                     emsg = drs_base.BETEXT[ecode]
-                    exception = DatabaseError(emsg, path=self.path,
-                                              func_name=func_name)
-                    # add code to database message
-                    emsg = 'E[0]: {1}'.format(ecode, emsg)
+                    eargs = [self.path, name, func_name]
                     # log base error
-                    return drs_base.base_error(ecode, emsg, 'error',
-                                               exceptionname='DatabaseError',
-                                               exception=exception)
+                    raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                              exceptionname='DatabaseError',
+                                              exception=DatabaseError)
                 # set as sql type
                 # noinspection PyTypeChecker
                 ftype = translator[ftype]
             # else we must have a string --> so break if not
             elif not isinstance(ftype, str):
-                # log error:field_types must be string or [int/float/str]
+                # log error: field_types must be string or [int/float/str]
                 ecode = '00-002-00038'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [self.path, name, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
-                                           exceptionname='DatabaseError',
-                                           exception=exception)
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
             # set type
             fields.append('{0} {1}'.format(fname, ftype))
         # ---------------------------------------------------------------------
@@ -1554,14 +1485,12 @@ class SQLiteDatabase(Database):
             # log error: Pandas.to_sql
             ecode = '00-002-00047'
             emsg = drs_base.BETEXT[ecode]
-            exception = DatabaseError(emsg, path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = ['DatabaseError', '{0} not in fail/replace/append',
+                     self.path, table, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error',
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # try to add pandas dataframe to table
         try:
             conargs = dict(func=func_name, kind='_TO_SQL:SQLiteDatabase')
@@ -1577,15 +1506,11 @@ class SQLiteDatabase(Database):
             # log error: Pandas.to_sql
             ecode = '00-002-00047'
             emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e), func_name]
-            exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = [type(e), str(e), func_name, self.path, table, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
 
     def _to_pandas(self, command: str) -> pd.DataFrame:
         """
@@ -1606,13 +1531,11 @@ class SQLiteDatabase(Database):
             # log error: Could not read SQL command as pandas table
             ecode = '00-002-00048'
             emsg = drs_base.BETEXT[ecode]
-            eargs = [command, func_name]
-            exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                      func_name=func_name)
+            eargs = [command, self.path, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                        exceptionname='DatabaseError',
-                                       exception=exception)
+                                       exception=DatabaseError)
         # return dataframe
         return df
 
@@ -1652,15 +1575,11 @@ class SQLiteDatabase(Database):
             # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
             ecode = '00-002-00040'
             emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e)]
-            exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = [type(e), str(e), self.path, table, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                        exceptionname='DatabaseError',
-                                       exception=exception)
+                                       exception=DatabaseError)
         # return a list of columns
         return colnames, coltypes
 
@@ -1784,14 +1703,11 @@ class MySQLDatabase(Database):
             # log error: Cannot import mysql connector
             ecode = '00-002-00044'
             emsg = drs_base.BETEXT[ecode]
-            exception = DatabaseError(emsg, path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = [self.path, func_name]
             # log base error
-            drs_base.base_error(ecode, emsg, 'error',
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                 exceptionname='DatabaseError',
-                                exception=exception)
+                                exception=DatabaseError)
         # call to super class
         super().__init__(verbose=verbose)
         # set a tries criteria
@@ -1887,14 +1803,10 @@ class MySQLDatabase(Database):
                     '|| Tries {7}')
         connkind = connkind.format(connect_kind, host, user, dbname, tname,
                                    func, kind, count)
-        eargs = [type(error), str(error), connkind, func_name]
-        exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                  func_name=func_name)
-        # add code to database message
-        emsg = 'E[0]: {1}'.format(ecode, emsg)
-        drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                            exceptionname='DatabaseError',
-                            exception=exception)
+        eargs = [type(error), str(error), connkind, self.path, tname, func_name]
+        raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                  exceptionname='DatabaseError',
+                                  exception=DatabaseError)
 
     def __str__(self):
         """
@@ -1970,20 +1882,13 @@ class MySQLDatabase(Database):
                     # close
                     cursor.close()
                     conn.close()
-                    # log error: Error Type: Error message \n\t Command:
                     ecode = '00-002-00032'
                     emsg = drs_base.BETEXT[ecode]
-                    eargs = [type(e), str(e), command]
-                    exception = DatabaseError(message=emsg.format(*eargs),
-                                              errorobj=e,
-                                              path=self.path,
-                                              func_name=func_name)
-                    # add code to database message
-                    emsg = 'E[0]: {1}'.format(ecode, emsg)
+                    eargs = [type(e), str(e), command, self.path, func_name]
                     # log base error
-                    return drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                               exceptionname='DatabaseError',
-                                               exception=exception)
+                    raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                              exceptionname='DatabaseError',
+                                              exception=DatabaseError)
 
         # print output of sql command if verbose
         if self._verbose_:
@@ -2037,15 +1942,11 @@ class MySQLDatabase(Database):
                     # log error
                     ecode = '00-002-00050'
                     emsg = drs_base.BETEXT[ecode]
-                    eargs = [self.dbname, type(e), str(e)]
-                    exception = DatabaseError(emsg,
-                                              path=self.path,
-                                              func_name=func_name)
+                    eargs = [self.dbname, type(e), str(e), self.path, func_name]
                     # log base error
-                    drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                        exceptionname='DatabaseError',
-                                        exception=exception)
-
+                    raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                              exceptionname='DatabaseError',
+                                              exception=DatabaseError)
                 # the table names are the first entry in each row so get the
                 #  table names from these (and update self.tables)
                 databases = []
@@ -2074,14 +1975,13 @@ class MySQLDatabase(Database):
                         # log error
                         ecode = '00-002-00050'
                         emsg = drs_base.BETEXT[ecode]
-                        eargs = [self.dbname, type(e), str(e)]
-                        exception = DatabaseError(emsg.format(*eargs),
-                                                  path=self.path,
-                                                  func_name=func_name)
+                        eargs = [self.dbname, type(e), str(e), self.path,
+                                 func_name]
                         # log base error
-                        drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                            exceptionname='DatabaseError',
-                                            exception=exception)
+                        raise drs_base.base_error(ecode, emsg, 'error',
+                                                  args=eargs,
+                                                  exceptionname='DatabaseError',
+                                                  exception=DatabaseError)
 
     def cursor(self, conn):
         """
@@ -2156,15 +2056,11 @@ class MySQLDatabase(Database):
             # log error: field_names and field_types must be the same length
             ecode = '00-002-00036'
             emsg = drs_base.BETEXT[ecode]
-            exception = DatabaseError(emsg, path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = [self.path, name, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error',
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
-
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # loop around fields
         for it in range(len(field_names)):
             # get this iterations values
@@ -2174,14 +2070,11 @@ class MySQLDatabase(Database):
                 # log error: field_names must be strings
                 ecode = '00-002-00037'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [self.path, name, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                            exceptionname='DatabaseError',
-                                           exception=exception)
+                                           exception=DatabaseError)
             # deal with type
             if isinstance(ftype, type):
                 # deal with wrong type
@@ -2189,30 +2082,24 @@ class MySQLDatabase(Database):
                     # log error: field_types must be string or [int/float/str]
                     ecode = '00-002-00038'
                     emsg = drs_base.BETEXT[ecode]
-                    exception = DatabaseError(emsg, path=self.path,
-                                              func_name=func_name)
-                    # add code to database message
-                    emsg = 'E[0]: {1}'.format(ecode, emsg)
+                    eargs = [self.path, name, func_name]
                     # log base error
-                    return drs_base.base_error(ecode, emsg, 'error',
-                                               exceptionname='DatabaseError',
-                                               exception=exception)
+                    raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                              exceptionname='DatabaseError',
+                                              exception=DatabaseError)
                 # set as sql type
                 # noinspection PyTypeChecker
                 ftype = translator[ftype]
             # else we must have a string --> so break if not
             elif not isinstance(ftype, str):
-                # log error:field_types must be string or [int/float/str]
+                # log error: field_types must be string or [int/float/str]
                 ecode = '00-002-00038'
                 emsg = drs_base.BETEXT[ecode]
-                exception = DatabaseError(emsg, path=self.path,
-                                          func_name=func_name)
-                # add code to database message
-                emsg = 'E[0]: {1}'.format(ecode, emsg)
+                eargs = [self.path, name, func_name]
                 # log base error
-                return drs_base.base_error(ecode, emsg, 'error',
-                                           exceptionname='DatabaseError',
-                                           exception=exception)
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
             # set type
             fields.append('{0} {1}'.format(fname, ftype))
         # ---------------------------------------------------------------------
@@ -2242,17 +2129,13 @@ class MySQLDatabase(Database):
                 # check that all columns are in database
                 for col in index_group:
                     if col not in field_names:
-                        ecode = ''
+                        ecode = '00-002-00052'
                         emsg = ('Index group error. Column {0} not in {1} '
                                 '(Group={2})')
-                        eargs = [col, name, group_name]
-                        exception = DatabaseError(emsg.format(*eargs),
-                                                  path=self.path,
-                                                  func_name=func_name)
-                        return drs_base.base_error(ecode, emsg.format(*eargs),
-                                                   'error',
-                                                   exceptionname='DBError',
-                                                   exception=exception)
+                        eargs = [col, name, group_name, self.path, func_name]
+                        raise drs_base.base_error(ecode, emsg, args=eargs,
+                                                  exceptionname='DatabaseError',
+                                                  exception=DatabaseError)
                 # construct command
                 cargs = [group_name, name, ', '.join(index_group)]
                 command = 'CREATE INDEX {0} ON {1} ({2});'.format(*cargs)
@@ -2317,14 +2200,12 @@ class MySQLDatabase(Database):
             # log error: Pandas.to_sql
             ecode = '00-002-00047'
             emsg = drs_base.BETEXT[ecode]
-            exception = DatabaseError(emsg, path=self.path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = ['DatabaseError', '{0} not in fail/replace/append',
+                     self.path, table, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error',
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # try to add pandas dataframe to table
         try:
             conargs = dict(func=func_name, kind='TO_SQL:SQLALCHEMY')
@@ -2340,13 +2221,11 @@ class MySQLDatabase(Database):
             # log error: Pandas.to_sql
             ecode = '00-002-00047'
             emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e), func_name]
-            exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                      func_name=func_name)
+            eargs = [type(e), str(e), func_name, self.path, table, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
 
     def _to_pandas(self, command: str) -> pd.DataFrame:
         """
@@ -2366,13 +2245,11 @@ class MySQLDatabase(Database):
             # log error: Could not read SQL command as pandas table
             ecode = '00-002-00048'
             emsg = drs_base.BETEXT[ecode]
-            eargs = [command, func_name]
-            exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                      func_name=func_name)
+            eargs = [command, self.path, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                        exceptionname='DatabaseError',
-                                       exception=exception)
+                                       exception=DatabaseError)
         # return dataframe
         return df
 
@@ -2429,16 +2306,11 @@ class MySQLDatabase(Database):
                     # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
                     ecode = '00-002-00040'
                     emsg = drs_base.BETEXT[ecode]
-                    eargs = [type(e), str(e)]
-                    exception = DatabaseError(emsg.format(*eargs),
-                                              path=self.path,
-                                              func_name=func_name)
-                    # add code to database message
-                    emsg = 'E[0]: {1}'.format(ecode, emsg)
+                    eargs = [type(e), str(e), self.path, table, func_name]
                     # log base error
-                    return drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                               exceptionname='DatabaseError',
-                                               exception=exception)
+                    raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                              exceptionname='DatabaseError',
+                                              exception=DatabaseError)
         # return a list of columns
         return colnames, coltypes
 
@@ -2545,15 +2417,11 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
             # log error: Database kind '{0}' is invalid
             ecode = '00-002-00049'
             emsg = drs_base.BETEXT[ecode]
-            eargs = [kind]
-            exception = DatabaseError(emsg.format(*eargs), path=path,
-                                      func_name=func_name)
-            # add code to database message
-            emsg = 'E[0]: {1}'.format(ecode, emsg)
+            eargs = [kind, path, func_name]
             # log base error
-            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # return the SQLiteDatabase instance
         return SQLiteDatabase(path, verbose)
 
@@ -3042,12 +2910,25 @@ def _unignore_warnings():
 
 
 def _mysql_connect(host, user, passwd, dbname):
+
+    func_name = __NAME__ + '._mysql_connect()'
+
     with warnings.catch_warnings():
-        _ignore_warnings()
-        conn = mysql.connect(host=host, user=user, passwd=passwd,
-                             database=dbname,
-                             connection_timeout=3600)
-    _unignore_warnings()
+        try:
+            _ignore_warnings()
+            conn = mysql.connect(host=host, user=user, passwd=passwd,
+                                 database=dbname,
+                                 connection_timeout=3600)
+            _unignore_warnings()
+        except Exception as e:
+            _unignore_warnings()
+            ecode = '00-002-00051'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [host, user, passwd]
+            # log base error
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                       exceptionname='DatabaseError',
+                                       exception=DatabaseError)
     return conn
 
 

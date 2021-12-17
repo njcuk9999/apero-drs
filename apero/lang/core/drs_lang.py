@@ -67,6 +67,57 @@ DATABASE_FILE = base.LANG_XLS_FILE
 # =============================================================================
 # Define classes
 # =============================================================================
+class LanguageException(Exception):
+    pass
+
+
+class LanguageError(LanguageException):
+    def __init__(self, message: Union[str, None] = None,
+                 errorobj: Any = None,
+                 func_name: Union[str, None] = None):
+        """
+        Construct the Database Error instance
+
+        :param message: str a mesage to pass / print
+        :param errorobj: the error instance (or anything else)
+        :param path: str/Path the path of the database
+        :param func_name: str, the function name where error occured
+        """
+        self.message = message
+        self.errorobj = errorobj
+        self.func_name = func_name
+        # call super class
+        super().__init__(message)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self):
+        """
+        Standard __str__ return (used in raising as Exception)
+        :return:
+        """
+        emsg = 'Language Error: {0}'.format(self.message)
+        return emsg
+
+
 class Text(str):
     """
     Special text container (so we can store text entry key)
@@ -292,7 +343,8 @@ def read_xls(xls_file: str) -> pd.io.excel.ExcelFile:
         ecode = '00-002-00026'
         emsg = drs_base.BETEXT(ecode)
         eargs = [xls_file, str(e), e]
-        return drs_base.base_error(ecode, emsg, 'error', args=eargs)
+        raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                   exception=LanguageError)
     return xls
 
 
@@ -383,7 +435,8 @@ def make_reset_csvs():
         ecode = '00-002-00027'
         emsg = drs_base.BETEXT[ecode]
         eargs = [DATABASE_FILE, database_path]
-        return drs_base.base_error(ecode, emsg, 'error', args=eargs)
+        raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                   exception=LanguageError)
     # ----------------------------------------------------------------------
     # create a backup of the database: Backing up database
     wcode = '40-001-00029'

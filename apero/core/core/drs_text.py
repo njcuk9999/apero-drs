@@ -95,7 +95,7 @@ def read_lines(filename: Union[str, Path], comments: str = '#',
         eargs = [filename, type(e), e, func_name]
         ecode = '01-001-00024'
         emsg = textentry(ecode)
-        return drs_base.base_error(ecode, emsg, 'error', eargs)
+        raise drs_base.base_error(ecode, emsg, 'error', eargs)
     # valid lines
     raw = []
     # loop around lines
@@ -116,7 +116,7 @@ def read_lines(filename: Union[str, Path], comments: str = '#',
                 eargs = [filename, l_it + 1, line, delimiter, func_name]
                 ecode = '01-001-00025'
                 emsg = textentry(ecode)
-                return drs_base.base_error(ecode, emsg, 'error', eargs)
+                raise drs_base.base_error(ecode, emsg, 'error', eargs)
             # append to raw list
             raw.append([key, value])
     # check that raw has entries
@@ -124,7 +124,7 @@ def read_lines(filename: Union[str, Path], comments: str = '#',
         eargs = [filename]
         ecode = '01-001-00026'
         emsg = textentry(ecode)
-        return drs_base.base_error(ecode, emsg, 'error', eargs)
+        raise drs_base.base_error(ecode, emsg, 'error', eargs)
 
     # return raw
     return np.array(raw)
