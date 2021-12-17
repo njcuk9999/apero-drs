@@ -368,18 +368,26 @@ def assign_use_berv(berv_props: ParamDict, use=True) -> ParamDict:
     # -------------------------------------------------------------------------
     # need to decide which values should be used (and report if we are using
     #   estimate)
-    cond = (berv is not None and np.isfinite(berv))
-    cond &= (bjd is not None and np.isfinite(bjd))
-    cond &= (berv_max is not None and np.isfinite(berv_max))
+    have_berv = (berv is not None and np.isfinite(berv))
+    have_berv &= (bjd is not None and np.isfinite(bjd))
+    have_berv &= (berv_max is not None and np.isfinite(berv_max))
+
+    # need to test if we have no BERV at all
+    have_bervest = False
+    if (not have_berv):
+        have_bervest = (berv_est is not None and np.isfinite(berv_est))
+        have_bervest &= (bjd_est is not None and np.isfinite(bjd_est))
+        have_bervest &= (berv_max_est is not None and np.isfinite(berv_max_est))
+
     # Case 1: Not BERV used
-    if not use:
+    if not use or (not have_berv and not have_bervest):
         use_berv = None
         use_bjd = None
         use_berv_max = None
         used_estimate = True
         psource = '{0} [{1}]'.format(func_name, 'None')
     # Case 2: pyasl used
-    elif (not cond) or berv_source == 'pyasl':
+    elif (not have_berv) or berv_source == 'pyasl':
         use_berv = float(berv_est)
         use_bjd = float(bjd_est)
         use_berv_max = float(berv_max_est)
@@ -532,9 +540,16 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
     if not quiet:
         WLOG(params, 'warning', textentry('10-016-00005', args=[estimate]),
              sublevel=8)
+
+    # deal with distance
+    if props['PLX'] == 0:
+        distance = None
+    else:
+        distance = Distance(parallax=props['PLX'] * uu.mas)
+
     # need to propagate ra and dec to J2000
     coords = SkyCoord(ra=props['RA'] * uu.deg, dec=props['DEC'] * uu.deg,
-                      distance=Distance(parallax=props['PLX'] * uu.mas),
+                      distance=distance,
                       pm_ra_cosdec=props['PMRA'] * uu.mas/uu.yr,
                       pm_dec=props['PMDE'] * uu.mas/uu.yr,
                       obstime=Time(props['EPOCH'], format='jd'))
@@ -542,10 +557,16 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
     j2000 = Time(2000.0, format='decimalyear').jd + 0.5
     delta_time = j2000 - props['EPOCH']
     # get the coordinates in J2000
-    coords2000 = coords.apply_space_motion(dt=delta_time * uu.day)
+    with warnings.catch_warnings(record=True) as w:
+        coords2000 = coords.apply_space_motion(dt=delta_time * uu.day)
     # extract the ra and dec from SkyCoords
     ra2000 = coords2000.ra.value
     dec2000 = coords2000.dec.value
+    # test the coordinates are find
+    if np.isnan(ra2000) or np.isnan(dec2000):
+        eargs = [props['OBJNAME'], props['RA'], props['DEC'], props['PMRA'],
+                 props['PMDE'], props['PLX'], props['EPOCH']]
+        WLOG(params, 'error', textentry('00-016-00028', args=eargs))
     # get args
     bkwargs = dict(ra2000=ra2000, dec2000=dec2000,
                    obs_long=props['DRS_LONG'], obs_lat=props['DRS_LAT'],
