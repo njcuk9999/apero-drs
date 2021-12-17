@@ -145,7 +145,7 @@ def reset_confirmation(params: ParamDict, name: str,
         return False
 
 
-def reset_tmp_folders(params: ParamDict, log: bool = True):
+def reset_tmp_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     """
     Reset the "tmp" (preprocessed directories)
 
@@ -177,7 +177,8 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_index_database(pconst, databases)
+        manage_databases.create_index_database(pconst, databases,
+                                               tries=dtimeout)
         # get index database
         indexdb = drs_database.IndexDatabase(params)
         # load index database
@@ -200,7 +201,7 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_log_database(pconst, databases)
+        manage_databases.create_log_database(pconst, databases, tries=dtimeout)
         # get log database
         logdb = drs_database.LogDatabase(params)
         # load index database
@@ -211,7 +212,8 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
     logdb.remove_entries(condition=condition)
 
 
-def reset_reduced_folders(params: ParamDict, log: bool = True):
+def reset_reduced_folders(params: ParamDict, log: bool = True,
+                          dtimeout: int = 20):
     """
     Resets the reduced directory
 
@@ -243,7 +245,8 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_index_database(pconst, databases)
+        manage_databases.create_index_database(pconst, databases,
+                                               tries=dtimeout)
         # get index database
         indexdb = drs_database.IndexDatabase(params)
         # load index database
@@ -266,7 +269,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_log_database(pconst, databases)
+        manage_databases.create_log_database(pconst, databases, tries=dtimeout)
         # get log database
         logdb = drs_database.LogDatabase(params)
         # load index database
@@ -277,7 +280,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
     logdb.remove_entries(condition=condition)
 
 
-def reset_calibdb(params: ParamDict, log: bool = True):
+def reset_calibdb(params: ParamDict, log: bool = True, dtimeout: int = 20):
     """
     Wrapper for reset_dbdir - specifically for calibDB
 
@@ -299,7 +302,8 @@ def reset_calibdb(params: ParamDict, log: bool = True):
     # reset files
     reset_dbdir(params, name, calib_dir, reset_path, log=log)
     # create calibration database
-    manage_databases.create_calibration_database(params, pconst, databases)
+    manage_databases.create_calibration_database(params, pconst, databases,
+                                                 tries=dtimeout)
     # -------------------------------------------------------------------------
     # remove entries from calibration database
     # -------------------------------------------------------------------------
@@ -312,7 +316,7 @@ def reset_calibdb(params: ParamDict, log: bool = True):
     calibdb.remove_entries(condition=condition)
 
 
-def reset_telludb(params: ParamDict, log: bool = True):
+def reset_telludb(params: ParamDict, log: bool = True, dtimeout: int = 20):
     """
     Wrapper for reset_dbdir - specifically for telluDB
 
@@ -334,7 +338,7 @@ def reset_telludb(params: ParamDict, log: bool = True):
     # reset files
     reset_dbdir(params, name, tellu_dir, reset_path, log=log)
     # create telluric database
-    manage_databases.create_telluric_database(pconst, databases)
+    manage_databases.create_telluric_database(pconst, databases, tries=dtimeout)
     # -------------------------------------------------------------------------
     # remove entries from telluric database
     # -------------------------------------------------------------------------
@@ -473,7 +477,7 @@ def reset_run(params: ParamDict, log: bool = True):
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
 
 
-def reset_out_folders(params: ParamDict, log: bool = True):
+def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     """
     Resets the reduced directory
 
@@ -505,7 +509,8 @@ def reset_out_folders(params: ParamDict, log: bool = True):
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_index_database(pconst, databases)
+        manage_databases.create_index_database(pconst, databases,
+                                               tries=dtimeout)
         # get index database
         indexdb = drs_database.IndexDatabase(params)
         # load index database
@@ -528,7 +533,7 @@ def reset_out_folders(params: ParamDict, log: bool = True):
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_log_database(pconst, databases)
+        manage_databases.create_log_database(pconst, databases, tries=dtimeout)
         # get log database
         logdb = drs_database.LogDatabase(params)
         # load index database
@@ -539,7 +544,7 @@ def reset_out_folders(params: ParamDict, log: bool = True):
     logdb.remove_entries(condition=condition)
 
 
-def reset_assets(params: ParamDict, log: bool = True):
+def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
     """
     Reset the Assets directory (including re-creating databases)
 
@@ -564,13 +569,14 @@ def reset_assets(params: ParamDict, log: bool = True):
     reset_dbdir(params, name, asset_path, abs_reset_path, log=log,
                 empty_first=False, relative_path='MODULE')
     # create index databases
-    manage_databases.create_index_database(pconst, databases)
+    manage_databases.create_index_database(pconst, databases, tries=dtimeout)
     # create log database
-    manage_databases.create_log_database(pconst, databases)
+    manage_databases.create_log_database(pconst, databases, tries=dtimeout)
     # create object database
-    manage_databases.create_object_database(params, pconst, databases)
+    manage_databases.create_object_database(params, pconst, databases,
+                                            tries=dtimeout)
     # create language database
-    manage_databases.create_lang_database(databases)
+    manage_databases.create_lang_database(databases, tries=dtimeout)
 
 
 def remove_all(params, path, log=True, skipfiles=None):

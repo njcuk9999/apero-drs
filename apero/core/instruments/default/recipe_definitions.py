@@ -308,7 +308,9 @@ reset.set_kwarg(name='--log', dtype='bool', default=True,
                 helpstr=textentry('RESET_LOG_HELP'))
 reset.set_kwarg(name='--warn', dtype='bool', default=True,
                 helpstr=textentry('RESET_WARN_HELP'))
-
+# TODO: move to language database
+reset.set_kwarg(name='--database_timeout', dtype=int, default=0,
+                helpstr='Set the database timeout tries')
 # -----------------------------------------------------------------------------
 # apero_run_ini.py
 # -----------------------------------------------------------------------------

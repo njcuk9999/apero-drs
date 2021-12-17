@@ -1750,7 +1750,8 @@ class MySQLDatabase(Database):
     # A wrapper for a MySQL database.
     def __init__(self, path: str, host: str, user: str, passwd: str,
                  database: str, tablename: str, verbose: bool = False,
-                 absolute_table_name: bool = False):
+                 absolute_table_name: bool = False,
+                 tries: int = 20):
         """
         Create an object for reading and writing to a SQLite database.
 
@@ -1794,7 +1795,7 @@ class MySQLDatabase(Database):
         # call to super class
         super().__init__(verbose=verbose)
         # set a tries criteria
-        self.tries = 20
+        self.tries = tries
         # storage for database path
         self.host = host
         self.user = user
@@ -1867,6 +1868,9 @@ class MySQLDatabase(Database):
                 if base.WARN_TO_ERROR:
                     raise e
                 error = e
+                # deal with not trying --> don't wait
+                if self.tries == 0:
+                    raise e
                 time.sleep(5 + np.random.uniform()*1)
                 count += 1
 
@@ -2494,7 +2498,7 @@ class MySQLDatabase(Database):
 # Define functions
 # =============================================================================
 def database_wrapper(kind: str, path: Union[Path, str, None],
-                     verbose: bool = False) -> Database:
+                     verbose: bool = False, tries: int = 20) -> Database:
     """
     Database wrapper - takes the database parameter yaml file
     Either uses MySQL or SQLite3
@@ -2531,7 +2535,8 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
                              passwd=sparams['PASSWD'],
                              database=sparams['DATABASE'],
                              tablename=tablename,
-                             verbose=verbose, absolute_table_name=abs_tname)
+                             verbose=verbose, absolute_table_name=abs_tname,
+                             tries=tries)
     # else default to sqlite3
     else:
         sparams = dparams['SQLITE3']
