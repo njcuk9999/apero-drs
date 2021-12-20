@@ -174,10 +174,8 @@ def __main__(recipe, params):
                          textentry('10-090-00001', args=wargs), sublevel=2)
                     os.remove(filename)
         else:
-            # \tSkipping output {0} - files not found \n\tFile: {1}'
-            wargs = [post_file.name, infile.filename]
-            WLOG(params, 'warning',
-                 textentry('10-090-00002', args=wargs), sublevel=2)
+            # print reason as a warning
+            WLOG(params, 'warning', reason, sublevel=2)
             # flag we have skipped some files
             has_skipped = True
             # log reason
@@ -194,12 +192,10 @@ def __main__(recipe, params):
     if has_skipped:
         if len(error_storage) > 0:
             # combine errors
-            errormsg = ''
+            eargs = [len(error_storage), recipe.name]
+            errormsg = textentry('00-090-00010', args=eargs)
             # loop around error reports (from error_storage)
             for e_it, error_entry in enumerate(error_storage):
-                # add a print out Error X of Y
-                eargs = [e_it + 1, len(error_storage)]
-                errormsg += textentry('00-090-00010', args=eargs)
                 # add the error itself
                 errormsg += error_entry
             # print error
