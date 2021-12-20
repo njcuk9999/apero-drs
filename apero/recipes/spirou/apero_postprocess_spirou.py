@@ -188,6 +188,8 @@ def __main__(recipe, params):
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     recipe.log.add_qc(qc_params, True)
     # -------------------------------------------------------------------------
+    WLOG(params, '', params['DRS_HEADER'])
+    # -------------------------------------------------------------------------
     # deal with printing errors
     if has_skipped:
         if len(error_storage) > 0:
@@ -200,6 +202,9 @@ def __main__(recipe, params):
                 errormsg += error_entry
             # print error
             WLOG(params, 'error', errormsg)
+    # else report that no errors were found
+    else:
+        WLOG(params, '', textentry('40-090-00009'))
     # -------------------------------------------------------------------------
     # end the log (only successful if no skips)
     if not has_skipped:
