@@ -1883,9 +1883,9 @@ class IndexDatabase(DatabaseManager):
             # fix header (with new keys in)
             header, _ = drs_file.fix_header(self.params, recipe, header=header)
             # condition is that full path is the same
-            ctxt = 'BLOCK_KIND="{0)" AND OBS_DIR="{2}" AND FILENAME="{3}"'
+            ctxt = 'BLOCK_KIND="{0}" AND OBS_DIR="{2}" AND FILENAME="{3}"'
             cargs = [table['BLOCK_KIND'].iloc[row], table['ABSPATH'].iloc[row],
-                     table['OBS_KIND'].iloc[row], table['FILENAME'].iloc[row]]
+                     table['OBS_DIR'].iloc[row], table['FILENAME'].iloc[row]]
             condition = ctxt.format(*cargs)
             # get values
             values = cargs + ['1']
