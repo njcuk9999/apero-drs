@@ -193,7 +193,7 @@ def __main__(recipe, params):
         if len(error_storage) > 0:
             # combine errors
             eargs = [len(error_storage), recipe.name]
-            errormsg = textentry('00-090-00010', args=eargs)
+            errormsg = str(textentry('00-090-00010', args=eargs))
             # loop around error reports (from error_storage)
             for e_it, error_entry in enumerate(error_storage):
                 # add the error itself
