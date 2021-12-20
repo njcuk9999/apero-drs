@@ -139,14 +139,14 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
         except RuntimeError as _:
             # finally try without the cubic term
             try:
-                fit_guess = fit_guess[:5]
+                fit_guess1 = fit_guess[:5]
                 # we optimize over pixels that are not NaN (this time with
                 #    no bounds)
                 popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
-                                       p0=fit_guess)
+                                       p0=fit_guess1)
             except RuntimeError as e:
                 strlist = ('amp={0} period={1} lin={2} slope={3} quad={4} '
-                           'cube={5} ')
+                           '(cube={5})')
                 strguess = strlist.format(*fit_guess)
                 strlower = strlist.format(*bounds[0])
                 strupper = strlist.format(*bounds[1])
