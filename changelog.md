@@ -2,6 +2,183 @@ Changelog
 =========
 
 
+0.7.193 (2021-12-20)
+--------------------
+- Apero.recipes.spirou.apero_postprocess_spirou.py - move text to
+  language database. [Neil Cook]
+- Apero.recipes.spirou.apero_postprocess_spirou.py - combien textentry
+  better. [Neil Cook]
+- Apero.recipes.spirou.apero_postprocess_spirou.py - better handle error
+  reporting. [Neil Cook]
+- Apero.recipes.spirou.apero_postprocess_spirou.py - report error
+  numbers. [Neil Cook]
+- Apero.recipes.spirou.apero_postprocess_spirou.py - report error
+  numbers. [Neil Cook]
+- Update language database. [Neil Cook]
+- Apero.recipes.spirou.apero_postprocess_spirou.py +
+  apero.core.core.drs_file.py - add changes to report errors better in
+  post processing. [Neil Cook]
+- Apero.science.calib.flat_blaze.py - correct strlist for sinc fit
+  (error reporting caused exception which hides actual error) [Neil
+  Cook]
+
+
+0.7.192 (2021-12-17)
+--------------------
+- Update language database. [Neil Cook]
+- Apero.science.extract.berv.py - check whether both barycorrpy and
+  pyasl are nan + deal better in pyasl with no distance (and give error
+  when ra/dec are nan because of bad apply_space_motion) [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.182-working' into
+  v0.7.182-working. [njcuk9999]
+- Update DrsDatabaseErrors. [Neil Cook]
+- Update the install module to work with command line args (see
+  install_script.sh) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.182-working' into
+  v0.7.182-working. [njcuk9999]
+- Apero.core.instruemnts.spirou.pseudo_const.py - get output type for
+  header/hdict (otherwise drsfile is updated) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.182-working' into
+  v0.7.182-working. [njcuk9999]
+- Update FILEDEF_HEADER_KEYS (for spirou to include polar keys) [Neil
+  Cook]
+- Fixes for errors with full run 211018. [njcuk9999]
+
+
+0.7.191 (2021-12-15)
+--------------------
+- Apero.tools.module.testing.drs_stats.py - update error mode. [Neil
+  Cook]
+- Apero.tools.module.testing.drs_stats.py - update error mode. [Neil
+  Cook]
+- Apero.tools.module.testing.drs_stats.py - update error mode. [Neil
+  Cook]
+- Add an error mode to the apero_stats.py module. [Neil Cook]
+- Apero.tools.moduile.recipes.bin.apero_astrometerics.py - finalise
+  design (move functionality to drs_astrometrics.py. [Neil Cook]
+- Apeor.science.velocity.gen_vel.py - Fix CamelCase column names. [Neil
+  Cook]
+- Apero.core.instruments.spirou.file_definitions.py - make S1D files
+  have tag UniformWavelength/UniformVelocity. [Neil Cook]
+- Remove auth keys for google sheet. [Neil Cook]
+- Tools.recipes.bin.apero_astrometrics.py - add code to get/write to
+  googlesheet. [Neil Cook]
+- Apero.tools.recipes.bin.apero_astrometrics.py - add astrometrics code
+  [unfinished] [Neil Cook]
+
+
+0.7.190 (2021-12-08)
+--------------------
+- Apero.tools.module.testing.drs_stats.py - fix qc stat plot. [Neil
+  Cook]
+- Debug printout tables= [Neil Cook]
+- Debug printout tables= [Neil Cook]
+- Debug printout tables= [Neil Cook]
+- Apero.base.drs_db.py - infer table name when getting columns. [Neil
+  Cook]
+- Apero_stats.py - add qc mode (unfinished) [Neil Cook]
+- Apero_stats.py - add qc print outs [still need qc plots] [Neil Cook]
+- Apero_stats.py - add qc mode (unfinished) [Neil Cook]
+- Setup.install.py - add fix for Issue #676  - weird module version must
+  be set in module_translation. [Neil Cook]
+
+
+0.7.189 (2021-12-06)
+--------------------
+- Add timing to apero_stats (formly apero_log_stats) - still need QC and
+  error checks. [Neil Cook]
+- Remove ABSPATH (not indexed) in favour of BLOCK_KIND + OBS_DIR +
+  FILENAME. [Neil Cook]
+- Allow thermal correction for telescope dark to use internal dark if
+  telescope dark is mising. [Neil Cook]
+- Re-make run.ini files with changes to thermal code. [Neil Cook]
+- Re-make run.ini files with changes to thermal code. [Neil Cook]
+- Apero.tools.module.processing.drs_precheck.py - update precheck to
+  handle exclusive/inclusive drs file lists. [Neil Cook]
+- Add quality control in preprocessing to catch DARK_DARKs that contain
+  science data - these will not be preprocessed. [Neil Cook]
+- Update run.ini files + typo in msg. [Neil Cook]
+- Finish apero_run_ini.py code. [Neil Cook]
+
+
+0.7.188 (2021-12-01)
+--------------------
+- Continue work on run.ini auto make. [Neil Cook]
+- Continue work on apero_run_ini.py. [Neil Cook]
+- Continue work on apero_run_ini.py. [Neil Cook]
+
+
+0.7.187 (2021-11-24)
+--------------------
+- Apero.tools.module.processing.drs_precheck.py - must mask out other
+  bad nights before comparing the 7 day rule. [Neil Cook]
+- Apero.tools.module.processing.drs_precheck.py - add a way to filter
+  which nights are actually bad and which nights aren't. [Neil Cook]
+- Apero.base.drs_db.py - must set number of tries after super call.
+  [Neil Cook]
+- Deal with language database trying to connect multiple times. [Neil
+  Cook]
+- Apero.core.core.drs_argument.py - don't load database until required.
+  [Neil Cook]
+- Apero_get.py - problem with AND when no object condition. [Neil Cook]
+- Apero.base.drs_db.py - fix create index on multiple columns. [Neil
+  Cook]
+- Apero.tools.module.drs_reset.py - pep8 fixes. [Neil Cook]
+- Apero.tools.module.drs_reset.py - add faster remove approach (when we
+  have none or a few skip files) [Neil Cook]
+- Apero.tools.module.database.manage_database.py +
+  apero.core.core.drs_database.py - fix idb_cols.get_index_groups. [Neil
+  Cook]
+- Remove circular imports to PandasLikeDatabase (move to
+  drs_base_classes.py) [Neil Cook]
+- Remove requirement for database.tname when tname set in database.
+  [Neil Cook]
+
+
+0.7.186 (2021-11-23)
+--------------------
+- Apero.core.core.drs_file.py - pep8 move comment. [Neil Cook]
+- Apero.core.core.drs_argument.py - remove pandas database store. [Neil
+  Cook]
+- Apero.core.core.drs_database.py + drs_file.py - load the whole
+  database entry for that night. [Neil Cook]
+- Apero.tools.recipes.bin.apero_get.py - allow no objname. [Neil Cook]
+
+
+0.7.185 (2021-11-19)
+--------------------
+- Deal with loading. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.182-working' into
+  v0.7.182-working. [Neil Cook]
+- Option to turn off using database in arguments calls. [Neil Cook]
+- Apero.core.instruments.*.file_definitions.py - _wavesol_master_ -->
+  _wavesol_master (removes double __) [Neil Cook]
+
+
+0.7.184 (2021-11-17)
+--------------------
+- Apero.tools.recipes.dev.apero_run_ini.py - first commit and code for
+  auto generating run.ini files [unfinished] [Neil Cook]
+- Update UPDATE_NOTES.txt. [Neil Cook]
+- Apero.core.core.drs_log.py - change recipe type when extract used
+  inside another recipe. [Neil Cook]
+- Apero.core.utils.drs_startup.py - change recipe type when extract used
+  inside another recipe. [Neil Cook]
+- Update log dir for recipes calling extract recipe. [Neil Cook]
+- Update log dir for recipes calling extract recipe. [Neil Cook]
+- Update UPDATE_NOTES.txt. [Neil Cook]
+- Apero.core.utils.drs_startup.py + apero.core.core.drs_file +
+  drs_log.py - get the obs_dir (without path) for logging - log messages
+  to subdir. [Neil Cook]
+
+
+0.7.183 (2021-11-12)
+--------------------
+- Apero.recipe.spirou.apero_extract_spirou.py - add combine method
+  argument. [Neil Cook]
+- Update date/version/changelog/update notes/documentation. [Neil Cook]
+
+
 0.7.182 (2021-11-10)
 --------------------
 - Apero.core.core.drs_database.py - do not log error in read_header -
