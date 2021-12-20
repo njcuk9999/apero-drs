@@ -641,7 +641,7 @@ however you may want to link this database to another apero profile","","","INST
 "{0} = extension position; {1} = extension name; {2} = condition; {3} = function name","Column file for EXT={0} ({1}) not found. \n\t Condition = {2}\n\tFunction = {3}","","Means that we could not find a file to add to the table column","00-090-00007","ERROR"
 "{0} = extension position; {1} = extension name; {2} = filename; {3} = column name; {4} = function name","Column for EXT={0} ({1}) not found \n\tFilename={2}\n\tColumn name = {3} \n\tFunction = {4}","","Means that we could not find a column in a file to add to the table column","00-090-00008","ERROR"
 "{0} = extension position; {1} = extension name; {2} = filename; {3} = column name; {4} = primary column name; {5} = primary column length; {6} = primary column filename; {7} = error column name; {8} = error column length; {9} = error column filename; {10} = function name","Column for EXT={0} ({1}) not found \n\tFilename={2}\n\tColumn name = {3} \n\tColumn '{4}' length={5} (File: {6}) \n\tColumn '{7}' length={8} (File: {9})\n\tFunction: {10}","","Means that column had the wrong length for the table column","00-090-00009","ERROR"
-"{0} = error number; {1} = total number of errors","\nError {0} of {1}\n","","Print a nice error X of Y","00-090-00010","ERROR"
+"{0} = total number of errors; {1} = recipe name","{0} error(s) occurred for {1}","","Report how many errors found","00-090-00010","ERROR"
 "","","","","",""
 "","","","","",""
 "","","","","",""
