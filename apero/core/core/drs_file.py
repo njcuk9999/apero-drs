@@ -5733,7 +5733,7 @@ class DrsOutFileExtension:
                                             fmt, copy=True)
 
     def make_table(self, params: ParamDict, ptable: Any, linkkind: str,
-                   criteria: str):
+                   criteria: str) -> Tuple[bool, textentry]:
         """
         Make a custom table for post files (using the info given when defined
         via DrsOutFile.add_column)
@@ -5746,6 +5746,8 @@ class DrsOutFileExtension:
 
         :return: None, updates self.data and self.datatype
         """
+        # set function name
+        func_name = display_func('make_table', __NAME__, self.class_name)
         # get allowed header keys
         pconst = constants.pload()
         iheader_cols = pconst.INDEX_HEADER_COLS()
@@ -5808,11 +5810,11 @@ class DrsOutFileExtension:
                 continue
             # deal with no entries and column required
             elif len(entries) == 0:
-                emsg = ('Column file for EXT={0} ({1}) not found. '
-                        '\n\t Condition = {2}')
-                eargs = [self.pos, self.name, condition]
-                WLOG(params, 'error', emsg.format(*eargs))
-                return
+                # log error and return: Column file for EXT={0} ({1}) not
+                #     found. Condition = {2}
+                eargs = [self.pos, self.name, condition, func_name]
+                reason = textentry('00-090-00007', args=eargs)
+                return False, reason
             else:
                 # else take the first entry
                 filename = entries['ABSPATH'][0]
@@ -5835,26 +5837,26 @@ class DrsOutFileExtension:
             # -----------------------------------------------------------------
             # check for column in table
             if incolumns[col] not in table.colnames:
-                emsg = ('Column for EXT={0} ({1}) not found. '
-                        '\n\t Filename = {2} \n\t Column name = {3}')
-                eargs = [self.pos, self.name, filename, incolumns[col]]
-                WLOG(params, 'error', emsg.format(*eargs))
-                continue
+                # log error and return: Column for EXT={0} ({1}) not found.
+                #     Filename = {2} \n\t Column name = {3}
+                eargs = [self.pos, self.name, filename, incolumns[col], 
+                         func_name]
+                reason = textentry('00-090-00008', args=eargs)
+                return False, reason
             # -----------------------------------------------------------------
             # get rows for this column
             row_values = np.array(table[incolumns[col]])
             # deal with wrong length
             if len(values) > 0:
                 if len(values[0]) != len(row_values):
-                    emsg = ('Column for EXT={0} ({1}) wrong length. '
-                            '\n\t Filename = {2} \n\t Column name = {3}'
-                            '\n\t Column "{4}" length={5} (File: {6})',
-                            '\n\t Column "{7}" length={8} (File: {9})')
+                    # log error and return Column for EXT={0} ({1}) wrong
+                    #     length.  Filename = {2} \n\t Column name = {3}
                     eargs = [self.pos, self.name, filename, incolumns[col],
                              incolumns[0], len(values[0]), filenames[0],
-                             incolumns[col], len(row_values), filenames[col]]
-                    WLOG(params, 'error', str(emsg).format(*eargs))
-                    continue
+                             incolumns[col], len(row_values), filenames[col],
+                             func_name]
+                    reason = textentry('00-090-00009', args=eargs)
+                    return False, reason
             # -----------------------------------------------------------------
             # load column into values
             values.append(row_values)
@@ -5867,10 +5869,9 @@ class DrsOutFileExtension:
         # ---------------------------------------------------------------------
         # print tables added
         for filename in tables:
-            msg = '\t\tFile: {0}'
             margs = [os.path.basename(filename)]
-            WLOG(params, '', msg.format(*margs), colour='magenta')
-
+            WLOG(params, '', textentry('40-090-00007', args=margs),
+                 colour='magenta')
         # ---------------------------------------------------------------------
         # deal with which files to clear
         # loop around filenames
@@ -5888,6 +5889,8 @@ class DrsOutFileExtension:
         self.data = outtable
         self.datatype = 'table'
         self.header = header
+        # ---------------------------------------------------------------------
+        return True, None
 
 
 class DrsOutFile(DrsInputFile):
@@ -6220,7 +6223,7 @@ class DrsOutFile(DrsInputFile):
         return value, names
 
     def process_links(self, params: ParamDict, indexdbm: Any,
-                      required: bool = True) -> bool:
+                      required: bool = True) -> Tuple[bool, Union[Text, None]]:
         """
         Process the linked extensions
 
@@ -6230,6 +6233,8 @@ class DrsOutFile(DrsInputFile):
 
         :return: bool, whether we successfully linked all extensions
         """
+        # set function name
+        func_name = display_func('proces_links', __NAME__, self.class_name)
         # get allowed header keys
         pconst = constants.pload()
         iheader_cols = pconst.INDEX_HEADER_COLS()
@@ -6237,34 +6242,32 @@ class DrsOutFile(DrsInputFile):
         rtypes = list(iheader_cols.dtypes)
         # must have primary filename set
         if self.extensions[0].filename is None:
-            emsg = 'Error cannot link infile not set for primary extension'
-
-            WLOG(params, 'error', emsg)
+            # log error and return
+            reason = textentry('00-090-00001', args=func_name)
+            return False, reason
         # ---------------------------------------------------------------------
         # get full database (will need it multiple times and should not
         #   change between reads) and store it as a pandas table
         pcond = '(BLOCK_KIND="tmp") OR (BLOCK_KIND="red")'
-        # TODO: move to language database
-        obs_dir = 'All'
+        # set observation directory to "All"
+        obs_dir = textentry('ALL_TEXT')
         # add to obs_dir if present (as we will only need files from this
         #   observation directory)
         if not drs_text.null_text(params['OBS_DIR'], ['None', '', 'Null']):
             pcond += ' AND (OBS_DIR="{0}")'.format(params['OBS_DIR'])
             obs_dir = str(params['OBS_DIR'])
-        # this may take some time
-         # TODO: move to language database
-        msg = 'Loading full database. OBS_DIR={0}. Please wait...'
+        # this may take some time print message:
+        #     Loading full database. OBS_DIR={0}. Please wait...'
         margs = [obs_dir]
-        WLOG(params, '', msg.format(*margs))
+        WLOG(params, '', textentry('40-090-00003', args=margs))
         # start a clock (reading large database is slow - give user feedback)
         start = time.time()
         pdataframe = indexdbm.get_entries('*', condition=pcond)
         ptable = PandasLikeDatabase(pdataframe)
         # end the clock  (reading large database is slow - give user feedback)
         end = time.time()
-        # TODO: move to language database
-        msg = 'Full database loaded in {0:.4f} s'
-        WLOG(params, '', msg.format(end - start))
+        # log full database loaded in X s
+        WLOG(params, '', textentry('40-090-00004', args=[end - start]))
         # get index columns
         index_cols = ptable.colnames()
         # ---------------------------------------------------------------------
@@ -6276,17 +6279,18 @@ class DrsOutFile(DrsInputFile):
             ext = self.extensions[pos]
             # cannot link primary extension
             if pos == 0:
+                # get message arguments
+                margs = [pos, ext.name]
                 # log progress
                 if ext.header_only:
-                    msg = '\tAdding EXT={0} ({1}) [Header only]'
+                    msg = textentry('40-090-00005', args=margs)
                 else:
-                    msg = '\tAdding EXT={0} ({1})'
-                margs = [pos, ext.name]
-                WLOG(params, '', msg.format(*margs))
+                    msg = textentry('40-090-00006', args=margs)
+                WLOG(params, '', msg)
                 # add filename
-                msg = '\t\tFile: {0}'
                 margs = [os.path.basename(ext.filename)]
-                WLOG(params, '', msg.format(*margs), colour='magenta')
+                WLOG(params, '', textentry('40-090-00007', args=margs),
+                     colour='magenta')
                 # skip to next extension
                 continue
             # -----------------------------------------------------------------
@@ -6316,11 +6320,12 @@ class DrsOutFile(DrsInputFile):
             # -----------------------------------------------------------------
             # get link position
             if ext.link not in valid_names:
-                emsg = ('link={0} not valid for extension {1} ({2})'
-                        '\n\tValid link names: {3}')
-                eargs = [ext.link, pos, name, ', '.join(valid_names)]
-                WLOG(params, 'error', emsg.format(*eargs))
-                return False
+                # log message and return: Link name={0} not valid for
+                #      extension {1} ({2}) \n\t Valid link names: {3}
+                eargs = [ext.link, pos, name, ', '.join(valid_names),
+                         func_name]
+                reason = textentry('00-090-00002', args=eargs)
+                return False, reason
             # -----------------------------------------------------------------
             # get the link parameters
             linkext = self.extensions[self._pos_from_name(ext.link)]
@@ -6331,22 +6336,23 @@ class DrsOutFile(DrsInputFile):
             # -----------------------------------------------------------------
             # need to check for hlink in params
             if hlink not in params:
-                emsg = ('hlink={0} is not valid for link={1}. '
-                        '\n\tlink file = {2}')
-                eargs = [ext.hlink, ext.link, linkext.filename]
-                WLOG(params, 'error', emsg.format(*eargs))
-                return False
+                # log message and return: Header link key={0} not valid for
+                #     link name={1}\n\tlink file={2}\n\tFunction = {3}
+                eargs = [ext.hlink, ext.link, linkext.filename, func_name]
+                reason = textentry('00-090-00003', args=eargs)
+                return False, reason
             # -----------------------------------------------------------------
             # get the header key associated with hlink
             hdrhlink = params[hlink][0]
             # need to check for params[hlink] in header
             if hdrhlink not in linkhdr:
-                emsg = ('hlink={0} is not valid for link={1}. '
-                        '\n\theader key "{2}" not found'
-                        '\n\tlink file = {3}')
-                eargs = [ext.hlink, ext.link, hdrhlink, linkext.filename]
-                WLOG(params, 'error', emsg.format(*eargs))
-                return False
+                # log message and return: Header link key={0} is not valid for
+                #     link name={1}\n\theader key "{2}" not found \n\tlink
+                #     file={3}\n\tFunction={4}
+                eargs = [ext.hlink, ext.link, hdrhlink, linkext.filename,
+                         func_name]
+                reason = textentry('00-090-00004', args=eargs)
+                return False, reason
             # -----------------------------------------------------------------
             # use the hlink to get the link criteria
             criteria = linkhdr[hdrhlink]
@@ -6383,60 +6389,76 @@ class DrsOutFile(DrsInputFile):
             exttable = ptable.get_index_entries('*', condition=condition)
             # deal with no entries and not required
             if len(exttable) == 0 and not required:
-                # TODO: add to language database
-                msg = '\t\tFile not found for ext {0} ({1})'
+                # print warning: File not found for ext {0} ({1})'
                 margs = [pos, name]
-                # file not found - this can be expected for some extension
-                #   types
-                WLOG(params, 'warning', msg.format(*margs), sublevel=2)
-                return False
+                WLOG(params, 'warning', textentry('10-090-00003', args=margs),
+                     sublevel=2)
+                return False, None
             # deal with no entries and required
             if len(exttable) == 0:
-                emsg = 'No entries for extension {0} ({1}) \n\t condition = {2}'
+                # log and return: No entries for extension {0} ({1})
+                #    \n\t condition = {2}
                 eargs = [pos, name, condition]
-                WLOG(params, 'error', emsg.format(*eargs))
-                return False
+                reason = textentry('00-090-00005', args=eargs)
+                return False, reason
             # deal with drsfile as a custom table
             if ext.drsfile == 'table':
-                # use first row that has a runstring (if any)
-                extrow = decide_on_table_row(exttable)
-                # add extension file properties
-                ext.set_infile(params, extrow, exttable)
-                # log progress
-                msg = '\tAdding EXT={0} ({1}) [TABLE]'
-                margs = [pos, name]
-                WLOG(params, '', msg.format(*margs))
-                # make the table
-                ext.make_table(params, ptable, linkkind, criteria)
-                # deal with reduced data
-                self._add_to_clear_files(ext)
+                try:
+                    # use first row that has a runstring (if any)
+                    extrow = decide_on_table_row(exttable)
+                    # add extension file properties
+                    ext.set_infile(params, extrow, exttable)
+                    # log progress: Adding EXT={0} ({1}) [TABLE]'
+                    margs = [pos, name]
+                    WLOG(params, '', textentry('40-090-00008', args=margs))
+                    # make the table
+                    success, reason = ext.make_table(params, ptable, linkkind,
+                                                     criteria)
+                    # deal with not being able to make table
+                    if not success:
+                        return False, reason
+                    # deal with reduced data
+                    self._add_to_clear_files(ext)
+                except Exception as e:
+                    eargs = ['table', pos, name, ext.filename, type(e), str(e),
+                             func_name]
+                    # log and return: Could not add extension
+                    reason = textentry('00-090-00006', args=eargs)
+                    return False, reason
             # else take the first entry
             else:
-                # use first row that has a runstring (if any)
-                extrow = decide_on_table_row(exttable)
-                # add extension file properties
-                ext.set_infile(params, extrow, exttable)
-                # load the extension file
-                ext.load_infile(params)
-                # deal with reduced data
-                self._add_to_clear_files(ext)
-                # log progress
-                if ext.header_only:
-                    msg = '\tAdding EXT={0} ({1}) [Header only]'
-                else:
-                    msg = '\tAdding EXT={0} ({1})'
-                margs = [pos, name]
-                WLOG(params, '', msg.format(*margs))
-                # add filename
-                msg = '\t\tFile: {0}'
-                margs = [os.path.basename(ext.filename)]
-                WLOG(params, '', msg.format(*margs), colour='magenta')
+                try:
+                    # use first row that has a runstring (if any)
+                    extrow = decide_on_table_row(exttable)
+                    # add extension file properties
+                    ext.set_infile(params, extrow, exttable)
+                    # load the extension file
+                    ext.load_infile(params)
+                    # deal with reduced data
+                    self._add_to_clear_files(ext)
+                    # log progress: Adding EXT={0} ({1}) [Header only]
+                    margs = [pos, name]
+                    if ext.header_only:
+                        msg = textentry('40-090-00005', args=margs)
+                    else:
+                        msg = textentry('40-090-00006', args=margs)
+                    WLOG(params, '', msg)
+                    # add filename
+                    msg = '\t\tFile: {0}'
+                    margs = [os.path.basename(ext.filename)]
+                    WLOG(params, '', msg.format(*margs), colour='magenta')
+                except Exception as e:
+                    eargs = ['image', pos, name, ext.filename, type(e), str(e),
+                             func_name]
+                    # log and return: Could not add extension
+                    reason = textentry('00-090-00006', args=eargs)
+                    return False, reason
             # -----------------------------------------------------------------
             # finally update the loaded files
             has_hdr, valid_names = self.has_header()
         # ---------------------------------------------------------------------
         # return that we linked successfully
-        return True
+        return True, None
 
     def process_header(self, params):
         """
