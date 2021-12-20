@@ -200,7 +200,6 @@ def __main__(recipe, params):
                 # add a print out Error X of Y
                 eargs = [e_it + 1, len(error_storage)]
                 errormsg += textentry('00-090-00010', args=eargs)
-                errormsg += '\n'
                 # add the error itself
                 errormsg += error_entry
             # print error
