@@ -2692,9 +2692,13 @@ class DrsFitsFile(DrsInputFile):
                 key = drskey
             # check that key is in header
             if key not in header:
-                eargs = [key]
-                emsg = 'Required header key "{0}" not found'
-                WLOG(params, 'error', emsg.format(*eargs))
+                # set filename (for error reporting)
+                if filename is None:
+                    filename = self.filename
+                # get error arguments
+                eargs = [key, filename, func_name]
+                # log error: Required header key "{0}" not found'
+                WLOG(params, 'error', textentry('00-001-00058', args=eargs))
             # get value and required value
             value = header[key].strip()
             rvalue = rkeys[drskey].strip()
@@ -5069,7 +5073,8 @@ class DrsNpyFile(DrsInputFile):
                         WLOG(params, 'error', emsg)
                     # some time file is locked by other process
                     else:
-                        wmsg = '{0} locked'.format(self.filename)
+                        # file locking trying again in 5s
+                        wmsg = textentry('10-001-00011', args=[self.filename])
                         WLOG(params, 'warning', wmsg, sublevel=1)
                         # sleep 5 seconds and then try again
                         time.sleep(5)
@@ -6544,37 +6549,36 @@ class DrsOutFile(DrsInputFile):
             # -----------------------------------------------------------------
             # make sure we have the in/out extensions for this key
             if inpos is None:
-                emsg = 'Cannot add hkey {0} (in extension {1} does not exist)'
-                eargs = [drs_key, inext]
-                WLOG(params, 'error', emsg.format(*eargs))
+                # Cannot add hkey {0} (in extension {1} does not exist)
+                eargs = [drs_key, inext, 'inpos']
+                WLOG(params, 'error', textentry('00-090-00011', args=eargs))
             if outpos is None:
-                emsg = 'Cannot add hkey {0} (out extension {1} does not exist)'
-                eargs = [drs_key, inext]
-                WLOG(params, 'error', emsg.format(*eargs))
+                # Cannot add hkey {0} (out extension {1} does not exist)
+                eargs = [drs_key, inext, 'outpos']
+                WLOG(params, 'error', textentry('00-090-00011', args=eargs))
             # -----------------------------------------------------------------
             # make sure we have the in header for this key
             if self.extensions[inpos].header is None:
-                emsg = 'Cannot add hkey {0} (in header {1} does not exist)'
-                eargs = [drs_key, inext]
-                WLOG(params, 'error', emsg.format(*eargs))
+                # Cannot add hkey {0} (in header {1} does not exist)
+                eargs = [drs_key, inext, 'inheader=None']
+                WLOG(params, 'error', textentry('00-090-00011', args=eargs))
                 inheader = None
             else:
                 inheader = self.extensions[inpos].header
             # make sure we have the out header for this key
             if self.extensions[outpos].header is None:
-                emsg = 'Cannot add hkey {0} (out header {1} does not exist)'
-                eargs = [drs_key, inext]
-                WLOG(params, 'error', emsg.format(*eargs))
+                # Cannot add hkey {0} (out header {1} does not exist)
+                eargs = [drs_key, inext, 'outheader=None']
+                WLOG(params, 'error', textentry('00-090-00011', args=eargs))
                 outheader = None
             else:
                 outheader = self.extensions[outpos].header
             # -----------------------------------------------------------------
             # get key from in header and push into out header
             if drs_key not in inheader:
-                emsg = ('Cannot add hkey {0} (in header {1} does not have '
-                        'header key')
+                # Cannot add hkey {0} (in header {1} does not have header key
                 eargs = [drs_key, inext]
-                WLOG(params, 'error', emsg.format(*eargs))
+                WLOG(params, 'error', textentry('00-090-00012', args=eargs))
             # get value
             value = inheader[drs_key]
             comment = inheader.comments[drs_key]
@@ -6709,14 +6713,13 @@ class DrsOutFile(DrsInputFile):
                 # else give warning that a primary key changed value
                 #  (this shouldn't happen)
                 else:
-                    # log warning
-                    # TODO: add to language database
-                    wmsg = ('Header key {0} expected in extension {1} ({2})'
-                            ' but value changed.')
+                    # log warning: Header key {0} expected in extension but
+                    #    value changed
                     wargs = [key, pos, self.extensions[pos].name]
                     # header key changed - this is should not happen but
                     #   isn't a big problem
-                    WLOG(params, 'warning', wmsg.format(*wargs), sublevel=2)
+                    WLOG(params, 'warning',
+                         textentry('10-090-00004', args=wargs), sublevel=2)
 
     def _add_extensions_names_to_primary(self, params: ParamDict):
         """
@@ -7522,7 +7525,8 @@ def id_drs_file(params: ParamDict,
         # check we ahve a file set
         if file_set.filename is None:
             if filename is None:
-                WLOG(params, 'error', 'filename is not set')
+                eargs = [func_name]
+                WLOG(params, 'error', textentry('00-001-00057', args=eargs))
             else:
                 file_set.set_filename(filename)
         # ------------------------------------------------------------------
