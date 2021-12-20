@@ -108,6 +108,8 @@ def __main__(recipe, params):
     post_files = fd.post_file.fileset
     # has skipped
     has_skipped = False
+    # storage of possible errors
+    error_storage = []
     # loop around post files
     for post_file in post_files:
         # ---------------------------------------------------------------------
@@ -178,14 +180,27 @@ def __main__(recipe, params):
                  textentry('10-090-00002', args=wargs), sublevel=2)
             # flag we have skipped some files
             has_skipped = True
-
+            # log reason
+            if reason is not None:
+                error_storage.append(reason)
+    # -------------------------------------------------------------------------
     # add the QC (there are none)
     qc_names, qc_values = ['None'], ['None']
     qc_logic, qc_pass = ['None'], ['None']
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     recipe.log.add_qc(qc_params, True)
-
-    # end the log (only successful if no skips
+    # -------------------------------------------------------------------------
+    # deal with printing errors
+    if has_skipped:
+        if len(error_storage) > 0:
+            # combine errors
+            errormsg = ''
+            for error_entry in error_storage:
+                errormsg += error_entry
+            # print error
+            WLOG(params, 'error', errormsg)
+    # -------------------------------------------------------------------------
+    # end the log (only successful if no skips)
     if not has_skipped:
         recipe.log.end()
 
