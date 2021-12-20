@@ -195,7 +195,13 @@ def __main__(recipe, params):
         if len(error_storage) > 0:
             # combine errors
             errormsg = ''
-            for error_entry in error_storage:
+            # loop around error reports (from error_storage)
+            for e_it, error_entry in enumerate(error_storage):
+                # add a print out Error X of Y
+                eargs = [e_it + 1, len(error_storage)]
+                errormsg += textentry('00-090-00010', args=eargs)
+                errormsg += '\n'
+                # add the error itself
                 errormsg += error_entry
             # print error
             WLOG(params, 'error', errormsg)

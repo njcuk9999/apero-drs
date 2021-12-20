@@ -1321,7 +1321,7 @@ wave_files = [out_wavem_sol, out_wave_night, out_wave_master]
 # post processed 2D extraction file
 # -----------------------------------------------------------------------------
 post_e_file = drs_oinput('DRS_POST_E', filetype='.fits', suffix='e.fits',
-                         outfunc=out.post_file, inext='o', required=False)
+                         outfunc=out.post_file, inext='o', required=True)
 # add extensions
 post_e_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
@@ -1369,7 +1369,7 @@ post_file.addset(post_e_file)
 # post processed 1D extraction file
 # -----------------------------------------------------------------------------
 post_s_file = drs_oinput('DRS_POST_S', filetype='.fits', suffix='s.fits',
-                         outfunc=out.post_file, inext='o', required=False)
+                         outfunc=out.post_file, inext='o', required=True)
 post_s_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
                                            'POLAR_DARK']),
@@ -1504,7 +1504,7 @@ post_file.addset(post_s_file)
 # post processed telluric file
 # -----------------------------------------------------------------------------
 post_t_file = drs_oinput('DRS_POST_T', filetype='.fits', suffix='t.fits',
-                         outfunc=out.post_file, inext='o', required=False)
+                         outfunc=out.post_file, inext='o', required=True)
 # add extensions
 post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
@@ -1554,7 +1554,7 @@ post_file.addset(post_t_file)
 # post processed velocity file
 # -----------------------------------------------------------------------------
 post_v_file = drs_oinput('DRS_POST_V', filetype='.fits', suffix='v.fits',
-                         outfunc=out.post_file, inext='o', required=False)
+                         outfunc=out.post_file, inext='o', required=True)
 post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
                                            'POLAR_DARK']),
