@@ -1852,7 +1852,7 @@ class IndexDatabase(DatabaseManager):
         iheader_cols = self.pconst.INDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
         # get columns
-        columns = ['BLOCK_KIND', 'ABSPATH', 'FILENAME', 'OBS_DIR', 'RAWFIX']
+        columns = ['BLOCK_KIND', 'ABSPATH', 'OBS_DIR', 'FILENAME', 'RAWFIX']
         columns += rkeys
         # get data for columns
         table = self.get_entries(', '.join(columns), block_kind='raw')
@@ -1884,6 +1884,7 @@ class IndexDatabase(DatabaseManager):
             header, _ = drs_file.fix_header(self.params, recipe, header=header)
             # condition is that full path is the same
             ctxt = 'BLOCK_KIND="{0}" AND OBS_DIR="{2}" AND FILENAME="{3}"'
+            # cargs must match "columns" above
             cargs = [table['BLOCK_KIND'].iloc[row], table['ABSPATH'].iloc[row],
                      table['OBS_DIR'].iloc[row], table['FILENAME'].iloc[row]]
             condition = ctxt.format(*cargs)
