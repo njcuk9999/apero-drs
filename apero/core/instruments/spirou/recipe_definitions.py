@@ -1335,9 +1335,9 @@ full_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber='AB',
              recipe_kind='rv-tcorr')
 
 # polar sequence on all POLAR_DARK / POLAR_FP
-full_seq.add(apero_pol, rkwargs=dict(exposures=[files.out_tellu_obj]), fiber='AB',
-             filters=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK']),
-             recipe_kind='polar-tcorr')
+full_seq.add(apero_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
+             fiber='AB', recipe_kind='polar-tcorr',
+             filters=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK']))
 
 # post processing
 full_seq.add(apero_postprocess, name='POSTALL', files=[files.pp_file],
@@ -1456,15 +1456,16 @@ limited_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber='AB',
 
 # polar sequence on all POLAR_DARK / POLAR_FP
 limited_seq.add(apero_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
-                recipe_kind='polar-tcorr',
-                fiber='AB', filters=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK']))
+                recipe_kind='polar-tcorr', fiber='AB',
+                filters=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK'],
+                             KW_OBJNAME='SCIENCE_TARGETS'))
 
-# post processing
-limited_seq.add(apero_postprocess, name='TELLPOST', files=[files.pp_file],
-                recipe_kind='post-hotstar',
-                filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
-                                         'POLAR_FP'],
-                             KW_OBJNAME='TELLURIC_TARGETS'))
+# # post processing
+# limited_seq.add(apero_postprocess, name='TELLPOST', files=[files.pp_file],
+#                 recipe_kind='post-hotstar',
+#                 filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
+#                                          'POLAR_FP'],
+#                              KW_OBJNAME='TELLURIC_TARGETS'))
 
 limited_seq.add(apero_postprocess, name='SCIPOST', files=[files.pp_file],
                 recipe_kind='post-science',
@@ -1586,13 +1587,13 @@ tellu_seq.add(apero_mk_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
                                        'POLAR_FP']),
               template_required=True)
 tellu_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
-
-# post processing
-tellu_seq.add(apero_postprocess, files=[files.pp_file], name='TELLPOST',
-              recipe_kind='post-hotstar',
-              filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
-                                       'POLAR_FP'],
-                           KW_OBJNAME='TELLURIC_TARGETS'))
+#
+# # post processing
+# tellu_seq.add(apero_postprocess, files=[files.pp_file], name='TELLPOST',
+#               recipe_kind='post-hotstar',
+#               filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
+#                                        'POLAR_FP'],
+#                            KW_OBJNAME='TELLURIC_TARGETS'))
 
 # -----------------------------------------------------------------------------
 # science sequence (for trigger)

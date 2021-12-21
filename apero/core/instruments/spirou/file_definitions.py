@@ -1553,8 +1553,9 @@ post_file.addset(post_t_file)
 # -----------------------------------------------------------------------------
 # post processed velocity file
 # -----------------------------------------------------------------------------
+# Not always required (i.e. for hot stars)
 post_v_file = drs_oinput('DRS_POST_V', filetype='.fits', suffix='v.fits',
-                         outfunc=out.post_file, inext='o', required=True)
+                         outfunc=out.post_file, inext='o', required=False)
 post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
                                            'POLAR_DARK']),
@@ -1572,6 +1573,7 @@ post_file.addset(post_v_file)
 # -----------------------------------------------------------------------------
 # post processed polar file
 # -----------------------------------------------------------------------------
+# Not always required (i.e. for hot stars)
 post_p_file = drs_oinput('DRS_POST_P', filetype='.fits', suffix='p.fits',
                          outfunc=out.post_file, inext='o', required=False)
 
