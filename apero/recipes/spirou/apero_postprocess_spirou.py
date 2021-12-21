@@ -188,22 +188,31 @@ def __main__(recipe, params):
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     recipe.log.add_qc(qc_params, True)
     # -------------------------------------------------------------------------
-    WLOG(params, '', params['DRS_HEADER'])
+
     # -------------------------------------------------------------------------
     # deal with printing errors
     if has_skipped:
         if len(error_storage) > 0:
-            # combine errors
-            eargs = [len(error_storage), recipe.name]
-            errormsg = str(textentry('00-090-00010', args=eargs))
+            # header banner (in red)
+            WLOG(params, '', params['DRS_HEADER'], colour='red')
+            # combine error messages
+            errormsg = ''
             # loop around error reports (from error_storage)
             for e_it, error_entry in enumerate(error_storage):
                 # add the error itself
                 errormsg += error_entry
-            # print error
-            WLOG(params, 'error', errormsg)
+                # print error
+                WLOG(params, 'error', errormsg, raise_exception=False)
+                # header banner (in red)
+                WLOG(params, '', params['DRS_HEADER'], colour='red')
+            # banner
+            WLOG(params, '', params['DRS_HEADER'], 'red')
+            # report on combined number of errors (and crash)
+            eargs = [len(error_storage), recipe.name]
+            WLOG(params, 'error', textentry('00-090-00010', args=eargs))
     # else report that no errors were found
     else:
+        WLOG(params, '', params['DRS_HEADER'])
         WLOG(params, '', textentry('40-090-00009'))
     # -------------------------------------------------------------------------
     # end the log (only successful if no skips)
