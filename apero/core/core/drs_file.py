@@ -6403,7 +6403,7 @@ class DrsOutFile(DrsInputFile):
             if len(exttable) == 0:
                 # log and return: No entries for extension {0} ({1})
                 #    \n\t condition = {2}
-                eargs = [pos, name, condition]
+                eargs = [pos, name, condition, func_name]
                 reason = textentry('00-090-00005', args=eargs)
                 return False, reason
             # deal with drsfile as a custom table
