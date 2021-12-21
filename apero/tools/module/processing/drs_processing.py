@@ -18,6 +18,7 @@ from copy import deepcopy
 import itertools
 import numpy as np
 import os
+import pandas as pd
 import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -1271,6 +1272,12 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     if not drs_text.null_text(_recal_templates, ['', 'None']):
         if not drs_text.true_text(_recal_templates):
             template_object_list = telluric.list_current_templates(params)
+            # print statement that we have been told not to recalculate
+            #   tempaltes and x many templates found
+            if len(template_object_list) > 0:
+                wargs = [len(template_object_list)]
+                WLOG(params, 'warning', textentry('10-503-00023', args=wargs),
+                     sublevel=2)
     # -------------------------------------------------------------------------
     # get filemod and recipe mod
     pconst = constants.pload()
@@ -1356,6 +1363,9 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                 subcondition = ' OR '.join(subs)
                 # add to global condition (in reverse - we don't want these)
                 condition += ' AND NOT ({0})'.format(subcondition)
+                # print that this recipe is skipping templates
+                wargs = [srecipe.shortname]
+                WLOG(params, 'warning', textentry('10-503-00024', args=wargs))
         # ------------------------------------------------------------------
         # deal with directory filters (master observation directory and
         # obs_dir filter)
@@ -2189,6 +2199,15 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
         dataframe = indexdb.get_entries('*', condition=argcondition)
         absfilenames = np.array(dataframe['ABSPATH']).astype(str)
 
+
+        # load pconst
+        pconst = constants.pload()
+        icols = pconst.INDEX_DB_COLUMNS()
+        # get index column data types
+        index_coltypes = dict()
+        for c_it, col in enumerate(icols.names):
+            index_coltypes[col] = icols.dtypes
+
         # ------------------------------------------------------------------
         # Now we need to get the files and assign
         #     - infile
@@ -2248,7 +2267,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
                 else:
                     infile.params = params
                 # get table dictionary
-                tabledict = dict(zip(ftable.colnames, ftable[it]))
+                tabledict = _index_dict_from_table(ftable[it], index_coltypes)
                 # check whether tabledict means that file is valid for this
                 #   infile
                 valid1 = infile.check_table_keys(tabledict)
@@ -2284,6 +2303,38 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
                 outfiledict[argname][name] = vstack_cols(tablelist)
     # return filedict
     return outfiledict
+
+
+def _index_dict_from_table(ftable: Table.Row, dtypes: Dict[str, type]
+                           ) -> Dict[str, Union[float, str]]:
+    # set up storage
+    fdict = dict()
+    # loop around column
+    for col in ftable.colnames:
+        # deal with types
+        if col in dtypes:
+            dtype = dtypes[col]
+        else:
+            dtype = str
+        # get value
+        value = ftable[col]
+        # deal with floats and ints
+        if dtype in [int, float]:
+            if isinstance(value, np.ma.core.MaskedConstant):
+                value = np.nan
+            elif drs_text.null_text(value, ['None', '', 'Null']):
+                value = np.nan
+            else:
+                value = float(value)
+        # deal with everything else
+        else:
+            value = str(value)
+            if drs_text.null_text(value, ['None', '', 'Null', '--']):
+                value = ''
+        # push into dictionary
+        fdict[col] = value
+    # return the dictionary
+    return fdict
 
 
 def add_non_file_args(params: ParamDict, recipe: DrsRecipe,
