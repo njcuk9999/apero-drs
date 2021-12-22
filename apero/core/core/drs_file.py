@@ -5738,7 +5738,7 @@ class DrsOutFileExtension:
                                             fmt, copy=True)
 
     def make_table(self, params: ParamDict, ptable: Any, linkkind: str,
-                   criteria: str) -> Tuple[bool, textentry]:
+                   criteria: str, mode: str) -> Tuple[bool, textentry]:
         """
         Make a custom table for post files (using the info given when defined
         via DrsOutFile.add_column)
@@ -5748,6 +5748,10 @@ class DrsOutFileExtension:
         :param linkkind: str, the link kind (column in index database)
         :param criteria: str, the link criteria (value of column in index
                          database)
+        :param mode: str, either science, calibration or telluric (decides
+                     how we try to get column filename)
+        :param dbkey: str, if mode is calibration or telluric we use this to
+                      get the bset key from the database
 
         :return: None, updates self.data and self.datatype
         """
@@ -5782,13 +5786,27 @@ class DrsOutFileExtension:
         # ---------------------------------------------------------------------
         # loop around columns and populate
         for col in range(len(outcolumns)):
+            # deal with calibration mode
+            if mode == 'calibration':
+                eargs = [mode, self.pos, self.name, col]
+                reason = textentry('00-090-00015', args=eargs)
+                return False, reason
             # -----------------------------------------------------------------
+            elif mode == 'telluric':
+                eargs = [mode, self.pos, self.name, col]
+                reason = textentry('00-090-00015', args=eargs)
+                return False, reason
+            # -----------------------------------------------------------------
+            # if in science mode we query the index database (or ptable from
+            #   index database) and return a row (or rows) associated with
+            #   this entry --> from this we can set filename
+            # -------------------------------------------------------------
             # add the hlink criteria
             condition = '{0}="{1}"'.format(linkkind, criteria)
             # set up index database condition
             # add kind (raw/tmp/red/out)
             condition += ' AND BLOCK_KIND="{0}"'.format(block_kinds[col])
-            # -----------------------------------------------------------------
+            # -------------------------------------------------------------
             # get hkeys for this drsfile
             hkeys = drsfiles[col].required_header_keys
             # add hkeys from file
@@ -5806,7 +5824,7 @@ class DrsOutFileExtension:
             # add fiber
             if not drs_text.null_text(fibers[col], ['None', '']):
                 condition += ' AND KW_FIBER="{0}"'.format(fibers[col])
-            # -----------------------------------------------------------------
+            # -------------------------------------------------------------
             # first get entries from index database
             entries = ptable.get_index_entries('*', condition=condition)
             # -----------------------------------------------------------------
@@ -6228,6 +6246,7 @@ class DrsOutFile(DrsInputFile):
         return value, names
 
     def process_links(self, params: ParamDict, indexdbm: Any,
+                      calibdbm: Any, telludbm: Any,
                       required: bool = True) -> Tuple[bool, Union[Text, None]]:
         """
         Process the linked extensions
@@ -6285,7 +6304,7 @@ class DrsOutFile(DrsInputFile):
             # cannot link primary extension
             if pos == 0:
                 # get message arguments
-                margs = [pos, ext.name]
+                margs = [pos, ext.name, 'primary']
                 # log progress
                 if ext.header_only:
                     msg = textentry('40-090-00005', args=margs)
@@ -6339,74 +6358,132 @@ class DrsOutFile(DrsInputFile):
             # get the hlink
             hlink = ext.hlink
             # -----------------------------------------------------------------
-            # need to check for hlink in params
-            if hlink not in params:
-                # log message and return: Header link key={0} not valid for
-                #     link name={1}\n\tlink file={2}\n\tFunction = {3}
-                eargs = [ext.hlink, ext.link, linkext.filename, func_name]
-                reason = textentry('00-090-00003', args=eargs)
-                return False, reason
-            # -----------------------------------------------------------------
-            # get the header key associated with hlink
-            hdrhlink = params[hlink][0]
-            # need to check for params[hlink] in header
-            if hdrhlink not in linkhdr:
-                # log message and return: Header link key={0} is not valid for
-                #     link name={1}\n\theader key "{2}" not found \n\tlink
-                #     file={3}\n\tFunction={4}
-                eargs = [ext.hlink, ext.link, hdrhlink, linkext.filename,
-                         func_name]
-                reason = textentry('00-090-00004', args=eargs)
-                return False, reason
-            # -----------------------------------------------------------------
-            # use the hlink to get the link criteria
-            criteria = linkhdr[hdrhlink]
-            # we need to figure out whether we have a database criteria link
-            #   or whether the link will be a filename
-            if hlink in index_cols:
-                linkkind = str(hlink)
+            # check for calibration / telluric entry
+            if hlink.startswith('CALIB::'):
+                mode, dbkey = 'calibration', hlink.split('CALIB::')[-1]
+            elif hlink.startswith('TELLU::'):
+                mode, dbkey = 'telluric', hlink.split('TELLU::')[-1]
             else:
-                linkkind = 'FILENAME'
+                mode, dbkey = 'science', None
             # -----------------------------------------------------------------
-            # look for critera in index database (to get absolute path)
-            # and to filter by fiber
+            # if in calib/tellu mode try to find file in calib/tellu file
             # -----------------------------------------------------------------
-            # add the hlink criteria
-            condition = '{0}="{1}"'.format(linkkind, criteria)
-            # add kind condition
-            condition += ' AND BLOCK_KIND="{0}"'.format(ext.block_kind)
-            # add hkey conditions
-            if hkeys is not None and isinstance(hkeys, dict):
-                # loop around each valid header key in index database
-                for h_it, hkey in enumerate(rkeys):
-                    # if we have the key in our header keys
-                    if hkey in hkeys:
-                        # get data type
-                        dtype = rtypes[h_it]
-                        # try to case and add to condition
-                        hargs = [hkey, dtype, hkeys[hkey]]
-                        # add to condition
-                        condition += index_hkey_condition(*hargs)
-            # add fiber condition (if present)
-            if ext.fiber is not None:
-                condition += ' AND KW_FIBER="{0}"'.format(ext.fiber)
-            # get entries
-            exttable = ptable.get_index_entries('*', condition=condition)
-            # deal with no entries and not required
-            if len(exttable) == 0 and not required:
-                # print warning: File not found for ext {0} ({1})'
-                margs = [pos, name]
-                WLOG(params, 'warning', textentry('10-090-00003', args=margs),
-                     sublevel=2)
-                return False, None
-            # deal with no entries and required
-            if len(exttable) == 0:
-                # log and return: No entries for extension {0} ({1})
-                #    \n\t condition = {2}
-                eargs = [pos, name, condition, func_name]
-                reason = textentry('00-090-00005', args=eargs)
-                return False, reason
+            # deal with calibration mode
+            if mode == 'calibration':
+                # try to find the calibration entry that matches the link header
+                cout = calibdbm.get_calib_file(dbkey, header=linkhdr,
+                                               fiber=ext.fiber, required=False)
+                # get the calibration filename
+                cfilename = cout[0]
+                # deal with no filename found
+                if cfilename is None:
+                    eargs = [dbkey, ext.pos, ext.name, linkext.pos,
+                             linkext.name, linkext.filename, func_name]
+                    reason = textentry('00-090-00013', args=eargs)
+                    return False, reason
+                # get criteria from calibration filename
+                criteria = str(cfilename)
+                # set link kind
+                linkkind = None
+                # add table
+                exttable = Table()
+                exttable['ABSPATH'] = [cfilename]
+            # -----------------------------------------------------------------
+            elif mode == 'telluric':
+                # try to find the telluric entry that matches the link header
+                tfilename = telludbm.get_tellu_file(dbkey, header=linkhdr,
+                                                    fiber=ext.fiber,
+                                                    required=False)
+                # deal with no filename found
+                if tfilename is None:
+                    eargs = [dbkey, ext.pos, ext.name, linkext.pos,
+                             linkext.name, linkext.filename, func_name]
+                    reason = textentry('00-090-00014', args=eargs)
+                    return False, reason
+                # get criteria from telluric filename
+                criteria = str(tfilename)
+                # set link kind
+                linkkind = None
+                # add table
+                exttable = Table()
+                exttable['ABSPATH'] = [tfilename]
+            # -----------------------------------------------------------------
+            # if in science mode we query the index database (or ptable from
+            #   index database) and return a row (or rows) associated with
+            #   this entry --> from this we can set filename
+            # -----------------------------------------------------------------
+            else:
+                # need to check for hlink in params
+                if hlink not in params:
+                    # log message and return: Header link key={0} not valid for
+                    #     link name={1}\n\tlink file={2}\n\tFunction = {3}
+                    eargs = [ext.hlink, ext.link, linkext.filename, func_name]
+                    reason = textentry('00-090-00003', args=eargs)
+                    return False, reason
+                # -------------------------------------------------------------
+                # get the header key associated with hlink
+                hdrhlink = params[hlink][0]
+                # need to check for params[hlink] in header
+                if hdrhlink not in linkhdr:
+                    # log message and return: Header link key={0} is not valid
+                    #     for link name={1}\n\theader key "{2}" not found
+                    #     \n\tlink file={3}\n\tFunction={4}
+                    eargs = [ext.hlink, ext.link, hdrhlink, linkext.filename,
+                             func_name]
+                    reason = textentry('00-090-00004', args=eargs)
+                    return False, reason
+                # -------------------------------------------------------------
+                # use the hlink to get the link criteria
+                criteria = linkhdr[hdrhlink]
+                # we need to figure out whether we have a database criteria
+                #    link  or whether the link will be a filename
+                if hlink in index_cols:
+                    linkkind = str(hlink)
+                else:
+                    linkkind = 'FILENAME'
+                # -------------------------------------------------------------
+                # look for critera in index database (to get absolute path
+                # and to filter by fiber
+                # -------------------------------------------------------------
+                # add the hlink criteria
+                condition = '{0}="{1}"'.format(linkkind, criteria)
+                # add kind condition
+                condition += ' AND BLOCK_KIND="{0}"'.format(ext.block_kind)
+                # add hkey conditions
+                if hkeys is not None and isinstance(hkeys, dict):
+                    # loop around each valid header key in index database
+                    for h_it, hkey in enumerate(rkeys):
+                        # if we have the key in our header keys
+                        if hkey in hkeys:
+                            # get data type
+                            dtype = rtypes[h_it]
+                            # try to case and add to condition
+                            hargs = [hkey, dtype, hkeys[hkey]]
+                            # add to condition
+                            condition += index_hkey_condition(*hargs)
+                # add fiber condition (if present)
+                if ext.fiber is not None:
+                    condition += ' AND KW_FIBER="{0}"'.format(ext.fiber)
+                # get entries
+                exttable = ptable.get_index_entries('*', condition=condition)
+                # deal with no entries and not required
+                if len(exttable) == 0 and not required:
+                    # print warning: File not found for ext {0} ({1})'
+                    margs = [pos, name]
+                    WLOG(params, 'warning', textentry('10-090-00003', args=margs),
+                         sublevel=2)
+                    return False, None
+                # deal with no entries and required
+                if len(exttable) == 0:
+                    # log and return: No entries for extension {0} ({1})
+                    #    \n\t condition = {2}
+                    eargs = [pos, name, condition, func_name]
+                    reason = textentry('00-090-00005', args=eargs)
+                    return False, reason
+
+            # -----------------------------------------------------------------
             # deal with drsfile as a custom table
+            # -----------------------------------------------------------------
             if ext.drsfile == 'table':
                 try:
                     # use first row that has a runstring (if any)
@@ -6414,11 +6491,11 @@ class DrsOutFile(DrsInputFile):
                     # add extension file properties
                     ext.set_infile(params, extrow, exttable)
                     # log progress: Adding EXT={0} ({1}) [TABLE]'
-                    margs = [pos, name]
+                    margs = [pos, name, mode]
                     WLOG(params, '', textentry('40-090-00008', args=margs))
                     # make the table
                     success, reason = ext.make_table(params, ptable, linkkind,
-                                                     criteria)
+                                                     criteria, mode)
                     # deal with not being able to make table
                     if not success:
                         return False, reason
@@ -6430,7 +6507,9 @@ class DrsOutFile(DrsInputFile):
                     # log and return: Could not add extension
                     reason = textentry('00-090-00006', args=eargs)
                     return False, reason
+            # -----------------------------------------------------------------
             # else take the first entry
+            # -----------------------------------------------------------------
             else:
                 try:
                     # use first row that has a runstring (if any)
@@ -6442,7 +6521,7 @@ class DrsOutFile(DrsInputFile):
                     # deal with reduced data
                     self._add_to_clear_files(ext)
                     # log progress: Adding EXT={0} ({1}) [Header only]
-                    margs = [pos, name]
+                    margs = [pos, name, mode]
                     if ext.header_only:
                         msg = textentry('40-090-00005', args=margs)
                     else:
