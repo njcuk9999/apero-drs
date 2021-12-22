@@ -1340,24 +1340,24 @@ post_e_file.add_ext('EXT_C', out_ext_e2dsff, pos=4, fiber='C', block_kind='red',
                     link='EXT_AB', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='FluxC')
 post_e_file.add_ext('WAVE_AB', wave_files, pos=5, fiber='AB', block_kind='red',
-                    link='EXT_AB', hlink='KW_CDBWAVE', tag='WaveAB')
+                    link='EXT_AB', hlink='CALIB::WAVE', tag='WaveAB')
 post_e_file.add_ext('WAVE_A', wave_files, pos=6, fiber='A', block_kind='red',
-                    link='EXT_A', hlink='KW_CDBWAVE', tag='WaveA')
+                    link='EXT_A', hlink='CALIB::WAVE', tag='WaveA')
 post_e_file.add_ext('WAVE_B', wave_files, pos=7, fiber='B', block_kind='red',
-                    link='EXT_B', hlink='KW_CDBWAVE', tag='WaveB')
+                    link='EXT_B', hlink='CALIB::WAVE', tag='WaveB')
 post_e_file.add_ext('WAVE_C', wave_files, pos=8, fiber='C', block_kind='red',
-                    link='EXT_C', hlink='KW_CDBWAVE', tag='WaveC')
+                    link='EXT_C', hlink='CALIB::WAVE', tag='WaveC')
 post_e_file.add_ext('BLAZE_AB', out_ff_blaze, pos=9, fiber='AB',
-                    block_kind='red', link='EXT_AB', hlink='KW_CDBBLAZE',
+                    block_kind='red', link='EXT_AB', hlink='CALIB::BLAZE',
                     tag='BlazeAB')
 post_e_file.add_ext('BLAZE_A', out_ff_blaze, pos=10, fiber='A',
-                    block_kind='red', link='EXT_A', hlink='KW_CDBBLAZE',
+                    block_kind='red', link='EXT_A', hlink='CALIB::BLAZE',
                     tag='BlazeA')
 post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B',
-                    block_kind='red', link='EXT_B', hlink='KW_CDBBLAZE',
+                    block_kind='red', link='EXT_B', hlink='CALIB::BLAZE',
                     tag='BlazeB')
 post_e_file.add_ext('BLAZE_C', out_ff_blaze, pos=12, fiber='C',
-                    block_kind='red', link='EXT_C', hlink='KW_CDBBLAZE',
+                    block_kind='red', link='EXT_C', hlink='CALIB::BLAZE',
                     tag='BlazeC')
 # move header keys
 post_e_file.add_hkey('KW_VERSION', inheader='EXT_AB', outheader='PP')
@@ -1514,10 +1514,10 @@ post_t_file.add_ext('TELLU_AB', out_tellu_obj, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='FluxAB')
 post_t_file.add_ext('WAVE_AB', wave_files, pos=2, fiber='AB',
-                    link='TELLU_AB', hlink='KW_CDBWAVE', block_kind='red',
+                    link='TELLU_AB', hlink='CALIB::WAVE', block_kind='red',
                     clear_file=True, tag='WaveAB')
 post_t_file.add_ext('BLAZE_AB', out_ff_blaze, pos=3, fiber='AB',
-                    link='TELLU_AB', hlink='KW_CDBBLAZE', block_kind='red',
+                    link='TELLU_AB', hlink='CALIB::BLAZE', block_kind='red',
                     clear_file=True, tag='BlazeAB')
 post_t_file.add_ext('RECON_AB', out_tellu_recon, pos=4, fiber='AB',
                     link='TELLU_AB', hlink='KW_IDENTIFIER', block_kind='red',
@@ -1529,19 +1529,19 @@ post_t_file.add_ext('TELLU_A', out_tellu_obj, pos=6, fiber='A',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='FluxA')
 post_t_file.add_ext('WAVE_A', wave_files, pos=7, fiber='A',
-                    link='TELLU_A', hlink='KW_CDBWAVE', block_kind='red',
+                    link='TELLU_A', hlink='CALIB::WAVE', block_kind='red',
                     clear_file=True, tag='WaveA')
 post_t_file.add_ext('BLAZE_A', out_ff_blaze, pos=8, fiber='A',
-                    link='TELLU_A', hlink='KW_CDBBLAZE', block_kind='red',
+                    link='TELLU_A', hlink='CALIB::BLAZE', block_kind='red',
                     clear_file=True, tag='BlazeA')
 post_t_file.add_ext('TELLU_B', out_tellu_obj, pos=9, fiber='B',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='FluxB')
 post_t_file.add_ext('WAVE_B', wave_files, pos=10, fiber='B',
-                    link='TELLU_B', hlink='KW_CDBWAVE', block_kind='red',
+                    link='TELLU_B', hlink='CALIB::WAVE', block_kind='red',
                     clear_file=True, tag='WaveB')
 post_t_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B',
-                    link='TELLU_B', hlink='KW_CDBBLAZE', block_kind='red',
+                    link='TELLU_B', hlink='CALIB::BLAZE', block_kind='red',
                     clear_file=True, tag='BlazeB')
 
 # move header keys
@@ -1600,10 +1600,10 @@ post_p_file.add_ext('NULL2', out_pol_null2, pos=6, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='Null2', extname='NULL_POL2')
 post_p_file.add_ext('WAVE_AB', wave_files, pos=7, fiber='AB',
-                    block_kind='red', link='POLERR', hlink='KW_CDBWAVE',
+                    block_kind='red', link='POLERR', hlink='CALIB::WAVE',
                     tag='WaveAB')
 post_p_file.add_ext('BLAZE_AB', out_ff_blaze, pos=8, fiber='AB',
-                    block_kind='red', link='POLERR', hlink='KW_CDBBLAZE',
+                    block_kind='red', link='POLERR', hlink='CALIB::BLAZE',
                     tag='BlazeAB')
 # s1d w table
 post_p_file.add_ext('S1D_W', 'table', pos=9, block_kind='red',

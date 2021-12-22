@@ -96,9 +96,13 @@ def __main__(recipe, params):
     # get whether we are to clean the reduced inputs
     clear = params['INPUTS']['CLEAR']
     # ---------------------------------------------------------------------
-    # load the index database
+    # load the databases
     indexdbm = drs_database.IndexDatabase(params)
     indexdbm.load_db()
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
+    telludbm = drs_database.TelluricDatabase(params)
+    telludbm.load_db()
     # ---------------------------------------------------------------------
     # get directory name
     obs_dir = params['OBS_DIR']
@@ -148,6 +152,7 @@ def __main__(recipe, params):
         # -----------------------------------------------------------------
         # link all other extensions
         success, reason = filepostfile.process_links(params, indexdbm,
+                                                     calibdbm, telludbm,
                                                      filepostfile.out_required)
         # deal with writing file
         if success:
