@@ -3047,9 +3047,10 @@ class DrsFitsFile(DrsInputFile):
                     continue
                 # special condition on KW_OUTPUT - raw files should not be
                 #   judged based on this condition
-                elif key == 'KW_OUTPUT' and filedictvalue.startswith('RAW_'):
-                    valid1 |= True
-                    continue
+                elif key == 'KW_OUTPUT':
+                    if filedictvalue.startswith('RAW_'):
+                        valid1 |= True
+                        continue
                 # deal with masked values
                 if isinstance(filedictvalue, MaskedConstant):
                     valid1 |= True
