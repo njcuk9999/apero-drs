@@ -134,11 +134,11 @@ class LogEntry:
             # flag that we have index
             self.has_index = True
             # get the observation directories (assume all entries equal)
-            self.obs_dir = self.index['OBS_DIR'][0]
+            self.obs_dir = self.index['OBS_DIR'].iloc[0]
             # get the infiles (assume all entries equal)
-            raw_infiles = self.index['INFILES'][0]
+            raw_infiles = self.index['INFILES'].iloc[0]
             if isinstance(raw_infiles, str):
-                self.infiles = self.index['INFILES'][0].split('|')
+                self.infiles = self.index['INFILES'].iloc[0].split('|')
             # get outfiles
             self.outfiles = np.array(self.index['FILENAME'])
             # get the output file type
