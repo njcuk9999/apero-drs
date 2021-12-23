@@ -2,6 +2,30 @@ Changelog
 =========
 
 
+0.7.194 (2021-12-22)
+--------------------
+- Merge remote-tracking branch 'origin/v0.7.193-working' into
+  v0.7.193-working. [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - deal with masked
+  columns and force str/float for all ftable row values (into tabledict)
+  [njcuk9999]
+- Deal with postprocess wave/blaze from calibration (may not be present
+  in index database) [Neil Cook]
+- Update language database for template skipped recipes. [Neil Cook]
+- `Apero.core.instruments.spirou.recipe_definitions.py` +
+  `file_definitions.py` - for mini data pol + ccf should only include
+  `science_targets`. [Neil Cook]
+- `Apero.recipes.spirou.apero_postprocess_spirou.py` - move around errors.
+  [njcuk9999]
+- `Apero.core.core.drs_database.py` - correct column order in
+  `update_header_fix()` [Neil Cook]
+- `Apero.core.core.drs_database.py` - correct typos `OBS_KIND-->OBS_DIR`.
+  [Neil Cook]
+- Astropy (np>1.18) and numba (<1.12) conflict on numpy --> np=1.20.3.
+  [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
+
+
 0.7.193 (2021-12-20)
 --------------------
 - `Apero.recipes.spirou.apero_postprocess_spirou.py` - move text to
