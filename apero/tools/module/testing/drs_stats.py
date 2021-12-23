@@ -108,7 +108,8 @@ class LogEntry:
     def __repr__(self) -> str:
         return self.__str__()
 
-    def get_attributes(self, params: ParamDict, mode: str):
+    def get_attributes(self, params: ParamDict, mode: str,
+                       idataframe: pd.DataFrame):
         """
         Get attributes from dataframe for this object
         :return:
@@ -125,8 +126,7 @@ class LogEntry:
         self.recipe_type = self.data.iloc[0]['RECIPE_TYPE']
         self.recipe_kind = self.data.iloc[0]['RECIPE_KIND']
         # cross-match with index database
-        self.index = _index_database_crossmatch(params, self.pid,
-                                                ','.join(INDEX_COLS))
+        self.index = _index_database_crossmatch(idataframe, self.pid)
         # add index linked parameters
         if len(self.index) > 0:
             # get the mjd mid
@@ -240,10 +240,16 @@ def get_log_entries(params: ParamDict,
                     mode: str) -> List[LogEntry]:
 
     # load log database
+    WLOG(params, '', 'Obtaining full log database. Please wait...')
     logdbm = drs_database.LogDatabase(params)
     logdbm.load_db()
     # get all entries from database
     dataframe = logdbm.get_entries('*')
+    # get the index database
+    WLOG(params, '', 'Obtaining full index database. Please wait...')
+    indexdbm = drs_database.IndexDatabase(params)
+    indexdbm.load_db()
+    idataframe = indexdbm.get_entries('*')
     # -------------------------------------------------------------------------
     # get unique pids
     upids = np.unique(dataframe['PID'])
@@ -255,7 +261,7 @@ def get_log_entries(params: ParamDict,
     for upid in tqdm(upids):
         # get a log entry
         log_entry = LogEntry(upid, dataframe)
-        log_entry.get_attributes(params, mode=mode)
+        log_entry.get_attributes(params, mode=mode, idataframe=idataframe)
         # deal with valid data
         cond = log_entry.is_valid
         if mode == 'timing':
@@ -269,24 +275,18 @@ def get_log_entries(params: ParamDict,
     return log_entries
 
 
-def _index_database_crossmatch(params: ParamDict, pid: str,
-                               columns: str = '*') -> pd.DataFrame:
+def _index_database_crossmatch(idataframe: pd.DataFrame,
+                               pid: str) -> pd.DataFrame:
     """
     Get all index entries for a specific pid
 
-    :param params: ParamDict, parameter dictionary of constants
+    :param idataframe: pandas.DataFrame -the full index database
     :param pid: str, the unique pid from the log entry
-    :param columns: str, comma separated list of columns to get
 
     :return: pandas dataframe - all index entries that match this pid
     """
-    # load index database
-    indexdbm = drs_database.IndexDatabase(params)
-    indexdbm.load_db()
-    # set up condition
-    condition = 'KW_PID="{0}"'.format(pid)
-    # get data frames
-    dataframe = indexdbm.get_entries(columns, condition=condition)
+    # filter the index database by PID
+    dataframe = idataframe[idataframe['PID'] == pid]
     # return the
     return dataframe
 
