@@ -286,7 +286,7 @@ def _index_database_crossmatch(idataframe: pd.DataFrame,
     :return: pandas dataframe - all index entries that match this pid
     """
     # filter the index database by PID
-    dataframe = idataframe[idataframe['PID'] == pid]
+    dataframe = idataframe[idataframe['KW_PID'] == pid]
     # return the
     return dataframe
 
