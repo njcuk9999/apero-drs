@@ -375,7 +375,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # ------------------------------------------------------------------
     # Step 2: Ask for instrument (from valid instruments)
     # ------------------------------------------------------------------
-    user_instrument = getattr(args, 'instrument', None)
+    user_instrument = getattr(args, 'instrument', 'Null')
     # test if we need instrument
     if user_instrument not in drs_instruments:
 
