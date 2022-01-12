@@ -752,7 +752,8 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
                  hcalibtime, func_name]
         WLOG(params, 'error', textentry('09-002-00004', args=eargs))
     else:
-        WLOG(params, '', textentry('40-005-10003', args=[max_dtime]))
+        margs = [key, delta_time, max_dtime, calib_filename]
+        WLOG(params, '', textentry('40-005-10003', args=margs))
 
 
 def check_fp(params: ParamDict, image: np.ndarray, filename: str,
