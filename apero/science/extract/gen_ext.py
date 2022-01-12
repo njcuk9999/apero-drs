@@ -1372,15 +1372,10 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,  wavemap: np.ndarray,
     if wgrid == 'wave':
         wavegrid = np.arange(wavestart, waveend + binwave / 2.0, binwave)
     else:
-        # work out number of wavelength points
-        flambda = np.log(waveend / wavestart)
-        nlambda = np.round((speed_of_light_kms / binvelo) * flambda)
-        # updating end wavelength slightly to have exactly 'step' km/s
-        waveend = np.exp(nlambda * (binvelo / speed_of_light_kms)) * wavestart
-        # get the wavegrid
-        index = np.arange(nlambda) / nlambda
-        wavegrid = wavestart * np.exp(index * np.log(waveend / wavestart))
-
+        # velocity grid in round numbers of m / s
+        magicgrid = mp.get_magic_grid(wavestart, waveend, binvelo * 1000)
+        # we want wave grid in km/s
+        wavegrid = magicgrid / 1000.0
     # -------------------------------------------------------------------------
     # define a smooth transition mask at the edges of the image
     # this ensures that the s1d has no discontinuity when going from one order
