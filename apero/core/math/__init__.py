@@ -45,6 +45,8 @@ gauss_beta_function = gauss.gauss_beta_function
 
 gauss_fit_s = gauss.gauss_fit_s
 
+get_magic_grid = gen_math.get_magic_grid
+
 get_dll_from_coefficients = gen_math.get_dll_from_coefficients
 
 get_ll_from_coefficients = gen_math.get_ll_from_coefficients
