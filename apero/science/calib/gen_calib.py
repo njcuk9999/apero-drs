@@ -49,6 +49,8 @@ DrsHeader = drs_fits.Header
 CalibDatabase = drs_database.CalibrationDatabase
 # Get Logging function
 WLOG = drs_log.wlog
+# get time
+Time = base.Time
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
@@ -230,10 +232,11 @@ class CalibFile:
                 for it in range(len(filename)):
                     calib_delta_time_check(params, inheader, self.mjdmid[it],
                                            self.filename[it], self.master[it],
-                                           self.user)
+                                           self.user, self.key)
             else:
                 calib_delta_time_check(params, inheader, self.mjdmid,
-                                       self.filename, self.master, self.user)
+                                       self.filename, self.master, self.user,
+                                       self.key)
         # ---------------------------------------------------------------------
         # if we are just returning filename return here
         if return_filename:
@@ -685,7 +688,7 @@ def add_calibs_to_header(outfile: DrsFitsFile,
 
 def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
                            calib_time: float, calib_filename: str,
-                           master: bool, user: bool):
+                           master: bool, user: bool, key: str):
     """
     Check that the delta time between calibration and observation is
     valid (as defined by MAX_CALIB_DTIME)
@@ -698,6 +701,7 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
                    checked
     :param user: bool, if True this calib came from the user and should not
                  be checked
+    :param key: str, the calibration key for the calib file
 
     :raises: DrsLogException if DO_CALIB_DTIME_CHECK = True and delta time is
              greater than MAX_CALIB_DTIME
@@ -740,7 +744,12 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
     delta_time = np.abs(obstime - calib_time)
     # now check delta time
     if delta_time > max_dtime:
-        eargs = [calib_filename, max_dtime, func_name]
+        # get human-readable time
+        hobstime = Time(obstime, format='mjd').iso
+        hcalibtime = Time(calib_time, format='mjd').iso
+        # log error
+        eargs = [key, calib_filename, delta_time, max_dtime, hobstime,
+                 hcalibtime, func_name]
         WLOG(params, 'error', textentry('09-002-00004', args=eargs))
     else:
         WLOG(params, '', textentry('40-005-10003', args=[max_dtime]))
