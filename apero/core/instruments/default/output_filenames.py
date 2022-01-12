@@ -440,14 +440,14 @@ def make_obs_dir(params: ParamDict, obs_dir: Union[str, None],
             os.chdir(cwd)
         except Exception as e:
             eargs = [rel_path, path, type(e), e, func_name]
-            raise DrsCodedException('09-002-00002', level='error',
+            raise DrsCodedException('09-003-00002', level='error',
                                     targs=eargs, func_name=func_name)
     # try to see if path exists one last time
     if os.path.exists(full_path):
         return full_path
     else:
         eargs = [rel_path, path, func_name]
-        raise DrsCodedException('09-002-00003', level='error',
+        raise DrsCodedException('09-003-00003', level='error',
                                 targs=eargs, func_name=func_name)
 
 
