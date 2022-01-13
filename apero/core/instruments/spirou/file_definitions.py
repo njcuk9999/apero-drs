@@ -1534,8 +1534,9 @@ post_t_file.add_ext('OHLINE', out_tellu_pclean, pos=5, fiber='AB',
                     link='TELLU_AB', hlink='TELLU::TELLU_PCLEAN',
                     block_kind='red', clear_file=True, tag='OHLine',
                     extname='SKY_MODEL')
+# TODO: TELLU_OBJ_A not added to telluric database
 post_t_file.add_ext('TELLU_A', out_tellu_obj, pos=6, fiber='A',
-                    link='PP', hlink='TELLU::TELLU_OBJ', block_kind='red',
+                    link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='FluxA')
 post_t_file.add_ext('WAVE_A', wave_files, pos=7, fiber='A',
                     link='TELLU_A', hlink='CALIB::WAVE', block_kind='red',
@@ -1543,8 +1544,9 @@ post_t_file.add_ext('WAVE_A', wave_files, pos=7, fiber='A',
 post_t_file.add_ext('BLAZE_A', out_ff_blaze, pos=8, fiber='A',
                     link='TELLU_A', hlink='CALIB::BLAZE', block_kind='red',
                     clear_file=True, tag='BlazeA')
+# TODO: TELLU_OBJ_A not added to telluric database
 post_t_file.add_ext('TELLU_B', out_tellu_obj, pos=9, fiber='B',
-                    link='PP', hlink='TELLU::TELLU_OBJ', block_kind='red',
+                    link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='FluxB')
 post_t_file.add_ext('WAVE_B', wave_files, pos=10, fiber='B',
                     link='TELLU_B', hlink='CALIB::WAVE', block_kind='red',
