@@ -6259,7 +6259,7 @@ class DrsOutFile(DrsInputFile):
         :return: bool, whether we successfully linked all extensions
         """
         # set function name
-        func_name = display_func('proces_links', __NAME__, self.class_name)
+        func_name = display_func('process_links', __NAME__, self.class_name)
         # get allowed header keys
         pconst = constants.pload()
         iheader_cols = pconst.INDEX_HEADER_COLS()
