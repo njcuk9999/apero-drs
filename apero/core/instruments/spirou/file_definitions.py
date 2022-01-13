@@ -1519,7 +1519,7 @@ post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                                            'POLAR_DARK']),
                     remove_drs_hkeys=True)
 post_t_file.add_ext('TELLU_AB', out_tellu_obj, pos=1, fiber='AB',
-                    link='PP', hlink='TELLU::TELLU_OBJ', block_kind='red',
+                    link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='FluxAB')
 post_t_file.add_ext('WAVE_AB', wave_files, pos=2, fiber='AB',
                     link='TELLU_AB', hlink='CALIB::WAVE', block_kind='red',
@@ -1528,13 +1528,13 @@ post_t_file.add_ext('BLAZE_AB', out_ff_blaze, pos=3, fiber='AB',
                     link='TELLU_AB', hlink='CALIB::BLAZE', block_kind='red',
                     clear_file=True, tag='BlazeAB')
 post_t_file.add_ext('RECON_AB', out_tellu_recon, pos=4, fiber='AB',
-                    link='TELLU_AB', hlink='TELLU::TELLU_RECON',
+                    link='TELLU_AB', hlink='KW_IDENTIFIER',
                     block_kind='red', clear_file=True, tag='Recon')
+# TODO: If precleaning fails --> no OHLINE file produced
 post_t_file.add_ext('OHLINE', out_tellu_pclean, pos=5, fiber='AB',
-                    link='TELLU_AB', hlink='TELLU::TELLU_PCLEAN',
+                    link='TELLU_AB', hlink='KW_IDENTIFIER',
                     block_kind='red', clear_file=True, tag='OHLine',
                     extname='SKY_MODEL')
-# TODO: TELLU_OBJ_A not added to telluric database
 post_t_file.add_ext('TELLU_A', out_tellu_obj, pos=6, fiber='A',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='FluxA')
@@ -1544,7 +1544,6 @@ post_t_file.add_ext('WAVE_A', wave_files, pos=7, fiber='A',
 post_t_file.add_ext('BLAZE_A', out_ff_blaze, pos=8, fiber='A',
                     link='TELLU_A', hlink='CALIB::BLAZE', block_kind='red',
                     clear_file=True, tag='BlazeA')
-# TODO: TELLU_OBJ_A not added to telluric database
 post_t_file.add_ext('TELLU_B', out_tellu_obj, pos=9, fiber='B',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='FluxB')
