@@ -6471,9 +6471,8 @@ class DrsOutFile(DrsInputFile):
                 if len(exttable) == 0 and not required:
                     # print warning: File not found for ext {0} ({1})'
                     margs = [pos, name]
-                    WLOG(params, 'warning', textentry('10-090-00003', args=margs),
-                         sublevel=2)
-                    return False, None
+                    reason = textentry('10-090-00003', args=margs)
+                    return False, reason
                 # deal with no entries and required
                 if len(exttable) == 0:
                     # log and return: No entries for extension {0} ({1})
