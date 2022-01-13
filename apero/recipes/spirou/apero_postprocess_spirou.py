@@ -205,13 +205,11 @@ def __main__(recipe, params):
             # loop around error reports (from error_storage)
             for e_it, error_entry in enumerate(error_storage):
                 # add the error itself
-                errormsg += error_entry
+                # errormsg += error_entry
                 # print error
-                WLOG(params, 'error', errormsg, raise_exception=False)
+                WLOG(params, 'error', error_entry, raise_exception=False)
                 # header banner (in red)
                 WLOG(params, '', params['DRS_HEADER'], colour='red')
-            # banner
-            WLOG(params, '', params['DRS_HEADER'], 'red')
             # report on combined number of errors (and crash)
             eargs = [len(error_storage), recipe.name]
             WLOG(params, 'error', textentry('00-090-00010', args=eargs))
