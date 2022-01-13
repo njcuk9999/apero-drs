@@ -415,12 +415,12 @@ pp_obj_fp = drs_finput('OBJ_FP', hkeys=dict(KW_DPRTYPE='OBJ_FP'),
                        suffix='_pp', intype=raw_obj_fp,
                        inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_obj_fp)
-pp_obj_hc1 = drs_finput('OBJ_HC1', hkeys=dict(KW_DPRTYPE='OBJ_HCONE'),
+pp_obj_hc1 = drs_finput('OBJ_HCONE', hkeys=dict(KW_DPRTYPE='OBJ_HCONE'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_obj_hc1,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_obj_hc1)
-pp_obj_hc2 = drs_finput('OBJ_HC2', hkeys=dict(KW_DPRTYPE='OBJ_HCTWO'),
+pp_obj_hc2 = drs_finput('OBJ_HCTWO', hkeys=dict(KW_DPRTYPE='OBJ_HCTWO'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_obj_hc2,
                         inext='.fits', outfunc=out.general_file)
