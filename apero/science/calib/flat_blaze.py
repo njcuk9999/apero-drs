@@ -117,43 +117,59 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
               (thres * 1.5, np.inf, np.max(xpix), np.inf, np.inf, 1e-20)]
     # set a counter
     n_it = -1
-    # ------------------------------------------------------------------
-    # try to fit and if there is a failure catch it
-    try:
-        # we optimize over pixels that are not NaN
-        popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
-                               bounds=bounds)
-        # we then re-fit to avoid local minima (this has happened - fitting
-        #   a second time seemed to fix this - when the guess is off)
-        popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt,
-                               bounds=bounds)
-    except RuntimeError as _:
-        # if it failed with bounds try without bounds
+    # -------------------------------------------------------------------------
+    # try a few times (this can fix it not working)
+    tries = 0
+    popt, pcov = [], []
+    # loop around 5 times
+    while tries <= 5:
+        # try to fit and if there is a failure catch it
         try:
-            # we optimize over pixels that are not NaN (this time with no bounds)
-            popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
-                                   p0=fit_guess)
+            # we optimize over pixels that are not NaN
+            popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
+                                   bounds=bounds)
             # we then re-fit to avoid local minima (this has happened - fitting
             #   a second time seemed to fix this - when the guess is off)
-            popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt)
+            popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt,
+                                   bounds=bounds)
+            # worked --> break while loop
+            break
         except RuntimeError as _:
-            # finally try without the cubic term
+            # if it failed with bounds try without bounds
             try:
-                fit_guess1 = fit_guess[:5]
-                # we optimize over pixels that are not NaN (this time with
-                #    no bounds)
+                # we optimize over pixels that are not NaN (this time with no bounds)
                 popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
-                                       p0=fit_guess1)
-            except RuntimeError as e:
-                strlist = ('amp={0} period={1} lin={2} slope={3} quad={4} '
-                           '(cube={5})')
-                strguess = strlist.format(*fit_guess)
-                strlower = strlist.format(*bounds[0])
-                strupper = strlist.format(*bounds[1])
-                eargs = [order_num, fiber, n_it, strguess, strlower, strupper,
-                         type(e), str(e), func_name]
-                WLOG(params, 'error', textentry('40-015-00009', args=eargs))
-                return
+                                       p0=fit_guess)
+                # we then re-fit to avoid local minima (this has happened - fitting
+                #   a second time seemed to fix this - when the guess is off)
+                popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt)
+                # worked --> break while loop
+                break
+            except RuntimeError as _:
+                # finally try without the cubic term
+                try:
+                    fit_guess1 = fit_guess[:5]
+                    # we optimize over pixels that are not NaN (this time with
+                    #    no bounds)
+                    popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
+                                           p0=fit_guess1)
+                    # worked --> break while loop
+                    break
+                except RuntimeError as e:
+                    if tries < 5:
+                        tries += 1
+                    # on the 5th attempt give up
+                    if tries == 5:
+                        strlist = ('amp={0} period={1} lin={2} slope={3} '
+                                   'quad={4} (cube={5})')
+                        strguess = strlist.format(*fit_guess)
+                        strlower = strlist.format(*bounds[0])
+                        strupper = strlist.format(*bounds[1])
+                        eargs = [order_num, fiber, n_it, strguess, strlower,
+                                 strupper, type(e), str(e), func_name]
+                        emsg = textentry('40-015-00009', args=eargs)
+                        WLOG(params, 'error', emsg)
+                        return
     # ------------------------------------------------------------------
     # calculate the blaze from the curve_fit coefficients
     blaze = mp.sinc(xpix, *popt, peak_cut=peak_cut)
