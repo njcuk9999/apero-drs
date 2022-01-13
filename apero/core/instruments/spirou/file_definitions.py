@@ -1466,30 +1466,38 @@ post_s_file.add_column('S1D_V', out_ext_s1d_v,
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='eflux', outcol='FluxErrC', fiber='C',
                        block_kind='red', clear_file=True)
+# TODO: from telluric database?
 post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='flux', outcol='FluxABTelluCorrected', fiber='AB',
                        required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
 post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='eflux', outcol='FluxErrABTelluCorrected',
                        fiber='AB', required=False,
                        block_kind='red', clear_file=True)
+# TODO: from telluric database?
 post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='flux', outcol='FluxATelluCorrected', fiber='A',
                        required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
 post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='eflux', outcol='FluxErrATelluCorrected',
                        fiber='A', required=False,
                        block_kind='red', clear_file=True)
+# TODO: from telluric database?
 post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='flux', outcol='FluxBTelluCorrected', fiber='B',
                        required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
 post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='eflux', outcol='FluxErrBTelluCorrected',
                        fiber='B', required=False,
                        block_kind='red', clear_file=True)
+# TODO: from telluric database?
 post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
                        incol='flux', outcol='Recon',
                        required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
 post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
                        incol='eflux', outcol='ReconErr',
                        required=False, block_kind='red', clear_file=True)
