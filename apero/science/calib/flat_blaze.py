@@ -126,8 +126,8 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
         # try to fit and if there is a failure catch it
         try:
             # we optimize over pixels that are not NaN
-            popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
-                                   bounds=bounds)
+            popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
+                                   p0=fit_guess, bounds=bounds)
             # we then re-fit to avoid local minima (this has happened - fitting
             #   a second time seemed to fix this - when the guess is off)
             popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt,
@@ -137,11 +137,13 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
         except RuntimeError as _:
             # if it failed with bounds try without bounds
             try:
-                # we optimize over pixels that are not NaN (this time with no bounds)
+                # we optimize over pixels that are not NaN (this time with
+                # no bounds)
                 popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
                                        p0=fit_guess)
-                # we then re-fit to avoid local minima (this has happened - fitting
-                #   a second time seemed to fix this - when the guess is off)
+                # we then re-fit to avoid local minima (this has happened
+                #    - fitting a second time seemed to fix this
+                #    - when the guess is off)
                 popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt)
                 # worked --> break while loop
                 break
@@ -156,7 +158,10 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
                     # worked --> break while loop
                     break
                 except RuntimeError as e:
+                    # try again and give warning that we are trying again
                     if tries < 5:
+                        wmsg = textentry('10-015-00001', args=[tries])
+                        WLOG(params, 'warning', wmsg, sublevel=2)
                         tries += 1
                     # on the 5th attempt give up
                     if tries == 5:
