@@ -8,9 +8,10 @@ NIRPS HE documentation
 .. toctree::
    :maxdepth: 2
 
-   using_apero_nirps_he.rst
-   recipes_nirps_he.rst
-   tools_nirps_he.rst
+   ../../auto/recipe_sequences/nirps_he/sequences.rst
+   ../../auto/recipe_definitions/nirps_he/recipes.rst
+   ../../auto/tool_definitions/nirps_he/tools.rst
+   ../../auto/file_definitions/nirps_he/files.rst
 
 .. only:: html
 

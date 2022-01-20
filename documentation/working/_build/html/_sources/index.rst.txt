@@ -25,7 +25,12 @@ Latest version: 0.7.194
   It is the official pipeline for:
 
   * `SPIROU <https://www.cfht.hawaii.edu/Instruments/SPIRou/>`_ (SPectropolarimeter InfraROUge) on the Canada-France-Hawaii Telescope `CFHT <https://www.cfht.hawaii.edu/>`_.
-  * NIRPS (Currently under construction)
+
+  APERO can also be used for:
+
+  * NIRPS HE (Currently under construction)
+  * NIRPS HA (Currently under construction)
+
 
 .. toctree::
    :maxdepth: 2

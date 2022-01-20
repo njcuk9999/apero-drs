@@ -19,11 +19,10 @@ Developer tools
   :maxdepth: 1
   :caption: Contents:
 
-  tools/apero_changelog.rst
-  tools/apero_dependencies.rst
-  tools/apero_documentation.rst
-  tools/apero_langdb.rst
-
+  ../../auto/dev_tool_definitions/default/dev_tools.rst
+  ../../auto/dev_tool_definitions/spirou/dev_tools.rst
+  ../../auto/dev_tool_definitions/nirps_ha/dev_tools.rst
+  ../../auto/dev_tool_definitions/nirps_he/dev_tools.rst
 
 .. _dev_main_quicklinks:
 
@@ -60,16 +59,6 @@ Full tutorials
 
 .. _dev_main_other:
 
-------------------------------
-Other
-------------------------------
-
-.. toctree::
-    :maxdepth: 1
-
-    ../../auto/file_definitions/spirou/spirou_file_definitions.rst
-    ../../auto/file_definitions/nirps_ha/nirps_ha_file_definitions.rst
-    ../../auto/file_definitions/nirps_he/nirps_he_file_definitions.rst
 
 .. only:: html
 

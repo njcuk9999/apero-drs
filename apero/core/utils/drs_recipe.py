@@ -269,6 +269,8 @@ class DrsRecipe(object):
         # get recipe name
         storage['NAME'] = self.name
         storage['SHORTNAME'] = self.shortname
+        storage['RECIPE_TYPE'] = self.recipe_type
+        storage['RECIPE_KIND'] = self.recipe_kind
         # get schematic diagram for this recipe
         storage['SCHEMATIC_FILE'] = self.schematic
         storage['DESCRIPTION_FILE'] = self.description_file

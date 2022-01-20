@@ -8,8 +8,3 @@ or
 the master wave solution (WAVESOL_MASTER)
 or
 the default wave solution (WAVESOL_DEFAULT)
-
-
-.. |br| raw:: html
-
-     <br>

@@ -1454,6 +1454,8 @@ def load_config(instrument: Union[str, None] = None,
             instrument = base.IPARAMS['INSTRUMENT']
         else:
             instrument = 'None'
+    elif instrument == 'default':
+        instrument = 'None'
     # check config cache
     if instrument in CONFIG_CACHE and cache:
         return CONFIG_CACHE[instrument].copy()
@@ -1507,6 +1509,8 @@ def load_pconfig(instrument: Union[str, None] = None
     # deal with no instrument
     if instrument is None:
         instrument = base.IPARAMS['INSTRUMENT']
+    elif instrument == 'default':
+        instrument = 'None'
     # check cache
     if instrument in PCONFIG_CACHE:
         return PCONFIG_CACHE[instrument]

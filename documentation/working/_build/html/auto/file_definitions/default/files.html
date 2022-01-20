@@ -1,0 +1,250 @@
+
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>File definitions (default) &#8212; APERO 0.7.194 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
+
+
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a title="Home" href="../../../index.html">
+        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="install" href="../../../user/general/installation.html">
+        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
+        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="download pdf" href="../../../apero-docs.pdf">
+        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+  </ul>
+    <div>
+    <a href="../../../index.html">
+      <img src="../../../_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.194 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">File definitions (default)</a></li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">File definitions (default)</a><ul>
+<li><a class="reference internal" href="#contents">Contents</a></li>
+<li><a class="reference internal" href="#raw-files">1. Raw Files</a><ul>
+<li><a class="reference internal" href="#file-definition-table">1.1  File definition table</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#preprocesed-files">2. Preprocesed files</a><ul>
+<li><a class="reference internal" href="#default-pp-file">2.1  File definition table</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#reduced-files">3. Reduced Files</a><ul>
+<li><a class="reference internal" href="#default-red-file">3.1  File definition table</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#calibration-files">4. Calibration files</a><ul>
+<li><a class="reference internal" href="#default-calib-file">4.1  File definition table</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#telluric-files">5. Telluric files</a><ul>
+<li><a class="reference internal" href="#default-tellu-file">5.1  File definition table</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#post-processed-files">6. Post-processed files</a><ul>
+<li><a class="reference internal" href="#default-post-file">6.1  File definition table</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/auto/file_definitions/default/files.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="file-definitions-default">
+<span id="default-file-def"></span><h1>File definitions (default)<a class="headerlink" href="#file-definitions-default" title="Permalink to this headline">¶</a></h1>
+<section id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="#default-raw-file"><span class="std std-ref">1. Raw Files</span></a></p></li>
+<li><p><a class="reference internal" href="#default-pp-file"><span class="std std-ref">2. Preprocesed files</span></a></p></li>
+<li><p><a class="reference internal" href="#default-red-file"><span class="std std-ref">3. Reduced Files</span></a></p></li>
+<li><p><a class="reference internal" href="#default-calib-file"><span class="std std-ref">4. Calibration files</span></a></p></li>
+<li><p><a class="reference internal" href="#default-tellu-file"><span class="std std-ref">5. Telluric files</span></a></p></li>
+<li><p><a class="reference internal" href="#default-post-file"><span class="std std-ref">6. Post-processed files</span></a></p></li>
+</ul>
+</section>
+<section id="raw-files">
+<h2>1. Raw Files<a class="headerlink" href="#raw-files" title="Permalink to this headline">¶</a></h2>
+<section id="file-definition-table">
+<span id="default-raw-file"></span><h3>1.1  File definition table<a class="headerlink" href="#file-definition-table" title="Permalink to this headline">¶</a></h3>
+<p>N/A</p>
+<p>“HDR[XXX]” denotes key from file header</p>
+<p><a class="reference internal" href="#default-file-def"><span class="std std-ref">Back to top</span></a></p>
+</section>
+</section>
+<section id="preprocesed-files">
+<h2>2. Preprocesed files<a class="headerlink" href="#preprocesed-files" title="Permalink to this headline">¶</a></h2>
+<section id="default-pp-file">
+<span id="id1"></span><h3>2.1  File definition table<a class="headerlink" href="#default-pp-file" title="Permalink to this headline">¶</a></h3>
+<p>N/A</p>
+<p>“HDR[XXX]” denotes key from file header</p>
+<p><a class="reference internal" href="#default-file-def"><span class="std std-ref">Back to top</span></a></p>
+</section>
+</section>
+<section id="reduced-files">
+<h2>3. Reduced Files<a class="headerlink" href="#reduced-files" title="Permalink to this headline">¶</a></h2>
+<section id="default-red-file">
+<span id="id2"></span><h3>3.1  File definition table<a class="headerlink" href="#default-red-file" title="Permalink to this headline">¶</a></h3>
+<p>N/A</p>
+<p>“HDR[XXX]” denotes key from file header</p>
+<p><a class="reference internal" href="#default-file-def"><span class="std std-ref">Back to top</span></a></p>
+</section>
+</section>
+<section id="calibration-files">
+<h2>4. Calibration files<a class="headerlink" href="#calibration-files" title="Permalink to this headline">¶</a></h2>
+<section id="default-calib-file">
+<span id="id3"></span><h3>4.1  File definition table<a class="headerlink" href="#default-calib-file" title="Permalink to this headline">¶</a></h3>
+<p>N/A</p>
+<p>“HDR[XXX]” denotes key from file header</p>
+<p><a class="reference internal" href="#default-file-def"><span class="std std-ref">Back to top</span></a></p>
+</section>
+</section>
+<section id="telluric-files">
+<h2>5. Telluric files<a class="headerlink" href="#telluric-files" title="Permalink to this headline">¶</a></h2>
+<section id="default-tellu-file">
+<span id="id4"></span><h3>5.1  File definition table<a class="headerlink" href="#default-tellu-file" title="Permalink to this headline">¶</a></h3>
+<p>N/A</p>
+<p>“HDR[XXX]” denotes key from file header</p>
+<p><a class="reference internal" href="#default-file-def"><span class="std std-ref">Back to top</span></a></p>
+</section>
+</section>
+<section id="post-processed-files">
+<h2>6. Post-processed files<a class="headerlink" href="#post-processed-files" title="Permalink to this headline">¶</a></h2>
+<section id="default-post-file">
+<span id="id5"></span><h3>6.1  File definition table<a class="headerlink" href="#default-post-file" title="Permalink to this headline">¶</a></h3>
+<p>N/A</p>
+<p>“HDR[XXX]” denotes key from file header</p>
+<p><a class="reference internal" href="#default-file-def"><span class="std std-ref">Back to top</span></a></p>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.194 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">File definitions (default)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    </div>
+  </body>
+</html>
