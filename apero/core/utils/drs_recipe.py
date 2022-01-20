@@ -1376,7 +1376,7 @@ class DrsRecipe(object):
             else:
                 self.special_args.append(self.specialargs[rarg])
         # ---------------------------------------------------------------------
-        usage = '{0}.py'.format(self.name)
+        usage = '{0}.py'.format(self.name.split('.py')[0])
         uhelp = dict()
         # loop around required arguments
         for rarg in self.required_args:

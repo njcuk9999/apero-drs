@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_preprocess_nirps_ha.py.py {obs_dir}[STRING] [FILE:DRS_RAW] {options}
+    apero_preprocess_nirps_ha.py {obs_dir}[STRING] [FILE:DRS_RAW] {options}
 
 
 .. code-block:: 

@@ -40,7 +40,7 @@ No description set
 
 .. code-block:: 
 
-    apero_flat_spirou.py.py {obs_dir}[STRING] [FILE:FLAT_FLAT] {options}
+    apero_flat_spirou.py {obs_dir}[STRING] [FILE:FLAT_FLAT] {options}
 
 
 .. code-block:: 

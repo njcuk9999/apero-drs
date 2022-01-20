@@ -215,6 +215,12 @@ e.g. <code class="xref py py-meth docutils literal notranslate"><span class="pre
 <li><p>see <a class="reference external" href="http://ds9.si.edu/site/Home.html">ds9.si.edu</a></p></li>
 </ul>
 </dd>
+<dt id="term-engineering-directories">engineering-directories<a class="headerlink" href="#term-engineering-directories" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
+<li><p>This are directories without science observations in</p></li>
+<li><p>In general we do not recommend to reduce these nights as they may
+reduce the quality of reduced data</p></li>
+</ul>
+</dd>
 <dt id="term-file-definitions">file-definitions<a class="headerlink" href="#term-file-definitions" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
 <li><p>This is an instrument specific python script that defines all the
 file types for use with this instrument (raw, preprocessed, output).</p></li>
@@ -224,7 +230,18 @@ file types for use with this instrument (raw, preprocessed, output).</p></li>
 <dt id="term-INSTRUMENT">INSTRUMENT<a class="headerlink" href="#term-INSTRUMENT" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
 <li><p>This is the instrument used at a specific telescope. Some settings are instrument specific.</p></li>
 <li><p>Currently supported instruments are::
-SPIROU</p></li>
+SPIROU, NIRPS_HA, NIRPS_HE</p></li>
+</ul>
+</dd>
+<dt id="term-observation-directory">observation-directory<a class="headerlink" href="#term-observation-directory" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
+<li><p>This is the sub-directories within the raw directory (define by <a class="reference internal" href="#term-DRS_DATA_RAW"><span class="xref std std-term">DRS_DATA_RAW</span></a>) that individual
+observations are separated into, this is recommended to be on a night-by-night basis but can be split in
+other ways (for example by object name).</p></li>
+</ul>
+</dd>
+<dt id="term-PID">PID<a class="headerlink" href="#term-PID" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
+<li><p>The unique process id for this specific <a class="reference internal" href="#term-recipe-run"><span class="xref std std-term">recipe-run</span></a></p></li>
+<li><p>Stored in the header using <a class="reference internal" href="#term-KW_PID"><span class="xref std std-term">KW_PID</span></a></p></li>
 </ul>
 </dd>
 <dt id="term-pdflatex">pdflatex<a class="headerlink" href="#term-pdflatex" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
@@ -254,6 +271,40 @@ e.g. <code class="xref py py-meth docutils literal notranslate"><span class="pre
 inherit from - if no instrument is defined, or a method is not defined
 for a specific instrument it will default to this method - this is stored
 in <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.instruments.default.psuedo_const()</span></code></p></li>
+</ul>
+</dd>
+<dt id="term-recipe">recipe<a class="headerlink" href="#term-recipe" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
+<li><p>a python script for use directly by the user</p></li>
+</ul>
+</dd>
+<dt id="term-recipe-run">recipe-run<a class="headerlink" href="#term-recipe-run" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
+<li><p>An individual, single, run of a given recipe, all required arguments for a single
+recipe-run should be given before running</p></li>
+</ul>
+</dd>
+<dt id="term-recipe-sequence-recipe-sequences">recipe-sequence, recipe-sequences<a class="headerlink" href="#term-recipe-sequence-recipe-sequences" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
+<li><p>A recipe sequence is a set of recipes to be run in a certain order, with
+certain parameters, the sequences are set up such that the apero_processing recipe
+can take all files in the raw directory (or a sub-set of these) and figure out
+all recipe-runs in a recipe-sequence for all the valid raw files. A sequence
+can be only a few different recipes or all recipes required for the full reduction
+of the raw data from start to finish.</p></li>
+</ul>
+</dd>
+<dt id="term-run-ini-file">run-ini-file<a class="headerlink" href="#term-run-ini-file" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
+<li><p>This is the file used in apero_processing recipe to switch on and off recipes in sequences,
+to skip recipes, and indicate other processing features (such as the number of cores)
+these are also used in the apero_precheck to give some indication on what will happen
+when the apero_processing recipe is run. If no sequences are given one can use
+the run.ini files as a batch processor where individual recipe-runs can be given</p></li>
+</ul>
+</dd>
+<dt id="term-shortname">shortname<a class="headerlink" href="#term-shortname" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
+<li><p>a shortened name for a specific recipe, these are used in log files, when
+turning off and skipping recipes in a :term:run-ini-file and elsewhere to
+reference a specific recipe, please check the recipe definitions for the link
+between short name and recipe names (Note some sequences alter shortnames when
+they need to be unique from the recipes themselves).</p></li>
 </ul>
 </dd>
 </dl>

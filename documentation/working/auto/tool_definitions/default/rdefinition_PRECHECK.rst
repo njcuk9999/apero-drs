@@ -15,7 +15,7 @@ apero_precheck
 SHORTNAME: PRECHECK
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_precheck.rst
 
 
 ********************************************************************************
@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_precheck.py.py {runfile}[STRING] {options}
+    apero_precheck.py {runfile}[STRING] {options}
 
 
 .. code-block:: 

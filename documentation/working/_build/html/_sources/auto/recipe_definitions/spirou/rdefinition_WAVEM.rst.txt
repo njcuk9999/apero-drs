@@ -40,7 +40,7 @@ No description set
 
 .. code-block:: 
 
-    apero_wave_master_spirou.py.py {obs_dir}[STRING] --hcfiles[FILE:HCONE_HCONE] --fpfiles[FILE:FP_FP] {options}
+    apero_wave_master_spirou.py {obs_dir}[STRING] --hcfiles[FILE:HCONE_HCONE] --fpfiles[FILE:FP_FP] {options}
 
 
 .. code-block:: 

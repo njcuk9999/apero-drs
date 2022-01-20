@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_dark_master_nirps_ha.py.py {options}
+    apero_dark_master_nirps_ha.py {options}
 
 
 No optional arguments

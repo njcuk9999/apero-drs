@@ -74,11 +74,22 @@ General
 
 .. glossary::  
 
+  block_kind
+
+    * this is the type of file we have related to the various data directories
+    * valid block kinds are: "raw", "tmp", "red", "calib", "tellu"
+
   ds9
 
     * An astronomical imaging and data visualization application
     * see `ds9.si.edu <http://ds9.si.edu/site/Home.html>`_
-      
+
+  engineering-directories
+
+    * This are directories without science observations in
+    * In general we do not recommend to reduce these nights as they may
+      reduce the quality of reduced data
+
   file-definitions
 
     * This is an instrument specific python script that defines all the
@@ -89,7 +100,19 @@ General
 
     * This is the instrument used at a specific telescope. Some settings are instrument specific.
     * Currently supported instruments are::
-      SPIROU
+      SPIROU, NIRPS_HA, NIRPS_HE
+
+
+  observation-directory
+
+    * This is the sub-directories within the raw directory (define by :term:`DRS_DATA_RAW`) that individual
+      observations are separated into, this is recommended to be on a night-by-night basis but can be split in
+      other ways (for example by object name).
+
+  PID
+
+    * The unique process id for this specific :term:`recipe-run`
+    * Stored in the header using :term:`KW_PID`
 
   pdflatex
 
@@ -120,7 +143,41 @@ General
       inherit from - if no instrument is defined, or a method is not defined
       for a specific instrument it will default to this method - this is stored
       in :meth:`apero.core.instruments.default.psuedo_const`
-      
+
+
+  recipe
+
+    * a python script for use directly by the user
+
+  recipe-run
+
+    * An individual, single, run of a given recipe, all required arguments for a single
+      recipe-run should be given before running
+
+  recipe-sequence, recipe-sequences
+
+    * A recipe sequence is a set of recipes to be run in a certain order, with
+      certain parameters, the sequences are set up such that the apero_processing recipe
+      can take all files in the raw directory (or a sub-set of these) and figure out
+      all recipe-runs in a recipe-sequence for all the valid raw files. A sequence
+      can be only a few different recipes or all recipes required for the full reduction
+      of the raw data from start to finish.
+
+  run-ini-file
+
+    * This is the file used in apero_processing recipe to switch on and off recipes in sequences,
+      to skip recipes, and indicate other processing features (such as the number of cores)
+      these are also used in the apero_precheck to give some indication on what will happen
+      when the apero_processing recipe is run. If no sequences are given one can use
+      the run.ini files as a batch processor where individual recipe-runs can be given
+
+  shortname
+
+    * a shortened name for a specific recipe, these are used in log files, when
+      turning off and skipping recipes in a :term:run-ini-file and elsewhere to
+      reference a specific recipe, please check the recipe definitions for the link
+      between short name and recipe names (Note some sequences alter shortnames when
+      they need to be unique from the recipes themselves).
 
 
 Constants (Autogen)

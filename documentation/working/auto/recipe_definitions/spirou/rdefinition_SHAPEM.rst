@@ -40,7 +40,7 @@ No description set
 
 .. code-block:: 
 
-    apero_shape_master_spirou.py.py {obs_dir}[STRING] --fpfiles[FILE:FP_FP] --hcfiles[FILE:HCONE_HCONE] {options}
+    apero_shape_master_spirou.py {obs_dir}[STRING] --fpfiles[FILE:FP_FP] --hcfiles[FILE:HCONE_HCONE] {options}
 
 
 .. code-block:: 

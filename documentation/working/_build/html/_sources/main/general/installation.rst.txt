@@ -257,6 +257,8 @@ installation and letting you know everything is good to run APERO recipes and to
 
 .. image:: ../../_static/images/apero_splash.png
 
+For details about the splash screen click :ref:`here <startup_splash>`.
+
 
 .. _installation-update:
 

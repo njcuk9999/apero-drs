@@ -96,7 +96,9 @@ installation and letting you know everything is good to run APERO recipes and to
 Running recipes indvidiually
 ===========================================
 
-How to run an individual recipe.
+One can simply run a recipe by using python or the command line.
+For details on individual recipes please check the recipe definitions for
+a specific instrument (e.g. for SPIROU click :ref:`here <recipes_spirou>`).
 
 .. only:: html
 
@@ -108,7 +110,9 @@ How to run an individual recipe.
 Using the processing script
 ===========================================
 
-How to use the APERO processing script.
+The processing script is the recommended way to run the reduction.
+
+Details of how to use the processing script can be found :ref:`here <user_tools_default_proc>`.
 
 
 .. only:: html

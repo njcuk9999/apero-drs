@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_postprocess_spirou.py.py {obs_dir}[STRING] [FILE:DRS_PP] {options}
+    apero_postprocess_spirou.py {obs_dir}[STRING] [FILE:DRS_PP] {options}
 
 
 .. code-block:: 

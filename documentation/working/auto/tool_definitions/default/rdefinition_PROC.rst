@@ -15,7 +15,7 @@ apero_processing
 SHORTNAME: PROC
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_processing.rst
 
 
 ********************************************************************************
@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_processing.py.py {runfile}[STRING] {options}
+    apero_processing.py {runfile}[STRING] {options}
 
 
 .. code-block:: 

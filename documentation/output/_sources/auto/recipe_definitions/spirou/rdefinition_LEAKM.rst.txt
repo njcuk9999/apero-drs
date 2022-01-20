@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_leak_master_spirou.py.py {obs_dir}[STRING] {options}
+    apero_leak_master_spirou.py {obs_dir}[STRING] {options}
 
 
 .. code-block:: 

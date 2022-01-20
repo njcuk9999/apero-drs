@@ -40,7 +40,7 @@ No description set
 
 .. code-block:: 
 
-    apero_dark_master_spirou.py.py {options}
+    apero_dark_master_spirou.py {options}
 
 
 No optional arguments

@@ -40,7 +40,7 @@ No description set
 
 .. code-block:: 
 
-    apero_loc_spirou.py.py {obs_dir}[STRING] [FILE:DARK_FLAT,FLAT_DARK] {options}
+    apero_loc_spirou.py {obs_dir}[STRING] [FILE:DARK_FLAT,FLAT_DARK] {options}
 
 
 .. code-block:: 

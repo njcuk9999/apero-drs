@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_ccf_spirou.py.py {obs_dir}[STRING] [FILE:EXT_E2DS,EXT_E2DS_FF,TELLU_OBJ] {options}
+    apero_ccf_spirou.py {obs_dir}[STRING] [FILE:EXT_E2DS,EXT_E2DS_FF,TELLU_OBJ] {options}
 
 
 .. code-block:: 

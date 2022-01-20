@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_badpix_nirps_ha.py.py {obs_dir}[STRING] --flatfiles[FILE:FLAT_FLAT] --darkfiles[FILE:DARK_DARK] {options}
+    apero_badpix_nirps_ha.py {obs_dir}[STRING] --flatfiles[FILE:FLAT_FLAT] --darkfiles[FILE:DARK_DARK] {options}
 
 
 .. code-block:: 

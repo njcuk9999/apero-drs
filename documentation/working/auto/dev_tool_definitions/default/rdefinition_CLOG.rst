@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_changelog.py.py {preview}[True/False] {options}
+    apero_changelog.py {preview}[True/False] {options}
 
 
 .. code-block:: 

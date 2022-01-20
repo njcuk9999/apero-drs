@@ -40,7 +40,7 @@ No description set
 
 .. code-block:: 
 
-    apero_preprocess_spirou.py.py {obs_dir}[STRING] [FILE:DRS_RAW] {options}
+    apero_preprocess_spirou.py {obs_dir}[STRING] [FILE:DRS_RAW] {options}
 
 
 .. code-block:: 

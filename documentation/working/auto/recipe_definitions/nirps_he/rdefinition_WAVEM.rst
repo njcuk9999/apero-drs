@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_wave_master_nirps_ha.py.py {obs_dir}[STRING] --hcfiles[FILE:HCONE_HCONE] --fpfiles[FILE:FP_FP] {options}
+    apero_wave_master_nirps_ha.py {obs_dir}[STRING] --hcfiles[FILE:HCONE_HCONE] --fpfiles[FILE:FP_FP] {options}
 
 
 .. code-block:: 

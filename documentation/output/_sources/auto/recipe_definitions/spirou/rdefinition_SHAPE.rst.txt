@@ -40,7 +40,7 @@ No description set
 
 .. code-block:: 
 
-    apero_shape_spirou.py.py {obs_dir}[STRING] [FILE:FP_FP] {options}
+    apero_shape_spirou.py {obs_dir}[STRING] [FILE:FP_FP] {options}
 
 
 .. code-block:: 

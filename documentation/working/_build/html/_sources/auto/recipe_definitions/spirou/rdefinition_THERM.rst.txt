@@ -40,7 +40,7 @@ No description set
 
 .. code-block:: 
 
-    apero_thermal_spirou.py.py {obs_dir}[STRING] [FILE:DARK_DARK_INT,DARK_DARK_TEL] {options}
+    apero_thermal_spirou.py {obs_dir}[STRING] [FILE:DARK_DARK_INT,DARK_DARK_TEL] {options}
 
 
 .. code-block:: 

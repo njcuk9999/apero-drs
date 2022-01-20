@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_mk_tellu_db_spirou.py.py {options}
+    apero_mk_tellu_db_spirou.py {options}
 
 
 No optional arguments

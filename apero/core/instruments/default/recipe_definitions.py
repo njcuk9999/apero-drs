@@ -172,7 +172,7 @@ explorer.recipe_type = 'nolog-tool'
 explorer.recipe_kind = 'user'
 explorer.set_kwarg(name='--hash', default=False, dtype='switch',
                    helpstr=textentry('EXPLORER_HASH'))
-
+explorer.description_file = 'apero_explorer.rst'
 
 # -----------------------------------------------------------------------------
 # apero_get.py
@@ -199,6 +199,7 @@ get_files.set_kwarg(name='--symlinks', default=False, dtype='switch',
                     helpstr=textentry('GET_SYMLINKS_HELP'))
 get_files.set_kwarg(name='--test', default=False, dtype='switch',
                     helpstr=textentry('GET_TEST_HELP'))
+get_files.description_file = 'apero_get.rst'
 
 # -----------------------------------------------------------------------------
 # apero_listing.py
@@ -218,6 +219,7 @@ listing.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
                   helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))
 listing.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
                   helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
+listing.description_file = 'apero_listing.rst'
 
 # -----------------------------------------------------------------------------
 # apero_log_stats.py
@@ -238,6 +240,7 @@ logstats.set_kwarg(name='--mode', dtype='options', default='red',
 logstats.set_kwarg(name='--plog', dtype=str, default='None',
                    helpstr='Specify a certain log file (full path)')
 logstats.set_kwarg(**plot)
+logstats.description_file = 'apero_stats.rst'
 
 # -----------------------------------------------------------------------------
 # apero_precheck.py
@@ -260,6 +263,7 @@ precheck.set_kwarg(name='--no_file_check', dtype='switch', default=False,
 precheck.set_kwarg(name='--no_obj_check', dtype='switch', default=False,
                    helpstr='Check the object database with current set of '
                            'raw files and flag possible problems')
+precheck.description_file = 'apero_precheck.rst'
 
 # -----------------------------------------------------------------------------
 # apero_processing.py
@@ -293,6 +297,7 @@ processing.set_kwarg(name='--telluric_targets', dtype=str, default='None',
                      helpstr=textentry('PROCESS_TELLU_TARGETS'))
 processing.set_kwarg(name='--update_objdb', dtype=str, default='None',
                      helpstr=textentry('PROCESS_UPDATE_OBJDB'))
+processing.description_file = 'apero_processing.rst'
 
 # -----------------------------------------------------------------------------
 # apero_requirements-check.py
@@ -343,4 +348,4 @@ validate.instrument = __INSTRUMENT__
 validate.description = textentry('VALIDATE_DESCRIPTION')
 validate.recipe_type = 'nolog-tool'
 validate.recipe_kind = 'user'
-
+validate.description_file = 'apero_validate.rst'

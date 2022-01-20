@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_database.py.py {options}
+    apero_database.py {options}
 
 
 No optional arguments

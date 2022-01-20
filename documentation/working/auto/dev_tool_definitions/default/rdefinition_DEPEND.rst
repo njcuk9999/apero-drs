@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_dependencies.py.py {options}
+    apero_dependencies.py {options}
 
 
 No optional arguments

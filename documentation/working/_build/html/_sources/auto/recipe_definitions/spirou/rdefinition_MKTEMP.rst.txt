@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_mk_template_spirou.py.py {objname}[STRING] {options}
+    apero_mk_template_spirou.py {objname}[STRING] {options}
 
 
 .. code-block:: 

@@ -98,6 +98,8 @@ DEV_TOOL_LIST_FILE = 'dev_tools.rst'
 # -----------------------------------------------------------------------------
 # Define the path to schematics
 SCHEMATIC_PATH = '../documentation/working/_static/yed/{instrument}/'
+# Define the path to the description files
+DESC_PATH = '../documentation/working/resources/{instrument}/descriptions/'
 # using apero reference
 USING_APERO_REF = 'using_apero_default'
 # -----------------------------------------------------------------------------
@@ -471,8 +473,13 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
     # get the absolute path of the schematics
     schematic_path = SCHEMATIC_PATH.format(instrument=instrument.lower())
     abs_schem_path = drs_misc.get_relative_folder(__PACKAGE__, schematic_path)
-    # get schmeatic path
+    # get schmeatic path relative to current path
     schem_path = rel_path_from_current(outpath, abs_schem_path)
+    # get the absolute path of the description files
+    descfile_path = DESC_PATH.format(instrument=instrument.lower())
+    abs_desc_path = drs_misc.get_relative_folder(__PACKAGE__, descfile_path)
+    # get description path relative to current path
+    desc_path = rel_path_from_current(outpath, abs_desc_path)
     # loop around recipes
     for srecipe in srecipes:
         # print we are analysing recipe
@@ -495,8 +502,10 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
         markdown.add_text('SHORTNAME: {0}'.format(summary['SHORTNAME']))
         # add description
         if summary['DESCRIPTION_FILE'] is not None:
+            # combine relative path with description file
+            dfile = os.path.join(desc_path, summary['DESCRIPTION_FILE'])
             # include a file
-            markdown.include_file(summary['DESCRIPTION_FILE'])
+            markdown.include_file(dfile)
         else:
             markdown.add_text('No description set')
         # ---------------------------------------------------------------------

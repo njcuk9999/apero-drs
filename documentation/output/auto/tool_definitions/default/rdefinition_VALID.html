@@ -112,7 +112,10 @@
   <h3><a href="../../../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">apero_validate</a><ul>
-<li><a class="reference internal" href="#description">1. Description</a></li>
+<li><a class="reference internal" href="#description">1. Description</a><ul>
+<li><a class="reference internal" href="#startup-splash">startup splash</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
 <li><a class="reference internal" href="#usage">3. Usage</a></li>
 <li><a class="reference internal" href="#optional-arguments">4. Optional Arguments</a></li>
@@ -161,7 +164,41 @@
 <section id="description">
 <h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
 <p>SHORTNAME: VALID</p>
-<p>No description set</p>
+<p>The validation recipe confirms that the configuration settings entered during the
+installation process (or updated manually in the files afterwards) are correct to at least
+setup APERO.</p>
+<p>As part of the validation recipe constants are print to the screen, similarly
+to when any recipe-run is started.</p>
+<section id="startup-splash">
+<span id="id1"></span><h3>startup splash<a class="headerlink" href="#startup-splash" title="Permalink to this headline">¶</a></h3>
+<p>The configuration values printed are as follows:</p>
+<ul class="simple">
+<li><p>The Instrument, <a class="reference internal" href="../../../main/misc/glossary.html#term-PID"><span class="xref std std-term">PID</span></a> and current version of APERO</p></li>
+<li><p><a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_DATA_RAW"><span class="xref std std-term">DRS_DATA_RAW</span></a>: the raw directory</p></li>
+<li><p><a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_DATA_REDUC"><span class="xref std std-term">DRS_DATA_REDUC</span></a>: the reduced data directory</p></li>
+<li><p><a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_DATA_WORKING"><span class="xref std std-term">DRS_DATA_WORKING</span></a>: the preprocessed data directory</p></li>
+<li><p><a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_CALIB_DB"><span class="xref std std-term">DRS_CALIB_DB</span></a>:</p></li>
+<li><p><a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_TELLU_DB"><span class="xref std std-term">DRS_TELLU_DB</span></a>:</p></li>
+<li><p><a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_DATA_ASSETS"><span class="xref std std-term">DRS_DATA_ASSETS</span></a>:</p></li>
+<li><p><a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_DATA_MSG"><span class="xref std std-term">DRS_DATA_MSG</span></a>:</p></li>
+<li><p><a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_DATA_RUN"><span class="xref std std-term">DRS_DATA_RUN</span></a>:</p></li>
+<li><p><a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_DATA_PLOT"><span class="xref std std-term">DRS_DATA_PLOT</span></a>:</p></li>
+<li><p>DRS_CONFIG: a list of places parameters and constants are taken from (ordered
+in decending priority</p></li>
+<li><p>DATABASE: The database type (MYSQL or SQLITE3)</p></li>
+<li><p>DATABASE-CALIB: the address of the calibration database table</p></li>
+<li><p>DATABASE-TELLU: the address of the telluric database table</p></li>
+<li><p>DATABASE-INDEX: the address of the index database table</p></li>
+<li><p>DATABASE-LOG: the address of the log database table</p></li>
+<li><p>DATABASE-OBJECT: the address of the object database table</p></li>
+<li><p>DATABASE-LANG: the address of the language database table</p></li>
+<li><p><a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_PRINT_LEVEL"><span class="xref std std-term">DRS_PRINT_LEVEL</span></a>: the standard output (console) level of logging</p></li>
+<li><p><a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_LOG_LEVEL"><span class="xref std std-term">DRS_LOG_LEVEL</span></a>: the log file level of logging</p></li>
+<li><p><a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_PLOT"><span class="xref std std-term">DRS_PLOT</span></a>: the plotting mode (0, 1 or 2)</p></li>
+</ul>
+<p>The slash screen should look similar to this:</p>
+<img alt="../../../_images/apero_splash.png" src="../../../_images/apero_splash.png" />
+</section>
 </section>
 <section id="schematic">
 <h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
@@ -169,7 +206,7 @@
 </section>
 <section id="usage">
 <h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_validate</span><span class="o">.</span><span class="n">py</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_validate</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
 <p>No optional arguments</p>

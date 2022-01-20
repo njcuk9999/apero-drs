@@ -15,7 +15,7 @@ apero_get
 SHORTNAME: GET
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_get.rst
 
 
 ********************************************************************************
@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_get.py.py {options}
+    apero_get.py {options}
 
 
 No optional arguments
