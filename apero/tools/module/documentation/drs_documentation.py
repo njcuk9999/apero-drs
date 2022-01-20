@@ -583,9 +583,9 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
     markdown = drs_markdown.MarkDownPage(page_ref)
     # add title
     if instrument in ['None', 'default']:
-        markdown.add_title(f'{strkind}'.capitalize())
+        markdown.add_title(f'{strkind.capitalize()}')
     else:
-        markdown.add_title(f'{strkind} ({instrument})'.capitalize())
+        markdown.add_title(f'{strkind.capitalize()} ({instrument})')
     # add text
     text = (f'This section describes all the {instrument} {strkind} to use with '
             f'APERO. \n For information on how to run these {strkind} (either '
