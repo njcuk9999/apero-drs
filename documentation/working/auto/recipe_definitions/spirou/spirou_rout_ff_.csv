@@ -1,0 +1,6 @@
+name,HDR[DRSOUTID],file type,suffix,fibers,dbname,dbkey,input file
+FF_FLAT,FF_FLAT,.fits,_flat,"AB, A, B, C",calibration,FLAT,FLAT_FLAT
+FF_BLAZE,FF_BLAZE,.fits,_blaze,"AB, A, B, C",calibration,BLAZE,FLAT_FLAT
+EXT_E2DS_LL,EXT_E2DS_LL,.fits,_e2dsll,"AB, A, B, C",--,--,"DRS_PP, FLAT_FLAT"
+ORDERP_STRAIGHT,ORDERP_STRAIGHT,.fits,_orderps,"AB, A, B, C",--,--,SHAPEL
+DEBUG_BACK,DEBUG_BACK,.fits,_background.fits,--,--,--,DRS_PP

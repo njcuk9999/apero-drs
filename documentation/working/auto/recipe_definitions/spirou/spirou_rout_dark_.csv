@@ -1,0 +1,4 @@
+name,HDR[DRSOUTID],file type,suffix,dbname,dbkey,input file
+DARKI,DARKI,.fits,_darki,calibration,DARKI,DARK_DARK_INT
+DARKT,DARKT,.fits,_darkt,calibration,DARKT,DARK_DARK_TEL
+DARKS,DARKS,.fits,_darks,calibration,DARKS,DARK_DARK_SKY

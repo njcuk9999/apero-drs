@@ -1,0 +1,65 @@
+name,HDR[DRSOUTID],file type,suffix,basename,fibers,input file
+PPMSTR,PPMSTR,.fits,_pmaster,--,--,RAW_FLAT_FLAT
+DARKI,DARKI,.fits,_darki,--,--,DARK_DARK
+DARKS,DARKS,.fits,_darks,--,--,DARK_DARK_SKY
+DARKM,DARKM,.fits,_dark_master,--,--,DARK_DARK
+BADPIX,BADPIX,.fits,_badpixel,--,--,FLAT_FLAT
+BKGRD_MAP,BKGRD_MAP,.fits,_bmap.fits,--,--,FLAT_FLAT
+DEBUG_BACK,DEBUG_BACK,.fits,_background.fits,--,--,DRS_PP
+LOC_ORDERP,LOC_ORDERP,.fits,_order_profile,--,"A, B","FLAT_DARK, DARK_FLAT"
+LOC_LOCO,LOC_LOCO,.fits,_loco,--,"A, B","FLAT_DARK, DARK_FLAT"
+LOC_FWHM,LOC_FWHM,.fits,_fwhm-order,--,"A, B","FLAT_DARK, DARK_FLAT"
+LOC_SUP,LOC_SUP,.fits,_with-order,--,"A, B","FLAT_DARK, DARK_FLAT"
+SHAPE_X,SHAPE_X,.fits,_shapex,--,--,FP_FP
+SHAPE_Y,SHAPE_Y,.fits,_shapey,--,--,FP_FP
+MASTER_FP,MASTER_FP,.fits,_fpmaster,--,--,FP_FP
+SHAPE_IN_FP,SHAPE_IN_FP,.fits,_shape_in_fp,--,--,FP_FP
+SHAPE_OUT_FP,SHAPE_OUT_FP,.fits,_shape_out_fp,--,--,FP_FP
+SHAPE_BDX,SHAPE_BDX,.fits,_shape_out_bdx,--,--,FP_FP
+SHAPEL,SHAPEL,.fits,_shapel,--,--,FP_FP
+SHAPEL_IN_FP,SHAPEL_IN_FP,.fits,_shapel_in_fp.fits,--,--,FP_FP
+SHAPEL_OUT_FP,SHAPEL_OUT_FP,.fits,_shapel_out_fp.fits,--,--,FP_FP
+FF_BLAZE,FF_BLAZE,.fits,_blaze,--,"A, B",FLAT_FLAT
+FF_FLAT,FF_FLAT,.fits,_flat,--,"A, B",FLAT_FLAT
+ORDERP_STRAIGHT,ORDERP_STRAIGHT,.fits,_orderps,--,"A, B",SHAPEL
+EXT_E2DS,EXT_E2DS,.fits,_e2ds,--,"A, B",DRS_PP
+EXT_E2DS_FF,EXT_E2DS_FF,.fits,_e2dsff,--,"A, B",DRS_PP
+EXT_E2DS_LL,EXT_E2DS_LL,.fits,_e2dsll,--,"A, B","DRS_PP, FLAT_FLAT"
+EXT_LOCO,EXT_LOCO,.fits,_e2dsloco,--,"A, B",DRS_PP
+EXT_S1D_W,EXT_S1D_W,.fits,_s1d_w,--,"A, B",DRS_PP
+EXT_S1D_V,EXT_S1D_V,.fits,_s1d_v,--,"A, B",DRS_PP
+EXT_FPLIST,EXT_FPLIST,.fits,_ext_fplines,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+LEAKM_E2DS,LEAKM_E2DS,.fits,_leak_master,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVESOL_MASTER,WAVESOL_MASTER,.fits,_wavesol_master,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVE_HCLIST_MASTER,WAVE_HCLIST_MASTER,.fits,_wavem_hclines,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLIST_MASTER,WAVE_FPLIST_MASTER,.fits,_wavem_fplines,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVEM_CAV,WAVEM_CAV,.fits,_wavecav_,--,--,"EXT_E2DS, EXT_E2DS_FF"
+WAVESOL_DEFAULT,WAVESOL_DEFAULT,.fits,_wavem,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVERES,WAVE_RES,.fits,_wavemres,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPRESTAB,--,.tbl,--,apero_wave_results,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLLTABL,--,.tbl,_mhc_lines,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVE_NIGHT,WAVE_NIGHT,.fits,_wave_night,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVEHCLL,--,.dat,_linelist,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVERES,WAVE_RES,.fits,_waveres,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPRESTAB,--,.tbl,--,apero_wave_results,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLLTABL,--,.tbl,_hc_lines,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVE_HCLIST,WAVE_HCLIST,.fits,_wave_hclines,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLIST,WAVE_FPLIST,.fits,_wave_fplines,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+TELLU_PCLEAN,TELLU_PCLEAN,.fits,_tellu_pclean,--,"A, B",EXT_E2DS_FF
+TELLU_CONV,--,.npy,_tellu_conv,--,"A, B","WAVESOL_MASTER, WAVE_NIGHT, WAVESOL_DEFAULT"
+TELLU_TRANS,TELLU_TRANS,.fits,_tellu_trans,--,"A, B",EXT_E2DS_FF
+TELLU_TAPAS,--,.npy,--,tapas_spl.npy,--,--
+TRANS_MODEL,TRANS_MODEL,.fits,--,trans_model_{0},"AB, A, B",--
+ABSO_NPY,--,.npy,--,tellu_save.npy,--,--
+TELLU_OBJ,TELLU_OBJ,.fits,_e2dsff_tcorr,--,"A, B",EXT_E2DS_FF
+SC1D_W_FILE,SC1D_W_FILE,.fits,_s1d_w_tcorr,--,"A, B",EXT_E2DS_FF
+SC1D_V_FILE,SC1D_V_FILE,.fits,_s1d_v_tcorr,--,"A, B",EXT_E2DS_FF
+TELLU_RECON,TELLU_RECON,.fits,_e2dsff_recon,--,"A, B",EXT_E2DS_FF
+RC1D_W_FILE,RC1D_W_FILE,.fits,_s1d_w_recon,--,"A, B",EXT_E2DS_FF
+RC1D_V_FILE,RC1D_V_FILE,.fits,_s1d_v_recon,--,"A, B",EXT_E2DS_FF
+TELLU_TEMP,TELLU_TEMP,.fits,--,Template,"A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE,TELLU_BIGCUBE,.fits,--,BigCube,"A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE0,TELLU_BIGCUBE0,.fits,--,BigCube0,"A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_TEMP_S1D,TELLU_TEMP_S1D,.fits,--,Template_s1d,"A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE_S1D,TELLU_BIGCUBE_S1D,.fits,--,BigCube_s1d,"A, B","EXT_E2DS_FF, TELLU_OBJ"
+CCF_RV,CCF_RV,.fits,_ccf,--,"A, B","EXT_E2DS_FF, TELLU_OBJ"

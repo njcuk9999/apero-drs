@@ -1,0 +1,3 @@
+name,HDR[DRSOUTID],file type,suffix,fibers,dbname,dbkey,input file
+EXT_E2DS,EXT_E2DS,.fits,_e2ds,"A, B",--,--,DRS_PP
+LEAKM_E2DS,LEAKM_E2DS,.fits,_leak_master,"A, B",calibration,LEAKM,"EXT_E2DS, EXT_E2DS_FF"

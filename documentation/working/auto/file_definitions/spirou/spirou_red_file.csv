@@ -1,0 +1,82 @@
+name,HDR[DRSOUTID],file type,suffix,basename,fibers,input file
+DARKI,DARKI,.fits,_darki,--,--,DARK_DARK_INT
+DARKT,DARKT,.fits,_darkt,--,--,DARK_DARK_TEL
+DARKS,DARKS,.fits,_darks,--,--,DARK_DARK_SKY
+DARKM,DARKM,.fits,_dark_master,--,--,"DARK_DARK_TEL, DARK_DARK_INT"
+BADPIX,BADPIX,.fits,_badpixel,--,--,FLAT_FLAT
+BKGRD_MAP,BKGRD_MAP,.fits,_bmap.fits,--,--,FLAT_FLAT
+DEBUG_BACK,DEBUG_BACK,.fits,_background.fits,--,--,DRS_PP
+LOC_ORDERP,LOC_ORDERP,.fits,_order_profile,--,"AB, C","FLAT_DARK, DARK_FLAT"
+LOC_LOCO,LOC_LOCO,.fits,_loco,--,"AB, C","FLAT_DARK, DARK_FLAT"
+LOC_FWHM,LOC_FWHM,.fits,_fwhm-order,--,"AB, C","FLAT_DARK, DARK_FLAT"
+LOC_SUP,LOC_SUP,.fits,_with-order,--,"AB, C","FLAT_DARK, DARK_FLAT"
+SHAPE_X,SHAPE_X,.fits,_shapex,--,--,FP_FP
+SHAPE_Y,SHAPE_Y,.fits,_shapey,--,--,FP_FP
+MASTER_FP,MASTER_FP,.fits,_fpmaster,--,--,FP_FP
+SHAPE_IN_FP,SHAPE_IN_FP,.fits,_shape_in_fp,--,--,FP_FP
+SHAPE_OUT_FP,SHAPE_OUT_FP,.fits,_shape_out_fp,--,--,FP_FP
+SHAPE_IN_HC,SHAPE_IN_HC,.fits,_shape_in_hc,--,--,HCONE_HCONE
+SHAPE_OUT_HC,SHAPE_OUT_HC,.fits,_shape_out_hc,--,--,HCONE_HCONE
+SHAPE_BDX,SHAPE_BDX,.fits,_shape_out_bdx,--,--,FP_FP
+SHAPEL,SHAPEL,.fits,_shapel,--,--,FP_FP
+SHAPEL_IN_FP,SHAPEL_IN_FP,.fits,_shapel_in_fp.fits,--,--,FP_FP
+SHAPEL_OUT_FP,SHAPEL_OUT_FP,.fits,_shapel_out_fp.fits,--,--,FP_FP
+FF_BLAZE,FF_BLAZE,.fits,_blaze,--,"AB, A, B, C",FLAT_FLAT
+FF_FLAT,FF_FLAT,.fits,_flat,--,"AB, A, B, C",FLAT_FLAT
+ORDERP_STRAIGHT,ORDERP_STRAIGHT,.fits,_orderps,--,"AB, A, B, C",SHAPEL
+EXT_E2DS,EXT_E2DS,.fits,_e2ds,--,"AB, A, B, C",DRS_PP
+EXT_E2DS_FF,EXT_E2DS_FF,.fits,_e2dsff,--,"AB, A, B, C",DRS_PP
+EXT_E2DS_LL,EXT_E2DS_LL,.fits,_e2dsll,--,"AB, A, B, C","DRS_PP, FLAT_FLAT"
+EXT_LOCO,EXT_LOCO,.fits,_e2dsloco,--,"AB, A, B, C",DRS_PP
+EXT_S1D_W,EXT_S1D_W,.fits,_s1d_w,--,"AB, A, B, C",DRS_PP
+EXT_S1D_V,EXT_S1D_V,.fits,_s1d_v,--,"AB, A, B, C",DRS_PP
+EXT_FPLIST,EXT_FPLIST,.fits,_ext_fplines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+THERMALI_E2DS,THERMALI_E2DS,.fits,_thermal_e2ds_int,--,"AB, A, B, C",DARK_DARK_INT
+THERMALT_E2DS,THERMALT_E2DS,.fits,_thermal_e2ds_tel,--,"AB, A, B, C",DARK_DARK_TEL
+LEAKM_E2DS,LEAKM_E2DS,.fits,_leak_master,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVESOL_MASTER,WAVESOL_MASTER,.fits,_wavesol_master,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_HCLIST_MASTER,WAVE_HCLIST_MASTER,.fits,_wavem_hclines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLIST_MASTER,WAVE_FPLIST_MASTER,.fits,_wavem_fplines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVEM_CAV,WAVEM_CAV,.fits,_wavecav_,--,--,"EXT_E2DS, EXT_E2DS_FF"
+WAVESOL_DEFAULT,WAVESOL_DEFAULT,.fits,_wavem,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVERES,WAVE_RES,.fits,_wavemres,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPRESTAB,--,.tbl,--,apero_wave_results,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLLTABL,--,.tbl,_mhc_lines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_NIGHT,WAVE_NIGHT,.fits,_wave_night,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVEHCLL,--,.dat,_linelist,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVERES,WAVE_RES,.fits,_waveres,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPRESTAB,--,.tbl,--,apero_wave_results,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLLTABL,--,.tbl,_hc_lines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_HCLIST,WAVE_HCLIST,.fits,_wave_hclines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLIST,WAVE_FPLIST,.fits,_wave_fplines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+TELLU_PCLEAN,TELLU_PCLEAN,.fits,_tellu_pclean,--,"AB, A, B, C",EXT_E2DS_FF
+TELLU_CONV,--,.npy,_tellu_conv,--,"AB, A, B, C","WAVESOL_MASTER, WAVE_NIGHT, WAVESOL_DEFAULT"
+TELLU_TRANS,TELLU_TRANS,.fits,_tellu_trans,--,"AB, A, B",EXT_E2DS_FF
+TELLU_TAPAS,--,.npy,--,tapas_spl.npy,--,--
+TRANS_MODEL,TRANS_MODEL,.fits,--,trans_model_{0},"AB, A, B",--
+ABSO_NPY,--,.npy,--,tellu_save.npy,--,--
+TELLU_OBJ,TELLU_OBJ,.fits,_e2dsff_tcorr,--,"AB, A, B, C",EXT_E2DS_FF
+SC1D_W_FILE,SC1D_W_FILE,.fits,_s1d_w_tcorr,--,"AB, A, B, C",EXT_E2DS_FF
+SC1D_V_FILE,SC1D_V_FILE,.fits,_s1d_v_tcorr,--,"AB, A, B, C",EXT_E2DS_FF
+TELLU_RECON,TELLU_RECON,.fits,_e2dsff_recon,--,"AB, A, B, C",EXT_E2DS_FF
+RC1D_W_FILE,RC1D_W_FILE,.fits,_s1d_w_recon,--,"AB, A, B, C",EXT_E2DS_FF
+RC1D_V_FILE,RC1D_V_FILE,.fits,_s1d_v_recon,--,"AB, A, B, C",EXT_E2DS_FF
+TELLU_TEMP,TELLU_TEMP,.fits,--,Template,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE,TELLU_BIGCUBE,.fits,--,BigCube,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE0,TELLU_BIGCUBE0,.fits,--,BigCube0,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_TEMP_S1D,TELLU_TEMP_S1D,.fits,--,Template_s1d,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE_S1D,TELLU_BIGCUBE_S1D,.fits,--,BigCube_s1d,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
+CCF_RV,CCF_RV,.fits,_ccf,--,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
+POL_DEG,POL_DEG,.fits,_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+STOKESI_POL,STOKESI_POL,.fits,_StokesI,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+NULL_POL1,NULL_POL1,.fits,_null1_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+NULL_POL2,NULL_POL2,.fits,_null2_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+LSD_POL,LSD_POL,.fits,_lsd_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DW_POL,S1DW_POL,.fits,_s1d_w_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DV_POL,S1DV_POL,.fits,_s1d_v_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DW_NULL1,S1DW_NULL1,.fits,_s1d_w_null1,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DV_NULL1,S1DV_NULL1,.fits,_s1d_v_null1,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DW_NULL2,S1DW_NULL1,.fits,_s1d_w_null2,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DV_NULL2,S1DV_NULL2,.fits,_s1d_v_null2,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DW_STOKESI,S1DW_STOKESI,.fits,_s1d_w_stokesi,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DV_STOKESI,S1DV_STOKESI,.fits,_s1d_v_stokesi,--,--,"EXT_E2DS_FF, TELLU_OBJ"

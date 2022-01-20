@@ -1,0 +1,11 @@
+ORDER,RECIPE,SHORTNAME,RECIPE KIND,MASTER RECIPE,ARGS,KWARGS
+1,apero_dark_master_spirou.py,DARKM,calib-master,Yes,,
+2,apero_badpix_spirou.py,BADM,calib-master,Yes,,
+3,apero_loc_spirou.py,LOCMC,calib-master-C,Yes,{files}=[DARK_FLAT],
+4,apero_loc_spirou.py,LOCMAB,calib-master-AB,Yes,{files}=[FLAT_DARK],
+5,apero_shape_master_spirou.py,SHAPEM,calib-master,Yes,,
+6,apero_shape_spirou.py,SHAPELM,calib-master,Yes,,
+7,apero_flat_spirou.py,FLATM,calib-master,Yes,,
+8,apero_thermal_spirou.py,THERM_M,calib-master,Yes,,
+9,apero_leak_master_spirou.py,LEAKM,calib-master,Yes,,
+10,apero_wave_master_spirou.py,WAVEM,calib-master,Yes,,--hcfiles=[HCONE_HCONE] |br| --fpfiles=[FP_FP]
