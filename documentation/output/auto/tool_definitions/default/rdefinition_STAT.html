@@ -112,7 +112,12 @@
   <h3><a href="../../../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">apero_stats</a><ul>
-<li><a class="reference internal" href="#description">1. Description</a></li>
+<li><a class="reference internal" href="#description">1. Description</a><ul>
+<li><a class="reference internal" href="#timing-mode">1.1 Timing mode</a></li>
+<li><a class="reference internal" href="#quality-control-mode">1.2 Quality control mode</a></li>
+<li><a class="reference internal" href="#error-mode">1.3 Error mode</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
 <li><a class="reference internal" href="#usage">3. Usage</a></li>
 <li><a class="reference internal" href="#optional-arguments">4. Optional Arguments</a></li>
@@ -161,7 +166,122 @@
 <section id="description">
 <h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
 <p>SHORTNAME: STAT</p>
-<p>No description set</p>
+<p>The apero stats file is usually run during or after a apero_processing run.</p>
+<p>There are three modes:</p>
+<ul class="simple">
+<li><p>timing mode: (using –mode=timing)</p></li>
+<li><p>quality control mode: (using –mode=qc)</p></li>
+<li><p>error mode: (using –mode=error)</p></li>
+</ul>
+<p>If the <cite>–plog</cite> argument is used (with the absolute path to a apero log file group)
+then only the stats for that apero_processing run are used</p>
+<section id="timing-mode">
+<h3>1.1 Timing mode<a class="headerlink" href="#timing-mode" title="Permalink to this headline">¶</a></h3>
+<p>This mode takes all the <span class="xref std std-term">recipe-runs</span> in the logger database (at this point in time) and measures
+various timing stats for each recipe.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>timing mode has to read and sort all log entries. This can take
+quite some time to get the stats of a full run of data</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The –plog argument is not used for timing mode</p>
+</div>
+<p>The stats are printed per recipe (named by the <a class="reference internal" href="../../../main/misc/glossary.html#term-shortname"><span class="xref std std-term">shortname</span></a>) and are as
+follows:</p>
+<ul>
+<li><p>Mean time: the mean time for recipes of this shortname +/- the standard deviation</p></li>
+<li><p>Median time: the median time for recipes of this shortname +/- the standard deviation</p></li>
+<li><p>The range in times (minimum and maximum) for recipes of this shortname</p></li>
+<li><p>The number of runs (<cite>Nruns</cite>) of this recipe attempted</p></li>
+<li><dl>
+<dt>The total time recipes of this shortname were running (end of last recipe run minus start of first recipe run)</dt><dd><div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The total time is only correct if all recipes of this shortname were run without interruption with no
+other recipe runs between - this is the standard apero_processing approach but may not be true if
+analysing multiple log entries</p>
+</div>
+</dd>
+</dl>
+</li>
+<li><p>The total cpu time the recipe of this shortname were running (the duration) note if all recipes of this shortname
+ran in a single block this should be the time taken if done on a single core</p></li>
+<li><p>efficiency <cite>(total cpu time)/(total time)</cite>, perfect efficiency would give a value equal to the number of cores used
+(however a perfect efficiency is impossible)</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If <cite>Nruns</cite> is less than the number of cores the total cpu time and total time should be the same and the
+efficiency should tend towards (or be exactly 1).</p>
+</div>
+</li>
+</ul>
+<p>As well as the stats, after all stats have printed a histogram of each recipe with over 10 recipe-runs is plotted.
+This shows this distribution of timings for each shortname.</p>
+</section>
+<section id="quality-control-mode">
+<h3>1.2 Quality control mode<a class="headerlink" href="#quality-control-mode" title="Permalink to this headline">¶</a></h3>
+<p>This mode takes all the <span class="xref std std-term">recipe-runs</span> in the logger database and prints statistics on the quality control
+recorded in each recipe (if present).</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>quality control mode has to read and sort all log entries. This can take
+quite some time to get the stats of a full run of data</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The –plog argument is not used for timing mode</p>
+</div>
+<p>The stats are printed per recipe (named by the <a class="reference internal" href="../../../main/misc/glossary.html#term-shortname"><span class="xref std std-term">shortname</span></a>) and are as
+follows:</p>
+<ul class="simple">
+<li><p>The number passed compared to the number that finished in total</p></li>
+<li><p>The number failed compared to the number that finished in total</p></li>
+<li><p>The Mean/Median/Max/Min and criteria of failure for each quality control</p></li>
+<li><p>The number that were still “running” when this report was made (should be zero if not apero_processing is running)</p></li>
+<li><p>The number that ended successfully (i.e. did not encouter an error or exception - handled or otherwise)</p></li>
+</ul>
+<p>As well as this for each shortname that has quality control a plot is produced. This plot should show N+1 panels,
+where N is the number of quality control criteria. The top panel shows the global pass/fail/ended statistics
+(taking into account all quality control criteria). The other panels show (if numeric) a value of the quality control
+criteria measured for each recipe run with that shortname as a function of observation date
+(from header key <a class="reference internal" href="../../../main/misc/glossary.html#term-KW_MID_OBS_TIME"><span class="xref std std-term">KW_MID_OBS_TIME</span></a>). These values should be in blue and in red (as a dashed line) compared to
+a logic threshold (i.e. points above or below, depending on the criteria fail or pass).</p>
+<p>This process is repeated for each shortname and graphs and or stats are shown if quality control criteria are available
+and numeric.</p>
+</section>
+<section id="error-mode">
+<h3>1.3 Error mode<a class="headerlink" href="#error-mode" title="Permalink to this headline">¶</a></h3>
+<p>The error mode takes all errors caught during apero_processing runs.
+Using the –plog argument one can select just a single apero_processing run.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>the only log files that should be used as an argument to –plog are in
+the <a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_DATA_MSG"><span class="xref std std-term">DRS_DATA_MSG</span></a> directory, specifically <cite>./tool/other/APEROL-PID-{PID}-apero_processing.log</cite> files
+(there should be one of these log files for each time apero_processing was run) where <a class="reference internal" href="../../../main/misc/glossary.html#term-PID"><span class="xref std std-term">PID</span></a> is the unique
+PID for that apero_processing run.</p>
+</div>
+<p>The error mode groups all found errors into files based on the apero error codes given (i.e. EXX-XXX-XXXXX) and also
+groups any errors that do not have an apero error code (unexpected exceptions) by the last line of text of that
+exception (generally these are the same for the same exception).</p>
+<p>Statistic of these are printed to the screen and a directory is added to the
+<cite>DRS_DATA_MSG/report/APEROL-PID-{PID}_apero_processing/</cite> directory.</p>
+<p>Files are saved as the error code: E_XX_XXX_XXXXX.log or if they were unexpected exceptions with a E_UNHANDLE_YYYYY.log
+where YYYYY increases from 0 up to the maximum number of unique unexpected execptions.</p>
+<p>Each of these error log files contains all errors that match</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#================================================</span>
+<span class="c1"># {i} / {total}</span>
+<span class="c1"># RUNSTRING = program.py {arguments} {options}</span>
+<span class="c1">#=================================================</span>
+
+<span class="n">ERROR</span> <span class="n">MSG</span> <span class="n">LINE</span> <span class="mi">1</span>
+<span class="n">ERROR</span> <span class="n">MSG</span> <span class="n">LINE</span> <span class="mi">2</span>
+<span class="o">...</span>
+<span class="n">ERROR</span> <span class="n">MSG</span> <span class="n">LINE</span> <span class="n">N</span>
+</pre></div>
+</div>
+<p>Where i is the nth error of this type, total is the total number of errors of this type</p>
+</section>
 </section>
 <section id="schematic">
 <h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>

@@ -15,7 +15,7 @@ apero_reset
 SHORTNAME: RESET
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_reset.rst
 
 
 ********************************************************************************

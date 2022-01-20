@@ -74,6 +74,11 @@ General
 
 .. glossary::  
 
+  block_kind
+
+    * this is the type of file we have related to the various data directories
+    * valid block kinds are: "raw", "tmp", "red", "calib", "tellu"
+
   ds9
 
     * An astronomical imaging and data visualization application
