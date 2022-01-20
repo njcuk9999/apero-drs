@@ -8,9 +8,10 @@ NIRPS HA documentation
 .. toctree::
    :maxdepth: 2
 
-   using_apero_nirps_ha.rst
-   recipes_nirps_ha.rst
-   tools_nirps_ha.rst
+   ../../auto/recipe_sequences/nirps_ha/sequences.rst
+   ../../auto/recipe_definitions/nirps_ha/recipes.rst
+   ../../auto/tool_definitions/nirps_ha/tools.rst
+   ../../auto/file_definitions/nirps_ha/files.rst
 
 .. only:: html
 

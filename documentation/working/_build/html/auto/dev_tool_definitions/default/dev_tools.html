@@ -1,0 +1,189 @@
+
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Dev tools &#8212; APERO 0.7.194 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="apero_changelog" href="rdefinition_CLOG.html" />
+    <link rel="prev" title="Developer how to guide" href="../../../main/developer/main_dev.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
+
+
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a title="Home" href="../../../index.html">
+        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="install" href="../../../user/general/installation.html">
+        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
+        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="download pdf" href="../../../apero-docs.pdf">
+        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+  </ul>
+    <div>
+    <a href="../../../index.html">
+      <img src="../../../_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="rdefinition_CLOG.html" title="apero_changelog"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../../../main/developer/main_dev.html" title="Developer how to guide"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.194 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../main/developer/main_dev.html" accesskey="U">Developer how to guide</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Dev tools</a></li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../../../main/developer/main_dev.html"
+                        title="previous chapter">Developer how to guide</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="rdefinition_CLOG.html"
+                        title="next chapter">apero_changelog</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/auto/dev_tool_definitions/default/dev_tools.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="dev-tools">
+<span id="dev-tools-default"></span><h1>Dev tools<a class="headerlink" href="#dev-tools" title="Permalink to this headline">¶</a></h1>
+<dl class="simple">
+<dt>This section describes all the default dev tools to use with APERO.</dt><dd><p>For information on how to run these dev tools (either individually or with the processing tools) see <a class="reference internal" href="../../../main/default/using_apero.html#using-apero-default"><span class="std std-ref">here</span></a>.</p>
+</dd>
+</dl>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">default dev tools</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="rdefinition_CLOG.html">apero_changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rdefinition_DBMGR.html">apero_database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rdefinition_DOC.html">apero_documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rdefinition_DEPEND.html">apero_dependencies</a></li>
+</ul>
+</div>
+<p><a class="reference internal" href="#dev-tools-default"><span class="std std-ref">Back to top</span></a></p>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="rdefinition_CLOG.html" title="apero_changelog"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../../../main/developer/main_dev.html" title="Developer how to guide"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.194 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../main/developer/main_dev.html" >Developer how to guide</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Dev tools</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    </div>
+  </body>
+</html>

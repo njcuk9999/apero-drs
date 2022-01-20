@@ -15,6 +15,7 @@ Created on 2018-10-31 at 18:06
 """
 from apero.base import base
 from apero.core.core import drs_file
+from apero.core.instruments.default import output_filenames as out
 
 # =============================================================================
 # Define variables
@@ -32,26 +33,41 @@ __release__ = base.__release__
 # =============================================================================
 drs_input = drs_file.DrsInputFile
 drs_finput = drs_file.DrsFitsFile
+drs_oinput = drs_file.DrsOutFile
 
 # =============================================================================
 # Raw Files
 # =============================================================================
 # generic raw file
-raw_file = drs_finput('DRS_RAW', ext='.fits')
+raw_file = drs_finput('DRS_RAW', filetype='.fits', suffix='',
+                      outfunc=out.blank)
 
 # =============================================================================
 # Preprocessed Files
 # =============================================================================
 # generic pp file
-pp_file = drs_finput('DRS_PP', ext='pp.fits')
+pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp',
+                     outfunc=out.general_file, intype=raw_file)
 
 # =============================================================================
 # Reduced Files
 # =============================================================================
 # generic out file
-out_file = drs_finput('DRS_OUTPUT')
-calib_file = drs_finput('DRS_OUTPUT')
+red_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
+                      intype=pp_file)
+# calib out file
+calib_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
+                        intype=pp_file)
+# telluric out file
+tellu_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
+                        intype=pp_file)
 
+# =============================================================================
+# Post processed Files
+# =============================================================================
+# generic post processed file
+post_file = drs_oinput('DRS_POST', filetype='.fits', suffix='',
+                       outfunc=out.post_file)
 
 # =============================================================================
 # End of code

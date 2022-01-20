@@ -74,14 +74,16 @@ def __main__(recipe, params):
         instruments = base.INSTRUMENTS[:-1]
     else:
         instruments = instruments.split(',')
+
+    # add default to instruments
+    instruments = ['default'] + instruments
     # -------------------------------------------------------------------------
     # get inputs
     run_filedef = params['INPUTS']['FILEDEF']
     run_recipedef = params['INPUTS']['RECIPEDEF']
     run_recipeseq = params['INPUTS']['RECIPESEQ']
-
-    # TODO: Add tools (default + instruments?)
-    # TODO: clean + create "auto" directories
+    # clean auto directories
+    drs_documentation.clean_auto(instruments)
     # -------------------------------------------------------------------------
     # loop around instruments
     for instrument in instruments:

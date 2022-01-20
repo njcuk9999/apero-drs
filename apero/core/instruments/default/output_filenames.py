@@ -10,12 +10,11 @@ Created on 2019-03-21 at 18:35
 @author: cook
 """
 import os
-from typing import Any, Union
+from typing import Any, Tuple, Union
 
 from apero.base import base
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
-from apero import lang
 from apero.core.constants import param_functions
 
 # =============================================================================
@@ -345,6 +344,43 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
         abspath = os.path.join(path, outfilename)
     # return absolute path
     return abspath
+
+
+def post_file(params: ParamDict, drsfile: Any, identifier: str,
+              obs_dir: Union[str, None] = None) -> Tuple[str, str]:
+    """
+    Generate a post processed filename
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param drsfile: DrsOutFile instance, the drs out file associated with this
+                    post processed file
+    :param identifier: str, an identifier to the required output filename
+    :param obs_dir: str, the observation directory
+    :return:
+    """
+    # set function name
+    _ = display_func('post_file', __NAME__)
+    # -------------------------------------------------------------------------
+    # set filename to identifer
+    filename = str(identifier)
+    # -------------------------------------------------------------------------
+    # remove input suffix (extension) from identifier
+    if drsfile.inext is not None:
+        if filename.endswith(drsfile.inext):
+            filename = filename[:-len(drsfile.inext)]
+    # -------------------------------------------------------------------------
+    # add output suffix
+    filename = filename + drsfile.suffix
+    # -------------------------------------------------------------------------
+    if obs_dir is None:
+        obs_dir = ''
+    # construct path
+    path = os.path.join(params['DRS_DATA_OUT'], obs_dir)
+    # add path to filename
+    filename = os.path.join(path, filename)
+    # -------------------------------------------------------------------------
+    # return filename
+    return filename, path
 
 
 # =============================================================================

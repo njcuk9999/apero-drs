@@ -11,11 +11,12 @@ This section provides a general guide to using APERO.
    :maxdepth: 2
 
    installation.rst
-   ../default/using_apero_default.rst
+   ../default/using_apero.rst
    known_issues.rst
    todo.rst
    deep.rst
-   ../default/tools_default.rst
+   ../../auto/tool_definitions/default/tools.rst
+
 
 --------------------------------------------------------------------------------
 

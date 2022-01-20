@@ -158,7 +158,11 @@ class DrsBaseError(DrsBaseException):
             eargs = [self.code, __NAME__]
             raise DrsBaseError('KEYERROR', arguments=eargs)
         # define the message
-        self.message = 'E[{0}]: '.format(self.code) + BETEXT[self.code]
+        if arguments is None:
+            self.message = 'E[{0}]: '.format(self.code) + BETEXT[self.code]
+        else:
+            self.message = ('E[{0}]: '.format(self.code) +
+                            BETEXT[self.code].format(*arguments))
         # define the args
         self.arguments = arguments
 

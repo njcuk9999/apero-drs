@@ -9,9 +9,10 @@ Created on 2021-06-29
 
 @author: cook
 """
+from astropy.table import Table
 import numpy as np
 import os
-from typing import Optional, List
+from typing import Optional, List, Union
 
 # =============================================================================
 # Define variables
@@ -24,6 +25,8 @@ class MarkDownPage:
         self.lines = []
         # add page ref to top of page
         self.add_reference(page_ref)
+        # multi-line table flag
+        self.multiline_table_enabled = False
 
     def write_page(self, filename: str):
         """
@@ -137,7 +140,8 @@ class MarkDownPage:
         self.lines += ['^' * length]
         self.add_newline()
 
-    def add_csv_table(self, title: str, csv_file: str):
+    def add_csv_table(self, title: str, csv_file: str,
+                      abs_path: Union[str, None] = None):
         """
         Create a csv table in the markdown page
 
@@ -146,12 +150,33 @@ class MarkDownPage:
 
         :return: None, updates page
         """
-        self.add_newline()
-        self.lines += ['.. csv-table:: {0}'.format(title)]
-        self.lines += ['   :file: {0}'.format(csv_file)]
-        self.lines += ['   :header-rows: 1']
-        self.lines += ['   :class: csvtable']
-        self.add_newline()
+        # if a abs_path is supplied we can check the file for rows, if there
+        #   are no rows do not add the csv-table
+        table_has_rows = True
+        # check abs_path
+        if abs_path is not None:
+            # if we cannot load table don't add csv-table
+            try:
+                table = Table.read(abs_path, format='csv')
+                # check length of table
+                if len(table) == 0:
+                    table_has_rows = False
+                # delete table
+                del table
+            except Exception as _:
+                table_has_rows = False
+        # only add csv table if we have rows
+        if table_has_rows:
+            self.add_newline()
+            self.lines += ['.. csv-table:: {0}'.format(title)]
+            self.lines += ['   :file: {0}'.format(csv_file)]
+            self.lines += ['   :header-rows: 1']
+            self.lines += ['   :class: csvtable']
+            self.add_newline()
+        else:
+            self.add_newline()
+            self.add_text('N/A')
+            self.add_newline()
 
     def enable_multiline_table(self):
         """
@@ -159,9 +184,15 @@ class MarkDownPage:
 
         :return: None, updates page
         """
+        # if we have already enabled multiline tables don't do it again
+        if self.multiline_table_enabled:
+            return
+        # enable multiline tables
         self.lines += ['.. |br| raw:: html']
         self.lines += ['']
         self.lines += ['     <br>']
+        # flag that for this page we have already enabled multiline tables
+        self.multiline_table_enabled = True
 
     def add_text(self, text: str):
         """
@@ -209,9 +240,8 @@ class MarkDownPage:
 
         :return: None, updates page
         """
-        basename = os.path.basename(filename)
         self.add_newline()
-        self.lines += ['.. include:: {0}'.format(basename)]
+        self.lines += ['.. include:: {0}'.format(filename)]
         self.add_newline()
 
     def add_code_block(self, codetype: str, codetext: List[str]):

@@ -8,9 +8,10 @@ SPIRou documentation
 .. toctree::
    :maxdepth: 2
 
-   using_apero_spirou.rst
-   recipes_spirou.rst
-   tools_spirou.rst
+   ../../auto/recipe_sequences/spirou/sequences.rst
+   ../../auto/recipe_definitions/spirou/recipes.rst
+   ../../auto/tool_definitions/spirou/tools.rst
+   ../../auto/file_definitions/spirou/files.rst
 
 .. only:: html
 
