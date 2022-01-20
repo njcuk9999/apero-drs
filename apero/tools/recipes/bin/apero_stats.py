@@ -97,9 +97,6 @@ def __main__(recipe, params):
         # do the qc stats
         drs_stats.qc_stats(params, recipe)
     elif mode.upper() == 'ERROR':
-        # make sure plog is defined for error mode
-        if drs_text.null_text(params['INPUTS']['PLOG'], ['None', 'Null', '']):
-            WLOG(params, 'error', 'For error mode you must define a log file')
         # do the error stats
         drs_stats.error_stats(params)
 
