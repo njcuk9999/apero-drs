@@ -15,7 +15,7 @@ apero_explorer
 SHORTNAME: EXPLO
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_explorer.rst
 
 
 ********************************************************************************
@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_explorer.py.py {options}
+    apero_explorer.py {options}
 
 
 No optional arguments

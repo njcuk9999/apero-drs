@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_reset.py.py {options}
+    apero_reset.py {options}
 
 
 No optional arguments

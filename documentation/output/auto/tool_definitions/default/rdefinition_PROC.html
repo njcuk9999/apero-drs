@@ -161,7 +161,126 @@
 <section id="description">
 <h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
 <p>SHORTNAME: PROC</p>
-<p>No description set</p>
+<p>The processing script is the recommended way to run the reduction.
+It takes a <a class="reference internal" href="../../../main/misc/glossary.html#term-run-ini-file"><span class="xref std std-term">run-ini-file</span></a> which contains parameters specific to the users
+needs for that processing session. Based on these run-ini-file parameters and the
+raw data (stored in the <a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_DATA_RAW"><span class="xref std std-term">DRS_DATA_RAW</span></a> directory) a set of recipes or a
+<span class="xref std std-term">recipe-sequences</span> will determine which recipes are run for which raw files.</p>
+<p>The run-ini-files are an important part of the processing script and have
+many options to control the processing run.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some of the following arguments can also be added to the command-line or python function call
+(see section 4)</p>
+</div>
+<p>Options are:</p>
+<ul>
+<li><p>RUN_NAME: the name of the run</p></li>
+<li><p>SEND_EMAIL: whether to send an email on start/finish</p></li>
+<li><p>EMAIL_ADDRESS: the email address to send an email to</p></li>
+<li><p>RUN_OBS_DIR: Whether to limit processing to a single <a class="reference internal" href="../../../main/misc/glossary.html#term-observation-directory"><span class="xref std std-term">observation-directory</span></a></p></li>
+<li><p>EXCLUDE_OBS_DIRS: Whether to ignore certain observation-directories</p></li>
+<li><p>INCLUDE_OBS_DIRS: Whether to limit processing to a set of observation-directories</p></li>
+<li><p>PI_NAMES: Whether to limit processing to a single or list of PI_NAMES (must match the header key <a class="reference internal" href="../../../main/misc/glossary.html#term-KW_PI_NAME"><span class="xref std std-term">KW_PI_NAME</span></a>)</p></li>
+<li><p>MASTER_OBS_DIR: The <a class="reference internal" href="../../../main/misc/glossary.html#term-observation-directory"><span class="xref std std-term">observation-directory</span></a> to use as the master</p>
+<blockquote>
+<div><div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>this should not be changed in general but does require calibrations from this night to be
+present in the raw directory.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Currently we do not support multiple master_obs_dir and a full reduction should never mix
+different master observation-directories</p>
+</div>
+</div></blockquote>
+</li>
+<li><dl>
+<dt>CORES: The number of cores to use</dt><dd><div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This should always be at least N-1 less than the total number of cores available</p>
+</div>
+</dd>
+</dl>
+</li>
+<li><p>STOP_AT_EXCEPTION: The processing code will not continue past an error and will stop</p></li>
+<li><dl>
+<dt>TEST_RUN: Runs the processing script without running any recipes</dt><dd><div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is highly recommended, please check that you are reducing the expected data before running
+without TEST_RUN = False</p>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>USE_ENGINEERING: If True engineering observation-directories (those without science observation).</dt><dd><div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In general we do not recommend to reduce these nights as they may
+reduce the quality of reduced data</p>
+</div>
+</dd>
+</dl>
+</li>
+<li><p>TRIGGER_RUN: For use in online reductions only</p></li>
+<li><p>USE_ODO_REJECTLIST: If True checks that odometer code aren’t already flagged as bad files</p></li>
+<li><dl>
+<dt>RECAL_TEMPLATES: If True recalculates the templates that are already present.</dt><dd><div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This should only be done when re-reducing all data for a single object.
+Recalculating the template for only new observations will greatly affect RV precision
+and we do not recommend doing any time series analysis with a varying template.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A template hash key is available in the header of files that have used a template. If
+unsure check that the template hash matches for all observations.</p>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>UPDATE_OBJ_DATABASE: If True the locally stored object database is updated from online.</dt><dd><div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Do not do this unless you are re-reducing all the data. If the object database
+has updated parameters this could affect RV precision (as the BERV calculation may
+change).</p>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>RUN_XXX: For each recipe (or recipe in a sequence) there is a <a class="reference internal" href="../../../main/misc/glossary.html#term-shortname"><span class="xref std std-term">shortname</span></a> associated with it. A user can</dt><dd><p>turn on and off recipes within a sequence without having to create a new sequence.
+i.e. setting <cite>RUN_PP = False</cite> will turn of the <cite>PP</cite> recipe (apero_preprocessing) all recipe-runs in an
+apero_processing run will be skipped.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>SKIP_XXX: Similar to RUN_XXX there is a <a class="reference internal" href="../../../main/misc/glossary.html#term-shortname"><span class="xref std std-term">shortname</span></a> that can be skipped, if and only if the recipe-run can be</dt><dd><p>found in the logging database (i.e. all required arguments are identical) and it has successfully completed
+in a previous apero_processing run, or when run individually</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>TELLURIC_TARGETS: A filter for certain recipes that use hot star observations to only use certain hot star object names</dt><dd><p>(and thus only use certain observations). The default value is “All” which uses all telluric objects
+in a pre-configured list of telluric object.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>SCIENCE_TARGETS: A filter for certain recipes that use science observations. Using this a user can only reduced data</dt><dd><p>for a single object name or a list of object names (separated by a comma).
+For example if one sets <cite>SCIENCE_TARGETS=Gl699</cite> and had <cite>RUN_EXTOBJ=True</cite> only extractions of Gl699
+would be reduced</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>The very last piece of information required is the sequences (or individual recipe runs) that are required.
+The should be numbered id00000, id00001, id00002 etc and should only contain an individual recipe run (with all correct
+arguments) or a sequence name. For sequence names see the sequences page for an instrument
+(e.g. for spirou click <a class="reference internal" href="../../recipe_sequences/spirou/sequences.html#sequences-spirou"><span class="std std-ref">here</span></a>).</p>
 </section>
 <section id="schematic">
 <h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
@@ -169,7 +288,7 @@
 </section>
 <section id="usage">
 <h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_processing</span><span class="o">.</span><span class="n">py</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">runfile</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_processing</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">runfile</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="n">runfile</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">The</span> <span class="n">run</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="ow">in</span> <span class="n">reprocessing</span>

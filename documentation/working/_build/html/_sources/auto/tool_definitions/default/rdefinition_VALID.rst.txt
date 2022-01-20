@@ -15,7 +15,7 @@ apero_validate
 SHORTNAME: VALID
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_validate.rst
 
 
 ********************************************************************************
@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_validate.py.py {options}
+    apero_validate.py {options}
 
 
 No optional arguments

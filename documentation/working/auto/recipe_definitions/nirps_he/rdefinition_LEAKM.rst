@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_leak_master_nirps_ha.py.py {obs_dir}[STRING] {options}
+    apero_leak_master_nirps_ha.py {obs_dir}[STRING] {options}
 
 
 .. code-block:: 

@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_shape_nirps_ha.py.py {obs_dir}[STRING] [FILE:FP_FP] {options}
+    apero_shape_nirps_ha.py {obs_dir}[STRING] [FILE:FP_FP] {options}
 
 
 .. code-block:: 

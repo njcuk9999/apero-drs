@@ -161,7 +161,61 @@
 <section id="description">
 <h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
 <p>SHORTNAME: EXPLO</p>
-<p>No description set</p>
+<p>The apero_explorer recipe is designed as a graphical user interface (GUI) between the user and the
+various databases that APERO uses. The script downloads a static copy of the SQL database,
+changes are not updated or saved in real time (but can be updated/saved by selecting the
+correct menu options).</p>
+<p>Tables within the database currently accessible with the explorer are:</p>
+<ul class="simple">
+<li><p>calib: The calibration database</p></li>
+<li><p>tellu: The telluric database</p></li>
+<li><p>index: The file index database</p></li>
+<li><p>log: The logger database</p></li>
+<li><p>object: The object astrometric database</p></li>
+<li><p>lang: The text and language database</p></li>
+</ul>
+<p>The GUI allows the user to:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Do File operations:</dt><dd><ul>
+<li><p>Open a pickle file to replace the current database</p></li>
+<li><p>Import a csv file to replace the current database</p></li>
+<li><p>Save a pickle file of the current database</p></li>
+<li><p>Export a csv file of the current database</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Edit the current database</dt><dd><ul>
+<li><p>Find and replace a string with another value</p></li>
+<li><p>Filter rows by a certain criteria</p></li>
+<li><p>Add rows and columns</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Table operations</dt><dd><ul>
+<li><p>refresh the current database (with updates since launching the GUI)</p></li>
+<li><p>Save changes for the current database to the main database</p></li>
+<li><p>Clean strings</p></li>
+<li><p>Remove formatting</p></li>
+<li><p>Get some information of the table formatting</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>No changes will be saved unless you use the “Table&gt;Save to Database” option</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We do not recommend changing any of the database entries without good reason
+and without talking to the developers</p>
+</div>
 </section>
 <section id="schematic">
 <h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
@@ -169,7 +223,7 @@
 </section>
 <section id="usage">
 <h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_explorer</span><span class="o">.</span><span class="n">py</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_explorer</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
 <p>No optional arguments</p>

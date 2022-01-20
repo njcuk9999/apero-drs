@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_pol_spirou.py.py {obs_dir}[STRING] --exposures[FILE:EXT_E2DS_FF,TELLU_OBJ] {options}
+    apero_pol_spirou.py {obs_dir}[STRING] --exposures[FILE:EXT_E2DS_FF,TELLU_OBJ] {options}
 
 
 .. code-block:: 

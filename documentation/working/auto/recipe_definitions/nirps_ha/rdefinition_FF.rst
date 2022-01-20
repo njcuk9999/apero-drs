@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_flat_nirps_ha.py.py {obs_dir}[STRING] [FILE:FLAT_FLAT] {options}
+    apero_flat_nirps_ha.py {obs_dir}[STRING] [FILE:FLAT_FLAT] {options}
 
 
 .. code-block:: 

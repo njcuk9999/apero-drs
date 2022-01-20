@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_run_ini.py.py {options}
+    apero_run_ini.py {options}
 
 
 No optional arguments

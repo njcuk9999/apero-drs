@@ -40,7 +40,7 @@ No description set
 
 .. code-block:: 
 
-    apero_badpix_spirou.py.py {obs_dir}[STRING] --flatfiles[FILE:FLAT_FLAT] --darkfiles[FILE:DARK_DARK_TEL,DARK_DARK_INT] {options}
+    apero_badpix_spirou.py {obs_dir}[STRING] --flatfiles[FILE:FLAT_FLAT] --darkfiles[FILE:DARK_DARK_TEL,DARK_DARK_INT] {options}
 
 
 .. code-block:: 

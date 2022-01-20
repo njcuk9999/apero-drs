@@ -161,7 +161,47 @@
 <section id="description">
 <h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
 <p>SHORTNAME: PRECHECK</p>
-<p>No description set</p>
+<p>The precheck recipe allows the user to check the current raw data stored in the
+<a class="reference internal" href="../../../main/misc/glossary.html#term-DRS_DATA_RAW"><span class="xref std std-term">DRS_DATA_RAW</span></a> directory. These checks are split into two parts a
+file check and a object check. The checks are based on a supplied <a class="reference internal" href="../../../main/misc/glossary.html#term-run-ini-file"><span class="xref std std-term">run-ini-file</span></a>
+which controls which recipes are and are not being used for a specific apero_processing
+run.</p>
+<p>The file checks are as follows:</p>
+<ol class="arabic">
+<li><p>The number of calibrations in each <a class="reference internal" href="../../../main/misc/glossary.html#term-observation-directory"><span class="xref std std-term">observation-directory</span></a> and whether
+this meets the minimum number of calibrations required for the sequence
+defined in the <a class="reference internal" href="../../../main/misc/glossary.html#term-run-ini-file"><span class="xref std std-term">run-ini-file</span></a>. A list of observation-directories that
+will cause problems due to missing calibrations is printed during the
+precheck recipe run.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Note if the observation-directory is sorted by observation night
+this will correctly flag if there are nights without calibrations
+within +/- the required time frame (controlled by <span class="xref std std-term">MAX_CALIB_DTIME</span>)
+but will not be able to assess whether calibrations pass quality
+control during processing.</p>
+</div>
+</li>
+<li><p>The number of science and telluric files found (note if the run-in-file has
+<cite>USE_ENGINEERING = False</cite> any observation-directory without science files will
+be ignored by the apero_processing recipe. The list of engineering observation-directories
+is also printed during the precheck recipe run.</p></li>
+</ol>
+<p>The object check is done as follows:</p>
+<ol class="arabic simple">
+<li><p>The object database is checked for all valid entries (and any ignore entries)</p></li>
+<li><p>All unique object names in raw files are checked against the object database
+object names (and associated aliases of each object name)</p></li>
+<li><p>Any object name not in the current database and not in the current ignore list
+are printed for the user to decide whether object must be added to the
+database or left to use the header values</p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Objects are only required in the database for accurate BERV calculations,
+as such only objects required precision radial velocity must be in the
+database, however we recommend all objects be added.</p>
+</div>
 </section>
 <section id="schematic">
 <h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
@@ -169,7 +209,7 @@
 </section>
 <section id="usage">
 <h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_precheck</span><span class="o">.</span><span class="n">py</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">runfile</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_precheck</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">runfile</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="n">runfile</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">The</span> <span class="n">run</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="ow">in</span> <span class="n">reprocessing</span>

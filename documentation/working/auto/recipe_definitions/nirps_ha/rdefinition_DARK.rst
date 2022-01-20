@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_dark_nirps_ha.py.py {obs_dir}[STRING] [FILE:DARK_DARK,DARK_DARK_SKY] {options}
+    apero_dark_nirps_ha.py {obs_dir}[STRING] [FILE:DARK_DARK,DARK_DARK_SKY] {options}
 
 
 .. code-block:: 

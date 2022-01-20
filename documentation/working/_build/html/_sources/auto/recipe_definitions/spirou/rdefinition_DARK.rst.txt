@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_dark_spirou.py.py {obs_dir}[STRING] [FILE:DARK_DARK_INT,DARK_DARK_TEL,DARK_DARK_SKY] {options}
+    apero_dark_spirou.py {obs_dir}[STRING] [FILE:DARK_DARK_INT,DARK_DARK_TEL,DARK_DARK_SKY] {options}
 
 
 .. code-block:: 
