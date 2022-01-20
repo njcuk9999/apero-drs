@@ -5413,11 +5413,22 @@ class DrsNpyFile(DrsInputFile):
         return self.dbkey
 
 
+class DrsFileGroup:
+    def __init__(self, name: str, files: List[DrsInputFile]):
+        self.name = name
+        self.files = files
+
+    def copy(self) -> 'DrsFileGroup':
+        return DrsFileGroup(self.name, self.files)
+
+
 class DrsOutFileExtension:
     # set class name
     class_name: str = 'DrsOutFileExtension'
 
-    def __init__(self, name: str, drsfile: DrsFitsFile, pos: int,
+    def __init__(self, name: str,
+                 drsfile: Union[DrsFileGroup, DrsFitsFile, str],
+                 pos: int,
                  fiber: Union[str, None] = None,
                  block_kind: Union[str, None] = None,
                  hkeys: Union[dict, None] = None,
@@ -5510,27 +5521,10 @@ class DrsOutFileExtension:
         else:
             etag = self.name
         # ---------------------------------------------------------------------
-        # deal with tables (columns) --> table
+        # drs file can be a DrsFileGroup, a string, or a DrsInputFile
+        #    deal with these individually
         # ---------------------------------------------------------------------
-        if self.drsfile == 'table':
-            # set column names
-            col_name = list(self.table_out_colnames)
-            # set column input files
-            col_input = list(map(lambda x: x.name, self.table_drsfiles))
-            # loop around ext name and inputs and make correct length
-            for col in range(len(col_name)):
-                # first time we have extension name
-                if col == 0:
-                    ext_name.append(etag)
-                # else we have a space (for columns)
-                else:
-                    ext_name.append('--')
-                # extension input is null
-                ext_input.append('--')
-        # ---------------------------------------------------------------------
-        # deal with standard extensions (no columns) --> image
-        # ---------------------------------------------------------------------
-        else:
+        if isinstance(self.drsfile, DrsFileGroup):
             # deal with primary extension slightly differently named
             if extkey == 0:
                 ext_name.append('Primary: {0}'.format(etag))
@@ -5539,7 +5533,38 @@ class DrsOutFileExtension:
             ext_input.append(self.drsfile.name)
             col_name.append('--')
             col_input.append('--')
-        # ---------------------------------------------------------------------
+        elif isinstance(self.drsfile, str):
+            # -----------------------------------------------------------------
+            # deal with tables (columns) --> table
+            # -----------------------------------------------------------------
+            if self.drsfile == 'table':
+                # set column names
+                col_name = list(self.table_out_colnames)
+                # set column input files
+                col_input = list(map(lambda x: x.name, self.table_drsfiles))
+                # loop around ext name and inputs and make correct length
+                for col in range(len(col_name)):
+                    # first time we have extension name
+                    if col == 0:
+                        ext_name.append(etag)
+                    # else we have a space (for columns)
+                    else:
+                        ext_name.append('--')
+                    # extension input is null
+                    ext_input.append('--')
+        # -----------------------------------------------------------------
+        # deal with standard extensions (no columns) --> image
+        # -----------------------------------------------------------------
+        elif isinstance(self.drsfile, DrsInputFile):
+            # deal with primary extension slightly differently named
+            if extkey == 0:
+                ext_name.append('Primary: {0}'.format(etag))
+            else:
+                ext_name.append('{0}'.format(etag))
+            ext_input.append(self.drsfile.name)
+            col_name.append('--')
+            col_input.append('--')
+        # -----------------------------------------------------------------
         # return table column lists
         return ext_name, ext_input, col_name, col_input
 
@@ -5622,6 +5647,8 @@ class DrsOutFileExtension:
         kwargs['name'] = deepcopy(self.name)
         if isinstance(self.drsfile, DrsInputFile):
             kwargs['drsfile'] = self.drsfile.newcopy()
+        elif isinstance(self.drsfile, DrsFileGroup):
+            kwargs['drsfile'] = self.drsfile.copy()
         else:
             kwargs['drsfile'] = deepcopy(self.drsfile)
         kwargs['pos'] = int(self.pos)
@@ -5680,9 +5707,9 @@ class DrsOutFileExtension:
                 self.datatype = self.drsfile.datatype
             # if we have multiple drsfiles we have to find the correct one
             #   it must be one of these by definition
-            elif isinstance(self.drsfile, list):
+            elif isinstance(self.drsfile, DrsFileGroup):
                 # loop around all drs files
-                for drsfile in self.drsfile:
+                for drsfile in self.drsfile.files:
                     # check we have a drs file
                     if isinstance(drsfile, DrsFitsFile):
                         # make a copy of the drs file
@@ -6062,7 +6089,7 @@ class DrsOutFile(DrsInputFile):
         return 'DrsOutFile[{0}]'.format(self.name)
 
     def add_ext(self, name: str,
-                drsfile: Union[List[DrsFitsFile], DrsFitsFile, str],
+                drsfile: Union[DrsFileGroup, DrsFitsFile, str],
                 pos: int, fiber: Union[str, None] = None,
                 block_kind: Union[str, None] = None,
                 hkeys: Union[dict, None] = None,

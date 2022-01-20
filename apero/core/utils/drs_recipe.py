@@ -119,7 +119,7 @@ class DrsRecipe(object):
         # most the time params should not be set here
         else:
             self.params = params
-            # even rarer that instrument is ont set but params is
+            # even rarer that instrument is not set but params is
             if self.instrument != params['INSTRUMENT']:
                 self.instrument = params['INSTRUMENT']
         # set filters
@@ -201,7 +201,7 @@ class DrsRecipe(object):
         # set function name
         _ = display_func('__getstate__', __NAME__, self.class_name)
         # exclude keys
-        exclude = ['pconst', 'filemod']
+        exclude = ['pconst', 'filemod', 'recipemod']
         # set state to __dict__
         state = dict()
         for key, item in self.__dict__.items():
@@ -222,9 +222,10 @@ class DrsRecipe(object):
         # update dict with state
         self.__dict__.update(state)
         # get pconst
-        self.pconst = constants.pload()
+        self.pconst = constants.pload(self.instrument)
         # set drs file module related to this recipe
         self.filemod = self.pconst.FILEMOD()
+        self.recipemod = self.pconst.RECIPEMOD()
 
     def __str__(self) -> str:
         """
@@ -249,6 +250,11 @@ class DrsRecipe(object):
                          self.class_name)
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.name)
+
+    def reload(self, instrument: str):
+        state = self.__getstate__()
+        state['instrument'] = instrument
+        self.__setstate__(state)
 
     def summary(self, params: ParamDict) -> Dict[str, Any]:
         """
@@ -300,7 +306,6 @@ class DrsRecipe(object):
         storage['SUMMARY_PLOTS'] = list(self.summary_plots)
         # return summary storage
         return storage
-
 
     def get_drs_params(self, **kwargs):
         """

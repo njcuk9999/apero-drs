@@ -141,6 +141,11 @@ remake_doc.shortname = 'DOC'
 remake_doc.description = textentry('REMAKE_DOC_DESCRIPTION')
 remake_doc.recipe_type = 'nolog-tool'
 remake_doc.recipe_kind = 'admin'
+remake_doc.set_kwarg(name='--instruments', dtype=str, default='None',
+                     helpstr='Which instrument(s) to run this for '
+                             '(default is current instrument) can also write '
+                             'ALL to get all instruments or list instruments '
+                             'separated by a comma')
 remake_doc.set_kwarg(name='--compile', dtype='switch', default=False,
                      helpstr=textentry('REMAKE_DOC_COMPILE_HELP'))
 remake_doc.set_kwarg(name='--upload', dtype='switch', default=False,
@@ -151,6 +156,10 @@ remake_doc.set_kwarg(name='--recipedef', dtype='switch', default=False,
                      helpstr=textentry('REMAKE_DOC_RECIPEDEF_HELP'))
 remake_doc.set_kwarg(name='--recipeseq', dtype='switch', default=False,
                      helpstr=textentry('REMAKE_DOC_RECIPESEQ_HELP'))
+remake_doc.set_kwarg(name='--mode', dtype='options', default='both',
+                     options=['both', 'html', 'latex'],
+                     helpstr='Which mode to output in "html", "latex" or '
+                             '"both". Default is "both"')
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py

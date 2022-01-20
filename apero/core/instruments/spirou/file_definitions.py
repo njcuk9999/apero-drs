@@ -37,6 +37,7 @@ drs_input = drs_file.DrsInputFile
 drs_finput = drs_file.DrsFitsFile
 drs_ninput = drs_file.DrsNpyFile
 drs_oinput = drs_file.DrsOutFile
+DrsFileGroup = drs_file.DrsFileGroup
 
 # =============================================================================
 # Raw Files
@@ -1315,7 +1316,9 @@ red_file.addset(out_stokesi_s1dv)
 post_file = drs_oinput('DRS_POST', filetype='.fits', suffix='',
                        outfunc=out.post_file)
 # define a list of wave outputs
-wave_files = [out_wavem_sol, out_wave_night, out_wave_master]
+wave_files = DrsFileGroup(name='WAVE_FILES',
+                          files=[out_wavem_sol, out_wave_night,
+                                 out_wave_master])
 
 # -----------------------------------------------------------------------------
 # post processed 2D extraction file

@@ -1,5 +1,6 @@
 "ARGUMENTS","ENG","FR","KEYDESC","KEYNAME","KIND"
 "None","This is the default DRS description message","None","","DRS_DESCRIPTION","HELP"
+"{0} = code id; {1} = function name","Key {0} not found. Function = {1}","Cl {0} introuvable. Fonction = {1}","This is the default key error","KEYERROR","ERROR"
 "None","[BOOLEAN] Whether to add outputs to calibration database","[BOOLEAN] S'il faut ajouter des sorties  la base de donnes d'talonnage ","","ADD_CAL_HELP","HELP"
 "None","Lists ALL the night name directories in the input directory if used without a 'directory' argument or lists the files in the given 'directory' (if defined)","Rpertorie TOUS les rpertoires de noms de nuit du rpertoire d'entre s'il est utilis sans l'argument 'directory' ou rpertorie les fichiers du 'rpertoire' donn (si dfini)","","ALLLISTING_HELP","HELP"
 "None","and","et","","AND_TEXT","TEXT"
