@@ -854,11 +854,16 @@ def _get_qcv(stats: dict, xkey: str, ykey: str, return_mask: bool = False
     # loop around all values
     for row in range(len(yvalues)):
         try:
-            valid_xvalues.append(float(xvalues[row]))
-            valid_yvalues.append(float(yvalues[row]))
-            valid_mask.append(mask[row])
+            # cast to floats / bool
+            vx = float(xvalues[row])
+            vy = float(yvalues[row])
+            vm = mask[row]
         except Exception as _:
             continue
+        # append to array
+        valid_xvalues.append(vx)
+        valid_yvalues.append(vy)
+        valid_mask.append(vm)
     # deal with no values
     if len(valid_mask) == 0:
         return np.array([]), np.array([]), np.array([])
