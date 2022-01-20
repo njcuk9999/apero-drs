@@ -1132,6 +1132,10 @@ def error_stats(params: ParamDict):
         # ---------------------------------------------------------------------
         # print progress
         WLOG(params, '', 'Dealing with unhandled errors')
+        # deal with no unhandled errors found
+        if UNHANDLED_ERROR_CODE not in all_error_codes_instance:
+            WLOG(params, 'info', '\tNo unhandled errors found')
+            return
         # get unhandled instances
         uinstances = all_error_codes_instance[UNHANDLED_ERROR_CODE]
         uerror_reports = list(map(lambda x: x.error_report, uinstances))
