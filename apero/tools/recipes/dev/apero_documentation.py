@@ -82,8 +82,10 @@ def __main__(recipe, params):
     run_filedef = params['INPUTS']['FILEDEF']
     run_recipedef = params['INPUTS']['RECIPEDEF']
     run_recipeseq = params['INPUTS']['RECIPESEQ']
-    # clean auto directories
-    drs_documentation.clean_auto(instruments)
+    # -------------------------------------------------------------------------
+    # clean auto directories (if doing all three again)
+    if run_filedef and run_recipedef and run_recipeseq:
+        drs_documentation.clean_auto(instruments)
     # -------------------------------------------------------------------------
     # loop around instruments
     for instrument in instruments:
