@@ -216,8 +216,8 @@ def base_func(func, _func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
     except DrsBaseError as drserror:
-        base_error(drserror.code, drserror.message, 'error',
-                   drserror.arguments)
+        raise base_error(drserror.code, drserror.message, 'error',
+                         drserror.arguments)
 
 
 def base_printer(codeid: str, message: str, level: str,
@@ -313,15 +313,17 @@ def base_error(codeid: str, message: str, level: str = 'error',
                exceptionname: Union[str, None] = None,
                exception: Any = None,
                exit_flag: bool = False) -> Any:
-    # exit criteria
-    if exception is None:
-        exception = DrsBaseError
+
     # print error message
     msg = base_printer(codeid, message, level, args, exceptionname,
                        printstatement=exit_flag)
     # raise exception
     if not exit_flag:
-        return exception(msg)
+        # exit criteria
+        if exception is None:
+            return DrsBaseError(codeid, args)
+        else:
+            return exception(msg)
     else:
         os._exit(0)
 

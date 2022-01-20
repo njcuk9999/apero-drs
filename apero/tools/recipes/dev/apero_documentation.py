@@ -9,10 +9,12 @@ Created on 2020-01-07 at 14:59
 
 @author: cook
 """
+import sys
+
 from apero.base import base
-from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.tools.module.documentation import drs_documentation
 
@@ -62,29 +64,73 @@ def main(**kwargs):
 
 
 def __main__(recipe, params):
-    # ----------------------------------------------------------------------
-    # deal with documenting file definitions
-    if params['INPUTS']['FILEDEF']:
-        # get file definitions
-        drs_documentation.compile_file_definitions(params, recipe)
-    # ----------------------------------------------------------------------
-    # deal with documenting file definitions
-    if params['INPUTS']['RECIPEDEF']:
-        # get file definitions
-        drs_documentation.compile_recipe_definitions(params, recipe)
-    # ----------------------------------------------------------------------
-    # deal with documenting the recipe sequences
-    if params['INPUTS']['RECIPESEQ']:
-        # get the recipe sequences
-        drs_documentation.compile_recipe_sequences(params, recipe)
-    # ----------------------------------------------------------------------
+
+    # get instruments parameter
+    instruments = params['INPUTS']['INSTRUMENTS']
+    # deal with instruments options
+    if drs_text.null_text(instruments, ['None', 'Null', '']):
+        instruments = [params['INSTRUMENT']]
+    elif instruments.upper() == 'ALL':
+        instruments = base.INSTRUMENTS[:-1]
+    else:
+        instruments = instruments.split(',')
+    # -------------------------------------------------------------------------
+    # get inputs
+    run_filedef = params['INPUTS']['FILEDEF']
+    run_recipedef = params['INPUTS']['RECIPEDEF']
+    run_recipeseq = params['INPUTS']['RECIPESEQ']
+
+    # TODO: Add tools (default + instruments?)
+    # TODO: clean + create "auto" directories
+    # -------------------------------------------------------------------------
+    # loop around instruments
+    for instrument in instruments:
+        # print progress if we are doing any of the three tasks
+        if run_filedef or run_recipedef or run_recipeseq:
+            WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+            WLOG(params, 'info', 'Processing {0}'.format(instrument),
+                 colour='magenta')
+            WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        # re-set the instrument
+        params.set('INSTRUMENT', instrument)
+        # re-get params and recipe
+        recipe.reload(instrument)
+        # ---------------------------------------------------------------------
+        # deal with documenting file definitions
+        if run_filedef:
+            # get file definitions
+            drs_documentation.compile_file_definitions(params, recipe)
+        # ---------------------------------------------------------------------
+        # deal with documenting file definitions
+        if run_recipedef:
+            # get file definitions
+            drs_documentation.compile_recipe_definitions(params, recipe)
+        # ---------------------------------------------------------------------
+        # deal with documenting the recipe sequences
+        if run_recipeseq:
+            # get the recipe sequences
+            drs_documentation.compile_recipe_sequences(params, recipe)
+    # ---------------------------------------------------------------------
     # compile documentation
     if params['INPUTS']['COMPILE']:
-        drs_documentation.compile_docs(params)
-
-        # upload to server
-        if params['INPUTS']['UPLOAD']:
-            drs_documentation.upload(params)
+        # get mode
+        mode = params['INPUTS']['MODE']
+        # print progress
+        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', 'Compiling mode={0}'.format(mode),
+             colour='magenta')
+        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        # compile
+        drs_documentation.compile_docs(params, mode=mode)
+    # upload to server
+    if params['INPUTS']['UPLOAD']:
+        # print progress
+        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', 'Compiling mode={0}'.format(mode),
+             colour='magenta')
+        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        # upload
+        drs_documentation.upload(params)
 
     # ----------------------------------------------------------------------
     # End of main code

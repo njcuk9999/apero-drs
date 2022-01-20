@@ -31,9 +31,11 @@ Latest version: 0.7.194
    :maxdepth: 2
    :caption: Contents:
 
-   user/general_guide.rst
-   user/spirou.rst
-   dev/developer_guide.rst
+   main/general/main_general.rst
+   main/spirou/main_spirou.rst
+   main/nirps_he/main_nirps_he.rst
+   main/nirps_ha/main_nirps_ha.rst
+   main/developer/main_dev.rst
 
 
 
@@ -51,6 +53,6 @@ Other
    :maxdepth: 1
    :titlesonly:
 
-   misc/pythoninstallation.rst
-   misc/glossary.rst
-   misc/updates.rst
+   main/misc/pythoninstallation.rst
+   main/misc/glossary.rst
+   main/misc/updates.rst

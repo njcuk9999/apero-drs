@@ -493,7 +493,7 @@ class ImportModule:
         """
         return self.__repr__()
 
-    def get(self) -> Any:
+    def get(self, force: bool = False) -> Any:
         """
         Import the module using importlib.import_module
         :return:
@@ -501,7 +501,7 @@ class ImportModule:
         # set function name
         func_name = display_func('get', __NAME__, self.class_name)
         # if we already have the module set then just return it
-        if self.modset:
+        if self.modset and not force:
             return self.mod
         else:
             # try to import the module
