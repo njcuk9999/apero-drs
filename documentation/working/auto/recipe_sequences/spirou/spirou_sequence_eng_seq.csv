@@ -1,0 +1,10 @@
+ORDER,RECIPE,SHORTNAME,RECIPE KIND,MASTER RECIPE,ARGS
+1,apero_extract_spirou.py,EXT_HC1HC1,extract-hchc,No,{files}=[HCONE_HCONE]
+2,apero_extract_spirou.py,EXT_FPFP,extract-fpfp,No,{files}=[FP_FP]
+3,apero_extract_spirou.py,EXT_FF,extract-ff,No,{files}=[FLAT_FLAT]
+4,apero_extract_spirou.py,EXT_DFP,extract-dfp,No,{files}=[DARK_FP]
+5,apero_extract_spirou.py,EXT_SKY,extract-sky,No,{files}=[DARK_DARK_SKY]
+6,apero_extract_spirou.py,EXT_LFC,extract-lfc,No,{files}=[LFC_LFC]
+7,apero_extract_spirou.py,EXT_FPD,extract-fpd,No,{files}=[FP_DARK]
+8,apero_extract_spirou.py,EXT_LFCFP,extract-lfcfp,No,{files}=[LFC_FP]
+9,apero_extract_spirou.py,EXT_FPLFC,extract-fplfc,No,{files}=[FP_LFC]

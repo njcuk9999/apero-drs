@@ -1,0 +1,10 @@
+ORDER,RECIPE,SHORTNAME,RECIPE KIND,MASTER RECIPE,ARGS,KWARGS
+1,apero_dark_master_nirps_ha.py,DARKM,calib-master,Yes,,
+2,apero_badpix_nirps_ha.py,BADM,calib-master,Yes,,
+3,apero_loc_nirps_ha.py,LOCMB,calib-master-B,Yes,{files}=[DARK_FLAT],
+4,apero_loc_nirps_ha.py,LOCMA,calib-master-A,Yes,{files}=[FLAT_DARK],
+5,apero_shape_master_nirps_ha.py,SHAPEM,calib-master,Yes,,
+6,apero_shape_nirps_ha.py,SHAPELM,calib-master,Yes,,
+7,apero_flat_nirps_ha.py,FLATM,calib-master,Yes,,
+8,apero_leak_master_nirps_ha.py,LEAKM,calib-master,Yes,,
+9,apero_wave_master_nirps_ha.py,WAVEM,calib-master,Yes,,--hcfiles=[HCONE_HCONE] |br| --fpfiles=[FP_FP]

@@ -1,0 +1,2 @@
+name,HDR[DRSOUTID],file type,basename,fibers,dbname,dbkey
+TRANS_MODEL,TRANS_MODEL,.fits,trans_model_{0},"AB, A, B",telluric,TELLU_MODEL

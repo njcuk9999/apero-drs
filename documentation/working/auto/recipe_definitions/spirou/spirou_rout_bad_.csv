@@ -1,0 +1,3 @@
+name,HDR[DRSOUTID],file type,suffix,dbname,dbkey,input file
+BADPIX,BADPIX,.fits,_badpixel,calibration,BADPIX,FLAT_FLAT
+BKGRD_MAP,BKGRD_MAP,.fits,_bmap.fits,calibration,BKGRDMAP,FLAT_FLAT

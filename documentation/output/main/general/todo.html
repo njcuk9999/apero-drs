@@ -1,0 +1,336 @@
+
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>TODO &#8212; APERO 0.7.194 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="APERO in depth" href="deep.html" />
+    <link rel="prev" title="Known Issues" href="known_issues.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
+
+
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a title="Home" href="../../index.html">
+        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="install" href="../../user/general/installation.html">
+        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
+        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="download pdf" href="../../apero-docs.pdf">
+        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+  </ul>
+    <div>
+    <a href="../../index.html">
+      <img src="../../_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="deep.html" title="APERO in depth"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="known_issues.html" title="Known Issues"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.194 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="main_general.html" accesskey="U">General User documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">TODO</a></li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">TODO</a><ul>
+<li><a class="reference internal" href="#apero">APERO</a></li>
+<li><a class="reference internal" href="#spirou-specific">SPIRou specific</a></li>
+<li><a class="reference internal" href="#nirps-specific">NIRPS specific</a></li>
+<li><a class="reference internal" href="#apero-utils-and-analysis">APERO utils and analysis</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="known_issues.html"
+                        title="previous chapter">Known Issues</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="deep.html"
+                        title="next chapter">APERO in depth</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/main/general/todo.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="todo">
+<span id="id1"></span><h1>TODO<a class="headerlink" href="#todo" title="Permalink to this headline">¶</a></h1>
+<p>This is the currently list of items that need to still be completed.
+Last updated: 2020-11-30 (NJC).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>bullet points are not ordered</p>
+</div>
+<section id="apero">
+<h2>APERO<a class="headerlink" href="#apero" title="Permalink to this headline">¶</a></h2>
+<p>For all instruments / in general.</p>
+<p>Current known Issues/ small immediate tasks:</p>
+<ul class="simple">
+<li><p>0.6.132 log.fits flat get A,B,C,AB,A,B,C entries (PLOTDIR different)?? not seen in 0.7</p></li>
+<li><p>need to check databases exist when resseting tmp/red etc - may not exist and then crashes [Neil]</p></li>
+<li><p>need to deal with installing mysql-connector-python and sqlalchemy [Neil]</p></li>
+<li><p>processing - need to id polar files (distinguish from spectro files) [Neil/Chris]</p></li>
+<li><dl class="simple">
+<dt>file outputs - need to check all files [Neil]</dt><dd><ul>
+<li><p>primary header only - other headers should be minimal [Neil]</p></li>
+<li><p>no image / table in primary extension (affects reading/writing) [Neil]</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>EA pre-processing code for cosmics [Etienne/Neil]</p></li>
+<li><p>review comsic extraction code changes by EA [Etienne/Neil]</p></li>
+<li><p>raw index should check last modified and update if new</p></li>
+</ul>
+<p>High priority:</p>
+<ul class="simple">
+<li><p>polar code update  [Neil/Eder/Chris]</p></li>
+</ul>
+<p>Medium priority:</p>
+<ul class="simple">
+<li><p>add NIPRS changes to 0.7 branch</p></li>
+<li><p>DRS tests [Charles + Thomas]</p></li>
+</ul>
+<p>Low priority:</p>
+<ul class="simple">
+<li><p>bisector for CCF (new extension in CCF outputs?) [Etienne/Neil]</p></li>
+<li><p>proper SNR calculation [Etienne/???]</p></li>
+<li><p>test barycorrpy against pyasl and other BERV calculators (precision) [Thomas?]</p></li>
+<li><p>apero_processing.py work with CANFAR [Neil/Chris + CANFAR collab]</p></li>
+<li><p>CCF masks from SpT/Teff (after masks are more mature)  [Etienne/Neil]</p></li>
+<li><p>instead of copying assets download them (clean up github)   [Neil]</p></li>
+<li><p>add doc strings/typing to all functions, descriptions to all constants, review all constant min/max/dtypes [Neil]</p></li>
+<li><p>apero_langdb.py - integrate with error/warning finding (tools.module.error.find_error.py)</p></li>
+<li><p>go through all summary plots and decide which plots, write figure captions, improve plots, write quality control description, decide which header keys to print [Charles/Thomas]</p></li>
+<li><p>write documentation [Neil/Etienne/Charles/Thomas]</p>
+<ul>
+<li><p>code to write constants/keywords</p></li>
+<li><p>write doc strings</p></li>
+<li><p>autodoc with sphinx once doc strings are in</p></li>
+<li><p>assign people to write constant descriptions</p></li>
+<li><p>add authors to constants</p></li>
+</ul>
+</li>
+<li><p>write paper [Neil/Etienne]</p></li>
+</ul>
+<p>Coding only tasks:</p>
+<ul class="simple">
+<li><p>deal with all python warnings [Neil]</p></li>
+<li><p>display func for all functions  [Neil]</p></li>
+<li><p>add more debug printouts [Neil]</p></li>
+<li><p>code to find unused functions/constants [Neil]</p></li>
+<li><p>setup instrument tool [Neil/Thomas/Charles]</p></li>
+<li><p>Windows compatibility [Neil]</p></li>
+</ul>
+<p>Later:</p>
+<ul class="simple">
+<li><p>persistence correction [Olivia/Etienne/Neil]</p></li>
+<li><p>add EA mask generation from templates [???]</p></li>
+<li><p>add EA template matching [???]</p></li>
+<li><p>uncertainty propagation [???]</p></li>
+<li><p>co-production of e2ds and e2dsff still needed? [???]</p></li>
+</ul>
+</section>
+<section id="spirou-specific">
+<h2>SPIRou specific<a class="headerlink" href="#spirou-specific" title="Permalink to this headline">¶</a></h2>
+<p>High priority:</p>
+<ul class="simple">
+<li><p>EA masks from templates [???]</p></li>
+</ul>
+<p>Low priority:</p>
+<ul class="simple">
+<li><p>finish <cite>obj_spec_spirou</cite> and <cite>obj_pol_spirou</cite> (Do not use them now) [Neil]</p></li>
+</ul>
+</section>
+<section id="nirps-specific">
+<h2>NIRPS specific<a class="headerlink" href="#nirps-specific" title="Permalink to this headline">¶</a></h2>
+<p>High priority:</p>
+<ul class="simple">
+<li><p>convert/adapt cal_wave / cal_wave_master [Etienne/Neil]</p></li>
+<li><p>push 0.6 code to 0.7 [Neil]</p></li>
+<li><dl class="simple">
+<dt>cut at Y=2880 norders=46</dt><dd><ul>
+<li><p>problem with localisation (coefficient consistency) [Etienne/Neil]</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Low priority:</p>
+<ul class="simple">
+<li><p>convert obj_mk_tellu (should just be a direct convert) [Etienne/Neil]</p></li>
+<li><p>convert obj_fit_tellu (should just be a direct convert) [Etienne/Neil]</p></li>
+<li><p>convert obj_mk_template (should just be a direct convert) [Etienne/Neil]</p></li>
+<li><p>convert cal_ccf (should just be a direct convert) [Etienne/Neil]</p></li>
+</ul>
+<p>Later:</p>
+<ul class="simple">
+<li><p>T.B.D.</p></li>
+</ul>
+</section>
+<section id="apero-utils-and-analysis">
+<h2>APERO utils and analysis<a class="headerlink" href="#apero-utils-and-analysis" title="Permalink to this headline">¶</a></h2>
+<p>This is a list of tasks mainly from <a class="reference external" href="http://github.com/njcuk9999/apero-utils/projects/2">here</a>
+Last updated: 2020-11-25 (NJC).</p>
+<p>High priority:</p>
+<ul class="simple">
+<li><p>object alias gaia/2mass list [Thomas]</p></li>
+<li><p>Preprocessing Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Dark Master recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Bad Pixel Corretion Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Localisation Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Shape Master Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Shape (per night) Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Flat/Blaze Correction test 1 [Charles/Thomas]</p></li>
+<li><p>Thermal Correction Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Master leak correction Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Master wavelength solution Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Nightly wavelength solution Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Extraction Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Extraction Recipe test 2 [Charles/Thomas]</p></li>
+<li><p>Leak correction Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Make Telluric Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Fit Telluric Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>Make Template Recipe test 1 [Charles/Thomas]</p></li>
+<li><p>CCF Recipe test 1 [Charles/Thomas]</p></li>
+</ul>
+<p>Lower priority:</p>
+<ul class="simple">
+<li><p>Check consistency of README/documentation/wiki for recipes</p></li>
+<li><p>BERV comparison</p></li>
+<li><p>Telluric templates</p></li>
+<li><p>PCA Components</p></li>
+<li><p>Timing stats</p></li>
+<li><p>Summary plot review / update (html/interactive)</p></li>
+</ul>
+<p><a class="reference internal" href="#todo"><span class="std std-ref">Back to top</span></a></p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="deep.html" title="APERO in depth"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="known_issues.html" title="Known Issues"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.194 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="main_general.html" >General User documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">TODO</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    </div>
+  </body>
+</html>
