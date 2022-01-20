@@ -9,10 +9,9 @@ Created on 2019-07-26 at 09:39
 
 @author: cook
 """
-from astropy.table import Table
-
 from apero.base import base
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_stats
 
@@ -98,6 +97,9 @@ def __main__(recipe, params):
         # do the qc stats
         drs_stats.qc_stats(params, recipe)
     elif mode.upper() == 'ERROR':
+        # make sure plog is defined for error mode
+        if drs_text.null_text(params['INPUTS']['PLOG'], ['None', 'Null', '']):
+            WLOG(params, 'error', 'For error mode you must define a log file')
         # do the error stats
         drs_stats.error_stats(params)
 
