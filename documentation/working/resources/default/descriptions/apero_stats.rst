@@ -19,6 +19,8 @@ various timing stats for each recipe.
 .. warning:: timing mode has to read and sort all log entries. This can take
              quite some time to get the stats of a full run of data
 
+.. note:: The --plog argument is not used for timing mode
+
 The stats are printed per recipe (named by the :term:`shortname`) and are as
 follows:
 
@@ -53,6 +55,8 @@ recorded in each recipe (if present).
 .. warning:: quality control mode has to read and sort all log entries. This can take
              quite some time to get the stats of a full run of data
 
+.. note:: The --plog argument is not used for timing mode
+
 The stats are printed per recipe (named by the :term:`shortname`) and are as
 follows:
 
@@ -76,4 +80,36 @@ and numeric.
 1.3 Error mode
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The error mode takes all errors
+The error mode takes all errors caught during apero_processing runs.
+Using the --plog argument one can select just a single apero_processing run.
+
+.. note:: the only log files that should be used as an argument to --plog are in
+          the :term:`DRS_DATA_MSG` directory, specifically `./tool/other/APEROL-PID-{PID}-apero_processing.log` files
+          (there should be one of these log files for each time apero_processing was run) where :term:`PID` is the unique
+          PID for that apero_processing run.
+
+The error mode groups all found errors into files based on the apero error codes given (i.e. EXX-XXX-XXXXX) and also
+groups any errors that do not have an apero error code (unexpected exceptions) by the last line of text of that
+exception (generally these are the same for the same exception).
+
+Statistic of these are printed to the screen and a directory is added to the
+`DRS_DATA_MSG/report/APEROL-PID-{PID}_apero_processing/` directory.
+
+Files are saved as the error code: E_XX_XXX_XXXXX.log or if they were unexpected exceptions with a E_UNHANDLE_YYYYY.log
+where YYYYY increases from 0 up to the maximum number of unique unexpected execptions.
+
+Each of these error log files contains all errors that match
+
+.. code-block::
+
+    #================================================
+    # {i} / {total}
+    # RUNSTRING = program.py {arguments} {options}
+    #=================================================
+
+    ERROR MSG LINE 1
+    ERROR MSG LINE 2
+    ...
+    ERROR MSG LINE N
+
+Where i is the nth error of this type, total is the total number of errors of this type

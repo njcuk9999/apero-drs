@@ -36,7 +36,7 @@ The configuration values printed are as follows:
 - :term:`DRS_LOG_LEVEL`: the log file level of logging
 - :term:`DRS_PLOT`: the plotting mode (0, 1 or 2)
 
-The slash screen should look similar to this:
+The splash screen should look similar to this:
 
 
 .. image:: ../../../_static/images/apero_splash.png

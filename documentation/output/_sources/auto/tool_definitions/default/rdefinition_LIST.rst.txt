@@ -15,7 +15,7 @@ apero_listing
 SHORTNAME: LIST
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_listing.rst
 
 
 ********************************************************************************

@@ -15,7 +15,7 @@ apero_stats
 SHORTNAME: STAT
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_stats.rst
 
 
 ********************************************************************************

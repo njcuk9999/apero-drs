@@ -325,6 +325,8 @@ reset.set_kwarg(name='--warn', dtype='bool', default=True,
 # TODO: move to language database
 reset.set_kwarg(name='--database_timeout', dtype=int, default=0,
                 helpstr='Set the database timeout tries')
+reset.description_file = 'apero_reset.rst'
+
 # -----------------------------------------------------------------------------
 # apero_run_ini.py
 # -----------------------------------------------------------------------------
@@ -333,11 +335,12 @@ run_ini.shortname = 'RUN_INI'
 run_ini.instrument = __INSTRUMENT__
 run_ini.description = 'Create default run.ini files for APERO instrument(s)'
 run_ini.recipe_type = 'nolog-tool'
-run_ini.recipe_kind = 'user'
+run_ini.recipe_kind = 'admin'
 run_ini.set_kwarg(name='--instrument', dtype='options', default='None',
                   options=base.INSTRUMENTS,
                   helpstr='Instrument or instruments to create run.ini '
                           'files for')
+run_ini.description_file = 'apero_run_ini.rst'
 
 # -----------------------------------------------------------------------------
 # apero_validate.py
