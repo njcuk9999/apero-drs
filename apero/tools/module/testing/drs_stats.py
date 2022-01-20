@@ -975,7 +975,11 @@ def error_stats(params: ParamDict):
     plog_files = []
     if 'INPUTS' in params:
         if 'PLOG' in params['INPUTS']:
-            plog_files = params['INPUTS'].listp('PLOG', dtype=str)
+            null_text = ['None', 'Null', '']
+            if drs_text.null_text(params['INPUTS']['PLOG'], null_text):
+                plog_files = []
+            else:
+                plog_files = params['INPUTS'].listp('PLOG', dtype=str)
     # -------------------------------------------------------------------------
     if len(plog_files) == 0:
         # get log directory
