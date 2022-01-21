@@ -80,7 +80,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
-    rawobjs = ['Gl699', 'Trappist1', 'Trappist-1', 'WASP107', 'M1']
+    # get the raw objects
+    rawobjs = params['INPUTS'].listp('OBJECTS', dtype=str)
 
     # ----------------------------------------------------------------------
     # step 1: Is object in database?

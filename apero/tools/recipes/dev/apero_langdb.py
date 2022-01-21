@@ -73,6 +73,7 @@ def main():
     # Note: cannot use any package other than apero.lang - as we are
     #       updating the language in this package
 
+    # TODO: use argparse here
     # get arguments
     args = sys.argv
     # Help
