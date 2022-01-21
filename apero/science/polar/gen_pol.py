@@ -517,7 +517,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # get global wave
             gwavemap = polar_dict['GLOBAL_WAVEMAP']
             # get interpolated data
-            flux, fluxerr = get_interp_flux(wavemap0=wavemap,
+            flux, fluxerr = get_interp_flux(params, wavemap0=wavemap,
                                             flux0=np.array(infile.data),
                                             blaze0=blaze, wavemap1=gwavemap)
             # -----------------------------------------------------------------
@@ -1145,12 +1145,13 @@ def calculate_stokes_i(params: ParamDict, props: ParamDict,
     return props
 
 
-def get_interp_flux(wavemap0: np.ndarray, flux0: np.ndarray,
+def get_interp_flux(params: ParamDict, wavemap0: np.ndarray, flux0: np.ndarray,
                     blaze0: np.ndarray, wavemap1: np.ndarray
                     ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Work out the interpolated flux from grid "wavemap0" to a grid "wavemap1"
 
+    :param params: ParamDict, the parameter dictionary of constants
     :param wavemap0: np.array, the initial wave grid of the flux data
     :param flux0: np.array, the initial flux values
     :param blaze0: np.array, the initial blaze values
@@ -1165,6 +1166,11 @@ def get_interp_flux(wavemap0: np.ndarray, flux0: np.ndarray,
     for order_num in range(wavemap0.shape[0]):
         # only keep clean data
         clean = np.isfinite(flux0[order_num]) & np.isfinite(flux0[order_num])
+        # deal with whole order being NaNs
+        if np.sum(clean) == 0:
+            wmsg = 'Order {0} has no good pixels (get_interp_flux)'
+            WLOG(params, 'warning', wmsg.format(order_num))
+            continue
         # get order values
         ordwave0 = wavemap0[order_num][clean]
         ordflux0 = flux0[order_num][clean]
