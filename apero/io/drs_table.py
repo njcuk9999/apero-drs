@@ -387,7 +387,7 @@ def print_full_table(params: ParamDict, table: Table):
     :return: None - prints the table (up to 9999)
     """
     # set function
-    _ = display_func('print_full_table', __NAME__)
+    # _ = display_func('print_full_table', __NAME__)
     # print table
     tablestrings = table.pformat(max_lines=len(table)*10,
                                  max_width=9999)
@@ -413,7 +413,7 @@ def make_fits_table(dictionary: Union[dict, None] = None) -> Table:
     :rtype: astropy.table.Table
     """
     # set function
-    _ = display_func('make_fits_table', __NAME__)
+    # _ = display_func('make_fits_table', __NAME__)
     # if dictionary is None return empty astropy table
     if dictionary is None:
         return Table()
@@ -619,7 +619,7 @@ def vstack_cols(params: ParamDict,
     :return:
     """
     # set function
-    _ = display_func('vstack_cols', __NAME__)
+    # _ = display_func('vstack_cols', __NAME__)
     # deal with empty list
     if len(tablelist) == 0:
         # append a None
@@ -674,7 +674,7 @@ def force_dtype_col(column: Union[np.ndarray, list, Column],
                     2. the dtype forced to (None if not recognised/not forced)
     """
     # set function
-    _ = display_func('force_dtype_col', __NAME__)
+    # _ = display_func('force_dtype_col', __NAME__)
     # if we have no columns don't do anything
     if len(column) == 0:
         return column, None
@@ -785,7 +785,7 @@ def list_of_formats() -> Table:
     :rtype: astropy.table.Table
     """
     # set function
-    _ = display_func('list_of_formats', __NAME__)
+    # _ = display_func('list_of_formats', __NAME__)
     # get table formats
     ftable = get_formats(Table)
     # push read and write into this table

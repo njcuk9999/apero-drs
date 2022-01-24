@@ -74,7 +74,7 @@ def get_relative_folder(params: ParamDict, package: str, folder: str) -> str:
                   file
     """
     # set function
-    _ = display_func('get_relative_folder', __NAME__)
+    # _ = display_func('get_relative_folder', __NAME__)
     # try to get relative directory
     try:
         data_folder = drs_misc.get_relative_folder(package, folder)
@@ -101,7 +101,7 @@ def get_uncommon_path(path1: str, path2: str) -> str:
     :return uncommon_path: string, the uncommon path between path1 and path2
     """
     # set function
-    _ = display_func('get_uncommon_path', __NAME__)
+    # _ = display_func('get_uncommon_path', __NAME__)
     # return result from drs_misc.get_uncommon_path
     return drs_misc.get_uncommon_path(path1, path2)
 
@@ -180,7 +180,7 @@ def get_most_recent(filelist: List[str]) -> Union[float, None]:
     :return: float the modified time of the most recent file
     """
     # set function
-    _ = display_func('get_most_recent', __NAME__)
+    # _ = display_func('get_most_recent', __NAME__)
     # set most recent time to None to start
     most_recent = None
     # loop around file list
@@ -229,7 +229,7 @@ def copytree(src: Union[str, Path], dst: Union[str, Path]):
     :return: None - just copies directories
     """
     # set function name
-    _ = display_func('makedirs', __NAME__)
+    # _ = display_func('makedirs', __NAME__)
     # loop around src path and go to every directory/sub-directory/file
     for root, dirs, files in os.walk(src, followlinks=True):
         # out root

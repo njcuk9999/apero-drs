@@ -94,8 +94,6 @@ class ParamDict(CaseInDict):
         """
         # set class name
         self.class_name = 'ParamDict'
-        # set function name
-        _ = display_func('__init__', __NAME__, self.class_name)
         # storage for the sources
         self.sources = CaseInDict()
         # storage for the source history
@@ -210,8 +208,6 @@ class ParamDict(CaseInDict):
 
         :return bool: True if ParamDict instance has a key "key", else False
         """
-        # set function name
-        _ = display_func('__contains__', __NAME__, self.class_name)
         # run contains command from super
         return super(ParamDict, self).__contains__(key)
 
@@ -224,8 +220,6 @@ class ParamDict(CaseInDict):
 
         :return None:
         """
-        # set function name
-        _ = display_func('__delitem__', __NAME__, self.class_name)
         # delete item using super
         super(ParamDict, self).__delitem__(key)
 
@@ -236,8 +230,6 @@ class ParamDict(CaseInDict):
 
         :rtype: str
         """
-        # set function name
-        _ = display_func('__repr__', __NAME__, self.class_name)
         # get string from string print
         return self._string_print()
 
@@ -248,8 +240,6 @@ class ParamDict(CaseInDict):
 
         :rtype: str
         """
-        # set function name
-        _ = display_func('__repr__', __NAME__, self.class_name)
         # get string from string print
         return self._string_print()
 
@@ -272,8 +262,6 @@ class ParamDict(CaseInDict):
 
         :return: None
         """
-        # set function name
-        _ = display_func('set', __NAME__, self.class_name)
         # update used
         if key in self.data.keys() and record_use:
             if key not in self.used:
@@ -297,8 +285,6 @@ class ParamDict(CaseInDict):
 
         :return:
         """
-        # set function name
-        _ = display_func('lock', __NAME__, self.class_name)
         # set locked to True
         self.locked = True
 
@@ -308,8 +294,6 @@ class ParamDict(CaseInDict):
 
         :return:
         """
-        # set function name
-        _ = display_func('unlock', __NAME__, self.class_name)
         # set locked to False
         self.locked = False
 
@@ -330,8 +314,6 @@ class ParamDict(CaseInDict):
         :return value: if key in ParamDict instance this value is returned else
                        the default value is returned (None if undefined)
         """
-        # set function name
-        _ = display_func('get', __NAME__, self.class_name)
         # if we have the key return the value
         if key in self.data.keys():
             return self.__getitem__(key)
@@ -415,8 +397,6 @@ class ParamDict(CaseInDict):
 
         :return None:
         """
-        # set function name
-        _ = display_func('append_source', __NAME__, self.class_name)
         # capitalise
         key = drs_text.capitalise_key(key)
         # if key exists append source to it
@@ -444,8 +424,6 @@ class ParamDict(CaseInDict):
 
         :return None:
         """
-        # set function name
-        _ = display_func('set_sources', __NAME__, self.class_name)
         # loop around each key in keys
         for k_it in range(len(keys)):
             # assign the key from k_it
@@ -481,8 +459,6 @@ class ParamDict(CaseInDict):
 
         :return None:
         """
-        # set function name
-        _ = display_func('set_instances', __NAME__, self.class_name)
         # loop around each key in keys
         for k_it in range(len(keys)):
             # assign the key from k_it
@@ -518,8 +494,6 @@ class ParamDict(CaseInDict):
 
         :return None:
         """
-        # set function name
-        _ = display_func('append_sources', __NAME__, self.class_name)
         # loop around each key in keys
         for k_it in range(len(keys)):
             # assign the key from k_it
@@ -546,8 +520,6 @@ class ParamDict(CaseInDict):
 
         :return None:
         """
-        # set function name
-        _ = display_func('set_all_sources', __NAME__, self.class_name)
         # loop around each key in keys
         for key in self.data.keys():
             # capitalise
@@ -565,8 +537,6 @@ class ParamDict(CaseInDict):
 
         :return None:
         """
-        # set function name
-        _ = display_func('append_all_sources', __NAME__, self.class_name)
         # loop around each key in keys
         for key in self.data.keys():
             # capitalise
@@ -627,8 +597,6 @@ class ParamDict(CaseInDict):
 
         :return sources: values of sources dictionary
         """
-        # set function name
-        _ = display_func('source_keys', __NAME__, self.class_name)
         # return all keys in source dictionary
         return list(self.sources.keys())
 
@@ -639,8 +607,6 @@ class ParamDict(CaseInDict):
 
         :return sources: values of sources dictionary
         """
-        # set function name
-        _ = display_func('source_values', __NAME__, self.class_name)
         # return all values in source dictionary
         return list(self.sources.values())
 
@@ -654,8 +620,6 @@ class ParamDict(CaseInDict):
 
         :return keys: list of strings, the keys with this substring at the start
         """
-        # set function name
-        _ = display_func('startswith', __NAME__, self.class_name)
         # define return list
         return_keys = []
         # loop around keys
@@ -679,8 +643,6 @@ class ParamDict(CaseInDict):
 
         :return keys: list of strings, the keys which contain this substring
         """
-        # set function name
-        _ = display_func('contains', __NAME__, self.class_name)
         # define return list
         return_keys = []
         # loop around keys
@@ -704,8 +666,6 @@ class ParamDict(CaseInDict):
 
         :return keys: list of strings, the keys with this substring at the end
         """
-        # set function name
-        _ = display_func('endswith', __NAME__, self.class_name)
         # define return list
         return_keys = []
         # loop around keys
@@ -726,8 +686,6 @@ class ParamDict(CaseInDict):
         :return: the copy of the parameter dictionary
         :rtype: ParamDict
         """
-        # set function name
-        _ = display_func('copy', __NAME__, self.class_name)
         # make new copy of param dict
         pp = ParamDict()
         keys = list(self.data.keys())
@@ -779,8 +737,6 @@ class ParamDict(CaseInDict):
 
         :return: None
         """
-        # set function name
-        _ = display_func('merge', __NAME__, self.class_name)
         # add param dict to self
         for key in paramdict:
             # deal with no overwriting
@@ -807,8 +763,6 @@ class ParamDict(CaseInDict):
         :return: a string representation of the instance
         :rtype: str
         """
-        # set function name
-        _ = display_func('_string_print', __NAME__, self.class_name)
         # get keys and values
         keys = list(self.data.keys())
         values = list(self.data.values())
@@ -950,8 +904,6 @@ class ParamDict(CaseInDict):
                  instance that belongs to instance of `lookup`
         :rtype: dict
         """
-        # set function name
-        _ = display_func('get_instanceof', __NAME__, self.class_name)
         # output storage
         keydict = dict()
         # loop around all keys
@@ -981,8 +933,6 @@ class ParamDict(CaseInDict):
 
         :return: None
         """
-        # set function name
-        _ = display_func('info', __NAME__, self.class_name)
         # deal with key not existing
         if key not in self.data.keys():
             print(textentry('40-000-00001', args=[key]))
@@ -1028,8 +978,6 @@ class ParamDict(CaseInDict):
 
         :return: None
         """
-        # set function name
-        _ = display_func('history', __NAME__, self.class_name)
         # if history found then print it
         if key in self.source_history:
             # print title: History for key
@@ -1229,8 +1177,6 @@ class PCheck:
         """
         # set class name
         self.class_name = 'PCheck'
-        # set function name
-        _ = display_func('__init__', __NAME__, self.class_name)
         # set wlog from inputs
         self.wlog = wlog
 
@@ -1259,8 +1205,6 @@ class PCheck:
         Return the string representation of the class
         :return: str, the string representation
         """
-        # set function name
-        _ = display_func('__str__', __NAME__, self.class_name)
         # return string representation
         return '{0}[CaseInsensitiveDict]'.format(self.class_name)
 
@@ -1269,8 +1213,6 @@ class PCheck:
         Return the string representation of the class
         :return: str, the string representation
         """
-        # set function name
-        _ = display_func('__repr__', __NAME__, self.class_name)
         # return string representation
         return self.__str__()
 
@@ -1424,8 +1366,6 @@ def update_paramdicts(*args: List[ParamDict], key: str,
                      with the key/value pair
     :return:
     """
-    # set function name
-    _ = display_func('update_paramdicts', __NAME__)
     # loop through param dicts
     for arg in args:
         if isinstance(arg, ParamDict):
@@ -1446,8 +1386,6 @@ def load_config(instrument: Union[str, None] = None,
     :return: ParamDict containing the constants
     """
     global CONFIG_CACHE
-    # set function name (cannot break here --> no access to inputs)
-    _ = display_func('load_config', __NAME__)
     # deal with no instrument
     if instrument is None:
         if 'INSTRUMENT' in base.IPARAMS:
@@ -1541,8 +1479,6 @@ def get_config_all():
     List all attributes in modules (from get_module_names)
     :return:
     """
-    # set function name
-    _ = display_func('get_config_all', __NAME__)
     # get module names
     modules = get_module_names('None')
     # loop around modules and print our __all__ statement
@@ -1665,8 +1601,6 @@ def print_error(error: DrsCodedException):
     :param error: one of the drs_exceptions classes
     :return:
     """
-    # set function name
-    _ = display_func('print_error', __NAME__)
     # print the configuration file
     print('\n')
     print('=' * 70)
@@ -1696,8 +1630,6 @@ def catch_sigint(signal: Any, frame: Any):
     :param frame:  expected from call to signal.signal (not used)
     :return:
     """
-    # set function name (cannot break here --> no access to inputs)
-    _ = display_func('catch_sigint', __NAME__)
     # raise Keyboard Interrupt
     raise KeyboardInterrupt('\nSIGINT or CTRL-C detected. Exiting\n')
 
@@ -1710,8 +1642,6 @@ def window_size(drows: int = 80, dcols: int = 80) -> Tuple[int, int]:
     :param dcols: int, default number of columns
     :return:
     """
-    # set function name (cannot break here --> no access to inputs)
-    _ = display_func('window_size', __NAME__)
     # only works on unix operating systems
     if os.name == 'posix':
         # see if we have stty commnad
@@ -1947,8 +1877,6 @@ def _check_mod_source(source: str) -> Union[None, str]:
     :param source: str, the moudle source to check
     :return: str, the cleaned source i.e. path1.path2.filename
     """
-    # set function name (cannot break here --> no access to inputs)
-    _ = display_func('_check_mod_source', __NAME__)
     # deal with source is None
     if source is None:
         return source
@@ -1986,8 +1914,6 @@ def _string_repr_list(key: str, values: Union[list, np.ndarray], source: str,
     :param fmt: str, the format for the printed list
     :return:
     """
-    # set function name (cannot break here --> no access to inputs)
-    _ = display_func('_load_from_file', __NAME__)
     # get the list as a string
     str_value = list(values).__repr__()
     # if the string is longer than 40 characters cut down and add ...

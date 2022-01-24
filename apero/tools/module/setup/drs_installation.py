@@ -63,10 +63,7 @@ SETUP_PATH = Path('.').joinpath('tools', 'resources', 'setup')
 VALIDATE_CODE = Path('bin').joinpath('apero_validate.py')
 RESET_CODE = 'apero_reset'
 # set descriptions for data paths
-DATA_CLASSES = [pathdef.RawPath, pathdef.TmpPath, pathdef.ReducedPath,
-                pathdef.OutPath, pathdef.CalibPath, pathdef.TelluPath,
-                pathdef.AssetPath, pathdef.PlotPath, pathdef.RunPath,
-                pathdef.LogPath]
+DATA_CLASSES = pathdef.BLOCKS
 # push into dictionary
 DATA_PATHS = dict()
 # set cmdline args expected for each

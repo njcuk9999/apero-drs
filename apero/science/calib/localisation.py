@@ -898,7 +898,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
                              order_profile: np.ndarray, lprops: ParamDict,
                              qc_params: list):
     # set function name
-    _ = display_func('write_localisation_files', __NAME__)
+    # _ = display_func('write_localisation_files', __NAME__)
     # get qc parameters
     # max_removed_cent = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_CTR',
     #                           func=func_name)

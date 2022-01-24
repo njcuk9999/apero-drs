@@ -98,8 +98,6 @@ class DrsArgumentParser(argparse.ArgumentParser):
         :param recipe: Drs Recipe - the recipe class for these arguments
         :param kwargs: keyword arguments passed to argparse.ArgumentParser
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, 'DRSArgumentParser')
         # define the recipe
         self.recipe = recipe
         self.indexdb = indexdb
@@ -127,8 +125,6 @@ class DrsArgumentParser(argparse.ArgumentParser):
                  (after checking) use  params = vars(return) to force into
                  a dictionary of key/value pairs
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('parse_args', __NAME__, 'DRSArgumentParser')
         # deal with no args passed (get from sys.argv)
         if args is None:
             # first arg is the recipe name
@@ -155,8 +151,6 @@ class DrsArgumentParser(argparse.ArgumentParser):
 
         raises an exit via WLOG error
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('error', __NAME__, 'DRSArgumentParser')
         # self.print_help(sys.stderr)
         # self.exit(2, '%s: error: %s\n' % (self.prog, message))
         # get parameterse from drs_params
@@ -178,8 +172,6 @@ class DrsArgumentParser(argparse.ArgumentParser):
 
         :return: None
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_print_message', __NAME__, 'DRSArgumentParser')
         # get parameters from drs_params
         params = self.recipe.params
         program = str(params['RECIPE'])
@@ -209,8 +201,6 @@ class DrsArgumentParser(argparse.ArgumentParser):
 
         :return: string representation of the usage for printing
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('format_usage', __NAME__, 'DRSArgumentParser')
         # noinspection PyProtectedMember
         return_string = (' ' + textentry('USAGE_TEXT') + ' ' +
                          self.recipe.drs_usage())
@@ -224,8 +214,6 @@ class DrsArgumentParser(argparse.ArgumentParser):
 
         :return: str, the help string to display
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('format_help', __NAME__, 'DRSArgumentParser')
         # empty help message at intialization
         hmsgs = []
         # noinspection PyProtectedMember
@@ -292,8 +280,6 @@ class DrsArgumentParser(argparse.ArgumentParser):
                  false
         :raises: _sys.exit if -h or --help in sys.argv
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_has_special', __NAME__, 'DRSArgumentParser')
         # deal with help
         if '-h' in sys.argv:
             self.print_help()
@@ -332,8 +318,6 @@ class DrsAction(argparse.Action):
         """
         # set class name
         self.class_name = 'DrsAction'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # run the argument parser (super)
         argparse.Action.__init__(self, *args, **kwargs)
 
@@ -370,8 +354,6 @@ class _CheckObsDir(DrsAction):
         :param args: arguments passed to argparse.Action.__init__
         :param kwargs: keyword arguments passed to argparse.Action.__init__
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # set the recipe and parser to None
         self.recipe = kwargs.get('recipe', None)
         self.indexdb = kwargs.get('indexdb', None)
@@ -416,8 +398,6 @@ class _CheckObsDir(DrsAction):
         :return: str: the valid directory (raises exception if invalid)
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_check_obs_dir', __NAME__, self.class_name)
         # get the argument name
         argname = self.dest
         # get the params from recipe
@@ -464,9 +444,6 @@ class _CheckObsDir(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         self.indexdb = parser.indexdb
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -490,8 +467,6 @@ class _CheckFiles(DrsAction):
         """
         # set the class name
         self.class_name = '_CheckFiles'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # get the recipe, namespace and directory (if not added set to None)
         self.recipe = kwargs.get('recipe', None)
         self.indexdb = kwargs.get('indexdb', None)
@@ -546,9 +521,6 @@ class _CheckFiles(DrsAction):
                  (raises exception if invalid)
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_check_files', __NAME__,
-                         self.class_name)
         # ---------------------------------------------------------------------
         # deal with single string -> list of strings
         if isinstance(value, str):
@@ -621,9 +593,6 @@ class _CheckFiles(DrsAction):
         self.recipe = parser.recipe
         self.indexdb = parser.indexdb
         self.parser = parser
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
         # store the namespace
         self.namespace = namespace
         # check for help
@@ -647,8 +616,6 @@ class _CheckBool(DrsAction):
         """
         # set class name
         self.class_name = '_CheckBool'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, '_CheckBool')
         # define recipe as unset
         self.recipe = None
         # force super initialisation
@@ -697,9 +664,6 @@ class _CheckBool(DrsAction):
                  (raises exception if invalid for a boolean)
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_check_bool', __NAME__,
-                         '_CheckBool')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -748,9 +712,6 @@ class _CheckBool(DrsAction):
         """
         # get drs parameters
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         '_CheckBool')
         # check for help
         # noinspection PyProtectedMember
         skip = parser._has_special()
@@ -774,8 +735,6 @@ class _CheckType(DrsAction):
         """
         # set class name
         self.class_name = '_CheckType'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None
         self.recipe = None
         # force super initialisation
@@ -821,9 +780,6 @@ class _CheckType(DrsAction):
         :return: Any, based on the type required (raises exception if invalid)
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_check_type', __NAME__,
-                         self.class_name)
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -863,9 +819,6 @@ class _CheckType(DrsAction):
         :return: Any, the value type-casted into self.type type
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_eval_type', __NAME__,
-                         self.class_name)
         # get parameters
         params = self.recipe.params
         # get type error
@@ -984,9 +937,6 @@ class _CheckType(DrsAction):
         """
         # get drs parameters
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_check_type', __NAME__,
-                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         skip = parser._has_special()
@@ -1012,8 +962,6 @@ class _CheckOptions(DrsAction):
         :param args: arguments passed to argparse.Action.__init__
         :param kwargs: keyword arguments passed to argparse.Action.__init__
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, '_CheckOptions')
         # define recipe as None (overwritten by __call__)
         self.recipe = None
         # force super initialisation
@@ -1057,9 +1005,6 @@ class _CheckOptions(DrsAction):
         :return: str: the valid directory (raises exception if invalid)
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_check_options', __NAME__,
-                         '_CheckOptions')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -1091,9 +1036,6 @@ class _CheckOptions(DrsAction):
         """
         # get drs parameters
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         '_CheckOptions')
         # check for help
         # noinspection PyProtectedMember
         skip = parser._has_special()
@@ -1120,8 +1062,6 @@ class _MakeListing(DrsAction):
         """
         # set class name
         self.class_name = '_MakeListing'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, '_MakeListing')
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # define name space as None (overwritten in __call__)
@@ -1173,9 +1113,6 @@ class _MakeListing(DrsAction):
         :return: str: the valid directory (raises exception if invalid)
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_display_listing', __NAME__,
-                         self.class_name)
         # get input dir
         # noinspection PyProtectedMember
         input_dir = self.recipe.input_block.abspath
@@ -1214,9 +1151,6 @@ class _MakeListing(DrsAction):
         """
         # get drs parameters
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
         # store parser
         self.parser = parser
         # check for help
@@ -1239,8 +1173,6 @@ class _MakeAllListing(DrsAction):
     def __init__(self, *args, **kwargs):
         # set class name
         self.class_name = '_MakeAllListing'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # define name space as None (overwritten in __call__)
@@ -1292,9 +1224,6 @@ class _MakeAllListing(DrsAction):
         :return: str: the valid directory (raises exception if invalid)
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_display_listing', __NAME__,
-                         self.class_name)
         # get input dir
         # noinspection PyProtectedMember
         input_dir = self.recipe.input_block.abspath
@@ -1333,9 +1262,6 @@ class _MakeAllListing(DrsAction):
         """
         # get drs parameters
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         '_MakeAllListing')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -1357,8 +1283,6 @@ class _ActivateDebug(DrsAction):
         """
         # set class name
         self.class_name = '_ActivateDebug'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -1401,9 +1325,6 @@ class _ActivateDebug(DrsAction):
         :return: int, the debug mode found
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_set_debug', __NAME__,
-                         self.class_name)
         # get params
         params = self.recipe.params
         # deal with a value of None
@@ -1444,9 +1365,7 @@ class _ActivateDebug(DrsAction):
         """
         # get drs parameters
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
+
         # display listing
         if type(values) == list:
             value = list(map(self._set_debug, values))
@@ -1466,8 +1385,6 @@ class _ExtendedHelp(DrsAction):
         """
         # set class name
         self.class_name = '_ActivateDebug'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe and parser as None (overwritten in __call__)
         self.recipe = None
         self.parser = None
@@ -1510,9 +1427,6 @@ class _ExtendedHelp(DrsAction):
         :return: int, the debug mode found
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_print_extended_help', __NAME__,
-                         self.class_name)
         # construct error message
         if self.recipe.params['DRS_COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
@@ -1538,8 +1452,6 @@ class _ExtendedHelp(DrsAction):
         :return: None
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__, self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -1562,8 +1474,6 @@ class _ForceInputDir(DrsAction):
         :param kwargs: keyword arguments passed to argparse.Action.__init__
         """
         self.class_name = '_ForceInputDir'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -1606,9 +1516,6 @@ class _ForceInputDir(DrsAction):
         :return: None or str, if value can go to a string and is not None
                  returns string representation of values[0] if list or values
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_force_input_dir', __NAME__,
-                         self.class_name)
         # get params
         params = self.recipe.params
         # deal with value of None
@@ -1645,9 +1552,6 @@ class _ForceInputDir(DrsAction):
         """
         # get drs parameters
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
         # display listing
         if type(values) == list:
             value = list(map(self._force_input_dir, values))[0]
@@ -1668,8 +1572,6 @@ class _ForceOutputDir(DrsAction):
         """
         # set class name
         self.class_name = '_ForceOutputDir'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -1712,9 +1614,6 @@ class _ForceOutputDir(DrsAction):
         :return: None or str, if value can go to a string and is not None
                  returns string representation of values[0] if list or values
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_force_output_dir', __NAME__,
-                         '_ForceOutputDir')
         # get params
         params = self.recipe.params
         # deal with None value
@@ -1751,9 +1650,6 @@ class _ForceOutputDir(DrsAction):
         """
         # get drs parameters
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         '_ForceOutputDir')
         # display listing
         if type(values) == list:
             value = list(map(self._force_output_dir, values))[0]
@@ -1773,8 +1669,6 @@ class _DisplayVersion(DrsAction):
         """
         # set class name
         self.class_name = '_DisplayVersion'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -1812,9 +1706,6 @@ class _DisplayVersion(DrsAction):
         Display the version info print out
         :return:
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_display_version', __NAME__,
-                         self.class_name)
         # get params
         params = self.recipe.params
         # get colours
@@ -1846,9 +1737,6 @@ class _DisplayVersion(DrsAction):
         """
         # set recipe from parser
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -1869,8 +1757,6 @@ class _DisplayInfo(DrsAction):
         """
         # set class name
         self.class_name = '_DisplayInfo'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -1908,9 +1794,6 @@ class _DisplayInfo(DrsAction):
         Display the info print out
         :return:
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_display_info', __NAME__,
-                         self.class_name)
         # get params
         recipe = self.recipe
         params = recipe.params
@@ -1971,9 +1854,6 @@ class _DisplayInfo(DrsAction):
         """
         # set recipe from parser
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         '_DisplayInfo')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -1994,8 +1874,6 @@ class _SetProgram(DrsAction):
         """
         # set class name
         self.class_name = '_SetProgram'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -2074,9 +1952,6 @@ class _SetProgram(DrsAction):
         """
         # get recipe from parser
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -2097,8 +1972,6 @@ class _SetParallel(DrsAction):
         """
         # set class name
         self.class_name = '_SetParallel'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -2140,8 +2013,6 @@ class _SetParallel(DrsAction):
         :return: str, the string representation of values (for program name)
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_set_recipe_kind', __NAME__, self.class_name)
         # get params
         params = self.recipe.params
         # deal with difference datatypes for values
@@ -2180,9 +2051,6 @@ class _SetParallel(DrsAction):
         """
         # get recipe from parser
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -2203,8 +2071,6 @@ class _SetRecipeKind(DrsAction):
         """
         # set class name
         self.class_name = '_SetRecipeKind'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -2281,9 +2147,6 @@ class _SetRecipeKind(DrsAction):
         """
         # get recipe from parser
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -2304,8 +2167,6 @@ class _SetShortName(DrsAction):
         """
         # set class name
         self.class_name = '_SetShortName'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -2347,8 +2208,6 @@ class _SetShortName(DrsAction):
         :return: str, the string representation of values (for program name)
         :raises: drs_exceptions.LogExit
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_set_shortname', __NAME__, self.class_name)
         # deal with difference datatypes for values
         if isinstance(values, list):
             strvalue = values[0]
@@ -2382,9 +2241,6 @@ class _SetShortName(DrsAction):
         """
         # get recipe from parser
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -2404,8 +2260,6 @@ class _SetIPythonReturn(DrsAction):
         """
         # set class name
         self.class_name = '_SetIPythonReturn'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -2473,9 +2327,6 @@ class _SetIPythonReturn(DrsAction):
         """
         # get recipe from parser
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -2496,8 +2347,6 @@ class _IsMaster(DrsAction):
         """
         # set class name
         self.class_name = '_IsMaster'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # set recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -2538,9 +2387,6 @@ class _IsMaster(DrsAction):
 
         :return: str: the valid directory (raises exception if invalid)
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_set_master',
-                         __NAME__, self.class_name)
         # deal with unset value
         if value is None:
             return None
@@ -2564,9 +2410,6 @@ class _IsMaster(DrsAction):
         """
         # get drs parameters
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__',
-                         __NAME__, self.class_name)
         # display listing
         if type(values) == list:
             value = list(map(self._set_master, values))
@@ -2590,8 +2433,6 @@ class _SetCrunFile(DrsAction):
         """
         # set class name
         self.class_name = '_SetCrunFile'
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, self.class_name)
         # set recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -2632,8 +2473,6 @@ class _SetCrunFile(DrsAction):
 
         :return: str: the valid directory (raises exception if invalid)
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_set_crun_file', __NAME__, self.class_name)
         # deal with unset value
         if value is None:
             return None
@@ -2657,9 +2496,6 @@ class _SetCrunFile(DrsAction):
         """
         # get drs parameters
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__',
-                         __NAME__, self.class_name)
         # display listing
         if type(values) == list:
             value = list(map(self._set_crun_file, values))
@@ -2683,7 +2519,7 @@ class _SetQuiet(DrsAction):
         # set class name
         self.class_name = '_SetQuiet'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__init__', __NAME__, '_SetQuiet')
+        # _ = display_func('__init__', __NAME__, '_SetQuiet')
         # set recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -2723,8 +2559,8 @@ class _SetQuiet(DrsAction):
         :return: True
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func('_set_return', __NAME__,
-                         self.class_name)
+        # _ = display_func('_set_return', __NAME__,
+        #                  self.class_name)
         # debug message: setting program to: "strvalue"
         dmsg = textentry('90-001-00034')
         WLOG(self.recipe.params, 'debug', dmsg)
@@ -2749,8 +2585,8 @@ class _SetQuiet(DrsAction):
         # get recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func('__call__', __NAME__,
-                         self.class_name)
+        # _ = display_func('__call__', __NAME__,
+        #                  self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -3022,7 +2858,7 @@ class DrsArgument(object):
                      i.e. DrsArgument[name]
         """
         # set function name (cannot break here --> no access to params)
-        _ = display_func('__str__', __NAME__, self.class_name)
+        # _ = display_func('__str__', __NAME__, self.class_name)
         # return string representation
         return self.__repr__()
 
@@ -3033,7 +2869,7 @@ class DrsArgument(object):
                      i.e. DrsArgument[name]
         """
         # set function name (cannot break here --> no access to params)
-        _ = display_func('__str__', __NAME__, self.class_name)
+        # _ = display_func('__str__', __NAME__, self.class_name)
         # return string representation
         return 'DrsArgument[{0}]'.format(self.name)
 
@@ -3051,7 +2887,7 @@ class DrsArgument(object):
         :return None:
         """
         # set function name (cannot break here --> no access to params)
-        _ = display_func('make_properties', __NAME__, 'DrsArgument')
+        # _ = display_func('make_properties', __NAME__, 'DrsArgument')
         # deal with no dtype
         if self.dtype is None:
             self.dtype = str
@@ -3124,7 +2960,7 @@ class DrsArgument(object):
         :return None:
         """
         # set function name (cannot break here --> no access to params)
-        _ = display_func('assign_properties', __NAME__, 'DrsArgument')
+        # _ = display_func('assign_properties', __NAME__, 'DrsArgument')
         # loop around properties
         for prop in self.propkeys:
             if prop in props:
@@ -3351,7 +3187,7 @@ def valid_obs_dir_no_db(params: ParamDict, indexdb: IndexDatabase,
              if passed)
     """
     # set function name
-    _ = display_func('valid_obs_dir_no_db', __NAME__)
+    # _ = display_func('valid_obs_dir_no_db', __NAME__)
     _ = indexdb
     # get block directory
     block_inst = drs_file.DrsPath(params, block_kind=block_kind)
@@ -3508,7 +3344,7 @@ def valid_file_no_db(params: ParamDict, recipe: Any,
                   currently found
     """
     # set function name
-    _ = display_func('valid_file_no_db', __NAME__)
+    # _ = display_func('valid_file_no_db', __NAME__)
     # get the argument that we are checking the file of
     arg = _get_arg(rargs, rkwargs, argname)
     drsfiles = arg.files
@@ -3708,7 +3544,7 @@ def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
     :return:
     """
     # set function name
-    _ = display_func('_check_fits_keys', __NAME__)
+    # _ = display_func('_check_fits_keys', __NAME__)
     # get data for this condition (must be greater than 0)
     table = filedb.get_index_entries('*', condition=condition)
     # storage for output
@@ -3808,7 +3644,7 @@ def _fits_query(params: ParamDict, recipe: Any,
     :return:
     """
     # set function name
-    _ = display_func('_check_fits_keys', __NAME__)
+    # _ = display_func('_check_fits_keys', __NAME__)
     # storage for output
     files, types = [], []
     # loop around rows in table
@@ -3915,7 +3751,7 @@ def _get_version_info(params: ParamDict, green: str = '',
     :return: a list of strings for the print out
     """
     # set function name (cannot break here --> no access to params)
-    _ = display_func('_get_version_info', __NAME__)
+    # _ = display_func('_get_version_info', __NAME__)
     # get name
     if 'DRS_NAME' in params:
         name = str(params['DRS_NAME'])
@@ -3954,7 +3790,7 @@ def _help_format(keys: List[str], helpstr: str,
     :return: str, the help text
     """
     # set function name (cannot break here --> no access to params)
-    _ = display_func('_help_format', __NAME__)
+    # _ = display_func('_help_format', __NAME__)
     # set up empty format string
     fmtstring = ''
     # set separation size
@@ -4016,7 +3852,7 @@ def _print_list_msg(recipe: Any, fulldir: str, dircond: bool = False,
     # get params from recipe
     params = recipe.params
     # set function name
-    _ = display_func('_print_list_msg', __NAME__)
+    # _ = display_func('_print_list_msg', __NAME__)
     # get limit
     mlimit = params['DRS_MAX_IO_DISPLAY_LIMIT']
     # generate a file list
@@ -4109,7 +3945,7 @@ def _get_file_list(limit: int, path: str, ext: Union[str, None] = None,
                        was reached
     """
     # set function name (cannot break here --> no access to params)
-    _ = display_func('_get_file_list', __NAME__)
+    # _ = display_func('_get_file_list', __NAME__)
     # deal with no limit - set hard limit
     if list_all:
         limit = np.inf
@@ -4208,7 +4044,7 @@ def _check_arg_path(params: ParamDict, arg: DrsArgument,
     :return:
     """
     # set function name
-    _ = display_func('_check_arg_path', __NAME__)
+    # _ = display_func('_check_arg_path', __NAME__)
     # set the path as directory if arg.path is None
     if arg.path is None:
         return obs_dir
@@ -4233,7 +4069,7 @@ def make_listing(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('make_listing', __NAME__)
+    # _ = display_func('make_listing', __NAME__)
     # define the listing limit (used in listing help
     limit = params['DRS_MAX_IO_DISPLAY_LIMIT']
     # set up an output storage dictionary
@@ -4262,7 +4098,7 @@ def make_alllisting(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('make_alllisting', __NAME__)
+    # _ = display_func('make_alllisting', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
@@ -4290,7 +4126,7 @@ def make_debug(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('make_debug', __NAME__)
+    # _ = display_func('make_debug', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
@@ -4318,7 +4154,7 @@ def extended_help(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name (cannot break here --> no access to params)
-    _ = display_func('set_quiet', __NAME__)
+    # _ = display_func('set_quiet', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
@@ -4347,7 +4183,7 @@ def set_inputdir(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('set_inputdir', __NAME__)
+    # _ = display_func('set_inputdir', __NAME__)
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4378,7 +4214,7 @@ def set_outputdir(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('set_outputdir', __NAME__)
+    # _ = display_func('set_outputdir', __NAME__)
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -4409,7 +4245,7 @@ def make_version(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('make_version', __NAME__)
+    # _ = display_func('make_version', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
@@ -4437,7 +4273,7 @@ def make_info(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('make_info', __NAME__)
+    # _ = display_func('make_info', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
@@ -4465,7 +4301,7 @@ def set_program(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('set_program', __NAME__)
+    # _ = display_func('set_program', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
@@ -4493,7 +4329,7 @@ def set_recipe_kind(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('set_recipe_kind', __NAME__)
+    # _ = display_func('set_recipe_kind', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
@@ -4521,7 +4357,7 @@ def set_parallel(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('set_parallel', __NAME__)
+    # _ = display_func('set_parallel', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
@@ -4552,7 +4388,7 @@ def set_shortname(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('set_program', __NAME__)
+    # _ = display_func('set_program', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
@@ -4581,7 +4417,7 @@ def set_ipython_return(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('set_ipython_return', __NAME__)
+    # _ = display_func('set_ipython_return', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
@@ -4609,7 +4445,7 @@ def is_master(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func('is_master', __NAME__)
+    # _ = display_func('is_master', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
@@ -4637,7 +4473,7 @@ def set_crun_file(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name (cannot break here --> no access to params)
-    _ = display_func('set_crun_file', __NAME__)
+    # _ = display_func('set_crun_file', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
@@ -4666,7 +4502,7 @@ def set_quiet(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name (cannot break here --> no access to params)
-    _ = display_func('set_quiet', __NAME__)
+    # _ = display_func('set_quiet', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()

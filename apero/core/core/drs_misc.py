@@ -311,7 +311,7 @@ def _get_prev_count(params: Any, previous: str) -> int:
     :return: number of times function occurs in DEBUG_FUNC_LIST
     """
     # set function name (cannot break here --> no access to inputs)
-    _ = display_func('._get_prev_count()', __NAME__)
+    # _ = display_func('._get_prev_count()', __NAME__)
     # deal with no params
     if params is None:
         return 0
@@ -345,7 +345,7 @@ def get_uncommon_path(path1: Union[Path, str], path2: Union[Path, str]) -> str:
     :return uncommon_path: string, the uncommon path between path1 and path2
     """
     # set function name (cannot break here --> no access to params)
-    _ = display_func('get_uncommon_path', __NAME__)
+    # _ = display_func('get_uncommon_path', __NAME__)
     # may need to switch paths if len(path2) > len(path1)
     if len(str(path2)) > len(str(path1)):
         _path1 = str(path2)
@@ -371,7 +371,7 @@ def unix_char_code() -> Tuple[float, str, str]:
              set of 4 characters
     """
     # set function name
-    _ = display_func('unix_char_code', __NAME__)
+    # _ = display_func('unix_char_code', __NAME__)
     # we need a random seed
     np.random.seed(random.randint(1, 2 ** 30))
     # generate a random number (in case time is too similar)

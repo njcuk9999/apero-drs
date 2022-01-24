@@ -1787,7 +1787,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     :return: None - writes files to disk
     """
     # set the function name
-    _ = display_func('write_files', __NAME__)
+    # _ = display_func('write_files', __NAME__)
     # get data from props
     pol_data = props['POL']
     polerr_data = props['POLERR']
