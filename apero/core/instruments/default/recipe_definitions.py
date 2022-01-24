@@ -98,7 +98,7 @@ astrometric.instrument = __INSTRUMENT__
 astrometric.description = textentry('ASTROMETRIC_DESCRIPTION')
 astrometric.recipe_type = 'tool'
 astrometric.recipe_kind = 'user'
-astrometric.set_arg(pos=0, name='objects', dtype='str',
+astrometric.set_arg(pos=0, name='objects', dtype=str,
                     helpstr=textentry('ASTROMETRIC_OBJ_HELP'))
 
 # -----------------------------------------------------------------------------
