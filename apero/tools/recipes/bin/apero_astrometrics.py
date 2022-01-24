@@ -20,7 +20,7 @@ from apero.tools.module.database import drs_astrometrics
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_astrometrics.py'
+__NAME__ = 'apero_astrometric.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
