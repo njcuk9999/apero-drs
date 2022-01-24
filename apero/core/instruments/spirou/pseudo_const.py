@@ -62,7 +62,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :param instrument: str, the drs instrument name
         """
         # set function name
-        _ = display_func('__init__', __NAME__, self.class_name)
+        # _ = display_func('__init__', __NAME__, self.class_name)
         # set instrument name
         self.instrument = instrument
         # storage of things we don't want to compute twice without need
@@ -84,7 +84,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return:
         """
         # set function name
-        _ = display_func('__getstate__', __NAME__, self.class_name)
+        # _ = display_func('__getstate__', __NAME__, self.class_name)
         # need a dictionary for pickle
         state = dict()
         for key, item in self.__dict__.items():
@@ -101,7 +101,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return:
         """
         # set function name
-        _ = display_func('__setstate__', __NAME__, self.class_name)
+        # _ = display_func('__setstate__', __NAME__, self.class_name)
         # update dict with state
         self.__dict__.update(state)
         # reset excluded values to None
@@ -114,7 +114,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return:
         """
         # set function name
-        _ = display_func('__str__', __NAME__, self.class_name)
+        # _ = display_func('__str__', __NAME__, self.class_name)
         # return string representation
         return self.__repr__()
 
@@ -124,7 +124,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return:
         """
         # set function name
-        _ = display_func('__repr__', __NAME__, self.class_name)
+        # _ = display_func('__repr__', __NAME__, self.class_name)
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.instrument)
 
@@ -194,7 +194,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return: a list of strings of valid extensions
         """
         # set function name
-        _ = display_func('VALID_RAW_FILES', __NAME__, self.class_name)
+        # _ = display_func('VALID_RAW_FILES', __NAME__, self.class_name)
         # set valid extentions
         valid = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
         return valid
@@ -204,8 +204,8 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         Post process do not check these duplicate keys
         """
         # set function name
-        _ = display_func('NON_CHECK_DUPLICATE_KEYS', __NAME__,
-                         self.class_name)
+        # _ = display_func('NON_CHECK_DUPLICATE_KEYS', __NAME__,
+        #                  self.class_name)
         # set forbidden keys
         keys = ['SIMPLE', 'EXTEND', 'NEXTEND']
         # return forbiiden keys
@@ -216,7 +216,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         Post process primary extension should not have these keys
         """
         # set function name
-        _ = display_func('FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
+        # _ = display_func('FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
         # set forbidden keys
         forbidden_keys = ['BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'XTENSION']
         # return forbiiden keys
@@ -232,7 +232,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
                                 to copy from and old fits file
         """
         # set function name
-        _ = display_func('FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
+        # _ = display_func('FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
         # set forbidden keys
         forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
                           'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
@@ -266,7 +266,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return: the fixed header
         """
         # set function name
-        _ = display_func('HEADER_FIXES', __NAME__, self.class_name)
+        # _ = display_func('HEADER_FIXES', __NAME__, self.class_name)
         # ------------------------------------------------------------------
         # Deal with cleaning object name
         # ------------------------------------------------------------------
@@ -303,7 +303,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return:
         """
         # set function name
-        _ = display_func('DRS_OBJ_NAME', __NAME__, self.class_name)
+        # _ = display_func('DRS_OBJ_NAME', __NAME__, self.class_name)
         # clean object name
         return clean_obj_name(objname=objname)
 
@@ -624,7 +624,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return:
         """
         # set function name
-        _ = display_func('SPLASH', __NAME__, self.class_name)
+        # _ = display_func('SPLASH', __NAME__, self.class_name)
         # set the logo
         logo = ['',
                 '      `-+syyyso:.   -/+oossssso+:-`   `.-:-`  `...------.``                                 ',
@@ -747,7 +747,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return: str, the fiber to use for input fiber
         """
         # set function name
-        _ = display_func('FIBER_LOC_TYPES', __NAME__, self.class_name)
+        # _ = display_func('FIBER_LOC_TYPES', __NAME__, self.class_name)
         # check fiber against list
         if fiber in ['AB', 'A', 'B']:
             return 'AB'
@@ -764,7 +764,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return: str, the fiber to use for input fiber
         """
         # set function name
-        _ = display_func('FIBER_WAVE_TYPES', __NAME__, self.class_name)
+        # _ = display_func('FIBER_WAVE_TYPES', __NAME__, self.class_name)
         # check fiber against list
         if fiber in ['AB', 'A', 'B']:
             return 'AB'
@@ -782,7 +782,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return:
         """
         # set function name
-        _ = display_func('FIBER_DPR_POS', __NAME__, self.class_name)
+        # _ = display_func('FIBER_DPR_POS', __NAME__, self.class_name)
         # split DPRTYPE
         dprtypes = dprtype.split('_')
         # check fiber type
@@ -821,7 +821,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :returns: the update coefficients and the number of orders
         """
         # set function name
-        _ = display_func('FIBER_LOC_COEFF_EXT', __NAME__, self.class_name)
+        # _ = display_func('FIBER_LOC_COEFF_EXT', __NAME__, self.class_name)
         # for AB we need to merge the A and B components
         if fiber == 'AB':
             # get shape
@@ -862,7 +862,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return:
         """
         # set function name
-        _ = display_func('FIBER_DATA_TYPE', __NAME__, self.class_name)
+        # _ = display_func('FIBER_DATA_TYPE', __NAME__, self.class_name)
         # check fiber type
         if fiber in ['AB', 'A', 'B']:
             return dprtype.split('_')[0]
@@ -876,7 +876,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return: the science and reference fiber
         """
         # set function name
-        _ = display_func('FIBER_CCF', __NAME__, self.class_name)
+        # _ = display_func('FIBER_CCF', __NAME__, self.class_name)
         # set the fibers and return
         science = 'AB'
         reference = 'C'
@@ -890,7 +890,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return: list of science fibers and the reference fiber
         """
         # set function name
-        _ = display_func('FIBER_KINDS', __NAME__, self.class_name)
+        # _ = display_func('FIBER_KINDS', __NAME__, self.class_name)
         # can be multiple science channels
         science = ['AB', 'A', 'B']
         # can only be one reference
@@ -919,7 +919,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return: list of strings, the individual fiber names
         """
         # set function name
-        _ = display_func('INDIVIDUAL_FIBERS', __NAME__, self.class_name)
+        # _ = display_func('INDIVIDUAL_FIBERS', __NAME__, self.class_name)
         # list the individual fiber names
         return ['A', 'B', 'C']
 
@@ -947,7 +947,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return: list of database columns
         """
         # set function name
-        _ = display_func('INDEX_DB_COLUMNS', __NAME__, self.class_name)
+        # _ = display_func('INDEX_DB_COLUMNS', __NAME__, self.class_name)
         # check for pre-existing values
         if self.index_cols is not None:
             return self.index_cols
@@ -1345,7 +1345,7 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     :return: the updated header and hdict
     """
     # set function name
-    _ = display_func('get_dprtype', __NAME__)
+    # _ = display_func('get_dprtype', __NAME__)
     # set key
     kwdprtype = params['KW_DPRTYPE'][0]
     kwdprcomment = params['KW_DPRTYPE'][1]

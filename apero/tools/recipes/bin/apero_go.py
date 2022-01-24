@@ -9,13 +9,18 @@ Created on 2020-02-27 at 10:56
 
 @author: cook
 """
+import argparse
 import os
 import sys
+from typing import Any, Dict
 
 from apero.base import base
+from apero.base import drs_base
 from apero.core import constants
+from apero.core.constants import path_definitions
 from apero.core.utils import drs_startup
 
+from apero.core.instruments.default import recipe_definitions as rd
 
 # =============================================================================
 # Define variables
@@ -32,12 +37,33 @@ __release__ = base.__release__
 # =============================================================================
 # Define functions
 # =============================================================================
-# All recipe code goes in _main
+# All recipe code goes in __main__
 #    Only change the following from here:
 #     1) function calls  (i.e. main(arg1, arg2, **kwargs)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
-# Everything else is controlled from recipe_definition
+def get_args() -> Dict[str, Any]:
+    """
+    Apero go should be quick
+    :return:
+    """
+    # get parser
+    description = rd.go_recipe.description
+    parser = argparse.ArgumentParser(description=description)
+    # add the full database
+    pargs, pkwargs = rd.go_recipe.proxy_keywordarg('data')
+    parser.add_argument(*pargs, **pkwargs)
+    # loop around block kinds and add arguments
+    for block in path_definitions.BLOCKS:
+        # add argument
+        pargs, pkwargs = rd.go_recipe.proxy_keywordarg(f'{block.argname}')
+        parser.add_argument(*pargs, **pkwargs)
+    # parse arguments
+    args = parser.parse_args()
+    # return as dictionary
+    return dict(vars(args))
+
+
 def main():
     """
     Main function for apero_listing.py
@@ -52,21 +78,10 @@ def main():
     :returns: dictionary of the local space
     :rtype: dict
     """
-    # TODO: use argparse here
-    # get args from sys.argv
-    args = sys.argv
     # get parameters for this instrument
     params = constants.load()
-    # add inputs
-    params['INPUTS'] = dict()
-    for it, arg in enumerate(args[1:]):
-        if it == 0:
-            params['INPUTS']['INSTRUMENT'] = arg
-
-        if arg.startswith('--'):
-            key = arg.strip('--').upper()
-            params['INPUTS'][key] = True
-
+    # add arguments as inputs (via argparse)
+    params['INPUTS'] = get_args()
     # run the __main__ function
     __main__(None, params)
 
@@ -104,46 +119,15 @@ def __main__(recipe, params):
             storage['Data Directory'] = value
 
     # ----------------------------------------------------------------------
-    # --raw option
+    # deal with block kind options
     # ----------------------------------------------------------------------
-    # deal with --data keyword
-    props, storage = get_path(params, storage, props, 'RAW', 'DRS_DATA_RAW')
-
-    # ----------------------------------------------------------------------
-    # --tmp option
-    # ----------------------------------------------------------------------
-    # deal with --data keyword
-    props, storage = get_path(params, storage, props, 'TMP', 'DRS_DATA_WORKING')
-
-    # ----------------------------------------------------------------------
-    # --red option
-    # ----------------------------------------------------------------------
-    # deal with --red keyword
-    props, storage = get_path(params, storage, props, 'RED', 'DRS_DATA_REDUC')
-
-    # ----------------------------------------------------------------------
-    # --calib option
-    # ----------------------------------------------------------------------
-    # deal with --calib keyword
-    props, storage = get_path(params, storage, props, 'CALIB', 'DRS_CALIB_DB')
-
-    # ----------------------------------------------------------------------
-    # --tellu option
-    # ----------------------------------------------------------------------
-    # deal with --tellu keyword
-    props, storage = get_path(params, storage, props, 'TELLU', 'DRS_TELLU_DB')
-
-    # ----------------------------------------------------------------------
-    # --msg option
-    # ----------------------------------------------------------------------
-    # deal with --msg keyword
-    props, storage = get_path(params, storage, props, 'MSG', 'DRS_DATA_MSG')
-
-    # ----------------------------------------------------------------------
-    # --plot option
-    # ----------------------------------------------------------------------
-    # deal with --plot keyword
-    props, storage = get_path(params, storage, props, 'PLOT', 'DRS_DATA_PLOT')
+    # loop around block kinds and add arguments
+    for block in path_definitions.BLOCKS:
+        # check for input key
+        if block.argname in params['INPUTS']:
+            # deal with --data keyword
+            props, storage = get_path(params, storage, props, block.argname,
+                                      block.key)
 
     # ----------------------------------------------------------------------
     # Deal with multiple arguments --> print
@@ -169,19 +153,16 @@ def __main__(recipe, params):
 
 
 def get_path(params, storage, props, input_key, param_key):
-
-    # check for input key
-    if input_key in params['INPUTS']:
-        # if is set to True then populate variables
-        if params['INPUTS'][input_key]:
-            # get the value from params
-            value = params[param_key]
-            # check path
-            if os.path.exists(value):
-                props['chdir'] = True
-                props['path'] = value
-            # update storage
-            storage[param_key] = value
+    # if is set to True then populate variables
+    if params['INPUTS'][input_key]:
+        # get the value from params
+        value = params[param_key]
+        # check path
+        if os.path.exists(value):
+            props['chdir'] = True
+            props['path'] = value
+        # update storage
+        storage[param_key] = value
     # return props and storage
     return props, storage
 

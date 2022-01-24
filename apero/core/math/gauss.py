@@ -61,7 +61,7 @@ def gauss_function(x: Union[float, np.ndarray], a: float, x0: float,
     :return gauss: numpy array (1D), size = len(x), the output gaussian
     """
     # set function name
-    _ = display_func('gauss_function', __NAME__)
+    # _ = display_func('gauss_function', __NAME__)
     # return gauss function
     return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
 
@@ -80,7 +80,7 @@ def gauss_function_nodc(x: Union[float, np.ndarray], a: float, x0: float,
     :return gauss: numpy array (1D), size = len(x), the output gaussian
     """
     # set function name
-    _ = display_func('gauss_function_nodc', __NAME__)
+    # _ = display_func('gauss_function_nodc', __NAME__)
     # return gauss function
     return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2)
 
@@ -102,7 +102,7 @@ def gauss_beta_function(x: Union[float, np.ndarray], a: float, x0: float,
     :return gauss: numpy array (1D), size = len(x), the output gaussian
     """
     # set function name
-    _ = display_func('gauss_beta_function', __NAME__)
+    # _ = display_func('gauss_beta_function', __NAME__)
     # return gauss function
     return a * np.exp(-0.5 * np.abs((x - x0) / sigma) ** beta) + dc
 
@@ -148,7 +148,7 @@ def gaussian_function_nn(x: Union[list, np.ndarray],
     :return pder: numpy array (1D), the gaussian fit derivatives
     """
     # set function name
-    _ = display_func('gaussian_function_nn', __NAME__)
+    # _ = display_func('gaussian_function_nn', __NAME__)
     # get the dimensions
     n, nx = len(a), len(x)
     # work out gaussian
@@ -285,7 +285,7 @@ def gauss_fit_s(x: Union[float, np.ndarray], a: float, x0: float, sigma: float,
     :return: np.ndarray - the gaussian value with slope correction
     """
     # set function name
-    _ = display_func('gauss_fit_s', __NAME__)
+    # _ = display_func('gauss_fit_s', __NAME__)
     # calculate gaussian
     gauss = a * np.exp(-0.5 * (x - x0) ** 2 / (sigma ** 2)) + zp
     correction = (x - x0) * slope
@@ -335,7 +335,7 @@ def fit_gauss_with_slope(x: np.ndarray, y: np.ndarray,
              is True return the best fit y values for the given x values
     """
     # set function name
-    _ = display_func('fit_gauss_with_slope', __NAME__)
+    # _ = display_func('fit_gauss_with_slope', __NAME__)
     # produce curve_fit using gauss_fit_s function
     with warnings.catch_warnings(record=True) as _:
         popt, pcov = curve_fit(gauss_fit_s, x, y, p0=guess)
@@ -380,7 +380,7 @@ def fitgaussian(x: np.ndarray, y: np.ndarray,
                   for the fit parameters, only returned if return_fit = True
     """
     # set function name
-    _ = display_func('fitgaussian', __NAME__)
+    # _ = display_func('fitgaussian', __NAME__)
     # if we don't have weights set them to be all equally weighted
     if weights is None:
         weights = np.ones(len(x))

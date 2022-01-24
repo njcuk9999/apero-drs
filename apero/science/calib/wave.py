@@ -2984,7 +2984,7 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
     :return: DrsFitsFile, the updated wave file instance
     """
     # set function name
-    _ = display_func('add_wave_keys', __NAME__)
+    # _ = display_func('add_wave_keys', __NAME__)
     # add wave parameters
     infile.add_hkey('KW_WAVEFILE', value=props['WAVEFILE'])
     infile.add_hkey('KW_WAVETIME', value=props['WAVETIME'])
@@ -3046,7 +3046,7 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     :return: None - writes to file
     """
     # set function name
-    _ = display_func('write_master_lines', __NAME__)
+    # _ = display_func('write_master_lines', __NAME__)
     # ------------------------------------------------------------------
     # write hc lines
     # ------------------------------------------------------------------
@@ -3209,7 +3209,7 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     :return: DrsFitsFile, the cavity file instance
     """
     # set function name
-    _ = display_func('write_cavity_file', __NAME__)
+    # _ = display_func('write_cavity_file', __NAME__)
     # ------------------------------------------------------------------
     # write hc lines
     # ------------------------------------------------------------------
@@ -3253,7 +3253,7 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
                          fpe2ds: DrsFitsFile, fiber: str,
                          wavefile: DrsFitsFile, wprops: ParamDict):
     # set function name
-    _ = display_func('write_cavity_file', __NAME__)
+    # _ = display_func('write_cavity_file', __NAME__)
 
     # get maps from wprops
     map_dvs = wprops['RES_MAP_DVS']

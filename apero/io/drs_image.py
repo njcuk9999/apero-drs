@@ -78,7 +78,7 @@ def rotate_image(image: np.ndarray, rotnum: int) -> np.ndarray:
     :return newimage:  numpy array (2D), the rotated image
     """
     # set function name
-    _ = display_func('rotate_image', __NAME__)
+    # _ = display_func('rotate_image', __NAME__)
     # return math functino to rotate
     return mp.rot8(image, rotnum)
 
@@ -276,7 +276,7 @@ def clean_hotpix(image: np.ndarray, badpix: np.ndarray) -> np.ndarray:
     :return: np.array the image corrected for hot pixels
     """
     # set function name
-    _ = display_func('clean_hotpix', __NAME__)
+    # _ = display_func('clean_hotpix', __NAME__)
     # copy the image
     image_rms_measurement = np.array(image)
     # make shifted cubes from +/- 2 pixels
@@ -456,7 +456,7 @@ def npy_filelist(params: ParamDict, name: str, index: int,
              to store npy filename
     """
     # set function name
-    _ = display_func('npy_filelist', __NAME__)
+    # _ = display_func('npy_filelist', __NAME__)
     # deal with no filenames
     if filenames is None:
         filenames = []
@@ -504,7 +504,7 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
     :return: None - removes npy files and subdir
     """
     # set function name
-    _ = display_func('npy_fileclean', __NAME__)
+    # _ = display_func('npy_fileclean', __NAME__)
     # deal with not outdir
     if outdir is None:
         outdir = ''
