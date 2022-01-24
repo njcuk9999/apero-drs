@@ -525,16 +525,42 @@ KW_CDTLEAKR = KW_CDTLEAKR.copy(__NAME__)
 KW_CDTLEAKR.set(key='CDTLEAKR', comment='MJDMID of cal ref LEAK file used')
 
 # additional properties of calibration
+
+# whether the calibrations have been flipped
 KW_C_FLIP = KW_C_FLIP.copy(__NAME__)
 KW_C_FLIP.set(key='CAL_FLIP', comment='Whether the image was flipped from pp')
+
+# whether the calibratoins have been converted to electrons
 KW_C_CVRTE = KW_C_CVRTE.copy(__NAME__)
 KW_C_CVRTE.set(key='CAL_TOE', comment='Whether the flux was converted to e-')
+
+# whether the calibrations have been resized
 KW_C_RESIZE = KW_C_RESIZE.copy(__NAME__)
 KW_C_RESIZE.set(key='CAL_SIZE', comment='Whether the image was resized from pp')
+
+# whether the calibrations have an ftype
 KW_C_FTYPE = KW_C_FTYPE.copy(__NAME__)
 KW_C_FTYPE.set(key='CAL_FTYP', comment='What this fiber was identified as')
+
+# the fiber name
 KW_FIBER = KW_FIBER.copy(__NAME__)
 KW_FIBER.set(key='FIBER', comment='The fiber name')
+
+# the ratio used for thermal correction (method=tapas or envelope)
+KW_THERM_RATIO_1 = KW_THERM_RATIO_1.copy(__NAME__)
+KW_THERM_RATIO_1.set(key='THERM_R1',
+                     comment='Ratio 1 used for thermal correction')
+
+# the ratio used for thermal correction (method=percentile)
+KW_THERM_RATIO_2 = KW_THERM_RATIO_2.copy(__NAME__)
+KW_THERM_RATIO_2.set(key='THERM_R2',
+                     comment='Ratio 2 used for thermal correction')
+
+# the ratio method used for thermal correction
+KW_THERM_RATIO_U = KW_THERM_RATIO_U.copy(__NAME__)
+KW_THERM_RATIO_U.set(key='THERM_RU',
+                     comment='Ratio method used for thermal correction')
+
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------

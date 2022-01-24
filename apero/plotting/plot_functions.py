@@ -2320,9 +2320,11 @@ def plot_thermal_background(plotter: Plotter, graph: Graph,
     params = kwargs['params']
     wavemap = kwargs['wavemap']
     image = kwargs['image']
-    thermal = kwargs['thermal']
+    thermal1 = kwargs['thermal1']
+    thermal2 = kwargs['thermal2']
     torder = kwargs['torder']
-    tmask = kwargs['tmask']
+    tmask1 = kwargs['tmask1']
+    tmask2 = kwargs['tmask2']
     fiber = kwargs['fiber']
     kind = kwargs['kind']
     # get properties from params
@@ -2330,17 +2332,25 @@ def plot_thermal_background(plotter: Plotter, graph: Graph,
     # correct data for graph
     rwave = np.ravel(wavemap[startorder:])
     rimage = np.ravel(image[startorder:])
-    rthermal = np.ravel(thermal[startorder:])
-    swave = wavemap[torder, tmask]
-    sthermal = thermal[torder][tmask]
+    rthermal1 = np.ravel(thermal1[startorder:])
+    rthermal2 = np.ravel(thermal2[startorder:])
+    swave1 = wavemap[torder, tmask1]
+    swave2 = wavemap.ravel()[tmask2.ravel()]
+    sthermal1 = thermal1[torder][tmask1]
+    sthermal2 = thermal2.ravel()[tmask2.ravel()]
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter)
     # plot data
     frame.plot(rwave, rimage, color='k', label='input spectrum')
-    frame.plot(rwave, rthermal, color='r', label='scaled thermal')
-    frame.plot(swave, sthermal, color='b', marker='o', ls='None',
-               label='background sample region')
+    frame.plot(rwave, rthermal1, color='r', alpha=0.8,
+               label='scaled thermal [tapas]')
+    frame.plot(swave1, sthermal1, color='b', marker='o', ls='None',
+               label='background sample region [tapas]', alpha=0.3)
+    frame.plot(rwave, rthermal2, color='m', alpha=0.8,
+               label='scaled thermal [percentile]')
+    frame.plot(swave2, sthermal2, color='c', marker='+', ls='None',
+               alpha=0.3, label='background sample region [percentile]')
     # set graph properties
     frame.legend(loc=0)
     title = 'Thermal scaled background ({0}Fiber {1})'.format(kind, fiber)
