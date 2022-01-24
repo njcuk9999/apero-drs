@@ -1190,7 +1190,7 @@ def get_abso_expo(params, wavemap, expo_others, expo_water, spl_others,
     # ----------------------------------------------------------------------
     # create a magic grid onto which we spline our transmission, same as
     #   for the s1d_v in km/s
-    magic_grid = mp.get_magic_grid(wavestart, waveend, dvgrid * 1000) / 1000.0
+    magic_grid = mp.get_magic_grid(wavestart, waveend, dvgrid * 1000)
     # spline onto magic grid
     sp_others = spl_others(magic_grid)
     sp_water = spl_water(magic_grid)
