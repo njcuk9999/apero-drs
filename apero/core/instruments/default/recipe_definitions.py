@@ -33,6 +33,7 @@ plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
 drs_recipe = drs_recipe.DrsRecipe
 
 # Below one must define all recipes and put into the "recipes" list
+astrometric = drs_recipe(__INSTRUMENT__)
 changelog = drs_recipe(__INSTRUMENT__)
 explorer = drs_recipe(__INSTRUMENT__)
 get_files = drs_recipe(__INSTRUMENT__)
@@ -49,7 +50,7 @@ run_ini = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [changelog, database_mgr, explorer, get_files, precheck,
+recipes = [astrometric, changelog, database_mgr, explorer, get_files, precheck,
            processing, listing, logstats, remake_db, remake_doc,
            req_check, reset, run_ini, validate]
 
@@ -87,6 +88,18 @@ recipes = [changelog, database_mgr, explorer, get_files, precheck,
 raw_recipe = drs_recipe(__INSTRUMENT__)
 pp_recipe = drs_recipe(__INSTRUMENT__)
 out_recipe = drs_recipe(__INSTRUMENT__)
+
+# -----------------------------------------------------------------------------
+# apero_astrometrics.py
+# -----------------------------------------------------------------------------
+astrometric.name = 'apero_astrometric.py'
+astrometric.shortname = 'ASTROM'
+astrometric.instrument = __INSTRUMENT__
+astrometric.description = textentry('ASTROMETRIC_DESCRIPTION')
+astrometric.recipe_type = 'tool'
+astrometric.recipe_kind = 'user'
+astrometric.set_arg(pos=0, name='objects', dtype=str,
+                    helpstr=textentry('ASTROMETRIC_OBJ_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_changelog.py
@@ -212,8 +225,8 @@ listing.recipe_type = 'nolog-tool'
 listing.recipe_kind = 'user'
 listing.set_kwarg(name='--obs_dir', dtype=str, default='',
                   helpstr=textentry('LISTING_HELP_OBS_DIR'))
-listing.set_kwarg(name='--kind', dtype='options', default='raw',
-                  options=['raw', 'tmp', 'red'],
+listing.set_kwarg(name='--block_kind', dtype='options', default='raw',
+                  options=['raw', 'tmp', 'red', 'out'],
                   helpstr=textentry('LISTING_HELP_KIND'))
 listing.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
                   helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))

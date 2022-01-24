@@ -9,13 +9,13 @@ Created on 2019-09-16 at 13:48
 
 @author: cook
 """
+from apero import lang
 from apero.base import base
 from apero.core.core import drs_text
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-
 
 
 # =============================================================================
@@ -30,6 +30,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
+# get text entry instance
+textentry = lang.textentry
 # Get Logging function
 WLOG = drs_log.wlog
 
@@ -89,7 +91,7 @@ def __main__(recipe, params):
     # get the night name from inputs
     obs_dir = params['INPUTS']['OBS_DIR']
     # get the kidn from inputs
-    kind = params['INPUTS']['KIND']
+    block_kind = params['INPUTS']['BLOCK_KIND']
     # get the white list of nights from inputs
     include_list = params['INPUTS']['INCLUDE_OBS_DIRS']
     if drs_text.null_text(include_list, ['None', '', 'All']):
@@ -107,26 +109,21 @@ def __main__(recipe, params):
     # Deal with kind
     # ----------------------------------------------------------------------
     # deal with kind
-    if kind.lower() == 'raw':
+    if block_kind.lower() in ['raw', 'tmp', 'red', 'out']:
+        # print progress
+        WLOG(params, '', textentry('40-005-00006', args=[block_kind]))
         # update the index database (taking into account include/exclude lists)
-        indexdbm = drs_utils.update_index_db(params, block_kind='raw',
-                                             includelist=include_list,
-                                             excludelist=exclude_list)
-    elif kind.lower() == 'tmp':
-        # update the index database (taking into account include/exclude lists)
-        indexdbm = drs_utils.update_index_db(params, block_kind='tmp',
-                                             includelist=include_list,
-                                             excludelist=exclude_list)
-    elif kind.lower() == 'red':
-        # update the index database (taking into account include/exclude lists)
-        indexdbm = drs_utils.update_index_db(params, block_kind='red',
+        indexdbm = drs_utils.update_index_db(params,
+                                             block_kind=block_kind.lower(),
                                              includelist=include_list,
                                              excludelist=exclude_list)
     else:
-        for data_kind in ['raw', 'tmp', 'red']:
+        for blockkind in ['raw', 'tmp', 'red', 'out']:
+            # print progress
+            WLOG(params, '', textentry('40-005-00006', args=[block_kind]))
             # update the index database (taking into account include/exclude
             #    lists)
-            indexdbm = drs_utils.update_index_db(params, block_kind=data_kind,
+            indexdbm = drs_utils.update_index_db(params, block_kind=blockkind,
                                                  includelist=include_list,
                                                  excludelist=exclude_list)
 

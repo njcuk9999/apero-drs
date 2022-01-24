@@ -17,7 +17,7 @@ from apero.tools.module.database import manage_databases
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_database.py'
+__NAME__ = 'apero_database_kill.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
