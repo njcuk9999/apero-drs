@@ -23,6 +23,7 @@ sqlalchemy==1.4.28
 
 # pip: developer only
 gitchangelog==3.0.4
+gspread-pandas==3.0.4
 ipdb==0.13.9
 ipython==8.0.1
 sphinx==4.3.2
