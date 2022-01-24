@@ -20,7 +20,7 @@ from apero.tools.module.database import drs_astrometrics
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_astrometrics.py'
+__NAME__ = 'apero_astrometric.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -80,7 +80,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
-    rawobjs = ['Gl699', 'Trappist1', 'Trappist-1', 'WASP107', 'M1']
+    # get the raw objects
+    rawobjs = params['INPUTS'].listp('OBJECTS', dtype=str)
 
     # ----------------------------------------------------------------------
     # step 1: Is object in database?
