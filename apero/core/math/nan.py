@@ -47,7 +47,7 @@ def nanpad(oimage: np.ndarray) -> np.ndarray:
     :rtype: np.ndarray
     """
     # set function name
-    _ = display_func('nanpad', __NAME__)
+    # _ = display_func('nanpad', __NAME__)
     # deep copy image
     image = np.array(oimage)
     # replace the NaNs on the edge with zeros
@@ -91,7 +91,7 @@ def nanpolyfit(x: np.ndarray, y: np.ndarray, deg: int,
     :return: same as np.polyfit
     """
     # set function name
-    _ = display_func('nanpolyfit', __NAME__)
+    # _ = display_func('nanpolyfit', __NAME__)
     # check if there is a weight input in kwargs
     if w is not None:
         # find the NaNs in x, y, w
@@ -115,7 +115,7 @@ def killnan(invector: np.ndarray, value: float = 0.0) -> np.ndarray:
     :return: the invector where NaNs are filled with value
     """
     # set function name
-    _ = display_func('killnan', __NAME__)
+    # _ = display_func('killnan', __NAME__)
     # copy vector
     vector = np.array(invector)
     # find all finite values

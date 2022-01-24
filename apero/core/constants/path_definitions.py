@@ -314,6 +314,11 @@ class LogPath(BlockPath):
         self.has_obs_dirs = False
 
 
+# define the block kinds as a list of classes
+BLOCKS = [RawPath, TmpPath, ReducedPath, CalibPath, TelluPath, OutPath,
+          AssetPath, PlotPath, RunPath, LogPath]
+
+
 # =============================================================================
 # Start of code
 # =============================================================================

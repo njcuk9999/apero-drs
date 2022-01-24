@@ -74,7 +74,7 @@ def no_group(rargs: Dict[str, DrsArgument],
     :return:
     """
     # set function name
-    _ = display_func('no_group', __NAME__)
+    # _ = display_func('no_group', __NAME__)
     # group column
     group_column = kwargs.get('group_column', None)
     master_value = kwargs.get('master', None)
@@ -146,7 +146,7 @@ def group_individually(rargs: Dict[str, DrsArgument],
              arguments to send for each individual run
     """
     # set function name
-    _ = display_func('group_individually', __NAME__)
+    # _ = display_func('group_individually', __NAME__)
     # group column
     group_column = kwargs.get('group_column', None)
     # define runs
@@ -673,7 +673,7 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
              arguments to send for each individual run
     """
     # set function name
-    _ = display_func('group_by_polar_sequence', __NAME__)
+    # _ = display_func('group_by_polar_sequence', __NAME__)
 
     # -------------------------------------------------------------------------
     # need to define a polar filter (inputs are the table out put is a set

@@ -1,5 +1,5 @@
 from apero.base import base
-from apero.core.constants import param_functions
+from apero.core.constants import path_definitions
 from apero.core.utils import drs_recipe
 from apero import lang
 
@@ -13,8 +13,6 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# Get constants
-Constants = param_functions.load_config(__INSTRUMENT__)
 # Get Help
 textentry = lang.textentry
 
@@ -37,9 +35,10 @@ astrometric = drs_recipe(__INSTRUMENT__)
 changelog = drs_recipe(__INSTRUMENT__)
 explorer = drs_recipe(__INSTRUMENT__)
 get_files = drs_recipe(__INSTRUMENT__)
+go_recipe = drs_recipe(__INSTRUMENT__)
 database_mgr = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
-logstats = drs_recipe(__INSTRUMENT__)
+stats = drs_recipe(__INSTRUMENT__)
 precheck = drs_recipe(__INSTRUMENT__)
 processing = drs_recipe(__INSTRUMENT__)
 remake_db = drs_recipe(__INSTRUMENT__)
@@ -50,9 +49,11 @@ run_ini = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [astrometric, changelog, database_mgr, explorer, get_files, precheck,
-           processing, listing, logstats, remake_db, remake_doc,
-           req_check, reset, run_ini, validate]
+recipes = [astrometric, changelog, database_mgr, explorer,
+           get_files, go_recipe, listing,
+           precheck, processing,
+           remake_db, remake_doc, req_check, reset, run_ini,
+           stats, validate]
 
 # =============================================================================
 # Recipe definitions
@@ -215,6 +216,24 @@ get_files.set_kwarg(name='--test', default=False, dtype='switch',
 get_files.description_file = 'apero_get.rst'
 
 # -----------------------------------------------------------------------------
+# apero_go.py
+# -----------------------------------------------------------------------------
+go_recipe.name = 'apero_go.py'
+go_recipe.shortname = 'GO'
+go_recipe.instrument = __INSTRUMENT__
+go_recipe.description = textentry('GO_DESCRIPTION')
+go_recipe.recipe_type = 'nolog-tool'
+go_recipe.recipe_kind = 'user'
+go_recipe.set_kwarg(name='--data', dtype='switch', default=False,
+                    helpstr=textentry('GO_DATA_HELP'))
+# loop around block kinds and add arguments
+for block in path_definitions.BLOCKS:
+    go_recipe.set_kwarg(name=f'--{block.argname}',
+                        dtype='switch', default=False,
+                        helpstr=textentry('GO_BLOCK_HELP', args=[block.name]))
+go_recipe.description_file = 'apero_go.rst'
+
+# -----------------------------------------------------------------------------
 # apero_listing.py
 # -----------------------------------------------------------------------------
 listing.name = 'apero_listing.py'
@@ -237,23 +256,23 @@ listing.description_file = 'apero_listing.rst'
 # -----------------------------------------------------------------------------
 # apero_log_stats.py
 # -----------------------------------------------------------------------------
-logstats.name = 'apero_stats.py'
-logstats.shortname = 'STAT'
-logstats.instrument = __INSTRUMENT__
-logstats.description = textentry('LOGSTAT_DESC')
-logstats.recipe_type = 'nolog-tool'
-logstats.recipe_kind = 'user'
-logstats.set_debug_plots('STATS_TIMING_PLOT', 'STAT_QC_RECIPE_PLOT')
-logstats.set_summary_plots()
-logstats.set_kwarg(name='--mode', dtype='options', default='red',
+stats.name = 'apero_stats.py'
+stats.shortname = 'STAT'
+stats.instrument = __INSTRUMENT__
+stats.description = textentry('LOGSTAT_DESC')
+stats.recipe_type = 'nolog-tool'
+stats.recipe_kind = 'user'
+stats.set_debug_plots('STATS_TIMING_PLOT', 'STAT_QC_RECIPE_PLOT')
+stats.set_summary_plots()
+stats.set_kwarg(name='--mode', dtype='options', default='red',
                    options=['timing', 'qc', 'error'],
                    helpstr='Stats mode. '
                            'For timing statistics use "timing".'
                            'For quality control statistics use "qc".')
-logstats.set_kwarg(name='--plog', dtype=str, default='None',
+stats.set_kwarg(name='--plog', dtype=str, default='None',
                    helpstr='Specify a certain log file (full path)')
-logstats.set_kwarg(**plot)
-logstats.description_file = 'apero_stats.rst'
+stats.set_kwarg(**plot)
+stats.description_file = 'apero_stats.rst'
 
 # -----------------------------------------------------------------------------
 # apero_precheck.py

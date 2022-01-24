@@ -359,7 +359,7 @@ def post_file(params: ParamDict, drsfile: Any, identifier: str,
     :return:
     """
     # set function name
-    _ = display_func('post_file', __NAME__)
+    # _ = display_func('post_file', __NAME__)
     # -------------------------------------------------------------------------
     # set filename to identifer
     filename = str(identifier)

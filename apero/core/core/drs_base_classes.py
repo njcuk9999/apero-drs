@@ -63,7 +63,7 @@ class CaseInsensitiveDict(UserDict):
         :param kw: keyword arguments passed to dict
         """
         # set function name
-        _ = display_func('__init__', __NAME__, self.class_name)
+        # _ = display_func('__init__', __NAME__, self.class_name)
         # super from dict
         super(CaseInsensitiveDict, self).__init__(*arg, **kw)
         # force keys to be capitals (internally)
@@ -81,8 +81,6 @@ class CaseInsensitiveDict(UserDict):
 
         :return value: object, the value stored at position "key"
         """
-        # set function name
-        _ = display_func('__getitem__', __NAME__, 'CaseInsensitiveDict')
         # make key capitals
         key = drs_text.capitalise_key(key)
         # return from supers dictionary storage
@@ -101,8 +99,6 @@ class CaseInsensitiveDict(UserDict):
 
         :return: None
         """
-        # set function name
-        _ = display_func('__setitem__', __NAME__, self.class_name)
         # capitalise string keys
         key = drs_text.capitalise_key(key)
         # then do the normal dictionary setting
@@ -124,7 +120,7 @@ class CaseInsensitiveDict(UserDict):
         :rtype: bool
         """
         # set function name
-        _ = display_func('__contains__', __NAME__, 'CaseInsensitiveDict')
+        # _ = display_func('__contains__', __NAME__, 'CaseInsensitiveDict')
         # capitalize key first
         key = drs_text.capitalise_key(key)
         # return True if key in keys else return False
@@ -142,7 +138,7 @@ class CaseInsensitiveDict(UserDict):
         :return None:
         """
         # set function name
-        _ = display_func('__delitem__', __NAME__, 'CaseInsensitiveDict')
+        # _ = display_func('__delitem__', __NAME__, 'CaseInsensitiveDict')
         # capitalize key first
         key = drs_text.capitalise_key(key)
         # delete key from keys
@@ -168,7 +164,7 @@ class CaseInsensitiveDict(UserDict):
                        the default value is returned (None if undefined)
         """
         # set function name
-        _ = display_func('get', __NAME__, 'CaseInsensitiveDict')
+        # _ = display_func('get', __NAME__, 'CaseInsensitiveDict')
         # capitalise string keys
         key = drs_text.capitalise_key(key)
         # if we have the key return the value
@@ -187,8 +183,8 @@ class CaseInsensitiveDict(UserDict):
         :return None:
         """
         # set function name
-        _ = display_func('__capitalise_keys__', __NAME__,
-                         'CaseInsensitiveDict')
+        # _ = display_func('__capitalise_keys__', __NAME__,
+        #                  'CaseInsensitiveDict')
         # make keys a list
         keys = list(self.keys())
         # loop around key in keys
@@ -233,7 +229,7 @@ class StrCaseINSDict(CaseInsensitiveDict):
         # set class name
         self.class_name = 'StrCaseINSDict'
         # set function name
-        _ = display_func('__init__', __NAME__, self.class_name)
+        # _ = display_func('__init__', __NAME__, self.class_name)
         # super from dict
         super(StrCaseINSDict, self).__init__(*arg, **kw)
 
@@ -250,7 +246,7 @@ class StrCaseINSDict(CaseInsensitiveDict):
         :return value: list, the value stored at position "key"
         """
         # set function name
-        _ = display_func('__getitem__', __NAME__, self.class_name)
+        # _ = display_func('__getitem__', __NAME__, self.class_name)
         # return from supers dictionary storage
         # noinspection PyTypeChecker
         return list(super(StrCaseINSDict, self).__getitem__(key))
@@ -268,7 +264,7 @@ class StrCaseINSDict(CaseInsensitiveDict):
         :return: None
         """
         # set function name
-        _ = display_func('__setitem__', __NAME__, self.class_name)
+        # _ = display_func('__setitem__', __NAME__, self.class_name)
         # then do the normal dictionary setting
         super(StrCaseINSDict, self).__setitem__(key, list(value))
 
@@ -297,7 +293,7 @@ class ListCaseINSDict(CaseInsensitiveDict):
         # set class name
         self.class_name = 'ListCaseINSDict'
         # set function name
-        _ = display_func('__init__', __NAME__, self.class_name)
+        # _ = display_func('__init__', __NAME__, self.class_name)
         # super from dict
         super(ListCaseINSDict, self).__init__(*arg, **kw)
 
@@ -314,7 +310,7 @@ class ListCaseINSDict(CaseInsensitiveDict):
         :return value: list, the value stored at position "key"
         """
         # set function name
-        _ = display_func('__getitem__', __NAME__, self.class_name)
+        # _ = display_func('__getitem__', __NAME__, self.class_name)
         # return from supers dictionary storage
         # noinspection PyTypeChecker
         return list(super(ListCaseINSDict, self).__getitem__(key))
@@ -332,7 +328,7 @@ class ListCaseINSDict(CaseInsensitiveDict):
         :return: None
         """
         # set function name
-        _ = display_func('__setitem__', __NAME__, self.class_name)
+        # _ = display_func('__setitem__', __NAME__, self.class_name)
         # then do the normal dictionary setting
         super(ListCaseINSDict, self).__setitem__(key, list(value))
 
@@ -361,7 +357,7 @@ class ListDict(UserDict):
         # set class name
         self.class_name = 'ListDict'
         # set function name
-        _ = display_func('__init__', __NAME__, self.class_name)
+        # _ = display_func('__init__', __NAME__, self.class_name)
         # super from dict
         super(ListDict, self).__init__(*arg, **kw)
 
@@ -378,7 +374,7 @@ class ListDict(UserDict):
         :return value: object, the value stored at position "key"
         """
         # set function name
-        _ = display_func('__getitem__', __NAME__, self.class_name)
+        # _ = display_func('__getitem__', __NAME__, self.class_name)
         # return from supers dictionary storage
         return list(super(ListDict, self).__getitem__(key))
 
@@ -395,7 +391,7 @@ class ListDict(UserDict):
         :return: None
         """
         # set function name
-        _ = display_func('__setitem__', __NAME__, self.class_name)
+        # _ = display_func('__setitem__', __NAME__, self.class_name)
         # then do the normal dictionary setting
         super(ListDict, self).__setitem__(key, value)
 
@@ -428,7 +424,7 @@ class ImportModule:
         :param path: str, the path to the module
         """
         # set function name
-        _ = display_func('__init__', __NAME__, self.class_name)
+        # _ = display_func('__init__', __NAME__, self.class_name)
         # set the name of the module to be imported
         self.name = name
         # set the path to the module to be imported
@@ -452,7 +448,7 @@ class ImportModule:
         :return:
         """
         # set function name
-        _ = display_func('__getstate__', __NAME__, self.class_name)
+        # _ = display_func('__getstate__', __NAME__, self.class_name)
         # what to exclude from state
         exclude = ['mod']
         # need a dictionary for pickle
@@ -472,7 +468,7 @@ class ImportModule:
         :return:
         """
         # set function name
-        _ = display_func('__setstate__', __NAME__, self.class_name)
+        # _ = display_func('__setstate__', __NAME__, self.class_name)
         # update dict with state
         self.__dict__.update(state)
         # now re-get module (if module is set)

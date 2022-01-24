@@ -71,7 +71,7 @@ No schematic set
      --shapey[FILE:SHAPE_Y] // [STRING] Sets the SHAPE DYMAP file used to get the dy correction map (CALIBDB=SHAPEY)
      --shapel[FILE:SHAPEL] // [STRING] Sets the SHAPE local file used to get the local transforms (CALIBDB = SHAPEL)
      --thermal[True/False] // [BOOLEAN] Sets whether to do the thermal correction (else defaults to THERMAL_CORRECT value in constants)
-     --thermalfile[FILE:THERMALI_E2DS,THERMALT_E2DS] // [STRING] Sets the Thermal correction file to use (CAILBDB = THERMAL_{fiber})
+     --thermalfile[FILE:THERMALI_E2DS,THERMALT_E2DS] // [STRING] Sets the Thermal correction file to use (CAILBDB = 'THERMAL_{fiber}')
      --wavefile[FILE:WAVE_HC,WAVE_FP,WAVEM_D] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
 
 

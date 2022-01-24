@@ -267,7 +267,7 @@ def get_tellu_objs(params: ParamDict, key: str,
     :return: list of strings, the absolute filenames for database entries of
              KEY == 'key' and OBJECT in 'objnames'
     """
-    _ = display_func('get_tellu_objs', __NAME__)
+    # _ = display_func('get_tellu_objs', __NAME__)
     # ----------------------------------------------------------------------
     # deal with objnames
     if objnames is None:
@@ -1167,7 +1167,7 @@ def get_abso_expo(params, wavemap, expo_others, expo_water, spl_others,
     :return:
     """
     # set the function name
-    _ = display_func('get_abso_expo', __NAME__)
+    # _ = display_func('get_abso_expo', __NAME__)
     # ----------------------------------------------------------------------
     # for some test one may give 0 as exponents and for this we just return
     #    a flat vector
@@ -1800,7 +1800,7 @@ def load_tellu_file(params: ParamDict, key: str,
 
     """
     # set function
-    _ = display_func('load_tellu_file', __NAME__)
+    # _ = display_func('load_tellu_file', __NAME__)
     # ------------------------------------------------------------------------
     # first try to get file from inputs
     fout = drs_data.get_file_from_inputs(params, 'telluric', userinputkey,

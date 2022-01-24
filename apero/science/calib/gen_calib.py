@@ -160,7 +160,7 @@ class CalibFile:
 
         """
         # set function
-        _ = display_func('load_calib_file', __NAME__)
+        # _ = display_func('load_calib_file', __NAME__)
         # ---------------------------------------------------------------------
         # set properties from load file
         self.key = key

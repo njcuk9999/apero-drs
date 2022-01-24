@@ -100,7 +100,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     :return: None - writes to disk
     """
     # set function name
-    _ = display_func('write_files', __NAME__)
+    # _ = display_func('write_files', __NAME__)
     # get data from polfile
     lsd_velocities = props['LSD_VELOCITIES']
     lsd_stokesvqu = props['LSD_STOKESVQU']
@@ -772,7 +772,7 @@ def line_pattern_matrix(wavemap: np.ndarray, wavec: np.ndarray,
                      polar LSD.
     """
     # set function name
-    _ = display_func('line_pattern_matrix', __NAME__)
+    # _ = display_func('line_pattern_matrix', __NAME__)
     # set number of points and velocity (km/s) limits in LSD profile
     numlines, vinit, vfinal = len(velocities), velocities[0], velocities[-1]
     # set number of spectral points

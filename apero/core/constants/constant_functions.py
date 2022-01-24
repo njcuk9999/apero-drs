@@ -208,8 +208,6 @@ class Const:
         :rtype: Union[bool, object]
         :raises DrsCodedError: if value is not valid
         """
-        # set function name
-        _ = display_func('validate', __NAME__, self.class_name)
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -282,8 +280,6 @@ class Const:
 
         :rtype: list[str]
         """
-        # set function name
-        _ = display_func('write_line', __NAME__, self.class_name)
         # set up line list
         lines = ['']
         # deal with value
@@ -527,8 +523,6 @@ class Keyword(Const):
 
         :returns: None
         """
-        # set function name
-        _ = display_func('set', __NAME__, self.class_name)
         # set the header key associated with this keyword
         if key is not None:
             self.key = key
@@ -686,8 +680,6 @@ class CKCaseINSDict(base_class.CaseInsensitiveDict):
         """
         # set class name
         self.class_name = 'CKCaseINSDict'
-        # set function name
-        _ = display_func('__init__', __NAME__, self.class_name)
         # super from dict
         super(CKCaseINSDict, self).__init__(*arg, **kw)
 
@@ -703,8 +695,6 @@ class CKCaseINSDict(base_class.CaseInsensitiveDict):
 
         :return value: list, the value stored at position "key"
         """
-        # set function name
-        _ = display_func('__getitem__', __NAME__, self.class_name)
         # return from supers dictionary storage
         # noinspection PyTypeChecker
         return super(CKCaseINSDict, self).__getitem__(key)
@@ -721,8 +711,6 @@ class CKCaseINSDict(base_class.CaseInsensitiveDict):
 
         :return: None
         """
-        # set function name
-        _ = display_func('__setitem__', __NAME__, self.class_name)
         # then do the normal dictionary setting
         super(CKCaseINSDict, self).__setitem__(key, value)
 
@@ -868,8 +856,6 @@ def get_constants_from_file(filename: str) -> Tuple[List[str], List[str]]:
 
     :raises DrsCodedException: if there is a profile read constants from file
     """
-    # set function name (cannot break here --> no access to inputs)
-    _ = display_func('get_constants_from_file', __NAME__)
     # first try to reformat text file to avoid weird characters
     #   (like mac smart quotes)
     _validate_text_file(filename)

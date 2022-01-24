@@ -672,7 +672,7 @@ def fill_e2ds_nans(params, image, **kwargs):
 
 def locate_reference_file(params, recipe, infile):
     # set function name
-    _ = display_func('locate_reference_file', __NAME__)
+    # _ = display_func('locate_reference_file', __NAME__)
     # deal with infile being telluric file (we do not have reference file
     #   for telluric files) --> must use the telluric files "intype file"
     if infile.name == 'TELLU_OBJ':
