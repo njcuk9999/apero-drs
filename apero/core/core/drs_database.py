@@ -105,7 +105,7 @@ class DatabaseManager:
         # save class name
         self.classname = 'DatabaseManager'
         # set function
-        _ = display_func('__init__', __NAME__, self.classname)
+        # _ = display_func('__init__', __NAME__, self.classname)
         # save params for use throughout
         self.params = params
         self.instrument = base.IPARAMS['INSTRUMENT']
@@ -214,7 +214,7 @@ class DatabaseManager:
         :return:
         """
         # set function
-        _ = display_func('load_db', __NAME__, self.classname)
+        # _ = display_func('load_db', __NAME__, self.classname)
         # if we already have database do nothing
         if (self.database is not None) and (not check):
             return
@@ -234,7 +234,7 @@ class DatabaseManager:
         :return:
         """
         # set function
-        _ = display_func('__str__', __NAME__, self.classname)
+        # _ = display_func('__str__', __NAME__, self.classname)
         # return string representation
         return '{0}[{1}]'.format(self.classname, self.path)
 
@@ -244,7 +244,7 @@ class DatabaseManager:
         :return:
         """
         # set function
-        _ = display_func('__repr__', __NAME__, self.classname)
+        # _ = display_func('__repr__', __NAME__, self.classname)
         # return string representation
         return self.__str__()
 
@@ -298,7 +298,7 @@ class CalibrationDatabase(DatabaseManager):
         # save class name
         self.classname = 'CalibrationDatabaseManager'
         # set function
-        _ = display_func('__init__', __NAME__, self.classname)
+        # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
         DatabaseManager.__init__(self, params)
         # set name
@@ -321,8 +321,8 @@ class CalibrationDatabase(DatabaseManager):
         :return: None
         """
         # set function
-        _ = display_func('add_calib_file', __NAME__,
-                         self.classname)
+        # _ = display_func('add_calib_file', __NAME__,
+        #                  self.classname)
         # deal with no database
         if self.database is None:
             self.load_db()
@@ -400,8 +400,8 @@ class CalibrationDatabase(DatabaseManager):
                  a np.ndarray, else returns a pandas table
         """
         # set function
-        _ = display_func('get_calib_entry', __NAME__,
-                         self.classname)
+        # _ = display_func('get_calib_entry', __NAME__,
+        #                  self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -635,8 +635,8 @@ class CalibrationDatabase(DatabaseManager):
 
     def remove_entries(self, condition):
         # set function
-        _ = display_func('remove_entries', __NAME__,
-                         self.classname)
+        # _ = display_func('remove_entries', __NAME__,
+        #                  self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -661,7 +661,7 @@ class TelluricDatabase(DatabaseManager):
         # save class name
         self.classname = 'TelluricDatabaseManager'
         # set function
-        _ = display_func('__init__', __NAME__, self.classname)
+        # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
         DatabaseManager.__init__(self, params)
         # set name
@@ -701,8 +701,8 @@ class TelluricDatabase(DatabaseManager):
                         copy_files=True)
         """
         # set function
-        _ = display_func('add_tellu_file', __NAME__,
-                         self.classname)
+        # _ = display_func('add_tellu_file', __NAME__,
+        #                  self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return
@@ -813,8 +813,8 @@ class TelluricDatabase(DatabaseManager):
                  a np.ndarray, else returns a pandas table
         """
         # set function
-        _ = display_func('get_tellu_entry', __NAME__,
-                         self.classname)
+        # _ = display_func('get_tellu_entry', __NAME__,
+        #                  self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -1042,8 +1042,8 @@ class TelluricDatabase(DatabaseManager):
 
     def remove_entries(self, condition):
         # set function
-        _ = display_func('remove_entries', __NAME__,
-                         self.classname)
+        # _ = display_func('remove_entries', __NAME__,
+        #                  self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -1327,7 +1327,7 @@ class IndexDatabase(DatabaseManager):
         # save class name
         self.classname = 'IndexDatabaseManager'
         # set function
-        _ = display_func('__init__', __NAME__, self.classname)
+        # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
         DatabaseManager.__init__(self, params)
         # set name
@@ -1479,8 +1479,8 @@ class IndexDatabase(DatabaseManager):
 
     def remove_entries(self, condition):
         # set function
-        _ = display_func('remove_entries', __NAME__,
-                         self.classname)
+        # _ = display_func('remove_entries', __NAME__,
+        #                  self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -1649,8 +1649,8 @@ class IndexDatabase(DatabaseManager):
         :return: None - updates the index database
         """
         # set function
-        _ = display_func('update_entries', __NAME__,
-                         self.classname)
+        # _ = display_func('update_entries', __NAME__,
+        #                  self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -1840,7 +1840,7 @@ class IndexDatabase(DatabaseManager):
 
     def update_header_fix(self, recipe):
         # set function name
-        _ = display_func('update_objname', __NAME__, self.classname)
+        # _ = display_func('update_objname', __NAME__, self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -2126,7 +2126,7 @@ class LogDatabase(DatabaseManager):
         # save class name
         self.classname = 'LogDatabaseManager'
         # set function
-        _ = display_func('__init__', __NAME__, self.classname)
+        # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
         DatabaseManager.__init__(self, params)
         # set name
@@ -2296,7 +2296,7 @@ class LogDatabase(DatabaseManager):
                  a np.ndarray, else returns a pandas table
         """
         # set function
-        _ = display_func('get_entries', __NAME__, self.classname)
+        # _ = display_func('get_entries', __NAME__, self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -2377,8 +2377,8 @@ class LogDatabase(DatabaseManager):
 
     def remove_entries(self, condition):
         # set function
-        _ = display_func('remove_entries', __NAME__,
-                         self.classname)
+        # _ = display_func('remove_entries', __NAME__,
+        #                  self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -2432,7 +2432,7 @@ class ObjectDatabase(DatabaseManager):
         # save class name
         self.classname = 'ObjectDatabaseManager'
         # set function
-        _ = display_func('__init__', __NAME__, self.classname)
+        # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
         DatabaseManager.__init__(self, params)
         # set name
@@ -2459,7 +2459,7 @@ class ObjectDatabase(DatabaseManager):
                  a np.ndarray, else returns a pandas table
         """
         # set function
-        _ = display_func('get_entries', __NAME__, self.classname)
+        # _ = display_func('get_entries', __NAME__, self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None

@@ -1,6 +1,5 @@
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
-from apero.core import constants
 from apero.core.utils import drs_recipe
 from apero import lang
 from apero.core.instruments.nirps_ha import file_definitions as files
@@ -18,8 +17,6 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Define instrument alias
 INSTRUMENT_ALIAS = 'nirps_he'
-# Get constants
-Constants = constants.load()
 # Get Help
 textentry = lang.textentry
 # import file definitions in import module class

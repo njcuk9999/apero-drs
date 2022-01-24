@@ -89,7 +89,7 @@ class Header(fits.Header):
         # save class name
         self.classname = 'Header'
         # set function
-        _ = display_func('__init__', __NAME__, self.classname)
+        # _ = display_func('__init__', __NAME__, self.classname)
         # construct astropy.io.fits.Header class
         super().__init__(*args, **kwargs)
         # set storage for temporary items
@@ -106,7 +106,7 @@ class Header(fits.Header):
         :return: None
         """
         # set function
-        _ = display_func('__setitem__', __NAME__, self.classname)
+        # _ = display_func('__setitem__', __NAME__, self.classname)
         # deal with key not being string
         if isinstance(key, tuple):
             # assume it is a tuple (key, id) - therefore we check key[0]
@@ -151,7 +151,7 @@ class Header(fits.Header):
         :return: the item in the header with key="key"
         """
         # set function
-        _ = display_func('__getitem__', __NAME__, self.classname)
+        # _ = display_func('__getitem__', __NAME__, self.classname)
         # deal with key not being string
         if isinstance(key, tuple):
             # assume it is a tuple (key, id) - therefore we check key[0]
@@ -195,7 +195,7 @@ class Header(fits.Header):
         :return:
         """
         # set function
-        _ = display_func('__contains__', __NAME__, self.classname)
+        # _ = display_func('__contains__', __NAME__, self.classname)
         # deal with key not being str
         if isinstance(key, tuple):
             if key[0].startswith('@@@'):
@@ -243,7 +243,7 @@ class Header(fits.Header):
         :return: copy of the header
         """
         # set function
-        _ = display_func('copy', __NAME__, self.classname)
+        # _ = display_func('copy', __NAME__, self.classname)
         # copy header via super
         header = Header(super().copy(strip), copy=False)
         # copy temp items
@@ -265,7 +265,7 @@ class Header(fits.Header):
         :return: copy of the header
         """
         # set function
-        _ = display_func('to_fits_header', __NAME__, self.classname)
+        # _ = display_func('to_fits_header', __NAME__, self.classname)
         # copy header via super
         header = super().copy(strip=strip)
         # if nan to string is True set all header keys (note the __setitem__
@@ -290,7 +290,7 @@ class Header(fits.Header):
         :return:
         """
         # set function
-        _ = display_func('from_fits_header', __NAME__)
+        # _ = display_func('from_fits_header', __NAME__)
         # construct new Header instance
         return Header(fits_header, copy=True)
 
@@ -305,7 +305,7 @@ class Header(fits.Header):
         :return:
         """
         # set function
-        _ = display_func('from_fits_header', __NAME__)
+        # _ = display_func('from_fits_header', __NAME__)
         # look for temp key prefix
         if key.startswith(chars):
             return key[len(chars):]
@@ -618,7 +618,7 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
     :return: data if getdata True and/or headers if gethdr True
     """
     # set function name
-    _ = display_func('_read_fitsimage', __NAME__)
+    # _ = display_func('_read_fitsimage', __NAME__)
     # -------------------------------------------------------------------------
     # deal with getting data
     if getdata:
@@ -756,7 +756,7 @@ def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
     :return: table if getdata True and/or headers if gethdr True
     """
     # set function name
-    _ = display_func('_read_fitstable', __NAME__)
+    # _ = display_func('_read_fitstable', __NAME__)
     # -------------------------------------------------------------------------
     # deal with getting data
     if getdata:
@@ -876,7 +876,7 @@ def writefits(params: ParamDict, filename: str, data: ListImageTable,
     :return: None - writes Fits HDU to 'filename'
     """
     # set function name
-    _ = display_func('writefits', __NAME__)
+    # _ = display_func('writefits', __NAME__)
     # ------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
@@ -1187,7 +1187,7 @@ def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
               up to the point where it cannot get them
     """
     # set function name
-    _ = display_func('deal_with_bad_header', __NAME__)
+    # _ = display_func('deal_with_bad_header', __NAME__)
     # define condition to pass
     cond = True
     # define iterator
@@ -1239,7 +1239,7 @@ def check_dtype_for_header(value: Any) -> Any:
     :return: the value updates with rules above
     """
     # set function name
-    _ = display_func('check_dtype_for_header', __NAME__)
+    # _ = display_func('check_dtype_for_header', __NAME__)
     # if value is a string check if it is a path if it is remove path
     #   and leave base file
     if isinstance(value, str):

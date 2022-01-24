@@ -694,7 +694,7 @@ def get_pp_mask(params: ParamDict, header: drs_fits.Header,
 
     :return: tuple, 1. the loaded mask as a np.array, 2. the Path to the mask
     """
-    _ = display_func('.get_pp_mask', __NAME__)
+    # _ = display_func('.get_pp_mask', __NAME__)
     # get file instance
     ppmstr = drs_file.get_file_definition(params, 'PPMSTR', block_kind='red')
     # get calibration key

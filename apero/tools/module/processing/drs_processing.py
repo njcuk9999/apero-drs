@@ -1478,7 +1478,7 @@ def generate_runs(params: ParamDict, recipe: DrsRecipe,
              line
     """
     # set function name
-    _ = display_func('generate_runs', __NAME__)
+    # _ = display_func('generate_runs', __NAME__)
     # need to find files in index database that match each argument
     #    filedict is a dictionary of arguments each for
     #    each drsfile (if filelogic=exclusive)
@@ -2670,7 +2670,7 @@ def convert_to_command(recipe: DrsRecipe,
              on the command line
     """
     # set function name
-    _ = display_func('convert_to_command', __NAME__)
+    # _ = display_func('convert_to_command', __NAME__)
     # get args/kwargs from recipe
     args = recipe.args
     kwargs = recipe.kwargs
@@ -2717,7 +2717,7 @@ def vstack_cols(tablelist: List[Table]) -> Union[Table, None]:
     :return: the stacked astropy.table
     """
     # set function name
-    _ = display_func('vstack_cols', __NAME__)
+    # _ = display_func('vstack_cols', __NAME__)
     # deal with empty list
     if len(tablelist) == 0:
         # append a None
@@ -3504,7 +3504,7 @@ def _get_argposorder(recipe: DrsRecipe, argdict: Dict[str, ArgDictType],
                 files associated with this [argument][drsfile]
     """
     # set function name
-    _ = display_func('_get_argposorder', __NAME__)
+    # _ = display_func('_get_argposorder', __NAME__)
     # set up storage
     runorder = OrderedDict()
     # get args/kwargs from recipe
@@ -3605,7 +3605,7 @@ def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
              that argument can take
     """
     # set function name
-    _ = display_func('_gen_run', __NAME__)
+    # _ = display_func('_gen_run', __NAME__)
     # deal with unset values (not used)
     if arg0 is None:
         arg0 = ''
@@ -3694,7 +3694,7 @@ def _find_first_filearg(runorder: List[str],
              2. the dictionary of drs file tables for this argument
     """
     # set function name
-    _ = display_func('_find_first_filearg', __NAME__)
+    # _ = display_func('_find_first_filearg', __NAME__)
     # loop around the run order
     for argname in runorder:
         # if argument is a positional argument return the argdict dictionary
@@ -3739,7 +3739,7 @@ def _find_next_group(argname: str, drstable: Table,
              list of group names that belong to that argument
     """
     # set function name
-    _ = display_func('_find_next_group', __NAME__)
+    # _ = display_func('_find_next_group', __NAME__)
     # make sure argname is in usedgroups
     if argname not in usedgroups:
         usedgroups[argname] = []

@@ -409,7 +409,7 @@ def run(func: Any, recipe: DrsRecipe,
     :rtype: tuple[dict, bool]
     """
     # set function name
-    _ = display_func('run', __NAME__)
+    # _ = display_func('run', __NAME__)
     # run main bulk of code (catching all errors)
     if params['DRS_DEBUG'] > 0:
         llmain = func(recipe, params)
@@ -564,7 +564,7 @@ def return_locals(params: ParamDict, ll: Dict[str, Any]) -> Dict[str, Any]:
     :return: dictionary, the lcoal namespace in dictionary form
     """
     # set function name
-    _ = display_func('return_locals', __NAME__)
+    # _ = display_func('return_locals', __NAME__)
     # else return ll
     return ll
 
@@ -850,7 +850,7 @@ def file_processing_update(params: ParamDict, it: int, num_files: int):
     :return: None, logs via WLOG
     """
     # set function name
-    _ = display_func('file_processing_update', __NAME__)
+    # _ = display_func('file_processing_update', __NAME__)
     # log
     WLOG(params, '', params['DRS_HEADER'])
     eargs = [it + 1, num_files]
@@ -869,7 +869,7 @@ def fiber_processing_update(params: ParamDict, fiber: str):
     :return: None, logs via WLOG
     """
     # set function name
-    _ = display_func('fiber_processing_update', __NAME__)
+    # _ = display_func('fiber_processing_update', __NAME__)
     # log
     WLOG(params, '', params['DRS_HEADER'])
     WLOG(params, '', textentry('40-001-00022', args=[fiber]))
@@ -889,7 +889,7 @@ def end_plotting(params: ParamDict, recipe: Union[DrsRecipe, None]):
     :return: None
     """
     # set function name
-    _ = display_func('end_plotting', __NAME__)
+    # _ = display_func('end_plotting', __NAME__)
     # only do this is we don't have a recipe
     if recipe is None or not hasattr(recipe, 'plot'):
         WLOG(params, 'debug', textentry('90-100-00004'))
@@ -915,7 +915,7 @@ def group_name(params: ParamDict, suffix: str = 'group') -> str:
     :return: str, the group name APEROG-{PID}_{RECIPE}_{SUFFIX}
     """
     # set function name
-    _ = display_func('group_name', __NAME__)
+    # _ = display_func('group_name', __NAME__)
     # ----------------------------------------------------------------------
     # deal with no PID
     if 'PID' not in params:
@@ -1185,7 +1185,7 @@ def _quiet_keys_present(recipe: DrsRecipe, quiet: bool,
     :rtype: bool
     """
     # set function name
-    _ = display_func('_quiet_keys_present', __NAME__)
+    # _ = display_func('_quiet_keys_present', __NAME__)
     # get the special keys
     skeys = _get_recipe_keys(recipe.specialargs, add=['--help', '-h'])
     # see if we have a key
@@ -1214,7 +1214,7 @@ def _parallel_key_present(fkwargs) -> bool:
     :return: bool, True if in parallel
     """
     # set function name
-    _ = display_func('_parallel_key_present', __NAME__)
+    # _ = display_func('_parallel_key_present', __NAME__)
     # search for parallel
     parallel = False
     if _search_for_key('parallel', fkwargs):
@@ -1248,7 +1248,7 @@ def _display_drs_title(params: ParamDict, group: Union[str, None] = None,
     :returns: None
     """
     # set function name
-    _ = display_func('_display_drs_title', __NAME__)
+    # _ = display_func('_display_drs_title', __NAME__)
     # get colours
     colors = COLOR
     # create title
@@ -1281,7 +1281,7 @@ def _display_title(params: ParamDict, title: str,
     :returns: None
     """
     # set function name
-    _ = display_func('_display_title', __NAME__)
+    # _ = display_func('_display_title', __NAME__)
     # print and log
     WLOG(params, '', params['DRS_HEADER'], wrap=False, printonly=printonly,
          logonly=logonly)
@@ -1306,7 +1306,7 @@ def _display_logo(params: ParamDict):
     :return: None
     """
     # set function name
-    _ = display_func('_display_logo', __NAME__)
+    # _ = display_func('_display_logo', __NAME__)
     # get colours
     colors = COLOR
     # get pconstant
@@ -1334,7 +1334,7 @@ def _display_ee(params: ParamDict):
     :returns: None
     """
     # set function name
-    _ = display_func('_display_ee', __NAME__)
+    # _ = display_func('_display_ee', __NAME__)
     # get colours
     colors = COLOR
     # get pconstant
@@ -1404,7 +1404,7 @@ def _display_initial_parameterisation(params: ParamDict,
     :return: None
     """
     # set function name
-    _ = display_func('_display_initial_parameterisation', __NAME__)
+    # _ = display_func('_display_initial_parameterisation', __NAME__)
     # Add initial parameterisation
     wmsgs = textentry('\n\tDRS_DATA_RAW: {}'.format(params['DRS_DATA_RAW']))
     wmsgs += textentry('\n\tDRS_DATA_REDUC: {}'
@@ -1516,7 +1516,7 @@ def _display_system_info(params: ParamDict, logonly: bool = True,
               string and does not print/log
     """
     # set function name
-    _ = display_func('_display_system_info', __NAME__)
+    # _ = display_func('_display_system_info', __NAME__)
     # noinspection PyListCreation
     messages = ' ' + textentry('40-001-00010')
     messages += '\n' + textentry(params['DRS_HEADER'])
@@ -1559,7 +1559,7 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
 
     """
     # set function name
-    _ = display_func('_display_run_time_arguments', __NAME__)
+    # _ = display_func('_display_run_time_arguments', __NAME__)
     # storage for logging strings
     log_strings = ''
     # get parameters
@@ -1662,7 +1662,7 @@ def _find_interactive() -> bool:
     :rtype: bool
     """
     # set function name
-    _ = display_func('_find_interactive', __NAME__)
+    # _ = display_func('_find_interactive', __NAME__)
     # if system flags this as an interactive session
     cond1 = sys.flags.interactive
     # if sys has ps1 as an attribute
@@ -1682,7 +1682,7 @@ def _find_ipython() -> bool:
     :rtype: bool
     """
     # set function name
-    _ = display_func('_find_ipython', __NAME__)
+    # _ = display_func('_find_ipython', __NAME__)
     # see if we are in ipython
     try:
         # noinspection PyStatementEffect
@@ -1724,7 +1724,7 @@ def assign_pid() -> Tuple[str, str]:
     :rtype: Tuple[str, str]
     """
     # set function name
-    _ = display_func('assign_pid', __NAME__)
+    # _ = display_func('assign_pid', __NAME__)
     # get unix char code
     unixtime, humantime, rval = drs_misc.unix_char_code()
     # write pid
@@ -1814,7 +1814,7 @@ def _get_arg_strval(value: Any):
     :return out: string, the string representation of "object"
     """
     # set function name
-    _ = display_func('_get_arg_strval', __NAME__)
+    # _ = display_func('_get_arg_strval', __NAME__)
     # if we done have list return value
     if not hasattr(value, '__len__'):
         return value
@@ -1869,7 +1869,7 @@ def _get_recipe_keys(args: Dict[str, drs_argument.DrsArgument],
                   a prefix if remove_prefix is not None)
     """
     # set function name
-    _ = display_func('_get_recipe_keys', __NAME__)
+    # _ = display_func('_get_recipe_keys', __NAME__)
     # get the special keys
     keys = []
     # loop around arguments in args (positional, optional or special)
@@ -1917,7 +1917,7 @@ def _keys_present(recipe: DrsRecipe,
                   if remove_prefix is not None)
     """
     # set function name
-    _ = display_func('_keys_present', __NAME__)
+    # _ = display_func('_keys_present', __NAME__)
     # deal with no fkwargs
     if fkwargs is None:
         fkwargs = dict()
@@ -1962,7 +1962,7 @@ def _search_for_key(key: str,
     :return cond: bool, True if key found in fkwargs/sys.argv, False otherwise
     """
     # set function name
-    _ = display_func('_search_for_key', __NAME__)
+    # _ = display_func('_search_for_key', __NAME__)
     # deal with no fkwargs
     if fkwargs is None:
         fkwargs = dict()
@@ -2120,7 +2120,7 @@ def _set_force_dirs(recipe: DrsRecipe,
     :return:
     """
     # set function name
-    _ = display_func('_set_force_dirs', __NAME__)
+    # _ = display_func('_set_force_dirs', __NAME__)
     # ----------------------------------------------------------------------
     # set debug key
     in_block_key = '--force_indir'
@@ -2242,7 +2242,7 @@ def _sort_version(messages: Union[str, None] = None) -> Union[List[str]]:
                       (if messages is None)
     """
     # set function name
-    _ = display_func('_sort_version', __NAME__)
+    # _ = display_func('_sort_version', __NAME__)
     # deal with no messages
     if messages is None:
         messages = []
@@ -2292,7 +2292,7 @@ def _make_dirs(params: ParamDict, path: str):
     :return: None
     """
     # set function name
-    _ = display_func('_make_dirs', __NAME__)
+    # _ = display_func('_make_dirs', __NAME__)
     # first check if path already exists
     if os.path.exists(path):
         # return
