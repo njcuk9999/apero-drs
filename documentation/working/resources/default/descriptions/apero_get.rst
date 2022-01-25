@@ -21,3 +21,4 @@ whether the copied files are just symlinks or full copies of the data.
 
 .. note:: We recommend running with --test the first time this is used to make
           sure you have the files you want (and check whether all the options worked)
+
