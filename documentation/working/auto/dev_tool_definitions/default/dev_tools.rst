@@ -17,6 +17,7 @@ This section describes all the default dev tools to use with APERO.
 
     rdefinition_CLOG.rst
     rdefinition_DBMGR.rst
+    rdefinition_LANG.rst
     rdefinition_DOC.rst
     rdefinition_DEPEND.rst
     rdefinition_RUN_INI.rst

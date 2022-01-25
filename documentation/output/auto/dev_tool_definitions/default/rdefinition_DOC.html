@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
     <link rel="next" title="apero_dependencies" href="rdefinition_DEPEND.html" />
-    <link rel="prev" title="apero_database" href="rdefinition_DBMGR.html" />
+    <link rel="prev" title="apero_langdb" href="rdefinition_LANG.html" />
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
     <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
@@ -99,7 +99,7 @@
           <a href="rdefinition_DEPEND.html" title="apero_dependencies"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="rdefinition_DBMGR.html" title="apero_database"
+          <a href="rdefinition_LANG.html" title="apero_langdb"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.194 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/developer/main_dev.html" >Developer how to guide</a> &#187;</li>
@@ -126,8 +126,8 @@
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="rdefinition_DBMGR.html"
-                        title="previous chapter">apero_database</a></p>
+  <p class="topless"><a href="rdefinition_LANG.html"
+                        title="previous chapter">apero_langdb</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="rdefinition_DEPEND.html"
                         title="next chapter">apero_dependencies</a></p>
@@ -161,7 +161,31 @@
 <section id="description">
 <h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
 <p>SHORTNAME: DOC</p>
-<p>No description set</p>
+<p>The apero_documentation recipe allows updatings, compiling and uploading of
+this documenation (via Sphinx).</p>
+<p>One can do this for all instruments (–instruments=ALL) or for an individual
+instrument (however the compile and upload will re-compile/re-upload all
+local files).</p>
+<p>If the file_definitions.py has been updated one can use the
+–filedef argument to update the documentation file definitions.</p>
+<p>If the recipes within recipe_definitions.py has been updated one can use the
+–recipedef argument to update the documentation and if the sequences within
+recipe_definitions.py has been updated one can use the –recipeseq argument
+to update the docuementation.</p>
+<p>The safest option is to use –filedef –recipedef –recipeseq to update all
+automatically created definitions.</p>
+<p>One can compile the html and/or latex documents by using –compile and change
+between compiling html/latex/both with the –mode option.</p>
+<p>Finally one can –upload the changes to the webserver (password will be
+required for the rsync)</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>you must make sure –compile has been done before this otherwise
+you could sync a empty directory and remove all files from the
+webserver</p>
+</div>
+<p>In general one probably runs this command with all arguments.
+i.e.</p>
 </section>
 <section id="schematic">
 <h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
@@ -244,7 +268,7 @@
           <a href="rdefinition_DEPEND.html" title="apero_dependencies"
              >next</a> |</li>
         <li class="right" >
-          <a href="rdefinition_DBMGR.html" title="apero_database"
+          <a href="rdefinition_LANG.html" title="apero_langdb"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.194 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/developer/main_dev.html" >Developer how to guide</a> &#187;</li>

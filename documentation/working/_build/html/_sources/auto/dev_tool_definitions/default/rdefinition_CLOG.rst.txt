@@ -15,7 +15,7 @@ apero_changelog
 SHORTNAME: CLOG
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_changelog.rst
 
 
 ********************************************************************************

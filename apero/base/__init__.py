@@ -7,7 +7,6 @@ Created on 2020-08-2020-08-21 18:26
 
 @author: cook
 """
-import apero.base.drs_db
 
 # =============================================================================
 # Define variables

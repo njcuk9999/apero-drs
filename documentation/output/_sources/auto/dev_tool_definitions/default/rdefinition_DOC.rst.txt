@@ -15,7 +15,7 @@ apero_documentation
 SHORTNAME: DOC
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_documentation.rst
 
 
 ********************************************************************************

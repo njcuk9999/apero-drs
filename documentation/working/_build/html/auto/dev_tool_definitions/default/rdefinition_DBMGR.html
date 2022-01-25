@@ -20,7 +20,7 @@
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="apero_documentation" href="rdefinition_DOC.html" />
+    <link rel="next" title="apero_langdb" href="rdefinition_LANG.html" />
     <link rel="prev" title="apero_changelog" href="rdefinition_CLOG.html" />
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
@@ -96,7 +96,7 @@
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="rdefinition_DOC.html" title="apero_documentation"
+          <a href="rdefinition_LANG.html" title="apero_langdb"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="rdefinition_CLOG.html" title="apero_changelog"
@@ -129,8 +129,8 @@
   <p class="topless"><a href="rdefinition_CLOG.html"
                         title="previous chapter">apero_changelog</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="rdefinition_DOC.html"
-                        title="next chapter">apero_documentation</a></p>
+  <p class="topless"><a href="rdefinition_LANG.html"
+                        title="next chapter">apero_langdb</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -161,7 +161,59 @@
 <section id="description">
 <h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
 <p>SHORTNAME: DBMGR</p>
-<p>No description set</p>
+<p>The apero_database recipe gives some ways to manage the local SQL/MySQL databases and tables.</p>
+<p>The options are:</p>
+<ul>
+<li><p>kill all database operations (–kill): Rarely the database completely
+freezes the –kill option should free this up if this is not possible use
+the apero_database_kill recipe.</p></li>
+<li><p>update object database (–objdb): Use the online google sheet to update the
+local object database</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This requires an internet connection</p>
+</div>
+</li>
+<li><p>update (–update) the calibration, telluric, log and index database using the files on
+disk in all the current apero profile data directories (raw/tmp/red/calib/tellu)</p></li>
+<li><p>import (–importdb) a csv file into either the calibration, telluric, index, log or object database</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Columns must conform with current database definitions</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You must also give the –csv argument with the absolute path to the csv file</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The language database can also be imported but this is not recommended</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>use the –join option to decide how to add the database (replace removes current database,
+append adds the csv contents to the end)</p>
+</div>
+</li>
+<li><p>export (–exportdb) a csv file for the calibration, telluric, index, log or object database.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You must also give the –csv argument with the absolute path to the csv file</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The language database can also be imported but this is not recommended</p>
+</div>
+</li>
+<li><p>manage all apero tables i.e. delete (–delete) a database using a GUI to select
+which tables (across all APERO profiles)</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Only remove databases you are sure are not being used. This is not
+backed up</p>
+</div>
+</li>
+</ul>
 </section>
 <section id="schematic">
 <h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
@@ -242,7 +294,7 @@
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="rdefinition_DOC.html" title="apero_documentation"
+          <a href="rdefinition_LANG.html" title="apero_langdb"
              >next</a> |</li>
         <li class="right" >
           <a href="rdefinition_CLOG.html" title="apero_changelog"

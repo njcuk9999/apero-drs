@@ -1,5 +1,0 @@
-name,HDR[DRSOUTID],file type,suffix,dbname,dbkey,input file
-SHAPEL,SHAPEL,.fits,_shapel,calibration,SHAPEL,FP_FP
-SHAPEL_IN_FP,SHAPEL_IN_FP,.fits,_shapel_in_fp.fits,--,--,FP_FP
-SHAPEL_OUT_FP,SHAPEL_OUT_FP,.fits,_shapel_out_fp.fits,--,--,FP_FP
-DEBUG_BACK,DEBUG_BACK,.fits,_background.fits,--,--,DRS_PP

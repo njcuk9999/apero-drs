@@ -1,4 +1,0 @@
-name,HDR[DRSOUTID],file type,suffix,dbname,dbkey,input file
-DARKI,DARKI,.fits,_darki,calibration,DARKI,DARK_DARK
-DARKI,DARKI,.fits,_darki,calibration,DARKI,DARK_DARK
-DARKS,DARKS,.fits,_darks,calibration,DARKS,DARK_DARK_SKY

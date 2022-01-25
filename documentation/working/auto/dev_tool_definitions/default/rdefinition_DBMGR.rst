@@ -15,7 +15,7 @@ apero_database
 SHORTNAME: DBMGR
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_database.rst
 
 
 ********************************************************************************
