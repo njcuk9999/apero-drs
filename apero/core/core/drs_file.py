@@ -6260,6 +6260,8 @@ class DrsOutFile(DrsInputFile):
         new.out_filename = deepcopy(self.out_filename)
         new.out_dirname = deepcopy(self.out_dirname)
         new.out_required = deepcopy(self.out_required)
+        # exceptions to be skipped without error
+        new.exclude_keys = deepcopy(self.exclude_keys)
         # store infiles
         new.infiles = deepcopy(self.infiles)
         # store reduced files

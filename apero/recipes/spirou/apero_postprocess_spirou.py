@@ -187,7 +187,7 @@ def __main__(recipe, params):
             # flag we have skipped some files
             has_skipped = True
             # log reason
-            if reason is not None:
+            if reason is not None and filepostfile.out_requiredd:
                 error_storage.append(reason)
     # -------------------------------------------------------------------------
     # add the QC (there are none)
