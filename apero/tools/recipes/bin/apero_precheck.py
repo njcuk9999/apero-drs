@@ -108,6 +108,7 @@ def __main__(recipe, params):
     # force the parallel key to False here (should not be True before we
     #   run processing)
     params['INPUTS']['PARALLEL'] = False
+
     # update the index database (taking into account include/exclude lists)
     #    we have to loop around block kinds to prevent recipe from updating
     #    the index database every time a new recipe starts

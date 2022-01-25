@@ -311,6 +311,12 @@ precheck.recipe_type = 'tool'
 precheck.recipe_kind = 'processing'
 precheck.set_arg(pos=0, name='runfile', dtype=str,
                  helpstr=textentry('PROCESS_RUNFILE_HELP'))
+precheck.set_kwarg(name='--obs_dir', dtype=str, default='None',
+                     helpstr=textentry('PROCESS_OBS_DIR_HELP'))
+precheck.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
+                     helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))
+precheck.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
+                     helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
 precheck.set_kwarg(name='--no_file_check', dtype='switch', default=False,
                    helpstr='Check the number of files on disk and '
                            'flag possible errors')
