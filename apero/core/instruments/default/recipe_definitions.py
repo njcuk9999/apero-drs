@@ -37,6 +37,7 @@ explorer = drs_recipe(__INSTRUMENT__)
 get_files = drs_recipe(__INSTRUMENT__)
 go_recipe = drs_recipe(__INSTRUMENT__)
 database_mgr = drs_recipe(__INSTRUMENT__)
+langdb = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
 stats = drs_recipe(__INSTRUMENT__)
 precheck = drs_recipe(__INSTRUMENT__)
@@ -50,7 +51,7 @@ validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
 recipes = [astrometric, changelog, database_mgr, explorer,
-           get_files, go_recipe, listing,
+           get_files, go_recipe, langdb, listing,
            precheck, processing,
            remake_db, remake_doc, req_check, reset, run_ini,
            stats, validate]
@@ -113,6 +114,7 @@ changelog.recipe_type = 'nolog-tool'
 changelog.recipe_kind = 'admin'
 changelog.set_arg(pos=0, name='preview', dtype='bool',
                   helpstr=textentry('PREVIEW_HELP'))
+changelog.description_file = 'apero_changelog.rst'
 
 # -----------------------------------------------------------------------------
 # apero_database.py
@@ -144,7 +146,7 @@ database_mgr.set_kwarg(name='--join', dtype='options', default='replace',
                        helpstr=textentry('DBMGR_JOIN_HELP'))
 database_mgr.set_kwarg(name='--delete', dtype='switch', default=False,
                        helpstr='Load up the delete table GUI (MySQL only)')
-
+database_mgr.description_file = 'apero_database.rst'
 
 # -----------------------------------------------------------------------------
 # apero_documentation.py
@@ -174,6 +176,7 @@ remake_doc.set_kwarg(name='--mode', dtype='options', default='both',
                      options=['both', 'html', 'latex'],
                      helpstr='Which mode to output in "html", "latex" or '
                              '"both". Default is "both"')
+remake_doc.description_file = 'apero_documentation.rst'
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py
@@ -232,6 +235,25 @@ for block in path_definitions.BLOCKS:
                         dtype='switch', default=False,
                         helpstr=textentry('GO_BLOCK_HELP', args=[block.name]))
 go_recipe.description_file = 'apero_go.rst'
+
+# -----------------------------------------------------------------------------
+# apero_langdb.py
+#      (proxy - also need to change apero_langdb.py)
+# -----------------------------------------------------------------------------
+langdb.name = 'apero_langdb.py'
+langdb.shortname = 'LANG'
+langdb.instrument = __INSTRUMENT__
+langdb.description = textentry('LANGDB_DESC')
+langdb.recipe_type = 'nolog-tool'
+langdb.recipe_kind = 'admin'
+langdb.set_kwarg(name='--find', dtype='switch', default=False,
+                 helpstr=textentry('LANGDB_FIND_HELP'))
+langdb.set_kwarg(name='--update', altnames=['--upgrade'],
+                 dtype='switch', default=False,
+                 helpstr=textentry('LANGDB_UPDATE_HELP'))
+langdb.set_kwarg(name='--reload', dtype='switch', default=False,
+                 helpstr=textentry('LANGDB_RELOAD_HELP'))
+langdb.description_file = 'apero_langdb.rst'
 
 # -----------------------------------------------------------------------------
 # apero_listing.py
@@ -340,6 +362,7 @@ req_check.instrument = __INSTRUMENT__
 req_check.description = textentry('DEPENDENCIES_DESCRIPTION')
 req_check.recipe_type = 'nolog-tool'
 req_check.recipe_kind = 'admin'
+req_check.description_file = 'apero_dependencies.rst'
 
 # -----------------------------------------------------------------------------
 # apero_reset.py

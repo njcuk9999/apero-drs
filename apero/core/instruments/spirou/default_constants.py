@@ -1280,7 +1280,7 @@ THERMAL_ENVELOPE_PERCENTILE.value = 10
 
 # define the order to plot on the thermal debug plot
 THERMAL_PLOT_START_ORDER = THERMAL_PLOT_START_ORDER.copy(__NAME__)
-THERMAL_PLOT_START_ORDER.value = 40
+THERMAL_PLOT_START_ORDER.value = 35
 
 # =============================================================================
 # CALIBRATION: WAVE EA GENERAL SETTINGS

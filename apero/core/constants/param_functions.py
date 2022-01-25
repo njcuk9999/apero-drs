@@ -702,24 +702,14 @@ class ParamDict(CaseInDict):
                     pp[key] = copy.deepcopy(value)
                 except Exception as _:
                     pp[key] = type(value)(value)
-            # copy source
-            if key in self.sources:
-                pp.set_source(key, str(self.sources[key]))
-            else:
-                pp.set_source(key, 'Unknown')
-            # copy source history
-            if key in self.source_history:
-                pp.source_history[key] = list(self.source_history[key])
-            else:
-                pp.source_history[key] = []
-            # copy instance
-            if key in self.instances:
-                pp.set_instance(key, self.instances[key])
-            else:
-                pp.set_instance(key, None)
-            # copy used
-            if key in self.used:
-                pp.used[key] = self.used[key]
+        # copy sources
+        pp.sources = CaseInDict(self.sources)
+        # copy source history
+        pp.source_history = base_class.ListCaseINSDict(self.source_history)
+        # copy instances
+        pp.instances = constant_functions.CKCaseINSDict(self.instances)
+        # copy used
+        pp.used = CaseInDict(self.used)
         # return new param dict filled
         return pp
 

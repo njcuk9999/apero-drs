@@ -15,13 +15,15 @@ This section describes all the default user tools to use with APERO.
     :maxdepth: 1
     :caption: default user tools
 
+    rdefinition_ASTROM.rst
     rdefinition_EXPLO.rst
     rdefinition_GET.rst
+    rdefinition_GO.rst
+    rdefinition_LIST.rst
     rdefinition_PRECHECK.rst
     rdefinition_PROC.rst
-    rdefinition_LIST.rst
-    rdefinition_STAT.rst
     rdefinition_RESET.rst
+    rdefinition_STAT.rst
     rdefinition_VALID.rst
 
 .. only:: html

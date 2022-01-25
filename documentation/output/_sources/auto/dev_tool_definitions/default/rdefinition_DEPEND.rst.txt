@@ -15,7 +15,7 @@ apero_dependencies
 SHORTNAME: DEPEND
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_dependencies.rst
 
 
 ********************************************************************************

@@ -47,7 +47,7 @@ No optional arguments
 .. code-block:: 
 
      --obs_dir[STRING] // LISTING_HELP_OBS_DIR
-     --kind[raw,tmp,red] // [STRING] The kind of indexs to rebuild (i.e. raw, tmp or reduced)
+     --block_kind[raw,tmp,red,out] // [STRING] The kind of indexs to rebuild (i.e. raw, tmp or reduced)
      --exclude_obs_dirs[STRING] // PROCESS_EXCLUDE_OBS_DIRS_HELP
      --include_obs_dirs[STRING] // PROCESS_INCLUDE_OBS_DIRS_HELP
 

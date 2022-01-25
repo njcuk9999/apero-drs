@@ -35,6 +35,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get tqdm
+tqdm = base.tqdm_module()
 
 # -----------------------------------------------------------------------------
 # define the program name
@@ -874,7 +876,7 @@ class LoadData:
         # get package (from drs_text)
         package = __PACKAGE__
         # get level above package
-        modpath = drs_misc.get_relative_folder(package, '..')
+        modpath = drs_misc.get_relative_folder(package, '.')
         # get python scripts in modpath
         pyfiles = find_all_py_files(modpath)
         # open and combine in to single list of lines
@@ -883,8 +885,9 @@ class LoadData:
         # now search through pentry for each database entry
         lines = dict()
         files = dict()
+        keys = list(self.dict.keys())
         # loop through keys
-        for it, key in enumerate(self.dict.keys()):
+        for key in tqdm(keys):
             # search for entry
             found, pnum, pfile = search_for_database_entry(key, *pargs)
             # if found add to storage
@@ -913,8 +916,14 @@ def find_all_py_files(path):
     # walk through path to file python files
     for root, dirs, files in os.walk(path, followlinks=True):
         for filename in files:
+            # get absolute path
+            abspath = os.path.join(root, filename)
+            # check and ignore symbolic links
+            if os.path.islink(abspath):
+                continue
+            # only keep python files
             if filename.endswith('.py'):
-                pyfiles.append(os.path.join(root, filename))
+                pyfiles.append(abspath)
     # return python files
     return np.sort(pyfiles)
 

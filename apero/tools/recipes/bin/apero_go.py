@@ -11,15 +11,11 @@ Created on 2020-02-27 at 10:56
 """
 import argparse
 import os
-import sys
 from typing import Any, Dict
 
 from apero.base import base
-from apero.base import drs_base
 from apero.core import constants
 from apero.core.constants import path_definitions
-from apero.core.utils import drs_startup
-
 from apero.core.instruments.default import recipe_definitions as rd
 
 # =============================================================================
@@ -83,7 +79,7 @@ def main():
     # add arguments as inputs (via argparse)
     params['INPUTS'] = get_args()
     # run the __main__ function
-    __main__(None, params)
+    return __main__(None, params)
 
 
 def __main__(recipe, params):
@@ -149,7 +145,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 def get_path(params, storage, props, input_key, param_key):
