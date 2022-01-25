@@ -6607,6 +6607,9 @@ class DrsOutFile(DrsInputFile):
 
         :return: bool, True if we should skip file, False otherwise
         """
+        # deal with no exclude keys
+        if self.exclude_keys is None:
+            return False
         # deal with exclude keys - make all entry values a list
         exclude_keys = self.exclude_keys
         for ekey in exclude_keys:
