@@ -56,6 +56,12 @@ class LangDict:
         """
         return self.lang_dict[item]
 
+    def error(self, code):
+        return 'E[{0}]: {1}'.format(code, self.lang_dict[code])
+
+    def warning(self, code):
+        return 'E[{0}]: {1}'.format(code, self.lang_dict[code])
+
 
 def get_lang_dict(language: str) -> dict:
     """

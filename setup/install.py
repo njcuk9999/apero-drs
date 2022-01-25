@@ -121,7 +121,7 @@ def catch_sigint(signal_received: Any, frame: Any):
     # we don't use these we just exit
     _ = signal_received, frame
     # print: Exiting installation script
-    print(lang['40-001-00075'])
+    print(lang.error('40-001-00075'))
     # raise Keyboard Interrupt
     sys.exit()
 
@@ -136,7 +136,7 @@ def validate():
     # python version check
     if sys.version_info.major < 3:
         # log error: Fatal Error: Python 2 is not supported
-        print(lang['00-000-00009'])
+        print(lang.error('00-000-00009'))
         sys.exit()
     # ------------------------------------------------------------------
     # load requirement files
@@ -167,7 +167,7 @@ def validate():
             modversion = module.split('==')[1].split('.')
         except Exception as e:
             # Module name "{0}" error {1}: {2}'
-            emsg = lang['00-000-00010']
+            emsg = lang.error('00-000-00010')
             eargs = [module, type(e), str(e)]
             raise IndexError(emsg.format(*eargs))
         # get suggested installation module
@@ -199,7 +199,8 @@ def validate():
                 print(lang['40-001-00078'].format(DRS_PATH, module, suggested))
             else:
                 # Fatal Error: {0} requires module {1} to be installed
-                print(lang['00-000-00011'].format(DRS_PATH, module, suggested))
+                eargs = [DRS_PATH, module, suggested]
+                print(lang.error('00-000-00011').format(*eargs))
                 sys.exit()
 
 
@@ -222,17 +223,17 @@ def check_install() -> Tuple[Any, Any, Any]:
         constants = importlib.import_module(constants_mod)
     except Exception as _:
         # raise error
-        raise ImportError(lang['00-000-00013'].format(constants_mod))
+        raise ImportError(lang.error('00-000-00013').format(constants_mod))
     try:
         install = importlib.import_module(install_mod)
     except Exception as _:
         # raise error
-        raise ImportError(lang['00-000-00013'].format(install_mod))
+        raise ImportError(lang.error('00-000-00013').format(install_mod))
     try:
         drs_base = importlib.import_module(base_mod)
     except Exception as _:
         # raise error
-        raise ImportError(lang['00-000-00013'].format(base_mod))
+        raise ImportError(lang.error('00-000-00013').format(base_mod))
     # add apero to the PYTHONPATH
     if 'PYTHONPATH' in os.environ:
         oldpath = os.environ['PYTHONPATH']
@@ -435,7 +436,7 @@ def check_version(module: str, imod: Any, rversionlist: Union[List[str], None],
             print(lang['40-001-00079'].format(*args))
         elif not passed:
             # print: Fatal Error: {0} requires module {1} ({3} < {2})
-            print(lang['40-001-00080'].format(*args))
+            print(lang.error('40-001-00080').format(*args))
             sys.exit()
         else:
             # print: Passed: {1} ({3} >= {2})
