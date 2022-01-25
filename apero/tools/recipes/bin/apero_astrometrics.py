@@ -140,6 +140,9 @@ def __main__(recipe, params):
                     rawuname = drs_installation.ask(question4, dtype=str)
                     # clean object name
                     pconst = constants.pload()
+                    # must add the old name to the aliases
+                    astro_obj.aliases += f'|{astro_obj.objname}'
+                    # update the name and objname
                     astro_obj.name = pconst.DRS_OBJ_NAME(rawuname)
                     astro_obj.objname = astro_obj.name
                     # log change of name
