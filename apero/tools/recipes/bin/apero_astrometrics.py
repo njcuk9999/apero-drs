@@ -141,6 +141,7 @@ def __main__(recipe, params):
                     # clean object name
                     pconst = constants.pload()
                     astro_obj.name = pconst.DRS_OBJ_NAME(rawuname)
+                    astro_obj.objname = astro_obj.name
                     # log change of name
                     WLOG(params, '', f'\t Object name set to: {astro_obj.name}')
                 # -------------------------------------------------------------
