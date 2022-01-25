@@ -11,8 +11,7 @@ Created on 2019-01-18 at 14:44
 """
 import numpy as np
 from pathlib import Path
-import string
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_db
@@ -39,6 +38,8 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 ParamDict = constants.ParamDict
 # Get the Database Columns class
 DatabaseColumns = drs_db.DatabaseColumns
+# get default Constant class
+DefaultConstants = pseudo_const.PseudoConstants
 # get error
 DrsCodedException = drs_exceptions.DrsCodedException
 # get display func
@@ -217,11 +218,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # set function name
         # _ = display_func('FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
         # set forbidden keys
-        forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
-                          'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
-                          'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
-                          'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB',
-                          'NEXTEND', '', 'HISTORY', 'XTENSION']
+        forbidden_keys = ['BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'XTENSION']
         # return forbiiden keys
         return forbidden_keys
 
@@ -241,7 +238,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
                           'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
                           'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
                           'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB',
-                          'XTENSION']
+                          'NEXTEND', '', 'HISTORY', 'XTENSION']
         # return keys
         return forbidden_keys
 
@@ -349,7 +346,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
 
     def FRAME_TIME(self, params: ParamDict, header: Any):
         """
-        Get the frame time (either from header or constants depending on 
+        Get the frame time (either from header or constants depending on
         instrument)
 
         :param params: ParamDict, the parameter dictionary of constants
@@ -442,7 +439,6 @@ class PseudoConstants(pseudo_const.PseudoConstants):
                 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG', 'KW_INSTRUMENT',
                 'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT']
         return keys
-
 
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
@@ -754,7 +750,6 @@ class PseudoConstants(pseudo_const.PseudoConstants):
             return self.index_cols
         # column definitions
         index_cols = DatabaseColumns()
-
         index_cols.add(name='ABSPATH', datatype='TEXT', is_unique=True)
         index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)', is_index=True)
         index_cols.add(name='FILENAME', is_index=True, datatype='VARCHAR(200)')
@@ -795,7 +790,8 @@ class PseudoConstants(pseudo_const.PseudoConstants):
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
-def clean_obj_name(params: ParamDict = None, header: Any = None,
+def clean_obj_name(params: Union[ParamDict, None] = None,
+                   header: Any = None,
                    hdict: Any = None, objname: Union[str, None] = None,
                    filename: Union[None, str, Path] = None
                    ) -> Union[Tuple[Any, Any], str]:
@@ -814,7 +810,6 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
     """
     # set function name
     func_name = display_func('clean_obj_name', __NAME__)
-
 
     # if we don't have header don't try this part (this happens when we
     #   are just calling using objname)
@@ -1052,8 +1047,7 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
 
 
 def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
-                filename: Union[None, str, Path] = None
-                ) -> Tuple[Any, Any]:
+                filename: Union[None, str, Path] = None) -> Tuple[Any, Any]:
     """
     Get the DPRTYPE from the header
 
@@ -1086,7 +1080,7 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     drsfiles = recipe.filemod.get().raw_file.fileset
     raw_prefix = recipe.filemod.get().raw_prefix
     # set up inname
-    dprtype = 'Unknown'
+    dprtype, outtype = 'Unknown', 'Unknown'
     drsfile = None
     # loop around drs files
     for drsfile in drsfiles:
@@ -1100,8 +1094,10 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
             # remove prefix if not None
             if raw_prefix is not None:
                 dprtype = drsfile.name.split(raw_prefix)[-1]
+                outtype = drsfile.name
             else:
                 dprtype = drsfile.name
+                outtype = drsfile.name
             # we have found file so break
             break
     # update header with DPRTYPE
@@ -1109,8 +1105,8 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     hdict[kwdprtype] = (dprtype, kwdprcomment)
     # add drs file type (if drs file was found)
     if drsfile is not None:
-        header[kwoutput] = (drsfile.name, kwoutputcomment)
-        hdict[kwoutput] = (drsfile.name, kwoutputcomment)
+        header[kwoutput] = (outtype, kwoutputcomment)
+        hdict[kwoutput] = (outtype, kwoutputcomment)
     # return header
     return header, hdict
 
