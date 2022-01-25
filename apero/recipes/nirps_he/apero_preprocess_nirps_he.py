@@ -8,10 +8,9 @@ Created on 2019-03-05 16:38
 @author: ncook
 Version 0.0.1
 """
-import warnings
-
 import numpy as np
 import os
+import warnings
 
 from apero.base import base
 from apero import lang
@@ -108,7 +107,7 @@ def __main__(recipe, params):
     output_names = []
     # get object database
     objdbm = ObjectDatabase(params)
-
+    objdbm.load_db()
     # loop around number of files
     for it in range(num_files):
         # ------------------------------------------------------------------
@@ -193,6 +192,7 @@ def __main__(recipe, params):
         snr_hotpix, rms_list = [], []
         shiftdx, shiftdy = 0, 0
         fail, fail_qcparams = False, []
+        qc_params = [[], [], [], [], []]
         # do this iteratively as if there is a shift need to re-workout QC
         for iteration in range(2):
             # get pass condition
@@ -343,6 +343,8 @@ def __main__(recipe, params):
         # add input filename
         outfile.add_hkey_1d('KW_INFILE1', values=[infile.basename],
                             dim1name='infile')
+        # set infiles
+        outfile.infiles = [infile.basename]
         # add qc parameters
         outfile.add_qckeys(qc_params)
         # add dprtype
@@ -379,8 +381,8 @@ def __main__(recipe, params):
         # add to output files (for indexing)
         recipe.add_output_file(outfile)
         # index this file
-        drs_startup.end_main(params, None, recipe, success=True,
-                             outputs='pp', end=False)
+        drs_startup.end_main(params, None, recipe, success=True, outputs='pp',
+                             end=False)
         # ------------------------------------------------------------------
         # append to output storage in p
         # ------------------------------------------------------------------

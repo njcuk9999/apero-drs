@@ -11,7 +11,7 @@ Created on 2019-01-18 at 14:44
 """
 import numpy as np
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_db
@@ -954,8 +954,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # column definitions
         index_cols = DatabaseColumns()
         index_cols.add(name='ABSPATH', datatype='TEXT', is_unique=True)
-        index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)',
-                              is_index=True)
+        index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)', is_index=True)
         index_cols.add(name='FILENAME', is_index=True, datatype='VARCHAR(200)')
         index_cols.add(name='BLOCK_KIND', is_index=True, datatype='VARCHAR(20)')
         index_cols.add(name='LAST_MODIFIED', datatype='DOUBLE')

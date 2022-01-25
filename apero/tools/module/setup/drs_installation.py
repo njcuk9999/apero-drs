@@ -318,7 +318,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # get default from params
     package = params['DRS_PACKAGE']
     # get available instruments
-    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
+    drs_instruments = list(np.char.array(params['DRS_INSTRUMENTS']).upper())
     # storage of answers
     all_params = ParamDict()
     # title
