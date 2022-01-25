@@ -11,6 +11,7 @@ Created on 2021-12-09
 """
 from apero import lang
 from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.database import manage_databases
@@ -109,8 +110,10 @@ def __main__(recipe, params):
         # if not skip
         if not cond:
             continue
+        # ---------------------------------------------------------------------
         # search in simbad for objects
         astro_objs = drs_astrometrics.query_simbad(params, rawobjname=objname)
+        # ---------------------------------------------------------------------
         # deal with 1 object
         if len(astro_objs) == 1:
             # get first object
@@ -119,10 +122,29 @@ def __main__(recipe, params):
             astro_obj.display_properties()
             # construct the object correction question
             question2 = 'Does the data for this object look correct?'
-            cond = drs_installation.ask(question2, dtype='YN')
+            cond2 = drs_installation.ask(question2, dtype='YN')
             print()
+            # -----------------------------------------------------------------
             # if correct add to add list
-            if cond:
+            if cond2:
+                # -------------------------------------------------------------
+                # but first check whether main name
+                question3 = (f'Modify main object name="{astro_obj.name}"'
+                             '(will set DRSOBJN) all other '
+                             'names will added to aliases')
+                cond3 = drs_installation.ask(question3, dtype='YN')
+                # if user want to modify name let them
+                if cond3:
+                    # ask for new name
+                    question4 = f'Enter new main name for "{astro_obj.name}"'
+                    rawuname = drs_installation.ask(question4, dtype=str)
+                    # clean object name
+                    pconst = constants.pload()
+                    astro_obj.name = pconst.DRS_OBJ_NAME(rawuname)
+                    # log change of name
+                    WLOG(params, '', f'\t Object name set to: {astro_obj.name}')
+                # -------------------------------------------------------------
+                # now add object to database
                 msg = 'Adding {0} to object list'.format(astro_obj.name)
                 WLOG(params, '', msg)
                 # append to add list
@@ -130,7 +152,7 @@ def __main__(recipe, params):
             # else print that we are not adding object to database
             else:
                 WLOG(params, '', 'Not adding object to database')
-
+    # -------------------------------------------------------------------------
     # add to google sheet
     if len(add_objs) > 0:
         # add all objects in add list to google-sheet
