@@ -149,6 +149,9 @@ def __main__(recipe, params):
         filepostfile.extensions[0].set_infile(params, filename=infile.filename)
         # load the extension 0 file
         filepostfile.extensions[0].load_infile(params)
+        # check if we should skip due to exclude header keys
+        if filepostfile.check_header_skip(ext=0):
+            continue
         # -----------------------------------------------------------------
         # link all other extensions
         success, reason = filepostfile.process_links(params, indexdbm,

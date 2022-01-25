@@ -1588,7 +1588,9 @@ post_file.addset(post_v_file)
 # -----------------------------------------------------------------------------
 # Not always required (i.e. for hot stars)
 post_p_file = drs_oinput('DRS_POST_P', filetype='.fits', suffix='p.fits',
-                         outfunc=out.post_file, inext='o', required=False)
+                         outfunc=out.post_file, inext='o', required=False,
+                         exclude_keys=dict(KW_DRS_MODE=['SPECTROSCOPY',
+                                                        'Unknown']))
 
 # add extensions
 post_p_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',

@@ -5943,13 +5943,18 @@ class DrsOutFileExtension:
         return True, None
 
 
+# define exclude keys type optional dictionary keys=str, values=str/list[str]
+EXCLUDE_KEYS_TYPE = Optional[Dict[str, Union[str, List[str]]]]
+
+
 class DrsOutFile(DrsInputFile):
     # set class name
     class_name: str = 'DrsOutFile'
 
     def __init__(self, name: str, filetype: str,
                  suffix: Union[str, None] = None, outfunc=None,
-                 inext=None, required: bool = True):
+                 inext=None, required: bool = True,
+                 exclude_keys: EXCLUDE_KEYS_TYPE = None):
         """
         Drs class for post-processed output files
 
@@ -5976,6 +5981,8 @@ class DrsOutFile(DrsInputFile):
         self.out_filename = None
         self.out_dirname = None
         self.out_required = required
+        # exceptions to be skipped without error
+        self.exclude_keys = exclude_keys
         # store infiles
         self.infiles = []
         # store reduced files
@@ -6590,6 +6597,48 @@ class DrsOutFile(DrsInputFile):
         # self._remove_duplicate_keys(params, pconst)
         # add extension names as comments
         self._add_extensions_names_to_primary(params)
+
+    def check_header_skip(self, ext: int = 0) -> bool:
+        """
+        Check whether we should skip this file due to an exclude key
+        matching a value that should be skipped (i.e. exclude_keys was set)
+
+        :param ext: int, the extension to check
+
+        :return: bool, True if we should skip file, False otherwise
+        """
+        # deal with exclude keys - make all entry values a list
+        exclude_keys = self.exclude_keys
+        for ekey in exclude_keys:
+            if isinstance(exclude_keys[ekey], str):
+                exclude_keys[ekey] = [exclude_keys[ekey]]
+        # ---------------------------------------------------------------------
+        # if we don't have extension just return
+        if ext not in self.extensions:
+            return False
+        # ---------------------------------------------------------------------
+        # if we don't have header just return here
+        if self.extensions[ext].header is None:
+            return False
+        # ---------------------------------------------------------------------
+        # load the header for this extension
+        header = self.extensions[ext].header
+        # assume file is not going to be skipped
+        skip = False
+        # loop around exclude keys
+        for ekey in exclude_keys:
+            if ekey in header:
+                # loop around all keys in exclude keys
+                for evalue in exclude_keys[ekey]:
+                    if header[ekey] == evalue:
+                        skip = True
+                        # log that we are skipping file
+                        msg = '\tSkipping {0} for {1} ({2} = {3})'
+                        margs = [self.extensions[ext].filename,
+                                 self.name, ekey, evalue]
+                        WLOG(self.params, '', msg.format(margs))
+        # return whether we should skip file
+        return skip
 
     def set_db_infiles(self, block_kind: str, database: Any):
         """
