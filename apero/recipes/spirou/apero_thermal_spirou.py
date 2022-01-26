@@ -9,13 +9,17 @@ Created on 2019-07-05 at 16:46
 
 @author: cook
 """
+import numpy as np
+
 from apero.base import base
 from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
+from apero.core import math as mp
 from apero.io import drs_image
+from apero.science.calib import wave
 from apero.science.extract import other as extractother
 
 
@@ -152,6 +156,12 @@ def __main__(recipe, params):
         thermal_files = extractother.extract_thermal_files(*eargs)
 
         # TODO: deal with sky darks here
+
+        # ------------------------------------------------------------------
+        # Multiple the thermal by excess emissivity
+        # ------------------------------------------------------------------
+        # TODO: Add in the emissivity stuff
+
 
         # ------------------------------------------------------------------
         # Quality control

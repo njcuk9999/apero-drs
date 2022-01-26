@@ -458,18 +458,21 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         """
         Define regions to select lines in the LSD analysis
 
+        Formally IC_POLAR_LSD_WLRANGES
+
         :return: list of regions each element is a list of a minimum wavelength
                  and a maximum wavelength of that band
         """
         # storage for bands
         bands = []
         # add bands (as tuples for low wave to high wave
-        bands.append([983.0, 1116.0])
-        bands.append([1163.0, 1260.0])
-        bands.append([1280.0, 1331.0])
-        bands.append([1490.0, 1790.0])
-        bands.append([1975.0, 1995.0])
-        bands.append([2030.0, 2047.5])
+        # bands.append([983.0, 1116.0])
+        # bands.append([1163.0, 1260.0])
+        # bands.append([1280.0, 1331.0])
+        # bands.append([1490.0, 1790.0])
+        # bands.append([1975.0, 1995.0])
+        # bands.append([2030.0, 2047.5])
+        bands.append([960.0, 2430.0])
         # return bands
         return bands
 

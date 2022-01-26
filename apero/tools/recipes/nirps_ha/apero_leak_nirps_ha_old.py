@@ -17,6 +17,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
+from apero.science.calib import leak
 from apero.science.extract import gen_ext as extgen
 
 
@@ -187,24 +188,24 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Get all extracted file instances associated with infile
         # ------------------------------------------------------------------
-        ext_outputs = extgen.get_extraction_files(params, recipe, infile,
+        ext_outputs = leak.get_extraction_files(params, recipe, infile,
                                                   EXTRACT_NAME)
 
         # ------------------------------------------------------------------
         # Add debugs for all uncorrected file
         # ------------------------------------------------------------------
-        extgen.save_uncorrected_ext_fp(params, ext_outputs)
+        leak.save_uncorrected_ext_fp(params, ext_outputs)
 
         # ------------------------------------------------------------------
         # Correct with dark fp
         # ------------------------------------------------------------------
-        cprops = extgen.correct_dark_fp(params, ext_outputs, database=calibdbm)
+        cprops = leak.correct_dark_fp(params, ext_outputs, database=calibdbm)
 
         # ------------------------------------------------------------------
         # Re-calculate s1d files
         # ------------------------------------------------------------------
-        cprops = extgen.dark_fp_regen_s1d(params, recipe, cprops,
-                                          database=calibdbm)
+        cprops = leak.dark_fp_regen_s1d(params, recipe, cprops,
+                                        database=calibdbm)
 
         # ------------------------------------------------------------------
         # Quality control
