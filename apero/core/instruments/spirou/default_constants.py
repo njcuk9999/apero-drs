@@ -2476,13 +2476,13 @@ POLAR_INTERPOLATE_FLUX.author = base.AUTHORS['EM']
 # Select stokes I continuum detection algorithm:
 #     'IRAF' or 'MOVING_MEDIAN'
 STOKESI_CONTINUUM_DET_ALG = STOKESI_CONTINUUM_DET_ALG.copy(__NAME__)
-STOKESI_CONTINUUM_DET_ALG.value = 'MOVING_MEDIAN'
+STOKESI_CONTINUUM_DET_ALG.value = 'IRAF'
 STOKESI_CONTINUUM_DET_ALG.author = base.AUTHORS['EM']
 
 # Select stokes I continuum detection algorithm:
 #     'IRAF' or 'MOVING_MEDIAN'
 POLAR_CONTINUUM_DET_ALG = POLAR_CONTINUUM_DET_ALG.copy(__NAME__)
-POLAR_CONTINUUM_DET_ALG.value = 'MOVING_MEDIAN'
+POLAR_CONTINUUM_DET_ALG.value = 'IRAF'
 POLAR_CONTINUUM_DET_ALG.author = base.AUTHORS['EM']
 
 # Normalize Stokes I (True or False)

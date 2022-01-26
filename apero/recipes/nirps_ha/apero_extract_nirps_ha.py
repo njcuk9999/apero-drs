@@ -16,12 +16,12 @@ from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
-from apero.io import drs_image
 from apero.science.calib import flat_blaze
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
 from apero.science.calib import shape
 from apero.science.calib import wave
+from apero.science.calib import leak
 from apero.science import extract
 
 # =============================================================================
@@ -292,8 +292,8 @@ def __main__(recipe, params):
             eprops = extract.extract2d(params, image2, lprops['ORDERP'],
                                        lcoeffs2, nframes, props, fiber=fiber)
             # leak correction
-            eprops = extract.manage_leak_correction(params, recipe, eprops,
-                                                    infile, fiber, ref_e2ds)
+            eprops = leak.manage_leak_correction(params, recipe, eprops,
+                                                 infile, fiber, ref_e2ds)
             # flat correction for e2dsff
             eprops = extract.flat_blaze_correction(eprops, fbprops['FLAT'],
                                                    fbprops['BLAZE'])
