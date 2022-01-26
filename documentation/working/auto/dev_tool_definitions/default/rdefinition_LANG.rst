@@ -46,9 +46,9 @@ No optional arguments
 
 .. code-block:: 
 
-     --find // LANGDB_FIND_HELP
-     --update // LANGDB_UPDATE_HELP
-     --reload // LANGDB_RELOAD_HELP
+     --find // Displays the message locator GUI
+     --update // Updates local language database and local text files with any changes
+     --reload // Reloads the local language database (with text file changes)
 
 
 ********************************************************************************

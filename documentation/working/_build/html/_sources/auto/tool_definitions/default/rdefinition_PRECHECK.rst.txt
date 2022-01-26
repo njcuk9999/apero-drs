@@ -48,6 +48,9 @@ No schematic set
 
 .. code-block:: 
 
+     --obs_dir[STRING] // PROCESS_OBS_DIR_HELP
+     --exclude_obs_dirs[STRING] // PROCESS_EXCLUDE_OBS_DIRS_HELP
+     --include_obs_dirs[STRING] // PROCESS_INCLUDE_OBS_DIRS_HELP
      --no_file_check // Check the number of files on disk and flag possible errors
      --no_obj_check // Check the object database with current set of raw files and flag possible problems
 
