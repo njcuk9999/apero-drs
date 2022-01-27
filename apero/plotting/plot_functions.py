@@ -5152,7 +5152,7 @@ def plot_polar_fit_cont(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     frame0.plot(wavemap[mask], spec[mask], color='b', lw=1.0)
     # plot the median filtered points
     if med_filt > 0:
-        frame0.plot(wavemap[mask], fspec[mask], ms=20.0, marker='d',
+        frame0.plot(wavemap[mask], fspec[mask], ms=2, marker='d',
                     mec='0.5', mfc='None', lw=0.5)
     # plot the continuum
     frame0.plot(wavemap, cont, ls='--', color='orange')
@@ -5197,7 +5197,7 @@ def plot_polar_continuum(plotter: Plotter, graph: Graph,
     # get the arguments from kwargs
     props = kwargs['props']
     # get data from props
-    wl = props['FLAT_X']
+    wl = props['FLAT_WLDATA']
     pol = 100 * props['FLAT_POL']
     contpol = 100.0 * props['CONT_POL']
     contxbin = np.array(props['CONT_XBIN'])
@@ -5252,7 +5252,7 @@ def plot_polar_results(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # get the arguments from kwargs
     props = kwargs['props']
     # get data from props
-    wl = props['FLAT_X']
+    wl = props['FLAT_WLDATA']
     pol = 100 * props['FLAT_POL']
     null1 = 100.0 * props['FLAT_NULL1']
     null2 = 100.0 * props['FLAT_NULL2']
