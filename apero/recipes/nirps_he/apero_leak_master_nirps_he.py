@@ -16,6 +16,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
+from apero.science.calib import leak
 from apero.science.extract import other as extother
 from apero.science.extract import gen_ext as extgen
 
@@ -175,7 +176,7 @@ def __main__(recipe, params):
         wargs = [', '.join(darkfp_extnames)]
         WLOG(params, '', textentry('40-016-00024', args=wargs))
         # correct dark fp
-        cout = extgen.correct_master_dark_fp(params, darkfp_extfiles)
+        cout = leak.correct_master_dark_fp(params, darkfp_extfiles)
         dark_fp_extcorr, cprops = cout
         # ------------------------------------------------------------------
         # add to storage
@@ -188,17 +189,17 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Produce super dark fp from median of all extractions
     # ------------------------------------------------------------------
-    medcubes = extgen.master_dark_fp_cube(params, recipe, dark_fp_storage)
+    medcubes = leak.master_dark_fp_cube(params, recipe, dark_fp_storage)
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
     # TODO: Need to add some QC
-    qc_params, passed = extgen.qc_leak_master(params, medcubes)
+    qc_params, passed = leak.qc_leak_master(params, medcubes)
     # ------------------------------------------------------------------
     # Write super dark fp to file
     # ------------------------------------------------------------------
     # TODO: Need to add some parameters to header
-    medcubes = extgen.write_leak_master(params, recipe, rawfiles, medcubes,
+    medcubes = leak.write_leak_master(params, recipe, rawfiles, medcubes,
                                         qc_params, cprops)
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB

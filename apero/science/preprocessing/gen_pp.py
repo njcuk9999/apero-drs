@@ -629,6 +629,8 @@ def quality_control2(params: ParamDict, qc_params: list, image: np.ndarray,
         # if above threshold this is not a valid dark
         if value > dark_thres:
             qc_pass.append(0)
+            margs = [dprtype, value, dark_thres]
+            fail_msg.append(textentry('40-010-00023', args=margs))
         else:
             qc_pass.append(1)
         # add to qc header lists

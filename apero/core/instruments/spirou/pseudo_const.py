@@ -11,7 +11,7 @@ Created on 2019-01-18 at 14:44
 """
 import numpy as np
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_db
@@ -445,12 +445,12 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # storage for bands
         bands = []
         # add bands (as tuples for low wave to high wave
-        bands.append([930, 967])
-        bands.append([1109, 1167])
-        bands.append([1326, 1491])
-        bands.append([1782, 1979])
-        bands.append([1997, 2027])
-        bands.append([2047, 2076])
+        # bands.append([930, 967])
+        # bands.append([1109, 1167])
+        # bands.append([1326, 1491])
+        # bands.append([1782, 1979])
+        # bands.append([1997, 2027])
+        # bands.append([2047, 2076])
         # return bands
         return bands
 
@@ -458,18 +458,21 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         """
         Define regions to select lines in the LSD analysis
 
+        Formally IC_POLAR_LSD_WLRANGES
+
         :return: list of regions each element is a list of a minimum wavelength
                  and a maximum wavelength of that band
         """
         # storage for bands
         bands = []
         # add bands (as tuples for low wave to high wave
-        bands.append([983.0, 1116.0])
-        bands.append([1163.0, 1260.0])
-        bands.append([1280.0, 1331.0])
-        bands.append([1490.0, 1790.0])
-        bands.append([1975.0, 1995.0])
-        bands.append([2030.0, 2047.5])
+        # bands.append([983.0, 1116.0])
+        # bands.append([1163.0, 1260.0])
+        # bands.append([1280.0, 1331.0])
+        # bands.append([1490.0, 1790.0])
+        # bands.append([1975.0, 1995.0])
+        # bands.append([2030.0, 2047.5])
+        bands.append([960.0, 2430.0])
         # return bands
         return bands
 
@@ -954,8 +957,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # column definitions
         index_cols = DatabaseColumns()
         index_cols.add(name='ABSPATH', datatype='TEXT', is_unique=True)
-        index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)',
-                              is_index=True)
+        index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)', is_index=True)
         index_cols.add(name='FILENAME', is_index=True, datatype='VARCHAR(200)')
         index_cols.add(name='BLOCK_KIND', is_index=True, datatype='VARCHAR(20)')
         index_cols.add(name='LAST_MODIFIED', datatype='DOUBLE')

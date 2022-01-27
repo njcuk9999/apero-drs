@@ -1,4 +1,4 @@
 name,HDR[DRSOUTID],file type,suffix,fibers,dbname,dbkey,input file
-TELLU_CONV,--,.npy,_tellu_conv,"AB, A, B, C",telluric,TELLU_CONV,"WAVESOL_MASTER, WAVE_NIGHT, WAVESOL_DEFAULT"
+TELLU_CONV,--,.npy,_tellu_conv,"AB, A, B",telluric,TELLU_CONV,"WAVESOL_MASTER, WAVE_NIGHT, WAVESOL_DEFAULT"
 TELLU_TRANS,TELLU_TRANS,.fits,_tellu_trans,"AB, A, B",telluric,TELLU_TRANS,EXT_E2DS_FF
-TELLU_PCLEAN,TELLU_PCLEAN,.fits,_tellu_pclean,"AB, A, B, C",telluric,TELLU_PCLEAN,EXT_E2DS_FF
+TELLU_PCLEAN,TELLU_PCLEAN,.fits,_tellu_pclean,"AB, A, B",telluric,TELLU_PCLEAN,EXT_E2DS_FF

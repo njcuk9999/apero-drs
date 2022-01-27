@@ -1258,12 +1258,16 @@ full_seq.add(apero_shape, name='SHAPELM', master=True,
              recipe_kind='calib-master')
 full_seq.add(apero_flat, name='FLATM', master=True,
              recipe_kind='calib-master')
-full_seq.add(apero_thermal, name='THERM_M', master=True,
-             recipe_kind='calib-master')
+# thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
+full_seq.add(apero_thermal, name='THERM_MI', master=True,
+             recipe_kind='calib-master-I', files=[files.pp_dark_dark_int])
 full_seq.add(apero_leak_master, master=True)
 full_seq.add(apero_wave_master, master=True,
              rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
                           fpfiles=[files.pp_fp_fp]))
+# thermal for everything else (requires a wave solution)
+full_seq.add(apero_thermal, name='THERM_MT', master=True,
+             recipe_kind='calib-master-T', files=[files.pp_dark_dark_tel])
 # night runs
 full_seq.add(apero_badpix)
 full_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCC',
@@ -1272,8 +1276,13 @@ full_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCAB',
              recipe_kind='calib-night-AB')
 full_seq.add(apero_shape)
 full_seq.add(apero_flat, files=[files.pp_flat_flat])
-full_seq.add(apero_thermal)
+# thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
+full_seq.add(apero_thermal, name='THERM_I', master=True,
+             recipe_kind='calib-night-I', files=[files.pp_dark_dark_int])
 full_seq.add(apero_wave_night)
+# thermal for everything else (requires a wave solution)
+full_seq.add(apero_thermal, name='THERM_T', master=True,
+             recipe_kind='calib-night-T', files=[files.pp_dark_dark_tel])
 # extract all OBJ_DARK and OBJ_FP
 full_seq.add(apero_extract, name='EXTALL', recipe_kind='extract-ALL',
              files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
@@ -1360,12 +1369,16 @@ limited_seq.add(apero_shape, name='SHAPELM', master=True,
                 recipe_kind='calib-master')
 limited_seq.add(apero_flat, name='FLATM', master=True,
                 recipe_kind='calib-master')
-limited_seq.add(apero_thermal, name='THERM_M', master=True,
-                recipe_kind='calib-master')
+# thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
+limited_seq.add(apero_thermal, name='THERM_MI', master=True,
+                recipe_kind='calib-master-I', files=[files.pp_dark_dark_int])
 limited_seq.add(apero_leak_master, master=True)
 limited_seq.add(apero_wave_master, master=True,
                 rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
                              fpfiles=[files.pp_fp_fp]))
+# thermal for everything else (requires a wave solution)
+limited_seq.add(apero_thermal, name='THERM_MT', master=True,
+                recipe_kind='calib-master-T', files=[files.pp_dark_dark_tel])
 # night runs
 limited_seq.add(apero_badpix)
 limited_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCC',
@@ -1374,8 +1387,13 @@ limited_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCAB',
                 recipe_kind='calib-night-AB')
 limited_seq.add(apero_shape)
 limited_seq.add(apero_flat, files=[files.pp_flat_flat])
-limited_seq.add(apero_thermal)
+# thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
+limited_seq.add(apero_thermal, name='THERM_I', master=True,
+                recipe_kind='calib-night-I', files=[files.pp_dark_dark_int])
 limited_seq.add(apero_wave_night)
+# thermal for everything else (requires a wave solution)
+limited_seq.add(apero_thermal, name='THERM_T', master=True,
+                recipe_kind='calib-night-T', files=[files.pp_dark_dark_tel])
 # extract tellurics
 limited_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
                 files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_fp,
@@ -1516,12 +1534,16 @@ master_seq.add(apero_shape, name='SHAPELM', master=True,
                recipe_kind='calib-master')
 master_seq.add(apero_flat, name='FLATM', master=True,
                recipe_kind='calib-master')
-master_seq.add(apero_thermal, name='THERM_M',
-               master=True, recipe_kind='calib-master')
+# thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
+master_seq.add(apero_thermal, name='THERM_MI', master=True,
+               recipe_kind='calib-master-I', files=[files.pp_dark_dark_int])
 master_seq.add(apero_leak_master, master=True)
 master_seq.add(apero_wave_master, master=True,
                rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
                             fpfiles=[files.pp_fp_fp]))
+# thermal for everything else (requires a wave solution)
+master_seq.add(apero_thermal, name='THERM_MT', master=True,
+               recipe_kind='calib-master-T', files=[files.pp_dark_dark_tel])
 
 # -----------------------------------------------------------------------------
 # calibration run (for trigger)
@@ -1535,8 +1557,13 @@ calib_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCAB',
               recipe_kind='calib-night-AB')
 calib_seq.add(apero_shape)
 calib_seq.add(apero_flat, files=[files.pp_flat_flat])
-calib_seq.add(apero_thermal)
+# thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
+calib_seq.add(apero_thermal, name='THERM_I', master=True,
+                recipe_kind='calib-night-I', files=[files.pp_dark_dark_int])
 calib_seq.add(apero_wave_night)
+# thermal for everything else (requires a wave solution)
+calib_seq.add(apero_thermal, name='THERM_T', master=True,
+                recipe_kind='calib-night-T', files=[files.pp_dark_dark_tel])
 
 # -----------------------------------------------------------------------------
 # telluric sequence (for trigger)
