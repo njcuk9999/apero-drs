@@ -122,8 +122,10 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     lsd_mask_file = props['LSD_MASK_FILE']
     lsd_num_lines_mask = props['LSD_LINES_NUM_MASK']
     lsd_num_lines_used = props['LSD_LINES_NUM_USED']
-    lsd_lines_mean_wave = props['LSD_LINES_MEAN_WAVE']
-    lsd_lines_mean_lande = props['LSD_LINES_MEAN_LANDE']
+    lsd_norm_wlc = props['LSD_NORM_WLC']
+    lsd_norm_lande = props['LSD_NORM_LANDE']
+    lsd_norm_depth = props['LSD_NORM_DEPTH']
+    lsd_norm_weight = props['LSD_NORM_WEIGHT']
     # -------------------------------------------------------------------------
     # make lsd table
 
@@ -173,9 +175,13 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # add the number of lines used in the LSD analysis
     lsdfile.add_hkey('KW_LSD_MASKLINES_USED', value=lsd_num_lines_used)
     # add the mean wavelength of lines use din lsd analysis
-    lsdfile.add_hkey('KW_LSD_MASKLINES_MWAVE', value=lsd_lines_mean_wave)
+    lsdfile.add_hkey('KW_LSD_NORM_WLC', value=lsd_norm_wlc)
     # add the mean lande of lines used in lsd analysis
-    lsdfile.add_hkey('KW_LSD_MASKLINES_MLANDE', value=lsd_lines_mean_lande)
+    lsdfile.add_hkey('KW_LSD_NORM_LANDE', value=lsd_norm_lande)
+    # add the depth used in the lsd analysis
+    lsdfile.add_hkey('KW_LSD_NORM_DEPTH', value=lsd_norm_depth)
+    # add the weight normalisation factor used in the lsd analysis
+    lsdfile.add_hkey('KW_LSD_NORM_WEIGHT', value=lsd_norm_weight)
     # -------------------------------------------------------------------------
     # add data
     lsdfile.data = lsd_table
@@ -229,8 +235,8 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
                 LSD_LINES_POL_EXC_POTENTIAL
                 LSD_LINES_POL_FLAG
                 LSD_LINES_NUM_USED
-                LSD_LINES_MEAN_WAVE
-                LSD_LINES_MEAN_LANDE
+                LSD_NORM_WLC
+                LSD_NORM_LANDE
     """
     # set function name
     func_name = display_func('load_lsd_mask', __NAME__)
@@ -240,6 +246,7 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     max_lande = params['POLAR_LSD_MAX_LANDE']
     ccflines_air_wave = params['POLAR_LSD_CCFLINES_AIR_WAVE']
     min_linedepth = params['POLAR_LSD_MIN_LINEDEPTH']
+    max_linedepth = params['POLAR_LSD_MAX_LINEDEPTH']
     # -------------------------------------------------------------------------
     # get pconst
     pconst = constants.pload()
@@ -294,8 +301,10 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     if ccflines_air_wave:
         # if ccf line wavelengths are measured in air convert to vacuum
         wavec = convert_air_to_vacuum_wl(wavec)
-    # create mask to cutoff lines with depth lower than POLAR_LSD_MIN_LINEDEPTH
+    # create mask to cutoff lines with depth greater than POLAR_LSD_MIN_LINEDEPTH
+    #   and less than POLAR_LSD_MAX_LINEDEPTH
     keep_mask &= depth > min_linedepth
+    keep_mask &= depth < max_linedepth
     # -------------------------------------------------------------------------
     # now cut down our arrays to valid lines
     wavec = wavec[keep_mask]
@@ -316,8 +325,10 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     # -------------------------------------------------------------------------
     # get weight from masks
     weight = wavec * depth * lande
+    # calculate the normalized weight
+    weight_norm_factor = mean_wave_lines * mean_lande_lines
     # normalize weight
-    weight = weight / np.max(weight)
+    weight = weight / weight_norm_factor
     # -------------------------------------------------------------------------
     # push values into props
     props['LSD_LINES_WLC'] = wavec
@@ -330,14 +341,16 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     props['LSD_MASK_FILE'] = os.path.basename(maskpath)
     props['LSD_LINES_NUM_MASK'] = lines_num_mask
     props['LSD_LINES_NUM_USED'] = num_lines_used
-    props['LSD_LINES_MEAN_WAVE'] = mean_wave_lines
-    props['LSD_LINES_MEAN_LANDE'] = mean_lande_lines
+    props['LSD_NORM_WLC'] = mean_wave_lines
+    props['LSD_NORM_LANDE'] = mean_lande_lines
+    props['LSD_NORM_DEPTH'] = 1.0
+    props['LSD_NORM_WEIGHT'] = weight_norm_factor
     # set source
     keys = ['LSD_LINES_WLC', 'LSD_LINES_ZNUMBER', 'LSD_LINES_DEPTH',
             'LSD_LINES_POL_WEIGHT', 'LSD_LINES_LANDE', 'LSD_MASK_FILE',
             'LSD_LINES_POL_EXC_POTENTIAL', 'LSD_LINES_POL_FLAG',
-            'LSD_LINES_NUM_MASK', 'LSD_LINES_NUM_USED', 'LSD_LINES_MEAN_WAVE',
-            'LSD_LINES_MEAN_LANDE']
+            'LSD_LINES_NUM_MASK', 'LSD_LINES_NUM_USED', 'LSD_NORM_WLC',
+            'LSD_NORM_LANDE', 'LSD_NORM_DEPTH', 'LSD_NORM_WEIGHT']
     props.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return the prop dictionary
@@ -473,7 +486,7 @@ def prepare_polarimetry_data(params: ParamDict, props: ParamDict) -> ParamDict:
         mask = np.isfinite(stokesi[order_num])
         mask &= np.isfinite(stokesierr[order_num])
         mask &= np.isfinite(pol[order_num]) & np.isfinite(polerr[order_num])
-        mask &= np.isfinite(null1[order_num]) & np.isfinite(null2[order_num])
+        mask &= np.isfinite(null2[order_num])
         # make values where stokes I is positive
         mask &= stokesi[order_num] > 0
         # ---------------------------------------------------------------------
@@ -497,7 +510,7 @@ def prepare_polarimetry_data(params: ParamDict, props: ParamDict) -> ParamDict:
             if normalize:
                 # measure continuum
                 # TODO: Should be in constant file
-                kwargs = dict(binsize=80, overlap=15, window=3,
+                kwargs = dict(binsize=100, overlap=15, window=3,
                               mode='max', use_linear_fit=True)
                 cont, xbin, ybin = gen_pol.continuum(params, ordwave, ordflux,
                                                      **kwargs)
@@ -512,6 +525,18 @@ def prepare_polarimetry_data(params: ParamDict, props: ParamDict) -> ParamDict:
             lsd_pol += list(ordpol)
             lsd_polerr += list(ordpolerr)
             lsd_null += list(ordnull)
+
+    # make lsd_flux a numpy array
+    lsd_flux = np.array(lsd_flux)
+    # -------------------------------------------------------------------------
+    # calculate outliers
+    # TODO: Do we need this?
+    # med_flux = mp.nanmedian(lsd_flux)
+    # mad = mp.median_absolute_deviation()
+    # medsig_flux = mp.nanmedian(np.abs(lsd_flux - med_flux)) / mad
+    # clean_outliers = lsd_flux < (med_flux + 3 * medsig_flux)
+    # clean_outliers &= lsd_flux > (med_flux - 3 * medsig_flux)
+    # TODO: If required apply to all vectors below
     # -------------------------------------------------------------------------
     # add back to props
     props['LSD_WAVE'] = np.array(lsd_wave)
@@ -777,6 +802,8 @@ def line_pattern_matrix(wavemap: np.ndarray, wavec: np.ndarray,
     numlines, vinit, vfinal = len(velocities), velocities[0], velocities[-1]
     # set number of spectral points
     numpixels = len(wavemap)
+    # calculate velocity sampling
+    dvel = np.nanmedian(np.abs(velocities[1:] - velocities[:-1]))
     # initialize line pattern matrix for flux LSD
     flux_lpm = np.zeros((numpixels, numlines))
     # initialize line pattern matrix for polar LSD
@@ -803,23 +830,22 @@ def line_pattern_matrix(wavemap: np.ndarray, wavec: np.ndarray,
             jpos = np.searchsorted(velocities, linevelo[pix], side='right')
             # -----------------------------------------------------------------
             # get the weight of the velocity
-            vpart1 = linevelo[pix] - velocities[jpos - 1]
-            vpart2 = velocities[jpos] - velocities[jpos - 1]
-            velo_weight = vpart1 / vpart2
+            vpart1 = velocities[jpos] - linevelo[jpos]
+            vpart2 = linevelo[pix] - velocities[jpos - 1]
             # -----------------------------------------------------------------
             # calculate the polar line pattern matrix element
-            pol_lpm_pix1 = weight[line_it] * (1.0 - velo_weight)
-            pol_lpm_pix2 = weight[line_it] * velo_weight
+            pol_lpm_pix1 = weight[line_it] * vpart1 / dvel
+            pol_lpm_pix2 = weight[line_it] * vpart2 / dvel
             # add to polar line pattern matrix
-            pol_lpm[linepos[pix]][jpos - 1] = pol_lpm_pix1
-            pol_lpm[linepos[pix]][jpos] = pol_lpm_pix2
+            pol_lpm[linepos[pix]][jpos - 1] += pol_lpm_pix1
+            pol_lpm[linepos[pix]][jpos] += pol_lpm_pix2
             # -----------------------------------------------------------------
             # calculate the flux line pattern matrix element
-            flux_lpm_pix1 = depth[line_it] * (1.0 - velo_weight)
-            flux_lpm_pix2 = depth[line_it] * velo_weight
+            flux_lpm_pix1 = depth[line_it] * vpart1 / dvel
+            flux_lpm_pix2 = depth[line_it] * vpart2 / dvel
             # add to polar line pattern matrix
-            flux_lpm[linepos[pix]][jpos - 1] = flux_lpm_pix1
-            flux_lpm[linepos[pix]][jpos] = flux_lpm_pix2
+            flux_lpm[linepos[pix]][jpos - 1] += flux_lpm_pix1
+            flux_lpm[linepos[pix]][jpos] += flux_lpm_pix2
     # ------------------------------------------------------------------------
     # return the
     return flux_lpm, pol_lpm

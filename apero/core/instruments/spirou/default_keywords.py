@@ -2314,16 +2314,25 @@ KW_LSD_MASKLINES_USED.set(key='NLINUSED',
                           comment='Number of lines used in LSD analysis')
 
 # define the mean wavelength of lines use din lsd analysis
-KW_LSD_MASKLINES_MWAVE = KW_LSD_MASKLINES_MWAVE.copy(__NAME__)
-KW_LSD_MASKLINES_MWAVE.set(key='WAVEAVG',
-                           comment='Mean wavelength of lines used in '
-                                   'LSD analysis')
+KW_LSD_NORM_WLC = KW_LSD_NORM_WLC.copy(__NAME__)
+KW_LSD_NORM_WLC.set(key='WAVEAVG',
+                    comment='Mean wavelength (wl) of lines used in LSD '
+                            'analysis')
 
 # define the mean lande of lines used in lsd analysis
-KW_LSD_MASKLINES_MLANDE = KW_LSD_MASKLINES_MLANDE.copy(__NAME__)
-KW_LSD_MASKLINES_MLANDE.set(key='LANDEAVG',
-                            comment='Mean lande of lines used in LSD analysis')
+KW_LSD_NORM_LANDE = KW_LSD_NORM_LANDE.copy(__NAME__)
+KW_LSD_NORM_LANDE.set(key='LANDEAVG',
+                      comment='Mean lande (g) of lines used in LSD analysis')
 
+# define the depth used in lsd analysis
+KW_LSD_NORM_DEPTH = KW_LSD_NORM_DEPTH.copy(__NAME__)
+KW_LSD_NORM_DEPTH.set(key='DEPTNORM',
+                      comment='Normalization line depth (d) used in LSD')
+
+# define the calculate normalisation of the weights used in the lsd analysis
+KW_LSD_NORM_WEIGHT = KW_LSD_NORM_WEIGHT.copy(__NAME__)
+KW_LSD_NORM_WEIGHT.set(key='WEIGNORM',
+                       comment='Normalization weight = wl * d * g used in LSD')
 
 # =============================================================================
 #  End of configuration file

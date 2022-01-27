@@ -264,6 +264,7 @@ __all__ = [
     'STOKESI_CONTINUUM_DET_ALG', 'POLAR_CONTINUUM_DET_ALG',
     'POLAR_NORMALIZE_STOKES_I', 'POLAR_REMOVE_CONTINUUM',
     'POLAR_CLEAN_BY_SIGMA_CLIPPING', 'POLAR_NSIGMA_CLIPPING',
+    'POLAR_REDDEST_THRESHOLD',
     # polar poly moving median settings
     'POLAR_CONT_BINSIZE', 'POLAR_CONT_OVERLAP', 'POLAR_CONT_POLYNOMIAL_FIT',
     'POLAR_CONT_DEG_POLYNOMIAL',
@@ -4287,6 +4288,12 @@ POLAR_NSIGMA_CLIPPING = Const('POLAR_NSIGMA_CLIPPING', value=None, dtype=float,
                               source=__NAME__, group=cgroup,
                               description='Define number of sigmas within '
                                           'which apply clipping')
+
+# Define the reddest wavelength to use throughout polar code
+POLAR_REDDEST_THRESHOLD = Const('POLAR_REDDEST_THRESHOLD', value=None,
+                                dtype=float, source=__NAME__, group=cgroup,
+                                description='Define the reddest wavelength to '
+                                            'use throughout polar code')
 
 # =============================================================================
 # POLAR POLY MOVING MEDIAN SETTINGS

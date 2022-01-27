@@ -135,10 +135,10 @@ def __main__(recipe, params):
     pprops = gen_pol.calculate_continuum(params, recipe, pprops)
     # if we are removing polar continuum
     if remove_continuum:
-        pprops = gen_pol.remove_continuum_polarization(pprops)
+        pprops = gen_pol.remove_continuum_polarization(params, pprops)
     # if we are
     if normalize_stokesi:
-        pprops = gen_pol.normalize_stokes_i(pprops)
+        pprops = gen_pol.normalize_stokes_i(params, pprops)
 
     # ----------------------------------------------------------------------
     # Apply sigma-clipping
