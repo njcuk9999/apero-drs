@@ -2483,7 +2483,7 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
         WLOG(params, '', textentry('40-021-00027', args=[osigm]))
     # -------------------------------------------------------------------------
     # produce the debug plot for fit continuum
-    recipe.plot('POLAR_FIT_CONT', wavemap=wavemap, mask=mspec, spec=spec,
+    recipe.plot('PLOT_POLAR_FIT_CONT', wavemap=wavemap, mask=mspec, spec=spec,
                 fspec=fspec, med_filt=med_filt, cont=cont, niter=niter,
                 rej_low=rej_low, rej_high=rej_high, sigm=sigm, res=res,
                 ores=ores)
