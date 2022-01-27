@@ -5203,7 +5203,7 @@ def plot_polar_continuum(plotter: Plotter, graph: Graph,
     contxbin = props['CONT_POL_XBIN']
     stokes = props['STOKES']
     method = props['METHOD']
-    nexp = props['NEXPOSURES']
+    nexp = props['N_EXPOSURES']
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
