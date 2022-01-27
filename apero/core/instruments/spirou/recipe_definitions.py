@@ -1128,7 +1128,7 @@ apero_pol.set_outputs(POL_DEG_FILE=files.out_pol_deg,
                       S1DV_NULL2=files.out_null2_s1dv,
                       S1DW_STOKESI=files.out_stokesi_s1dw,
                       S1DV_STOKESI=files.out_stokesi_s1dv)
-apero_pol.set_debug_plots('PLOT_POLAR_FIT_CONT', 'POLAR_CONTINUUM',
+apero_pol.set_debug_plots('POLAR_FIT_CONT', 'POLAR_CONTINUUM',
                           'POLAR_RESULTS', 'POLAR_STOKES_I', 'POLAR_LSD',
                           'EXTRACT_S1D_WEIGHT', 'EXTRACT_S1D')
 apero_pol.set_summary_plots('SUM_EXTRACT_S1D')
