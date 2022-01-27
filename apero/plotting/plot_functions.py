@@ -5201,7 +5201,7 @@ def plot_polar_continuum(plotter: Plotter, graph: Graph,
     pol = 100 * props['FLAT_POL']
     contpol = 100.0 * props['CONT_POL']
     contxbin = props['CONT_POL_XBIN']
-    stokes = props['STOKES']
+    stokes = props['STOKES']['A_1']
     method = props['METHOD']
     nexp = props['N_EXPOSURES']
     # ------------------------------------------------------------------
@@ -5260,9 +5260,9 @@ def plot_polar_results(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     pol = 100 * props['FLAT_POL']
     null1 = 100.0 * props['FLAT_NULL1']
     null2 = 100.0 * props['FLAT_NULL2']
-    stokes = props['STOKES']
+    stokes = props['STOKES']['A_1']
     method = props['METHOD']
-    nexp = props['NEXPOSURES']
+    nexp = props['N_EXPOSURES']
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -5313,7 +5313,7 @@ def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     stokes_ierr = props['FLAT_STOKES_I_ERR']
     stokes = props['STOKES']
     method = props['METHOD']
-    nexp = props['NEXPOSURES']
+    nexp = props['N_EXPOSURES']
     cont_flux = props['CONT_FLUX']
     # ------------------------------------------------------------------
     # set up plot
