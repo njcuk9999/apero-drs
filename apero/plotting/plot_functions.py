@@ -5153,7 +5153,7 @@ def plot_polar_fit_cont(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # plot the median filtered points
     if med_filt > 0:
         frame0.plot(wavemap[mask], fspec[mask], ms=20.0, marker='d',
-                    edgecolors='0.5', facecolors='None', lw=0.5)
+                    mec='0.5', mfc='None', lw=0.5)
     # plot the continuum
     frame0.plot(wavemap, cont, ls='--', color='orange')
     # ------------------------------------------------------------------
