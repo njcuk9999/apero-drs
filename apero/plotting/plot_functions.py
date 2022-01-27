@@ -5200,8 +5200,7 @@ def plot_polar_continuum(plotter: Plotter, graph: Graph,
     wl = props['FLAT_WLDATA']
     pol = 100 * props['FLAT_POL']
     contpol = 100.0 * props['CONT_POL']
-    contxbin = np.array(props['CONT_POL_XBIN'])
-    contybin = 100. * np.array(props['CONT_POL_YBIN'])
+    contxbin = props['CONT_POL_XBIN']
     stokes = props['STOKES']
     method = props['METHOD']
     nexp = props['NEXPOSURES']
@@ -5217,8 +5216,13 @@ def plot_polar_continuum(plotter: Plotter, graph: Graph,
     frame.plot(wl, pol, linestyle='None', marker='.',
                label='Degree of Polarization')
     # plot continuum sample points
-    frame.plot(contxbin, contybin, linestyle='None', marker='o',
-               label='Continuum Sampling')
+    if contxbin is not None:
+        # get values
+        contxbin = np.array(contxbin)
+        contybin = 100. * np.array(props['CONT_POL_YBIN'])
+        # plot continuum sampling
+        frame.plot(contxbin, contybin, linestyle='None', marker='o',
+                   label='Continuum Sampling')
     # plot continuum fit
     frame.plot(wl, contpol, label='Continuum Polarization')
     # ---------------------------------------------------------------------
