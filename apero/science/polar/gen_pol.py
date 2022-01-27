@@ -1201,8 +1201,8 @@ def get_interp_flux(params: ParamDict, wavemap0: np.ndarray, flux0: np.ndarray,
     return flux1, fluxerr1
 
 
-def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
-                        in_wavelength: bool = True) -> ParamDict:
+def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict
+                        ) -> ParamDict:
     """
     Function to calculate the continuum flux and continuum polarization
 
@@ -1225,11 +1225,9 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
             STOKESI: numpy array (2D), e2ds Stokes I data
             STOKESIERR: numpy array (2D), e2ds errors of Stokes I
 
-    :param in_wavelength: bool, to indicate whether or not there is wave cal
-
     :return props: parameter dictionary, the updated parameter dictionary
         Adds/updates the following:
-            FLAT_X: numpy array (1D), flatten polarimetric x data
+            FLAT_WLDATA: numpy array (1D), flatten polarimetric x data
             FLAT_POL: numpy array (1D), flatten polarimetric pol data
             FLAT_POLERR: numpy array (1D), flatten polarimetric pol error data
             FLAT_STOKESI: numpy array (1D), flatten polarimetric stokes I data
@@ -1272,13 +1270,10 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     pconst = constants.pload()
     telluric_bands = pconst.GET_POLAR_TELLURIC_BANDS()
     # -------------------------------------------------------------------------
-    # get the shape of pol
-    ydim, xdim = props['POL'].shape
     # get wavelength data if require
-    if in_wavelength:
-        xdata = props['GLOBAL_WAVEMAP'].ravel()
-    else:
-        xdata = np.arange(ydim * xdim)
+    wldata = props['GLOBAL_WAVEMAP'].ravel()
+    # remove the reddest pixels
+    keep = wldata < params['POLAR_REDDEST_THRESHOLD']
     # -------------------------------------------------------------------------
     # flatten data (across orders)
     pol = props['POL'].ravel()
@@ -1287,11 +1282,24 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     stokes_ierr = props['STOKESIERR'].ravel()
     null1 = props['NULL1'].ravel()
     null2 = props['NULL2'].ravel()
+    # add to the keep mask
+    keep &= np.isfinite(pol)
+    keep &= np.isfinite(stokes_i)
+    keep &= stokes_i > 0
+    # -------------------------------------------------------------------------
+    # apply keep mask to all vectors
+    wldata = wldata[keep]
+    pol = pol[keep]
+    polerr = polerr[keep]
+    stokes_i = stokes_i[keep]
+    stokes_ierr = stokes_ierr[keep]
+    null1 = null1[keep]
+    null2 = null2[keep]
     # -------------------------------------------------------------------------
     # sort by wavelength (or pixel number)
-    sortmask = np.argsort(xdata)
+    sortmask = np.argsort(wldata)
     # sort data
-    xdata = xdata[sortmask]
+    wldata = wldata[sortmask]
     pol = pol[sortmask]
     polerr = polerr[sortmask]
     stokes_i = stokes_i[sortmask]
@@ -1309,17 +1317,17 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # calculate continuum flux using moving median
     if stokesi_detection_alg == 'MOVING_MEDIAN':
         # calculate continuum flux
-        cout = continuum(params, xdata, stokes_i, binsize=pol_binsize,
+        cout = continuum(params, wldata, stokes_i, binsize=pol_binsize,
                          overlap=pol_overlap, window=6, mode="max",
                          use_linear_fit=True, telluric_bands=telluric_bands)
         contflux, flux_xbin, flux_ybin = cout
         # calculate conntinuum flux using IRAF algorithm
     elif stokesi_detection_alg == 'IRAF':
-        contflux = _fit_continuum(params, recipe, xdata, stokes_i,
+        contflux = _fit_continuum(params, recipe, wldata, stokes_i,
                                   function=stokei_iraf_cont_fit_func,
                                   degree=stokes_iraf_cont_func_ord,
                                   niter=5, rej_low=3.0, rej_high=3.0, grow=1,
-                                  med_filt=0, percentile_low=0.,
+                                  med_filt=1, percentile_low=0.,
                                   percentile_high=100.0,
                                   min_points=10, verbose=False)
     # else raise error
@@ -1341,7 +1349,8 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # calculate polarization flux using moving median
     if polar_detection_alg == 'MOVING_MEDIAN':
         # calculate continuum polarization
-        cpout = _continuum_polarization(params, xdata, pol, binsize=pol_binsize,
+        cpout = _continuum_polarization(params, wldata, pol,
+                                        binsize=pol_binsize,
                                         overlap=pol_overlap, mode='median',
                                         use_polynomail_fit=cont_poly_fit,
                                         deg_poly_fit=cont_deg_poly,
@@ -1349,11 +1358,11 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
         contpol, pol_xbin, pol_ybin = cpout
     # calculate polarization flux using IRAF algorithm
     elif polar_detection_alg == 'IRAF':
-        contpol = _fit_continuum(params, recipe, xdata, pol,
+        contpol = _fit_continuum(params, recipe, wldata, pol,
                                  function=polar_iraf_cont_fit_func,
                                  degree=polar_iraf_cont_func_ord, niter=5,
                                  rej_low=3.0, rej_high=3.0, grow=1,
-                                 med_filt=0, percentile_low=0.0,
+                                 med_filt=1, percentile_low=0.0,
                                  percentile_high=100.0, min_points=10,
                                  verbose=False)
     # else raise error
@@ -1368,7 +1377,7 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
         pol = pol - contpol
     # -------------------------------------------------------------------------
     # save back to props
-    props['FLAT_X'] = xdata
+    props['FLAT_WLDATA'] = wldata
     props['FLAT_POL'] = pol
     props['FLAT_POLERR'] = polerr
     props['FLAT_STOKESI'] = stokes_i
@@ -1384,7 +1393,7 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     props['CONT_FLUX'] = contflux
     props['CONT_POL'] = contpol
     # key sources
-    keys = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKESI',
+    keys = ['FLAT_WLDATA', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKESI',
             'FLAT_STOKESIERR', 'FLAT_NULL1', 'FLAT_NULL2',
             'CONT_FLUX_XBIN', 'CONT_FLUX_YBIN', 'CONT_POL_XBIN',
             'CONT_POL_YBIN', 'CONT_FLUX', 'CONT_POL']
@@ -1394,7 +1403,8 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     return props
 
 
-def remove_continuum_polarization(props: ParamDict) -> ParamDict:
+def remove_continuum_polarization(params: ParamDict, props: ParamDict
+                                  ) -> ParamDict:
     """
         Function to remove the continuum polarization
 
@@ -1404,7 +1414,7 @@ def remove_continuum_polarization(props: ParamDict) -> ParamDict:
             WAVE: numpy array (2D), e2ds wavelength data
             POL: numpy array (2D), e2ds degree of polarization data
             POLERR: numpy array (2D), e2ds errors of degree of polarization
-            FLAT_X: numpy array (1D), flatten polarimetric x data
+            FLAT_WLDATA: numpy array (1D), flatten polarimetric x data
             CONT_POL: numpy array (1D), e2ds continuum polarization data
 
         :return props: parameter dictionary, the updated parameter dictionary
@@ -1416,8 +1426,9 @@ def remove_continuum_polarization(props: ParamDict) -> ParamDict:
     # set function name
     func_name = display_func('remove_continuum_polarization', __NAME__)
     # get arrays
-    xdata = props['FLAT_X']
+    wldata = props['FLAT_WLDATA']
     pol = props['POL']
+    stokesi = props['STOKESI']
     wavemap = props['GLOBAL_WAVEMAP']
     cont_pol = props['CONT_POL']
     # get the shape of pol
@@ -1428,28 +1439,34 @@ def remove_continuum_polarization(props: ParamDict) -> ParamDict:
     # interpolate and remove continuum (across orders)
     # loop around order data
     for order_num in range(ydim):
+        # remove the reddest pixels
+        ordkeep = wavemap[order_num] < params['POLAR_REDDEST_THRESHOLD']
+        ordkeep &= np.isfinite(pol[order_num])
+        ordkeep &= np.isfinite(stokesi[order_num])
+        ordkeep &= stokesi[order_num] > 0
         # get wavelengths for current order
-        ordwave = wavemap[order_num]
+        ordwave = wavemap[order_num][ordkeep]
         # get polarimetry for current order
-        ordpol = pol[order_num]
+        ordpol = pol[order_num][ordkeep]
         # get wavelength at edges of order
         wl0, wlf = ordwave[0], ordwave[-1]
         # create mask to get only continuum data within wavelength range
-        # TODO: Question - this doesn't work with in_wavelength = False
-        wlmask = (xdata >= wl0) & (xdata <= wlf)
+        wlmask = (wldata >= wl0) & (wldata <= wlf)
         # get continuum data within order range
-        wl_cont = xdata[wlmask]
+        wl_cont = wldata[wlmask]
         pol_cont = cont_pol[wlmask]
         # interpolate points applying a cubic spline to the continuum data
         pol_interp = interpolate.interp1d(wl_cont, pol_cont, kind='cubic')
         # create continuum vector at same wavelength sampling as polar data
         cont_vector = pol_interp(ordwave)
         # save continuum with the same shape as input pol
-        order_cont_pol[order_num] = cont_vector
+        order_cont_pol[order_num][ordkeep] = cont_vector
         # remove continuum from data
         ordpol = ordpol - cont_vector
         # update pol array
-        pol[order_num] = ordpol
+        pol[order_num][ordkeep] = ordpol
+        # set all other polar values to NaN
+        pol[order_num][~ordkeep] = np.nan
     # -------------------------------------------------------------------------
     # update POL
     props['POL'] = pol
@@ -1460,7 +1477,7 @@ def remove_continuum_polarization(props: ParamDict) -> ParamDict:
     return props
 
 
-def normalize_stokes_i(props: ParamDict) -> ParamDict:
+def normalize_stokes_i(params: ParamDict, props: ParamDict) -> ParamDict:
     """
         Function to normalize Stokes I by the continuum flux
 
@@ -1469,7 +1486,7 @@ def normalize_stokes_i(props: ParamDict) -> ParamDict:
                 WAVE: numpy array (2D), e2ds wavelength data
                 STOKESI: numpy array (2D), e2ds degree of polarization data
                 POLERR: numpy array (2D), e2ds errors of degree of polarization
-                FLAT_X: numpy array (1D), flatten polarimetric x data
+                FLAT_WLDATA: numpy array (1D), flatten polarimetric x data
                 CONT_POL: numpy array (1D), e2ds continuum polarization data
 
         :return loc: parameter dictionary, the updated parameter dictionary
@@ -1481,7 +1498,8 @@ def normalize_stokes_i(props: ParamDict) -> ParamDict:
     # set function name
     func_name = display_func('normalize_stokes_i', __NAME__)
     # get arrays
-    xdata = props['FLAT_X']
+    wldata = props['FLAT_WLDATA']
+    pol = props['POL']
     stokesi = props['STOKESI']
     stokesierr = props['STOKESIERR']
     wavemap = props['GLOBAL_WAVEMAP']
@@ -1494,29 +1512,35 @@ def normalize_stokes_i(props: ParamDict) -> ParamDict:
     # interpolate and remove continuum (across orders)
     # loop around order data
     for order_num in range(ydim):
+        # remove the reddest pixels
+        ordkeep = wavemap[order_num] < params['POLAR_REDDEST_THRESHOLD']
+        ordkeep &= np.isfinite(pol[order_num])
+        ordkeep &= np.isfinite(stokesi[order_num])
+        ordkeep &= stokesi[order_num] > 0
         # get wavelengths for current order
-        ordwave = wavemap[order_num]
+        ordwave = wavemap[order_num][ordkeep]
         # get wavelength at edges of order
         wl0, wlf = ordwave[0], ordwave[-1]
         # get polarimetry for current order
-        flux = stokesi[order_num]
-        fluxerr = stokesierr[order_num]
+        flux = stokesi[order_num][ordkeep]
+        fluxerr = stokesierr[order_num][ordkeep]
         # create mask to get only continuum data within wavelength range
-        # TODO: Question - this doesn't work with in_wavelength = False
-        wlmask = (xdata >= wl0) & (xdata <= wlf)
+        wlmask = (wldata >= wl0) & (wldata <= wlf)
         # get continuum data within order range
-        wl_cont = xdata[wlmask]
+        wl_cont = wldata[wlmask]
         flux_cont = cont_flux[wlmask]
         # interpolate points applying a cubic spline to the continuum data
         flux_interp = interpolate.interp1d(wl_cont, flux_cont, kind='cubic')
         # create continuum vector at same wavelength sampling as polar data
         _continuum = flux_interp(ordwave)
         # save continuum with the same shape as input pol
-        order_cont_flux[order_num] = _continuum
+        order_cont_flux[order_num][ordkeep] = _continuum
         # normalize stokes I by the continuum
-        stokesi[order_num] = flux / _continuum
+        stokesi[order_num][ordkeep] = flux / _continuum
+        stokesi[order_num][~ordkeep] = np.nan
         # normalize stokes I by the continuum
-        stokesierr[order_num] = fluxerr / _continuum
+        stokesierr[order_num][ordkeep] = fluxerr / _continuum
+        stokesierr[order_num][~ordkeep] = np.nan
     # -------------------------------------------------------------------------
     # update stokesi and stokesierr
     props['STOKESI'] = stokesi
@@ -1608,11 +1632,11 @@ def clean_polarimetry_data(props: ParamDict, sigclip: bool = False,
         # if user wants to sigma clip do add the sigma clip to mask
         if sigclip:
             # calcualte meidan of the polar array
-            median_pol = np.median(pol[order_num][mask])
+            median_pol = mp.nanmedian(pol[order_num][mask])
             # calculate the median sigma
-            # TODO: Question: where does 0.67499 come from?
             meddiff = pol[order_num][mask] - median_pol
-            medsig_pol = np.median(np.abs(meddiff)) / 0.67499
+            mad = mp.median_absolute_deviation()
+            medsig_pol = np.nanmedian(np.abs(meddiff)) / mad
             # add this to mask
             mask &= pol[order_num] > (median_pol - (nsig * medsig_pol))
             mask &= pol[order_num] < (median_pol + (nsig * medsig_pol))
@@ -1640,9 +1664,9 @@ def clean_polarimetry_data(props: ParamDict, sigclip: bool = False,
     # -------------------------------------------------------------------------
     # sort by wavelength (or pixel number)
     sortmask = np.argsort(clean_wavemap)
-    # save FLAT_X back to props
-    props['FLAT_X'] = np.array(clean_wavemap)[sortmask]
-    props.append_source('FLAT_X', func_name)
+    # save FLAT_WLDATA back to props
+    props['FLAT_WLDATA'] = np.array(clean_wavemap)[sortmask]
+    props.append_source('FLAT_WLDATA', func_name)
     # save FLAT_POL back to props
     props['FLAT_POL'] = np.array(clean_pol)[sortmask]
     props.append_source('FLAT_POL', func_name)
@@ -2204,16 +2228,16 @@ def continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
         if ibin == 0 and not use_linear_fit:
             xbin.append(xarr[0] - np.abs(xarr[1] - xarr[0]))
             # create mask to get rid of NaNs
-            ybin.append(np.nanmedian(yarr[:binsize]))
+            ybin.append(mp.nanmedian(yarr[:binsize]))
         # ---------------------------------------------------------------------
         # if we have more than 2 points we can use mean / median
         if len(xtmp[nanmask]) > 2:
             # calculate mean x within the bin
-            xmean = np.mean(xtmp[nanmask])
+            xmean = mp.nanmean(xtmp[nanmask])
             # calculate median y within the bin
-            medy = np.median(ytmp[nanmask])
+            medy = mp.nanmedian(ytmp[nanmask])
             # calculate median deviation
-            medydev = np.median(np.abs(ytmp[nanmask] - medy))
+            medydev = mp.nanmedian(np.abs(ytmp[nanmask] - medy))
             # create mask to filter data outside n*sigma range
             filtermask = (ytmp[nanmask] > medy)
             filtermask &= (ytmp[nanmask] < medy + sigmaclip * medydev)
@@ -2224,13 +2248,13 @@ def continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
                 # do a median
                 if mode == 'max':
                     # save maximum y of filtered data
-                    ybin.append(np.max(ytmp[nanmask][filtermask]))
+                    ybin.append(mp.nanmax(ytmp[nanmask][filtermask]))
                 elif mode == 'median':
                     # save median y of filtered data
-                    ybin.append(np.median(ytmp[nanmask][filtermask]))
+                    ybin.append(mp.nanmedian(ytmp[nanmask][filtermask]))
                 elif mode == 'mean':
                     # save mean y of filtered data
-                    ybin.append(np.mean(ytmp[nanmask][filtermask]))
+                    ybin.append(mp.nanmean(ytmp[nanmask][filtermask]))
                 else:
                     # Log Error: Can not recognize selected mode="{0}"
                     eargs = [mode, func_name]
@@ -2240,7 +2264,7 @@ def continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
         if ibin == nbins - 1 and not use_linear_fit:
             xbin.append(xarr[-1] + np.abs(xarr[-1] - xarr[-2]))
             # create mask to get rid of NaNs
-            ybin.append(np.nanmedian(yarr[-binsize:]))
+            ybin.append(mp.nanmedian(yarr[-binsize:]))
     # -------------------------------------------------------------------------
     # Option to use a linearfit within a given window
     if use_linear_fit:
@@ -2544,21 +2568,21 @@ def _continuum_polarization(params: ParamDict, xarr: np.ndarray,
             xbin.append(xarr[0] - np.abs(xarr[1] - xarr[0]))
             # create mask to get rid of NaNs
             localnanmask = np.isfinite(yarr)
-            ybin.append(np.nanmedian(yarr[localnanmask][:binsize]))
+            ybin.append(mp.nanmedian(yarr[localnanmask][:binsize]))
         # ---------------------------------------------------------------------
         # if we have over 2 points we can use mean / median
         if len(xtmp[nanmask]) > 2:
             # calculate mean x within the bin
-            xmean = np.mean(xtmp[nanmask])
+            xmean = mp.nanmean(xtmp[nanmask])
             # save mean x with in bin
             xbin.append(xmean)
             # do a median
             if mode == 'median':
                 # save median y of filtered data
-                ybin.append(np.median(ytmp[nanmask]))
+                ybin.append(mp.nanmedian(ytmp[nanmask]))
             elif mode == 'mean':
                 # save mean y of filtered data
-                ybin.append(np.mean(ytmp[nanmask]))
+                ybin.append(mp.nanmean(ytmp[nanmask]))
             else:
                 # Log error: Can not recognize selected mode="{0}"
                 eargs = [mode, func_name]
@@ -2568,7 +2592,7 @@ def _continuum_polarization(params: ParamDict, xarr: np.ndarray,
             xbin.append(xarr[-1] + np.abs(xarr[-1] - xarr[-2]))
             # create mask to get rid of NaNs
             localnanmask = np.isfinite(yarr)
-            ybin.append(np.nanmedian(yarr[localnanmask][-binsize:]))
+            ybin.append(mp.nanmedian(yarr[localnanmask][-binsize:]))
     # -------------------------------------------------------------------------
     # the continuum may be obtained either by polynomial fit or by cubic
     # interpolation

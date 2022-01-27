@@ -16,6 +16,7 @@ from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.io import drs_image
+from apero.science.calib import thermal
 from apero.science.extract import other as extractother
 
 
@@ -152,6 +153,14 @@ def __main__(recipe, params):
         thermal_files = extractother.extract_thermal_files(*eargs)
 
         # TODO: deal with sky darks here
+
+        # ------------------------------------------------------------------
+        # Multiple the thermal by excess emissivity
+        # ------------------------------------------------------------------
+        thermal_files = thermal.apply_excess_emissivity(params, recipe,
+                                                        thermal_files,
+                                                        fiber_types,
+                                                        calibdbm=calibdbm)
 
         # ------------------------------------------------------------------
         # Quality control

@@ -11,8 +11,7 @@ Created on 2019-01-18 at 14:44
 """
 import numpy as np
 from pathlib import Path
-import string
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_db
@@ -147,10 +146,10 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         if self.filemod is not None:
             return self.filemod
         # set module name
-        module_name = 'apero.core.instruments.nirps_ha.file_definitions'
+        module_name = 'apero.core.instruments.nirps_he.file_definitions'
         # try to import module
         try:
-            self.filemod = base_class.ImportModule('nirps_ha.file_definitions',
+            self.filemod = base_class.ImportModule('nirps_he.file_definitions',
                                                    module_name)
             return self.filemod
         except Exception as e:
@@ -172,10 +171,10 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         if self.recipemod is not None:
             return self.recipemod
         # set module name
-        module_name = 'apero.core.instruments.nirps_ha.recipe_definitions'
+        module_name = 'apero.core.instruments.nirps_he.recipe_definitions'
         # try to import module
         try:
-            strmod = 'nirps_ha.recipe_definitions'
+            strmod = 'nirps_he.recipe_definitions'
             self.recipemod = base_class.ImportModule(strmod, module_name)
             return self.recipemod
         except Exception as e:
@@ -219,11 +218,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # set function name
         # _ = display_func('FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
         # set forbidden keys
-        forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
-                          'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
-                          'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
-                          'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB',
-                          'NEXTEND', '', 'HISTORY', 'XTENSION']
+        forbidden_keys = ['BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'XTENSION']
         # return forbiiden keys
         return forbidden_keys
 
@@ -243,7 +238,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
                           'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
                           'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
                           'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB',
-                          'XTENSION']
+                          'NEXTEND', '', 'HISTORY', 'XTENSION']
         # return keys
         return forbidden_keys
 
@@ -444,7 +439,6 @@ class PseudoConstants(pseudo_const.PseudoConstants):
                 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG', 'KW_INSTRUMENT',
                 'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT']
         return keys
-
 
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
@@ -756,7 +750,6 @@ class PseudoConstants(pseudo_const.PseudoConstants):
             return self.index_cols
         # column definitions
         index_cols = DatabaseColumns()
-
         index_cols.add(name='ABSPATH', datatype='TEXT', is_unique=True)
         index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)', is_index=True)
         index_cols.add(name='FILENAME', is_index=True, datatype='VARCHAR(200)')
@@ -816,7 +809,6 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
     """
     # set function name
     func_name = display_func('clean_obj_name', __NAME__)
-
 
     # if we don't have header don't try this part (this happens when we
     #   are just calling using objname)
@@ -1087,7 +1079,7 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     drsfiles = recipe.filemod.get().raw_file.fileset
     raw_prefix = recipe.filemod.get().raw_prefix
     # set up inname
-    dprtype = 'Unknown'
+    dprtype, outtype = 'Unknown', 'Unknown'
     drsfile = None
     # loop around drs files
     for drsfile in drsfiles:
@@ -1101,8 +1093,10 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
             # remove prefix if not None
             if raw_prefix is not None:
                 dprtype = drsfile.name.split(raw_prefix)[-1]
+                outtype = drsfile.name
             else:
                 dprtype = drsfile.name
+                outtype = drsfile.name
             # we have found file so break
             break
     # update header with DPRTYPE
@@ -1110,8 +1104,8 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     hdict[kwdprtype] = (dprtype, kwdprcomment)
     # add drs file type (if drs file was found)
     if drsfile is not None:
-        header[kwoutput] = (drsfile.name, kwoutputcomment)
-        hdict[kwoutput] = (drsfile.name, kwoutputcomment)
+        header[kwoutput] = (outtype, kwoutputcomment)
+        hdict[kwoutput] = (outtype, kwoutputcomment)
     # return header
     return header, hdict
 

@@ -61,6 +61,8 @@ lowpassfilter = gen_math.lowpassfilter
 
 measure_box_min_max = gen_math.measure_box_min_max
 
+median_absolute_deviation = gen_math.median_absolute_deviation
+
 medbin = gen_math.medbin
 
 medfilt_1d = fast.medfilt_1d

@@ -16,7 +16,7 @@ from astropy import units as uu
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.interpolate import UnivariateSpline
 from scipy.ndimage.morphology import binary_dilation
-from scipy.special import erf
+from scipy.special import erf, erfinv
 from scipy import stats
 from typing import Tuple, Union
 
@@ -175,6 +175,18 @@ def normal_fraction(sigma: Union[float, np.ndarray] = 1.0
     # _ = display_func('normal_fraction', __NAME__)
     # return error function
     return erf(sigma / np.sqrt(2.0))
+
+
+def median_absolute_deviation(sigma: float = 1.0) -> float:
+    """
+    Calculate the median absolute deviation
+    (From: https://en.wikipedia.org/wiki/Median_absolute_deviation)
+
+    :param sigma: the number of sigma away from the median to be
+
+    :return: float, the median absolute deviation
+    """
+    return sigma * np.sqrt(2) * erfinv(0.5)
 
 
 def estimate_sigma(tmp: np.ndarray, sigma=1.0) -> float:

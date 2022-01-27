@@ -519,8 +519,9 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
     # apply boundary mask to xhot and yhot
     xhot = xhot[bmask]
     yhot = yhot[bmask]
+    # -------------------------------------------------------------------------
     # get median hot pixel box
-    med_hotpix = np.zeros([2 * med_size + 1, 2 * med_size + 1])
+    cube_hotpix = np.zeros([2 * med_size + 1, 2 * med_size + 1, len(xhot)])
     # loop around x
     for dx in range(-med_size, med_size + 1):
         # loop around y
@@ -531,7 +532,16 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
             # get the hot pixel values at position in median box
             data_hot = np.array(image[yhot + dx, xhot + dy])
             # median the data_hot for this box position
-            med_hotpix[posx, posy] = mp.nanmedian(data_hot)
+            cube_hotpix[posx, posy] = data_hot
+    # only keep the darkest 25% of the pixels
+    mask = cube_hotpix[0][0].ravel() < np.nanpercentile(cube_hotpix[0][0], 25)
+    cube_hotpix = cube_hotpix[:,:,mask]
+    # remove the dc from background
+    for ibox in range(np.sum(mask)):
+        cube_hotpix[:, :, ibox] -= np.nanmedian(cube_hotpix[:, :, ibox])
+    # combine each of the hotpixel boxes back into one box
+    med_hotpix = np.nanmedian(cube_hotpix, axis=2)
+    # -------------------------------------------------------------------------
     # get dark ribbon
     dark_ribbon = image[:, 0:dark_size]
     # you should not have an excess in odd/even RMS of pixels

@@ -2320,11 +2320,9 @@ def plot_thermal_background(plotter: Plotter, graph: Graph,
     params = kwargs['params']
     wavemap = kwargs['wavemap']
     image = kwargs['image']
-    thermal1 = kwargs['thermal1']
-    thermal2 = kwargs['thermal2']
+    thermal = kwargs['thermal']
     torder = kwargs['torder']
-    tmask1 = kwargs['tmask1']
-    tmask2 = kwargs['tmask2']
+    tmask = kwargs['tmask']
     fiber = kwargs['fiber']
     kind = kwargs['kind']
     # get properties from params
@@ -2332,25 +2330,17 @@ def plot_thermal_background(plotter: Plotter, graph: Graph,
     # correct data for graph
     rwave = np.ravel(wavemap[startorder:])
     rimage = np.ravel(image[startorder:])
-    rthermal1 = np.ravel(thermal1[startorder:])
-    rthermal2 = np.ravel(thermal2[startorder:])
-    swave1 = wavemap[torder, tmask1]
-    swave2 = wavemap.ravel()[tmask2.ravel()]
-    sthermal1 = thermal1[torder][tmask1]
-    sthermal2 = thermal2.ravel()[tmask2.ravel()]
+    rthermal = np.ravel(thermal[startorder:])
+    swave = wavemap[torder, tmask]
+    sthermal = thermal[torder][tmask]
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter)
     # plot data
     frame.plot(rwave, rimage, color='k', label='input spectrum')
-    frame.plot(rwave, rthermal1, color='r', alpha=0.8,
-               label='scaled thermal [tapas]')
-    frame.plot(swave1, sthermal1, color='b', marker='o', ls='None',
-               label='background sample region [tapas]', alpha=0.3)
-    frame.plot(rwave, rthermal2, color='m', alpha=0.8,
-               label='scaled thermal [percentile]')
-    frame.plot(swave2, sthermal2, color='c', marker='+', ls='None',
-               alpha=0.3, label='background sample region [percentile]')
+    frame.plot(rwave, rthermal, color='r', label='scaled thermal')
+    frame.plot(swave, sthermal, color='b', marker='o', ls='None',
+               label='background sample region')
     # set graph properties
     frame.legend(loc=0)
     title = 'Thermal scaled background ({0}Fiber {1})'.format(kind, fiber)
@@ -5320,6 +5310,7 @@ def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     stokes = props['STOKES']
     method = props['METHOD']
     nexp = props['NEXPOSURES']
+    cont_flux = props['CONT_FLUX']
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -5330,7 +5321,10 @@ def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # ---------------------------------------------------------------------
     # plot polarimetry data
     frame.errorbar(wl, stokes_i, yerr=stokes_ierr, fmt='-', label='Stokes I',
-                   alpha=0.5)
+                   alpha=0.3, zorder=1)
+    # plot continuum flux
+    frame.plot(wl, cont_flux, label='Continuum Flux for Normalization',
+               zorder=2)
     # ---------------------------------------------------------------------
     # set title and labels
     xlabel = 'wavelength [nm]'
@@ -5365,17 +5359,21 @@ def plot_polar_lsd(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # get data from props
     vels = lprops['LSD_VELOCITIES']
     zz = lprops['LSD_STOKES_I']
+    zz_err = lprops['LSD_STOKESI_ERR']
     zgauss = lprops['LSD_STOKES_I_MODEL']
     z_p = lprops['LSD_STOKES_VQU']
+    z_p_err = lprops['LSD_STOKESVQU_ERR']
     z_np = lprops['LSD_NULL']
+    z_np_err = lprops['LSD_NULL_ERR']
     stokes = pprops['STOKES']
     # ------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, nrows=1, ncols=3)
     # ------------------------------------------------------------------
     frame = frames[0]
-    frame.plot(vels, zz, '-')
-    frame.plot(vels, zgauss, '-')
+    frame.errorbar(vels, zz, yerr=zz_err, fmt='.', color='red')
+    frame.plot(vels, zz, '-', linewidth=0.3, color='red')
+    frame.plot(vels, zgauss, '-', color='green')
     title = 'LSD Analysis'
     ylabel = 'Stokes I profile'
     xlabel = ''
@@ -5384,14 +5382,16 @@ def plot_polar_lsd(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # ---------------------------------------------------------------------
     frame = frames[1]
     title = ''
-    frame.plot(vels, z_p, '-')
+    frame.errorbar(vels, z_p, yerr=z_p_err, fmt='.', color='blue')
+    frame.plot(vels, z_p, '-', linewidth=0.5, color='blue')
     ylabel = 'Stokes {0} profile'.format(stokes)
     xlabel = ''
     # set title and labels
     frame.set(title=title, xlabel=xlabel, ylabel=ylabel)
     # ---------------------------------------------------------------------
     frame = frames[2]
-    frame.plot(vels, z_np, '-')
+    frame.errorbar(vels, z_np, yerr=z_np_err, fmt='.', color='orange')
+    frame.plot(vels, z_np, '-', linewidth=0.5, color='orange')
     xlabel = 'velocity (km/s)'
     ylabel = 'Null profile'
     # set title and labels

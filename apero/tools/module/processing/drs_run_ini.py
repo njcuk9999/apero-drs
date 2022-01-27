@@ -540,7 +540,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     blank_run_nirps_ha.append_sequence('blank_seq')
     run_files.append(blank_run_nirps_ha)
     # mini run
-    mini_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'mini_run1')
+    mini_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'mini_run')
     mini_run_nirps_ha.append_sequence('limited_seq')
     run_files.append(mini_run_nirps_ha)
     # quick run
@@ -609,7 +609,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     blank_run_nirps_he.append_sequence('blank_seq')
     run_files.append(blank_run_nirps_he)
     # mini run
-    mini_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'mini_run1')
+    mini_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'mini_run')
     mini_run_nirps_he.append_sequence('limited_seq')
     run_files.append(mini_run_nirps_he)
     # quick run

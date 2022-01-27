@@ -31,7 +31,7 @@ __all__ = [  # input keys
     'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
     'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
     'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE', 'KW_FIBER',
-    'KW_THERM_RATIO_1', 'KW_THERM_RATIO_2', 'KW_THERM_RATIO_U',
+    'KW_THERM_RATIO', 'KW_THERM_RATIO_2', 'KW_THERM_RATIO_U',
     'KW_MID_OBS_TIME', 'KW_MID_OBSTIME_METHOD',
     # calibration file header keys
     'KW_CDBDARK', 'KW_CDTDARK', 'KW_CDBBAD', 'KW_CDTBAD',
@@ -177,7 +177,8 @@ __all__ = [  # input keys
     'KW_LSD_POL_MEDIAN', 'KW_LSD_POL_MEDABSDEV', 'KW_LSD_STOKESVQU_MEAN',
     'KW_LSD_STOKESVQU_STDDEV', 'KW_LSD_NULL_MEAN', 'KW_LSD_NULL_STDDEV',
     'KW_LSD_MASK_FILE', 'KW_LSD_MASK_NUMLINES', 'KW_LSD_MASKLINES_USED',
-    'KW_LSD_MASKLINES_MWAVE', 'KW_LSD_MASKLINES_MLANDE'
+    'KW_LSD_NORM_WLC', 'KW_LSD_NORM_LANDE', 'KW_LSD_NORM_DEPTH',
+    'KW_LSD_NORM_WEIGHT',
 ]
 
 # set name
@@ -668,16 +669,10 @@ KW_C_FTYPE = Keyword('KW_C_FTYPE', key='NULL', dtype=str, source=__NAME__,
 KW_FIBER = Keyword('KW_FIBER', key='NULL', dtype=str, source=__NAME__,
                    description='the fiber name')
 # the ratio used for thermal correction (method=tapas or envelope)
-KW_THERM_RATIO_1 = Keyword('KW_THERM_RATIO_1', key='NULL', dtype=float,
+KW_THERM_RATIO = Keyword('KW_THERM_RATIO', key='NULL', dtype=float,
                            source=__NAME__,
                            description='the ratio used for thermal correction '
                                        '(method=tapas or envelope)')
-
-# the ratio used for thermal correction (method=percentile)
-KW_THERM_RATIO_2 = Keyword('KW_THERM_RATIO_2', key='NULL', dtype=float,
-                           source=__NAME__,
-                           description='the ratio used for thermal correction '
-                                       '(method=percentile)')
 
 # the ratio method used for thermal correction
 KW_THERM_RATIO_U = Keyword('KW_THERM_RATIO_U', key='NULL', dtype=str,
@@ -2591,17 +2586,28 @@ KW_LSD_MASKLINES_USED = Keyword('KW_LSD_MASK_NUMLINES', key='NULL', dtype=int,
                                            'in the LSD analysis')
 
 # define the mean wavelength of lines use din lsd analysis
-KW_LSD_MASKLINES_MWAVE = Keyword('KW_LSD_MASKLINES_MWAVE', key='NULL', dtype=float,
+KW_LSD_NORM_WLC = Keyword('KW_LSD_NORM_WLC', key='NULL', dtype=float,
                                 source=__NAME__,
                                 description='define the mean wavelength of '
                                             'lines use din lsd analysis')
 
 # define the mean lande of lines used in lsd analysis
-KW_LSD_MASKLINES_MLANDE = Keyword('KW_LSD_MASKLINES_MLANDE', key='NULL',
-                                  dtype=float, source=__NAME__,
-                                 description='define the mean lande of lines '
-                                             'used in lsd analysis')
+KW_LSD_NORM_LANDE = Keyword('KW_LSD_NORM_LANDE', key='NULL',
+                            dtype=float, source=__NAME__,
+                            description='define the mean lande of lines used '
+                                        'in lsd analysis')
 
+# define the depth used in lsd analysis
+KW_LSD_NORM_DEPTH = Keyword('KW_LSD_NORM_DEPTH', key='NULL',
+                            dtype=float, source=__NAME__,
+                            description='define the depth used in lsd analysis')
+
+# define the calculate normalisation of the weights used in the lsd analysis
+KW_LSD_NORM_WEIGHT = Keyword('KW_LSD_NORM_WEIGHT', key='NULL',
+                             dtype=float, source=__NAME__,
+                             description='define the calculate normalisation '
+                                         'of the weights used in the lsd '
+                                         'analysis')
 
 # =============================================================================
 #  End of configuration file

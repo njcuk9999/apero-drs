@@ -275,6 +275,56 @@ def load_full_flat_badpix(params: ParamDict,
     return image
 
 
+def load_excess_emissivity(params: ParamDict,
+                           assetsdir: Union[str, None] = None,
+                           calib_dir: Union[str, None] = None,
+                           filename: Union[str, None] = None,
+                           func: Union[str, None] = None,
+                           fmt: str = 'csv', datastart: int = 1
+                           ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Load the excess emissivity file designed to be multiplied by the
+    thermal DARK_DARK_TEL (not DARK_DARK_INT) before being used for correction
+    this file corrects for telluric emission (due to air glow?)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param assetsdir: str, an option to override the standard DRS_DATA_ASSETS
+                      directory (defaults to DRS_DATA_ASSETS)
+    :param calib_dir: str, an option to override the calibration sub-directory
+                      (defaults to DRS_CALIB_DATA)
+    :param filename: str, an option to override the excess emissivity filename
+                     (defaults to THERMAL_EXCESS_EMISSIVITY_FILE)
+    :param func: str, the function that called this function (for error
+                 reporting)
+    :param fmt: str, the file format (valid for astropy.table)
+    :param datastart: int, the row to start at (default = 1)
+
+    :return: tuple, 1. the wavelength vector for the excess emissivity, 2.
+             the excess emissivity vector (multiple by this)
+    """
+    # set function name
+    if func is None:
+        func_name = display_func('load_excess_emissivity', __NAME__)
+    else:
+        func_name = func
+    # set parameters from params (or override)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+                      override=assetsdir)
+    relfolder = pcheck(params, 'DRS_CALIB_DATA', func=func_name,
+                       override=calib_dir)
+    filename = pcheck(params, 'THERMAL_EXCESS_EMISSIVITY_FILE', func=func_name,
+                      override=filename)
+    # deal with return_filename
+    absfilename = os.path.join(assetdir, relfolder, filename)
+    # return table
+    table = load_table_file(params, absfilename, fmt=fmt,
+                            datastart=datastart, func_name=func_name)
+    wavelength = np.array(table['wavelength'])
+    emissivity = np.array(table['emissivity'])
+    # return the excess emissivity wavelength vector and emissivity
+    return wavelength, emissivity
+
+
 def load_hotpix(params: ParamDict,
                 assetsdir: Union[str, None] = None,
                 eng_dir: Union[str, None] = None,

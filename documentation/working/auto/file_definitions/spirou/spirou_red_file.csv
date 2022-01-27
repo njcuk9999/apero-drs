@@ -37,7 +37,7 @@ LEAKM_E2DS,LEAKM_E2DS,.fits,_leak_master,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF
 WAVESOL_MASTER,WAVESOL_MASTER,.fits,_wavesol_master,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVE_HCLIST_MASTER,WAVE_HCLIST_MASTER,.fits,_wavem_hclines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVE_FPLIST_MASTER,WAVE_FPLIST_MASTER,.fits,_wavem_fplines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
-WAVEM_CAV,WAVEM_CAV,.fits,_wavecav_,--,--,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_CAV,WAVEM_CAV,.fits,_wavecav_,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVESOL_DEFAULT,WAVESOL_DEFAULT,.fits,_wavem,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVERES,WAVE_RES,.fits,_wavemres,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVE_FPRESTAB,--,.tbl,--,apero_wave_results,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
@@ -49,23 +49,23 @@ WAVE_FPRESTAB,--,.tbl,--,apero_wave_results,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF
 WAVE_FPLLTABL,--,.tbl,_hc_lines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVE_HCLIST,WAVE_HCLIST,.fits,_wave_hclines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVE_FPLIST,WAVE_FPLIST,.fits,_wave_fplines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
-TELLU_PCLEAN,TELLU_PCLEAN,.fits,_tellu_pclean,--,"AB, A, B, C",EXT_E2DS_FF
-TELLU_CONV,--,.npy,_tellu_conv,--,"AB, A, B, C","WAVESOL_MASTER, WAVE_NIGHT, WAVESOL_DEFAULT"
+TELLU_PCLEAN,TELLU_PCLEAN,.fits,_tellu_pclean,--,"AB, A, B",EXT_E2DS_FF
+TELLU_CONV,--,.npy,_tellu_conv,--,"AB, A, B","WAVESOL_MASTER, WAVE_NIGHT, WAVESOL_DEFAULT"
 TELLU_TRANS,TELLU_TRANS,.fits,_tellu_trans,--,"AB, A, B",EXT_E2DS_FF
 TELLU_TAPAS,--,.npy,--,tapas_spl.npy,--,--
 TRANS_MODEL,TRANS_MODEL,.fits,--,trans_model_{0},"AB, A, B",--
 ABSO_NPY,--,.npy,--,tellu_save.npy,--,--
-TELLU_OBJ,TELLU_OBJ,.fits,_e2dsff_tcorr,--,"AB, A, B, C",EXT_E2DS_FF
-SC1D_W_FILE,SC1D_W_FILE,.fits,_s1d_w_tcorr,--,"AB, A, B, C",EXT_E2DS_FF
-SC1D_V_FILE,SC1D_V_FILE,.fits,_s1d_v_tcorr,--,"AB, A, B, C",EXT_E2DS_FF
-TELLU_RECON,TELLU_RECON,.fits,_e2dsff_recon,--,"AB, A, B, C",EXT_E2DS_FF
-RC1D_W_FILE,RC1D_W_FILE,.fits,_s1d_w_recon,--,"AB, A, B, C",EXT_E2DS_FF
-RC1D_V_FILE,RC1D_V_FILE,.fits,_s1d_v_recon,--,"AB, A, B, C",EXT_E2DS_FF
-TELLU_TEMP,TELLU_TEMP,.fits,--,Template,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
-TELLU_BIGCUBE,TELLU_BIGCUBE,.fits,--,BigCube,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
-TELLU_BIGCUBE0,TELLU_BIGCUBE0,.fits,--,BigCube0,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
-TELLU_TEMP_S1D,TELLU_TEMP_S1D,.fits,--,Template_s1d,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
-TELLU_BIGCUBE_S1D,TELLU_BIGCUBE_S1D,.fits,--,BigCube_s1d,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_OBJ,TELLU_OBJ,.fits,_e2dsff_tcorr,--,"AB, A, B",EXT_E2DS_FF
+SC1D_W_FILE,SC1D_W_FILE,.fits,_s1d_w_tcorr,--,"AB, A, B",EXT_E2DS_FF
+SC1D_V_FILE,SC1D_V_FILE,.fits,_s1d_v_tcorr,--,"AB, A, B",EXT_E2DS_FF
+TELLU_RECON,TELLU_RECON,.fits,_e2dsff_recon,--,"AB, A, B",EXT_E2DS_FF
+RC1D_W_FILE,RC1D_W_FILE,.fits,_s1d_w_recon,--,"AB, A, B",EXT_E2DS_FF
+RC1D_V_FILE,RC1D_V_FILE,.fits,_s1d_v_recon,--,"AB, A, B",EXT_E2DS_FF
+TELLU_TEMP,TELLU_TEMP,.fits,--,Template,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE,TELLU_BIGCUBE,.fits,--,BigCube,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE0,TELLU_BIGCUBE0,.fits,--,BigCube0,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_TEMP_S1D,TELLU_TEMP_S1D,.fits,--,Template_s1d,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE_S1D,TELLU_BIGCUBE_S1D,.fits,--,BigCube_s1d,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
 CCF_RV,CCF_RV,.fits,_ccf,--,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
 POL_DEG,POL_DEG,.fits,_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
 STOKESI_POL,STOKESI_POL,.fits,_StokesI,--,--,"EXT_E2DS_FF, TELLU_OBJ"

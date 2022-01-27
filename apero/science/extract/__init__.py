@@ -32,11 +32,7 @@ flat_blaze_correction = extraction.flat_blaze_correction
 
 get_berv = berv.get_berv
 
-manage_leak_correction = gen_ext.manage_leak_correction
-
 order_profiles = gen_ext.order_profiles
-
-thermal_correction = gen_ext.thermal_correction
 
 qc_extraction = gen_ext.qc_extraction
 

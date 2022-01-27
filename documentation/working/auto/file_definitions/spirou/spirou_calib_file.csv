@@ -16,9 +16,9 @@ FF_FLAT,FF_FLAT,.fits,_flat,"AB, A, B, C",calibration,FLAT,FLAT_FLAT
 THERMALI_E2DS,THERMALI_E2DS,.fits,_thermal_e2ds_int,"AB, A, B, C",calibration,THERMALI,DARK_DARK_INT
 THERMALT_E2DS,THERMALT_E2DS,.fits,_thermal_e2ds_tel,"AB, A, B, C",calibration,THERMALT,DARK_DARK_TEL
 LEAKM_E2DS,LEAKM_E2DS,.fits,_leak_master,"AB, A, B, C",calibration,LEAKM,"EXT_E2DS, EXT_E2DS_FF"
-WAVESOL_MASTER,WAVESOL_MASTER,.fits,_wavesol_master,"AB, A, B, C",calibration,WAVEM_D,"EXT_E2DS, EXT_E2DS_FF"
+WAVESOL_MASTER,WAVESOL_MASTER,.fits,_wavesol_master,"AB, A, B, C",calibration,WAVESOL_MASTER,"EXT_E2DS, EXT_E2DS_FF"
 WAVE_HCLIST_MASTER,WAVE_HCLIST_MASTER,.fits,_wavem_hclines,"AB, A, B, C",calibration,WAVEHCL,"EXT_E2DS, EXT_E2DS_FF"
 WAVE_FPLIST_MASTER,WAVE_FPLIST_MASTER,.fits,_wavem_fplines,"AB, A, B, C",calibration,WAVEFPL,"EXT_E2DS, EXT_E2DS_FF"
-WAVEM_CAV,WAVEM_CAV,.fits,_wavecav_,--,calibration,WAVECAV,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_CAV,WAVEM_CAV,.fits,_wavecav_,"AB, A, B, C",calibration,WAVECAV,"EXT_E2DS, EXT_E2DS_FF"
 WAVESOL_DEFAULT,WAVESOL_DEFAULT,.fits,_wavem,"AB, A, B, C",calibration,WAVESOL_DEFAULT,"EXT_E2DS, EXT_E2DS_FF"
 WAVE_NIGHT,WAVE_NIGHT,.fits,_wave_night,"AB, A, B, C",calibration,WAVE,"EXT_E2DS, EXT_E2DS_FF"

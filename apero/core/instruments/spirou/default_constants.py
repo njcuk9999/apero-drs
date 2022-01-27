@@ -1282,6 +1282,15 @@ THERMAL_ENVELOPE_PERCENTILE.value = 10
 THERMAL_PLOT_START_ORDER = THERMAL_PLOT_START_ORDER.copy(__NAME__)
 THERMAL_PLOT_START_ORDER.value = 35
 
+# define the dprtypes for which to apply the excess emissivity file
+THERMAL_EXCESS_DPRTYPES = THERMAL_EXCESS_DPRTYPES.copy(__NAME__)
+THERMAL_EXCESS_DPRTYPES.value = 'DARK_DARK_TEL'
+
+# define the thermal emissivity file
+THERMAL_EXCESS_EMISSIVITY_FILE = THERMAL_EXCESS_EMISSIVITY_FILE.copy(__NAME__)
+THERMAL_EXCESS_EMISSIVITY_FILE.value = 'excess_emissivity.csv'
+
+
 # =============================================================================
 # CALIBRATION: WAVE EA GENERAL SETTINGS
 # =============================================================================
@@ -2474,15 +2483,17 @@ POLAR_INTERPOLATE_FLUX.value = True
 POLAR_INTERPOLATE_FLUX.author = base.AUTHORS['EM']
 
 # Select stokes I continuum detection algorithm:
+#   formaly IC_STOKESI_CONTINUUM_DETECTION_ALGORITHM
 #     'IRAF' or 'MOVING_MEDIAN'
 STOKESI_CONTINUUM_DET_ALG = STOKESI_CONTINUUM_DET_ALG.copy(__NAME__)
-STOKESI_CONTINUUM_DET_ALG.value = 'MOVING_MEDIAN'
+STOKESI_CONTINUUM_DET_ALG.value = 'IRAF'
 STOKESI_CONTINUUM_DET_ALG.author = base.AUTHORS['EM']
 
 # Select stokes I continuum detection algorithm:
+#   formaly IC_POLAR_CONTINUUM_DETECTION_ALGORITHM
 #     'IRAF' or 'MOVING_MEDIAN'
 POLAR_CONTINUUM_DET_ALG = POLAR_CONTINUUM_DET_ALG.copy(__NAME__)
-POLAR_CONTINUUM_DET_ALG.value = 'MOVING_MEDIAN'
+POLAR_CONTINUUM_DET_ALG.value = 'IRAF'
 POLAR_CONTINUUM_DET_ALG.author = base.AUTHORS['EM']
 
 # Normalize Stokes I (True or False)
@@ -2506,6 +2517,11 @@ POLAR_NSIGMA_CLIPPING = POLAR_NSIGMA_CLIPPING.copy(__NAME__)
 POLAR_NSIGMA_CLIPPING.value = 4
 POLAR_NSIGMA_CLIPPING.author = base.AUTHORS['EM']
 
+# Define the reddest wavelength to use throughout polar code
+POLAR_REDDEST_THRESHOLD = POLAR_REDDEST_THRESHOLD.copy(__NAME__)
+POLAR_REDDEST_THRESHOLD.value = 2450
+POLAR_REDDEST_THRESHOLD.author = base.AUTHORS['EM']
+
 # =============================================================================
 # POLAR POLY MOVING MEDIAN SETTINGS
 # =============================================================================
@@ -2522,12 +2538,12 @@ POLAR_CONT_OVERLAP.author = base.AUTHORS['EM']
 # Fit polynomial to continuum polarization?
 #    If False it will use a cubic interpolation instead of polynomial fit
 POLAR_CONT_POLYNOMIAL_FIT = POLAR_CONT_POLYNOMIAL_FIT.copy(__NAME__)
-POLAR_CONT_POLYNOMIAL_FIT.value = True
+POLAR_CONT_POLYNOMIAL_FIT.value = False
 POLAR_CONT_POLYNOMIAL_FIT.author = base.AUTHORS['EM']
 
 # Define degree of polynomial to fit continuum polarization
 POLAR_CONT_DEG_POLYNOMIAL = POLAR_CONT_DEG_POLYNOMIAL.copy(__NAME__)
-POLAR_CONT_DEG_POLYNOMIAL.value = 3
+POLAR_CONT_DEG_POLYNOMIAL.value = 20
 POLAR_CONT_DEG_POLYNOMIAL.author = base.AUTHORS['EM']
 
 # =============================================================================
@@ -2536,24 +2552,24 @@ POLAR_CONT_DEG_POLYNOMIAL.author = base.AUTHORS['EM']
 # function to fit to the stokes I continuum: must be 'polynomial' or
 #    'spline3'
 STOKESI_IRAF_CONT_FIT_FUNC = STOKESI_IRAF_CONT_FIT_FUNC.copy(__NAME__)
-STOKESI_IRAF_CONT_FIT_FUNC.value = 'polynomial'
+STOKESI_IRAF_CONT_FIT_FUNC.value = 'spline3'
 STOKESI_IRAF_CONT_FIT_FUNC.author = base.AUTHORS['EM']
 
 # function to fit to the polar continuum: must be 'polynomial' or 'spline3'
 POLAR_IRAF_CONT_FIT_FUNC = POLAR_IRAF_CONT_FIT_FUNC.copy(__NAME__)
-POLAR_IRAF_CONT_FIT_FUNC.value = 'polynomial'
+POLAR_IRAF_CONT_FIT_FUNC.value = 'spline3'
 POLAR_IRAF_CONT_FIT_FUNC.author = base.AUTHORS['EM']
 
 # stokes i continuum fit function order: 'polynomial': degree or 'spline3':
 #    number of knots
 STOKESI_IRAF_CONT_FUNC_ORDER = STOKESI_IRAF_CONT_FUNC_ORDER.copy(__NAME__)
-STOKESI_IRAF_CONT_FUNC_ORDER.value = 5
+STOKESI_IRAF_CONT_FUNC_ORDER.value = 60
 STOKESI_IRAF_CONT_FUNC_ORDER.author = base.AUTHORS['EM']
 
 # polar continuum fit function order: 'polynomial': degree or 'spline3':
 #    number of knots
 POLAR_IRAF_CONT_FUNC_ORDER = POLAR_IRAF_CONT_FUNC_ORDER.copy(__NAME__)
-POLAR_IRAF_CONT_FUNC_ORDER.value = 3
+POLAR_IRAF_CONT_FUNC_ORDER.value = 20
 POLAR_IRAF_CONT_FUNC_ORDER.author = base.AUTHORS['EM']
 
 # =============================================================================
@@ -2591,8 +2607,14 @@ POLAR_LSD_CCFLINES_AIR_WAVE.author = base.AUTHORS['EM']
 
 # Define minimum line depth to be used in the LSD analyis
 POLAR_LSD_MIN_LINEDEPTH = POLAR_LSD_MIN_LINEDEPTH.copy(__NAME__)
-POLAR_LSD_MIN_LINEDEPTH.value = 0.005
+POLAR_LSD_MIN_LINEDEPTH.value = 0.03
 POLAR_LSD_MIN_LINEDEPTH.author = base.AUTHORS['EM']
+
+# Define maximum line depth to be used in the LSD analyis
+# TODO: Add to default constants
+POLAR_LSD_MAX_LINEDEPTH = POLAR_LSD_MAX_LINEDEPTH.copy(__NAME__)
+POLAR_LSD_MAX_LINEDEPTH.value = 1
+POLAR_LSD_MAX_LINEDEPTH.author = base.AUTHORS['EM']
 
 # Define initial velocity (km/s) for output LSD profile
 POLAR_LSD_V0 = POLAR_LSD_V0.copy(__NAME__)
