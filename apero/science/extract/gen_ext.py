@@ -521,8 +521,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     if 'THERMALFILE' in eprops:
         e2dsfile.add_hkey('KW_CDBTHERMAL', value=eprops['THERMALFILE'])
         e2dsfile.add_hkey('KW_CDTTHERMAL', value=eprops['THERMALTIME'])
-        e2dsfile.add_hkey('KW_THERM_RATIO_1', value=eprops['THERMAL_RATIO1'])
-        e2dsfile.add_hkey('KW_THERM_RATIO_2', value=eprops['THERMAL_RATIO2'])
+        e2dsfile.add_hkey('KW_THERM_RATIO', value=eprops['THERMAL_RATIO'])
         e2dsfile.add_hkey('KW_THERM_RATIO_U',
                           value=eprops['THERMAL_RATIO_USED'])
 
@@ -629,11 +628,11 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
     # set output key
     e2dsfffile.add_hkey('KW_OUTPUT', value=e2dsfffile.name)
-    # need to use different thermal ratio keys
-    e2dsfffile.add_hkey('KW_THERM_RATIO_1', value=eprops['THERMALFF_RATIO1'])
-    e2dsfffile.add_hkey('KW_THERM_RATIO_2', value=eprops['THERMALFF_RATIO2'])
-    e2dsfffile.add_hkey('KW_THERM_RATIO_U',
-                        value=eprops['THERMALFF_RATIO_USED'])
+    # need to use different thermal ratio keys if we have corrected thermal
+    if 'THERMALFILE' in eprops:
+        e2dsfffile.add_hkey('KW_THERM_RATIO', value=eprops['THERMALFF_RATIO'])
+        e2dsfffile.add_hkey('KW_THERM_RATIO_U',
+                            value=eprops['THERMALFF_RATIO_USED'])
     # copy data
     e2dsfffile.data = eprops['E2DSFF']
     # ----------------------------------------------------------------------

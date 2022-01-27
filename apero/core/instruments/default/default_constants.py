@@ -144,7 +144,8 @@ __all__ = [
     'THERMAL_CORRETION_TYPE1', 'THERMAL_CORRETION_TYPE2', 'THERMAL_ORDER',
     'THERMAL_FILTER_WID', 'THERMAL_RED_LIMIT', 'THERMAL_BLUE_LIMIT',
     'THERMAL_THRES_TAPAS', 'THERMAL_ENVELOPE_PERCENTILE',
-    'THERMAL_PLOT_START_ORDER',
+    'THERMAL_PLOT_START_ORDER', 'THERMAL_EXCESS_EMISSIVITY_FILE',
+    'THERMAL_EXCESS_DPRTYPES',
     # wave general constants
     'WAVE_MASTER_FIBER', 'WAVE_GUESS_CAVITY_WIDTH', 'WAVE_WAVESOL_FIT_DEGREE',
     'WAVE_CAVITY_FIT_DEGREE', 'WAVE_NSIG_CUT',
@@ -2366,6 +2367,20 @@ THERMAL_PLOT_START_ORDER = Const('THERMAL_PLOT_START_ORDER', value=None,
                                  dtype=int, source=__NAME__, group=cgroup,
                                  description=('define the order to plot on the '
                                               'thermal debug plot'))
+
+# define the dprtypes for which to apply the excess emissivity file
+THERMAL_EXCESS_DPRTYPES = Const('THERMAL_EXCESS_DPRTYPES', value=None,
+                                 dtype=str, source=__NAME__, group=cgroup,
+                                 description=('define the dprtypes for which '
+                                              'to apply the excess emissivity '
+                                              'file'))
+
+# define the thermal emissivity file
+THERMAL_EXCESS_EMISSIVITY_FILE = Const('THERMAL_EXCESS_EMISSIVITY_FILE',
+                                       value=None, dtype=str, source=__NAME__,
+                                       group=cgroup,
+                                       description='define the thermal '
+                                                   'emissivity file')
 
 # =============================================================================
 # CALIBRATION: WAVE EA GENERAL SETTINGS

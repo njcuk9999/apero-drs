@@ -46,6 +46,8 @@ WLOG = drs_log.wlog
 textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
+# Get function string
+display_func = drs_log.display_func
 
 
 # =============================================================================
@@ -65,6 +67,8 @@ def apply_excess_emissivity(params: ParamDict, recipe: DrsRecipe,
     :param calibdbm:
     :return:
     """
+    # set function name
+    func_name = display_func('apply_excess_emissivity', __NAME__)
     # -------------------------------------------------------------------------
     # get allowed dprtypes parameter
     dprtypes = params.listp('THERMAL_EXCESS_DPRTYPES', dtype=str)
@@ -80,9 +84,11 @@ def apply_excess_emissivity(params: ParamDict, recipe: DrsRecipe,
             return thermal_files
     # -------------------------------------------------------------------------
     # load excess emissivity file
-    ex_wave, ex_flux = get_excess_emissivity_file(params)
+    ex_wave, ex_flux = drs_data.load_excess_emissivity(params, func=func_name)
     # create a spline for the excess emissivity
     espline = mp.iuv_spline(ex_wave, ex_flux, ext=3, k=1)
+
+    # TODO: change fiber_types --> science fibers
     # loop around all fibers and apply excess correction
     for fiber in fiber_types:
         # get the thermal file
@@ -104,14 +110,6 @@ def apply_excess_emissivity(params: ParamDict, recipe: DrsRecipe,
         thermal_files[fiber] = thermal_file
     # return thermal files
     return thermal_files
-
-
-def get_excess_emissivity_file(params: ParamDict
-                               ) -> Tuple[np.ndarray, np.ndarray]:
-
-    # TODO: Fill out
-
-    return np.array(), np.array()
 
 
 # =============================================================================
@@ -247,16 +245,14 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     eprops['FIBERTYPE'] = fibertype
     eprops['THERMALFILE'] = thermalfile
     eprops['THERMALTIME'] = thermaltime
-    eprops['THERMAL_RATIO1'] = tprops['ratio1']
-    eprops['THERMAL_RATIO2'] = tprops['ratio2']
+    eprops['THERMAL_RATIO'] = tprops['ratio']
     eprops['THERMAL_RATIO_USED'] = tprops['ratio_used']
-    eprops['THERMALFF_RATIO1'] = tpropsff['ratio1']
-    eprops['THERMALFF_RATIO2'] = tpropsff['ratio2']
+    eprops['THERMALFF_RATIO'] = tpropsff['ratio']
     eprops['THERMALFF_RATIO_USED'] = tpropsff['ratio_used']
     # update source
     keys = ['E2DS', 'E2DSFF', 'FIBERTYPE', 'THERMALFILE', 'THERMALTIME',
-            'THERMAL_RATIO1', 'THERMAL_RATIO2', 'THERMAL_RATIO_USED',
-            'THERMALFF_RATIO1', 'THERMALFF_RATIO2', 'THERMALFF_RATIO_USED', ]
+            'THERMAL_RATIO', 'THERMAL_RATIO_USED',
+            'THERMALFF_RATIO', 'THERMALFF_RATIO_USED']
     eprops.set_sources(keys, func_name)
     # return eprops
     return eprops
@@ -350,51 +346,30 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
     # splining tapas onto the order 49 wavelength grid
     sptapas = mp.iuv_spline(wtapas, ttapas, ext=3, k=1)
     # set torder mask all to False initially
-    torder_mask1 = np.zeros_like(wavemap[torder, :], dtype=bool)
+    torder_mask = np.zeros_like(wavemap[torder, :], dtype=bool)
     # get the wave mask
     wavemask = wavemap[torder] < red_limit
     # get the tapas data for these wavelengths
     torder_tapas = sptapas(wavemap[torder, wavemask])
     # find those pixels lower than threshold in tapas
-    torder_mask1[wavemask] = torder_tapas < tapas_thres
+    torder_mask[wavemask] = torder_tapas < tapas_thres
     # we find the median scale between the observation and the thermal
     #    background in domains where there is no transmission
-    thermal_torder1 = thermal[torder, torder_mask1]
-    image_torder1 = image[torder, torder_mask1]
-    ratio1 = mp.nanmedian(thermal_torder1 / image_torder1)
-
-    # --------------------------------------------------------------------------
-    # Method 2: Use percentile (for use with faint targets)
-    # --------------------------------------------------------------------------
-    # find those at the red end of the detector
-    torder_mask2 = (wavemap > 2450) & (wavemap < 2500)
-    # we find the median scale between the observation and the thermal
-    #    background in domains where there is no transmission
-    thermal_torder2 = thermal[torder_mask2]
-    image_torder2 = image[torder_mask2]
-    ratio2 = np.nanpercentile(thermal_torder2 / image_torder2, 90)
-
-    # --------------------------------------------------------------------------
+    thermal_torder = thermal[torder, torder_mask]
+    image_torder = image[torder, torder_mask]
+    ratio = mp.nanmedian(thermal_torder / image_torder)
+    # -------------------------------------------------------------------------
     # scale thermal by ratio
-    thermal1 = thermal / ratio1
-    thermal2 = thermal / ratio2
-    # work out which ratio is larger
-    argratio = np.max([ratio1, ratio2])
+    thermal = thermal / ratio
     # set the header parameters for thermal ratios
-    if argratio == 0:
-        ratio = float(ratio1)
-        strratio = 'ratio1[tapas]'
-    else:
-        ratio = ratio2
-        strratio = 'ratio2[percentile]'
+    strratio = 'tapas'
     # ----------------------------------------------------------------------
     # calculate final thermal profile (for correction)
     thermal = thermal / ratio
     # ----------------------------------------------------------------------
     # plot thermal background plot
     recipe.plot('THERMAL_BACKGROUND', params=params, wavemap=wavemap,
-                image=image, thermal1=thermal1, thermal2=thermal2,
-                torder=torder, tmask1=torder_mask1, tmask2=torder_mask2,
+                image=image, thermal=thermal, torder=torder, tmask=torder_mask,
                 fiber=fiber, kind=kind)
     # ----------------------------------------------------------------------
     # correct image
@@ -402,8 +377,7 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     # save parameters to param dict
     therm_props = ParamDict()
-    therm_props['ratio1'] = ratio1
-    therm_props['ratio2'] = ratio2
+    therm_props['ratio'] = ratio
     therm_props['ratio_used'] = strratio
     # ----------------------------------------------------------------------
     # return p and corrected image
@@ -476,8 +450,6 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
     ratio = mp.nanmedian(thermal_torder / envelope_torder)
     # ----------------------------------------------------------------------
     # set parameters for header
-    ratio1 = float(ratio)
-    ratio2 = np.nan
     strratio = 'ratio1[envelope]'
     # scale thermal by ratio
     thermal = thermal / ratio
@@ -492,8 +464,7 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     # save parameters to param dict
     therm_props = ParamDict()
-    therm_props['ratio1'] = ratio1
-    therm_props['ratio2'] = ratio2
+    therm_props['ratio'] = ratio
     therm_props['ratio_used'] = strratio
     # ----------------------------------------------------------------------
     # return p and corrected image

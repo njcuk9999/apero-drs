@@ -1282,6 +1282,15 @@ THERMAL_ENVELOPE_PERCENTILE.value = 10
 THERMAL_PLOT_START_ORDER = THERMAL_PLOT_START_ORDER.copy(__NAME__)
 THERMAL_PLOT_START_ORDER.value = 35
 
+# define the dprtypes for which to apply the excess emissivity file
+THERMAL_EXCESS_DPRTYPES = THERMAL_EXCESS_DPRTYPES.copy(__NAME__)
+THERMAL_EXCESS_DPRTYPES.value = 'DARK_DARK_TEL'
+
+# define the thermal emissivity file
+THERMAL_EXCESS_EMISSIVITY_FILE = THERMAL_EXCESS_EMISSIVITY_FILE.copy(__NAME__)
+THERMAL_EXCESS_EMISSIVITY_FILE.value = 'excess_emissivity.csv'
+
+
 # =============================================================================
 # CALIBRATION: WAVE EA GENERAL SETTINGS
 # =============================================================================

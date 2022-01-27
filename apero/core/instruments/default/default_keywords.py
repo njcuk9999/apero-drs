@@ -31,7 +31,7 @@ __all__ = [  # input keys
     'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
     'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
     'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE', 'KW_FIBER',
-    'KW_THERM_RATIO_1', 'KW_THERM_RATIO_2', 'KW_THERM_RATIO_U',
+    'KW_THERM_RATIO', 'KW_THERM_RATIO_2', 'KW_THERM_RATIO_U',
     'KW_MID_OBS_TIME', 'KW_MID_OBSTIME_METHOD',
     # calibration file header keys
     'KW_CDBDARK', 'KW_CDTDARK', 'KW_CDBBAD', 'KW_CDTBAD',
@@ -669,16 +669,10 @@ KW_C_FTYPE = Keyword('KW_C_FTYPE', key='NULL', dtype=str, source=__NAME__,
 KW_FIBER = Keyword('KW_FIBER', key='NULL', dtype=str, source=__NAME__,
                    description='the fiber name')
 # the ratio used for thermal correction (method=tapas or envelope)
-KW_THERM_RATIO_1 = Keyword('KW_THERM_RATIO_1', key='NULL', dtype=float,
+KW_THERM_RATIO = Keyword('KW_THERM_RATIO', key='NULL', dtype=float,
                            source=__NAME__,
                            description='the ratio used for thermal correction '
                                        '(method=tapas or envelope)')
-
-# the ratio used for thermal correction (method=percentile)
-KW_THERM_RATIO_2 = Keyword('KW_THERM_RATIO_2', key='NULL', dtype=float,
-                           source=__NAME__,
-                           description='the ratio used for thermal correction '
-                                       '(method=percentile)')
 
 # the ratio method used for thermal correction
 KW_THERM_RATIO_U = Keyword('KW_THERM_RATIO_U', key='NULL', dtype=str,
