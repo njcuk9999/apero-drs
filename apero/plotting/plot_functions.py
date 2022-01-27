@@ -5320,6 +5320,7 @@ def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     stokes = props['STOKES']
     method = props['METHOD']
     nexp = props['NEXPOSURES']
+    cont_flux = props['CONT_FLUX']
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -5330,7 +5331,10 @@ def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # ---------------------------------------------------------------------
     # plot polarimetry data
     frame.errorbar(wl, stokes_i, yerr=stokes_ierr, fmt='-', label='Stokes I',
-                   alpha=0.5)
+                   alpha=0.3, zorder=1)
+    # plot continuum flux
+    frame.plot(wl, cont_flux, label='Continuum Flux for Normalization',
+               zorder=2)
     # ---------------------------------------------------------------------
     # set title and labels
     xlabel = 'wavelength [nm]'
@@ -5365,17 +5369,21 @@ def plot_polar_lsd(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # get data from props
     vels = lprops['LSD_VELOCITIES']
     zz = lprops['LSD_STOKES_I']
+    zz_err = lprops['LSD_STOKESI_ERR']
     zgauss = lprops['LSD_STOKES_I_MODEL']
     z_p = lprops['LSD_STOKES_VQU']
+    z_p_err = lprops['LSD_STOKESVQU_ERR']
     z_np = lprops['LSD_NULL']
+    z_np_err = lprops['LSD_NULL_ERR']
     stokes = pprops['STOKES']
     # ------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, nrows=1, ncols=3)
     # ------------------------------------------------------------------
     frame = frames[0]
-    frame.plot(vels, zz, '-')
-    frame.plot(vels, zgauss, '-')
+    frame.errorbar(vels, zz, yerr=zz_err, fmt='.', color='red')
+    frame.plot(vels, zz, '-', linewidth=0.3, color='red')
+    frame.plot(vels, zgauss, '-', color='green')
     title = 'LSD Analysis'
     ylabel = 'Stokes I profile'
     xlabel = ''
@@ -5384,14 +5392,16 @@ def plot_polar_lsd(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # ---------------------------------------------------------------------
     frame = frames[1]
     title = ''
-    frame.plot(vels, z_p, '-')
+    frame.errorbar(vels, z_p, yerr=z_p_err, fmt='.', color='blue')
+    frame.plot(vels, z_p, '-', linewidth=0.5, color='blue')
     ylabel = 'Stokes {0} profile'.format(stokes)
     xlabel = ''
     # set title and labels
     frame.set(title=title, xlabel=xlabel, ylabel=ylabel)
     # ---------------------------------------------------------------------
     frame = frames[2]
-    frame.plot(vels, z_np, '-')
+    frame.errorbar(vels, z_np, yerr=z_np_err, fmt='.', color='orange')
+    frame.plot(vels, z_np, '-', linewidth=0.5, color='orange')
     xlabel = 'velocity (km/s)'
     ylabel = 'Null profile'
     # set title and labels

@@ -445,12 +445,12 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # storage for bands
         bands = []
         # add bands (as tuples for low wave to high wave
-        bands.append([930, 967])
-        bands.append([1109, 1167])
-        bands.append([1326, 1491])
-        bands.append([1782, 1979])
-        bands.append([1997, 2027])
-        bands.append([2047, 2076])
+        # bands.append([930, 967])
+        # bands.append([1109, 1167])
+        # bands.append([1326, 1491])
+        # bands.append([1782, 1979])
+        # bands.append([1997, 2027])
+        # bands.append([2047, 2076])
         # return bands
         return bands
 

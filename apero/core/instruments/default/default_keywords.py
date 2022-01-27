@@ -177,7 +177,8 @@ __all__ = [  # input keys
     'KW_LSD_POL_MEDIAN', 'KW_LSD_POL_MEDABSDEV', 'KW_LSD_STOKESVQU_MEAN',
     'KW_LSD_STOKESVQU_STDDEV', 'KW_LSD_NULL_MEAN', 'KW_LSD_NULL_STDDEV',
     'KW_LSD_MASK_FILE', 'KW_LSD_MASK_NUMLINES', 'KW_LSD_MASKLINES_USED',
-    'KW_LSD_MASKLINES_MWAVE', 'KW_LSD_MASKLINES_MLANDE'
+    'KW_LSD_NORM_WLC', 'KW_LSD_NORM_LANDE', 'KW_LSD_NORM_DEPTH',
+    'KW_LSD_NORM_WEIGHT',
 ]
 
 # set name
@@ -2591,17 +2592,28 @@ KW_LSD_MASKLINES_USED = Keyword('KW_LSD_MASK_NUMLINES', key='NULL', dtype=int,
                                            'in the LSD analysis')
 
 # define the mean wavelength of lines use din lsd analysis
-KW_LSD_MASKLINES_MWAVE = Keyword('KW_LSD_MASKLINES_MWAVE', key='NULL', dtype=float,
+KW_LSD_NORM_WLC = Keyword('KW_LSD_NORM_WLC', key='NULL', dtype=float,
                                 source=__NAME__,
                                 description='define the mean wavelength of '
                                             'lines use din lsd analysis')
 
 # define the mean lande of lines used in lsd analysis
-KW_LSD_MASKLINES_MLANDE = Keyword('KW_LSD_MASKLINES_MLANDE', key='NULL',
-                                  dtype=float, source=__NAME__,
-                                 description='define the mean lande of lines '
-                                             'used in lsd analysis')
+KW_LSD_NORM_LANDE = Keyword('KW_LSD_NORM_LANDE', key='NULL',
+                            dtype=float, source=__NAME__,
+                            description='define the mean lande of lines used '
+                                        'in lsd analysis')
 
+# define the depth used in lsd analysis
+KW_LSD_NORM_DEPTH = Keyword('KW_LSD_NORM_DEPTH', key='NULL',
+                            dtype=float, source=__NAME__,
+                            description='define the depth used in lsd analysis')
+
+# define the calculate normalisation of the weights used in the lsd analysis
+KW_LSD_NORM_WEIGHT = Keyword('KW_LSD_NORM_WEIGHT', key='NULL',
+                             dtype=float, source=__NAME__,
+                             description='define the calculate normalisation '
+                                         'of the weights used in the lsd '
+                                         'analysis')
 
 # =============================================================================
 #  End of configuration file
