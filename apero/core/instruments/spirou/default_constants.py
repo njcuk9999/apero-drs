@@ -2611,7 +2611,6 @@ POLAR_LSD_MIN_LINEDEPTH.value = 0.03
 POLAR_LSD_MIN_LINEDEPTH.author = base.AUTHORS['EM']
 
 # Define maximum line depth to be used in the LSD analyis
-# TODO: Add to default constants
 POLAR_LSD_MAX_LINEDEPTH = POLAR_LSD_MAX_LINEDEPTH.copy(__NAME__)
 POLAR_LSD_MAX_LINEDEPTH.value = 1
 POLAR_LSD_MAX_LINEDEPTH.author = base.AUTHORS['EM']
