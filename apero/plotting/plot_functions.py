@@ -5200,8 +5200,8 @@ def plot_polar_continuum(plotter: Plotter, graph: Graph,
     wl = props['FLAT_WLDATA']
     pol = 100 * props['FLAT_POL']
     contpol = 100.0 * props['CONT_POL']
-    contxbin = np.array(props['CONT_XBIN'])
-    contybin = 100. * np.array(props['CONT_YBIN'])
+    contxbin = np.array(props['CONT_POL_XBIN'])
+    contybin = 100. * np.array(props['CONT_POL_YBIN'])
     stokes = props['STOKES']
     method = props['METHOD']
     nexp = props['NEXPOSURES']
