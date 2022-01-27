@@ -6632,16 +6632,23 @@ class DrsOutFile(DrsInputFile):
         skip = False
         # loop around exclude keys
         for ekey in exclude_keys:
-            if ekey in header:
+            # need to look up key in params
+            if ekey in self.params:
+                drsekey = self.params[ekey][0]
+            else:
+                drsekey = str(ekey)
+            # if key is in header check value
+            if drsekey in header:
                 # loop around all keys in exclude keys
                 for evalue in exclude_keys[ekey]:
-                    if header[ekey] == evalue:
+                    if header[drsekey] == evalue:
+                        # set skip to True
                         skip = True
                         # log that we are skipping file
                         msg = '\tSkipping {0} for {1} ({2} = {3})'
                         margs = [self.extensions[ext].filename,
-                                 self.name, ekey, evalue]
-                        WLOG(self.params, '', msg.format(margs))
+                                 self.name, drsekey, evalue]
+                        WLOG(self.params, '', msg.format(*margs))
         # return whether we should skip file
         return skip
 
