@@ -275,7 +275,8 @@ __all__ = [
     # polar lsd constants
     'POLAR_LSD_DIR', 'POLAR_LSD_FILE_KEY', 'POLAR_LSD_MIN_LANDE',
     'POLAR_LSD_MAX_LANDE', 'POLAR_LSD_CCFLINES_AIR_WAVE',
-    'POLAR_LSD_MIN_LINEDEPTH', 'POLAR_LSD_V0', 'POLAR_LSD_VF', 'POLAR_LSD_NP',
+    'POLAR_LSD_MIN_LINEDEPTH', 'POLAR_LSD_MAX_LINEDEPTH',
+    'POLAR_LSD_V0', 'POLAR_LSD_VF', 'POLAR_LSD_NP',
     'POLAR_LSD_NORMALIZE', 'POLAR_LSD_REMOVE_EDGES',
     'POLAR_LSD_RES_POWER_GUESS',
     # debug output file settings
@@ -4432,6 +4433,12 @@ POLAR_LSD_CCFLINES_AIR_WAVE = Const('POLAR_LSD_CCFLINES_AIR_WAVE', value=None,
 POLAR_LSD_MIN_LINEDEPTH = Const('POLAR_LSD_MIN_LINEDEPTH', value=None,
                                 dtype=float, source=__NAME__, group=cgroup,
                                 description='Define minimum line depth to be '
+                                            'used in the LSD analyis')
+
+# Define maximum line depth to be used in the LSD analyis
+POLAR_LSD_MAX_LINEDEPTH = Const('POLAR_LSD_MAX_LINEDEPTH', value=None,
+                                dtype=float, source=__NAME__, group=cgroup,
+                                description='Define maximum line depth to be '
                                             'used in the LSD analyis')
 
 # Define initial velocity (km/s) for output LSD profile
