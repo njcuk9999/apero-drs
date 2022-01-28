@@ -5214,7 +5214,7 @@ def plot_polar_continuum(plotter: Plotter, graph: Graph,
     # ------------------------------------------------------------------
     # plot polarimetry data
     frame.plot(wl, pol, linestyle='None', marker='.',
-               label='Degree of Polarization')
+               label='Degree of Polarization', alpha=0.3)
     # plot continuum sample points
     if contxbin is not None:
         # get values
@@ -5274,9 +5274,9 @@ def plot_polar_results(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # plot polarimetry data
     frame.plot(wl, pol, label='Degree of Polarization')
     # plot null1 data
-    frame.plot(wl, null1, label='Null Polarization 1')
+    frame.plot(wl, null1, label='Null Polarization 1', linewidth=0.5, alpha=0.6)
     # plot null2 data
-    frame.plot(wl, null2, label='Null Polarization 2')
+    frame.plot(wl, null2, label='Null Polarization 2', linewidth=0.5, alpha=0.6)
     # ---------------------------------------------------------------------
     # set title and labels
     xlabel = 'wavelength [nm]'
@@ -5308,10 +5308,11 @@ def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # get the arguments from kwargs
     props = kwargs['props']
     # get data from props
-    wl = props['FLAT_X']
+    wl = props['FLAT_WLDATA']
     stokes_i = props['FLAT_STOKES_I']
     stokes_ierr = props['FLAT_STOKES_I_ERR']
-    stokes = props['STOKES']
+    contxbin = props['CONT_FLUX_XBIN']
+    stokes = props['STOKES']['A_1']
     method = props['METHOD']
     nexp = props['N_EXPOSURES']
     cont_flux = props['CONT_FLUX']
@@ -5326,6 +5327,15 @@ def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # plot polarimetry data
     frame.errorbar(wl, stokes_i, yerr=stokes_ierr, fmt='-', label='Stokes I',
                    alpha=0.3, zorder=1)
+    # plot continuum sample points
+    if contxbin is not None:
+        # get values
+        contxbin = np.array(contxbin)
+        contybin = 100. * np.array(props['CONT_FLUX_YBIN'])
+        # plot continuum sampling
+        frame.plot(contxbin, contybin, linestyle='None', marker='o',
+                   label='Continuum Samples')
+
     # plot continuum flux
     frame.plot(wl, cont_flux, label='Continuum Flux for Normalization',
                zorder=2)
