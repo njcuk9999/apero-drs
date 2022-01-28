@@ -5309,8 +5309,8 @@ def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     props = kwargs['props']
     # get data from props
     wl = props['FLAT_WLDATA']
-    stokes_i = props['FLAT_STOKESI']
-    stokes_ierr = props['FLAT_STOKESIERR']
+    stokes_i = props['FLAT_STOKESI'] * props['CONT_FLUX']
+    stokes_ierr = props['FLAT_STOKESIERR'] * props['CONT_FLUX']
     contxbin = props['CONT_FLUX_XBIN']
     stokes = props['STOKES']['A_1']
     method = props['METHOD']
@@ -5325,8 +5325,8 @@ def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     titleargs = [stokes, method, nexp]
     # ---------------------------------------------------------------------
     # plot polarimetry data
-    frame.errorbar(wl, stokes_i, yerr=stokes_ierr, fmt='-', label='Stokes I',
-                   alpha=0.3, zorder=1)
+    frame.errorbar(wl, stokes_i, yerr=stokes_ierr, fmt='.', linestyle='None',
+                   label='Stokes I', alpha=0.3, zorder=1)
     # plot continuum sample points
     if contxbin is not None:
         # get values
