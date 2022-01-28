@@ -5309,8 +5309,8 @@ def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     props = kwargs['props']
     # get data from props
     wl = props['FLAT_WLDATA']
-    stokes_i = props['FLAT_STOKES_I']
-    stokes_ierr = props['FLAT_STOKES_I_ERR']
+    stokes_i = props['FLAT_STOKESI']
+    stokes_ierr = props['FLAT_STOKESIERR']
     contxbin = props['CONT_FLUX_XBIN']
     stokes = props['STOKES']['A_1']
     method = props['METHOD']
