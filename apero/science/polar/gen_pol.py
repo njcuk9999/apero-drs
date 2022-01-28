@@ -1329,7 +1329,7 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict
                                   niter=5, rej_low=3.0, rej_high=3.0, grow=1,
                                   med_filt=1, percentile_low=0.,
                                   percentile_high=100.0,
-                                  min_points=10, verbose=False)
+                                  min_points=10, verbose=False, kind='Stoke I')
     # else raise error
     else:
         # log error: Stokes I continuum detection algorithm invalid
@@ -1364,7 +1364,7 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict
                                  rej_low=3.0, rej_high=3.0, grow=1,
                                  med_filt=1, percentile_low=0.0,
                                  percentile_high=100.0, min_points=10,
-                                 verbose=False)
+                                 verbose=False, kind='Polar')
     # else raise error
     else:
         # Log error: Stokes I continuum detection algorithm invalid
@@ -2315,7 +2315,8 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
                    degree: int = 3, niter: int = 5, rej_low: float = 2.0,
                    rej_high: float = 2.5, grow=1, med_filt: int = 0,
                    percentile_low: float = 0.0, percentile_high: float = 100.0,
-                   min_points: int = 10, verbose: bool = False) -> np.ndarray:
+                   min_points: int = 10, verbose: bool = False,
+                   kind: str = 'None') -> np.ndarray:
     """
     Continuum fitting re-implemented from IRAF's 'continuum' function
     in non-interactive mode only but with additional options.
@@ -2486,7 +2487,7 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
     recipe.plot('POLAR_FIT_CONT', wavemap=wavemap, mask=mspec, spec=spec,
                 fspec=fspec, med_filt=med_filt, cont=cont, niter=niter,
                 rej_low=rej_low, rej_high=rej_high, sigm=sigm, res=res,
-                ores=ores)
+                ores=ores, kind=kind)
     # -------------------------------------------------------------------------
     # return the continuum
     return cont

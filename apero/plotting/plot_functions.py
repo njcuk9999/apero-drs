@@ -5124,7 +5124,7 @@ def plot_polar_fit_cont(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     wavemap = kwargs['wavemap']
-    mask = kwargs['mask']
+    mask = ~kwargs['mask']
     spec = kwargs['spec']
     fspec = kwargs['fspec']
     med_filt = kwargs['med_filt']
@@ -5135,6 +5135,7 @@ def plot_polar_fit_cont(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     sigm = kwargs['sigm']
     res = kwargs['res']
     ores = kwargs['ores']
+    kind = kwargs['kind']
     # ------------------------------------------------------------------
     # set up plot
     if niter > 0:
@@ -5149,30 +5150,52 @@ def plot_polar_fit_cont(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # frame 0
     # ------------------------------------------------------------------
     # plot the valid points of the original data
-    frame0.plot(wavemap[mask], spec[mask], color='b', lw=1.0)
+    frame0.plot(wavemap[~mask], spec[~mask], color='tab:b', lw=1.0,
+                label='Data used')
     # plot the median filtered points
     if med_filt > 0:
-        frame0.plot(wavemap[mask], fspec[mask], ms=2, marker='d',
-                    mec='0.5', mfc='None', lw=0.5)
+        frame0.plot(wavemap[~mask], fspec[~mask],
+                    c='tab:cyan', lw=1.0, label='median filter')
+
+    frame0.scatter(wavemap[mask], spec[mask], s=20., marker='d',
+                   edgecolors='tab:gray', facecolors='none', lw=0.5,
+                   label='Data not used')
     # plot the continuum
-    frame0.plot(wavemap, cont, ls='--', color='orange')
+    frame0.plot(wavemap, cont, ls='--', color='tab:orange',
+                label='Continnum fit')
+    # ---------------------------------------------------------------------
+    # set up title and labels
+    title = '{0}: Fit continuum. Iteration {1}'.format(kind, niter)
+    xlabel = 'wavelength [nm]'
+    ylabel = 'Spectrum'
+    frame0.set(title=title, xlabel=xlabel, ylabel=ylabel)
+    frame0.legend(loc=0)
     # ------------------------------------------------------------------
     # frame 2 - only plot for nit > 0
     # ------------------------------------------------------------------
     if niter > 0:
         # plot some horizontal lines at limits
-        frame1.axhline(0.0, ls='--', color='orange', lw=1.0)
-        frame1.axhline(-rej_low * sigm, ls=':')
+        frame1.axhline(0.0, ls='--', color='tab:orange', lw=1.0)
+        frame1.axhline(-rej_low * sigm, ls=':', label='Rejection threshold')
         frame1.axhline(rej_high * sigm, ls=':')
         # plot the points
-        frame1.scatter(wavemap[~mask], res[~mask], s=20.0, marker='d',
-                       edgecolors='0.5', facecolors='None', lw=0.5)
-        frame1.scatter(wavemap[mask], ores[mask], s=10.0, marker='o',
-                       edgecolors='b', facecolors='None', lw=0.5)
+        frame1.scatter(wavemap[mask], res[mask], s=10.0, marker='d',
+                       edgecolors='tab:gray', facecolors='None', lw=0.5,
+                       label='Data not used')
+        frame1.scatter(wavemap[~mask], ores[~mask], s=10.0, marker='o',
+                       edgecolors='tab:blue', facecolors='None', lw=0.5,
+                       label='Data used')
         # overplot median filtered spectrum
         if med_filt > 0:
-            frame1.scatter(wavemap[mask], res[mask], s=5.0, marker='s',
-                           edgecolors='c', facecolors='None', lw=0.2)
+            frame1.scatter(wavemap[~mask], res[~mask], s=5.0, marker='s',
+                           edgecolors='tab:cyan', facecolors='None', lw=0.2,
+                           label='median filtered data used')
+        # ---------------------------------------------------------------------
+        # set up labels
+        xlabel = 'wavelength [nm]'
+        ylabel = 'Residuals'
+        frame1.set(title=title, xlabel=xlabel, ylabel=ylabel)
+        frame1.legend(loc=0)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
