@@ -5150,7 +5150,7 @@ def plot_polar_fit_cont(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # frame 0
     # ------------------------------------------------------------------
     # plot the valid points of the original data
-    frame0.plot(wavemap[~mask], spec[~mask], color='tab:b', lw=1.0,
+    frame0.plot(wavemap[~mask], spec[~mask], color='tab:blue', lw=1.0,
                 label='Data used')
     # plot the median filtered points
     if med_filt > 0:
