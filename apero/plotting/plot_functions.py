@@ -5394,10 +5394,10 @@ def plot_polar_lsd(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     props = kwargs['props']
     # get data from props
     vels = props['LSD_VELOCITIES']
-    zz = props['LSD_STOKES_I']
+    zz = props['LSD_STOKESI']
     zz_err = props['LSD_STOKESI_ERR']
-    zgauss = props['LSD_STOKES_I_MODEL']
-    z_p = props['LSD_STOKES_VQU']
+    zgauss = props['LSD_STOKESI_MODEL']
+    z_p = props['LSD_STOKESVQU']
     z_p_err = props['LSD_STOKESVQU_ERR']
     z_np = props['LSD_NULL']
     z_np_err = props['LSD_NULL_ERR']
