@@ -830,7 +830,7 @@ def line_pattern_matrix(wavemap: np.ndarray, wavec: np.ndarray,
             jpos = np.searchsorted(velocities, linevelo[pix], side='right')
             # -----------------------------------------------------------------
             # get the weight of the velocity
-            vpart1 = velocities[jpos] - linevelo[jpos]
+            vpart1 = velocities[jpos] - linevelo[pix]
             vpart2 = linevelo[pix] - velocities[jpos - 1]
             # -----------------------------------------------------------------
             # calculate the polar line pattern matrix element

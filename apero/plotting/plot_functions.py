@@ -5194,7 +5194,7 @@ def plot_polar_fit_cont(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
         # set up labels
         xlabel = 'wavelength [nm]'
         ylabel = 'Residuals'
-        frame1.set(title=title, xlabel=xlabel, ylabel=ylabel)
+        frame1.set(xlabel=xlabel, ylabel=ylabel)
         frame1.legend(loc=0)
     # ------------------------------------------------------------------
     # wrap up using plotter
