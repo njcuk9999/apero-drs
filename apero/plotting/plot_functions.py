@@ -5401,10 +5401,10 @@ def plot_polar_lsd(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     z_p_err = props['LSD_STOKESVQU_ERR']
     z_np = props['LSD_NULL']
     z_np_err = props['LSD_NULL_ERR']
-    stokes = props['STOKES']
+    stokes = props['STOKES']['A_1']
     # ------------------------------------------------------------------
     # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=1, ncols=3)
+    fig, frames = graph.set_figure(plotter, nrows=3, ncols=1)
     # ------------------------------------------------------------------
     frame = frames[0]
     frame.errorbar(vels, zz, yerr=zz_err, fmt='.', color='red')
