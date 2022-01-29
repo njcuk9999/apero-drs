@@ -102,6 +102,9 @@ astrometric.recipe_type = 'tool'
 astrometric.recipe_kind = 'user'
 astrometric.set_arg(pos=0, name='objects', dtype=str,
                     helpstr=textentry('ASTROMETRIC_OBJ_HELP'))
+astrometric.set_kwarg(name='--overwrite', dtype='switch', default=False,
+                      helpstr='Do not check if object is currently in database.'
+                              ' Overwrite old value.')
 
 # -----------------------------------------------------------------------------
 # apero_changelog.py

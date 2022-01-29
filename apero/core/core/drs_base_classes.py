@@ -18,9 +18,11 @@ only from
 """
 from collections import UserDict
 import importlib
+import os
 import pandas as pd
 from pandasql import sqldf
 from typing import Any, List, Optional, Union
+import sys
 
 from apero.base import base
 from apero.core.core import drs_misc
@@ -630,6 +632,26 @@ class PandasLikeDatabase:
                     outcolumns.append(rcol.strip())
             # return the output columns
             return outcolumns
+
+
+class HiddenPrints:
+    """
+    Hide printouts inside with statement
+
+    with HiddenPrints():
+        print("This will not be printed")
+
+    print("This will be printed as before")
+
+    from: https://stackoverflow.com/a/45669280
+    """
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
 
 
 # =============================================================================

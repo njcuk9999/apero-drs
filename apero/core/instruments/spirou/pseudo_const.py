@@ -11,7 +11,7 @@ Created on 2019-01-18 at 14:44
 """
 import numpy as np
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_db
@@ -991,6 +991,83 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         epoch = Time(value, format=time_fmt)
         # return epoch in JD
         return epoch.jd
+
+    # =========================================================================
+    # CROSSMATCHING
+    # =========================================================================
+    def PM_TAP_DICT(self, params: ParamDict) -> Dict[str, Dict[str, str]]:
+        """
+        Once we have an id for a proper motion catalogue we can cross-match
+        against this catalogue and get back variables. To do this we have
+        to set up a TAP query. These are done per proper motion catalogue and
+        stored as a dictionary.
+
+        Each entry should have:
+
+        query: SELECT {ra} as ra, {dec} as dec, {pmra} as pmde,
+                      {pmde} as pmde, {plx} as {plx}, epoch as {epoch}
+               FROM {cat} WHERE {id}={idnum}
+        url: TAP url
+
+        :return:
+        """
+        # storage
+        tap_dict = dict()
+        # ---------------------------------------------------------------------
+        QUERY1 = ('SELECT {id} as sid, {ra} as ra, {dec} as dec, '
+                  '{pmra} as pmra, {pmde} as pmde, {plx} as plx, '
+                  '{epoch} as epoch FROM {cat} WHERE {id}=\'{idnum}\'')
+
+        # ---------------------------------------------------------------------
+        # Gaia EDR3
+        # ---------------------------------------------------------------------
+        qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
+                      plx='parallax', epoch='ref_epoch',
+                      cat='gaiaedr3.gaia_source', id='source_id', idnum='{0}')
+        params.set('TAP_GAIA_EDR3_URL', 'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['Gaia EDR3 '] = dict()
+        tap_dict['Gaia EDR3 ']['QUERY'] = QUERY1.format(**qkargs)
+        tap_dict['Gaia EDR3 ']['URL'] = str(params['TAP_GAIA_EDR3_URL'])
+        # ---------------------------------------------------------------------
+        # Gaia DR2
+        # ---------------------------------------------------------------------
+        qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
+                      plx='parallax', epoch='ref_epoch',
+                      cat='gaiadr2.gaia_source', id='source_id', idnum='{0}')
+        params.set('TAP_GAIA_DR2_URL', 'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['Gaia DR2 '] = dict()
+        tap_dict['Gaia DR2 ']['QUERY'] = QUERY1.format(**qkargs)
+        tap_dict['Gaia DR2 ']['URL'] = str(params['TAP_GAIA_DR2_URL'])
+        # ---------------------------------------------------------------------
+        # UCAC 4
+        # ---------------------------------------------------------------------
+        QUERY2 = ('SELECT {id} as sid, {ra} as ra, {dec} as dec, '
+                  '{pmra}*3600*1000 as pmra, {pmde}*3600*1000 as pmde,'
+                  '0 as plx, 2000.0 as epoch'
+                  ' FROM {cat} WHERE {id}=\'UCAC4-{idnum}\'')
+        qkargs = dict(ra='raj2000', dec='dej2000', pmra='pmra', pmde='pmde',
+                      cat='ucac4.main', id='ucacid', idnum='{0}')
+        params.set('TAP_UCAC4_URL', 'http://dc.zah.uni-heidelberg.de/tap')
+        tap_dict['UCAC4 '] = dict()
+        tap_dict['UCAC4 ']['QUERY'] = QUERY2.format(**qkargs)
+        tap_dict['UCAC4 ']['URL'] = str(params['TAP_UCAC4_URL'])
+        # ---------------------------------------------------------------------
+        # Hipparcos
+        # ---------------------------------------------------------------------
+        QUERY3 = ('SELECT {id} as sid, {ra} as ra, {dec} as dec, '
+                  '{pmra} as pmra, {pmde} as pmde,'
+                  '{plx} as plx, 1991.25 as epoch'
+                  ' FROM {cat} WHERE {id}=\'{idnum}\'')
+        qkargs = dict(ra='ra', dec='dec', pmra='pm_ra', pmde='pm_de',
+                      plx='plx', id='hip', idnum='{0}',
+                      cat='public.hipparcos_newreduction')
+        params.set('TAP_HIP_URL', 'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['HIP '] = dict()
+        tap_dict['HIP ']['QUERY'] = QUERY3.format(**qkargs)
+        tap_dict['HIP ']['URL'] = str(params['TAP_HIP_URL'])
+        # ---------------------------------------------------------------------
+        # return dictionary
+        return tap_dict
 
 
 # =============================================================================
