@@ -83,12 +83,13 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get the raw objects
     rawobjs = params['INPUTS'].listp('OBJECTS', dtype=str)
-
+    # get the overwrite parameter
+    overwrite = params['INPUTS']['OVERWRITE']
     # ----------------------------------------------------------------------
     # step 1: Is object in database?
     # ----------------------------------------------------------------------
     # query local object database
-    unfound_objs = drs_astrometrics.query_database(params, rawobjs)
+    unfound_objs = drs_astrometrics.query_database(params, rawobjs, overwrite)
     # stop here if all objects found
     if len(unfound_objs) == 0:
         msg = 'All objects found in database'
