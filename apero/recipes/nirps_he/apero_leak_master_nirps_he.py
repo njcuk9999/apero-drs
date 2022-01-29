@@ -36,7 +36,7 @@ WLOG = drs_log.wlog
 # Get the text types
 textentry = lang.textentry
 # define extraction code to use
-EXTRACT_NAME = 'apero_extract_nirps_ha.py'
+EXTRACT_NAME = 'apero_extract_nirps_he.py'
 
 
 # =============================================================================
