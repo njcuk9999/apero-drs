@@ -33,13 +33,12 @@ No schematic set
 
 .. code-block:: 
 
-    apero_pol_spirou.py {obs_dir}[STRING] --exposures[FILE:EXT_E2DS_FF,TELLU_OBJ] {options}
+    apero_pol_spirou.py {obs_dir}[STRING] {options}
 
 
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     --exposures[FILE:EXT_E2DS_FF,TELLU_OBJ] // List of exposures to add (order determined by recipe)
 
 
 ********************************************************************************
@@ -49,6 +48,7 @@ No schematic set
 
 .. code-block:: 
 
+     --exposures[FILE:EXT_E2DS_FF,TELLU_OBJ] // List of exposures to add (order determined by recipe)
      --exp1[FILE:EXT_E2DS_FF,TELLU_OBJ] // Override input exposure 1
      --exp2[FILE:EXT_E2DS_FF,TELLU_OBJ] // Override input exposure 2
      --exp3[FILE:EXT_E2DS_FF,TELLU_OBJ] // Override input exposure 3
@@ -116,7 +116,7 @@ No schematic set
 
 .. code-block:: 
 
-    PLOT_POLAR_FIT_CONT
+    POLAR_FIT_CONT
     POLAR_CONTINUUM
     POLAR_RESULTS
     POLAR_STOKES_I
