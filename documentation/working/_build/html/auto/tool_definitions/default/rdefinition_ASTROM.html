@@ -112,7 +112,10 @@
   <h3><a href="../../../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">apero_astrometric</a><ul>
-<li><a class="reference internal" href="#description">1. Description</a></li>
+<li><a class="reference internal" href="#description">1. Description</a><ul>
+<li><a class="reference internal" href="#simbad-coordinates-and-proper-motions">1.1 SIMBAD, coordinates and proper motions</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
 <li><a class="reference internal" href="#usage">3. Usage</a></li>
 <li><a class="reference internal" href="#optional-arguments">4. Optional Arguments</a></li>
@@ -161,7 +164,167 @@
 <section id="description">
 <h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
 <p>SHORTNAME: ASTROM</p>
-<p>No description set</p>
+<p>The apero astrometrics recipe allows one to add an object or a set of objects
+to the astrometrics database (pending list) - to allow APERO to get the best
+possible coordinates, proper motions and parallax as possible.</p>
+<p>The online database <a href="#id1"><span class="problematic" id="id2">`can be view here&lt;https://docs.google.com/spreadsheets/d/1dOogfEwC7wAagjVFdouB1Y1JdF9Eva4uDW6CTZ8x2FM/edit?usp=sharing&gt;`_</span></a> (but not edited).</p>
+<p>The first thing that is checked is whether the object (or one of its aliases)
+exists in the database. If it does the code skips this objects.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>An object can be forced to be updated with the –overwrite command.
+This is only recommended if an object currently in the astrometric
+database is deemed to be suspicious.</p>
+</div>
+<p>Once an object has been found not to be present currently in the database the
+user is asked whether they with to add the object to the database.</p>
+<p>The apero astrometrics recipe then cross-matches the name against SIMBAD, and
+tries to update the astrometrics with the best possible proper motions (see
+section 1.1 below) it then produces a print out to the screen similar to the
+following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">==================================================</span>
+    <span class="p">{</span><span class="n">CLEAN_OBJ_NAME</span><span class="p">}</span> <span class="p">[{</span><span class="n">ORIGINAL_OBJ_NAME</span><span class="p">}]</span>
+ <span class="o">==================================================</span>
+    <span class="n">Aliases</span><span class="p">:</span>
+         <span class="o">-</span> <span class="p">{</span><span class="n">ALIASES</span><span class="p">}</span>
+
+
+    <span class="n">RA</span><span class="p">:</span>    <span class="p">{</span><span class="n">RA</span><span class="p">}</span>             <span class="p">({</span><span class="n">COORD_SOURCE</span><span class="p">})</span>
+    <span class="n">DEC</span><span class="p">:</span>   <span class="p">{</span><span class="n">DEC</span><span class="p">}</span>            <span class="p">({</span><span class="n">COORD_SOURCE</span><span class="p">})</span>
+    <span class="n">PMRA</span><span class="p">:</span>  <span class="p">{</span><span class="n">PMRA</span><span class="p">}</span> <span class="n">mas</span><span class="o">/</span><span class="n">yr</span>    <span class="p">({</span><span class="n">PM_SOURCE</span><span class="p">})</span>
+    <span class="n">PMDE</span><span class="p">:</span>  <span class="p">{</span><span class="n">PMDE</span><span class="p">}</span> <span class="n">mas</span><span class="o">/</span><span class="n">yr</span>    <span class="p">({</span><span class="n">PM_SOURCE</span><span class="p">})</span>
+    <span class="n">PLX</span><span class="p">:</span>   <span class="p">{</span><span class="n">PLX</span><span class="p">}</span> <span class="n">mas</span>        <span class="p">({</span><span class="n">PLX_SOURCE</span><span class="p">})</span>
+    <span class="n">RV</span><span class="p">:</span>    <span class="p">{</span><span class="n">RV</span><span class="p">}</span> <span class="n">km</span><span class="o">/</span><span class="n">s</span>        <span class="p">({</span><span class="n">RV_SOURCE</span><span class="p">})</span>
+    <span class="n">SPT</span><span class="p">:</span>   <span class="p">{</span><span class="n">SPT</span><span class="p">}</span>            <span class="p">({</span><span class="n">SPT_SOURCE</span><span class="p">})</span>
+    <span class="n">EPOCH</span><span class="p">:</span> <span class="p">{</span><span class="n">EPOCH</span><span class="p">}</span>
+    <span class="n">Jmag</span><span class="p">:</span> <span class="p">{</span><span class="n">JMAG</span><span class="p">}</span>
+    <span class="n">Hmag</span><span class="p">:</span> <span class="p">{</span><span class="n">HMAG</span><span class="p">}</span>
+    <span class="n">Kmag</span><span class="p">:</span> <span class="p">{</span><span class="n">KMAG</span><span class="p">}</span>
+ <span class="o">==================================================</span>
+</pre></div>
+</div>
+<p>where:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>“CLEAN_OBJ_NAME” is a cleaned version of the name (capitalized, white spaces
+and puntucation removed) used throughout APERO.</p></li>
+<li><p>“ORIGINAL_OBJ_NAME” is the name input by the user</p></li>
+<li><p>“ALIASES” are SIMBAD (or otherwise) other names that should and can be used
+for this target (any with cleaned versions of these will use the “CLEAN_OBJ_NAME”
+throughout APERO.</p></li>
+<li><p>“RA”/”DEC” and the “COORD_SOURCE” are the Right ascension, declination and
+where they come from.
+.. note:: “COORD_SOURCE” should match “PM_SOURCE” (see section 1.1 below)</p></li>
+<li><p>“PMRA/PMDE” and the “PM_SOURCE” are the proper motions and where they come from
+.. note:: “COORD_SOURCE” should match “PM_SOURCE” (see section 1.1 below)</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>“RV” and “RV_SOURCE” are the radial velocity and where it comes from – if available
+(normally a bib code reference)</p></li>
+<li><p>“SPT” and “SPT_SOURCE” are the spectral type and source – if available
+(normally a bib code reference)</p></li>
+<li><p>EPOCH is the JD time of the coordinates and proper motion (see section 1.1 below)</p></li>
+<li><p>“Jmag”, “Hmag” and “Kmag” are the J/H and K magnitudes from SIMBAD</p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>You must must check these parameters carefully as this will
+define these parameters will define this observation throughout APERO.
+The must describe the astrophysical object for which you are naming.
+If they are not correct DO NOT add this object.</p>
+</div>
+<section id="simbad-coordinates-and-proper-motions">
+<h3>1.1 SIMBAD, coordinates and proper motions<a class="headerlink" href="#simbad-coordinates-and-proper-motions" title="Permalink to this headline">¶</a></h3>
+<p>Crossmatching an object name with SIMBAD is a great way to find the correct
+astrophysical object against a list of aliases and a large database of
+coordinates, motions and distances. However the coordinates given by
+SIMBAD are at 2000.0 but the proper motions are not. Therefore we only
+use SIMBAD to get a list of aliases for a certain astrophysical object and
+check against a few proper motion catalogues (matching to the ID from SIMBAD)
+to get coordinates that match the proper motion epoch.</p>
+<p>For example:</p>
+<p>Gl699 has the following aliases (from SIMBAD):</p>
+<ul class="simple">
+<li><p>BD+04  3561a</p></li>
+<li><p>AC2000  146626</p></li>
+<li><p>ASCC 1153178</p></li>
+<li><p>CCDM J17578+0441A</p></li>
+<li><p>Ci 20 1069</p></li>
+<li><p>CSI+04-17554</p></li>
+<li><p>CSV   7737</p></li>
+<li><p>1E 1755.3+0438</p></li>
+<li><p>GAT   12</p></li>
+<li><p>GCRV 10392</p></li>
+<li><p>GEN# +0.00403561</p></li>
+<li><p>G 140-24</p></li>
+<li><p>GJ   699</p></li>
+<li><p>GSC 00425-00184</p></li>
+<li><p>GSC 00425-02502</p></li>
+<li><p>HIC  87937</p></li>
+<li><p>HIP  87937</p></li>
+<li><p>IRAS 17553+0438</p></li>
+<li><p>JP11    18</p></li>
+<li><p>Karmn J17578+046</p></li>
+<li><p>LFT 1385</p></li>
+<li><p>LHS    57</p></li>
+<li><p>LSPM J1757+0441</p></li>
+<li><p>LTT 15309</p></li>
+<li><p>2MASS J17574849+0441405</p></li>
+<li><p>MCC 799</p></li>
+<li><p>NAME Barnard’s star</p></li>
+<li><p>NAME Barnard Star</p></li>
+<li><p>NLTT 45718</p></li>
+<li><p>NSV  9910</p></li>
+<li><p>8pc 549.01</p></li>
+<li><p>PLX 4098</p></li>
+<li><p>PLX 4098.00</p></li>
+<li><p>PM J17578+0441N</p></li>
+<li><p>StKM 2-1355</p></li>
+<li><p>TIC 325554331</p></li>
+<li><p>TYC  425-2502-1</p></li>
+<li><p>UBV   15269</p></li>
+<li><p>UCAC2  33428712</p></li>
+<li><p>UCAC4 474-068224</p></li>
+<li><p>USNO-B1.0 0946-00315199</p></li>
+<li><p>USNO 347</p></li>
+<li><p>USNO 876</p></li>
+<li><p>uvby98 000403561</p></li>
+<li><p>V* V2500 Oph</p></li>
+<li><p>VVO   6</p></li>
+<li><p>WEB 14849</p></li>
+<li><p>WISEA J175747.94+044323.8</p></li>
+<li><p>Zkh 269</p></li>
+<li><p>[RHG95]  2849</p></li>
+<li><p>Gaia EDR3 4472832130942575872</p></li>
+<li><p>Gaia DR2 4472832130942575872</p></li>
+</ul>
+<p>From this we find Gaia EDR3, Gaia DR2, UAC4 and HIP ids. We then cross match
+against these proper motion catalogues and obtain coordinates (ra and dec) that
+match the same epoch (i.e. for Gaia DR2 2015.5). We only match enough catalogues
+to provide one set of none-null coordaintes and proper motions.</p>
+<p>Currently the order of priority with proper motion catalogues is as follows:</p>
+<ul class="simple">
+<li><p>Gaia EDR3</p></li>
+<li><p>Gaia DR2</p></li>
+<li><p>UCAC4</p></li>
+<li><p>HIP</p></li>
+</ul>
+<p>If a astrophysical object does not have an alias in any of these catalogues
+we return a warning and skip this target.</p>
+<p>Once all targets have been matched (or skipped) the online database is updated
+(in the pending list) waiting the verification of administrators.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>that if a astrophyiscal object is in the pending list but not in the
+main list it will be used in APERO by default (assuming users allow updates
+from the database). If an astrophyiscal object is both in the main and pending
+lists, the pending list entry will NOT be used. The main list will be
+updated at specific times deemed by the administrators (to minimize
+inconsistencies between large redictions whereby changing a targets astrometrics
+could induce differences between unreduced and already reduced observations).</p>
+</div>
+</section>
 </section>
 <section id="schematic">
 <h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
@@ -178,7 +341,9 @@
 </section>
 <section id="optional-arguments">
 <h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
-<p>No optional arguments</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">overwrite</span> <span class="o">//</span> <span class="n">Do</span> <span class="ow">not</span> <span class="n">check</span> <span class="k">if</span> <span class="nb">object</span> <span class="ow">is</span> <span class="n">currently</span> <span class="ow">in</span> <span class="n">database</span><span class="o">.</span> <span class="n">Overwrite</span> <span class="n">old</span> <span class="n">value</span><span class="o">.</span>
+</pre></div>
+</div>
 </section>
 <section id="special-arguments">
 <h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this headline">¶</a></h2>

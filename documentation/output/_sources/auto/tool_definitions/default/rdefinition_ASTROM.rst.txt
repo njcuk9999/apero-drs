@@ -15,7 +15,7 @@ apero_astrometric
 SHORTNAME: ASTROM
 
 
-No description set
+.. include:: ../../../resources/default/descriptions/apero_astrometrics.rst
 
 
 ********************************************************************************
@@ -46,7 +46,9 @@ No schematic set
 ********************************************************************************
 
 
-No optional arguments
+.. code-block:: 
+
+     --overwrite // Do not check if object is currently in database. Overwrite old value.
 
 
 ********************************************************************************

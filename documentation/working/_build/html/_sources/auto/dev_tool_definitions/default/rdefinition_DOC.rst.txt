@@ -49,6 +49,7 @@ No optional arguments
      --instruments[STRING] // Which instrument(s) to run this for (default is current instrument) can also write ALL to get all instruments or list instruments separated by a comma
      --compile // Compile all rst pages
      --upload // [Bool] If True upload documentation to defined server (for web access)
+     --all // --filedef --recipedef and --recipeseq
      --filedef // Compile the docs for file definitions
      --recipedef // Compile the docs for recipe definitions
      --recipeseq // Compile the docs for recipe sequences
