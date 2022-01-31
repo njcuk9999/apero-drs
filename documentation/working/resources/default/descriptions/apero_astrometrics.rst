@@ -2,7 +2,7 @@ The apero astrometrics recipe allows one to add an object or a set of objects
 to the astrometrics database (pending list) - to allow APERO to get the best
 possible coordinates, proper motions and parallax as possible.
 
-The online database `can be view here<https://docs.google.com/spreadsheets/d/1dOogfEwC7wAagjVFdouB1Y1JdF9Eva4uDW6CTZ8x2FM/edit?usp=sharing>`_ (but not edited).
+The online database `can be viewed here <https://docs.google.com/spreadsheets/d/1dOogfEwC7wAagjVFdouB1Y1JdF9Eva4uDW6CTZ8x2FM/edit?usp=sharing>`_. (but not edited).
 
 The first thing that is checked is whether the object (or one of its aliases)
 exists in the database. If it does the code skips this objects.
@@ -151,7 +151,7 @@ Currently the order of priority with proper motion catalogues is as follows:
 - UCAC4
 - HIP
 
-If a astrophysical object does not have an alias in any of these catalogues
+If an astrophysical object does not have an alias in any of these catalogues
 we return a warning and skip this target.
 
 Once all targets have been matched (or skipped) the online database is updated
