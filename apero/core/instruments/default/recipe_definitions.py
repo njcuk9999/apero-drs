@@ -105,6 +105,7 @@ astrometric.set_arg(pos=0, name='objects', dtype=str,
 astrometric.set_kwarg(name='--overwrite', dtype='switch', default=False,
                       helpstr='Do not check if object is currently in database.'
                               ' Overwrite old value.')
+astrometric.description_file = 'apero_astrometrics.rst'
 
 # -----------------------------------------------------------------------------
 # apero_changelog.py

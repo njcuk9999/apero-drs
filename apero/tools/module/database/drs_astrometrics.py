@@ -18,7 +18,7 @@ import gspread_pandas as gspd
 import os
 import socket
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 import warnings
 
 from apero import lang
@@ -83,6 +83,8 @@ TEXT2 = ('{{"refresh_token": "{0}", "token_uri": "https://oauth2.googleap'
          '"scopes": ["openid", "https://www.googleapis.com/auth/drive", '
          '"https://www.googleapis.com/auth/userinfo.email", '
          '"https://www.googleapis.com/auth/spreadsheets"]}}')
+# treat these as null values
+NULL_TEXT = ['None', '--', 'None', '']
 
 
 # =============================================================================
@@ -126,11 +128,12 @@ class AstroObj:
     def __repr__(self) -> str:
         return self.__str__()
 
-    def from_table_row(self, table_row: Row):
+    def from_table_row(self, table_row: Row, update: bool = False):
         """
         Populate attributes from astropy table row
 
         :param table_row: astropy.table.row.Row
+        :param update: bool, whether we are running new or updating all rows
 
         :return: None populates attributes
         """
@@ -148,7 +151,7 @@ class AstroObj:
         self.dec = table_row['DEC_d']
         self.dec_source = table_row['COO_BIBCODE']
         # assume the epoch is J2000.0
-        # TODO: Question: Is this a good assumption from SIMBAD?
+        # Question: Is this a good assumption from SIMBAD?
         self.epoch = 2451545.0
         # set the pmra and source from table row
         self.pmra = table_row['PMRA']
@@ -173,13 +176,17 @@ class AstroObj:
         self.mags['H'] = table_row['FLUX_H']
         self.mags['K'] = table_row['FLUX_K']
         # deal with notes
-        nargs = [Time.now().iso, getpass.getuser(), socket.gethostname(),
-                 __NAME__]
-        note = ' Added on {0} by {1}@{2} using {3}'
-        self.notes += note.format(*nargs)
+        if not update:
+            nargs = [Time.now().iso, getpass.getuser(), socket.gethostname(),
+                     __NAME__]
+            note = ' Added on {0} by {1}@{2} using {3}'
+            self.notes += note.format(*nargs)
 
     def to_dataframe(self) -> pd.DataFrame:
-
+        """
+        Push table into dataframe
+        :return:
+        """
         dataframe = pd.DataFrame()
         dataframe['OBJNAME'] = [self.objname]
         dataframe['ORIGINAL_NAME'] = [self.original_name]
@@ -269,7 +276,7 @@ class AstroObj:
             print('\t{0}mag: {1}'.format(mag, self.mags[mag]))
         print(' ' + '=' * 50 + '\n')
 
-    def consistent_astrometrics(self, params: ParamDict) -> bool:
+    def consistent_astrometrics(self, params: ParamDict) -> Tuple[bool, str]:
         """
         Assuming we have some ids we can update the ra/dec/pmra/pmde/plx
         most importantly these astrometrics should be at the same observation
@@ -286,22 +293,20 @@ class AstroObj:
         pm_tap_dict = pconst.PM_TAP_DICT(params)
         # ---------------------------------------------------------------------
         # storage for the catalogue to use
-        cat = None
-        pm_id = None
+        cats = []
+        pm_ids = []
         # find whether this object is in any of the proper motion catalogues
         for pm_cat in list(pm_tap_dict.keys()):
-            if cat is None:
-                for alias in self.aliases.split('|'):
-                    if alias.upper().startswith(pm_cat.upper()):
-                      pm_id = str(alias[len(pm_cat):])
-                      cat = str(pm_cat)
-                      break
+            for alias in self.aliases.split('|'):
+                if alias.upper().startswith(pm_cat.upper()):
+                    pm_ids.append(str(alias[len(pm_cat):]))
+                    cats.append(pm_cat)
         # ---------------------------------------------------------------------
         # deal with not finding object
-        if cat is None or pm_id is None:
+        if len(cats) == 0:
             wmsg = 'Cannot find an alias in PM catalog. Skipping'
             WLOG(params, 'warning', wmsg)
-            return False
+            return False, wmsg
         # ---------------------------------------------------------------------
         # check for astroquery and return
         try:
@@ -309,48 +314,78 @@ class AstroObj:
         except Exception as e:
             eargs = [type(e), str(e), func_name]
             WLOG(params, 'warning', textentry('10-016-00009', args=eargs))
-            return False
+            return False, str(textentry('10-016-00009', args=eargs))
         # ---------------------------------------------------------------------
-        url = pm_tap_dict[cat]['URL']
-        # make the query -- the only argument should be an ID string
-        query = pm_tap_dict[cat]['QUERY'].format(pm_id)
+        # set up reason
+        reason = ''
+        # loop around all catalogues found
+        for c_it, cat in enumerate(cats):
+            # get url for this catalog
+            url = pm_tap_dict[cat]['URL']
+            # make the query -- the only argument should be an ID string
+            query = pm_tap_dict[cat]['QUERY'].format(pm_ids[c_it])
+            # ---------------------------------------------------------------------
+            # try running proper motion query
+            try:
+                with warnings.catch_warnings(record=True) as _:
+                    with drs_base_classes.HiddenPrints():
+                        # construct gaia TapPlus instance
+                        catalog = TapPlus(url=url)
+                        # launch gaia job
+                        job = catalog.launch_job(query=query)
+                        # get gaia table
+                        qtable = job.get_results()
+                        # wait 1 second to avoid spamming servers
+                        time.sleep(1)
+            except Exception as e:
+                wargs = [url, query, type(e), e, func_name]
+                WLOG(params, 'warning', textentry('10-016-00008', args=wargs))
+                # return No row and True to fail
+                reason = str(textentry('10-016-00008', args=wargs))
+                continue
+            # ---------------------------------------------------------------------
+            # deal with no pmde/pmra/plx
+            cond1 = drs_text.null_text(str(qtable['pmra'][0]), NULL_TEXT)
+            cond2 = drs_text.null_text(str(qtable['pmde'][0]), NULL_TEXT)
+            cond3 = drs_text.null_text(str(qtable['plx'][0]), NULL_TEXT)
+            # ---------------------------------------------------------------------
+            if cond1 or cond2:
+                reason = 'No pm value from {0}'.format(cat)
+                continue
+            # ---------------------------------------------------------------------
+            # finally if this is successful we need to update some parameters
+            self.ra = qtable['ra'][0]
+            self.ra_source = cat.strip()
+            self.dec = qtable['dec'][0]
+            self.dec_source = cat.strip()
+            self.epoch = Time(qtable['epoch'][0], format='decimalyear').jd
+            self.pmra = qtable['pmra'][0]
+            self.pmra_source = cat.strip()
+            self.pmde = qtable['pmde'][0]
+            self.pmde_source = cat.strip()
+            # deal with parallax
+            if cond3:
+                self.plx = 0
+                self.plx_source = ''
+            else:
+                self.plx = qtable['plx'][0]
+                self.plx_source = cat.strip()
+            # print that object astrometrics updated by pm catalogue
+            msg = '\tObject = {0} astrometrics updated using {1}'
+            WLOG(params, '', msg.format(self.objname, cat.strip()),
+                 colour='magenta')
+            # if we get to here we have updated and don't need to continue the
+            # loop
+            return True, ''
         # ---------------------------------------------------------------------
-        # try running proper motion query
-        try:
-            with warnings.catch_warnings(record=True) as _:
-                with drs_base_classes.HiddenPrints():
-                    # construct gaia TapPlus instance
-                    catalog = TapPlus(url=url)
-                    # launch gaia job
-                    job = catalog.launch_job(query=query)
-                    # get gaia table
-                    qtable = job.get_results()
-                    # wait 1 second to avoid spamming servers
-                    time.sleep(1)
-        except Exception as e:
-            wargs = [url, query, type(e), e, func_name]
-            WLOG(params, 'warning', textentry('10-016-00008', args=wargs))
-            # return No row and True to fail
-            return False
-        # ---------------------------------------------------------------------
-        # finally if this is successful we need to update some parameters
-        self.ra = qtable['ra'][0]
-        self.ra_source = cat.strip()
-        self.dec = qtable['dec'][0]
-        self.dec_source = cat.strip()
-        self.epoch = Time(qtable['epoch'][0], format='decimalyear').jd
-        self.pmra = qtable['pmra'][0]
-        self.pmra_source = cat.strip()
-        self.pmde = qtable['pmde'][0]
-        self.pmde_source = cat.strip()
-        self.plx = qtable['plx'][0]
-        self.plx_source = cat.strip()
-        return True
+        # return False and the reason
+        return False, reason
 
     def combine_aliases(self, params: ParamDict, old_aliases: List[str]):
         """
         Combine two sets of aliases and print out those added from new / old
 
+        :param params: ParamDict, parameter dictionary of constants
         :param old_aliases: list of strings, the original (old) list of aliases
 
         :return:
@@ -383,7 +418,8 @@ class AstroObj:
 
 
 def query_simbad(params: ParamDict, rawobjname: str,
-                 report: bool = True) -> List[AstroObj]:
+                 report: bool = True, update: bool = False
+                 ) -> Tuple[List[AstroObj], str]:
     # ---------------------------------------------------------------------
     # get results
     with warnings.catch_warnings(record=True) as _:
@@ -393,30 +429,49 @@ def query_simbad(params: ParamDict, rawobjname: str,
         for simbad_column in SIMBAD_COLUMNS:
             Simbad.add_votable_fields(simbad_column)
         Simbad.remove_votable_fields('coordinates')
-        # query simbad
-        table = Simbad.query_object(rawobjname)
+        # query simbad - try a few times
+        attempts, error = 0, ''
+        while attempts < 10:
+            try:
+                table = Simbad.query_object(rawobjname)
+                break
+            except Exception as e:
+                msg = 'Error in Simbad.query_object. Trying again {0}/{1}'
+                WLOG(params, 'warning', msg.format(attempts + 1, 10))
+                # error message
+                error = str(e)
+                # wait 5 seconds
+                time.sleep(1)
+                # add to attempts
+                attempts += 1
+    # deal with max attempts
+    if attempts == 10:
+        emsg = 'Cannot run simbad query objects. \n\t Error {0}'
+        WLOG(params, 'error', emsg.format(error))
     # storage for astrometric objects
     astroobjs = []
     # deal with not having object
     if (table is None) or (len(table) == 0):
+        msg = ('Object "{0}" not found in simbad. '
+               'Please add it manually if requred for PRV')
         if report:
-            msg = ('Object "{0}" not found in simbad. '
-                   'Please add it manually if requred for PRV')
             WLOG(params, '', msg.format(rawobjname), colour='red')
-        return astroobjs
+        return astroobjs, msg.format(rawobjname)
+    # set up reason
+    reason = ''
     # loop around rows in table and add to astro obj list
     for row in range(len(table)):
         # construct instance of AstroObj
         astroobj = AstroObj(rawobjname)
         # push in information from this row
-        astroobj.from_table_row(table[row])
+        astroobj.from_table_row(table[row], update=update)
         # try to get consistent ra/dec/pmra/pmde/plx (i.e. at same epoch)
-        updated = astroobj.consistent_astrometrics(params)
+        updated, reason = astroobj.consistent_astrometrics(params)
         # append to storage
         if updated:
             astroobjs.append(astroobj)
     # return the list of astrometric objects
-    return astroobjs
+    return astroobjs, reason
 
 
 def query_database(params, rawobjnames: List[str],
@@ -556,8 +611,6 @@ def update_astrometrics(params, filename):
     pconst = constants.pload()
     # load table
     table = Table.read(filename, format='csv')
-    # treat these as null values
-    null_text = ['None', '--', 'None', '']
     # store astrometric objects that we need to add to database
     add_objs = []
     removed_objs = []
@@ -565,7 +618,7 @@ def update_astrometrics(params, filename):
     # loop around unfound objects
     for row in range(len(table)):
         # get object name for simbad search
-        objname = table[row]['ORIGINAL_NAME']
+        objname = str(table[row]['ORIGINAL_NAME'])
         # update
         margs = [objname, row+1, len(table)]
         msg = 'Processing original name = {0}  ({1}/{2})'.format(*margs)
@@ -576,7 +629,8 @@ def update_astrometrics(params, filename):
         astro_objs, alias = [], str(objname)
         # search in simbad for objects (loop around aliases)
         for alias in table[row]['ALIASES'].split('|'):
-            astro_objs = query_simbad(params, rawobjname=alias, report=False)
+            astro_objs, reason = query_simbad(params, rawobjname=alias,
+                                              report=False)
             if len(astro_objs) > 0:
                 break
         # ---------------------------------------------------------------------
@@ -591,25 +645,48 @@ def update_astrometrics(params, filename):
             astro_obj = astro_objs[0]
         # ---------------------------------------------------------------------
         # update original name to alias
-        astro_obj.original_name = alias
-        if pconst.DRS_OBJ_NAME(alias) != pconst.DRS_OBJ_NAME(objname):
+        astro_obj.original_name = str(alias)
+        # check if object names are basically the same (cleaned + no underscore)
+        if not very_similar_obj_names(pconst, objname, alias):
             msg = 'Not using original name = "{0}". "{1}" may be incorrect. '
             astro_obj.notes += msg.format(objname, alias)
             WLOG(params, 'warning', msg.format(objname, alias))
             possible_mismatched_objects.append(msg.format(objname, alias))
         # ---------------------------------------------------------------------
         # add notes from original table
-        if not drs_text.null_text(str(table[row]['NOTES']), null_text):
+        if not drs_text.null_text(str(table[row]['NOTES']), NULL_TEXT):
             # add a space between notes
             if len(astro_obj.notes) != 0:
                 astro_obj.notes += ' '
-            # add old note
-            astro_obj.notes += table[row]['NOTES']
+            elif astro_obj.notes[-1] == ' ':
+                astro_obj.notes += table[row]['NOTES']
+            else:
+                # add old note
+                astro_obj.notes += ' ' + table[row]['NOTES']
+        # ---------------------------------------------------------------------
+        # set PLX from table if not present
+        if drs_text.null_text(str(astro_obj.plx), NULL_TEXT):
+            astro_obj.plx = table[row]['PLX']
+            astro_obj.plx_source = table[row]['PLX_SOURCE']
+        # set RV from table if not present
+        if drs_text.null_text(str(astro_obj.rv), NULL_TEXT):
+            astro_obj.rv = table[row]['RV']
+            astro_obj.rv_source = table[row]['RV_SOURCE']
+        # set SpT from table if not present
+        if drs_text.null_text(str(astro_obj.sp_type), NULL_TEXT):
+            astro_obj.sp_type = table[row]['SP_TYPE']
+            astro_obj.sp_source = table[row]['SP_SOURCE']
+        # set Teff from table if not present
+        if drs_text.null_text(str(astro_obj.teff), NULL_TEXT):
+            astro_obj.teff = table[row]['TEFF']
+            astro_obj.teff_source = table[row]['TEFF_SOURCE']
         # ---------------------------------------------------------------------
         # keep OBJNAME from original table
         astro_obj.name = str(table[row]['OBJNAME'])
+        astro_obj.objname = str(table[row]['OBJNAME'])
         # deal with combining aliases
-        old_aliases = table[row]['ALIASES'].split('|') + [objname]
+        orignal_names = [table[row]['OBJNAME'], table[row]['ORIGINAL_NAME']]
+        old_aliases = table[row]['ALIASES'].split('|') + orignal_names
         astro_obj.combine_aliases(params, old_aliases)
         # -------------------------------------------------------------
         # now add object to database
@@ -618,10 +695,8 @@ def update_astrometrics(params, filename):
         # append to add list
         add_objs.append(astro_obj)
     # -------------------------------------------------------------------------
-    # TODO: preview table some how?
-    # -------------------------------------------------------------------------
     # add to google sheet
-    if len(add_objs) >0:
+    if len(add_objs) > 0:
         WLOG(params, '', params['DRS_HEADER'], colour='magenta')
         msg = 'Adding {0} objects to the object database'
         WLOG(params, '', msg.format(len(add_objs)), colour='magenta')
@@ -658,6 +733,20 @@ def update_astrometrics(params, filename):
     WLOG(params, 'info', params['DRS_HEADER'])
 
 
+def very_similar_obj_names(pconst, objname1: str, objname2: str) -> bool:
+    """
+    Check if two objects are the same just with underscores differing them
+    """
+    # clean and remove underscores (just for comparison)
+    cobjname1 = pconst.DRS_OBJ_NAME(objname1).replace('_', '')
+    cobjname2 = pconst.DRS_OBJ_NAME(objname2).replace('_', '')
+    # if they are the same return True
+    if cobjname1 == cobjname2:
+        return True
+    else:
+        return False
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -667,6 +756,7 @@ if __name__ == "__main__":
     # assign a PID
     _params['PID'], _ = drs_startup.assign_pid()
     # set shortname
+    _params['RECIPE'] = __NAME__
     _params['RECIPE_SHORT'] = str('ASTRO-UP')
     # set filename for
     _filename = '/data/spirou/misc/objdb/apero_objdb_20220128.csv'

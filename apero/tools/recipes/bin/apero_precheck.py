@@ -105,6 +105,9 @@ def __main__(recipe, params):
     # construct the index database instance
     indexdbm = IndexDatabase(params)
     indexdbm.load_db()
+    # construct object database
+    objdbm = ObjectDatabase(params)
+    objdbm.load_db()
     # force the parallel key to False here (should not be True before we
     #   run processing)
     params['INPUTS']['PARALLEL'] = False
@@ -118,7 +121,7 @@ def __main__(recipe, params):
 
     # fix the header data (object name, dprtype, mjdmid and trg_type etc)
     WLOG(params, '', textentry('40-503-00043'))
-    indexdbm.update_header_fix(recipe)
+    indexdbm.update_header_fix(recipe, objdbm)
     # -------------------------------------------------------------------------
     # File check
     #    1. check number of calibrations

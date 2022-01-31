@@ -282,6 +282,266 @@ class DatabaseManager:
 
 
 # =============================================================================
+# Object database
+# =============================================================================
+class ObjectDatabase(DatabaseManager):
+    def __init__(self, params: ParamDict, check: bool = True,
+                 dparams: Union[dict, None] = None):
+        """
+        Constructor of the Object Database class
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
+        # save class name
+        self.classname = 'ObjectDatabaseManager'
+        # set function
+        # _ = display_func('__init__', __NAME__, self.classname)
+        # construct super class
+        DatabaseManager.__init__(self, params)
+        # set name
+        self.name = 'object'
+        self.kind = 'OBJECT'
+        # set path
+        self.set_path(kind=self.kind, check=check, dparams=dparams)
+
+    def get_entries(self, columns: str = '*',
+                    nentries: Union[int, None] = None,
+                    condition: Union[str, None] = None,
+                    ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
+        """
+        Get an entry from the object database (can set columns to return, or
+        filter by specific columns)
+
+        :param columns: str, the columns to return ('*' for all)
+        :param nentries: int or None, if set limits the number of entries to get
+                         back - sorted newest to oldest
+        :param condition: str or None, if set the SQL query to add
+
+        :return: the entries of columns, if nentries = 1 returns either that
+                 entry (as a tuple) or None, if len(columns) = 1, returns
+                 a np.ndarray, else returns a pandas table
+        """
+        # set function
+        # _ = display_func('get_entries', __NAME__, self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with no database loaded
+        if self.database is None:
+            self.load_db()
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
+        # ------------------------------------------------------------------
+        # set up kwargs from database query
+        sql = dict()
+        # set up sql kwargs
+        sql['sort_by'] = None
+        sql['sort_descending'] = True
+        # condition for used
+        sql['condition'] = 'USED = 1'
+        # ------------------------------------------------------------------
+        if condition is not None:
+            sql['condition'] += ' AND {0}'.format(condition)
+        # ------------------------------------------------------------------
+        # add the number of entries to get
+        if isinstance(nentries, int):
+            sql['max_rows'] = nentries
+        # if we have one entry just get the tuple back
+        if nentries == 1:
+            # do sql query
+            entries = self.database.get(columns, **sql)
+            # return filename
+            if len(entries) == 1:
+                if len(colnames) == 1:
+                    return entries[0][0]
+                else:
+                    return entries[0]
+            else:
+                return None
+        # ------------------------------------------------------------------
+        # if we have one column return a list
+        if len(colnames) == 1:
+            # return array for ease
+            sql['return_array'] = True
+            # do sql query
+            entries = self.database.get(columns, **sql)
+            # return one list
+            if len(entries) == 0:
+                return []
+            else:
+                return entries[:, 0]
+        # else return a pandas table
+        else:
+            # return as pandas table
+            sql['return_pandas'] = True
+            # do sql query
+            entries = self.database.get(columns, **sql)
+            # return pandas table
+            return entries
+
+    def add_entry(self, objname: str, objname_s: str,
+                  gaia_id: str, gaia_id_s: str,
+                  ra: float, ra_s: str, dec: float, dec_s: str,
+                  pmra: Union[float, None] = None, pmra_s: str = 'None',
+                  pmde: Union[float, None] = None, pmde_s: str = 'None',
+                  plx: Union[float, None] = None, plx_s: str = 'None',
+                  rv: Union[float, None] = None, rv_s: str = 'None',
+                  gmag: Union[float, None] = None, gmag_s: str = 'None',
+                  bpmag: Union[float, None] = None, bpmag_s: str = 'None',
+                  rpmag: Union[float, None] = None, rpmag_s: str = 'None',
+                  epoch: Union[float, None] = None, epoch_s: str = 'None',
+                  teff: Union[float, None] = None, teff_s: str = 'None',
+                  aliases: Union[List[str], str, None] = None,
+                  aliases_s: str = 'None', used: int = 1):
+        """
+        Add an object to the object database
+
+        :param objname: str, the primary object name (SIMBAD name)
+        :param objname_s: str, source of objname
+        :param gaia_id: str, the Gaia ID (from Gaia DR2)
+        :param gaia_id_s: str, source of Gaia ID
+        :param ra: float, the Gaia right ascension of an object (in degrees)
+        :param ra_s: str, source of ra
+        :param dec: float, the Gaia declination of an object (in degrees)
+        :param dec_s: str, source of dec
+        :param pmra: float, the Gaia proper motion in RA (in mas/yr)
+        :param pmra_s: str, source of pmra
+        :param pmde: float, the Gaia proper motion in Dec (in mas/yr)
+        :param pmde_s: str, source of pmde
+        :param plx: float, the Gaia parallax in mas
+        :param plx_s: str, source of plx
+        :param rv: float, the RV in km/s
+        :param rv_s: str, source of rv
+        :param gmag: float, the Gaia G magnitude
+        :param gmag_s: str, source of gmag
+        :param bpmag: float, the Gaia BP magnitude
+        :param bpmag_s: str, the source of bpmag
+        :param rpmag: float, the Gaia RP magniutde
+        :param rpmag_s: str, the source of rpmag
+        :param epoch: float, the Gaia epoch (2015.5)
+        :param epoch_s: str, the source of epoch
+        :param teff: float, the temperature in K
+        :param teff_s: str, the source of Teff
+        :param aliases: list of strings or string, any other names this
+                        target can have
+        :param aliases_s: str, the source of aliases
+        :param used: int, whether to use entries or not (normally ste manually)
+
+        :return: None - updates database
+        """
+        # deal with values
+        values = [objname, objname_s, gaia_id, gaia_id_s, ra, ra_s, dec, dec_s,
+                  pmra, pmra_s, pmde, pmde_s, plx, plx_s, rv, rv_s, gmag,
+                  gmag_s, bpmag, bpmag_s, rpmag, rpmag_s, epoch, epoch_s,
+                  teff, teff_s]
+        # get unique columns
+        objdb_cols = self.pconst.OBJECT_DB_COLUMNS()
+        ucols = list(objdb_cols.unique_cols)
+        # deal with null values
+        for it, value in enumerate(values):
+            if value is None:
+                values[it] = 'None'
+        # deal with aliases
+        if isinstance(aliases, str):
+            values.append(aliases)
+            values.append(aliases_s)
+        elif isinstance(aliases, list):
+            values.append('|'.join(aliases))
+            values.append(aliases_s)
+        else:
+            values.append('None')
+            values.append(aliases_s)
+        # add used
+        values.append(used)
+        # try to add a new row
+        try:
+            self.database.add_row(values, columns='*', unique_cols=ucols)
+        # if row already exists then update that row (based on Gaia ID and
+        #   objname)
+        except drs_db.UniqueEntryException:
+            # condition comes from uhash - so set to None here (to remember)
+            condition = None
+            # update row in database
+            self.database.set('*', values=values, condition=condition,
+                              unique_cols=ucols)
+
+    def count(self, condition: Union[str, None] = None) -> int:
+        """
+        Count the number of rows in the object database
+        """
+        return self.database.count(condition=condition)
+
+    def find_objnames(self, pconst: constants.PseudoConstants,
+                      objnames: List[str]) -> List[str]:
+        """
+        Wrapper around find_objname
+
+        :param pconst: psuedo constants - used to clean the object name
+        :param objname: list of str, a list of object names to clean and fimd
+        :return:
+        """
+        out_objnames = []
+        for objname in objnames:
+            out_objname, _ = self.find_objname(pconst, objname)
+            out_objnames.append(out_objname)
+        # return the filled out list
+        return out_objnames
+
+    def find_objname(self, pconst: constants.PseudoConstants,
+                     objname: str) -> Tuple[str, bool]:
+        """
+        Find and clean the correct object name (as used by apero) this is
+        either:
+        1. from the OBJNAME column of the database directly
+        2. from the ALIAS column of the database (if not found in OBJNAME)
+        3. the cleaned input name (not found in the database)
+
+        :param pconst: psuedo constants - used to clean the object name
+        :param objname: str, the object name to clean and fimd
+
+        :return: Tuple, 1. str, the "correct" object name to use for the DRS,
+                 2. whether the object was found in the database
+        """
+        # assume we have not found our object name
+        found = False
+        # clean the input objname
+        cobjname = pconst.DRS_OBJ_NAME(objname)
+        # sql obj condition
+        sql_obj_cond = 'OBJNAME="{0}"'.format(cobjname)
+        # look for object name in database
+        count = self.count(condition=sql_obj_cond)
+        # if we have not found our object we must check aliases
+        if count == 0:
+            # get the full database
+            full_table = self.get_entries('OBJNAME, ALIASES')
+            aliases = full_table['ALIASES']
+            # set row to zero as a place holder
+            row = 0
+            # loop around each row in the table
+            for row in range(len(aliases)):
+                # loop around aliases until we find the alias
+                for alias in aliases[row].split('|'):
+                    if pconst.DRS_OBJ_NAME(alias) == cobjname:
+                        found = True
+                        break
+                # stop looping if we have found our object
+                if found:
+                    break
+            # get the cobjname for this target if found
+            if found:
+                cobjname = full_table['OBJNAME'][row]
+        # if there is an entry we found the object
+        else:
+            found = True
+        # return the correct object name
+        return cobjname, found
+
+
+# =============================================================================
 # Define specific file databases
 # =============================================================================
 class CalibrationDatabase(DatabaseManager):
@@ -1838,7 +2098,18 @@ class IndexDatabase(DatabaseManager):
             # add to database
             self.add_entry(req_inst, block_kind, hkeys=hkeys)
 
-    def update_header_fix(self, recipe):
+    def update_header_fix(self, recipe: Any, objdbm: ObjectDatabase):
+        """
+        Update the index database with the header fixes for block_kind = raw
+
+        The object database is required as we need to check against object
+        name aliases (raw data will have the wrong object name otherwise)
+
+        :param recipe: DrsRecipe, the recipe that called this function
+        :param objdbm: ObjectDatabase, the object database class
+
+        :return: None - updates the IndexDatabase
+        """
         # set function name
         # _ = display_func('update_objname', __NAME__, self.classname)
         # deal with no instrument set
@@ -1847,7 +2118,6 @@ class IndexDatabase(DatabaseManager):
         # deal with no database loaded
         if self.database is None:
             self.load_db()
-        # get allowed header keys
         # get allowed header keys
         iheader_cols = self.pconst.INDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
@@ -1881,7 +2151,8 @@ class IndexDatabase(DatabaseManager):
                 else:
                     header[drs_key] = value
             # fix header (with new keys in)
-            header, _ = drs_file.fix_header(self.params, recipe, header=header)
+            header, _ = drs_file.fix_header(self.params, recipe, header=header,
+                                            check_aliases=True, objdbm=objdbm)
             # condition is that full path is the same
             ctxt = 'BLOCK_KIND="{0}" AND OBS_DIR="{2}" AND FILENAME="{3}"'
             # cargs must match "columns" above
@@ -2414,248 +2685,7 @@ def _clean_error(errors: Union[str, None]) -> Union[str, None]:
     return errors
 
 
-# =============================================================================
-# Define other databases
-# =============================================================================
-class ObjectDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, check: bool = True,
-                 dparams: Union[dict, None] = None):
-        """
-        Constructor of the Object Database class
 
-        :param params: ParamDict, parameter dictionary of constants
-        :param check: bool, if True makes sure database file exists (otherwise
-                      assumes it is)
-
-        :return: None
-        """
-        # save class name
-        self.classname = 'ObjectDatabaseManager'
-        # set function
-        # _ = display_func('__init__', __NAME__, self.classname)
-        # construct super class
-        DatabaseManager.__init__(self, params)
-        # set name
-        self.name = 'object'
-        self.kind = 'OBJECT'
-        # set path
-        self.set_path(kind=self.kind, check=check, dparams=dparams)
-
-    def get_entries(self, columns: str = '*',
-                    nentries: Union[int, None] = None,
-                    condition: Union[str, None] = None,
-                    ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
-        """
-        Get an entry from the object database (can set columns to return, or
-        filter by specific columns)
-
-        :param columns: str, the columns to return ('*' for all)
-        :param nentries: int or None, if set limits the number of entries to get
-                         back - sorted newest to oldest
-        :param condition: str or None, if set the SQL query to add
-
-        :return: the entries of columns, if nentries = 1 returns either that
-                 entry (as a tuple) or None, if len(columns) = 1, returns
-                 a np.ndarray, else returns a pandas table
-        """
-        # set function
-        # _ = display_func('get_entries', __NAME__, self.classname)
-        # deal with no instrument set
-        if self.instrument == 'None':
-            return None
-        # deal with no database loaded
-        if self.database is None:
-            self.load_db()
-        # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns)
-        # ------------------------------------------------------------------
-        # set up kwargs from database query
-        sql = dict()
-        # set up sql kwargs
-        sql['sort_by'] = None
-        sql['sort_descending'] = True
-        # condition for used
-        sql['condition'] = 'USED = 1'
-        # ------------------------------------------------------------------
-        if condition is not None:
-            sql['condition'] += ' AND {0}'.format(condition)
-        # ------------------------------------------------------------------
-        # add the number of entries to get
-        if isinstance(nentries, int):
-            sql['max_rows'] = nentries
-        # if we have one entry just get the tuple back
-        if nentries == 1:
-            # do sql query
-            entries = self.database.get(columns, **sql)
-            # return filename
-            if len(entries) == 1:
-                if len(colnames) == 1:
-                    return entries[0][0]
-                else:
-                    return entries[0]
-            else:
-                return None
-        # ------------------------------------------------------------------
-        # if we have one column return a list
-        if len(colnames) == 1:
-            # return array for ease
-            sql['return_array'] = True
-            # do sql query
-            entries = self.database.get(columns, **sql)
-            # return one list
-            if len(entries) == 0:
-                return []
-            else:
-                return entries[:, 0]
-        # else return a pandas table
-        else:
-            # return as pandas table
-            sql['return_pandas'] = True
-            # do sql query
-            entries = self.database.get(columns, **sql)
-            # return pandas table
-            return entries
-
-    def add_entry(self, objname: str, objname_s: str,
-                  gaia_id: str, gaia_id_s: str,
-                  ra: float, ra_s: str, dec: float, dec_s: str,
-                  pmra: Union[float, None] = None, pmra_s: str = 'None',
-                  pmde: Union[float, None] = None, pmde_s: str = 'None',
-                  plx: Union[float, None] = None, plx_s: str = 'None',
-                  rv: Union[float, None] = None, rv_s: str = 'None',
-                  gmag: Union[float, None] = None, gmag_s: str = 'None',
-                  bpmag: Union[float, None] = None, bpmag_s: str = 'None',
-                  rpmag: Union[float, None] = None, rpmag_s: str = 'None',
-                  epoch: Union[float, None] = None, epoch_s: str = 'None',
-                  teff: Union[float, None] = None, teff_s: str = 'None',
-                  aliases: Union[List[str], str, None] = None,
-                  aliases_s: str = 'None', used: int = 1):
-        """
-        Add an object to the object database
-
-        :param objname: str, the primary object name (SIMBAD name)
-        :param objname_s: str, source of objname
-        :param gaia_id: str, the Gaia ID (from Gaia DR2)
-        :param gaia_id_s: str, source of Gaia ID
-        :param ra: float, the Gaia right ascension of an object (in degrees)
-        :param ra_s: str, source of ra
-        :param dec: float, the Gaia declination of an object (in degrees)
-        :param dec_s: str, source of dec
-        :param pmra: float, the Gaia proper motion in RA (in mas/yr)
-        :param pmra_s: str, source of pmra
-        :param pmde: float, the Gaia proper motion in Dec (in mas/yr)
-        :param pmde_s: str, source of pmde
-        :param plx: float, the Gaia parallax in mas
-        :param plx_s: str, source of plx
-        :param rv: float, the RV in km/s
-        :param rv_s: str, source of rv
-        :param gmag: float, the Gaia G magnitude
-        :param gmag_s: str, source of gmag
-        :param bpmag: float, the Gaia BP magnitude
-        :param bpmag_s: str, the source of bpmag
-        :param rpmag: float, the Gaia RP magniutde
-        :param rpmag_s: str, the source of rpmag
-        :param epoch: float, the Gaia epoch (2015.5)
-        :param epoch_s: str, the source of epoch
-        :param teff: float, the temperature in K
-        :param teff_s: str, the source of Teff
-        :param aliases: list of strings or string, any other names this
-                        target can have
-        :param aliases_s: str, the source of aliases
-        :param used: int, whether to use entries or not (normally ste manually)
-
-        :return: None - updates database
-        """
-        # deal with values
-        values = [objname, objname_s, gaia_id, gaia_id_s, ra, ra_s, dec, dec_s,
-                  pmra, pmra_s, pmde, pmde_s, plx, plx_s, rv, rv_s, gmag,
-                  gmag_s, bpmag, bpmag_s, rpmag, rpmag_s, epoch, epoch_s,
-                  teff, teff_s]
-        # get unique columns
-        objdb_cols = self.pconst.OBJECT_DB_COLUMNS()
-        ucols = list(objdb_cols.unique_cols)
-        # deal with null values
-        for it, value in enumerate(values):
-            if value is None:
-                values[it] = 'None'
-        # deal with aliases
-        if isinstance(aliases, str):
-            values.append(aliases)
-            values.append(aliases_s)
-        elif isinstance(aliases, list):
-            values.append('|'.join(aliases))
-            values.append(aliases_s)
-        else:
-            values.append('None')
-            values.append(aliases_s)
-        # add used
-        values.append(used)
-        # try to add a new row
-        try:
-            self.database.add_row(values, columns='*', unique_cols=ucols)
-        # if row already exists then update that row (based on Gaia ID and
-        #   objname)
-        except drs_db.UniqueEntryException:
-            # condition comes from uhash - so set to None here (to remember)
-            condition = None
-            # update row in database
-            self.database.set('*', values=values, condition=condition,
-                              unique_cols=ucols)
-
-    def count(self, condition: Union[str, None] = None) -> int:
-        """
-        Count the number of rows in the object database
-        """
-        return self.database.count(condition=condition)
-
-    def find_objname(self, pconst: constants.PseudoConstants,
-                     objname: str) -> Tuple[str, bool]:
-        """
-        Find and clean the correct object name (as used by apero) this is
-        either:
-        1. from the OBJNAME column of the database directly
-        2. from the ALIAS column of the database (if not found in OBJNAME)
-        3. the cleaned input name (not found in the database)
-
-        :param pconst: psuedo constants - used to clean the object name
-        :param objname: str, the object name to clean and fimd
-
-        :return: Tuple, 1. str, the "correct" object name to use for the DRS,
-                 2. whether the object was found in the database
-        """
-        # assume we have not found our object name
-        found = False
-        # clean the input objname
-        cobjname = pconst.DRS_OBJ_NAME(objname)
-        # sql obj condition
-        sql_obj_cond = 'OBJNAME="{0}"'.format(cobjname)
-        # look for object name in database
-        count = self.count(condition=sql_obj_cond)
-        # if we have not found our object we must check aliases
-        if count == 0:
-            # get the full database
-            full_table = self.get_entries('OBJNAME, ALIASES')
-            aliases = full_table['ALIASES']
-            # set row to zero as a place holder
-            row = 0
-            # loop around each row in the table
-            for row in range(len(aliases)):
-                # loop around aliases until we find the alias
-                for alias in aliases[row].split('|'):
-                    if pconst.DRS_OBJ_NAME(alias) == cobjname:
-                        found = True
-                        break
-                # stop looping if we have found our object
-                if found:
-                    break
-            # get the cobjname for this target if found
-            if found:
-                cobjname = full_table['OBJNAME'][row]
-        # if there is an entry we found the object
-        else:
-            found = True
-        # return the correct object name
-        return cobjname, found
 
 
 
