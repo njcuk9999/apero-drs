@@ -113,7 +113,8 @@ def __main__(recipe, params):
             continue
         # ---------------------------------------------------------------------
         # search in simbad for objects
-        astro_objs = drs_astrometrics.query_simbad(params, rawobjname=objname)
+        astro_objs, reason = drs_astrometrics.query_simbad(params,
+                                                           rawobjname=objname)
         # ---------------------------------------------------------------------
         # deal with 1 object
         if len(astro_objs) == 1:
@@ -157,6 +158,26 @@ def __main__(recipe, params):
             # else print that we are not adding object to database
             else:
                 WLOG(params, '', 'Not adding object to database')
+        elif len(astro_objs) == 0:
+            emsg = ('Cannot find object "{0}" in SIMBAD. \n\t{1}'
+                    '\n\tPlease try another alias')
+            eargs = [objname, reason]
+            WLOG(params, 'warning', emsg.format(*eargs), sublevel=6)
+
+        else:
+            # print warning
+            emsg = ('More than one object matches object "{0}" in SIMBAD. '
+                    'Please try another alias.')
+            WLOG(params, 'warning', emsg.format(objname), sublevel=6)
+            # print list of aliases for each object found
+            msg = 'List of aliases:'
+            WLOG(params, '', msg, colour='yellow')
+            # loop around objects found
+            for a_it, astro_obj in enumerate(astro_objs):
+                msg = 'Object {0}: {1}'
+                margs = [a_it + 1, ','.join(astro_obj.aliases.split('|'))]
+                WLOG(params, '', msg.format(*margs), colour='yellow')
+                WLOG(params, '', '')
     # -------------------------------------------------------------------------
     # add to google sheet
     if len(add_objs) > 0:

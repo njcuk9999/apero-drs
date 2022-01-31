@@ -243,7 +243,8 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         return forbidden_keys
 
     def HEADER_FIXES(self, params: ParamDict, recipe: Any, header: Any,
-                     hdict: Any, filename: str) -> Any:
+                     hdict: Any, filename: str, check_aliases: bool = False,
+                     objdbm: Any = None) -> Any:
         """
         For NIRPS_HA the following keys may or may not be present (older data
         may need these adding):
@@ -262,15 +263,24 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :param hdict:  drs_fits.Header, alternate source for keys, can be
                        unset if header set
         :param filename: str, used for filename reported in exceptions
+        :param check_aliases: bool, if True check aliases (using database)
+        :param objdbm: drs_database.ObjectDatabase - the database to check
+                       aliases in
 
         :return: the fixed header
         """
         # set function name
-        # _ = display_func('HEADER_FIXES', __NAME__, self.class_name)
+        func_name = display_func('HEADER_FIXES', __NAME__, self.class_name)
+        # make sure if check_aliases is True objdbm is set
+        if check_aliases and objdbm is None:
+            emsg = 'check_aliases=True requires objdbm set. \n\tFunction = {0}'
+            raise ValueError(emsg.format(func_name))
         # ------------------------------------------------------------------
         # Deal with cleaning object name
         # ------------------------------------------------------------------
-        header, hdict = clean_obj_name(params, header, hdict, filename=filename)
+        header, hdict = clean_obj_name(params, header, hdict, filename=filename,
+                                       check_aliases=check_aliases,
+                                       objdbm=objdbm)
         # ------------------------------------------------------------------
         # Deal with TRG_TYPE
         # ------------------------------------------------------------------
@@ -305,7 +315,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # set function name
         # _ = display_func('DRS_OBJ_NAME', __NAME__, self.class_name)
         # clean object name
-        return clean_obj_name(objname=objname)
+        return pseudo_const.clean_object(objname)
 
     def DRS_DPRTYPE(self, params: ParamDict, recipe: Any, header: Any,
                     filename: Union[Path, str]) -> str:
@@ -792,8 +802,9 @@ class PseudoConstants(pseudo_const.PseudoConstants):
 # =============================================================================
 def clean_obj_name(params: ParamDict = None, header: Any = None,
                    hdict: Any = None, objname: Union[str, None] = None,
-                   filename: Union[None, str, Path] = None
-                   ) -> Union[Tuple[Any, Any], str]:
+                   filename: Union[None, str, Path] = None,
+                   check_aliases: bool = False,
+                   objdbm: Any = None) -> Union[Tuple[Any, Any], str]:
     """
     Clean an object name (remove spaces and make upper case strip white space)
 
@@ -804,65 +815,46 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
                   objname (as well as "header" if "objname" not set)
     :param objname: str, the uncleaned object name to clean
     :param filename: str, the filename header came from (for exception)
-
+    :param check_aliases: bool, if True check aliases (using database)
+    :param objdbm: drs_database.ObjectDatabase - the database to check aliases
+                   in
+                   
     :return: if objname set return str, else return the updated header and hdict
     """
     # set function name
     func_name = display_func('clean_obj_name', __NAME__)
-
-    # if we don't have header don't try this part (this happens when we
-    #   are just calling using objname)
-    if header is not None:
-        # return header if we have header given
-        return_header = True
-        # ---------------------------------------------------------------------
-        # check KW_OBJNAME and then KW_OBJECTNAME
-        # ---------------------------------------------------------------------
-        # if objname is None we need to get it from the header
-        if drs_text.null_text(objname, NULL_TEXT):
-            # get keys from params
-            kwrawobjname = params['KW_OBJECTNAME'][0]
-            kwobjname = params['KW_OBJNAME'][0]
-            # deal with output key already in header
-            if kwobjname in header:
-                if not drs_text.null_text(header[kwobjname], NULL_TEXT):
-                    return header, hdict
-            # get raw object name
-            if kwrawobjname not in header:
-                eargs = [kwrawobjname, filename]
-                raise DrsCodedException('01-001-00027', 'error', targs=eargs,
-                                        func_name=func_name)
-            else:
-                rawobjname = header[kwrawobjname]
-        # else just set up blank parameters
-        else:
-            kwrawobjname, kwobjname = '', ''
-            rawobjname = str(objname)
-    # else just set up blank parameters
+    # ---------------------------------------------------------------------
+    # check KW_OBJNAME and then KW_OBJECTNAME
+    # ---------------------------------------------------------------------
+    # get keys from params
+    kwrawobjname = params['KW_OBJECTNAME'][0]
+    kwobjname = params['KW_OBJNAME'][0]
+    # deal with output key already in header
+    if kwobjname in header:
+        if not drs_text.null_text(header[kwobjname], NULL_TEXT):
+            return header, hdict
+    # get raw object name
+    if kwrawobjname not in header:
+        eargs = [kwrawobjname, filename]
+        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
+                                func_name=func_name)
     else:
-        kwrawobjname, kwobjname = '', ''
-        return_header = False
-        rawobjname = str(objname)
+        rawobjname = header[kwrawobjname]
     # -------------------------------------------------------------------------
-    # if object name is still None - just set it to Null - we can't do anything
-    #    else here
-    # -------------------------------------------------------------------------
-    # finally if we really cannot resolve target name
-    if drs_text.null_text(rawobjname, NULL_TEXT):
-        objectname = 'Null'
-    # else remove spaces - clean object name
+    if check_aliases and objdbm is not None:
+        # get local version of pconst
+        pconst = PseudoConstants()
+        # get clean / alias-safe version of object name
+        objectname, _ = objdbm.find_objname(pconst, objname)
     else:
         objectname = pseudo_const.clean_object(rawobjname)
     # -------------------------------------------------------------------------
     # deal with returning header
-    if return_header:
-        # add it to the header with new keyword
-        header[kwobjname] = objectname
-        hdict[kwobjname] = objectname
-        # return header
-        return header, hdict
-    else:
-        return objectname
+    # add it to the header with new keyword
+    header[kwobjname] = objectname
+    hdict[kwobjname] = objectname
+    # return header
+    return header, hdict
 
 
 def get_trg_type(params: ParamDict, header: Any, hdict: Any,
