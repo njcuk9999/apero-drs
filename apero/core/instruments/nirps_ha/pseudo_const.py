@@ -300,6 +300,10 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         header, hdict = get_dprtype(params, recipe, header, hdict,
                                     filename=filename)
         # ------------------------------------------------------------------
+        # Deal with calibrations and sky KW_OBJNAME
+        # ------------------------------------------------------------------
+        header, hdict = get_special_objname(params, header, hdict)
+        # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
         return header, hdict
@@ -1106,6 +1110,52 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
         header[kwoutput] = (outtype, kwoutputcomment)
         hdict[kwoutput] = (outtype, kwoutputcomment)
     # return header
+    return header, hdict
+
+
+def get_special_objname(params: ParamDict, header: Any,
+                        hdict: Any) -> Tuple[Any, Any]:
+    """
+    Deal with setting the object name for SKY and CALIB
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check for objname (if "objname" not set)
+    :param hdict: drs_fits.Header the output header dictionary to update with
+                  objname (as well as "header" if "objname" not set)
+
+    :return: the updated header/hdict
+    """
+    # get parameters from params
+    kwdprtype = params['KW_DPRTYPE'][0]
+    kwobjname = params['KW_OBJNAME'][0]
+    kwcatg = params['KW_RAW_DPRCATG'][0]
+    kwtrgtype = params['KW_TARGET_TYPE'][0]
+    kwobjcomment = params['KW_OBJNAME'][2]
+    obj_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
+    # conditions
+    cond1 = header[kwdprtype] in obj_dprtypes
+    cond2 = header[kwtrgtype] == 'SKY'
+    cond3 = header[kwcatg] == 'CALIB'
+    cond4 = header[kwcatg] == 'TEST'
+    # if nether conditions are met we have a science/telluric observation
+    #  don't update the date
+    if cond1 and not cond2:
+        return header, hdict
+    # if target type is sky make the object name sky
+    elif cond2:
+        objname = 'SKY'
+    # otherwise we assume we have a calibration
+    elif cond3:
+        objname = 'CALIB'
+    elif cond4:
+        objname = 'TEST'
+    else:
+        objname = 'UNKNOWN'
+    #  update header / hdict
+    header[kwobjname] = (objname, kwobjcomment)
+    hdict[kwobjname] = (objname, kwobjcomment)
+    # return header and hdict
     return header, hdict
 
 
