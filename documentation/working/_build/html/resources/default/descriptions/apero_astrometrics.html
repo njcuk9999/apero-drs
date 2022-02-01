@@ -1,0 +1,311 @@
+
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>1.1 SIMBAD, coordinates and proper motions &#8212; APERO 0.7.194 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
+
+
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a title="Home" href="../../../index.html">
+        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="install" href="../../../user/general/installation.html">
+        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
+        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="download pdf" href="../../../apero-docs.pdf">
+        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+  </ul>
+    <div>
+    <a href="../../../index.html">
+      <img src="../../../_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.194 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">1.1 SIMBAD, coordinates and proper motions</a></li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/resources/default/descriptions/apero_astrometrics.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <p>The apero astrometrics recipe allows one to add an object or a set of objects
+to the astrometrics database (pending list) - to allow APERO to get the best
+possible coordinates, proper motions and parallax as possible.</p>
+<p>The online database <a class="reference external" href="https://docs.google.com/spreadsheets/d/1dOogfEwC7wAagjVFdouB1Y1JdF9Eva4uDW6CTZ8x2FM/edit?usp=sharing">can be viewed here</a>. (but not edited).</p>
+<p>The first thing that is checked is whether the object (or one of its aliases)
+exists in the database. If it does the code skips this objects.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>An object can be forced to be updated with the –overwrite command.
+This is only recommended if an object currently in the astrometric
+database is deemed to be suspicious.</p>
+</div>
+<p>Once an object has been found not to be present currently in the database the
+user is asked whether they with to add the object to the database.</p>
+<p>The apero astrometrics recipe then cross-matches the name against SIMBAD, and
+tries to update the astrometrics with the best possible proper motions (see
+section 1.1 below) it then produces a print out to the screen similar to the
+following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">==================================================</span>
+    <span class="p">{</span><span class="n">CLEAN_OBJ_NAME</span><span class="p">}</span> <span class="p">[{</span><span class="n">ORIGINAL_OBJ_NAME</span><span class="p">}]</span>
+ <span class="o">==================================================</span>
+    <span class="n">Aliases</span><span class="p">:</span>
+         <span class="o">-</span> <span class="p">{</span><span class="n">ALIASES</span><span class="p">}</span>
+
+
+    <span class="n">RA</span><span class="p">:</span>    <span class="p">{</span><span class="n">RA</span><span class="p">}</span>             <span class="p">({</span><span class="n">COORD_SOURCE</span><span class="p">})</span>
+    <span class="n">DEC</span><span class="p">:</span>   <span class="p">{</span><span class="n">DEC</span><span class="p">}</span>            <span class="p">({</span><span class="n">COORD_SOURCE</span><span class="p">})</span>
+    <span class="n">PMRA</span><span class="p">:</span>  <span class="p">{</span><span class="n">PMRA</span><span class="p">}</span> <span class="n">mas</span><span class="o">/</span><span class="n">yr</span>    <span class="p">({</span><span class="n">PM_SOURCE</span><span class="p">})</span>
+    <span class="n">PMDE</span><span class="p">:</span>  <span class="p">{</span><span class="n">PMDE</span><span class="p">}</span> <span class="n">mas</span><span class="o">/</span><span class="n">yr</span>    <span class="p">({</span><span class="n">PM_SOURCE</span><span class="p">})</span>
+    <span class="n">PLX</span><span class="p">:</span>   <span class="p">{</span><span class="n">PLX</span><span class="p">}</span> <span class="n">mas</span>        <span class="p">({</span><span class="n">PLX_SOURCE</span><span class="p">})</span>
+    <span class="n">RV</span><span class="p">:</span>    <span class="p">{</span><span class="n">RV</span><span class="p">}</span> <span class="n">km</span><span class="o">/</span><span class="n">s</span>        <span class="p">({</span><span class="n">RV_SOURCE</span><span class="p">})</span>
+    <span class="n">SPT</span><span class="p">:</span>   <span class="p">{</span><span class="n">SPT</span><span class="p">}</span>            <span class="p">({</span><span class="n">SPT_SOURCE</span><span class="p">})</span>
+    <span class="n">EPOCH</span><span class="p">:</span> <span class="p">{</span><span class="n">EPOCH</span><span class="p">}</span>
+    <span class="n">Jmag</span><span class="p">:</span> <span class="p">{</span><span class="n">JMAG</span><span class="p">}</span>
+    <span class="n">Hmag</span><span class="p">:</span> <span class="p">{</span><span class="n">HMAG</span><span class="p">}</span>
+    <span class="n">Kmag</span><span class="p">:</span> <span class="p">{</span><span class="n">KMAG</span><span class="p">}</span>
+ <span class="o">==================================================</span>
+</pre></div>
+</div>
+<p>where:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>“CLEAN_OBJ_NAME” is a cleaned version of the name (capitalized, white spaces
+and puntucation removed) used throughout APERO.</p></li>
+<li><p>“ORIGINAL_OBJ_NAME” is the name input by the user</p></li>
+<li><p>“ALIASES” are SIMBAD (or otherwise) other names that should and can be used
+for this target (any with cleaned versions of these will use the “CLEAN_OBJ_NAME”
+throughout APERO.</p></li>
+<li><p>“RA”/”DEC” and the “COORD_SOURCE” are the Right ascension, declination and
+where they come from.
+.. note:: “COORD_SOURCE” should match “PM_SOURCE” (see section 1.1 below)</p></li>
+<li><p>“PMRA/PMDE” and the “PM_SOURCE” are the proper motions and where they come from
+.. note:: “COORD_SOURCE” should match “PM_SOURCE” (see section 1.1 below)</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>“RV” and “RV_SOURCE” are the radial velocity and where it comes from – if available
+(normally a bib code reference)</p></li>
+<li><p>“SPT” and “SPT_SOURCE” are the spectral type and source – if available
+(normally a bib code reference)</p></li>
+<li><p>EPOCH is the JD time of the coordinates and proper motion (see section 1.1 below)</p></li>
+<li><p>“Jmag”, “Hmag” and “Kmag” are the J/H and K magnitudes from SIMBAD</p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>You must must check these parameters carefully as this will
+define these parameters will define this observation throughout APERO.
+The must describe the astrophysical object for which you are naming.
+If they are not correct DO NOT add this object.</p>
+</div>
+<section id="simbad-coordinates-and-proper-motions">
+<h1>1.1 SIMBAD, coordinates and proper motions<a class="headerlink" href="#simbad-coordinates-and-proper-motions" title="Permalink to this headline">¶</a></h1>
+<p>Crossmatching an object name with SIMBAD is a great way to find the correct
+astrophysical object against a list of aliases and a large database of
+coordinates, motions and distances. However the coordinates given by
+SIMBAD are at 2000.0 but the proper motions are not. Therefore we only
+use SIMBAD to get a list of aliases for a certain astrophysical object and
+check against a few proper motion catalogues (matching to the ID from SIMBAD)
+to get coordinates that match the proper motion epoch.</p>
+<p>For example:</p>
+<p>Gl699 has the following aliases (from SIMBAD):</p>
+<ul class="simple">
+<li><p>BD+04  3561a</p></li>
+<li><p>AC2000  146626</p></li>
+<li><p>ASCC 1153178</p></li>
+<li><p>CCDM J17578+0441A</p></li>
+<li><p>Ci 20 1069</p></li>
+<li><p>CSI+04-17554</p></li>
+<li><p>CSV   7737</p></li>
+<li><p>1E 1755.3+0438</p></li>
+<li><p>GAT   12</p></li>
+<li><p>GCRV 10392</p></li>
+<li><p>GEN# +0.00403561</p></li>
+<li><p>G 140-24</p></li>
+<li><p>GJ   699</p></li>
+<li><p>GSC 00425-00184</p></li>
+<li><p>GSC 00425-02502</p></li>
+<li><p>HIC  87937</p></li>
+<li><p>HIP  87937</p></li>
+<li><p>IRAS 17553+0438</p></li>
+<li><p>JP11    18</p></li>
+<li><p>Karmn J17578+046</p></li>
+<li><p>LFT 1385</p></li>
+<li><p>LHS    57</p></li>
+<li><p>LSPM J1757+0441</p></li>
+<li><p>LTT 15309</p></li>
+<li><p>2MASS J17574849+0441405</p></li>
+<li><p>MCC 799</p></li>
+<li><p>NAME Barnard’s star</p></li>
+<li><p>NAME Barnard Star</p></li>
+<li><p>NLTT 45718</p></li>
+<li><p>NSV  9910</p></li>
+<li><p>8pc 549.01</p></li>
+<li><p>PLX 4098</p></li>
+<li><p>PLX 4098.00</p></li>
+<li><p>PM J17578+0441N</p></li>
+<li><p>StKM 2-1355</p></li>
+<li><p>TIC 325554331</p></li>
+<li><p>TYC  425-2502-1</p></li>
+<li><p>UBV   15269</p></li>
+<li><p>UCAC2  33428712</p></li>
+<li><p>UCAC4 474-068224</p></li>
+<li><p>USNO-B1.0 0946-00315199</p></li>
+<li><p>USNO 347</p></li>
+<li><p>USNO 876</p></li>
+<li><p>uvby98 000403561</p></li>
+<li><p>V* V2500 Oph</p></li>
+<li><p>VVO   6</p></li>
+<li><p>WEB 14849</p></li>
+<li><p>WISEA J175747.94+044323.8</p></li>
+<li><p>Zkh 269</p></li>
+<li><p>[RHG95]  2849</p></li>
+<li><p>Gaia EDR3 4472832130942575872</p></li>
+<li><p>Gaia DR2 4472832130942575872</p></li>
+</ul>
+<p>From this we find Gaia EDR3, Gaia DR2, UAC4 and HIP ids. We then cross match
+against these proper motion catalogues and obtain coordinates (ra and dec) that
+match the same epoch (i.e. for Gaia DR2 2015.5). We only match enough catalogues
+to provide one set of none-null coordaintes and proper motions.</p>
+<p>Currently the order of priority with proper motion catalogues is as follows:</p>
+<ul class="simple">
+<li><p>Gaia EDR3</p></li>
+<li><p>Gaia DR2</p></li>
+<li><p>UCAC4</p></li>
+<li><p>HIP</p></li>
+</ul>
+<p>If an astrophysical object does not have an alias in any of these catalogues
+we return a warning and skip this target.</p>
+<p>Once all targets have been matched (or skipped) the online database is updated
+(in the pending list) waiting the verification of administrators.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>that if a astrophyiscal object is in the pending list but not in the
+main list it will be used in APERO by default (assuming users allow updates
+from the database). If an astrophyiscal object is both in the main and pending
+lists, the pending list entry will NOT be used. The main list will be
+updated at specific times deemed by the administrators (to minimize
+inconsistencies between large redictions whereby changing a targets astrometrics
+could induce differences between unreduced and already reduced observations).</p>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.194 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">1.1 SIMBAD, coordinates and proper motions</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    </div>
+  </body>
+</html>
