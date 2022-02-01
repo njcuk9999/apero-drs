@@ -516,10 +516,8 @@ def query_database(params, rawobjnames: List[str],
     reject_list = prep.get_obj_reject_list(params)
     # loop around objects and find them in database
     for rawobjname in rawobjnames:
-        # clean the object
-        objname = pconst.DRS_OBJ_NAME(rawobjname)
         # find correct name in the database (via objname or aliases)
-        correct_objname, found = objdbm.find_objname(pconst, objname)
+        correct_objname, found = objdbm.find_objname(pconst, rawobjname)
         # deal with found / not found
         if found:
             msg = '\t - Object: "{0}" found in database as "{1}"'
