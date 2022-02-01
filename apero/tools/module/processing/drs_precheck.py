@@ -588,8 +588,6 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
     unfound_objects = []
     # loop around index database unique object names and check for them
     for uobjname in uobjnames:
-        # clean the object
-        uobjname = pconst.DRS_OBJ_NAME(uobjname)
         # find correct name in the database (via objname or aliases)
         correct_objname, found = objdbm.find_objname(pconst, uobjname)
         # ignore objects in the reject list

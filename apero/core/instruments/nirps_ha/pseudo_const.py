@@ -309,6 +309,13 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         Clean and standardize an object name
         i.e. make upper case and remove white spaces
 
+        Should only be used when we do not have to worry about aliases to
+        object names - use:
+            objdbm = drs_database.ObjectDatabase(params)
+            objdbm.load_db()
+            objdbm.find_objname(pconst, objname)
+        instead to deal with aliases
+
         :param objname: str, input object name
         :return:
         """

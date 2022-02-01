@@ -736,6 +736,8 @@ def update_astrometrics(params, filename):
 def very_similar_obj_names(pconst, objname1: str, objname2: str) -> bool:
     """
     Check if two objects are the same just with underscores differing them
+    (after the usual cleaning of object names - all caps + no punctuation or
+     white space)
     """
     # clean and remove underscores (just for comparison)
     cobjname1 = pconst.DRS_OBJ_NAME(objname1).replace('_', '')
