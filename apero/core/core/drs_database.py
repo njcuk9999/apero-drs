@@ -82,7 +82,8 @@ DealFilenameReturn = Union[Tuple[str, str], Tuple[Path, str, str, str]]
 OBS_PATHS = dict()
 FILEDBS = dict()
 OBS_NAMES = dict()
-
+# define reserved object names
+RESERVED_OBJ_NAMES = ['CALIB', 'SKY', 'TEST']
 
 # =============================================================================
 # Define classes
@@ -513,7 +514,11 @@ class ObjectDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         # check objname in global
         if objname in OBS_NAMES:
-            return OBS_NAMES[objname]
+            return OBS_NAMES[objname], True
+        # ---------------------------------------------------------------------
+        # deal with calib / sky / test
+        if objname in RESERVED_OBJ_NAMES:
+            return objname, True
         # ---------------------------------------------------------------------
         # assume we have not found our object name
         found = False
