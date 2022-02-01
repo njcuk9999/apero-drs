@@ -1079,6 +1079,9 @@ class DrsRecipe(object):
                                  self.class_name)
         # get parameters
         params = self.params
+        # load object database
+        objdbm = drs_database.ObjectDatabase(params)
+        objdbm.load_db()
         # load pseudo constants
         pconst = constants.pload()
         # loop around arguments
@@ -1101,7 +1104,7 @@ class DrsRecipe(object):
                             # make sure there are no white spaces
                             value = np.char.strip(value)
                             # deal with object name cleaning
-                            value = pconst.DRS_OBJ_NAMES(value)
+                            value = objdbm.find_objnames(pconst, value)
                         # need to filter list by tstars and ostars
                         # (if not in either list means they are not on disk)
                         all_objs = list(ostars) + list(tstars)
