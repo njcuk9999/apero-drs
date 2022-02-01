@@ -286,6 +286,9 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
     header.set_key(params, 'KW_DRS_DSOURCE', value=data_source)
     header.set_key(params, 'KW_DRS_DDATE', value=data_date)
     # -------------------------------------------------------------------------
+    # must update DRSOBJN
+    header.set_key(params, 'KW_OBJNAME', value=objname)
+    # -------------------------------------------------------------------------
     # return the header
     return header
 

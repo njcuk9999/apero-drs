@@ -100,6 +100,9 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     WLOG(params, '', 'Loading database...')
     indexdb = drs_database.IndexDatabase(params)
     indexdb.load_db()
+    # load object database
+    objdbm = drs_database.ObjectDatabase(params)
+    objdbm.load_db()
     # -------------------------------------------------------------------------
     # create master condition
     master_condition = ''
@@ -134,8 +137,8 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     database_inpaths = dict()
     # loop around input object names
     for kw_objname in kw_objnames:
-        # clean object name (as best we can)
-        clean_obj_name = pconst.DRS_OBJ_NAME(kw_objname)
+        # find correct name in the database (via objname or aliases)
+        clean_obj_name, found = objdbm.find_objname(pconst, kw_objname)
         WLOG(params, '', 'Processing KW_OBJNAME={0}'.format(clean_obj_name))
         # write condition for this object
         if drs_text.null_text(kw_objname, ['None', '', 'Null']):
