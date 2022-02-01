@@ -116,8 +116,11 @@ def __main__(recipe, params):
     objname = params['INPUTS']['OBJNAME']
     # need to convert object to drs object name
     pconst = constants.pload()
-    objname = pconst.DRS_OBJ_NAME(objname)
-
+    # load object database
+    objdbm = drs_database.ObjectDatabase(params)
+    objdbm.load_db()
+    # get clean / alias-safe version of object name
+    objname, _ = objdbm.find_objname(pconst, objname)
     # get the filetype (this is overwritten from user inputs if defined)
     filetype = params['INPUTS']['FILETYPE']
     # get the fiber type required

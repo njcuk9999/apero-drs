@@ -73,6 +73,9 @@ def get_tellu_include_list(params: ParamDict,
     func_name = __NAME__ + '.get_whitelist()'
     # get pseudo constants
     pconst = constants.pload()
+    # get object database
+    objdbm = drs_database.ObjectDatabase(params)
+    objdbm.load_db()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', func=func_name,
                       override=assets_dir)
@@ -86,7 +89,7 @@ def get_tellu_include_list(params: ParamDict,
     whitelist = drs_data.load_text_file(params, whitelistfile, func_name,
                                         dtype=str)
     # must clean names
-    whitelist = pconst.DRS_OBJ_NAMES(whitelist)
+    whitelist = objdbm.find_objnames(pconst, whitelist)
     # return the whitelist
     return whitelist
 
@@ -99,6 +102,9 @@ def get_tellu_exclude_list(params: ParamDict,
     func_name = __NAME__ + '.get_blacklist()'
     # get pseudo constants
     pconst = constants.pload()
+    # get object database
+    objdbm = drs_database.ObjectDatabase(params)
+    objdbm.load_db()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', func=func_name,
                       override=assets_dir)
@@ -111,8 +117,8 @@ def get_tellu_exclude_list(params: ParamDict,
     # load the white list
     blacklist = drs_data.load_text_file(params, blacklistfile, func_name,
                                         dtype=str)
-    # must clean names
-    blacklist = pconst.DRS_OBJ_NAMES(blacklist)
+    # must clean names and deal with aliases
+    blacklist = objdbm.find_objnames(pconst, blacklist)
     # return the whitelist
     return blacklist, blacklistfile
 

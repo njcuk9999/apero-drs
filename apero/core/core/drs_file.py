@@ -7611,6 +7611,7 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
 def fix_header(params: ParamDict, recipe: Any,
                infile: Union[DrsFitsFile, None] = None,
                header: Union[Header, FitsHeader, None] = None,
+               check_aliases: bool = False, objdbm: Any = None
                ) -> Union[DrsFitsFile, Tuple[FitsHeader, Header]]:
     """
     Instrument specific header fixes are define in pseudo_const.py for an
@@ -7622,6 +7623,13 @@ def fix_header(params: ParamDict, recipe: Any,
                    header to fix - if not set must have header set
     :param header: Header - if set fixes this header (if not set uses infile)
                    if both set 'header' takes precedence over infile.header
+    :param check_aliases: bool, if True checks objname for aliases (this should
+                   only be used when aliases are not going to be checked or
+                   have not been checked before) i.e. this should be set to
+                   False in preprocessing but true for precheck/processing
+                   where we deal with raw files
+    :param objdbm: drs_database.ObjectDatabase - the object database class to
+                   check aliases in (if check_aliases is True)
 
     :return: if infile is set return the infile with the updated infile.header,
              else return hdict and header (both fits.Header instances)
@@ -7644,7 +7652,9 @@ def fix_header(params: ParamDict, recipe: Any,
     #   a specific instrument) and update the header
     header, hdict = pconst.HEADER_FIXES(params=params, recipe=recipe,
                                         header=header, hdict=hdict,
-                                        filename=filename)
+                                        filename=filename,
+                                        check_aliases=check_aliases,
+                                        objdbm=objdbm)
     # if the input was an infile return the infile back
     if has_infile:
         # return the updated infile

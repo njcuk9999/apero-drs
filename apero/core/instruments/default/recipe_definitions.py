@@ -105,6 +105,7 @@ astrometric.set_arg(pos=0, name='objects', dtype=str,
 astrometric.set_kwarg(name='--overwrite', dtype='switch', default=False,
                       helpstr='Do not check if object is currently in database.'
                               ' Overwrite old value.')
+astrometric.description_file = 'apero_astrometrics.rst'
 
 # -----------------------------------------------------------------------------
 # apero_changelog.py
@@ -169,6 +170,8 @@ remake_doc.set_kwarg(name='--compile', dtype='switch', default=False,
                      helpstr=textentry('REMAKE_DOC_COMPILE_HELP'))
 remake_doc.set_kwarg(name='--upload', dtype='switch', default=False,
                      helpstr=textentry('REMAKE_DOC_UPLOADARG_HELP'))
+remake_doc.set_kwarg(name='--all', dtype='switch', default=False,
+                     helpstr='--filedef --recipedef and --recipeseq')
 remake_doc.set_kwarg(name='--filedef', dtype='switch', default=False,
                      helpstr=textentry('REMAKE_DOC_FILEDEF_HELP'))
 remake_doc.set_kwarg(name='--recipedef', dtype='switch', default=False,
