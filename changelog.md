@@ -1593,7 +1593,7 @@ Changelog
 - Apero.io.drs_fits.py - warnings for Table.read (with multiple tables)
   [Neil Cook]
 - Apero.core.instruments.*.default_constants.py - add
-  REPROCESS_OBJ_DPRTYPES. [Neil Cook]
+  PP_OBJ_DPRTYPES. [Neil Cook]
 - Apero.core.core.drs_file.py - correct __log__ [Neil Cook]
 - Apero.tools.module.database.manage_databases.py +
   apero.recipes.bin.apero_database.py - add kill switch for database

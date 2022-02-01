@@ -2771,7 +2771,7 @@ def get_non_telluric_stars(params, indexdb: IndexDatabase,
     if drs_text.null_text(tstars, ['None', '']):
         tstars = []
     # define the conditions for objects
-    dprtypes = params.listp('REPROCESS_OBJ_DPRTYPES', dtype=str)
+    dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
     # get the dprtype condition
     subcond = []
     for dprtype in dprtypes:
