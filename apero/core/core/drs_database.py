@@ -81,6 +81,7 @@ DealFilenameReturn = Union[Tuple[str, str], Tuple[Path, str, str, str]]
 # globals to save time on multiple reads
 OBS_PATHS = dict()
 FILEDBS = dict()
+OBS_NAMES = dict()
 
 
 # =============================================================================
@@ -506,6 +507,13 @@ class ObjectDatabase(DatabaseManager):
         :return: Tuple, 1. str, the "correct" object name to use for the DRS,
                  2. whether the object was found in the database
         """
+        # global
+        global OBS_NAMES
+        # ---------------------------------------------------------------------
+        # check objname in global
+        if objname in OBS_NAMES:
+            return OBS_NAMES[objname]
+        # ---------------------------------------------------------------------
         # assume we have not found our object name
         found = False
         # clean the input objname
@@ -537,6 +545,8 @@ class ObjectDatabase(DatabaseManager):
         # if there is an entry we found the object
         else:
             found = True
+        # store in global so we don't have to do this again
+        OBS_NAMES[objname] = [cobjname, found]
         # return the correct object name
         return cobjname, found
 
