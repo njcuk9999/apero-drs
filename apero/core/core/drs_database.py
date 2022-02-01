@@ -507,7 +507,8 @@ class ObjectDatabase(DatabaseManager):
         :return: Tuple, 1. str, the "correct" object name to use for the DRS,
                  2. whether the object was found in the database
         """
-        # global
+        # global to be updated so we don't do this more than once for the
+        #   same objname
         global OBS_NAMES
         # ---------------------------------------------------------------------
         # check objname in global

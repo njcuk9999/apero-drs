@@ -264,7 +264,7 @@ FIBER_SET_NUM_FIBERS_B.value = 1
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
-# Define object dpr types
+# Define object (science or telluric)
 PP_OBJ_DPRTYPES = PP_OBJ_DPRTYPES.copy(__NAME__)
 PP_OBJ_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
 
@@ -2731,10 +2731,6 @@ REPROCESS_SEQCOL.value = 'KW_CMPLTEXP'
 # define the time col for raw file table
 REPROCESS_TIMECOL = REPROCESS_TIMECOL.copy(__NAME__)
 REPROCESS_TIMECOL.value = 'KW_ACQTIME'
-
-# define the dprtypes for objects (for getting non telluric stars)
-REPROCESS_OBJ_DPRTYPES = REPROCESS_OBJ_DPRTYPES.copy(__NAME__)
-REPROCESS_OBJ_DPRTYPES.value = 'OBJ_FP, OBJ_DARK'
 
 # Define whether we try to create a latex summary pdf
 #   (turn this off if you have any problems with latex/pdflatex)
