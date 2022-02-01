@@ -1077,7 +1077,7 @@ def clean_obj_name(params: Union[ParamDict, None], header,
         # get local version of pconst
         pconst = PseudoConstants()
         # get clean / alias-safe version of object name
-        objectname, _ = objdbm.find_objname(pconst, objname)
+        objectname, _ = objdbm.find_objname(pconst, rawobjname)
     else:
         objectname = pseudo_const.clean_object(rawobjname)
     # -------------------------------------------------------------------------
