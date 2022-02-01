@@ -1,0 +1,7 @@
+This is makeindex, version 2.15 [TeX Live 2019] (kpathsea + Thai support).
+Scanning style file ./python.ist.......done (7 attributes redefined, 0 ignored).
+Scanning input file apero-docs.idx.....done (1103 entries accepted, 0 rejected).
+Sorting entries...........done (11784 comparisons).
+Generating output file apero-docs.ind.....done (1169 lines written, 0 warnings).
+Output written in apero-docs.ind.
+Transcript written in apero-docs.ilg.
