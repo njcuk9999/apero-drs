@@ -78,9 +78,16 @@ def __main__(recipe, params):
     instruments = ['default'] + instruments
     # -------------------------------------------------------------------------
     # get inputs
-    run_filedef = params['INPUTS']['FILEDEF']
-    run_recipedef = params['INPUTS']['RECIPEDEF']
-    run_recipeseq = params['INPUTS']['RECIPESEQ']
+    run_all = params['INPUTS']['ALL']
+    # deal with individual re-generation (or all regenerated)
+    if run_all:
+        run_filedef = True
+        run_recipedef = True
+        run_recipeseq = True
+    else:
+        run_filedef = params['INPUTS']['FILEDEF']
+        run_recipedef = params['INPUTS']['RECIPEDEF']
+        run_recipeseq = params['INPUTS']['RECIPESEQ']
     # -------------------------------------------------------------------------
     # clean auto directories (if doing all three again)
     if run_filedef and run_recipedef and run_recipeseq:

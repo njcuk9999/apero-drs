@@ -315,13 +315,17 @@ def check_files(params: ParamDict,
         objname = 'None'
     # clean (capitalize and remove white spaces)
     dprtype = drs_text.clean_strings(dprtype)
-    objname = pconst.DRS_OBJ_NAME(objname)
+    # load object database
+    objdbm = drs_database.ObjectDatabase(params)
+    objdbm.load_db()
+    # get clean / alias-safe version of object name
+    objname, _ = objdbm.find_objname(pconst, objname)
     # get inputs
     dprtype_inputs = params['INPUTS']['DPRTYPE'].split(',')
     objname_inputs = params['INPUTS']['OBJNAME'].split(',')
     # clean (capitalize and remove white spaces)
     dprtype_inputs = drs_text.clean_strings(dprtype_inputs)
-    objname_inputs = pconst.DRS_OBJ_NAMES(objname_inputs)
+    objname_inputs = objdbm.find_objnames(pconst, objname_inputs)
     # ----------------------------------------------------------------------
     # log checking file info
     wargs = [dprtype, objname]

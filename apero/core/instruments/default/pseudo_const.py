@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from apero.base import base
 from apero.base import drs_db
+from apero.core.core import drs_text
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_misc
 from apero.core.core import drs_exceptions
@@ -43,6 +44,8 @@ DatabaseColumns = drs_db.DatabaseColumns
 display_func = drs_misc.display_func
 # define bad characters for objects (alpha numeric + "_")
 BAD_OBJ_CHARS = [' '] + list(string.punctuation.replace('_', ''))
+# null text
+NULL_TEXT = ['', 'None', 'Null']
 
 
 # =============================================================================
@@ -190,6 +193,7 @@ class PseudoConstants:
         valid = ['.fits']
         return valid
 
+    # noinspection PyPep8Naming
     def NON_CHECK_DUPLICATE_KEYS(self) -> List[str]:
         """
         Post process do not check these duplicate keys
@@ -202,6 +206,7 @@ class PseudoConstants:
         # return forbiiden keys
         return keys
 
+    # noinspection PyPep8Naming
     def FORBIDDEN_OUT_KEYS(self) -> List[str]:
         """
         Defines the keys in a HEADER file not to copy when copying over all
@@ -269,7 +274,8 @@ class PseudoConstants:
 
     # noinspection PyPep8Naming
     def HEADER_FIXES(self, params: Any, recipe: Any, header: Any,
-                     hdict: Any, filename: str):
+                     hdict: Any, filename: str, check_aliases: bool = False,
+                     objdbm: Any = None):
         """
         This should do nothing unless an instrument header needs fixing
 
@@ -281,32 +287,18 @@ class PseudoConstants:
         :param hdict:  drs_fits.Header, alternate source for keys, can be
                        unset if header set
         :param filename: str, used for filename reported in exceptions
-
+        :param check_aliases: bool, if True check aliases (using database)
+        :param objdbm: drs_database.ObjectDatabase - the database to check
+                       aliases in
+                       
         :return: the fixed header
         """
         # set function name
         # _ = display_func('HEADER_FIXES', __NAME__, self.class_name)
         # do nothing
-        _ = params, recipe, header, hdict, filename
+        _ = params, recipe, header, hdict, filename, check_aliases, objdbm
         # raise implementation error
         self._not_implemented('HEADER_FIXES')
-
-    # noinspection PyPep8Naming
-    def DRS_OBJ_NAMES(self,
-                      objnamelist: Union[List[str], np.ndarray]) -> List[str]:
-        """
-        Wrapper around DRS_OBJ_NAME (for a list of strings)
-
-        :param params: ParamDict, parameter dictionary of constants
-        :param objnamelist: list of strings, the objnames to clean
-        :return:
-        """
-        outlist = []
-        # loop around objnames
-        for objname in objnamelist:
-            outlist.append(self.DRS_OBJ_NAME(objname=objname))
-        # return outlist
-        return outlist
 
     # noinspection PyPep8Naming
     def DRS_OBJ_NAME(self, objname: str) -> str:
@@ -315,22 +307,20 @@ class PseudoConstants:
 
         Default action: make upper case and remove white spaces
 
+        Should only be used when we do not have to worry about aliases to
+        object names - use:
+            objdbm = drs_database.ObjectDatabase(params)
+            objdbm.load_db()
+            objdbm.find_objname(pconst, objname)
+        instead to deal with aliases
+
         :param objname: str, input object name
         :return:
         """
-        # set function name
-        # _ = display_func('DRS_OBJ_NAME', __NAME__, self.class_name)
-        # clean object name
-        rawobjname = str(objname)
-        objectname = rawobjname.strip()
-        objectname = objectname.replace(' ', '_')
-        objectname = objectname.upper()
-        # deal with multiple underscores in a row
-        while '__' in objectname:
-            objectname = objectname.replace('__', '_')
         # return object name
-        return objectname
+        return clean_object(objname)
 
+    # noinspection PyPep8Naming
     def DRS_DPRTYPE(self, params: Any, recipe: Any, header: Any,
                     filename: str):
         """
@@ -351,6 +341,7 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('DRS_DPRTYPE')
 
+    # noinspection PyPep8Naming
     def DRS_MIDMJD(self, params: Any, header: Any, filename: str):
         """
         Get the midmjd for a specific header
@@ -368,6 +359,7 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('DRS_MIDMJD')
 
+    # noinspection PyPep8Naming
     def FRAME_TIME(self, params: Any, header: Any):
         """
         Get the frame time (either from header or constants depending on
@@ -383,6 +375,7 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('FRAME_TIME')
 
+    # noinspection PyPep8Naming
     def SATURATION(self, params: Any, header: Any):
         """
         Get the saturation (either from header or constants depending on
@@ -398,6 +391,7 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('SATURATION')
 
+    # noinspection PyPep8Naming
     def GET_STOKES_FROM_HEADER(self, params: Any, header: Any, wlog: Any):
         """
         Get the stokes parameter and exposure number from the header
@@ -412,6 +406,7 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('DRS_MIDMJD')
 
+    # noinspection PyPep8Naming
     def GET_POLAR_TELLURIC_BANDS(self):
         """
         Define regions where telluric absorption is high
@@ -422,6 +417,7 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('GET_POLAR_TELLURIC_BANDS')
 
+    # noinspection PyPep8Naming
     def GET_LSD_LINE_REGIONS(self):
         """
         Define regions to select lines in the LSD analysis
@@ -432,6 +428,7 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('GET_LSD_LINE_REGIONS')
 
+    # noinspection PyPep8Naming
     def GET_LSD_ORDER_RANGES(self):
         """
         Define the valid wavelength ranges for each order in SPIrou.
@@ -444,6 +441,7 @@ class PseudoConstants:
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
+    # noinspection PyPep8Naming
     def INDEX_HEADER_COLS(self) -> DatabaseColumns:
         """
         Which header keys should we have in the index database.
@@ -469,6 +467,7 @@ class PseudoConstants:
         self.header_cols = header_cols
         return header_cols
 
+    # noinspection PyPep8Naming
     def FILEDEF_HEADER_KEYS(self) -> List[str]:
         """
         Define the keys allowed to be used in file definitions
@@ -477,7 +476,6 @@ class PseudoConstants:
         """
         keys = []
         return keys
-
 
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
@@ -678,6 +676,7 @@ class PseudoConstants:
                         info='**', graph='~~', debug='++')
         return trig_key
 
+    # noinspection PyPep8Naming
     def ADJUST_SUBLEVEL(self, code: str, sublevel: Optional[int] = None):
         """
         Adjust the log code based on sub level (minor and major)
@@ -866,7 +865,7 @@ class PseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-
+    # noinspection PyPep8Naming
     def FIBER_LOCALISATION(self, fiber):
         """
         Return which fibers to calculate localisation for
@@ -882,6 +881,7 @@ class PseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+    # noinspection PyPep8Naming
     def FIBER_DILATE(self, fiber: str):
         """
         whether we are dilate the imagine due to fiber configuration this should
@@ -898,6 +898,7 @@ class PseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+    # noinspection PyPep8Naming
     def FIBER_DOUBLETS(self, fiber: str):
         """
         whether we have orders coming in doublets (i.e. SPIROUs AB --> A + B)
@@ -912,6 +913,7 @@ class PseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+    # noinspection PyPep8Naming
     def FIBER_DOUBLET_PARITY(self, fiber: str) -> Union[int, None]:
         """
         Give the doublt fibers parity - all other fibers should not use this
@@ -977,6 +979,7 @@ class PseudoConstants:
         # raise not implemented yet error
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+    # noinspection PyPep8Naming
     def FIBER_DPRTYPE(self, dprtype: str):
         """
         Input DPRTYPE tells you which fiber we are correcting for
@@ -1055,6 +1058,7 @@ class PseudoConstants:
         func_name = display_func('FIBER_KINDS', __NAME__, self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+    # noinspection PyPep8Naming
     def FIBER_LOC(self, fiber: str) -> Any:
         """
         Set the localisation fibers
@@ -1135,7 +1139,7 @@ class PseudoConstants:
         calib_columns.add(name='UNIXTIME', datatype='DOUBLE', is_index=True)
         calib_columns.add(name='USED', datatype='INT')
         # return columns
-        self.calibration_cols= calib_columns
+        self.calibration_cols = calib_columns
         return calib_columns
 
     # noinspection PyPep8Naming
@@ -1350,6 +1354,7 @@ class PseudoConstants:
         self.objdb_cols = obj_columns
         return obj_columns
 
+    # noinspection PyPep8Naming
     def GET_EPOCH(self, params, header):
         """
         Get the EPOCH in JD from a input header file (instrument specific)
@@ -1358,12 +1363,91 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('GET_EPOCH')
 
+    # =========================================================================
+    # CROSSMATCHING
+    # =========================================================================
+    # noinspection PyPep8Naming
+    def PM_TAP_DICT(self, params: Any) -> Dict[str, Dict[str, str]]:
+        """
+        Once we have an id for a proper motion catalogue we can cross-match
+        against this catalogue and get back variables. To do this we have
+        to set up a TAP query. These are done per proper motion catalogue and
+        stored as a dictionary.
+
+        Each entry should have:
+
+        query: SELECT {ra} as ra, {dec} as dec, {pmra} as pmde,
+                      {pmde} as pmde, {plx} as {plx}, epoch as {epoch}
+               FROM {cat} WHERE {id}={idnum}
+        url: TAP url
+
+        :return:
+        """
+        # storage
+        tap_dict = dict()
+        # ---------------------------------------------------------------------
+        QUERY1 = ('SELECT TOP 5 {id} as sid, {ra} as ra, {dec} as dec, '
+                  '{pmra} as pmra, {pmde} as pmde, {plx} as plx, '
+                  '{epoch} as epoch FROM {cat} WHERE {id}=\'{idnum}\'')
+
+        # ---------------------------------------------------------------------
+        # Gaia EDR3
+        # ---------------------------------------------------------------------
+        qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
+                      plx='parallax', epoch='ref_epoch',
+                      cat='gaiaedr3.gaia_source', id='source_id', idnum='{0}')
+        params.set('TAP_GAIA_EDR3_URL', 'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['Gaia EDR3 '] = dict()
+        tap_dict['Gaia EDR3 ']['QUERY'] = QUERY1.format(**qkargs)
+        tap_dict['Gaia EDR3 ']['URL'] = str(params['TAP_GAIA_EDR3_URL'])
+        # ---------------------------------------------------------------------
+        # Gaia DR2
+        # ---------------------------------------------------------------------
+        qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
+                      plx='parallax', epoch='ref_epoch',
+                      cat='gaiadr2.gaia_source', id='source_id', idnum='{0}')
+        params.set('TAP_GAIA_DR2_URL', 'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['Gaia DR2 '] = dict()
+        tap_dict['Gaia DR2 ']['QUERY'] = QUERY1.format(**qkargs)
+        tap_dict['Gaia DR2 ']['URL'] = str(params['TAP_GAIA_DR2_URL'])
+        # ---------------------------------------------------------------------
+        # UCAC 4
+        # ---------------------------------------------------------------------
+        QUERY2 = ('SELECT TOP 5 {id} as sid, {ra} as ra, {dec} as dec, '
+                  '{pmra}*3600*1000 as pmra, {pmde}*3600*1000 as pmde,'
+                  '0 as plx, 2000.0 as epoch'
+                  ' FROM {cat} WHERE {id}=\'UCAC4-{idnum}\'')
+        qkargs = dict(ra='raj2000', dec='dej2000', pmra='pmra', pmde='pmde',
+                      cat='ucac4.main', id='ucacid', idnum='{0}')
+        params.set('TAP_UCAC4_URL', 'http://dc.zah.uni-heidelberg.de/tap')
+        tap_dict['UCAC4 '] = dict()
+        tap_dict['UCAC4 ']['QUERY'] = QUERY2.format(**qkargs)
+        tap_dict['UCAC4 ']['URL'] = str(params['TAP_UCAC4_URL'])
+        # ---------------------------------------------------------------------
+        # Hipparcos
+        # ---------------------------------------------------------------------
+        QUERY3 = ('SELECT TOP 5 {id} as sid, {ra} as ra, {dec} as dec, '
+                  '{pmra} as pmra, {pmde} as pmde,'
+                  '{plx} as plx, 1991.25 as epoch'
+                  ' FROM {cat} WHERE {id}=\'{idnum}\'')
+        qkargs = dict(ra='ra', dec='dec', pmra='pm_ra', pmde='pm_de',
+                      plx='plx', id='hip', idnum='{0}',
+                      cat='public.hipparcos_newreduction')
+        params.set('TAP_HIP_URL', 'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['HIP '] = dict()
+        tap_dict['HIP ']['QUERY'] = QUERY3.format(**qkargs)
+        tap_dict['HIP ']['URL'] = str(params['TAP_HIP_URL'])
+        # ---------------------------------------------------------------------
+        # return dictionary
+        return tap_dict
+
 
 # =============================================================================
 # Functions used by pseudo const
 # =============================================================================
 def clean_object(rawobjname: str) -> str:
-
+    if drs_text.null_text(rawobjname, NULL_TEXT):
+        return 'Null'
     # strip spaces off raw object
     objectname = rawobjname.strip()
     # replace + and - with "p" and "m"

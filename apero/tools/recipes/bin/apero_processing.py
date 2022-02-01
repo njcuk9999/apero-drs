@@ -34,6 +34,7 @@ __release__ = base.__release__
 WLOG = drs_log.wlog
 # Get index database
 IndexDatabase = drs_database.IndexDatabase
+ObjectDatabase = drs_database.ObjectDatabase
 # get text entry instance
 textentry = lang.textentry
 
@@ -113,10 +114,20 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # everything else in a try (to log end email even with exception)
     try:
+        # ----------------------------------------------------------------------
+        # Update the object database (recommended only for full reprocessing)
+        # ----------------------------------------------------------------------
+        # check that we have entries in the object database
+        manage_databases.object_db_populated(params)
+        # update the database if required
+        if params['UPDATE_OBJ_DATABASE']:
+            manage_databases.update_object_database(params)
+        # load the object database
+        objdbm = ObjectDatabase(params)
+        objdbm.load_db()
         # ---------------------------------------------------------------------
         # find all files via index database
         # ---------------------------------------------------------------------
-
         # construct the index database instance
         indexdbm = IndexDatabase(params)
         indexdbm.load_db()
@@ -132,19 +143,10 @@ def __main__(recipe, params):
 
         # fix the header data (object name, dprtype, mjdmid and trg_type etc)
         WLOG(params, '', textentry('40-503-00043'))
-        indexdbm.update_header_fix(recipe)
+        indexdbm.update_header_fix(recipe, objdbm=objdbm)
 
         # find all previous runs
         skiptable = drs_processing.generate_skip_table(params)
-
-        # ----------------------------------------------------------------------
-        # Update the object database (recommended only for full reprocessing)
-        # ----------------------------------------------------------------------
-        # check that we have entries in the object database
-        manage_databases.object_db_populated(params)
-        # update the database if required
-        if params['UPDATE_OBJ_DATABASE']:
-            manage_databases.update_object_database(params)
 
         # ----------------------------------------------------------------------
         # Generate run list

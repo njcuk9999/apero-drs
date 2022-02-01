@@ -2804,24 +2804,6 @@ def get_non_telluric_stars(params, indexdb: IndexDatabase,
     return list(np.sort(other_objects))
 
 
-def _update_table_objnames(table):
-    """
-    Takes a table and forces updates to object name columns
-
-    :param table:
-    :return:
-    """
-    # get pseudo constants
-    pconst = constants.pload()
-    if OBJNAMECOL in table:
-        # original objnames
-        objnames = table[OBJNAMECOL]
-        # need to map values by new drs obj name
-        table[OBJNAMECOL] = pconst.DRS_OBJ_NAMES(objnames)
-    # return table
-    return table
-
-
 def _get_recipe_module(params, **kwargs):
     func_name = __NAME__ + '.get_recipe_module()'
     # log progress: loading recipe module files
@@ -2887,6 +2869,9 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
     func_name = __NAME__ + '._get_filters()'
     # get pseudo constatns
     pconst = constants.pload()
+    # need to load object database
+    objdbm = drs_database.ObjectDatabase(params)
+    objdbm.load_db()
     # set up filter storage
     filters = dict()
     # -------------------------------------------------------------------------
@@ -2909,7 +2894,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                     tellu_include_list = telluric.get_tellu_include_list(params)
                     # note we need to update this list to match
                     # the cleaning that is done in preprocessing
-                    clist = pconst.DRS_OBJ_NAMES(tellu_include_list)
+                    clist = objdbm.find_objnames(pconst, tellu_include_list)
                     # add cleaned obj list to filters
                     filters[key] = list(clist)
                 else:
@@ -2920,7 +2905,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                 objlist = _split_string_list(user_filter, allow_whitespace=True)
                 # note we need to update this list to match
                 # the cleaning that is done in preprocessing
-                clist = pconst.DRS_OBJ_NAMES(objlist)
+                clist = objdbm.find_objnames(pconst, objlist)
                 # add cleaned obj list to filters
                 filters[key] = list(clist)
                 if value == 'SCIENCE_TARGETS':

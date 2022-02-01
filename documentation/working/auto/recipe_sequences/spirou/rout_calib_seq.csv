@@ -4,5 +4,6 @@ ORDER,RECIPE,SHORTNAME,RECIPE KIND,MASTER RECIPE,ARGS
 3,apero_loc_spirou.py,LOCAB,calib-night-AB,No,{files}=[FLAT_DARK]
 4,apero_shape_spirou.py,SHAPE,calib-night,No,
 5,apero_flat_spirou.py,FF,calib-night,No,{files}=[FLAT_FLAT]
-6,apero_thermal_spirou.py,THERM,calib-night,No,
+6,apero_thermal_spirou.py,THERM_I,calib-night-I,Yes,{files}=[DARK_DARK_INT]
 7,apero_wave_night_spirou.py,WAVE,calib-night,No,
+8,apero_thermal_spirou.py,THERM_T,calib-night-T,Yes,{files}=[DARK_DARK_TEL]

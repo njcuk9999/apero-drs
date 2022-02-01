@@ -137,8 +137,8 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     database_inpaths = dict()
     # loop around input object names
     for kw_objname in kw_objnames:
-        # find correct name in the database (via objname or aliases)
-        clean_obj_name, found = objdbm.find_objname(pconst, kw_objname)
+        # clean object name (as best we can)
+        clean_obj_name, _ = objdbm.find_objname(pconst, kw_objname)
         WLOG(params, '', 'Processing KW_OBJNAME={0}'.format(clean_obj_name))
         # write condition for this object
         if drs_text.null_text(kw_objname, ['None', '', 'Null']):
