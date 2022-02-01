@@ -1070,6 +1070,8 @@ class DrsInputFile:
         :param hkeys: passed to required header keys (i.e. must be a DRS
                        Header key reference -- "KW_HEADERKEY")
                        [not used in DrsInputFile]
+        :param instrument: str, the instrument this file definition is
+                           associated with
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -4948,7 +4950,8 @@ class DrsNpyFile(DrsInputFile):
                  combined_list: Union[list, None] = None,
                  infiles: Union[list, None] = None,
                  s1d: Union[list, None] = None,
-                 hkeys: Union[Dict[str, str], None] = None):
+                 hkeys: Union[Dict[str, str], None] = None,
+                 instrument: Optional[str] = None):
         """
         Create a DRS Npy File Input object
 
@@ -5010,7 +5013,7 @@ class DrsNpyFile(DrsInputFile):
                               fileset, filesetnames, outfunc, inext, dbname,
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
-                              combined_list, s1d, hkeys)
+                              combined_list, s1d, hkeys, instrument)
         # these keys are not set in DrsInputFile
         self.inext = inext
         # get tag
@@ -5259,7 +5262,8 @@ class DrsNpyFile(DrsInputFile):
                 combined_list: Union[list, None] = None,
                 infiles: Union[list, None] = None,
                 s1d: Union[list, None] = None,
-                hkeys: Union[Dict[str, str], None] = None):
+                hkeys: Union[Dict[str, str], None] = None,
+                instrument: Optional[str] = None):
         """
         Create a new copy of DRS Npy File object - unset parameters come
         from current instance of Drs Input File
@@ -5307,6 +5311,9 @@ class DrsNpyFile(DrsInputFile):
         :param infiles: list, the list of input files (if output file)
         :param s1d: NOT USED FOR NPY FILE CLASS
         :param hkeys: NOT USED FOR NPY FILE CLASS
+        :param instrument: str, the instrument this file definition is
+                   associated with
+
         """
         # set function name
         # _ = display_func('newcopy', __NAME__, self.class_name)
@@ -5317,7 +5324,7 @@ class DrsNpyFile(DrsInputFile):
                             obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, hkeys)
+                            is_combined, combined_list, s1d, hkeys, instrument)
 
     def completecopy(self, drsfile: 'DrsNpyFile',
                      name: Union[str, None] = None,
@@ -5353,7 +5360,8 @@ class DrsNpyFile(DrsInputFile):
                      combined_list: Union[list, None] = None,
                      infiles: Union[list, None] = None,
                      s1d: Union[list, None] = None,
-                     hkeys: Union[Dict[str, str], None] = None):
+                     hkeys: Union[Dict[str, str], None] = None,
+                     instrument: Optional[str] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -5403,6 +5411,8 @@ class DrsNpyFile(DrsInputFile):
         :param infiles: NOT USED FOR NPY FILE CLASS
         :param s1d: NOT USED FOR NPY FILE CLASS
         :param hkeys: NOT USED FOR NPY FILE CLASS
+        :param instrument: str, the instrument this file definition is
+                   associated with
         """
         # set function name
         # _ = display_func('completecopy', __NAME__, self.class_name)
@@ -5413,7 +5423,8 @@ class DrsNpyFile(DrsInputFile):
                             obs_dir, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, infiles, s1d, hkeys)
+                            is_combined, combined_list, infiles, s1d, hkeys,
+                            instrument)
 
     # -------------------------------------------------------------------------
     # database methods
@@ -7765,6 +7776,7 @@ def id_drs_file(params: ParamDict,
                     #   read above
                     if file_set.hdict is not None:
                         for key in file_set.hdict:
+                            # noinspection PyUnresolvedReferences
                             file_in.header[key] = file_set.hdict[key]
 
                 # if exception occurs continue to next file
@@ -8079,7 +8091,8 @@ def _check_keyworddict(key: str,
     return False, None
 
 
-def _copydrsfile(drsfileclass, instance1: DrsInputFile,
+def _copydrsfile(drsfileclass,
+                 instance1: DrsInputFile,
                  instance2: Union[DrsInputFile, None],
                  name: Union[str, None] = None,
                  filetype: Union[str, None] = None,
