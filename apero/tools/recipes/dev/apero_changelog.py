@@ -44,7 +44,7 @@ DOC_CONFPATH = '../documentation/working/conf.py'
 DOC_CONF_PREFIX = 'release = '
 DOC_INDEXPATH = '../documentation/working/index.rst'
 DOC_INDEX_PREFIX = 'Latest version: '
-DOC_CHANGELOGPATH = '../documentation/working/misc/changelog.rst'
+DOC_CHANGELOGPATH = '../documentation/working/main/misc/changelog.rst'
 
 
 # =============================================================================
