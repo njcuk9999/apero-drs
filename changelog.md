@@ -2,6 +2,237 @@ Changelog
 =========
 
 
+0.7.205 (2022-02-01)
+--------------------
+- Merge remote-tracking branch 'origin/v0.7.194-working' into
+  v0.7.194-working. [Neil Cook]
+- Apero.core.instruments.*.pseudo_const.py - deal with SKY and CALIB
+  object names. [njcuk9999]
+- Apero.core.core.drs_database.py - deal with special (calib/sky/test)
+  better when trying to find aliases (don't check) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.194-working' into
+  v0.7.194-working. [Neil Cook]
+- Apero.core.core.drs_fil.py - update DrsInputFile children to have
+  instrument input. [njcuk9999]
+- Update PP_OBJ_DPRTYPES. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.194-working' into
+  v0.7.194-working. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.194-working' into
+  v0.7.194-working. [Neil Cook]
+
+  # Conflicts:
+  #	apero/tools/recipes/bin/apero_get.py
+- Obj fix. [Neil Cook]
+- Find_objname requires rawobjname not objname. [njcuk9999]
+- Apero.core.core.drs_database.py - save a list of obs names so we don't
+  do this multiple times per object. [Neil Cook]
+- Apero.tools.module.processing.drs_run_ini.py - correct pp_seq_opt (set
+  all RUN_PP_XXX to False except those we want as True by default) [Neil
+  Cook]
+- Continue dealing with aliases to object names. [Neil Cook]
+- Update documentation. [Neil Cook]
+- Update documentation. [Neil Cook]
+- Update documentation. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.194-working' into
+  v0.7.194-working. [Neil Cook]
+- Update object database / index database / header fix to check object
+  name aliases for raw data and in preprocessing (everything after this
+  point uses preprocessing names) [Neil Cook]
+
+
+0.7.204 (2022-01-29)
+--------------------
+- Merge remote-tracking branch 'origin/v0.7.194-working' into
+  v0.7.194-working. [Neil Cook]
+- Updates to apero_astrometrics.py to query pm catalogues for new
+  coords/motions. [Neil Cook]
+- Apero_leak_master_nirps_he.py - fix extract name (ha-->he) [Neil Cook]
+- Apero.plotting.plot_functions.py - flip figure rows/cols + stokes
+  parameter. [Neil Cook]
+- Apero.plotting.plot_functions.py - LSD param typos. [Neil Cook]
+- Apero.plotting.plot_functions.py - pprops and lprops --> props. [Neil
+  Cook]
+- Apero.science.polar.lsd.py - linevelo[jpos] --> linevelo[pix] [Neil
+  Cook]
+- Apero.plotting.plot_functions.py - typo tab:b -> tab:blue. [Neil Cook]
+- Add labels to plot_polar_fit_cont graph. [Neil Cook]
+
+
+0.7.203 (2022-01-28)
+--------------------
+- Apero.plotting.plot_functions.py - more plot fixes. [Neil Cook]
+- Apero.plotting.plot_functions.py - more plot fixes. [Neil Cook]
+- Apero.plotting.plot_functions.py - more plot fixes. [Neil Cook]
+- Apero.plotting.plot_functions.py - correct more typos. [Neil Cook]
+- Apero.plotting.plot_functions.py - correct typo NEXPOSURES -->
+  N_EXPOSURES. [Neil Cook]
+- Apero.plotting.plot_functions.py - deal with contx being None. [Neil
+  Cook]
+- Apero.plotting.plot_functions.py - CONT_XBIN, CONT_YBIN ->
+  CONT_POL_XBIN, CONT_POL_YBIN. [Neil Cook]
+- Apero.plotting.plot_functions.py - FLAT_X --> FLAT_WLDATA. [Neil Cook]
+- Apero.plotting.plot_functions.py - plot_polar_fit_cont correct plot.
+  [Neil Cook]
+- Apero.plotting.plot_functions.py - plot_polar_fit_cont correct typo
+  s-->ms. [Neil Cook]
+- Apero.science.polar.gen_pol.py - typo PLOT_POLAR_FIT_CONT -->
+  POLAR_FIT_CONT. [Neil Cook]
+- Apero.science.polar.gen_pol.py - typo POLAR_FIT_CONT -->
+  PLOT_POLAR_FIT_CONT. [Neil Cook]
+- Apero.insturments.spirou.recipe_definitions.py - polar code
+  --exposures should not be required. [Neil Cook]
+- Apero.core.instruments.*.default_keywords.py - remove
+  KW_THERM_RATIO_2. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.194-working' into
+  v0.7.194-working. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.194-working' into
+  v0.7.194-working. [njcuk9999]
+- Apero.core.core.drs_file.py - deal better with exclude keys in post
+  processing. [njcuk9999]
+- Apero.core.instruemnts.*.default_constants.py - add LSD MAX LINEDEPTH.
+  [Neil Cook]
+- Add excess emissivity csv file (default file for the drs) [Neil Cook]
+- Add excess emissivity changes. [Neil Cook]
+- Add new lsd masks. [Neil Cook]
+- Add polar changes (Eder update for 0.7) [Neil Cook]
+
+
+0.7.202 (2022-01-26)
+--------------------
+- Move leak and thermal to own calib py files and start excess
+  emissivity work. [Neil Cook]
+- [NIRPS_HE] apero.science.preprocessing.detector.py - account for too
+  much flux between pixels. [Neil Cook]
+- Correct mini runs for nirps_he and nirps_ha. [Neil Cook]
+- Update documentation (put examples for apero_get in correct place)
+  [Neil Cook]
+
+
+0.7.201 (2022-01-25)
+--------------------
+- Updates to get nirps-he working (currently on preprocessing) [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Apero.science.extract.gen_ext.py - correct typo THERMALFF_RATIO to
+  THERMALFF_RATIO_USED. [Neil Cook]
+- Update lang messages that are warnings/errors to display error code.
+  [Neil Cook]
+- Apero.core.core.drs_file.py - must copy exclude keys. [Neil Cook]
+- Apero.core.core.drs_file.py - need to deal with
+  DrsOutFile.exclude_keys = None. [Neil Cook]
+- Apero.tools.recipes.spirou.apero_postprocess_spirou.py - allow polar
+  code to skip certain files (i.e. if DRSMODE=SPECTROSCOPY or UNKNOWN
+  there will not be any p files to product) [Neil Cook]
+- Apero.tools.recipes.bin.apero_astrometrics.py - need to add old name
+  to aliases. [Neil Cook]
+- Apero.tools.recipes.bin.apero_astrometrics.py - need to update
+  astro_obj.objname. [Neil Cook]
+- Update apero_astrometrics.py and apero_precheck.py with new options.
+  [Neil Cook]
+- Update docs for dev tools + some optimization. [Neil Cook]
+
+
+0.7.200 (2022-01-25)
+--------------------
+- Update docs for dev tools + some optimization. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.194-working' into
+  v0.7.194-working. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.194-working' into
+  v0.7.194-working. [Neil Cook]
+- Remove _ = display_func and use of Constants = constants.load() where
+  possible. [Neil Cook]
+- Add a mode to thermal correction (tapas vs percentile) + add the
+  thermal ratios to header. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.194-working' into
+  v0.7.194-working. [njcuk9999]
+- Recipe_definitions for astrometric code wrong. [Neil Cook]
+- Recipe_definitions for astrometric code wrong. [Neil Cook]
+- Update requirements pillow + ipython. [Neil Cook]
+- Apero.science.extract + telluric - fix magic grid (no divide by 1000)
+  [njcuk9999]
+
+
+0.7.199 (2022-01-21)
+--------------------
+- Update some recipe definitions for dev tools. [Neil Cook]
+- Apero.science.polar.gen_pol.py - deal with full order having no good
+  (all NaNs) pixels. [njcuk9999]
+
+
+0.7.198 (2022-01-20)
+--------------------
+- Update documentation descriptions for user tools. [Neil Cook]
+- Update documentation descriptions for user tools. [Neil Cook]
+- Update documentation descriptions for user tools. [Neil Cook]
+- Update documentation descriptions for user tools. [Neil Cook]
+- Apero.tools.module.testing.drs_stats.py - deal with no unhandled
+  errors found. [Neil Cook]
+- Apero.tools.module.testing.drs_stats.py - check for PPLOG = None.
+  [Neil Cook]
+- Apero.tools.recipes.bin.apero_stats.py - error mode requires plog.
+  [Neil Cook]
+- Apero.tools.module.testing.drs_stats.py - append after errors caught
+  (otherwise x,y and m could be different lengths) [Neil Cook]
+- Apero.tools.module.drs_documentation.py - fix capitalization (just
+  first word) [Neil Cook]
+- Only clean auto files if we are redoing all automatically created
+  files. [Neil Cook]
+- Rearrange doc structure + fix warnings + add tools and dev tools +
+  clean auto files before restarting. [Neil Cook]
+- Rearrange doc structure. [Neil Cook]
+- Update documentation code + recipe definitions + file definitions +
+  update docs. [Neil Cook]
+
+
+0.7.197 (2022-01-13)
+--------------------
+- Merge remote-tracking branch 'origin/v0.7.194-working' into
+  v0.7.194-working. [njcuk9999]
+- Apero.science.calib.flat_blaze.py - add warning message that we are
+  trying sinc fit again + update language database. [Neil Cook]
+- Apero.science.calib.flat_blaze.py - sometimes does not fit (but not
+  reproducible) try again 5 times and then report error. [Neil Cook]
+- Apero.recipes.spirou.apero_postprocess_spirou.py - correct error
+  reporting. [njcuk9999]
+- Apero.core.instruments.spirou.file_definitions.py - cannot take tellu
+  from telluric database (shouldn't be the closest - should match
+  odometer (KW_IDENTIFIER) [Neil Cook]
+- Apero.core.instruments.spirou.file_definitions.py - TELLU A and B
+  files not in telluric database (should they be?) [Neil Cook]
+- Apero.core.instruments.spirou.file_definitions.py - tellurics from
+  telluric database? [Neil Cook]
+- Apero.core.instruments.spirou.file_definitions.py - t.fits hlink for
+  telluric files should be from database (shouldn't save if qc wasn't
+  passed) [Neil Cook]
+- Apero.core.instruments.spirou.file_definitions.py - fix typo OBJ_HC2
+  --> OBJ_HCTWO. [Neil Cook]
+
+
+0.7.196 (2022-01-12)
+--------------------
+- Update the language database. [Neil Cook]
+- Apero.science.calib.gen_calib.py - update pass message for calib delta
+  time + language database. [Neil Cook]
+- Apero.science.calib.gen_calib.py - update pass message for calib delta
+  time + language database. [Neil Cook]
+- Apero.science.calib.gen_calib.py - improve error for calib delta time.
+  [Neil Cook]
+- Problem with error code 09-002 and 09-003. [Neil Cook]
+- Correction of magic grid function (from lbl changes) [Neil Cook]
+
+
+0.7.195 (2021-12-27)
+--------------------
+- Apero.tools.module.setup.drs_isntallation.py - user_instrument must be
+  a string. [Neil Cook]
+- Apero.tools.module.testing.drs_stats.py - self.index is dataframe.
+  [Neil Cook]
+- Apero.tools.module.testing.drs_stats.py - PID-->KW_PID. [Neil Cook]
+- Apero.tools.module.testing.drs_stats.py - obtain the index database
+  once and pass dataframe to classes. [Neil Cook]
+- Update date/version/changelog/docs. [Neil Cook]
+
+
 0.7.194 (2021-12-22)
 --------------------
 - Merge remote-tracking branch 'origin/v0.7.193-working' into
@@ -1593,7 +1824,7 @@ Changelog
 - Apero.io.drs_fits.py - warnings for Table.read (with multiple tables)
   [Neil Cook]
 - Apero.core.instruments.*.default_constants.py - add
-  PP_OBJ_DPRTYPES. [Neil Cook]
+  REPROCESS_OBJ_DPRTYPES. [Neil Cook]
 - Apero.core.core.drs_file.py - correct __log__ [Neil Cook]
 - Apero.tools.module.database.manage_databases.py +
   apero.recipes.bin.apero_database.py - add kill switch for database
