@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Python installation &#8212; APERO 0.7.194 documentation</title>
+    <title>Python installation &#8212; APERO 0.7.205 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Glossary" href="glossary.html" />
-    <link rel="prev" title="Adding a new plot" href="../developer/adding_new_plot.html" />
+    <link rel="prev" title="MySQL example commands" href="mysql_database_commands.html" />
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
     <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
@@ -99,9 +99,9 @@
           <a href="glossary.html" title="Glossary"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../developer/adding_new_plot.html" title="Adding a new plot"
+          <a href="mysql_database_commands.html" title="MySQL example commands"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.194 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.205 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Python installation</a></li> 
       </ul>
     </div>
@@ -111,17 +111,15 @@
   <ul>
 <li><a class="reference internal" href="#">Python installation</a><ul>
 <li><a class="reference internal" href="#installing-miniconda-with-supplied-environment">Installing miniconda (with supplied environment)</a></li>
-<li><a class="reference internal" href="#using-miniconda-conda-pip-install-packages">Using miniconda (conda/pip install packages)</a></li>
 <li><a class="reference internal" href="#using-anaconda-with-supplied-environment">Using anaconda (with supplied environment)</a></li>
-<li><a class="reference internal" href="#using-anaconda-conda-pip-install-packages">Using anaconda (conda/pip install packages)</a></li>
 <li><a class="reference internal" href="#manually-using-pip">Manually using pip</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../developer/adding_new_plot.html"
-                        title="previous chapter">Adding a new plot</a></p>
+  <p class="topless"><a href="mysql_database_commands.html"
+                        title="previous chapter">MySQL example commands</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="glossary.html"
                         title="next chapter">Glossary</a></p>
@@ -156,16 +154,19 @@
 there will be a <cite>setup.py</cite> but not yet!</p>
 <p>Currently supported options are:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#python-install-miniconda-env"><span class="std std-ref">install miniconda with the supplied environment</span></a> (recommended)</p></li>
-<li><p><a class="reference internal" href="#python-install-miniconda-manual"><span class="std std-ref">install miniconda and manually installing packages</span></a></p></li>
-<li><p><a class="reference internal" href="#python-install-anaconda-env"><span class="std std-ref">install anaconda with the supplied environment</span></a></p></li>
-<li><p><a class="reference internal" href="#python-install-anaconda-manual"><span class="std std-ref">install anaconda and manually installing packages</span></a></p></li>
-<li><p><a class="reference internal" href="#python-install-pip"><span class="std std-ref">install via pip only</span></a></p></li>
+<li><p><a class="reference internal" href="#python-install-miniconda"><span class="std std-ref">install miniconda</span></a> (recommended)</p></li>
+<li><p><a class="reference internal" href="#python-install-anaconda"><span class="std std-ref">install anaconda</span></a></p></li>
+<li><p><a class="reference internal" href="#python-install-pip"><span class="std std-ref">install via pip only (i.e. in a venv)</span></a></p></li>
 </ul>
 <p>Once python and the required modules are correctly installed you can
 install APERO - see <a class="reference internal" href="../general/installation.html#installation"><span class="std std-ref">here</span></a>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>We do not recommend ever using the base environment or the
+system python for installing modules or running the APERO codes.</p>
+</div>
 <section id="installing-miniconda-with-supplied-environment">
-<span id="python-install-miniconda-env"></span><h2>Installing miniconda (with supplied environment)<a class="headerlink" href="#installing-miniconda-with-supplied-environment" title="Permalink to this headline">¶</a></h2>
+<span id="python-install-miniconda"></span><h2>Installing miniconda (with supplied environment)<a class="headerlink" href="#installing-miniconda-with-supplied-environment" title="Permalink to this headline">¶</a></h2>
 <p>This is recommended for maximum compatibility</p>
 <p>If you already use miniconda (with python 3) skip to step 3</p>
 <div class="admonition note">
@@ -189,102 +190,28 @@ anaconda website <a class="reference external" href="https:/repo.anaconda.com/mi
 </div>
 </div></blockquote>
 </li>
-<li><p>Find the APERO conda environment for you (you can either use the yml or the
-txt file) - note these files are system depenedent - do not install on
-non-supported systems</p>
+<li><p>Create a conda environment</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> apero-drs/setup/env/
-conda env create --file apero-env-<span class="o">{</span>EXT<span class="o">}</span>.yml
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda env create --name <span class="o">{</span>YOUR ENV NAME<span class="o">}</span> <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9
 </pre></div>
 </div>
-<p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> apero-drs/setup/env/
-conda create --name apero-env --file apero-env-<span class="o">{</span>EXT<span class="o">}</span>.txt
-bash apero-pip-<span class="o">{</span>EXT<span class="o">}</span>.txt
-</pre></div>
-</div>
-<p>where {EXT} should be the latest version for your system / setup.</p>
+<p>where <cite>{YOUR ENV NAME}</cite> should be a suitable name for the apero conda environemnt
+(e.g. <cite>setup_07XXX_mini1</cite> or <cite>full_07111</cite>)</p>
 </div></blockquote>
 </li>
 </ol>
-<p>You should now have an environment called <cite>apero-env</cite>.</p>
+<p>You should now have an environment called <cite>{YOUR ENV NAME}</cite>.</p>
 <p>Before running or installing APERO you must be in this conda environment, i.e. type:</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda activate apero-env
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda activate <span class="o">{</span>YOUR ENV NAME<span class="o">}</span>
 </pre></div>
 </div>
 </div></blockquote>
-<p><a class="reference internal" href="#python-installation"><span class="std std-ref">Back to top</span></a></p>
-</section>
-<section id="using-miniconda-conda-pip-install-packages">
-<span id="python-install-miniconda-manual"></span><h2>Using miniconda (conda/pip install packages)<a class="headerlink" href="#using-miniconda-conda-pip-install-packages" title="Permalink to this headline">¶</a></h2>
-<p>If you already use miniconda (with python 3) skip to step 3</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Make sure the miniconda you download/have is miniconda3</p>
-</div>
-<ol class="arabic">
-<li><p>Download miniconda3, i.e. in bash and wget (or go to the
-anaconda website <a class="reference external" href="https:/repo.anaconda.com/miniconda/">https:/repo.anaconda.com/miniconda/</a>)</p>
-<p>i.e. the current latest version of Miniconda3 for Linux is this:</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-</pre></div>
-</div>
-</div></blockquote>
-</li>
-<li><p>Install miniconda, i.e. with bash</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash Miniconda3-latest-Linux-x86_64.sh
-</pre></div>
-</div>
-</div></blockquote>
-</li>
-<li><p>Create a new conda environment</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda create --name apero-env <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.7
-</pre></div>
-</div>
-</div></blockquote>
-</li>
-<li><p>Install the packages available via conda. You will need to check the
-currently supported packages in the <cite>apero-drs/requirements_current.txt</cite> file
-or for developers <cite>apero-drs/requirements_developer.txt</cite> file.</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda install <span class="nv">astropy</span><span class="o">=</span><span class="m">4</span>.0
-conda install <span class="nv">numpy</span><span class="o">=</span><span class="m">1</span>.18.1
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Some packages must be installed via pip</p>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">astroquery</span><span class="o">=</span><span class="mf">0.3.10</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="n">barycorrpy</span><span class="o">=</span><span class="mf">0.3.1</span>
-</pre></div>
-</div>
-</div></blockquote>
-</li>
-</ol>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If experiencing trouble with barycorrpy with the error:
-<cite>Cannot remove entries from nonexistent</cite> run the following:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install barycorrpy --ignore-installed
-</pre></div>
-</div>
-</div>
-<p>You should now have an environment called <cite>apero-env</cite>.</p>
-<p>Before running or installing APERO you must be in this conda environment, i.e. type:</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda activate apero-env
-</pre></div>
-</div>
-</div></blockquote>
+<p>You can now install APERO (see <a class="reference internal" href="../general/installation.html#installation"><span class="std std-ref">here</span></a>)</p>
 <p><a class="reference internal" href="#python-installation"><span class="std std-ref">Back to top</span></a></p>
 </section>
 <section id="using-anaconda-with-supplied-environment">
-<span id="python-install-anaconda-env"></span><h2>Using anaconda (with supplied environment)<a class="headerlink" href="#using-anaconda-with-supplied-environment" title="Permalink to this headline">¶</a></h2>
+<span id="python-install-anaconda"></span><h2>Using anaconda (with supplied environment)<a class="headerlink" href="#using-anaconda-with-supplied-environment" title="Permalink to this headline">¶</a></h2>
 <p>If you already use anaconda (with python 3) skip to step 3</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -307,122 +234,36 @@ anaconda website <a class="reference external" href="https:/repo.anaconda.com/ar
 </div>
 </div></blockquote>
 </li>
-<li><p>Find the APERO conda environment for you (you can either use the yml or the
-txt file) - note these files are system depenedent - do not install on
-non-supported systems</p>
+<li><p>Create a conda environment</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> apero-drs/setup/env/
-conda env create --file apero-env-<span class="o">{</span>EXT<span class="o">}</span>.yml
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda env create --name <span class="o">{</span>YOUR ENV NAME<span class="o">}</span> <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9
 </pre></div>
 </div>
-<p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> apero-drs/setup/env/
-conda create --name apero-env --file apero-env-<span class="o">{</span>EXT<span class="o">}</span>.txt
-bash apero-pip-<span class="o">{</span>EXT<span class="o">}</span>.txt
-</pre></div>
-</div>
-<p>where {EXT} should be the latest version for your system / setup.</p>
+<p>where <cite>{YOUR ENV NAME}</cite> should be a suitable name for the apero conda environemnt
+(e.g. <cite>setup_07XXX_mini1</cite> or <cite>full_07111</cite>)</p>
 </div></blockquote>
 </li>
 </ol>
-<p>You should now have an environment called <cite>apero-env</cite>.</p>
+<p>You should now have an environment called <cite>{YOUR ENV NAME}</cite>.</p>
 <p>Before running or installing APERO you must be in this conda environment, i.e. type:</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda activate apero-env
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda activate <span class="o">{</span>YOUR ENV NAME<span class="o">}</span>
 </pre></div>
 </div>
 </div></blockquote>
-<p><a class="reference internal" href="#python-installation"><span class="std std-ref">Back to top</span></a></p>
-</section>
-<section id="using-anaconda-conda-pip-install-packages">
-<span id="python-install-anaconda-manual"></span><h2>Using anaconda (conda/pip install packages)<a class="headerlink" href="#using-anaconda-conda-pip-install-packages" title="Permalink to this headline">¶</a></h2>
-<p>If you already use anaconda (with python 3) skip to step 3</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Make sure the anaconda you download/have is anaconda3</p>
-</div>
-<ol class="arabic">
-<li><p>Download anaconda, i.e. in bash and wget (or go to the
-anaconda website <a class="reference external" href="https:/repo.anaconda.com/archive/">https:/repo.anaconda.com/archive/</a>)</p>
-<p>i.e. the current latest version of Anaconda3 for Linux is this:</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget https://repo.anaconda.com/archive/Anaconda3-2020.07-Linux-x86_64.sh
-</pre></div>
-</div>
-</div></blockquote>
-</li>
-<li><p>Install anaconda, i.e. with bash</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash Anaconda3-2020.07-Linux-x86_64.sh
-</pre></div>
-</div>
-</div></blockquote>
-</li>
-<li><p>Create a new conda environment</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda create --name apero-env <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.7
-</pre></div>
-</div>
-</div></blockquote>
-</li>
-<li><p>Install the packages available via conda. You will need to check the
-currently supported packages in the <cite>apero-drs/requirements_current.txt</cite> file
-or for developers <cite>apero-drs/requirements_developer.txt</cite> file.</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda install <span class="nv">astropy</span><span class="o">=</span><span class="m">4</span>.0
-conda install <span class="nv">numpy</span><span class="o">=</span><span class="m">1</span>.18.1
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Some packages must be installed via pip</p>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">astroquery</span><span class="o">=</span><span class="mf">0.3.10</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="n">barycorrpy</span><span class="o">=</span><span class="mf">0.3.1</span>
-</pre></div>
-</div>
-</div></blockquote>
-</li>
-</ol>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If experiencing trouble with barycorrpy with the error:
-<cite>Cannot remove entries from nonexistent</cite> run the following:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install barycorrpy --ignore-installed
-</pre></div>
-</div>
-</div>
-<p>You should now have an environment called <cite>apero-env</cite>.</p>
-<p>Before running or installing APERO you must be in this conda environment, i.e. type:</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda activate apero-env
-</pre></div>
-</div>
-</div></blockquote>
+<p>You can now install APERO (see <a class="reference internal" href="../general/installation.html#installation"><span class="std std-ref">here</span></a>)</p>
 <p><a class="reference internal" href="#python-installation"><span class="std std-ref">Back to top</span></a></p>
 </section>
 <section id="manually-using-pip">
 <span id="python-install-pip"></span><h2>Manually using pip<a class="headerlink" href="#manually-using-pip" title="Permalink to this headline">¶</a></h2>
-<ol class="arabic">
-<li><p>install python 3.7 (install, via virtual environment etc)</p></li>
-<li><p>pip install all modules. You will need to check the
-currently supported packages in the <cite>apero-drs/requirements_current.txt</cite> file
-or for developers <cite>apero-drs/requirements_developer.txt</cite> file.</p>
-<blockquote>
-<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">astroquery</span><span class="o">=</span><span class="mf">0.3.10</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="n">barycorrpy</span><span class="o">=</span><span class="mf">0.3.1</span>
-</pre></div>
-</div>
-</div></blockquote>
-</li>
-</ol>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If experiencing trouble with barycorrpy with the error:
-<cite>Cannot remove entries from nonexistent</cite> run the following:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install barycorrpy --ignore-installed
-</pre></div>
-</div>
+<p>Setup your python and install the pip module and create a environement as required,
+we do not give instructions how to do this here.</p>
+<p>We recommend typing <cite>which pip</cite> to verify you are using the correct pip.</p>
+<p>You can now install APERO (see <a class="reference internal" href="../general/installation.html#installation"><span class="std std-ref">here</span></a>)</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>We do not recommend ever using the base environment or the
+system python for installing modules or running the APERO codes.</p>
 </div>
 <p><a class="reference internal" href="#python-installation"><span class="std std-ref">Back to top</span></a></p>
 </section>
@@ -445,9 +286,9 @@ or for developers <cite>apero-drs/requirements_developer.txt</cite> file.</p>
           <a href="glossary.html" title="Glossary"
              >next</a> |</li>
         <li class="right" >
-          <a href="../developer/adding_new_plot.html" title="Adding a new plot"
+          <a href="mysql_database_commands.html" title="MySQL example commands"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.194 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.205 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Python installation</a></li> 
       </ul>
     </div>

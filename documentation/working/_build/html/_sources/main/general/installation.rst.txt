@@ -8,8 +8,8 @@ Installation
 
   Below is the guide for first time installation and upgrade
 
-  * :ref:`installation-prerequisites`
   * :ref:`installation-download`
+  * :ref:`installation-prerequisites`
   * :ref:`installation-setup`
   * :ref:`installation-update`
 
@@ -17,47 +17,7 @@ Installation
 Once you have installed APERO you can read about running APERO
 :ref:`here <using_apero_default>`.
 
-
-.. _installation-prerequisites:
-
-====================================================================================
-Prerequisites 
-====================================================================================
-
-APERO is coded using `python 3 <https://www.python.org/download/releases/3.0/>`_
-Please do not use python 2 with APERO.
-
-The following python modules are required
-
-    .. code-block:: bash
-
-        astropy
-        matplotlib
-        pandas
-        numpy
-        scipy
-        yaml
-
-The following python modules are recommended
-
-    .. code-block:: bash
-
-        astroquery (required for precision BERV)
-        barycorrpy (required for precision BERV)
-        bottleneck (faster)
-        ipdb       (debugging)
-        numba      (faster)
-        PIL        (some graphical interfaces)
-        tqdm       (for some tools)
-        yagmail    (for an email settings)
-
-See :ref:`here <python-installation>` for guide to intalling python and modules with
-the recommended setup.
-
-
-.. only:: html
-
-  :ref:`Back to top <installation>`
+.. note:: A Guide for installing python can be found :ref:`here <python-installation>`
 
 .. _installation-download:
 
@@ -132,8 +92,45 @@ Choose which branch:
 
   :ref:`Back to top <installation>`
 
+.. _installation-prerequisites:
+
+====================================================================================
+Prerequisites
+====================================================================================
+
+APERO is coded using `python 3 <https://www.python.org/download/releases/3.0/>`_
+
+Currently we recommend python 3.9 (however 3.7 and 3.8 are supported).
+
+Please do not use python 2 with APERO.
+
+Please use the requirements file to install the exact required modules
+i.e. from the git hub directory
+
+.. code-block:: bash
+
+    pip install -r requirements_current.txt
+
+
+.. note:: Some developer tools require additional modules. Please use the
+          requirements_developer.txt for these (This can be done at any time
+          after the installation process to use the tools).
+
+.. warning:: Please make sure you are in the correct environment (especially if
+             using conda). If using conda it is worth doing a `which pip` to
+             make sure your pip is installing the python modules to the
+             correct environment (and not, for example, your base or system
+             environment).
+
+
+.. only:: html
+
+  :ref:`Back to top <installation>`
+
+
+
 .. _installation-setup:
-      
+
 ====================================================================================
 Setup
 ====================================================================================

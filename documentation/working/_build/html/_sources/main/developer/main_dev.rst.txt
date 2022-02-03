@@ -59,6 +59,18 @@ Full tutorials
 
 .. _dev_main_other:
 
+--------------------------------
+Other
+--------------------------------
+
+.. toctree::
+  :maxdepth: 1
+  :caption: Contents:
+
+  ../misc/mysql_database_commands.rst
+
+
+
 
 .. only:: html
 
