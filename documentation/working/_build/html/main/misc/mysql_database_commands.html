@@ -1,0 +1,249 @@
+
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>MySQL example commands &#8212; APERO 0.7.205 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Python installation" href="pythoninstallation.html" />
+    <link rel="prev" title="Adding a new plot" href="../developer/adding_new_plot.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
+
+
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a title="Home" href="../../index.html">
+        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="install" href="../../user/general/installation.html">
+        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
+        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="download pdf" href="../../apero-docs.pdf">
+        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+  </ul>
+    <div>
+    <a href="../../index.html">
+      <img src="../../_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="pythoninstallation.html" title="Python installation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../developer/adding_new_plot.html" title="Adding a new plot"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.205 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../developer/main_dev.html" accesskey="U">Developer how to guide</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">MySQL example commands</a></li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">MySQL example commands</a><ul>
+<li><a class="reference internal" href="#specific-example-commands">Specific example commands:</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../developer/adding_new_plot.html"
+                        title="previous chapter">Adding a new plot</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pythoninstallation.html"
+                        title="next chapter">Python installation</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/main/misc/mysql_database_commands.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="mysql-example-commands">
+<h1>MySQL example commands<a class="headerlink" href="#mysql-example-commands" title="Permalink to this headline">¶</a></h1>
+<p>If using the MySQL database one can make use of direct access to the databases</p>
+<p>To accesing mysql (i.e. from bash):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mysql -h rali -u spirou -p
+</pre></div>
+</div>
+<p>Get/Show to database/tables</p>
+<div class="highlight-MySQL notranslate"><div class="highlight"><pre><span></span><span class="k">SHOW</span><span class="w"> </span><span class="k">databases</span><span class="p">;</span><span class="w"></span>
+<span class="k">USE</span><span class="w"> </span><span class="n">spirou</span><span class="p">;</span><span class="w"></span>
+<span class="k">SHOW</span><span class="w"> </span><span class="k">tables</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+</div>
+<p>Show columns in a table</p>
+<div class="highlight-MySQL notranslate"><div class="highlight"><pre><span></span>SHOW COLUMNS FROM {table name}
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><cite>{index table name}</cite> is the correct index database and {object table name}
+is the correct object index database from the <cite>SHOW tables;</cite> command above</p>
+</div>
+<section id="specific-example-commands">
+<h2>Specific example commands:<a class="headerlink" href="#specific-example-commands" title="Permalink to this headline">¶</a></h2>
+<p>Get count of each object (in raw directory) with counts over 100</p>
+<div class="highlight-MySQL notranslate"><div class="highlight"><pre><span></span>SELECT KW_OBJNAME, COUNT(KW_OBJNAME)
+FROM {index table name}
+WHERE BLOCK_KIND=&quot;raw&quot;
+GROUP BY KW_OBJNAME
+HAVING COUNT(KW_OBJNAME) &gt; 100;
+</pre></div>
+</div>
+<p>Get all raw files for a specific night:</p>
+<div class="highlight-MySQL notranslate"><div class="highlight"><pre><span></span>SELECT ABSPATH, OBS_DIR, FILENAME, KW_OBJNAME
+FROM {index table name}
+WHERE BLOCK_KIND=&quot;raw&quot; AND OBS_DIR=&quot;2019-06-15&quot;;
+</pre></div>
+</div>
+<p>Count the number of e2dsff entries for GL699</p>
+<div class="highlight-MySQL notranslate"><div class="highlight"><pre><span></span>SELECT COUNT(*)
+FROM {index table name}
+WHERE block_kind=&quot;red&quot; and KW_OBJNAME=&quot;GL699&quot; and KW_OUTPUT=&quot;EXT_E2DS_FF&quot;;
+</pre></div>
+</div>
+<p>Current local object astrometric database</p>
+<div class="highlight-MySQL notranslate"><div class="highlight"><pre><span></span>SELECT OBJNAME, ORIGINAl_NAME, SP_TYPE, TEFF
+FROM {object table name};
+</pre></div>
+</div>
+<p>Combining the INDEX and OBJECT database to find the number of raw files and adding the temperature and spectral
+type for each from the object database</p>
+<div class="highlight-MySQL notranslate"><div class="highlight"><pre><span></span>SELECT m.KW_OBJNAME as name, COUNT(KW_OBJNAME) as counter, c.TEFF, c.SP_TYPE
+FROM {index table name} AS m
+INNER JOIN {object table name} c ON c.OBJNAME = m.KW_OBJNAME
+WHERE m.BLOCK_KIND=&quot;raw&quot;
+GROUP BY m.KW_OBJNAME;
+</pre></div>
+</div>
+<p>Combining the INDEX and OBJECT database to find the number of e2dsff AB files and adding the temperature and spectral
+type for each from the object database</p>
+<div class="highlight-MySQL notranslate"><div class="highlight"><pre><span></span>SELECT m.KW_OBJNAME as name, COUNT(KW_OBJNAME) as counter, c.TEFF, c.SP_TYPE
+FROM {index table name} AS m
+INNER JOIN {object table name} AS c ON c.OBJNAME = m.KW_OBJNAME
+WHERE m.BLOCK_KIND=&quot;red&quot; AND m.KW_OUTPUT=&quot;EXT_E2DS_FF&quot; AND m.KW_FIBER=&quot;AB&quot;
+GROUP BY m.KW_OBJNAME;
+</pre></div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="pythoninstallation.html" title="Python installation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../developer/adding_new_plot.html" title="Adding a new plot"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.205 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../developer/main_dev.html" >Developer how to guide</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">MySQL example commands</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    </div>
+  </body>
+</html>
