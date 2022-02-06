@@ -514,7 +514,7 @@ class ObjectDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         # check objname in global
         if objname in OBS_NAMES:
-            return OBS_NAMES[objname], True
+            return OBS_NAMES[objname]
         # ---------------------------------------------------------------------
         # deal with calib / sky / test
         if objname in RESERVED_OBJ_NAMES:
