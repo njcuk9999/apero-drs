@@ -19,6 +19,7 @@ from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_database
 from apero.core.core import drs_text
+from apero.core.core import drs_misc
 
 # =============================================================================
 # Define variables
@@ -38,6 +39,51 @@ ParamDict = constants.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
+def raw_files(params: ParamDict, user_outdir: str, do_copy: bool = True,
+              do_symlink: bool = False):
+    """
+    Copy (or sym-link) the whole raw directory
+
+    :param params:
+    :param do_symlink:
+    :return:
+    """
+    # get raw directory
+    raw_path = params['DRS_DATA_RAW']
+    # walk through path
+    for root, dirs, files in os.walk(raw_path):
+        # get uncommon path
+        upath = drs_misc.get_uncommon_path(raw_path, root)
+        # make outpath
+        outdir = os.path.join(user_outdir, upath)
+        # make out directory if it doesn't exist
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+        # loop around files
+        for filename in files:
+            # only copy fits
+            if not filename.endswith('.fits'):
+                continue
+            # construct inpath
+            inpath = os.path.join(root, filename)
+            # construct outpath
+            outpath = os.path.join(outdir, filename)
+
+            # copy
+            if do_symlink:
+                # print process
+                msg = 'Creating symlink {0}'
+                WLOG(params, '', msg.format(outpath))
+                # create symlink
+                os.symlink(inpath, outpath)
+            elif do_copy:
+                # print process
+                msg = 'Copying file {0}'
+                WLOG(params, '', msg.format(outpath))
+                # copy file
+                shutil.copy(inpath, outpath)
+
+
 def basic_filter(params: ParamDict, kw_objnames: List[str],
                  filters: Dict[str, List[str]], user_outdir: str,
                  do_copy: bool = True, do_symlink: bool = False

@@ -22,6 +22,14 @@ whether the copied files are just symlinks or full copies of the data.
 .. note:: We recommend running with --test the first time this is used to make
           sure you have the files you want (and check whether all the options worked)
 
+The apero_get recipe also allows quick copying of the full raw data set (or symlinks) this is useful when doing a full
+reduction and wanting a consistent dataset (where a normal raw directory may be getting new files every day)
+
+   .. code-block::
+
+       apero_get.py --raw --symlink --outpath /home/test/apero-files/raw/
+
+
 1.1 Some examples
 ^^^^^^^^^^^^^^^^^^^^^^
 
