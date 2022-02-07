@@ -397,22 +397,15 @@ def object_db_populated(params: ParamDict) -> bool:
     return count > 0
 
 
-def update_object_database(params: ParamDict, log: bool = True):
+def get_object_database(params: ParamDict, log: bool = True) -> Table:
     """
-    Update the local object database - note this overwrites all entries in the
-    local database
+    Get the object database from google sheet (or file)
+    and combine with pending / user table if required and found
 
-    By default this uses a googlesheet URL (OBJ_LIST_GOOGLE_SHEET_URL)
-    + workbook ids to populate the object database
-    (OBJ_LIST_GSHEET_MAIN_LIST_ID + OBJ_LIST_GSHEET_PEND_LIST_ID)
+    :param params: ParamDict, parameter dictionary of constants
+    :param log: whether to log table read
 
-    however if OBJ_LIST_GOOGLE_SHEET_URL is a local directory one can set the
-    OBJ_LIST_GSHEET_MAIN_LIST_ID + OBJ_LIST_GSHEET_PEND_LIST_ID to csv
-    files for a complete offline reduction
-
-    :param params: ParamDict, the parameter dictionary of constants
-
-    :return: None, updates local object database
+    :return: astropy table, the object database
     """
     # get parameters from params
     gsheet_url = params['OBJ_LIST_GOOGLE_SHEET_URL']
@@ -420,10 +413,6 @@ def update_object_database(params: ParamDict, log: bool = True):
     pending_id = params['OBJ_LIST_GSHEET_PEND_LIST_ID']
     user_url = params['OBJ_LIST_GSHEET_USER_URL']
     user_id = params['OBJ_LIST_GSHEET_USER_ID']
-    # get pconst
-    pconst = constants.pload()
-    # get list of databases
-    databases = list_databases(params)
     # object col name in google sheet
     gl_objcol = params['GL_OBJ_COL_NAME']
     # print that we are updating object database
@@ -481,6 +470,33 @@ def update_object_database(params: ParamDict, log: bool = True):
                 pmask = ~np.in1d(_table[gl_objcol], maintable[gl_objcol])
                 # add new columns to main table
                 maintable = vstack([maintable, _table[pmask]])
+    # return the main table
+    return maintable
+
+
+def update_object_database(params: ParamDict, log: bool = True):
+    """
+    Update the local object database - note this overwrites all entries in the
+    local database
+
+    By default this uses a googlesheet URL (OBJ_LIST_GOOGLE_SHEET_URL)
+    + workbook ids to populate the object database
+    (OBJ_LIST_GSHEET_MAIN_LIST_ID + OBJ_LIST_GSHEET_PEND_LIST_ID)
+
+    however if OBJ_LIST_GOOGLE_SHEET_URL is a local directory one can set the
+    OBJ_LIST_GSHEET_MAIN_LIST_ID + OBJ_LIST_GSHEET_PEND_LIST_ID to csv
+    files for a complete offline reduction
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: None, updates local object database
+    """
+    # get pconst
+    pconst = constants.pload()
+    # get list of databases
+    databases = list_databases(params)
+    # get the object database (combined with pending + user table)
+    maintable = get_object_database(params, log=log)
     # -------------------------------------------------------------------------
     # convert main table to a pandas dataframe
     df = maintable.to_pandas()
