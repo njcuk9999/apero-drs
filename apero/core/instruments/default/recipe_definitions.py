@@ -228,6 +228,9 @@ get_files.set_kwarg(name='--symlinks', default=False, dtype='switch',
                     helpstr=textentry('GET_SYMLINKS_HELP'))
 get_files.set_kwarg(name='--test', default=False, dtype='switch',
                     helpstr=textentry('GET_TEST_HELP'))
+get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',
+                    helpstr='Include files that failed QC. '
+                            'Highly unrecommended')
 get_files.description_file = 'apero_get.rst'
 
 # -----------------------------------------------------------------------------
