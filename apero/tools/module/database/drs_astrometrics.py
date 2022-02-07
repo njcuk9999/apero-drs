@@ -220,14 +220,26 @@ class AstroObj:
         self.plx = table_row['PLX']
         self.plx_source = table_row['PLX_SOURCE']
         # set the radial velocity and source from table row
-        self.rv = table_row['RV']
-        self.rv_source = table_row['RV_SOURCE']
+        if drs_text.null_text(str(table_row['RV']), NULL_TEXT):
+            self.rv = np.nan
+            self.rv_source = ''
+        else:
+            self.rv = table_row['RV']
+            self.rv_source = table_row['RV_SOURCE']
         # set the spectral type from table row
-        self.teff = table_row['TEFF']
-        self.teff_source = table_row['TEFF_SOURCE']
+        if drs_text.null_text(str(table_row['TEFF']), NULL_TEXT):
+            self.teff = np.nan
+            self.teff_source = ''
+        else:
+            self.teff = table_row['TEFF']
+            self.teff_source = table_row['TEFF_SOURCE']
         # set the spectral type from table row
-        self.sp_type = table_row['SP_TYPE']
-        self.sp_source = table_row['SP_SOURCE']
+        if drs_text.null_text(str(table_row['SP_TYPE']), NULL_TEXT):
+            self.sp_type = ''
+            self.sp_source = ''
+        else:
+            self.sp_type = table_row['SP_TYPE']
+            self.sp_source = table_row['SP_SOURCE']
 
     def to_dataframe(self) -> pd.DataFrame:
         """
@@ -514,6 +526,9 @@ class AstroObj:
                 # add obs dir to used obs dirs
                 used_obs_dirs.append(obs_dirs[o_it])
         # ---------------------------------------------------------------------
+        # deal with no teff values
+        if len(teffs) == 0:
+            return
         # find unique teff values
         uteffs = np.unique(teffs)
         # if we only have one great we use it
@@ -548,7 +563,7 @@ class AstroObj:
         # log teff update
         msg = 'Teff updated from files on disk. \n\tTeff = {0}\n\tSource = {1}'
         margs = [self.teff, self.teff_source]
-        WLOG(params, 'info', msg.format(*margs))
+        WLOG(params, '', msg.format(*margs))
 
 
 
@@ -940,7 +955,7 @@ def update_teffs(params):
     # storage of those objects to add
     add_objs = []
     # deal with these entries row by row
-    for row in table:
+    for row in range(len(table)):
         # print progress
         msg = 'Updating object = "{0}"'
         WLOG(params, 'info', msg.format(table[row]['OBJNAME']))
