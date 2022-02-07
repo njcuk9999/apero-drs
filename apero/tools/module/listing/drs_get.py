@@ -50,6 +50,9 @@ def raw_files(params: ParamDict, user_outdir: str, do_copy: bool = True,
     """
     # get raw directory
     raw_path = params['DRS_DATA_RAW']
+    # make sure user_outdir exists
+    if not os.path.exists(user_outdir):
+        os.makedirs(user_outdir)
     # walk through path
     for root, dirs, files in os.walk(raw_path):
         # get uncommon path
