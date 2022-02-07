@@ -237,7 +237,7 @@ class DrsRecipe(object):
         # _ = display_func('__str__', __NAME__,
         #                  self.class_name)
         # return string representation
-        return self.__str__()
+        return self.__repr__()
 
     def __repr__(self) -> str:
         """
