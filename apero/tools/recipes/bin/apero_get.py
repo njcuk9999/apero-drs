@@ -80,6 +80,17 @@ def __main__(recipe, params):
     :return: returns the local namespace as a dictionary
     :rtype: dict
     """
+    # get copy criteria from user inputs
+    do_copy = not params['INPUTS']['TEST']
+    # get sym link criteria from user inputs
+    do_symlink = params['INPUTS']['SYMLINKS']
+    # get outpath from user inputs
+    user_outdir = params['INPUTS']['OUTPATH']
+    if drs_text.null_text(user_outdir, ['None', '', 'Null']):
+        user_outdir = os.getcwd()
+        current = True
+    else:
+        current = False
     # get inputs from user
     inputs = params['INPUTS']
     use_gui = params['INPUTS']['GUI']
@@ -87,19 +98,19 @@ def __main__(recipe, params):
         WLOG(params, 'warning', 'Not Implemented yet',
              sublevel=2)
         return drs_startup.return_locals(params, locals())
+    # deal with copying raw files
+    if params['INPUTS']['RAW']:
+        # deal with being in the current directory and no argument
+        if current:
+            user_outdir = os.path.join(user_outdir, 'raw')
+        # get raw files
+        drs_get.raw_files(params, user_outdir, do_copy, do_symlink)
+        return drs_startup.return_locals(params, locals())
     # get filters from user inputs
     kw_objnames = inputs.listp('objnames', dtype=str, required=False)
     kw_dprtypes = inputs.listp('dprtypes', dtype=str, required=False)
     kw_outputs = inputs.listp('outtypes', dtype=str, required=False)
     kw_fibers = inputs.listp('fibers', dtype=str, required=False)
-    # get outpath from user inputs
-    user_outdir = params['INPUTS']['OUTPATH']
-    if drs_text.null_text(user_outdir, ['None', '', 'Null']):
-        user_outdir = os.getcwd()
-    # get copy criteria from user inputs
-    do_copy = not params['INPUTS']['TEST']
-    # get sym link criteria from user inputs
-    do_symlink = params['INPUTS']['SYMLINKS']
     # check for None
     if drs_text.null_text(kw_objnames, ['None', '', 'Null']):
         kw_objnames = None
