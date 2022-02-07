@@ -131,9 +131,9 @@ class AstroObj:
     def __repr__(self) -> str:
         return self.__str__()
 
-    def from_table_row(self, table_row: Row, update: bool = False):
+    def from_simbad_table_row(self, table_row: Row, update: bool = False):
         """
-        Populate attributes from astropy table row
+        Populate attributes from astropy table row (sourced from simbad query)
 
         :param table_row: astropy.table.row.Row
         :param update: bool, whether we are running new or updating all rows
@@ -184,6 +184,50 @@ class AstroObj:
                      __NAME__]
             note = ' Added on {0} by {1}@{2} using {3}'
             self.notes += note.format(*nargs)
+
+    def from_gsheet_table_row(self, table_row: Row):
+        """
+        Populate attributes from astropy table row (sourced from google
+        sheets)
+
+        :param table_row: astropy.table.row.Row
+        :param update: bool, whether we are running new or updating all rows
+
+        :return: None populates attributes
+        """
+        pconst = constants.pload()
+        # set objname as cleaned version of name
+        self.objname = table_row['OBJNAME']
+        # store the original name
+        self.original_name = table_row['ORIGINAL_NAME']
+        # get the aliases from table row
+        self.aliases = table_row['ALIASES']
+        # get the ra and source from table row
+        self.ra = table_row['RA_DEG']
+        self.ra_source = table_row['RA_SOURCE']
+        # get the dec and source from table row
+        self.dec = table_row['DEC_DEG']
+        self.dec_source = table_row['DEC_SOURCE']
+        # get the epoch
+        self.epoch = table_row['EPOCH']
+        # set the pmra and source from table row
+        self.pmra = table_row['PMRA']
+        self.pmra_source = table_row['PMRA_SOURCE']
+        # set the pmdec and source from table row
+        self.pmde = table_row['PMDE']
+        self.pmde_source = table_row['PMDE_SOURCE']
+        # set the parallax and source from table row
+        self.plx = table_row['PLX']
+        self.plx_source = table_row['PLX_SOURCE']
+        # set the radial velocity and source from table row
+        self.rv = table_row['RV']
+        self.rv_source = table_row['RV_SOURCE']
+        # set the spectral type from table row
+        self.teff = table_row['TEFF']
+        self.teff_source = table_row['TEFF_SOURCE']
+        # set the spectral type from table row
+        self.sp_type = table_row['SP_TYPE']
+        self.sp_source = table_row['SP_SOURCE']
 
     def to_dataframe(self) -> pd.DataFrame:
         """
@@ -555,7 +599,7 @@ def query_simbad(params: ParamDict, rawobjname: str,
         # construct instance of AstroObj
         astroobj = AstroObj(rawobjname)
         # push in information from this row
-        astroobj.from_table_row(table[row], update=update)
+        astroobj.from_simbad_table_row(table[row], update=update)
         # try to get consistent ra/dec/pmra/pmde/plx (i.e. at same epoch)
         updated, reason = astroobj.consistent_astrometrics(params)
         # append to storage
@@ -823,13 +867,42 @@ def update_astrometrics(params):
 
 
 def update_teffs(params):
-    # get pconst
-    pconst = constants.pload()
+    # get index database
+    indexdbm = drs_database.IndexDatabase(params)
+    indexdbm.load_db()
     # load table
     table = manage_databases.get_object_database(params)
     # filter rows without teff
     mask = np.array(table['TEFF'].mask).astype(bool)
     table = table[mask]
+    # storage of those objects to add
+    add_objs = []
+    # deal with these entries row by row
+    for row in table:
+        # print progress
+        msg = 'Updating object = "{0}"'
+        WLOG(params, 'info', msg.format(table[row]['OBJNAME']))
+        # set up a new astro object
+        astro_obj = AstroObj(name=table[row]['OBJNAME'])
+        # add data from the table
+        astro_obj.from_gsheet_table_row(table[row])
+        # check
+        astro_obj.check_teff(params, indexdbm)
+        # add to list to add
+        add_objs.append(astro_obj)
+    # -------------------------------------------------------------------------
+    # add to google sheet
+    if len(add_objs) > 0:
+        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        msg = 'Adding {0} objects to the object database'
+        WLOG(params, '', msg.format(len(add_objs)), colour='magenta')
+        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        # add all objects in add list to google-sheet
+        add_obj_to_sheet(params, add_objs)
+        # log progress
+        WLOG(params, '', textentry('40-503-00039'))
+        # update database
+        manage_databases.update_object_database(params, log=False)
 
 
 
