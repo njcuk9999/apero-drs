@@ -131,25 +131,8 @@ def __main__(recipe, params):
             # if correct add to add list
             if cond2:
                 # -------------------------------------------------------------
-                # but first check whether main name
-                question3 = (f'Modify main object name="{astro_obj.name}"'
-                             '(will set DRSOBJN) all other '
-                             'names will added to aliases')
-                cond3 = drs_installation.ask(question3, dtype='YN')
-                # if user want to modify name let them
-                if cond3:
-                    # ask for new name
-                    question4 = f'Enter new main name for "{astro_obj.name}"'
-                    rawuname = drs_installation.ask(question4, dtype=str)
-                    # clean object name
-                    pconst = constants.pload()
-                    # must add the old name to the aliases
-                    astro_obj.aliases += f'|{astro_obj.objname}'
-                    # update the name and objname
-                    astro_obj.name = pconst.DRS_OBJ_NAME(rawuname)
-                    astro_obj.objname = astro_obj.name
-                    # log change of name
-                    WLOG(params, '', f'\t Object name set to: {astro_obj.name}')
+                # Ask user if they wish to add a new name to ID the target as
+                astro_obj = drs_astrometrics.ask_for_name(params, astro_obj)
                 # -------------------------------------------------------------
                 # now add object to database
                 msg = 'Adding {0} to object list'.format(astro_obj.name)
@@ -159,12 +142,28 @@ def __main__(recipe, params):
             # else print that we are not adding object to database
             else:
                 WLOG(params, '', 'Not adding object to database')
+            # ----------------------------------------------------------------
+            # deal with trying to update Teff automatically
+            if params['INPUTS']['GETTEFF']:
+                # get index database
+                indexdbm = drs_database.IndexDatabase(params)
+                # check for Teff (from files on disk with this objname/aliases)
+                astro_obj.check_teff(params, indexdbm)
+            # ----------------------------------------------------------------
+            # Ask user if they want to add a Teff value (as this does not
+            #   come from SIMBAD) - note if Teff found in files we don't check
+            #   this
+            astro_obj = drs_astrometrics.ask_for_teff(astro_obj)
+
+        # --------------------------------------------------------------------
+        # else deal with no objects
         elif len(astro_objs) == 0:
             emsg = ('Cannot find object "{0}" in SIMBAD. \n\t{1}'
                     '\n\tPlease try another alias')
             eargs = [objname, reason]
             WLOG(params, 'warning', emsg.format(*eargs), sublevel=6)
-
+        # --------------------------------------------------------------------
+        # else deal with multiple objects
         else:
             # print warning
             emsg = ('More than one object matches object "{0}" in SIMBAD. '
@@ -179,12 +178,6 @@ def __main__(recipe, params):
                 margs = [a_it + 1, ','.join(astro_obj.aliases.split('|'))]
                 WLOG(params, '', msg.format(*margs), colour='yellow')
                 WLOG(params, '', '')
-    # -------------------------------------------------------------------------
-    # get index database
-    indexdbm = drs_database.IndexDatabase(params)
-    # check for Teff (from files on disk with this objname / aliases)
-    for astro_obj in add_objs:
-        astro_obj.check_teff(params, indexdbm)
     # -------------------------------------------------------------------------
     # add to google sheet
     if len(add_objs) > 0:

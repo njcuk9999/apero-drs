@@ -695,6 +695,62 @@ def gsp_setup():
         file2.write(TEXT2.format(''.join(PARAM4), PARAM1, PARAM3))
 
 
+def ask_for_name(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
+    """
+    Ask the user whether they wish to update Teff manually
+
+    :param params: ParamDict, paraemter dictionary of constnats
+    :param astro_obj: AstroObj
+
+    :return: update AstroObj
+    """
+    # but first check whether main name
+    question3 = (f'Modify main object name="{astro_obj.name}"'
+                 '(will set DRSOBJN) all other '
+                 'names will added to aliases')
+    cond3 = drs_installation.ask(question3, dtype='YN')
+    # if user want to modify name let them
+    if cond3:
+        # ask for new name
+        question4 = f'Enter new main name for "{astro_obj.name}"'
+        rawuname = drs_installation.ask(question4, dtype=str)
+        # clean object name
+        pconst = constants.pload()
+        # must add the old name to the aliases
+        astro_obj.aliases += f'|{astro_obj.objname}'
+        # update the name and objname
+        astro_obj.name = pconst.DRS_OBJ_NAME(rawuname)
+        astro_obj.objname = astro_obj.name
+        # log change of name
+        WLOG(params, '', f'\t Object name set to: {astro_obj.name}')
+    # return the original or update astro_obj
+    return astro_obj
+
+
+def ask_for_teff(astro_obj: AstroObj) -> AstroObj:
+    """
+    Ask the user whether they wish to update Teff manually
+
+    :param astro_obj: AstroObj
+
+    :return: update AstroObj
+    """
+    if astro_obj.teff is None:
+        question5 = 'Add Teff for object [K]?'
+        cond4 = drs_installation.ask(question5, dtype='YN')
+        if cond4:
+            # Ask user for Teff
+            question6 = 'Enter Teff in K'
+            rawteff = drs_installation.ask(question6, dtype=float)
+            # get user /host
+            nargs = [getpass.getuser(), socket.gethostname()]
+            # add to astro_obj
+            astro_obj.teff = rawteff
+            astro_obj.teff_source = '{0}@{1}'.format(*nargs)
+    # return the original or update astro_obj
+    return astro_obj
+
+
 def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
     """
     Add all listed astrometrics objects to the sheet
