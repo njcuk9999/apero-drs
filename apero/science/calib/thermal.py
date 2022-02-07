@@ -236,8 +236,8 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
         thermalfile = 'None'
         thermaltime = np.nan
         # thermal ratios are set to NaN
-        tprops = dict(ratio1=np.nan, ratio2=np.nan, ratio_used='None')
-        tpropsff = dict(ratio1=np.nan, ratio2=np.nan, ratio_used='None')
+        tprops = dict(ratio=np.nan, ratio_used='None')
+        tpropsff = dict(ratio=np.nan, ratio_used='None')
     # ----------------------------------------------------------------------
     # add / update eprops
     eprops['E2DS'] = e2ds
