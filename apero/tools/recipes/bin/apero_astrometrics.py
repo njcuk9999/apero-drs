@@ -13,6 +13,7 @@ from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_database
 from apero.core.utils import drs_startup
 from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_installation
@@ -178,6 +179,12 @@ def __main__(recipe, params):
                 margs = [a_it + 1, ','.join(astro_obj.aliases.split('|'))]
                 WLOG(params, '', msg.format(*margs), colour='yellow')
                 WLOG(params, '', '')
+    # -------------------------------------------------------------------------
+    # get index database
+    indexdbm = drs_database.IndexDatabase(params)
+    # check for Teff (from files on disk with this objname / aliases)
+    for astro_obj in add_objs:
+        astro_obj.check_teff(params, indexdbm)
     # -------------------------------------------------------------------------
     # add to google sheet
     if len(add_objs) > 0:

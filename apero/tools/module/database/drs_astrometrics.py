@@ -29,8 +29,10 @@ from apero.core.core import drs_log
 from apero.core.core import drs_database
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
+from apero.io import drs_fits
 from apero.science import preprocessing as prep
 from apero.tools.module.database import manage_databases
+from apero.tools.module.setup import drs_installation
 
 
 # =============================================================================
@@ -415,6 +417,94 @@ class AstroObj:
         WLOG(params, '', msg)
         # update aliases in class
         self.aliases = '|'.join(update_aliases)
+
+    def check_teff(self, params: ParamDict,
+                   indexdbm: drs_database.IndexDatabase):
+
+        # get teff header key
+        teff_hkey = params['KW_OBJ_TEMP'][0]
+        # ---------------------------------------------------------------------
+        # load database if required
+        if indexdbm.database is None:
+            indexdbm.load_db()
+        # ---------------------------------------------------------------------
+        # get all possible object names
+        objnames = [self.objname, self.original_name]  + self.aliases.split('|')
+        # check for objname in raw files only
+        mcondition = 'BLOCK_KIND="raw"'
+        # add obj conditions
+        subcondition = []
+        for objname in objnames:
+            subcondition.append(f'KW_OBJECTNAME="{self.objname}"')
+        # add master condition + obj conditions
+        condition = mcondition + ' AND ({0})'.format(' OR '.join(subcondition))
+        # ---------------------------------------------------------------------
+        # get paths from database
+        otable = indexdbm.get_entries('ABSPATH, OBS_DIR', condition=condition)
+        # get the absolute path column
+        paths = np.array(otable['ABSPATH'])
+        obs_dirs = np.array(otable['OBS_DIR'])
+        # ---------------------------------------------------------------------
+        # deal with no paths
+        if len(paths) == 0:
+            msg = 'No files found for {0}. Cannot allocate Teff from header'
+            WLOG(params, '', msg.format(self.objname))
+            return
+        # ---------------------------------------------------------------------
+        # get Teffs from headers of files (not in the database) - one per
+        #   obs_dir (no need to repeat for each file)
+        teffs = []
+        used_obs_dirs = []
+        # loop around all paths
+        for o_it, filename in enumerate(paths):
+            # skip obs_dirs already present
+            if obs_dirs[o_it] in used_obs_dirs:
+                continue
+            # get the header
+            objhdr = drs_fits.read_header(params, filename)
+            # only add teff if key present
+            if teff_hkey in objhdr:
+                # add the teff
+                teffs.append(objhdr[teff_hkey])
+                # add obs dir to used obs dirs
+                used_obs_dirs.append(obs_dirs[o_it])
+        # ---------------------------------------------------------------------
+        # find unique teff values
+        uteffs = np.unique(teffs)
+        # if we only have one great we use it
+        if len(uteffs) == 1:
+            self.teff = uteffs[0]
+            self.teff_source = 'Header'
+        else:
+            # work out median teff value
+            medteff = np.median(uteffs)
+            # Choose a teff from the headers
+            question = 'Multiple Teffs found. Choose from the following:'
+            # construct the question (with options)
+            count, options, values = 0, [], []
+            for count in uteffs:
+                question += '\n\t{0}:   {1} K'.format(count + 1, uteffs[count])
+                options.append(count + 1)
+                values.append(uteffs[count])
+            # Add the median value as an option
+            question += '\n\t {0} [Median]:    {1} K'.format(count + 1, medteff)
+            options.append(count + 1)
+            values.append(medteff)
+            # ask user the question
+            uinput = drs_installation.ask(question, dtype=int, options=options)
+            # set Teff value
+            self.teff = values[uinput]
+            # deal with user chosing median
+            if uinput == options[-1]:
+                self.teff_source = 'Header [Multi:Median]'
+            else:
+                self.teff_source = 'Header [Multi:user]'
+        # ---------------------------------------------------------------------
+        # log teff update
+        msg = 'Teff updated from files on disk. \n\tTeff = {0}\n\tSource = {1}'
+        margs = [self.teff, self.teff_source]
+        WLOG(params, 'info', msg.format(*margs))
+
 
 
 def query_simbad(params: ParamDict, rawobjname: str,
