@@ -600,6 +600,12 @@ def query_simbad(params: ParamDict, rawobjname: str,
         astroobj = AstroObj(rawobjname)
         # push in information from this row
         astroobj.from_simbad_table_row(table[row], update=update)
+        # if no pm is required then we can add it to the database without
+        #   checking pm databases
+        if 'NOPMREQUIRED' in params['INPUTS']:
+            if params['INPUTS']['NOPMREQUIRED']:
+                astroobjs.append(astroobj)
+                continue
         # try to get consistent ra/dec/pmra/pmde/plx (i.e. at same epoch)
         updated, reason = astroobj.consistent_astrometrics(params)
         # append to storage
