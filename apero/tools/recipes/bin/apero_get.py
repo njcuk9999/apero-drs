@@ -103,6 +103,9 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # load object database
     objdbm = drs_database.ObjectDatabase(params)
     objdbm.load_db()
+    # load log database
+    logdbm = drs_database.LogDatabase(params)
+    logdbm.load_db()
     # -------------------------------------------------------------------------
     # create master condition
     master_condition = ''
@@ -161,7 +164,16 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         if len(condition) == 0:
             condition = None
         # get inpaths
-        inpaths = indexdb.get_entries('ABSPATH', condition=condition)
+        itable = indexdb.get_entries('ABSPATH, KW_PID', condition=condition)
+        inpaths = itable['ABSPATH']
+        ipids = itable['KW_PID']
+        # ---------------------------------------------------------------------
+        # need to filter by pid in log database
+        # ---------------------------------------------------------------------
+        # get all pids where passed_all_qc is PASSED_ALL_QC is True
+        lpids = logdbm.database.unique('PID', condition='PASSED_ALL_QC=1')
+
+        # ---------------------------------------------------------------------
         # load into file storage
         if len(inpaths) > 0:
             WLOG(params, '', '\tFound {0} entries'.format(len(inpaths)))
