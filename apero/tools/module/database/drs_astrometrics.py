@@ -12,11 +12,12 @@ Created on 2021-12-15
 import numpy as np
 import pandas as pd
 from astroquery.simbad import Simbad
-from astropy.table import Table, Row
+from astropy.table import Row
 import getpass
 import gspread_pandas as gspd
 import os
 import socket
+import sys
 import time
 from typing import Dict, List, Optional, Tuple
 import warnings
@@ -435,7 +436,7 @@ class AstroObj:
         # add obj conditions
         subcondition = []
         for objname in objnames:
-            subcondition.append(f'KW_OBJECTNAME="{self.objname}"')
+            subcondition.append(f'KW_OBJECTNAME="{objname}"')
         # add master condition + obj conditions
         condition = mcondition + ' AND ({0})'.format(' OR '.join(subcondition))
         # ---------------------------------------------------------------------
@@ -694,11 +695,11 @@ def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
     WLOG(params, '', msg)
 
 
-def update_astrometrics(params, filename):
+def update_astrometrics(params):
     # get pconst
     pconst = constants.pload()
     # load table
-    table = Table.read(filename, format='csv')
+    table = manage_databases.get_object_database(params)
     # store astrometric objects that we need to add to database
     add_objs = []
     removed_objs = []
@@ -821,6 +822,17 @@ def update_astrometrics(params, filename):
     WLOG(params, 'info', params['DRS_HEADER'])
 
 
+def update_teffs(params):
+    # get pconst
+    pconst = constants.pload()
+    # load table
+    table = manage_databases.get_object_database(params)
+    # filter rows without teff
+    mask = np.array(table['TEFF'].mask).astype(bool)
+    table = table[mask]
+
+
+
 def very_similar_obj_names(pconst, objname1: str, objname2: str) -> bool:
     """
     Check if two objects are the same just with underscores differing them
@@ -841,6 +853,8 @@ def very_similar_obj_names(pconst, objname1: str, objname2: str) -> bool:
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
+    # TODO: should this be a dev recipe?
+    args = sys.argv
     # get params
     _params = constants.load()
     # assign a PID
@@ -848,9 +862,12 @@ if __name__ == "__main__":
     # set shortname
     _params['RECIPE'] = __NAME__
     _params['RECIPE_SHORT'] = str('ASTRO-UP')
-    # set filename for
-    _filename = '/data/spirou/misc/objdb/apero_objdb_20220128.csv'
-    update_astrometrics(_params, _filename)
+    # deal with a coordinates update
+    if '--update_coords' in args:
+        update_astrometrics(_params)
+    # deal with teff update
+    elif '--update_teffs' in args:
+        update_teffs(_params)
 
 
 # =============================================================================
