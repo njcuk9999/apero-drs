@@ -383,7 +383,7 @@ def __main__(recipe, params):
             # -----------------------------------------------------------------
             if fiber == master_fiber:
                 # cavity args
-                cargs = [fp_e2ds_file, wavefile, wprops['CAVITY']]
+                cargs = [fp_e2ds_file, wavefile, wprops['CAVITY'], fiber]
                 # write cavity file
                 cavityfile = wave.write_cavity_file(params, recipe, *cargs)
                 # resolution args
