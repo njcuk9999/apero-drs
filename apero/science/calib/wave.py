@@ -3196,7 +3196,7 @@ def write_fplines(params: ParamDict, recipe: DrsRecipe, rfpl: Table,
 
 def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
                       fpe2ds: DrsFitsFile, wavefile: DrsFitsFile,
-                      cavity: np.ndarray) -> DrsFitsFile:
+                      cavity: np.ndarray, fiber: str) -> DrsFitsFile:
     """
     Write the cavity file to disk
 
@@ -3205,6 +3205,7 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     :param fpe2ds: DrsFitsFile, the FP e2ds fits file instance
     :param wavefile: DrsFitsFile, the wave solution file instance
     :param cavity: np.array, the cavity solution to save to file
+    :param fiber: str, the fiber for which the cavity file was generated from
 
     :return: DrsFitsFile, the cavity file instance
     """
@@ -3216,7 +3217,7 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     # get copy of instance of wave file (WAVE_HCMAP)
     cavfile = recipe.outputs['WAVEM_CAVITY'].newcopy(params=params)
     # construct the filename from file instance
-    cavfile.construct_filename(infile=fpe2ds)
+    cavfile.construct_filename(infile=fpe2ds, fiber=fiber)
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     cavfile.copy_header(wavefile)
@@ -3225,6 +3226,7 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     cavfile.infiles = list(wavefile.infiles)
     # set output key
     cavfile.add_hkey('KW_OUTPUT', value=cavfile.name)
+    cavfile.add_hkey('KW_FIBER', value=fiber)
     # set data
     cavfile.data = cavity
     cavfile.datatype = 'image'
