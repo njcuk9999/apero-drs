@@ -259,7 +259,9 @@ def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
         else:
             wavetime = header[params['KW_MID_OBS_TIME'][0]]
         # set the wave file data
-        wavefile.data = np.zeros((header['NAXIS2'], header['NAXIS1']))
+        nbo = header[params['KW_WAVE_NBO'][0]]
+        nbpix = params['IMAGE_X_HIGH'] - params['IMAGE_X_LOW']
+        wavefile.data = np.zeros((nbo, nbpix))
         # set the source as header
         wavesource = 'header'
         # get wave map
