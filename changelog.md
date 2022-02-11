@@ -2,6 +2,59 @@ Changelog
 =========
 
 
+0.7.208 (2022-02-11)
+--------------------
+- Copyraw and add version to setup codes, point README.md the
+  documentation. [Neil Cook]
+- Move the raw sym/copy in apero_get into setup (outside apero frame
+  work) as it is probably only going to be used before installation.
+  [Neil Cook]
+- Apero.recipes.spirou.apero_postprocess_spirou.py - correct typo
+  filepostfile.out_requiredd --> filepostfile.out_required. [Neil Cook]
+- Merge branch 'v0.7.205-stable-test' into v0.7.205-working. [Neil Cook]
+- Apero.science.calib.wave.py - remove reference to NAXIS2 and NAXIS1.
+  [Neil Cook]
+- Apero.tools.recipes.bin.apero_visu.py - for later use. [Neil Cook]
+- Apero.recipes.*.apero_wave_master_*.py. [Neil Cook]
+
+
+0.7.207 (2022-02-07)
+--------------------
+- Apero.tools.recipes.bin.apero_get.py - create user_outdir path if it
+  doesn't exist. [Neil Cook]
+- Apero.tools.recipes.bin.apero_get.py - add in a raw copy/symlink
+  option. [Neil Cook]
+- Apero.tools.recipes.bin.apero_get.py - move functionality to module +
+  finish changes to filter by qc failures. [njcuk9999]
+- Apero.tools.recipes.bin.apero_get.py - only copy those with qc passed.
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.205-stable-test' into
+  v0.7.205-stable-test. [Neil Cook]
+- Update how null columns are handled. [njcuk9999]
+- Apero.science.calib.thermal.py - fix ratio1 and ratio2 in Null case
+  (should be ratio) [Neil Cook]
+- Apero.tools.module.database.drs_astrometrics.py - add way to not check
+  pm (for dev only) [Neil Cook]
+- Apero.tools.module.database.drs_astrometrics.py - add way to attempt
+  to update all missing teffs. [Neil Cook]
+- Apero.tools.module.database.drs_astrometrics.py - add way to attempt
+  to update all missing teffs. [Neil Cook]
+- Apero.tools.module.database.dsr_astrometrics.py - work on updating
+  teffs. [njcuk9999]
+- Apero.tools.module.database.manage_database.py - separate update and
+  get object database functions. [Neil Cook]
+- Apero_astrometrics.py - add teff from disk if possible. [Neil Cook]
+- Update run.ini files. [Neil Cook]
+- Apero.core.core.drs_database.py - return only OBS_NAMES[objname]
+  [njcuk9999]
+
+
+0.7.206 (2022-02-03)
+--------------------
+- Update some documentation. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
 0.7.205 (2022-02-01)
 --------------------
 - Merge remote-tracking branch 'origin/v0.7.194-working' into
