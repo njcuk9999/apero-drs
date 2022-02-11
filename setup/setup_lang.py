@@ -15,11 +15,17 @@ Import Rules: Cannot use anything other than standard python 3 packages
 """
 import csv
 import os
+from pathlib import Path
 
 
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'setup.setup_lang.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = 'APERO'
+VERSION_FILE = 'version.txt'
+
 # define the default language (must be the same as base.DEAFULT_LANG)
 DEFAULT_LANG = 'ENG'
 # define all allowed languages (must be the same as base.LANGUAGES)
@@ -37,6 +43,21 @@ KEYS = ['00-000-00009', '00-000-00010', '00-000-00011',
 # =============================================================================
 # Define functions
 # =============================================================================
+def get_version() -> str:
+    filepath = os.path.abspath(__file__)
+    # get files
+    v_file = Path(filepath).parent.parent.joinpath(VERSION_FILE)
+    # get version
+    with open(v_file, 'r') as vfile:
+        version = vfile.read().split('=')[-1].replace('\n', '')
+    # return version
+    return version
+
+
+# set version
+__version__ = get_version()
+
+
 class LangDict:
     """
     Just for setup codes - only to be used until we can access apero

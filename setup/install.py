@@ -25,6 +25,9 @@ import setup_lang
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'setup.install.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = 'APERO'
 # define the drs name (and module name)
 DRS_PATH = 'apero'
 # instruments
@@ -38,6 +41,7 @@ BASE_PATH = 'base.drs_base'
 # Requirement files
 REQ_USER = 'requirements_current.txt'
 REQ_DEV = 'requirements_developer.txt'
+VERSION_FILE = 'version.txt'
 # modules that don't install like their name
 module_translation = dict()
 module_translation['Pillow'] = 'PIL'
@@ -52,6 +56,21 @@ lang = setup_lang.LangDict()
 # =============================================================================
 # Define functions
 # =============================================================================
+def get_version() -> str:
+    filepath = os.path.abspath(__file__)
+    # get files
+    v_file = Path(filepath).parent.parent.joinpath(VERSION_FILE)
+    # get version
+    with open(v_file, 'r') as vfile:
+        version = vfile.read().split('=')[-1].replace('\n', '')
+    # return version
+    return version
+
+
+# set version
+__version__ = get_version()
+
+
 # need this argument before anything else
 def get_sys_arg(name, kind=None):
     """
