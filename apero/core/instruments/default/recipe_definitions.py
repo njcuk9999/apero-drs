@@ -226,9 +226,6 @@ get_files.set_kwarg(name='--outpath', dtype=str, default='None',
                     helpstr=textentry('GET_OUTPATH_HELP'))
 get_files.set_kwarg(name='--symlinks', default=False, dtype='switch',
                     helpstr=textentry('GET_SYMLINKS_HELP'))
-get_files.set_kwarg(name='--raw', default=False, dtype='switch',
-                    helpstr='Copy the whole raw folder '
-                            '(overrides other options)')
 get_files.set_kwarg(name='--test', default=False, dtype='switch',
                     helpstr=textentry('GET_TEST_HELP'))
 get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',

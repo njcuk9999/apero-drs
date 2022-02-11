@@ -98,14 +98,6 @@ def __main__(recipe, params):
         WLOG(params, 'warning', 'Not Implemented yet',
              sublevel=2)
         return drs_startup.return_locals(params, locals())
-    # deal with copying raw files
-    if params['INPUTS']['RAW']:
-        # deal with being in the current directory and no argument
-        if current:
-            user_outdir = os.path.join(user_outdir, 'raw')
-        # get raw files
-        drs_get.raw_files(params, user_outdir, do_copy, do_symlink)
-        return drs_startup.return_locals(params, locals())
     # get filters from user inputs
     kw_objnames = inputs.listp('objnames', dtype=str, required=False)
     kw_dprtypes = inputs.listp('dprtypes', dtype=str, required=False)
