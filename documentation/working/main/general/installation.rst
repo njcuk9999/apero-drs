@@ -135,6 +135,27 @@ i.e. from the git hub directory
 Setup
 ====================================================================================
 
+Possible pre-installation step
+-------------------------------------------------------------------------------------------
+
+When doing a full reduction it may be useful to have a static raw directory
+(e.g. if a raw directory has files coming in from observations / synced to other servers).
+
+For a static full reduction it is preferable not to add new raw files during processing
+(i.e. it requires time to update database, templates could need to change with new observations etc)
+
+For this reason a script `copyraw.py` exists i.e.
+
+    .. code-block:: bash
+
+        python setup/copyraw.py --indir /path/to/full/raw/dir --outdir /path/to/new/symlink/dir --do_symlink
+
+By default it create symlinks but these can be turned off and hard copies can be created with the following:
+
+    .. code-block:: bash
+
+        python setup/copyraw.py --indir /path/to/full/raw/dir --outdir /path/to/new/symlink/dir --do_copy
+
 Run the installation script
 -------------------------------------------------------------------------------------------
 

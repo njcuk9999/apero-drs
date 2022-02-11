@@ -22,15 +22,30 @@ from typing import Union
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'copyraw.py'
+__NAME__ = 'setup.copyraw.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = 'APERO'
-__version__ = '0.1'
+VERSION_FILE = 'version.txt'
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
+def get_version() -> str:
+    filepath = os.path.abspath(__file__)
+    # get files
+    v_file = Path(filepath).parent.parent.joinpath(VERSION_FILE)
+    # get version
+    with open(v_file, 'r') as vfile:
+        version = vfile.read().split('=')[-1].replace('\n', '')
+    # return version
+    return version
+
+
+# set version
+__version__ = get_version()
+
+
 def get_args():
     """
     Get arguments using argparse
@@ -50,7 +65,7 @@ def get_args():
                         help='The proposed out raw directory')
     parser.add_argument('--do_copy', action='store_true', default=False,
                         dest='do_copy', help='Hard copies of files')
-    parser.add_argument('--do_symlink', action='store_true', default=True,
+    parser.add_argument('--do_symlink', action='store_true', default=False,
                         dest='do_symlink',
                         help='Symlink files (overrides --do_copy if used)')
     # parse arguments
@@ -65,11 +80,19 @@ def get_args():
     # check that out directory is a string
     if str(args.user_outdir) in ['None', '', 'Null']:
         raise ValueError('--outdir must be defined')
+    # deal with do_copy and do_symlink both being False
+    if args.do_copy and args.do_symlink:
+        raise ValueError('Must choose either --do_copy or --do_symlink')
+    if not args.do_copy and not args.do_symlink:
+        raise ValueError('Must choose either --do_copy or --do_symlink')
+    # deal with indir and outdir being the same
+    if os.path.realpath(args.user_indir) == os.path.realpath(args.user_outdir):
+        raise ValueError('--outdir cannot be the same as --indir')
     # return args
     return args
 
 
-def raw_files(user_indir: str, user_outdir: str, do_copy: bool = True,
+def raw_files(user_indir: str, user_outdir: str, do_copy: bool = False,
               do_symlink: bool = False):
     """
     Copy (or sym-link) the whole raw directory
@@ -103,15 +126,20 @@ def raw_files(user_indir: str, user_outdir: str, do_copy: bool = True,
             inpath = os.path.join(root, filename)
             # construct outpath
             outpath = os.path.join(outdir, filename)
-
             # copy
             if do_symlink:
+                # remove outpath if it exists
+                if os.path.exists(outpath):
+                    os.remove(outpath)
                 # print process
                 msg = 'Creating symlink {0}'
                 print(msg.format(outpath))
                 # create symlink
                 os.symlink(inpath, outpath)
             elif do_copy:
+                # remove outpath if it exists
+                if os.path.exists(outpath):
+                    os.remove(outpath)
                 # print process
                 msg = 'Copying file {0}'
                 print(msg.format(outpath))
