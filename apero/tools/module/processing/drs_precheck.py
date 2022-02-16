@@ -577,7 +577,7 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
     sci_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
     subconditions = []
     for sci_dprtype in sci_dprtypes:
-        subconditions.append(f'KW_DPRTYPE="{sci_dprtype}')
+        subconditions.append(f'KW_DPRTYPE="{sci_dprtype}"')
     # construct full condition
     condition = 'BLOCK_KIND="raw" AND ({0})'.format(' OR '.join(subconditions))
     # get list of unique objects from index database
