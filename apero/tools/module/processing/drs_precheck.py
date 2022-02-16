@@ -573,9 +573,15 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
     objdbm = ObjectDatabase(params)
     objdbm.load_db()
     # ---------------------------------------------------------------------
+    # only find science / hot star objects
+    sci_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
+    subconditions = []
+    for sci_dprtype in sci_dprtypes:
+        subconditions.append(f'KW_DPRTYPE="{sci_dprtype}')
+    # construct full condition
+    condition = 'BLOCK_KIND="raw" AND ({0})'.format(' OR '.join(subconditions))
     # get list of unique objects from index database
-    uobjnames = indexdbm.get_unique('KW_OBJNAME',
-                                    condition='BLOCK_KIND="raw"')
+    uobjnames = indexdbm.get_unique('KW_OBJNAME', condition=condition)
     # ---------------------------------------------------------------------
     # print progress
     # TODO: move to langauge database
