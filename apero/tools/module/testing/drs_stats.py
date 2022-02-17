@@ -161,8 +161,10 @@ class LogEntry:
                     self.is_valid = True
                     self.is_valid_for_timing = True
             except Exception as e:
-                emsg = 'TIMING ERROR - PID {0}: {1}: {2}'
-                eargs = [self.pid, type(e), str(e)]
+                emsg = ('TIMING ERROR PID {0}\n\tstart_time={1}'
+                        '\n\tend_time={2}\n\t{3}: {4}')
+                eargs = [self.pid, self.data.iloc[0]['START_TIME'],
+                         self.data.iloc[0]['END_TIME'], type(e), str(e)[:84]]
                 WLOG(params, 'warning', emsg.format(*eargs))
         elif mode == 'qc':
             # if we don't have index can't do qc (need outputs for qc)
