@@ -153,19 +153,36 @@ class LogEntry:
             return
         # get timing criteria
         if mode == 'timing':
+            # get raw start and end time from data table
+            rawstart = self.data.iloc[0]['START_TIME']
+            rawend = self.data.iloc[0]['END_TIME']
+            # try to get duration
             try:
-                self.start_time = Time(self.data.iloc[0]['START_TIME']).unix
-                self.end_time = Time(self.data.iloc[0]['END_TIME']).unix
+                # convert start tiem to a time
+                if not drs_text.null_text(rawstart, ['None', 'Null', '']):
+                    self.start_time = Time(rawstart).unix
+                else:
+                    self.start_time = np.nan
+                # convert end time to a time
+                if not drs_text.null_text(rawend, ['None', 'Null', '']):
+                    self.end_time = Time(rawend).unix
+                else:
+                    self.end_time = np.nan
+                # work out duration
                 self.duration = self.end_time - self.start_time
+                # only keep values which are finite
                 if np.isfinite(self.duration):
                     self.is_valid = True
                     self.is_valid_for_timing = True
             except Exception as e:
                 emsg = ('TIMING ERROR PID {0}\n\tstart_time={1}'
                         '\n\tend_time={2}\n\t{3}: {4}')
-                eargs = [self.pid, self.data.iloc[0]['START_TIME'],
-                         self.data.iloc[0]['END_TIME'], type(e), str(e)[:84]]
+                eargs = [self.pid, rawstart, rawend, type(e), str(e)[:84]]
                 WLOG(params, 'warning', emsg.format(*eargs))
+                # make sure this target is not valid
+                self.is_valid = False
+                self.is_valid_for_timing = False
+
         elif mode == 'qc':
             # if we don't have index can't do qc (need outputs for qc)
             if not self.has_index:
