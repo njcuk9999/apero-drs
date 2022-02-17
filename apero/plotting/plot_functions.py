@@ -5566,6 +5566,9 @@ def plot_stats_timing_plot(plotter: Plotter, graph: Graph,
     # plot graph
     # -------------------------------------------------------------------------
     used = []
+    # deal with only one recipe run
+    if nrows == 1:
+        frames = [frames]
     # loop around recipes
     for it, recipe in enumerate(rnames):
         # get position in grid
