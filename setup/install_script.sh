@@ -1,6 +1,6 @@
 # Example of all arguments
 python install.py --name=test_profile                                          \
-                  --config=/data/spirou/drs-settings/setup_test_profile        \
+                  --config=/data/spirou/drs-settings/                          \
                   --instrument=SPIROU                                          \
                   --datadir=/data/spirou/drs-data/test_profile                 \
                   --rawdir=/data/spirou/drs-data/test_profile/raw              \
