@@ -178,7 +178,7 @@ class SpectrumPlot:
             # copy source dict
             sdict = dict(self.source.data)
             # push into storage
-            for order_num in range(len(data[0])):
+            for order_num in range(data.shape[0]):
                 # add x values
                 sxname = 'x_{0}[{1}]'.format(name, order_num)
                 sdict[sxname] = np.arange(data.shape[1])
