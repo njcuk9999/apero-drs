@@ -175,14 +175,18 @@ class SpectrumPlot:
             self.order_max = data.shape[0]
             self.order_num_widget.end = self.order_max
             # -----------------------------------------------------------------
+            # copy source dict
+            sdict = dict(self.source.data)
             # push into storage
             for order_num in range(len(data[0])):
                 # add x values
                 sxname = 'x_{0}[{1}]'.format(name, order_num)
-                self.source[sxname] = np.arange(data.shape[1])
+                sdict[sxname] = np.arange(data.shape[1])
                 # add y values
                 syname = 'flux_{0}[{1}]'.format(name, order_num)
-                self.source[syname] = data
+                sdict[syname] = data
+            # update source
+            self.source.data = sdict
 
     def plot(self):
         # get order number
