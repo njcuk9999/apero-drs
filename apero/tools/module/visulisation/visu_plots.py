@@ -78,7 +78,7 @@ class SpectrumPlot:
         self.line_colors = ['black', 'red', 'blue', 'orange']
         self.line_alphas = [0.5, 0.5, 0.5, 0.5]
         self.line_dc = [0, 0, 0, 1]
-        self.lines = []
+        self.lines = [None, None, None, None]
         self.source = ColumnDataSource()
 
         # widgets
@@ -92,6 +92,8 @@ class SpectrumPlot:
         self.order_max = PARAMS['FIBER_MAX_NUM_ORDERS_A']
         self.xmin = 0
         self.xmax = 1
+        self.ymin = 0
+        self.ymax = 1
         # whether we currently have identifier loaded
         self.loaded = ''
 
@@ -214,6 +216,9 @@ class SpectrumPlot:
         # ----------------------------------------------------------------------
         # get the wave solution
 
+        # -----------------------------------------------------------------
+        # copy source dict
+        sdict = dict(self.source.data)
         # ---------------------------------------------------------------------
         # get files from index database
         for it in range(len(self.line_labels)):
@@ -250,9 +255,7 @@ class SpectrumPlot:
             # correct for blaze
             if self.line_blaze_cor[it] and blaze is not None:
                 data = data / blaze
-            # -----------------------------------------------------------------
-            # copy source dict
-            sdict = dict(self.source.data)
+
             # get dc level
             dclevel = self.line_dc[it]
             # push into storage
@@ -270,49 +273,67 @@ class SpectrumPlot:
                     else:
                         norm = np.ones_like(data[order_num])
                     sdict[syname] = (data[order_num] / norm) + dclevel
-            # update source
-            self.source.data = sdict
+            # update current
+            sdict['current_{0}_x'] = 'x_{0}[{1}]'.format(name, 0)
+            sdict['current_{0}_y'] = 'flux_{0}[{1}]'.format(name, 0)
+        # update source
+        self.source.data = sdict
+
 
     def plot(self):
         # get order number
         order_num = self.order_num
-        # reset lines
-        self.lines = []
-        # clear plots
-        self.figure.renderers = []
         # loop around lines
         for it in range(len(self.line_labels)):
-            if DEBUG:
-                dargs = [self.line_labels[it], order_num]
-                print('Plotting {0} [Order={1}]'.format(*dargs))
             # get name
             name = self.line_labels[it]
             color = self.line_colors[it]
             alpha = self.line_alphas[it]
-            # get variable names
+
+            # get x and y values
             sxname = 'x_{0}[{1}]'.format(name, order_num)
             syname = 'flux_{0}[{1}]'.format(name, order_num)
-            # plot line
-            line = self.figure.line(sxname, syname, source=self.source,
-                                    color=color, alpha=alpha,
-                                    legend_label=name)
-            # keep lines
-            self.lines.append(line)
+
+            cxname = 'current_{0}_x'.format(name)
+            cyname = 'current_{0}_y'.format(name)
+            # update current
+            self.source.data[cxname] = self.source.data[sxname]
+            self.source.data[cyname] = self.source.data[syname]
+            # adjust ymin and ymax
+            y = self.source[syname]
+            self.ymin = np.min([self.ymin, np.nanmin(y)])
+            self.ymax = np.max([self.ymax, np.nanmax(y)])
+            # deal with debugging
+            if DEBUG:
+                dargs = [name, order_num]
+                print('Plotting {0} [Order={1}]'.format(*dargs))
+
+            if self.lines[it] is None:
+                # plot line
+                line = self.figure.line(cxname, cyname, source=self.source,
+                                        color=color, alpha=alpha,
+                                        legend_label=name)
+                # keep lines
+                self.lines[it] = line
         # set x and y range
-        self.figure.y_range = Range1d(0, 3)
+        self.figure.y_range = Range1d(self.ymin, self.ymax)
         self.figure.x_range = Range1d(self.xmin, self.xmax)
 
 
 def e2ds_plot(**kwargs) -> bokeh.models.Model:
     # -------------------------------------------------------------------------
-    plotwindow = figure(width=800, height=512)
+    plotwindow = figure()
+    plotwindow.sizing_mode = 'scale_width'
     # -------------------------------------------------------------------------
     e2dsplotapp = SpectrumPlot(plotwindow)
     # -------------------------------------------------------------------------
     # get widgets
     inputs = column(*e2dsplotapp.widgets)
     # return the grid
-    return row(inputs, plotwindow, width=1200)
+    page = row(inputs, plotwindow, width=1200)
+    page.sizing_mode = 'scale_width'
+    # return full page
+    return page
 
 
 # =============================================================================
