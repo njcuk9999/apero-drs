@@ -273,9 +273,15 @@ class SpectrumPlot:
                     else:
                         norm = np.ones_like(data[order_num])
                     sdict[syname] = (data[order_num] / norm) + dclevel
+
+            # get x and y values for start position
+            sxname0 = 'x_{0}[{1}]'.format(name, self.order_num)
+            syname0 = 'flux_{0}[{1}]'.format(name, self.order_num)
+            cxname = 'current_{0}_x'.format(name)
+            cyname = 'current_{0}_y'.format(name)
             # update current
-            sdict['current_{0}_x'] = 'x_{0}[{1}]'.format(name, 0)
-            sdict['current_{0}_y'] = 'flux_{0}[{1}]'.format(name, 0)
+            sdict[cxname] = sdict[sxname0]
+            sdict[cyname] = sdict[syname0]
         # update source
         self.source.data = sdict
 
