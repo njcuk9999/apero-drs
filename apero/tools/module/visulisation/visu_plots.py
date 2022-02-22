@@ -117,7 +117,7 @@ class SpectrumPlot:
         fiber_menu = []
         for fiber in self.fibers:
             fiber_menu.append((fiber, fiber))
-        self.dropdown_widget = Dropdown(label='Fiber', button_type='warning',
+        self.dropdown_widget = Dropdown(label='Fiber', button_type='primary',
                                         menu=fiber_menu)
         self.dropdown_widget.on_click(self.update_fiber)
         # ---------------------------------------------------------------------
@@ -153,11 +153,11 @@ class SpectrumPlot:
         self.identifier = str(self.identifier_widget.value)
         self.obs_dir = str(self.obs_dir_widget.value)
         self.order_num = int(self.order_num_widget.value)
-        self.fiber = str(self.dropdown_widget)
+        self.fiber = str(self.dropdown_widget.value)
 
         if DEBUG:
             out = dict(idenfier=self.identifier, obs_dir=self.obs_dir,
-                       order_num=self.order_num)
+                       order_num=self.order_num, fiber=self.fiber)
             print('Update')
             print(out)
 
