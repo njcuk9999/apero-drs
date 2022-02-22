@@ -62,6 +62,7 @@ class SpectrumPlot:
         self.line_labels = ['e2ds', 'tcorr', 'recon', 'skymodel']
         self.line_otypes = ['EXT_E2DS_FF', 'TELLU_OBJ', 'TELLU_RECON',
                             'TELLU_PCLEAN']
+        self.line_norm = [True, True, False, False]
         self.line_oext = [1, 1, 1, 4]
         self.line_active = [1, 0, 0, 0]
         self.line_colors = ['black', 'red', 'blue', 'orange']
@@ -155,6 +156,8 @@ class SpectrumPlot:
         Find files and update graph if possible
         :return:
         """
+        # storage for the median
+        med0 = None
         # ---------------------------------------------------------------------
         # get files from index database
         for it in range(len(self.line_labels)):
@@ -198,16 +201,18 @@ class SpectrumPlot:
                 # add y values
                 syname = 'flux_{0}[{1}]'.format(name, order_num)
                 with warnings.catch_warnings(record=True) as _:
-                    med = mp.nanmedian(data[order_num])
-                    sdict[syname] = data[order_num] / med
+                    if med0 is None:
+                        med0 = mp.nanmedian(data[order_num])
+                    if self.line_norm[it]:
+                        sdict[syname] = data[order_num] / med0
+                    else:
+                        sdict[syname] = data[order_num]
             # update source
             self.source.data = sdict
 
     def plot(self):
         # get order number
         order_num = self.order_num
-        # clear the current plot
-        self.figure.renderers = []
         # loop around lines
         for it in range(len(self.line_labels)):
             # get name
