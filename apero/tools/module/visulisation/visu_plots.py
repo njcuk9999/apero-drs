@@ -230,9 +230,10 @@ class SpectrumPlot:
         order_num = self.order_num
         # reset lines
         self.lines = []
+        # clear plots
+        self.figure.renderers = []
         # loop around lines
         for it in range(len(self.line_labels)):
-
             if DEBUG:
                 dargs = [self.line_labels[it], order_num]
                 print('Plotting {0} [Order={1}]'.format(*dargs))
