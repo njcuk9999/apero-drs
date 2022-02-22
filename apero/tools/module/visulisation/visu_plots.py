@@ -95,7 +95,7 @@ class SpectrumPlot:
         self.ymin = 0
         self.ymax = 1
         # whether we currently have identifier loaded
-        self.loaded = ''
+        self.loaded_params = dict(id=self.identifier, fiber=self.fiber)
 
         self.valid = False
         # create the graph
@@ -155,15 +155,22 @@ class SpectrumPlot:
         self.identifier = str(self.identifier_widget.value)
         self.obs_dir = str(self.obs_dir_widget.value)
         self.order_num = int(self.order_num_widget.value)
+        # get loaded params
+        lparams = dict(idenfier=self.identifier, obs_dir=self.obs_dir,
+                       order_num=self.order_num, fiber=self.fiber)
 
         if DEBUG:
-            out = dict(idenfier=self.identifier, obs_dir=self.obs_dir,
-                       order_num=self.order_num, fiber=self.fiber)
             print('Update')
-            print(out)
+            print(lparams)
+
+        # check condition to update file
+        cond_update = False
+        for key in self.loaded_params:
+            if lparams[key] != self.loaded_params[key]:
+                cond_update = True
 
         # if identifier is the same as loaded we just check line visibility
-        if self.identifier != self.loaded or not self.valid:
+        if cond_update or not self.valid:
             self.update_files()
         # update line visibility
         if self.valid:
@@ -194,6 +201,7 @@ class SpectrumPlot:
         Find files and update graph if possible
         :return:
         """
+
         # ---------------------------------------------------------------------
         # get blaze
         blaze = None
@@ -242,7 +250,11 @@ class SpectrumPlot:
                 return
             else:
                 self.valid = True
-                self.loaded = self.identifier
+                # set loaded params
+                self.loaded_params = dict(idenfier=self.identifier,
+                                          obs_dir=self.obs_dir,
+                                          order_num=self.order_num,
+                                          fiber=self.fiber)
                 if DEBUG:
                     print('Found file {0}'.format(filename))
             # -----------------------------------------------------------------
@@ -330,7 +342,7 @@ class SpectrumPlot:
 
 def e2ds_plot(**kwargs) -> bokeh.models.Model:
     # -------------------------------------------------------------------------
-    plotwindow = figure()
+    plotwindow = figure(height=512, width=768)
     plotwindow.sizing_mode = 'scale_width'
     # -------------------------------------------------------------------------
     e2dsplotapp = SpectrumPlot(plotwindow)
@@ -338,7 +350,7 @@ def e2ds_plot(**kwargs) -> bokeh.models.Model:
     # get widgets
     inputs = column(*e2dsplotapp.widgets)
     # return the grid
-    page = row(inputs, plotwindow, width=1200)
+    page = row(inputs, plotwindow)
     page.sizing_mode = 'scale_width'
     # return full page
     return page
