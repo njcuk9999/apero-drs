@@ -10,6 +10,7 @@ Created on 2022-02-22
 @author: cook
 """
 import numpy as np
+import warnings
 
 import bokeh
 from bokeh.themes import built_in_themes
@@ -18,6 +19,7 @@ from bokeh.plotting import figure
 from bokeh.models import HoverTool, CheckboxButtonGroup
 from bokeh.layouts import grid, row, column
 from bokeh.models import ColumnDataSource, Slider, TextInput, Button
+from bokeh.models import Range1d
 
 from apero.tools.module.visulisation import visu_core
 from apero.core import math as mp
@@ -75,6 +77,8 @@ class SpectrumPlot:
         self.widgets = []
         # other variables
         self.order_max = 1
+        self.xmin = 0
+        self.xmax = 1
         # whether we currently have identifier loaded
         self.loaded = ''
 
@@ -181,6 +185,8 @@ class SpectrumPlot:
             # update max order
             self.order_max = data.shape[0]
             self.order_num_widget.end = self.order_max
+            self.xmin = 0
+            self.xmax = data.shape[1]
             # -----------------------------------------------------------------
             # copy source dict
             sdict = dict(self.source.data)
@@ -191,13 +197,17 @@ class SpectrumPlot:
                 sdict[sxname] = np.arange(data.shape[1])
                 # add y values
                 syname = 'flux_{0}[{1}]'.format(name, order_num)
-                sdict[syname] = data[order_num] / mp.nanmedian(data[order_num])
+                with warnings.catch_warnings(record=True) as _:
+                    med = mp.nanmedian(data[order_num])
+                    sdict[syname] = data[order_num] / med
             # update source
             self.source.data = sdict
 
     def plot(self):
         # get order number
         order_num = self.order_num
+        # clear the current plot
+        self.figure.renderers = []
         # loop around lines
         for it in range(len(self.line_labels)):
             # get name
@@ -209,10 +219,13 @@ class SpectrumPlot:
             syname = 'flux_{0}[{1}]'.format(name, order_num)
             # plot line
             line = self.figure.line(sxname, syname, source=self.source,
-                                    color=color, alpha=alpha)
+                                    color=color, alpha=alpha,
+                                    legend_label=name)
             # keep lines
             self.lines.append(line)
-
+        # set x and y range
+        self.figure.y_range = Range1d(0, 3)
+        self.figure.x_range = Range1d(self.xmin, self.xmax)
 
 
 def e2ds_plot(**kwargs) -> bokeh.models.Model:
