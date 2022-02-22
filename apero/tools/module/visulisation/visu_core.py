@@ -160,7 +160,7 @@ def check_arg(func_name, kwargs, key, dtype, required: bool = True):
 
 
 def get_file(block_kind: str,  obs_dir: str, identifier: str,
-             output: str, hdu: int, get_data: bool = True
+             output: str, fiber: str, hdu: int, get_data: bool = True
              ) -> Tuple[Union[np.ndarray, None], Union[str, None]]:
 
     # get database
@@ -168,8 +168,9 @@ def get_file(block_kind: str,  obs_dir: str, identifier: str,
     indexdbm.load_db()
     # find file in database
     condition = 'BLOCK_KIND="{0}" AND OBS_DIR="{1}" AND KW_IDENTIFIER="{2}"'
-    condition += ' AND KW_OUTPUT="{3}"'
-    condition = condition.format(block_kind, obs_dir, identifier, output)
+    condition += ' AND KW_OUTPUT="{3}" AND KW_FIBER="{4}"'
+    condition = condition.format(block_kind, obs_dir, identifier, output,
+                                 fiber)
     # query database
     table = indexdbm.get_entries('ABSPATH, OBS_DIR', condition=condition)
     # deal with no entries
