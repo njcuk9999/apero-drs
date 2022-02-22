@@ -184,7 +184,7 @@ class SpectrumPlot:
                 sdict[sxname] = np.arange(data.shape[1])
                 # add y values
                 syname = 'flux_{0}[{1}]'.format(name, order_num)
-                sdict[syname] = data
+                sdict[syname] = data[order_num]
             # update source
             self.source.data = sdict
 
