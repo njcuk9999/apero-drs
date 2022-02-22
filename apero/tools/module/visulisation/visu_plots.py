@@ -223,7 +223,7 @@ class SpectrumPlot:
             file_dict = dict(block_kind=self.line_bkind[it],
                              obs_dir=self.obs_dir, identifier=self.identifier,
                              output=self.line_otypes[it],
-                             hdu=self.line_oext[it])
+                             hdu=self.line_oext[it], fiber=self.fiber)
             # -----------------------------------------------------------------
             # find data and load
             data, filename = visu_core.get_file(**file_dict)
