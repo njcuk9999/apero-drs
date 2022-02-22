@@ -229,7 +229,6 @@ class SpectrumPlot:
         # get order number
         order_num = self.order_num
         # reset lines
-        self.figure.renderer = []
         self.lines = []
         # loop around lines
         for it in range(len(self.line_labels)):
