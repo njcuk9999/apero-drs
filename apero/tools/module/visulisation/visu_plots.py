@@ -95,7 +95,10 @@ class SpectrumPlot:
         self.ymin = 0
         self.ymax = 1
         # whether we currently have identifier loaded
-        self.loaded_params = dict(id=self.identifier, fiber=self.fiber)
+        self.loaded_params = dict(identifier=self.identifier,
+                                  obs_dir=self.obs_dir,
+                                  order_num=self.order_num,
+                                  fiber=self.fiber)
 
         self.valid = False
         # create the graph
@@ -156,7 +159,7 @@ class SpectrumPlot:
         self.obs_dir = str(self.obs_dir_widget.value)
         self.order_num = int(self.order_num_widget.value)
         # get loaded params
-        lparams = dict(idenfier=self.identifier, obs_dir=self.obs_dir,
+        lparams = dict(identifier=self.identifier, obs_dir=self.obs_dir,
                        order_num=self.order_num, fiber=self.fiber)
 
         if DEBUG:
@@ -251,7 +254,7 @@ class SpectrumPlot:
             else:
                 self.valid = True
                 # set loaded params
-                self.loaded_params = dict(idenfier=self.identifier,
+                self.loaded_params = dict(identifier=self.identifier,
                                           obs_dir=self.obs_dir,
                                           order_num=self.order_num,
                                           fiber=self.fiber)
