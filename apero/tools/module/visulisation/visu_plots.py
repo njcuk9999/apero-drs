@@ -62,7 +62,7 @@ class SpectrumPlot:
         self.line_labels = ['e2ds', 'tcorr', 'recon', 'skymodel']
         self.line_otypes = ['EXT_E2DS_FF', 'TELLU_OBJ', 'TELLU_RECON',
                             'TELLU_PCLEAN']
-        self.line_norm = [True, True, False, False]
+        self.line_norm = ['med', 'med', None, 'max']
         self.line_oext = [1, 1, 1, 4]
         self.line_active = [1, 0, 0, 0]
         self.line_colors = ['black', 'red', 'blue', 'orange']
@@ -88,27 +88,39 @@ class SpectrumPlot:
         self.create()
 
     def create(self):
+        # ---------------------------------------------------------------------
         # create obs dir text widget
         self.obs_dir_widget = TextInput(title='OBS_DIR', value=self.obs_dir)
         #self.obs_dir_widget.on_change('value', self.update_graph)
+        # ---------------------------------------------------------------------
         # create identifier text widget
         self.identifier_widget = TextInput(title='ID', value=self.identifier)
         #self.identifier_widget.on_change('value', self.update_graph)
-        # create lines checkbox group widget
-        self.lines_widget = CheckboxButtonGroup(labels=self.line_labels,
-                                                active=self.line_active)
-        #self.lines_widget.on_change('active', self.update_graph)
+        # ---------------------------------------------------------------------
         # create widget for order number
         self.order_num_widget = Slider(title='Order No.', value=self.order_num,
                                        start=0, end=self.order_max, step=1)
        # self.order_num_widget.on_change('value', self.update_graph)
-
+        # ---------------------------------------------------------------------
+        # create a button to update graph
         self.button = Button(label='Update', button_type='success')
-        self.button.on_click(self.update_graph)
-
+        self.button.on_click(self.update_graph_on_click)
+        # ---------------------------------------------------------------------
+        # create lines checkbox group widget
+        self.lines_widget = CheckboxButtonGroup(labels=self.line_labels,
+                                                active=self.line_active)
+        self.lines_widget.on_change('active', self.update_graph)
+        # ---------------------------------------------------------------------
         self.widgets = [self.obs_dir_widget, self.identifier_widget,
-                        self.lines_widget, self.order_num_widget,
-                        self.button]
+                        self.order_num_widget, self.button,
+                        self.lines_widget]
+
+    def update_graph_on_change(self, attrname, old, new):
+        _ = attrname, old, new
+        self.update_graph()
+
+    def update_graph_on_click(self):
+        self.update_graph()
 
     def update_graph(self):
         # _ = attrname, old, new
@@ -201,20 +213,26 @@ class SpectrumPlot:
                 # add y values
                 syname = 'flux_{0}[{1}]'.format(name, order_num)
                 with warnings.catch_warnings(record=True) as _:
-                    if med0 is None:
-                        med0 = mp.nanmedian(data[order_num])
-                    if self.line_norm[it]:
-                        sdict[syname] = data[order_num] / med0
+                    if self.line_norm[it] == 'med':
+                        norm = mp.nanmedian(data[order_num])
+                    elif self.line_norm[it] == 'max':
+                        norm = np.nanmax(data[order_num])
                     else:
-                        sdict[syname] = data[order_num]
+                        norm = np.ones_like(data[order_num])
+                    sdict[syname] = data[order_num] / norm
             # update source
             self.source.data = sdict
 
     def plot(self):
         # get order number
         order_num = self.order_num
+        # get which checkboxs are active
+        switch = self.lines_widget.active
         # loop around lines
         for it in range(len(self.line_labels)):
+            # do not plot
+            if it not in switch:
+                continue
             # get name
             name = self.line_labels[it]
             color = self.line_colors[it]
