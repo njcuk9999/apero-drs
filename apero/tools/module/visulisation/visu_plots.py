@@ -167,9 +167,11 @@ class SpectrumPlot:
 
                 self.valid = False
                 return
-
-            if DEBUG:
-                print('Found file {0}'.format(filename))
+            else:
+                self.valid = True
+                self.loaded = self.identifier
+                if DEBUG:
+                    print('Found file {0}'.format(filename))
             # -----------------------------------------------------------------
             # update max order
             self.order_max = data.shape[0]
