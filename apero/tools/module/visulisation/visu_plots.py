@@ -153,7 +153,6 @@ class SpectrumPlot:
         self.identifier = str(self.identifier_widget.value)
         self.obs_dir = str(self.obs_dir_widget.value)
         self.order_num = int(self.order_num_widget.value)
-        self.fiber = str(self.dropdown_widget.value)
 
         if DEBUG:
             out = dict(idenfier=self.identifier, obs_dir=self.obs_dir,
