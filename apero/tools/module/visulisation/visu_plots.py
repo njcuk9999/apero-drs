@@ -32,10 +32,6 @@ from apero.tools.module.visulisation import visu_core
 DEBUG = True
 # get params
 PARAMS = constants.load()
-# get pseudo constants
-PCONST = constants.pload()
-# get fibers
-scifibers, reffibers = PCONST.FIBER_KINDS()
 
 
 # =============================================================================
@@ -65,7 +61,9 @@ class SpectrumPlot:
         self.obs_dir = '2020-08-31'
         self.identifier = '2510303o'
         self.order_num = 0
-        self.fiber = scifibers[0]
+        self.fibers = PARAMS['TELLURIC_FIBER_TYPE']
+        self.order_max = PARAMS['FIBER_MAX_NUM_ORDERS_A']
+        self.fiber = str(self.fibers[0])
         # line variables
         self.line_bkind = ['red', 'red', 'red', 'red']
         self.line_labels = ['e2ds', 'tcorr', 'recon', 'skymodel']
@@ -88,8 +86,6 @@ class SpectrumPlot:
         self.order_num_widget = None
         self.widgets = []
         # other variables
-        self.fibers = scifibers + [reffibers]
-        self.order_max = PARAMS['FIBER_MAX_NUM_ORDERS_A']
         self.xmin = 0
         self.xmax = 1
         self.ymin = 0
@@ -105,39 +101,46 @@ class SpectrumPlot:
         self.create()
 
     def create(self):
+
+        self.widgets = []
         # ---------------------------------------------------------------------
         # create obs dir text widget
         self.obs_dir_widget = TextInput(title='OBS_DIR', value=self.obs_dir)
         #self.obs_dir_widget.on_change('value', self.update_graph)
+        self.widgets.append(self.obs_dir_widget)
         # ---------------------------------------------------------------------
         # create identifier text widget
         self.identifier_widget = TextInput(title='ID', value=self.identifier)
         #self.identifier_widget.on_change('value', self.update_graph)
+        self.widgets.append(self.identifier_widget)
         # ---------------------------------------------------------------------
         # create widget for order number
         self.order_num_widget = Slider(title='Order No.', value=self.order_num,
                                        start=0, end=self.order_max, step=1)
         # self.order_num_widget.on_change('value', self.update_graph)
+        self.widgets.append(self.order_num_widget)
         # ---------------------------------------------------------------------
-        fiber_menu = []
-        for fiber in self.fibers:
-            fiber_menu.append((fiber, fiber))
-        self.dropdown_widget = Dropdown(label='Fiber', button_type='primary',
-                                        menu=fiber_menu)
-        self.dropdown_widget.on_click(self.update_fiber)
+        if len(self.fibers) > 1:
+            fiber_menu = []
+            for fiber in self.fibers:
+                fiber_menu.append((fiber, fiber))
+            self.dropdown_widget = Dropdown(label='Fiber',
+                                            button_type='primary',
+                                            menu=fiber_menu)
+            self.dropdown_widget.on_click(self.update_fiber)
+            self.widgets.append(self.dropdown_widget)
         # ---------------------------------------------------------------------
         # create a button to update graph
         self.button = Button(label='Update', button_type='success')
         self.button.on_click(self.update_graph_on_click)
+        self.widgets.append(self.button)
         # ---------------------------------------------------------------------
         # create lines checkbox group widget
         self.lines_widget = CheckboxButtonGroup(labels=self.line_labels,
                                                 active=self.line_active)
         self.lines_widget.on_change('active', self.update_active)
+        self.widgets.append(self.lines_widget)
         # ---------------------------------------------------------------------
-        self.widgets = [self.obs_dir_widget, self.identifier_widget,
-                        self.order_num_widget, self.dropdown_widget,
-                        self.button,  self.lines_widget]
         # update graph now
         self.update_graph()
 
@@ -255,8 +258,6 @@ class SpectrumPlot:
                 self.valid = True
                 # set loaded params
                 self.loaded_params = dict(identifier=self.identifier,
-                                          obs_dir=self.obs_dir,
-                                          order_num=self.order_num,
                                           fiber=self.fiber)
                 if DEBUG:
                     print('Found file {0}'.format(filename))
