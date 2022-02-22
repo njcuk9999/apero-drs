@@ -16,18 +16,26 @@ import bokeh
 from bokeh.themes import built_in_themes
 from bokeh.io import curdoc, show, output_file
 from bokeh.plotting import figure
-from bokeh.models import HoverTool, CheckboxButtonGroup
 from bokeh.layouts import grid, row, column
+from bokeh.models import HoverTool, CheckboxButtonGroup
 from bokeh.models import ColumnDataSource, Slider, TextInput, Button
-from bokeh.models import Range1d
+from bokeh.models import Range1d, Dropdown
 
-from apero.tools.module.visulisation import visu_core
+from apero.core import constants
 from apero.core import math as mp
+from apero.tools.module.visulisation import visu_core
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
 DEBUG = True
+# get params
+PARAMS = constants.load()
+# get pseudo constants
+PCONST = constants.pload()
+# get fibers
+scifibers, reffibers = PCONST.FIBER_KINDS()
 
 
 # =============================================================================
@@ -57,16 +65,19 @@ class SpectrumPlot:
         self.obs_dir = '2020-08-31'
         self.identifier = '2510303o'
         self.order_num = 0
+        self.fiber = scifibers[0]
         # line variables
         self.line_bkind = ['red', 'red', 'red', 'red']
         self.line_labels = ['e2ds', 'tcorr', 'recon', 'skymodel']
         self.line_otypes = ['EXT_E2DS_FF', 'TELLU_OBJ', 'TELLU_RECON',
                             'TELLU_PCLEAN']
         self.line_norm = ['med', 'med', None, 'max']
+        self.line_blaze_cor = [True, True, False, False]
         self.line_oext = [1, 1, 1, 4]
         self.line_active = [1, 0, 0, 0]
         self.line_colors = ['black', 'red', 'blue', 'orange']
         self.line_alphas = [0.5, 0.5, 0.5, 0.5]
+        self.line_dc = [0, 0, 0, 1]
         self.lines = []
         self.source = ColumnDataSource()
 
@@ -77,7 +88,8 @@ class SpectrumPlot:
         self.order_num_widget = None
         self.widgets = []
         # other variables
-        self.order_max = 1
+        self.fibers = scifibers + [reffibers]
+        self.order_max = PARAMS['FIBER_MAX_NUM_ORDERS_A']
         self.xmin = 0
         self.xmax = 1
         # whether we currently have identifier loaded
@@ -100,7 +112,13 @@ class SpectrumPlot:
         # create widget for order number
         self.order_num_widget = Slider(title='Order No.', value=self.order_num,
                                        start=0, end=self.order_max, step=1)
-       # self.order_num_widget.on_change('value', self.update_graph)
+        # self.order_num_widget.on_change('value', self.update_graph)
+        # ---------------------------------------------------------------------
+        fiber_menu = []
+        for fiber in self.fibers:
+            fiber_menu.append((fiber, fiber))
+        self.dropdown_widget = Dropdown(label='Fiber', button_type='warning',
+                                        menu=fiber_menu)
         # ---------------------------------------------------------------------
         # create a button to update graph
         self.button = Button(label='Update', button_type='success')
@@ -112,8 +130,8 @@ class SpectrumPlot:
         self.lines_widget.on_change('active', self.update_active)
         # ---------------------------------------------------------------------
         self.widgets = [self.obs_dir_widget, self.identifier_widget,
-                        self.order_num_widget, self.button,
-                        self.lines_widget]
+                        self.order_num_widget, self.dropdown_widget,
+                        self.button,  self.lines_widget]
         # update graph now
         self.update_graph()
 
@@ -131,6 +149,7 @@ class SpectrumPlot:
         self.identifier = str(self.identifier_widget.value)
         self.obs_dir = str(self.obs_dir_widget.value)
         self.order_num = int(self.order_num_widget.value)
+        self.fiber = str(self.dropdown_widget)
 
         if DEBUG:
             out = dict(idenfier=self.identifier, obs_dir=self.obs_dir,
@@ -170,8 +189,28 @@ class SpectrumPlot:
         Find files and update graph if possible
         :return:
         """
-        # storage for the median
-        med0 = None
+        # ---------------------------------------------------------------------
+        # get blaze
+        blaze = None
+        if np.sum(self.line_blaze_cor) > 0:
+            pos = np.where(self.line_blaze_cor)
+            # get file dict
+            file_dict = dict(block_kind=self.line_bkind[pos],
+                             obs_dir=self.obs_dir, identifier=self.identifier,
+                             output=self.line_otypes[pos],
+                             hdu=self.line_oext[pos], fiber=self.fiber)
+            # find data and load
+            _, filename = visu_core.get_file(get_data=False, **file_dict)
+            if filename is not None:
+                blaze, blazefile = visu_core.get_calib(filename, 'BLAZE')
+            else:
+                if DEBUG:
+                    print('Cannot find data')
+                    print(file_dict)
+                return
+        # ----------------------------------------------------------------------
+        # get the wave solution
+
         # ---------------------------------------------------------------------
         # get files from index database
         for it in range(len(self.line_labels)):
@@ -205,8 +244,14 @@ class SpectrumPlot:
             self.xmin = 0
             self.xmax = data.shape[1]
             # -----------------------------------------------------------------
+            # correct for blaze
+            if self.line_blaze_cor[it] and blaze is not None:
+                data = data / blaze
+            # -----------------------------------------------------------------
             # copy source dict
             sdict = dict(self.source.data)
+            # get dc level
+            dclevel = self.line_dc[it]
             # push into storage
             for order_num in range(data.shape[0]):
                 # add x values
@@ -221,7 +266,7 @@ class SpectrumPlot:
                         norm = np.nanmax(data[order_num])
                     else:
                         norm = np.ones_like(data[order_num])
-                    sdict[syname] = data[order_num] / norm
+                    sdict[syname] = (data[order_num] / norm) + dclevel
             # update source
             self.source.data = sdict
 

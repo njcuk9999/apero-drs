@@ -160,7 +160,7 @@ def check_arg(func_name, kwargs, key, dtype, required: bool = True):
 
 
 def get_file(block_kind: str,  obs_dir: str, identifier: str,
-             output: str, hdu: int,
+             output: str, hdu: int, get_data: bool = True
              ) -> Tuple[Union[np.ndarray, None], Union[str, None]]:
 
     # get database
@@ -178,9 +178,34 @@ def get_file(block_kind: str,  obs_dir: str, identifier: str,
     # use the first entry as the filename
     filename = table['ABSPATH'].iloc[0]
     # load file with correct extension
-    data = drs_fits.readfits(PARAMS, filename, ext=hdu)
+    if get_data:
+        data = drs_fits.readfits(PARAMS, filename, ext=hdu)
+    else:
+        data = None
     # return file
     return np.array(data), filename
+
+
+def get_calib(filename: str, key: str) -> Tuple[np.ndarray, str]:
+    """
+    Get a calibration file for a speific file and get
+
+    :param filename: str, the filename
+    :param key: str, the db key for the specific type of calibration
+    """
+    # load the header of the filename
+    header = drs_fits.read_header(PARAMS, filename, ext=0)
+    # get database
+    calibdbm = drs_database.CalibrationDatabase(PARAMS)
+    calibdbm.load_db()
+    # get calib file
+    cout = calibdbm.get_calib_file(key=key, header=header, nentries=1)
+    # extract absolute filename from calibration database
+    cfilename = os.path.join(PARAMS['DRS_CALIB_DB'], cout[0])
+    # get data
+    cdata = drs_fits.readfits(PARAMS, cfilename, ext=1)
+    # return the data and the filename
+    return cdata, cfilename
 
 
 # =============================================================================
