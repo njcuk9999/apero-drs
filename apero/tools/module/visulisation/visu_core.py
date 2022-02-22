@@ -160,7 +160,7 @@ def check_arg(func_name, kwargs, key, dtype, required: bool = True):
 
 
 def get_file(block_kind: str,  obs_dir: str, identifier: str,
-             output: str, hdu: int
+             output: str, hdu: int,
              ) -> Tuple[Union[np.ndarray, None], Union[str, None]]:
 
     # get database

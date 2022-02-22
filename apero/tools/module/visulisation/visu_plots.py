@@ -17,9 +17,10 @@ from bokeh.io import curdoc, show, output_file
 from bokeh.plotting import figure
 from bokeh.models import HoverTool, CheckboxButtonGroup
 from bokeh.layouts import grid, row, column
-from bokeh.models import ColumnDataSource, Slider, TextInput
+from bokeh.models import ColumnDataSource, Slider, TextInput, Button
 
 from apero.tools.module.visulisation import visu_core
+from apero.core import math as mp
 
 # =============================================================================
 # Define variables
@@ -84,24 +85,28 @@ class SpectrumPlot:
     def create(self):
         # create obs dir text widget
         self.obs_dir_widget = TextInput(title='OBS_DIR', value=self.obs_dir)
-        self.obs_dir_widget.on_change('value', self.update_graph)
+        #self.obs_dir_widget.on_change('value', self.update_graph)
         # create identifier text widget
         self.identifier_widget = TextInput(title='ID', value=self.identifier)
-        self.identifier_widget.on_change('value', self.update_graph)
+        #self.identifier_widget.on_change('value', self.update_graph)
         # create lines checkbox group widget
         self.lines_widget = CheckboxButtonGroup(labels=self.line_labels,
                                                 active=self.line_active)
-        self.lines_widget.on_change('active', self.update_graph)
+        #self.lines_widget.on_change('active', self.update_graph)
         # create widget for order number
         self.order_num_widget = Slider(title='Order No.', value=self.order_num,
                                        start=0, end=self.order_max, step=1)
-        self.order_num_widget.on_change('value', self.update_graph)
+       # self.order_num_widget.on_change('value', self.update_graph)
+
+        self.button = Button(label='Update', button_type='success')
+        self.button.on_click(self.update_graph)
 
         self.widgets = [self.obs_dir_widget, self.identifier_widget,
-                        self.lines_widget, self.order_num_widget]
+                        self.lines_widget, self.order_num_widget,
+                        self.button]
 
-    def update_graph(self, attrname, old, new):
-        _ = attrname, old, new
+    def update_graph(self):
+        # _ = attrname, old, new
 
         # update values from widgets
         self.identifier = str(self.identifier_widget.value)
@@ -186,7 +191,7 @@ class SpectrumPlot:
                 sdict[sxname] = np.arange(data.shape[1])
                 # add y values
                 syname = 'flux_{0}[{1}]'.format(name, order_num)
-                sdict[syname] = data[order_num]
+                sdict[syname] = data[order_num] / mp.nanmedian(data[order_num])
             # update source
             self.source.data = sdict
 
