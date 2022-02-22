@@ -289,6 +289,8 @@ class SpectrumPlot:
     def plot(self):
         # get order number
         order_num = self.order_num
+        # reset ymin and ymax
+        self.ymin, self.ymax = 0, 1
         # loop around lines
         for it in range(len(self.line_labels)):
             # get name
@@ -299,14 +301,14 @@ class SpectrumPlot:
             # get x and y values
             sxname = 'x_{0}[{1}]'.format(name, order_num)
             syname = 'flux_{0}[{1}]'.format(name, order_num)
-
+            # assign current values
             cxname = 'current_{0}_x'.format(name)
             cyname = 'current_{0}_y'.format(name)
             # update current
             self.source.data[cxname] = self.source.data[sxname]
             self.source.data[cyname] = self.source.data[syname]
             # adjust ymin and ymax
-            y = self.source[syname]
+            y = self.source.data[syname]
             self.ymin = np.min([self.ymin, np.nanmin(y)])
             self.ymax = np.max([self.ymax, np.nanmax(y)])
             # deal with debugging
