@@ -176,7 +176,7 @@ def get_file(block_kind: str,  obs_dir: str, identifier: str,
     if table is None or len(table) == 0:
         return None, None
     # use the first entry as the filename
-    filename = table.iloc[0]
+    filename = table['ABSPATH'].iloc[0]
     # load file with correct extension
     data = drs_fits.readfits(PARAMS, filename, ext=hdu)
     # return file
