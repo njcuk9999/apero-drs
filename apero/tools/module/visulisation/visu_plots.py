@@ -61,7 +61,7 @@ class SpectrumPlot:
         self.obs_dir = '2020-08-31'
         self.identifier = '2510303o'
         self.order_num = 0
-        self.fibers = PARAMS['TELLURIC_FIBER_TYPE']
+        self.fibers = PARAMS.listp('TELLURIC_FIBER_TYPE', dtype=str)
         self.order_max = PARAMS['FIBER_MAX_NUM_ORDERS_A']
         self.fiber = str(self.fibers[0])
         # line variables
@@ -347,16 +347,15 @@ class SpectrumPlot:
 def e2ds_plot(**kwargs) -> bokeh.models.Model:
     # -------------------------------------------------------------------------
     plotwindow = figure(height=512, width=768)
-    plotwindow.sizing_mode = 'scale_width'
+    plotwindow.sizing_mode = 'stretch_both'
     # -------------------------------------------------------------------------
     e2dsplotapp = SpectrumPlot(plotwindow)
     # -------------------------------------------------------------------------
     # get widgets
     inputs = column(*e2dsplotapp.widgets)
-    inputs.sizing_mode = 'scale_width'
     # return the grid
     page = row(inputs, plotwindow, width=1024)
-    page.sizing_mode = 'scale_width'
+    page.sizing_mode = 'stretch_both'
     # return full page
     return page
 
