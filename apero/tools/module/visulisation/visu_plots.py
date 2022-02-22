@@ -20,6 +20,7 @@ from bokeh.layouts import grid, row, column
 from bokeh.models import HoverTool, CheckboxButtonGroup
 from bokeh.models import ColumnDataSource, Slider, TextInput, Button
 from bokeh.models import Range1d, Dropdown
+from bokeh.models.widgets.inputs import AutocompleteInput
 
 from apero.core import constants
 from apero.core import math as mp
@@ -62,8 +63,10 @@ class SpectrumPlot:
         self.identifier = '2510303o'
         self.order_num = 0
         self.fibers = PARAMS.listp('TELLURIC_FIBER_TYPE', dtype=str)
-        self.order_max = PARAMS['FIBER_MAX_NUM_ORDERS_A']
+        self.order_max = PARAMS['FIBER_MAX_NUM_ORDERS_A'] - 1
         self.fiber = str(self.fibers[0])
+        self.obs_dirs = visu_core.get_obs_dirs()
+        self.identifiers = visu_core.get_identifers()
         # line variables
         self.line_bkind = ['red', 'red', 'red', 'red']
         self.line_labels = ['e2ds', 'tcorr', 'recon', 'skymodel']
@@ -105,13 +108,17 @@ class SpectrumPlot:
         self.widgets = []
         # ---------------------------------------------------------------------
         # create obs dir text widget
-        self.obs_dir_widget = TextInput(title='OBS_DIR', value=self.obs_dir)
-        #self.obs_dir_widget.on_change('value', self.update_graph)
+        self.obs_dir_widget = AutocompleteInput(title='OBS_DIR',
+                                                value=self.obs_dir)
+        self.obs_dir.completions = self.obs_dirs
+        self.obs_dir_widget.on_change('value', self.update_file_args)
         self.widgets.append(self.obs_dir_widget)
         # ---------------------------------------------------------------------
         # create identifier text widget
-        self.identifier_widget = TextInput(title='ID', value=self.identifier)
-        #self.identifier_widget.on_change('value', self.update_graph)
+        self.identifier_widget = AutocompleteInput(title='ID',
+                                                   value=self.identifier)
+        self.identifier_widget.completions = self.identifiers
+        self.identifier_widget.on_change('value', self.update_file_args)
         self.widgets.append(self.identifier_widget)
         # ---------------------------------------------------------------------
         # create widget for order number
@@ -143,6 +150,15 @@ class SpectrumPlot:
         # ---------------------------------------------------------------------
         # update graph now
         self.update_graph()
+
+    def update_file_args(self, attrname, old, new):
+        _ = attrname, old, new
+        self.identifier = str(self.identifier_widget.value)
+        self.obs_dir = str(self.obs_dir_widget.value)
+        # update
+        if self.obs_dir not in [None, 'None', '', 'Null']:
+            new_identifiers = visu_core.get_identifers(obs_dir=self.obs_dir)
+            self.identifier_widget.completions = new_identifiers
 
     def update_fiber(self, event):
         self.fiber = event.item

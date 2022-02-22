@@ -209,6 +209,38 @@ def get_calib(filename: str, key: str) -> Tuple[np.ndarray, str]:
     return cdata, cfilename
 
 
+def get_obs_dirs() -> List[str]:
+    # get database
+    indexdbm = drs_database.IndexDatabase(PARAMS)
+    indexdbm.load_db()
+    # return observation directories
+    new_obs_dirs = indexdbm.get_unique('OBS_DIR', condition='BLOCK_KIND="raw"')
+
+    if len(new_obs_dirs) == 0:
+        return []
+    else:
+        return new_obs_dirs
+
+
+def get_identifers(block_kind='red', obs_dir=None) -> List[str]:
+    # get database
+    indexdbm = drs_database.IndexDatabase(PARAMS)
+    indexdbm.load_db()
+    # set up condition
+    if obs_dir is None:
+        condition = 'BLOCK_KIND="{0}"'.format(block_kind)
+    else:
+        condition = 'BLOCK_KIND="{0}" AND OBS_DIR="{1}"'
+        condition = condition.format(block_kind, obs_dir)
+    # return identifiers which conform to these filters
+    newidentifiers = indexdbm.get_unique('KW_IDENTIFIER', condition=condition)
+
+    if len(newidentifiers) == 0:
+        return []
+    else:
+        return newidentifiers
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
