@@ -228,10 +228,10 @@ class SpectrumPlot:
     def plot(self):
         # get order number
         order_num = self.order_num
-        # rest plot
-        self.figure.emit()
         # get which checkboxs are active
         switch = self.lines_widget.active
+        # clear figures first
+        self.figure.renderers = []
         # loop around lines
         for it in range(len(self.line_labels)):
 
