@@ -48,13 +48,14 @@ req_check = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 run_ini = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
+visulise = drs_recipe(__INSTRUMENT__)
 
 # push into a list
 recipes = [astrometric, changelog, database_mgr, explorer,
            get_files, go_recipe, langdb, listing,
            precheck, processing,
            remake_db, remake_doc, req_check, reset, run_ini,
-           stats, validate]
+           stats, validate, visulise]
 
 # =============================================================================
 # Recipe definitions
@@ -428,3 +429,18 @@ validate.description = textentry('VALIDATE_DESCRIPTION')
 validate.recipe_type = 'nolog-tool'
 validate.recipe_kind = 'user'
 validate.description_file = 'apero_validate.rst'
+
+
+# -----------------------------------------------------------------------------
+# apero_visu.py
+# -----------------------------------------------------------------------------
+visulise.name = 'apero_visu.py'
+visulise.shortname = 'VISU'
+visulise.instrument = __INSTRUMENT__
+visulise.description = 'APERO visuliser'
+visulise.recipe_type = 'tool'
+visulise.recipe_kind = 'user'
+visulise.set_kwarg(name='--mode', dtype='options', default='None',
+                   options=['e2ds'],
+                   helpstr='Which type of graph to plot')
+visulise.description_file = None

@@ -187,14 +187,14 @@ def get_file(block_kind: str,  obs_dir: str, identifier: str,
 # =============================================================================
 if __name__ == "__main__":
 
-    # _bplt = BokehPlot(PARAMS, 'test_plot', '/home/cook/bokeh_test/test.py',
-    #                   'My test plot')
+
+    # _path = os.path.join(PARAMS['DRS_DATA_PLOT'], 'test.py')
+    # _bplt = BokehPlot(PARAMS, 'test_plot', _path, 'My test plot')
     # _bplt.create(kwargs=dict(power=3, xlabel='x', ylabel='x^3'))
     # _bplt.run()
 
-
-    _bplt = BokehPlot(PARAMS, 'e2ds_plot', '/home/cook/bokeh_test/e2ds_plot.py',
-                      'E2DS plot')
+    _path = os.path.join(PARAMS['DRS_DATA_PLOT'], 'e2ds_plot.py')
+    _bplt = BokehPlot(PARAMS, 'e2ds_plot', _path, 'E2DS plot')
     _bplt.create()
     _bplt.run()
 

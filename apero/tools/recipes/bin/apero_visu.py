@@ -9,18 +9,14 @@ Created on 2022-02-08
 
 @author: cook
 """
-import numpy as np
 import os
-import shutil
-from typing import Dict, List, Tuple
 
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
-from apero.core.core import drs_database
-from apero.core.core import drs_text
 from apero.core.utils import drs_startup
-from apero.tools.module.listing import drs_get
+from apero.tools.module.visulisation import visu_core
+
 
 # =============================================================================
 # Define variables
@@ -82,6 +78,26 @@ def __main__(recipe, params):
     :return: returns the local namespace as a dictionary
     :rtype: dict
     """
+    # deal with no mode set
+    if 'MODE' not in params['INPUTS']:
+        WLOG(params, '', 'Must set --mode')
+        return drs_startup.return_locals(params, locals())
+
+    # get mode
+    mode = params['INPUTS']['MODE']
+
+    # deal with options
+    if mode == 'e2ds':
+        # create path for tmp py file
+        path = os.path.join(params['DRS_DATA_PLOT'], 'e2ds_plot.py')
+        # get bokeh plotter instance
+        bplt = visu_core.BokehPlot(params, 'e2ds_plot', path, 'E2DS plot')
+        # create tmp py file
+        bplt.create()
+        # run bokeh server
+        bplt.run()
+
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
