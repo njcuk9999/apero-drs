@@ -109,13 +109,15 @@ class SpectrumPlot:
         # create lines checkbox group widget
         self.lines_widget = CheckboxButtonGroup(labels=self.line_labels,
                                                 active=self.line_active)
-        self.lines_widget.on_change('active', self.update_graph_on_change)
+        self.lines_widget.on_change('active', self.update_active)
         # ---------------------------------------------------------------------
         self.widgets = [self.obs_dir_widget, self.identifier_widget,
                         self.order_num_widget, self.button,
                         self.lines_widget]
+        # update graph now
+        self.update_graph()
 
-    def update_graph_on_change(self, attrname, old, new):
+    def update_active(self, attrname, old, new):
         _ = attrname, old, new
         self.update_line_visibility()
 
@@ -226,10 +228,16 @@ class SpectrumPlot:
     def plot(self):
         # get order number
         order_num = self.order_num
+        # rest plot
+        self.figure.emit()
         # get which checkboxs are active
         switch = self.lines_widget.active
         # loop around lines
         for it in range(len(self.line_labels)):
+
+            if DEBUG:
+                dargs = [self.line_labels[it], order_num]
+                print('Plotting {0} [Order={1}]'.format(*dargs))
             # get name
             name = self.line_labels[it]
             color = self.line_colors[it]
