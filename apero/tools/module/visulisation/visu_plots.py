@@ -54,8 +54,8 @@ class SpectrumPlot:
         # figure this is part of
         self.figure = figure
         # values to change by the user
-        self.obs_dir = ''
-        self.identifier = ''
+        self.obs_dir = '2020-08-31'
+        self.identifier = '2510303o'
         self.order_num = 0
         # line variables
         self.line_bkind = ['red', 'red', 'red', 'red']
