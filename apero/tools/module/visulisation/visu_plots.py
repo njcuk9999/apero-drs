@@ -193,7 +193,7 @@ class SpectrumPlot:
         # get blaze
         blaze = None
         if np.sum(self.line_blaze_cor) > 0:
-            pos = np.where(self.line_blaze_cor)
+            pos = np.where(self.line_blaze_cor)[0][0]
             # get file dict
             file_dict = dict(block_kind=self.line_bkind[pos],
                              obs_dir=self.obs_dir, identifier=self.identifier,
