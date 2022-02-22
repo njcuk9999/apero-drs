@@ -353,8 +353,9 @@ def e2ds_plot(**kwargs) -> bokeh.models.Model:
     # -------------------------------------------------------------------------
     # get widgets
     inputs = column(*e2dsplotapp.widgets)
+    inputs.sizing_mode = 'scale_width'
     # return the grid
-    page = row(inputs, plotwindow)
+    page = row(inputs, plotwindow, width=1024)
     page.sizing_mode = 'scale_width'
     # return full page
     return page
