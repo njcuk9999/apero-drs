@@ -228,10 +228,6 @@ class SpectrumPlot:
     def plot(self):
         # get order number
         order_num = self.order_num
-        # get which checkboxs are active
-        switch = self.lines_widget.active
-        # clear figures first
-        self.figure.renderers = []
         # loop around lines
         for it in range(len(self.line_labels)):
 
@@ -249,9 +245,6 @@ class SpectrumPlot:
             line = self.figure.line(sxname, syname, source=self.source,
                                     color=color, alpha=alpha,
                                     legend_label=name)
-            # do not show
-            if it not in switch:
-                line.visible = False
             # keep lines
             self.lines.append(line)
         # set x and y range
