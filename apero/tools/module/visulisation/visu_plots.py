@@ -119,6 +119,7 @@ class SpectrumPlot:
             fiber_menu.append((fiber, fiber))
         self.dropdown_widget = Dropdown(label='Fiber', button_type='warning',
                                         menu=fiber_menu)
+        self.dropdown_widget.on_click(self.update_fiber)
         # ---------------------------------------------------------------------
         # create a button to update graph
         self.button = Button(label='Update', button_type='success')
@@ -134,6 +135,9 @@ class SpectrumPlot:
                         self.button,  self.lines_widget]
         # update graph now
         self.update_graph()
+
+    def update_fiber(self, event):
+        self.fiber = event.item
 
     def update_active(self, attrname, old, new):
         _ = attrname, old, new
