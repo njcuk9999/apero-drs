@@ -109,7 +109,7 @@ class SpectrumPlot:
         # create lines checkbox group widget
         self.lines_widget = CheckboxButtonGroup(labels=self.line_labels,
                                                 active=self.line_active)
-        self.lines_widget.on_change('active', self.update_graph)
+        self.lines_widget.on_change('active', self.update_graph_on_change)
         # ---------------------------------------------------------------------
         self.widgets = [self.obs_dir_widget, self.identifier_widget,
                         self.order_num_widget, self.button,
@@ -117,7 +117,7 @@ class SpectrumPlot:
 
     def update_graph_on_change(self, attrname, old, new):
         _ = attrname, old, new
-        self.update_graph()
+        self.update_line_visibility()
 
     def update_graph_on_click(self):
         self.update_graph()
