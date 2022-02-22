@@ -11,7 +11,7 @@ Created on 2022-02-22
 """
 import numpy as np
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero import lang
@@ -160,7 +160,8 @@ def check_arg(func_name, kwargs, key, dtype, required: bool = True):
 
 
 def get_file(block_kind: str,  obs_dir: str, identifier: str,
-             output: str, hdu: int) -> Union[np.ndarray, None]:
+             output: str, hdu: int
+             ) -> Tuple[Union[np.ndarray, None], Union[str, None]]:
 
     # get database
     indexdbm = drs_database.IndexDatabase(PARAMS)
@@ -170,16 +171,16 @@ def get_file(block_kind: str,  obs_dir: str, identifier: str,
     condition += ' AND KW_OUTPUT="{3}"'
     condition = condition.format(block_kind, obs_dir, identifier, output)
     # query database
-    table = indexdbm.get_entries('ABSPATH', condition=condition)
+    table = indexdbm.get_entries('ABSPATH, OBS_DIR', condition=condition)
     # deal with no entries
-    if len(table) == 0:
-        return None
+    if table is None or len(table) == 0:
+        return None, None
     # use the first entry as the filename
     filename = table.iloc[0]
     # load file with correct extension
     data = drs_fits.readfits(PARAMS, filename, ext=hdu)
     # return file
-    return np.array(data)
+    return np.array(data), filename
 
 
 # =============================================================================

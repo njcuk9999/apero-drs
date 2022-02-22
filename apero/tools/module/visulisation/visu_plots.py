@@ -158,7 +158,7 @@ class SpectrumPlot:
                              hdu=self.line_oext[it])
             # -----------------------------------------------------------------
             # find data and load
-            data = visu_core.get_file(**file_dict)
+            data, filename = visu_core.get_file(**file_dict)
             # deal with no valid data
             if data is None:
                 if DEBUG:
@@ -167,6 +167,9 @@ class SpectrumPlot:
 
                 self.valid = False
                 return
+
+            if DEBUG:
+                print('Found file {0}'.format(filename))
             # -----------------------------------------------------------------
             # update max order
             self.order_max = data.shape[0]
