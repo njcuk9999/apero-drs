@@ -187,15 +187,18 @@ def get_file(block_kind: str,  obs_dir: str, identifier: str,
     return np.array(data), filename
 
 
-def get_calib(filename: str, key: str) -> Tuple[np.ndarray, str]:
+def get_header(filename: str) -> drs_fits.Header:
+    # load the header of the filename
+    return drs_fits.read_header(PARAMS, filename, ext=0)
+
+
+def get_calib(header: drs_fits.Header, key: str) -> Tuple[np.ndarray, str]:
     """
     Get a calibration file for a speific file and get
 
     :param filename: str, the filename
     :param key: str, the db key for the specific type of calibration
     """
-    # load the header of the filename
-    header = drs_fits.read_header(PARAMS, filename, ext=0)
     # get database
     calibdbm = drs_database.CalibrationDatabase(PARAMS)
     calibdbm.load_db()
@@ -219,7 +222,7 @@ def get_obs_dirs() -> List[str]:
     if len(new_obs_dirs) == 0:
         return []
     else:
-        return new_obs_dirs
+        return list(new_obs_dirs)
 
 
 def get_identifers(block_kind='red', obs_dir=None) -> List[str]:
@@ -232,13 +235,15 @@ def get_identifers(block_kind='red', obs_dir=None) -> List[str]:
     else:
         condition = 'BLOCK_KIND="{0}" AND OBS_DIR="{1}"'
         condition = condition.format(block_kind, obs_dir)
+
+    condition += ' AND KW_IDENTIFIER IS NOT NULL'
     # return identifiers which conform to these filters
     newidentifiers = indexdbm.get_unique('KW_IDENTIFIER', condition=condition)
 
     if len(newidentifiers) == 0:
         return []
     else:
-        return newidentifiers
+        return list(newidentifiers)
 
 
 # =============================================================================

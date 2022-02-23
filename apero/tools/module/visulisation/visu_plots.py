@@ -21,6 +21,8 @@ from bokeh.models import HoverTool, CheckboxButtonGroup
 from bokeh.models import ColumnDataSource, Slider, TextInput, Button
 from bokeh.models import Range1d, Dropdown
 from bokeh.models.widgets.inputs import AutocompleteInput
+from bokeh.models.widgets import Paragraph
+from bokeh.models.widgets import DataTable, DateFormatter, TableColumn
 
 from apero.core import constants
 from apero.core import math as mp
@@ -59,8 +61,8 @@ class SpectrumPlot:
         # figure this is part of
         self.figure = figure
         # values to change by the user
-        self.obs_dir = '2020-08-31'
-        self.identifier = '2510303o'
+        self.obs_dir = '2019-04-20'
+        self.identifier = '2400514o'
         self.order_num = 0
         self.fibers = PARAMS.listp('TELLURIC_FIBER_TYPE', dtype=str)
         self.order_max = PARAMS['FIBER_MAX_NUM_ORDERS_A'] - 1
@@ -81,12 +83,22 @@ class SpectrumPlot:
         self.line_dc = [0, 0, 0, 1]
         self.lines = [None, None, None, None]
         self.source = ColumnDataSource()
-
+        # object table
+        self.obj_hkeys = ['KW_OBJNAME', 'KW_DPRTYPE', 'KW_DATE_OBS',
+                          'KW_UTC_OBS', 'KW_EXPTIME', 'KW_EXT_SNR']
+        self.obj_keys = ['OBJECT', 'DPRTYPE', 'DATE', 'START TIME', 'EXPTIME',
+                         'SNR']
+        self.obj_values = ['None', 'None', 'None', 'None', 'None', 'None']
+        self.object_source = ColumnDataSource()
+        self.object_header = None
         # widgets
         self.obs_dir_widget = None
         self.identifier_widget = None
-        self.lines_widget = None
         self.order_num_widget = None
+        self.dropdown_widget = None
+        self.button = None
+        self.lines_widget = None
+        self.object_table = None
         self.widgets = []
         # other variables
         self.xmin = 0
@@ -110,7 +122,7 @@ class SpectrumPlot:
         # create obs dir text widget
         self.obs_dir_widget = AutocompleteInput(title='OBS_DIR',
                                                 value=self.obs_dir)
-        self.obs_dir.completions = self.obs_dirs
+        self.obs_dir_widget.completions = self.obs_dirs
         self.obs_dir_widget.on_change('value', self.update_file_args)
         self.widgets.append(self.obs_dir_widget)
         # ---------------------------------------------------------------------
@@ -124,7 +136,7 @@ class SpectrumPlot:
         # create widget for order number
         self.order_num_widget = Slider(title='Order No.', value=self.order_num,
                                        start=0, end=self.order_max, step=1)
-        # self.order_num_widget.on_change('value', self.update_graph)
+        self.order_num_widget.on_change('value', self.update_order_num)
         self.widgets.append(self.order_num_widget)
         # ---------------------------------------------------------------------
         if len(self.fibers) > 1:
@@ -148,6 +160,20 @@ class SpectrumPlot:
         self.lines_widget.on_change('active', self.update_active)
         self.widgets.append(self.lines_widget)
         # ---------------------------------------------------------------------
+        # Add object box
+        obj_data = dict()
+        obj_cols = []
+        # loop around columns (we will update the values later)
+        for it in range(len(self.obj_keys)):
+            key = self.obj_keys[it]
+            obj_data[key] = self.obj_values[it]
+            obj_cols.append(TableColumn(field=key, title=key))
+
+        self.object_data = ColumnDataSource(obj_data)
+        self.object_table = DataTable(source=self.object_data,
+                                      columns=obj_cols)
+        self.widgets.append(self.object_table)
+        # ---------------------------------------------------------------------
         # update graph now
         self.update_graph()
 
@@ -159,6 +185,11 @@ class SpectrumPlot:
         if self.obs_dir not in [None, 'None', '', 'Null']:
             new_identifiers = visu_core.get_identifers(obs_dir=self.obs_dir)
             self.identifier_widget.completions = new_identifiers
+
+    def update_order_num(self, attrname, old, new):
+        _ = attrname, old, new
+        self.order_num = int(self.order_num_widget.value)
+        self.update_hkeys()
 
     def update_fiber(self, event):
         self.fiber = event.item
@@ -218,26 +249,53 @@ class SpectrumPlot:
     def error(self):
         pass
 
+    def update_hkeys(self, header=None):
+        # deal with not having header
+        if header is None:
+            header = self.object_header
+        # if header is still None do nothing
+        if header is None:
+            return
+        # get the list of hkeys
+        hkeys = self.obj_hkeys
+        # loop round and update
+        for it in range(len(hkeys)):
+            # get object data key
+            key = self.obj_keys[it]
+            # get header key
+            if key == 'SNR':
+                hkey = PARAMS[hkeys[it].format(self.order_num)][0]
+            else:
+                hkey = PARAMS[hkeys[it]][0]
+            # update value
+            self.object_data.data[key] = header[hkey]
+
     def update_files(self):
         """
         Find files and update graph if possible
         :return:
         """
-
+        # ---------------------------------------------------------------------
+        # get header of first file
+        # get file dict
+        file_dict = dict(block_kind=self.line_bkind[0],
+                         obs_dir=self.obs_dir, identifier=self.identifier,
+                         output=self.line_otypes[0],
+                         hdu=self.line_oext[0], fiber=self.fiber)
+        # find data and load
+        _, filename = visu_core.get_file(get_data=False, **file_dict)
+        # get header
+        header = visu_core.get_header(filename)
+        self.object_header = header
+        # ---------------------------------------------------------------------
+        # populate object table
+        self.update_hkeys(header)
         # ---------------------------------------------------------------------
         # get blaze
         blaze = None
         if np.sum(self.line_blaze_cor) > 0:
-            pos = np.where(self.line_blaze_cor)[0][0]
-            # get file dict
-            file_dict = dict(block_kind=self.line_bkind[pos],
-                             obs_dir=self.obs_dir, identifier=self.identifier,
-                             output=self.line_otypes[pos],
-                             hdu=self.line_oext[pos], fiber=self.fiber)
-            # find data and load
-            _, filename = visu_core.get_file(get_data=False, **file_dict)
             if filename is not None:
-                blaze, blazefile = visu_core.get_calib(filename, 'BLAZE')
+                blaze, blazefile = visu_core.get_calib(header, 'BLAZE')
             else:
                 if DEBUG:
                     print('Cannot find data')
