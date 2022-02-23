@@ -61,14 +61,14 @@ class SpectrumPlot:
         # figure this is part of
         self.figure = figure
         # values to change by the user
-        self.obs_dir = '2019-04-20'
-        self.identifier = '2400514o'
+        self.obs_dir = ''
+        self.identifier = ''
         self.order_num = 0
         self.fibers = PARAMS.listp('TELLURIC_FIBER_TYPE', dtype=str)
         self.order_max = PARAMS['FIBER_MAX_NUM_ORDERS_A'] - 1
         self.fiber = str(self.fibers[0])
         self.obs_dirs = visu_core.get_obs_dirs()
-        self.identifiers = visu_core.get_identifers()
+        self.identifiers = []
         # line variables
         self.line_bkind = ['red', 'red', 'red', 'red']
         self.line_labels = ['e2ds', 'tcorr', 'recon', 'skymodel']
@@ -77,7 +77,7 @@ class SpectrumPlot:
         self.line_norm = ['med', 'med', None, 'max']
         self.line_blaze_cor = [True, True, False, False]
         self.line_oext = [1, 1, 1, 4]
-        self.line_active = [1, 0, 0, 0]
+        self.line_active = [0, 1, 2, 3]
         self.line_colors = ['black', 'red', 'blue', 'orange']
         self.line_alphas = [0.5, 0.5, 0.5, 0.5]
         self.line_dc = [0, 0, 0, 1]
@@ -87,10 +87,13 @@ class SpectrumPlot:
         self.obj_hkeys = ['KW_OBJNAME', 'KW_DPRTYPE', 'KW_DATE_OBS',
                           'KW_UTC_OBS', 'KW_EXPTIME', 'KW_EXT_SNR']
         self.obj_keys = ['OBJECT', 'DPRTYPE', 'DATE', 'START TIME', 'EXPTIME',
-                         'SNR']
+                         'SNR[{0}]']
         self.obj_values = ['None', 'None', 'None', 'None', 'None', 'None']
         self.object_source = ColumnDataSource()
         self.object_header = None
+        self.object_cols = [TableColumn(field='keys', title=''),
+                            TableColumn(field='values', title='')]
+        self.current_filename = 'None'
         # widgets
         self.obs_dir_widget = None
         self.identifier_widget = None
@@ -120,17 +123,19 @@ class SpectrumPlot:
         self.widgets = []
         # ---------------------------------------------------------------------
         # create obs dir text widget
-        self.obs_dir_widget = AutocompleteInput(title='OBS_DIR',
-                                                value=self.obs_dir)
-        self.obs_dir_widget.completions = self.obs_dirs
-        self.obs_dir_widget.on_change('value', self.update_file_args)
+        menu = [(key, key) for key in self.obs_dirs]
+        self.obs_dir_widget = Dropdown(label='OBS_DIR',
+                                       button_type='primary',
+                                       menu=menu)
+        self.obs_dir_widget.on_click(self.update_obs_dir)
         self.widgets.append(self.obs_dir_widget)
         # ---------------------------------------------------------------------
         # create identifier text widget
-        self.identifier_widget = AutocompleteInput(title='ID',
-                                                   value=self.identifier)
-        self.identifier_widget.completions = self.identifiers
-        self.identifier_widget.on_change('value', self.update_file_args)
+        menu = [(key, key) for key in self.identifiers]
+        self.identifier_widget = Dropdown(label='ID',
+                                          button_type='primary',
+                                          menu=menu)
+        self.identifier_widget.on_click(self.update_identifier)
         self.widgets.append(self.identifier_widget)
         # ---------------------------------------------------------------------
         # create widget for order number
@@ -140,9 +145,7 @@ class SpectrumPlot:
         self.widgets.append(self.order_num_widget)
         # ---------------------------------------------------------------------
         if len(self.fibers) > 1:
-            fiber_menu = []
-            for fiber in self.fibers:
-                fiber_menu.append((fiber, fiber))
+            fiber_menu = [(fiber, fiber) for fiber in self.fibers]
             self.dropdown_widget = Dropdown(label='Fiber',
                                             button_type='primary',
                                             menu=fiber_menu)
@@ -157,34 +160,26 @@ class SpectrumPlot:
         # create lines checkbox group widget
         self.lines_widget = CheckboxButtonGroup(labels=self.line_labels,
                                                 active=self.line_active)
-        self.lines_widget.on_change('active', self.update_active)
+        self.lines_widget.on_change('active', self.update_lines)
         self.widgets.append(self.lines_widget)
         # ---------------------------------------------------------------------
         # Add object box
-        obj_data = dict()
-        obj_cols = []
-        # loop around columns (we will update the values later)
-        for it in range(len(self.obj_keys)):
-            key = self.obj_keys[it]
-            obj_data[key] = self.obj_values[it]
-            obj_cols.append(TableColumn(field=key, title=key))
-
-        self.object_data = ColumnDataSource(obj_data)
-        self.object_table = DataTable(source=self.object_data,
-                                      columns=obj_cols)
+        self.object_table = DataTable(source=self.object_source,
+                                      columns=self.object_cols)
+        self.update_hkeys()
         self.widgets.append(self.object_table)
         # ---------------------------------------------------------------------
-        # update graph now
-        self.update_graph()
 
-    def update_file_args(self, attrname, old, new):
-        _ = attrname, old, new
-        self.identifier = str(self.identifier_widget.value)
-        self.obs_dir = str(self.obs_dir_widget.value)
+    def update_obs_dir(self, event):
+        self.obs_dir = str(event.item)
         # update
         if self.obs_dir not in [None, 'None', '', 'Null']:
             new_identifiers = visu_core.get_identifers(obs_dir=self.obs_dir)
-            self.identifier_widget.completions = new_identifiers
+            menu = [(key, key) for key in new_identifiers]
+            self.identifier_widget.menu = menu
+
+    def update_identifier(self, event):
+        self.identifier = str(event.item)
 
     def update_order_num(self, attrname, old, new):
         _ = attrname, old, new
@@ -194,7 +189,7 @@ class SpectrumPlot:
     def update_fiber(self, event):
         self.fiber = event.item
 
-    def update_active(self, attrname, old, new):
+    def update_lines(self, attrname, old, new):
         _ = attrname, old, new
         self.update_line_visibility()
 
@@ -203,11 +198,7 @@ class SpectrumPlot:
 
     def update_graph(self):
         # _ = attrname, old, new
-
-        # update values from widgets
-        self.identifier = str(self.identifier_widget.value)
-        self.obs_dir = str(self.obs_dir_widget.value)
-        self.order_num = int(self.order_num_widget.value)
+        self.update_hkeys()
         # get loaded params
         lparams = dict(identifier=self.identifier, obs_dir=self.obs_dir,
                        order_num=self.order_num, fiber=self.fiber)
@@ -253,22 +244,51 @@ class SpectrumPlot:
         # deal with not having header
         if header is None:
             header = self.object_header
+        # storage for new values
+        new_values = []
+        new_keys = []
+
         # if header is still None do nothing
         if header is None:
-            return
-        # get the list of hkeys
-        hkeys = self.obj_hkeys
-        # loop round and update
-        for it in range(len(hkeys)):
-            # get object data key
-            key = self.obj_keys[it]
-            # get header key
-            if key == 'SNR':
-                hkey = PARAMS[hkeys[it].format(self.order_num)][0]
-            else:
-                hkey = PARAMS[hkeys[it]][0]
-            # update value
-            self.object_data.data[key] = header[hkey]
+            # loop round and update
+            for it in range(len(self.obj_keys)):
+                # get object data key
+                key = self.obj_keys[it]
+                # get header key
+                if key.startswith('SNR'):
+                    key = key.format(self.order_num)
+                # append reset values
+                new_keys.append(key)
+                new_values.append(self.obj_values[it])
+        else:
+            # get the list of hkeys
+            hkeys = self.obj_hkeys
+            # loop round and update
+            for it in range(len(hkeys)):
+                # get object data key
+                key = self.obj_keys[it]
+                # get header key
+                if key.startswith('SNR'):
+                    key = key.format(self.order_num)
+                    hkey = PARAMS[hkeys[it]][0].format(self.order_num)
+                    value = header[hkey]
+                    value = '{0:.3f}'.format(value)
+                else:
+                    hkey = PARAMS[hkeys[it]][0]
+                    value = header[hkey]
+                # add to new values
+                new_keys.append(key)
+                new_values.append(value)
+        # add filename
+        new_keys += ['PATH', 'OBS_DIR', 'ID']
+        new_values += [PARAMS['DRS_DATA_REDUC'], self.obs_dir,
+                       self.identifier]
+        # update value
+        if DEBUG:
+            print(list(zip(new_keys, new_values)))
+
+        sdict = dict(keys=new_keys, values=new_values)
+        self.object_source.data = sdict
 
     def update_files(self):
         """
@@ -284,9 +304,18 @@ class SpectrumPlot:
                          hdu=self.line_oext[0], fiber=self.fiber)
         # find data and load
         _, filename = visu_core.get_file(get_data=False, **file_dict)
+
         # get header
-        header = visu_core.get_header(filename)
-        self.object_header = header
+        if filename is not None:
+            header = visu_core.get_header(filename)
+            self.object_header = header
+            # set current filename
+            self.current_filename = filename
+        else:
+            header = None
+            self.object_header = None
+            # set current filename
+            self.current_filename = 'None'
         # ---------------------------------------------------------------------
         # populate object table
         self.update_hkeys(header)
@@ -303,7 +332,7 @@ class SpectrumPlot:
                 return
         # ----------------------------------------------------------------------
         # get the wave solution
-
+        # TODO: get wave solution and change x axis
         # -----------------------------------------------------------------
         # copy source dict
         sdict = dict(self.source.data)
@@ -374,7 +403,6 @@ class SpectrumPlot:
             sdict[cyname] = sdict[syname0]
         # update source
         self.source.data = sdict
-
 
     def plot(self):
         # get order number
