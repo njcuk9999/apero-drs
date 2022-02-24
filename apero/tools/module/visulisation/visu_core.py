@@ -246,6 +246,16 @@ def get_identifers(block_kind='red', obs_dir=None) -> List[str]:
         return list(newidentifiers)
 
 
+def get_bokeh_plot_dir(params, pyfile):
+    # set path to bokeh subdir
+    path = os.path.join(params['DRS_DATA_PLOT'], 'bokeh')
+    # create path if it doesn't exist
+    if not os.path.exists(path):
+        os.mkdir(path)
+    # return path + python filename
+    return os.path.join(path, pyfile)
+
+
 # =============================================================================
 # Start of code
 # =============================================================================

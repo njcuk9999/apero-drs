@@ -89,7 +89,7 @@ def __main__(recipe, params):
     # deal with options
     if mode == 'e2ds':
         # create path for tmp py file
-        path = os.path.join(params['DRS_DATA_PLOT'], 'e2ds_plot.py')
+        path = visu_core.get_bokeh_plot_dir(params, 'e2ds_plot.py')
         # get bokeh plotter instance
         bplt = visu_core.BokehPlot(params, 'e2ds_plot', path, 'E2DS plot')
         # create tmp py file
