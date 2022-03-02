@@ -126,26 +126,30 @@ class LogEntry:
         self.block_kind = self.data.iloc[0]['BLOCK_KIND']
         self.recipe_type = self.data.iloc[0]['RECIPE_TYPE']
         self.recipe_kind = self.data.iloc[0]['RECIPE_KIND']
-        # cross-match with index database
-        self.index = _index_database_crossmatch(idataframe, self.pid)
-        # add index linked parameters
-        if len(self.index) > 0:
-            # get the mjd mid
-            self.mjdmid = self.index['KW_MID_OBS_TIME'].mean()
-            # flag that we have index
-            self.has_index = True
-            # get the observation directories (assume all entries equal)
-            self.obs_dir = self.index['OBS_DIR'].iloc[0]
-            # get the infiles (assume all entries equal)
-            raw_infiles = self.index['INFILES'].iloc[0]
-            if isinstance(raw_infiles, str):
-                self.infiles = self.index['INFILES'].iloc[0].split('|')
-            # get outfiles
-            self.outfiles = np.array(self.index['FILENAME'])
-            # get the output file type
-            self.outtypes = np.array(self.index['KW_OUTPUT'])
-            # get the DPRTYPE
-            self.dprtypes = np.array(self.index['KW_DPRTYPE'])
+
+        if mode != 'timing':
+            # cross-match with index database
+            self.index = _index_database_crossmatch(idataframe, self.pid)
+            # add index linked parameters
+            if len(self.index) > 0:
+                # get the mjd mid
+                self.mjdmid = self.index['KW_MID_OBS_TIME'].mean()
+                # flag that we have index
+                self.has_index = True
+                # get the observation directories (assume all entries equal)
+                self.obs_dir = self.index['OBS_DIR'].iloc[0]
+                # get the infiles (assume all entries equal)
+                raw_infiles = self.index['INFILES'].iloc[0]
+                if isinstance(raw_infiles, str):
+                    self.infiles = self.index['INFILES'].iloc[0].split('|')
+                # get outfiles
+                self.outfiles = np.array(self.index['FILENAME'])
+                # get the output file type
+                self.outtypes = np.array(self.index['KW_OUTPUT'])
+                # get the DPRTYPE
+                self.dprtypes = np.array(self.index['KW_DPRTYPE'])
+            else:
+                self.has_index = False
         else:
             self.has_index = False
 
