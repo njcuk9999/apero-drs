@@ -9,6 +9,7 @@ Created on 2021-12-06
 
 @author: cook
 """
+from astropy.table import Table
 import glob
 import numpy as np
 import os
@@ -323,17 +324,47 @@ def timing_stats(params: ParamDict, recipe: DrsRecipe):
     """
     # print progress
     WLOG(params, 'info', 'Running timing code')
+    # -------------------------------------------------------------------------
+    # plot dt timing graph
+    report_file = 'apero_stats_timing.fits'
+    # construct report directory
+    report_dir = os.path.join(params['DRS_DATA_MSG'], 'report')
+    # deal with report directory not existing
+    if not os.path.exists(report_dir):
+        os.makedirs(report_dir)
+    # -------------------------------------------------------------------------
     # get log entries
     log_entries = get_log_entries(params, mode='timing')
     # -------------------------------------------------------------------------
     # get stats
     stat_dict = get_timing_stats(log_entries)
+    # get log table
+    log_dict = dict(recipe=[], shortname=[], start=[], end=[], duration=[])
+
+    for log_entry in log_entries:
+        log_dict['recipe'].append(log_entry.recipe_name)
+        log_dict['shortname'].append(log_entry.shortname)
+        log_dict['start'].append(log_entry.start_time)
+        log_dict['end'].append(log_entry.end_time)
+        log_dict['duration'].append(log_entry.duration)
+    # convert to table and write to disk
+    log_table = Table(log_dict)
+    # construct log file absolute path
+    log_file = os.path.join(report_dir, report_file)
+    # print progress
+    WLOG(params, '', 'Writing log file: {0}'.format(log_file))
+    # write to disk
+    log_table.write(log_file, overwrite=True)
+    # -------------------------------------------------------------------------
     # loop around recipe and print stats
+    pdict = dict()
+
     for recipe_name in stat_dict:
-        print_timing_stats(params, recipe_name, stat_dict[recipe_name])
+        pdict[recipe_name] = print_timing_stats(params, recipe_name,
+                                                stat_dict[recipe_name])
     # -------------------------------------------------------------------------
     # plot timing graph
-    recipe.plot('STATS_TIMING_PLOT', logs=log_entries)
+    recipe.plot('STATS_TIMING_PLOT', logs=log_entries, pstats=pdict)
 
 
 def get_timing_stats(logs: List[LogEntry]) -> Dict[str, Dict[str, Any]]:
@@ -394,7 +425,8 @@ def get_timing_stats(logs: List[LogEntry]) -> Dict[str, Dict[str, Any]]:
     return recipe_dict
 
 
-def print_timing_stats(params: ParamDict, recipe: str, stats: Dict[str, Any]):
+def print_timing_stats(params: ParamDict, recipe: str,
+                       stats: Dict[str, Any]) -> str:
     WLOG(params, 'info', '='*50)
     WLOG(params, 'info', '\t{0}'.format(recipe))
     WLOG(params, 'info', '='*50)
@@ -408,6 +440,7 @@ def print_timing_stats(params: ParamDict, recipe: str, stats: Dict[str, Any]):
                '\n')
     WLOG(params, '', statstr.format(**stats))
 
+    return statstr.replace('\t', '\n').format(**stats)
 
 # =============================================================================
 # Define timing stats functions
