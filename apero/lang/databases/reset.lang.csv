@@ -1854,7 +1854,7 @@ i.e. by default: '{1}_{2}_DB'","","Prints question to enter table suffix for dat
 "None","Plotting: Must close other plots before a loop debug plot.","","Close plots for loop debug plot","40-100-00006","ALL"
 "{0} = name of plot","Plotting plot: {0}","","Plotting plot","40-100-00007","ALL"
 "None","Skipping latex compile (DRS_PDFLATEX_PATH not set)","","Means that we are skipping latex plot due to pdflatex path being None","40-100-00008","ALL"
-"","","","","40-100-00009","ALL"
+"{0} = number of iterations","Plot loop navigation: \n[L]ist options \nGo to \n\t [P]revious plot \n\t [N]ext plot \n\t [E]nd plotting \n\t Number from [0 to {0}]: \t ","","alternate plot loop text (for string lists)","40-100-00009","ALL"
 "","","","","",""
 "","","","","",""
 "","","","","",""
