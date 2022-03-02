@@ -11,6 +11,7 @@ Created on 2021-11-08
 """
 import numpy as np
 from typing import Dict, List, Optional, Tuple
+from tqdm import tqdm
 
 from apero import lang
 from apero.base import base
@@ -603,6 +604,26 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
         # if object was not found add to list
         if not found:
             unfound_objects.append(correct_objname)
+
+    # TODO: REMOVE
+    unfound_objects = list(uobjnames)
+    # ---------------------------------------------------------------------
+    # get original names for objects
+    orig_names = []
+    # Print progress
+    # TODO: move to language database
+    msg = 'Finding all original names for each unfound object'
+    WLOG(params, 'info', msg)
+    # loop around
+    for unfound_object in tqdm(unfound_objects):
+        # condition for this target
+        condition = 'KW_OBJNAME="{0}" AND BLOCK_KIND="raw"'
+        condition = condition.format(unfound_object)
+        # get all original names for this target
+        orig_name = indexdbm.get_unique('KW_OBJECTNAME', condition=condition)
+        # append to list
+        orig_names.append(list(orig_name))
+
     # ---------------------------------------------------------------------
     # print any remaining objects
     # TODO: move to language database
@@ -617,10 +638,11 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
     # else we print the unfound objects
     else:
         # loop around objects and put on a new line
-        for it, unfound_object in enumerate(unfound_objects):
+        for it in range(len(unfound_objects)):
             # print the object
-            margs = [it + 1, unfound_object]
-            WLOG(params, 'warning', '\t{0}\t{1}'.format(*margs))
+            msg = '\t{0}\t{1:30s}\t(APERO: {2})'
+            margs = [it + 1, ' or '.join(orig_names[it]), unfound_objects[it]]
+            WLOG(params, 'warning', msg.format(*margs))
         # print a note that some objects are in ignore list
         if len(reject_list) > 0:
             # TODO: move to language database
