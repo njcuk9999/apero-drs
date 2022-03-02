@@ -40,6 +40,8 @@ __release__ = base.__release__
 # Get parameter dictionary class
 ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
+# get astropy time module
+Time = base.Time
 # set up definition storage
 definitions = []
 # Speed of light
@@ -47,8 +49,6 @@ definitions = []
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
-
-
 # -----------------------------------------------------------------------------
 
 
@@ -5526,9 +5526,12 @@ def plot_stats_timing_plot(plotter: Plotter, graph: Graph,
     # start the plotting process
     if not plotter.plotstart(graph):
         return
+    # get plt
+    plt = plotter.plt
     # -------------------------------------------------------------------------
     # get the arguments from kwargs
     logs = kwargs['logs']
+    pstats = kwargs['pstats']
     # -------------------------------------------------------------------------
     # get data from logs
     durations = np.array(list(map(lambda x: x.duration, logs)))
@@ -5545,6 +5548,7 @@ def plot_stats_timing_plot(plotter: Plotter, graph: Graph,
     recipes = recipes[sortmask]
     # get durations
     durationdict = dict()
+    startdict = dict()
     # loop around recipes
     for recipe in recipes:
         if recipe in durationdict:
@@ -5554,52 +5558,65 @@ def plot_stats_timing_plot(plotter: Plotter, graph: Graph,
         # only add if we have more than 10 recipes
         if len(durations[rmask]) > 10:
             durationdict[recipe] = durations[rmask]
+            startdict[recipe] = Time(start_times[rmask], format='unix')
     # re-get recipe names
     rnames = list(durationdict.keys())
-    # get number of rows and columns
-    nrows = int(np.ceil(np.sqrt(len(rnames))))
-    ncols = int(np.ceil(len(rnames)/nrows))
     # -------------------------------------------------------------------------
-    # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=nrows, ncols=ncols)
+    # plot graphs
     # -------------------------------------------------------------------------
-    # plot graph
-    # -------------------------------------------------------------------------
-    used = []
-    # deal with only one recipe run
-    if nrows == 1 and ncols == 1:
-        frames = [[frames]]
-    elif nrows == 1:
-        frames = [frames]
+    # force plot settings
+    plotter.plotoption = 2
+    plotter.loop_allowed = True
+    # get the plot generator
+    generator = plotter.plotloop(rnames)
+
+    indices = dict(zip(rnames, range(len(rnames))))
+    # prompt to start looper
+    plotter.close_plots(loop=True)
     # loop around recipes
-    for it, recipe in enumerate(rnames):
-        # get position in grid
-        jt, kt = it % ncols, it // ncols
-        # append that we have used these coordinates
-        used.append([jt, kt])
-        # append
-        # get the frame
-        frame = frames[kt][jt]
-        # get the durations
-        durations =  durationdict[recipe]
-        if len(durations) > 10:
-            # work out the number of bins
-            nbins = np.max([len(durations)//10, 10])
-            # plot the histogram
-            frame.hist(durations, bins=nbins)
-            # set labels
-            frame.set(xlabel='{0} time taken [s]'.format(recipe),
-                      ylabel='Number of recipes')
-    # remove unused plots
-    for it in range(ncols*nrows):
-        # get position in grid
-        jt, kt = it % ncols, it // ncols
-        # turn off unused axis
-        if [jt, kt] not in used:
-            frames[kt][jt].axis('off')
-    # -------------------------------------------------------------------------
-    # wrap up using plotter
-    plotter.plotend(graph)
+    for recipe in generator:
+        # get this recipes values
+        durations = durationdict[recipe]
+        starts = startdict[recipe]
+        # ---------------------------------------------------------------------
+        # do not plot less than 10 entries
+        if len(durations) < 10:
+            continue
+        # ---------------------------------------------------------------------
+        # set up plot
+        fig, gs = graph.set_grid(plotter, nrows=2, ncols=2,
+                                 figsize=(12, 12))
+        # ---------------------------------------------------------------------
+        # first frame: histogram
+        frame = fig.add_subplot(gs[0, 0])
+        # work out the number of bins
+        nbins = np.max([len(durations) // 10, 10])
+        # plot the histogram
+        frame.hist(durations, bins=nbins)
+        # set labels
+        frame.set(xlabel='Duration [seconds]',
+                  ylabel='Number of recipes')
+        # ---------------------------------------------------------------------
+        # table
+        frame = fig.add_subplot(gs[0, 1])
+        # just add the text
+        frame.text(0.5, 0.5, pstats[recipe], ha='center', va='center',
+                   fontsize=12, style='oblique')
+        # turn off this axis
+        frame.axis('off')
+        # ---------------------------------------------------------------------
+        # large frame: dt
+        frame = fig.add_subplot(gs[1, :])
+        # get time since first
+        start0 = (starts - np.min(starts)).to(uu.hr)
+        # plot the start vs duration
+        frame.plot(start0, durations, ls='None', marker='.')
+        frame.set(xlabel='Time since first call [hours]',
+                  ylabel='Duration [seconds]')
+        plt.suptitle('{0}: {1}'.format(indices[recipe], recipe))
+        # ---------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
 
 
 def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
@@ -5677,7 +5694,6 @@ def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
     # -------------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
-
 
 
 logstats_bar = Graph('LOGSTATS_BAR', kind='show', func=plot_logstats_bar)

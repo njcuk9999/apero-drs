@@ -376,8 +376,19 @@ class Plotter:
                 looplist = list(looplist)
             except Exception as _:
                 WLOG(self.params, 'error', 'Must be a list')
+
+        # test for string list
+        if len(looplist) > 0:
+            strlist = isinstance(looplist[0], str)
+        else:
+            strlist = False
+        # ---------------------------------------------------------------------
         # define message to give to user
-        message = textentry('40-100-00001', args=[len(looplist) - 1])
+        if strlist:
+            message = textentry('40-100-00009', args=[len(looplist) - 1])
+        else:
+            message = textentry('40-100-00001', args=[len(looplist) - 1])
+        # ---------------------------------------------------------------------
         # start the iterator at zero
         it = 0
         first = True
@@ -414,8 +425,14 @@ class Plotter:
                     userinput = int(userinput)
                 except Exception as _:
                     userinput = str(userinput)
+                # if 'l' in user input we assume they want to list options
+                if strlist and 'L' in str(userinput).upper():
+                    print('Options are:')
+                    for jt in range(len(looplist)):
+                        print('\t{0}: {1}'.format(jt, looplist[jt]))
+                    continue
                 # if 'p' in user input we assume they want to go to previous
-                if 'P' in str(userinput).upper():
+                elif 'P' in str(userinput).upper():
                     yield looplist[it - 1]
                     it -= 1
                 # if 'n' in user input we assume they want to go to next
