@@ -604,9 +604,6 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
         # if object was not found add to list
         if not found:
             unfound_objects.append(correct_objname)
-
-    # TODO: REMOVE
-    unfound_objects = list(uobjnames)
     # ---------------------------------------------------------------------
     # get original names for objects
     orig_names = []
@@ -623,7 +620,6 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
         orig_name = indexdbm.get_unique('KW_OBJECTNAME', condition=condition)
         # append to list
         orig_names.append(list(orig_name))
-
     # ---------------------------------------------------------------------
     # print any remaining objects
     # TODO: move to language database
