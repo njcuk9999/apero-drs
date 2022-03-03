@@ -168,26 +168,26 @@ pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 # -----------------------------------------------------------------------------
 # apero_pp_master
 # -----------------------------------------------------------------------------
-# TODO: remove
-apero_pp_master = DrsRecipe(__INSTRUMENT__)
-apero_pp_master.name = 'apero_pp_master_{0}.py'.format(INSTRUMENT_ALIAS)
-apero_pp_master.shortname = 'PPM'
-apero_pp_master.instrument = __INSTRUMENT__
-apero_pp_master.in_block_str = 'raw'
-apero_pp_master.out_block_str = 'red'
-apero_pp_master.extension = 'fits'
-apero_pp_master.description = textentry('PPMASTER_DESC')
-apero_pp_master.epilog = textentry('PPMASTER_EXAMPLE')
-apero_pp_master.recipe_type = 'recipe'
-apero_pp_master.recipe_kind = 'pre-master'
-apero_pp_master.set_outputs(PP_MASTER=files.out_pp_master)
-apero_pp_master.set_arg(pos=0, **obs_dir)
-apero_pp_master.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
-                        helpstr=textentry('PPMASTER_FILETYPE_HELP'))
-apero_pp_master.group_func = grouping.no_group
-apero_pp_master.group_column = None
-# add to recipe
-recipes.append(apero_pp_master)
+# # TODO: remove
+# apero_pp_master = DrsRecipe(__INSTRUMENT__)
+# apero_pp_master.name = 'apero_pp_master_{0}.py'.format(INSTRUMENT_ALIAS)
+# apero_pp_master.shortname = 'PPM'
+# apero_pp_master.instrument = __INSTRUMENT__
+# apero_pp_master.in_block_str = 'raw'
+# apero_pp_master.out_block_str = 'red'
+# apero_pp_master.extension = 'fits'
+# apero_pp_master.description = textentry('PPMASTER_DESC')
+# apero_pp_master.epilog = textentry('PPMASTER_EXAMPLE')
+# apero_pp_master.recipe_type = 'recipe'
+# apero_pp_master.recipe_kind = 'pre-master'
+# apero_pp_master.set_outputs(PP_MASTER=files.out_pp_master)
+# apero_pp_master.set_arg(pos=0, **obs_dir)
+# apero_pp_master.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
+#                         helpstr=textentry('PPMASTER_FILETYPE_HELP'))
+# apero_pp_master.group_func = grouping.no_group
+# apero_pp_master.group_column = None
+# # add to recipe
+# recipes.append(apero_pp_master)
 
 # -----------------------------------------------------------------------------
 # apero_preprocess
@@ -209,7 +209,8 @@ apero_preprocess.set_arg(name='files', dtype='files', pos='1+',
                          files=[files.raw_file],
                          helpstr=textentry('PREPROCESS_UFILES_HELP'), limit=1)
 apero_preprocess.set_kwarg(name='--skip', dtype='bool', default=False,
-                 helpstr=textentry('PPSKIP_HELP'), default_ref='SKIP_DONE_PP')
+                           helpstr=textentry('PPSKIP_HELP'),
+                           default_ref='SKIP_DONE_PP')
 apero_preprocess.group_func = grouping.group_individually
 apero_preprocess.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -229,6 +230,7 @@ apero_badpix.description = textentry('BADPIX_DESC')
 apero_badpix.epilog = textentry('BADPIX_EXAMPLE')
 apero_badpix.recipe_type = 'recipe'
 apero_badpix.recipe_kind = 'calib-night'
+apero_badpix.calib_required = True
 apero_badpix.set_outputs(BADPIX=files.out_badpix, BACKMAP=files.out_backmap)
 apero_badpix.set_debug_plots('BADPIX_MAP')
 apero_badpix.set_summary_plots('SUM_BADPIX_MAP')
@@ -266,6 +268,7 @@ apero_dark.description = textentry('DARK_DESC')
 apero_dark.epilog = textentry('DARK_EXAMPLE')
 apero_dark.recipe_type = 'recipe'
 apero_dark.recipe_kind = 'calib-night'
+apero_dark.calib_required = False
 apero_dark.set_outputs(DARK_INT_FILE=files.out_dark,
                      DARK_TEL_FIEL=files.out_dark,
                      DARK_SKY_FILE=files.out_dark_sky)
@@ -299,6 +302,7 @@ apero_dark_master.description = textentry('DARK_MASTER_DESC')
 apero_dark_master.epilog = textentry('DARK_MASTER_EXAMPLE')
 apero_dark_master.recipe_type = 'recipe'
 apero_dark_master.recipe_kind = 'calib-master'
+apero_dark_master.calib_required = True
 apero_dark_master.set_outputs(DARK_MASTER_FILE=files.out_dark_master)
 apero_dark_master.set_kwarg(name='--filetype', dtype=str,
                             default='DARK_DARK',
@@ -324,6 +328,7 @@ apero_loc.description = textentry('LOC_DESC')
 apero_loc.epilog = textentry('LOC_EXAMPLE')
 apero_loc.recipe_type = 'recipe'
 apero_loc.recipe_kind = 'calib-night'
+apero_loc.calib_required = True
 apero_loc.set_outputs(ORDERP_FILE=files.out_loc_orderp,
                     LOCO_FILE=files.out_loc_loco,
                     FWHM_FILE=files.out_loc_fwhm,
@@ -368,6 +373,7 @@ apero_shape_master.description = textentry('SHAPE_DESC')
 apero_shape_master.epilog = textentry('SHAPEMASTER_EXAMPLE')
 apero_shape_master.recipe_type = 'recipe'
 apero_shape_master.recipe_kind = 'calib-master'
+apero_shape_master.calib_required = True
 apero_shape_master.set_outputs(FPMASTER_FILE=files.out_shape_fpmaster,
                              DXMAP_FILE=files.out_shape_dxmap,
                              DYMAP_FILE=files.out_shape_dymap,
@@ -421,6 +427,7 @@ apero_shape.description = textentry('SHAPE_DESC')
 apero_shape.epilog = textentry('SHAPE_EXAMPLE')
 apero_shape.recipe_type = 'recipe'
 apero_shape.recipe_kind = 'calib-night'
+apero_shape.calib_required = True
 apero_shape.set_outputs(LOCAL_SHAPE_FILE=files.out_shape_local,
                         SHAPEL_IN_FP_FILE=files.out_shapel_debug_ifp,
                         SHAPEL_OUT_FP_FILE=files.out_shapel_debug_ofp,
@@ -463,6 +470,7 @@ apero_flat.description = textentry('FLAT_DESC')
 apero_flat.epilog = textentry('FLAT_EXAMPLE')
 apero_flat.recipe_type = 'recipe'
 apero_flat.recipe_kind = 'calib-night'
+apero_flat.calib_required = True
 apero_flat.set_outputs(FLAT_FILE=files.out_ff_flat,
                        BLAZE_FILE=files.out_ff_blaze,
                        E2DSLL_FILE=files.out_ext_e2dsll,
@@ -512,6 +520,7 @@ apero_leak_master.description = textentry('LEAKM_DESC')
 apero_leak_master.epilog = textentry('LEAKM_EXAMPLE')
 apero_leak_master.recipe_type = 'recipe'
 apero_leak_master.recipe_kind = 'calib-master'
+apero_leak_master.calib_required = False
 apero_leak_master.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2ds,
                               LEAK_MASTER=files.out_leak_master)
 apero_leak_master.set_arg(pos=0, **obs_dir)
@@ -641,6 +650,7 @@ apero_wave_master.description = textentry('WAVE_DESC')
 apero_wave_master.epilog = textentry('WAVE_EXAMPLE')
 apero_wave_master.recipe_type = 'recipe'
 apero_wave_master.recipe_kind = 'calib-master'
+apero_wave_master.calib_required = True
 apero_wave_master.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                               WAVESOL_MASTER=files.out_wavem_sol,
                               WAVEM_CAVITY=files.out_wavem_cavity,
@@ -707,6 +717,7 @@ apero_wave_night.description = textentry('WAVE_DESC')
 apero_wave_night.epilog = textentry('WAVE_EXAMPLE')
 apero_wave_night.recipe_type = 'recipe'
 apero_wave_night.recipe_kind = 'calib-night'
+apero_wave_night.calib_required = True
 apero_wave_night.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                              WAVEMAP_NIGHT=files.out_wave_night,
                              WAVE_HCLIST=files.out_wave_hclist,
