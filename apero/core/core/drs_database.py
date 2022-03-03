@@ -525,13 +525,16 @@ class ObjectDatabase(DatabaseManager):
         # clean the input objname
         cobjname = pconst.DRS_OBJ_NAME(objname)
         # sql obj condition
-        sql_obj_cond = 'OBJNAME="{0}"'.format(cobjname)
+        sql_obj_cond = 'OBJNAME="{0}" AND USED=1'.format(cobjname)
         # look for object name in database
         count = self.count(condition=sql_obj_cond)
         # if we have not found our object we must check aliases
         if count == 0:
+            # condition - only use ones with USED
+            condition = 'USED=1'
             # get the full database
-            full_table = self.get_entries('OBJNAME, ALIASES')
+            full_table = self.get_entries('OBJNAME, ALIASES',
+                                          condition=condition)
             aliases = full_table['ALIASES']
             # set row to zero as a place holder
             row = 0

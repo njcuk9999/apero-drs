@@ -16,7 +16,7 @@ import copy
 import numpy as np
 from pathlib import Path
 import sys
-from typing import Any, Dict, List, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from apero import lang
 from apero.base import base
@@ -189,6 +189,8 @@ class DrsRecipe(object):
         self.get_drs_params()
         # make special arguments
         self._make_specials()
+        # whether calibration is required (used in precheck)
+        self.calib_required = False
         # parameters for summary documentation
         self.schematic = None
         self.description_file = None
@@ -1002,6 +1004,11 @@ class DrsRecipe(object):
         self.summary_plots = list(recipe.summary_plots)
         # set up the input validation (should be True to check arguments)
         self.input_validation = recipe.input_validation
+        # whether calibration is required (used in precheck)
+        self.calib_required = bool(recipe.calib_required)
+        # parameters for summary documentation
+        self.schematic = copy.deepcopy(recipe.schematic)
+        self.description_file = copy.deepcopy(recipe.description_file)
 
     def proxy_keywordarg(self, kwargname: str
                          ) -> Tuple[List[Any], Dict[str, Any]]:
@@ -1611,7 +1618,8 @@ class DrsRunSequence:
             rargs: Union[Dict[str, List[DrsInputFile]], None] = None,
             rkwargs: Union[Dict[str, List[DrsInputFile]], None] = None,
             template_required: bool = False,
-            recipe_kind: Union[str, None] = None):
+            recipe_kind: Union[str, None] = None,
+            calib_required: Optional[bool] = None):
         """
         Add a recipe to the sequence, can overwrite default recipe behaviour
         with the name (shortname), master, fiber keys and add more specialised
@@ -1663,6 +1671,10 @@ class DrsRunSequence:
         :param template_required: bool, if True means this recipe is turned
                         off if RECAL_TEMPLATES is True (run.ini files)
         :param recipe_kind: str, if set update the recipe kind
+        :param calib_required: bool, if set updates the calib_required
+                               (used in precheck to know which calibrations are
+                                required and should be checked and which should
+                                not)
 
         :return: None - updates DrsRunSequence.adds
         """
@@ -1678,6 +1690,7 @@ class DrsRunSequence:
         add_set['filters'] = filters
         add_set['template_required'] = template_required
         add_set['recipe_kind'] = recipe_kind
+        add_set['calib_required'] = calib_required
         # deal with adding recipe arguments
         if rargs is None:
             rargs = dict()
@@ -1742,6 +1755,9 @@ class DrsRunSequence:
             # update recipe kind if not None
             if add['recipe_kind'] is not None:
                 frecipe.recipe_kind = add['recipe_kind']
+            # add calib_required
+            if add['calib_required'] is not None:
+                frecipe.calib_required = add['calib_required']
             # print out
             if logmsg:
                 wargs = [frecipe.shortname]

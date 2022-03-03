@@ -163,7 +163,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
                         calib_times[uobsdir] += list(np.unique(mjdmids[dmask]))
                         # ---------------------------------------------------------
                         # print if missing
-                        if count == 0:
+                        if count == 0 and srecipe.calib_required:
                             msg = '\t\tMISSING {0}\t(OBS_DIR={1} RECIPE={2})'
                             margs = [drsfile, uobsdir, recipe_name]
                             WLOG(params, 'warning', msg.format(*margs))
@@ -189,7 +189,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
                     # get the time for this drs file
                     calib_times[uobsdir] += list(np.unique(mjdmids[dmask]))
                     # print if missing
-                    if count == 0:
+                    if count == 0 and srecipe.calib_required:
                         msg = '\t\tMISSING {0}\t(OBS_DIR={1} RECIPE={2})'
                         margs = [drsfilenames, uobsdir, recipe_name]
                         WLOG(params, 'warning', msg.format(*margs))
@@ -604,9 +604,6 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
         # if object was not found add to list
         if not found:
             unfound_objects.append(correct_objname)
-
-    # TODO: REMOVE
-    unfound_objects = list(uobjnames)
     # ---------------------------------------------------------------------
     # get original names for objects
     orig_names = []
@@ -623,7 +620,6 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
         orig_name = indexdbm.get_unique('KW_OBJECTNAME', condition=condition)
         # append to list
         orig_names.append(list(orig_name))
-
     # ---------------------------------------------------------------------
     # print any remaining objects
     # TODO: move to language database
