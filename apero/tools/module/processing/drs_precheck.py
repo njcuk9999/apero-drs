@@ -87,6 +87,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     science_count = dict()
     # store a list of possible bad nights
     bad_calib_nights, engineering_nights = [], []
+    sci_times = dict()
     # -------------------------------------------------------------------------
     # get telluric stars and non-telluric stars
     # -------------------------------------------------------------------------
@@ -267,8 +268,8 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             WLOG(params, 'info', msg.format(*margs), colour='magenta')
         # ---------------------------------------------------------------------
         # get all raw files for this night
-        rtable = indexdbm.get_entries('KW_OBJNAME, KW_OUTPUT', obs_dir=uobsdir,
-                                      block_kind='raw')
+        rtable = indexdbm.get_entries('KW_OBJNAME, KW_OUTPUT,KW_MID_OBS_TIME',
+                                      obs_dir=uobsdir, block_kind='raw')
         # mask telluric stars
         tellu_mask = np.in1d(rtable['KW_OBJNAME'], tstars)
         sci_mask = np.in1d(rtable['KW_OBJNAME'], ostars)
@@ -314,6 +315,9 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         #     (no science or tellu)
         if t_missing and s_missing:
             engineering_nights.append(uobsdir)
+            sci_times[uobsdir] = np.array([])
+        else:
+            sci_times[uobsdir] = np.array(rtable['KW_MID_OBS_TIME'])
     # -------------------------------------------------------------------------
     # Work out possible bad obs directories
     # -------------------------------------------------------------------------
@@ -321,7 +325,14 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     all_obs_dir = []
     mean_times = []
     for obs_dir in calib_times:
-        mean_times.append(np.nanmean(calib_times[obs_dir]))
+        if len(calib_times[obs_dir]) == 0:
+            # need to work out a time from science files
+            if len(sci_times[obs_dir]) > 0:
+                mean_times.append(np.nanmean(sci_times[obs_dir]))
+            else:
+                mean_times.append(np.nan)
+        else:
+            mean_times.append(np.nanmean(calib_times[obs_dir]))
         all_obs_dir.append(obs_dir)
     # convert to numpy arrays
     all_obs_dir, mean_times = np.array(all_obs_dir), np.array(mean_times)
