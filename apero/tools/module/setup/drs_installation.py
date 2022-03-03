@@ -535,7 +535,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     if args.plotmode is None:
         # ask about plotting, options are 0. (no plots) 1. (plots at end)
         #   2. plots at time of creation
-        plot = ask(textentry('40-001-00050'), dtype='int', options=[0, 1, 2],
+        plot = ask(textentry('40-001-00050'), dtype='int', options=[0, 1, 2, 3],
                    optiondesc=[textentry('40-001-00051'),
                                textentry('40-001-00052'),
                                textentry('40-001-00053')],

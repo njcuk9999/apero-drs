@@ -169,7 +169,7 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
                 sigma = res / est_sig
                 num = np.sum(np.isfinite(trans_slice))
                 # re-calculate worst offender
-                worst_pos = np.nanargmax(sigma)
+                worst_pos = mp.nanargmax(sigma)
                 worst_offender = sigma[worst_pos]
                 # deal with worst offender - remove worst
                 if worst_offender > sigma_cut:

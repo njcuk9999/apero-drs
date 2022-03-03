@@ -435,7 +435,7 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
         imagebox = image[torder, start:end]
         # get the envelope
         with warnings.catch_warnings(record=True) as _:
-            envelope[x_it] = np.nanpercentile(imagebox, envelope_percent)
+            envelope[x_it] = mp.nanpercentile(imagebox, envelope_percent)
     # --------------------------------------------------------------------------
     # median filter the thermal (loop around orders)
     for order_num in range(thermal.shape[0]):

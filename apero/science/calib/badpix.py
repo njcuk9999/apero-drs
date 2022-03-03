@@ -103,7 +103,7 @@ def normalise_median_flat(params, image, method='new', **kwargs):
 
     if method == 'new':
         # get the 90th percentile of median image
-        norm = np.nanpercentile(image_med[np.isfinite(image_med)], percentile)
+        norm = mp.nanpercentile(image_med[np.isfinite(image_med)], percentile)
     else:
         v = image_med.reshape(np.product(image.shape))
         v = np.sort(v)

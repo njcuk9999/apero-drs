@@ -79,12 +79,12 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
     # keep only regions that make sense compared to the 95th percentile
     #   max would be affected by outliers
     with warnings.catch_warnings(record=True) as _:
-        keep &= e2ds > 0.05 * np.nanpercentile(e2ds, 95)
-        keep &= e2ds < 2 * np.nanpercentile(e2ds, 95)
+        keep &= e2ds > 0.05 * mp.nanpercentile(e2ds, 95)
+        keep &= e2ds < 2 * mp.nanpercentile(e2ds, 95)
     # ------------------------------------------------------------------
     # guess of peak value, we do not take the max as there may be a
     #     hot/bad pix in the order
-    thres = np.nanpercentile(e2ds, badpercentile)
+    thres = mp.nanpercentile(e2ds, badpercentile)
     # ------------------------------------------------------------------
     # how many points above 50% of peak value?
     # The period should be a factor of about 2.0 more than the domain

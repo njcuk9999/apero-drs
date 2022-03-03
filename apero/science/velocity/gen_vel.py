@@ -145,14 +145,14 @@ def measure_fp_peaks(params: ParamDict, props: ParamDict, limit: float,
         index = np.arange(len(tmp))
         # ------------------------------------------------------------------
         # normalize the spectrum
-        tmp = tmp / np.nanpercentile(tmp, normpercent)
+        tmp = tmp / mp.nanpercentile(tmp, normpercent)
         # ------------------------------------------------------------------
         # find the peaks
         with warnings.catch_warnings(record=True) as w:
             peakmask = (tmp[1:-1] > tmp[2:]) & (tmp[1:-1] > tmp[:-2])
         peakpos = np.where(peakmask)[0]
         # work out the FP width for this order
-        size = int(np.nanmedian(peakpos[1:] - peakpos[:-1]))
+        size = int(mp.nanmedian(peakpos[1:] - peakpos[:-1]))
         # ------------------------------------------------------------------
         # mask for finding maximum peak
         mask = np.ones_like(tmp)
@@ -164,7 +164,7 @@ def measure_fp_peaks(params: ParamDict, props: ParamDict, limit: float,
         while mp.nanmax(mask * tmp) > limit:
             # --------------------------------------------------------------
             # find peak along the order
-            maxpos = np.nanargmax(mask * tmp)
+            maxpos = mp.nanargmax(mask * tmp)
             maxtmp = tmp[maxpos]
             # --------------------------------------------------------------
             # get the values around the max position
@@ -260,8 +260,8 @@ def fit_fp_peaks(x, y, size, return_model=False):
     # get gauss function
     ea_airy = mp.ea_airy_function
     # get the guess on the maximum peak position
-    maxpos = np.nanargmax(y)
-    minpos = np.nanargmin(y)
+    maxpos = mp.nanargmax(y)
+    minpos = mp.nanargmin(y)
     ymax = y[maxpos]
     ymin = y[minpos]
     # set up initial guess
@@ -1065,7 +1065,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     # ----------------------------------------------------------------------
     # switch normalization across all weights
     if ccfnormmode.upper() == 'ALL':
-        mask_weights = mask_weights / np.nanmean(np.abs(mask_weights))
+        mask_weights = mask_weights / mp.nanmean(np.abs(mask_weights))
     # ----------------------------------------------------------------------
     # loop around the orders
     for order_num in range(nbo):
@@ -1083,7 +1083,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
 
         # normalize per-ord blaze to its peak value
         # this gets rid of the calibration lamp SED
-        bl_ord /= np.nanpercentile(bl_ord, blaze_norm_percentile)
+        bl_ord /= mp.nanpercentile(bl_ord, blaze_norm_percentile)
         # change NaNs in blaze to zeros
         bl_ord[~np.isfinite(bl_ord)] = 0.0
         # mask on the blaze
@@ -1190,7 +1190,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         omask_weights = omask_weights[keep]
         # normalise omask weights by order (if required)
         if ccfnormmode.upper() == 'ORDER':
-            omask_weights = omask_weights / np.nanmean(omask_weights)
+            omask_weights = omask_weights / mp.nanmean(omask_weights)
         # Number of photons at line centers for 1 CCF step
         sweights = spline_weight(omask_centers)
         nphot = spline_sp(omask_centers) * sweights / ccfstep
@@ -1259,7 +1259,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
                 ccf_noise = np.nan
                 ccf_snr = np.nan
         else:
-            ccf_noise = 1 / np.sqrt(np.nansum(dv_pix ** 2))
+            ccf_noise = 1 / np.sqrt(mp.nansum(dv_pix ** 2))
             # ge the snr
             ccf_snr = wsum / wnoise
         # ------------------------------------------------------------------

@@ -594,8 +594,8 @@ class TableSection:
                 y = table['flux']
                 # scale data (by percentiles)
                 with warnings.catch_warnings(record=True) as _:
-                    mask = y > np.nanpercentile(y, 5)
-                    mask &= y < np.nanpercentile(y, 95)
+                    mask = y > mp.nanpercentile(y, 5)
+                    mask &= y < mp.nanpercentile(y, 95)
                     x, y = x[mask], y[mask]
                 # set arguments
                 pkwargs = dict()
@@ -613,8 +613,8 @@ class TableSection:
                 # set argument
                 pkwargs = dict()
                 pkwargs['image'] = image
-                pkwargs['vmin'] = np.nanpercentile(image, 5)
-                pkwargs['vmax'] = np.nanpercentile(image, 95)
+                pkwargs['vmin'] = mp.nanpercentile(image, 5)
+                pkwargs['vmax'] = mp.nanpercentile(image, 95)
                 # set name
                 name = 'IMAGE'
             # --------------------------------------------------------------

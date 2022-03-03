@@ -900,7 +900,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # storage for the wavelength centers
         wave0 = np.ones_like(nth_peak, dtype=float)
         # start the wave inversion of the polynomial at a sensible value
-        wave0 = wave0 * np.nanmean(wavemap)
+        wave0 = wave0 * mp.nanmean(wavemap)
         # need a few iterations to invert polynomial relations
         for _ in range(fp_inv_itr):
             wave0 = np.polyval(cavity_length_poly, wave0) / nth_peak
@@ -1158,9 +1158,9 @@ def hc_wave_sol_offset(params: ParamDict, inwavemap: np.ndarray,
     # We measure gradient of the wave map so we can get the scaling
     #   factor of the wave map
     fchange = np.gradient(inwavemap, axis=1) / inwavemap
-    opart1 = np.nanmedian(fchange)
+    opart1 = mp.nanmedian(fchange)
     # get the bulk offset in lines (in pixel space)
-    opart2 = np.nanmedian(hclines['DIFF'])
+    opart2 = mp.nanmedian(hclines['DIFF'])
     # fractional offset of wavelengths (re-expressed as a scaling)
     offset = opart1 * opart2
     # print offset added: Appling global fraction offset of wavemap
@@ -1503,7 +1503,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # find the bulk offset that leads to a minimisation of the STDDEV of the
     #    cavity length through domain
     bulk_offset = [0]
-    rms = [np.nanstd(fpl_wave_meas * fpl_peak_num)]
+    rms = [mp.nanstd(fpl_wave_meas * fpl_peak_num)]
     # keep track of which way we are going
     sign = 1
     # start a counter to make sure our while loop doesn't go on forever
@@ -1511,12 +1511,12 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # loop around until the rms is zero
     while (np.argmin(rms) == 0) or (np.argmin(rms) == (len(rms) - 1)):
         if sign == 1:
-            new_bulk = np.nanmax(np.abs(bulk_offset)) + 1
+            new_bulk = mp.nanmax(np.abs(bulk_offset)) + 1
         else:
-            new_bulk = -np.nanmax(np.abs(bulk_offset))
+            new_bulk = -mp.nanmax(np.abs(bulk_offset))
         bulk_offset = np.append(bulk_offset, new_bulk)
         # calculate the new rms
-        new_rms = np.nanstd(fpl_wave_meas * (new_bulk + fpl_peak_num))
+        new_rms = mp.nanstd(fpl_wave_meas * (new_bulk + fpl_peak_num))
         rms = np.append(rms, new_rms)
         # flip the sign
         sign *= -1
@@ -2327,8 +2327,8 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
                 # subtract off the median flux for these lines
                 #  this normalizes the flux
                 with warnings.catch_warnings(record=True) as _:
-                    flux = flux - np.nanmedian(flux[~dvmask])
-                    flux = flux / np.nansum(flux[dvmask])
+                    flux = flux - mp.nanmedian(flux[~dvmask])
+                    flux = flux / mp.nansum(flux[dvmask])
                 # append all lines left to storage
                 all_dv += list(dv)
                 all_flux += list(flux)
@@ -2666,7 +2666,7 @@ def wave_meas_diff(params: ParamDict, master_fiber: str,
             mask1, mask2 = match_fplines(ref_orders, ref_peakn, orders, peakn)
             # -----------------------------------------------------------------
             # get dv for wave meas between master fiber and this fiber
-            wratio = np.nanmedian(ref_wmeas[mask1] / wmeas[mask2])
+            wratio = mp.nanmedian(ref_wmeas[mask1] / wmeas[mask2])
             # wave meas dv in m/s
             wm_dv = (1 - wratio) * speed_of_light_ms
             # -----------------------------------------------------------------
@@ -2826,7 +2826,7 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         # get the differences for each order
         rvdiff = master_rvs - fiber_rvs
         # get the median difference
-        meddiff = np.nanmedian(rvdiff)
+        meddiff = mp.nanmedian(rvdiff)
         # deal with rv threshold
         if np.abs(meddiff) > rv_thres:
             qc_pass.append(0)

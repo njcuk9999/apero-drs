@@ -232,7 +232,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
         # get the flux values of the pixels for this order
         value = image[mask_region]
         # get the low flux bound (more than 5% of peak flux)
-        low_flux = value < np.nanpercentile(value, 95) * 0.05
+        low_flux = value < mp.nanpercentile(value, 95) * 0.05
         # get the positions so we can mask them with the low_flux mask
         ypix1, xpix1 = np.where(mask_region)
         # mask mask_orders with low_flux for this order region
@@ -724,12 +724,12 @@ def loc_stats(params: ParamDict, fiber: str, cent_coeffs: np.ndarray,
     # Get max signal and mean background (just for stats)
     # -------------------------------------------------------------------------
     # deal with the central column column=ic_cent_col
-    y = np.nanmedian(image[ydet_min:ydet_max,
+    y = mp.nanmedian(image[ydet_min:ydet_max,
                      central_col - 10:central_col + 10],
                      axis=1)
     # measure min max of box smoothed central col
     miny, maxy = mp.measure_box_min_max(y, horder_size)
-    max_signal = np.nanpercentile(y, 95)
+    max_signal = mp.nanpercentile(y, 95)
     diff_maxmin = maxy - miny
     # normalised the central pixel values above the minimum amplitude
     #   zero by miny and normalise by (maxy - miny)

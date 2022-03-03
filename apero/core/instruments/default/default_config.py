@@ -60,13 +60,14 @@ Const = constant_functions.Const
 # global settings
 # =============================================================================
 cgroup = 'GLOBAL SETTINGS'
-# Plotting mode
+# PLotting mode (0-3)
 DRS_PLOT = Const('DRS_PLOT', value=0, dtype=int, source=__NAME__, user=True,
-                 active=True, group=cgroup, options=[0, 1, 2],
+                 active=True, group=cgroup, options=[0, 1, 2, 3],
                  description='Plotting mode: '
-                             '\n\t0: only summary plots '
-                             '\n\t1: debug plots at end of code '
-                             '\n\t2: debug plots at time of creation '
+                             '\n\t0: No plots'
+                             '\n\t1: only summary plots '
+                             '\n\t2: debug plots at end of code '
+                             '\n\t3: debug plots at time of creation '
                              '(pauses code)')
 
 # Whether to run in debug mode

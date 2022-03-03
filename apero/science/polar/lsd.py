@@ -316,8 +316,8 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     # -------------------------------------------------------------------------
     # set some statistics
     num_lines_used = len(wavec)
-    mean_wave_lines = np.nanmean(wavec)
-    mean_lande_lines = np.nanmean(lande)
+    mean_wave_lines = mp.nanmean(wavec)
+    mean_lande_lines = mp.nanmean(lande)
     # -------------------------------------------------------------------------
     # log the number of valid lines after filtering
     margs = [num_lines_used]
@@ -664,14 +664,14 @@ def lsd_analysis(params: ParamDict, props: ParamDict) -> ParamDict:
     lsd_stokesi_model = _remove_edges(lsd_stokesi_model, remove_edges)
     # -------------------------------------------------------------------------
     # calculate statistical quantities
-    lsd_pol_mean = np.nanmean(lsd_pol)
-    lsd_pol_stddev = np.nanstd(lsd_pol)
-    lsd_pol_median = np.nanmedian(lsd_pol)
-    lsd_pol_medabsdev = np.nanmedian(np.abs(lsd_pol - lsd_pol_median))
-    lsd_stokesvqu_mean = np.nanmean(lsd_stokesvqu)
-    lsd_stokesvqu_stddev = np.nanstd(lsd_stokesvqu)
-    lsd_null_mean = np.nanmean(lsd_null)
-    lsd_null_stddev = np.nanstd(lsd_null)
+    lsd_pol_mean = mp.nanmean(lsd_pol)
+    lsd_pol_stddev = mp.nanstd(lsd_pol)
+    lsd_pol_median = mp.nanmedian(lsd_pol)
+    lsd_pol_medabsdev = mp.nanmedian(np.abs(lsd_pol - lsd_pol_median))
+    lsd_stokesvqu_mean = mp.nanmean(lsd_stokesvqu)
+    lsd_stokesvqu_stddev = mp.nanstd(lsd_stokesvqu)
+    lsd_null_mean = mp.nanmean(lsd_null)
+    lsd_null_stddev = mp.nanstd(lsd_null)
     # -------------------------------------------------------------------------
     # add to props data parameter dictionary
     props.set('LSD_VELOCITIES', lsd_velocities, source=func_name)
@@ -803,7 +803,7 @@ def line_pattern_matrix(wavemap: np.ndarray, wavec: np.ndarray,
     # set number of spectral points
     numpixels = len(wavemap)
     # calculate velocity sampling
-    dvel = np.nanmedian(np.abs(velocities[1:] - velocities[:-1]))
+    dvel = mp.nanmedian(np.abs(velocities[1:] - velocities[:-1]))
     # initialize line pattern matrix for flux LSD
     flux_lpm = np.zeros((numpixels, numlines))
     # initialize line pattern matrix for polar LSD

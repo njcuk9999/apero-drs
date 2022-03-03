@@ -163,9 +163,9 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
         # normalize the spectrum
         spo, bzo = image1[order_num], blaze[order_num]
         # normalise image
-        image1[order_num] = spo / np.nanpercentile(spo, blaze_p)
+        image1[order_num] = spo / mp.nanpercentile(spo, blaze_p)
         # normalize the blaze
-        blaze_norm[order_num] = bzo / np.nanpercentile(bzo, blaze_p)
+        blaze_norm[order_num] = bzo / mp.nanpercentile(bzo, blaze_p)
     # ----------------------------------------------------------------------
     # find where the blaze is bad
     with warnings.catch_warnings(record=True) as _:
@@ -581,7 +581,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # make sure we have at least one order above the min snr requiredment
     if np.nanmax(snr) < snr_min_thres:
         # update qc params
-        qc_values[0] = np.nanmax(snr)
+        qc_values[0] = mp.nanmax(snr)
         qc_pass[0] = 0
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean
@@ -589,7 +589,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                       wave_e2ds, qc_params, sky_model,
                                       database=database)
     else:
-        qc_values[0] = np.nanmax(snr)
+        qc_values[0] = mp.nanmax(snr)
         qc_pass[0] = 1
     # mask all orders below min snr
     for order_num in range(nbo):
@@ -665,7 +665,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # ------------------------------------------------------------------
         # apply some cuts to very discrepant points. These will be set to zero
         #   not to bias the CCF too much
-        cut = np.nanmedian(np.abs(spectrum_tmp)) * trans_siglim
+        cut = mp.nanmedian(np.abs(spectrum_tmp)) * trans_siglim
         # set NaN and infinite values to zero
         spectrum_tmp[~np.isfinite(spectrum_tmp)] = 0.0
         # apply cut and set values to zero
@@ -685,11 +685,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             # compute for others
             lothers = np.array(mask_others['ll_mask_s']) * scaling
             tmp_others = spline(lothers) * np.array(mask_others['w_mask'])
-            ccf_others[d_it] = np.nanmean(tmp_others[tmp_others != 0.0])
+            ccf_others[d_it] = mp.nanmean(tmp_others[tmp_others != 0.0])
             # computer for water
             lwater = np.array(mask_water['ll_mask_s']) * scaling
             tmp_water = spline(lwater) * mask_water['w_mask']
-            ccf_water[d_it] = np.nanmean(tmp_water[tmp_water != 0.0])
+            ccf_water[d_it] = mp.nanmean(tmp_water[tmp_water != 0.0])
         # ------------------------------------------------------------------
         # subtract the median of the ccf outside the core of the gaussian.
         #     We take this to be the 'external' part of of the scan range
@@ -715,9 +715,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # get the amplitude of the middle of the CCF
         # work out the internal part mask
         internal_mask = np.abs(drange) < params['IMAGE_PIXEL_SIZE']
-        amp_water = np.nansum(ccf_water[internal_mask])
+        amp_water = mp.nansum(ccf_water[internal_mask])
         if not force_airmass:
-            amp_others = np.nansum(ccf_others[internal_mask])
+            amp_others = mp.nansum(ccf_others[internal_mask])
         else:
             amp_others = 0.0
         # ------------------------------------------------------------------
@@ -741,14 +741,14 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # if this is the first iteration then fit the  absorption velocity
         if iteration == 0:
             # make a guess for the water fit parameters (for curve fit)
-            water_guess = [np.nanmin(ccf_water), 0, 4]
+            water_guess = [mp.nanmin(ccf_water), 0, 4]
             # fit the ccf_water with a guassian
             popt, pcov = curve_fit(mp.gauss_function_nodc, drange, ccf_water,
                                    p0=water_guess)
             # store the velocity of the water
             dv_water = popt[1]
             # make a guess of the others fit parameters (for curve fit)
-            others_guess = [np.nanmin(ccf_water), 0, 4]
+            others_guess = [mp.nanmin(ccf_water), 0, 4]
             # fit the ccf_others with a gaussian
             popt, pconv = curve_fit(mp.gauss_function_nodc, drange, ccf_others,
                                     p0=others_guess)
@@ -952,8 +952,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # calculate CCF power
     keep = np.abs(drange) < (ccf_scan_range / 4)
-    water_ccfpower = np.nansum(np.gradient(ccf_water[keep] ** 2))
-    others_ccfpower = np.nansum(np.gradient(ccf_others)[keep] ** 2)
+    water_ccfpower = mp.nansum(np.gradient(ccf_water[keep] ** 2))
+    others_ccfpower = mp.nansum(np.gradient(ccf_others)[keep] ** 2)
     # ----------------------------------------------------------------------
     # populate parameter dictionary
     props = ParamDict()
@@ -1101,7 +1101,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     # loop around brightest OH lines
     for it in range(nbright):
         # find brightest sky pixel that has not yet been looked at
-        imax = np.nanargmax(sky_model + mask)
+        imax = mp.nanargmax(sky_model + mask)
         # keep track of where we looked
         mask[imax-width:imax+width] = np.nan
         # segment of science spectrum minus current best guess of sky
@@ -1112,7 +1112,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
         gtmp1 = np.gradient(tmp1)
         gtmp2 = np.gradient(tmp2)
         # find rms of derivative of science vs sky line
-        snr_line = (np.nanstd(gtmp2)/np.nanstd(gtmp1))
+        snr_line = (mp.nanstd(gtmp2)/mp.nanstd(gtmp1))
         # if above 1 sigma, we adjust
         if snr_line > 1:
             # dot product of derivative vs science sp
@@ -1230,8 +1230,8 @@ def get_abso_expo(params, wavemap, expo_others, expo_water, spl_others,
     # cannot spline outside magic grid
     # ----------------------------------------------------------------------
     # get bounds of magic grid
-    min_magic = np.nanmin(magic_grid)
-    max_magic = np.nanmax(magic_grid)
+    min_magic = mp.nanmin(magic_grid)
+    max_magic = mp.nanmax(magic_grid)
     # set all out of bound values to NaN
     mask = (wavemap < min_magic) | (wavemap > max_magic)
     out_vector[mask] = np.nan

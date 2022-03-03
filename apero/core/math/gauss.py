@@ -16,7 +16,6 @@ from typing import Any, Tuple, Union
 import warnings
 
 from apero.base import base
-from apero.core.core import drs_misc
 from apero.core.math import gen_math
 from apero.core.math import fast
 
@@ -30,8 +29,6 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get display func
-display_func = drs_misc.display_func
 
 # =============================================================================
 # Define complex typing
@@ -212,7 +209,7 @@ def gauss_fit_nn(xpix: np.ndarray, ypix: np.ndarray,
     :return gfit: numpy array (1D), the fitted gaussian
     """
     # set function name
-    func_name = display_func('gauss_fit_slope', __NAME__)
+    func_name = __NAME__ + 'gauss_fit_slope()'
     # we guess that the Gaussian is close to Nyquist and has a
     # 2 PIX FWHM and therefore 2/2.54 e-width
     ew_guess = 2 * fast.nanmedian(np.gradient(xpix)) / gen_math.fwhm()

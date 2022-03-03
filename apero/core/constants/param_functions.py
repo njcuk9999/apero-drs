@@ -22,6 +22,7 @@ from typing import Any, List, Tuple, Type, Union
 from pathlib import Path
 
 from apero.base import base
+from apero.core import math as mp
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
@@ -936,7 +937,7 @@ class ParamDict(CaseInDict):
         # deal with lists and numpy array
         if isinstance(value, (list, np.ndarray)):
             sargs = [key, list(value), None, self.pfmt_ns]
-            wargs = [np.nanmin(value), np.nanmax(value),
+            wargs = [mp.nanmin(value), mp.nanmax(value),
                      np.sum(np.isnan(value)) > 0, _string_repr_list(*sargs)]
             print(textentry('40-000-00004', args=wargs))
         # deal with dictionaries

@@ -119,10 +119,10 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
     for order_num in range(nord):
         # remove the pedestal from the FP to avoid an offset from
         #     thermal background
-        background = np.nanpercentile(refimage[order_num], bckgrd_percentile)
+        background = mp.nanpercentile(refimage[order_num], bckgrd_percentile)
         refimage[order_num] = refimage[order_num] - background
         # get the amplitudes
-        amplitude = np.nanpercentile(refimage[order_num], norm_percentile)
+        amplitude = mp.nanpercentile(refimage[order_num], norm_percentile)
         ref_amps[order_num] = amplitude
         # normalize the reference image by this amplitude
         refimage[order_num] = refimage[order_num] / amplitude
@@ -353,7 +353,7 @@ def correct_ext_dark_fp(params, sciimage, refimage, header, fiber,
         master_ref_ord = rleakmaster[order_num]
         # remove the pedestal from the FP to avoid an offset from
         #     thermal background
-        background = np.nanpercentile(refimage[order_num], bckgrd_percentile)
+        background = mp.nanpercentile(refimage[order_num], bckgrd_percentile)
         refimage[order_num] = refimage[order_num] - background
         # only perform the measurement of the amplitude of the leakage signal
         #  on the lower and upper percentiles. This allows for a small number
@@ -361,8 +361,8 @@ def correct_ext_dark_fp(params, sciimage, refimage, header, fiber,
         #  some spurious amplitude values in the frames
         with warnings.catch_warnings(record=True) as _:
             # get percentiles
-            low, high = np.nanpercentile(refimage[order_num], bpercents)
-            lowm, highm = np.nanpercentile(master_ref_ord, bpercents)
+            low, high = mp.nanpercentile(refimage[order_num], bpercents)
+            lowm, highm = mp.nanpercentile(master_ref_ord, bpercents)
             # translate this into a mask
             mask = refimage[order_num] > low
             mask &= refimage[order_num] < high
@@ -370,7 +370,7 @@ def correct_ext_dark_fp(params, sciimage, refimage, header, fiber,
             mask &= master_ref_ord < highm
         # approximate ratio, we know that frames were normalized with their
         #  "norm_percentile" percentile prior to median combining
-        amplitude = np.nanpercentile(refimage[order_num], norm_percentile)
+        amplitude = mp.nanpercentile(refimage[order_num], norm_percentile)
         approx_ratio = 1 / amplitude
         # save to storage
         approx_ratio_arr[order_num] = float(approx_ratio)
@@ -410,7 +410,7 @@ def correct_ext_dark_fp(params, sciimage, refimage, header, fiber,
         # apply leakage scaling
         sciimage[order_num] = sciimage[order_num] - scale
         # calculate the ratio of the leakage
-        rpart1 = np.nanpercentile(sciimage[order_num], norm_percentile)
+        rpart1 = mp.nanpercentile(sciimage[order_num], norm_percentile)
         rpart2 = mp.nanmedian(sciimage[order_num])
         ratio_leak[order_num] = rpart1 / rpart2
 
@@ -497,7 +497,7 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
         master_ref_ord = master_leaks[ref_fiber][order_num]
         # remove the pedestal from the FP to avoid an offset from
         #     thermal background
-        background = np.nanpercentile(refimage[order_num], bckgrd_percentile)
+        background = mp.nanpercentile(refimage[order_num], bckgrd_percentile)
         refimage[order_num] = refimage[order_num] - background
         # only perform the measurement of the amplitude of the leakage signal
         #  on the lower and upper percentiles. This allows for a small number
@@ -505,8 +505,8 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
         #  some spurious amplitude values in the frames
         with warnings.catch_warnings(record=True) as _:
             # get percentiles
-            low, high = np.nanpercentile(refimage[order_num], bpercents)
-            lowm, highm = np.nanpercentile(master_ref_ord, bpercents)
+            low, high = mp.nanpercentile(refimage[order_num], bpercents)
+            lowm, highm = mp.nanpercentile(master_ref_ord, bpercents)
             # translate this into a mask
             mask = refimage[order_num] > low
             mask &= refimage[order_num] < high
@@ -514,7 +514,7 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
             mask &= master_ref_ord < highm
         # approximate ratio, we know that frames were normalized with their
         #  "norm_percentile" percentile prior to median combining
-        amplitude = np.nanpercentile(refimage[order_num], norm_percentile)
+        amplitude = mp.nanpercentile(refimage[order_num], norm_percentile)
         approx_ratio = 1 / amplitude
         # save to storage
         approx_ratio_arr[order_num] = float(approx_ratio)
@@ -588,7 +588,7 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
                 # apply leakage scaling
                 extimage[order_num] = extimage[order_num] - scale
                 # calculate the ratio of the leakage
-                rpart1 = np.nanpercentile(refimage[order_num], norm_percentile)
+                rpart1 = mp.nanpercentile(refimage[order_num], norm_percentile)
                 rpart2 = mp.nanmedian(extimage[order_num])
                 ratio_leak[order_num] = rpart1 / rpart2
             # update ext file
