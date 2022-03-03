@@ -338,8 +338,9 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
                 # get hte order profile slice
                 fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
                 # Renormalise the rotated order profile
-                if mp.nansum(fx) > 0:
-                    fx = fx / mp.nansum(fx)
+                sumfx = mp.nansum(fx)
+                if sumfx > 0:
+                    fx = fx / sumfx
                 else:
                     fx = np.ones(fx.shape, dtype=float)
                 # get the amplitude (ratio between flux and flat)
@@ -347,19 +348,24 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
                 # residuals
                 res = sx - fx / amp
                 # work out number of sigma away from the the median res
-                nsig = np.abs(res) / mp.nanmedian(np.abs(res))
+                ares = np.abs(res)
+                nsig = ares / mp.nanmedian(ares)
                 # work out weights (0 or 1 based on number of sigma)
                 weights = nsig < cosmic_sigcut
                 # add to the number of rejected cosmics
                 cpt += np.sum(~weights)
                 # weights to floats
                 weights = np.array(weights).astype(float)
+                # some matrix manipulation
+                wsxfx = weights * sx * fx
+                wsxfxfx = wsxfx * fx
+                sum_wsxfxfx = mp.nansum(wsxfxfx)
                 # set the value of this pixel to the weighted sum
-                spelong[:, ic] = (weights * sx * fx)
-                spe[ic] = mp.nansum(weights * sx * fx)
+                spelong[:, ic] = wsxfx
+                spe[ic] = mp.nansum(wsxfx)
                 # normalise spe
-                spe[ic] = spe[ic] / mp.nansum(weights * fx ** 2)
-                spelong[:, ic] = spelong[:, ic] / mp.nansum(weights * fx ** 2)
+                spe[ic] = spe[ic] / sum_wsxfxfx
+                spelong[:, ic] = spelong[:, ic] / sum_wsxfxfx
                 coslong[:, ic] = weights
     # multiple spe by gain to convert to e-
     spe *= gain
