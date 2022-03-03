@@ -190,7 +190,8 @@ apero_preprocess.set_arg(name='files', dtype='files', pos='1+',
                          files=[files.raw_file],
                          helpstr=textentry('PREPROCESS_UFILES_HELP'), limit=1)
 apero_preprocess.set_kwarg(name='--skip', dtype='bool', default=False,
-                           helpstr=textentry('PPSKIP_HELP'), default_ref='SKIP_DONE_PP')
+                           helpstr=textentry('PPSKIP_HELP'),
+                           default_ref='SKIP_DONE_PP')
 apero_preprocess.group_func = grouping.group_individually
 apero_preprocess.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
@@ -212,6 +213,7 @@ apero_badpix.description = textentry('BADPIX_DESC')
 apero_badpix.epilog = textentry('BADPIX_EXAMPLE')
 apero_badpix.recipe_type = 'recipe'
 apero_badpix.recipe_kind = 'calib-night'
+apero_badpix.calib_required = True
 apero_badpix.set_outputs(BADPIX=files.out_badpix, BACKMAP=files.out_backmap)
 apero_badpix.set_debug_plots('BADPIX_MAP')
 apero_badpix.set_summary_plots('SUM_BADPIX_MAP')
@@ -251,6 +253,7 @@ apero_dark.description = textentry('DARK_DESC')
 apero_dark.epilog = textentry('DARK_EXAMPLE')
 apero_dark.recipe_type = 'recipe'
 apero_dark.recipe_kind = 'calib-night'
+apero_dark.calib_required = False
 apero_dark.set_outputs(DARK_INT_FILE=files.out_dark_int,
                        DARK_TEL_FIEL=files.out_dark_tel,
                        DARK_SKY_FILE=files.out_dark_sky)
@@ -285,6 +288,7 @@ apero_dark_master.description = textentry('DARK_MASTER_DESC')
 apero_dark_master.epilog = textentry('DARK_MASTER_EXAMPLE')
 apero_dark_master.recipe_type = 'recipe'
 apero_dark_master.recipe_kind = 'calib-master'
+apero_dark_master.calib_required = True
 apero_dark_master.set_outputs(DARK_MASTER_FILE=files.out_dark_master)
 apero_dark_master.set_kwarg(name='--filetype', dtype=str,
                             default='DARK_DARK_TEL, DARK_DARK_INT',
@@ -312,6 +316,7 @@ apero_loc.description = textentry('LOC_DESC')
 apero_loc.epilog = textentry('LOC_EXAMPLE')
 apero_loc.recipe_type = 'recipe'
 apero_loc.recipe_kind = 'calib-night'
+apero_loc.calib_required = True
 apero_loc.set_outputs(ORDERP_FILE=files.out_loc_orderp,
                       LOCO_FILE=files.out_loc_loco,
                       FWHM_FILE=files.out_loc_fwhm,
@@ -358,6 +363,7 @@ apero_shape_master.description = textentry('SHAPE_DESC')
 apero_shape_master.epilog = textentry('SHAPEMASTER_EXAMPLE')
 apero_shape_master.recipe_type = 'recipe'
 apero_shape_master.recipe_kind = 'calib-master'
+apero_shape_master.calib_required = True
 apero_shape_master.set_outputs(FPMASTER_FILE=files.out_shape_fpmaster,
                                DXMAP_FILE=files.out_shape_dxmap,
                                DYMAP_FILE=files.out_shape_dymap,
@@ -415,6 +421,7 @@ apero_shape.description = textentry('SHAPE_DESC')
 apero_shape.epilog = textentry('SHAPE_EXAMPLE')
 apero_shape.recipe_type = 'recipe'
 apero_shape.recipe_kind = 'calib-night'
+apero_shape.calib_required = True
 apero_shape.set_outputs(LOCAL_SHAPE_FILE=files.out_shape_local,
                         SHAPEL_IN_FP_FILE=files.out_shapel_debug_ifp,
                         SHAPEL_OUT_FP_FILE=files.out_shapel_debug_ofp,
@@ -459,6 +466,7 @@ apero_flat.description = textentry('FLAT_DESC')
 apero_flat.epilog = textentry('FLAT_EXAMPLE')
 apero_flat.recipe_type = 'recipe'
 apero_flat.recipe_kind = 'calib-night'
+apero_flat.calib_required = True
 apero_flat.set_outputs(FLAT_FILE=files.out_ff_flat,
                        BLAZE_FILE=files.out_ff_blaze,
                        E2DSLL_FILE=files.out_ext_e2dsll,
@@ -509,6 +517,7 @@ apero_thermal.description = textentry('EXTRACT_DESC')
 apero_thermal.epilog = textentry('EXTRACT_EXAMPLE')
 apero_thermal.recipe_type = 'recipe'
 apero_thermal.recipe_kind = 'calib-night'
+apero_thermal.calib_required = True
 # TODO: Need to add out_thermal_e2ds_sky
 apero_thermal.set_outputs(THERMAL_E2DS_FILE=files.out_ext_e2dsff,
                           THERMALI_FILE=files.out_thermal_e2ds_int,
@@ -563,6 +572,7 @@ apero_leak_master.description = textentry('LEAKM_DESC')
 apero_leak_master.epilog = textentry('LEAKM_EXAMPLE')
 apero_leak_master.recipe_type = 'recipe'
 apero_leak_master.recipe_kind = 'calib-master'
+apero_leak_master.calib_required = False
 apero_leak_master.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2ds,
                               LEAK_MASTER=files.out_leak_master)
 apero_leak_master.set_arg(pos=0, **obs_dir)
@@ -700,6 +710,7 @@ apero_wave_master.description = textentry('WAVE_DESC')
 apero_wave_master.epilog = textentry('WAVE_EXAMPLE')
 apero_wave_master.recipe_type = 'recipe'
 apero_wave_master.recipe_kind = 'calib-master'
+apero_wave_master.calib_required = True
 apero_wave_master.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                               WAVESOL_MASTER=files.out_wavem_sol,
                               WAVEM_CAVITY=files.out_wavem_cavity,
@@ -768,6 +779,7 @@ apero_wave_night.description = textentry('WAVE_DESC')
 apero_wave_night.epilog = textentry('WAVE_EXAMPLE')
 apero_wave_night.recipe_type = 'recipe'
 apero_wave_night.recipe_kind = 'calib-night'
+apero_wave_night.calib_required = True
 apero_wave_night.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                              WAVEMAP_NIGHT=files.out_wave_night,
                              WAVE_HCLIST=files.out_wave_hclist,
@@ -1267,7 +1279,8 @@ full_seq.add(apero_wave_master, master=True,
                           fpfiles=[files.pp_fp_fp]))
 # thermal for everything else (requires a wave solution)
 full_seq.add(apero_thermal, name='THERM_MT', master=True,
-             recipe_kind='calib-master-T', files=[files.pp_dark_dark_tel])
+             recipe_kind='calib-master-T', files=[files.pp_dark_dark_tel],
+             calib_required=False)
 # night runs
 full_seq.add(apero_badpix)
 full_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCC',
@@ -1282,7 +1295,8 @@ full_seq.add(apero_thermal, name='THERM_I', master=True,
 full_seq.add(apero_wave_night)
 # thermal for everything else (requires a wave solution)
 full_seq.add(apero_thermal, name='THERM_T', master=True,
-             recipe_kind='calib-night-T', files=[files.pp_dark_dark_tel])
+             recipe_kind='calib-night-T', files=[files.pp_dark_dark_tel],
+             calib_required=False)
 # extract all OBJ_DARK and OBJ_FP
 full_seq.add(apero_extract, name='EXTALL', recipe_kind='extract-ALL',
              files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
@@ -1378,7 +1392,8 @@ limited_seq.add(apero_wave_master, master=True,
                              fpfiles=[files.pp_fp_fp]))
 # thermal for everything else (requires a wave solution)
 limited_seq.add(apero_thermal, name='THERM_MT', master=True,
-                recipe_kind='calib-master-T', files=[files.pp_dark_dark_tel])
+                recipe_kind='calib-master-T', files=[files.pp_dark_dark_tel],
+                calib_required=False)
 # night runs
 limited_seq.add(apero_badpix)
 limited_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCC',
@@ -1393,7 +1408,8 @@ limited_seq.add(apero_thermal, name='THERM_I', master=True,
 limited_seq.add(apero_wave_night)
 # thermal for everything else (requires a wave solution)
 limited_seq.add(apero_thermal, name='THERM_T', master=True,
-                recipe_kind='calib-night-T', files=[files.pp_dark_dark_tel])
+                recipe_kind='calib-night-T', files=[files.pp_dark_dark_tel],
+                calib_required=False)
 # extract tellurics
 limited_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
                 files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_fp,
@@ -1543,7 +1559,8 @@ master_seq.add(apero_wave_master, master=True,
                             fpfiles=[files.pp_fp_fp]))
 # thermal for everything else (requires a wave solution)
 master_seq.add(apero_thermal, name='THERM_MT', master=True,
-               recipe_kind='calib-master-T', files=[files.pp_dark_dark_tel])
+               recipe_kind='calib-master-T', files=[files.pp_dark_dark_tel],
+               calib_required=False)
 
 # -----------------------------------------------------------------------------
 # calibration run (for trigger)
@@ -1563,7 +1580,8 @@ calib_seq.add(apero_thermal, name='THERM_I', master=True,
 calib_seq.add(apero_wave_night)
 # thermal for everything else (requires a wave solution)
 calib_seq.add(apero_thermal, name='THERM_T', master=True,
-                recipe_kind='calib-night-T', files=[files.pp_dark_dark_tel])
+              recipe_kind='calib-night-T', files=[files.pp_dark_dark_tel],
+              calib_required=False)
 
 # -----------------------------------------------------------------------------
 # telluric sequence (for trigger)
