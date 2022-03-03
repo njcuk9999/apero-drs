@@ -270,10 +270,13 @@ def get_log_entries(params: ParamDict,
     # get all entries from database
     dataframe = logdbm.get_entries('*')
     # get the index database
-    WLOG(params, '', 'Obtaining full index database. Please wait...')
-    indexdbm = drs_database.IndexDatabase(params)
-    indexdbm.load_db()
-    idataframe = indexdbm.get_entries('*')
+    if mode != 'timing':
+        WLOG(params, '', 'Obtaining full index database. Please wait...')
+        indexdbm = drs_database.IndexDatabase(params)
+        indexdbm.load_db()
+        idataframe = indexdbm.get_entries('*')
+    else:
+        idataframe = pd.DataFrame()
     # -------------------------------------------------------------------------
     # get unique pids
     upids = np.unique(dataframe['PID'])
