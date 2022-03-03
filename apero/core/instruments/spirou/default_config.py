@@ -39,7 +39,7 @@ OBS_ALT.value = 4204
 # -----------------------------------------------------------------------------
 # global settings
 # -----------------------------------------------------------------------------
-# Whether to plotting (True or 1 to plotting)
+# PLotting mode (0-3)
 DRS_PLOT = DRS_PLOT.copy(__NAME__)
 DRS_PLOT.value = 0
 

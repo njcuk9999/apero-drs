@@ -13,6 +13,7 @@ import numpy as np
 
 from apero.base import base
 from apero.core import constants
+from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.science.calib import localisation
 from apero.science.calib import shape
@@ -216,8 +217,8 @@ def main():
     # apply order profile (after de-straightening)
     # --------------------------------------------------------------------------
     # calculate order profile for full image
-    orderp = orderp_ab / np.nanmax(orderp_ab)
-    orderp += orderp_c / np.nanmax(orderp_c)
+    orderp = orderp_ab / mp.nanmax(orderp_ab)
+    orderp += orderp_c / mp.nanmax(orderp_c)
     # apply this to maps
     pfp_map = pfp_map * orderp
 

@@ -417,7 +417,7 @@ def mc_line(frame: Any, plt: Any, line: Any, x: np.ndarray, y: np.ndarray,
         cmap = 'viridis'
     # Create a continuous norm to map from data points to colors
     if norm is None:
-        norm = plt.Normalize(np.nanmin(z), np.nanmax(z))
+        norm = plt.Normalize(mp.nanmin(z), mp.nanmax(z))
     # Create a set of line segments so that we can color them individually
     # This creates the points as a N x 1 x 2 array so that we can stack points
     # together easily to get the segments. The segments array for line
@@ -922,7 +922,7 @@ def plot_loc_image_fit(plotter: Plotter, graph: Graph,
     xpix = np.arange(nbxpix)
     # deal with no threshold
     if threshold is None:
-        threshold = np.nanpercentile(image, 95)
+        threshold = mp.nanpercentile(image, 95)
     # ------------------------------------------------------------------
     title = 'Localisation for fibers={0}'.format(plot_kind)
     # ------------------------------------------------------------------
@@ -1050,7 +1050,7 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
         # get image zoom
         image_zoom = image[ymin:ymax, xmin:xmax]
         # threshold = percentile
-        threshold = np.nanpercentile(image_zoom, 95)
+        threshold = mp.nanpercentile(image_zoom, 95)
         # ------------------------------------------------------------------
         # plot image
         im = frame.imshow(image_zoom, origin='lower', vmin=0.0, vmax=threshold,
@@ -1503,7 +1503,7 @@ definitions += [loc_width_regions, loc_fiber_doublet_parity, loc_gap_orders,
 #         # get image zoom
 #         image_zoom = image[ymin:ymax, xmin:xmax]
 #         # threshold = percentile
-#         threshold = np.nanpercentile(image_zoom, 95)
+#         threshold = mp.nanpercentile(image_zoom, 95)
 #         # ------------------------------------------------------------------
 #         # plot image
 #         im = frame.imshow(image_zoom, origin='lower', vmin=0.0, vmax=threshold,
@@ -1578,15 +1578,15 @@ definitions += [loc_width_regions, loc_fiber_doublet_parity, loc_gap_orders,
 #         ypix0go = ypix0[order_num, good]
 #         residual = ypixgo - ypix0go
 #         # get the y limits
-#         ymax = np.ceil(np.nanmax([np.nanmax(ypixgo), np.nanmax(ypix0go)]))
-#         ymin = np.floor(np.nanmin([np.nanmin(ypixgo), np.nanmin(ypix0go)]))
+#         ymax = np.ceil(mp.nanmax([np.nanmax(ypixgo), mp.nanmax(ypix0go)]))
+#         ymin = np.floor(mp.nanmin([np.nanmin(ypixgo), mp.nanmin(ypix0go)]))
 #         ydiff = np.ceil(ymax - ymin)
 #         ymax = np.min([int(ymax + 0.25 * ydiff), image.shape[0]])
 #         ymin = np.max([int(ymin - 0.25 * ydiff), 0])
 #         # mask the image between y limits
 #         imagezoom = image[ymin:ymax]
 #         # normalise zoom image
-#         imagezoom = imagezoom / np.nanpercentile(imagezoom, 85)
+#         imagezoom = imagezoom / mp.nanpercentile(imagezoom, 85)
 #         # ------------------------------------------------------------------
 #         # set up plot
 #         if kind == 'center':
@@ -1706,9 +1706,9 @@ def plot_shape_dx(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     bnum = kwargs['bnum']
     nbanana = kwargs['nbanana']
     # set the zeropoint
-    zeropoint = np.nanmedian(dx)
+    zeropoint = mp.nanmedian(dx)
     # get the sig of dx
-    sig_dx = np.nanmedian(np.abs(dx - zeropoint))
+    sig_dx = mp.nanmedian(np.abs(dx - zeropoint))
     # ------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, ncols=3, nrows=1)
@@ -1799,7 +1799,7 @@ def plot_shape_linear_tparams(plotter: Plotter, graph: Graph,
     diffy = y1 - y2
     xrange1 = [0, dim2]
     xrange2 = [0, dim1]
-    ylim = np.max([np.nanmedian(np.abs(diffx)), np.nanmedian(np.abs(diffy))])
+    ylim = np.max([mp.nanmedian(np.abs(diffx)), mp.nanmedian(np.abs(diffy))])
     yrange = [-10 * ylim, 10 * ylim]
     nbins = 50
     pstep = 100
@@ -2000,8 +2000,8 @@ def plot_shape_local_zoom_shift(plotter: Plotter, graph: Graph,
     image2 = image[ymin2:ymax2, xmin2:xmax2]
     simage2 = simage[ymin2:ymax2, xmin2:xmax2]
     # threshold = percentile
-    threshold1 = np.nanpercentile(image1, 95)
-    threshold2 = np.nanpercentile(image2, 95)
+    threshold1 = mp.nanpercentile(image1, 95)
+    threshold2 = mp.nanpercentile(image2, 95)
     # ------------------------------------------------------------------
     skwargs1 = dict(origin='lower', aspect='auto', vmin=0.0, vmax=threshold1,
                     extent=[xmin1, xmax1, ymin1, ymax1])
@@ -2144,8 +2144,8 @@ def plot_flat_order_fit_edges(plotter: Plotter, graph: Graph,
         imagezoom1 = image1[ymin1:ymax1]
         imagezoom2 = image2[ymin2:ymax2]
         # set threshold
-        threshold1 = np.nanpercentile(imagezoom1, 95)
-        threshold2 = np.nanpercentile(imagezoom2, 95)
+        threshold1 = mp.nanpercentile(imagezoom1, 95)
+        threshold2 = mp.nanpercentile(imagezoom2, 95)
         # ------------------------------------------------------------------
         # set up plot
         fig, frames = graph.set_figure(plotter, ncols=1, nrows=2, sharex=True)
@@ -2408,9 +2408,9 @@ def plot_extract_spectral_order(plotter: Plotter, graph: Graph,
         # set up plot
         fig, frames = graph.set_figure(plotter, ncols=1, nrows=2, sharex=True)
         # get normalised values
-        e2dsn = e2ds[order_num] / np.nanmedian(e2ds[order_num])
-        e2dsffn = e2dsff[order_num] / np.nanmedian(e2ds[order_num])
-        blazen = blaze[order_num] / np.nanmedian(blaze[order_num])
+        e2dsn = e2ds[order_num] / mp.nanmedian(e2ds[order_num])
+        e2dsffn = e2dsff[order_num] / mp.nanmedian(e2ds[order_num])
+        blazen = blaze[order_num] / mp.nanmedian(blaze[order_num])
         # plot fits
         frames[0].plot(wavemap[order_num], e2dsn, label='e2ds')
         frames[0].plot(wavemap[order_num], e2dsffn, label='e2dsff')
@@ -2470,7 +2470,7 @@ def plot_extract_s1d(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # set up plot
     fig, frames = graph.set_figure(plotter, ncols=1, nrows=len(zoom1))
     # get the normalised colours based on the full wavelength range
-    norm = plt.Normalize(np.nanmin(wavemap), np.nanmax(wavemap))
+    norm = plt.Normalize(mp.nanmin(wavemap), mp.nanmax(wavemap))
     # loop around frames
     for row in range(len(zoom1)):
         # get bounds
@@ -2493,7 +2493,7 @@ def plot_extract_s1d(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
         frame.set_xlim(lowerbound, upperbound)
         # set the y limits to 5 and 95 percentiles (to avoid outliers)
         with warnings.catch_warnings(record=True) as _:
-            ylow, yhigh = np.nanpercentile(flux[mask], [2, 98])
+            ylow, yhigh = mp.nanpercentile(flux[mask], [2, 98])
         # only set ylimit if whole region is not NaN
         if np.isfinite(ylow) and np.isfinite(yhigh):
             frame.set_ylim(ylow, yhigh)
@@ -2545,9 +2545,9 @@ def plot_extract_s1d_weights(plotter: Plotter, graph: Graph,
     # ------------------------------------------------------------------
     # correct data for plotting
     with warnings.catch_warnings(record=True) as _:
-        flux1 = flux / np.nanmedian(flux)
-        weight = weight / np.nanmedian(weight)
-        flux2 = (flux / weight) / np.nanmedian(flux / weight)
+        flux1 = flux / mp.nanmedian(flux)
+        weight = weight / mp.nanmedian(weight)
+        flux2 = (flux / weight) / mp.nanmedian(flux / weight)
     # ------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, ncols=1, nrows=len(zoom1))
@@ -3778,7 +3778,7 @@ def plot_wave_fp_multi_order(plotter: Plotter, graph: Graph,
         # plot hc spectra
         frame.plot(wave_map[order_num], loghcdata)
         # plot used HC lines
-        frame.vlines(hc_ll_plot, 0, np.nanmax(loghcdata),
+        frame.vlines(hc_ll_plot, 0, mp.nanmax(loghcdata),
                      color=col_plot, linestyles=lty_plot)
         # set axis labels
     frame.set(xlabel='Wavelength [nm]', ylabel='log_{10}(Normalised flux)',
@@ -3895,7 +3895,7 @@ def plot_waveref_expected(plotter: Plotter, graph: Graph,
             continue
         # ------------------------------------------------------------------
         # do not plot outliers in diff
-        low, high = np.nanpercentile(diff[omask], [1, 99])
+        low, high = mp.nanpercentile(diff[omask], [1, 99])
         pmask = (diff[omask] > low) & (diff[omask] < high)
         # ------------------------------------------------------------------
         # plot points
@@ -4220,7 +4220,7 @@ def plot_tellup_abso_spec(plotter: Plotter, graph: Graph,
     clean_ohlines = kwargs['clean_ohlines']
     # ------------------------------------------------------------------
     # calculate normalisation
-    median = np.nanmedian(spectrum)
+    median = mp.nanmedian(spectrum)
     spectrum = spectrum / median
     spectrum_ini = spectrum_ini / median
     # calculate mask for transmissiong
@@ -4230,7 +4230,7 @@ def plot_tellup_abso_spec(plotter: Plotter, graph: Graph,
     # set NaN values in spectrum to NaNs in mask
     mask[~np.isfinite(spectrum)] = np.nan
     # work out a scaling
-    scale = np.nanpercentile(spectrum / trans * mask, 99.5)
+    scale = mp.nanpercentile(spectrum / trans * mask, 99.5)
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -4327,8 +4327,8 @@ def plot_mktellu_wave_flux(plotter: Plotter, graph: Graph,
 
         # get max / min y
         values = list(y2) + list(y3) + list(y4) + list(y5)
-        mins = 0.95 * np.nanmin([0, np.nanmin(values)])
-        maxs = 1.05 * np.nanmax(values)
+        mins = 0.95 * mp.nanmin([0, mp.nanmin(values)])
+        maxs = 1.05 * mp.nanmax(values)
 
         # plot legend and set up labels / limits / title
         frame.legend(loc=0)
@@ -4502,9 +4502,9 @@ def plot_ftellu_recon_spline(plotter: Plotter, graph: Graph,
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
         # ------------------------------------------------------------------
         # plot spectra for selected order
-        frame.plot(swave, simage / np.nanmedian(simage), label='Observed SP')
-        frame.plot(swave, stemp / np.nanmedian(stemp), label='Template SP')
-        frame.plot(swave, srecov / np.nanmedian(srecov),
+        frame.plot(swave, simage / mp.nanmedian(simage), label='Observed SP')
+        frame.plot(swave, stemp / mp.nanmedian(stemp), label='Template SP')
+        frame.plot(swave, srecov / mp.nanmedian(srecov),
                    label='Recov abso SP (Observed/Template)')
         # add legend
         frame.legend(loc=0)
@@ -4560,7 +4560,7 @@ def plot_ftellu_wave_shift(plotter: Plotter, graph: Graph,
         # get start and end points
         start, end = order_num * nbpix, order_num * nbpix + nbpix
         # get this orders data
-        tdata_s = image[order_num, :] / np.nanmedian(image[order_num, :])
+        tdata_s = image[order_num, :] / mp.nanmedian(image[order_num, :])
         tapas_before_s = tapas_before[start:end]
         tapas_after_s = tapas_after[start:end]
         pc1_before_s = pc_before[start:end]
@@ -4653,11 +4653,11 @@ def plot_ftellu_recon_abso(plotter: Plotter, graph: Graph,
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
         # ------------------------------------------------------------------
         # plot spectra for selected order
-        frame.plot(swave, ssp / np.nanmedian(ssp), color=black,
+        frame.plot(swave, ssp / mp.nanmedian(ssp), color=black,
                    label='input SP')
-        frame.plot(swave, ssp2 / np.nanmedian(ssp2) / srecon_abso, color='g',
+        frame.plot(swave, ssp2 / mp.nanmedian(ssp2) / srecon_abso, color='g',
                    label='Cleaned SP')
-        frame.plot(swave, stemp2 / np.nanmedian(stemp2), color='c',
+        frame.plot(swave, stemp2 / mp.nanmedian(stemp2), color='c',
                    label='Template')
         frame.plot(swave, srecon_abso, color='r', label='recon abso')
         # add legend
@@ -4711,11 +4711,11 @@ def plot_ftellu_res_model(plotter: Plotter, graph: Graph,
         # get wave solution for this order
         wavemap = wprops['WAVEMAP'][order_num]
         # get original uncorrected image for this order
-        flat_image = image[order_num] / np.nanmedian(image)
+        flat_image = image[order_num] / mp.nanmedian(image)
         # get pre-cleaned image for this order
-        flat_image1 = image1[order_num] / np.nanmedian(image)
+        flat_image1 = image1[order_num] / mp.nanmedian(image)
         # get output image (completely corrected) for this order
-        flat_sp_out = sp_out[order_num] / np.nanmedian(image)
+        flat_sp_out = sp_out[order_num] / mp.nanmedian(image)
         # get the pre-cleaned absorption
         flat_abso = tpreprops['ABSO_E2DS'][order_num]
         # get the residual model

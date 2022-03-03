@@ -14,7 +14,6 @@ from typing import Any, Union
 import warnings
 
 from apero.base import base
-from apero.core.core import drs_misc
 from apero.core.math import fast
 
 # =============================================================================
@@ -27,8 +26,6 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get display func
-display_func = drs_misc.display_func
 
 
 # =============================================================================

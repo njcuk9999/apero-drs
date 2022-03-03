@@ -1048,7 +1048,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, **kwargs):
             dypix_arr_i.append(np.array(dypix))
             cckeep_arr_i.append(np.array(keep))
             # get rms values
-            dxrms_arr_i.append(np.array(dx[order_num] - np.nanmin(ddx)))
+            dxrms_arr_i.append(np.array(dx[order_num] - mp.nanmin(ddx)))
             # -----------------------------------------------------------------
             # set those values that should not be kept to NaN
             dx[order_num][~keep] = np.nan
@@ -1164,7 +1164,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, **kwargs):
                     # get shifts combination of ddx and dx0 correction
                     ddx_f = ddx + dx0
                     shifts = ddx_f[pos_y_mask]  # - corr_dx_from_fp[order_num][ix]
-                    shifts_all[order_num][ix] = np.nanmean(shifts)
+                    shifts_all[order_num][ix] = mp.nanmean(shifts)
                     # apply shifts to master dx map at correct positions
                     master_dxmap[positions, ix] += shifts
 
@@ -1225,7 +1225,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, **kwargs):
         # get the keep mask
         keep = cckeep_arr[-1][order_num]
 
-        dxrms.append(np.nanstd(dxrms_arr[-1][order_num][keep]))
+        dxrms.append(mp.nanstd(dxrms_arr[-1][order_num][keep]))
     # ---------------------------------------------------------------------
     # return parameters
     return master_dxmap, max_dxmap_std, max_dxmap_info, dxrms
@@ -1992,7 +1992,7 @@ def max_neighbour_mask(image, percent, thres):
     # to filter-out noise excursions
     with warnings.catch_warnings(record=True) as _:
         mask = (image > max_neighbours)
-        mask &= (image > np.nanpercentile(image, percent))
+        mask &= (image > mp.nanpercentile(image, percent))
         mask &= (image / max_neighbours < thres)
     # return mask of where peaks are
     return mask
@@ -2104,8 +2104,8 @@ def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata, poly_wave_ref,
         # define a segment between start and end
         segment = sp_fp[start:end]
         # push values into bottom and top
-        bottom[xpix] = np.nanpercentile(segment, bottom_fp_percentile)
-        top[xpix] = np.nanpercentile(segment, top_fp_percentile)
+        bottom[xpix] = mp.nanpercentile(segment, bottom_fp_percentile)
+        top[xpix] = mp.nanpercentile(segment, top_fp_percentile)
     # -------------------------------------------------------------------------
     # put a floor in the top values
     top_floor_value = top_floor_frac * mp.nanmax(top)
@@ -2236,8 +2236,8 @@ def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata, poly_wave_ref,
     xpeak2_mean = (xpeak2[1:] + xpeak2[:-1]) / 2
     dxpeak = xpeak2[1:] - xpeak2[:-1]
     # we clip the most deviant peaks
-    lowermask = dxpeak > np.nanpercentile(dxpeak, deviant_percentiles[0])
-    uppermask = dxpeak < np.nanpercentile(dxpeak, deviant_percentiles[1])
+    lowermask = dxpeak > mp.nanpercentile(dxpeak, deviant_percentiles[0])
+    uppermask = dxpeak < mp.nanpercentile(dxpeak, deviant_percentiles[1])
     good = lowermask & uppermask
     # apply good mask and fit the peak separation
     fit_peak_separation = mp.nanpolyfit(xpeak2_mean[good], dxpeak[good], 2)

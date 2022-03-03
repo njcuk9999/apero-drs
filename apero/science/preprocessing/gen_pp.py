@@ -628,7 +628,7 @@ def quality_control2(params: ParamDict, qc_params: list, image: np.ndarray,
     # check if dark dark it is not science
     if dprtype in dark_types:
         # get the 90th percentile for this image
-        value = np.nanpercentile(image, 90)
+        value = mp.nanpercentile(image, 90)
         # if above threshold this is not a valid dark
         if value > dark_thres:
             qc_pass.append(0)

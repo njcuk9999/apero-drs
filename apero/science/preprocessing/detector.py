@@ -134,7 +134,7 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
         nsig2 = variance / expected
     # number of simga away from bulk of expected-to-observed variance
     with warnings.catch_warnings(record=True) as _:
-        nsig2 = nsig2 / np.nanpercentile(np.abs(nsig2), norm_frac)
+        nsig2 = nsig2 / mp.nanpercentile(np.abs(nsig2), norm_frac)
     # mask the nsigma by the variance cuts
     mask1 = np.array(nsig2 > variance_cut1)
     mask2 = np.array(nsig2 > variance_cut2)
@@ -168,7 +168,7 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
             intercept[starty:endy, startx:endx] -= intmed
     # normalize to 1-sigma
     with warnings.catch_warnings(record=True) as _:
-        intercept = intercept / np.nanpercentile(np.abs(intercept), norm_frac)
+        intercept = intercept / mp.nanpercentile(np.abs(intercept), norm_frac)
     # express as varuabce
     nsig2 = intercept ** 2
     # mask the nsigma by the variance cuts
@@ -273,10 +273,10 @@ def correct_left_right(params: ParamDict, image: np.ndarray) -> np.ndarray:
         # remove DC level between pixels so that the median+axis=1 really
         # filters noise. Otherwise, the median would just select the pixel
         # that has the median DC level
-        nanmed = np.nanmedian(reference_pixels_sides[:, it])
+        nanmed = mp.nanmedian(reference_pixels_sides[:, it])
         reference_pixels_sides[:, it] -= nanmed
     # median profile of the 8 pixels
-    medprofile = np.nanmedian(reference_pixels_sides, axis=1)
+    medprofile = mp.nanmedian(reference_pixels_sides, axis=1)
     # filter profile with width
     medprofile_filtered = ndimage.median_filter(medprofile, width)
     # correlated noise replicated onto the output image format
@@ -438,7 +438,7 @@ def intercept_correct(intercept: np.ndarray) -> np.ndarray:
     """
     # loop around each column and correct intercept by median of that column
     for it in range(intercept.shape[1]):
-        intercept[:, it] = intercept[:, it] - np.nanmedian(intercept[:, it])
+        intercept[:, it] = intercept[:, it] - mp.nanmedian(intercept[:, it])
     # return the intercept
     return intercept
 
@@ -454,9 +454,9 @@ def errslope_correct(errslope):
     """
     # get the median across the x-direction
     with warnings.catch_warnings(record=True) as _:
-        emed0 = np.nanmedian(errslope, axis=0)
+        emed0 = mp.nanmedian(errslope, axis=0)
         # get the total median
-        emed = np.nanmedian(errslope)
+        emed = mp.nanmedian(errslope)
     # find the bad columns of pixels
     emask = np.where(emed0 > 2 * emed)[0]
     # set the bad columns of pixels to the median error slope value
@@ -534,13 +534,13 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
             # median the data_hot for this box position
             cube_hotpix[posx, posy] = data_hot
     # only keep the darkest 25% of the pixels
-    mask = cube_hotpix[0][0].ravel() < np.nanpercentile(cube_hotpix[0][0], 25)
+    mask = cube_hotpix[0][0].ravel() < mp.nanpercentile(cube_hotpix[0][0], 25)
     cube_hotpix = cube_hotpix[:,:,mask]
     # remove the dc from background
     for ibox in range(np.sum(mask)):
-        cube_hotpix[:, :, ibox] -= np.nanmedian(cube_hotpix[:, :, ibox])
+        cube_hotpix[:, :, ibox] -= mp.nanmedian(cube_hotpix[:, :, ibox])
     # combine each of the hotpixel boxes back into one box
-    med_hotpix = np.nanmedian(cube_hotpix, axis=2)
+    med_hotpix = mp.nanmedian(cube_hotpix, axis=2)
     # -------------------------------------------------------------------------
     # get dark ribbon
     dark_ribbon = image[:, 0:dark_size]
@@ -554,7 +554,7 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
     rms0 = mp.nanmedian(np.abs(med0 - mp.nanmedian(med0)))
     rms1 = mp.nanmedian(np.abs(med1 - mp.nanmedian(med1)))
     # get the 'rms_percentile' percentile value
-    percentile_cut = np.nanpercentile(image, rms_percentile)
+    percentile_cut = mp.nanpercentile(image, rms_percentile)
     # make sure the percentile does not fall below a lower level
     if percentile_cut < percent_thres:
         percentile_cut = percent_thres
@@ -620,13 +620,13 @@ def nirps_correction(params: ParamDict, image: np.ndarray) -> np.ndarray:
         # start and end across amplifiers
         start, end = namp * ampwid, (namp + 1) * ampwid
         # median of bottom ref pixels
-        bottom_med[namp] = np.nanmedian(image[0:4, start:end])
+        bottom_med[namp] = mp.nanmedian(image[0:4, start:end])
         # median of top ref pixels
-        top_med[namp] = np.nanmedian(image[-4:, start:end])
+        top_med[namp] = mp.nanmedian(image[-4:, start:end])
     # subtraction of slope between top and bottom
     for namp in range(namps):
-        bottom_med = bottom_med - np.nanmedian(bottom_med)
-        top_med = top_med - np.nanmedian(top_med)
+        bottom_med = bottom_med - mp.nanmedian(bottom_med)
+        top_med = top_med - mp.nanmedian(top_med)
     # subtract top / bottom from image for each amplifier
     for namp in range(namps):
         # start and end across amplifiers
@@ -645,7 +645,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray) -> np.ndarray:
     # loop around all pixels in the y-direction
     for pixel_y in range(nbypix):
         # get the 90th percentile value for this row
-        p90 = np.nanpercentile(image2[pixel_y], 90)
+        p90 = mp.nanpercentile(image2[pixel_y], 90)
         # add to mask
         bright_mask[pixel_y] = image2[pixel_y] > p90
     # set all bright pixels to NaN
@@ -666,7 +666,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray) -> np.ndarray:
     # subtract the low frequency
     image2 = image2 - lowf
     # remove correlated profile in Y axis
-    yprofile1d = np.nanmedian(image2, axis=1)
+    yprofile1d = mp.nanmedian(image2, axis=1)
     # remove an eventual small zero point or low frequency
     zerop = mp.lowpassfilter(yprofile1d, 501)
     yprofile1d = yprofile1d - zerop

@@ -129,7 +129,7 @@ def __main__(recipe, params):
     # subtract a DC offset of the image level
     image = image - mp.nanmedian(image)
     # express image normalized in terms of sigma
-    image = image / np.nanpercentile(np.abs(image), 100 * mp.normal_fraction())
+    image = image / mp.nanpercentile(np.abs(image), 100 * mp.normal_fraction())
 
     # ----------------------------------------------------------------------
     # Find hot pixels

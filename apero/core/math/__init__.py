@@ -9,6 +9,8 @@ Created on 2019-01-18 at 15:53
 
 @author: cook
 """
+import numpy as np
+
 from apero.core.math import gen_math
 from apero.core.math import gauss
 from apero.core.math import nan
@@ -88,6 +90,8 @@ nanpolyfit = nan.nanpolyfit
 nanstd = fast.nanstd
 
 nansum = fast.nansum
+
+nanpercentile = fast.nanpercentile
 
 normal_fraction = gen_math.normal_fraction
 

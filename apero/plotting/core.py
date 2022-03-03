@@ -203,12 +203,12 @@ class Plotter:
                                                  args=[str(func)]))
         # ------------------------------------------------------------------
         # deal with no plot needed
-        if self.plotoption == -1:
+        if self.plotoption == 0:
             WLOG(self.params, 'debug', textentry('90-100-00002'))
             return 0
         # ------------------------------------------------------------------
         # deal with no plot needed
-        if (self.plotoption == 0) and (name in self.debug_graphs):
+        if (self.plotoption == 1) and (name in self.debug_graphs):
             WLOG(self.params, 'debug', textentry('90-100-00002'))
             return 0
         # ------------------------------------------------------------------
@@ -233,9 +233,9 @@ class Plotter:
                 WLOG(self.params, 'debug', dmsg)
                 # if it is check whether it is set to False
                 return 0
-        # do not plot if we are in debug mode and plot == 0
+        # do not plot if we are in debug mode and plot = 0 or 1
         if plot_obj.kind == 'debug':
-            if self.plotoption == 0:
+            if self.plotoption in [0, 1]:
                 return 0
 
         # deal with show graphs
@@ -282,10 +282,10 @@ class Plotter:
             #   summary mode
             self.loop_allowed = True
             # if we are in interactive mode turn it on
-            if self.plotoption == 1:
+            if self.plotoption == 2:
                 self.interactive(True)
             # if we are in any mode that is non-zero turn plotting on
-            if self.plotoption > 0:
+            if self.plotoption > 1:
                 return True
             # else turn plotting off
             else:
@@ -318,17 +318,17 @@ class Plotter:
         # deal with debug plots
         if graph.kind == 'debug':
             # we shouldn't have got here but if plot=0 do not plot
-            if self.plotoption == 0:
+            if self.plotoption == 1:
                 pass
             # if plot = 1 we are in interactive mode
-            elif self.plotoption == 1:
+            elif self.plotoption == 2:
                 self.interactive(False)
                 # add debug plots
                 self.debug_graphs[graph.name] = graph.copy()
                 # mark that we have plots active
                 self.plots_active = True
             # if plot = 2 we need to show the plot
-            elif self.plotoption == 2:
+            elif self.plotoption == 3:
                 self.plt.show(block=True)
                 if not self.plt.isinteractive():
                     self.plt.close()
@@ -363,9 +363,9 @@ class Plotter:
                  or ends loop if user wishes
         """
         # must run in plot mode 2
-        if self.plotoption == 1:
+        if self.plotoption == 2:
             current_mode = 1
-            self.plotoption = 2
+            self.plotoption = 3
             self.interactive(False)
         else:
             current_mode = None
@@ -1189,10 +1189,19 @@ class Plotter:
         # ------------------------------------------------------------------
         # if we do not have debug plots or we are in plotoption = 0
         #    then we do not need any fancy backend and can just use Agg
-        cond1 = not self.has_debugs or self.plotoption < 1
+        cond0 = self.plotoption == 0
+        cond1 = not self.has_debugs or (self.plotoption == 1)
         cond2 = not force
+        # mode 0 is now no plotting whatsoever
+        if cond0:
+            self.plt = None
+            self.matplotlib = None
+            self.axes_grid1 = None
+            PLT_MOD = None
+            MPL_MOD = None
+            return
         # both conditions are met set to Agg (no plotting)
-        if cond1 and cond2:
+        elif cond1 and cond2:
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
             from mpl_toolkits import axes_grid1

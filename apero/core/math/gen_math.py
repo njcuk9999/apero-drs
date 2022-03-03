@@ -14,14 +14,11 @@ import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
 from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.interpolate import UnivariateSpline
 from scipy.ndimage.morphology import binary_dilation
 from scipy.special import erf, erfinv
-from scipy import stats
 from typing import Tuple, Union
 
 from apero.base import base
-from apero.core.core import drs_misc
 from apero.core.core.drs_exceptions import DrsCodedException
 from apero.core.math import fast
 
@@ -41,8 +38,6 @@ __release__ = base.__release__
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
-# get display func
-display_func = drs_misc.display_func
 
 
 # =============================================================================
@@ -202,8 +197,8 @@ def estimate_sigma(tmp: np.ndarray, sigma=1.0) -> float:
     # get the 1 sigma as a percentile
     p1 = (1 - (1-sig1)/2) * 100
     # work out the lower and upper percentiles for 1 sigma
-    upper = np.nanpercentile(tmp, p1)
-    lower = np.nanpercentile(tmp, 100 - p1)
+    upper = fast.nanpercentile(tmp, p1)
+    lower = fast.nanpercentile(tmp, 100 - p1)
     # return the mean of these two bounds
     return (upper - lower) / 2.0
 
@@ -235,7 +230,7 @@ def linear_minimization(vector: np.ndarray, sample: np.ndarray,
     :return:
     """
     # set function name
-    func_name = display_func('linear_minimization', __NAME__)
+    func_name = __NAME__ + 'linear_minimization()'
     # get sample and vector shapes
     sz_sample = sample.shape  # 1d vector of length N
     sz_vector = vector.shape  # 2d matrix that is N x M or M x N
@@ -490,7 +485,7 @@ def robust_polyfit(x: np.ndarray, y: np.ndarray, degree: int,
         # calculate the residuals of the polynomial fit
         res = y - np.polyval(fit, x)
         # work out the new sigma values
-        sig = np.nanmedian(np.abs(res))
+        sig = fast.nanmedian(np.abs(res))
         if sig == 0:
             nsig = np.zeros_like(res)
             nsig[res != 0] = np.inf
@@ -519,8 +514,8 @@ def robust_nanstd(x: np.ndarray) -> float:
     # get the 1 sigma error value
     erfvalue = erf(np.array([1.0]))[0] * 100
     # work out the high and low bounds
-    low = np.nanpercentile(x, 100 - erfvalue)
-    high = np.nanpercentile(x, erfvalue)
+    low = fast.nanpercentile(x, 100 - erfvalue)
+    high = fast.nanpercentile(x, erfvalue)
     # return the 1 sigma value
     return (high - low) / 2.0
 
@@ -601,7 +596,7 @@ def sigfig(x: Union[list, np.ndarray, float, int], n: int
     :return: numpy array like x at significant figures
     """
     # set function name
-    func_name = display_func('sigfig', __NAME__)
+    func_name = __NAME__ + 'sigfig()'
     # deal with differing formats of x (cast to numpy array)
     if isinstance(x, np.ndarray):
         xin = np.array(x)
@@ -697,7 +692,7 @@ def medbin(image: np.ndarray, by: int, bx: int) -> np.ndarray:
     """
     # TODO: Question: are "bx" and "by" the right way around?
     # set function name
-    func_name = display_func('medbin', __NAME__)
+    func_name = __NAME__ + 'medbin()'
     # get the shape of the image
     dim1, dim2 = image.shape
     # must have valid bx and by
@@ -774,8 +769,8 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:
             continue
         # mean position along vector and NaN median value of
         # points at those positions
-        xmed.append(np.nanmean(pixval))
-        ymed.append(np.nanmedian(input_vect[pixval]))
+        xmed.append(fast.nanmean(pixval))
+        ymed.append(fast.nanmedian(input_vect[pixval]))
     # convert to arrays
     xmed = np.array(xmed, dtype=float)
     ymed = np.array(ymed, dtype=float)
@@ -852,7 +847,7 @@ def percentile_bin(image: np.ndarray, bx: int, by: int,
             # slice the image
             imslice = image[ystart:yend, xstart:xend]
             # get the nan percentile
-            outimage[b_it, b_jt] = np.nanpercentile(imslice, percentile)
+            outimage[b_it, b_jt] = fast.nanpercentile(imslice, percentile)
     # return out image
     return outimage
 

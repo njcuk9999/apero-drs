@@ -22,6 +22,7 @@ import warnings
 
 from apero.base import base
 from apero.core import constants
+from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.core import drs_database
 from apero.core.core import drs_text
@@ -410,11 +411,11 @@ def get_timing_stats(logs: List[LogEntry]) -> Dict[str, Dict[str, Any]]:
         # storage for stats
         stats = dict()
         # stats
-        stats['MEAN'] = np.nanmean(durations[rmask])
-        stats['MEDIAN'] = np.nanmedian(durations[rmask])
-        stats['SHORTEST'] = np.nanmin(durations[rmask])
-        stats['LONGEST'] = np.nanmax(durations[rmask])
-        stats['STD'] = np.nanstd(durations[rmask])
+        stats['MEAN'] = mp.nanmean(durations[rmask])
+        stats['MEDIAN'] = mp.nanmedian(durations[rmask])
+        stats['SHORTEST'] = mp.nanmin(durations[rmask])
+        stats['LONGEST'] = mp.nanmax(durations[rmask])
+        stats['STD'] = mp.nanstd(durations[rmask])
         stats['NUMBER'] = len(durations[rmask])
         stats['CPU_TIME_SS'] = np.sum(durations[rmask])
         # total time
@@ -731,10 +732,10 @@ def _statstr_print(statstr: str, key: str, values: List[Any],
         else:
             fmtstr = '\t\t{0} {1} = {2:.4e}\n'
 
-    mean = np.nanmean(valid_values)
-    median = np.nanmedian(valid_values)
-    maximum = np.nanmax(valid_values)
-    minimum = np.nanmin(valid_values)
+    mean = mp.nanmean(valid_values)
+    median = mp.nanmedian(valid_values)
+    maximum = mp.nanmax(valid_values)
+    minimum = mp.nanmin(valid_values)
 
     statstr += '\t\t' + '-' * 50 + '\n'
     if dtype == 'int':

@@ -10,7 +10,6 @@ Created on 2019-01-18 at 15:54
 @author: cook
 """
 from apero.base import base
-from apero.core.core import drs_misc
 
 # =============================================================================
 # Define variables
@@ -24,8 +23,6 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Astropy Time and Time Delta
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
-# get display func
-display_func = drs_misc.display_func
 
 
 # =============================================================================

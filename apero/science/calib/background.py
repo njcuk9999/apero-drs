@@ -81,7 +81,7 @@ def create_background_map(params, image, badpixmask, **kwargs):
             if yend > image0.shape[0] - 1:
                 yend = image0.shape[0] - 1
             # background estimate
-            backest_pix = np.nanpercentile(ribbon[ystart:yend], percent)
+            backest_pix = mp.nanpercentile(ribbon[ystart:yend], percent)
             backest[y_it, x_it: x_it + width] = backest_pix
     # the mask is the area that is below then Nth percentile threshold
     with warnings.catch_warnings(record=True) as _:

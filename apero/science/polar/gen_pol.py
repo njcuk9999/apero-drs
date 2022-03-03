@@ -366,7 +366,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             wmsgs += wmsg
         WLOG(params, 'warning', wmsgs, sublevel=4)
         # set the object temperature
-        object_temperature = np.nanmedian(objtemps)
+        object_temperature = mp.nanmedian(objtemps)
     else:
         # set the object temperature
         object_temperature = objtemps[0]
@@ -458,7 +458,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
                                         database=calibdb)
             _, _, blaze = bout
             # get normalized blaze data
-            blaze = blaze / np.nanmax(blaze)
+            blaze = blaze / mp.nanmax(blaze)
             # -----------------------------------------------------------------
             # load wave for file
             wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
@@ -593,10 +593,10 @@ def calculate_polar_times(props: ParamDict) -> ParamDict:
     # calculate mean flux for each exposure
     mean_fluxes = []
     for exp_num in fluxes:
-        mean_fluxes.append(np.nanmean(fluxes[exp_num]))
+        mean_fluxes.append(mp.nanmean(fluxes[exp_num]))
     # -------------------------------------------------------------------------
     # calculate total exposure time
-    total_time = np.nansum(exptimes)
+    total_time = mp.nansum(exptimes)
     # -------------------------------------------------------------------------
     # calculate elapsed time (in days)
     elapsed_time = (np.max(bjds) - np.min(bjds)) * uu.day
@@ -629,9 +629,9 @@ def calculate_polar_times(props: ParamDict) -> ParamDict:
     berv_intercept = bervs[0] - berv_slope * bjds[0]
     bervcen = (berv_slope * bjdcen) + berv_intercept
     # calculate mean berv
-    mean_berv = np.nanmean(bervs)
+    mean_berv = mp.nanmean(bervs)
     # calculate mean bjd
-    mean_bjd = np.nanmean(bjds)
+    mean_bjd = mp.nanmean(bjds)
     # -------------------------------------------------------------------------
     # add to props
     props['ELAPSED_TIME'] = elapsed_time
@@ -1636,7 +1636,7 @@ def clean_polarimetry_data(props: ParamDict, sigclip: bool = False,
             # calculate the median sigma
             meddiff = pol[order_num][mask] - median_pol
             mad = mp.median_absolute_deviation()
-            medsig_pol = np.nanmedian(np.abs(meddiff)) / mad
+            medsig_pol = mp.nanmedian(np.abs(meddiff)) / mad
             # add this to mask
             mask &= pol[order_num] > (median_pol - (nsig * medsig_pol))
             mask &= pol[order_num] < (median_pol + (nsig * medsig_pol))
@@ -2467,7 +2467,7 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
     # compute residual and rms
     res = fspec - cont
     # compute the standard deviation of valid points
-    sigm = np.nanstd(res[mspec])
+    sigm = mp.nanstd(res[mspec])
     # print out if verbose
     if verbose:
         # log stats: nfit={0}/{1} fit RMS={2:.3e}'
@@ -2477,7 +2477,7 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
     # different from above when median filtering is applied
     ores = spec - cont
     # get the original spectrum standard deviation
-    osigm = np.nanstd(ores[mspec])
+    osigm = mp.nanstd(ores[mspec])
     # print out the unfiltered RMS (if we use the median filter)
     if med_filt > 0 and verbose:
         # log message: Unfiltered RMS={0:.3e}'

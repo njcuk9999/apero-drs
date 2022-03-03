@@ -16,6 +16,7 @@ from tqdm import tqdm
 from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -328,11 +329,11 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         if len(calib_times[obs_dir]) == 0:
             # need to work out a time from science files
             if len(sci_times[obs_dir]) > 0:
-                mean_times.append(np.nanmean(sci_times[obs_dir]))
+                mean_times.append(mp.nanmean(sci_times[obs_dir]))
             else:
                 mean_times.append(np.nan)
         else:
-            mean_times.append(np.nanmean(calib_times[obs_dir]))
+            mean_times.append(mp.nanmean(calib_times[obs_dir]))
         all_obs_dir.append(obs_dir)
     # convert to numpy arrays
     all_obs_dir, mean_times = np.array(all_obs_dir), np.array(mean_times)

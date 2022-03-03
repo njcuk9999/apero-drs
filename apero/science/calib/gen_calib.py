@@ -17,6 +17,7 @@ import warnings
 from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_database
@@ -573,7 +574,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
         # log that we are normalising
         WLOG(params, '', textentry('40-014-00014', args=[n_percentile]))
         # normalise by nanpercentile
-        image4 = image4 / np.nanpercentile(image4, n_percentile)
+        image4 = image4 / mp.nanpercentile(image4, n_percentile)
 
     # ----------------------------------------------------------------------
     # image 5 is cleaned from hot pixels
@@ -801,11 +802,11 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
     xlower, xupper = (nbxpix // 2) - centersize, (nbxpix // 2) + centersize
     ylower, yupper = (nbypix // 2) - centersize, (nbypix // 2) + centersize
     # get the center percentile of image
-    cent = np.nanpercentile(image[xlower:xupper, ylower:yupper], percentile)
+    cent = mp.nanpercentile(image[xlower:xupper, ylower:yupper], percentile)
     # work out the residuals in the reference pixels
-    residuals = np.abs(image[:num_ref]) - np.nanmedian(image[:num_ref])
+    residuals = np.abs(image[:num_ref]) - mp.nanmedian(image[:num_ref])
     # get the quality control on fp
-    passed = (cent / np.nanmedian(residuals)) > fp_qc
+    passed = (cent / mp.nanmedian(residuals)) > fp_qc
     # return passed
     return passed
 

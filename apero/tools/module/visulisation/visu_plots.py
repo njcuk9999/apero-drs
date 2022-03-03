@@ -481,7 +481,7 @@ class SpectrumPlot:
                     if self.line_norm[it] == 'med':
                         norm = mp.nanmedian(data[order_num])
                     elif self.line_norm[it] == 'max':
-                        norm = np.nanmax(data[order_num])
+                        norm = mp.nanmax(data[order_num])
                     else:
                         norm = np.ones_like(data[order_num])
                     # norm and add dc level
@@ -539,8 +539,8 @@ class SpectrumPlot:
         self.source.data[cyname] = self.source.data[syname]
         # adjust ymin and ymax
         y = self.source.data[syname]
-        self.ymin = np.min([self.ymin, np.nanmin(y)])
-        self.ymax = np.max([self.ymax, np.nanmax(y)])
+        self.ymin = np.min([self.ymin, mp.nanmin(y)])
+        self.ymax = np.max([self.ymax, mp.nanmax(y)])
         # only plot if active
         if self.lines[it] is None and it in switch:
             # deal with debugging

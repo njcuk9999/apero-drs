@@ -14,7 +14,6 @@ from scipy import signal
 from typing import Tuple, Union
 
 from apero.base import base
-from apero.core.core import drs_misc
 
 # try to import bottleneck module
 # noinspection PyBroadException
@@ -44,8 +43,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get display func
-display_func = drs_misc.display_func
+# alias to non changed nan functions
+nanpercentile = np.nanpercentile
 
 
 # =============================================================================
@@ -278,8 +277,11 @@ def nansum(a: Union[list, np.ndarray],
     # _ = display_func('nansum', __NAME__)
     # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
-        # make sure a is an array
-        a1 = np.array(a)
+        # make sure vector a is an array
+        if not isinstance(a, np.ndarray):
+            a1 = np.array(a)
+        else:
+            a1 = a
         # bottle neck return in type given for bool array this is not
         #  what we want
         if a1.dtype == bool:
