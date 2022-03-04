@@ -543,19 +543,20 @@ class AstroObj:
             # work out median teff value
             medteff = np.median(uteffs)
             # Choose a teff from the headers
-            question = 'Multiple Teffs found. Choose from the following:'
+            question = 'Multiple Teffs found. Select a Teff to use.'
             # construct the question (with options)
-            count, options, values = 0, [], []
-            for count in uteffs:
-                question += '\n\t{0}:   {1} K'.format(count + 1, uteffs[count])
+            count, options, optionsdesc, values = 0, [], [], dict()
+            for count, uteff in enumerate(uteffs):
                 options.append(count + 1)
-                values.append(uteffs[count])
+                optionsdesc.append('{0}. {1} K'.format(count + 1, uteffs[count]))
+                values[count + 1] = uteffs[count]
             # Add the median value as an option
-            question += '\n\t {0} [Median]:    {1} K'.format(count + 1, medteff)
-            options.append(count + 1)
-            values.append(medteff)
+            options.append(count + 2)
+            optionsdesc.append('{0}: [Median] {1} K'.format(count + 2, medteff))
+            values[count + 2] = medteff
             # ask user the question
-            uinput = drs_installation.ask(question, dtype=int, options=options)
+            uinput = drs_installation.ask(question, dtype=int, options=options,
+                                          optiondesc=optionsdesc)
             # set Teff value
             self.teff = values[uinput]
             # deal with user chosing median
