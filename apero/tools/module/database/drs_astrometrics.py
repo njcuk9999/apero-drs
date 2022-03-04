@@ -540,6 +540,10 @@ class AstroObj:
             self.teff = uteffs[0]
             self.teff_source = 'Header'
         else:
+            # find the last instance of each teff in used_obs_dirs
+            last_instance = dict()
+            for u_it, teff in enumerate(teffs):
+                last_instance[teff] = used_obs_dirs[u_it]
             # work out median teff value
             medteff = np.median(uteffs)
             # Choose a teff from the headers
@@ -547,8 +551,13 @@ class AstroObj:
             # construct the question (with options)
             count, options, optionsdesc, values = 0, [], [], dict()
             for count, uteff in enumerate(uteffs):
+                # add option
                 options.append(count + 1)
-                optionsdesc.append('{0}. {1} K'.format(count + 1, uteffs[count]))
+                # add option string
+                optionstr = '{0}:  {1} K [OBS_DIR={2}]'
+                optionarg = [count + 1, uteff[count], last_instance[uteff]]
+                optionsdesc.append(optionstr.format(optionarg))
+                # add value
                 values[count + 1] = uteffs[count]
             # Add the median value as an option
             options.append(count + 2)
