@@ -2104,7 +2104,7 @@ class MySQLDatabase(Database):
             fields.append('{0} {1}'.format(fname, ftype))
         # ---------------------------------------------------------------------
         # unique columns become a 255 hash
-        if unique_cols is not None:
+        if unique_cols is not None and len(unique_cols) > 0:
             extra_str = ', {0} VARCHAR(64), UNIQUE({0})'.format(UHASH_COL)
         else:
             extra_str = ''
@@ -2193,7 +2193,7 @@ class MySQLDatabase(Database):
         # infer table name
         table = self._infer_table_(table)
         # need to add uhash column
-        if unique_cols is not None:
+        if unique_cols is not None and len(unique_cols) > 0:
             df = _hash_df(df, unique_cols)
         # check if_exists criteria
         if if_exists not in ['fail', 'replace', 'append']:
@@ -2214,7 +2214,7 @@ class MySQLDatabase(Database):
                 dconn.close()
                 # pandas removes uniqueness of columns - need to readd this
                 #   constraint if unique_cols is not None
-                if unique_cols is not None:
+                if unique_cols is not None and len(unique_cols) > 0:
                     self.add_unique_uhash_col(table)
 
         except Exception as e:

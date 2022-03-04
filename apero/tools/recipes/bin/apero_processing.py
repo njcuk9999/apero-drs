@@ -125,6 +125,14 @@ def __main__(recipe, params):
         # load the object database
         objdbm = ObjectDatabase(params)
         objdbm.load_db()
+        # ----------------------------------------------------------------------
+        # Update the reject database (recommended only for full reprocessing)
+        # ----------------------------------------------------------------------
+        # check that we have entries in the object database
+        has_entries = manage_databases.reject_db_populated(params)
+        # update the database if required
+        if params['UPDATE_REJECT_DATABASE'] or not has_entries:
+            manage_databases.update_reject_database(params)
         # ---------------------------------------------------------------------
         # find all files via index database
         # ---------------------------------------------------------------------

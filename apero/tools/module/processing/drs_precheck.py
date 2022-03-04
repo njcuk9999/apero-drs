@@ -586,6 +586,13 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
     objdbm = ObjectDatabase(params)
     objdbm.load_db()
     # ---------------------------------------------------------------------
+    # Update the reject database (recommended only for full reprocessing)
+    # check that we have entries in the object database
+    has_entries = manage_databases.reject_db_populated(params)
+    # update the database if required
+    if params['UPDATE_REJECT_DATABASE'] or not has_entries:
+        manage_databases.update_reject_database(params)
+    # ---------------------------------------------------------------------
     # only find science / hot star objects
     sci_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
     subconditions = []
