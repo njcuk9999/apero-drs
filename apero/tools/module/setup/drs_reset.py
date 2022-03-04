@@ -575,6 +575,9 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
     # create object database
     manage_databases.create_object_database(params, pconst, databases,
                                             tries=dtimeout)
+    # create reject database
+    manage_databases.create_reject_database(params, pconst, databases,
+                                            tries=dtimeout)
     # create language database
     manage_databases.create_lang_database(databases, tries=dtimeout)
 

@@ -77,6 +77,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         self.objdb_cols: Optional[DatabaseColumns] = None
         self.filemod: Optional[base_class.ImportModule] = None
         self.recipemod: Optional[base_class.ImportModule] = None
+        self.rejectdb_cols: Optional[DatabaseColumns] = None
 
     def __getstate__(self) -> dict:
         """

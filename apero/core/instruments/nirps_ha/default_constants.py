@@ -224,13 +224,13 @@ OBJ_LIST_GAIA_PLX_LIM.value = 0.5
 OBJ_LIST_GAIA_MAG_CUT = OBJ_LIST_GAIA_MAG_CUT.copy(__NAME__)
 OBJ_LIST_GAIA_MAG_CUT.value = 15.0
 
-# Define the odometer code rejection google sheet id
-ODOCODE_REJECT_GSHEET_ID = ODOCODE_REJECT_GSHEET_ID.copy(__NAME__)
-ODOCODE_REJECT_GSHEET_ID.value = '1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM'
+# Define the google sheet to use for update the reject list
+REJECT_LIST_GOOGLE_SHEET_URL = REJECT_LIST_GOOGLE_SHEET_URL.copy(__NAME__)
+REJECT_LIST_GOOGLE_SHEET_URL.value = '1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM'
 
-# Define the odmeter code rejection google sheet workbook
-ODOCODE_REJECT_GSHEET_NUM = ODOCODE_REJECT_GSHEET_NUM.copy(__NAME__)
-ODOCODE_REJECT_GSHEET_NUM.value = 0
+# Define the google sheet id to use for update the reject list
+REJECT_LIST_GSHEET_MAIN_LIST_ID = REJECT_LIST_GSHEET_MAIN_LIST_ID.copy(__NAME__)
+REJECT_LIST_GSHEET_MAIN_LIST_ID.value = '768446388'
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS

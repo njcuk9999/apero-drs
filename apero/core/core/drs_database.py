@@ -84,6 +84,9 @@ FILEDBS = dict()
 OBS_NAMES = dict()
 # define reserved object names
 RESERVED_OBJ_NAMES = ['CALIB', 'SKY', 'TEST']
+# define database names
+DATABASE_NAMES = ['CALIB', 'TELLU', 'INDEX', 'LOG', 'OBJECT', 'LANG', 'REJECT']
+
 
 # =============================================================================
 # Define classes
@@ -272,7 +275,7 @@ class DatabaseManager:
             sdict = ddict['SQLITE3']
             self.dbtype = 'SQLITE3'
         # kind must be one of the following
-        if kind not in ['CALIB', 'TELLU', 'INDEX', 'LOG', 'OBJECT', 'LANG']:
+        if kind not in DATABASE_NAMES:
             raise ValueError('kind=={0} invalid'.format(kind))
         # set name/path/reset based on ddict
         self.dbname = sdict[kind]['NAME']
@@ -2704,8 +2707,160 @@ def _clean_error(errors: Union[str, None]) -> Union[str, None]:
     return errors
 
 
+# =============================================================================
+# Define reject database
+# =============================================================================
+class RejectDatabase(DatabaseManager):
+    def __init__(self, params: ParamDict, check: bool = True):
+        """
+        Constructor of the Reject Database class
 
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
 
+        :return: None
+        """
+        # save class name
+        self.classname = 'RejectDatabaseManager'
+        # set function
+        # _ = display_func('__init__', __NAME__, self.classname)
+        # construct super class
+        DatabaseManager.__init__(self, params)
+        # set name
+        self.name = 'reject'
+        self.kind = 'REJECT'
+        # set path
+        self.set_path(kind=self.kind, check=check)
+
+    def add_entries(self, identifier: Optional[str] = None,
+                    pp_flag: Optional[bool] = None,
+                    tel_flag: Optional[bool] = None,
+                    rv_flag: Optional[bool] = None,
+                    used: Union[int, None] = None):
+        """
+        Add a reject entry to database
+
+        :param used: int, if entry should be used - always 1 for use internally
+
+        :return: None - updates database
+        """
+        # get correct order
+        keys = [identifier, pp_flag, tel_flag, rv_flag, used]
+        # get column names and column datatypes
+        rdb_cols = self.pconst.REJECT_DB_COLUMNS()
+        coltypes = list(rdb_cols.dtypes)
+        # storage of values
+        values = []
+        # loop around values
+        for it in range(len(keys)):
+            # deal with unset key
+            if drs_text.null_text(keys[it], ['None', '']):
+                values.append('None')
+            else:
+                # noinspection PyBroadException
+                try:
+                    # get data type
+                    dtype = coltypes[it]
+                    # append forcing data type
+                    values.append(dtype(keys[it]))
+                except Exception as _:
+                    values.append('None')
+        # add row to database
+        self.database.add_row(values)
+
+    def get_entries(self, columns: str = '*',
+                    nentries: Union[int, None] = None,
+                    condition: Union[str, None] = None,
+                    ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
+        """
+        Get an entry from the reject database (can set columns to return, or
+        filter by specific columns)
+
+        :param columns: str, the columns to return ('*' for all)
+
+        :param nentries: int or None, if set limits the number of entries to get
+                         back - sorted newest to oldest
+        :param condition: str or None, if set the SQL query to add
+
+        :return: the entries of columns, if nentries = 1 returns either that
+                 entry (as a tuple) or None, if len(columns) = 1, returns
+                 a np.ndarray, else returns a pandas table
+        """
+        # set function
+        # _ = display_func('get_entries', __NAME__, self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with no database loaded
+        if self.database is None:
+            self.load_db()
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
+        # ------------------------------------------------------------------
+        # set up kwargs from database query
+        sql = dict()
+        # set up sql kwargs
+        sql['sort_by'] = None
+        sql['sort_descending'] = True
+        # sort by last modified
+        sql['sort_by'] = 'UNIXTIME'
+        # condition for used
+        sql['condition'] = 'USED = 1'
+        # ------------------------------------------------------------------
+        if condition is not None:
+            sql['condition'] += ' AND {0}'.format(condition)
+        # ------------------------------------------------------------------
+        # add the number of entries to get
+        if isinstance(nentries, int):
+            sql['max_rows'] = nentries
+        # if we have one entry just get the tuple back
+        if nentries == 1:
+            # do sql query
+            entries = self.database.get(columns, **sql)
+            # return filename
+            if len(entries) == 1:
+                if len(colnames) == 1:
+                    return entries[0][0]
+                else:
+                    return entries[0]
+            else:
+                return None
+        # ------------------------------------------------------------------
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
+        # if we have one column return a list
+        if len(colnames) == 1:
+            # return array for ease
+            sql['return_array'] = True
+            # do sql query
+            entries = self.database.get(columns, **sql)
+            # return one list
+            if len(entries) == 0:
+                return []
+            else:
+                return entries[:, 0]
+        # else return a pandas table
+        else:
+            # return as pandas table
+            sql['return_pandas'] = True
+            # do sql query
+            entries = self.database.get(columns, **sql)
+            # return pandas table
+            return entries
+
+    def remove_entries(self, condition):
+        # set function
+        # _ = display_func('remove_entries', __NAME__,
+        #                  self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with no database loaded
+        if self.database is None:
+            self.load_db()
+        # remove entries
+        self.database.delete_rows(condition=condition)
 
 
 # =============================================================================
