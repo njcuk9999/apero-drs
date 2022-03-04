@@ -5565,7 +5565,6 @@ def plot_stats_timing_plot(plotter: Plotter, graph: Graph,
     # plot graphs
     # -------------------------------------------------------------------------
     # force plot settings
-    plotter.plotoption = 2
     plotter.loop_allowed = True
     # get the plot generator
     generator = plotter.plotloop(rnames)
