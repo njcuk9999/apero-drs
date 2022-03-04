@@ -126,6 +126,15 @@ def ask(question: str, dtype: Union[str, type, None] = None,
     check = True
     # set up user input as unset
     uinput = None
+    # -------------------------------------------------------------------------
+    # deal with no optionsdesc
+    if options is not None:
+        if optiondesc is None:
+            # TODO: move to langdb
+            raise ValueError('Using options but optiondesc not defined')
+        if len(optiondesc) != len(options):
+            raise ValueError('Using options but optiondesc wrong length')
+    # -------------------------------------------------------------------------
     # deal with yes/no dtype
     if isinstance(dtype, str) and dtype.upper() == 'YN':
         options = [lang.YES, lang.NO]
@@ -136,6 +145,7 @@ def ask(question: str, dtype: Union[str, type, None] = None,
         if default not in ['None', '']:
             default = Path(default)
             default.expanduser()
+    # -------------------------------------------------------------------------
     # loop around until check is passed
     while check:
         # ask question
