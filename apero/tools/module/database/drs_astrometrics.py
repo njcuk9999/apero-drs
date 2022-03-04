@@ -166,8 +166,12 @@ class AstroObj:
         self.plx = table_row['PLX_VALUE']
         self.plx_source = table_row['PLX_BIBCODE']
         # set the radial velocity and source from table row
-        self.rv = table_row['RVZ_RADVEL']
-        self.rv_source = table_row['RVZ_BIBCODE']
+        if drs_text.null_text(str(table_row['RVZ_RADVEL']), NULL_TEXT):
+            self.rv = np.nan
+            self.rv_source = ''
+        else:
+            self.rv = table_row['RVZ_RADVEL']
+            self.rv_source = table_row['RVZ_BIBCODE']
         # set the spectral type from table row
         self.sp_type = table_row['SP_TYPE']
         self.sp_source = table_row['SP_BIBCODE']
