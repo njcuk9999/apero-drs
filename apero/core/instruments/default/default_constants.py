@@ -46,8 +46,8 @@ __all__ = [
     'OBJ_LIST_RESOLVE_FROM_DATABASE', 'OBJ_LIST_RESOLVE_FROM_GAIAID',
     'OBJ_LIST_RESOLVE_FROM_GLIST', 'OBJ_LIST_RESOLVE_FROM_COORDS',
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
-    'OBJ_LIST_CROSS_MATCH_RADIUS', 'ODOCODE_REJECT_GSHEET_ID',
-    'ODOCODE_REJECT_GSHEET_NUM', 'GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
+    'OBJ_LIST_CROSS_MATCH_RADIUS', 'REJECT_LIST_GOOGLE_SHEET_URL',
+    'REJECT_LIST_GSHEET_MAIN_LIST_ID','GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
     'DO_CALIB_DTIME_CHECK',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
@@ -699,19 +699,31 @@ OBJ_LIST_GAIA_MAG_CUT = Const('OBJ_LIST_GAIA_MAG_CUT', value=None, dtype=float,
                               description=('Define the gaia magnitude cut to '
                                            'use in the gaia query'))
 
-# Define the odometer code rejection google sheet id
-ODOCODE_REJECT_GSHEET_ID = Const('ODOCODE_REJECT_GSHEET_ID', value=None,
-                                 dtype=str, source=__NAME__, group=cgroup,
-                                 description=('Define the odometer code '
-                                              'rejection google sheet id'))
+# Define the google sheet to use for update the reject list
+REJECT_LIST_GOOGLE_SHEET_URL = Const('REJECT_LIST_GOOGLE_SHEET_URL', value=None,
+                                  dtype=str, source=__NAME__, group=cgroup,
+                                  description=('Define the google sheet to use '
+                                               'for crossmatch'))
 
-# Define the odmeter code rejection google sheet workbook
-ODOCODE_REJECT_GSHEET_NUM = Const('ODOCODE_REJECT_GSHEET_NUM', value=int,
-                                  dtype=str, source=__NAME__, minimum=0,
-                                  group=cgroup,
-                                  description=('Define the odmeter code '
-                                               'rejection google sheet '
-                                               'workbook'))
+# Define the google sheet id to use for update the reject list
+REJECT_LIST_GSHEET_MAIN_LIST_ID = Const('REJECT_LIST_GSHEET_MAIN_LIST_ID', value=None,
+                                  dtype=str, source=__NAME__, group=cgroup,
+                                  description='Define the google sheet objname '
+                                              'list main list id number')
+
+# # Define the odometer code rejection google sheet id
+# ODOCODE_REJECT_GSHEET_ID = Const('ODOCODE_REJECT_GSHEET_ID', value=None,
+#                                  dtype=str, source=__NAME__, group=cgroup,
+#                                  description=('Define the odometer code '
+#                                               'rejection google sheet id'))
+# 
+# # Define the odmeter code rejection google sheet workbook
+# ODOCODE_REJECT_GSHEET_NUM = Const('ODOCODE_REJECT_GSHEET_NUM', value=int,
+#                                   dtype=str, source=__NAME__, minimum=0,
+#                                   group=cgroup,
+#                                   description=('Define the odmeter code '
+#                                                'rejection google sheet '
+#                                                'workbook'))
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS

@@ -72,6 +72,7 @@ class PseudoConstants:
         self.telluric_cols: Optional[DatabaseColumns] = None
         self.logdb_cols: Optional[DatabaseColumns] = None
         self.objdb_cols: Optional[DatabaseColumns] = None
+        self.rejectdb_cols: Optional[DatabaseColumns] = None
 
     def __getstate__(self) -> dict:
         """
@@ -1220,6 +1221,35 @@ class PseudoConstants:
         # return columns and column types
         self.index_cols = index_cols
         return index_cols
+
+    def REJECT_DB_COLUMNS(self) -> DatabaseColumns:
+        """
+        Define the columns use in the reject database
+        :return: list of columns (strings)
+        """
+        # set function name
+        # _ = display_func('LOG_DB_COLUMNS', __NAME__,
+        #                  self.class_name)
+        # check for pre-existing values
+        if self.rejectdb_cols is not None:
+            return self.rejectdb_cols
+        # set columns (dictionary form for clarity
+        rejectdb_cols = DatabaseColumns(name_prefix='rlog.')
+        rejectdb_cols.add(name='IDENTIFIER', datatype='VARCHAR(16)',
+                       is_index=True,
+                       comment='Identifier column')
+        rejectdb_cols.add(name='PP', datatype='INT',
+                       comment='Whether this file should not be preprocessed')
+        rejectdb_cols.add(name='TEL', datatype='INT',
+                       comment='Whether this file should be used for telluric')
+        rejectdb_cols.add(name='RV', datatype='INT',
+                       comment='Whether this file should be used for RV')
+        rejectdb_cols.add(name='USED', datatype='INT',
+                       comment='Whether flags should be used')
+        rejectdb_cols.add(name='DATE_ADDED', datatype='VARCHAR(26)')
+        # return columns and ctypes
+        self.rejectdb_cols = rejectdb_cols
+        return rejectdb_cols
 
     # noinspection PyPep8Naming
     def LOG_DB_COLUMNS(self) -> DatabaseColumns:
