@@ -18,13 +18,18 @@ only from
 - apero.core.math.*
 - apero.io.drs_fits
 """
+from astropy.table import Table
+from astropy.io.ascii.core import InconsistentTableError
 import numpy as np
 import os
 import pandas as pd
 from pandasql import sqldf
 from pathlib import Path
+import requests
 import shutil
+import time
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
+import warnings
 
 from apero import lang
 from apero.base import base
@@ -86,6 +91,11 @@ OBS_NAMES = dict()
 RESERVED_OBJ_NAMES = ['CALIB', 'SKY', 'TEST']
 # define database names
 DATABASE_NAMES = ['CALIB', 'TELLU', 'INDEX', 'LOG', 'OBJECT', 'LANG', 'REJECT']
+# cache for google sheet
+GOOGLE_TABLES = dict()
+# define standard google base url
+GOOGLE_BASE_URL = ('https://docs.google.com/spreadsheets/d/{}/gviz/'
+                   'tq?tqx=out:csv&gid={}')
 
 
 # =============================================================================
@@ -3045,6 +3055,68 @@ class PandasLikeDatabase:
                     outcolumns.append(rcol.strip())
             # return the output columns
             return outcolumns
+
+
+# =============================================================================
+# Define other database functionality
+# =============================================================================
+def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
+                     cached: bool = True) -> Table:
+    """
+    Load a google sheet from url using a sheet id (if cached = True and
+    previous loaded - just loads from memory)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param sheet_id: str, the google sheet id
+    :param worksheet: int, the worksheet id (defaults to 0)
+    :param cached: bool, if True and previous loaded, loads from memory
+
+    :return: Table, astropy table representation of google sheet
+    """
+    # set google cache table as global
+    global GOOGLE_TABLES
+    # set function name
+    func_name = display_func('get_google_sheet', __NAME__)
+    # construct url for worksheet
+    url = GOOGLE_BASE_URL.format(sheet_id, worksheet)
+    # deal with table existing
+    if url in GOOGLE_TABLES and cached:
+        return GOOGLE_TABLES[url]
+    # get data using a request
+    try:
+        rawdata = requests.get(url)
+    except Exception as e:
+        # log error: Could not load table from url
+        eargs = [url, type(e), str(e), func_name]
+        WLOG(params, 'error', textentry('00-010-00009', args=eargs))
+        return Table()
+    # convert rawdata input table
+    with warnings.catch_warnings(record=True) as _:
+        tries = 0
+        while tries < 10:
+            # try to open table
+            try:
+                table = Table.read(rawdata.text, format='ascii')
+                break
+            # if this fails try again (but with a limit
+            except InconsistentTableError as _:
+                tries += 1
+                # lets wait a little bit to try again
+                time.sleep(2)
+            # deal with no rows in table - assume this always gives a
+            #   FileNotFoundErorr
+            except FileNotFoundError:
+                table = Table()
+                break
+    # need to deal with too many tries
+    if tries >= 10:
+        # log error: Could not load table from url: (Tried 10 times)
+        eargs = [url, func_name]
+        WLOG(params, 'error', textentry('00-010-00010', args=eargs))
+    # add to cached storage
+    GOOGLE_TABLES[url] = table
+    # return table
+    return table
 
 
 # =============================================================================

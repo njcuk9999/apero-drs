@@ -21,7 +21,6 @@ from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero import lang
-from apero.science.preprocessing import gen_pp
 
 # =============================================================================
 # Define variables
@@ -603,8 +602,8 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
             pendtable = Table()
     else:
         # get google sheets
-        maintable = gen_pp.get_google_sheet(params, gsheet_url, main_id)
-        pendtable = gen_pp.get_google_sheet(params, gsheet_url, pending_id)
+        maintable = drs_database.get_google_sheet(params, gsheet_url, main_id)
+        pendtable = drs_database.get_google_sheet(params, gsheet_url, pending_id)
     # force types in main table and pend table (so we can join them)
     maintable = _force_column_dtypes(maintable, OBJ_DATA_TYPES)
     pendtable = _force_column_dtypes(pendtable, OBJ_DATA_TYPES)
@@ -619,7 +618,7 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
             except Exception as _:
                 usertable = Table()
         else:
-            usertable = gen_pp.get_google_sheet(params, user_url, user_id)
+            usertable = drs_database.get_google_sheet(params, user_url, user_id)
     else:
         usertable = Table()
     # force types in user table
@@ -739,6 +738,19 @@ def create_reject_database(params: ParamDict, pconst: PseudoConst,
     return rejectdb
 
 
+def reject_db_populated(params: ParamDict) -> bool:
+    """
+    Check that reject database is populated
+    """
+    # need to load database
+    rejectdbm = drs_database.RejectDatabase(params)
+    rejectdbm.load_db()
+    # count rows in database
+    count = rejectdbm.database.count()
+    # return a boolean for object database populated
+    return count > 0
+
+
 def update_reject_database(params: ParamDict, log: bool = True):
     """
     Update the local reject database - note this overwrites all entries in the
@@ -823,7 +835,7 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
             maintable = Table()
     else:
         # get google sheets
-        maintable = gen_pp.get_google_sheet(params, gsheet_url, main_id)
+        maintable = drs_database.get_google_sheet(params, gsheet_url, main_id)
     # force types in main table and pend table (so we can join them)
     maintable = _force_column_dtypes(maintable, REJECT_DATA_TYPES)
     # -------------------------------------------------------------------------
