@@ -556,7 +556,7 @@ class AstroObj:
                 # add option string
                 optionstr = '{0}:  {1} K [OBS_DIR={2}]'
                 optionarg = [count + 1, uteff[count], last_instance[uteff]]
-                optionsdesc.append(optionstr.format(optionarg))
+                optionsdesc.append(optionstr.format(*optionarg))
                 # add value
                 values[count + 1] = uteffs[count]
             # Add the median value as an option
