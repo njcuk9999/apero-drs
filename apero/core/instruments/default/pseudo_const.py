@@ -1236,16 +1236,18 @@ class PseudoConstants:
         # set columns (dictionary form for clarity
         rejectdb_cols = DatabaseColumns(name_prefix='rlog.')
         rejectdb_cols.add(name='IDENTIFIER', datatype='VARCHAR(16)',
-                       is_index=True,
-                       comment='Identifier column')
+                          is_index=True,
+                          comment='Identifier column')
         rejectdb_cols.add(name='PP', datatype='INT',
-                       comment='Whether this file should not be preprocessed')
+                          comment='Whether this file should not be '
+                                  'preprocessed')
         rejectdb_cols.add(name='TEL', datatype='INT',
-                       comment='Whether this file should be used for telluric')
+                          comment='Whether this file should be used for '
+                                  'telluric')
         rejectdb_cols.add(name='RV', datatype='INT',
-                       comment='Whether this file should be used for RV')
+                          comment='Whether this file should be used for RV')
         rejectdb_cols.add(name='USED', datatype='INT',
-                       comment='Whether flags should be used')
+                          comment='Whether flags should be used')
         rejectdb_cols.add(name='DATE_ADDED', datatype='VARCHAR(26)')
         # return columns and ctypes
         self.rejectdb_cols = rejectdb_cols
