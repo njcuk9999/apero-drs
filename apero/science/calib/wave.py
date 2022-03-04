@@ -1528,6 +1528,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         rms = list(np.array(rms)[offsetsort])
         # deal with too many iterations
         if count > mp.nanmin(fpl_peak_num):
+            # TODO: move to language db
             emsg = 'Too many iterations for bulk offset N={0}'
             eargs = [count]
             WLOG(params, 'error', emsg.format(*eargs))
