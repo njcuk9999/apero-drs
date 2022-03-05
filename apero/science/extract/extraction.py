@@ -358,14 +358,14 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
                 weights = np.array(weights).astype(float)
                 # some matrix manipulation
                 wsxfx = weights * sx * fx
-                wsxfxfx = wsxfx * fx
-                sum_wsxfxfx = mp.nansum(wsxfxfx)
+                wfxfx = weights * fx ** 2
+                sum_wfxfx = mp.nansum(wfxfx)
                 # set the value of this pixel to the weighted sum
                 spelong[:, ic] = wsxfx
                 spe[ic] = mp.nansum(wsxfx)
                 # normalise spe
-                spe[ic] = spe[ic] / sum_wsxfxfx
-                spelong[:, ic] = spelong[:, ic] / sum_wsxfxfx
+                spe[ic] = spe[ic] / sum_wfxfx
+                spelong[:, ic] = spelong[:, ic] / sum_wfxfx
                 coslong[:, ic] = weights
     # multiple spe by gain to convert to e-
     spe *= gain
