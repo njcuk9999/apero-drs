@@ -2813,8 +2813,6 @@ class RejectDatabase(DatabaseManager):
         # set up sql kwargs
         sql['sort_by'] = None
         sql['sort_descending'] = True
-        # sort by last modified
-        sql['sort_by'] = 'UNIXTIME'
         # condition for used
         sql['condition'] = 'USED = 1'
         # ------------------------------------------------------------------
