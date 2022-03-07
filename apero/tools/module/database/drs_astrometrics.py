@@ -555,7 +555,7 @@ class AstroObj:
                 options.append(count + 1)
                 # add option string
                 optionstr = '{0}:  {1} K [OBS_DIR={2}]'
-                optionarg = [count + 1, uteff[count], last_instance[uteff]]
+                optionarg = [count + 1, uteff, last_instance[uteff]]
                 optionsdesc.append(optionstr.format(*optionarg))
                 # add value
                 values[count + 1] = uteffs[count]
