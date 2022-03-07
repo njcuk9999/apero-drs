@@ -443,32 +443,25 @@ def get_file_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
     """
     # set function name
     func_name = display_func('get_reject_list', __NAME__)
-    # get sheet id and worksheet number
-    sheet_id = params['ODOCODE_REJECT_GSHEET_ID']
-    workbook_id = params['ODOCODE_REJECT_GSHEET_NUM']
-    # get column names
-    ppcol = params['GL_R_PP_COL']
-    rvcol = params['GL_R_RV_COL']
-    odocol = params['GL_R_ODO_COL']
+    # get reject database
+    rejectdbm = drs_database.RejectDatabase(params)
+    rejectdbm.load_db()
     # get reject table
-    reject_table = drs_database.get_google_sheet(params, sheet_id, workbook_id)
-    # convert masks to boolean
-    if ppcol in reject_table.colnames:
-        reject_table[ppcol] = reject_table[ppcol] == 'TRUE'
-    if rvcol in reject_table.colnames:
-        reject_table[rvcol] = reject_table[rvcol] == 'TRUE'
+    rtable = rejectdbm.get_entries('*')
     # deal with bad kind
-    if column not in reject_table.colnames:
+    if column not in list(rtable.columns):
         # log error
         eargs = [column, func_name]
         WLOG(params, 'error', textentry('00-010-00008', args=eargs))
         # return empty array if error does not exit
         return np.array([])
     else:
-        # get odocodes to be rejected
-        odocodes = np.array(reject_table[odocol][reject_table[column]])
+        # get the reject mask for the column
+        idmask = np.array(rtable[column], dtype=bool)
+        # get the reject list
+        reject_list = np.array(rtable['IDENTIFIER'], dtype=str)[idmask]
         # return rejection list
-        return odocodes
+        return reject_list
 
 
 # =============================================================================
