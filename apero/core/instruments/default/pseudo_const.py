@@ -1443,6 +1443,16 @@ class PseudoConstants:
         tap_dict['Gaia DR2 ']['QUERY'] = QUERY1.format(**qkargs)
         tap_dict['Gaia DR2 ']['URL'] = str(params['TAP_GAIA_DR2_URL'])
         # ---------------------------------------------------------------------
+        # Gaia DR1
+        # ---------------------------------------------------------------------
+        qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
+                      plx='parallax', epoch='ref_epoch',
+                      cat='gaiadr1.gaia_source', id='source_id', idnum='{0}')
+        params.set('TAP_GAIA_DR1_URL', 'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['Gaia DR1 '] = dict()
+        tap_dict['Gaia DR1 ']['QUERY'] = QUERY1.format(**qkargs)
+        tap_dict['Gaia DR1 ']['URL'] = str(params['TAP_GAIA_DR1_URL'])
+        # ---------------------------------------------------------------------
         # UCAC 4
         # ---------------------------------------------------------------------
         QUERY2 = ('SELECT TOP 5 {id} as sid, {ra} as ra, {dec} as dec, '

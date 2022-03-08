@@ -19,7 +19,7 @@ import os
 import socket
 import sys
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 import warnings
 
 from apero import lang
@@ -339,7 +339,8 @@ class AstroObj:
             print('\t{0}mag: {1}'.format(mag, self.mags[mag]))
         print(' ' + '=' * 50 + '\n')
 
-    def consistent_astrometrics(self, params: ParamDict) -> Tuple[bool, str]:
+    def consistent_astrometrics(self, params: ParamDict,
+                                report: bool = True) -> Tuple[bool, str]:
         """
         Assuming we have some ids we can update the ra/dec/pmra/pmde/plx
         most importantly these astrometrics should be at the same observation
@@ -354,12 +355,17 @@ class AstroObj:
         pconst = constants.pload()
         # get the tap dictionaries
         pm_tap_dict = pconst.PM_TAP_DICT(params)
+        # update progress if report is True
+        if report:
+            WLOG(params, 'info', 'Checking with proper motion catalogs:')
         # ---------------------------------------------------------------------
         # storage for the catalogue to use
         cats = []
         pm_ids = []
         # find whether this object is in any of the proper motion catalogues
         for pm_cat in list(pm_tap_dict.keys()):
+            if report:
+                WLOG(params, '', '\t - {0}'.format(pm_cat.upper()))
             for alias in self.aliases.split('|'):
                 if alias.upper().startswith(pm_cat.upper()):
                     pm_ids.append(str(alias[len(pm_cat):]))
@@ -367,8 +373,8 @@ class AstroObj:
         # ---------------------------------------------------------------------
         # deal with not finding object
         if len(cats) == 0:
-            wmsg = 'Cannot find an alias in PM catalog. Skipping'
-            WLOG(params, 'warning', wmsg)
+            # Only report if found
+            wmsg = 'Cannot find an alias in proper motion catalog. Skipping'
             return False, wmsg
         # ---------------------------------------------------------------------
         # check for astroquery and return
@@ -413,7 +419,7 @@ class AstroObj:
             cond3 = drs_text.null_text(str(qtable['plx'][0]), NULL_TEXT)
             # ---------------------------------------------------------------------
             if cond1 or cond2:
-                reason = 'No pm value from {0}'.format(cat)
+                reason = 'No proper motion value from {0}'.format(cat)
                 continue
             # ---------------------------------------------------------------------
             # finally if this is successful we need to update some parameters
@@ -616,11 +622,14 @@ def query_simbad(params: ParamDict, rawobjname: str,
     astroobjs = []
     # deal with not having object
     if (table is None) or (len(table) == 0):
-        msg = ('Object "{0}" not found in simbad. '
-               'Please add it manually if requred for PRV')
+        msg = ('Object "{0}" not found in SIMBAD.')
         if report:
-            WLOG(params, '', msg.format(rawobjname), colour='red')
+            WLOG(params, 'warning', msg.format(rawobjname))
         return astroobjs, msg.format(rawobjname)
+    else:
+        msg = 'Object "{0}" found in SIMBAD'
+        if report:
+            WLOG(params, '', msg.format(rawobjname))
     # set up reason
     reason = ''
     # loop around rows in table and add to astro obj list
@@ -636,7 +645,8 @@ def query_simbad(params: ParamDict, rawobjname: str,
                 astroobjs.append(astroobj)
                 continue
         # try to get consistent ra/dec/pmra/pmde/plx (i.e. at same epoch)
-        updated, reason = astroobj.consistent_astrometrics(params)
+        updated, reason = astroobj.consistent_astrometrics(params,
+                                                           report=report)
         # append to storage
         if updated:
             astroobjs.append(astroobj)
@@ -707,6 +717,100 @@ def query_database(params, rawobjnames: List[str],
             unfound.append(rawobjname)
     # return the entry names and the found dictionary
     return unfound
+
+
+def ask_user(params: ParamDict, astro_obj: AstroObj) -> Tuple[AstroObj, bool]:
+    """
+    Ask the user if the data look good and get teff
+    
+    :param params: 
+    :param astro_obj: 
+    :return: 
+    """
+    # display the properties for this object
+    astro_obj.display_properties()
+    # construct the object correction question
+    question2 = 'Does the data for this object look correct?'
+    cond2 = drs_installation.ask(question2, dtype='YN')
+    print()
+    # -----------------------------------------------------------------
+    # if correct add to add list
+    if cond2:
+        # -------------------------------------------------------------
+        # Ask user if they wish to add a new name to ID the target as
+        astro_obj = ask_for_name(params, astro_obj)
+        # -------------------------------------------------------------
+        # now add object to database
+        msg = 'Adding {0} to object list'.format(astro_obj.name)
+        WLOG(params, '', msg)
+        # flag adding to list
+        add_to_list = True
+    # else print that we are not adding object to database
+    else:
+        WLOG(params, '', 'Not adding object to database')
+        # flag not adding to list
+        add_to_list = False
+    # ----------------------------------------------------------------
+    # deal with trying to update Teff automatically
+    if params['INPUTS']['GETTEFF'] and add_to_list:
+        # get index database
+        indexdbm = drs_database.IndexDatabase(params)
+        # check for Teff (from files on disk with this objname/aliases)
+        astro_obj.check_teff(params, indexdbm)
+    # ----------------------------------------------------------------
+    # Ask user if they want to add a Teff value (as this does not
+    #   come from SIMBAD) - note if Teff found in files we don't check
+    #   this
+    if add_to_list:
+        astro_obj = ask_for_teff(astro_obj)
+    # -----------------------------------------------------------------
+    return astro_obj, add_to_list
+
+
+def lookup(params: ParamDict, rawobjname: str
+           ) -> Tuple[Union[AstroObj, None], str]:
+    """
+    Try to look up an object other than in simbad
+    
+    :param params: 
+    :param rawobjname: 
+    :return: 
+    """
+    # get pconst 
+    pconst = constants.pload()
+    # get cleaned object name
+    objname = pconst.DRS_OBJ_NAME(rawobjname)
+    # construct new astrometric object instance
+    astroobj = AstroObj(rawobjname)
+    # set values of astroobj
+    astroobj.objname = objname
+    astroobj.original_name =  rawobjname
+    astroobj.aliases = '|'.join([rawobjname, objname])
+    # update notes - this object was not found in simbad
+    astroobj.notes = 'Not in SIMBAD. '
+    # print progress
+    msg = ('Looking up object directly in proper motion catalogues '
+           '(not found in SIMBAD).')
+    WLOG(params, 'info', msg)
+    # try to get consistent ra/dec/pmra/pmde/plx (i.e. at same epoch)
+    updated, reason = astroobj.consistent_astrometrics(params)
+    # append to storage
+    if updated:
+        # Update notes
+        astroobj.notes += 'Found in {0}. '.format(astroobj.ra_source)
+        # Add user who added target
+        nargs = [Time.now().iso, getpass.getuser(), socket.gethostname(),
+                 __NAME__]
+        note = ' Added on {0} by {1}@{2} using {3}'
+        astroobj.notes += note.format(*nargs)
+        # print found
+        WLOG(params, '', '\tObject found in "{0}"'.format(astroobj.ra_source))
+        # return the astro object
+        return astroobj, ''
+    else:
+        reason = '\n\tObject not found in proper motion catalogues.'
+        # return None
+        return None, reason
 
 
 def gsp_setup():
@@ -810,6 +914,12 @@ def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
         WLOG(params, '', msg.format(*margs))
         # add to dataframe
         dataframe = dataframe.append(astro_obj.to_dataframe())
+    # -------------------------------------------------------------------------
+    # deal with test run
+    if 'TEST' in params['INPUTS']:
+        if params['INPUTS']['TEST']:
+            WLOG(params, '', 'Test mode. Skipping upload.')
+            return
     # -------------------------------------------------------------------------
     # add a few empty rows
     empty_dataframe = pd.DataFrame()

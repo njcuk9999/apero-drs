@@ -112,6 +112,8 @@ astrometric.set_kwarg(name='--getteff', dtype='switch', default=False,
                               'index database to be up-to-date')
 astrometric.set_kwarg(name='--nopmrequired', dtype='switch', default=False,
                       helpstr='Do not require proper motion (not recommended)')
+astrometric.set_kwarg(name='--test', dtype='switch', default=False,
+                      helpstr='Run in test mode (do not add to database)')
 astrometric.description_file = 'apero_astrometrics.rst'
 
 # -----------------------------------------------------------------------------
