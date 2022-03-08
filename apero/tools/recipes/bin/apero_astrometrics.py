@@ -33,6 +33,7 @@ __release__ = base.__release__
 textentry = lang.textentry
 # Get Logging function
 WLOG = drs_log.wlog
+ParamDict = constants.ParamDict
 
 
 # =============================================================================
@@ -104,6 +105,10 @@ def __main__(recipe, params):
     add_objs = []
     # loop around unfound objects
     for objname in unfound_objs:
+        # print header title
+        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', '\tProcessing: {0}'.format(objname))
+        WLOG(params, 'info', params['DRS_HEADER'])
         # construct add object question
         question1 = '\n\nAdd OBJECT="{0}" to astrometric database?'
         # ask if we want to find object
@@ -121,50 +126,41 @@ def __main__(recipe, params):
         if len(astro_objs) == 1:
             # get first object
             astro_obj = astro_objs[0]
-            # display the properties for this object
-            astro_obj.display_properties()
-            # construct the object correction question
-            question2 = 'Does the data for this object look correct?'
-            cond2 = drs_installation.ask(question2, dtype='YN')
-            print()
-            # -----------------------------------------------------------------
-            # if correct add to add list
-            if cond2:
-                # -------------------------------------------------------------
-                # Ask user if they wish to add a new name to ID the target as
-                astro_obj = drs_astrometrics.ask_for_name(params, astro_obj)
-                # -------------------------------------------------------------
-                # now add object to database
-                msg = 'Adding {0} to object list'.format(astro_obj.name)
-                WLOG(params, '', msg)
+            # ask user about object
+            astro_obj, add_to_list = drs_astrometrics.ask_user(params,
+                                                               astro_obj)
+            # finally add to list
+            if add_to_list:
                 # append to add list
                 add_objs.append(astro_obj)
-            # else print that we are not adding object to database
-            else:
-                WLOG(params, '', 'Not adding object to database')
-            # ----------------------------------------------------------------
-            # deal with trying to update Teff automatically
-            if params['INPUTS']['GETTEFF']:
-                # get index database
-                indexdbm = drs_database.IndexDatabase(params)
-                # check for Teff (from files on disk with this objname/aliases)
-                astro_obj.check_teff(params, indexdbm)
-            # ----------------------------------------------------------------
-            # Ask user if they want to add a Teff value (as this does not
-            #   come from SIMBAD) - note if Teff found in files we don't check
-            #   this
-            astro_obj = drs_astrometrics.ask_for_teff(astro_obj)
-
         # --------------------------------------------------------------------
-        # else deal with no objects
-        elif len(astro_objs) == 0:
-            emsg = ('Cannot find object "{0}" in SIMBAD. \n\t{1}'
+        # if we cannot find in simbad try to look elsewhere
+        if len(astro_objs) == 0 and 'proper motion catalog' not in reason:
+            # try to look up object elsewhere
+            astro_obj, reason1 = drs_astrometrics.lookup(params, objname)
+            reason += reason1
+            # if astro_obj is not None we found it elsewhere
+            if astro_obj is not None:
+                # ask user about object
+                astro_obj, add_to_list = drs_astrometrics.ask_user(params,
+                                                                   astro_obj)
+                # finally add to list
+                if add_to_list:
+                    # append to add list
+                    add_objs.append(astro_obj)
+                # add to astro_objs
+                astro_objs  = [astro_obj]
+        # --------------------------------------------------------------------
+        # if we still have no objects deal with no objects
+        if len(astro_objs) == 0:
+            emsg = ('Invalid object "{0}". \n\t{1}'
                     '\n\tPlease try another alias')
             eargs = [objname, reason]
-            WLOG(params, 'warning', emsg.format(*eargs), sublevel=6)
+            WLOG(params, 'warning', emsg.format(*eargs), sublevel=6,
+                 colour='red')
         # --------------------------------------------------------------------
         # else deal with multiple objects
-        else:
+        elif len(astro_objs) > 1:
             # print warning
             emsg = ('More than one object matches object "{0}" in SIMBAD. '
                     'Please try another alias.')
@@ -178,9 +174,14 @@ def __main__(recipe, params):
                 margs = [a_it + 1, ','.join(astro_obj.aliases.split('|'))]
                 WLOG(params, '', msg.format(*margs), colour='yellow')
                 WLOG(params, '', '')
+
     # -------------------------------------------------------------------------
     # add to google sheet
     if len(add_objs) > 0:
+        # print progress
+        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', 'Updating pending-list online database')
+        WLOG(params, 'info', params['DRS_HEADER'])
         # add all objects in add list to google-sheet
         drs_astrometrics.add_obj_to_sheet(params, add_objs)
         # log progress
