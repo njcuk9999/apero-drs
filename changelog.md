@@ -2,6 +2,146 @@ Changelog
 =========
 
 
+0.7.213 (2022-03-09)
+--------------------
+- Merge branch 'v0.7.209-neil-test' into v0.7.208-working. [Neil Cook]
+- Apero.science.calib.shape.py - try again to close file. [Neil Cook]
+- Apero.science.calib.shape.py - must close file here. [Neil Cook]
+- Merge branch 'v0.7.208-stable-test' into v0.7.208-working. [Neil Cook]
+- Apero.tools.recipes.bin.apero_astrometrics.py - add an option to seach
+  proper motion catalogues for the name even if it isn't found in
+  SIMBAD. [Neil Cook]
+- Apero.science.preprocessing.gen_pp.py - get the file reject list from
+  the reject database. [Neil Cook]
+- Merge branch 'v0.7.208-stable-test' into v0.7.208-working. [Neil Cook]
+- Apero_astrometrics - correct bug with multiple teff values.
+  [njcuk9999]
+
+
+0.7.212 (2022-03-05)
+--------------------
+- Update language database. [Neil Cook]
+- Merge branch 'v0.7.208-stable-test' into v0.7.208-working. [Neil Cook]
+
+  # Conflicts:
+  #	apero/science/extract/extraction.py
+- Apero.science.extract.extraction.py - correct typo in extraction.
+  [Neil Cook]
+- Apero.science.extract.extraction.py - correct typo in extraction.
+  [Neil Cook]
+- Merge branch 'v0.7.208-stable-test' into v0.7.208-working. [Neil Cook]
+- Apero.tools.module.database.drs_astrometrics.py - make teff selection
+  more logical. [Neil Cook]
+- Apero.tools.module.database.drs_astrometrics.py - make teff selection
+  more logical. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.208-stable-test' into
+  v0.7.208-stable-test. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.208-stable-test' into
+  v0.7.208-stable-test. [njcuk9999]
+- Apero_astrometrics - correct bug with multiple teff values.
+  [njcuk9999]
+- Update a todo. [Neil Cook]
+- Continue adding reject database. [Neil Cook]
+- Merge branch 'v0.7.208-stable-test' into v0.7.208-working. [Neil Cook]
+- Apeor.plotting.plot_functions.py - remove forced plot option. [Neil
+  Cook]
+- Apero.tools.module.database.drs_astrometrics.py - deal better with
+  masked rv value (no "--") [Neil Cook]
+- Add reject database. [Neil Cook]
+- Add reject database. [Neil Cook]
+
+
+0.7.211 (2022-03-03)
+--------------------
+- Apero.science.extraction.py - rearrange equations for speed up. [Neil
+  Cook]
+- Replace np.nanfunc with mp.nanfunc (speed up) [Neil Cook]
+- Apero_precheck - get time from sci data if no calibrations.
+  [njcuk9999]
+- Merge branch 'v0.7.208-working' into v0.7.208-stable-test. [Neil Cook]
+- Apero.core.instruments.*.recipe_definitions.py - update recipe
+  definitions to add calib_required for those calibs that must be
+  checked. [Neil Cook]
+- Apero.core.core.drs_database.py - only use "USED=1" objects from
+  object database. [Neil Cook]
+- Apero.tools.module.processing.drs_precheck.py - remove the todo line
+  setting all objs to be refound. [Neil Cook]
+- Apero.tools.module.testing.drs_stats.py - do not get the index
+  database if in timing mode (we don't need it) [Neil Cook]
+- Merge branch 'v0.7.208-working' into v0.7.208-stable-test. [Neil Cook]
+- Apero.tools.module.testing.drs_stats.py - do not crossmatch with index
+  for timing mode. [Neil Cook]
+- Merge branch 'v0.7.208-working' into v0.7.208-stable-test. [Neil Cook]
+- Apero.tools.module.testing.drs_stats.py - add dt vs start time plot.
+  [Neil Cook]
+- Merge branch 'v0.7.208-working' into v0.7.208-stable-test. [Neil Cook]
+- Apero.tools.module.processing.drs_precheck.py - use original names for
+  use in astrometrics. [Neil Cook]
+- Update requirements for astro_visu. [Neil Cook]
+- Update requirements for astro_visu. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update requirements for LAM (downgrade bottleneck) [Neil Cook]
+
+
+0.7.210 (2022-02-23)
+--------------------
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Test visualisations. [Neil Cook]
+
+
+0.7.209 (2022-02-17)
+--------------------
+- Apero.plotting.plot_functions.py.plot_stats_timing_plot - deal with
+  nrows=1 ncols=1. [Neil Cook]
+- Apero.tools.module.testing.drs_stats.py - deal with None in END_TIME
+  better. [Neil Cook]
+- Apero.tools.module.testing.drs_stats.py - update timing error. [Neil
+  Cook]
+- Apero.plotting.plot_functions.py - deal with case where nrows = 1.
+  [Neil Cook]
+- Apero.tools.module.processing.drs_precheck.py - fix typo. [Neil Cook]
+- Apero.tools.module.processing.drs_precheck.py - only check obj names
+  for science / hot star observations. [Neil Cook]
+- Update date/version/docs. [Neil Cook]
+
+
 0.7.208 (2022-02-11)
 --------------------
 - Copyraw and add version to setup codes, point README.md the
