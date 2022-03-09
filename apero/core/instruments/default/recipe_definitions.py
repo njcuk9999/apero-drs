@@ -140,10 +140,18 @@ database_mgr.recipe_type = 'nolog-tool'
 database_mgr.recipe_kind = 'admin'
 database_mgr.set_kwarg(name='--kill', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_KILLARG_HELP'))
-database_mgr.set_kwarg(name='--objdb', dtype=str, default='None',
-                       helpstr='[True] or [str Path to dfits output]. '
-                               'Update the object reset database using raw '
-                               'directory [True] or a dfits output [str]')
+database_mgr.set_kwarg(name='--calibdb', dtype='switch', default=False,
+                       helpstr='Update calibration database')
+database_mgr.set_kwarg(name='--telludb', dtype='switch', default=False,
+                       helpstr='Update telluric database')
+database_mgr.set_kwarg(name='--logdb', dtype='switch', default=False,
+                       helpstr='Update log database')
+database_mgr.set_kwarg(name='--indexdb', dtype='switch', default=False,
+                       helpstr='Update index database')
+database_mgr.set_kwarg(name='--objdb', dtype='switch', default=False,
+                       helpstr='Update object database')
+database_mgr.set_kwarg(name='--rejectdb', dtype='switch', default=False,
+                       helpstr='Update rejection database')
 database_mgr.set_kwarg(name='--update', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_UPDATE_HELP'))
 database_mgr.set_kwarg(name='--csv', dtype=str, default='None',

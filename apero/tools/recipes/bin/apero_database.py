@@ -9,6 +9,7 @@ Created on 2019-07-26 at 09:39
 
 @author: cook
 """
+import numpy as np
 from pathlib import Path
 
 from apero import lang
@@ -82,7 +83,20 @@ def __main__(recipe, params):
     :return: returns the local namespace as a dictionary
     :rtype: dict
     """
-
+    # define null text
+    null_text = ['None', '', 'Null']
+    # deal with update arguments
+    update_calib = params['INPUTS']['CALIBDB']
+    update_tellu = params['INPUTS']['TELLUDB']
+    update_index = params['INPUTS']['INDEXDB']
+    update_log = params['INPUTS']['LOGDB']
+    update_reject = params['INPUTS']['REJECTDB']
+    update_object = params['INPUTS']['OBJDB']
+    update = params['INPUTS']['UPDATE']
+    # deal with list of update arguments
+    database_conds = [update_calib, update_tellu, update_index, update_log,
+                         update_reject, update_object]
+    database_names = ['calib', 'tellu', 'index', 'log', 'reject', 'object']
     # deal with killing sleeping processes
     if params['INPUTS']['KILL']:
         # kill all user processes in the database that have been running for
@@ -93,11 +107,23 @@ def __main__(recipe, params):
         return drs_startup.return_locals(params, locals())
 
     # ----------------------------------------------------------------------
-    # deal with update
+    # deal with updates
     # ----------------------------------------------------------------------
-    if not drs_text.null_text(params['INPUTS']['OBJDB'], ['None', '', 'Null']):
-        # update database
-        database_update.update_obj_reset(params)
+    # deal with full update
+    if update:
+        database_update.update_database(params, dbkind='all')
+        # ------------------------------------------------------------------
+        # End of main code
+        # ------------------------------------------------------------------
+        return drs_startup.return_locals(params, locals())
+    # deal with partial update
+    if np.any(database_conds):
+        # loop around all databases
+        for db_it in range(len(database_conds)):
+            # if we have been flagged to update - update now
+            if database_conds[db_it]:
+                database_update.update_database(params, recipe,
+                                                dbkind=database_names[db_it])
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
@@ -115,23 +141,12 @@ def __main__(recipe, params):
         return drs_startup.return_locals(params, locals())
 
     # ----------------------------------------------------------------------
-    # deal with update
-    # ----------------------------------------------------------------------
-    if params['INPUTS']['UPDATE']:
-        # update database
-        database_update.update_database(params, recipe)
-        # ------------------------------------------------------------------
-        # End of main code
-        # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
-
-    # ----------------------------------------------------------------------
     # get csv file path
     # ----------------------------------------------------------------------
     # get it from input parameters
     csvpath = params['INPUTS'].get('CSV', 'None')
     # deal with no csv file
-    if drs_text.null_text(csvpath, ['None', '']):
+    if drs_text.null_text(csvpath, null_text):
         # log error: Argument Error: --csv file is required'
         WLOG(params, 'error', textentry('09-507-00001'))
         csvpath = None
@@ -143,7 +158,7 @@ def __main__(recipe, params):
     # get the database name
     database_name = params['INPUTS'].get('EXPORTDB', 'None')
     # only export if we exportdb is not None
-    if not drs_text.null_text(database_name, ['None', '']):
+    if not drs_text.null_text(database_name, null_text):
         # export database
         manage_databases.export_database(params, database_name,
                                          csvpath)
@@ -159,7 +174,7 @@ def __main__(recipe, params):
     # get join type
     joinmode = params['INPUTS'].get('JOIN', 'replace')
     # deal with import mode not set
-    if not drs_text.null_text(database_name, ['None', '']):
+    if not drs_text.null_text(database_name, null_text):
         # import csv file into database
         manage_databases.import_database(params, database_name,
                                          csvpath, joinmode)
