@@ -472,7 +472,7 @@ def readfits(params: ParamDict, filename: Union[str, Path],
 
 
 def read_header(params: ParamDict, filename: str, ext: Union[int, None] = None,
-                log: bool = True) -> fits.Header:
+                log: bool = True, copy: bool = False) -> fits.Header:
     """
     Read the header from a fits file located at 'filename' with extension
     'ext' (defaults to 0)
@@ -499,7 +499,10 @@ def read_header(params: ParamDict, filename: str, ext: Union[int, None] = None,
         else:
             raise e
     # return header
-    return header
+    if copy:
+        return fits.Header(header)
+    else:
+        return header
 
 
 # define complex typing for _read_fitsmulti
