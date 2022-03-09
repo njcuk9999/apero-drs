@@ -80,9 +80,9 @@ def construct_fp_table(params, filenames, **kwargs):
         # get the observation directory
         obs_dir = path_inst.obs_dir
         # read the header
-        hdr = drs_fits.read_header(params, filenames[it])
+        hdr = drs_fits.read_header(params, filenames[it], copy=True)
         # must load file here to check if fp is valid
-        image = drs_fits.readfits(params, filenames[it], log=False)
+        image = drs_fits.readfits(params, filenames[it], log=False, copy=True)
         # if image is not valid skip
         if not gen_calib.check_fp(params, image, filename=filenames[it]):
             continue
