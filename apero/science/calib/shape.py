@@ -91,8 +91,10 @@ def construct_fp_table(params, filenames, **kwargs):
         # get keys from hdr
         acqtime, acqmethod = drs_file.get_mid_obs_time(params, hdr,
                                                        out_fmt='mjd')
-        exptime = hdr[params['KW_EXPTIME'][0]]
-        ppversion = hdr[params['KW_PPVERSION'][0]]
+        exptime = float(hdr[params['KW_EXPTIME'][0]])
+        ppversion = str(hdr[params['KW_PPVERSION'][0]])
+        # must delete header so file can be closed
+        del hdr
         # append to lists
         valid_files.append(filenames[it])
         fp_time.append(float(acqtime))
