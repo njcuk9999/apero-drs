@@ -380,7 +380,27 @@ class RunIniFile:
 
 
     def _add_command_sequences(self):
-        # TODO: finish this
+        """
+        Add command sequences (i.e. for a batch job)
+
+        This converts a sequence or set of sequences to a set of individual
+        commands based on current directories
+
+        :return:
+        """
+
+        # get run obs dir
+        run_dir = self.run_keys['RUN_OBS_DIR']
+        # get the raw dir
+        raw_dir = self.params['DRS_DATA_RAW']
+        # get raw run dir
+        raw_run_dir = os.path.join(raw_dir, run_dir)
+        # make sure raw run dir is present - if not we have to skip
+        if not os.path.exists(raw_run_dir):
+            wmsg = 'Skipping {0} [{1}]. Run directory: {2} does not exist'
+            wargs = [self.name, self.instrument, raw_run_dir]
+            WLOG(self.params, 'warning', wmsg.format(*wargs))
+            return
         # copy params
         sparams = self.params.copy()
         # get sequence list

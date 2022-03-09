@@ -65,7 +65,7 @@ GAIA_COL = 'GAIADR2ID'
 # =============================================================================
 # Define functions
 # =============================================================================
-def update_database(params: ParamDict, recipe: DrsRecipe):
+def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
     """
     Update the calib/tellu/log and index databases from files on disk
 
@@ -76,50 +76,47 @@ def update_database(params: ParamDict, recipe: DrsRecipe):
     # load pconst
     pconst = constants.pload()
     # update calibration database
-    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    WLOG(params, 'info', textentry('40-006-00007', args=['calibration']),
-         colour='magenta')
-    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    calib_tellu_update(params, recipe, pconst, 'calibration')
+    if dbkind in ['calib', 'all']:
+        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', textentry('40-006-00007', args=['calibration']),
+             colour='magenta')
+        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        calib_tellu_update(params, recipe, pconst, 'calibration')
     # update telluric database
-    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    WLOG(params, 'info', textentry('40-006-00007', args=['telluric']),
-         colour='magenta')
-    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    calib_tellu_update(params, recipe, pconst, 'telluric')
+    if dbkind in ['tellu', 'all']:
+        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', textentry('40-006-00007', args=['telluric']),
+             colour='magenta')
+        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        calib_tellu_update(params, recipe, pconst, 'telluric')
     # update log and index database
-    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    WLOG(params, 'info', textentry('40-006-00007', args=['log']),
-         colour='magenta')
-    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    log_update(params, pconst)
+    if dbkind in ['log', 'all']:
+        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', textentry('40-006-00007', args=['log']),
+             colour='magenta')
+        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        log_update(params, pconst)
     # update index database
-    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    WLOG(params, 'info', textentry('40-006-00007', args=['index']),
-         colour='magenta')
-    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    index_update(params)
+    if dbkind in ['index', 'all']:
+        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', textentry('40-006-00007', args=['index']),
+             colour='magenta')
+        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        index_update(params)
 
+    if dbkind in ['object', 'all']:
+        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', textentry('40-006-00007', args=['object']),
+             colour='magenta')
+        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        manage_databases.update_object_database(params)
 
-def update_obj_reset(params: ParamDict):
-    """
-    Update the reset.object.csv file from either a manual dfits query piped
-    to a text file (or set of text files) or from the currently defined
-    raw directory
-
-    :param params: ParamDict, the parameter dictionary of constants
-
-    :return:
-    """
-    # get objdb arg from user
-    objdb_arg = str(params['INPUTS']['OBJDB'])
-    # deal with objdb argument being null
-    if drs_text.null_text(objdb_arg, ['None', '', 'Null']):
-        return
-    # -------------------------------------------------------------------------
-    # update database using standard way
-    manage_databases.update_object_database(params)
-
+    if dbkind in ['reject', 'all']:
+        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', textentry('40-006-00007', args=['reject']),
+             colour='magenta')
+        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        manage_databases.update_reject_database(params)
 
 
 def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
