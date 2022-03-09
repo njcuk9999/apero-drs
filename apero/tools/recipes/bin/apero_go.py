@@ -49,6 +49,9 @@ def get_args() -> Dict[str, Any]:
     # add the full database
     pargs, pkwargs = rd.go_recipe.proxy_keywordarg('data')
     parser.add_argument(*pargs, **pkwargs)
+
+    pargs, pkwargs = rd.go_recipe.proxy_keywordarg('all')
+    parser.add_argument(*pargs, **pkwargs)
     # loop around block kinds and add arguments
     for block in path_definitions.BLOCKS:
         # add argument
@@ -98,14 +101,21 @@ def __main__(recipe, params):
     props = dict()
     props['path'] = None
     props['chdir'] = False
-
+    # ----------------------------------------------------------------------
+    # deal with 'all' argument
+    if 'all' in params['INPUTS']:
+        if params['INPUTS']['all']:
+            for block in path_definitions.BLOCKS:
+                params['INPUTS'][f'{block.argname}'] = True
+    # ----------------------------------------------------------------------
+    # output storage
     storage = dict()
     # ----------------------------------------------------------------------
     # --data option
     # ----------------------------------------------------------------------
     # deal with --data keyword
-    if 'DATA' in params['INPUTS']:
-        if params['INPUTS']['DATA']:
+    if 'data' in params['INPUTS']:
+        if params['INPUTS']['data']:
             value = os.path.dirname(params['DRS_DATA_RAW'])
             # set change dir to True
             if os.path.exists(value):
