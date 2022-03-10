@@ -300,7 +300,7 @@ PP_BADLIST_DRS_HKEY.author = base.AUTHORS['NJC']
 
 # Define the bad list google spreadsheet value column
 PP_BADLIST_SS_VALCOL = PP_BADLIST_SS_VALCOL.copy(__NAME__)
-PP_BADLIST_SS_VALCOL.value = 'ODOMETER'
+PP_BADLIST_SS_VALCOL.value = 'IDENTIFIER'
 PP_BADLIST_SS_VALCOL.author = base.AUTHORS['NJC']
 
 # Define the bad list google spreadsheet mask column for preprocessing

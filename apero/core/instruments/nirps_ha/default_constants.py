@@ -285,12 +285,12 @@ PP_BADLIST_DRS_HKEY.author = base.AUTHORS['NJC']
 
 # Define the bad list google spreadsheet value column
 PP_BADLIST_SS_VALCOL = PP_BADLIST_SS_VALCOL.copy(__NAME__)
-PP_BADLIST_SS_VALCOL.value = None
+PP_BADLIST_SS_VALCOL.value = 'IDENTIFIER'
 PP_BADLIST_SS_VALCOL.author = base.AUTHORS['NJC']
 
 # Define the bad list google spreadsheet mask column for preprocessing
 PP_BADLIST_SS_MASKCOL = PP_BADLIST_SS_MASKCOL.copy(__NAME__)
-PP_BADLIST_SS_MASKCOL.value = None
+PP_BADLIST_SS_MASKCOL.value = 'PP'
 PP_BADLIST_SS_MASKCOL.author = base.AUTHORS['NJC']
 
 # Defines the box size surrounding hot pixels to use
