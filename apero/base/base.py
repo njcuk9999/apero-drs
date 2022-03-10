@@ -287,6 +287,13 @@ def create_yamls(allparams: Any):
     objectdb['RESET'] = allparams['SQLITE'].get('OBJ_RESET', 'reset.object.csv')
     objectdb['PROFILE'] = allparams['SQLITE'].get('OBJ_PROFILE', 'NULL')
     sqlite3['OBJECT'] = objectdb
+    # add reject database
+    rejectdb = dict()
+    rejectdb['PATH'] = allparams['SQLITE'].get('REJECT_PATH', 'DRS_DATA_ASSETS')
+    rejectdb['NAME'] = allparams['SQLITE'].get('REJECT_NAME', 'reject.db')
+    rejectdb['RESET'] = allparams['SQLITE'].get('REJECT_RESET', 'NULL')
+    rejectdb['PROFILE'] = allparams['SQLITE'].get('REJECT_PROFILE', 'NULL')
+    sqlite3['REJECT'] = rejectdb
     # add language database
     langdb = dict()
     langdb['PATH'] = allparams['SQLITE'].get('LANG_PATH', 'DRS_DATA_ASSETS')
@@ -342,6 +349,13 @@ def create_yamls(allparams: Any):
     objectdb['RESET'] = allparams['MYSQL'].get('OBJ_RESET', 'reset.object.csv')
     objectdb['PROFILE'] = allparams['MYSQL'].get('OBJ_PROFILE', 'MAIN')
     mysql['OBJECT'] = objectdb
+    # add reject database
+    rejectdb = dict()
+    rejectdb['PATH'] = allparams['MYSQL'].get('REJECT_PATH', 'NULL')
+    rejectdb['NAME'] = allparams['MYSQL'].get('REJECT_NAME', 'NULL')
+    rejectdb['RESET'] = allparams['MYSQL'].get('REJECT_RESET', 'NULL')
+    rejectdb['PROFILE'] = allparams['MYSQL'].get('REJECT_PROFILE', 'MAIN')
+    mysql['REJECT'] = rejectdb
     # add language database
     langdb = dict()
     langdb['PATH'] = allparams['MYSQL'].get('LANG_PATH', 'DRS_DATA_ASSETS')
