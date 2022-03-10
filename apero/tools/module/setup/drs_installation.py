@@ -548,7 +548,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
         plot = ask(textentry('40-001-00050'), dtype='int', options=[0, 1, 2, 3],
                    optiondesc=[textentry('40-001-00051'),
                                textentry('40-001-00052'),
-                               textentry('40-001-00053')],
+                               textentry('40-001-00053'),
+                               textentry('40-001-00082')],
                    default=0)
         all_params['DRS_PLOT'] = plot
         all_params.set_source('DRS_PLOT', __NAME__)
@@ -692,14 +693,15 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
     # ----------------------------------------------------------------------
     # Individual database table settings
     # ----------------------------------------------------------------------
-    database_user = ['CALIB', 'TELLU', 'INDEX', 'LOG', 'OBJECT', 'LANGUAGE']
-    databases_raw = ['CALIB', 'TELLU', 'IDX', 'LOG', 'OBJ', 'LANG']
+    database_user = ['CALIB', 'TELLU', 'INDEX', 'LOG', 'OBJECT', 'REJECT',
+                     'LANGUAGE']
+    databases_raw = ['CALIB', 'TELLU', 'IDX', 'LOG', 'OBJ', 'REJECT', 'LANG']
     if db_ask:
         database_ask = [True, True, False, False, False, False]
     else:
         database_ask = [False] * 6
     database_args = ['calibtable', 'tellutable', 'indextable', 'logtable',
-                     'objtable', 'langtable']
+                     'objtable', 'rejecttable', 'langtable']
     # loop around databases
     for db_it in range(len(database_user)):
         # ---------------------------------------------------------------------

@@ -352,6 +352,8 @@ def get_args() -> argparse.Namespace:
                         help=lang['INSTALL_LOGTABLE_HELP'])
     parser.add_argument('--obj-table', action='store', dest='objtable',
                         help=lang['INSTALL_OBJTABLE_HELP'])
+    parser.add_argument('--reject-table', action='store', dest='rejecttable',
+                        help=lang['INSTALL_REJECTTABLE_HELP'])
     parser.add_argument('--lang-table', action='store', dest='langtable',
                         help=lang['INSTALL_LANGTABLE_HELP'])
     # parse arguments
