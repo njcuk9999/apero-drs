@@ -484,7 +484,7 @@ def main():
     LANGUAGE = lang.language
     # ----------------------------------------------------------------------
     # deal with validation
-    if not get_sys_arg('--skip'):
+    if not get_sys_arg('--skip') and not get_sys_arg('--help', 'switch'):
         validate()
     # catch Ctrl+C
     signal.signal(signal.SIGINT, catch_sigint)
