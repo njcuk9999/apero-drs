@@ -355,12 +355,9 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
              good
     """
     # set function name
-    func_name = display_func('get_bad_list', __NAME__)
+    # func_name = display_func('get_bad_list', __NAME__)
     # -------------------------------------------------------------------------
     # get parameters from params
-    sheet_id = params['PP_BADLIST_SSID']
-    worksheet = params['PP_BADLIST_SSWB']
-    # TODO: Add in RV kind?
     if bad_kind == 'pp':
         header_col = params['PP_BADLIST_DRS_HKEY']
         value_col = params['PP_BADLIST_SS_VALCOL']
@@ -396,28 +393,19 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
              sublevel=4)
         return False
     # -------------------------------------------------------------------------
-    # get bad list table
-    try:
-        table = drs_database.get_google_sheet(params, sheet_id, worksheet,
-                                              cached=True)
-    except Exception as e:
-        # construct url for worksheet
-        url = GOOGLE_BASE_URL.format(sheet_id, worksheet)
-        wargs = [url, type(e), str(e), func_name]
-        WLOG(params, 'warning', textentry('10-503-00021', args=wargs),
-             sublevel=4)
-        return False
+    # get reject database
+    rejectdbm = drs_database.RejectDatabase(params)
+    rejectdbm.load_db()
+    # get reject table
+    rtable = rejectdbm.get_entries('*')
+    # -------------------------------------------------------------------------
     # if we have no entries return False
-    if len(table[mask_col]) == 0:
+    if len(rtable[mask_col]) == 0:
         return False
     # convert mask column to bool
-    if isinstance(table[mask_col][0], str):
-        mask = np.array(table[mask_col]) == 'True'
-    # if it is cached it wont be strings it will be bools
-    else:
-        mask = np.array(table[mask_col])
+    mask = np.array(rtable[mask_col], dtype=bool)
     # get value column
-    values = np.array(table[value_col])
+    values = np.array(rtable[value_col])
     # -------------------------------------------------------------------------
     # deal with no files being rejected
     if np.sum(mask) == 0:
