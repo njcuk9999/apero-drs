@@ -697,9 +697,9 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
                      'LANGUAGE']
     databases_raw = ['CALIB', 'TELLU', 'IDX', 'LOG', 'OBJ', 'REJECT', 'LANG']
     if db_ask:
-        database_ask = [True, True, False, False, False, False]
+        database_ask = [True, True, False, False, False, False, False]
     else:
-        database_ask = [False] * 6
+        database_ask = [False] * 7
     database_args = ['calibtable', 'tellutable', 'indextable', 'logtable',
                      'objtable', 'rejecttable', 'langtable']
     # loop around databases
