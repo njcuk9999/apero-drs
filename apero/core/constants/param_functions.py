@@ -1097,6 +1097,12 @@ class ParamDict(CaseInDict):
             # add database count (always 1)
             tabledict['COUNT'].append(1)
         # ---------------------------------------------------------------------
+        # get index parameters
+        # ---------------------------------------------------------------------
+        tabledict = _add_index_params_to_table_dict(tabledict, recipe,
+                                                    drsfitsfile)
+
+        # ---------------------------------------------------------------------
         # get recipe parameters (from recipe)
         # ---------------------------------------------------------------------
         if recipe is not None:
@@ -1120,7 +1126,7 @@ class ParamDict(CaseInDict):
                                                      self.sources, self.used,
                                                      None)
         # ---------------------------------------------------------------------
-        # deal with
+        # deal with adding header values
         # ---------------------------------------------------------------------
         # loop around arguments
         if names is not None:
@@ -2012,6 +2018,54 @@ def _yaml_walk(yaml_dict) -> Tuple[list, list]:
     return chains, values
 
 
+def _add_index_params_to_table_dict(tabledict: dict, recipe: Any,
+                                    drsfitsfile: Any) -> dict:
+    """
+    Add parameters from the index database to the
+
+    :param tabledict: dict, the table dict with each column as a list
+    :param recipe: DrsRecipe instance that called this function
+    :param drsfitsfile: DrsFitsFile
+
+    :return: dict, the updated table dictionary
+    """
+    # if we do not have a drs fits file skip this section
+    if drsfitsfile is None:
+        return tabledict
+    # -------------------------------------------------------------------------
+    # deal with no log
+    if recipe.log is None:
+        return tabledict
+    if len(recipe.log.set) == 0:
+        rlogs = [recipe.log]
+    else:
+        rlogs = recipe.log.set
+    # loop
+    rlog = rlogs[-1]
+    # -------------------------------------------------------------------------
+    # generate the output dictionary (without header)
+    drsfitsfile.output_dictionary(rlog.block_kind, rlog.runstring)
+    # get source
+    source = '{0}._add_index_params_to_table_dict()'.format(__NAME__)
+    # -------------------------------------------------------------------------
+    # loop around output dictionary keys
+    for key in drsfitsfile.output_dict:
+        # add database key name
+        tabledict['NAME'].append('iloc.{0}'.format(key))
+        # add database key kind
+        tabledict['KIND'].append('ilog')
+        # add database key value
+        tabledict['VALUE'].append(drsfitsfile.output_dict[key])
+        # add database key source (database yaml file)
+        tabledict['SOURCE'].append(source)
+        # add database description (default)
+        tabledict['DESCRIPTION'].append('Index Database Column')
+        # add database count (always 1)
+        tabledict['COUNT'].append(1)
+    # return updated table dict
+    return tabledict
+
+
 def _add_recipe_params_to_table_dict(tabledict: dict, recipe: Any) -> dict:
     """
     Add parameters from the recipe (and recipe log) if present
@@ -2024,6 +2078,7 @@ def _add_recipe_params_to_table_dict(tabledict: dict, recipe: Any) -> dict:
     # deal with no recipe
     if recipe is None:
         return tabledict
+    # -------------------------------------------------------------------------
     # deal with no log
     if recipe.log is None:
         return tabledict
@@ -2033,10 +2088,12 @@ def _add_recipe_params_to_table_dict(tabledict: dict, recipe: Any) -> dict:
         instances = recipe.log.set
     # loop
     inst = instances[-1]
+    # -------------------------------------------------------------------------
     # get the param table
     out = inst.get_param_table()
     # extract list from get_param_table return
     names, param_kinds, values, sources, descriptions, counts = out
+    # -------------------------------------------------------------------------
     # loop around and add to table dict
     for row in range(len(names)):
         # add database key name
