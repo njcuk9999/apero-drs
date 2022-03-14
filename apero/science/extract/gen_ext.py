@@ -176,9 +176,20 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
             # log progress (saving to file)
             wargs = [orderpsfile.filename]
             WLOG(params, '', textentry('40-013-00024', args=wargs))
-            # save for use later (as .npy)
-            orderpsfile.write_file(block_kind=recipe.out_block_str,
-                                   runstring=recipe.runstring)
+            # define multi lists
+            data_list, name_list = [], []
+            # snapshot of parameters
+            if params['PARAMETER_SNAPSHOT']:
+                data_list += [params.snapshot_table(recipe,
+                                                    drsfitsfile=orderpsfile)]
+                name_list += ['PARAM_TABLE']
+            # write image to file
+            orderpsfile.write_multi(data_list=data_list, name_list=name_list,
+                                    block_kind=recipe.out_block_str,
+                                    runstring=recipe.runstring)
+            # add to output files (for indexing)
+            recipe.add_output_file(orderpsfile)
+
         # store in storage dictionary
         orderprofiles[fiber] = orderp
         orderfiles[fiber] = orderpfilename
