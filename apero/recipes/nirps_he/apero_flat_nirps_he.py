@@ -230,6 +230,11 @@ def __main__(recipe, params):
             outfiles = flat_blaze.flat_blaze_write(params, recipe, *wargs)
             blazefile, flatfile = outfiles
 
+            # write e2ds/e2dsll files (for debug purposes)
+            fargs = [params, recipe, infile, rawfiles, combine, fiber,
+                     props, lprops, eprops, sprops, qc_params]
+            flat_blaze.write_flat_extraction_files(*fargs)
+
             # --------------------------------------------------------------
             # Update the calibration database
             # --------------------------------------------------------------
