@@ -460,6 +460,175 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     return blazefile, flatfile
 
 
+def write_flat_extraction_files(params, recipe, infile, rawfiles, combine,
+                                fiber, props, lprops, eprops, sprops,
+                                qc_params):
+    # ----------------------------------------------------------------------
+    # Store E2DS in file
+    # ----------------------------------------------------------------------
+    # get a new copy of the e2ds file
+    e2dsfile = recipe.outputs['E2DS_FILE'].newcopy(params=params,
+                                                   fiber=fiber)
+    # construct the filename from file instance
+    e2dsfile.construct_filename(infile=infile)
+    # define header keys for output file
+    # copy keys from input file (excluding loc)
+    e2dsfile.copy_original_keys(infile, exclude_groups=['loc'])
+    # add version
+    e2dsfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    e2dsfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    e2dsfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    e2dsfile.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    e2dsfile.add_hkey('KW_OUTPUT', value=e2dsfile.name)
+    e2dsfile.add_hkey('KW_FIBER', value=fiber)
+    # add input files (and deal with combining or not combining)
+    if combine:
+        hfiles = rawfiles
+    else:
+        hfiles = [infile.basename]
+    e2dsfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add infiles to outfile
+    e2dsfile.infiles = list(hfiles)
+    # add the calibration files use
+    e2dsfile = gen_calib.add_calibs_to_header(e2dsfile, props)
+    # ----------------------------------------------------------------------
+    # add the order profile used
+    e2dsfile.add_hkey('KW_CDBORDP', value=lprops['ORDERPFILE'])
+    e2dsfile.add_hkey('KW_CDTORDP', value=lprops['ORDERPTIME'])
+    # add the localisation file used
+    e2dsfile.add_hkey('KW_CDBLOCO', value=lprops['LOCOFILE'])
+    e2dsfile.add_hkey('KW_CDTLOCO', value=lprops['LOCOTIME'])
+    # add the shape local file used
+    e2dsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
+    e2dsfile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
+    # add the shape dx file used
+    e2dsfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
+    e2dsfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
+    # add the shape dy file used
+    e2dsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
+    e2dsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
+    # add the flat file used
+    e2dsfile.add_hkey('KW_CDBFLAT', value='None')
+    e2dsfile.add_hkey('KW_CDTFLAT', value='None')
+    # add the blaze file used
+    e2dsfile.add_hkey('KW_CDBBLAZE', value='None')
+    e2dsfile.add_hkey('KW_CDTBLAZE', value='None')
+    # add the thermal file used
+    e2dsfile.add_hkey('KW_CDBTHERMAL', value='None')
+    e2dsfile.add_hkey('KW_CDTTHERMAL', value='None')
+    e2dsfile.add_hkey('KW_THERM_RATIO', value='None')
+    e2dsfile.add_hkey('KW_THERM_RATIO_U', value='None')
+    # add the wave file used
+    e2dsfile.add_hkey('KW_CDBWAVE', value='None')
+    e2dsfile.add_hkey('KW_CDTWAVE', value='None')
+    # add the leak master calibration file used
+    e2dsfile.add_hkey('KW_CDBLEAKM', value='None')
+    e2dsfile.add_hkey('KW_CDTLEAKM', value='None')
+    e2dsfile.add_hkey('KW_CDBLEAKR', value='None')
+    e2dsfile.add_hkey('KW_CDTLEAKR', value='None')
+    # additional calibration keys
+    if 'FIBERTYPE' in eprops:
+        e2dsfile.add_hkey('KW_C_FTYPE', value=eprops['FIBERTYPE'])
+    # ----------------------------------------------------------------------
+    # add qc parameters
+    e2dsfile.add_qckeys(qc_params)
+    # ----------------------------------------------------------------------
+    # add shape transform parameters
+    e2dsfile.add_hkey('KW_SHAPE_DX', value=sprops['SHAPEL'][0])
+    e2dsfile.add_hkey('KW_SHAPE_DY', value=sprops['SHAPEL'][1])
+    e2dsfile.add_hkey('KW_SHAPE_A', value=sprops['SHAPEL'][2])
+    e2dsfile.add_hkey('KW_SHAPE_B', value=sprops['SHAPEL'][3])
+    e2dsfile.add_hkey('KW_SHAPE_C', value=sprops['SHAPEL'][4])
+    e2dsfile.add_hkey('KW_SHAPE_D', value=sprops['SHAPEL'][5])
+    # ----------------------------------------------------------------------
+    # add extraction type (does not change for future files)
+    e2dsfile.add_hkey('KW_EXT_TYPE', value=e2dsfile.name)
+    # add SNR parameters to header
+    e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
+                         dim1name='order')
+    # add start and end extraction order used
+    e2dsfile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
+    e2dsfile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
+    # add extraction ranges used
+    e2dsfile.add_hkey('KW_EXT_RANGE1', value=eprops['RANGE1'])
+    e2dsfile.add_hkey('KW_EXT_RANGE2', value=eprops['RANGE2'])
+    # add cosmic parameters used
+    e2dsfile.add_hkey('KW_COSMIC', value=eprops['COSMIC'])
+    e2dsfile.add_hkey('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'])
+    e2dsfile.add_hkey('KW_COSMIC_THRES',
+                      value=eprops['COSMIC_THRESHOLD'])
+    # add saturation parameters used
+    e2dsfile.add_hkey('KW_SAT_QC', value=eprops['SAT_LEVEL'])
+    with warnings.catch_warnings(record=True) as _:
+        max_sat_level = mp.nanmax(eprops['FLUX_VAL'])
+    e2dsfile.add_hkey('KW_SAT_LEVEL', value=max_sat_level)
+    # ----------------------------------------------------------------------
+    # add loco parameters (using locofile)
+    locofile = lprops['LOCOOBJECT']
+    e2dsfile.copy_original_keys(locofile, group='loc')
+    # add whether we corrected FP leakage
+    e2dsfile.add_hkey('KW_LEAK_CORR', value=0)
+    # ----------------------------------------------------------------------
+    # copy data
+    e2dsfile.data = eprops['E2DS']
+    # ----------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [e2dsfile.filename]
+    WLOG(params, '', textentry('40-016-00005', args=wargs))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfile)]
+        name_list += ['PARAM_TABLE']
+    # write image to file
+    e2dsfile.write_multi(data_list=data_list, name_list=name_list,
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(e2dsfile)
+    # ----------------------------------------------------------------------
+    # Store E2DSLL in file
+    # ----------------------------------------------------------------------
+    if params['DEBUG_E2DSLL_FILE']:
+        # get a new copy of the e2dsll file
+        e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(params=params,
+                                                           fiber=fiber)
+        # construct the filename from file instance
+        e2dsllfile.construct_filename(infile=infile)
+        # copy header from e2dsll file
+        e2dsllfile.copy_hdict(e2dsfile)
+        # add infiles to outfile
+        e2dsllfile.infiles = list(hfiles)
+        # set output key
+        e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
+        # copy data
+        e2dsllfile.data = eprops['E2DSLL']
+        # ----------------------------------------------------------------------
+        # log that we are saving rotated image
+        wargs = [e2dsllfile.filename]
+        WLOG(params, '', textentry('40-016-00007', args=wargs))
+        # define multi lists
+        data_list = [eprops['E2DSCC']]
+        name_list = ['E2DSLL', 'E2DSCC']
+        datatype_list = ['image']
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsllfile)]
+            name_list += ['PARAM_TABLE']
+            datatype_list += ['table']
+        # write image to file
+        e2dsllfile.write_multi(data_list=data_list, name_list=name_list,
+                               datatype_list=datatype_list,
+                               block_kind=recipe.out_block_str,
+                               runstring=recipe.runstring)
+        # add to output files (for indexing)
+        recipe.add_output_file(e2dsllfile)
+
+
 def flat_blaze_summary(recipe, params, qc_params, eprops, fiber):
     # alias to eprops
     epp = eprops
