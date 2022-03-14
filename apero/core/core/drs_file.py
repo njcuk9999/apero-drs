@@ -3655,7 +3655,7 @@ class DrsFitsFile(DrsInputFile):
         iheader_cols = pconst.INDEX_HEADER_COLS()
         hkeys = list(iheader_cols.names)
         htypes = list(iheader_cols.dtypes)
-        
+        # ---------------------------------------------------------------------
         # deal with absolute path of file
         self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file
@@ -3688,6 +3688,7 @@ class DrsFitsFile(DrsInputFile):
         self.output_dict['USED'] = used
         # add the raw fix (all files here should be raw fixed)
         self.output_dict['RAWFIX'] = 1
+        # ---------------------------------------------------------------------
         # loop around the keys and find them in hdict (or add null character if
         #     not found)
         for it, key in enumerate(hkeys):
@@ -3701,14 +3702,14 @@ class DrsFitsFile(DrsInputFile):
             # set found
             found = False
             # add key if in hdict (priority)
-            if dkey in self.hdict:
+            if (self.hdict is not None) and dkey in self.hdict:
                 # noinspection PyBroadException
                 try:
                     self.output_dict[key] = dtype(self.hdict[dkey])
                     found = True
                 except Exception as _:
                     self.output_dict[key] = 'None'
-            if dkey in self.header and not found:
+            if (self.header is not None) and dkey in self.header and not found:
                 # noinspection PyBroadException
                 try:
                     self.output_dict[key] = dtype(self.header[dkey])
@@ -7097,6 +7098,7 @@ class DrsOutFile(DrsInputFile):
         manual_keys['KW_VERSION'] = params['DRS_VERSION']
         manual_keys['KW_FIBER'] = 'None'
         manual_keys['KW_OUTPUT'] = self.name
+        # ---------------------------------------------------------------------
         # loop around the keys and find them in hdict (or add null character if
         #     not found)
         for it, key in enumerate(hkeys):
