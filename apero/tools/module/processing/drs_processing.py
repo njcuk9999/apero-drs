@@ -3078,6 +3078,8 @@ def _split_string_list(string: str, allow_whitespace: bool = True):
 
 
 def _get_cores(params):
+    # get number of cores on machine
+    cpus = os.cpu_count()
     # get cores from inputs
     if 'CORES' in params['INPUTS']:
         # get value from inputs
@@ -3111,8 +3113,17 @@ def _get_cores(params):
             cores = 1
     else:
         cores = 1
-    # get number of cores on machine
-    cpus = os.cpu_count()
+    # -------------------------------------------------------------------------
+    # if cores is negative use all but this many cores
+    if cores < 0:
+        if abs(cores) >= cpus:
+            cores = cpus - 1
+        else:
+            cores = cpus + cores
+    # if cores is zero use all but 1 core
+    elif cores == 0:
+        cores = cpus - 1
+    # -------------------------------------------------------------------------
     # check that cores is valid
     if cores < 1:
         WLOG(params, 'error', textentry('00-503-00008', args=[cores]))
