@@ -121,10 +121,10 @@ def __main__(recipe, params):
             # get the recipe sequences
             drs_documentation.compile_recipe_sequences(params, recipe)
     # ---------------------------------------------------------------------
+    # get mode
+    mode = params['INPUTS']['MODE']
     # compile documentation
     if params['INPUTS']['COMPILE']:
-        # get mode
-        mode = params['INPUTS']['MODE']
         # print progress
         WLOG(params, '', params['DRS_HEADER'], colour='magenta')
         WLOG(params, 'info', 'Compiling mode={0}'.format(mode),

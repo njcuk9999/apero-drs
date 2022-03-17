@@ -849,6 +849,8 @@ def upload(params: ParamDict):
     rdict['HOST'] = SSH_HOST
     rdict['INPATH'] = out_dir
     rdict['OUTPATH'] = SSH_PATH
+    # print command to rsync
+    WLOG(params, '', RSYNC_CMD.format(**rdict))
     # run command (will require password)
     os.system(RSYNC_CMD.format(**rdict))
 
