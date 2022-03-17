@@ -129,7 +129,7 @@ class LogEntry:
         self.block_kind = self.data.iloc[0]['BLOCK_KIND']
         self.recipe_type = self.data.iloc[0]['RECIPE_TYPE']
         self.recipe_kind = self.data.iloc[0]['RECIPE_KIND']
-        self.log_file = self.data.iloc[0]['LOG_FILE']
+        self.log_file = self.data.iloc[0]['LOGFILE']
         self.runstring = self.data.iloc[0]['RUNSTRING']
 
         if mode != 'timing':
