@@ -75,6 +75,8 @@ class LogEntry:
         self.block_kind = 'None'
         self.recipe_type = 'None'
         self.recipe_kind = 'None'
+        self.log_file = 'None'
+        self.runstring = 'None'
         # get the mjd mid
         self.mjdmid = np.nan
         self.obs_dir = 'None'
@@ -127,6 +129,8 @@ class LogEntry:
         self.block_kind = self.data.iloc[0]['BLOCK_KIND']
         self.recipe_type = self.data.iloc[0]['RECIPE_TYPE']
         self.recipe_kind = self.data.iloc[0]['RECIPE_KIND']
+        self.log_file = self.data.iloc[0]['LOG_FILE']
+        self.runstring = self.data.iloc[0]['RUNSTRING']
 
         if mode != 'timing':
             # cross-match with index database
@@ -347,13 +351,15 @@ def timing_stats(params: ParamDict, recipe: DrsRecipe):
     # get stats
     stat_dict = get_timing_stats(log_entries)
     # get log table
-    log_dict = dict(recipe=[], shortname=[], pid=[],
+    log_dict = dict(recipe=[], shortname=[], pid=[], logfile=[], runstring=[],
                     start=[], end=[], duration=[])
     # loop around and add entries
     for log_entry in log_entries:
         log_dict['recipe'].append(log_entry.recipe_name)
         log_dict['shortname'].append(log_entry.shortname)
         log_dict['pid'].append(log_entry.pid)
+        log_dict['logfile'].append(log_entry.log_file)
+        log_dict['runstring'].append(log_entry.runstring)
         log_dict['start'].append(log_entry.start_time)
         log_dict['end'].append(log_entry.end_time)
         log_dict['duration'].append(log_entry.duration)
