@@ -2,6 +2,41 @@ Changelog
 =========
 
 
+0.7.215 (2022-03-21)
+--------------------
+- Apero.core.*.recipe_definitions.py - master night non master recipes
+  should not have master=True, night cals should not have thermal
+  master=True. [Neil Cook]
+- Drs_stats.py - correct typo LOG_FILE --> LOGFILE. [Neil Cook]
+- Drs_stats.py - add logfile and runstring to output timing stats. [Neil
+  Cook]
+- Drs_stats.py - add pid to log output. [Neil Cook]
+
+
+0.7.214 (2022-03-15)
+--------------------
+- Update run.ini files and all negative number of cores (to mean
+  N-abs(cores)) [Neil Cook]
+- Apero_flat_*.py - remove e2ds saving. [Neil Cook]
+- Apero.core.constants.param_functions.py + apero.core.core.drs_file.py
+  - add iloc (index database entries) to PARAM_TABLE. [Neil Cook]
+- Apero.recipes.spirou.apero_flat_*.py - write e2ds and e2dsll for flat
+  files (as debug) [Neil Cook]
+- Apero.science.extract.gen_ext.py - make sure orderps files are added
+  to index database (and have PARAM_TABLE) [ID by DRS-TEST] [Neil Cook]
+- Apero.science.calib.dark.py - fix bad naming of dark_master extensions
+  [ID by DRS-TESTS] [Neil Cook]
+- Install.py - fix database_ask criteria for reject database. [Neil
+  Cook]
+- Install.py - do not validate if --help in args. [Neil Cook]
+- Update installer with reject database installation. [Neil Cook]
+- Apero_preprocessing.py - correct reject_infile() [Neil Cook]
+- Update apero_go.py. [Neil Cook]
+- Update run.ini files and add reject database to apero_database.py.
+  [Neil Cook]
+- Update date, version, documentation, changelog. [Neil Cook]
+
+
 0.7.213 (2022-03-09)
 --------------------
 - Merge branch 'v0.7.209-neil-test' into v0.7.208-working. [Neil Cook]
