@@ -1126,15 +1126,16 @@ full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 # master run
 full_seq.add(apero_preprocess, recipe_kind='pre-all')
 full_seq.add(apero_dark_master, master=True)
-full_seq.add(apero_badpix, name='BADM', master=True, recipe_kind='calib-master')
-full_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat], master=True,
+full_seq.add(apero_badpix, name='BADM', master=False,
+             recipe_kind='calib-master')
+full_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat], master=False,
              recipe_kind='calib-master-B')
-full_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark], master=True,
+full_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark], master=False,
              recipe_kind='calib-master-A')
 full_seq.add(apero_shape_master, master=True)
-full_seq.add(apero_shape, name='SHAPELM', master=True,
+full_seq.add(apero_shape, name='SHAPELM', master=False,
              recipe_kind='calib-master')
-full_seq.add(apero_flat, name='FLATM', master=True,
+full_seq.add(apero_flat, name='FLATM', master=False,
              recipe_kind='calib-master')
 full_seq.add(apero_leak_master, master=True)
 full_seq.add(apero_wave_master, master=True,
@@ -1209,16 +1210,16 @@ limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
 # master run
 limited_seq.add(apero_preprocess, recipe_kind='pre-all')
 limited_seq.add(apero_dark_master, master=True)
-limited_seq.add(apero_badpix, name='BADM', master=True,
+limited_seq.add(apero_badpix, name='BADM', master=False,
                 recipe_kind='calib-master')
-limited_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat], master=True,
-                recipe_kind='calib-master-B')
-limited_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark], master=True,
-                recipe_kind='calib-master-A')
+limited_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat],
+                master=False, recipe_kind='calib-master-B')
+limited_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark],
+                master=False, recipe_kind='calib-master-A')
 limited_seq.add(apero_shape_master, master=True)
-limited_seq.add(apero_shape, name='SHAPELM', master=True,
+limited_seq.add(apero_shape, name='SHAPELM', master=False,
                 recipe_kind='calib-master')
-limited_seq.add(apero_flat, name='FLATM', master=True,
+limited_seq.add(apero_flat, name='FLATM', master=False,
                 recipe_kind='calib-master')
 limited_seq.add(apero_leak_master, master=True)
 limited_seq.add(apero_wave_master, master=True,
@@ -1344,16 +1345,16 @@ pp_seq_opt.add(apero_preprocess, name='PP_FPLFC', files=[files.raw_fp_lfc],
 # -----------------------------------------------------------------------------
 master_seq = drs_recipe.DrsRunSequence('master_seq', __INSTRUMENT__)
 master_seq.add(apero_dark_master, master=True)
-master_seq.add(apero_badpix, name='BADM', master=True,
+master_seq.add(apero_badpix, name='BADM', master=False,
                recipe_kind='calib-master')
-master_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat], master=True,
-               recipe_kind='calib-master-B')
-master_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark], master=True,
-               recipe_kind='calib-master-A')
+master_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat],
+               master=False, recipe_kind='calib-master-B')
+master_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark],
+               master=False, recipe_kind='calib-master-A')
 master_seq.add(apero_shape_master, master=True)
-master_seq.add(apero_shape, name='SHAPELM', master=True,
+master_seq.add(apero_shape, name='SHAPELM', master=False,
                recipe_kind='calib-master')
-master_seq.add(apero_flat, name='FLATM', master=True,
+master_seq.add(apero_flat, name='FLATM', master=False,
                recipe_kind='calib-master')
 master_seq.add(apero_leak_master, master=True)
 master_seq.add(apero_wave_master, master=True,
