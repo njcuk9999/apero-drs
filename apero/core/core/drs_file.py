@@ -3447,8 +3447,8 @@ class DrsFitsFile(DrsInputFile):
         for key in self.hdict:
             # deal with COMMENT cards
             if isinstance(self.hdict[key], HCC):
-                self.header[key] = (self.hdict[key][0],
-                                    self.hdict.comments[key][0])
+                for value in str(self.hdict[key]).split('\n'):
+                    self.header[key] = value
             # just set them to  header[key] = (VALUE, COMMENT)
             else:
                 self.header[key] = (self.hdict[key], self.hdict.comments[key])
@@ -7361,7 +7361,7 @@ def combine(params: ParamDict, recipe: Any,
     basenames = []
     for infile in infiles:
         # read the infile
-        infile.read_file()
+        infile.read_file(check=True)
         # get the base name for each infile
         basenames.append(infile.basename)
     # make new infile using math
@@ -7489,7 +7489,7 @@ def combine_headers(params: ParamDict, headers: List[Header],
     # step 3: get all header keys and see which are identical
     # -------------------------------------------------------------------------
     # storage of all keys
-    all_dict = dict()
+    all_dict, type_dict = dict(), dict()
     table_keys, table_comments, constant_keys = [], [], []
     # loop around unique header keys
     for k_it, key in enumerate(all_header_keys):
@@ -7498,10 +7498,16 @@ def combine_headers(params: ParamDict, headers: List[Header],
             continue
         # storage of values
         values = []
+
+        comment_card = False
         # loop around headers
         for h_it, header in enumerate(headers):
             if key in header:
-                values.append(header[key])
+                value = header[key]
+                # deal with header comment cards
+                if isinstance(value, drs_fits.HeaderCommentCards):
+                    comment_card = True
+                values.append(value)
             else:
                 values.append(None)
         # if keys are identified as being combined add them to table_keys
@@ -7509,13 +7515,16 @@ def combine_headers(params: ParamDict, headers: List[Header],
             table_keys.append(key)
             table_comments.append(all_comments[k_it])
         # identify if values are all the same
-        if len(set(values)) == 1:
+        if comment_card:
+            constant_keys.append(key)
+        elif len(set(values)) == 1:
             constant_keys.append(key)
         else:
             table_keys.append(key)
             table_comments.append(all_comments[k_it])
         # add values to all_dict
         all_dict[key] = values
+        type_dict[key] = comment_card
     # -------------------------------------------------------------------------
     # step 4: for those keys that have been flagged as needing combining
     #         combine them with the combine_method
@@ -7564,7 +7573,10 @@ def combine_headers(params: ParamDict, headers: List[Header],
     # loop around all keys in the correct order
     for k_it, key in enumerate(all_header_keys):
         # only add keys that are in new_header_dict
-        if key in new_header_dict:
+        if key in new_header_dict and type_dict[key]:
+            for value in str(new_header_dict[key]).split('\n'):
+                new_hdict[key] = value
+        elif key in new_header_dict:
             # add the value and the comment
             new_hdict[key] = (new_header_dict[key], all_comments[k_it])
     # copy into the new header

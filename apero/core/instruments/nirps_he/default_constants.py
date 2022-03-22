@@ -848,25 +848,25 @@ SHAPE_PLOT_SELECTED_ORDER.value = 33
 
 # total width of the order (combined fibers) in pixels
 SHAPE_ORDER_WIDTH = SHAPE_ORDER_WIDTH.copy(__NAME__)
-SHAPE_ORDER_WIDTH.value = 60
+SHAPE_ORDER_WIDTH.value = '{"A": 24, "B": 8}'
 
 # number of sections per order to split the order into
 SHAPE_NSECTIONS = SHAPE_NSECTIONS.copy(__NAME__)
-SHAPE_NSECTIONS.value = 32
+SHAPE_NSECTIONS.value = 16
 
 # the range of angles (in degrees) for the first iteration (large)
 # and subsequent iterations (small)
 SHAPE_LARGE_ANGLE_MIN = SHAPE_LARGE_ANGLE_MIN.copy(__NAME__)
-SHAPE_LARGE_ANGLE_MIN.value = -12.0
+SHAPE_LARGE_ANGLE_MIN.value = -20.0
 
 SHAPE_LARGE_ANGLE_MAX = SHAPE_LARGE_ANGLE_MAX.copy(__NAME__)
-SHAPE_LARGE_ANGLE_MAX.value = 0.0
+SHAPE_LARGE_ANGLE_MAX.value = 20.0
 
 SHAPE_SMALL_ANGLE_MIN = SHAPE_SMALL_ANGLE_MIN.copy(__NAME__)
-SHAPE_SMALL_ANGLE_MIN.value = -1.0
+SHAPE_SMALL_ANGLE_MIN.value = -5.0
 
 SHAPE_SMALL_ANGLE_MAX = SHAPE_SMALL_ANGLE_MAX.copy(__NAME__)
-SHAPE_SMALL_ANGLE_MAX.value = 1.0
+SHAPE_SMALL_ANGLE_MAX.value = 5.0
 
 # max sigma clip (in sigma) on points within a section
 SHAPE_SIGMACLIP_MAX = SHAPE_SIGMACLIP_MAX.copy(__NAME__)
@@ -878,7 +878,7 @@ SHAPE_MEDIAN_FILTER_SIZE.value = 51
 
 # The minimum value for the cross-correlation to be deemed good
 SHAPE_MIN_GOOD_CORRELATION = SHAPE_MIN_GOOD_CORRELATION.copy(__NAME__)
-SHAPE_MIN_GOOD_CORRELATION.value = 0.3
+SHAPE_MIN_GOOD_CORRELATION.value = 0.5
 
 # Define the first pass (short) median filter width for dx
 SHAPE_SHORT_DX_MEDFILT_WID = SHAPE_SHORT_DX_MEDFILT_WID.copy(__NAME__)
@@ -1130,11 +1130,11 @@ EXT_END_ORDER.value = None
 
 #   Half-zone extraction width left side (formally plage1)
 EXT_RANGE1 = EXT_RANGE1.copy(__NAME__)
-EXT_RANGE1.value = '{"A":5, "B":5}'
+EXT_RANGE1.value = '{"A":9, "B":4}'
 
 #   Half-zone extraction width right side (formally plage2)
 EXT_RANGE2 = EXT_RANGE2.copy(__NAME__)
-EXT_RANGE2.value = '{"A":5, "B":5}'
+EXT_RANGE2.value = '{"A":9, "B":4}'
 
 #   Define the orders to skip extraction on (will set all order values
 #      to NaN. If empty list no orders are skipped. Should be a string

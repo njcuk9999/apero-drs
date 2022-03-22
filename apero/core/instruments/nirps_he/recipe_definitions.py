@@ -168,26 +168,25 @@ pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 # -----------------------------------------------------------------------------
 # apero_pp_master
 # -----------------------------------------------------------------------------
-# # TODO: remove
-# apero_pp_master = DrsRecipe(__INSTRUMENT__)
-# apero_pp_master.name = 'apero_pp_master_{0}.py'.format(INSTRUMENT_ALIAS)
-# apero_pp_master.shortname = 'PPM'
-# apero_pp_master.instrument = __INSTRUMENT__
-# apero_pp_master.in_block_str = 'raw'
-# apero_pp_master.out_block_str = 'red'
-# apero_pp_master.extension = 'fits'
-# apero_pp_master.description = textentry('PPMASTER_DESC')
-# apero_pp_master.epilog = textentry('PPMASTER_EXAMPLE')
-# apero_pp_master.recipe_type = 'recipe'
-# apero_pp_master.recipe_kind = 'pre-master'
-# apero_pp_master.set_outputs(PP_MASTER=files.out_pp_master)
-# apero_pp_master.set_arg(pos=0, **obs_dir)
-# apero_pp_master.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
-#                         helpstr=textentry('PPMASTER_FILETYPE_HELP'))
-# apero_pp_master.group_func = grouping.no_group
-# apero_pp_master.group_column = None
-# # add to recipe
-# recipes.append(apero_pp_master)
+apero_pp_master = DrsRecipe(__INSTRUMENT__)
+apero_pp_master.name = 'apero_pp_master_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_pp_master.shortname = 'PPM'
+apero_pp_master.instrument = __INSTRUMENT__
+apero_pp_master.in_block_str = 'raw'
+apero_pp_master.out_block_str = 'red'
+apero_pp_master.extension = 'fits'
+apero_pp_master.description = textentry('PPMASTER_DESC')
+apero_pp_master.epilog = textentry('PPMASTER_EXAMPLE')
+apero_pp_master.recipe_type = 'recipe'
+apero_pp_master.recipe_kind = 'pre-master'
+apero_pp_master.set_outputs(PP_MASTER=files.out_pp_master)
+apero_pp_master.set_arg(pos=0, **obs_dir)
+apero_pp_master.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
+                        helpstr=textentry('PPMASTER_FILETYPE_HELP'))
+apero_pp_master.group_func = grouping.no_group
+apero_pp_master.group_column = None
+# add to recipe
+recipes.append(apero_pp_master)
 
 # -----------------------------------------------------------------------------
 # apero_preprocess

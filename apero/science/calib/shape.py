@@ -705,13 +705,12 @@ def ea_transform_coeff(image, coeffs, lin_transform_vect):
     return coeffs2
 
 
-def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, **kwargs):
+def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
     func_name = __NAME__ + '.calculate_dxmap()'
 
     # get parameters from params/kwargs
     nbanana = pcheck(params, 'SHAPE_NUM_ITERATIONS', 'nbanana', kwargs,
                      func_name)
-    width = pcheck(params, 'SHAPE_ORDER_WIDTH', 'width', kwargs, func_name)
     nsections = pcheck(params, 'SHAPE_NSECTIONS', 'nsections', kwargs,
                        func_name)
     large_angle_min = pcheck(params, 'SHAPE_LARGE_ANGLE_MIN',
@@ -735,7 +734,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, **kwargs):
     long_medfilt_wid = pcheck(params, 'SHAPE_LONG_DX_MEDFILT_WID',
                               'long_medfilt_width', kwargs, func_name)
     std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
-
+    # get width for fiber
+    width = params.dictp('SHAPE_ORDER_WIDTH', dtype=int)[fiber]
     # get properties from property dictionaries
     nbo = lprops['NBO']
     acc = lprops['CENT_COEFFS']
@@ -766,6 +766,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, **kwargs):
     for order_num in range(nbo):
         # x pixel vector that is used with polynomials to
         # find the order center y order center
+        # TODO: This is spirou-centric *2 for A and B
         ypix[order_num] = np.polyval(acc[order_num * 2][::-1], xpix)
     # -------------------------------------------------------------------------
     # storage of the dxmap standard deviations
@@ -1072,7 +1073,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, **kwargs):
         # ---------------------------------------------------------------------
         # dx plot
         recipe.plot('SHAPE_DX', dx=dx, dx2=dx2, bnum=banana_num,
-                    nbanana=nbanana)
+                    nbanana=nbanana, fiber=fiber)
         # ---------------------------------------------------------------------
         # loop around orders
         for order_num in range(nbo):
@@ -1191,7 +1192,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, **kwargs):
                        ccor=[ccor_arr_i], ddx=[ddx_arr_i], dx=[dx_arr_i],
                        dypix=[dypix_arr_i], ckeep=[cckeep_arr_i])
         recipe.plot('SHAPE_ANGLE_OFFSET_ALL', params=params, bnum=banana_num,
-                    nbo=nbo, nbpix=dim2, **pkwargs)
+                    nbo=nbo, nbpix=dim2, fiber=fiber, **pkwargs)
         # ---------------------------------------------------------------------
         # append to storage
         slope_deg_arr.append(slope_deg_arr_i), slope_arr.append(slope_arr_i)
@@ -1206,10 +1207,10 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, **kwargs):
                    ddx=ddx_arr, dx=dx_arr, dypix=dypix_arr, ckeep=cckeep_arr)
     # plot as debug plot
     recipe.plot('SHAPE_ANGLE_OFFSET', params=params, bnum=None, nbo=nbo,
-                nbpix=dim2, **pkwargs)
+                nbpix=dim2, fiber=fiber, **pkwargs)
     # plot as summary plot
     recipe.plot('SUM_SHAPE_ANGLE_OFFSET', params=params, bnum=None, nbo=nbo,
-                nbpix=dim2, **pkwargs)
+                nbpix=dim2, fiber=fiber, **pkwargs)
     # ---------------------------------------------------------------------
     # setting to 0 pixels that are NaNs
     nanmask = ~np.isfinite(master_dxmap)
@@ -1231,6 +1232,518 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, **kwargs):
     # ---------------------------------------------------------------------
     # return parameters
     return master_dxmap, max_dxmap_std, max_dxmap_info, dxrms
+
+
+def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
+    func_name = __NAME__ + '.calculate_dxmap()'
+
+    # get parameters from params/kwargs
+    nbanana = pcheck(params, 'SHAPE_NUM_ITERATIONS', 'nbanana', kwargs,
+                     func_name)
+
+    nsections = pcheck(params, 'SHAPE_NSECTIONS', 'nsections', kwargs,
+                       func_name)
+    large_angle_min = pcheck(params, 'SHAPE_LARGE_ANGLE_MIN',
+                             'large_angle_min', kwargs, func_name)
+    large_angle_max = pcheck(params, 'SHAPE_LARGE_ANGLE_MAX',
+                             'large_angle_max', kwargs, func_name)
+    large_angle_range = [large_angle_min, large_angle_max]
+    small_angle_min = pcheck(params, 'SHAPE_SMALL_ANGLE_MIN',
+                             'small_angle_min', kwargs, func_name)
+    small_angle_max = pcheck(params, 'SHAPE_SMALL_ANGLE_MAX',
+                             'small_angle_max', kwargs, func_name)
+    small_angle_range = [small_angle_min, small_angle_max]
+    sigclipmax = pcheck(params, 'SHAPE_SIGMACLIP_MAX', 'sigclipmax',
+                        kwargs, func_name)
+    med_filter_size = pcheck(params, 'SHAPE_MEDIAN_FILTER_SIZE',
+                             'med_filter_size', kwargs, func_name)
+    min_good_corr = pcheck(params, 'SHAPE_MIN_GOOD_CORRELATION',
+                           'min_good_corr', kwargs, func_name)
+    short_medfilt_wid = pcheck(params, 'SHAPE_SHORT_DX_MEDFILT_WID',
+                               'short_medfilt_width', kwargs, func_name)
+    long_medfilt_wid = pcheck(params, 'SHAPE_LONG_DX_MEDFILT_WID',
+                              'long_medfilt_width', kwargs, func_name)
+    std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
+    # get width for fiber
+    width = params.dictp('SHAPE_ORDER_WIDTH', dtype=int)[fiber]
+    # get properties from property dictionaries
+    nbo = lprops['NBO']
+    acc = lprops['CENT_COEFFS']
+    # poly_wave_ref = wprops['COEFFS']
+    # une_lines, une_amps = drs_data.load_linelist(params)
+    _, poly_cavity = drs_data.load_cavity_files(params)
+    # get the dimensions
+    dim1, dim2 = fpdata.shape
+    # -------------------------------------------------------------------------
+    # define storage for plotting
+    slope_deg_arr, slope_arr, skeep_arr = [], [], []
+    xsec_arr, ccor_arr = [], []
+    ddx_arr, dx_arr = [], []
+    dypix_arr, cckeep_arr = [], []
+    dxrms_arr = []
+    # define storage for output
+    master_dxmap = np.zeros_like(fpdata)
+    map_orders = np.zeros_like(fpdata) - 1
+    order_overlap = np.zeros_like(fpdata)
+    slope_all_ord = np.zeros((nbo, dim2))
+    # -------------------------------------------------------------------------
+    # create the x pixel vector (used with polynomials to find
+    #    order center)
+    xpix = np.array(range(dim2))
+    # y order center positions (every other one)
+    ypix = np.zeros((nbo, dim2))
+    # loop around order number
+    for order_num in range(nbo):
+        # x pixel vector that is used with polynomials to
+        # find the order center y order center
+        ypix[order_num] = np.polyval(acc[order_num][::-1], xpix)
+    # -------------------------------------------------------------------------
+    # storage of the dxmap standard deviations
+    dxmap_stds = []
+    # -------------------------------------------------------------------------
+    # iterating the correction, from coarser to finer
+    for banana_num in range(nbanana):
+        # ---------------------------------------------------------------------
+        # we use the code that will be used by the extraction to ensure
+        # that slice images are as straight as can be
+        # ---------------------------------------------------------------------
+        # if the map is not zeros, we use it as a starting point
+        if np.sum(master_dxmap != 0) != 0:
+            fpdata2 = ea_transform(params, fpdata, dxmap=master_dxmap)
+            # if this is not the first iteration, then we must be really close
+            # to a slope of 0
+            range_slopes_deg = small_angle_range
+        else:
+            fpdata2 = np.array(fpdata)
+            # starting point for slope exploration
+            range_slopes_deg = large_angle_range
+        # expressed in pixels, not degrees
+        range_slopes = np.tan(np.deg2rad(np.array(range_slopes_deg)))
+        # set up iteration storage
+        slope_deg_arr_i, slope_arr_i, skeep_arr_i = [], [], []
+        xsec_arr_i, ccor_arr_i, ddx_arr_i, dx_arr_i = [], [], [], []
+        dypix_arr_i, cckeep_arr_i, dxrms_arr_i = [], [], []
+        # corr_dx_from_fp = np.zeros((nbo, dim2))
+        shifts_all = np.zeros((nbo, dim2))
+        # get dx array (NaN)
+        dx = np.zeros((nbo, width)) + np.nan
+        # ------------------------------------------------------------------
+        # loop around orders
+        for order_num in range(nbo):
+            # --------------------------------------------------------------
+            # Log progress banana iteration {0} of {1} order {2} of {3}
+            wargs = [banana_num + 1, nbanana, order_num + 1, nbo]
+            WLOG(params, '', textentry('40-014-00016', args=wargs))
+            # --------------------------------------------------------------
+            # defining a ribbon that will contain the straightened order
+            ribbon_fp = np.zeros([width, dim2])
+            # get the widths
+            widths = np.arange(width) - width / 2.0
+            # get all bottoms and tops
+            bottoms = ypix[order_num] - width / 2 - 2
+            tops = ypix[order_num] + width / 2 + 2
+            # splitting the original image onto the ribbon
+            for ix in range(dim2):
+                # define bottom and top that encompasses all 3 fibers
+                bottom = int(bottoms[ix])
+                top = int(tops[ix])
+                # deal with bottom and top being out of bounds
+                if bottom < 0:
+                    bottom = 0
+                if top > dim1:
+                    top = dim1
+                # get the x pixels for range
+                sx = np.arange(bottom, top)
+                # calculate spline interpolation and ribbon values
+                if bottom > 0:
+                    # for the fp data
+                    spline_fp = mp.iuv_spline(sx, fpdata2[bottom:top, ix],
+                                              ext=1, k=3)
+                    ribbon_fp[:, ix] = spline_fp(ypix[order_num, ix] + widths)
+
+            # normalizing ribbon stripes to their median abs dev
+            for iw in range(width):
+                # for the hc data
+                norm_fp = mp.nanmedian(np.abs(ribbon_fp[iw, :]))
+                # deal with a row of zeros
+                if norm_fp == 0.0:
+                    continue
+                # for the fp data
+                ribbon_fp[iw, :] = ribbon_fp[iw, :] / norm_fp
+            # range explored in slopes
+            #
+            # Once we have searched through a range of slopes and found the
+            # best slope, we search a narrower range. We cut the slope range
+            # by a factor of 8. This is a big ad-hoc as a number, but its a
+            # reasonable compromise between code speed and being sure that we
+            # would not miss the best slope on the next iteration
+            #
+            sfactor = (range_slopes[1] - range_slopes[0]) / 8.0
+            slopes = (np.arange(9) * sfactor) + range_slopes[0]
+            # log the range slope exploration
+            wargs = [range_slopes_deg[0], range_slopes_deg[1]]
+            WLOG(params, '', textentry('40-014-00017', args=wargs))
+            # -------------------------------------------------------------
+            # the domain is sliced into a number of sections, then we
+            # find the tilt that maximizes the RV content
+            xsection = dim2 * (np.arange(nsections) + 0.5) / nsections
+            dxsection = np.repeat([np.nan], len(xsection))
+            keep = np.zeros(len(dxsection), dtype=bool)
+            ribbon_fp2 = np.array(ribbon_fp)
+            # RV content per slice and per slope
+            rvcontent = np.zeros([len(slopes), nsections])
+            # loop around the slopes
+            for islope, slope in enumerate(slopes):
+                # copy the ribbon
+                ribbon_fp2 = np.array(ribbon_fp)
+                # interpolate new slope-ed ribbon
+                for iw in range(width):
+                    # get the ddx value
+                    ddx = (iw - width / 2.0) * slope
+                    # get the spline
+                    spline = mp.iuv_spline(xpix, ribbon_fp[iw, :], ext=1)
+                    # calculate the new ribbon values
+                    ribbon_fp2[iw, :] = spline(xpix + ddx)
+                # record the profile of the ribbon
+                profile = mp.nanmean(ribbon_fp2, axis=0)
+                # loop around the sections to record rv content
+                for nsection in range(nsections):
+                    # sum of integral of derivatives == RV content.
+                    # This should be maximal when the angle is right
+                    start = nsection * dim2 // nsections
+                    end = (nsection + 1) * dim2 // nsections
+                    grad = np.gradient(profile[start:end])
+                    rvcontent[islope, nsection] = mp.nansum(grad ** 2)
+            # -------------------------------------------------------------
+            # we find the peak of RV content and fit a parabola to that peak
+            for nsection in range(nsections):
+                # we must have some RV content (i.e., !=0)
+                if mp.nanmax(rvcontent[:, nsection]) != 0:
+                    vec = np.ones_like(slopes)
+                    vec[0], vec[-1] = 0, 0
+                    # get the max pixel
+                    maxpix = mp.nanargmax(rvcontent[:, nsection] * vec)
+                    # max RV and fit on the neighbouring pixels
+                    xff = slopes[maxpix - 1: maxpix + 2]
+                    yff = rvcontent[maxpix - 1: maxpix + 2, nsection]
+                    coeffs = mp.nanpolyfit(xff, yff, 2)
+                    # if peak within range, then its fine
+                    dcoeffs = -0.5 * coeffs[1] / coeffs[0]
+                    if np.abs(dcoeffs) < 1:
+                        dxsection[nsection] = dcoeffs
+                # we sigma-clip the dx[x] values relative to a linear fit
+                keep = np.isfinite(dxsection)
+            # -------------------------------------------------------------
+            # work out the median slope
+            dxdiff = dxsection[1:] - dxsection[:-1]
+            xdiff = xsection[1:] - xsection[:-1]
+            medslope = mp.nanmedian(dxdiff / xdiff)
+            # work out the residual of dxsection (based on median slope)
+            residual = dxsection - (medslope * xsection)
+            residual = residual - mp.nanmedian(residual)
+            res_residual = residual - mp.nanmedian(residual)
+            residual = residual / mp.nanmedian(np.abs(res_residual))
+            # work out the maximum sigma and update keep vector
+            sigmax = mp.nanmax(np.abs(residual[keep]))
+            with warnings.catch_warnings(record=True) as _:
+                keep &= np.abs(residual) < sigclipmax
+            # -------------------------------------------------------------
+            # sigma clip
+            while sigmax > sigclipmax:
+                # recalculate the fit
+                coeffs = mp.nanpolyfit(xsection[keep], dxsection[keep], 2)
+                # get the residuals
+                res = dxsection - np.polyval(coeffs, xsection)
+                # normalise residuals
+                res = res - mp.nanmedian(res[keep])
+                res = res / mp.nanmedian(np.abs(res[keep]))
+                # calculate the sigma
+                sigmax = mp.nanmax(np.abs(res[keep]))
+                # do not keep bad residuals
+                with warnings.catch_warnings(record=True) as _:
+                    keep &= np.abs(res) < sigclipmax
+            # -------------------------------------------------------------
+            # fit a 2nd order polynomial to the slope vx position
+            #    along order
+            # TODO: 2 for spirou 1 for nirps
+            coeffs = mp.nanpolyfit(xsection[keep], dxsection[keep], 1)
+            # log slope at center
+            s_xpix = dim2 // 2
+            s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
+            wargs = [s_xpix, s_ypix]
+            WLOG(params, '', textentry('40-014-00018', args=wargs))
+            # get slope for full range
+            slope_all_ord[order_num] = np.polyval(coeffs, np.arange(dim2))
+            # -------------------------------------------------------------
+            # append to storage (for plotting)
+            xsec_arr_i.append(np.array(xsection))
+            slope_deg_arr_i.append(np.rad2deg(np.arctan(dxsection)))
+            slope_arr_i.append(np.rad2deg(np.arctan(slope_all_ord[order_num])))
+            skeep_arr_i.append(np.array(keep))
+
+            # -------------------------------------------------------------
+            # correct for the slope the ribbons and look for the
+            #    slicer profile in the fp
+            yfit = np.polyval(coeffs, xpix)
+            for iw in range(width):
+                # get the x shift
+                ddx = (iw - width / 2.0) * yfit
+                # calculate the spline at this width
+                spline_fp = mp.iuv_spline(xpix, ribbon_fp[iw, :], ext=1)
+                # push spline values with shift into ribbon2
+                ribbon_fp2[iw, :] = spline_fp(xpix + ddx)
+
+            # -------------------------------------------------------------
+            # get the median values of the fp and hc
+            # sp_fp = mp.nanmedian(ribbon_fp2, axis=0)
+            # sp_hc = mp.nanmedian(ribbon_hc2, axis=0)
+
+            # pargs = [params, sp_fp, sp_hc, order_num, hcdata,
+            #          poly_wave_ref, une_lines, poly_cavity]
+            # out = get_offset_sp(*pargs)
+            # # get and save offest outputs into lists
+            # corr_dx_from_fp[order_num] = out[0]
+            # xpeak2.append(out[1])
+            # peakval2.append(out[2])
+            # ewval2.append(out[3])
+            # err_pix.append(out[4])
+            # good_mask.append(out[5])
+            # -------------------------------------------------------------
+            # median FP peak profile. We will cross-correlate each
+            # row of the ribbon with this
+            profile = mp.nanmedian(ribbon_fp2, axis=0)
+            medianprofile = filters.median_filter(profile, med_filter_size)
+            profile = profile - medianprofile
+
+            # -------------------------------------------------------------
+            # cross-correlation peaks of median profile VS position
+            #    along ribbon
+            # TODO: Question: Why -3 to 4 where does this come from?
+            ddx = np.arange(-3, 4)
+            # set up cross-correlation storage
+            ccor = np.zeros([width, len(ddx)], dtype=float)
+            # loop around widths
+            for iw in range(width):
+                for jw in range(len(ddx)):
+                    # calculate the peasron r coefficient
+                    xff = ribbon_fp2[iw, :]
+                    yff = np.roll(profile, ddx[jw])
+                    pearsonr_value = stats.pearsonr(xff, yff)[0]
+                    # push into cross-correlation storage
+                    ccor[iw, jw] = pearsonr_value
+                # fit a gaussian to the cross-correlation peak
+                xvec = ddx
+                yvec = ccor[iw, :]
+                with warnings.catch_warnings(record=True) as _:
+                    # we perform a gaussian fit on the correlation coefficient
+                    # between the median order profile and the Nth slice in
+                    # y perpendicular to dispersion along the order. The
+                    # gaussian fit has nn=4 as there may be a DC offset
+                    # nn=4 is gaussian+offset (5th is slope, just in case
+                    # you wondered)
+                    gcoeffs, _ = mp.gauss_fit_nn(xvec, yvec, 4)
+                # check that max value is good
+                if mp.nanmax(ccor[iw, :]) > min_good_corr:
+                    dx[order_num, iw] = gcoeffs[1]
+            # -------------------------------------------------------------
+            # remove any offset in dx, this would only shift the spectra
+
+            # TODO : bad bad bad, don't comment out yet!
+            dypix = np.arange(len(dx[order_num]))
+            with warnings.catch_warnings(record=True):
+                keep = np.abs(dx[order_num] - mp.nanmedian(dx[order_num])) < 1
+            keep &= np.isfinite(dx[order_num])
+            # -------------------------------------------------------------
+            # append to storage for plotting
+            ccor_arr_i.append(np.array(ccor))
+            ddx_arr_i.append(np.array(ddx))
+            dx_arr_i.append(np.array(dx[order_num]))
+            dypix_arr_i.append(np.array(dypix))
+            cckeep_arr_i.append(np.array(keep))
+            # get rms values
+            dxrms_arr_i.append(np.array(dx[order_num] - mp.nanmin(ddx)))
+            # -----------------------------------------------------------------
+            # set those values that should not be kept to NaN
+            dx[order_num][~keep] = np.nan
+        # -----------------------------------------------------------------
+        # get the median filter of dx (short median filter)
+        dx2_short = np.array(dx)
+        for iw in range(width):
+            dx2_short[:, iw] = mp.medfilt_1d(dx[:, iw], short_medfilt_wid)
+        # get the median filter of short dx with longer median
+        #     filter/second pass
+        dx2_long = np.array(dx)
+        for iw in range(width):
+            dx2_long[:, iw] = mp.medfilt_1d(dx2_short[:, iw], long_medfilt_wid)
+        # apply short dx filter to dx2
+        dx2 = np.array(dx2_short)
+        # apply long dx filter to NaN positions of short dx filter
+        nanmask = ~np.isfinite(dx2)
+        dx2[nanmask] = dx2_long[nanmask]
+        # ---------------------------------------------------------------------
+        # dx plot
+        recipe.plot('SHAPE_DX', dx=dx, dx2=dx2, bnum=banana_num,
+                    nbanana=nbanana, fiber=fiber)
+        # ---------------------------------------------------------------------
+        # loop around orders
+        for order_num in range(nbo):
+            # -------------------------------------------------------------
+            # log process (updating big dx map)
+            wargs = [order_num + 1, nbo]
+            WLOG(params, '', textentry('40-014-00021', args=wargs))
+            # -------------------------------------------------------------
+            # spline everything onto the master DX map
+            #    ext=3 forces that out-of-range values are set to boundary
+            #    value this simply uses the last reliable dx measurement for
+            #    the neighbouring slit position
+
+            # redefine keep array from dx2
+            keep = np.isfinite(dx2[order_num])
+            # redefine dypix
+            dypix = np.arange(len(keep))
+            # get locations of keep
+            pos_keep = np.where(keep)[0]
+            # set the start point
+            start_good_ccor = mp.nanmin(pos_keep) - 2
+            # deal with start being out-of-bounds
+            if start_good_ccor == -1:
+                start_good_ccor = 0
+            # set the end point
+            end_good_ccor = mp.nanmax(pos_keep) + 2
+            # deal with end being out-of-bounds
+            if end_good_ccor == width:
+                end_good_ccor = width - 1
+            # work out spline
+            spline = mp.iuv_spline(dypix[keep], dx2[order_num][keep], ext=3)
+            # define a mask for the good ccor
+            good_ccor_mask = np.zeros(len(keep), dtype=bool)
+            good_ccor_mask[start_good_ccor:end_good_ccor] = True
+
+            # log start and end points along slice
+            wargs = [start_good_ccor, end_good_ccor]
+            WLOG(params, '', textentry('40-014-00022', args=wargs))
+
+            # -------------------------------------------------------------
+            # for all field positions along the order, we determine the
+            #    dx+rotation values and update the master DX map
+            fracs = ypix[order_num] - np.fix(ypix[order_num])
+            widths = np.arange(width)
+
+            for ix in range(dim2):
+                # get slope
+                slope = slope_all_ord[order_num, ix]
+                # get dx0 with slope factor added
+                dx0 = (widths - width // 2 + (1 - fracs[ix])) * slope
+                # get the ypix at this value
+                widthrange = np.arange(-width // 2, width // 2)
+                ypix2 = int(ypix[order_num, ix]) + widthrange
+                # get the ddx
+                ddx = spline(widths - fracs[ix])
+                # set the zero shifts to NaNs
+                ddx[ddx == 0] = np.nan
+                # only set positive ypixels
+                pos_y_mask = (ypix2 >= 0) & good_ccor_mask
+                # do not want overlap between orders and a gap of 1 pixel
+                ypix0 = ypix[order_num, ix]
+                # identify the upper bound of order
+                if order_num != (nbo - 1):
+                    ypixa = ypix[order_num + 1, ix]
+                    upper_ylimit_overlap = ypix0 + 0.5 * (ypixa - ypix0) - 1
+                else:
+                    upper_ylimit_overlap = dim1 - 1
+                # identify the lower bound of order
+                if order_num != 0:
+                    ypixb = ypix[order_num - 1, ix]
+                    lower_ylimit_overlap = ypix0 - 0.5 * (ypix0 - ypixb) + 1
+                else:
+                    lower_ylimit_overlap = 0
+                # add these constraints to the position mask
+                pos_y_mask &= (ypix2 > lower_ylimit_overlap)
+                pos_y_mask &= (ypix2 < upper_ylimit_overlap)
+                # if we have some values add to master DX map
+                if np.sum(pos_y_mask) != 0:
+                    # get positions in y
+                    positions = ypix2[pos_y_mask]
+
+                    # for first iteration
+                    if banana_num == 0:
+                        # get good positions
+                        good_pos = map_orders[positions, ix] != -1
+                        # get order overlap from last order
+                        order_overlap[positions, ix] += good_pos
+                        # update map_orders
+                        map_orders[positions, ix] = order_num
+
+                    # get shifts combination of ddx and dx0 correction
+                    ddx_f = ddx + dx0
+                    shifts = ddx_f[pos_y_mask]  # - corr_dx_from_fp[order_num][ix]
+                    shifts_all[order_num][ix] = mp.nanmean(shifts)
+                    # apply shifts to master dx map at correct positions
+                    master_dxmap[positions, ix] += shifts
+
+                    # after each iteration updating the dxmap, we verify
+                    # that the per-order and per-x-pixel shift is not larger
+                    # than the maximum seen over 'normal' images.
+                    dxmap_std = mp.nanstd(master_dxmap[positions, ix])
+
+                    dxmap_stds.append(dxmap_std)
+
+                    # return here if QC not met
+                    if dxmap_std > std_qc:
+                        # add DXMAP to loc
+                        dxmap = None
+                        max_dxmap_std = dxmap_std
+                        max_dxmap_info = [order_num, ix, std_qc]
+                        return dxmap, max_dxmap_std, max_dxmap_info, None
+        # -----------------------------------------------------------------
+        # plot all order angle_offset plot (in loop)
+        pkwargs = dict(slope_deg=[slope_deg_arr_i], slope=[slope_arr_i],
+                       skeep=[skeep_arr_i], xsection=[xsec_arr_i],
+                       ccor=[ccor_arr_i], ddx=[ddx_arr_i], dx=[dx_arr_i],
+                       dypix=[dypix_arr_i], ckeep=[cckeep_arr_i])
+        recipe.plot('SHAPE_ANGLE_OFFSET_ALL', params=params, bnum=banana_num,
+                    nbo=nbo, nbpix=dim2, fiber=fiber, **pkwargs)
+        # ---------------------------------------------------------------------
+        # append to storage
+        slope_deg_arr.append(slope_deg_arr_i), slope_arr.append(slope_arr_i)
+        skeep_arr.append(skeep_arr_i), xsec_arr.append(xsec_arr_i)
+        ccor_arr.append(ccor_arr_i), ddx_arr.append(ddx_arr_i)
+        dx_arr.append(dx_arr_i), dypix_arr.append(dypix_arr_i)
+        dxrms_arr.append(dxrms_arr_i), cckeep_arr.append(cckeep_arr_i)
+    # ---------------------------------------------------------------------
+    # plot selected order angle_offset plot
+    pkwargs = dict(slope_deg=slope_deg_arr, slope=slope_arr,
+                   skeep=skeep_arr, xsection=xsec_arr, ccor=ccor_arr,
+                   ddx=ddx_arr, dx=dx_arr, dypix=dypix_arr, ckeep=cckeep_arr)
+    # plot as debug plot
+    recipe.plot('SHAPE_ANGLE_OFFSET', params=params, bnum=None, nbo=nbo,
+                nbpix=dim2, fiber=fiber, **pkwargs)
+    # plot as summary plot
+    recipe.plot('SUM_SHAPE_ANGLE_OFFSET', params=params, bnum=None, nbo=nbo,
+                nbpix=dim2, fiber=fiber, **pkwargs)
+    # ---------------------------------------------------------------------
+    # setting to 0 pixels that are NaNs
+    nanmask = ~np.isfinite(master_dxmap)
+    master_dxmap[nanmask] = 0.0
+
+    # distortions where there is some overlap between orders will be wrong
+    master_dxmap[order_overlap != 0] = 0.0
+    # save qc
+    max_dxmap_std = mp.nanmax(dxmap_stds)
+    max_dxmap_info = [None, None, std_qc]
+    # ---------------------------------------------------------------------
+    # calculate rms for dx-ddx (last iteration)
+    dxrms = []
+    for order_num in range(nbo):
+        # get the keep mask
+        keep = cckeep_arr[-1][order_num]
+
+        dxrms.append(mp.nanstd(dxrms_arr[-1][order_num][keep]))
+    # ---------------------------------------------------------------------
+    # return parameters
+    return master_dxmap, max_dxmap_std, max_dxmap_info, dxrms
+
+
 
 
 def calculate_dymap(params, fpimage, fpheader, **kwargs):

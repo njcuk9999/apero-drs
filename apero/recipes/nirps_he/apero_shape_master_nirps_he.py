@@ -100,6 +100,8 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
+    # get pconst
+    pconst = constants.pload()
     # get files
     fpfiles = params['INPUTS']['FPFILES'][1]
     # get list of filenames (for output)
@@ -110,6 +112,8 @@ def __main__(recipe, params):
 
     # set fiber we should use
     fiber = pcheck(params, 'SHAPE_MASTER_FIBER', func=mainname)
+    # get science and reference fiber
+    sci_fibers, ref_fiber = pconst.FIBER_KINDS()
 
     # get combined fpfile
     cout = drs_file.combine(params, recipe, fpfiles, math='median')
@@ -124,15 +128,17 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
     # ----------------------------------------------------------------------
-    lprops = localisation.get_coefficients(params, fpheader, fiber,
-                                           database=calibdbm)
+    lprops_sci = localisation.get_coefficients(params, fpheader, sci_fibers[0],
+                                               database=calibdbm)
+    lprops_ref = localisation.get_coefficients(params, fpheader, ref_fiber,
+                                               database=calibdbm)
 
     # ----------------------------------------------------------------------
     # Get wave coefficients from master wavefile
     # ----------------------------------------------------------------------
     # get master wave map
-    wprops = wave.get_wavesolution(params, recipe, fiber=fiber, master=True,
-                                   database=calibdbm)
+    # wprops = wave.get_wavesolution(params, recipe, fiber=fiber, master=True,
+    #                                database=calibdbm)
 
     # ------------------------------------------------------------------
     # Correction of fp file
@@ -198,8 +204,19 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Calculate dx shape map
     # ----------------------------------------------------------------------
-    # for nirps_ha we do not need dxmap (no shape)
-    dxmap = np.zeros_like(fpimage)
+
+    # calculate the dx map for fiber A
+    cargs_a = [master_fp, lprops_sci]
+    dout = shape.calculate_dxmap_nirpshe(params, recipe, *cargs_a, fiber='A')
+    # TODO use max_dxmap_std, max_dxmap_info, dxrms as in spirou (QC?)
+    dxmap_a, max_dxmap_std_a, max_dxmap_info_a, dxrms_a = dout
+    # calculate the dx map for fiber B
+    cargs_b = [master_fp, lprops_ref]
+    dout = shape.calculate_dxmap_nirpshe(params, recipe, *cargs_b, fiber='B')
+    # TODO use max_dxmap_std, max_dxmap_info, dxrms as in spirou (QC?)
+    dxmap_b, max_dxmap_std_b, max_dxmap_info_b, dxrms_b = dout
+    # TODO: Question do we just sum dxmap_a and dxmap_b?
+    dxmap = dxmap_a + dxmap_b
 
     # ----------------------------------------------------------------------
     # Calculate dy shape map

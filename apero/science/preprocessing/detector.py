@@ -807,7 +807,7 @@ def nirps_order_mask(params: ParamDict,
     # with warnings.catch_warnings(record=True):
     #     mask = image > nsig * sig_image
     # correct the image (as in preprocessing)
-    image, _ = nirps_correction(params, image)
+    image = nirps_correction(params, image)
     # generate a better estimate of the mask (after correction)
     with warnings.catch_warnings(record=True):
         mask = image > nsig * sig_image
