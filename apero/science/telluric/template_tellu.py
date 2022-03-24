@@ -93,6 +93,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     # storage
     snr_all, infiles, vfilenames, vbasenames, midexps = [], [], [], [], []
+    headers, basecolnames = [], []
     # choose snr to check
     snr_order = qc_snr_order
     # loop through files
@@ -121,6 +122,9 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
         midexps.append(midexp)
         # append infiles
         infiles.append(infile)
+        # append headers and column name for dict
+        headers.append(infile.header)
+        basecolnames.append(infile.basename.replace('.fits', ''))
     # ----------------------------------------------------------------------
     # Sort by mid observation time
     # ----------------------------------------------------------------------
@@ -134,6 +138,13 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     snr_thres = mp.nanmedian(snr_all) / 2.0
     bad_snr_objects = np.where(snr_all < snr_thres)[0]
+
+    # ----------------------------------------------------------------------
+    # Create combined header and combined table from input headers
+    # ----------------------------------------------------------------------
+    chout = drs_file.combine_headers(params, headers, basecolnames,
+                                     math='median')
+    template_header, _, template_combinetable = chout
 
     # ----------------------------------------------------------------------
     # Storage for cube table
@@ -386,11 +397,13 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     props['BERV_COVERAGE_TABLE'] = berv_cov_table
     props['QC_PARAMS'] = qc_params
     props['FAIL_MSG'] = fail_msgs
+    props['TEMPLATE_HEADER'] = template_header
+    props['HEADER_TABLE'] = template_combinetable
     # set sources
     keys = ['BIG_CUBE', 'BIG_CUBE0', 'BIG_COLS', 'MEDIAN', 'QC_SNR_ORDER',
             'QC_SNR_THRES', 'E2DS_ITERATIONS', 'E2DS_LOWF_SIZE',
             'BERV_COVERAGE_VAL', 'MIN_BERV_COVERAGE', 'BERV_COVERAGE_TABLE',
-            'QC_PARAMS']
+            'QC_PARAMS', 'FAIL_MSG', 'TEMPLATE_HEADER', 'HEADER_TABLE']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return outputs
@@ -827,8 +840,10 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # construct the filename from file instance
     template_file.construct_filename(infile=infile, suffix=suffix)
     # ------------------------------------------------------------------
+    # copy header from template
+    template_file.copy_header(header=cprops['TEMPLATE_HEADER'])
     # copy keys from input file
-    template_file.copy_original_keys(infile, exclude_groups='wave')
+    #template_file.copy_original_keys(infile, exclude_groups='wave')
     # add wave keys
     template_file = wave.add_wave_keys(template_file, wprops)
     # add version
@@ -862,9 +877,9 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # log that we are saving s1d table
     WLOG(params, '', textentry('40-019-00029', args=[template_file.filename]))
     # define multi lists
-    data_list = [bigtable, berv_cov_table]
-    datatype_list = ['table', 'table']
-    name_list = ['TEMPLATE_TABLE', 'BERV_TABLE']
+    data_list = [bigtable, berv_cov_table, cprops['HEADER_TABLE']]
+    datatype_list = ['table', 'table', 'table']
+    name_list = ['TEMPLATE_TABLE', 'BERV_TABLE', 'COMBINE_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=template_file)]
