@@ -218,7 +218,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Calculate dx shape map
     # ----------------------------------------------------------------------
-    cargs = [hcimage, master_fp, lprops]
+    cargs = [hcimage, master_fp, lprops, fiber]
     dout = shape.calculate_dxmap(params, recipe, *cargs)
     dxmap, max_dxmap_std, max_dxmap_info, dxrms = dout
     # if dxmap is None we shouldn't continue as quality control have failed

@@ -278,7 +278,7 @@ def __main__(recipe, params):
         # correct image
         # ------------------------------------------------------------------
         # nirps correction for preprocessing (specific to NIRPS)
-        image = prep.nirps_correction(params, image)
+        image = prep.nirps_correction(params, image, create_mask=False)
 
         # ----------------------------------------------------------------------
         # Correct for cosmic rays before the possible pixel shift

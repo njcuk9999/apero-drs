@@ -168,26 +168,25 @@ pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 # -----------------------------------------------------------------------------
 # apero_pp_master
 # -----------------------------------------------------------------------------
-# # TODO: remove
-# apero_pp_master = DrsRecipe(__INSTRUMENT__)
-# apero_pp_master.name = 'apero_pp_master_{0}.py'.format(INSTRUMENT_ALIAS)
-# apero_pp_master.shortname = 'PPM'
-# apero_pp_master.instrument = __INSTRUMENT__
-# apero_pp_master.in_block_str = 'raw'
-# apero_pp_master.out_block_str = 'red'
-# apero_pp_master.extension = 'fits'
-# apero_pp_master.description = textentry('PPMASTER_DESC')
-# apero_pp_master.epilog = textentry('PPMASTER_EXAMPLE')
-# apero_pp_master.recipe_type = 'recipe'
-# apero_pp_master.recipe_kind = 'pre-master'
-# apero_pp_master.set_outputs(PP_MASTER=files.out_pp_master)
-# apero_pp_master.set_arg(pos=0, **obs_dir)
-# apero_pp_master.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
-#                         helpstr=textentry('PPMASTER_FILETYPE_HELP'))
-# apero_pp_master.group_func = grouping.no_group
-# apero_pp_master.group_column = None
-# # add to recipe
-# recipes.append(apero_pp_master)
+apero_pp_master = DrsRecipe(__INSTRUMENT__)
+apero_pp_master.name = 'apero_pp_master_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_pp_master.shortname = 'PPM'
+apero_pp_master.instrument = __INSTRUMENT__
+apero_pp_master.in_block_str = 'raw'
+apero_pp_master.out_block_str = 'red'
+apero_pp_master.extension = 'fits'
+apero_pp_master.description = textentry('PPMASTER_DESC')
+apero_pp_master.epilog = textentry('PPMASTER_EXAMPLE')
+apero_pp_master.recipe_type = 'recipe'
+apero_pp_master.recipe_kind = 'pre-master'
+apero_pp_master.set_outputs(PP_MASTER=files.out_pp_master)
+apero_pp_master.set_arg(pos=0, **obs_dir)
+apero_pp_master.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
+                        helpstr=textentry('PPMASTER_FILETYPE_HELP'))
+apero_pp_master.group_func = grouping.no_group
+apero_pp_master.group_column = None
+# add to recipe
+recipes.append(apero_pp_master)
 
 # -----------------------------------------------------------------------------
 # apero_preprocess
@@ -1124,6 +1123,8 @@ recipes.append(apero_wave_night)
 # -----------------------------------------------------------------------------
 full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 # master run
+full_seq.add(apero_pp_master, recipe_kind='pre-master',
+             arguments=dict(obs_dir='RUN_OBS_DIR'))
 full_seq.add(apero_preprocess, recipe_kind='pre-all')
 full_seq.add(apero_dark_master, master=True)
 full_seq.add(apero_badpix, name='BADM', master=False,
@@ -1208,6 +1209,8 @@ full_seq.add(apero_extract, name='EXTALL', recipe_kind='extract-ALL',
 # -----------------------------------------------------------------------------
 limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
 # master run
+limited_seq.add(apero_pp_master, recipe_kind='pre-master',
+                arguments=dict(obs_dir='RUN_OBS_DIR'))
 limited_seq.add(apero_preprocess, recipe_kind='pre-all')
 limited_seq.add(apero_dark_master, master=True)
 limited_seq.add(apero_badpix, name='BADM', master=False,
@@ -1314,9 +1317,11 @@ limited_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
 # pp sequence (for trigger)
 # -----------------------------------------------------------------------------
 pp_seq = drs_recipe.DrsRunSequence('pp_seq', __INSTRUMENT__)
+pp_seq.add(apero_pp_master, recipe_kind='pre-master')
 pp_seq.add(apero_preprocess)
 
 pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
+pp_seq_opt.add(apero_pp_master, recipe_kind='pre-master')
 pp_seq_opt.add(apero_preprocess, name='PP_CAL', recipe_kind='pre-cal',
                filters=dict(KW_RAW_DPRCATG='CALIB'))
 pp_seq_opt.add(apero_preprocess, name='PP_SCI', recipe_kind='pre-sci',

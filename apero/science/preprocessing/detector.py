@@ -580,7 +580,8 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
 # =============================================================================
 # Define nirps detector functions
 # =============================================================================
-def nirps_correction(params: ParamDict, image: np.ndarray) -> np.ndarray:
+def nirps_correction(params: ParamDict, image: np.ndarray,
+                     create_mask: bool = True) -> np.ndarray:
     """
     Pre-processing of NIRPS images with only left/right and top/bottom pixels
 
@@ -638,18 +639,40 @@ def nirps_correction(params: ParamDict, image: np.ndarray) -> np.ndarray:
     # -------------------------------------------------------------------------
     # copy the image
     image2 = np.array(image)
-    # log progress: Masking bright pixels
-    WLOG(params, '', textentry('40-010-00019'))
-    # define the bright mask
-    bright_mask = np.ones_like(image, dtype=bool)
-    # loop around all pixels in the y-direction
-    for pixel_y in range(nbypix):
-        # get the 90th percentile value for this row
-        p90 = mp.nanpercentile(image2[pixel_y], 90)
-        # add to mask
-        bright_mask[pixel_y] = image2[pixel_y] > p90
-    # set all bright pixels to NaN
-    image2[bright_mask] = np.nan
+    # -------------------------------------------------------------------------
+    if create_mask:
+        # log progress: Masking bright pixels
+        WLOG(params, '', textentry('40-010-00019'))
+        # define the bright mask
+        bright_mask = np.ones_like(image, dtype=bool)
+        # loop around all pixels in the y-direction
+        for pixel_y in range(nbypix):
+            # get the 90th percentile value for this row
+            p90 = mp.nanpercentile(image2[pixel_y], 90)
+            # add to mask
+            bright_mask[pixel_y] = image2[pixel_y] > p90
+        # set all bright pixels to NaN
+        image2[bright_mask] = np.nan
+
+    else:
+        # ---------------------------------------------------------------------
+        # get the mask from the flat
+        ppmstr = drs_file.get_file_definition(params, 'PPMSTR', block_kind='red')
+        # get the database key for this file
+        dbkey = ppmstr.dbkey
+        # load the database
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+        # get mask file
+        ppmaskfile, ppmasktime, _ = calibdbm.get_calib_file(dbkey, nentries=1,
+                                                            no_times=True)
+        # load mask file
+        ppmask = drs_fits.readfits(params, ppmaskfile)
+
+        ppmask = np.array(ppmask, dtype=bool)
+
+        image2[~ppmask] = np.nan
+
     # -------------------------------------------------------------------------
     # we find the low level frequencies
     # we bin in regions of binsize x binsize pixels. This CANNOT be
@@ -807,13 +830,13 @@ def nirps_order_mask(params: ParamDict,
     # with warnings.catch_warnings(record=True):
     #     mask = image > nsig * sig_image
     # correct the image (as in preprocessing)
-    image, _ = nirps_correction(params, image)
+    image2 = nirps_correction(params, image)
     # generate a better estimate of the mask (after correction)
     with warnings.catch_warnings(record=True):
-        mask = image > nsig * sig_image
+        mask = image2 < 0
     # set properties
     props = ParamDict()
-    props['PPM_MASK_NSIG'] = nsig
+    props['PPM_MASK_NSIG'] = 0
     props.set_source('PPM_MASK_NSIG', func_name)
     # return mask
     return mask, props
