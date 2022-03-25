@@ -12,9 +12,10 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero.base import base
+from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
@@ -44,6 +45,8 @@ WLOG = drs_log.wlog
 pcheck = constants.PCheck(wlog=WLOG)
 # get parameter dictionary
 ParamDict = constants.ParamDict
+# get the binary dictionary
+BinaryDict = base_class.BinaryDict
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # get databases
@@ -61,7 +64,8 @@ class RecipeLog:
 
     def __init__(self, name: str, sname: str, params: ParamDict, level: int = 0,
                  logger: Union[None, drs_log.Logger] = None,
-                 database: Union[LogDatabase, None] = None):
+                 database: Union[LogDatabase, None] = None,
+                 flags: Optional[BinaryDict] = None):
         """
         Constructor for the recipe log
 
@@ -151,6 +155,10 @@ class RecipeLog:
         self.qc_value = ''
         self.qc_pass = ''
         self.qc_logic = ''
+        # keep the flags
+        self.flags = flags
+        self.flagnum = 0
+        self.flagstr = ''
         # set the errors
         self.errors = ''
         # set that recipe ended
@@ -218,6 +226,17 @@ class RecipeLog:
         self.start_time = str(rlog.start_time)
         self.end_time = str(rlog.end_time)
         self.level_criteria = str(rlog.level_criteria)
+        self.passed_qc = bool(rlog.passed_qc)
+        self.qc_string = str(rlog.qc_string)
+        self.qc_name = str(rlog.qc_name)
+        self.qc_value = str(rlog.qc_value)
+        self.qc_pass = str(rlog.qc_pass)
+        self.qc_logic = str(rlog.qc_logic)
+        self.flags = rlog.flags.copy()
+        self.flagnum = int(rlog.flagnum)
+        self.flagstr = str(rlog.flagstr)
+        self.errors = str(rlog.errors)
+        self.ended = bool(rlog.ended)
 
     def set_log_file(self, logfile: Union[str, Path]):
         """
@@ -286,7 +305,8 @@ class RecipeLog:
         level = self.level + 1
         # create new log
         newlog = RecipeLog(self.name, self.sname, params, level=level,
-                           logger=self.wlog, database=self.logdbm)
+                           logger=self.wlog, database=self.logdbm,
+                           flags=self.flags)
         # copy from parent
         newlog.copy(self)
         # record level criteria
@@ -447,6 +467,8 @@ class RecipeLog:
         for inst in instances:
             # get utime
             utime = float(Time(inst.htime).unix)
+            # convert flags before writing
+            inst.convert_flags()
             # add entries
             self.logdbm.add_entries(recipe=inst.name, sname=inst.sname,
                                     block_kind=inst.block_kind,
@@ -477,7 +499,10 @@ class RecipeLog:
                                     errors=inst.errors,
                                     parallel=inst.parallel,
                                     running=inst.running,
-                                    ended=inst.ended, used=1)
+                                    ended=inst.ended,
+                                    flagnum=inst.flagnum,
+                                    flagstr=inst.flagstr,
+                                    used=1)
 
     def _make_row(self) -> OrderedDict:
         """
@@ -486,6 +511,8 @@ class RecipeLog:
         """
         # set function name
         _ = drs_misc.display_func('_make_row', __NAME__, self.class_name)
+        # convert flags
+        self.convert_flags()
         # set rows
         row = OrderedDict()
         row['RECIPE'] = self.name
@@ -526,8 +553,30 @@ class RecipeLog:
         # add whether recipe ended
         row['RUNNING'] = self.ended
         row['ENDED'] = self.ended
+        # add flags
+        row['FLAGNUM'] = self.flagnum
+        row['FLAGSTR'] = self.flagstr
         # return row
         return row
+
+    def update_flags(self, **kwargs: bool):
+        """
+        Update the log flags
+
+        :param kwargs: str, the keys to update
+        :return:
+        """
+        # loop around flags and update the required ones
+        for kwarg in kwargs:
+            self.flags[kwarg] = bool(kwargs[kwarg])
+        # convert flags for logging
+        self.convert_flags()
+        # whether to write (update) recipe log file
+        self.write_logfile()
+
+    def convert_flags(self):
+        self.flagnum = self.flags.decode()
+        self.flagstr = '|'.join(list(self.flags.keys()))
 
     def get_rows(self) -> List[OrderedDict]:
         """
@@ -580,6 +629,8 @@ class RecipeLog:
         ldb_cols = constants.pload().LOG_DB_COLUMNS()
         log_keys = list(ldb_cols.altnames)
         log_comments= list(ldb_cols.comments)
+        # convert the flags
+        self.convert_flags()
         # ---------------------------------------------------------------------
         # define the values for each column (must be same length as
         #    LOG_DB_COLUMNS
@@ -593,7 +644,8 @@ class RecipeLog:
                       self.start_time, self.end_time, self.started,
                       self.passed_qc, self.qc_string,
                       self.qc_name, self.qc_value, self.qc_logic, self.qc_pass,
-                      self.errors, self.parallel, 0, 0, 1]
+                      self.errors, self.parallel, self.running, self.ended,
+                      self.flagnum, self.flagstr, 1]
         # ---------------------------------------------------------------------
         # loop around all rows and add to params
         for it in range(len(log_keys)):

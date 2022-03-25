@@ -1338,6 +1338,10 @@ class PseudoConstants:
         log_columns.add(name='ENDED', datatype='INT',
                         comment='flag for recipe ended '
                                 '(false at time of writing)')
+        log_columns.add(name='FLAGNUM', datatype='INT',
+                        comment='binary flag decimal number')
+        log_columns.add(name='FLAGSTR', datatype='TEXT',
+                        comment='binary flag names (one for each binary flag)')
         log_columns.add(name='USED', datatype='INT',
                         comment='Whether file should be used (always true)')
         # return columns and ctypes

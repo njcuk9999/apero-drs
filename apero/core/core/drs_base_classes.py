@@ -466,6 +466,17 @@ class BinaryDict(UserDict):
         fmt = '{0:0' + str(digits) + 'b}'
         return fmt.format(self.decode())
 
+    def add_keys(self, *args: str):
+        """
+        Add a set of keys to the data and set their value all to False
+        :param args:
+        :return:
+        """
+        # loop around the args
+        for arg in args:
+            # set all data to False
+            self.data[arg] = False
+
     def __str__(self) -> str:
         """
         String representation of the binary dictionary

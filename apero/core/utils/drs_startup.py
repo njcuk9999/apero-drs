@@ -369,7 +369,8 @@ def setup(name: str = 'None', instrument: str = 'None',
     cond2 = params['DRS_RECIPE_TYPE'] != 'nolog-tool'
     if cond1 and cond2:
         recipe.log = drs_utils.RecipeLog(recipe.name, recipe.shortname,
-                                         params, logger=WLOG)
+                                         params, logger=WLOG,
+                                         flags=recipe.flags)
         # add log file to log (only used to save where the log is)
         logfile = drs_log.get_logfilepath(WLOG, params)
         recipe.log.set_log_file(logfile)
