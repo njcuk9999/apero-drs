@@ -48,6 +48,8 @@ WLOG = drs_log.wlog
 COLOR = drs_misc.Colors()
 # get param dict
 ParamDict = constants.ParamDict
+# get the binary dictionary
+BinaryDict = base_class.BinaryDict
 # get the input file
 DrsInputFile = drs_file.DrsInputFile
 # Get the text types
@@ -194,6 +196,8 @@ class DrsRecipe(object):
         # parameters for summary documentation
         self.schematic = None
         self.description_file = None
+        # binary flags
+        self.flags = BinaryDict()
 
     def __getstate__(self) -> dict:
         """
@@ -806,6 +810,21 @@ class DrsRecipe(object):
                 self.params.set('DRS_RECIPE_KIND', self.recipe_kind,
                                 source=func_name)
 
+    def set_flags(self, **kwargs: bool):
+        """
+        Set the initial value of the flags
+
+        :param kwargs: str, the keys for each flag
+
+        :return:
+        """
+        # loop around kwargs
+        for kwarg in kwargs:
+            # check if kwarg is a string
+            if isinstance(kwargs[kwarg], bool):
+                # update the flag
+                self.flags[kwarg] = bool(kwargs[kwarg])
+
     def set_debug_plots(self, *args: str):
         """
         Sets the debug plot list
@@ -1009,6 +1028,8 @@ class DrsRecipe(object):
         # parameters for summary documentation
         self.schematic = copy.deepcopy(recipe.schematic)
         self.description_file = copy.deepcopy(recipe.description_file)
+        # copy the binary flags
+        self.flags = recipe.flags.copy()
 
     def proxy_keywordarg(self, kwargname: str
                          ) -> Tuple[List[Any], Dict[str, Any]]:
@@ -1346,7 +1367,6 @@ class DrsRecipe(object):
         # force input and output directories
         self._make_special(drs_argument.set_inputdir, skip=False)
         self._make_special(drs_argument.set_outputdir, skip=False)
-
 
     def _make_special(self, function: Any, skip: bool = False):
         """

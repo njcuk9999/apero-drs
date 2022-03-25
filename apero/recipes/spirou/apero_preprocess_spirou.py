@@ -147,6 +147,8 @@ def __main__(recipe, params):
             infile.header = prep.resolve_target(params, pconst,
                                                 header=infile.header,
                                                 database=objdbm)
+            # set flag for passing qc
+            log1.update_flags(OBJ=True)
         # ------------------------------------------------------------------
         # if it wasn't found skip this file, if it was print a message
         if cond:
@@ -275,6 +277,9 @@ def __main__(recipe, params):
             log1.end()
             # go to next iteration
             continue
+        else:
+            # set flag for passing qc
+            log1.update_flags(QCPASSED=True)
 
         # ------------------------------------------------------------------
         # correct image
@@ -324,10 +329,15 @@ def __main__(recipe, params):
         # update recipe log
         log1.add_qc(qc_params, passed)
         if not passed:
+            # set flag for passing qc
+            log1.update_flags(QCPASSED=False)
             # end log here
             log1.end()
             # go to next iteration
             continue
+        else:
+            # set flag for passing qc
+            log1.update_flags(QCPASSED=True)
 
         # ------------------------------------------------------------------
         # Save rotated image

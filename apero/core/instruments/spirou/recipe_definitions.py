@@ -185,6 +185,7 @@ apero_preprocess.epilog = textentry('PREPROCESS_EXAMPLE')
 apero_preprocess.recipe_type = 'recipe'
 apero_preprocess.recipe_kind = 'pre'
 apero_preprocess.set_outputs(PP_FILE=files.pp_file)
+apero_preprocess.set_flags(OBJ=False, QCPASSED=False)
 apero_preprocess.set_arg(pos=0, **obs_dir)
 apero_preprocess.set_arg(name='files', dtype='files', pos='1+',
                          files=[files.raw_file],
@@ -322,6 +323,7 @@ apero_loc.set_outputs(ORDERP_FILE=files.out_loc_orderp,
                       FWHM_FILE=files.out_loc_fwhm,
                       SUP_FILE=files.out_loc_sup,
                       DEBUG_BACK=files.debug_back)
+apero_loc.set_flags(SCIFIBER=False, REFFIBER=False)
 apero_loc.set_debug_plots('LOC_WIDTH_REGIONS', 'LOC_FIBER_DOUBLET_PARITY',
                           'LOC_GAP_ORDERS', 'LOC_IMAGE_FIT', 'LOC_IM_CORNER',
                           'LOC_IM_REGIONS')

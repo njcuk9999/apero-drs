@@ -2484,6 +2484,8 @@ class LogDatabase(DatabaseManager):
                     running: Union[bool, int, None] = None,
                     parallel: Union[bool, int, None] = None,
                     ended: Union[bool, int, None] = None,
+                    flagnum: Union[int, None] = None,
+                    flagstr: Union[str, None] = None,
                     used: Union[int, None] = None):
         """
         Add a log entry to database
@@ -2552,7 +2554,7 @@ class LogDatabase(DatabaseManager):
                 runstring, args, kwargs, skwargs, start_time, end_time,
                 started, passed_all_qc,
                 qc_string, qc_names, qc_values, qc_logic, qc_pass,
-                clean_error, running, parallel, ended, used]
+                clean_error, running, parallel, ended, flagnum, flagstr, used]
         # get column names and column datatypes
         ldb_cols = self.pconst.LOG_DB_COLUMNS()
         coltypes = list(ldb_cols.dtypes)
