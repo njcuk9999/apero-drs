@@ -372,6 +372,13 @@ class RunIniFile:
                             # deal with group not present in groups
                             else:
                                 groups[group] = [shortname]
+
+                if not found:
+                    wmsg = ('Recipe {0} ({1}) not in valid group (add {2} to '
+                            '{3}.GROUP)')
+                    wargs = [srecipe.name, shortname, recipe_kind, __NAME__]
+                    WLOG(self.params, 'warning', wmsg.format(*wargs))
+
         # ---------------------------------------------------------------------
         if mode == 'group':
             return groups
