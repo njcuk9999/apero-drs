@@ -254,12 +254,13 @@ def get_non_file_args(non_file_args: List[str],
             run_inst2 = run_inst.copy()
             # loop around all argument names
             for argname in non_file_args:
-                # if key is directory set if from group name
-                if argname == 'obs_dir':
+                # if key is directory set if from group name (unless group
+                #   is None)
+                if argname == 'obs_dir' and (run_inst2.group is not None):
                     value = run_inst2.group
                 # if key is in our set of combinations get the value from
                 #  combinations
-                elif argname in pkeys:
+                elif argname in list(pkeys):
                     # find position in combinations
                     pos = np.where(pkeys == argname)[0][0]
                     # get value from combinations

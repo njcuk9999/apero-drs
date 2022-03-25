@@ -1705,6 +1705,7 @@ def plot_shape_dx(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     dx2 = kwargs['dx2']
     bnum = kwargs['bnum']
     nbanana = kwargs['nbanana']
+    fiber = kwargs['fiber']
     # set the zeropoint
     zeropoint = mp.nanmedian(dx)
     # get the sig of dx
@@ -1718,7 +1719,8 @@ def plot_shape_dx(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # plot dx
     vmin = (-2 * sig_dx) + zeropoint
     vmax = (2 * sig_dx) + zeropoint
-    im1 = frame1.imshow(dx, vmin=vmin, vmax=vmax, cmap='viridis')
+    im1 = frame1.imshow(dx, vmin=vmin, vmax=vmax, cmap='viridis',
+                        aspect='auto', origin='lower')
     # add colour bar
     divider1 = axes_grid1.make_axes_locatable(frame1)
     cax1 = divider1.append_axes("top", size="10%", pad=0.05)
@@ -1733,7 +1735,8 @@ def plot_shape_dx(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # plot dx2
     vmin = (-2 * sig_dx) + zeropoint
     vmax = (2 * sig_dx) + zeropoint
-    im2 = frame2.imshow(dx2, vmin=vmin, vmax=vmax, cmap='viridis')
+    im2 = frame2.imshow(dx2, vmin=vmin, vmax=vmax, cmap='viridis',
+                        aspect='auto', origin='lower')
     # add colour bar
     divider2 = axes_grid1.make_axes_locatable(frame2)
     cax2 = divider2.append_axes("top", size="10%", pad=0.05)
@@ -1748,7 +1751,8 @@ def plot_shape_dx(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # plot diff
     vmin = (-0.5 * sig_dx) + zeropoint
     vmax = (0.5 * sig_dx) + zeropoint
-    im3 = frame3.imshow(dx - dx2, vmin=vmin, vmax=vmax, cmap='viridis')
+    im3 = frame3.imshow(dx - dx2, vmin=vmin, vmax=vmax, cmap='viridis',
+                        aspect='auto', origin='lower')
     # add colour bar
     divider3 = axes_grid1.make_axes_locatable(frame3)
     cax3 = divider3.append_axes("top", size="10%", pad=0.05)
@@ -1762,7 +1766,8 @@ def plot_shape_dx(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # ----------------------------------------------------------------------
     # title
     # ----------------------------------------------------------------------
-    plt.suptitle('Iteration {0} / {1}'.format(bnum + 1, nbanana))
+    targs = [bnum + 1, nbanana, fiber]
+    plt.suptitle('Iteration {0} / {1}  Fiber {2}'.format(*targs))
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -1898,10 +1903,12 @@ def plot_shape_angle_offset(plotter: Plotter, graph: Graph,
     dx_arr = kwargs['dx']
     dypix_arr = kwargs['dypix']
     ckeep_arr = kwargs['ckeep']
+    fiber = kwargs['fiber']
     # get parameters from params
     sorder = params['SHAPE_PLOT_SELECTED_ORDER']
     nbanana = params['SHAPE_NUM_ITERATIONS']
-    width = params['SHAPE_ORDER_WIDTH']
+    # get width for fiber
+    width = params.dictp('SHAPE_ORDER_WIDTH', dtype=int)[fiber]
     # ------------------------------------------------------------------
     # if we have a bnum set get the plot loop generator (around orders)
     if bnum is not None:
@@ -1940,8 +1947,8 @@ def plot_shape_angle_offset(plotter: Plotter, graph: Graph,
             fig, frames = graph.set_figure(plotter, ncols=2, nrows=1)
             frame1, frame2 = frames
             # title
-            title = 'Iteration {0}/{1} - Order {2}'
-            plt.suptitle(title.format(bnum_it + 1, nbanana, order_num))
+            title = 'Iteration {0}/{1} - Order {2} Fiber {3}'
+            plt.suptitle(title.format(bnum_it + 1, nbanana, order_num, fiber))
             # --------------------------------------------------------------
             # frame 1
             # --------------------------------------------------------------
@@ -1960,7 +1967,8 @@ def plot_shape_angle_offset(plotter: Plotter, graph: Graph,
             frame2.set(ylim=[0.0, width - 1], xlim=[0, len(ddx) - 1])
             # ------------------------------------------------------------------
             # update filename (adding order_num to end)
-            suffix = 'bnum{0}_order{1}'.format(bnum_it, order_num)
+            sname = 'bnum{0}_order{1}_fiber{2}'
+            suffix = sname.format(bnum_it, order_num, fiber)
             graph.set_filename(plotter.params, plotter.location, suffix=suffix)
             # --------------------------------------------------------------
             # wrap up using plotter

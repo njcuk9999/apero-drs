@@ -848,7 +848,7 @@ SHAPE_PLOT_SELECTED_ORDER.value = 33
 
 # total width of the order (combined fibers) in pixels
 SHAPE_ORDER_WIDTH = SHAPE_ORDER_WIDTH.copy(__NAME__)
-SHAPE_ORDER_WIDTH.value = 60
+SHAPE_ORDER_WIDTH.value = '{"A": 60, "B": 60, "C": 60}'
 
 # number of sections per order to split the order into
 SHAPE_NSECTIONS = SHAPE_NSECTIONS.copy(__NAME__)

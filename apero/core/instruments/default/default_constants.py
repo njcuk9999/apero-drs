@@ -1680,7 +1680,7 @@ SHAPE_PLOT_SELECTED_ORDER = Const('SHAPE_PLOT_SELECTED_ORDER', value=None,
 
 # width of the ABC fibers (in pixels)
 SHAPE_ORDER_WIDTH = Const('SHAPE_ORDER_WIDTH', value=None, dtype=int,
-                          minimum=1, source=__NAME__, group=cgroup,
+                          source=__NAME__, group=cgroup,
                           description='width of the ABC fibers (in pixels)')
 
 # number of sections per order to split the order into
