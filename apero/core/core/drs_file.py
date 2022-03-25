@@ -7489,8 +7489,13 @@ def combine_headers(params: ParamDict, headers: List[Header],
     # step 3: get all header keys and see which are identical
     # -------------------------------------------------------------------------
     # storage of all keys
-    all_dict, type_dict = dict(), dict()
-    table_keys, table_comments, constant_keys = [], [], []
+    all_dict = dict()
+    type_dict = dict()
+    # add full filename
+    all_dict['INPUT_FILENAME'] = names
+    table_keys = ['INPUT_FILENAME']
+    table_comments = ['COMMENT']
+    constant_keys = []
     # loop around unique header keys
     for k_it, key in enumerate(all_header_keys):
         # skip forbidden keys
@@ -7511,6 +7516,7 @@ def combine_headers(params: ParamDict, headers: List[Header],
             else:
                 values.append(None)
         # if keys are identified as being combined add them to table_keys
+        #  even if they are constant
         if key in ckeys:
             table_keys.append(key)
             table_comments.append(all_comments[k_it])
@@ -7552,20 +7558,28 @@ def combine_headers(params: ParamDict, headers: List[Header],
     # -------------------------------------------------------------------------
     # step 6: make a table from header keys that change
     # -------------------------------------------------------------------------
+    # filter out keys which are not in table_keys
+
     table_dict = dict()
-    for row in range(len(headers)):
-        table_dict[names[row]] = []
-        for ckey in table_keys:
-            table_dict[names[row]].append(all_dict[ckey][row])
+
+    for cit, ckey in enumerate(list(table_keys)):
+        table_dict[ckey] = list(all_dict[ckey]) + [table_comments[cit]]
+
+
+    # table_dict = dict()
+    # for row in range(len(headers)):
+    #     table_dict[names[row]] = []
+    #     for ckey in table_keys:
+    #         table_dict[names[row]].append(all_dict[ckey][row])
     # convert to a table
     combine_table = Table()
     # add the keys as the first column
-    combine_table['KEYS'] = table_keys
+    # combine_table['KEYS'] = table_keys
     # add the columns
     for col in table_dict:
         combine_table[col] = np.array(table_dict[col]).astype(str)
     # add the comments
-    combine_table['COMMENTS'] = table_comments
+    # combine_table['COMMENTS'] = table_comments
     # -------------------------------------------------------------------------
     # step 7: make new hdict and header
     # -------------------------------------------------------------------------

@@ -412,6 +412,130 @@ class ListDict(UserDict):
         return self.__str__()
 
 
+class BinaryDict(UserDict):
+    def __init__(self, *args, **kwargs):
+        """
+        Construct the binary dictionary
+
+        :param args: arguments passed to dict
+        :param kwargs: keyword arguments passed to dict
+        """
+        # super from dict
+        super(BinaryDict, self).__init__(*args, **kwargs)
+
+    def decode(self) -> int:
+        """
+        Decode binary dictionary into a single decimal number
+
+        :returns: int, the single decimal number representing the binary
+                  dictionary
+        """
+        num = 0
+        for kit, key in enumerate(self.data):
+            num += self.data[key] << kit
+        return num
+
+    def encode(self, number: int):
+        """
+        Encode a single decimal number into binary dictionary
+
+        :param number: int, a single decimal number describing all the binary
+                       flags
+        """
+        for kit, key in enumerate(self.data):
+            self.data[key] = (number >> kit) % 2 == 1
+
+    def copy(self) -> 'BinaryDict':
+        """
+        Deep copy the binary dictionary
+
+        :returns: copy of the class
+        """
+        new = BinaryDict()
+        for key in self.data:
+            new[key] = bool(self.data[key])
+        return new
+
+    def bin(self) -> str:
+        """
+        binary representation of the binary dictionary
+
+        :return: str, the binary representation
+        """
+        digits = len(self.data)
+        fmt = '{0:0' + str(digits) + 'b}'
+        return fmt.format(self.decode())
+
+    def __str__(self) -> str:
+        """
+        String representation of the binary dictionary
+
+        :returns: string representation of the binary dictionary
+        """
+
+
+        sargs = [self.decode(), self.bin()]
+        string = ('BinaryDict[{0}] = {1}').format(*sargs)
+        for key in self.data:
+            string += f'\n\t{key} = {self.data[key]}'
+        return string
+
+    def __repr__(self) -> str:
+        """
+        String representation of the binary dictionary
+
+        :returns: string representation of the binary dictionary
+        """
+        return self.__str__()
+
+    def __setitem__(self, key: str, value: bool):
+        """
+        Sets an item wrapper for self[key] = value
+        :param key: string, the key to set for the parameter
+        :param value: object, the object to set (as in dictionary) for the
+                      parameter
+
+        :type key: str
+        :type value: object
+
+        :return: None
+        """
+        # set function name
+        # _ = display_func('__setitem__', __NAME__, self.class_name)
+        # then do the normal dictionary setting
+        super(BinaryDict, self).__setitem__(key, bool(value))
+
+    def __getitem__(self, key: str) -> bool:
+        """
+        Method used to get the value of an item using "key"
+        used as x.__getitem__(y) <==> x[y]
+        where key is case insensitive
+
+        :param key: string, the key for the value returned (case insensitive)
+
+        :type key: str
+
+        :return value: object, the value stored at position "key"
+        """
+        # set function name
+        # _ = display_func('__getitem__', __NAME__, self.class_name)
+        # return from supers dictionary storage
+        return bool(super(BinaryDict, self).__getitem__(key))
+
+    def __add__(self, binaryflag: 'BinaryDict') -> 'BinaryDict':
+        """
+        Add two binary dictionaries together
+
+        x = BinaryDict('a', 'b', 'c')
+        y = BinaryDict('d', 'e', 'f')
+        z = x + y = BinaryDict('a', 'b, 'c', 'd', 'e', 'f')
+        """
+        new = self.copy()
+        for key in list(binaryflag.data.keys()):
+            new.data[key] = binaryflag[key]
+        return new
+
+
 class ImportModule:
     # set class name
     class_name = 'ImportModule'
