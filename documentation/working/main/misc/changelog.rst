@@ -2,6 +2,36 @@ Changelog
 =========
 
 
+0.7.219 (2022-03-27)
+--------------------
+- Bug fixes after nirps merge. [Neil Cook]
+- Merge branch 'v0.7.213-nirps-he' into v0.7.213-working. [Neil Cook]
+- `Apero.tools.moduile.processing.drs_grouping_functions.py` -
+  `get_non_file_args()`: add an additional check on group being none
+  before assigning `obs_dir` to group. [Neil Cook]
+- Add back in `pp_master` for `nirps_he`. [Neil Cook]
+- Re-run run.ini for nirps he. [Neil Cook]
+- Merge branch 'v0.7.213-working' into v0.7.213-nirps-he. [Neil Cook]
+
+  # Conflicts:
+  #    `apero/core/core/drs_file.py`
+- `Apero_shape_master_nirps_he.py` - update shape for nirps he + start
+  preprocess changes. [Neil Cook]
+- Add flags to log database and test with preprocessing and loc. [Neil
+  Cook]
+
+
+0.7.218 (2022-03-24)
+--------------------
+- `Apero.core.core.drs_base_classes.py` - add binary dictionary (to store
+  flags) - eventually use for log. [Neil Cook]
+- `Apero.core.core.drs_file.py` - switch axis in combined table - header
+  keys are columns. [Neil Cook]
+- `Apero.science.telluric.template_tellu.py` - template header is now a
+  combined header. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
 0.7.215 (2022-03-21)
 --------------------
 - `Apero.core.*.recipe_definitions.py` - master night non master recipes
@@ -26,6 +56,10 @@ Changelog
   to index database (and have `PARAM_TABLE)` [ID by DRS-TEST] [Neil Cook]
 - `Apero.science.calib.dark.py` - fix bad naming of `dark_master` extensions
   [ID by DRS-TESTS] [Neil Cook]
+
+
+0.7.216 (2022-03-11)
+--------------------
 - `Install.py` - fix `database_ask` criteria for reject database. [Neil
   Cook]
 - `Install.py` - do not validate if --help in args. [Neil Cook]
