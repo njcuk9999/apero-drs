@@ -3760,7 +3760,7 @@ class DrsFitsFile(DrsInputFile):
         # --------------------------------------------------------------------
         # cube
         datacube0 = [data]
-        headers0 = [self.header]
+        headers0 = [Header.from_fits_header(self.header)]
         basenames0 = [self.basename]
         # combine data into cube
         for infile in infiles:
@@ -3773,7 +3773,7 @@ class DrsFitsFile(DrsInputFile):
             # add to cube
             datacube0.append(infile.data)
             basenames0.append(infile.basename)
-            headers0.append(infile.header)
+            headers0.append(Header.from_fits_header(infile.header))
         # --------------------------------------------------------------------
         # Quality control on data
         # --------------------------------------------------------------------
