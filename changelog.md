@@ -9428,7 +9428,7 @@ Changelog
 --------------------
 - Drs_reprocess.py - address new bugs. [Neil Cook]
 - Drs_reprocess.py - address new bugs. [Neil Cook]
-- Core.instruments - add outfunc=out.blank (and blank description) [Neil
+- Core.instruments - add outclass=blank_ofile (and blank description) [Neil
   Cook]
 - Drs_recipe.py - add return of runs. [Neil Cook]
 - Drs_reprocessing.py - update for continued work on reprocessing. [Neil

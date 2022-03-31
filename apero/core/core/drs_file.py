@@ -46,7 +46,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.core import drs_misc
 from apero.core.core import drs_base_classes
-from apero.core.instruments.default import output_filenames as outf
+from apero.core.core import drs_out_file as out
 from apero.io import drs_fits
 from apero.io import drs_table
 from apero.io import drs_path
@@ -100,13 +100,16 @@ QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
 # -----------------------------------------------------------------------------
 # path definitions
 BlockPath = pathdef.BlockPath
+# get out file class
+OutFileTypes = (out.OutFile, out.GeneralOutFile, out.NpyOutFile,
+                out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
+                out.MasterCalibOutFile, out.SetOutFile, out.PostOutFile)
 
 
 # =============================================================================
 # Define DrsPath class
 # =============================================================================
 class DrsPath:
-
     blocks: List[BlockPath] = None
 
     def __init__(self, params: ParamDict,
@@ -610,7 +613,7 @@ class DrsInputFile:
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
                  filesetnames: Union[List[str], None] = None,
-                 outfunc: Union[Any, None] = None,
+                 outclass: Optional[OutFileTypes] = None,
                  inext: Union[str, None] = None,
                  dbname: Union[str, None] = None,
                  dbkey: Union[str, None] = None,
@@ -664,8 +667,7 @@ class DrsInputFile:
                         a container for a set of DrsFiles
         :param filesetnames: List of strings, the names of each DrsFile same
                              as doing list(map(lambda x: x.name, fileset))
-        :param outfunc: Function, the output function to generate the output
-                        name (using in constructing filename)
+        :param outclass: OutClass, the associated outclass
         :param inext: str, the input file extension [not used in DrsInputFile]
         :param dbname: str, the database name this file can go in
                     (i.e. cailbration or telluric) [not used in DrsInputFile]
@@ -733,7 +735,7 @@ class DrsInputFile:
             self.filesetnames = []
         else:
             self.filesetnames = filesetnames
-        self.outfunc = outfunc
+        self.outclass = outclass
 
         # following keys are not used in this class
         self.inext = inext
@@ -893,7 +895,7 @@ class DrsInputFile:
             if isinstance(self.intype, list):
                 names = list(map(lambda x: x.name, self.intype))
                 values.append(', '.join(names))
-            else:
+            elif isinstance(self.intype, DrsInputFile):
                 values.append(self.intype.name)
         else:
             values.append('--')
@@ -984,7 +986,7 @@ class DrsInputFile:
                 header: Union[drs_fits.Header, None] = None,
                 fileset: Union[list, None] = None,
                 filesetnames: Union[List[str], None] = None,
-                outfunc: Union[Any, None] = None,
+                outclass: Optional[OutFileTypes] = None,
                 inext: Union[str, None] = None,
                 dbname: Union[str, None] = None,
                 dbkey: Union[str, None] = None,
@@ -1039,8 +1041,7 @@ class DrsInputFile:
                         a container for a set of DrsFiles
         :param filesetnames: List of strings, the names of each DrsFile same
                              as doing list(map(lambda x: x.name, fileset))
-        :param outfunc: Function, the output function to generate the output
-                        name (using in constructing filename)
+        :param outclass: OutClass, the associated outclass
         :param inext: str, the input file extension [not used in DrsInputFile]
         :param dbname: str, the database name this file can go in
                     (i.e. cailbration or telluric) [not used in DrsInputFile]
@@ -1082,7 +1083,7 @@ class DrsInputFile:
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
                             obs_dir, data, header, fileset, filesetnames,
-                            outfunc, inext, dbname, dbkey, rkeys, numfiles,
+                            outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
                             instrument)
@@ -1190,7 +1191,7 @@ class DrsInputFile:
                   header: Union[drs_fits.Header, None] = None,
                   fileset: Union[list, None] = None,
                   filesetnames: Union[List[str], None] = None,
-                  outfunc: Union[Any, None] = None,
+                  outclass: Optional[OutFileTypes] = None,
                   inext: Union[str, None] = None,
                   dbname: Union[str, None] = None,
                   dbkey: Union[str, None] = None,
@@ -1246,8 +1247,7 @@ class DrsInputFile:
                         a container for a set of DrsFiles
         :param filesetnames: List of strings, the names of each DrsFile same
                              as doing list(map(lambda x: x.name, fileset))
-        :param outfunc: Function, the output function to generate the output
-                        name (using in constructing filename)
+        :param outclass: OutClass, the associated outclass
         :param inext: str, the input file extension [not used in DrsInputFile]
         :param dbname: str, the database name this file can go in
                     (i.e. cailbration or telluric) [not used in DrsInputFile]
@@ -1288,7 +1288,7 @@ class DrsInputFile:
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
                             obs_dir, data, header, fileset, filesetnames,
-                            outfunc, inext, dbname, dbkey, rkeys, numfiles,
+                            outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
                             instrument)
@@ -1312,7 +1312,7 @@ class DrsInputFile:
                      header: Union[drs_fits.Header, None] = None,
                      fileset: Union[list, None] = None,
                      filesetnames: Union[List[str], None] = None,
-                     outfunc: Union[Any, None] = None,
+                     outclass: Optional[OutFileTypes] = None,
                      inext: Union[str, None] = None,
                      dbname: Union[str, None] = None,
                      dbkey: Union[str, None] = None,
@@ -1368,8 +1368,7 @@ class DrsInputFile:
                         a container for a set of DrsFiles
         :param filesetnames: List of strings, the names of each DrsFile same
                              as doing list(map(lambda x: x.name, fileset))
-        :param outfunc: Function, the output function to generate the output
-                        name (using in constructing filename)
+        :param outclass: OutClass, the associated outclass
         :param inext: str, the input file extension [not used in DrsInputFile]
         :param dbname: str, the database name this file can go in
                     (i.e. cailbration or telluric) [not used in DrsInputFile]
@@ -1409,7 +1408,7 @@ class DrsInputFile:
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
                             obs_dir, data, header, fileset, filesetnames,
-                            outfunc, inext, dbname, dbkey, rkeys, numfiles,
+                            outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
                             instrument)
@@ -1595,7 +1594,7 @@ class DrsInputFile:
         """
         Constructs the filename from the parameters defined at instance
         definition and using the infile (if required). If check is True, checks
-        the infile type against "intype". Uses "outfunc" in instance definition
+        the infile type against "intype". Uses "outclass" in instance definition
         to set the suffices/prefixes/fiber etc
 
         :param infile: Drsfile, the input DrsFile
@@ -1627,11 +1626,12 @@ class DrsInputFile:
         if outfile is None:
             outfile = self
         # if we have a function use it
-        if self.outfunc is not None:
+        if self.outclass is not None:
             try:
-                abspath = self.outfunc(params, infile, outfile, fiber, path,
-                                       func, remove_insuffix, prefix, suffix,
-                                       filename)
+                abspath = self.outclass.construct(params, infile, outfile,
+                                                  fiber, path, func,
+                                                  remove_insuffix, prefix,
+                                                  suffix, filename)
             except DrsCodedException as e:
                 level = e.get('level', 'error')
                 eargs = e.get('targs', None)
@@ -1761,8 +1761,8 @@ class DrsInputFile:
             currentfile = currentfile + inext
         # ----------------------------------------------------------------------
         # get re-constructed out file name
-        outfilename = outf.get_outfilename(params, currentfile, prefix, suffix,
-                                           inext, outext, fiber)
+        outfilename = out.get_outfilename(params, currentfile, prefix, suffix,
+                                          inext, outext, fiber)
         # ----------------------------------------------------------------------
         # update self
         self.prefix = prefix
@@ -1851,7 +1851,7 @@ class DrsFitsFile(DrsInputFile):
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
                  filesetnames: Union[List[str], None] = None,
-                 outfunc: Union[Any, None] = None,
+                 outclass: Union[Any, None] = None,
                  inext: Union[str, None] = '.fits',
                  dbname: Union[str, None] = None,
                  dbkey: Union[str, None] = None,
@@ -1905,8 +1905,7 @@ class DrsFitsFile(DrsInputFile):
                         a container for a set of DrsFiles
         :param filesetnames: List of strings, the names of each DrsFile same
                              as doing list(map(lambda x: x.name, fileset))
-        :param outfunc: Function, the output function to generate the output
-                        name (using in constructing filename)
+        :param outclass: OutClass, the
         :param inext: str, the input file extension
         :param dbname: str, the database name this file can go in
                     (i.e. cailbration or telluric)
@@ -1945,7 +1944,7 @@ class DrsFitsFile(DrsInputFile):
         DrsInputFile.__init__(self, name, filetype, suffix, remove_insuffix,
                               prefix, fibers, fiber, params, filename, intype,
                               path, basename, inputdir, obs_dir, data, header,
-                              fileset, filesetnames, outfunc, inext, dbname,
+                              fileset, filesetnames, outclass, inext, dbname,
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
                               combined_list, infiles, s1d, hkeys, instrument)
@@ -1962,7 +1961,7 @@ class DrsFitsFile(DrsInputFile):
         # get the specific fiber linked to this drs fits file
         self.fiber = fiber
         # get the function used for writing output file
-        self.outfunc = outfunc
+        self.outclass = outclass
         # get the database name (only set if intended to go into a database)
         self.dbname = dbname
         # get the raw database key name (only set if intended to go into a
@@ -2117,7 +2116,7 @@ class DrsFitsFile(DrsInputFile):
                 header: Union[drs_fits.Header, None] = None,
                 fileset: Union[list, None] = None,
                 filesetnames: Union[List[str], None] = None,
-                outfunc: Union[Any, None] = None,
+                outclass: Optional[OutFileTypes] = None,
                 inext: Union[str, None] = None,
                 dbname: Union[str, None] = None,
                 dbkey: Union[str, None] = None,
@@ -2172,8 +2171,7 @@ class DrsFitsFile(DrsInputFile):
                         a container for a set of DrsFiles
         :param filesetnames: List of strings, the names of each DrsFile same
                              as doing list(map(lambda x: x.name, fileset))
-        :param outfunc: Function, the output function to generate the output
-                        name (using in constructing filename)
+        :param outclass: OutClass, the associated outclass
         :param inext: str, the input file extension [not used in DrsInputFile]
         :param dbname: str, the database name this file can go in
                     (i.e. cailbration or telluric) [not used in DrsInputFile]
@@ -2215,7 +2213,7 @@ class DrsFitsFile(DrsInputFile):
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
                             obs_dir, data, header, fileset, filesetnames,
-                            outfunc, inext, dbname, dbkey, rkeys, numfiles,
+                            outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
                             instrument)
@@ -2271,7 +2269,7 @@ class DrsFitsFile(DrsInputFile):
                   header: Union[drs_fits.Header, None] = None,
                   fileset: Union[list, None] = None,
                   filesetnames: Union[List[str], None] = None,
-                  outfunc: Union[Any, None] = None,
+                  outclass: Optional[OutFileTypes] = None,
                   inext: Union[str, None] = None,
                   dbname: Union[str, None] = None,
                   dbkey: Union[str, None] = None,
@@ -2327,8 +2325,7 @@ class DrsFitsFile(DrsInputFile):
                         a container for a set of DrsFiles
         :param filesetnames: List of strings, the names of each DrsFile same
                              as doing list(map(lambda x: x.name, fileset))
-        :param outfunc: Function, the output function to generate the output
-                        name (using in constructing filename)
+        :param outclass: OutClass, the associated outclass
         :param inext: str, the input file extension [not used in DrsInputFile]
         :param dbname: str, the database name this file can go in
                     (i.e. cailbration or telluric) [not used in DrsInputFile]
@@ -2371,7 +2368,7 @@ class DrsFitsFile(DrsInputFile):
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
                             obs_dir, data, header, fileset, filesetnames,
-                            outfunc, inext, dbname, dbkey, rkeys, numfiles,
+                            outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys, instrument)
 
@@ -2394,7 +2391,7 @@ class DrsFitsFile(DrsInputFile):
                      header: Union[drs_fits.Header, None] = None,
                      fileset: Union[list, None] = None,
                      filesetnames: Union[List[str], None] = None,
-                     outfunc: Union[Any, None] = None,
+                     outclass: Optional[OutFileTypes] = None,
                      inext: Union[str, None] = None,
                      dbname: Union[str, None] = None,
                      dbkey: Union[str, None] = None,
@@ -2450,8 +2447,7 @@ class DrsFitsFile(DrsInputFile):
                         a container for a set of DrsFiles
         :param filesetnames: List of strings, the names of each DrsFile same
                              as doing list(map(lambda x: x.name, fileset))
-        :param outfunc: Function, the output function to generate the output
-                        name (using in constructing filename)
+        :param outclass: OutClass, the associated outclass
         :param inext: str, the input file extension [not used in DrsInputFile]
         :param dbname: str, the database name this file can go in
                     (i.e. cailbration or telluric) [not used in DrsInputFile]
@@ -2491,7 +2487,7 @@ class DrsFitsFile(DrsInputFile):
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
                             obs_dir, data, header, fileset, filesetnames,
-                            outfunc, inext, dbname, dbkey, rkeys, numfiles,
+                            outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
                             instrument)
@@ -2862,10 +2858,10 @@ class DrsFitsFile(DrsInputFile):
             # make sure cintype has params
             cintype.params = params
             # get out file name
-            out = cintype.check_table_filename(recipename, bottomfile,
-                                               fullpath=True,
-                                               allowedfibers=fiber)
-            valid, outfilename = out
+            cout = cintype.check_table_filename(recipename, bottomfile,
+                                                fullpath=True,
+                                                allowedfibers=fiber)
+            valid, outfilename = cout
             # set the filename to the outfilename
             filename = outfilename
             bottomfile = cintype
@@ -2971,10 +2967,12 @@ class DrsFitsFile(DrsInputFile):
         # loop around fibers
         for fiber in fibers:
             # 2. need to assign an output filename for out file
-            if self.outfunc is not None:
+            if self.outclass is not None:
                 try:
-                    outfilename = self.outfunc(params, infile=infile,
-                                               outfile=self, fiber=fiber)
+                    outfilename = self.outclass.construct(params,
+                                                          infile=infile,
+                                                          outfile=self,
+                                                          fiber=fiber)
                 except DrsCodedException as e:
                     level = e.get('level', 'error')
                     eargs = e.get('targs', None)
@@ -3148,17 +3146,17 @@ class DrsFitsFile(DrsInputFile):
         else:
             fmt = 'fits-image'
         # read the fits file
-        out = drs_fits.readfits(params, self.filename, getdata=True,
-                                gethdr=True, fmt=fmt, ext=ext)
+        dout = drs_fits.readfits(params, self.filename, getdata=True,
+                                 gethdr=True, fmt=fmt, ext=ext)
         # deal with copying
         if copy:
             if self.datatype == 'table':
-                self.data = Table(out[0])
+                self.data = Table(dout[0])
             else:
-                self.data = np.array(out[0])
+                self.data = np.array(dout[0])
         else:
-            self.data = out[0]
-        self.header = drs_fits.Header.from_fits_header(out[1])
+            self.data = dout[0]
+        self.header = drs_fits.Header.from_fits_header(dout[1])
         # update fiber parameter from header
         if self.header is not None:
             self.fiber = self.get_hkey('KW_FIBER', dtype=str, required=False)
@@ -3923,7 +3921,7 @@ class DrsFitsFile(DrsInputFile):
                                 self.fiber, self.params, filename, self.intype,
                                 path, basename, self.inputdir, self.obs_dir,
                                 data, self.header, self.fileset,
-                                self.filesetnames, self.outfunc, self.inext,
+                                self.filesetnames, self.outclass, self.inext,
                                 self.dbname, self.dbkey,
                                 self.required_header_keys, self.numfiles,
                                 data.shape, self.hdict, self.output_dict,
@@ -4936,7 +4934,7 @@ class DrsNpyFile(DrsInputFile):
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
                  filesetnames: Union[List[str], None] = None,
-                 outfunc: Union[Any, None] = None,
+                 outclass: Optional[OutFileTypes] = None,
                  inext: Union[str, None] = '.npy',
                  dbname: Union[str, None] = None,
                  dbkey: Union[str, None] = None,
@@ -4981,8 +4979,7 @@ class DrsNpyFile(DrsInputFile):
                         a container for a set of DrsFiles
         :param filesetnames: List of strings, the names of each DrsFile same
                              as doing list(map(lambda x: x.name, fileset))
-        :param outfunc: Function, the output function to generate the output
-                        name (using in constructing filename)
+        :param outclass: OutClass, the associated outclass
         :param inext: str, the input file extension [not used in DrsInputFile]
         :param dbname: str, the database name this file can go in
                     (i.e. cailbration or telluric) [not used in DrsInputFile]
@@ -5011,7 +5008,7 @@ class DrsNpyFile(DrsInputFile):
         DrsInputFile.__init__(self, name, filetype, suffix, remove_insuffix,
                               prefix, fibers, fiber, params, filename, intype,
                               path, basename, inputdir, obs_dir, data, header,
-                              fileset, filesetnames, outfunc, inext, dbname,
+                              fileset, filesetnames, outclass, inext, dbname,
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
                               combined_list, s1d, hkeys, instrument)
@@ -5248,7 +5245,7 @@ class DrsNpyFile(DrsInputFile):
                 header: Union[drs_fits.Header, None] = None,
                 fileset: Union[list, None] = None,
                 filesetnames: Union[List[str], None] = None,
-                outfunc: Union[Any, None] = None,
+                outclass: Optional[OutFileTypes] = None,
                 inext: Union[str, None] = None,
                 dbname: Union[str, None] = None,
                 dbkey: Union[str, None] = None,
@@ -5294,8 +5291,7 @@ class DrsNpyFile(DrsInputFile):
                         a container for a set of DrsFiles
         :param filesetnames: List of strings, the names of each DrsFile same
                              as doing list(map(lambda x: x.name, fileset))
-        :param outfunc: Function, the output function to generate the output
-                        name (using in constructing filename)
+        :param outclass: OutClass, the associated outclass
         :param inext: str, the input file extension [not used in DrsInputFile]
         :param dbname: str, the database name this file can go in
                     (i.e. cailbration or telluric) [not used in DrsInputFile]
@@ -5323,7 +5319,7 @@ class DrsNpyFile(DrsInputFile):
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
                             obs_dir, data, header, fileset, filesetnames,
-                            outfunc, inext, dbname, dbkey, rkeys, numfiles,
+                            outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys, instrument)
 
@@ -5346,7 +5342,7 @@ class DrsNpyFile(DrsInputFile):
                      header: Union[drs_fits.Header, None] = None,
                      fileset: Union[list, None] = None,
                      filesetnames: Union[List[str], None] = None,
-                     outfunc: Union[Any, None] = None,
+                     outclass: Optional[OutFileTypes] = None,
                      inext: Union[str, None] = None,
                      dbname: Union[str, None] = None,
                      dbkey: Union[str, None] = None,
@@ -5394,8 +5390,7 @@ class DrsNpyFile(DrsInputFile):
                         a container for a set of DrsFiles
         :param filesetnames: List of strings, the names of each DrsFile same
                              as doing list(map(lambda x: x.name, fileset))
-        :param outfunc: Function, the output function to generate the output
-                        name (using in constructing filename)
+        :param outclass: OutClass, the associated outclass
         :param inext: str, the input file extension [not used in DrsInputFile]
         :param dbname: str, the database name this file can go in
                     (i.e. cailbration or telluric) [not used in DrsInputFile]
@@ -5422,7 +5417,7 @@ class DrsNpyFile(DrsInputFile):
                             remove_insuffix, prefix, fibers, fiber, params,
                             filename, intype, path, basename, inputdir,
                             obs_dir, data, header, fileset, filesetnames,
-                            outfunc, inext, dbname, dbkey, rkeys, numfiles,
+                            outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
                             instrument)
@@ -5810,14 +5805,12 @@ class DrsOutFileExtension:
         via DrsOutFile.add_column)
 
         :param params: ParamDict, parameter dictionary of constants
-        :param indexdbm: index database instance
+        :param ptable: index database instance
         :param linkkind: str, the link kind (column in index database)
         :param criteria: str, the link criteria (value of column in index
                          database)
         :param mode: str, either science, calibration or telluric (decides
                      how we try to get column filename)
-        :param dbkey: str, if mode is calibration or telluric we use this to
-                      get the bset key from the database
 
         :return: None, updates self.data and self.datatype
         """
@@ -5928,7 +5921,7 @@ class DrsOutFileExtension:
             if incolumns[col] not in table.colnames:
                 # log error and return: Column for EXT={0} ({1}) not found.
                 #     Filename = {2} \n\t Column name = {3}
-                eargs = [self.pos, self.name, filename, incolumns[col], 
+                eargs = [self.pos, self.name, filename, incolumns[col],
                          func_name]
                 reason = textentry('00-090-00008', args=eargs)
                 return False, reason
@@ -5991,7 +5984,8 @@ class DrsOutFile(DrsInputFile):
     class_name: str = 'DrsOutFile'
 
     def __init__(self, name: str, filetype: str,
-                 suffix: Union[str, None] = None, outfunc=None,
+                 suffix: Union[str, None] = None,
+                 outclass: Optional[OutFileTypes] = None,
                  inext=None, required: bool = True,
                  exclude_keys: EXCLUDE_KEYS_TYPE = None,
                  instrument: Optional[str] = None):
@@ -6001,7 +5995,7 @@ class DrsOutFile(DrsInputFile):
         :param name: str, a name for this out file
         :param filetype: str, the file type (i.e. .fits) for this file
         :param suffix: str, the output file suffix and extension
-        :param outfunc: function, the output file function
+        :param outclass: PostOutFile, the associated outclass
         :param inext: str, any suffix/extension in the input filename to remove
         :param required: bool, whether this file is require (i.e. generate
                          error when we can't create it) if False skips on
@@ -6014,7 +6008,7 @@ class DrsOutFile(DrsInputFile):
         # define a name
         self.name = name
         # get super init
-        DrsInputFile.__init__(self, name, filetype, suffix, outfunc=outfunc,
+        DrsInputFile.__init__(self, name, filetype, suffix, outclass=outclass,
                               inext=inext, instrument=instrument)
         # store extensions
         self.extensions = dict()
@@ -6288,7 +6282,7 @@ class DrsOutFile(DrsInputFile):
         # set function name
         # _ = display_func('__init__', __NAME__, self.class_name)
         # get new copy of drs out file
-        new = DrsOutFile(self.name, self.filetype, self.suffix, self.outfunc,
+        new = DrsOutFile(self.name, self.filetype, self.suffix, self.outclass,
                          self.inext)
         # copy extensions
         for ext in self.extensions:
@@ -7565,7 +7559,6 @@ def combine_headers(params: ParamDict, headers: List[Header],
     for cit, ckey in enumerate(list(table_keys)):
         table_dict[ckey] = list(all_dict[ckey]) + [table_comments[cit]]
 
-
     # table_dict = dict()
     # for row in range(len(headers)):
     #     table_dict[names[row]] = []
@@ -8140,7 +8133,7 @@ def _copydrsfile(drsfileclass,
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
                  filesetnames: Union[List[str], None] = None,
-                 outfunc: Union[Any, None] = None,
+                 outclass: Optional[OutFileTypes] = None,
                  inext: Union[str, None] = None,
                  dbname: Union[str, None] = None,
                  dbkey: Union[str, None] = None,
@@ -8201,8 +8194,7 @@ def _copydrsfile(drsfileclass,
                     a container for a set of DrsFiles
     :param filesetnames: List of strings, the names of each DrsFile same
                          as doing list(map(lambda x: x.name, fileset))
-    :param outfunc: Function, the output function to generate the output
-                    name (using in constructing filename)
+    :param outclass: OutClass, the associated outclass
     :param inext: str, the input file extension [not used in DrsInputFile]
     :param dbname: str, the database name this file can go in
                 (i.e. cailbration or telluric) [not used in DrsInputFile]
@@ -8313,9 +8305,9 @@ def _copydrsfile(drsfileclass,
     # set filesetnames
     if filesetnames is None:
         filesetnames = deepcopy(instance1.filesetnames)
-    # set outfunc
-    if outfunc is None:
-        outfunc = instance1.outfunc
+    # set outclass
+    if outclass is None:
+        outclass = instance1.outclass.copy()
     # set inext
     if inext is None:
         inext = deepcopy(instance2.inext)
@@ -8380,7 +8372,7 @@ def _copydrsfile(drsfileclass,
     return drsfileclass(name, filetype, suffix, remove_insuffix, prefix,
                         fibers, fiber, params, filename, intype, path,
                         basename, inputdir, obs_dir, data, header,
-                        fileset, filesetnames, outfunc, inext, dbname,
+                        fileset, filesetnames, outclass, inext, dbname,
                         dbkey, rkeys, numfiles, shape, hdict,
                         output_dict, datatype, dtype, is_combined,
                         combined_list, infiles, s1d, new_hkeys, instrument)
