@@ -963,13 +963,33 @@ class Database:
         if self.tname is not None:
             if self.tname in self.tables:
                 return str(self.tname)
+            # need to deal with no table
+            elif table is None:
+                # log error: tname not defined and multiple tables defined
+                ecode = '00-002-00053'
+                emsg = drs_base.BETEXT[ecode]
+                # get string list of tables
+                strtables = ''
+                for _table in self.tables:
+                    strtables += '\n\t\t- ' + _table
+                # add error args
+                eargs = [self.tname, self.path, strtables, func_name]
+                # log base error
+                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                           exceptionname='DatabaseError',
+                                           exception=DatabaseError)
         # deal with no table
         if table is None:
             if len(self.tables) != 1:
                 # log error: pick one -- table cannot be None
                 ecode = '00-002-00041'
                 emsg = drs_base.BETEXT[ecode]
-                eargs = [self.path, ','.join(self.tables), func_name]
+                # get string list of tables
+                strtables = ''
+                for _table in self.tables:
+                    strtables += '\n\t\t- ' + _table
+                # add error args
+                eargs = [self.path, strtables, func_name]
                 # log base error
                 raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                            exceptionname='DatabaseError',
