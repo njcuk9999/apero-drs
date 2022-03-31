@@ -496,7 +496,7 @@ class ObjectDatabase(DatabaseManager):
         Wrapper around find_objname
 
         :param pconst: psuedo constants - used to clean the object name
-        :param objname: list of str, a list of object names to clean and fimd
+        :param objnames: list of str, a list of object names to clean and fimd
         :return:
         """
         out_objnames = []
@@ -632,6 +632,7 @@ class CalibrationDatabase(DatabaseManager):
         # get fiber
         fiber = _get_hkey(self.params, 'KW_FIBER', hdict, header)
         # get super definition
+        # TODO: change to drsfile.parent.master_calib
         is_super = _get_is_super(self.params)
         # get time
         header_time = _get_time(self.params, self.name, header, hdict)
@@ -780,9 +781,9 @@ class CalibrationDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-    CALIB_FILE_RTN = Union[Tuple[None, float, bool],
-                           Tuple[Path, float, bool],
-                           Tuple[List[Path], List[float], List[bool]]]
+    CALIB_FILE_RTN = Optional[Tuple[None, float, bool],
+                              Tuple[Path, float, bool],
+                              Tuple[List[Path], List[float], List[bool]]]
 
     def get_calib_file(self, key: str, drsfile=None, header=None, hdict=None,
                        filetime: Union[None, Time] = None,

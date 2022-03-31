@@ -15,7 +15,7 @@ Created on 2018-10-31 at 18:06
 """
 from apero.base import base
 from apero.core.core import drs_file
-from apero.core.instruments.spirou import output_filenames as out
+from apero.core.core import drs_out_file as out
 
 # =============================================================================
 # Define variables
@@ -38,6 +38,16 @@ drs_finput = drs_file.DrsFitsFile
 drs_ninput = drs_file.DrsNpyFile
 drs_oinput = drs_file.DrsOutFile
 DrsFileGroup = drs_file.DrsFileGroup
+# define out file classes
+blank_ofile = out.BlankOutFile()
+general_ofile = out.GeneralOutFile()
+debug_ofile = out.DebugOutFile()
+set_ofile = out.SetOutFile()
+post_ofile = out.PostOutFile()
+calib_ofile = out.CalibOutFile()
+mcalib_ofile = out.MasterCalibOutFile()
+tellu_ofile = out.TelluOutFile()
+mtellu_ofile = out.MasterTelluOutFile()
 
 # =============================================================================
 # Raw Files
@@ -49,18 +59,18 @@ raw_files = []
 # =============================================================================
 # generic raw file
 raw_file = drs_finput('DRS_RAW', filetype='.fits', suffix='',
-                      outfunc=out.blank, instrument=__INSTRUMENT__)
+                      outclass=blank_ofile, instrument=__INSTRUMENT__)
 # -----------------------------------------------------------------------------
 # raw dark files
 # raw_dark_dark = drs_finput('RAW_DARK_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
 #                            KW_OBSTYPE='DARK',
 #                            filetype='.fits', suffix='', inext='d.fits',
-#                            outfunc=out.blank)
+#                            outclass=blank_ofile)
 # raw_file.addset(raw_dark_dark)
 
 # raw dark in P4 (internal dark)
 raw_dark_dark_int = drs_finput('RAW_DARK_DARK_INT', filetype='.fits',
-                               suffix='', inext='.fits', outfunc=out.blank,
+                               suffix='', inext='.fits', outclass=blank_ofile,
                                hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
                                           KW_OBSTYPE='DARK', KW_CALIBWH='P4',
                                           KW_INSTRUMENT=INSTRUMENT_NAME))
@@ -68,7 +78,7 @@ raw_file.addset(raw_dark_dark_int)
 
 # raw dark in P5 (telescope dark)
 raw_dark_dark_tel = drs_finput('RAW_DARK_DARK_TEL', filetype='.fits',
-                               suffix='', inext='.fits', outfunc=out.blank,
+                               suffix='', inext='.fits', outclass=blank_ofile,
                                hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
                                           KW_OBSTYPE='DARK', KW_CALIBWH='P5',
                                           KW_INSTRUMENT=INSTRUMENT_NAME))
@@ -76,7 +86,7 @@ raw_file.addset(raw_dark_dark_tel)
 
 # sky observation (sky dark)
 raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', filetype='.fits',
-                               suffix='', inext='.fits', outfunc=out.blank,
+                               suffix='', inext='.fits', outclass=blank_ofile,
                                hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
                                           KW_OBSTYPE='OBJECT',
                                           KW_TARGET_TYPE='SKY',
@@ -85,7 +95,7 @@ raw_file.addset(raw_dark_dark_sky)
 
 # sky observations (with fp)
 raw_dark_fp_sky = drs_finput('RAW_DARK_FP_SKY', filetype='.fits', suffix='',
-                             inext='.fits', outfunc=out.blank,
+                             inext='.fits', outclass=blank_ofile,
                              hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
                                         KW_OBSTYPE='OBJECT',
                                         KW_TARGET_TYPE='SKY',
@@ -94,28 +104,28 @@ raw_file.addset(raw_dark_fp_sky)
 
 # -----------------------------------------------------------------------------
 # raw flat files
-raw_dark_flat = drs_finput('RAW_DARK_FLAT', outfunc=out.blank, filetype='.fits',
+raw_dark_flat = drs_finput('RAW_DARK_FLAT', outclass=blank_ofile, filetype='.fits',
                            suffix='',
                            hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_wl',
                                       KW_OBSTYPE='FLAT',
                                       KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_dark_flat)
 
-raw_flat_dark = drs_finput('RAW_FLAT_DARK', outfunc=out.blank,
+raw_flat_dark = drs_finput('RAW_FLAT_DARK', outclass=blank_ofile,
                            filetype='.fits', suffix='',
                            hkeys=dict(KW_CCAS='pos_wl', KW_CREF='pos_pk',
                                       KW_OBSTYPE='FLAT',
                                       KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_flat_dark)
 
-raw_flat_flat = drs_finput('RAW_FLAT_FLAT', outfunc=out.blank,
+raw_flat_flat = drs_finput('RAW_FLAT_FLAT', outclass=blank_ofile,
                            filetype='.fits', suffix='',
                            hkeys=dict(KW_CCAS='pos_wl', KW_CREF='pos_wl',
                                       KW_OBSTYPE='FLAT',
                                       KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_flat_flat)
 
-raw_flat_fp = drs_finput('RAW_FLAT_FP', outfunc=out.blank,
+raw_flat_fp = drs_finput('RAW_FLAT_FP', outclass=blank_ofile,
                          filetype='.fits', suffix='',
                          hkeys=dict(KW_CCAS='pos_wl', KW_CREF='pos_fp',
                                     KW_OBSTYPE='FLAT',
@@ -124,28 +134,28 @@ raw_file.addset(raw_flat_fp)
 
 # -----------------------------------------------------------------------------
 # raw align files
-raw_dark_fp = drs_finput('RAW_DARK_FP', outfunc=out.blank,
+raw_dark_fp = drs_finput('RAW_DARK_FP', outclass=blank_ofile,
                          filetype='.fits', suffix='',
                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
                                     KW_OBSTYPE='ALIGN',
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_dark_fp)
 
-raw_fp_dark = drs_finput('RAW_FP_DARK', outfunc=out.blank,
+raw_fp_dark = drs_finput('RAW_FP_DARK', outclass=blank_ofile,
                          filetype='.fits', suffix='',
                          hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_pk',
                                     KW_OBSTYPE='ALIGN',
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_fp_dark)
 
-raw_fp_flat = drs_finput('RAW_FP_FLAT', outfunc=out.blank,
+raw_fp_flat = drs_finput('RAW_FP_FLAT', outclass=blank_ofile,
                          filetype='.fits', suffix='',
                          hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_wl',
                                     KW_OBSTYPE='ALIGN',
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_fp_flat)
 
-raw_fp_fp = drs_finput('RAW_FP_FP', outfunc=out.blank,
+raw_fp_fp = drs_finput('RAW_FP_FP', outclass=blank_ofile,
                        filetype='.fits', suffix='',
                        hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_fp',
                                   KW_OBSTYPE='ALIGN',
@@ -155,20 +165,20 @@ raw_file.addset(raw_fp_fp)
 # -----------------------------------------------------------------------------
 # raw LFC files
 raw_lfc_lfc = drs_finput('RAW_LFC_LFC', filetype='.fits', suffix='',
-                         outfunc=out.blank,
+                         outclass=blank_ofile,
                          hkeys=dict(KW_CCAS='pos_rs', KW_CREF='pos_rs',
                                     KW_OBSTYPE='ALIGN',
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_lfc_lfc)
 
-raw_lfc_fp = drs_finput('RAW_LFC_FP', outfunc=out.blank,
+raw_lfc_fp = drs_finput('RAW_LFC_FP', outclass=blank_ofile,
                         filetype='.fits', suffix='',
                         hkeys=dict(KW_CCAS='pos_rs', KW_CREF='pos_fp',
                                    KW_OBSTYPE='ALIGN',
                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_lfc_fp)
 
-raw_fp_lfc = drs_finput('RAW_FP_LFC', outfunc=out.blank,
+raw_fp_lfc = drs_finput('RAW_FP_LFC', outclass=blank_ofile,
                         filetype='.fits', suffix='',
                         hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_rs',
                                    KW_OBSTYPE='ALIGN',
@@ -177,7 +187,7 @@ raw_file.addset(raw_fp_lfc)
 
 # -----------------------------------------------------------------------------
 # raw object files
-raw_obj_dark = drs_finput('RAW_OBJ_DARK', outfunc=out.blank,
+raw_obj_dark = drs_finput('RAW_OBJ_DARK', outclass=blank_ofile,
                           hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
                                      KW_OBSTYPE='OBJECT',
                                      KW_DRS_MODE='SPECTROSCOPY',
@@ -185,7 +195,7 @@ raw_obj_dark = drs_finput('RAW_OBJ_DARK', outfunc=out.blank,
                                      KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_obj_dark)
 
-raw_obj_fp = drs_finput('RAW_OBJ_FP', outfunc=out.blank, filetype='.fits',
+raw_obj_fp = drs_finput('RAW_OBJ_FP', outclass=blank_ofile, filetype='.fits',
                         suffix='', inext='.fits',
                         hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
                                    KW_OBSTYPE='OBJECT',
@@ -194,7 +204,7 @@ raw_obj_fp = drs_finput('RAW_OBJ_FP', outfunc=out.blank, filetype='.fits',
                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_obj_fp)
 
-raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', outfunc=out.blank,
+raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', outclass=blank_ofile,
                          filetype='.fits', suffix='', inext='.fits',
                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc1',
                                     KW_OBSTYPE='OBJECT',
@@ -202,7 +212,7 @@ raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', outfunc=out.blank,
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_obj_hc1)
 
-raw_obj_hc2 = drs_finput('RAW_OBJ_HCTWO', outfunc=out.blank, filetype='.fits',
+raw_obj_hc2 = drs_finput('RAW_OBJ_HCTWO', outclass=blank_ofile, filetype='.fits',
                          suffix='', inext='.fits',
                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc2',
                                     KW_OBSTYPE='OBJECT',
@@ -211,7 +221,7 @@ raw_obj_hc2 = drs_finput('RAW_OBJ_HCTWO', outfunc=out.blank, filetype='.fits',
 raw_file.addset(raw_obj_hc2)
 
 # raw object files
-raw_polar_dark = drs_finput('RAW_POLAR_DARK', outfunc=out.blank,
+raw_polar_dark = drs_finput('RAW_POLAR_DARK', outclass=blank_ofile,
                             hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
                                        KW_OBSTYPE='OBJECT',
                                        KW_DRS_MODE='POLAR',
@@ -219,7 +229,7 @@ raw_polar_dark = drs_finput('RAW_POLAR_DARK', outfunc=out.blank,
                                        KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_polar_dark)
 
-raw_polar_fp = drs_finput('RAW_POLAR_FP', outfunc=out.blank, filetype='.fits',
+raw_polar_fp = drs_finput('RAW_POLAR_FP', outclass=blank_ofile, filetype='.fits',
                           suffix='', inext='.fits',
                           hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
                                      KW_OBSTYPE='OBJECT',
@@ -230,42 +240,42 @@ raw_file.addset(raw_polar_fp)
 
 # -----------------------------------------------------------------------------
 # raw comparison files
-raw_dark_hc1 = drs_finput('RAW_DARK_HCONE', outfunc=out.blank,
+raw_dark_hc1 = drs_finput('RAW_DARK_HCONE', outclass=blank_ofile,
                           filetype='.fits', suffix='',
                           hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc1',
                                      KW_OBSTYPE='COMPARISON',
                                      KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_dark_hc1)
 
-raw_dark_hc2 = drs_finput('RAW_DARK_HCTWO', outfunc=out.blank,
+raw_dark_hc2 = drs_finput('RAW_DARK_HCTWO', outclass=blank_ofile,
                           filetype='.fits', suffix='',
                           hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc2',
                                      KW_OBSTYPE='COMPARISON',
                                      KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_dark_hc2)
 
-raw_fp_hc1 = drs_finput('RAW_FP_HCONE', outfunc=out.blank,
+raw_fp_hc1 = drs_finput('RAW_FP_HCONE', outclass=blank_ofile,
                         filetype='.fits', suffix='',
                         hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_hc1',
                                    KW_OBSTYPE='COMPARISON',
                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_fp_hc1)
 
-raw_fp_hc2 = drs_finput('RAW_FP_HCTWO', outfunc=out.blank,
+raw_fp_hc2 = drs_finput('RAW_FP_HCTWO', outclass=blank_ofile,
                         filetype='.fits', suffix='',
                         hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_hc2',
                                    KW_OBSTYPE='COMPARISON',
                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_fp_hc2)
 
-raw_hc1_fp = drs_finput('RAW_HCONE_FP', outfunc=out.blank,
+raw_hc1_fp = drs_finput('RAW_HCONE_FP', outclass=blank_ofile,
                         filetype='.fits', suffix='',
                         hkeys=dict(KW_CCAS='pos_hc1', KW_CREF='pos_fp',
                                    KW_OBSTYPE='COMPARISON',
                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_hc1_fp)
 
-raw_hc2_fp = drs_finput('RAW_HCTWO_FP', outfunc=out.blank,
+raw_hc2_fp = drs_finput('RAW_HCTWO_FP', outclass=blank_ofile,
                         filetype='.fits', suffix='',
                         hkeys=dict(KW_CCAS='pos_hc2', KW_CREF='pos_fp',
                                    KW_OBSTYPE='COMPARISON',
@@ -273,28 +283,28 @@ raw_hc2_fp = drs_finput('RAW_HCTWO_FP', outfunc=out.blank,
 raw_file.addset(raw_hc2_fp)
 
 raw_hc1_hc1 = drs_finput('RAW_HCONE_HCONE', filetype='.fits', suffix='',
-                         outfunc=out.blank,
+                         outclass=blank_ofile,
                          hkeys=dict(KW_CCAS='pos_hc1', KW_CREF='pos_hc1',
                                     KW_OBSTYPE='COMPARISON',
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_hc1_hc1)
 
 raw_hc2_hc2 = drs_finput('RAW_HCTWO_HCTWO', filetype='.fits', suffix='',
-                         outfunc=out.blank,
+                         outclass=blank_ofile,
                          hkeys=dict(KW_CCAS='pos_hc2', KW_CREF='pos_hc2',
                                     KW_OBSTYPE='COMPARISON',
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_hc2_hc2)
 
 raw_hc1_dark = drs_finput('RAW_HCONE_DARK', filetype='.fits', suffix='',
-                          outfunc=out.blank,
+                          outclass=blank_ofile,
                           hkeys=dict(KW_CCAS='pos_hc1', KW_CREF='pos_pk',
                                      KW_OBSTYPE='COMPARISON',
                                      KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_hc1_dark)
 
 raw_hc2_dark = drs_finput('RAW_HCTWO_DARK', filetype='.fits', suffix='',
-                          outfunc=out.blank,
+                          outclass=blank_ofile,
                           hkeys=dict(KW_CCAS='pos_hc2', KW_CREF='pos_pk',
                                      KW_OBSTYPE='COMPARISON',
                                      KW_INSTRUMENT=INSTRUMENT_NAME))
@@ -305,37 +315,37 @@ raw_file.addset(raw_hc2_dark)
 # =============================================================================
 # generic pp file
 pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp',
-                     outfunc=out.general_file, intype=raw_file,
+                     outclass=general_ofile, intype=raw_file,
                      instrument=__INSTRUMENT__)
 # -----------------------------------------------------------------------------
 # dark
 # pp_dark_dark = drs_finput('DARK_DARK', KW_DPRTYPE='DARK_DARK',
 #                           filetype='.fits',
 #                           suffix='_pp', intype=raw_dark_dark,
-#                           inext='.fits', outfunc=out.general_file)
+#                           inext='.fits', outclass=general_ofile)
 # pp_file.addset(pp_dark_dark)
 
 pp_dark_dark_int = drs_finput('DARK_DARK_INT', filetype='.fits',
                               suffix='_pp', intype=raw_dark_dark_int,
-                              inext='.fits', outfunc=out.general_file,
+                              inext='.fits', outclass=general_ofile,
                               hkeys=dict(KW_DPRTYPE='DARK_DARK_INT', ))
 pp_file.addset(pp_dark_dark_int)
 
 pp_dark_dark_tel = drs_finput('DARK_DARK_TEL', filetype='.fits',
                               suffix='_pp', intype=raw_dark_dark_tel,
-                              inext='.fits', outfunc=out.general_file,
+                              inext='.fits', outclass=general_ofile,
                               hkeys=dict(KW_DPRTYPE='DARK_DARK_TEL'))
 pp_file.addset(pp_dark_dark_tel)
 
 pp_dark_dark_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',
                               suffix='_pp', intype=raw_dark_dark_sky,
-                              inext='.fits', outfunc=out.general_file,
+                              inext='.fits', outclass=general_ofile,
                               hkeys=dict(KW_DPRTYPE='DARK_DARK_SKY'))
 pp_file.addset(pp_dark_dark_sky)
 
 pp_dark_fp_sky = drs_finput('DARK_FP_SKY', filetype='.fits',
                             suffix='_pp', intype=raw_dark_fp_sky,
-                            inext='.fits', outfunc=out.general_file,
+                            inext='.fits', outclass=general_ofile,
                             hkeys=dict(KW_DPRTYPE='DARK_FP_SKY'))
 pp_file.addset(pp_dark_fp_sky)
 
@@ -343,47 +353,47 @@ pp_file.addset(pp_dark_fp_sky)
 # flat
 pp_flat_dark = drs_finput('FLAT_DARK', filetype='.fits',
                           suffix='_pp', intype=raw_flat_dark,
-                          inext='.fits', outfunc=out.general_file,
+                          inext='.fits', outclass=general_ofile,
                           hkeys=dict(KW_DPRTYPE='FLAT_DARK'))
 pp_file.addset(pp_flat_dark)
 
 pp_dark_flat = drs_finput('DARK_FLAT', filetype='.fits',
                           suffix='_pp', intype=raw_dark_flat,
-                          inext='.fits', outfunc=out.general_file,
+                          inext='.fits', outclass=general_ofile,
                           hkeys=dict(KW_DPRTYPE='DARK_FLAT'))
 pp_file.addset(pp_dark_flat)
 
 pp_flat_flat = drs_finput('FLAT_FLAT', filetype='.fits',
                           suffix='_pp', intype=raw_flat_flat,
-                          inext='.fits', outfunc=out.general_file,
+                          inext='.fits', outclass=general_ofile,
                           hkeys=dict(KW_DPRTYPE='FLAT_FLAT'))
 pp_file.addset(pp_flat_flat)
 
 pp_flat_fp = drs_finput('FLAT_FP', filetype='.fits',
                         suffix='_pp', intype=raw_flat_fp,
-                        inext='.fits', outfunc=out.general_file,
+                        inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='FLAT_FP'))
 pp_file.addset(pp_flat_fp)
 # -----------------------------------------------------------------------------
 # align
 pp_dark_fp = drs_finput('DARK_FP', filetype='.fits',
                         suffix='_pp', intype=raw_dark_fp,
-                        inext='.fits', outfunc=out.general_file,
+                        inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='DARK_FP'))
 pp_file.addset(pp_dark_fp)
 pp_fp_dark = drs_finput('FP_DARK', filetype='.fits',
                         suffix='_pp', intype=raw_fp_dark,
-                        inext='.fits', outfunc=out.general_file,
+                        inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='FP_DARK'))
 pp_file.addset(pp_fp_dark)
 pp_fp_flat = drs_finput('FP_FLAT', filetype='.fits',
                         suffix='_pp', intype=raw_fp_flat,
-                        inext='.fits', outfunc=out.general_file,
+                        inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='FP_FLAT'))
 pp_file.addset(pp_fp_flat)
 pp_fp_fp = drs_finput('FP_FP', filetype='.fits',
                       suffix='_pp', intype=raw_fp_fp,
-                      inext='.fits', outfunc=out.general_file,
+                      inext='.fits', outclass=general_ofile,
                       hkeys=dict(KW_DPRTYPE='FP_FP'))
 pp_file.addset(pp_fp_fp)
 
@@ -391,18 +401,18 @@ pp_file.addset(pp_fp_fp)
 # LFC
 pp_lfc_lfc = drs_finput('LFC_LFC', filetype='.fits', suffix='_pp',
                         intype=raw_lfc_lfc, inext='.fits',
-                        outfunc=out.general_file,
+                        outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='LFC_LFC'))
 pp_file.addset(pp_lfc_lfc)
 
 pp_lfc_fp = drs_finput('LFC_FP', hkeys=dict(KW_DPRTYPE='LFC_FP'),
                        filetype='.fits', suffix='_pp', intype=raw_lfc_fp,
-                       inext='.fits', outfunc=out.general_file)
+                       inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_lfc_fp)
 
 pp_fp_lfc = drs_finput('FP_LFC', hkeys=dict(KW_DPRTYPE='FP_LFC'),
                        filetype='.fits', suffix='_pp', intype=raw_fp_lfc,
-                       inext='.fits', outfunc=out.general_file)
+                       inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_fp_lfc)
 
 # -----------------------------------------------------------------------------
@@ -410,32 +420,32 @@ pp_file.addset(pp_fp_lfc)
 pp_obj_dark = drs_finput('OBJ_DARK', hkeys=dict(KW_DPRTYPE='OBJ_DARK'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_obj_dark,
-                         inext='.fits', outfunc=out.general_file)
+                         inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_obj_dark)
 pp_obj_fp = drs_finput('OBJ_FP', hkeys=dict(KW_DPRTYPE='OBJ_FP'),
                        filetype='.fits',
                        suffix='_pp', intype=raw_obj_fp,
-                       inext='.fits', outfunc=out.general_file)
+                       inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_obj_fp)
 pp_obj_hc1 = drs_finput('OBJ_HCONE', hkeys=dict(KW_DPRTYPE='OBJ_HCONE'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_obj_hc1,
-                        inext='.fits', outfunc=out.general_file)
+                        inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_obj_hc1)
 pp_obj_hc2 = drs_finput('OBJ_HCTWO', hkeys=dict(KW_DPRTYPE='OBJ_HCTWO'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_obj_hc2,
-                        inext='.fits', outfunc=out.general_file)
+                        inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_obj_hc2)
 pp_polar_dark = drs_finput('POLAR_DARK', hkeys=dict(KW_DPRTYPE='POLAR_DARK'),
                            filetype='.fits',
                            suffix='_pp', intype=raw_polar_dark,
-                           inext='.fits', outfunc=out.general_file)
+                           inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_polar_dark)
 pp_polar_fp = drs_finput('POLAR_FP', hkeys=dict(KW_DPRTYPE='POLAR_FP'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_polar_fp,
-                         inext='.fits', outfunc=out.general_file)
+                         inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_polar_fp)
 
 # -----------------------------------------------------------------------------
@@ -443,52 +453,52 @@ pp_file.addset(pp_polar_fp)
 pp_dark_hc1 = drs_finput('DARK_HCONE', hkeys=dict(KW_DPRTYPE='DARK_HCONE'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_dark_hc1,
-                         inext='.fits', outfunc=out.general_file)
+                         inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_dark_hc1)
 pp_dark_hc2 = drs_finput('DARK_HCTWO', hkeys=dict(KW_DPRTYPE='DARK_HCTWO'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_dark_hc2,
-                         inext='.fits', outfunc=out.general_file)
+                         inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_dark_hc2)
 pp_fp_hc1 = drs_finput('FP_HCONE', hkeys=dict(KW_DPRTYPE='FP_HCONE'),
                        filetype='.fits',
                        suffix='_pp', intype=raw_fp_hc1,
-                       inext='.fits', outfunc=out.general_file)
+                       inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_fp_hc1)
 pp_fp_hc2 = drs_finput('FP_HCTWO', hkeys=dict(KW_DPRTYPE='FP_HCTWO'),
                        filetype='.fits',
                        suffix='_pp', intype=raw_fp_hc2,
-                       inext='.fits', outfunc=out.general_file)
+                       inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_fp_hc2)
 pp_hc1_fp = drs_finput('HCONE_FP', hkeys=dict(KW_DPRTYPE='HCONE_FP'),
                        filetype='.fits',
                        suffix='_pp', intype=raw_hc1_fp,
-                       inext='.fits', outfunc=out.general_file)
+                       inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_hc1_fp)
 pp_hc2_fp = drs_finput('HCTWO_FP', hkeys=dict(KW_DPRTYPE='HCTWO_FP'),
                        filetype='.fits',
                        suffix='_pp', intype=raw_hc2_fp,
-                       inext='.fits', outfunc=out.general_file)
+                       inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_hc2_fp)
 pp_hc1_hc1 = drs_finput('HCONE_HCONE', hkeys=dict(KW_DPRTYPE='HCONE_HCONE'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_hc1_hc1,
-                        inext='.fits', outfunc=out.general_file)
+                        inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_hc1_hc1)
 pp_hc2_hc2 = drs_finput('HCTWO_HCTWO', hkeys=dict(KW_DPRTYPE='HCTWO_HCTWO'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_hc2_hc2,
-                        inext='.fits', outfunc=out.general_file)
+                        inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_hc2_hc2)
 pp_hc1_dark = drs_finput('HCONE_DARK', hkeys=dict(KW_DPRTYPE='HCONE_DARK'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_hc1_dark,
-                         inext='.fits', outfunc=out.general_file)
+                         inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_hc1_dark)
 pp_hc2_dark = drs_finput('HCTWO_DARK', hkeys=dict(KW_DPRTYPE='HCTWO_DARK'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_hc2_dark,
-                         inext='.fits', outfunc=out.general_file)
+                         inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_hc2_dark)
 
 # =============================================================================
@@ -511,32 +521,32 @@ tellu_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
 # out_dark = drs_finput('DARK', KW_OUTPUT='DARK',
 #                       filetype='.fits', intype=pp_dark_dark,
 #                       suffix='',
-#                       outfunc=out.calib_file,
+#                       outclass=calib_ofile,
 #                       dbname='calibration', dbkey='DARK')
 
 out_dark_int = drs_finput('DARKI', hkeys=dict(KW_OUTPUT='DARKI'),
                           filetype='.fits', intype=pp_dark_dark_int,
                           suffix='_darki',
-                          outfunc=out.calib_file,
+                          outclass=calib_ofile,
                           dbname='calibration', dbkey='DARKI')
 
 out_dark_tel = drs_finput('DARKT', hkeys=dict(KW_OUTPUT='DARKT'),
                           filetype='.fits', intype=pp_dark_dark_tel,
                           suffix='_darkt',
-                          outfunc=out.calib_file,
+                          outclass=calib_ofile,
                           dbname='calibration', dbkey='DARKT')
 
 out_dark_sky = drs_finput('DARKS', hkeys=dict(KW_OUTPUT='DARKS'),
                           filetype='.fits', intype=pp_dark_dark_sky,
                           suffix='_darks',
-                          outfunc=out.calib_file,
+                          outclass=calib_ofile,
                           dbname='calibration', dbkey='DARKS')
 
 out_dark_master = drs_finput('DARKM', hkeys=dict(KW_OUTPUT='DARKM'),
                              filetype='.fits',
                              intype=[pp_dark_dark_tel, pp_dark_dark_int],
                              suffix='_dark_master',
-                             outfunc=out.calib_file,
+                             outclass=mcalib_ofile,
                              dbname='calibration', dbkey='DARKM')
 # add dark outputs to output fileset
 red_file.addset(out_dark_int)
@@ -556,17 +566,17 @@ out_badpix = drs_finput('BADPIX', hkeys=dict(KW_OUTPUT='BADPIX'),
                         filetype='.fits',
                         intype=[pp_flat_flat],
                         suffix='_badpixel',
-                        outfunc=out.calib_file,
+                        outclass=calib_ofile,
                         dbname='calibration', dbkey='BADPIX')
 out_backmap = drs_finput('BKGRD_MAP', hkeys=dict(KW_OUTPUT='BKGRD_MAP'),
                          intype=[pp_flat_flat],
-                         suffix='_bmap.fits', outfunc=out.calib_file,
+                         suffix='_bmap.fits', outclass=calib_ofile,
                          dbname='calibration', dbkey='BKGRDMAP')
 
 # background debug file
 debug_back = drs_finput('DEBUG_BACK', hkeys=dict(KW_OUTPUT='DEBUG_BACK'),
                         filetype='.fits', intype=pp_file,
-                        suffix='_background.fits', outfunc=out.debug_file)
+                        suffix='_background.fits', outclass=debug_ofile)
 
 # add badpix outputs to output fileset
 red_file.addset(out_badpix)
@@ -586,24 +596,24 @@ out_loc_orderp = drs_finput('LOC_ORDERP', hkeys=dict(KW_OUTPUT='LOC_ORDERP'),
                             filetype='.fits',
                             intype=[pp_flat_dark, pp_dark_flat],
                             suffix='_order_profile',
-                            outfunc=out.calib_file,
+                            outclass=calib_ofile,
                             dbname='calibration', dbkey='ORDER_PROFILE')
 out_loc_loco = drs_finput('LOC_LOCO', hkeys=dict(KW_OUTPUT='LOC_LOCO'),
                           fibers=valid_lfibers,
                           filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                           suffix='_loco',
-                          outfunc=out.calib_file,
+                          outclass=calib_ofile,
                           dbname='calibration', dbkey='LOC')
 out_loc_fwhm = drs_finput('LOC_FWHM', hkeys=dict(KW_OUTPUT='LOC_FWHM'),
                           fibers=valid_lfibers,
                           filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                           suffix='_fwhm-order',
-                          outfunc=out.calib_file)
+                          outclass=calib_ofile)
 out_loc_sup = drs_finput('LOC_SUP', hkeys=dict(KW_OUTPUT='LOC_SUP'),
                          fibers=valid_lfibers,
                          filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                          suffix='_with-order',
-                         outfunc=out.calib_file)
+                         outclass=calib_ofile)
 # add localisation outputs to output fileset
 red_file.addset(out_loc_orderp)
 red_file.addset(out_loc_loco)
@@ -619,42 +629,42 @@ calib_file.addset(out_loc_loco)
 out_shape_dxmap = drs_finput('SHAPE_X', hkeys=dict(KW_OUTPUT='SHAPE_X'),
                              filetype='.fits', intype=pp_fp_fp,
                              suffix='_shapex',
-                             outfunc=out.calib_file,
+                             outclass=mcalib_ofile,
                              dbname='calibration', dbkey='SHAPEX')
 out_shape_dymap = drs_finput('SHAPE_Y', hkeys=dict(KW_OUTPUT='SHAPE_Y'),
                              filetype='.fits', intype=pp_fp_fp,
                              suffix='_shapey',
-                             outfunc=out.calib_file,
+                             outclass=mcalib_ofile,
                              dbname='calibration', dbkey='SHAPEY')
 out_shape_fpmaster = drs_finput('MASTER_FP', hkeys=dict(KW_OUTPUT='MASTER_FP'),
                                 filetype='.fits', intype=pp_fp_fp,
                                 suffix='_fpmaster',
-                                outfunc=out.calib_file,
+                                outclass=mcalib_ofile,
                                 dbname='calibration', dbkey='FPMASTER')
 out_shape_debug_ifp = drs_finput('SHAPE_IN_FP',
                                  hkeys=dict(KW_OUTPUT='SHAPE_IN_FP'),
                                  filetype='.fits', intype=pp_fp_fp,
                                  suffix='_shape_in_fp',
-                                 outfunc=out.debug_file)
+                                 outclass=debug_ofile)
 out_shape_debug_ofp = drs_finput('SHAPE_OUT_FP',
                                  hkeys=dict(KW_OUTPUT='SHAPE_OUT_FP'),
                                  filetype='.fits', intype=pp_fp_fp,
                                  suffix='_shape_out_fp',
-                                 outfunc=out.debug_file)
+                                 outclass=debug_ofile)
 out_shape_debug_ihc = drs_finput('SHAPE_IN_HC',
                                  hkeys=dict(KW_OUTPUT='SHAPE_IN_HC'),
                                  filetype='.fits', intype=pp_hc1_hc1,
                                  suffix='_shape_in_hc',
-                                 outfunc=out.debug_file)
+                                 outclass=debug_ofile)
 out_shape_debug_ohc = drs_finput('SHAPE_OUT_HC',
                                  hkeys=dict(KW_OUTPUT='SHAPE_OUT_HC'),
                                  filetype='.fits', intype=pp_hc1_hc1,
                                  suffix='_shape_out_hc',
-                                 outfunc=out.debug_file)
+                                 outclass=debug_ofile)
 out_shape_debug_bdx = drs_finput('SHAPE_BDX', hkeys=dict(KW_OUTPUT='SHAPE_BDX'),
                                  filetype='.fits', intype=pp_fp_fp,
                                  suffix='_shape_out_bdx',
-                                 outfunc=out.debug_file)
+                                 outclass=debug_ofile)
 # add shape master outputs to output fileset
 red_file.addset(out_shape_dxmap)
 red_file.addset(out_shape_dymap)
@@ -678,19 +688,19 @@ valid_efibers = ['AB', 'A', 'B', 'C']
 out_shape_local = drs_finput('SHAPEL', hkeys=dict(KW_OUTPUT='SHAPEL'),
                              filetype='.fits', intype=pp_fp_fp,
                              suffix='_shapel',
-                             outfunc=out.calib_file,
+                             outclass=calib_ofile,
                              dbname='calibration', dbkey='SHAPEL')
 out_shapel_debug_ifp = drs_finput('SHAPEL_IN_FP',
                                   hkeys=dict(KW_OUTPUT='SHAPEL_IN_FP'),
                                   filetype='.fits', intype=pp_fp_fp,
                                   suffix='_shapel_in_fp.fits',
-                                  outfunc=out.debug_file)
+                                  outclass=debug_ofile)
 
 out_shapel_debug_ofp = drs_finput('SHAPEL_OUT_FP',
                                   hkeys=dict(KW_OUTPUT='SHAPEL_OUT_FP'),
                                   filetype='.fits', intype=pp_fp_fp,
                                   suffix='_shapel_out_fp.fits',
-                                  outfunc=out.debug_file)
+                                  outclass=debug_ofile)
 # add shape local outputs to output fileset
 red_file.addset(out_shape_local)
 red_file.addset(out_shapel_debug_ifp)
@@ -706,20 +716,20 @@ out_ff_blaze = drs_finput('FF_BLAZE', hkeys=dict(KW_OUTPUT='FF_BLAZE'),
                           filetype='.fits', intype=pp_flat_flat,
                           suffix='_blaze',
                           dbname='calibration', dbkey='BLAZE',
-                          outfunc=out.calib_file)
+                          outclass=calib_ofile)
 out_ff_flat = drs_finput('FF_FLAT', hkeys=dict(KW_OUTPUT='FF_FLAT'),
                          fibers=valid_efibers,
                          filetype='.fits', intype=pp_flat_flat,
                          suffix='_flat',
                          dbname='calibration', dbkey='FLAT',
-                         outfunc=out.calib_file)
+                         outclass=calib_ofile)
 
 out_orderp_straight = drs_finput('ORDERP_STRAIGHT',
                                  hkeys=dict(KW_OUTPUT='ORDERP_STRAIGHT'),
                                  fibers=valid_efibers,
                                  filetype='.fits', intype=out_shape_local,
                                  suffix='_orderps',
-                                 outfunc=out.general_file)
+                                 outclass=general_ofile)
 
 # add flat outputs to output fileset
 red_file.addset(out_ff_blaze)
@@ -735,13 +745,13 @@ calib_file.addset(out_ff_flat)
 out_ql_e2ds = drs_finput('QL_E2DS', hkeys=dict(KW_OUTPUT='QL_E2DS'),
                          fibers=valid_efibers,
                          filetype='.fits', intype=pp_file,
-                         suffix='_q2ds', outfunc=out.general_file)
+                         suffix='_q2ds', outclass=general_ofile)
 
 # extract E2DS with flat fielding
 out_ql_e2dsff = drs_finput('QL_E2DS_FF', hkeys=dict(KW_OUTPUT='QL_E2DS_FF'),
                            fibers=valid_efibers,
                            filetype='.fits', intype=pp_file,
-                           suffix='_q2dsff', outfunc=out.general_file)
+                           suffix='_q2dsff', outclass=general_ofile)
 
 # -----------------------------------------------------------------------------
 # extract files
@@ -750,33 +760,33 @@ out_ql_e2dsff = drs_finput('QL_E2DS_FF', hkeys=dict(KW_OUTPUT='QL_E2DS_FF'),
 out_ext_e2ds = drs_finput('EXT_E2DS', hkeys=dict(KW_OUTPUT='EXT_E2DS'),
                           fibers=valid_efibers,
                           filetype='.fits', intype=pp_file,
-                          suffix='_e2ds', outfunc=out.general_file)
+                          suffix='_e2ds', outclass=general_ofile)
 # extract E2DS with flat fielding
 out_ext_e2dsff = drs_finput('EXT_E2DS_FF', hkeys=dict(KW_OUTPUT='EXT_E2DS_FF'),
                             fibers=valid_efibers,
                             filetype='.fits', intype=pp_file,
-                            suffix='_e2dsff', outfunc=out.general_file,
+                            suffix='_e2dsff', outclass=general_ofile,
                             s1d=['EXT_S1D_W', 'EXT_S1D_V'])
 # pre-extract debug file
 out_ext_e2dsll = drs_finput('EXT_E2DS_LL', hkeys=dict(KW_OUTPUT='EXT_E2DS_LL'),
                             fibers=valid_efibers,
                             filetype='.fits', intype=[pp_file, pp_flat_flat],
-                            suffix='_e2dsll', outfunc=out.debug_file)
+                            suffix='_e2dsll', outclass=debug_ofile)
 # extraction localisation file
 out_ext_loco = drs_finput('EXT_LOCO', hkeys=dict(KW_OUTPUT='EXT_LOCO'),
                           fibers=valid_efibers,
                           filetype='.fits', intype=pp_file,
-                          suffix='_e2dsloco', outfunc=out.debug_file)
+                          suffix='_e2dsloco', outclass=debug_ofile)
 # extract s1d without flat fielding (constant in wavelength)
 out_ext_s1d_w = drs_finput('EXT_S1D_W', hkeys=dict(KW_OUTPUT='EXT_S1D_W'),
                            fibers=valid_efibers,
                            filetype='.fits', intype=pp_file, datatype='table',
-                           suffix='_s1d_w', outfunc=out.general_file)
+                           suffix='_s1d_w', outclass=general_ofile)
 # extract s1d without flat fielding (constant in velocity)
 out_ext_s1d_v = drs_finput('EXT_S1D_V', hkeys=dict(KW_OUTPUT='EXT_S1D_V'),
                            fibers=valid_efibers,
                            filetype='.fits', intype=pp_file, datatype='table',
-                           suffix='_s1d_v', outfunc=out.general_file)
+                           suffix='_s1d_v', outclass=general_ofile)
 
 # fp line file from night
 out_ext_fplines = drs_finput('EXT_FPLIST', hkeys=dict(KW_OUTPUT='EXT_FPLIST'),
@@ -784,7 +794,7 @@ out_ext_fplines = drs_finput('EXT_FPLIST', hkeys=dict(KW_OUTPUT='EXT_FPLIST'),
                              filetype='.fits', remove_insuffix=True,
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_ext_fplines',
-                             outfunc=out.general_file)
+                             outclass=general_ofile)
 
 # add extract outputs to output fileset
 red_file.addset(out_ext_e2ds)
@@ -805,7 +815,7 @@ out_thermal_e2ds_int = drs_finput('THERMALI_E2DS',
                                   filetype='.fits', intype=pp_dark_dark_int,
                                   suffix='_thermal_e2ds_int',
                                   dbname='calibration', dbkey='THERMALI',
-                                  outfunc=out.general_file)
+                                  outclass=general_ofile)
 
 # thermal from telescope dark
 out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS',
@@ -814,7 +824,7 @@ out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS',
                                   filetype='.fits', intype=pp_dark_dark_tel,
                                   suffix='_thermal_e2ds_tel',
                                   dbname='calibration', dbkey='THERMALT',
-                                  outfunc=out.general_file)
+                                  outclass=general_ofile)
 
 # add thermal outputs to output fileset
 red_file.addset(out_thermal_e2ds_int)
@@ -832,7 +842,7 @@ out_leak_master = drs_finput('LEAKM_E2DS', hkeys=dict(KW_OUTPUT='LEAKM_E2DS'),
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_leak_master',
                              dbname='calibration', dbkey='LEAKM',
-                             outfunc=out.general_file)
+                             outclass=mcalib_ofile)
 red_file.addset(out_leak_master)
 calib_file.addset(out_leak_master)
 
@@ -847,7 +857,7 @@ out_wavem_sol = drs_finput('WAVESOL_MASTER',
                            intype=[out_ext_e2ds, out_ext_e2dsff],
                            suffix='_wavesol_master',
                            dbname='calibration', dbkey='WAVESOL_MASTER',
-                           outfunc=out.calib_file)
+                           outclass=mcalib_ofile)
 
 # hc line file from master
 out_wave_hclist_master = drs_finput('WAVE_HCLIST_MASTER',
@@ -858,7 +868,7 @@ out_wave_hclist_master = drs_finput('WAVE_HCLIST_MASTER',
                                     suffix='_wavem_hclines',
                                     dbname='calibration', dbkey='WAVEHCL',
                                     datatype='table',
-                                    outfunc=out.calib_file)
+                                    outclass=mcalib_ofile)
 
 # fp line file from master
 out_wave_fplist_master = drs_finput('WAVE_FPLIST_MASTER',
@@ -869,7 +879,7 @@ out_wave_fplist_master = drs_finput('WAVE_FPLIST_MASTER',
                                     suffix='_wavem_fplines',
                                     dbname='calibration', dbkey='WAVEFPL',
                                     datatype='table',
-                                    outfunc=out.calib_file)
+                                    outclass=mcalib_ofile)
 
 # teh cavity file polynomial file
 out_wavem_cavity = drs_finput('WAVEM_CAV', hkeys=dict(KW_OUTPUT='WAVEM_CAV'),
@@ -878,7 +888,7 @@ out_wavem_cavity = drs_finput('WAVEM_CAV', hkeys=dict(KW_OUTPUT='WAVEM_CAV'),
                               intype=[out_ext_e2ds, out_ext_e2dsff],
                               suffix='_wavecav_',
                               dbname='calibration', dbkey='WAVECAV',
-                              outfunc=out.calib_file)
+                              outclass=mcalib_ofile)
 
 # the default wave master
 out_wave_master = drs_finput('WAVESOL_DEFAULT',
@@ -888,7 +898,7 @@ out_wave_master = drs_finput('WAVESOL_DEFAULT',
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_wavem',
                              dbname='calibration', dbkey='WAVESOL_DEFAULT',
-                             outfunc=out.calib_file)
+                             outclass=mcalib_ofile)
 
 # add wave outputs to output fileset
 red_file.addset(out_wavem_sol)
@@ -911,7 +921,7 @@ out_wavem_res = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
                            filetype='.fits',
                            intype=[out_ext_e2ds, out_ext_e2dsff],
                            suffix='_wavemres',
-                           outfunc=out.calib_file)
+                           outclass=calib_ofile)
 
 # hc resolution map
 out_wavem_hcres = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
@@ -919,7 +929,7 @@ out_wavem_hcres = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
                              filetype='.fits',
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_wavemres',
-                             outfunc=out.calib_file)
+                             outclass=calib_ofile)
 
 # fp global results table
 out_wavem_res_table = drs_input('WAVE_FPRESTAB',
@@ -927,7 +937,7 @@ out_wavem_res_table = drs_input('WAVE_FPRESTAB',
                                 fibers=valid_efibers,
                                 filetype='.tbl',
                                 intype=[out_ext_e2ds, out_ext_e2dsff],
-                                outfunc=out.set_file,
+                                outclass=set_ofile,
                                 basename='apero_wave_results')
 
 # fp line list table
@@ -937,7 +947,7 @@ out_wavem_ll_table = drs_input('WAVE_FPLLTABL',
                                filetype='.tbl',
                                intype=[out_ext_e2ds, out_ext_e2dsff],
                                suffix='_mhc_lines',
-                               outfunc=out.calib_file)
+                               outclass=calib_ofile)
 
 # add wave outputs to output fileset
 red_file.addset(out_wavem_hcres)
@@ -954,7 +964,7 @@ out_wave_night = drs_finput('WAVE_NIGHT', hkeys=dict(KW_OUTPUT='WAVE_NIGHT'),
                             intype=[out_ext_e2ds, out_ext_e2dsff],
                             suffix='_wave_night',
                             dbname='calibration', dbkey='WAVE',
-                            outfunc=out.calib_file)
+                            outclass=calib_ofile)
 
 # hc initial linelist
 out_wave_hcline = drs_input('WAVEHCLL', hkeys=dict(KW_OUTPUT='WAVEHCLL'),
@@ -962,7 +972,7 @@ out_wave_hcline = drs_input('WAVEHCLL', hkeys=dict(KW_OUTPUT='WAVEHCLL'),
                             filetype='.dat',
                             intype=[out_ext_e2ds, out_ext_e2dsff],
                             suffix='_linelist',
-                            outfunc=out.calib_file)
+                            outclass=calib_ofile)
 
 # hc resolution map
 out_wave_hcres = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
@@ -970,7 +980,7 @@ out_wave_hcres = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
                             filetype='.fits',
                             intype=[out_ext_e2ds, out_ext_e2dsff],
                             suffix='_waveres',
-                            outfunc=out.calib_file)
+                            outclass=calib_ofile)
 
 # fp global results table
 out_wave_res_table = drs_input('WAVE_FPRESTAB',
@@ -978,7 +988,7 @@ out_wave_res_table = drs_input('WAVE_FPRESTAB',
                                fibers=valid_efibers,
                                filetype='.tbl',
                                intype=[out_ext_e2ds, out_ext_e2dsff],
-                               outfunc=out.set_file,
+                               outclass=set_ofile,
                                basename='apero_wave_results')
 
 # fp line list table
@@ -988,7 +998,7 @@ out_wave_ll_table = drs_input('WAVE_FPLLTABL',
                               filetype='.tbl',
                               intype=[out_ext_e2ds, out_ext_e2dsff],
                               suffix='_hc_lines',
-                              outfunc=out.calib_file)
+                              outclass=calib_ofile)
 
 # hc line file from night
 out_wave_hclist = drs_finput('WAVE_HCLIST', hkeys=dict(KW_OUTPUT='WAVE_HCLIST'),
@@ -996,7 +1006,7 @@ out_wave_hclist = drs_finput('WAVE_HCLIST', hkeys=dict(KW_OUTPUT='WAVE_HCLIST'),
                              filetype='.fits',
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_wave_hclines',
-                             outfunc=out.calib_file)
+                             outclass=calib_ofile)
 
 # fp line file from night
 out_wave_fplist = drs_finput('WAVE_FPLIST', hkeys=dict(KW_OUTPUT='WAVE_FPLIST'),
@@ -1004,7 +1014,7 @@ out_wave_fplist = drs_finput('WAVE_FPLIST', hkeys=dict(KW_OUTPUT='WAVE_FPLIST'),
                              filetype='.fits',
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_wave_fplines',
-                             outfunc=out.calib_file)
+                             outclass=calib_ofile)
 
 # add wave outputs to output fileset
 red_file.addset(out_wave_night)
@@ -1029,7 +1039,7 @@ out_tellu_pclean = drs_finput('TELLU_PCLEAN',
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_tellu_pclean', remove_insuffix=True,
                               dbname='telluric', dbkey='TELLU_PCLEAN',
-                              outfunc=out.general_file)
+                              outclass=tellu_ofile)
 
 # convolved tapas map (with master wave solution)
 out_tellu_conv = drs_ninput('TELLU_CONV', hkeys=dict(KW_OUTPUT='TELLU_CONV'),
@@ -1039,13 +1049,13 @@ out_tellu_conv = drs_ninput('TELLU_CONV', hkeys=dict(KW_OUTPUT='TELLU_CONV'),
                                     out_wave_master],
                             suffix='_tellu_conv', remove_insuffix=True,
                             dbname='telluric', dbkey='TELLU_CONV',
-                            outfunc=out.general_file)
+                            outclass=tellu_ofile)
 
 # tapas file in format for pre-cleaning
 out_tellu_spl_npy = drs_ninput('TELLU_TAPAS', filetype='.npy',
                                basename='tapas_spl.npy',
                                dbname='telluric', dbkey='TELLU_TAPAS',
-                               outfunc=out.set_file)
+                               outclass=tellu_ofile)
 
 # transmission map
 out_tellu_trans = drs_finput('TELLU_TRANS', hkeys=dict(KW_OUTPUT='TELLU_TRANS'),
@@ -1053,14 +1063,14 @@ out_tellu_trans = drs_finput('TELLU_TRANS', hkeys=dict(KW_OUTPUT='TELLU_TRANS'),
                              filetype='.fits', intype=out_ext_e2dsff,
                              suffix='_tellu_trans', remove_insuffix=True,
                              dbname='telluric', dbkey='TELLU_TRANS',
-                             outfunc=out.general_file)
+                             outclass=tellu_ofile)
 
 # transmission model
 out_tellu_model = drs_finput('TRANS_MODEL', hkeys=dict(KW_OUTPUT='TRANS_MODEL'),
                              fibers=valid_tfibers, filetype='.fits',
-                             basename = 'trans_model_{0}', # add fiber manually
+                             basename='trans_model_{0}',  # add fiber manually
                              dbname='telluric', dbkey='TELLU_MODEL',
-                             outfunc=out.set_file)
+                             outclass=mtellu_ofile)
 
 # add make_telluric outputs to output fileset
 red_file.addset(out_tellu_pclean)
@@ -1081,11 +1091,11 @@ tellu_file.addset(out_tellu_model)
 out_tellu_abso_npy = drs_ninput('ABSO_NPY',
                                 filetype='.npy',
                                 basename='tellu_save.npy',
-                                outfunc=out.set_file)
+                                outclass=set_ofile)
 out_tellu_abso1_npy = drs_ninput('ABSO1_NPY',
                                  filetype='.npy',
                                  basename='tellu_save1.npy',
-                                 outfunc=out.set_file)
+                                 outclass=set_ofile)
 
 # telluric corrected e2ds spectrum
 out_tellu_obj = drs_finput('TELLU_OBJ', hkeys=dict(KW_OUTPUT='TELLU_OBJ'),
@@ -1093,7 +1103,7 @@ out_tellu_obj = drs_finput('TELLU_OBJ', hkeys=dict(KW_OUTPUT='TELLU_OBJ'),
                            filetype='.fits', intype=out_ext_e2dsff,
                            suffix='_e2dsff_tcorr', remove_insuffix=True,
                            dbname='telluric', dbkey='TELLU_OBJ',
-                           outfunc=out.general_file,
+                           outclass=tellu_ofile,
                            s1d=['SC1D_W_FILE', 'SC1D_V_FILE'])
 
 # telluric corrected s1d spectrum
@@ -1102,13 +1112,13 @@ out_tellu_sc1d_w = drs_finput('SC1D_W_FILE',
                               fibers=valid_tfibers,
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_s1d_w_tcorr', remove_insuffix=True,
-                              outfunc=out.general_file, datatype='table')
+                              outclass=tellu_ofile, datatype='table')
 out_tellu_sc1d_v = drs_finput('SC1D_V_FILE',
                               hkeys=dict(KW_OUTPUT='SC1D_V_FILE'),
                               fibers=valid_tfibers,
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_s1d_v_tcorr', remove_insuffix=True,
-                              outfunc=out.general_file, datatype='table')
+                              outclass=tellu_ofile, datatype='table')
 
 # reconstructed telluric absorption file
 out_tellu_recon = drs_finput('TELLU_RECON', hkeys=dict(KW_OUTPUT='TELLU_RECON'),
@@ -1116,7 +1126,7 @@ out_tellu_recon = drs_finput('TELLU_RECON', hkeys=dict(KW_OUTPUT='TELLU_RECON'),
                              filetype='.fits', intype=out_ext_e2dsff,
                              suffix='_e2dsff_recon', remove_insuffix=True,
                              dbname='telluric', dbkey='TELLU_RECON',
-                             outfunc=out.general_file,
+                             outclass=tellu_ofile,
                              s1d=['RC1D_W_FILE', 'RC1D_V_FILE'])
 
 # reconstructed telluric 1d absorption
@@ -1125,13 +1135,13 @@ out_tellu_rc1d_w = drs_finput('RC1D_W_FILE',
                               fibers=valid_tfibers,
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_s1d_w_recon', remove_insuffix=True,
-                              outfunc=out.general_file, datatype='table')
+                              outclass=tellu_ofile, datatype='table')
 out_tellu_rc1d_v = drs_finput('RC1D_V_FILE',
                               hkeys=dict(KW_OUTPUT='RC1D_V_FILE'),
                               fibers=valid_tfibers,
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_s1d_v_recon', remove_insuffix=True,
-                              outfunc=out.general_file, datatype='table')
+                              outclass=tellu_ofile, datatype='table')
 
 # add fit telluric outputs to output fileset
 red_file.addset(out_tellu_abso_npy)
@@ -1155,7 +1165,7 @@ out_tellu_template = drs_finput('TELLU_TEMP',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
                                 basename='Template',
                                 dbname='telluric', dbkey='TELLU_TEMP',
-                                outfunc=out.set_file)
+                                outclass=set_ofile)
 
 # template cube file (after shift)
 out_tellu_bigcube = drs_finput('TELLU_BIGCUBE',
@@ -1164,7 +1174,7 @@ out_tellu_bigcube = drs_finput('TELLU_BIGCUBE',
                                filetype='.fits',
                                intype=[out_ext_e2dsff, out_tellu_obj],
                                basename='BigCube',
-                               outfunc=out.set_file)
+                               outclass=set_ofile)
 
 # template cube file (before shift)
 out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0',
@@ -1173,7 +1183,7 @@ out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0',
                                 filetype='.fits',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
                                 basename='BigCube0',
-                                outfunc=out.set_file)
+                                outclass=set_ofile)
 
 # s1d template file (median)
 out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',
@@ -1182,7 +1192,7 @@ out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',
                                     filetype='.fits',
                                     intype=[out_ext_e2dsff, out_tellu_obj],
                                     basename='Template_s1d', datatype='table',
-                                    outfunc=out.set_file)
+                                    outclass=set_ofile)
 
 # s1d cibe file (after shift)
 out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
@@ -1191,7 +1201,7 @@ out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
                                    filetype='.fits',
                                    intype=[out_ext_e2dsff, out_tellu_obj],
                                    basename='BigCube_s1d',
-                                   outfunc=out.set_file)
+                                   outclass=set_ofile)
 
 # add make template outputs to output fileset
 red_file.addset(out_tellu_template)
@@ -1213,7 +1223,7 @@ out_ccf_fits = drs_finput('CCF_RV', hkeys=dict(KW_OUTPUT='CCF_RV'),
                           suffix='_ccf',
                           intype=[out_ext_e2dsff, out_tellu_obj],
                           datatype='table',
-                          outfunc=out.general_file)
+                          outclass=general_ofile)
 
 red_file.addset(out_ccf_fits)
 
@@ -1225,7 +1235,7 @@ out_pol_deg = drs_finput('POL_DEG', hkeys=dict(KW_OUTPUT='POL_DEG'),
                          filetype='.fits',
                          suffix='_pol',
                          intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                         outclass=general_ofile)
 
 # stokes i file
 out_pol_stokesi = drs_finput('STOKESI_POL',
@@ -1233,64 +1243,64 @@ out_pol_stokesi = drs_finput('STOKESI_POL',
                              filetype='.fits',
                              suffix='_StokesI',
                              intype=[out_ext_e2dsff, out_tellu_obj],
-                             outfunc=out.general_file)
+                             outclass=general_ofile)
 
 # null 1 file
 out_pol_null1 = drs_finput('NULL_POL1', hkeys=dict(KW_OUTPUT='NULL_POL1'),
                            filetype='.fits',
                            suffix='_null1_pol',
                            intype=[out_ext_e2dsff, out_tellu_obj],
-                           outfunc=out.general_file)
+                           outclass=general_ofile)
 
 # null 2 file
 out_pol_null2 = drs_finput('NULL_POL2', hkeys=dict(KW_OUTPUT='NULL_POL2'),
                            filetype='.fits',
                            suffix='_null2_pol',
                            intype=[out_ext_e2dsff, out_tellu_obj],
-                           outfunc=out.general_file)
+                           outclass=general_ofile)
 
 # lsd file
 out_pol_lsd = drs_finput('LSD_POL', hkeys=dict(KW_OUTPUT='LSD_POL'),
                          filetype='.fits',
                          suffix='_lsd_pol',  # datatype='table',
                          intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
+                         outclass=general_ofile)
 
 # pol s1d files
 out_pol_s1dw = drs_finput('S1DW_POL', hkeys=dict(KW_OUTPUT='S1DW_POL'),
                           filetype='.fits',
                           suffix='_s1d_w_pol', remove_insuffix=True,
                           intype=[out_ext_e2dsff, out_tellu_obj],
-                          outfunc=out.general_file)
+                          outclass=general_ofile)
 out_pol_s1dv = drs_finput('S1DV_POL', hkeys=dict(KW_OUTPUT='S1DV_POL'),
                           filetype='.fits',
                           suffix='_s1d_v_pol', remove_insuffix=True,
                           intype=[out_ext_e2dsff, out_tellu_obj],
-                          outfunc=out.general_file)
+                          outclass=general_ofile)
 
 # null1 s1d files
 out_null1_s1dw = drs_finput('S1DW_NULL1', hkeys=dict(KW_OUTPUT='S1DW_NULL1'),
                             filetype='.fits',
                             suffix='_s1d_w_null1', remove_insuffix=True,
                             intype=[out_ext_e2dsff, out_tellu_obj],
-                            outfunc=out.general_file)
+                            outclass=general_ofile)
 out_null1_s1dv = drs_finput('S1DV_NULL1', hkeys=dict(KW_OUTPUT='S1DV_NULL1'),
                             filetype='.fits',
                             suffix='_s1d_v_null1', remove_insuffix=True,
                             intype=[out_ext_e2dsff, out_tellu_obj],
-                            outfunc=out.general_file)
+                            outclass=general_ofile)
 
 # null2 s1d files
 out_null2_s1dw = drs_finput('S1DW_NULL2', hkeys=dict(KW_OUTPUT='S1DW_NULL1'),
                             filetype='.fits',
                             suffix='_s1d_w_null2', remove_insuffix=True,
                             intype=[out_ext_e2dsff, out_tellu_obj],
-                            outfunc=out.general_file)
+                            outclass=general_ofile)
 out_null2_s1dv = drs_finput('S1DV_NULL2', hkeys=dict(KW_OUTPUT='S1DV_NULL2'),
                             filetype='.fits',
                             suffix='_s1d_v_null2', remove_insuffix=True,
                             intype=[out_ext_e2dsff, out_tellu_obj],
-                            outfunc=out.general_file)
+                            outclass=general_ofile)
 
 # stokes I s1d files
 out_stokesi_s1dw = drs_finput('S1DW_STOKESI',
@@ -1298,13 +1308,13 @@ out_stokesi_s1dw = drs_finput('S1DW_STOKESI',
                               filetype='.fits',
                               suffix='_s1d_w_stokesi', remove_insuffix=True,
                               intype=[out_ext_e2dsff, out_tellu_obj],
-                              outfunc=out.general_file)
+                              outclass=general_ofile)
 out_stokesi_s1dv = drs_finput('S1DV_STOKESI',
                               hkeys=dict(KW_OUTPUT='S1DV_STOKESI'),
                               filetype='.fits',
                               suffix='_s1d_v_stokesi', remove_insuffix=True,
                               intype=[out_ext_e2dsff, out_tellu_obj],
-                              outfunc=out.general_file)
+                              outclass=general_ofile)
 
 red_file.addset(out_pol_deg)
 red_file.addset(out_pol_stokesi)
@@ -1325,7 +1335,7 @@ red_file.addset(out_stokesi_s1dv)
 # =============================================================================
 # generic post processed file
 post_file = drs_oinput('DRS_POST', filetype='.fits', suffix='',
-                       outfunc=out.post_file, instrument=__INSTRUMENT__)
+                       outclass=post_ofile, instrument=__INSTRUMENT__)
 # define a list of wave outputs
 wave_files = DrsFileGroup(name='WAVE_FILES',
                           files=[out_wavem_sol, out_wave_night,
@@ -1335,7 +1345,7 @@ wave_files = DrsFileGroup(name='WAVE_FILES',
 # post processed 2D extraction file
 # -----------------------------------------------------------------------------
 post_e_file = drs_oinput('DRS_POST_E', filetype='.fits', suffix='e.fits',
-                         outfunc=out.post_file, inext='o', required=True)
+                         outclass=post_ofile, inext='o', required=True)
 # add extensions
 post_e_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
@@ -1396,7 +1406,7 @@ post_file.addset(post_e_file)
 # post processed 1D extraction file
 # -----------------------------------------------------------------------------
 post_s_file = drs_oinput('DRS_POST_S', filetype='.fits', suffix='s.fits',
-                         outfunc=out.post_file, inext='o', required=True)
+                         outclass=post_ofile, inext='o', required=True)
 post_s_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
                                            'POLAR_DARK']),
@@ -1566,7 +1576,7 @@ post_file.addset(post_s_file)
 # post processed telluric file
 # -----------------------------------------------------------------------------
 post_t_file = drs_oinput('DRS_POST_T', filetype='.fits', suffix='t.fits',
-                         outfunc=out.post_file, inext='o', required=False)
+                         outclass=post_ofile, inext='o', required=False)
 # add extensions
 post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
@@ -1629,7 +1639,7 @@ post_file.addset(post_t_file)
 # -----------------------------------------------------------------------------
 # Not always required (i.e. for hot stars)
 post_v_file = drs_oinput('DRS_POST_V', filetype='.fits', suffix='v.fits',
-                         outfunc=out.post_file, inext='o', required=False)
+                         outclass=post_ofile, inext='o', required=False)
 post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
                                            'POLAR_DARK']),
@@ -1650,7 +1660,7 @@ post_file.addset(post_v_file)
 # -----------------------------------------------------------------------------
 # Not always required (i.e. for hot stars)
 post_p_file = drs_oinput('DRS_POST_P', filetype='.fits', suffix='p.fits',
-                         outfunc=out.post_file, inext='o', required=False,
+                         outclass=post_ofile, inext='o', required=False,
                          exclude_keys=dict(KW_DRS_MODE=['SPECTROSCOPY',
                                                         'Unknown']))
 
