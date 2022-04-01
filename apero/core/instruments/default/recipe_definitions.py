@@ -212,6 +212,14 @@ explorer.recipe_type = 'nolog-tool'
 explorer.recipe_kind = 'user'
 explorer.set_kwarg(name='--hash', default=False, dtype='switch',
                    helpstr=textentry('EXPLORER_HASH'))
+explorer.set_kwarg(name='--recipe', default='None', dtype=str,
+                   helpstr='Recipe or shortname for recipe '
+                           '(must used in combination with --flagnum)')
+explorer.set_kwarg(name='--flagnum', default=0, dtype=int,
+                   helpstr='Instead of running explorer converts a binary flag'
+                           ' to a set of binary flags for a recipe '
+                           '(must be used in combination with --recipe)')
+
 explorer.description_file = 'apero_explorer.rst'
 
 # -----------------------------------------------------------------------------

@@ -1331,10 +1331,6 @@ class PseudoConstants:
                         comment='full quality control pass/fail')
         log_columns.add(name='ERRORMSGS', datatype='TEXT',
                         comment='recipe errors')
-        log_columns.add(name='IN_PARALLEL', datatype='INT',
-                        comment='Whether recipe was run in parellel')
-        log_columns.add(name='RUNNING', datatype='INT',
-                        comment='whether the recipe was still running')
         log_columns.add(name='ENDED', datatype='INT',
                         comment='flag for recipe ended '
                                 '(false at time of writing)')

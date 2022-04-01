@@ -13,7 +13,9 @@ from pathlib import Path
 
 from apero.base import base
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.utils import drs_startup
+from apero.core.utils import drs_utils
 
 from apero.tools.module.database import manage_databases
 from apero.tools.module.database import database_gui
@@ -84,10 +86,26 @@ def __main__(recipe, params):
     :return: returns the local namespace as a dictionary
     :rtype: dict
     """
+
+    # get inputs
+    inputs = params['INPUTS']
+    null_text = ['None', '', 'Null']
+    # flag mode
+    cond1 = drs_text.null_text(inputs.get('RECIPE', None), null_text)
+    cond2 = drs_text.null_text(inputs.get('FLAGNUM', None), null_text)
+
+    if not cond1 and not cond2:
+        # get flags
+        drs_utils.display_flag(params)
+        # ----------------------------------------------------------------------
+        # End of main code
+        # ----------------------------------------------------------------------
+        return drs_startup.return_locals(params, locals())
+
     # get instrument
     instrument = str(recipe.instrument)
     # get hash col argument from inputs
-    hash_col = params['INPUTS']['hash']
+    hash_col = inputs.get('hash', False)
     # get databases
     dbs = manage_databases.list_databases(params)
     # push into database holder

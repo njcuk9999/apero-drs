@@ -36,3 +36,31 @@ The GUI allows the user to:
 
 .. note:: We do not recommend changing any of the database entries without good reason
           and without talking to the developers
+
+
+In addition to the GUI explorer, apero_explorer can be run in "flag mode".
+
+This recipes both the --recipe and --flagnum arguments to be used.
+
+.. code-block::
+    apero_explorer.py --recipe=PP --flagnum=21
+
+Gives the binary flags for "preprocessing" (shortname: PP) when the decimal
+representation of the flags is set to a value of (21)
+
+The output for apero_explorer is then as follows:
+
+.. code-block::
+     Flag mode: PP[21]
+     recipe = apero_preprocess_spirou.py
+       IN_PARALLEL         : True
+       RUNNING             : False
+       ENDED               : True
+       OBJ                 : False
+       QCPASSED            : True
+
+Showing that the flag number 21 (binary 10101) corresponds to these flags being
+true or false.
+
+Note the flags are specific to a specific recipe and thus the --recipe argument
+must be used.

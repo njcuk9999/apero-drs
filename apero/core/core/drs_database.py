@@ -632,8 +632,7 @@ class CalibrationDatabase(DatabaseManager):
         # get fiber
         fiber = _get_hkey(self.params, 'KW_FIBER', hdict, header)
         # get super definition
-        # TODO: change to drsfile.parent.master_calib
-        is_super = _get_is_super(self.params)
+        is_super = _get_is_super(drsfile)
         # get time
         header_time = _get_time(self.params, self.name, header, hdict)
         # ------------------------------------------------------------------
@@ -781,9 +780,10 @@ class CalibrationDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-    CALIB_FILE_RTN = Optional[Tuple[None, float, bool],
-                              Tuple[Path, float, bool],
-                              Tuple[List[Path], List[float], List[bool]]]
+    CALIB_FILE_RTN = Union[Tuple[None, float, bool],
+                           Tuple[Path, float, bool],
+                           Tuple[List[Path], List[float], List[bool]],
+                           None]
 
     def get_calib_file(self, key: str, drsfile=None, header=None, hdict=None,
                        filetime: Union[None, Time] = None,
@@ -1013,7 +1013,7 @@ class TelluricDatabase(DatabaseManager):
         # get fiber
         fiber = _get_hkey(self.params, 'KW_FIBER', hdict, header)
         # get super definition
-        is_super = _get_is_super(self.params)
+        is_super = _get_is_super(drsfile)
         # get time
         header_time = _get_time(self.params, self.name, header, hdict)
         # get object name
@@ -1441,7 +1441,7 @@ def _get_hkey(params: ParamDict, pkey: str,
     return value
 
 
-def _get_is_super(params: ParamDict) -> int:
+def _get_is_super(drsfile: DrsInputFile) -> int:
     """
     Find out whether file entry is from a super set or not
 
@@ -1449,8 +1449,11 @@ def _get_is_super(params: ParamDict) -> int:
 
     :return: 1 if code is super else returns 0
     """
+    # no outclass - not super
+    if drsfile.outclass is None:
+        return 0
     # get master setting from params
-    is_super = params['IS_MASTER']
+    is_super = drsfile.outclass.master
     # change bool to 1 or 0
     # get master key
     if is_super:
@@ -2482,9 +2485,7 @@ class LogDatabase(DatabaseManager):
                     qc_logic: Union[str, None] = None,
                     qc_pass: Union[str, None] = None,
                     errors: Union[str, None] = None,
-                    running: Union[bool, int, None] = None,
-                    parallel: Union[bool, int, None] = None,
-                    ended: Union[bool, int, None] = None,
+                    ended: Union[int, None] = None,
                     flagnum: Union[int, None] = None,
                     flagstr: Union[str, None] = None,
                     used: Union[int, None] = None):
@@ -2536,12 +2537,6 @@ class LogDatabase(DatabaseManager):
                         fail - divided by ||
         :param errors: str, errors found and passed to this entry - divided by
                        ||
-        :param ended: bool or int, whether a recipe is still running - 1 for
-                      running 0 if not running
-        :param running: bool or int, whether recipe is running at this time
-        :param parallel: bool or int, whether recipe was run in parallel
-        :param ended: bool or int, whether a recipe run ended - 1 for ended
-                      0 if did not end (default)
         :param used: int, if entry should be used - always 1 for use internally
 
         :return: None - updates database
@@ -2555,7 +2550,7 @@ class LogDatabase(DatabaseManager):
                 runstring, args, kwargs, skwargs, start_time, end_time,
                 started, passed_all_qc,
                 qc_string, qc_names, qc_values, qc_logic, qc_pass,
-                clean_error, running, parallel, ended, flagnum, flagstr, used]
+                clean_error, ended, flagnum, flagstr, used]
         # get column names and column datatypes
         ldb_cols = self.pconst.LOG_DB_COLUMNS()
         coltypes = list(ldb_cols.dtypes)
