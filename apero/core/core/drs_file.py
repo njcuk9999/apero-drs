@@ -101,9 +101,10 @@ QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
 # path definitions
 BlockPath = pathdef.BlockPath
 # get out file class
-OutFileTypes = (out.OutFile, out.GeneralOutFile, out.NpyOutFile,
-                out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
-                out.MasterCalibOutFile, out.SetOutFile, out.PostOutFile)
+OutFileTypes = Union[out.OutFile, out.GeneralOutFile, out.NpyOutFile,
+                     out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
+                     out.MasterCalibOutFile, out.SetOutFile, out.PostOutFile,
+                     None]
 
 
 # =============================================================================
@@ -613,7 +614,7 @@ class DrsInputFile:
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
                  filesetnames: Union[List[str], None] = None,
-                 outclass: Optional[OutFileTypes] = None,
+                 outclass: OutFileTypes = None,
                  inext: Union[str, None] = None,
                  dbname: Union[str, None] = None,
                  dbkey: Union[str, None] = None,
@@ -986,7 +987,7 @@ class DrsInputFile:
                 header: Union[drs_fits.Header, None] = None,
                 fileset: Union[list, None] = None,
                 filesetnames: Union[List[str], None] = None,
-                outclass: Optional[OutFileTypes] = None,
+                outclass: OutFileTypes = None,
                 inext: Union[str, None] = None,
                 dbname: Union[str, None] = None,
                 dbkey: Union[str, None] = None,
@@ -1191,7 +1192,7 @@ class DrsInputFile:
                   header: Union[drs_fits.Header, None] = None,
                   fileset: Union[list, None] = None,
                   filesetnames: Union[List[str], None] = None,
-                  outclass: Optional[OutFileTypes] = None,
+                  outclass: OutFileTypes = None,
                   inext: Union[str, None] = None,
                   dbname: Union[str, None] = None,
                   dbkey: Union[str, None] = None,
@@ -1312,7 +1313,7 @@ class DrsInputFile:
                      header: Union[drs_fits.Header, None] = None,
                      fileset: Union[list, None] = None,
                      filesetnames: Union[List[str], None] = None,
-                     outclass: Optional[OutFileTypes] = None,
+                     outclass: OutFileTypes = None,
                      inext: Union[str, None] = None,
                      dbname: Union[str, None] = None,
                      dbkey: Union[str, None] = None,
@@ -2116,7 +2117,7 @@ class DrsFitsFile(DrsInputFile):
                 header: Union[drs_fits.Header, None] = None,
                 fileset: Union[list, None] = None,
                 filesetnames: Union[List[str], None] = None,
-                outclass: Optional[OutFileTypes] = None,
+                outclass: OutFileTypes = None,
                 inext: Union[str, None] = None,
                 dbname: Union[str, None] = None,
                 dbkey: Union[str, None] = None,
@@ -2269,7 +2270,7 @@ class DrsFitsFile(DrsInputFile):
                   header: Union[drs_fits.Header, None] = None,
                   fileset: Union[list, None] = None,
                   filesetnames: Union[List[str], None] = None,
-                  outclass: Optional[OutFileTypes] = None,
+                  outclass: OutFileTypes = None,
                   inext: Union[str, None] = None,
                   dbname: Union[str, None] = None,
                   dbkey: Union[str, None] = None,
@@ -2391,7 +2392,7 @@ class DrsFitsFile(DrsInputFile):
                      header: Union[drs_fits.Header, None] = None,
                      fileset: Union[list, None] = None,
                      filesetnames: Union[List[str], None] = None,
-                     outclass: Optional[OutFileTypes] = None,
+                     outclass: OutFileTypes = None,
                      inext: Union[str, None] = None,
                      dbname: Union[str, None] = None,
                      dbkey: Union[str, None] = None,
@@ -4934,7 +4935,7 @@ class DrsNpyFile(DrsInputFile):
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
                  filesetnames: Union[List[str], None] = None,
-                 outclass: Optional[OutFileTypes] = None,
+                 outclass: OutFileTypes = None,
                  inext: Union[str, None] = '.npy',
                  dbname: Union[str, None] = None,
                  dbkey: Union[str, None] = None,
@@ -5245,7 +5246,7 @@ class DrsNpyFile(DrsInputFile):
                 header: Union[drs_fits.Header, None] = None,
                 fileset: Union[list, None] = None,
                 filesetnames: Union[List[str], None] = None,
-                outclass: Optional[OutFileTypes] = None,
+                outclass: OutFileTypes = None,
                 inext: Union[str, None] = None,
                 dbname: Union[str, None] = None,
                 dbkey: Union[str, None] = None,
@@ -5342,7 +5343,7 @@ class DrsNpyFile(DrsInputFile):
                      header: Union[drs_fits.Header, None] = None,
                      fileset: Union[list, None] = None,
                      filesetnames: Union[List[str], None] = None,
-                     outclass: Optional[OutFileTypes] = None,
+                     outclass: OutFileTypes = None,
                      inext: Union[str, None] = None,
                      dbname: Union[str, None] = None,
                      dbkey: Union[str, None] = None,
@@ -5985,7 +5986,7 @@ class DrsOutFile(DrsInputFile):
 
     def __init__(self, name: str, filetype: str,
                  suffix: Union[str, None] = None,
-                 outclass: Optional[OutFileTypes] = None,
+                 outclass: OutFileTypes = None,
                  inext=None, required: bool = True,
                  exclude_keys: EXCLUDE_KEYS_TYPE = None,
                  instrument: Optional[str] = None):
@@ -8133,7 +8134,7 @@ def _copydrsfile(drsfileclass,
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
                  filesetnames: Union[List[str], None] = None,
-                 outclass: Optional[OutFileTypes] = None,
+                 outclass: OutFileTypes = None,
                  inext: Union[str, None] = None,
                  dbname: Union[str, None] = None,
                  dbkey: Union[str, None] = None,
@@ -8307,7 +8308,10 @@ def _copydrsfile(drsfileclass,
         filesetnames = deepcopy(instance1.filesetnames)
     # set outclass
     if outclass is None:
-        outclass = instance1.outclass.copy()
+        if instance1.outclass is not None:
+            outclass = instance1.outclass.copy()
+        else:
+            outclass = None
     # set inext
     if inext is None:
         inext = deepcopy(instance2.inext)

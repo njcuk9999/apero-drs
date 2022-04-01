@@ -1127,16 +1127,16 @@ full_seq.add(apero_pp_master, recipe_kind='pre-master',
              arguments=dict(obs_dir='RUN_OBS_DIR'))
 full_seq.add(apero_preprocess, recipe_kind='pre-all')
 full_seq.add(apero_dark_master, master=True)
-full_seq.add(apero_badpix, name='BADM', master=False,
+full_seq.add(apero_badpix, name='BADM', master=True,
              recipe_kind='calib-master')
-full_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat], master=False,
+full_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat], master=True,
              recipe_kind='calib-master-B')
-full_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark], master=False,
+full_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark], master=True,
              recipe_kind='calib-master-A')
 full_seq.add(apero_shape_master, master=True)
-full_seq.add(apero_shape, name='SHAPELM', master=False,
+full_seq.add(apero_shape, name='SHAPELM', master=True,
              recipe_kind='calib-master')
-full_seq.add(apero_flat, name='FLATM', master=False,
+full_seq.add(apero_flat, name='FLATM', master=True,
              recipe_kind='calib-master')
 full_seq.add(apero_leak_master, master=True)
 full_seq.add(apero_wave_master, master=True,
@@ -1213,16 +1213,16 @@ limited_seq.add(apero_pp_master, recipe_kind='pre-master',
                 arguments=dict(obs_dir='RUN_OBS_DIR'))
 limited_seq.add(apero_preprocess, recipe_kind='pre-all')
 limited_seq.add(apero_dark_master, master=True)
-limited_seq.add(apero_badpix, name='BADM', master=False,
+limited_seq.add(apero_badpix, name='BADM', master=True,
                 recipe_kind='calib-master')
 limited_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat],
-                master=False, recipe_kind='calib-master-B')
+                master=True, recipe_kind='calib-master-B')
 limited_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark],
-                master=False, recipe_kind='calib-master-A')
+                master=True, recipe_kind='calib-master-A')
 limited_seq.add(apero_shape_master, master=True)
-limited_seq.add(apero_shape, name='SHAPELM', master=False,
+limited_seq.add(apero_shape, name='SHAPELM', master=True,
                 recipe_kind='calib-master')
-limited_seq.add(apero_flat, name='FLATM', master=False,
+limited_seq.add(apero_flat, name='FLATM', master=True,
                 recipe_kind='calib-master')
 limited_seq.add(apero_leak_master, master=True)
 limited_seq.add(apero_wave_master, master=True,

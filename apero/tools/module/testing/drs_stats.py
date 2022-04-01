@@ -23,6 +23,7 @@ import warnings
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_log
 from apero.core.core import drs_database
 from apero.core.core import drs_text
@@ -235,10 +236,13 @@ class LogEntry:
                         qc_logic.append(qc_logic_raw[qc_it])
                         # convert pass to boolean
                         qc_pass.append(drs_text.true_text(qc_pass_raw[qc_it]))
-                    # get running critera
-                    running = drs_text.true_text(row_data['RUNNING'])
-                    # get ended critera
-                    ended = drs_text.true_text(row_data['ENDED'])
+                    # get the flags
+                    flags = base_class.BinaryDict()
+                    flags.add_keys(row_data['FLAGSTR'])
+                    flags.encode(row_data['FLAGNUM'])
+                    # get the runninng + ended flags
+                    running = flags['RUNNING']
+                    ended = flags['ENDED']
                     # get any errors
                     errors = _get_list_param(row_data, 'ERRORMSGS')
                     # -----------------------------------------------------------------

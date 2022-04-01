@@ -645,6 +645,7 @@ apero_extract.set_outputs(E2DS_FILE=files.out_ext_e2ds,
                           EXT_FPLINES=files.out_ext_fplines,
                           Q2DS_FILE=files.out_ql_e2ds,
                           Q2DSFF_FILE=files.out_ql_e2dsff)
+apero_loc.set_flags(QUICKLOOK=False)
 apero_extract.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                               'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
                               'THERMAL_BACKGROUND', 'EXTRACT_SPECTRAL_ORDER1',
@@ -1262,25 +1263,25 @@ full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 # master run
 full_seq.add(apero_preprocess, recipe_kind='pre-all')
 full_seq.add(apero_dark_master, master=True)
-full_seq.add(apero_badpix, name='BADM', master=False, recipe_kind='calib-master')
-full_seq.add(apero_loc, name='LOCMC', files=[files.pp_dark_flat], master=False,
+full_seq.add(apero_badpix, name='BADM', master=True, recipe_kind='calib-master')
+full_seq.add(apero_loc, name='LOCMC', files=[files.pp_dark_flat], master=True,
              recipe_kind='calib-master-C')
-full_seq.add(apero_loc, name='LOCMAB', files=[files.pp_flat_dark], master=False,
+full_seq.add(apero_loc, name='LOCMAB', files=[files.pp_flat_dark], master=True,
              recipe_kind='calib-master-AB')
 full_seq.add(apero_shape_master, master=True)
-full_seq.add(apero_shape, name='SHAPELM', master=False,
+full_seq.add(apero_shape, name='SHAPELM', master=True,
              recipe_kind='calib-master')
-full_seq.add(apero_flat, name='FLATM', master=False,
+full_seq.add(apero_flat, name='FLATM', master=True,
              recipe_kind='calib-master')
 # thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
-full_seq.add(apero_thermal, name='THERM_MI', master=False,
+full_seq.add(apero_thermal, name='THERM_MI', master=True,
              recipe_kind='calib-master-I', files=[files.pp_dark_dark_int])
 full_seq.add(apero_leak_master, master=True)
 full_seq.add(apero_wave_master, master=True,
              rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
                           fpfiles=[files.pp_fp_fp]))
 # thermal for everything else (requires a wave solution)
-full_seq.add(apero_thermal, name='THERM_MT', master=False,
+full_seq.add(apero_thermal, name='THERM_MT', master=True,
              recipe_kind='calib-master-T', files=[files.pp_dark_dark_tel],
              calib_required=False)
 # night runs
@@ -1374,26 +1375,26 @@ limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
 # master run
 limited_seq.add(apero_preprocess, recipe_kind='pre-all')
 limited_seq.add(apero_dark_master, master=True)
-limited_seq.add(apero_badpix, name='BADM', master=False,
+limited_seq.add(apero_badpix, name='BADM', master=True,
                 recipe_kind='calib-master')
 limited_seq.add(apero_loc, name='LOCMC', files=[files.pp_dark_flat],
-                master=False, recipe_kind='calib-master-C')
+                master=True, recipe_kind='calib-master-C')
 limited_seq.add(apero_loc, name='LOCMAB', files=[files.pp_flat_dark],
-                master=False, recipe_kind='calib-master-AB')
+                master=True, recipe_kind='calib-master-AB')
 limited_seq.add(apero_shape_master, master=True)
-limited_seq.add(apero_shape, name='SHAPELM', master=False,
+limited_seq.add(apero_shape, name='SHAPELM', master=True,
                 recipe_kind='calib-master')
-limited_seq.add(apero_flat, name='FLATM', master=False,
+limited_seq.add(apero_flat, name='FLATM', master=True,
                 recipe_kind='calib-master')
 # thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
-limited_seq.add(apero_thermal, name='THERM_MI', master=False,
+limited_seq.add(apero_thermal, name='THERM_MI', master=True,
                 recipe_kind='calib-master-I', files=[files.pp_dark_dark_int])
 limited_seq.add(apero_leak_master, master=True)
 limited_seq.add(apero_wave_master, master=True,
                 rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
                              fpfiles=[files.pp_fp_fp]))
 # thermal for everything else (requires a wave solution)
-limited_seq.add(apero_thermal, name='THERM_MT', master=False,
+limited_seq.add(apero_thermal, name='THERM_MT', master=True,
                 recipe_kind='calib-master-T', files=[files.pp_dark_dark_tel],
                 calib_required=False)
 # night runs
@@ -1541,26 +1542,26 @@ pp_seq_opt.add(apero_preprocess, name='PP_FPLFC', files=[files.raw_fp_lfc],
 # -----------------------------------------------------------------------------
 master_seq = drs_recipe.DrsRunSequence('master_seq', __INSTRUMENT__)
 master_seq.add(apero_dark_master, master=True)
-master_seq.add(apero_badpix, name='BADM', master=False,
+master_seq.add(apero_badpix, name='BADM', master=True,
                recipe_kind='calib-master')
 master_seq.add(apero_loc, name='LOCMC', files=[files.pp_dark_flat],
                master=False, recipe_kind='calib-master-C')
 master_seq.add(apero_loc, name='LOCMAB', files=[files.pp_flat_dark],
                master=False, recipe_kind='calib-master-AB')
 master_seq.add(apero_shape_master, master=True)
-master_seq.add(apero_shape, name='SHAPELM', master=False,
+master_seq.add(apero_shape, name='SHAPELM', master=True,
                recipe_kind='calib-master')
-master_seq.add(apero_flat, name='FLATM', master=False,
+master_seq.add(apero_flat, name='FLATM', master=True,
                recipe_kind='calib-master')
 # thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
-master_seq.add(apero_thermal, name='THERM_MI', master=False,
+master_seq.add(apero_thermal, name='THERM_MI', master=True,
                recipe_kind='calib-master-I', files=[files.pp_dark_dark_int])
 master_seq.add(apero_leak_master, master=True)
 master_seq.add(apero_wave_master, master=True,
                rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
                             fpfiles=[files.pp_fp_fp]))
 # thermal for everything else (requires a wave solution)
-master_seq.add(apero_thermal, name='THERM_MT', master=False,
+master_seq.add(apero_thermal, name='THERM_MT', master=True,
                recipe_kind='calib-master-T', files=[files.pp_dark_dark_tel],
                calib_required=False)
 

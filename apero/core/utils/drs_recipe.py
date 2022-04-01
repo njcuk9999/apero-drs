@@ -66,6 +66,8 @@ DrsArgument = drs_argument.DrsArgument
 pcheck = constants.PCheck(wlog=WLOG)
 # define special keys
 SPECIAL_LIST_KEYS = ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']
+# define default flags for all recipes
+DEFAULT_FLAGS = dict(IN_PARALLEL=False, RUNNING=False, ENDED=False)
 
 
 # =============================================================================
@@ -198,6 +200,8 @@ class DrsRecipe(object):
         self.description_file = None
         # binary flags
         self.flags = BinaryDict()
+        for key in DEFAULT_FLAGS:
+            self.flags[key] = DEFAULT_FLAGS[key]
 
     def __getstate__(self) -> dict:
         """

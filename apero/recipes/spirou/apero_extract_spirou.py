@@ -226,6 +226,9 @@ def __main__(recipe, params):
             # ------------------------------------------------------------------
             # add level to recipe log
             log2 = log1.add_level(params, 'fiber', fiber)
+            # flag quick look
+            if quicklook:
+                log2.update_flags(QUICKLOOK=True)
             # ------------------------------------------------------------------
             # log process: processing fiber
             wargs = [fiber, ', '.join(fibertypes)]

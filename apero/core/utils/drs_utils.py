@@ -132,12 +132,6 @@ class RecipeLog:
         self.recipe_type = str(params['DRS_RECIPE_TYPE'])
         self.recipe_kind = str(params['DRS_RECIPE_KIND'])
         self.program_name = str(params['DRS_USER_PROGRAM'])
-        # deal with running in parallel
-        self.parallel = False
-        if 'INPUTS' in params:
-            self.parallel = int(params['INPUTS'].get('PARALLEL', False))
-        # set this recipe to running
-        self.running = True
         # set that recipe started
         self.started = True
         # set the iteration
@@ -159,10 +153,14 @@ class RecipeLog:
         self.flags = flags
         self.flagnum = 0
         self.flagstr = ''
+        # set flag: in parallel
+        if 'INPUTS' in params:
+            in_parallel = params['INPUTS'].get('PARALLEL', False)
+            self.flags['IN_PARALLEL'] = in_parallel
+        # set flag: running
+        self.flags['RUNNING'] = True
         # set the errors
         self.errors = ''
-        # set that recipe ended
-        self.ended = False
 
     def __getstate__(self) -> dict:
         """
@@ -236,7 +234,6 @@ class RecipeLog:
         self.flagnum = int(rlog.flagnum)
         self.flagstr = str(rlog.flagstr)
         self.errors = str(rlog.errors)
-        self.ended = bool(rlog.ended)
 
     def set_log_file(self, logfile: Union[str, Path]):
         """
@@ -441,8 +438,10 @@ class RecipeLog:
         self.end_time = str(Time.now().iso)
         # set the ended parameter to True
         if success:
-            self.ended = True
-        self.running = False
+            self.flags['ENDED'] = True
+        # set the running parameter to False (we have finished whether
+        #   successful or not)
+        self.flags['RUNNING'] = False
         # whether to write (update) recipe log file
         if write:
             self.write_logfile()
@@ -497,9 +496,7 @@ class RecipeLog:
                                     qc_logic=inst.qc_logic,
                                     qc_pass=inst.qc_pass,
                                     errors=inst.errors,
-                                    parallel=inst.parallel,
-                                    running=inst.running,
-                                    ended=inst.ended,
+                                    ended=int(inst.flags['ENDED']),
                                     flagnum=inst.flagnum,
                                     flagstr=inst.flagstr,
                                     used=1)
@@ -550,9 +547,6 @@ class RecipeLog:
         row['QC_PASS'] = self.qc_pass.strip().strip('||').strip()
         # add errors
         row['ERRORMSGS'] = self.errors
-        # add whether recipe ended
-        row['RUNNING'] = self.ended
-        row['ENDED'] = self.ended
         # add flags
         row['FLAGNUM'] = self.flagnum
         row['FLAGSTR'] = self.flagstr
@@ -644,7 +638,7 @@ class RecipeLog:
                       self.start_time, self.end_time, self.started,
                       self.passed_qc, self.qc_string,
                       self.qc_name, self.qc_value, self.qc_logic, self.qc_pass,
-                      self.errors, self.parallel, self.running, self.ended,
+                      self.errors, int(self.flags['ENDED']),
                       self.flagnum, self.flagstr, 1]
         # ---------------------------------------------------------------------
         # loop around all rows and add to params
@@ -805,6 +799,61 @@ def uniform_time_list(times: Union[List[float], np.ndarray], number: int
     mask = np.array(np.in1d(times, times2))
     # return the mask
     return mask
+
+
+def display_flag(params: ParamDict):
+    # get inputs
+    inputs = params['INPUTS']
+    null_text = ['None', '', 'Null']
+    # flag mode
+    cond1 = drs_text.null_text(inputs.get('RECIPE', None), null_text)
+    cond2 = drs_text.null_text(inputs.get('FLAGNUM', None), null_text)
+    # deal with recipe or flagnum being None
+    if cond1 or cond2:
+        return
+    # get the recipe name (or short name)
+    recipe = str(params['INPUTS']['recipe'].replace('.py', ''))
+    # get the flag number
+    flagnum = params['INPUTS']['flagnum']
+    # print progress
+    WLOG(params, '', 'Flag mode: {0}[{1}]'.format(recipe, flagnum))
+    # load pseudo constants
+    pconst = constants.pload()
+    # get the recipe module
+    rmod = pconst.RECIPEMOD().get()
+    # get binary flags for recipe
+    srecipes = rmod.recipes
+    srecipe = None
+    found = False
+    # find recipe in recipes
+    for srecipe in srecipes:
+        # remove py from recipe name
+        rname = srecipe.name.replace('.py', '')
+        rname = rname.replace(__INSTRUMENT__.lower(), '')
+        rname = rname.strip('_')
+        # test recipe and short name
+        cond3 = recipe.upper() == rname.upper()
+        cond4 = recipe.upper() == srecipe.shortname.upper()
+        # if cond 3 or cond 4 we have found our recipe
+        if cond3 or cond4:
+            found = True
+            break
+    # deal with recipe not being found
+    if not found:
+        WLOG(params, 'warning', 'Invalid "recipe" argument.')
+        return
+    # get binary flags
+    flags = srecipe.flags
+    # deal with non-integer
+    if not isinstance(flagnum, int):
+        WLOG(params, 'warning', 'Invalid flag number (must be int).')
+    # encode the given number
+    flags.encode(flagnum)
+    # print the recipe name
+    WLOG(params, '', 'recipe = {0}'.format(srecipe.name))
+    # print the flags
+    for flag in flags:
+        WLOG(params, '', '\t{0:20s}: {1}'.format(flag, flags[flag]))
 
 
 # =============================================================================
