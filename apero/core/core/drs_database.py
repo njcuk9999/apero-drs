@@ -1307,14 +1307,18 @@ class TelluricDatabase(DatabaseManager):
             if drsfile is not None:
                 if no_times:
                     infile = '{0} [NoTime]'.format(drsfile.filename)
-                else:
+                elif filetime is not None:
                     infile = '{0} [Time={1}]'.format(drsfile.filename,
                                                      filetime.iso)
+                else:
+                    infile = 'None'
             else:
                 if no_times:
                     infile = 'File[NoTime]'
-                else:
+                elif filetime is not None:
                     infile = 'File[Time={0}]'.format(filetime.iso)
+                else:
+                    infile = 'None'
             # log error: No entries found in {0} database for key='{1}
             eargs = [self.name, key, ', '.join(keys), infile, func_name]
             WLOG(self.params, 'error', textentry('00-002-00015', args=eargs))

@@ -88,6 +88,10 @@ def __main__(recipe, params):
     warn = params['INPUTS']['warn']
     database_timeout = params['INPUTS']['DATABASE_TIMEOUT']
     # ----------------------------------------------------------------------
+    # Must check that we are not inside an apero directory
+    drs_reset.check_cwd(params)
+
+    # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
     reset0, reset1, reset2, reset3 = True, True, True, True

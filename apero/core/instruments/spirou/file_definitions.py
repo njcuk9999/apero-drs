@@ -48,6 +48,8 @@ calib_ofile = out.CalibOutFile()
 mcalib_ofile = out.MasterCalibOutFile()
 tellu_ofile = out.TelluOutFile()
 mtellu_ofile = out.MasterTelluOutFile()
+tellu_set_ofile = out.TelluSetOutFile()
+
 
 # =============================================================================
 # Raw Files
@@ -921,7 +923,7 @@ out_wavem_res = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
                            filetype='.fits',
                            intype=[out_ext_e2ds, out_ext_e2dsff],
                            suffix='_wavemres',
-                           outclass=calib_ofile)
+                           outclass=mcalib_ofile)
 
 # hc resolution map
 out_wavem_hcres = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
@@ -929,7 +931,7 @@ out_wavem_hcres = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
                              filetype='.fits',
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_wavemres',
-                             outclass=calib_ofile)
+                             outclass=mcalib_ofile)
 
 # fp global results table
 out_wavem_res_table = drs_input('WAVE_FPRESTAB',
@@ -947,7 +949,7 @@ out_wavem_ll_table = drs_input('WAVE_FPLLTABL',
                                filetype='.tbl',
                                intype=[out_ext_e2ds, out_ext_e2dsff],
                                suffix='_mhc_lines',
-                               outclass=calib_ofile)
+                               outclass=mcalib_ofile)
 
 # add wave outputs to output fileset
 red_file.addset(out_wavem_hcres)
@@ -1055,7 +1057,7 @@ out_tellu_conv = drs_ninput('TELLU_CONV', hkeys=dict(KW_OUTPUT='TELLU_CONV'),
 out_tellu_spl_npy = drs_ninput('TELLU_TAPAS', filetype='.npy',
                                basename='tapas_spl.npy',
                                dbname='telluric', dbkey='TELLU_TAPAS',
-                               outclass=tellu_ofile)
+                               outclass=tellu_set_ofile)
 
 # transmission map
 out_tellu_trans = drs_finput('TELLU_TRANS', hkeys=dict(KW_OUTPUT='TELLU_TRANS'),
@@ -1070,7 +1072,7 @@ out_tellu_model = drs_finput('TRANS_MODEL', hkeys=dict(KW_OUTPUT='TRANS_MODEL'),
                              fibers=valid_tfibers, filetype='.fits',
                              basename='trans_model_{0}',  # add fiber manually
                              dbname='telluric', dbkey='TELLU_MODEL',
-                             outclass=mtellu_ofile)
+                             outclass=tellu_set_ofile)
 
 # add make_telluric outputs to output fileset
 red_file.addset(out_tellu_pclean)
@@ -1091,11 +1093,11 @@ tellu_file.addset(out_tellu_model)
 out_tellu_abso_npy = drs_ninput('ABSO_NPY',
                                 filetype='.npy',
                                 basename='tellu_save.npy',
-                                outclass=set_ofile)
+                                outclass=tellu_set_ofile)
 out_tellu_abso1_npy = drs_ninput('ABSO1_NPY',
                                  filetype='.npy',
                                  basename='tellu_save1.npy',
-                                 outclass=set_ofile)
+                                 outclass=tellu_set_ofile)
 
 # telluric corrected e2ds spectrum
 out_tellu_obj = drs_finput('TELLU_OBJ', hkeys=dict(KW_OUTPUT='TELLU_OBJ'),
@@ -1165,7 +1167,7 @@ out_tellu_template = drs_finput('TELLU_TEMP',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
                                 basename='Template',
                                 dbname='telluric', dbkey='TELLU_TEMP',
-                                outclass=set_ofile)
+                                outclass=tellu_set_ofile)
 
 # template cube file (after shift)
 out_tellu_bigcube = drs_finput('TELLU_BIGCUBE',
@@ -1174,7 +1176,7 @@ out_tellu_bigcube = drs_finput('TELLU_BIGCUBE',
                                filetype='.fits',
                                intype=[out_ext_e2dsff, out_tellu_obj],
                                basename='BigCube',
-                               outclass=set_ofile)
+                               outclass=tellu_set_ofile)
 
 # template cube file (before shift)
 out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0',
@@ -1183,7 +1185,7 @@ out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0',
                                 filetype='.fits',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
                                 basename='BigCube0',
-                                outclass=set_ofile)
+                                outclass=tellu_set_ofile)
 
 # s1d template file (median)
 out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',
@@ -1192,7 +1194,7 @@ out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',
                                     filetype='.fits',
                                     intype=[out_ext_e2dsff, out_tellu_obj],
                                     basename='Template_s1d', datatype='table',
-                                    outclass=set_ofile)
+                                    outclass=tellu_set_ofile)
 
 # s1d cibe file (after shift)
 out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
@@ -1201,7 +1203,7 @@ out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
                                    filetype='.fits',
                                    intype=[out_ext_e2dsff, out_tellu_obj],
                                    basename='BigCube_s1d',
-                                   outclass=set_ofile)
+                                   outclass=tellu_set_ofile)
 
 # add make template outputs to output fileset
 red_file.addset(out_tellu_template)
@@ -1346,6 +1348,7 @@ wave_files = DrsFileGroup(name='WAVE_FILES',
 # -----------------------------------------------------------------------------
 post_e_file = drs_oinput('DRS_POST_E', filetype='.fits', suffix='e.fits',
                          outclass=post_ofile, inext='o', required=True)
+
 # add extensions
 post_e_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
