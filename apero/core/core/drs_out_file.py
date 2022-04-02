@@ -511,6 +511,57 @@ class SetOutFile(OutFile):
         return abspath
 
 
+# noinspection PyMethodOverriding
+class PostOutFile(OutFile):
+    def __init__(self):
+        super().__init__()
+        self.classname = 'CalibOutFile'
+        self.calib = True
+
+    def copy(self) -> 'PostOutFile':
+        new = PostOutFile()
+        return new
+
+    def construct(self, params: ParamDict, drsfile: Any, identifier: str,
+                  obs_dir: Union[str, None] = None) -> Tuple[str, str]:
+        """
+        Generate a post processed filename
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param drsfile: DrsOutFile instance, the drs out file associated with this
+                        post processed file
+        :param identifier: str, an identifier to the required output filename
+        :param obs_dir: str, the observation directory
+        :return:
+        """
+        # set function name
+        # _ = display_func('post_file', __NAME__)
+        # ---------------------------------------------------------------------
+        # set filename to identifer
+        filename = str(identifier)
+        # ---------------------------------------------------------------------
+        # remove input suffix (extension) from identifier
+        if drsfile.inext is not None:
+            if filename.endswith(drsfile.inext):
+                filename = filename[:-len(drsfile.inext)]
+        # ---------------------------------------------------------------------
+        # add output suffix
+        filename = filename + drsfile.suffix
+        # ---------------------------------------------------------------------
+        if obs_dir is None:
+            obs_dir = ''
+        # construct path
+        path = os.path.join(params['DRS_DATA_OUT'], obs_dir)
+        # add path to filename
+        filename = os.path.join(path, filename)
+        # ---------------------------------------------------------------------
+        # return filename
+        return filename, path
+
+
+# =============================================================================
+# Specific type classes
+# =============================================================================
 class CalibOutFile(GeneralOutFile):
     def __init__(self):
         super().__init__()
@@ -641,52 +692,15 @@ class MasterTelluOutFile(CalibOutFile):
         return new
 
 
-# noinspection PyMethodOverriding
-class PostOutFile(OutFile):
+class TelluSetOutFile(SetOutFile):
     def __init__(self):
         super().__init__()
-        self.classname = 'CalibOutFile'
-        self.calib = True
+        self.classname = 'TelluSetOutFile'
+        self.tellu = True
 
-    def copy(self) -> 'PostOutFile':
-        new = PostOutFile()
+    def copy(self) -> 'TelluSetOutFile':
+        new = TelluSetOutFile()
         return new
-
-    def construct(self, params: ParamDict, drsfile: Any, identifier: str,
-                  obs_dir: Union[str, None] = None) -> Tuple[str, str]:
-        """
-        Generate a post processed filename
-
-        :param params: ParamDict, the parameter dictionary of constants
-        :param drsfile: DrsOutFile instance, the drs out file associated with this
-                        post processed file
-        :param identifier: str, an identifier to the required output filename
-        :param obs_dir: str, the observation directory
-        :return:
-        """
-        # set function name
-        # _ = display_func('post_file', __NAME__)
-        # ---------------------------------------------------------------------
-        # set filename to identifer
-        filename = str(identifier)
-        # ---------------------------------------------------------------------
-        # remove input suffix (extension) from identifier
-        if drsfile.inext is not None:
-            if filename.endswith(drsfile.inext):
-                filename = filename[:-len(drsfile.inext)]
-        # ---------------------------------------------------------------------
-        # add output suffix
-        filename = filename + drsfile.suffix
-        # ---------------------------------------------------------------------
-        if obs_dir is None:
-            obs_dir = ''
-        # construct path
-        path = os.path.join(params['DRS_DATA_OUT'], obs_dir)
-        # add path to filename
-        filename = os.path.join(path, filename)
-        # ---------------------------------------------------------------------
-        # return filename
-        return filename, path
 
 
 # =============================================================================

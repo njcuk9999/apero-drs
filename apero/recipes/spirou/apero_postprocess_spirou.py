@@ -123,10 +123,11 @@ def __main__(recipe, params):
         # add params to post_file
         postfile.params = params
         # get the output filename function
-        outfunc = postfile.outfunc
+        outclass = postfile.outclass
         # -----------------------------------------------------------------
         # generate out file name
-        outfile, outdir = outfunc(params, postfile, identifier, obs_dir)
+        outfile, outdir = outclass.construct(params, postfile, identifier,
+                                             obs_dir)
         # skip existing files
         if skip and os.path.exists(outfile):
             continue

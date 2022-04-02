@@ -17,6 +17,7 @@ from typing import List, Union
 
 from apero.base import base
 from apero.core import constants
+from apero.core.constants import path_definitions
 from apero.core.core import drs_log
 from apero.core.core import drs_database
 from apero.core.instruments.default import pseudo_const
@@ -51,6 +52,31 @@ DEBUG = False
 # =============================================================================
 # Define functions
 # =============================================================================
+def check_cwd(params: ParamDict):
+    """
+    Check whether we are currently in a block path
+
+    :param params: ParamDict, parameter dictioary of constnats
+
+    :return: None, raises error if currently in a block path
+    """
+    # get current working directory
+    cwd = os.getcwd()
+    # get block definitions
+    blocks = path_definitions.BLOCKS
+    # loop around blocks and check path
+    for block in blocks:
+        # get this blocks path
+        block_path = block(params).path
+        # if it is in current working path we have a problem
+        if str(os.path.realpath(block_path)) in str(os.path.realpath(cwd)):
+            # raise error
+            emsg = ('Current working directory within paths to be reset. '
+                    'Please change directory\n\tCurrent dir: {0}\n\tBlock: {1}')
+            eargs = [cwd, block_path]
+            WLOG(params, 'error', emsg.format(*eargs))
+
+
 def is_empty(directory: str,
              exclude_files: Union[List[str], None] = None) -> bool:
     """

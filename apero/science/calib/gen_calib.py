@@ -217,6 +217,10 @@ class CalibFile:
             self.filename, self.mjdmid, self.master = fout
             self.source = 'calibDB'
         # ---------------------------------------------------------------------
+        # if master recipe don't check calib delta
+        if 'MASTER' in params['INPUTS'] and params['INPUTS']['MASTER']:
+            self.master = True
+        # ---------------------------------------------------------------------
         # deal with filename being a path --> string (unless None)
         if self.filename is not None:
             if isinstance(self.filename, list):
