@@ -56,7 +56,7 @@ No schematic set
      --masknormmode[None,all,order] // CCF_MASK_NORM_HELP
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
      --blazefile[FILE:FF_BLAZE] // BLAZEFILE_HELP
-     --plot[-1>INT>2] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
 
 
 ********************************************************************************

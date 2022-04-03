@@ -49,6 +49,9 @@ No schematic set
 .. code-block:: 
 
      --overwrite // Do not check if object is currently in database. Overwrite old value.
+     --getteff // Attempt to get Teff from header value.Requires a raw file of this object and the index database to be up-to-date
+     --nopmrequired // Do not require proper motion (not recommended)
+     --test // Run in test mode (do not add to database)
 
 
 ********************************************************************************

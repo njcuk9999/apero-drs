@@ -61,7 +61,7 @@ No description set
      --combine[True/False] // COMBINE_HELP
      --flipimage[None,x,y,both] // FLIPIMAGE_HELP
      --fluxunits[ADU/s,e-] // FLUXUNITS_HELP
-     --plot[-1>INT>2] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --resize[True/False] // RESIZE_HELP
 
 

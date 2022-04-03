@@ -54,6 +54,7 @@ No optional arguments
      --outpath[STRING] // This is the directory where copied files will be placed. Must be a valid path and must have permission be able to write.
      --symlinks // Create symlinks to the file instead of copying
      --test // Does not copy files - prints copy as a debug test. Recommended for first time use.
+     --failedqc // Include files that failed QC. Highly unrecommended
 
 
 ********************************************************************************

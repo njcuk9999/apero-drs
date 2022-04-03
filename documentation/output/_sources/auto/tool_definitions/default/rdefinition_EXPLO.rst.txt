@@ -47,6 +47,8 @@ No optional arguments
 .. code-block:: 
 
      --hash // Display all hash columns (hidden by default)
+     --recipe[STRING] // Recipe or shortname for recipe (must used in combination with --flagnum)
+     --flagnum[INT] // Instead of running explorer converts a binary flag to a set of binary flags for a recipe (must be used in combination with --recipe)
 
 
 ********************************************************************************

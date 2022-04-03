@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Installation &#8212; APERO 0.7.205 documentation</title>
+    <title>Installation &#8212; APERO 0.7.221 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="main_general.html" title="General User documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.205 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.221 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="main_general.html" accesskey="U">General User documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
@@ -118,6 +118,7 @@
 </li>
 <li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li><a class="reference internal" href="#setup">Setup</a><ul>
+<li><a class="reference internal" href="#possible-pre-installation-step">Possible pre-installation step</a></li>
 <li><a class="reference internal" href="#run-the-installation-script">Run the installation script</a></li>
 <li><a class="reference internal" href="#step-by-step-guide">Step-by-step guide</a></li>
 </ul>
@@ -262,6 +263,25 @@ environment).</p>
 </section>
 <section id="setup">
 <span id="installation-setup"></span><h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<section id="possible-pre-installation-step">
+<h3>Possible pre-installation step<a class="headerlink" href="#possible-pre-installation-step" title="Permalink to this headline">¶</a></h3>
+<p>When doing a full reduction it may be useful to have a static raw directory
+(e.g. if a raw directory has files coming in from observations / synced to other servers).</p>
+<p>For a static full reduction it is preferable not to add new raw files during processing
+(i.e. it requires time to update database, templates could need to change with new observations etc)</p>
+<p>For this reason a script <cite>copyraw.py</cite> exists i.e.</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup/copyraw.py --indir /path/to/full/raw/dir --outdir /path/to/new/symlink/dir --do_symlink
+</pre></div>
+</div>
+</div></blockquote>
+<p>By default it create symlinks but these can be turned off and hard copies can be created with the following:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup/copyraw.py --indir /path/to/full/raw/dir --outdir /path/to/new/symlink/dir --do_copy
+</pre></div>
+</div>
+</div></blockquote>
+</section>
 <section id="run-the-installation-script">
 <h3>Run the installation script<a class="headerlink" href="#run-the-installation-script" title="Permalink to this headline">¶</a></h3>
 <p>Change to the <cite>{DRS_ROOT}</cite> directory</p>
@@ -433,7 +453,7 @@ installation and letting you know everything is good to run APERO recipes and to
         <li class="right" >
           <a href="main_general.html" title="General User documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.205 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.221 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="main_general.html" >General User documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>

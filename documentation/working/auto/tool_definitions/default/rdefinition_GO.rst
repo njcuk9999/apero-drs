@@ -47,6 +47,7 @@ No optional arguments
 .. code-block:: 
 
      --data // Find the current data directory
+     --all // Display all relevant paths
      --rawdir // Find the current raw data directory
      --tmpdir // Find the current tmp data directory
      --reddir // Find the current red data directory

@@ -2,6 +2,282 @@ Changelog
 =========
 
 
+0.7.221 (2022-04-02)
+--------------------
+- Fixes for outclass (telluric centric fixes) [Neil Cook]
+- Fix problems with outclass + move `running/in_parallel/ended` to binary
+  flag + add a flag mode in `apero_explorer.py`. [Neil Cook]
+
+
+0.7.220 (2022-03-31)
+--------------------
+- Replace outfunc with outclass (a output file class) [Neil Cook]
+- Update error for database not found (was ambiguous) [Neil Cook]
+- Update date/version/docs/changelog. [Neil Cook]
+
+
+0.7.219 (2022-03-27)
+--------------------
+- Bug fixes after nirps merge. [Neil Cook]
+- Merge branch 'v0.7.213-nirps-he' into v0.7.213-working. [Neil Cook]
+- `Apero.tools.moduile.processing.drs_grouping_functions.py` -
+  `get_non_file_args()`: add an additional check on group being none
+  before assigning `obs_dir` to group. [Neil Cook]
+- Add back in `pp_master` for `nirps_he`. [Neil Cook]
+- Re-run run.ini for nirps he. [Neil Cook]
+- Merge branch 'v0.7.213-working' into v0.7.213-nirps-he. [Neil Cook]
+
+  # Conflicts:
+  #    `apero/core/core/drs_file.py`
+- `Apero_shape_master_nirps_he.py` - update shape for nirps he + start
+  preprocess changes. [Neil Cook]
+- Add flags to log database and test with preprocessing and loc. [Neil
+  Cook]
+
+
+0.7.218 (2022-03-24)
+--------------------
+- `Apero.core.core.drs_base_classes.py` - add binary dictionary (to store
+  flags) - eventually use for log. [Neil Cook]
+- `Apero.core.core.drs_file.py` - switch axis in combined table - header
+  keys are columns. [Neil Cook]
+- `Apero.science.telluric.template_tellu.py` - template header is now a
+  combined header. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
+0.7.215 (2022-03-21)
+--------------------
+- `Apero.core.*.recipe_definitions.py` - master night non master recipes
+  should not have master=True, night cals should not have thermal
+  master=True. [Neil Cook]
+- `Drs_stats.py` - correct typo `LOG_FILE` --> LOGFILE. [Neil Cook]
+- `Drs_stats.py` - add logfile and runstring to output timing stats. [Neil
+  Cook]
+- `Drs_stats.py` - add pid to log output. [Neil Cook]
+
+
+0.7.214 (2022-03-15)
+--------------------
+- Update run.ini files and all negative number of cores (to mean
+  N-abs(cores)) [Neil Cook]
+- `Apero_flat_*.py` - remove e2ds saving. [Neil Cook]
+- `Apero.core.constants.param_functions.py` + `apero.core.core.drs_file.py`
+  - add iloc (index database entries) to `PARAM_TABLE`. [Neil Cook]
+- `Apero.recipes.spirou.apero_flat_*.py` - write e2ds and e2dsll for flat
+  files (as debug) [Neil Cook]
+- `Apero.science.extract.gen_ext.py` - make sure orderps files are added
+  to index database (and have `PARAM_TABLE)` [ID by DRS-TEST] [Neil Cook]
+- `Apero.science.calib.dark.py` - fix bad naming of `dark_master` extensions
+  [ID by DRS-TESTS] [Neil Cook]
+
+
+0.7.216 (2022-03-11)
+--------------------
+- `Install.py` - fix `database_ask` criteria for reject database. [Neil
+  Cook]
+- `Install.py` - do not validate if --help in args. [Neil Cook]
+- Update installer with reject database installation. [Neil Cook]
+- `Apero_preprocessing.py` - correct `reject_infile()` [Neil Cook]
+- Update `apero_go.py`. [Neil Cook]
+- Update run.ini files and add reject database to `apero_database.py`.
+  [Neil Cook]
+- Update date, version, documentation, changelog. [Neil Cook]
+
+
+0.7.213 (2022-03-09)
+--------------------
+- Merge branch 'v0.7.209-neil-test' into v0.7.208-working. [Neil Cook]
+- `Apero.science.calib.shape.py` - try again to close file. [Neil Cook]
+- `Apero.science.calib.shape.py` - must close file here. [Neil Cook]
+- Merge branch 'v0.7.208-stable-test' into v0.7.208-working. [Neil Cook]
+- `Apero.tools.recipes.bin.apero_astrometrics.py` - add an option to seach
+  proper motion catalogues for the name even if it isn't found in
+  SIMBAD. [Neil Cook]
+- `Apero.science.preprocessing.gen_pp.py` - get the file reject list from
+  the reject database. [Neil Cook]
+- Merge branch 'v0.7.208-stable-test' into v0.7.208-working. [Neil Cook]
+- `Apero_astrometrics` - correct bug with multiple teff values.
+  [njcuk9999]
+
+
+0.7.212 (2022-03-05)
+--------------------
+- Update language database. [Neil Cook]
+- Merge branch 'v0.7.208-stable-test' into v0.7.208-working. [Neil Cook]
+
+  # Conflicts:
+  #    apero/science/extract/extraction.py
+- `Apero.science.extract.extraction.py` - correct typo in extraction.
+  [Neil Cook]
+- `Apero.science.extract.extraction.py` - correct typo in extraction.
+  [Neil Cook]
+- Merge branch 'v0.7.208-stable-test' into v0.7.208-working. [Neil Cook]
+- `Apero.tools.module.database.drs_astrometrics.py` - make teff selection
+  more logical. [Neil Cook]
+- `Apero.tools.module.database.drs_astrometrics.py` - make teff selection
+  more logical. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.208-stable-test' into
+  v0.7.208-stable-test. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.208-stable-test' into
+  v0.7.208-stable-test. [njcuk9999]
+- `Apero_astrometrics` - correct bug with multiple teff values.
+  [njcuk9999]
+- Update a todo. [Neil Cook]
+- Continue adding reject database. [Neil Cook]
+- Merge branch 'v0.7.208-stable-test' into v0.7.208-working. [Neil Cook]
+- `Apeor.plotting.plot_functions.py` - remove forced plot option. [Neil
+  Cook]
+- `Apero.tools.module.database.drs_astrometrics.py` - deal better with
+  masked rv value (no "--") [Neil Cook]
+- Add reject database. [Neil Cook]
+- Add reject database. [Neil Cook]
+
+
+0.7.211 (2022-03-03)
+--------------------
+- `Apero.science.extraction.py` - rearrange equations for speed up. [Neil
+  Cook]
+- Replace np.nanfunc with mp.nanfunc (speed up) [Neil Cook]
+- `Apero_precheck` - get time from sci data if no calibrations.
+  [njcuk9999]
+- Merge branch 'v0.7.208-working' into v0.7.208-stable-test. [Neil Cook]
+- `Apero.core.instruments.*.recipe_definitions.py` - update recipe
+  definitions to add `calib_required` for those calibs that must be
+  checked. [Neil Cook]
+- `Apero.core.core.drs_database.py` - only use "USED=1" objects from
+  object database. [Neil Cook]
+- `Apero.tools.module.processing.drs_precheck.py` - remove the todo line
+  setting all objs to be refound. [Neil Cook]
+- `Apero.tools.module.testing.drs_stats.py` - do not get the index
+  database if in timing mode (we don't need it) [Neil Cook]
+- Merge branch 'v0.7.208-working' into v0.7.208-stable-test. [Neil Cook]
+- `Apero.tools.module.testing.drs_stats.py` - do not crossmatch with index
+  for timing mode. [Neil Cook]
+- Merge branch 'v0.7.208-working' into v0.7.208-stable-test. [Neil Cook]
+- `Apero.tools.module.testing.drs_stats.py` - add dt vs start time plot.
+  [Neil Cook]
+- Merge branch 'v0.7.208-working' into v0.7.208-stable-test. [Neil Cook]
+- `Apero.tools.module.processing.drs_precheck.py` - use original names for
+  use in astrometrics. [Neil Cook]
+- Update requirements for `astro_visu`. [Neil Cook]
+- Update requirements for `astro_visu`. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update requirements for LAM (downgrade bottleneck) [Neil Cook]
+
+
+0.7.210 (2022-02-23)
+--------------------
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Update visualisation test code. [Neil Cook]
+- Test visualisations. [Neil Cook]
+
+
+0.7.209 (2022-02-17)
+--------------------
+- `Apero.plotting.plot_functions.py.plot_stats_timing_plot` - deal with
+  nrows=1 ncols=1. [Neil Cook]
+- `Apero.tools.module.testing.drs_stats.py` - deal with None in `END_TIME`
+  better. [Neil Cook]
+- `Apero.tools.module.testing.drs_stats.py` - update timing error. [Neil
+  Cook]
+- `Apero.plotting.plot_functions.py` - deal with case where nrows = 1.
+  [Neil Cook]
+- `Apero.tools.module.processing.drs_precheck.py` - fix typo. [Neil Cook]
+- `Apero.tools.module.processing.drs_precheck.py` - only check obj names
+  for science / hot star observations. [Neil Cook]
+- Update date/version/docs. [Neil Cook]
+
+
+0.7.208 (2022-02-11)
+--------------------
+- Copyraw and add version to setup codes, point README.md the
+  documentation. [Neil Cook]
+- Move the raw sym/copy in `apero_get` into setup (outside apero frame
+  work) as it is probably only going to be used before installation.
+  [Neil Cook]
+- `Apero.recipes.spirou.apero_postprocess_spirou.py` - correct typo
+  `filepostfile.out_requiredd` --> `filepostfile.out_required`. [Neil Cook]
+- Merge branch 'v0.7.205-stable-test' into v0.7.205-working. [Neil Cook]
+- `Apero.science.calib.wave.py` - remove reference to NAXIS2 and NAXIS1.
+  [Neil Cook]
+- `Apero.tools.recipes.bin.apero_visu.py` - for later use. [Neil Cook]
+- `Apero.recipes.*.apero_wave_master_*.py`. [Neil Cook]
+
+
+0.7.207 (2022-02-07)
+--------------------
+- `Apero.tools.recipes.bin.apero_get.py` - create `user_outdir` path if it
+  doesn't exist. [Neil Cook]
+- `Apero.tools.recipes.bin.apero_get.py` - add in a raw copy/symlink
+  option. [Neil Cook]
+- `Apero.tools.recipes.bin.apero_get.py` - move functionality to module +
+  finish changes to filter by qc failures. [njcuk9999]
+- `Apero.tools.recipes.bin.apero_get.py` - only copy those with qc passed.
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.205-stable-test' into
+  v0.7.205-stable-test. [Neil Cook]
+- Update how null columns are handled. [njcuk9999]
+- `Apero.science.calib.thermal.py` - fix ratio1 and ratio2 in Null case
+  (should be ratio) [Neil Cook]
+- `Apero.tools.module.database.drs_astrometrics.py` - add way to not check
+  pm (for dev only) [Neil Cook]
+- `Apero.tools.module.database.drs_astrometrics.py` - add way to attempt
+  to update all missing teffs. [Neil Cook]
+- `Apero.tools.module.database.drs_astrometrics.py` - add way to attempt
+  to update all missing teffs. [Neil Cook]
+- `Apero.tools.module.database.dsr_astrometrics.py` - work on updating
+  teffs. [njcuk9999]
+- `Apero.tools.module.database.manage_database.py` - separate update and
+  get object database functions. [Neil Cook]
+- `Apero_astrometrics.py` - add teff from disk if possible. [Neil Cook]
+- Update run.ini files. [Neil Cook]
+- `Apero.core.core.drs_database.py` - return only `OBS_NAMES[objname]`
+  [njcuk9999]
+
+
+0.7.206 (2022-02-03)
+--------------------
+- Update some documentation. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
 0.7.205 (2022-02-01)
 --------------------
 - Merge remote-tracking branch 'origin/v0.7.194-working' into

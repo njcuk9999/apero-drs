@@ -51,7 +51,7 @@ No schematic set
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
      --blazefile[FILE:FF_BLAZE] // BLAZEFILE_HELP
-     --plot[-1>INT>2] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --wavefile[FILE:WAVESOL_MASTER,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
      --use_template[True/False] // USE_TEMP_HELP
      --template[FILE:TELLU_TEMP] // TEMPLATE_FILE_HELP

@@ -66,7 +66,7 @@ No schematic set
      --flatfile[FILE:FF_FLAT] // FLATFILE_HELP
      --locofile[FILE:LOC_LOCO] // LOCOFILE_HELP
      --orderpfile[FILE:LOC_ORDERP] // ORDERPFILE_HELP
-     --plot[-1>INT>2] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --resize[True/False] // RESIZE_HELP
      --shapex[FILE:SHAPE_X] // SHAPEXFILE_HELP
      --shapey[FILE:SHAPE_Y] // SHAPEYFILE_HELP
