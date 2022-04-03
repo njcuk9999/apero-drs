@@ -47,7 +47,12 @@ No optional arguments
 .. code-block:: 
 
      --kill // Use this when database is stuck and you have no other opens (mysql only)
-     --objdb[STRING] // [True] or [str Path to dfits output]. Update the object reset database using raw directory [True] or a dfits output [str]
+     --calibdb // Update calibration database
+     --telludb // Update telluric database
+     --logdb // Update log database
+     --indexdb // Update index database
+     --objdb // Update object database
+     --rejectdb // Update rejection database
      --update // Use this to update the database based on files on disk in the correct directories (Currently updates calib/tellu/log and index databases)
      --csv[STRING] // Path to csv file. For --importdb this is the csv file you wish to add. For --exportdb this is the csv file that will be saved.
      --exportdb[calib,tellu,index,log,object,lang] // Export a database to a csv file

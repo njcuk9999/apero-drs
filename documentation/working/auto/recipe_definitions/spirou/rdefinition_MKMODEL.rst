@@ -47,7 +47,7 @@ No optional arguments
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --plot[-1>INT>2] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
 
 
 ********************************************************************************

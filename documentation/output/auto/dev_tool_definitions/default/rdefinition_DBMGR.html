@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>apero_database &#8212; APERO 0.7.205 documentation</title>
+    <title>apero_database &#8212; APERO 0.7.221 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="rdefinition_CLOG.html" title="apero_changelog"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.205 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.221 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/developer/main_dev.html" >Developer how to guide</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="dev_tools.html" accesskey="U">Dev tools</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_database</a></li> 
@@ -229,7 +229,12 @@ backed up</p>
 <section id="optional-arguments">
 <h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">kill</span> <span class="o">//</span> <span class="n">Use</span> <span class="n">this</span> <span class="n">when</span> <span class="n">database</span> <span class="ow">is</span> <span class="n">stuck</span> <span class="ow">and</span> <span class="n">you</span> <span class="n">have</span> <span class="n">no</span> <span class="n">other</span> <span class="n">opens</span> <span class="p">(</span><span class="n">mysql</span> <span class="n">only</span><span class="p">)</span>
-<span class="o">--</span><span class="n">objdb</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="ow">or</span> <span class="p">[</span><span class="nb">str</span> <span class="n">Path</span> <span class="n">to</span> <span class="n">dfits</span> <span class="n">output</span><span class="p">]</span><span class="o">.</span> <span class="n">Update</span> <span class="n">the</span> <span class="nb">object</span> <span class="n">reset</span> <span class="n">database</span> <span class="n">using</span> <span class="n">raw</span> <span class="n">directory</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="ow">or</span> <span class="n">a</span> <span class="n">dfits</span> <span class="n">output</span> <span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="o">--</span><span class="n">calibdb</span> <span class="o">//</span> <span class="n">Update</span> <span class="n">calibration</span> <span class="n">database</span>
+<span class="o">--</span><span class="n">telludb</span> <span class="o">//</span> <span class="n">Update</span> <span class="n">telluric</span> <span class="n">database</span>
+<span class="o">--</span><span class="n">logdb</span> <span class="o">//</span> <span class="n">Update</span> <span class="n">log</span> <span class="n">database</span>
+<span class="o">--</span><span class="n">indexdb</span> <span class="o">//</span> <span class="n">Update</span> <span class="n">index</span> <span class="n">database</span>
+<span class="o">--</span><span class="n">objdb</span> <span class="o">//</span> <span class="n">Update</span> <span class="nb">object</span> <span class="n">database</span>
+<span class="o">--</span><span class="n">rejectdb</span> <span class="o">//</span> <span class="n">Update</span> <span class="n">rejection</span> <span class="n">database</span>
 <span class="o">--</span><span class="n">update</span> <span class="o">//</span> <span class="n">Use</span> <span class="n">this</span> <span class="n">to</span> <span class="n">update</span> <span class="n">the</span> <span class="n">database</span> <span class="n">based</span> <span class="n">on</span> <span class="n">files</span> <span class="n">on</span> <span class="n">disk</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">correct</span> <span class="n">directories</span> <span class="p">(</span><span class="n">Currently</span> <span class="n">updates</span> <span class="n">calib</span><span class="o">/</span><span class="n">tellu</span><span class="o">/</span><span class="n">log</span> <span class="ow">and</span> <span class="n">index</span> <span class="n">databases</span><span class="p">)</span>
 <span class="o">--</span><span class="n">csv</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Path</span> <span class="n">to</span> <span class="n">csv</span> <span class="n">file</span><span class="o">.</span> <span class="n">For</span> <span class="o">--</span><span class="n">importdb</span> <span class="n">this</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">csv</span> <span class="n">file</span> <span class="n">you</span> <span class="n">wish</span> <span class="n">to</span> <span class="n">add</span><span class="o">.</span> <span class="n">For</span> <span class="o">--</span><span class="n">exportdb</span> <span class="n">this</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">csv</span> <span class="n">file</span> <span class="n">that</span> <span class="n">will</span> <span class="n">be</span> <span class="n">saved</span><span class="o">.</span>
 <span class="o">--</span><span class="n">exportdb</span><span class="p">[</span><span class="n">calib</span><span class="p">,</span><span class="n">tellu</span><span class="p">,</span><span class="n">index</span><span class="p">,</span><span class="n">log</span><span class="p">,</span><span class="nb">object</span><span class="p">,</span><span class="n">lang</span><span class="p">]</span> <span class="o">//</span> <span class="n">Export</span> <span class="n">a</span> <span class="n">database</span> <span class="n">to</span> <span class="n">a</span> <span class="n">csv</span> <span class="n">file</span>
@@ -299,7 +304,7 @@ backed up</p>
         <li class="right" >
           <a href="rdefinition_CLOG.html" title="apero_changelog"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.205 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.221 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/developer/main_dev.html" >Developer how to guide</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="dev_tools.html" >Dev tools</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_database</a></li> 

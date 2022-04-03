@@ -59,7 +59,7 @@ No schematic set
      --output_lsd[STRING] // Output LSD file
      --lsd // Run LSD analysis
      --blazefile[FILE:FF_BLAZE] // BLAZEFILE_HELP
-     --plot[-1>INT>2] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --wavefile[FILE:WAVESOL_MASTER,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
 
 
