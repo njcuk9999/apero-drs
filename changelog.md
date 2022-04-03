@@ -2,6 +2,20 @@ Changelog
 =========
 
 
+0.7.221 (2022-04-02)
+--------------------
+- Fixes for outclass (telluric centric fixes) [Neil Cook]
+- Fix problems with outclass + move running/in_parallel/ended to binary
+  flag + add a flag mode in apero_explorer.py. [Neil Cook]
+
+
+0.7.220 (2022-03-31)
+--------------------
+- Replace outfunc with outclass (a output file class) [Neil Cook]
+- Update error for database not found (was ambiguous) [Neil Cook]
+- Update date/version/docs/changelog. [Neil Cook]
+
+
 0.7.219 (2022-03-27)
 --------------------
 - Bug fixes after nirps merge. [Neil Cook]
@@ -9428,7 +9442,7 @@ Changelog
 --------------------
 - Drs_reprocess.py - address new bugs. [Neil Cook]
 - Drs_reprocess.py - address new bugs. [Neil Cook]
-- Core.instruments - add outclass=blank_ofile (and blank description) [Neil
+- Core.instruments - add outfunc=out.blank (and blank description) [Neil
   Cook]
 - Drs_recipe.py - add return of runs. [Neil Cook]
 - Drs_reprocessing.py - update for continued work on reprocessing. [Neil
