@@ -44,6 +44,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# get tqdm
+tqdm = base.tqdm_module()
 # get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get function string
@@ -52,6 +54,7 @@ display_func = drs_log.display_func
 DrsCodedException = drs_exceptions.DrsCodedException
 # Get Logging function
 WLOG = drs_log.wlog
+TLOG = drs_log.Printer
 # Get the text types
 textentry= lang.textentry
 # -----------------------------------------------------------------------------
@@ -453,7 +456,8 @@ def listfiles(rootdir) -> List[str]:
     return files
 
 
-def recursive_path_glob(path: Union[Path, str],
+def recursive_path_glob(params: ParamDict,
+                        path: Union[Path, str],
                         prefix: Optional[str] = None,
                         suffix: Optional[str] = None) -> List[Path]:
     """
@@ -464,8 +468,12 @@ def recursive_path_glob(path: Union[Path, str],
     # whether we need to check prefix and / or suffix
     check_prefix = prefix is not None
     check_suffix = suffix is not None
+
+    # loading message
+    TLOG(params, '', 'Analying path: {0}'.format(path))
     # use os walk to loop around files
     for root, dirs, files in os.walk(str(path)):
+        TLOG(params, '', 'Analying path: {0}'.format(root))
         # get the root as a Pathlib instance
         root_instant = Path(root)
         # loop around all files
@@ -480,6 +488,8 @@ def recursive_path_glob(path: Union[Path, str],
                     continue
             # if we get to here file is valid
             valid_files.append(root_instant.joinpath(filename))
+    # clear message
+    TLOG(params, '', '')
     # return valid files
     return valid_files
 
