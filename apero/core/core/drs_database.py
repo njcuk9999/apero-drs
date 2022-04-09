@@ -2321,11 +2321,15 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     # only use sub-directories for the following kinds
     if block_kind.lower() in block_names:
         # ---------------------------------------------------------------------
+        # processing sub-directories
+        TLOG(params, '', 'Listing dir {0}...'.format(path))
         # get all sub directory path
         all_dirs = drs_path.listdirs(str(path))
         # loop around directories
         subdirs = []
         for item in all_dirs:
+            # processing sub-directories
+            TLOG(params, '', 'Listing dir {0}...'.format(item))
             # skip directories not in included directories
             if incdircond:
                 if item not in incdirs1:
@@ -2336,6 +2340,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
                     continue
             # if we have reached here then append subdirs
             subdirs.append(item)
+            # clear loading message
+        TLOG(params, '', '')
     # else we do not use subdirs
     else:
         subdirs = None
@@ -2344,7 +2350,7 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     if subdirs is None:
         # get all files in path
         # allfiles = list(path.rglob('*{0}'.format(suffix)))
-        allfiles = drs_path.recursive_path_glob(path, suffix=suffix)
+        allfiles = drs_path.recursive_path_glob(params, path, suffix=suffix)
     # else we have subdirs
     else:
         allfiles = []
@@ -2354,7 +2360,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
             TLOG(params, '', 'Analysing {0}...'.format(subdir))
             # append to filenames
             # allfiles += list(Path(subdir).glob('*{0}'.format(suffix)))
-            allfiles += drs_path.recursive_path_glob(subdir, suffix=suffix)
+            allfiles += drs_path.recursive_path_glob(params, subdir,
+                                                     suffix=suffix)
     # clear loading message
     TLOG(params, '', '')
     # -------------------------------------------------------------------------
