@@ -72,6 +72,8 @@ def apply_excess_emissivity(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # get allowed dprtypes parameter
     dprtypes = params.listp('THERMAL_EXCESS_DPRTYPES', dtype=str)
+    # get the filter width for the low pass filter
+    filter_wid = params['THERMAL_FILTER_WID']
     # loop around all fibers
     # if any file has the wrong dprtype skip this step
     for fiber in fiber_types:
@@ -103,9 +105,11 @@ def apply_excess_emissivity(params: ParamDict, recipe: DrsRecipe,
                                        nbpix=image.shape[1])
         # spline excess emissivity onto the wave grid of the extracted file
         excess_correction = espline(wprops['WAVEMAP'])
+        # low pass the image before applying the excess correction
+        for order_num in range(image.shape[0]):
+            image[order_num] = mp.lowpassfilter(image[order_num], filter_wid)
         # correct data and push back to thermal file
         thermal_file.data = image * excess_correction
-
         # add thermal file back to dictionary
         thermal_files[fiber] = thermal_file
     # return thermal files
@@ -330,9 +334,9 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
     wtapas, ttapas = tapas['wavelength'], tapas['trans_combined']
 
     # --------------------------------------------------------------------------
-    # median filter the thermal (loop around orders)
-    for order_num in range(thermal.shape[0]):
-        thermal[order_num] = mp.lowpassfilter(thermal[order_num], filter_wid)
+    # # median filter the thermal (loop around orders)
+    # for order_num in range(thermal.shape[0]):
+    #     thermal[order_num] = mp.lowpassfilter(thermal[order_num], filter_wid)
 
     # --------------------------------------------------------------------------
     # Method 1: Use tapas (for use with bright targets)
@@ -363,9 +367,6 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
     thermal = thermal / ratio
     # set the header parameters for thermal ratios
     strratio = 'tapas'
-    # ----------------------------------------------------------------------
-    # calculate final thermal profile (for correction)
-    thermal = thermal / ratio
     # ----------------------------------------------------------------------
     # plot thermal background plot
     recipe.plot('THERMAL_BACKGROUND', params=params, wavemap=wavemap,
