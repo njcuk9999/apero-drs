@@ -2073,7 +2073,7 @@ TELLUP_OHLINE_PCA_FILE.value = 'sky_PCs.fits'
 # define the orders not to use in pre-cleaning fit (due to thermal
 # background)
 TELLUP_REMOVE_ORDS = TELLUP_REMOVE_ORDS.copy(__NAME__)
-TELLUP_REMOVE_ORDS.value = '47, 48'
+TELLUP_REMOVE_ORDS.value = '45, 46, 47, 48'
 
 # define the minimum snr to accept orders for pre-cleaning fit
 TELLUP_SNR_MIN_THRES = TELLUP_SNR_MIN_THRES.copy(__NAME__)
@@ -2094,7 +2094,7 @@ TELLUP_DEXPO_CONV_THRES.value = 1.0e-4
 # define the maximum number of iterations to try to get dexpo
 # convergence
 TELLUP_DEXPO_MAX_ITR = TELLUP_DEXPO_MAX_ITR.copy(__NAME__)
-TELLUP_DEXPO_MAX_ITR.value = 20
+TELLUP_DEXPO_MAX_ITR.value = 40
 
 # define the kernel threshold in abso_expo
 TELLUP_ABSO_EXPO_KTHRES = TELLUP_ABSO_EXPO_KTHRES.copy(__NAME__)

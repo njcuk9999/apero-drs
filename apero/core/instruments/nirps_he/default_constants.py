@@ -2032,7 +2032,7 @@ TELLUP_DEXPO_CONV_THRES.value = 1.0e-4
 # define the maximum number of iterations to try to get dexpo
 # convergence
 TELLUP_DEXPO_MAX_ITR = TELLUP_DEXPO_MAX_ITR.copy(__NAME__)
-TELLUP_DEXPO_MAX_ITR.value = 20
+TELLUP_DEXPO_MAX_ITR.value = 40
 
 # define the kernel threshold in abso_expo
 TELLUP_ABSO_EXPO_KTHRES = TELLUP_ABSO_EXPO_KTHRES.copy(__NAME__)
