@@ -4137,21 +4137,58 @@ def plot_tellup_wave_trans(plotter: Plotter, graph: Graph,
     dd_arr = kwargs['dd_arr']
     ccf_water_arr = kwargs['ccf_water_arr']
     ccf_others_arr = kwargs['ccf_others_arr']
+    size = kwargs['size']
     n_iterations = len(dd_arr)
     # ------------------------------------------------------------------
     # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2)
+    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2, sharex='all')
+    # construct the title
+    titlesup = '[Total iterations={0}]'.format(n_iterations)
     # ------------------------------------------------------------------
-    # plot ccfs
+    # plot ccfs (for each iteration)
     for n_it in range(n_iterations):
+        # ---------------------------------------------------------------------
+        # set up different plot parameters based on iteration number
+        if n_it == 0:
+            color = 'red'
+            alpha = 1
+            label = 'First iteration'
+        elif n_it == n_iterations - 1:
+            color = 'green'
+            alpha = 1
+            label = 'Last iteration'
+        else:
+            color = 'black'
+            alpha = (n_it + 1) / n_iterations
+            label = None
+        # ---------------------------------------------------------------------
         # plot water ccf
-        frames[0].plot(dd_arr[n_it], ccf_water_arr[n_it])
+        frames[0].plot(dd_arr[n_it], ccf_water_arr[n_it], color=color,
+                       alpha=alpha, label=label)
         frames[0].set(xlabel='dv [km/s]', ylabel='CCF power',
                       title='Water CCF')
         # plot other species ccf
-        frames[1].plot(dd_arr[n_it], ccf_others_arr[n_it])
+        frames[1].plot(dd_arr[n_it], ccf_others_arr[n_it], color=color,
+                       alpha=alpha, label=label)
         frames[1].set(xlabel='dv [km/s]', ylabel='CCF power',
                       title='Dry CCF')
+    # ------------------------------------------------------------------
+    # plot the control region
+    frames[0].axvline(x=size, color='k', linestyle='--')
+    frames[0].axvline(x=-size, color='k', linestyle='--')
+    # plot the horizontal zero line
+    frames[0].axhline(y=0, color='k', linestyle='--', label='control region')
+    # plot the control region
+    frames[1].axvline(x=size, color='k', linestyle='--')
+    frames[1].axvline(x=-size, color='k', linestyle='--')
+    # plot the horizontal zero line
+    frames[1].axhline(y=0, color='k', linestyle='--', label='control region')
+    # ------------------------------------------------------------------
+    # plot legends
+    frames[0].legend(loc=0)
+    frames[1].legend(loc=1)
+    # plot super title
+    plotter.plt.suptitle(titlesup)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -4180,6 +4217,10 @@ def plot_tellup_clean_oh(plotter: Plotter, graph: Graph,
     skymodel = kwargs['skymodel'].ravel()
     mask_limits = kwargs['mask_limits']
     # ------------------------------------------------------------------
+    wave_limits = []
+    for mask_limit in mask_limits:
+        wave_limits.append([wave[mask_limit[0]], wave[mask_limit[1]]])
+    # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
     # plot the image, image - skymodel (before), image - skymodel (after)
@@ -4193,10 +4234,19 @@ def plot_tellup_clean_oh(plotter: Plotter, graph: Graph,
     # get graph bounds
     xmin, xmax, ymin, ymax = frame.axis()
     # loop around mask limits and plot
-    for mask_limit in mask_limits:
-        frame.fill_between(mask_limit, ymin, ymax, color='0.5', alpha=0.5)
+    for wave_limit in wave_limits:
+        frame.fill_between(wave_limit, ymin, ymax, color='0.5', alpha=0.05)
+    # add a square for the mask limits
+    mpatches = plotter.matplotlib.patches
+    # draw a rectangle representing the mask limits
+    lmask = mpatches.Patch(color='0.5', alpha=0.5, label='Mask limits')
+    # get handles and labels
+    handles, labels = frame.get_legend_handles_labels()
+    # add lmask to handles and labels
+    handles.append(lmask)
+    labels.append('Mask limits')
     # add legend
-    frame.legend(loc=0)
+    frame.legend(handles, labels, loc=0)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
