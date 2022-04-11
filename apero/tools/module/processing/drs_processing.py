@@ -488,7 +488,8 @@ def generate_skip_table(params):
     return skip_table
 
 
-def skip_clean_arguments(runstring):
+def skip_clean_arguments(runstring: str,
+                         additional_args: Optional[List[str]] = None):
     """
     Clean arguments for skip check - these are arguments that may change
     between otherwise identical runs
@@ -497,15 +498,23 @@ def skip_clean_arguments(runstring):
          --plot and --debug do not change run
          --skip should not determine same run
 
-    :param runstring:
+    :param runstring: str, the run string for this recipe run
+    :param additional_args: list of strings, if present adds to the string
+
     :return:
     """
+    # add any additional arguments required
+    if additional_args is not None:
+        skip_remove_args = SKIP_REMOVE_ARGS + list(additional_args)
+    else:
+        skip_remove_args = list(SKIP_REMOVE_ARGS)
+    # split arguments
     args = np.array(runstring.split(' '))
     # mask for arguments to keep
     mask = np.ones(len(args)).astype(bool)
     # loop around arguments and figure out whether to keep them
     for it, arg in enumerate(args):
-        for remove_arg in SKIP_REMOVE_ARGS:
+        for remove_arg in skip_remove_args:
             if arg.startswith(remove_arg):
                 mask[it] = False
     return ' '.join(args[mask])
