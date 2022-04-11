@@ -705,6 +705,7 @@ recipes.append(apero_extract)
 apero_wave_master = DrsRecipe(__INSTRUMENT__)
 apero_wave_master.name = 'apero_wave_master_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_wave_master.shortname = 'WAVEM'
+apero_wave_master.master = True
 apero_wave_master.instrument = __INSTRUMENT__
 apero_wave_master.in_block_str = 'tmp'
 apero_wave_master.out_block_str = 'red'
