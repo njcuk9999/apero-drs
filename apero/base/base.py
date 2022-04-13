@@ -139,6 +139,22 @@ COLOURS['WHITE2'] = '\033[1;37m'
 COLOURS['ENDC'] = '\033[0;0m'
 COLOURS['BOLD'] = '\033[1m'
 COLOURS['UNDERLINE'] = '\033[4m'
+# -----------------------------------------------------------------------------
+# allowed log flags
+# -----------------------------------------------------------------------------
+# define default flags for all recipes
+DEFAULT_FLAGS = dict(IN_PARALLEL=False, RUNNING=False, ENDED=False)
+# define allowed log flags
+LOG_FLAGS = dict()
+# LOG_FLAG[key] = description
+LOG_FLAGS['IN_PARALLEL'] = 'Recipe was run in parallel'
+LOG_FLAGS['RUNNING'] = 'Recipe is still running and has not ended'
+LOG_FLAGS['ENDED'] = 'Recipe has ended'
+LOG_FLAGS['SCIFIBER'] = 'Localisation recipe used the science fiber'
+LOG_FLAGS['REFFIBER'] = 'Localisation recipe used the reference fiber'
+LOG_FLAGS['INT_EXT'] = 'An internal extraction is done in this recipe'
+LOG_FLAGS['EXT_FOUND'] = 'Extracted files for internal extraction were found.'
+LOG_FLAGS['QUICKLOOK'] = 'Extraction is running in quick look mode'
 
 
 # =============================================================================
