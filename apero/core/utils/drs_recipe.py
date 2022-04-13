@@ -66,8 +66,6 @@ DrsArgument = drs_argument.DrsArgument
 pcheck = constants.PCheck(wlog=WLOG)
 # define special keys
 SPECIAL_LIST_KEYS = ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']
-# define default flags for all recipes
-DEFAULT_FLAGS = dict(IN_PARALLEL=False, RUNNING=False, ENDED=False)
 
 
 # =============================================================================
@@ -200,8 +198,8 @@ class DrsRecipe(object):
         self.description_file = None
         # binary flags
         self.flags = BinaryDict()
-        for key in DEFAULT_FLAGS:
-            self.flags[key] = DEFAULT_FLAGS[key]
+        for key in base.DEFAULT_FLAGS:
+            self.flags[key] = base.DEFAULT_FLAGS[key]
 
     def __getstate__(self) -> dict:
         """
@@ -824,6 +822,13 @@ class DrsRecipe(object):
         """
         # loop around kwargs
         for kwarg in kwargs:
+            # flag must be defined
+            if kwarg not in base.LOG_FLAGS:
+                # TODO: move to language database
+                emsg = ('Recipe {0} flag "{1}" not in base.LOG_FLAGS. '
+                        'Please add to use')
+                eargs = [self.name, kwarg]
+                WLOG(self.params, 'error', emsg.format(*eargs))
             # check if kwarg is a string
             if isinstance(kwargs[kwarg], bool):
                 # update the flag
