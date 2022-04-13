@@ -193,7 +193,7 @@ def __main__(recipe, params):
         # -----------------------------------------------------------------
         # set up parameters
         eargs = [params, recipe, EXTRACT_NAME, hcfile, fpfile]
-        ekwargs = dict(wavefile=iwprops['WAVEFILE'])
+        ekwargs = dict(wavefile=iwprops['WAVEFILE'], logger=log1)
         # run extraction
         hc_outputs, fp_outputs = extractother.extract_wave_files(*eargs,
                                                                  **ekwargs)
