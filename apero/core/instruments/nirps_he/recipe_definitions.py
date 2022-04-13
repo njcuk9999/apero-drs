@@ -522,6 +522,7 @@ apero_leak_master.recipe_kind = 'calib-master'
 apero_leak_master.calib_required = False
 apero_leak_master.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2ds,
                               LEAK_MASTER=files.out_leak_master)
+apero_leak_master.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_leak_master.set_arg(pos=0, **obs_dir)
 apero_leak_master.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
                             helpstr=textentry('LEAKM_HELP_FILETYPE'))
@@ -657,6 +658,7 @@ apero_wave_master.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                               WAVEM_FPLIST=files.out_wave_fplist_master,
                               WAVEM_RES=files.out_wavem_res,
                               CCF_RV=files.out_ccf_fits)
+apero_wave_master.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_wave_master.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                   'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
                                   'WAVEREF_EXPECTED', 'EXTRACT_S1D',
@@ -722,6 +724,7 @@ apero_wave_night.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                              WAVE_HCLIST=files.out_wave_hclist,
                              WAVE_FPLIST=files.out_wave_fplist,
                              CCF_RV=files.out_ccf_fits)
+apero_wave_night.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_wave_night.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                  'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
                                  'WAVEREF_EXPECTED', 'EXTRACT_S1D',
@@ -1350,16 +1353,18 @@ pp_seq_opt.add(apero_preprocess, name='PP_FPLFC', files=[files.raw_fp_lfc],
 # -----------------------------------------------------------------------------
 master_seq = drs_recipe.DrsRunSequence('master_seq', __INSTRUMENT__)
 master_seq.add(apero_dark_master, master=True)
-master_seq.add(apero_badpix, name='BADM', master=False,
+master_seq.add(apero_badpix, name='BADM', master=True,
                recipe_kind='calib-master')
 master_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat],
-               master=False, recipe_kind='calib-master-B')
+               master=True,
+               recipe_kind='calib-master-B')
 master_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark],
-               master=False, recipe_kind='calib-master-A')
+               master=True,
+               recipe_kind='calib-master-A')
 master_seq.add(apero_shape_master, master=True)
-master_seq.add(apero_shape, name='SHAPELM', master=False,
+master_seq.add(apero_shape, name='SHAPELM', master=True,
                recipe_kind='calib-master')
-master_seq.add(apero_flat, name='FLATM', master=False,
+master_seq.add(apero_flat, name='FLATM', master=True,
                recipe_kind='calib-master')
 master_seq.add(apero_leak_master, master=True)
 master_seq.add(apero_wave_master, master=True,
