@@ -2,6 +2,45 @@ Changelog
 =========
 
 
+0.7.225 (2022-04-13)
+--------------------
+- Apero.science.extract.other.py - flag when extraction file has been
+  found (require RecipeLog as input to extract_*_files functions) [Neil
+  Cook]
+- Apero.core.instruments.*.recipe_definitions.py - add INT_EXT and
+  EXT_FOUND flags to recipes that use apero_extract internally. [Neil
+  Cook]
+- Apero.core.instruments.*.file_definitions.py - WAVEM_CAV should only
+  be the main science fiber. [Neil Cook]
+- Apero.base.base.py - add log flag descriptions - can only add flags if
+  the are here. [Neil Cook]
+
+
+0.7.224 (2022-04-11)
+--------------------
+- Apero.tools.processing.drs_processing.py - update skip_clean_arguments
+  to allow additional arguments. [Neil Cook]
+- Apero.core.instruments.spirou.recipe_definitions.py -
+  apero_water_master should be a master recipe always. [Neil Cook]
+- Apero.core.instruments.spirou.recipe_definitions.py - correct typo
+  "apero_loc.set_flags" --> "apero_extract.set_flags" [Neil Cook]
+
+
+0.7.223 (2022-04-09)
+--------------------
+- Merge branch 'v0.7.219-stable-test' into v0.7.221-working. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.219-stable-test' into
+  v0.7.219-stable-test. [Neil Cook]
+- Fix tellurics and thermal problems. [njcuk9999]
+
+
+0.7.222 (2022-04-03)
+--------------------
+- Update documentation. [Neil Cook]
+- Update documentation. [Neil Cook]
+- Update date/version/docs. [Neil Cook]
+
+
 0.7.221 (2022-04-02)
 --------------------
 - Fixes for outclass (telluric centric fixes) [Neil Cook]
