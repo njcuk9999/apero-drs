@@ -886,7 +886,7 @@ out_wave_fplist_master = drs_finput('WAVE_FPLIST_MASTER',
 # teh cavity file polynomial file
 out_wavem_cavity = drs_finput('WAVEM_CAV', hkeys=dict(KW_OUTPUT='WAVEM_CAV'),
                               filetype='.fits',
-                              fibers=valid_efibers,
+                              fibers=['AB'],
                               intype=[out_ext_e2ds, out_ext_e2dsff],
                               suffix='_wavecav_',
                               dbname='calibration', dbkey='WAVECAV',
