@@ -154,6 +154,8 @@ def __main__(recipe, params):
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
+        # add level to recipe log
+        log1 = recipe.log.add_level(params, 'num', it)
         # print file iteration progress
         drs_startup.file_processing_update(params, it, num_files)
         # ge this iterations file
@@ -163,7 +165,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Get the dark_fp output e2ds filename and extract/read file
         # ------------------------------------------------------------------
-        eargs = [params, recipe, EXTRACT_NAME, infile]
+        eargs = [params, recipe, EXTRACT_NAME, infile, log1]
         darkfp_extfiles = extother.extract_leak_files(*eargs)
         # get list of basename for dark fp extracted files
         darkfp_extnames = []
@@ -185,6 +187,8 @@ def __main__(recipe, params):
                 dark_fp_storage[fiber].append(dark_fp_extcorr[fiber])
             else:
                 dark_fp_storage[fiber] = [dark_fp_extcorr[fiber]]
+        # end this log level
+        log1.end()
 
     # ------------------------------------------------------------------
     # Produce super dark fp from median of all extractions

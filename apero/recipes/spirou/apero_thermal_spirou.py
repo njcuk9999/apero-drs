@@ -149,7 +149,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Get the thermal output e2ds filename and extract/read file
         # ------------------------------------------------------------------
-        eargs = [params, recipe, EXTRACT_NAME, infile]
+        eargs = [params, recipe, EXTRACT_NAME, infile, log1]
         thermal_files = extractother.extract_thermal_files(*eargs)
 
         # TODO: deal with sky darks here
