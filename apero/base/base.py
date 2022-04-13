@@ -150,6 +150,7 @@ LOG_FLAGS = dict()
 LOG_FLAGS['IN_PARALLEL'] = 'Recipe was run in parallel'
 LOG_FLAGS['RUNNING'] = 'Recipe is still running and has not ended'
 LOG_FLAGS['ENDED'] = 'Recipe has ended'
+LOG_FLAGS['OBJ'] = 'Is an OBJECT file'
 LOG_FLAGS['SCIFIBER'] = 'Localisation recipe used the science fiber'
 LOG_FLAGS['REFFIBER'] = 'Localisation recipe used the reference fiber'
 LOG_FLAGS['INT_EXT'] = 'An internal extraction is done in this recipe'
