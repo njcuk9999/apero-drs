@@ -524,6 +524,7 @@ apero_thermal.calib_required = True
 apero_thermal.set_outputs(THERMAL_E2DS_FILE=files.out_ext_e2dsff,
                           THERMALI_FILE=files.out_thermal_e2ds_int,
                           THERMALT_FILE=files.out_thermal_e2ds_tel)
+apero_thermal.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_thermal.set_arg(pos=0, **obs_dir)
 # TODO: Need to add files.pp_dark_dark_sky
 apero_thermal.set_arg(name='files', dtype='files', pos='1+',
@@ -577,6 +578,7 @@ apero_leak_master.recipe_kind = 'calib-master'
 apero_leak_master.calib_required = False
 apero_leak_master.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2ds,
                               LEAK_MASTER=files.out_leak_master)
+apero_leak_master.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_leak_master.set_arg(pos=0, **obs_dir)
 apero_leak_master.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
                             helpstr=textentry('LEAKM_HELP_FILETYPE'))
@@ -722,6 +724,7 @@ apero_wave_master.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                               WAVEM_FPLIST=files.out_wave_fplist_master,
                               WAVEM_RES=files.out_wavem_res,
                               CCF_RV=files.out_ccf_fits)
+apero_wave_master.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_wave_master.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                   'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
                                   'WAVEREF_EXPECTED', 'EXTRACT_S1D',
@@ -789,6 +792,7 @@ apero_wave_night.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                              WAVE_HCLIST=files.out_wave_hclist,
                              WAVE_FPLIST=files.out_wave_fplist,
                              CCF_RV=files.out_ccf_fits)
+apero_wave_night.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_wave_night.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                  'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
                                  'WAVEREF_EXPECTED', 'EXTRACT_S1D',
