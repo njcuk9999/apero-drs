@@ -3468,7 +3468,7 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase,
     condition = 'BLOCK_KIND="{0}"'.format(obs_dir.block_kind)
     # add obs_dir if present
     if not drs_text.null_text(obs_dir.obs_dir, ['None', '', 'Null']):
-        condition = ' AND OBS_DIR="{0}"'.format(obs_dir.obs_dir)
+        condition += ' AND OBS_DIR="{0}"'.format(obs_dir.obs_dir)
     # get filedb
     dbtable = indexdb.get_entries('*', condition=condition)
     filedb = PandasLikeDatabase(dbtable)
