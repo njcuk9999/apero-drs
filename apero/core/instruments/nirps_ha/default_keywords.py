@@ -26,7 +26,7 @@ __release__ = base.__release__
 #     (i.e. an odometer code)
 KW_IDENTIFIER = KW_IDENTIFIER.copy(__NAME__)
 KW_IDENTIFIER.set(key='FILENAME',
-                  comment='filename anticipated by fitspipe server', 
+                  comment='filename anticipated by fitspipe server',
                   group='raw')
 
 # define the MJ date HEADER key (only used for logging)
@@ -38,19 +38,19 @@ KW_MJDATE.set(key='MJD-OBS', datatype='mjd', dataformat=float,
 # define the observation date HEADER key
 KW_DATE_OBS = KW_DATE_OBS.copy(__NAME__)
 KW_DATE_OBS.set(key='DATE-OBS', datatype='fits', dataformat=str,
-                comment='Observation Start (YYYY-MM-DDThh:mm:ss UTC)', 
+                comment='Observation Start (YYYY-MM-DDThh:mm:ss UTC)',
                 group='raw')
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 KW_RDNOISE = KW_RDNOISE.copy(__NAME__)
 KW_RDNOISE.set(key='HIERARCH ESO DET OUT1 RON',
-               comment='Read noise (electrons)', combine_method='flux', 
+               comment='Read noise (electrons)', combine_method='flux',
                group='raw')
 
 # define the gain HEADER key (used to get value only)
 KW_GAIN = KW_GAIN.copy(__NAME__)
 KW_GAIN.set(key='HIERARCH ESO DET OUT1 GAIN',
-            comment='Amplifier gain (electrons/ADU)', combine_method='mean', 
+            comment='Amplifier gain (electrons/ADU)', combine_method='mean',
             group='raw')
 
 # define the exposure time HEADER key (used to get value only)
@@ -127,17 +127,17 @@ KW_INSTRUMENT.set(key='INSTRUME', comment='Instrument Name', group='raw')
 
 # define the instrument mode header key
 KW_INST_MODE = KW_INST_MODE.copy(__NAME__)
-KW_INST_MODE.set(key='HIERARCH ESO INS MODE', comment='Instrument mode used', 
+KW_INST_MODE.set(key='HIERARCH ESO INS MODE', comment='Instrument mode used',
                  group='raw')
 
 # define the raw dprtype from the telescope
 KW_RAW_DPRTYPE = KW_RAW_DPRTYPE.copy(__NAME__)
-KW_RAW_DPRTYPE.set(key='HIERARCH ESO DPR TYPE', comment='Observation type', 
+KW_RAW_DPRTYPE.set(key='HIERARCH ESO DPR TYPE', comment='Observation type',
                    group='raw')
 
 # define the raw dpr category
 KW_RAW_DPRCATG = KW_RAW_DPRCATG.copy(__NAME__)
-KW_RAW_DPRCATG.set(key='HIERARCH ESO DPR CATG', comment='Observation category', 
+KW_RAW_DPRCATG.set(key='HIERARCH ESO DPR CATG', comment='Observation category',
                    group='raw')
 
 # -----------------------------------------------------------------------------
@@ -145,12 +145,12 @@ KW_RAW_DPRCATG.set(key='HIERARCH ESO DPR CATG', comment='Observation category',
 # -----------------------------------------------------------------------------
 # define the observation ra HEADER key
 KW_OBJRA = KW_OBJRA.copy(__NAME__)
-KW_OBJRA.set(key='RA_DEG', unit=uu.deg, comment='Target right ascension', 
+KW_OBJRA.set(key='RA_DEG', unit=uu.deg, comment='Target right ascension',
              group='raw')
 
 # define the observation dec HEADER key
 KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
-KW_OBJDEC.set(key='DEC_DEG', unit=uu.deg, comment='Target declination ', 
+KW_OBJDEC.set(key='DEC_DEG', unit=uu.deg, comment='Target declination ',
               group='raw')
 
 # define the observation name
@@ -165,30 +165,30 @@ KW_OBJEQUIN.set(key='OBJEQUIN', datatype='decimalyear',
 # define the observation proper motion in ra HEADER key
 KW_OBJRAPM = KW_OBJRAPM.copy(__NAME__)
 KW_OBJRAPM.set(key='OBJRAPM', unit=uu.arcsec / uu.yr,
-               comment='Target right ascension proper motion in as/yr ', 
+               comment='Target right ascension proper motion in as/yr ',
                group='raw')
 
 # define the observation proper motion in dec HEADER key
 KW_OBJDECPM = KW_OBJDECPM.copy(__NAME__)
 KW_OBJDECPM.set(key='OBJDECPM', unit=uu.arcsec / uu.yr,
-                comment='Target declination proper motion in as/yr', 
+                comment='Target declination proper motion in as/yr',
                 group='raw')
 
 # define the airmass HEADER key
 KW_AIRMASS = KW_AIRMASS.copy(__NAME__)
-KW_AIRMASS.set(key='AIRMASS', comment='Airmass at start of observation', 
+KW_AIRMASS.set(key='AIRMASS', comment='Airmass at start of observation',
                group='raw')
 
 # define the weather tower temperature HEADER key
 # KW_WEATHER_TOWER_TEMP = KW_WEATHER_TOWER_TEMP.copy(__NAME__)
 # KW_WEATHER_TOWER_TEMP.set(key='TEMPERAT',
-#                           comment='86 temp, air, weather tower deg C  ', 
+#                           comment='86 temp, air, weather tower deg C  ',
 #                           group='raw')
 
 # define the cassegrain temperature HEADER key
 # KW_CASS_TEMP = KW_CASS_TEMP.copy(__NAME__)
 # KW_CASS_TEMP.set(key='SB_POL_T',
-#                  comment='SPIRou tpolar temp at start of exp (deg C)  ', 
+#                  comment='SPIRou tpolar temp at start of exp (deg C)  ',
 #                  group='raw')
 
 # define the humidity HEADER key
@@ -199,15 +199,6 @@ KW_AIRMASS.set(key='AIRMASS', comment='Airmass at start of observation',
 # -----------------------------------------------------------------------------
 # Wanted header keys (related to science object)
 # -----------------------------------------------------------------------------
-# define the gaia id
-KW_GAIA_ID = KW_GAIA_ID.copy(__NAME__)
-KW_GAIA_ID.set(key='GAIAID', comment='Gaia catalog target identifier', 
-               group='raw')
-
-# define the gaia data release key
-KW_GAIA_DR = KW_GAIA_DR.copy(__NAME__)
-KW_GAIA_DR.set(key='GAIADR', comment='Gaia catalog data release', group='raw')
-
 # define the parallax HEADER key
 KW_PLX = KW_PLX.copy(__NAME__)
 KW_PLX.set(key='OBJPLX', unit=uu.mas, group='raw')
@@ -870,7 +861,7 @@ KW_BERV.set(key='BERV', comment='Barycentric Velocity calc. in BERVSRCE [km/s]',
 # the Barycenter Julian date calculate with KW_BERVSOURCE
 KW_BJD = KW_BJD.copy(__NAME__)
 KW_BJD.set(key='BJD',
-           comment='Barycentric Julian data at mid exp calc. in BERVSRCE',
+           comment='Barycentric Julian date mid exp calc. BERVSRCE',
            datatype=float)
 
 # the maximum BERV found across 1 year (with KW_BERVSOURCE)
@@ -895,7 +886,7 @@ KW_BERV_EST.set(key='BERV_EST', comment='Barycentric Velocity estimate [km/s]',
 
 # the Barycenter Julian date calculated with the estimate
 KW_BJD_EST = KW_BJD_EST.copy(__NAME__)
-KW_BJD_EST.set(key='BJD_EST', comment='Barycentric Julian data estimate',
+KW_BJD_EST.set(key='BJD_EST', comment='Barycentric Julian date estimate',
                datatype=float)
 
 # the maximum BERV found across 1 year (calculated with estimate)
