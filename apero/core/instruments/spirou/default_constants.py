@@ -1865,7 +1865,7 @@ WAVE_FP_PLOT_MULTI_NBO.value = 5
 
 # define the dprtype for generating FPLINES (string list)
 WAVE_FP_DPRLIST = WAVE_FP_DPRLIST.copy(__NAME__)
-WAVE_FP_DPRLIST.value = 'OBJ_FP'
+WAVE_FP_DPRLIST.value = 'OBJ_FP, POLAR_FP'
 
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
