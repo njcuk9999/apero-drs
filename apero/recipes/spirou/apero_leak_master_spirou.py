@@ -189,7 +189,6 @@ def __main__(recipe, params):
                 dark_fp_storage[fiber] = [dark_fp_extcorr[fiber]]
         # end this log level
         log1.end()
-
     # ------------------------------------------------------------------
     # Produce super dark fp from median of all extractions
     # ------------------------------------------------------------------
@@ -199,6 +198,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # TODO: Need to add some QC
     qc_params, passed = leak.qc_leak_master(params, medcubes)
+    recipe.log.no_qc()
     # ------------------------------------------------------------------
     # Write super dark fp to file
     # ------------------------------------------------------------------
