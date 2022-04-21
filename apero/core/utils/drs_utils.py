@@ -378,6 +378,11 @@ class RecipeLog:
         _ = drs_misc.display_func('no_qc', __NAME__, self.class_name)
         # set passed_qc to True (no qc means automatic pass)
         self.passed_qc = True
+        # all children must also not have qc
+        instances = self.get_children()
+        # loop around instances
+        for inst in instances:
+            inst.passed_qc = True
         # whether to write (update) recipe log file
         if write:
             self.write_logfile()
