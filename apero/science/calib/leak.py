@@ -703,6 +703,8 @@ def master_dark_fp_cube(params, recipe, extractdict):
     medcubedict = dict()
     # loop around fibers
     for fiber in extractdict:
+        # add level to recipe log
+        log2 = recipe.log.add_level(params, 'fiber', fiber)
         # get the file list for this fiber
         extfiles = extractdict[fiber]
         # get the first file as reference
@@ -730,6 +732,8 @@ def master_dark_fp_cube(params, recipe, extractdict):
         outfile.data = medcube
         # add to median cube storage
         medcubedict[fiber] = outfile
+        # end this log level
+        log2.end()
     # return median cube storage dictionary
     return medcubedict
 
