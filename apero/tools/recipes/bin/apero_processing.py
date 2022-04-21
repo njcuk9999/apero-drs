@@ -139,19 +139,23 @@ def __main__(recipe, params):
         # construct the index database instance
         indexdbm = IndexDatabase(params)
         indexdbm.load_db()
-        # force the parallel key to False here (should not be True before we
-        #   run processing)
-        params['INPUTS']['PARALLEL'] = False
-        # update the index database (taking into account include/exclude lists)
-        #    we have to loop around block kinds to prevent recipe from updating
-        #    the index database every time a new recipe starts
-        # this is really important as we have disabled updating for parallel
-        #  runs to make it more efficient
-        drs_processing.update_index_db(params)
+        # there are a few use cases where we want to skip updating the index
+        #   database
+        if params['UPDATE_INDEX_DATABASE']:
+            # force the parallel key to False here (should not be True
+            #   before we run processing)
+            params['INPUTS']['PARALLEL'] = False
+            # update the index database (taking into account include/exclude
+            #    lists) we have to loop around block kinds to prevent recipe
+            #    from updating the index database every time a new recipe
+            #    starts this is really important as we have disabled updating
+            #    for parallel runs to make it more efficient
+            drs_processing.update_index_db(params)
 
-        # fix the header data (object name, dprtype, mjdmid and trg_type etc)
-        WLOG(params, '', textentry('40-503-00043'))
-        indexdbm.update_header_fix(recipe, objdbm=objdbm)
+            # fix the header data (object name, dprtype, mjdmid and
+            #     trg_type etc)
+            WLOG(params, '', textentry('40-503-00043'))
+            indexdbm.update_header_fix(recipe, objdbm=objdbm)
 
         # find all previous runs
         skiptable = drs_processing.generate_skip_table(params)
