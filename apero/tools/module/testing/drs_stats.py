@@ -133,7 +133,7 @@ class LogEntry:
         self.log_file = self.data.iloc[0]['LOGFILE']
         self.runstring = self.data.iloc[0]['RUNSTRING']
 
-        if mode != 'timing':
+        if mode == 'index':
             # cross-match with index database
             self.index = _index_database_crossmatch(idataframe, self.pid)
             # add index linked parameters
@@ -196,9 +196,9 @@ class LogEntry:
 
         elif mode == 'qc':
             # if we don't have index can't do qc (need outputs for qc)
-            if not self.has_index:
-                self.is_valid_for_qc = False
-                return
+            # if not self.has_index:
+            #     self.is_valid_for_qc = False
+            #     return
             try:
                 # get sub level criteria and remove static variables
                 subcriteria = _sort_sublevel(self.data)
@@ -238,7 +238,7 @@ class LogEntry:
                         qc_pass.append(drs_text.true_text(qc_pass_raw[qc_it]))
                     # get the flags
                     flags = base_class.BinaryDict()
-                    flags.add_keys(row_data['FLAGSTR'])
+                    flags.add_keys(row_data['FLAGSTR'].split('|'))
                     flags.encode(row_data['FLAGNUM'])
                     # get the runninng + ended flags
                     running = flags['RUNNING']
@@ -279,7 +279,7 @@ def get_log_entries(params: ParamDict,
     # get all entries from database
     dataframe = logdbm.get_entries('*')
     # get the index database
-    if mode != 'timing':
+    if mode == 'index':
         WLOG(params, '', 'Obtaining full index database. Please wait...')
         indexdbm = drs_database.IndexDatabase(params)
         indexdbm.load_db()
