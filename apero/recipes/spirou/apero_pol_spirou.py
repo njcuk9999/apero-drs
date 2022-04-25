@@ -110,7 +110,27 @@ def __main__(recipe, params):
     WLOG(params, 'info', drs_header)
     # TODO: decide here (or inside) which products to load from
     # TODO:   - add e.fits + t.fits + v.fits instead of reduced products
-    pprops = gen_pol.apero_load_data(params, recipe, inputs)
+    pprops, passed = gen_pol.apero_load_data(params, recipe, inputs)
+    # if inputs did not pass we stop here
+    if not passed:
+        # log we are not continuing
+        # TODO: move to language database
+        wmsg = 'Input data did not pass QC. Skipping (Use --noqccheck to force)'
+        WLOG(params, 'warning', wmsg, sublevel=6)
+        # flag that inputs failed QC
+        recipe.log.update_flags(INPUTQC=False)
+        # we have no polar qc
+        recipe.log.no_qc()
+        # end the logging
+        recipe.log.end()
+        # end the recipe
+        return drs_startup.return_locals(params, locals())
+    # otherwise make sure the inputqc flag is True
+    else:
+        recipe.log.update_flags(INPUTQC=True)
+        # we have no polar qc
+        recipe.log.no_qc()
+    # -------------------------------------------------------------------------
     # calculate polar times
     pprops = gen_pol.calculate_polar_times(pprops)
 

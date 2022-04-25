@@ -1148,6 +1148,7 @@ apero_pol.set_outputs(POL_DEG_FILE=files.out_pol_deg,
                       S1DV_NULL2=files.out_null2_s1dv,
                       S1DW_STOKESI=files.out_stokesi_s1dw,
                       S1DV_STOKESI=files.out_stokesi_s1dv)
+apero_pol.set_flags(INPUTQC=True)
 apero_pol.set_debug_plots('POLAR_FIT_CONT', 'POLAR_CONTINUUM',
                           'POLAR_RESULTS', 'POLAR_STOKES_I', 'POLAR_LSD',
                           'EXTRACT_S1D_WEIGHT', 'EXTRACT_S1D')
@@ -1184,6 +1185,8 @@ apero_pol.set_kwarg(name='--output_lsd', altnames=['-l'], dtype=str,
                     helpstr='Output LSD file', default='None')
 apero_pol.set_kwarg(name='--lsd', altnames=['-L'], dtype='switch',
                     default=False, helpstr='Run LSD analysis')
+apero_pol.set_kwarg(name='--noqccheck', dtype='switch', default=False,
+                    helpstr='Do not check quality control of inputs')
 apero_pol.set_kwarg(**blazefile)
 apero_pol.set_kwarg(**plot)
 apero_pol.set_kwarg(**wavefile)

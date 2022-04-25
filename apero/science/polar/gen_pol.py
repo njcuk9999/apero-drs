@@ -194,7 +194,7 @@ def set_polar_exposures(params: ParamDict) -> List[DrsFitsFile]:
 
 
 def apero_load_data(params: ParamDict, recipe: DrsRecipe,
-                    inputs: List[DrsFitsFile]) -> ParamDict:
+                    inputs: List[DrsFitsFile]) -> Tuple[ParamDict, bool]:
     """
     Load the data for the inputted exposures
 
@@ -221,10 +221,10 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     returns a class storing these
 
 
-    :param params:
-    :param recipe:
-    :param inputs:
-    :return:
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: Recipe instance, the recipe class which called this
+    :param inputs: list of DrsFitsFiles, the fits files to process
+    :return: tuple, 1. ParamDict, polar data, 2. whether input QC passed
     """
     # set function name
     func_name = display_func('apero_load_data', __NAME__)
@@ -236,6 +236,11 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     stokesparams = params.listp('POLAR_STOKES_PARAMS', dtype=str)
     berv_correct = params['POLAR_BERV_CORRECT']
     source_rv_correct = params['POLAR_SOURCE_RV_CORRECT']
+    # whether we need to check qc
+    if params['INPUTS']['NOQCCHECK']:
+        check_qc = False
+    else:
+        check_qc = True
     # -------------------------------------------------------------------------
     # set up storage
     polar_dict = ParamDict()
@@ -283,6 +288,12 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             'RAW_WAVEMAP', 'RAW_WAVEFILE', 'RAW_WAVETIME',
             'RAW_FLUX', 'RAW_FLUXERR', 'FLUX', 'FLUXERR']
     polar_dict.set_sources(keys, func_name)
+    # -------------------------------------------------------------------------
+    # loop around exposures and work out stokes parameters
+    if check_qc:
+        for expfile in inputs:
+            if not expfile.header[params['KW_DRS_QC'][0]]:
+                return polar_dict, False
     # -------------------------------------------------------------------------
     # TODO: What about from a CCF file?
     # set source rv
@@ -542,7 +553,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     polar_dict.set_sources(['OBJECT_NAME', 'OBJECT_TEMPERATURE'], func_name)
     # -------------------------------------------------------------------------
     # return the polar dictionary
-    return polar_dict
+    return polar_dict, True
 
 
 def calculate_polar_times(props: ParamDict) -> ParamDict:
