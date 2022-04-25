@@ -647,7 +647,7 @@ apero_extract.set_outputs(E2DS_FILE=files.out_ext_e2ds,
                           EXT_FPLINES=files.out_ext_fplines,
                           Q2DS_FILE=files.out_ql_e2ds,
                           Q2DSFF_FILE=files.out_ql_e2dsff)
-apero_extract.set_flags(QUICKLOOK=False)
+apero_extract.set_flags(QUICKLOOK=False, EXP_FPLINE=False)
 apero_extract.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                               'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
                               'THERMAL_BACKGROUND', 'EXTRACT_SPECTRAL_ORDER1',
