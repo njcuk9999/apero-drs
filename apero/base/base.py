@@ -157,7 +157,9 @@ LOG_FLAGS['REFFIBER'] = 'Localisation recipe used the reference fiber'
 LOG_FLAGS['INT_EXT'] = 'An internal extraction is done in this recipe'
 LOG_FLAGS['EXT_FOUND'] = 'Extracted files for internal extraction were found.'
 LOG_FLAGS['QUICKLOOK'] = 'Extraction is running in quick look mode'
+LOG_FLAGS['EXP_FPLINE'] = 'Extraction has an FP ref fiber and addition outputs'
 LOG_FLAGS['INPUTQC'] = 'Polar inputs passed QC (or were forced to)'
+
 
 # =============================================================================
 # Define functions

@@ -417,7 +417,6 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
         return False
 
 
-# TODO: Replace this function with call to reject database
 def get_file_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
     """
     Query the googlesheet for rejection odometer codes and return

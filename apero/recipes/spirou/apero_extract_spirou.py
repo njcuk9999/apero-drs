@@ -379,6 +379,11 @@ def __main__(recipe, params):
                 if rfpl is not None:
                     rargs = [rfpl, e2dsfile, e2dsfile, fiber, 'EXT_FPLINES']
                     wave.write_fplines(params, recipe, *rargs)
+                    # update flags
+                    log2.update_flags(EXP_FPLINE=True)
+                else:
+                    # update flags
+                    log2.update_flags(EXP_FPLINE=False)
 
             # --------------------------------------------------------------
             # add files to outputs
