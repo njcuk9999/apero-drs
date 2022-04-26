@@ -117,7 +117,10 @@ def __main__(recipe, params):
     #    the index database every time a new recipe starts
     # this is really important as we have disabled updating for parallel
     #  runs to make it more efficient
-    drs_processing.update_index_db(params)
+    # there are a few use cases where we want to skip updating the index
+    #   database
+    if params['UPDATE_INDEX_DATABASE']:
+        drs_processing.update_index_db(params)
 
     # fix the header data (object name, dprtype, mjdmid and trg_type etc)
     WLOG(params, '', textentry('40-503-00043'))

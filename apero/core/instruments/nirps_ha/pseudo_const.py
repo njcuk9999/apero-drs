@@ -941,7 +941,14 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     # deal with output key already in header
     if header is not None:
         if kwmidobstime in header:
-            if not drs_text.null_text(header[kwmidobstime], NULL_TEXT):
+            # get the header value
+            midobstime = header[kwmidobstime]
+            # if float or int return if we have a finite and positive value
+            if isinstance(midobstime, (int, float)):
+                if np.isfinite(midobstime) and midobstime > 0:
+                    return header, hdict
+            # else we have a string and should check for nulls
+            elif not drs_text.null_text(midobstime, NULL_TEXT):
                 return header, hdict
     # deal with no hdict
     if hdict is None:

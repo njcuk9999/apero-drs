@@ -162,7 +162,8 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
                         # add to count
                         calib_count[uobsdir][recipe_name][drsfile.name] = count
                         # get the time for this drs file
-                        calib_times[uobsdir] += list(np.unique(mjdmids[dmask]))
+                        if count > 0:
+                            calib_times[uobsdir] += list(np.unique(mjdmids[dmask]))
                         # ---------------------------------------------------------
                         # print if missing
                         if count == 0 and srecipe.calib_required:
@@ -218,13 +219,17 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     sci_files, sci_recipes, sci_args = sout
     # -------------------------------------------------------------------------
     # if we are not using a telluric run don't include it
+    rm_list = []
     for srecipe in tellu_files:
         # get run code
         runcode = 'RUN_{0}'.format(srecipe)
         # do not check recipes that do not have RUN_XXXX = True
         if runcode in params:
             if not params[runcode]:
-                del tellu_files[srecipe]
+                rm_list.append(srecipe)
+    # remove bad recipes from tellu_files
+    for srecipe in rm_list:
+        del tellu_files[srecipe]
     # report if None found
     if len(tellu_files) == 0:
         # log a warning if None found
@@ -233,13 +238,17 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         WLOG(params, 'warning', msg.format(*margs))
     # -------------------------------------------------------------------------
     # if we are not using a science run don't include it
+    rm_list = []
     for srecipe in sci_files:
         # get run code
         runcode = 'RUN_{0}'.format(srecipe)
         # do not check recipes that do not have RUN_XXXX = True
         if runcode in params:
             if not params[runcode]:
-                del sci_files[srecipe]
+                rm_list.append(srecipe)
+    # remove bad recipes from tellu_files
+    for srecipe in rm_list:
+        del sci_files[srecipe]
     if len(sci_files) == 0:
         # log a warning if None found
         msg = 'No science RUN instances in run file "{0}". Skipping'
