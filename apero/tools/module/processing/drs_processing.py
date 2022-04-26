@@ -40,7 +40,7 @@ from apero import lang
 from apero.core import constants
 from apero.io import drs_table
 from apero.io import drs_lock
-from apero.science.preprocessing import gen_pp
+from apero.science import preprocessing as prep
 from apero.science import telluric
 from apero.tools.module.setup import drs_reset
 
@@ -742,6 +742,17 @@ def update_index_db(params: ParamDict,
     excludelist = params.listp('EXCLUDE_OBS_DIRS', dtype=str)
     # get re-index list
     reindexlist = params.listp('REPROCESS_REINDEX_BLOCKS', dtype=str)
+    # -------------------------------------------------------------------------
+    # get the user defined databases to update
+    if 'UPDATE_IDATABASE_NAMES' in params:
+        ureindexlist = params['UPDATE_IDATABASE_NAMES']
+        if drs_text.null_text(ureindexlist, ['All', 'None', 'Null', 'None']):
+            ureindexlist = list(reindexlist)
+        else:
+            ureindexlist = params.listp('UPDATE_IDATABASE_NAMES', dtype=str)
+    else:
+        ureindexlist = list(reindexlist)
+    # -------------------------------------------------------------------------
     # get all block kinds
     block_kinds = drs_file.DrsPath.get_block_names(params=params,
                                                    block_filter='indexing')
@@ -754,7 +765,7 @@ def update_index_db(params: ParamDict,
     #  runs to make it more efficient
     for block_kind in block_kinds:
         # deal with reindexing
-        if block_kind not in reindexlist:
+        if block_kind not in ureindexlist:
             continue
         # log block update
         WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
@@ -1270,7 +1281,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     odo_reject_list = []
     if not drs_text.null_text(_use_odo_reject, ['', 'None']):
         if drs_text.true_text(_use_odo_reject):
-            odo_reject_list = gen_pp.get_file_reject_list(params)
+            odo_reject_list = prep.get_file_reject_list(params)
     # -------------------------------------------------------------------------
     # get template list (if required)
     # -------------------------------------------------------------------------
@@ -1559,6 +1570,54 @@ def prompt():
         return 1
 
 
+def conditional_list(strlist: List[str], key: str, logic: str,
+                     condition: Optional[str] = None) -> str:
+        """
+        Add a condition list to a condition (or create a condition if condition
+        is not given)
+
+        :param strlist: List of strings, the items to add
+        :param key: str, the column name to check against
+        :param logic: str, eitehr 'include' or 'exclude'
+        :param condition: str or None, if set a previous condition to add to
+
+        :return: str, the updated (or new) condition
+        """
+        # ---------------------------------------------------------------------
+        # deal with no starting condition
+        if condition is None:
+            condition = ''
+            add = ''
+        else:
+            add = ' AND '
+        # ---------------------------------------------------------------------
+        # deal with include logic
+        if logic == 'include':
+            # define a subcondition
+            subconditions = []
+            # loop around white listed nights and set them to False
+            for item in strlist:
+                # add subcondition
+                subcondition = '{0}="{1}"'.format(key, item)
+                subconditions.append(subcondition)
+            # add to conditions
+            condition += add + '({0})'.format(' OR '.join(subconditions))
+        # ---------------------------------------------------------------------
+        # else we have exclude logic
+        else:
+            # define a subcondition
+            subconditions = []
+            # loop around white listed nights and set them to False
+            for item in strlist:
+                # add subcondition
+                subcondition = '{0}!="{1}"'.format(key, item)
+                subconditions.append(subcondition)
+            # add to conditions
+            condition += add + '({0})'.format(' AND '.join(subconditions))
+        # ---------------------------------------------------------------------
+        return condition
+
+
 def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
                          odo_reject_list: List[str]) -> str:
     """
@@ -1606,10 +1665,9 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
     if not drs_text.null_text(params['EXCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         # get black list from params
         exclude_obs_dirs = params.listp('EXCLUDE_OBS_DIRS', dtype=str)
-        # loop around blacklist
-        for exclude_obs_dir in exclude_obs_dirs:
-            # add to condition
-            condition += ' AND (OBS_DIR!="{0}")'.format(exclude_obs_dir)
+        # add excluded obs dirs to condition
+        condition = conditional_list(exclude_obs_dirs, 'OBS_DIR', 'exclude',
+                                     condition)
         # log blacklist
         wargs = [' ,'.join(exclude_obs_dirs)]
         WLOG(params, '', textentry('40-503-00026', args=wargs))
@@ -1629,18 +1687,12 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
     # ------------------------------------------------------------------
     if not drs_text.null_text(params['INCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         # get white list from params
-        whitelist_nights = params.listp('INCLUDE_OBS_DIRS', dtype=str)
-        # define a subcondition
-        subconditions = []
-        # loop around white listed nights and set them to False
-        for whitelist_night in whitelist_nights:
-            # add subcondition
-            subcondition = 'OBS_DIR="{0}"'.format(whitelist_night)
-            subconditions.append(subcondition)
-        # add to conditions
-        condition += ' AND ({0})'.format(' OR '.join(subconditions))
+        include_obs_dirs = params.listp('INCLUDE_OBS_DIRS', dtype=str)
+        # add included obs dirs to condition
+        condition = conditional_list(include_obs_dirs, 'OBS_DIR', 'include',
+                                     condition)
         # log whitelist
-        wargs = [', '.join(whitelist_nights)]
+        wargs = [', '.join(include_obs_dirs)]
         WLOG(params, '', textentry('40-503-00027', args=wargs))
         # get length of database at this point
         idb_len = indexdb.database.count(condition=condition)
@@ -1659,15 +1711,9 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
     if not drs_text.null_text(params['PI_NAMES'], ['', 'All', 'None']):
         # get pi name list from params
         pi_names = params.listp('PI_NAMES', dtype=str)
-        # define a subcondition
-        subconditions = []
-        # loop around pi names and set them to False
-        for pi_name in pi_names:
-            # add subcondition
-            subcondition = 'KW_PI_NAME="{0}"'.format(pi_name)
-            subconditions.append(subcondition)
-        # add to conditions
-        condition += ' AND ({0})'.format(' OR '.join(subconditions))
+        # add included pi_names to condition
+        condition = conditional_list(pi_names, 'KW_PI_NAME', 'include',
+                                     condition)
         # log pi name
         wargs = [' ,'.join(pi_names)]
         WLOG(params, '', textentry('40-503-00029', args=wargs))

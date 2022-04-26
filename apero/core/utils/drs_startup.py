@@ -91,9 +91,9 @@ RUN_KEYS['RECAL_TEMPLATES'] = True
 RUN_KEYS['UPDATE_OBJ_DATABASE'] = False
 RUN_KEYS['UPDATE_REJECT_DATABASE'] = True
 RUN_KEYS['UPDATE_INDEX_DATABASE'] = True
+RUN_KEYS['UPDATE_IDATABASE_NAMES'] = 'All'
 RUN_KEYS['TELLURIC_TARGETS'] = 'All'
 RUN_KEYS['SCIENCE_TARGETS'] = 'All'
-
 
 # =============================================================================
 # Define functions
