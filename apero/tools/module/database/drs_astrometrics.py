@@ -496,13 +496,18 @@ class AstroObj:
             indexdbm.load_db()
         # ---------------------------------------------------------------------
         # get all possible object names
-        objnames = [self.objname, self.original_name]  + self.aliases.split('|')
+        objnames = [self.objname, self.original_name] + self.aliases.split('|')
+        # clean all names
+        cobjnames = []
+        pconst = constants.pload()
+        for objname in objnames:
+            cobjnames.append(pconst.DRS_OBJ_NAME(objname))
         # check for objname in raw files only
         mcondition = 'BLOCK_KIND="raw"'
         # add obj conditions
         subcondition = []
-        for objname in objnames:
-            subcondition.append(f'KW_OBJECTNAME="{objname}"')
+        for cobjname in cobjnames:
+            subcondition.append(f'KW_OBJNAME="{cobjname}"')
         # add master condition + obj conditions
         condition = mcondition + ' AND ({0})'.format(' OR '.join(subcondition))
         # ---------------------------------------------------------------------
@@ -731,7 +736,7 @@ def ask_user(params: ParamDict, astro_obj: AstroObj) -> Tuple[AstroObj, bool]:
     astro_obj.display_properties()
     # construct the object correction question
     question2 = 'Does the data for this object look correct?'
-    cond2 = drs_installation.ask(question2, dtype='YN')
+    cond2 = drs_installation.ask(question2, dtype='YN', color='m')
     print()
     # -----------------------------------------------------------------
     # if correct add to add list
@@ -739,6 +744,9 @@ def ask_user(params: ParamDict, astro_obj: AstroObj) -> Tuple[AstroObj, bool]:
         # -------------------------------------------------------------
         # Ask user if they wish to add a new name to ID the target as
         astro_obj = ask_for_name(params, astro_obj)
+        # -------------------------------------------------------------
+        # Ask for alises
+        astro_obj = ask_for_aliases(params, astro_obj)
         # -------------------------------------------------------------
         # now add object to database
         msg = 'Adding {0} to object list'.format(astro_obj.name)
@@ -750,6 +758,7 @@ def ask_user(params: ParamDict, astro_obj: AstroObj) -> Tuple[AstroObj, bool]:
         WLOG(params, '', 'Not adding object to database')
         # flag not adding to list
         add_to_list = False
+
     # ----------------------------------------------------------------
     # deal with trying to update Teff automatically
     if params['INPUTS']['GETTEFF'] and add_to_list:
@@ -836,25 +845,29 @@ def gsp_setup():
 
 def ask_for_name(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
     """
-    Ask the user whether they wish to update Teff manually
+    Ask the user whether they wish to change the main name of the object
 
     :param params: ParamDict, paraemter dictionary of constnats
     :param astro_obj: AstroObj
 
     :return: update AstroObj
     """
+    # clean object name
+    pconst = constants.pload()
+    # get the obj name
+    name = pconst.DRS_OBJ_NAME(astro_obj.name)
     # but first check whether main name
-    question3 = (f'Modify main object name="{astro_obj.name}"'
-                 '(will set DRSOBJN) all other '
-                 'names will added to aliases')
-    cond3 = drs_installation.ask(question3, dtype='YN')
+    question1 = (f'\nModify main object name="{name}"?'
+                 f'\n\tinput name="{astro_obj.name}"'
+                 f'\n\tThis will set DRSOBJN, the input will added to '
+                 f'aliases')
+    cond = drs_installation.ask(question1, dtype='YN', color='m')
     # if user want to modify name let them
-    if cond3:
+    if cond:
         # ask for new name
-        question4 = f'Enter new main name for "{astro_obj.name}"'
-        rawuname = drs_installation.ask(question4, dtype=str)
-        # clean object name
-        pconst = constants.pload()
+        question2 = f'Enter new main name for "{name}"'
+        rawuname = drs_installation.ask(question2, dtype=str)
+
         # must add the old name to the aliases
         astro_obj.aliases += f'|{astro_obj.objname}'
         # update the name and objname
@@ -862,6 +875,52 @@ def ask_for_name(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
         astro_obj.objname = astro_obj.name
         # log change of name
         WLOG(params, '', f'\t Object name set to: {astro_obj.name}')
+    # return the original or update astro_obj
+    return astro_obj
+
+
+def ask_for_aliases(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
+    """
+    Ask the user whether they wish to update Teff manually
+
+    :param params: ParamDict, paraemter dictionary of constnats
+    :param astro_obj: AstroObj
+
+    :return: update AstroObj
+    """
+    # get aliaslist
+    aliaslist = ''
+    # get original aliases
+    aliases0 = astro_obj.aliases.split('|')
+    # loop around alias list
+    for alias in aliases0:
+        aliaslist += f'\n\t - {alias}'
+    # but first check whether main name
+    question1 = (f'\nAdd to aliases?\n\tCurrent aliases:{aliaslist}')
+    cond = drs_installation.ask(question1, dtype='YN', color='m')
+    # if user want to modify name let them
+    if cond:
+        # ask for new name
+        question2 = f'Enter new aliases (separated by a comma):'
+        raw_aliases = drs_installation.ask(question2, dtype=str)
+        # get raw aliases
+        raw_aliases = raw_aliases.split(',')
+        # ---------------------------------------------------------------------
+        # clean raw aliases
+        aliases = []
+        for raw_alias in raw_aliases:
+            aliases.append(raw_alias.strip())
+        # add to aliases
+        astro_obj.aliases = '|'.join(aliases0 + aliases)
+        # ---------------------------------------------------------------------
+        # re get aliaslist
+        aliaslist = ''
+        # loop around alias list
+        for alias in astro_obj.aliases.split('|'):
+            aliaslist += f'\n\t - {alias}'
+        # ---------------------------------------------------------------------
+        # log change of name
+        WLOG(params, '', f'\n\tUpdated aliases:{aliaslist}')
     # return the original or update astro_obj
     return astro_obj
 
@@ -875,12 +934,12 @@ def ask_for_teff(astro_obj: AstroObj) -> AstroObj:
     :return: update AstroObj
     """
     if astro_obj.teff is None:
-        question5 = 'Add Teff for object [K]?'
-        cond4 = drs_installation.ask(question5, dtype='YN')
-        if cond4:
+        question1 = '\nAdd Teff for object [K]?'
+        cond = drs_installation.ask(question1, dtype='YN', color='m')
+        if cond:
             # Ask user for Teff
-            question6 = 'Enter Teff in K'
-            rawteff = drs_installation.ask(question6, dtype=float)
+            question2 = 'Enter Teff in K'
+            rawteff = drs_installation.ask(question2, dtype=float)
             # get user /host
             nargs = [getpass.getuser(), socket.gethostname()]
             # add to astro_obj

@@ -108,7 +108,7 @@ def cprint(message: Union[lang.Text, str], colour: str = 'g'):
 def ask(question: str, dtype: Union[str, type, None] = None,
         options: Union[List[Any], None] = None,
         optiondesc: Union[List[str], None] = None, default: Any = None,
-        required: bool = True):
+        required: bool = True, color='g'):
     """
     Ask a question
 
@@ -149,7 +149,7 @@ def ask(question: str, dtype: Union[str, type, None] = None,
     # loop around until check is passed
     while check:
         # ask question
-        cprint(question, 'g')
+        cprint(question, color)
         # print options
         if options is not None:
             cprint(lang.OPTIONS_ARE + ':', 'b')
