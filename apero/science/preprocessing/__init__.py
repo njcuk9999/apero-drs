@@ -33,6 +33,8 @@ get_hot_pixels = detector.get_hot_pixels
 
 get_obj_reject_list = gen_pp.get_obj_reject_list
 
+get_file_reject_list = gen_pp.get_file_reject_list
+
 intercept_correct = detector.intercept_correct
 
 median_filter_dark_amps = detector.median_filter_dark_amp

@@ -72,8 +72,23 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         # construct the index database instance
         indexdbm = IndexDatabase(params)
         indexdbm.load_db()
+    # -------------------------------------------------------------------------
+    # get odometer reject list (if required)
+    # -------------------------------------------------------------------------
+    # get whether the user wants to use reject list
+    _use_odo_reject = params['USE_ODO_REJECTLIST']
+    # get the odometer reject list
+    odo_reject_list = []
+    if not drs_text.null_text(_use_odo_reject, ['', 'None']):
+        if drs_text.true_text(_use_odo_reject):
+            odo_reject_list = prep.get_file_reject_list(params)
+    # -------------------------------------------------------------------------
+    # get the conditions based on params
+    # -------------------------------------------------------------------------
+    condition = drs_processing.gen_global_condition(params, indexdbm,
+                                                    odo_reject_list)
     # get unique observations directories
-    uobsdirs = indexdbm.get_unique('OBS_DIR')
+    uobsdirs = indexdbm.get_unique('OBS_DIR', condition=condition)
     # get the recipe module for this instrument
     recipemodule = recipe.recipemod.get()
     filemodule = recipe.filemod.get()
@@ -125,7 +140,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         # ---------------------------------------------------------------------
         # get all raw files for this night
         itable = indexdbm.get_entries('KW_OUTPUT,KW_MID_OBS_TIME',
-                                      obs_dir=uobsdir, block_kind='raw')
+                                      obs_dir=uobsdir, condition=condition)
         # get columns
         drsoutids = itable['KW_OUTPUT']
         mjdmids = itable['KW_MID_OBS_TIME']
