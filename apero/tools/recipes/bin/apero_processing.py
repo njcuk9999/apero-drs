@@ -152,10 +152,10 @@ def __main__(recipe, params):
             #    for parallel runs to make it more efficient
             drs_processing.update_index_db(params)
 
-            # fix the header data (object name, dprtype, mjdmid and
-            #     trg_type etc)
-            WLOG(params, '', textentry('40-503-00043'))
-            indexdbm.update_header_fix(recipe, objdbm=objdbm)
+        # fix the header data (object name, dprtype, mjdmid and
+        #     trg_type etc)
+        WLOG(params, '', textentry('40-503-00043'))
+        indexdbm.update_header_fix(recipe, objdbm=objdbm)
 
         # find all previous runs
         skiptable = drs_processing.generate_skip_table(params)
