@@ -112,7 +112,8 @@ def __main__(recipe, params):
         # construct add object question
         question1 = '\n\nAdd OBJECT="{0}" to astrometric database?'
         # ask if we want to find object
-        cond = drs_installation.ask(question1.format(objname), dtype='YN')
+        cond = drs_installation.ask(question1.format(objname), dtype='YN',
+                                    color='m')
         print()
         # if not skip
         if not cond:
