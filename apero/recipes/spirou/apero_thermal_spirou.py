@@ -157,6 +157,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Multiple the thermal by excess emissivity
         # ------------------------------------------------------------------
+
         thermal_files = thermal.apply_excess_emissivity(params, recipe,
                                                         thermal_files,
                                                         fiber_types,

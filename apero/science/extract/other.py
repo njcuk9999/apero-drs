@@ -64,16 +64,26 @@ def extract_thermal_files(params, recipe, extname, thermalfile,
     # ----------------------------------------------------------------------
     # extract thermal files
     # ----------------------------------------------------------------------
+    # Need to figure out the thermal output
+    dprtype = thermalfile.get_hkey('KW_DPRTYPE', dtype=str)
+    # DARK_DARK_INT extraction comes before wave solution is generated
+    #   ( as wave sol requires thermal correction, therefore we only have the
+    #    master or default master wave solution - and must force extraction
+    #    to only look for master wave solutions)
+    if dprtype == 'DARK_DARK_INT':
+        force_master_wave = True
+    elif dprtype == 'DARK_DARK_TEL':
+        force_master_wave = False
     # get output e2ds filetype
     thfileinst = recipe.outputs['THERMAL_E2DS_FILE']
     # get outputs
     thermal_outputs = extract_files(params, recipe, thermalfile, thfileinst,
                                     therm_always_extract, extrecipe,
                                     therm_extract_type, kind='thermal',
-                                    func_name=func_name, logger=logger)
+                                    func_name=func_name, logger=logger,
+                                    force_master_wave=force_master_wave)
 
-    # Need to figure out the thermal output
-    dprtype = thermalfile.get_hkey('KW_DPRTYPE', dtype=str)
+
     # TODO: Add sky dark here
     if dprtype == 'DARK_DARK_INT':
         thoutinst = recipe.outputs['THERMALI_FILE']
@@ -207,7 +217,8 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
                   func_name: Union[str, None] = None,
                   leakcorr: Optional[bool] = None,
                   wavefile: Optional[str] = None,
-                  logger: Optional[RecipeLog] = None):
+                  logger: Optional[RecipeLog] = None,
+                  force_master_wave: bool = False):
     if func_name is None:
         func_name = __NAME__ + '.extract_files()'
     # get the fiber types from a list parameter
@@ -263,6 +274,7 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         kwargs['recipe_kind'] = '{0}-extract'.format(kind)
         kwargs['recipe_type'] = 'sub-recipe'
         kwargs['parallel'] = params['INPUTS']['PARALLEL']
+        kwargs['force_master_wave'] = force_master_wave
         # force the input directory (combined files go to reduced dir)
         kwargs['force_indir'] = path_ins.block_kind
         # push data to extractiong code
