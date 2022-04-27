@@ -633,6 +633,9 @@ apero_extract.set_kwarg(name='--leakcorr', dtype='bool', default=True,
                         helpstr=textentry('LEAKCORR_HELP'),
                         default_ref='CORRECT_LEAKAGE')
 apero_extract.set_kwarg(**wavefile)
+apero_extract.set_kwarg(name='--force_master_wave', dtype='bool',
+                        default=False,
+                        helpstr='Force using the master wave solution')
 apero_extract.group_func = grouping.group_individually
 apero_extract.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe

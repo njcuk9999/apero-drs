@@ -696,6 +696,9 @@ apero_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
                         default_ref='THERMAL_CORRECT')
 apero_extract.set_kwarg(**thermalfile)
 apero_extract.set_kwarg(**wavefile)
+apero_extract.set_kwarg(name='--force_master_wave', dtype='bool',
+                        default=False,
+                        helpstr='Force using the master wave solution')
 apero_extract.group_func = grouping.group_individually
 apero_extract.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
