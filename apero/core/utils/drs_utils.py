@@ -165,13 +165,13 @@ class RecipeLog:
         stats = drs_misc.get_system_stats()
         # system stats
         self.ram_usage_start = stats['ram_used']
-        self.ram_usage_end = np.nan
+        self.ram_usage_end = -1
         self.ram_total = stats['raw_total']
         self.swap_usage_start = stats['swap_used']
-        self.swap_usage_end = np.nan
+        self.swap_usage_end = -1
         self.swap_total = stats['swap_total']
         self.cpu_usage_start = stats['cpu_percent']
-        self.cpu_usage_end = np.nan
+        self.cpu_usage_end = -1
         self.cpu_num = stats['cpu_total']
 
     def __getstate__(self) -> dict:
