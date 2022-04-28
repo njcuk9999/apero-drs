@@ -18,10 +18,11 @@ only from
 import numpy as np
 import os
 from pathlib import Path
+import psutil
 import random
 import string
 import time
-from typing import Any, List, Union, Tuple
+from typing import Any, Dict, List, Union, Tuple
 
 from apero import lang
 from apero.base import base
@@ -294,6 +295,34 @@ def send_email(params: Any, subject: str, message: Union[List[str], str],
     # ----------------------------------------------------------------------
     # return 1
     return 1
+
+
+def get_system_stats() -> Dict[str, Any]:
+    """
+    Get system stats at this point in time
+
+    :return: dictionary of the stats
+    """
+    # storage for stats
+    stats = dict()
+    # try to get stats
+    try:
+        # default ram value is in bytes
+        stats['ram_used'] = psutil.virtual_memory().used / 1e9
+        stats['raw_total'] = psutil.virtual_memory().total / 1e9
+        stats['swap_used'] = psutil.swap_memory().used / 1e9
+        stats['swap_total'] = psutil.swap_memory().total / 1e9
+        stats['cpu_percent'] = psutil.cpu_percent()
+        stats['cpu_total'] = psutil.cpu_count()
+    except Exception as _:
+        stats['ram_used'] = np.nan
+        stats['raw_total'] = np.nan
+        stats['swap_used'] = np.nan
+        stats['swap_total'] = np.nan
+        stats['cpu_percent'] = np.nan
+        stats['cpu_total'] = -1
+    # return stats
+    return stats
 
 
 # =============================================================================

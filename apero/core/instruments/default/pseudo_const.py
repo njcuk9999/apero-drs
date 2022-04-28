@@ -1132,12 +1132,18 @@ class PseudoConstants:
             return self.calibration_cols
         # set columns
         calib_columns = DatabaseColumns()
-        calib_columns.add(name='KEYNAME', datatype='VARCHAR(20)', is_index=True)
-        calib_columns.add(name='FIBER', datatype='VARCHAR(10)')
-        calib_columns.add(name='SUPERCAL', datatype='INT')
-        calib_columns.add(name='FILENAME', datatype='VARCHAR(200)')
+        calib_columns.add(name='KEYNAME', datatype='VARCHAR(20)', is_index=True,
+                          is_unique=True)
+        calib_columns.add(name='FIBER', datatype='VARCHAR(10)',
+                          is_unique=True)
+        calib_columns.add(name='SUPERCAL', datatype='INT',
+                          is_unique=True)
+        calib_columns.add(name='FILENAME', datatype='VARCHAR(200)',
+                          is_unique=True)
         calib_columns.add(name='HUMANTIME', datatype='VARCHAR(50)')
         calib_columns.add(name='UNIXTIME', datatype='DOUBLE', is_index=True)
+        calib_columns.add(name='PID', datatype='VARCHAR(80)', is_index=True)
+        calib_columns.add(name='PDATE', datatype='VARCHAR(50)')
         calib_columns.add(name='USED', datatype='INT')
         # return columns
         self.calibration_cols = calib_columns
@@ -1156,16 +1162,22 @@ class PseudoConstants:
             return self.telluric_cols
         # set columns
         tellu_columns = DatabaseColumns()
-        tellu_columns.add(name='KEYNAME', datatype='VARCHAR(20)', is_index=True)
-        tellu_columns.add(name='FIBER', datatype='VARCHAR(5)')
-        tellu_columns.add(name='SUPERCAL', datatype='INT')
-        tellu_columns.add(name='FILENAME', datatype='VARCHAR(200)')
+        tellu_columns.add(name='KEYNAME', datatype='VARCHAR(20)', is_index=True,
+                          is_unique=True)
+        tellu_columns.add(name='FIBER', datatype='VARCHAR(5)',
+                          is_unique=True)
+        tellu_columns.add(name='SUPERCAL', datatype='INT',
+                          is_unique=True)
+        tellu_columns.add(name='FILENAME', datatype='VARCHAR(200)',
+                          is_unique=True)
         tellu_columns.add(name='HUMANTIME', datatype='VARCHAR(50)')
         tellu_columns.add(name='UNIXTIME', datatype='DOUBLE', is_index=True)
         tellu_columns.add(name='OBJECT', datatype='VARCHAR(80)', is_index=True)
         tellu_columns.add(name='AIRMASS', datatype='DOUBLE')
         tellu_columns.add(name='TAU_WATER', datatype='DOUBLE')
         tellu_columns.add(name='TAU_OTHERS', datatype='DOUBLE')
+        tellu_columns.add(name='PID', datatype='VARCHAR(80)', is_index=True)
+        tellu_columns.add(name='PDATE', datatype='VARCHAR(50)')
         tellu_columns.add(name='USED', datatype='INT')
         # return columns and ctypes
         self.telluric_cols = tellu_columns
@@ -1340,6 +1352,24 @@ class PseudoConstants:
                         comment='binary flag names (one for each binary flag)')
         log_columns.add(name='USED', datatype='INT',
                         comment='Whether file should be used (always true)')
+        log_columns.add(name='RAM_USAGE_START', datatype='DOUBLE',
+                        comment='RAM usuage at start of recipe / GB')
+        log_columns.add(name='RAM_USAGE_END', datatype='DOUBLE',
+                        comment='RAM usuage at end of recipe / GB')
+        log_columns.add(name='RAW_TOTAL', datatype='DOUBLE',
+                        comment='Total RAM at start')
+        log_columns.add(name='SWAP_USAGE_START', datatype='DOUBLE',
+                        comment='SWAP usuage at start of recipe / GB')
+        log_columns.add(name='SWAP_USAGE_END', datatype='DOUBLE',
+                        comment='SWAP usuage at end of recipe / GB')
+        log_columns.add(name='SWAP_TOTAL', datatype='DOUBLE',
+                        comment='Total SWAP at start')
+        log_columns.add(name='CPU_USAGE_START', datatype='DOUBLE',
+                        comment='CPU usage at the start  or recipe (percent)')
+        log_columns.add(name='CPU_USAGE_END', datatype='DOUBLE',
+                        comment='CPU usage at the end  or recipe (percent)')
+        log_columns.add(name='CPU_NUM', datatype='INT',
+                        comment='Total number of CPUs at start')
         # return columns and ctypes
         self.logdb_cols = log_columns
         return log_columns

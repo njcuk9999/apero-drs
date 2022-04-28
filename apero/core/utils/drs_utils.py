@@ -161,6 +161,18 @@ class RecipeLog:
         self.flags['RUNNING'] = True
         # set the errors
         self.errors = ''
+        # get system stats at start
+        stats = drs_misc.get_system_stats()
+        # system stats
+        self.ram_usage_start = stats['ram_used']
+        self.ram_usage_end = np.nan
+        self.ram_total = stats['raw_total']
+        self.swap_usage_start = stats['swap_used']
+        self.swap_usage_end = np.nan
+        self.swap_total = stats['swap_total']
+        self.cpu_usage_start = stats['cpu_percent']
+        self.cpu_usage_end = np.nan
+        self.cpu_num = stats['cpu_total']
 
     def __getstate__(self) -> dict:
         """
@@ -234,6 +246,15 @@ class RecipeLog:
         self.flagnum = int(rlog.flagnum)
         self.flagstr = str(rlog.flagstr)
         self.errors = str(rlog.errors)
+        self.ram_usage_start = float(rlog.ram_usage_start)
+        self.ram_usage_end = float(rlog.ram_usage_end)
+        self.ram_total = float(rlog.ram_total)
+        self.swap_usage_start = float(rlog.swap_usage_start)
+        self.swap_usage_end = float(rlog.swap_usage_end)
+        self.swap_total = float(rlog.swap_total)
+        self.cpu_usage_start = float(rlog.cpu_usage_start)
+        self.cpu_usage_end = float(rlog.cpu_usage_end)
+        self.cpu_num = int(rlog.cpu_num)
 
     def set_log_file(self, logfile: Union[str, Path]):
         """
@@ -447,6 +468,11 @@ class RecipeLog:
         # set the running parameter to False (we have finished whether
         #   successful or not)
         self.flags['RUNNING'] = False
+        # get system stats at end
+        stats = drs_misc.get_system_stats()
+        self.ram_usage_end = stats['ram_used']
+        self.swap_usage_end = stats['swap_used']
+        self.cpu_usage_end = stats['cpu_percent']
         # whether to write (update) recipe log file
         if write:
             self.write_logfile()
@@ -504,11 +530,21 @@ class RecipeLog:
                                     ended=int(inst.flags['ENDED']),
                                     flagnum=inst.flagnum,
                                     flagstr=inst.flagstr,
-                                    used=1)
+                                    used=1,
+                                    ram_usage_start=inst.ram_usage_start,
+                                    ram_usage_end=inst.ram_usage_end,
+                                    ram_total=inst.ram_total,
+                                    swap_usage_start=inst.swap_usage_start,
+                                    swap_usage_end=inst.swap_usage_end,
+                                    swap_total=inst.swap_total,
+                                    cpu_usage_start=inst.cpu_usage_start,
+                                    cpu_usage_end=inst.cpu_usage_end,
+                                    cpu_num=inst.cpu_num)
 
     def _make_row(self) -> OrderedDict:
         """
         Make a row in the RecipeLog file
+
         :return: OrderedDict the row entry where each key is a column name
         """
         # set function name
@@ -555,6 +591,16 @@ class RecipeLog:
         # add flags
         row['FLAGNUM'] = self.flagnum
         row['FLAGSTR'] = self.flagstr
+        # add system stats
+        row['RAM_USAGE_START'] = self.ram_usage_start
+        row['RAM_USAGE_END'] = self.ram_usage_end
+        row['RAW_TOTAL'] = self.ram_total
+        row['SWAP_USAGE_START'] = self.swap_usage_start
+        row['SWAP_USAGE_END'] = self.swap_usage_end
+        row['SWAP_TOTAL'] = self.swap_total
+        row['CPU_USAGE_START'] = self.cpu_usage_start
+        row['CPU_USAGE_END'] = self.cpu_usage_end
+        row['CPU_NUM'] = self.cpu_num
         # return row
         return row
 
@@ -644,7 +690,10 @@ class RecipeLog:
                       self.passed_qc, self.qc_string,
                       self.qc_name, self.qc_value, self.qc_logic, self.qc_pass,
                       self.errors, int(self.flags['ENDED']),
-                      self.flagnum, self.flagstr, 1]
+                      self.flagnum, self.flagstr, 1, self.ram_usage_start,
+                      self.ram_usage_end, self.ram_total, self.swap_usage_start,
+                      self.swap_usage_end, self.swap_total,
+                      self.cpu_usage_start, self.cpu_usage_end, self.cpu_num]
         # ---------------------------------------------------------------------
         # loop around all rows and add to params
         for it in range(len(log_keys)):

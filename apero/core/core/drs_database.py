@@ -621,6 +621,9 @@ class CalibrationDatabase(DatabaseManager):
         # deal with no instrument
         if self.instrument == 'None':
             return
+        # get unique columns
+        calibdb_cols = self.pconst.CALIBRATION_DB_COLUMNS()
+        ucols = list(calibdb_cols.unique_cols)
         # ------------------------------------------------------------------
         # get header and hdict
         hdict, header = _get_hdict(self.params, self.name, drsfile)
@@ -657,12 +660,24 @@ class CalibrationDatabase(DatabaseManager):
         filename = str(drsfile.basename).strip()
         human_time = str(header_time.iso)
         unix_time = str(header_time.unix).strip()
+        pid = str(self.params['PID'])
+        pdate = str(self.params['DATE_NOW'])
         used = 1
         # ------------------------------------------------------------------
         # add entry to database
-        values = [key, fiber, is_super, filename, human_time, unix_time, used]
-        # are allowed duplicate columns --> don't check for unique
-        self.database.add_row(values)
+        values = [key, fiber, is_super, filename, human_time, unix_time, pid,
+                  pdate, used]
+        # try to add a new row
+        try:
+            self.database.add_row(values, columns='*', unique_cols=ucols)
+        # if row already exists then update that row (based on Gaia ID and
+        #   objname)
+        except drs_db.UniqueEntryException:
+            # condition comes from uhash - so set to None here (to remember)
+            condition = None
+            # update row in database
+            self.database.set('*', values=values, condition=condition,
+                              unique_cols=ucols)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('CALIB_DB_ENTRY',
@@ -1002,6 +1017,9 @@ class TelluricDatabase(DatabaseManager):
         # deal with no database
         if self.database is None:
             self.load_db()
+        # get unique columns
+        telludb_cols = self.pconst.CALIBRATION_DB_COLUMNS()
+        ucols = list(telludb_cols.unique_cols)
         # ------------------------------------------------------------------
         # get header and hdict
         hdict, header = _get_hdict(self.params, self.name, drsfile)
@@ -1053,6 +1071,8 @@ class TelluricDatabase(DatabaseManager):
         filename = str(drsfile.basename).strip()
         human_time = str(header_time.iso)
         unix_time = str(header_time.unix).strip()
+        pid = str(self.params['PID'])
+        pdate = str(self.params['DATE_NOW'])
         used = 1
         # deal with no tau_water/tau_other being None (should be float)
         # if tau_water is None:
@@ -1062,9 +1082,18 @@ class TelluricDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time,
-                  objname, airmass, tau_water, tau_others, used]
-        # are allowed duplicate rows --> just add (don't check for unique)
-        self.database.add_row(values)
+                  objname, airmass, tau_water, tau_others, pid, pdate, used]
+        # try to add a new row
+        try:
+            self.database.add_row(values, columns='*', unique_cols=ucols)
+        # if row already exists then update that row (based on Gaia ID and
+        #   objname)
+        except drs_db.UniqueEntryException:
+            # condition comes from uhash - so set to None here (to remember)
+            condition = None
+            # update row in database
+            self.database.set('*', values=values, condition=condition,
+                              unique_cols=ucols)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('TELLU_DB_ENTRY',
@@ -1449,7 +1478,7 @@ def _get_is_super(drsfile: DrsInputFile) -> int:
     """
     Find out whether file entry is from a super set or not
 
-    :param params: ParamDict, the parameter dictionary of constants
+    :param drsfile: DrsFitsFile - the file to check whether it is a super
 
     :return: 1 if code is super else returns 0
     """
@@ -2263,7 +2292,6 @@ class IndexDatabase(DatabaseManager):
         return self.database.unique(column, condition=condition)
 
 
-
 def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
                incdirs: Union[List[Union[str, Path]], None] = None,
                excdirs: Union[List[Union[str, Path]], None] = None,
@@ -2499,7 +2527,16 @@ class LogDatabase(DatabaseManager):
                     ended: Union[int, None] = None,
                     flagnum: Union[int, None] = None,
                     flagstr: Union[str, None] = None,
-                    used: Union[int, None] = None):
+                    used: Union[int, None] = None,
+                    ram_usage_start: Union[float, None] = None,
+                    ram_usage_end: Union[float, None] = None,
+                    ram_total: Union[float, None] = None,
+                    swap_usage_start: Union[float, None] = None,
+                    swap_usage_end: Union[float, None] = None,
+                    swap_total: Union[float, None] = None,
+                    cpu_usage_start: Union[float, None] = None,
+                    cpu_usage_end: Union[float, None] = None,
+                    cpu_num: Union[int, None] = None):
         """
         Add a log entry to database
 
@@ -2549,6 +2586,15 @@ class LogDatabase(DatabaseManager):
         :param errors: str, errors found and passed to this entry - divided by
                        ||
         :param used: int, if entry should be used - always 1 for use internally
+        :param ram_usage_start: float, RAM usage GB at start of recipe
+        :param ram_usage_end: float, RAM usage GB at end of recipe
+        :param ram_total: float, RAM total at start of recipe
+        :param swap_usage_start: float, SWAP usage GB at start of recipe
+        :param swap_usage_end: float, SWAP usage GB at end of recipe
+        :param swap_total: float, SWAP total at start of recipe
+        :param cpu_usage_start: float, CPU usage (percentage) at start of recipe
+        :param cpu_usage_end: float, CPU usage (percentrage) at end of recipe
+        :param cpu_num: int, number of CPUs at start
 
         :return: None - updates database
         """
@@ -2561,7 +2607,10 @@ class LogDatabase(DatabaseManager):
                 runstring, args, kwargs, skwargs, start_time, end_time,
                 started, passed_all_qc,
                 qc_string, qc_names, qc_values, qc_logic, qc_pass,
-                clean_error, ended, flagnum, flagstr, used]
+                clean_error, ended, flagnum, flagstr, used,
+                ram_usage_start, ram_usage_end, ram_total, swap_usage_start,
+                swap_usage_end, swap_total, cpu_usage_start, cpu_usage_end,
+                cpu_num]
         # get column names and column datatypes
         ldb_cols = self.pconst.LOG_DB_COLUMNS()
         coltypes = list(ldb_cols.dtypes)
