@@ -315,11 +315,11 @@ def get_system_stats() -> Dict[str, Any]:
         stats['cpu_percent'] = psutil.cpu_percent()
         stats['cpu_total'] = psutil.cpu_count()
     except Exception as _:
-        stats['ram_used'] = np.nan
-        stats['raw_total'] = np.nan
-        stats['swap_used'] = np.nan
-        stats['swap_total'] = np.nan
-        stats['cpu_percent'] = np.nan
+        stats['ram_used'] = -1
+        stats['raw_total'] = -1
+        stats['swap_used'] = -1
+        stats['swap_total'] = -1
+        stats['cpu_percent'] = -1
         stats['cpu_total'] = -1
     # return stats
     return stats
