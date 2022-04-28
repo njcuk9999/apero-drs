@@ -2,6 +2,64 @@ Changelog
 =========
 
 
+0.7.228 (2022-04-28)
+--------------------
+- Add in PID, PDATE to calibration/telluric database add in RAM/SWAP/CPU
+  column to log database. [Neil Cook]
+- `Apero.recipes.spirou.apero_thermal_spirou.py` - for `DARK_DARK_INT` force
+  wave solution to master. [Neil Cook]
+- `Apero.recipes.*.apero_extract_*.py` - add way to force wave master in
+  extraction + update `recipe_definitions.py`. [Neil Cook]
+
+
+0.7.227 (2022-04-26)
+--------------------
+- `Documentation.working.resources.default.descriptions.apero_astrometric`
+  s.rst - update the notes on `apero_astrometrics`. [Neil Cook]
+- `Apero_astrometrics.py` - allow aliases to be added and deal with Teff
+  objname better. [Neil Cook]
+- `Apero.tools.module.processing.drs_precheck.py` - link conditions to
+  run.ini file supplied (for checking `obs_dir` etc) [Neil Cook]
+- `Apero.tools.module.drs_processing.py` - add `UPDATE_IDATABASE_NAME`
+  run.ini parameter (to allow turning off update certain databases)
+  [Neil Cook]
+- Update the default run.ini files. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.225-working' into
+  v0.7.225-working. [Neil Cook]
+- `Apero.core.instruments.*.pseudo_const.py` - fix problem with MJDMID
+  having a NaN (float) value. [njcuk9999]
+- `Apero_extract_spirou.py` - add `EXP_FPLINE` flag. [Neil Cook]
+- `Apero.recipes.spirou.apero_pol_spirou.py` - do not allow files that
+  failed qc to be used in polar recipe (by default) flag and return
+  failure. [Neil Cook]
+- `Apero.tools.module.testing.drs_stats.py` - remove index database
+  crossmatch for qc mode (not required?) [Neil Cook]
+
+
+0.7.226 (2022-04-21)
+--------------------
+- `Apero.tools.resources.run_in.*` - update templates for run.ini files to
+  have `UPDATE_INDEX_DATABASE` flag. [Neil Cook]
+- `Apero.tools.recipes.bin.apero_processing.py` - add
+  `UPDATE_INDEX_DATABASE` flag so user can not update the index database
+  (needs big warning about doing this) [Neil Cook]
+- `Apero.science.calib.leak.py` - add in a second log for fiber loop
+  [untested] [Neil Cook]
+- `Apero.recipes.spirou.apero_leak_master_spirou.py` - leak master has no
+  qc - update recipe.log. [Neil Cook]
+- `Apero.core.utils.drs_utils.py` - `no_qc` must update children as well.
+  [Neil Cook]
+- `Apero.core.utils.drs_startup.py` - add `UPDATE_INDEX_DATABASE` to allow
+  not updating index database in `apero_processing` [UNTESTED] [Neil Cook]
+- `Apero.core.instruments.spirou.default_constants.py` - update
+  `WAVE_FP_DPRLIST` (missed `POLAR_FP)` [Neil Cook]
+- Update some typos in `default_keywords.py`. [Neil Cook]
+- Correct typo and change `NO_DB` = False. [Neil Cook]
+- `Apero.base.base.py` - update `LOG_FLAGS` to include QCPASSED. [Neil Cook]
+- `Apero.base.base.py` - update `LOG_FLAGS` to include OBJ. [Neil Cook]
+- Update date/version/changelog/docs. [Neil Cook]
+
+
 0.7.225 (2022-04-13)
 --------------------
 - `Apero.science.extract.other.py` - flag when extraction file has been
