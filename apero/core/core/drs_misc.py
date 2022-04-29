@@ -308,10 +308,10 @@ def get_system_stats() -> Dict[str, Any]:
     # try to get stats
     try:
         # default ram value is in bytes
-        stats['ram_used'] = psutil.virtual_memory().used / 1e9
-        stats['raw_total'] = psutil.virtual_memory().total / 1e9
-        stats['swap_used'] = psutil.swap_memory().used / 1e9
-        stats['swap_total'] = psutil.swap_memory().total / 1e9
+        stats['ram_used'] = psutil.virtual_memory().used / 2**30
+        stats['raw_total'] = psutil.virtual_memory().total / 2**30
+        stats['swap_used'] = psutil.swap_memory().used / 2**30
+        stats['swap_total'] = psutil.swap_memory().total / 2**30
         stats['cpu_percent'] = psutil.cpu_percent()
         stats['cpu_total'] = psutil.cpu_count()
     except Exception as _:

@@ -105,7 +105,7 @@ def __main__(recipe, params):
     # get instrument
     instrument = str(recipe.instrument)
     # get hash col argument from inputs
-    hash_col = inputs.get('hash', False)
+    hash_col = inputs.get('HASH', False)
     # get databases
     dbs = manage_databases.list_databases(params)
     # push into database holder
