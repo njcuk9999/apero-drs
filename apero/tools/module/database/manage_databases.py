@@ -364,6 +364,7 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     cdb_cols = pconst.CALIBRATION_DB_COLUMNS()
     columns = list(cdb_cols.names)
     ctypes = list(cdb_cols.datatypes)
+    cuniques = list(cdb_cols.unique_cols)
     cicols = list(cdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
@@ -377,7 +378,8 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
         calibdb.backup()
         calibdb.delete_table(calibdb.tname)
     # add main table
-    calibdb.add_table(calibdb.tname, columns, ctypes, index_cols=cicols)
+    calibdb.add_table(calibdb.tname, columns, ctypes, index_cols=cicols,
+                      unique_cols=cuniques)
     # ---------------------------------------------------------------------
     # construct reset file
     reset_abspath = os.path.join(asset_dir, reset_path, calibdbm.dbreset)
@@ -408,6 +410,7 @@ def create_telluric_database(pconst: PseudoConst,
     tdb_cols = pconst.TELLURIC_DB_COLUMNS()
     columns = list(tdb_cols.names)
     ctypes = list(tdb_cols.datatypes)
+    cuniques = list(tdb_cols.unique_cols)
     cicols = list(tdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
@@ -421,7 +424,8 @@ def create_telluric_database(pconst: PseudoConst,
         telludb.backup()
         telludb.delete_table(telludb.tname)
     # add main table
-    telludb.add_table(telludb.tname, columns, ctypes, index_cols=cicols)
+    telludb.add_table(telludb.tname, columns, ctypes, index_cols=cicols,
+                      unique_cols=cuniques)
     # -------------------------------------------------------------------------
     return telludb
 
