@@ -1926,9 +1926,13 @@ KW_FTELLU_TAU_REST.set(key='TAU_OTHE',
 # -----------------------------------------------------------------------------
 # Define make template variables
 # -----------------------------------------------------------------------------
-# store the number of files used to create template
+# store the number of files we had to create template
 KW_MKTEMP_NFILES = KW_MKTEMP_NFILES.copy(__NAME__)
-KW_MKTEMP_NFILES.set(key='MTPNFILE', comment='mktemplate num files used')
+KW_MKTEMP_NFILES.set(key='MTPNFILO', comment='mktemplate num files orig')
+
+# store the number of files used to create template
+KW_MKTEMP_NFILES_USED = KW_MKTEMP_NFILES_USED.copy(__NAME__)
+KW_MKTEMP_NFILES_USED.set(key='MTPNFILU', comment='mktemplate num files used')
 
 # store a unique hash for this template (based on file name etc)
 KW_MKTEMP_HASH = KW_MKTEMP_HASH.copy(__NAME__)

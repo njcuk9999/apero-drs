@@ -147,7 +147,8 @@ __all__ = [  # input keys
     'KW_FTELLU_TEMPLATE', 'KW_FTELLU_TEMPNUM', 'KW_FTELLU_TEMPHASH',
     'KW_FTELLU_TEMPTIME', 'KW_FTELLU_NTRANS',
     # make template values
-    'KW_MKTEMP_NFILES', 'KW_MKTEMP_HASH', 'KW_MKTEMP_TIME',
+    'KW_MKTEMP_NFILES', 'KW_MKTEMP_NFILES_USED',
+    'KW_MKTEMP_HASH', 'KW_MKTEMP_TIME',
     'KW_MKTEMP_SNR_ORDER', 'KW_MKTEMP_SNR_THRES',
     # ccf values
     'KW_CCF_MEAN_RV', 'KW_CCF_MEAN_CONSTRAST', 'KW_CCF_MEAN_FWHM',
@@ -2115,11 +2116,17 @@ KW_FTELLU_TAU_REST = Keyword('KW_FTELLU_TAU_REST', key='NULL', dtype=float,
 # -----------------------------------------------------------------------------
 # Define make template variables
 # -----------------------------------------------------------------------------
-# store the number of files used to create template
+# store the number of files we had to create template
 KW_MKTEMP_NFILES = Keyword('KW_MKTEMP_NFILES', key='NULL', dtype=int,
                            source=__NAME__,
-                           description=('store the number of files used to '
+                           description=('store the number of files we had to '
                                         'create template'))
+
+# store the number of files used to create template
+KW_MKTEMP_NFILES_USED = Keyword('KW_MKTEMP_NFILES_USED', key='NULL', dtype=int,
+                                source=__NAME__,
+                                description=('store the number of files used '
+                                             'to create template'))
 
 # store a unique hash for this template (based on file name etc)
 KW_MKTEMP_HASH = Keyword('KW_MKTEMP_HASH', key='NULL', dtype=str,

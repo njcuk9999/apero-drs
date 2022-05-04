@@ -27,7 +27,6 @@ from apero.science.calib import wave
 from apero.science import extract
 from apero.science.telluric import gen_tellu
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -82,6 +81,11 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
                       func_name)
     resolution = pcheck(params, 'MKTEMPLATE_BERVCOV_RES', 'resolution', kwargs,
                         func_name)
+    debug_mode = pcheck(params, 'MKTEMPLATE_DEBUG_MODE', 'debug_mode', kwargs,
+                        func_name)
+    max_files = pcheck(params, 'MKTEMPLATE_MAX_OPEN_FILES', 'max_files',
+                       kwargs, func_name)
+
     # get master wave map
     mwavemap = mprops['WAVEMAP']
     # get the objname
@@ -101,8 +105,10 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
         # do not get duplicate files with same base name
         if os.path.basename(filename) in vbasenames:
             continue
-        # get new copy of file definition
-        infile = reffile.newcopy(params=params, fiber=fiber)
+        # get new copy of file definition - do not copy the data as it is
+        #   already loaded in reffile (set to empty array for now)
+        infile = reffile.newcopy(params=params, fiber=fiber,
+                                 data=np.array([]))
         # set filename
         infile.set_filename(filename)
         # read header only
@@ -164,11 +170,33 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     b_cols['LOCOTIME'], b_cols['BLAZETIME'], b_cols['FLATTIME'] = [], [], []
     b_cols['SHAPEXTIME'], b_cols['SHAPEYTIME'] = [], []
     b_cols['SHAPELTIME'], b_cols['THERMTIME'], b_cols['WAVETIME'] = [], [], []
+    b_cols['USED'], b_cols['TEMPLATE_BIN'] = [], []
+    # ----------------------------------------------------------------------
+    # Deal with binning up the template
+    # ----------------------------------------------------------------------
+    # make vfilenames an array
+    vfilenames = np.array(vfilenames)
+    vlen = len(vfilenames)
+
+    # if we have more then the maximum number of files and we are not in
+    #   debug mode we need to bin the files and do a median of a median for
+    #   all files
+    if vlen > max_files and not debug_mode:
+        # get the number of bins to make
+        nbins = int(np.sqrt(len(vfilenames)))
+        # get the bin position for each file
+        pbins = np.array(np.arange(vlen) // (nbins + 0.5)).astype(int)
+    # otherwise each file is a "bin"
+    else:
+        # each bin has exactly one file
+        pbins = np.arange(vlen).astype(int)
     # ----------------------------------------------------------------------
     # Set up storage for cubes (NaN arrays)
     # ----------------------------------------------------------------------
+    # get the unique bins
+    upbins = np.unique(pbins)
     # set up flat size
-    dims = [reffile.shape[0], reffile.shape[1], len(vfilenames)]
+    dims = [reffile.shape[0], reffile.shape[1], len(upbins)]
     flatsize = np.product(dims)
     # create NaN filled storage
     big_cube = np.repeat([np.nan], flatsize).reshape(*dims)
@@ -177,143 +205,193 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     qc_names, qc_values, qc_logic, qc_pass = qc_params
     fail_msgs = []
     # ----------------------------------------------------------------------
-    # Loop through input files
+    # Loop through bins
     # ----------------------------------------------------------------------
-    for it, filename in enumerate(vfilenames):
-        # get the infile for this iteration
-        infile = infiles[it]
-        # log progress
-        wargs = [reffile.name, it + 1, len(vfilenames)]
-        WLOG(params, '', params['DRS_HEADER'])
-        WLOG(params, '', textentry('40-019-00028', args=wargs))
-        WLOG(params, '', params['DRS_HEADER'])
-        # ------------------------------------------------------------------
-        # load the data for this iteration
-        # ------------------------------------------------------------------
-        # log progres: reading file: {0}
-        wargs = [infile.filename]
-        WLOG(params, '', textentry('40-019-00033', args=wargs))
-        # read data
-        infile.read_file(copy=True)
-        # get image and set up shifted image
-        image = infile.get_data(copy=True)
-        # normalise image by the normalised blaze
-        image2 = image / nprops['NBLAZE']
-        # get dprtype
-        dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
-        # ------------------------------------------------------------------
-        # Get barycentric corrections (BERV)
-        # ------------------------------------------------------------------
-        bprops = extract.get_berv(params, infile, log=False)
-        # get berv from bprops
-        berv = bprops['USE_BERV']
-        bjd = bprops['USE_BJD']
-        bervmax = bprops['USE_BERV_MAX']
-        # deal with bad berv (nan or None)
-        if berv in [np.nan, None] or not isinstance(berv, (int, float)):
-            eargs = [berv, func_name]
-            WLOG(params, 'error', textentry('09-016-00004', args=eargs))
-        # ------------------------------------------------------------------
-        # load wavelength solution for this fiber
-        # ------------------------------------------------------------------
-        wprops = wave.get_wavesolution(params, recipe, infile=infile,
-                                       fiber=fiber, database=calibdb)
-        # get wavemap
-        wavemap = wprops['WAVEMAP']
-        # ------------------------------------------------------------------
-        # append to table lists
-        # ------------------------------------------------------------------
-        # get string/file kwargs
-        bkwargs = dict(dtype=str, required=False)
-        # get drs date now
-        drs_date_now = infile.get_hkey('KW_DRS_DATE_NOW', dtype=str)
-        # add values
-        b_cols['RowNum'].append(it)
-        b_cols['Filename'].append(infile.basename)
-        b_cols['OBJNAME'].append(infile.get_hkey('KW_OBJNAME', dtype=str))
-        b_cols['BERV'].append(berv)
-        b_cols['BJD'].append(bjd)
-        b_cols['BERVMAX'].append(bervmax)
-        b_cols['SNR{0}'.format(snr_order)].append(snr_all[it])
-        b_cols['MidObsHuman'].append(Time(midexps[it], format='mjd').iso)
-        b_cols['MidObsMJD'].append(midexps[it])
-        b_cols['VERSION'].append(infile.get_hkey('KW_VERSION', dtype=str))
-        b_cols['Process_Date'].append(drs_date_now)
-        b_cols['DRS_Date'].append(infile.get_hkey('KW_DRS_DATE', dtype=str))
-        # add the dark file and dark file time (MJDMID)
-        b_cols['DARKFILE'].append(infile.get_hkey('KW_CDBDARK', **bkwargs))
-        b_cols['DARKTIME'].append(infile.get_hkey('KW_CDTDARK', **bkwargs))
-        # add the bad file and bad file time (MJDMID)
-        b_cols['BADFILE'].append(infile.get_hkey('KW_CDBBAD', **bkwargs))
-        b_cols['BADTIME'].append(infile.get_hkey('KW_CDTBAD', **bkwargs))
-        # add the background file and background file time (MJDMID)
-        b_cols['BACKFILE'].append(infile.get_hkey('KW_CDBBACK', **bkwargs))
-        b_cols['BACKTIME'].append(infile.get_hkey('KW_CDTBACK', **bkwargs))
-        # add the loco file and loco time (MJDMID)
-        b_cols['LOCOFILE'].append(infile.get_hkey('KW_CDBLOCO', **bkwargs))
-        b_cols['LOCOTIME'].append(infile.get_hkey('KW_CDTLOCO', **bkwargs))
-        # add the blaze file and blaze time (MJDMID)
-        b_cols['BLAZEFILE'].append(infile.get_hkey('KW_CDBBLAZE', **bkwargs))
-        b_cols['BLAZETIME'].append(infile.get_hkey('KW_CDTBLAZE', **bkwargs))
-        # add the flat file and flat time (MJDMID)
-        b_cols['FLATFILE'].append(infile.get_hkey('KW_CDBFLAT', **bkwargs))
-        b_cols['FLATTIME'].append(infile.get_hkey('KW_CDTFLAT', **bkwargs))
-        # add the shape x file and shape x time (MJDMID)
-        b_cols['SHAPEXFILE'].append(infile.get_hkey('KW_CDBSHAPEDX', **bkwargs))
-        b_cols['SHAPEXTIME'].append(infile.get_hkey('KW_CDTSHAPEDX', **bkwargs))
-        # add the shape y file and shape y time (MJDMID)
-        b_cols['SHAPEYFILE'].append(infile.get_hkey('KW_CDBSHAPEDY', **bkwargs))
-        b_cols['SHAPEYTIME'].append(infile.get_hkey('KW_CDTSHAPEDY', **bkwargs))
-        # add the shape local file and shape local time (MJDMID)
-        b_cols['SHAPELFILE'].append(infile.get_hkey('KW_CDBSHAPEL', **bkwargs))
-        b_cols['SHAPELTIME'].append(infile.get_hkey('KW_CDTSHAPEL', **bkwargs))
-        # add the thermal file and thermal time (MJDMID)
-        b_cols['THERMFILE'].append(infile.get_hkey('KW_CDTTHERMAL', **bkwargs))
-        b_cols['THERMTIME'].append(infile.get_hkey('KW_CDTTHERMAL', **bkwargs))
-        # add the wave file and wave time (MJDMID)
-        b_cols['WAVEFILE'].append(os.path.basename(wprops['WAVEFILE']))
-        b_cols['WAVETIME'].append(wprops['WAVETIME'])
-        # remove the infile
-        del infile
-        # ------------------------------------------------------------------
-        # skip if bad snr object
-        # ------------------------------------------------------------------
-        if it in bad_snr_objects:
-            # log skipping
-            wargs = [it + 1, len(vfilenames), snr_order, snr_all[it], snr_thres]
-            WLOG(params, 'warning', textentry('10-019-00006', args=wargs),
-                 sublevel=4)
-            # skip
-            continue
+    for p_it in upbins:
+        # get a mask of files in this bin
+        pmask = p_it == pbins
+        # ----------------------------------------------------------------------
+        # Set up storage for cubes (NaN arrays) for binned median
+        # ----------------------------------------------------------------------
+        # set up flat size fpr the binned median
+        dims_tmp = [reffile.shape[0], reffile.shape[1], np.sum(pmask)]
+        flatsize_tmp = np.product(dims_tmp)
+        # create NaN filled storage for the binned median
+        big_cube_tmp = np.repeat([np.nan], flatsize_tmp).reshape(*dims_tmp)
+        big_cube0_tmp = np.repeat([np.nan], flatsize_tmp).reshape(*dims_tmp)
+        # ----------------------------------------------------------------------
+        # Loop through input files
+        # ----------------------------------------------------------------------
+        for it, filename in enumerate(vfilenames[pmask]):
+            # get the infile for this iteration
+            infile = infiles[it]
+            # log progress
+            wargs = [reffile.name, it + 1, len(vfilenames[pmask]), p_it + 1,
+                     len(upbins)]
+            WLOG(params, '', params['DRS_HEADER'])
+            WLOG(params, '', textentry('40-019-00028', args=wargs))
+            WLOG(params, '', params['DRS_HEADER'])
+            # ------------------------------------------------------------------
+            # load the data for this iteration
+            # ------------------------------------------------------------------
+            # log progres: reading file: {0}
+            wargs = [infile.filename]
+            WLOG(params, '', textentry('40-019-00033', args=wargs))
+            # read data
+            infile.read_file(copy=True)
+            # get image and set up shifted image
+            image = infile.get_data(copy=True)
+            # normalise image by the normalised blaze
+            image2 = image / nprops['NBLAZE']
+            # ------------------------------------------------------------------
+            # Get barycentric corrections (BERV)
+            # ------------------------------------------------------------------
+            bprops = extract.get_berv(params, infile, log=False)
+            # get berv from bprops
+            berv = bprops['USE_BERV']
+            bjd = bprops['USE_BJD']
+            bervmax = bprops['USE_BERV_MAX']
+            # deal with bad berv (nan or None)
+            if berv in [np.nan, None] or not isinstance(berv, (int, float)):
+                eargs = [berv, func_name]
+                WLOG(params, 'error', textentry('09-016-00004', args=eargs))
+            # ------------------------------------------------------------------
+            # load wavelength solution for this fiber
+            # ------------------------------------------------------------------
+            wprops = wave.get_wavesolution(params, recipe, infile=infile,
+                                           fiber=fiber, database=calibdb)
+            # get wavemap
+            wavemap = wprops['WAVEMAP']
+            # ------------------------------------------------------------------
+            # append to table lists
+            # ------------------------------------------------------------------
+            # get string/file kwargs
+            bkwargs = dict(dtype=str, required=False)
+            # get drs date now
+            drs_date_now = infile.get_hkey('KW_DRS_DATE_NOW', dtype=str)
+            # add values
+            b_cols['RowNum'].append(it)
+            b_cols['Filename'].append(infile.basename)
+            b_cols['OBJNAME'].append(infile.get_hkey('KW_OBJNAME', dtype=str))
+            b_cols['BERV'].append(berv)
+            b_cols['BJD'].append(bjd)
+            b_cols['BERVMAX'].append(bervmax)
+            b_cols['SNR{0}'.format(snr_order)].append(snr_all[it])
+            b_cols['MidObsHuman'].append(Time(midexps[it], format='mjd').iso)
+            b_cols['MidObsMJD'].append(midexps[it])
+            b_cols['VERSION'].append(infile.get_hkey('KW_VERSION', dtype=str))
+            b_cols['Process_Date'].append(drs_date_now)
+            b_cols['DRS_Date'].append(infile.get_hkey('KW_DRS_DATE', dtype=str))
+            # add the dark file and dark file time (MJDMID)
+            b_cols['DARKFILE'].append(infile.get_hkey('KW_CDBDARK', **bkwargs))
+            b_cols['DARKTIME'].append(infile.get_hkey('KW_CDTDARK', **bkwargs))
+            # add the bad file and bad file time (MJDMID)
+            b_cols['BADFILE'].append(infile.get_hkey('KW_CDBBAD', **bkwargs))
+            b_cols['BADTIME'].append(infile.get_hkey('KW_CDTBAD', **bkwargs))
+            # add the background file and background file time (MJDMID)
+            b_cols['BACKFILE'].append(infile.get_hkey('KW_CDBBACK', **bkwargs))
+            b_cols['BACKTIME'].append(infile.get_hkey('KW_CDTBACK', **bkwargs))
+            # add the loco file and loco time (MJDMID)
+            b_cols['LOCOFILE'].append(infile.get_hkey('KW_CDBLOCO', **bkwargs))
+            b_cols['LOCOTIME'].append(infile.get_hkey('KW_CDTLOCO', **bkwargs))
+            # add the blaze file and blaze time (MJDMID)
+            b_cols['BLAZEFILE'].append(infile.get_hkey('KW_CDBBLAZE',
+                                                       **bkwargs))
+            b_cols['BLAZETIME'].append(infile.get_hkey('KW_CDTBLAZE',
+                                                       **bkwargs))
+            # add the flat file and flat time (MJDMID)
+            b_cols['FLATFILE'].append(infile.get_hkey('KW_CDBFLAT', **bkwargs))
+            b_cols['FLATTIME'].append(infile.get_hkey('KW_CDTFLAT', **bkwargs))
+            # add the shape x file and shape x time (MJDMID)
+            b_cols['SHAPEXFILE'].append(infile.get_hkey('KW_CDBSHAPEDX',
+                                                        **bkwargs))
+            b_cols['SHAPEXTIME'].append(infile.get_hkey('KW_CDTSHAPEDX',
+                                                        **bkwargs))
+            # add the shape y file and shape y time (MJDMID)
+            b_cols['SHAPEYFILE'].append(infile.get_hkey('KW_CDBSHAPEDY',
+                                                        **bkwargs))
+            b_cols['SHAPEYTIME'].append(infile.get_hkey('KW_CDTSHAPEDY',
+                                                        **bkwargs))
+            # add the shape local file and shape local time (MJDMID)
+            b_cols['SHAPELFILE'].append(infile.get_hkey('KW_CDBSHAPEL',
+                                                        **bkwargs))
+            b_cols['SHAPELTIME'].append(infile.get_hkey('KW_CDTSHAPEL',
+                                                        **bkwargs))
+            # add the thermal file and thermal time (MJDMID)
+            b_cols['THERMFILE'].append(infile.get_hkey('KW_CDTTHERMAL',
+                                                       **bkwargs))
+            b_cols['THERMTIME'].append(infile.get_hkey('KW_CDTTHERMAL',
+                                                       **bkwargs))
+            # add the wave file and wave time (MJDMID)
+            b_cols['WAVEFILE'].append(os.path.basename(wprops['WAVEFILE']))
+            b_cols['WAVETIME'].append(wprops['WAVETIME'])
+            # add the bin number for this file
+            b_cols['TEMPLATE_BIN'].append(p_it)
+            # remove the infile
+            del infile
+            # ------------------------------------------------------------------
+            # skip if bad snr object
+            # ------------------------------------------------------------------
+            if it in bad_snr_objects:
+                # flag that we are not using this file
+                b_cols['USED'].append(0)
+                # log skipping
+                wargs = [it + 1, len(vfilenames), snr_order, snr_all[it], snr_thres]
+                WLOG(params, 'warning', textentry('10-019-00006', args=wargs),
+                     sublevel=4)
+                # skip
+                continue
+            else:
+                b_cols['USED'].append(1)
+            # ------------------------------------------------------------------
+            # Shift to correct berv
+            # ------------------------------------------------------------------
+            # get velocity shift due to berv
+            dvshift = mp.relativistic_waveshift(berv, units='km/s')
+            # shift the image
+            simage = gen_tellu.wave_to_wave(params, image2, wavemap * dvshift,
+                                            mwavemap)
+            # ------------------------------------------------------------------
+            # normalise by the median of each order
+            # ------------------------------------------------------------------
+            for order_num in range(reffile.shape[0]):
+                # normalise the shifted data
+                simage[order_num, :] /= mp.nanmedian(simage[order_num, :])
+                # normalise the original data
+                image2[order_num, :] /= mp.nanmedian(image2[order_num, :])
 
-        # ------------------------------------------------------------------
-        # Shift to correct berv
-        # ------------------------------------------------------------------
-        # get velocity shift due to berv
-        dvshift = mp.relativistic_waveshift(berv, units='km/s')
-        # shift the image
-        simage = gen_tellu.wave_to_wave(params, image2, wavemap * dvshift,
-                                        mwavemap)
-        # ------------------------------------------------------------------
-        # normalise by the median of each order
-        # ------------------------------------------------------------------
-        for order_num in range(reffile.shape[0]):
-            # normalise the shifted data
-            simage[order_num, :] /= mp.nanmedian(simage[order_num, :])
-            # normalise the original data
-            image2[order_num, :] /= mp.nanmedian(image2[order_num, :])
+            # ------------------------------------------------------------------
+            # add to cube storage
+            # ------------------------------------------------------------------
+            # add the shifted data to big_cube
+            big_cube_tmp[:, :, it] = simage
+            # add the original data to big_cube0
+            big_cube0_tmp[:, :, it] = image2
+
         # ------------------------------------------------------------------
         # add to cube storage
         # ------------------------------------------------------------------
-        # add the shifted data to big_cube
-        big_cube[:, :, it] = simage
-        # add the original data to big_cube0
-        big_cube0[:, :, it] = image2
+        # deal with having no bins (no extra median)
+        if dims_tmp[-1] == 1:
+            # add the shifted data to big_cube
+            big_cube[:, :, p_it] = big_cube_tmp[:, :, 0]
+            # add the original data to big_cube0
+            big_cube0[:, :, p_it] = big_cube0_tmp[:, :, 0]
+
+        else:
+            # add the shifted data to big_cube
+            big_cube[:, :, p_it] = mp.nanmedian(big_cube_tmp, axis=2)
+            # add the original data to big_cube0
+            big_cube0[:, :, p_it] = mp.nanmedian(big_cube0_tmp, axis=2)
 
     # ------------------------------------------------------------------
     # Deal with BERV coverage
     # ------------------------------------------------------------------
-    bcovargs = [b_cols['BERV'], b_cols['SNR{0}'.format(snr_order)],
+    # get the mask of only the used files
+    used_mask = np.array(b_cols['USED']) == 1
+    # get the berv coverage criteria
+    bcovargs = [np.array(b_cols['BERV'])[used_mask],
+                np.array(b_cols['SNR{0}'.format(snr_order)])[used_mask],
                 core_snr, resolution, objname]
     bcout = calculate_berv_coverage(params, recipe, *bcovargs)
     berv_cov_table, berv_cov = bcout
@@ -357,7 +435,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             # loop each order
             for order_num in range(reffile.shape[0]):
                 # loop through files and normalise by cube median
-                for it in range(len(vfilenames)):
+                for it in range(big_cube.shape[-1]):
                     # get the new ratio
                     ratio = big_cube[order_num, :, it] / median[order_num]
                     # apply median filtered ratio (low frequency removal)
@@ -421,7 +499,10 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
                             kwargs, func_name)
     s1d_lowf_size = pcheck(params, 'MKTEMPLATE_S1D_LOWF_SIZE', 's1d_lowf_size',
                            kwargs, func_name)
-
+    debug_mode = pcheck(params, 'MKTEMPLATE_DEBUG_MODE', 'debug_mode', kwargs,
+                        func_name)
+    max_files = pcheck(params, 'MKTEMPLATE_MAX_OPEN_FILES', 'max_files',
+                       kwargs, func_name)
     # log that we are constructing the cubes
     WLOG(params, 'info', textentry('40-019-00027'))
 
@@ -443,8 +524,10 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         # do not get duplicate files with same base name
         if os.path.basename(filename) in vbasenames:
             continue
-        # get new copy of file definition
-        infile = reffile.newcopy(params=params, fiber=fiber)
+        # get new copy of file definition - do not copy the data as it is
+        #   already loaded in reffile (set to empty Table for now)
+        infile = reffile.newcopy(params=params, fiber=fiber,
+                                 data=Table())
         # set filename
         infile.set_filename(filename)
         # read header only
@@ -494,135 +577,198 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
     b_cols['LOCOTIME'], b_cols['BLAZETIME'], b_cols['FLATTIME'] = [], [], []
     b_cols['SHAPEXTIME'], b_cols['SHAPEYTIME'] = [], []
     b_cols['SHAPELTIME'], b_cols['THERMTIME'], b_cols['WAVETIME'] = [], [], []
+    b_cols['USED'], b_cols['TEMPLATE_BIN'] = [], []
+    # ----------------------------------------------------------------------
+    # Deal with binning up the template
+    # ----------------------------------------------------------------------
+    # make vfilenames an array
+    vfilenames = np.array(vfilenames)
+    vlen = len(vfilenames)
+
+    # if we have more then the maximum number of files and we are not in
+    #   debug mode we need to bin the files and do a median of a median for
+    #   all files
+    if vlen > max_files and not debug_mode:
+        # get the number of bins to make
+        nbins = int(np.sqrt(len(vfilenames)))
+        # get the bin position for each file
+        pbins = np.array(np.arange(vlen) // (nbins + 0.5)).astype(int)
+    # otherwise each file is a "bin"
+    else:
+        # each bin has exactly one file
+        pbins = np.arange(vlen).astype(int)
     # ----------------------------------------------------------------------
     # Set up storage for cubes (NaN arrays)
     # ----------------------------------------------------------------------
+    # get the unique bins
+    upbins = np.unique(pbins)
     # set up flat size
-    dims = [reffile.shape[0], len(vfilenames)]
+    dims = [reffile.shape[0], len(upbins)]
     flatsize = np.product(dims)
     # create NaN filled storage
     big_cube = np.repeat([np.nan], flatsize).reshape(*dims)
     # ----------------------------------------------------------------------
-    # Loop through input files
+    # Loop through bins
     # ----------------------------------------------------------------------
-    for it, filename in enumerate(vfilenames):
-        # get the infile for this iteration
-        infile = infiles[it]
-        # log progress
-        wargs = [reffile.name, it + 1, len(vfilenames)]
-        WLOG(params, '', params['DRS_HEADER'])
-        WLOG(params, '', textentry('40-019-00028', args=wargs))
-        WLOG(params, '', params['DRS_HEADER'])
-        # ------------------------------------------------------------------
-        # load the data for this iteration
-        # ------------------------------------------------------------------
-        # log progres: reading file: {0}
-        wargs = [infile.filename]
-        WLOG(params, '', textentry('40-019-00033', args=wargs))
-        # read data
-        infile.read_file(copy=True)
-        # get image and set up shifted image
-        image = np.array(infile.get_data()['flux'])
-        wavemap = np.array(infile.get_data()['wavelength'])
+    for p_it in upbins:
+        # get a mask of files in this bin
+        pmask = p_it == pbins
+        # ----------------------------------------------------------------------
+        # Set up storage for cubes (NaN arrays) for binned median
+        # ----------------------------------------------------------------------
+        # set up flat size fpr the binned median
+        dims_tmp = [reffile.shape[0], np.sum(pmask)]
+        flatsize_tmp = np.product(dims_tmp)
+        # create NaN filled storage for the binned median
+        big_cube_tmp = np.repeat([np.nan], flatsize_tmp).reshape(*dims_tmp)
+        # ----------------------------------------------------------------------
+        # Loop through input files
+        # ----------------------------------------------------------------------
+        for it, filename in enumerate(vfilenames[pmask]):
+            # get the infile for this iteration
+            infile = infiles[it]
+            # log progress
+            wargs = [reffile.name, it + 1, len(vfilenames[pmask]), p_it + 1,
+                     len(upbins)]
+            WLOG(params, '', params['DRS_HEADER'])
+            WLOG(params, '', textentry('40-019-00028', args=wargs))
+            WLOG(params, '', params['DRS_HEADER'])
+            # ------------------------------------------------------------------
+            # load the data for this iteration
+            # ------------------------------------------------------------------
+            # log progres: reading file: {0}
+            wargs = [infile.filename]
+            WLOG(params, '', textentry('40-019-00033', args=wargs))
+            # read data
+            infile.read_file(copy=True)
+            # get image and set up shifted image
+            image = np.array(infile.get_data()['flux'])
+            wavemap = np.array(infile.get_data()['wavelength'])
 
-        # normalise image by the normalised blaze
-        image2 = image / mp.nanmedian(image)
-
-        # get dprtype
-        dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
-        # ------------------------------------------------------------------
-        # Get barycentric corrections (BERV)
-        # ------------------------------------------------------------------
-        bprops = extract.get_berv(params, infile, log=False)
-        # get berv from bprops
-        berv = bprops['USE_BERV']
-        # deal with bad berv (nan or None)
-        if berv in [np.nan, None] or not isinstance(berv, (int, float)):
-            eargs = [berv, func_name]
-            WLOG(params, 'error', textentry('09-016-00004', args=eargs))
-        # ------------------------------------------------------------------
-        # append to table lists
-        # ------------------------------------------------------------------
-        # get string/file kwargs
-        bkwargs = dict(dtype=str, required=False)
-        # get drs date now
-        drs_date_now = infile.get_hkey('KW_DRS_DATE_NOW', dtype=str)
-        # add values
-        b_cols['RowNum'].append(it)
-        b_cols['Filename'].append(infile.basename)
-        b_cols['OBJNAME'].append(infile.get_hkey('KW_OBJNAME', dtype=str))
-        b_cols['BERV'].append(berv)
-        b_cols['SNR{0}'.format(snr_order)].append(snr_all[it])
-        b_cols['MidObsHuman'].append(Time(midexps[it], format='mjd').iso)
-        b_cols['MidObsMJD'].append(midexps[it])
-        b_cols['VERSION'].append(infile.get_hkey('KW_VERSION', dtype=str))
-        b_cols['Process_Date'].append(drs_date_now)
-        b_cols['DRS_Date'].append(infile.get_hkey('KW_DRS_DATE', dtype=str))
-        # add dark file and time
-        b_cols['DARKFILE'].append(infile.get_hkey('KW_CDBDARK', **bkwargs))
-        b_cols['DARKTIME'].append(infile.get_hkey('KW_CDTDARK', **bkwargs))
-        # add bad file and time
-        b_cols['BADFILE'].append(infile.get_hkey('KW_CDBBAD', **bkwargs))
-        b_cols['BADTIME'].append(infile.get_hkey('KW_CDTBAD', **bkwargs))
-        # add back file and time
-        b_cols['BACKFILE'].append(infile.get_hkey('KW_CDBBACK', **bkwargs))
-        b_cols['BACKTIME'].append(infile.get_hkey('KW_CDTBACK', **bkwargs))
-        # add loco file and time
-        b_cols['LOCOFILE'].append(infile.get_hkey('KW_CDBLOCO', **bkwargs))
-        b_cols['LOCOTIME'].append(infile.get_hkey('KW_CDTLOCO', **bkwargs))
-        # add blaze file and time
-        b_cols['BLAZEFILE'].append(infile.get_hkey('KW_CDBBLAZE', **bkwargs))
-        b_cols['BLAZETIME'].append(infile.get_hkey('KW_CDTBLAZE', **bkwargs))
-        # add flat file and time
-        b_cols['FLATFILE'].append(infile.get_hkey('KW_CDBFLAT', **bkwargs))
-        b_cols['FLATTIME'].append(infile.get_hkey('KW_CDTFLAT', **bkwargs))
-        # add shape x file and time
-        b_cols['SHAPEXFILE'].append(infile.get_hkey('KW_CDBSHAPEDX', **bkwargs))
-        b_cols['SHAPEXTIME'].append(infile.get_hkey('KW_CDTSHAPEDX', **bkwargs))
-        # add shape y file and time
-        b_cols['SHAPEYFILE'].append(infile.get_hkey('KW_CDBSHAPEDY', **bkwargs))
-        b_cols['SHAPEYTIME'].append(infile.get_hkey('KW_CDTSHAPEDY', **bkwargs))
-        # add shape local file and time
-        b_cols['SHAPELFILE'].append(infile.get_hkey('KW_CDBSHAPEL', **bkwargs))
-        b_cols['SHAPELTIME'].append(infile.get_hkey('KW_CDTSHAPEL', **bkwargs))
-        # add thermal file and time
-        b_cols['THERMFILE'].append(infile.get_hkey('KW_CDBTHERMAL', **bkwargs))
-        b_cols['THERMTIME'].append(infile.get_hkey('KW_CDTTHERMAL', **bkwargs))
-        # add wave file and time
-        b_cols['WAVEFILE'].append(infile.get_hkey('KW_CDBWAVE', **bkwargs))
-        b_cols['WAVETIME'].append(infile.get_hkey('KW_CDTWAVE', **bkwargs))
-        # ------------------------------------------------------------------
-        # skip if bad snr object
-        # ------------------------------------------------------------------
-        if it in bad_snr_objects:
-            # log skipping
-            wargs = [it + 1, len(vfilenames), snr_order, snr_all[it], snr_thres]
-            WLOG(params, 'warning', textentry('10-019-00006', args=wargs),
-                 sublevel=4)
-            # skip
-            continue
-        # ------------------------------------------------------------------
-        # Shift to correct berv
-        # ------------------------------------------------------------------
-        # get velocity shift due to berv
-        dvshift = mp.relativistic_waveshift(berv, units='km/s')
-        # shift the image
-        image3 = np.array([image2])
-        wave3a = np.array([wavemap * dvshift])
-        wave3b = np.array([rwavemap])
-        simage = gen_tellu.wave_to_wave(params, image3, wave3a, wave3b)
-        # ------------------------------------------------------------------
-        # normalise by the median of each order
-        # ------------------------------------------------------------------
-        # normalise the shifted data
-        simage /= mp.nanmedian(simage)
-        # normalise the original data
-        image2 /= mp.nanmedian(image2)
+            # normalise image by the normalised blaze
+            image2 = image / mp.nanmedian(image)
+            # ------------------------------------------------------------------
+            # Get barycentric corrections (BERV)
+            # ------------------------------------------------------------------
+            bprops = extract.get_berv(params, infile, log=False)
+            # get berv from bprops
+            berv = bprops['USE_BERV']
+            # deal with bad berv (nan or None)
+            if berv in [np.nan, None] or not isinstance(berv, (int, float)):
+                eargs = [berv, func_name]
+                WLOG(params, 'error', textentry('09-016-00004', args=eargs))
+            # ------------------------------------------------------------------
+            # append to table lists
+            # ------------------------------------------------------------------
+            # get string/file kwargs
+            bkwargs = dict(dtype=str, required=False)
+            # get drs date now
+            drs_date_now = infile.get_hkey('KW_DRS_DATE_NOW', dtype=str)
+            # add values
+            b_cols['RowNum'].append(it)
+            b_cols['Filename'].append(infile.basename)
+            b_cols['OBJNAME'].append(infile.get_hkey('KW_OBJNAME', dtype=str))
+            b_cols['BERV'].append(berv)
+            b_cols['SNR{0}'.format(snr_order)].append(snr_all[it])
+            b_cols['MidObsHuman'].append(Time(midexps[it], format='mjd').iso)
+            b_cols['MidObsMJD'].append(midexps[it])
+            b_cols['VERSION'].append(infile.get_hkey('KW_VERSION', dtype=str))
+            b_cols['Process_Date'].append(drs_date_now)
+            b_cols['DRS_Date'].append(infile.get_hkey('KW_DRS_DATE', dtype=str))
+            # add dark file and time
+            b_cols['DARKFILE'].append(infile.get_hkey('KW_CDBDARK', **bkwargs))
+            b_cols['DARKTIME'].append(infile.get_hkey('KW_CDTDARK', **bkwargs))
+            # add bad file and time
+            b_cols['BADFILE'].append(infile.get_hkey('KW_CDBBAD', **bkwargs))
+            b_cols['BADTIME'].append(infile.get_hkey('KW_CDTBAD', **bkwargs))
+            # add back file and time
+            b_cols['BACKFILE'].append(infile.get_hkey('KW_CDBBACK', **bkwargs))
+            b_cols['BACKTIME'].append(infile.get_hkey('KW_CDTBACK', **bkwargs))
+            # add loco file and time
+            b_cols['LOCOFILE'].append(infile.get_hkey('KW_CDBLOCO', **bkwargs))
+            b_cols['LOCOTIME'].append(infile.get_hkey('KW_CDTLOCO', **bkwargs))
+            # add blaze file and time
+            b_cols['BLAZEFILE'].append(infile.get_hkey('KW_CDBBLAZE',
+                                                       **bkwargs))
+            b_cols['BLAZETIME'].append(infile.get_hkey('KW_CDTBLAZE',
+                                                       **bkwargs))
+            # add flat file and time
+            b_cols['FLATFILE'].append(infile.get_hkey('KW_CDBFLAT', **bkwargs))
+            b_cols['FLATTIME'].append(infile.get_hkey('KW_CDTFLAT', **bkwargs))
+            # add shape x file and time
+            b_cols['SHAPEXFILE'].append(infile.get_hkey('KW_CDBSHAPEDX',
+                                                        **bkwargs))
+            b_cols['SHAPEXTIME'].append(infile.get_hkey('KW_CDTSHAPEDX',
+                                                        **bkwargs))
+            # add shape y file and time
+            b_cols['SHAPEYFILE'].append(infile.get_hkey('KW_CDBSHAPEDY',
+                                                        **bkwargs))
+            b_cols['SHAPEYTIME'].append(infile.get_hkey('KW_CDTSHAPEDY',
+                                                        **bkwargs))
+            # add shape local file and time
+            b_cols['SHAPELFILE'].append(infile.get_hkey('KW_CDBSHAPEL',
+                                                        **bkwargs))
+            b_cols['SHAPELTIME'].append(infile.get_hkey('KW_CDTSHAPEL',
+                                                        **bkwargs))
+            # add thermal file and time
+            b_cols['THERMFILE'].append(infile.get_hkey('KW_CDBTHERMAL',
+                                                       **bkwargs))
+            b_cols['THERMTIME'].append(infile.get_hkey('KW_CDTTHERMAL',
+                                                       **bkwargs))
+            # add wave file and time
+            b_cols['WAVEFILE'].append(infile.get_hkey('KW_CDBWAVE', **bkwargs))
+            b_cols['WAVETIME'].append(infile.get_hkey('KW_CDTWAVE', **bkwargs))
+            # add the bin number for this file
+            b_cols['TEMPLATE_BIN'].append(p_it)
+            # remove the infile
+            del infile
+            # ------------------------------------------------------------------
+            # skip if bad snr object
+            # ------------------------------------------------------------------
+            if it in bad_snr_objects:
+                # flag that we are not using this file
+                b_cols['USED'].append(0)
+                # log skipping
+                wargs = [it + 1, len(vfilenames), snr_order, snr_all[it],
+                         snr_thres]
+                WLOG(params, 'warning', textentry('10-019-00006', args=wargs),
+                     sublevel=4)
+                # skip
+                continue
+            else:
+                b_cols['USED'].append(1)
+            # ------------------------------------------------------------------
+            # Shift to correct berv
+            # ------------------------------------------------------------------
+            # get velocity shift due to berv
+            dvshift = mp.relativistic_waveshift(berv, units='km/s')
+            # shift the image
+            image3 = np.array([image2])
+            wave3a = np.array([wavemap * dvshift])
+            wave3b = np.array([rwavemap])
+            simage = gen_tellu.wave_to_wave(params, image3, wave3a, wave3b)
+            # ------------------------------------------------------------------
+            # normalise by the median of each order
+            # ------------------------------------------------------------------
+            # normalise the shifted data
+            simage /= mp.nanmedian(simage)
+            # normalise the original data
+            image2 /= mp.nanmedian(image2)
+            # ------------------------------------------------------------------
+            # add to cube storage
+            # ------------------------------------------------------------------
+            # add the shifted data to big_cube
+            big_cube_tmp[:, it] = simage
         # ------------------------------------------------------------------
         # add to cube storage
         # ------------------------------------------------------------------
-        # add the shifted data to big_cube
-        big_cube[:, it] = simage
+        # deal with having no bins (no extra median)
+        if dims_tmp[-1] == 1:
+            # add the shifted data to big_cube
+            big_cube[:, p_it] = big_cube_tmp[:, 0]
+        else:
+            # add the shifted data to big_cube
+            big_cube[:, p_it] = mp.nanmedian(big_cube_tmp, axis=1)
     # ------------------------------------------------------------------
     # Iterate until low frequency noise is gone
     # ------------------------------------------------------------------
@@ -634,7 +780,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         # print which iteration we are on
         WLOG(params, '', textentry('40-019-00035', args=wargs))
         # loop through files and normalise by cube median
-        for it in range(len(vfilenames)):
+        for it in range(big_cube.shape[-1]):
             # get the new ratio
             ratio = big_cube[:, it] / median
             # apply median filtered ratio (low frequency removal)
@@ -644,7 +790,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # calculate residuals from the median
     residual_cube = np.array(big_cube)
-    for it in range(len(vfilenames)):
+    for it in range(big_cube.shape[-1]):
         residual_cube[:, it] -= median
     # calculate rms (median of residuals)
     rms = mp.nanmedian(np.abs(residual_cube), axis=1)
@@ -819,6 +965,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # construct suffix
     suffix = '_{0}_{1}_{2}'.format(objname, filetype.lower(), fiber)
 
+    # get a mask of files used
+    nused = np.array(cprops['BIG_COLS']['USED']) == 1
     # ------------------------------------------------------------------
     # Set up template big table
     # ------------------------------------------------------------------
@@ -828,7 +976,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # construct table
     bigtable = drs_table.make_table(params, columns=columns, values=values)
     # make a hash so this template is unique
-    template_hash = gen_template_hash(','.join(cprops['BIG_COLS']['Filename']))
+    template_hash = gen_template_hash(','.join(bigtable['Filename'][nused]))
     # get berv coverage table
     berv_cov_table = cprops['BERV_COVERAGE_TABLE']
     # ------------------------------------------------------------------
@@ -843,7 +991,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # copy header from template
     template_file.copy_header(header=cprops['TEMPLATE_HEADER'])
     # copy keys from input file
-    #template_file.copy_original_keys(infile, exclude_groups='wave')
+    # template_file.copy_original_keys(infile, exclude_groups='wave')
     # add wave keys
     template_file = wave.add_wave_keys(template_file, wprops)
     # add version
@@ -857,8 +1005,10 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     template_file.add_hkey('KW_OUTPUT', value=template_file.name)
     # add qc parameters
     template_file.add_qckeys(qc_params)
+    # deal with number of files total + used
+    template_file.add_hkey('KW_MKTEMP_NFILES', value=len(nused))
+    template_file.add_hkey('KW_MKTEMP_NFILES_USED', value=np.sum(nused))
     # add constants
-    template_file.add_hkey('KW_MKTEMP_NFILES', value=len(bigtable))
     template_file.add_hkey('KW_MKTEMP_HASH', value=template_hash)
     template_file.add_hkey('KW_MKTEMP_TIME', value=params['DATE_NOW'])
     template_file.add_hkey('KW_MKTEMP_SNR_ORDER', value=cprops['QC_SNR_ORDER'])
@@ -871,7 +1021,6 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
                            value=cprops['BERV_COVERAGE_SNR'])
     template_file.add_hkey('KW_MKTEMP_BERV_COV_RES',
                            value=cprops['BERV_COVERAGE_RES'])
-
     # set data
     template_file.data = cprops['MEDIAN']
     # log that we are saving s1d table

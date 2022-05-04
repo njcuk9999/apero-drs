@@ -1745,7 +1745,7 @@ i.e. by default: '{1}_{2}_DB'","","Prints question to enter table suffix for dat
 "{0} = filename","Saving recon E2DS file: {0}","","prints that we are saving the e2ds recon file","40-019-00025","ALL"
 "{0} = wave grid kind; {1} = filename","Saving recon s1d ({0}) file: {1}","","prints that we are saving the s1d recon file","40-019-00026","ALL"
 "None","Constructing data cubes","","prints that we are constructing cudes","40-019-00027","ALL"
-"{0} = file type; {1} = iteration number; {2} = total number of files","Processing {0} file {1} of {2}","","prints that we are processing template file iteration number","40-019-00028","ALL"
+"{0} = file type; {1} = iteration number; {2} = number of files in bin; {3} = bin number; {4} = total number of bins ","Processing {0} file {1} of {2} (bin={3} of {4})","","prints that we are processing template file iteration number","40-019-00028","ALL"
 "{0} = filename","Saving median template file: {0}","","prints that we are saving the template file","40-019-00029","ALL"
 "{0} = filename","Saving Big Cube: {0}","","prints that we are saving the big cube file","40-019-00030","ALL"
 "{0} = filename","Saving Big Cube 0: {0}","","prints that we are saving the big cube 0 file","40-019-00031","ALL"
