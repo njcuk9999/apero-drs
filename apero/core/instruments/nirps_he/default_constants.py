@@ -2273,6 +2273,16 @@ MKTEMPLATE_BERVCOV_CSNR.value = 100.0
 MKTEMPLATE_BERVCOV_RES = MKTEMPLATE_BERVCOV_RES.copy(__NAME__)
 MKTEMPLATE_BERVCOV_RES.value = 4.0
 
+# Define whether to run template making in debug mode (do not bin the
+#   data when medianing)
+MKTEMPLATE_DEBUG_MODE = MKTEMPLATE_DEBUG_MODE.copy(__NAME__)
+MKTEMPLATE_DEBUG_MODE.value = False
+
+# Define the max number of files to be allowed into a bin (if not in debug
+#   mode)
+MKTEMPLATE_MAX_OPEN_FILES = MKTEMPLATE_MAX_OPEN_FILES.copy(__NAME__)
+MKTEMPLATE_MAX_OPEN_FILES.value = 50
+
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================

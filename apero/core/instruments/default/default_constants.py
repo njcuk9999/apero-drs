@@ -249,7 +249,7 @@ __all__ = [
     'MKTEMPLATE_E2DS_ITNUM', 'MKTEMPLATE_E2DS_LOWF_SIZE',
     'MKTEMPLATE_S1D_ITNUM', 'MKTEMPLATE_S1D_LOWF_SIZE', 'MKTEMPLATE_FILESOURCE',
     'MKTEMPLATE_BERVCOR_QCMIN', 'MKTEMPLATE_BERVCOV_CSNR',
-    'MKTEMPLATE_BERVCOV_RES',
+    'MKTEMPLATE_BERVCOV_RES', 'MKTEMPLATE_DEBUG_MODE', 'MKTEMPLATE_MAX_OPEN_FILES',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_NO_RV_VAL', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_UNITS', 'CCF_MASK_FMT',
@@ -4041,12 +4041,31 @@ MKTEMPLATE_BERVCOV_CSNR = Const('MKTEMPLATE_BERVCOV_CSNR', value=None,
                                              'calculate required BERV '
                                              'coverage'))
 
-# Defome the resolution in km/s for calculating BERV coverage
+# Define the resolution in km/s for calculating BERV coverage
 MKTEMPLATE_BERVCOV_RES = Const('MKTEMPLATE_BERVCOV_RES', value=None,
                                dtype=float, source=__NAME__, minimum=0.0,
                                group=cgroup,
                                description=('Defome the resolution in km/s for '
                                             'calculating BERV coverage'))
+
+# Define whether to run template making in debug mode (do not bin the
+#   data when medianing)
+MKTEMPLATE_DEBUG_MODE = Const('MKTEMPLATE_DEBUG_MODE', value=False,
+                              dtype=bool, source=__NAME__,
+                              group=cgroup,
+                              description='Define whether to run template '
+                                          'making in debug mode (do not bin '
+                                          'the data when medianing)')
+
+# Define the max number of files to be allowed into a bin (if not in debug
+#   mode)
+MKTEMPLATE_MAX_OPEN_FILES = Const('MKTEMPLATE_MAX_OPEN_FILES', value=50,
+                                  dtype=int, source=__NAME__, minimum=1,
+                                  group=cgroup,
+                                  description='Define the max number of files '
+                                              'to be allowed into a bin '
+                                              '(if not in debug mode)')
+
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
