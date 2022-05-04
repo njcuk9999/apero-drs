@@ -1455,6 +1455,11 @@ def remove_continuum_polarization(params: ParamDict, props: ParamDict
         ordkeep &= np.isfinite(pol[order_num])
         ordkeep &= np.isfinite(stokesi[order_num])
         ordkeep &= stokesi[order_num] > 0
+        # deal with no values to keep
+        if np.sum(ordkeep) == 0:
+            # set all other polar values to NaN
+            pol[order_num][~ordkeep] = np.nan
+            continue
         # get wavelengths for current order
         ordwave = wavemap[order_num][ordkeep]
         # get polarimetry for current order
@@ -1478,6 +1483,7 @@ def remove_continuum_polarization(params: ParamDict, props: ParamDict
         pol[order_num][ordkeep] = ordpol
         # set all other polar values to NaN
         pol[order_num][~ordkeep] = np.nan
+
     # -------------------------------------------------------------------------
     # update POL
     props['POL'] = pol
@@ -1528,6 +1534,12 @@ def normalize_stokes_i(params: ParamDict, props: ParamDict) -> ParamDict:
         ordkeep &= np.isfinite(pol[order_num])
         ordkeep &= np.isfinite(stokesi[order_num])
         ordkeep &= stokesi[order_num] > 0
+        # deal with no values to keep
+        if np.sum(ordkeep) == 0:
+            # set all other polar values to NaN
+            stokesi[order_num][~ordkeep] = np.nan
+            stokesierr[order_num][~ordkeep] = np.nan
+            continue
         # get wavelengths for current order
         ordwave = wavemap[order_num][ordkeep]
         # get wavelength at edges of order
