@@ -202,7 +202,7 @@ def __main__(recipe, params):
                                                infile=hc_e2ds_file,
                                                fiber=fiber, master=True,
                                                forcefiber=True,
-                                               database=calibdbm)
+                                               database=calibdbm, log=log2)
             # --------------------------------------------------------------
             # define the header as being from the hc e2ds file
             hcheader = hc_e2ds_file.get_header()

@@ -221,7 +221,7 @@ def __main__(recipe, params):
         # load master wavelength solution
         mprops = wave.get_wavesolution(params, recipe, master=True,
                                        fiber=fiber, infile=infile,
-                                       database=calibdbm)
+                                       database=calibdbm, log=log1)
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
