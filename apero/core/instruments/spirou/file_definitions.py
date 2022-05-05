@@ -1239,6 +1239,14 @@ out_pol_deg = drs_finput('POL_DEG', hkeys=dict(KW_OUTPUT='POL_DEG'),
                          intype=[out_ext_e2dsff, out_tellu_obj],
                          outclass=general_ofile)
 
+# pol calib file
+out_pol_calib = drs_finput('POL_CALIB', hkeys=dict(KW_OUTPUT='POL_CALIB'),
+                           filetype='.fits', datatype='table',
+                           suffix='_pol_calib',
+                           intype=[out_ext_e2dsff, out_tellu_obj],
+                           outclass=general_ofile)
+
+
 # stokes i file
 out_pol_stokesi = drs_finput('STOKESI_POL',
                              hkeys=dict(KW_OUTPUT='STOKESI_POL'),
@@ -1689,12 +1697,14 @@ post_p_file.add_ext('NULL1', out_pol_null1, pos=5, block_kind='red',
 post_p_file.add_ext('NULL2', out_pol_null2, pos=6, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='Null2', extname='NULL_POL2')
-post_p_file.add_ext('WAVE_AB', wave_files, pos=7, fiber='AB',
-                    block_kind='red', link='POLERR', hlink='CALIB::WAVE',
-                    tag='WaveAB')
-post_p_file.add_ext('BLAZE_AB', out_ff_blaze, pos=8, fiber='AB',
-                    block_kind='red', link='POLERR', hlink='CALIB::BLAZE',
-                    tag='BlazeAB')
+post_p_file.add_ext('WAVE_AB', out_pol_calib, pos=7,
+                    block_kind='red', link='PP', hlink='KW_IDENTIFIER',
+                    tag='WaveAB', extname='POL_WAVE', datatype='image',
+                    hdr_extname='POL_WAVE')
+post_p_file.add_ext('BLAZE_AB', out_pol_calib, pos=8,
+                    block_kind='red', link='PP', hlink='KW_IDENTIFIER',
+                    tag='BlazeAB', extname='POL_BLAZE', datatype='image',
+                    hdr_extname='POL_BLAZE')
 # s1d w table
 post_p_file.add_ext('S1D_W', 'table', pos=9, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER',
@@ -1759,7 +1769,6 @@ post_p_file.add_column('S1D_V', out_null2_s1dv,
 post_p_file.add_column('S1D_V', out_null2_s1dv,
                        incol='eflux', outcol='FluxErrNull2', fiber='None',
                        block_kind='red', clear_file=True)
-
 # add the polar input combine table
 post_p_file.add_ext('POLTABLE', out_pol_deg, pos=11, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER', clear_file=True,
