@@ -1814,7 +1814,7 @@ i.e. by default: '{1}_{2}_DB'","","Prints question to enter table suffix for dat
 "{0} = lsd mask filename","Selected input LSD mask: {0}","","print the selected LSD mask ","40-021-00028","ALL"
 "{0} = number of lines","Number of lines in the original mask = {0}","","print the number of lines in original mask","40-021-00029","ALL"
 "{0} = number of lines","Number of lines after filtering = {0}","","print the number of lines after filtering","40-021-00030","ALL"
-"","","","","40-021-00031","ALL"
+"{0} = filename","Saving POL_CALIB file: {0}","","prints that we are saving pol_calib file","40-021-00031","ALL"
 "","","","","40-021-00032","ALL"
 "","","","","40-021-00033","ALL"
 "","","","","",""

@@ -31,6 +31,8 @@ from apero.core.utils import drs_recipe
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import extract
+from apero.io import drs_fits
+
 
 # =============================================================================
 # Define variables
@@ -257,9 +259,11 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     polar_dict['GLOBAL_WAVEMAP'] = None
     polar_dict['GLOBAL_WAVEFILE'] = None
     polar_dict['GLOBAL_WAVETIME'] = None
+    polar_dict['GLOBAL_WAVE_HDR'] = None
     # save a blaze file
     polar_dict['GLOBAL_BLAZE'] = None
     polar_dict['GLOBAL_BLAZEFILE'] = None
+    polar_dict['GLOBAL_BLAZE_HDR'] = None
     # save timing and berv information
     polar_dict['EXPTIMES'] = dict()
     polar_dict['MJDATES'] = dict()
@@ -392,6 +396,15 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # get the exposure 1 wave solution (will be the global solution)
             wprops = wave.get_wavesolution(params, recipe, fiber=expfile.fiber,
                                            infile=expfile, database=calibdb)
+            # attempt to get wave file from calibration database
+            wavehdr = wave.get_waveheader(params, wprops)
+            # -----------------------------------------------------------------
+            # load the blaze file
+            bout = flat_blaze.get_blaze(params, expfile.header,
+                                        expfile.fiber, database=calibdb)
+            blazefile, blazetime, blaze0 = bout
+            # get the blaze header
+            blazehdr = drs_fits.read_header(params, blazefile)
             # -----------------------------------------------------------------
             # apply a berv correction if requested
             if berv_correct:
@@ -405,8 +418,18 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
                 dvshift = mp.relativistic_waveshift(dv, units='km/s')
                 # apply to wave solution
                 wavemap = np.array(wprops['WAVEMAP']) * dvshift
+
+                # TODO: we need to update wprops and wavehdr
+                #       i.e. shift the wave coefficients similar to wavemap
+
+                # shift the blaze onto new wavemap
+                blaze1 = get_interp_blaze(params, wprops['WAVEMAP'], blaze0,
+                                          wavemap)
             else:
+                # no shift - don't shift wavemap
                 wavemap = np.array(wprops['WAVEMAP'])
+                # no shift - don't shift blaze
+                blaze1 = np.array(blaze0)
             # -----------------------------------------------------------------
             # add the global wave solution to polar dict
             polar_dict['GLOBAL_WAVEMAP'] = wavemap
@@ -414,18 +437,16 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             polar_dict['GLOBAL_WAVEFILE'] = str(wprops['WAVEFILE'])
             # add the global wave time solution to polar dict
             polar_dict['GLOBAL_WAVETIME'] = str(wprops['WAVETIME'])
-            # -----------------------------------------------------------------
-            # load the blaze file
-            bout = flat_blaze.get_blaze(params, expfile.header,
-                                        expfile.fiber, database=calibdb)
-            blazefile, blazetime, blaze = bout
+            # add the global wave header (for output)
+            polar_dict['GLOBAL_WAVE_HDR'] = wavehdr
             # add the global blaze solution to polar dict
-            polar_dict['GLOBAL_BLAZE'] = blaze
+            polar_dict['GLOBAL_BLAZE'] = blaze1
             # add the global blaze filename to polar dict
             polar_dict['GLOBAL_BLAZEFILE'] = blazefile
             # add the global blaze MJDMID time to polar dict
             polar_dict['GLOBAL_BLAZETIME'] = blazetime
-
+            # add the global blaze header (for output)
+            polar_dict['GLOBAL_BLAZE_HDR'] = blazehdr
     # -------------------------------------------------------------------------
     # Load all exposures for each polar fiber
     # -------------------------------------------------------------------------
@@ -1173,6 +1194,7 @@ def get_interp_flux(params: ParamDict, wavemap0: np.ndarray, flux0: np.ndarray,
     # output flux and flux error maps
     flux1 = np.full_like(flux0, np.nan)
     fluxerr1 = np.full_like(flux0, np.nan)
+    blaze1 = np.full_like(flux0, np.nan)
     # loop around each order (per order spline)
     for order_num in range(wavemap0.shape[0]):
         # only keep clean data
@@ -1210,6 +1232,54 @@ def get_interp_flux(params: ParamDict, wavemap0: np.ndarray, flux0: np.ndarray,
             fluxerr1[order_num][wlmask] = np.sqrt(ordflux1) / ordblaze1
     # ---------------------------------------------------------------------
     return flux1, fluxerr1
+
+
+def get_interp_blaze(params: ParamDict, wavemap0: np.ndarray,
+                     blaze0: np.ndarray, wavemap1: np.ndarray) -> np.ndarray:
+    """
+    Work out the interpolated blaze from grid "wavemap0" to a grid "wavemap1"
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param wavemap0: np.array, the initial wave grid of the flux data
+    :param flux0: np.array, the initial flux values
+    :param blaze0: np.array, the initial blaze values
+    :param wavemap1: np.array, the final wave grid to interpolate to
+
+    :return: np.ndarray, the blaze on wavemap1
+    """
+    # output flux and flux error maps
+    blaze1 = np.full_like(blaze0, np.nan)
+    # loop around each order (per order spline)
+    for order_num in range(wavemap0.shape[0]):
+        # only keep clean data
+        clean = np.isfinite(blaze0[order_num]) & np.isfinite(blaze0[order_num])
+        # deal with whole order being NaNs
+        if np.sum(clean) == 0:
+            wmsg = 'Order {0} has no good pixels (get_interp_flux)'
+            WLOG(params, 'warning', wmsg.format(order_num))
+            continue
+        # get order values
+        ordwave0 = wavemap0[order_num][clean]
+        ordblaze0 = blaze0[order_num][clean]
+        ordwave1 = wavemap1[order_num]
+        ordclean0 = np.array(clean).astype(float)
+        # spline the spectrum and the blaze
+        spline_bl = mp.iuv_spline(ordwave0, ordblaze0, k=5, ext=1)
+        spline_clean = mp.iuv_spline(wavemap0[order_num], ordclean0, k=1, ext=1)
+        # mask the global wavemap (1) so it lies within the bounds of the
+        #  the local wavemap (0)
+        wlmask = ordwave1 > np.min(ordwave0)
+        wlmask &= ordwave1 < np.max(ordwave0)
+        # apply the spline to the output wave grid (masked)
+        ordblaze1 = spline_bl(ordwave1[wlmask])
+        # need to remove the gaps that were ill defined in the splines
+        #    (using the clean mask splined to the same grid)
+        cleanmask = spline_clean(ordwave1[wlmask]) < 0.99
+        ordblaze1[cleanmask] = np.nan
+        # push into array
+        blaze1[order_num][wlmask] = ordblaze1
+    # ---------------------------------------------------------------------
+    return blaze1
 
 
 def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict
@@ -1842,6 +1912,10 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     stokesierr_data = props['STOKESIERR']
     null1_data = props['NULL1']
     null2_data = props['NULL2']
+    wave_data = props['GLOBAL_WAVEMAP']
+    wave_hdr = props['GLOBAL_WAVE_HDR']
+    blaze_data = props['GLOBAL_BLAZE']
+    blaze_hdr = props['GLOBAL_BLAZE_HDR']
     # ----------------------------------------------------------------------
     # get the raw files inputted by user
     rawfiles1 = []
@@ -1873,7 +1947,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     polfile.construct_filename(infile=cfile)
     # define header keys for output file
     # copy keys from input file
-    polfile.copy_original_keys(cfile)
+    polfile.copy_original_keys(cfile, exclude_groups='wave')
     # add version
     polfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
@@ -2019,6 +2093,41 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(null2file)
+    # ----------------------------------------------------------------------
+    # Write calibration data (shifted) to disk
+    # ----------------------------------------------------------------------
+    # get a new copy of the pol file
+    calibfile = recipe.outputs['POL_CALIB'].newcopy(params=params)
+    # construct the filename from file instance
+    calibfile.construct_filename(infile=cfile)
+    # copy header from pol file
+    calibfile.copy_hdict(polfile)
+    # add input files to output file
+    calibfile.infiles = list(rawfiles1) + list(rawfiles2)
+    # add output tag
+    calibfile.add_hkey('KW_OUTPUT', value=calibfile.name)
+    # add data
+    calibfile.data = ctable
+    # log that we are saving null 2file
+    WLOG(params, '', textentry('40-021-00031', args=[calibfile.filename]))
+    # define multi lists
+    data_list = [wave_data, blaze_data]
+    datatype_list = ['image', 'image']
+    name_list = ['POL_TABLE', 'POL_WAVE', 'POL_BLAZE']
+    header_list = [wave_hdr, blaze_hdr]
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=calibfile)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
+        header_list += [None]
+    # write image to file
+    calibfile.write_multi(data_list=data_list, name_list=name_list,
+                          datatype_list=datatype_list, header_list=header_list,
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(calibfile)
     # ----------------------------------------------------------------------
     # Write the s1d files to disk
     # ----------------------------------------------------------------------

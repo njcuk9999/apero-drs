@@ -5475,6 +5475,7 @@ class DrsOutFileExtension:
                  clear_file: bool = False,
                  tag: Union[str, None] = None,
                  extname: Union[str, None] = None,
+                 hdr_extname: Union[str, None] = None,
                  datatype: Union[str, None] = None):
         """
         Properties for an extension of a POST PROCESS file
@@ -5500,6 +5501,9 @@ class DrsOutFileExtension:
                     extension in the output fits file (if None uses "name")
         :param extname: str, if set this is the extension name from the
                         file to take the image/table from
+        :param hdr_extname: str, if set this forces taking the header from
+                            the extension named here (otherwise uses primary)
+        :param datatype: str, force 'image' or 'table' for extension
 
         :return:
         """
@@ -5519,6 +5523,7 @@ class DrsOutFileExtension:
         self.clear_file = clear_file
         self.tag = tag
         self.extname = extname
+        self.hdr_extname = hdr_extname
         # to be filled
         self.filename = None
         self.header = None
@@ -5698,6 +5703,7 @@ class DrsOutFileExtension:
         kwargs['clear_file'] = bool(self.clear_file)
         kwargs['tag'] = deepcopy(self.tag)
         kwargs['extname'] = deepcopy(self.extname)
+        kwargs['hdr_extname'] = deepcopy(self.hdr_extname)
         kwargs['datatype'] = deepcopy(self.datatype)
         # create new copy
         new = DrsOutFileExtension(**kwargs)
@@ -5788,16 +5794,20 @@ class DrsOutFileExtension:
             self.data = drs_fits.readfits(params, self.filename, True, False,
                                           fmt, extname=self.extname, copy=True)
         elif self.header_only:
-            # don't want to read header from self.extname
+            # don't want to read header from self.extname (so use primary if
+            #   hdr_extname is None -- the default, otherwise use hdr_extname)
             self.header = drs_fits.readfits(params, self.filename, False, True,
-                                            fmt, copy=True)
+                                            fmt, copy=True,
+                                            extname=self.hdr_extname)
         else:
             # want to read data from extname if set
             self.data = drs_fits.readfits(params, self.filename, True, False,
                                           fmt, extname=self.extname, copy=True)
-            # don't want to read header from self.extname
+            # don't want to read header from self.extname (so use primary if
+            #   hdr_extname is None -- the default, otherwise use hdr_extname)
             self.header = drs_fits.readfits(params, self.filename, False, True,
-                                            fmt, copy=True)
+                                            fmt, copy=True,
+                                            extname=self.hdr_extname)
 
     def make_table(self, params: ParamDict, ptable: Any, linkkind: str,
                    criteria: str, mode: str) -> Tuple[bool, textentry]:
@@ -6144,6 +6154,7 @@ class DrsOutFile(DrsInputFile):
                 clear_file: bool = False,
                 tag: Union[str, None] = None,
                 extname: Union[str, None] = None,
+                hdr_extname: Union[str, None] = None,
                 datatype: Union[str, None] = None):
         """
         Add a fits extension
@@ -6176,7 +6187,9 @@ class DrsOutFile(DrsInputFile):
                     final post process file
         :param extname: str, if set this is the extension name from the
                         input file to take the image/table from
-        :param datatype: str, image or table - the data type of the file
+        :param hdr_extname: str, if set this forces taking the header from
+                            the extension named here (otherwise uses primary)
+        :param datatype: str, force 'image' or 'table' for extension
 
         :return:
         """
@@ -6195,7 +6208,8 @@ class DrsOutFile(DrsInputFile):
                                                    remove_drs_hkeys,
                                                    remove_std_hkeys,
                                                    clear_file, tag,
-                                                   extname, datatype)
+                                                   extname, hdr_extname,
+                                                   datatype)
 
     def add_column(self, extname: str, drsfile: DrsFitsFile,
                    incol: str, outcol: str, fiber: Union[str, None],
