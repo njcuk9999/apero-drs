@@ -167,6 +167,8 @@ database_mgr.set_kwarg(name='--join', dtype='options', default='replace',
                        helpstr=textentry('DBMGR_JOIN_HELP'))
 database_mgr.set_kwarg(name='--delete', dtype='switch', default=False,
                        helpstr='Load up the delete table GUI (MySQL only)')
+database_mgr.set_kwarg(name='--reset', dtype='switch', default=False,
+                       helpstr='Reset current databases')
 database_mgr.description_file = 'apero_database.rst'
 
 # -----------------------------------------------------------------------------

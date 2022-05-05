@@ -93,9 +93,10 @@ def __main__(recipe, params):
     update_reject = params['INPUTS']['REJECTDB']
     update_object = params['INPUTS']['OBJDB']
     update = params['INPUTS']['UPDATE']
+    reset = params['INPUTS']['RESET']
     # deal with list of update arguments
     database_conds = [update_calib, update_tellu, update_index, update_log,
-                         update_reject, update_object]
+                      update_reject, update_object]
     database_names = ['calib', 'tellu', 'index', 'log', 'reject', 'object']
     # deal with killing sleeping processes
     if params['INPUTS']['KILL']:
@@ -107,11 +108,21 @@ def __main__(recipe, params):
         return drs_startup.return_locals(params, locals())
 
     # ----------------------------------------------------------------------
+    # deal with resetting databasee
+    # ----------------------------------------------------------------------
+    if reset:
+        database_update.reset_databases(params)
+        # ------------------------------------------------------------------
+        # End of main code
+        # ------------------------------------------------------------------
+        return drs_startup.return_locals(params, locals())
+
+    # ----------------------------------------------------------------------
     # deal with updates
     # ----------------------------------------------------------------------
     # deal with full update
     if update:
-        database_update.update_database(params, dbkind='all')
+        database_update.update_database(params, recipe, dbkind='all')
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
