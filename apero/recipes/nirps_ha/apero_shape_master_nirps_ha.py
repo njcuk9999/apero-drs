@@ -132,7 +132,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get master wave map
     wprops = wave.get_wavesolution(params, recipe, fiber=fiber, master=True,
-                                   database=calibdbm)
+                                   database=calibdbm, log=recipe.log)
 
     # ------------------------------------------------------------------
     # Correction of fp file
