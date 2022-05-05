@@ -382,7 +382,9 @@ def listdirs(rootdir: str) -> List[str]:
                 directories.append(it.path)
             # add sub directories
             directories += listdirs(it)
-
+    # sort directories
+    directories = sorted(directories)
+    # return sort directories
     return directories
 
 
@@ -490,6 +492,8 @@ def recursive_path_glob(params: ParamDict,
             valid_files.append(root_instant.joinpath(filename))
     # clear message
     TLOG(params, '', '')
+    # sort valid files
+    valid_files = sorted(valid_files)
     # return valid files
     return valid_files
 
