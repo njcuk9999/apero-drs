@@ -2,6 +2,43 @@ Changelog
 =========
 
 
+0.7.231 (2022-05-06)
+--------------------
+- Apero.science.polar.gen_pol.py - shift correctly all parameters stored
+  in headers of the wave solution. [Neil Cook]
+- Create a pol_calib to store shifted blaze and wave + add WAVE_AB ad
+  BLAZE_AB to p.fits from pol_calib. [Neil Cook]
+- Add a binary flag for when wave master is forced. [Neil Cook]
+- Apero.tools.recipes.bin.apero_database.py - add a reset database
+  option. [Neil Cook]
+- Apero.io.drs_path.py - sort directories and valid_files. [Neil Cook]
+
+
+0.7.230 (2022-05-04)
+--------------------
+- Apero.science.polar.gen_pol.py - deal with polar failing on orders
+  with all NaN. [njcuk9999]
+- Mk_template now bins to avoid loading many images + correct berv
+  coverage. [Neil Cook]
+
+
+0.7.229 (2022-04-29)
+--------------------
+- Apero.data.spirou.databases.reset.calib.csv - uhash must be unique -
+  generate hash for default values. [Neil Cook]
+- Apero.tools.module.database.manage_database.py - update database
+  creation with additional unique columns in calib/tellu database. [Neil
+  Cook]
+- Update reset calibration database (need UHASH column) [Neil Cook]
+- Apero.tools.recipes.bin.apero_explorer.py - correct getting hash arg.
+  [Neil Cook]
+- Apero.core.core.drs_misc.py - do not use nan for doubles in stats.
+  [Neil Cook]
+- Apero.core.utils.drs_utils.py - do not use nan for doubles. [Neil
+  Cook]
+- Update date/version/docs/changelog. [Neil Cook]
+
+
 0.7.228 (2022-04-28)
 --------------------
 - Add in PID, PDATE to calibration/telluric database add in RAM/SWAP/CPU
