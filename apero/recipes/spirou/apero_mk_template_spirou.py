@@ -190,7 +190,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # load master wavelength solution
     mkwargs = dict(infile=infile, master=True, fiber=fiber,
-                   database=calibdbm)
+                   database=calibdbm, log=recipe.log)
     mprops = wave.get_wavesolution(params, recipe, **mkwargs)
     # ------------------------------------------------------------------
     # Normalize image by peak blaze

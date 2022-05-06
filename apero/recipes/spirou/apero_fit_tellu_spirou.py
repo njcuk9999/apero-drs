@@ -210,7 +210,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
-                                       infile=infile, database=calibdbm)
+                                       infile=infile, database=calibdbm,
+                                       log=log1)
 
         # ------------------------------------------------------------------
         # Get template file (if available)

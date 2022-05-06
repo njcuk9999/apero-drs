@@ -119,6 +119,16 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
         manage_databases.update_reject_database(params)
 
 
+def reset_databases(params: ParamDict):
+    """
+    Reset all database to installation point
+
+    :param params: ParamDict, parameter dictionary of constants
+    :return:
+    """
+    manage_databases.install_databases(params)
+
+
 def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
                        pconst: PseudoConstants, db_type: str):
     """

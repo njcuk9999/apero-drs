@@ -249,7 +249,7 @@ def __main__(recipe, params):
                 wprops = wave.get_wavesolution(params, recipe, header,
                                                fiber=fiber, master=mwave,
                                                database=calibdbm,
-                                               nbpix=image.shape[1])
+                                               nbpix=image.shape[1], log=log2)
             else:
                 wprops = ParamDict()
             # --------------------------------------------------------------

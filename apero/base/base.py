@@ -143,13 +143,15 @@ COLOURS['UNDERLINE'] = '\033[4m'
 # allowed log flags
 # -----------------------------------------------------------------------------
 # define default flags for all recipes
-DEFAULT_FLAGS = dict(IN_PARALLEL=False, RUNNING=False, ENDED=False)
+DEFAULT_FLAGS = dict(IN_PARALLEL=False, RUNNING=False, ENDED=False,
+                     FORCE_MWAVE=False)
 # define allowed log flags
 LOG_FLAGS = dict()
 # LOG_FLAG[key] = description
 LOG_FLAGS['IN_PARALLEL'] = 'Recipe was run in parallel'
 LOG_FLAGS['RUNNING'] = 'Recipe is still running and has not ended'
 LOG_FLAGS['ENDED'] = 'Recipe has ended'
+LOG_FLAGS['FORCE_MWAVE'] = 'Wave solution was forced to master'
 LOG_FLAGS['OBJ'] = 'Is an OBJECT file'
 LOG_FLAGS['QCPASSED'] = 'Preprocessing passed QC'
 LOG_FLAGS['SCIFIBER'] = 'Localisation recipe used the science fiber'
