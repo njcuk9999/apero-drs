@@ -92,7 +92,7 @@ PseudoConstants = constants.PseudoConstants
 # get numpy masked constant
 MaskedConstant = np.ma.core.MaskedConstant
 # Get pandas like database class
-PandasLikeDatabase = drs_base_classes.PandasLikeDatabase
+PandasLikeDatabase = drs_base_classes.PandasLikeDatabaseDuckDB
 # -----------------------------------------------------------------------------
 # define complex typing
 QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
@@ -6362,13 +6362,17 @@ class DrsOutFile(DrsInputFile):
         # start a clock (reading large database is slow - give user feedback)
         start = time.time()
         pdataframe = indexdbm.get_entries('*', condition=pcond)
+        # ptable = PandasLikeDatabase(pdataframe)
         ptable = PandasLikeDatabase(pdataframe)
         # end the clock  (reading large database is slow - give user feedback)
         end = time.time()
         # log full database loaded in X s
         WLOG(params, '', textentry('40-090-00004', args=[end - start]))
         # get index columns
-        index_cols = ptable.colnames()
+        # index_cols = ptable.colnames()
+        idbcols = pconst.INDEX_DB_COLUMNS()
+        index_cols = list(idbcols.names)
+
         # ---------------------------------------------------------------------
         # get information about loaded files
         has_hdr, valid_names = self.has_header()

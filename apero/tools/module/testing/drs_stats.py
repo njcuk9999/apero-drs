@@ -276,8 +276,15 @@ def get_log_entries(params: ParamDict,
     WLOG(params, '', 'Obtaining full log database. Please wait...')
     logdbm = drs_database.LogDatabase(params)
     logdbm.load_db()
+
+
+    # get condition from arguments
+    if drs_text.null_text(params['INPUTS']['SQL'], ['None', '', 'Null']):
+        condition = None
+    else:
+        condition = params['INPUTS']['SQL']
     # get all entries from database
-    dataframe = logdbm.get_entries('*')
+    dataframe = logdbm.get_entries('*', condition=condition)
     # get the index database
     if mode == 'index':
         WLOG(params, '', 'Obtaining full index database. Please wait...')
