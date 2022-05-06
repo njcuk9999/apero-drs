@@ -4,6 +4,7 @@ astropy==5.0
 astroquery==0.4.4
 barycorrpy==0.4.4
 bottleneck==1.2.1
+duckdb==0.3.4
 matplotlib==3.5.1
 numba==0.54.1
 numpy==1.20.3
