@@ -260,6 +260,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     polar_dict['GLOBAL_WAVEFILE'] = None
     polar_dict['GLOBAL_WAVETIME'] = None
     polar_dict['GLOBAL_WAVE_HDR'] = None
+    polar_dict['GLOBAL_WPROPS'] = None
     # save a blaze file
     polar_dict['GLOBAL_BLAZE'] = None
     polar_dict['GLOBAL_BLAZEFILE'] = None
@@ -288,7 +289,8 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             'BERVS', 'BJDS', 'BERV_USED_ESTIMATE',
             'EXPOSURES', 'N_EXPOSURES', 'EXPOSURE_NUMBERS', 'STOKES',
             'GLOBAL_WAVEMAP', 'GLOBAL_WAVEFILE', 'GLOBAL_WAVETIME',
-            'GLOBAL_BLAZE', 'GLOBAL_BLAZEFILE', 'GLOBAL_STOKES',
+            'GLOBAL_WAVE_HDR', 'GLOBAL_WPROPS', 'GLOBAL_BLAZE',
+            'GLOBAL_BLAZEFILE', 'GLOBAL_BLAZE_HDR', 'GLOBAL_STOKES',
             'RAW_WAVEMAP', 'RAW_WAVEFILE', 'RAW_WAVETIME',
             'RAW_FLUX', 'RAW_FLUXERR', 'FLUX', 'FLUXERR']
     polar_dict.set_sources(keys, func_name)
@@ -417,26 +419,30 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
                 # calculate proper wave shift
                 dvshift = mp.relativistic_waveshift(dv, units='km/s')
                 # apply to wave solution
-                wavemap = np.array(wprops['WAVEMAP']) * dvshift
-
-                # TODO: we need to update wprops and wavehdr
-                #       i.e. shift the wave coefficients similar to wavemap
-
+                wprops1 = wave.shift_wavesolution(wprops, dvshift)
                 # shift the blaze onto new wavemap
                 blaze1 = get_interp_blaze(params, wprops['WAVEMAP'], blaze0,
-                                          wavemap)
+                                          wprops1['WAVEMAP'])
+
+                # update the wave and blaze headers - these should show the
+                #   shifted wave solution info too
+                wavehdr = wave.add_wave_keys_hdr(params, wavehdr, wprops1)
+                blazehdr = wave.add_wave_keys_hdr(params, wavehdr, wprops1)
+
             else:
                 # no shift - don't shift wavemap
-                wavemap = np.array(wprops['WAVEMAP'])
+                wprops1 = wprops.copy()
                 # no shift - don't shift blaze
                 blaze1 = np.array(blaze0)
             # -----------------------------------------------------------------
             # add the global wave solution to polar dict
-            polar_dict['GLOBAL_WAVEMAP'] = wavemap
+            polar_dict['GLOBAL_WAVEMAP'] = wprops1['WAVEMAP']
+            # add the wprops here as the global wave props (for file saving)
+            polar_dict['GLOBAL_WPROPS'] = wprops1
             # add the global wave filename solution to polar dict
-            polar_dict['GLOBAL_WAVEFILE'] = str(wprops['WAVEFILE'])
+            polar_dict['GLOBAL_WAVEFILE'] = str(wprops1['WAVEFILE'])
             # add the global wave time solution to polar dict
-            polar_dict['GLOBAL_WAVETIME'] = str(wprops['WAVETIME'])
+            polar_dict['GLOBAL_WAVETIME'] = str(wprops1['WAVETIME'])
             # add the global wave header (for output)
             polar_dict['GLOBAL_WAVE_HDR'] = wavehdr
             # add the global blaze solution to polar dict
@@ -1914,6 +1920,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     null2_data = props['NULL2']
     wave_data = props['GLOBAL_WAVEMAP']
     wave_hdr = props['GLOBAL_WAVE_HDR']
+    wprops = props['GLOBAL_WPROPS']
     blaze_data = props['GLOBAL_BLAZE']
     blaze_hdr = props['GLOBAL_BLAZE_HDR']
     # ----------------------------------------------------------------------
@@ -1948,6 +1955,8 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # define header keys for output file
     # copy keys from input file
     polfile.copy_original_keys(cfile, exclude_groups='wave')
+    # get update wave properties for header
+    polfile = wave.add_wave_keys(polfile, wprops)
     # add version
     polfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
