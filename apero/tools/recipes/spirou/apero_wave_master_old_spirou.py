@@ -211,7 +211,7 @@ def __main__(recipe, params):
         #    this should only be a master wavelength solution
         iwprops = wave_old.get_wavesolution(params, recipe, infile=hc_e2ds_file,
                                             fiber=master_fiber, master=True,
-                                            database=calibdbm)
+                                            database=calibdbm, log=log1)
         # check that wave parameters are consistent with required number
         #   of parameters (from constants)
         iwprops = wave_old.check_wave_consistency(params, iwprops)

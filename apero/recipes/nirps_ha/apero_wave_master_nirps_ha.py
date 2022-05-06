@@ -185,7 +185,7 @@ def __main__(recipe, params):
         #    this should only be a master wavelength solution
         iwprops = wave.get_wavesolution(params, recipe, infile=hcfile,
                                         fiber=master_fiber, master=True,
-                                        database=calibdbm)
+                                        database=calibdbm, log=log1)
         # check that wave parameters are consistent with required number
         #   of parameters (from constants)
         iwprops = wave.check_wave_consistency(params, iwprops)

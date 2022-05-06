@@ -12,6 +12,7 @@ Created on
 from astropy.table import Table
 from astropy import constants as cc
 from astropy import units as uu
+from copy import deepcopy
 import numpy as np
 import os
 from scipy.optimize import curve_fit
@@ -28,6 +29,7 @@ from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_data
+from apero.core.utils import drs_utils
 from apero.io import drs_image
 from apero.io import drs_fits
 from apero.io import drs_table
@@ -53,6 +55,7 @@ __release__ = Constants['DRS_RELEASE']
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
+RecipeLog = drs_utils.RecipeLog
 # get calibration database
 CalibDB = drs_database.CalibrationDatabase
 # Get Logging function
@@ -295,6 +298,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
                      master: bool = False,
                      database: Union[CalibDB, None] = None,
                      nbpix: Union[int, None] = None,
+                     rlog: Union[RecipeLog, None] = None,
                      **kwargs) -> ParamDict:
     """
     Get the wavelength solution
@@ -319,6 +323,8 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     :param nbpix: int or None, if in file is not set we require the size of each
                   order in pixels
     :param kwargs: keyword arguments passed to function
+    :param rlog: Recipe log or None, if defined recipe must have
+                 FORCE_MASTER_WAVE as one if its FLAGS
 
     :keyword force: bool, if True forces wave solution to come from calibDB
     :keyword filename: str or None, the filename to get wave solution from
@@ -327,6 +333,9 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     """
     # set function name
     func_name = display_func('get_wavesolution', __NAME__)
+    # deal with logging that a master wave sol was forced
+    if rlog is not None:
+        rlog.update_flags(FORCE_MWAVE=master)
     # get parameters from params/kwargs
     inwavefile = kwargs.get('filename', None)
     # deal with wave file in the inputs
@@ -499,6 +508,29 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     return wprops
 
 
+def get_waveheader(params: ParamDict, wprops: ParamDict
+                   ) -> Union[drs_fits.Header, None]:
+    """
+    Given a wave parameter dictionary try to get the wave header for a give
+    WAVEFILE (required as solution could have come from header)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param wprops: ParamDict, parameter dictionary of wave data
+
+    :return:
+    """
+    # construct the absolute path (assuming file is in calibration database)
+    wavefile = os.path.join(params['DRS_CALIB_DB'], wprops['WAVEFILE'])
+    # if we have this file in the calibration database get the header
+    if os.path.exists(wavefile):
+        # get the wave header
+        return drs_fits.read_header(params, wavefile)
+    # no wave solution matching this name in the calibration database
+    #    --> return None
+    else:
+        return None
+
+
 def get_wavemap_from_coeffs(wave_coeffs: np.ndarray, nbo: int,
                             nbx: int) -> np.ndarray:
     """
@@ -521,6 +553,46 @@ def get_wavemap_from_coeffs(wave_coeffs: np.ndarray, nbo: int,
         # calculate polynomial values and push into wavemap
         wavemap[order_num] = np.polyval(ocoeffs, xpixels)
     return wavemap
+
+
+def shift_wavesolution(wprops: ParamDict, dvshift: float) -> ParamDict:
+    """
+    Apply a wavelength offset (dvshift) to a wave parameter dictionary
+
+    :param wprops: ParamDict, the wave parameter dictionary
+    :param dvshift: float, the wave offset to apply
+
+    :return: ParamDict, the updates wave parameters
+    """
+    # -------------------------------------------------------------------------
+    # apply shift to the wave map
+    wavemap1 = np.array(wprops['WAVEMAP']) * dvshift
+    # -------------------------------------------------------------------------
+    # update wave coefficients
+    wavecoeffs1 = np.array(wprops['COEFFS'])
+    # each wave coefficient is just multiplied by the shift
+    for c_it in range(wavecoeffs1.shape[1]):
+        wavecoeffs1[:, c_it] *= dvshift
+    # -------------------------------------------------------------------------
+    # new storage for wprops
+    wprops1 = ParamDict()
+    # -------------------------------------------------------------------------
+    # update wave props we have to change
+    wprops1['WAVEFILE'] = str(wprops['WAVEFILE']) + '[SHIFTED]'
+    wprops1['WAVEINIT'] = str(wprops['WAVEINIT']) + '[SHIFTED]'
+    wprops1['WAVESOURCE'] = 'SHIFT={0} km/s'.format(dvshift)
+    wprops1['COEFFS'] = wavecoeffs1
+    wprops1['WAVEMAP'] = wavemap1
+    # cannot copy this with deep copy
+    wprops1['WAVEINST'] = wprops['WAVEINST']
+    # -------------------------------------------------------------------------
+    # all other keys stay the same (but are copied)
+    for key in wprops.keys():
+        if key not in wprops1:
+            wprops1[key] = deepcopy(wprops[key])
+    # -------------------------------------------------------------------------
+    # return wprops1 - the updated wprops
+    return wprops1
 
 
 def get_cavity_file(params: ParamDict, header: HeaderType = None,
@@ -3024,6 +3096,32 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
     infile.add_hkey('KW_WAVE_EMEANHC', value=props['ERR_HC_VEL'])
     # return infile
     return infile
+
+
+def add_wave_keys_hdr(params: ParamDict, header: drs_fits.Header,
+                      props: ParamDict) -> drs_fits.Header:
+    """
+    Add wave keys to header - this should only be used when add_wave_keys
+    cannot be used (i.e. updating additional extensions headers
+
+    :param header: drs_fits.Header - fits header
+    :param props:  ParamDict, the parameter dictionary of wave data
+
+    :return:
+    """
+    # generate a fake infile
+    infile = drs_file.DrsFitsFile('toto', params=params)
+    # update wave keys in fake infile (using add_wave_keys)
+    infile = add_wave_keys(infile, props)
+    # push hdict keys into input header
+    for key in infile.hdict:
+        # only update keys - do not add them
+        if key not in header:
+            continue
+        # update key
+        header[key] = infile.hdict[key]
+    # return updated header
+    return header
 
 
 def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
