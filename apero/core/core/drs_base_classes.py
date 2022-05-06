@@ -18,6 +18,7 @@ only from
 """
 from collections import UserDict
 import importlib
+import duckdb
 import os
 import pandas as pd
 from pandasql import sqldf
@@ -770,6 +771,27 @@ class PandasLikeDatabase:
             # return the output columns
             return outcolumns
 
+
+class PandasLikeDatabaseDuckDB(PandasLikeDatabase):
+
+    def execute(self, command: str) -> pd.DataFrame:
+        """
+        How we run an sql query on a pandas database
+
+        Note the table has to be in self.namespace
+
+        i.e. "SELECT * FROM data" requires self.namespace['data'] = self.data
+
+        :param command: str, the sql command to run
+        :return:
+        """
+        conn = duckdb.connect()
+        # ref has to be in local space for duckdb to use it
+        data = self.namespace['data']
+        # command has to use single quotations
+        command = command.replace('\"', '\'')
+        # return dataframe
+        return conn.execute(command).df()
 
 class HiddenPrints:
     """
