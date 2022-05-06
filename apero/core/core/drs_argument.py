@@ -69,7 +69,7 @@ IndexDatabase = drs_database.IndexDatabase
 # get the config error
 DrsCodedException = drs_exceptions.DrsCodedException
 # Get pandas like database class
-PandasLikeDatabase = drs_base_classes.PandasLikeDatabase
+PandasLikeDatabase = drs_base_classes.PandasLikeDatabaseDuckDB
 # Get the text types
 textentry = lang.textentry
 # define display strings for types

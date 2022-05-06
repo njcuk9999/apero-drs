@@ -334,6 +334,8 @@ stats.set_kwarg(name='--mode', dtype='options', default='red',
 stats.set_kwarg(name='--plog', dtype=str, default='None',
                    helpstr='Specify a certain log file (full path)')
 stats.set_kwarg(**plot)
+stats.set_kwarg(name='--sql', dtype=str, default='None',
+                helpstr='specify a SQL WHERE clause to narrow the stats')
 stats.description_file = 'apero_stats.rst'
 
 # -----------------------------------------------------------------------------
