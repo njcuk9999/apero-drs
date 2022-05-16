@@ -790,8 +790,13 @@ class PandasLikeDatabaseDuckDB(PandasLikeDatabase):
         data = self.namespace['data']
         # command has to use single quotations
         command = command.replace('\"', '\'')
-        # return dataframe
-        return conn.execute(command).df()
+        # get dataframe
+        results =  conn.execute(command).df()
+        # close conn
+        conn.close()
+        # return results
+        return results
+
 
 class HiddenPrints:
     """

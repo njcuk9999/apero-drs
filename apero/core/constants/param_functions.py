@@ -76,6 +76,10 @@ Exceptions = Union[DrsCodedException]
 
 ModLoads = Tuple[List[str], List[Any], List[str], List[Union[Const, Keyword]]]
 
+# storage for checked sources
+CHECKED_SOURCES = dict()
+
+
 
 # =============================================================================
 # Define Custom classes
@@ -338,20 +342,27 @@ class ParamDict(CaseInDict):
         :return None:
         :raises DrsCodedException: if key not found
         """
+        global CHECKED_SOURCES
         # set function name
         func_name = display_func('set_source', __NAME__, self.class_name)
         # capitalise
         key = drs_text.capitalise_key(key)
-        # don't put full path for sources in package
-        source = _check_mod_source(source)
+        # check storage so we don't do this many times for no reason
+        if source in CHECKED_SOURCES:
+            _source = CHECKED_SOURCES[source]
+        else:
+            # don't put full path for sources in package
+            _source = _check_mod_source(source)
+            # add to storage so we don't do this many times for no reason
+            CHECKED_SOURCES[source] = _source
         # only add if key is in main dictionary
         if key in self.data.keys():
-            self.sources[key] = source
+            self.sources[key] = _source
             # add to history
             if key in self.source_history:
-                self.source_history[key].append(source)
+                self.source_history[key].append(_source)
             else:
-                self.source_history[key] = [source]
+                self.source_history[key] = [_source]
         else:
             # log error: source cannot be added for key
             raise DrsCodedException('00-003-00026', targs=[key], level='error',
