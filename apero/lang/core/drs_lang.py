@@ -41,10 +41,10 @@ LANG = base.IPARAMS.get('LANGUAGE', DEFAULT_LANG)
 # get and load the language database once
 try:
     langdbm = drs_db.LanguageDatabase()
-    # if we can't access straight away go to proxy
-    langdbm.database.tries = 1
     # load database
     langdbm.load_db()
+    # if we can't access straight away go to proxy
+    langdbm.database.tries = 1
     # Can be the case that we have the database but we are yet to
     # create the language table - in this case we need to use the proxy
     # dictionary instead - else we get the dictionary from the langauage

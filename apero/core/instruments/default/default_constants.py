@@ -1679,7 +1679,7 @@ SHAPE_PLOT_SELECTED_ORDER = Const('SHAPE_PLOT_SELECTED_ORDER', value=None,
                                                'shape plot'))
 
 # width of the ABC fibers (in pixels)
-SHAPE_ORDER_WIDTH = Const('SHAPE_ORDER_WIDTH', value=None, dtype=int,
+SHAPE_ORDER_WIDTH = Const('SHAPE_ORDER_WIDTH', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
                           description='width of the ABC fibers (in pixels)')
 
