@@ -54,9 +54,8 @@ KW_GAIN.set(key='HIERARCH ESO DET OUT1 GAIN',
             group='raw')
 
 # define the exposure time HEADER key (used to get value only)
-# TODO: This value should change
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
-KW_EXPTIME.set(key='HIERARCH ESO DET SEQ1 DIT', unit=uu.s,
+KW_EXPTIME.set(key='EXPTIME', unit=uu.s,
                comment='[sec] Integration time',
                combine_method='sum', group='raw')
 
@@ -64,7 +63,7 @@ KW_EXPTIME.set(key='HIERARCH ESO DET SEQ1 DIT', unit=uu.s,
 # NIRPS-CHANGE: Do we have this for NIRPS?
 # TODO: For now set this to the actual exposure time
 KW_EXPREQ = KW_EXPREQ.copy(__NAME__)
-KW_EXPREQ.set(key='HIERARCH ESO DET SEQ1 DIT', unit=uu.s,
+KW_EXPREQ.set(key='EXPTIME', unit=uu.s,
               comment='[sec] Requested integration time',
               combine_method='sum', group='raw')
 
