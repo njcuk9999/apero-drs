@@ -49,7 +49,7 @@ KW_RDNOISE.set(key='HIERARCH ESO DET OUT1 RON',
 
 # define the gain HEADER key (used to get value only)
 KW_GAIN = KW_GAIN.copy(__NAME__)
-KW_GAIN.set(key='HIERARCH ESO DET OUT1 GAIN',
+KW_GAIN.set(key='HIERARCH ESO DET CHIP1 GAIN',
             comment='Amplifier gain (electrons/ADU)', combine_method='mean',
             group='raw')
 
