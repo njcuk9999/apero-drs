@@ -210,26 +210,45 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
         ra_source = 'header'
         dec_deg = float(header[params['KW_OBJDEC'][0]])
         dec_source = 'header'
+        # ---------------------------------------------------------------------
         # epoch needs to be converted based on instrument (should be in JD)
         epoch = float(pconst.GET_EPOCH(params, header))
-        # pmra and pmde
-        pmra = float(header[params['KW_OBJRAPM'][0]])
-        pmra = _convert_units(params, 'KW_OBJRAPM', pmra, uu.mas/uu.yr)
-        pmra_source = 'header'
-        pmde = float(header[params['KW_OBJDECPM'][0]])
-        pmde = _convert_units(params, 'KW_OBJDECPM', pmde, uu.mas/uu.yr)
-        pmde_source = 'header'
+        # ---------------------------------------------------------------------
+        # pmra
+        kw_pmra = params['KW_OBJRAPM'][0]
+        # make sure RA is in header
+        if kw_pmra in header:
+            pmra = float(header[params['KW_OBJRAPM'][0]])
+            pmra = _convert_units(params, 'KW_OBJRAPM', pmra, uu.mas/uu.yr)
+            pmra_source = 'header'
+        else:
+            pmra = 0.0
+            pmra_source = 'null'
+        # ---------------------------------------------------------------------
+        # pmde
+        kw_pmdec = params['KW_OBJDECPM'][0]
+        if kw_pmdec in header:
+            pmde = float(header[params['KW_OBJDECPM'][0]])
+            pmde = _convert_units(params, 'KW_OBJDECPM', pmde, uu.mas/uu.yr)
+            pmde_source = 'header'
+        else:
+            pmde = 0.0
+            pmde_source = 'null'
+        # ---------------------------------------------------------------------
         # parallax in mas (may not be present)
         plx = float(header.get(params['KW_PLX'][0], np.nan))
         plx = _convert_units(params, 'KW_PLX', plx, uu.mas)
         plx_source = 'header'
+        # ---------------------------------------------------------------------
         # RV in km/s (may not be present)
         rv = float(header.get(params['KW_INPUTRV'][0], np.nan))
         rv = _convert_units(params, 'KW_INPUTRV', rv, uu.km / uu.s)
         rv_source = 'header'
+        # ---------------------------------------------------------------------
         # Teff in K (may not be present)
         teff = float(header.get(params['KW_OBJ_TEMP'][0], np.nan))
         teff_source = 'header'
+        # ---------------------------------------------------------------------
         # spectral type (not present but required for KW_DRS_SPTYPE)
         sp_type = ''
         sp_source = 'header'
