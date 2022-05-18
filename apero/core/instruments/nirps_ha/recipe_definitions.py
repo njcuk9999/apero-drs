@@ -1045,12 +1045,12 @@ limited_seq.add(apero_flat, files=[files.pp_flat_flat])
 limited_seq.add(apero_wave_night)
 # extract tellurics
 limited_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
-                files=[files.pp_obj_dark, files.pp_obj_fp],
+                files=[files.pp_obj_dark, files.pp_obj_fp, files.raw_obj_sky],
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS'))
 
 # extract science
 limited_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
-                files=[files.pp_obj_dark, files.pp_obj_fp],
+                files=[files.pp_obj_dark, files.pp_obj_fp, files.raw_obj_sky],
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
 
 # correct leakage for any telluric targets that are OBJ_FP
