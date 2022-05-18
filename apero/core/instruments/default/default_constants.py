@@ -341,6 +341,7 @@ __all__ = [
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
     'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_REINDEX_BLOCKS',
+    'REPROCESS_OBJECT_TYPES'
 ]
 
 # set name
@@ -5126,6 +5127,12 @@ REPROCESS_OBSDIR_COL = Const('REPROCESS_OBSDIR_COL', value=None, dtype=str,
                              source=__NAME__, group=cgroup,
                              description=('Define the obs_dir column name '
                                           'for raw file table'))
+
+# Define the KW_OBJTYPE allowed for a science target
+REPROCESS_OBJECT_TYPES = Const('REPROCESS_OBJECT_TYPES', value=None, dtype=str,
+                               source=__NAME__, group=cgroup,
+                               description=('Define the KW_OBJTYPE allowed for '
+                                            'a science target'))
 
 # Define the pi name column name for raw file table
 REPROCESS_PINAMECOL = Const('REPROCESS_PINAMECOL', value=None, dtype=str,
