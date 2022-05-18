@@ -1034,6 +1034,9 @@ apero_fit_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
 apero_fit_tellu.set_kwarg(name='--template', dtype='file', default='None',
                           files=[files.out_tellu_template],
                           helpstr=textentry('TEMPLATE_FILE_HELP'))
+apero_fit_tellu.set_kwarg(name='--onlypreclean', dtype='switch', default=False,
+                          helpstr='Only run the precleaning steps '
+                                  '(not recommended - for debugging ONLY)')
 apero_fit_tellu.set_kwarg(**add_db)
 apero_fit_tellu.set_kwarg(**blazefile)
 apero_fit_tellu.set_kwarg(**plot)

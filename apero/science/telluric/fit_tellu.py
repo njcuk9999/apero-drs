@@ -827,7 +827,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
 
 
 def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
-                   mprops, wprops):
+                   mprops, wprops) -> ParamDict:
     """
     Calculate the residual model and apply it to the image
 
@@ -944,6 +944,23 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     fsargs = [infile, corrfile, fiber, scwprops, scvprops]
     fit_tellu_write_corrected_s1d(params, recipe, *fsargs)
+
+
+def pclean_only(tpreprops: ParamDict) -> ParamDict:
+    """
+    In pre-clean only mode we need to set the cprops (exactly the same as
+    in calc_res_model)
+
+    """
+    # set function name
+    func_name = display_func('pclean_only', __NAME__)
+    # push into parameter dictionary
+    cprops = ParamDict()
+    cprops['CORRECTED_SP'] = tpreprops['CORRECTED_E2DS']
+    cprops['RECON_ABSO'] = tpreprops['ABSO_E2DS']
+    # add keys
+    cprops.set_sources(['CORRECTED_SP', 'RECON_ABSO'], func_name)
+    return cprops
 
 
 # =============================================================================
