@@ -95,6 +95,8 @@ tellu_preclean = gen_tellu.tellu_preclean
 
 normalise_by_pblaze = gen_tellu.normalise_by_pblaze
 
+pclean_only = fit_tellu.pclean_only
+
 shift_template = fit_tellu.shift_template
 
 # =============================================================================

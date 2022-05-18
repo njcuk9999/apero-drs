@@ -44,8 +44,8 @@ from apero.science import telluric
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_fit_tellu_spirou.py'
-__INSTRUMENT__ = 'SPIROU'
+__NAME__ = 'apero_fit_tellu_nirps_he.py'
+__INSTRUMENT__ = 'NIRPS_HE'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__

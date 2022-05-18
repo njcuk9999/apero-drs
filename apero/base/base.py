@@ -161,7 +161,7 @@ LOG_FLAGS['EXT_FOUND'] = 'Extracted files for internal extraction were found.'
 LOG_FLAGS['QUICKLOOK'] = 'Extraction is running in quick look mode'
 LOG_FLAGS['EXP_FPLINE'] = 'Extraction has an FP ref fiber and addition outputs'
 LOG_FLAGS['INPUTQC'] = 'Polar inputs passed QC (or were forced to)'
-
+LOG_FLAGS['ONLYPRECLEAN'] = 'Only do preclean part of telluric correction'
 
 # =============================================================================
 # Define functions
