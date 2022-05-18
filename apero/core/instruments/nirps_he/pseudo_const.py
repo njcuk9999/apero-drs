@@ -368,7 +368,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
 
     def FRAME_TIME(self, params: ParamDict, header: Any):
         """
-        Get the frame time (either from header or constants depending on 
+        Get the frame time (either from header or constants depending on
         instrument)
 
         :param params: ParamDict, the parameter dictionary of constants
@@ -800,7 +800,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         """
         # spirou stores the equinox in decimal years
         key = params['KW_OBJEQUIN'][0]
-        time_fmt = params.instances['KW_OBJEQUIN'].unit
+        time_fmt = params.instances['KW_OBJEQUIN'].datatype
         # get value from header
         value = header[key]
         # get time
@@ -857,7 +857,7 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
         # get local version of pconst
         pconst = PseudoConstants()
         # get clean / alias-safe version of object name
-        objectname, _ = objdbm.find_objname(pconst, objname)
+        objectname, _ = objdbm.find_objname(pconst, rawobjname)
     else:
         objectname = pseudo_const.clean_object(rawobjname)
     # -------------------------------------------------------------------------
@@ -1047,7 +1047,7 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     # get drs mode header keyword store
     kw_drs_mode, _, kw_drs_mode_comment = params['KW_DRS_MODE']
     # get drs mode header keyword store
-    drs_mode = 'HA'
+    drs_mode = 'HE'
     # -------------------------------------------------------------------------
     # add header key
     header[kw_drs_mode] = (drs_mode, kw_drs_mode_comment)

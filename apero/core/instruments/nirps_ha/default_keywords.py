@@ -144,12 +144,12 @@ KW_RAW_DPRCATG.set(key='HIERARCH ESO DPR CATG', comment='Observation category',
 # -----------------------------------------------------------------------------
 # define the observation ra HEADER key
 KW_OBJRA = KW_OBJRA.copy(__NAME__)
-KW_OBJRA.set(key='RA_DEG', unit=uu.deg, comment='Target right ascension',
+KW_OBJRA.set(key='RA', unit=uu.deg, comment='Target right ascension',
              group='raw')
 
 # define the observation dec HEADER key
 KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
-KW_OBJDEC.set(key='DEC_DEG', unit=uu.deg, comment='Target declination ',
+KW_OBJDEC.set(key='DEC', unit=uu.deg, comment='Target declination ',
               group='raw')
 
 # define the observation name
@@ -158,7 +158,7 @@ KW_OBJECTNAME.set(key='OBJECT', comment='Target name', group='raw')
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
-KW_OBJEQUIN.set(key='OBJEQUIN', datatype='decimalyear',
+KW_OBJEQUIN.set(key='EQUINOX', datatype='decimalyear',
                 comment='Target equinox ', group='raw')
 
 # define the observation proper motion in ra HEADER key
@@ -382,7 +382,7 @@ KW_DPRTYPE.set(key='DPRTYPE', comment='APERO-type of file (from pre-process)',
 
 # Define the key to get the drs mode
 KW_DRS_MODE = KW_DRS_MODE.copy(__NAME__)
-KW_DRS_MODE.set(key='DRSMODE', comment='APERO-mode (Spectroscopy or Polar)',
+KW_DRS_MODE.set(key='DRSMODE', comment='APERO-mode (HA or HE)',
                 group='ppraw')
 
 # Define the mid exposure time

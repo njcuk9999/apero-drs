@@ -962,7 +962,7 @@ full_seq.add(apero_flat, files=[files.pp_flat_flat])
 full_seq.add(apero_wave_night)
 # extract all OBJ_DARK and OBJ_FP
 full_seq.add(apero_extract, name='EXTALL', recipe_kind='extract-ALL',
-             files=[files.pp_obj_dark, files.pp_obj_fp])
+             files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_obj_sky])
 # correct leakage
 # full_seq.add(apero_leak, name='LEAKALL', files=[files.out_ext_e2dsff],
 #              fiber='A', filters=dict(KW_DPRTYPE=['OBJ_FP']),
@@ -1048,12 +1048,12 @@ limited_seq.add(apero_flat, files=[files.pp_flat_flat])
 limited_seq.add(apero_wave_night)
 # extract tellurics
 limited_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
-                files=[files.pp_obj_dark, files.pp_obj_fp],
+                files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_obj_sky],
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS'))
 
 # extract science
 limited_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
-                files=[files.pp_obj_dark, files.pp_obj_fp],
+                files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_obj_sky],
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
 
 # correct leakage for any telluric targets that are OBJ_FP
@@ -1197,7 +1197,7 @@ calib_seq.add(apero_wave_night)
 tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
 # extract science
 tellu_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
-              files=[files.pp_obj_dark, files.pp_obj_fp],
+              files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_obj_sky],
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 
@@ -1243,7 +1243,7 @@ tellu_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
 science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
 # extract science
 science_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
-                files=[files.pp_obj_dark, files.pp_obj_fp],
+                files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_obj_sky],
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 
@@ -1288,7 +1288,7 @@ science_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
 quick_seq = drs_recipe.DrsRunSequence('quick_seq', __INSTRUMENT__)
 # extract science
 quick_seq.add(apero_extract, name='EXTQUICK', recipe_kind='extract-quick',
-              files=[files.pp_obj_dark, files.pp_obj_fp],
+              files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_obj_sky],
               arguments=dict(quicklook=True, fiber='AB'),
               filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                            KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
