@@ -266,7 +266,7 @@ FIBER_SET_NUM_FIBERS_B.value = 1
 # =============================================================================
 # Define object (science or telluric)
 PP_OBJ_DPRTYPES = PP_OBJ_DPRTYPES.copy(__NAME__)
-PP_OBJ_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
+PP_OBJ_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, OBJ_SKY'
 
 # Define the bad list google spreadsheet id
 PP_BADLIST_SSID = PP_BADLIST_SSID.copy(__NAME__)
@@ -1189,7 +1189,7 @@ EXT_S1D_EDGE_SMOOTH_SIZE.value = 20
 
 #    Define dprtypes to calculate berv for (should be a string list)
 EXT_ALLOWED_BERV_DPRTYPES = EXT_ALLOWED_BERV_DPRTYPES.copy(__NAME__)
-EXT_ALLOWED_BERV_DPRTYPES.value = 'OBJ_FP, OBJ_DARK'
+EXT_ALLOWED_BERV_DPRTYPES.value = 'OBJ_FP, OBJ_DARK, OBJ_SKY'
 
 #    Define which BERV calculation to use ('barycorrpy' or 'estimate' or 'None')
 EXT_BERV_KIND = EXT_BERV_KIND.copy(__NAME__)
@@ -1956,7 +1956,7 @@ TAPAS_FILE_FMT.value = 'fits'
 
 # The allowed input DPRTYPES for input telluric files
 TELLU_ALLOWED_DPRTYPES = TELLU_ALLOWED_DPRTYPES.copy(__NAME__)
-TELLU_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
+TELLU_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, OBJ_SKY'
 
 # the INPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input telluric files
@@ -2366,7 +2366,7 @@ CCF_N_ORD_MAX.value = 48
 
 # Allowed input DPRTYPES for input  for CCF recipe
 CCF_ALLOWED_DPRTYPES = CCF_ALLOWED_DPRTYPES.copy(__NAME__)
-CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
+CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, OBJ_SKY'
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
 CCF_CORRECT_TELLU_TYPES = CCF_CORRECT_TELLU_TYPES.copy(__NAME__)
