@@ -897,7 +897,7 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
                                                targs=eargs)
     obstype = header[kwobstype]
     # deal with setting value
-    if 'SKY' in obstype:
+    if 'SKY' in obstype and 'OBJECT' not in obstype:
         trg_type = 'SKY'
     elif 'OBJECT' in obstype:
         trg_type = 'TARGET'
