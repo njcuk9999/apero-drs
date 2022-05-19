@@ -304,7 +304,6 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # Deal with calibrations and sky KW_OBJNAME
         # ------------------------------------------------------------------
         header, hdict = get_special_objname(params, header, hdict)
-
         # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
