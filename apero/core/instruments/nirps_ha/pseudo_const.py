@@ -800,7 +800,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         """
         # spirou stores the equinox in decimal years
         key = params['KW_OBJEQUIN'][0]
-        time_fmt = params.instances['KW_OBJEQUIN'].unit
+        time_fmt = params.instances['KW_OBJEQUIN'].datatype
         # get value from header
         value = header[key]
         # get time
@@ -812,7 +812,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
-def clean_obj_name(params: Union[ParamDict, None], header: Any,
+def clean_obj_name(params: ParamDict = None, header: Any = None,
                    hdict: Any = None, objname: Union[str, None] = None,
                    filename: Union[None, str, Path] = None,
                    check_aliases: bool = False,
@@ -857,7 +857,7 @@ def clean_obj_name(params: Union[ParamDict, None], header: Any,
         # get local version of pconst
         pconst = PseudoConstants()
         # get clean / alias-safe version of object name
-        objectname, _ = objdbm.find_objname(pconst, objname)
+        objectname, _ = objdbm.find_objname(pconst, rawobjname)
     else:
         objectname = pseudo_const.clean_object(rawobjname)
     # -------------------------------------------------------------------------
