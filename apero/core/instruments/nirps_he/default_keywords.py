@@ -175,7 +175,8 @@ KW_OBJDECPM.set(key='OBJDECPM', unit=uu.arcsec / uu.yr,
 
 # define the airmass HEADER key
 KW_AIRMASS = KW_AIRMASS.copy(__NAME__)
-KW_AIRMASS.set(key='AIRMASS', comment='Airmass at start of observation',
+KW_AIRMASS.set(key='HIERARCH ESO TEL AIRM START',
+               comment='Airmass at start of observation',
                group='raw')
 
 # define the weather tower temperature HEADER key
