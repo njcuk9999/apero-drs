@@ -26,11 +26,11 @@ INSTRUMENT.value = 'NIRPS_HA'
 
 # Defines the longitude West is negative
 OBS_LONG = OBS_LONG.copy(__NAME__)
-OBS_LONG.value = -29.261165622
+OBS_LONG.value = -70.731330408
 
 #  Defines the latitude North (deg)
 OBS_LAT = OBS_LAT.copy(__NAME__)
-OBS_LAT.value = -70.731330408
+OBS_LAT.value = -29.261165622
 
 #  Defines the CFHT altitude (m)
 OBS_ALT = OBS_ALT.copy(__NAME__)
