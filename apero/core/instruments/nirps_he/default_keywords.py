@@ -50,8 +50,8 @@ KW_RDNOISE.set(key='HIERARCH ESO DET OUT1 RON',
 # define the gain HEADER key (used to get value only)
 KW_GAIN = KW_GAIN.copy(__NAME__)
 KW_GAIN.set(key='HIERARCH ESO DET CHIP1 GAIN',
-            comment='Amplifier gain (electrons/ADU)', combine_method='mean',
-            group='raw')
+            comment='[adu/e-] Conversion electrons to ADU',
+            combine_method='mean', group='raw')
 
 # define the exposure time HEADER key (used to get value only)
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
@@ -144,12 +144,12 @@ KW_RAW_DPRCATG.set(key='HIERARCH ESO DPR CATG', comment='Observation category',
 # -----------------------------------------------------------------------------
 # define the observation ra HEADER key
 KW_OBJRA = KW_OBJRA.copy(__NAME__)
-KW_OBJRA.set(key='RA_DEG', unit=uu.deg, comment='Target right ascension',
+KW_OBJRA.set(key='RA', unit=uu.deg, comment='Target right ascension',
              group='raw')
 
 # define the observation dec HEADER key
 KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
-KW_OBJDEC.set(key='DEC_DEG', unit=uu.deg, comment='Target declination ',
+KW_OBJDEC.set(key='DEC', unit=uu.deg, comment='Target declination ',
               group='raw')
 
 # define the observation name
