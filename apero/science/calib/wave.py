@@ -1179,7 +1179,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     wave_m[bad] = np.nan
     # calculate the difference
     diffpix = pixel_m - list_pixels
-    diffvelo = speed_of_light_ms * ( 1 - (wave_m/list_waves))
+    diffvelo = speed_of_light_ms * (1 - (wave_m/list_waves))
     # ----------------------------------------------------------------------
     # Plot the expected lines vs measured line positions
     # ----------------------------------------------------------------------
@@ -1713,6 +1713,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # recalculate mean to error ratio
             mean2error = np.abs(mean_hc_vel / err_hc_vel)
             # update last coefficient of the cavity fit
+            cavity = np.array(cavity)
             cavity[-1] = cavity[-1] * (1 + mean_hc_vel / speed_of_light_ms)
         # else update the cavity
         else:
@@ -1860,7 +1861,7 @@ def wprop_pixel_wave_shift(wprops: ParamDict, offset: float = 0.0,
     # loop around each order
     for order_num in range(nbo):
         xx = np.arange(nbpix)
-        wave = np.polyval(coeffs[order_num][::-1],xx)
+        wave = np.polyval(coeffs[order_num][::-1], xx)
         xx2 = (xx + offset) * scale
         fit2 = np.polyfit(xx2, wave, deg)
         wavemap[order_num] = np.polyval(fit2, xx)
@@ -1877,8 +1878,6 @@ def wprop_pixel_wave_shift(wprops: ParamDict, offset: float = 0.0,
             wprops1.set_source(key, wprops.sources[key])
     # return the new wprops shifted
     return wprops1
-
-
 
 
 def process_fibers(params: ParamDict, recipe: DrsRecipe,
@@ -3144,7 +3143,7 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
     infile.add_hkey('KW_WFP_STEP', value=props['WFP_STEP'])
     # add some other wave keys
     infile.add_hkey_1d('KW_CAVITY_WIDTH', values=props['CAVITY'],
-                         dim1name='coeffs')
+                       dim1name='coeffs')
     infile.add_hkey('KW_CAVITY_DEG', value=props['CAVITY_DEG'])
     infile.add_hkey('KW_WAVE_MEANHC', value=props['MEAN_HC_VEL'])
     infile.add_hkey('KW_WAVE_EMEANHC', value=props['ERR_HC_VEL'])
@@ -3158,6 +3157,7 @@ def add_wave_keys_hdr(params: ParamDict, header: drs_fits.Header,
     Add wave keys to header - this should only be used when add_wave_keys
     cannot be used (i.e. updating additional extensions headers
 
+    :param params: ParamDict, the parameter dictionary of constants
     :param header: drs_fits.Header - fits header
     :param props:  ParamDict, the parameter dictionary of wave data
 
