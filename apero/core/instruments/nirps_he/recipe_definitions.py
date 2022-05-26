@@ -175,6 +175,7 @@ apero_pp_master.instrument = __INSTRUMENT__
 apero_pp_master.in_block_str = 'raw'
 apero_pp_master.out_block_str = 'red'
 apero_pp_master.extension = 'fits'
+apero_pp_master.master = True
 apero_pp_master.description = textentry('PPMASTER_DESC')
 apero_pp_master.epilog = textentry('PPMASTER_EXAMPLE')
 apero_pp_master.recipe_type = 'recipe'
