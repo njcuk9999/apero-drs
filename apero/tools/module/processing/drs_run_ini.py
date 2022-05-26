@@ -51,8 +51,8 @@ textentry = lang.textentry
 # define default master dir
 DEFAULT_MASTER_OBSDIR = dict()
 DEFAULT_MASTER_OBSDIR['SPIROU'] = '2020-08-31'
-DEFAULT_MASTER_OBSDIR['NIRPS_HA'] = 'm20210605'
-DEFAULT_MASTER_OBSDIR['NIRPS_HE'] = 'm20210605'
+DEFAULT_MASTER_OBSDIR['NIRPS_HA'] = '2022-05-17'
+DEFAULT_MASTER_OBSDIR['NIRPS_HE'] = '2022-05-17'
 # define default number of cores
 DEFAULT_CORES = 5
 # define relative output path

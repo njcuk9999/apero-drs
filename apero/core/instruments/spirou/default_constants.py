@@ -1459,11 +1459,11 @@ WAVEREF_HC_GUESS_EWID.author = base.AUTHORS['EA']
 
 # Define the fiber offset (in pixels) away from master fiber
 WAVE_FIBER_OFFSET_MOD = WAVE_FIBER_OFFSET_MOD.copy(__NAME__)
-WAVE_FIBER_OFFSET_MOD.value = '{A:0.0, B:0.0}'
+WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":0.0}'
 
 # Define the fiber scale factor from master fiber
 WAVE_FIBER_SCALE_MOD = WAVE_FIBER_SCALE_MOD.copy(__NAME__)
-WAVE_FIBER_SCALE_MOD.value = '{A:1.0, B:1.0}'
+WAVE_FIBER_SCALE_MOD.value = '{"A":1.0, "B":1.0}'
 
 # =============================================================================
 # CALIBRATION: WAVE RESOLUTION MAP SETTINGS
