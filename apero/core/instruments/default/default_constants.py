@@ -160,7 +160,7 @@ __all__ = [
     'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
     'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
     'WAVEREF_FP_NLOW', 'WAVEREF_FP_NHIGH', 'WAVEREF_FP_POLYINV',
-    'WAVEREF_HC_GUESS_EWID',
+    'WAVEREF_HC_GUESS_EWID', 'WAVE_FIBER_OFFSET_MOD', 'WAVE_FIBER_SCALE_MOD',
     # wave resolution settings
     'WAVE_RES_MAP_ORDER_BINS', 'WAVE_RES_MAP_SPATIAL_BINS',
     'WAVE_RES_MAP_FILTER_SIZE', 'WAVE_RES_VELO_CUTOFF1',
@@ -2603,6 +2603,18 @@ WAVEREF_HC_GUESS_EWID = Const('WAVEREF_HC_GUESS_EWID', value=None, dtype=float,
                               source=__NAME__, minimum=0, group=cgroup,
                               description=('define the guess HC exponetial '
                                            'width [pixels]'))
+
+# Define the fiber offset (in pixels) away from master fiber
+WAVE_FIBER_OFFSET_MOD = Const('WAVE_FIBER_OFFSET_MOD', value=None, dtype=str,
+                              source=__NAME__, group=cgroup,
+                              description='Define the fiber offset (in pixels) '
+                                          'away from master fiber')
+
+# Define the fiber scale factor from master fiber
+WAVE_FIBER_SCALE_MOD = Const('WAVE_FIBER_SCALE_MOD', value=None, dtype=str,
+                             source=__NAME__, group=cgroup,
+                             description='Define the fiber scale factor '
+                                         'from master fiber')
 
 # =============================================================================
 # CALIBRATION: WAVE RESOLUTION MAP SETTINGS

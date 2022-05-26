@@ -3911,13 +3911,13 @@ def plot_waveref_expected(plotter: Plotter, graph: Graph,
     # add title (with or without iteration)
     if iteration is not None:
         if isinstance(iteration, int) or isinstance(iteration, float):
-            title = 'Pixel difference Fiber {0} Type {1} (Iteration = {2})'
+            title = 'Velocity difference Fiber {0} Type {1} (Iteration = {2})'
         else:
-            title = 'Pixel difference Fiber {0} Type {1} ({2})'
+            title = 'Velocity difference Fiber {0} Type {1} ({2})'
     else:
-        title = 'Pixel difference Fiber {0} Type {1}'
+        title = 'Velocity difference Fiber {0} Type {1}'
     # set labels
-    frame.set(xlabel='Wavelength [nm]', ylabel='Pixel difference',
+    frame.set(xlabel='Wavelength [nm]', ylabel='Velocity difference [m/s]',
               title=title.format(fiber, fibtype, iteration))
     # ------------------------------------------------------------------
     # update filename (adding order_num to end)

@@ -1179,12 +1179,13 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     wave_m[bad] = np.nan
     # calculate the difference
     diffpix = pixel_m - list_pixels
+    diffvelo = speed_of_light_ms * ( 1 - (wave_m/list_waves))
     # ----------------------------------------------------------------------
     # Plot the expected lines vs measured line positions
     # ----------------------------------------------------------------------
     # debug plot expected lines vs measured positions
     recipe.plot('WAVEREF_EXPECTED', orders=list_orders, wavemap=list_waves,
-                diff=diffpix, fiber=fiber, nbo=nbo, fibtype=fibtype,
+                diff=diffvelo, fiber=fiber, nbo=nbo, fibtype=fibtype,
                 iteration=iteration)
 
     # # TODO: move to plotting recipe or remove?
@@ -1620,7 +1621,6 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     #  3. We want to fit only the achromatic but don't provide a cavity.
     #     This is bad, we cannot change the achromatic term only if we don't
     #     have the chromatic terms. This produces and error
-
     if not fit_achromatic and fit_cavity:
         #  Scenario 1. This is a master night AB, we do not want an achromatic
         #              fit and all  coefficients should be fitted
@@ -1837,6 +1837,50 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     return wprops
 
 
+def wprop_pixel_wave_shift(wprops: ParamDict, offset: float = 0.0,
+                           scale: float = 1.0) -> ParamDict:
+    """
+    Shift a wave solution parameter dictionary by a given offset and scale
+    factor
+
+    :param wprops:
+    :param offset:
+    :param scale:
+    :return:
+    """
+    # deal with no offset or scale
+    if offset == 0.0 and scale == 1.0:
+        return wprops
+    # extract values out that we need to use
+    deg = wprops['DEG']
+    nbo = wprops['NBO']
+    nbpix = wprops['RES_NBPIX']
+    coeffs = np.array(wprops['COEFFS'])
+    wavemap = np.array(wprops['WAVEMAP'])
+    # loop around each order
+    for order_num in range(nbo):
+        xx = np.arange(nbpix)
+        wave = np.polyval(coeffs[order_num][::-1],xx)
+        xx2 = (xx + offset) * scale
+        fit2 = np.polyfit(xx2, wave, deg)
+        wavemap[order_num] = np.polyval(fit2, xx)
+        coeffs[order_num] = fit2[::-1]
+    # create new wprops
+    wprops1 = ParamDict()
+    wprops1['COEFFS'] = coeffs
+    wprops1['WAVEMAP'] = wavemap
+    # deep copy all other keys
+    for key in wprops:
+        if key not in wprops1:
+            # deep copy this value
+            wprops1[key] = deepcopy(wprops[key])
+            wprops1.set_source(key, wprops.sources[key])
+    # return the new wprops shifted
+    return wprops1
+
+
+
+
 def process_fibers(params: ParamDict, recipe: DrsRecipe,
                    mprops: ParamDict, fp_outputs: Dict[str, DrsFitsFile],
                    hc_outputs: Dict[str, DrsFitsFile], fit_cavity: bool,
@@ -1865,6 +1909,9 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
     # get wave master file (controller fiber)
     master_fiber = pcheck(params, 'WAVE_MASTER_FIBER', func=func_name)
     plot_order = pcheck(params, 'WAVE_FIBER_COMP_PLOT_ORD', func=func_name)
+    # get the scale and offset modifiers
+    fiber_offset = params.dictp('WAVE_FIBER_OFFSET_MOD', dtype=float)
+    fiber_scale = params.dictp('WAVE_FIBER_SCALE_MOD', dtype=float)
     # get the cavity file
     cavity = mprops['CAVITY']
     # get the master fiber lines
@@ -1872,6 +1919,7 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
     # mfpl = mprops['FPLINES']
     # get the fiber types from a list parameter (or from inputs)
     fiber_types = drs_image.get_fiber_types(params)
+
     # loop around fibers
     for fiber in fiber_types:
         # log that we are processing fiber
@@ -1889,12 +1937,18 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
             solutions[fiber] = mprops
             continue
         # ---------------------------------------------------------------------
+        # deal with having to shift the master wave sol (for large difference
+        #    between fibers)
+        offset = fiber_offset[fiber]
+        scale = fiber_scale[fiber]
+        mprops1 = wprop_pixel_wave_shift(mprops, offset=offset, scale=scale)
+        # ---------------------------------------------------------------------
         # generate the hc reference lines
-        hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=mprops['WAVEMAP'],
+        hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=mprops1['WAVEMAP'],
                       iteration='1 fiber {0}'.format(fiber))
         hclines = calc_wave_lines(params, recipe, **hcargs)
         # generate the fp reference lines
-        fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=mprops['WAVEMAP'],
+        fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=mprops1['WAVEMAP'],
                       cavity_poly=cavity, iteration='1 fiber {0}'.format(fiber))
         fplines = calc_wave_lines(params, recipe, **fpargs)
         # ---------------------------------------------------------------------
