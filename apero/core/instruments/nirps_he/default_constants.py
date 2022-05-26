@@ -1394,11 +1394,11 @@ WAVEREF_HC_GUESS_EWID.author = base.AUTHORS['EA']
 
 # Define the fiber offset (in pixels) away from master fiber
 WAVE_FIBER_OFFSET_MOD = WAVE_FIBER_OFFSET_MOD.copy(__NAME__)
-WAVE_FIBER_OFFSET_MOD.value = '{A:0.0, B:-24.0}'
+WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":-24.0}'
 
 # Define the fiber scale factor from master fiber
 WAVE_FIBER_SCALE_MOD = WAVE_FIBER_SCALE_MOD.copy(__NAME__)
-WAVE_FIBER_SCALE_MOD.value = '{A:1.0, B:1.0}'
+WAVE_FIBER_SCALE_MOD.value = '{"A":1.0,"B":1.0}'
 
 # =============================================================================
 # CALIBRATION: WAVE RESOLUTION MAP SETTINGS
@@ -1532,10 +1532,12 @@ WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
 
 # define the quality control threshold from RV of CCF FP between master
 #    fiber and other fibers, above this limit fails QC [m/s]
+#  For HE there is an offset between A and B - this will be a high value
 # TODO: We should really think about this a bit more
 WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
 # TODO: address this later - should be much lower
-WAVE_CCF_RV_THRES_QC.value = 20.0    # 0.5 (spirou value)
+WAVE_CCF_RV_THRES_QC.value = 50000.0    # 0.5 (spirou value)
+WAVE_CCF_RV_THRES_QC.author = base.AUTHORS['EA']
 
 # TODO: Sort out wave constants below here
 # =============================================================================

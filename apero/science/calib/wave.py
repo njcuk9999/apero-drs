@@ -1854,7 +1854,7 @@ def wprop_pixel_wave_shift(wprops: ParamDict, offset: float = 0.0,
     # extract values out that we need to use
     deg = wprops['DEG']
     nbo = wprops['NBO']
-    nbpix = wprops['RES_NBPIX']
+    nbpix = wprops['WAVEMAP'].shape[1]
     coeffs = np.array(wprops['COEFFS'])
     wavemap = np.array(wprops['WAVEMAP'])
     # loop around each order
