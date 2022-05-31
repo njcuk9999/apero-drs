@@ -720,6 +720,10 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     test_run_nirps_ha.run_default = False
     test_run_nirps_ha.modify('TEST_RUN', True)
     run_files.append(test_run_nirps_ha)
+    # helios run
+    helios_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'helios_run')
+    helios_nirps_ha.append_sequence('helios_seq')
+    run_files.append(helios_nirps_ha)
     # batch run
     # batch_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'batch_run')
     # batch_run_nirps_ha.add_sequence_as_command('limited_seq')
@@ -828,6 +832,10 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     test_run_nirps_he.run_default = False
     test_run_nirps_he.modify('TEST_RUN', True)
     run_files.append(test_run_nirps_he)
+    # helios run
+    helios_nirps_he = RunIniFile(params, 'NIRPS_HE', 'helios_run')
+    helios_nirps_he.append_sequence('helios_seq')
+    run_files.append(helios_nirps_he)
     # batch run
     # batch_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'batch_run')
     # batch_run_nirps_he.add_sequence_as_command('limited_seq')
