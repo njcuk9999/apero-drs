@@ -902,7 +902,7 @@ apero_mk_tellu.set_outputs(TELLU_CONV=files.out_tellu_conv,
                            TELLU_PCLEAN=files.out_tellu_pclean)
 apero_mk_tellu.set_debug_plots('MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2',
                                'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
-                               'TELLUP_CLEAN_OH')
+                               'TELLUP_CLEAN_OH', 'FTELLU_RECON_SPLINE2')
 apero_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX',
                                  'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
 apero_mk_tellu.set_arg(pos=0, **obs_dir)
