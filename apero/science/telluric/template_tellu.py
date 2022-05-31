@@ -317,11 +317,18 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
                                                         **bkwargs))
             b_cols['SHAPELTIME'].append(infile.get_hkey('KW_CDTSHAPEL',
                                                         **bkwargs))
-            # add the thermal file and thermal time (MJDMID)
-            b_cols['THERMFILE'].append(infile.get_hkey('KW_CDTTHERMAL',
-                                                       **bkwargs))
-            b_cols['THERMTIME'].append(infile.get_hkey('KW_CDTTHERMAL',
-                                                       **bkwargs))
+            # add the thermal file
+            cdb_thermal = infile.get_hkey('KW_CDBTHERMAL', **bkwargs)
+            # can be None if no thermal correction done
+            if cdb_thermal is None:
+                cdb_thermal = 'None'
+            b_cols['THERMFILE'].append(cdb_thermal)
+            # add the thermal time (MJDMID)
+            cdt_thermal = infile.get_hkey('KW_CDTTHERMAL', **bkwargs)
+            # can be None if no thermal correction done
+            if cdt_thermal is None:
+                cdt_thermal = 0.0
+            b_cols['THERMTIME'].append(cdt_thermal)
             # add the wave file and wave time (MJDMID)
             b_cols['WAVEFILE'].append(os.path.basename(wprops['WAVEFILE']))
             b_cols['WAVETIME'].append(wprops['WAVETIME'])
@@ -710,11 +717,18 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
                                                         **bkwargs))
             b_cols['SHAPELTIME'].append(infile.get_hkey('KW_CDTSHAPEL',
                                                         **bkwargs))
-            # add thermal file and time
-            b_cols['THERMFILE'].append(infile.get_hkey('KW_CDBTHERMAL',
-                                                       **bkwargs))
-            b_cols['THERMTIME'].append(infile.get_hkey('KW_CDTTHERMAL',
-                                                       **bkwargs))
+            # add the thermal file
+            cdb_thermal = infile.get_hkey('KW_CDBTHERMAL', **bkwargs)
+            # can be None if no thermal correction done
+            if cdb_thermal is None:
+                cdb_thermal = 'None'
+            b_cols['THERMFILE'].append(cdb_thermal)
+            # add the thermal time (MJDMID)
+            cdt_thermal = infile.get_hkey('KW_CDTTHERMAL', **bkwargs)
+            # can be None if no thermal correction done
+            if cdt_thermal is None:
+                cdt_thermal = 0.0
+            b_cols['THERMTIME'].append(cdt_thermal)
             # add wave file and time
             b_cols['WAVEFILE'].append(infile.get_hkey('KW_CDBWAVE', **bkwargs))
             b_cols['WAVETIME'].append(infile.get_hkey('KW_CDTWAVE', **bkwargs))
@@ -932,7 +946,7 @@ def mk_template_qc(params, qc_params, fail_msg=None):
 def mk_template_summary(recipe, params, cprops, template_file, qc_params):
     # count number of files
     nfiles = len(cprops['BIG_COLS']['RowNum'])
-    temp_hash = template_file.get_hkey('KW_MKTEMP_HASH')
+    temp_hash = template_file.get_hkey('KW_MKTEMP_HASH', dtype=str)
     berv_cov = template_file.get_hkey('KW_MKTEMP_BERV_COV')
     min_berv_cov = template_file.get_hkey('KW_MKTEMP_BERV_COV_MIN')
     # add stats
