@@ -46,8 +46,8 @@ No description set
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     --fpfiles[FILE:FP_FP] // SHAPE_FPFILES_HELP
-     --hcfiles[FILE:HCONE_HCONE] // SHAPE_HCFILES_HELP
+     --fpfiles[FILE:FP_FP] // Current allowed types: FP_FP
+     --hcfiles[FILE:HCONE_HCONE] // Current allowed types: HC_HC
 
 
 ********************************************************************************
@@ -58,18 +58,18 @@ No description set
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --badpixfile[FILE:BADPIX] // BADFILE_HELP
-     --badcorr[True/False] // DOBAD_HELP
-     --backsub[True/False] // BACKSUB_HELP
-     --combine[True/False] // COMBINE_HELP
-     --darkfile[FILE:DARKM] // DARKFILE_HELP
-     --darkcorr[True/False] // DODARK_HELP
-     --flipimage[None,x,y,both] // FLIPIMAGE_HELP
-     --fluxunits[ADU/s,e-] // FLUXUNITS_HELP
-     --locofile[FILE:LOC_LOCO] // LOCOFILE_HELP
+     --badpixfile[FILE:BADPIX] // [STRING] Define a custom file to use for bad pixel correction. Checks for an absolute path and then checks directory
+     --badcorr[True/False] // [BOOLEAN] Whether to correct for the bad pixel file
+     --backsub[True/False] // [BOOLEAN] Whether to do background subtraction
+     --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
+     --darkfile[FILE:DARKM] // [STRING] The Dark file to use (CALIBDB=DARKM)
+     --darkcorr[True/False] // [BOOLEAN] Whether to correct for the dark file
+     --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
+     --fluxunits[ADU/s,e-] // [STRING] Output units for flux
+     --locofile[FILE:LOC_LOCO] // [STRING] Sets the LOCO file used to get the coefficients (CALIBDB=LOC_{fiber})
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --resize[True/False] // RESIZE_HELP
-     --fpmaster[FILE:MASTER_FP] // SHAPE_FPMASTER_HELP
+     --resize[True/False] // [BOOLEAN] Whether to resize image
+     --fpmaster[FILE:MASTER_FP] // [STRING] Define a custom file to use for the FP master (skips the FP master step) - this file must have been produced by a previous run of cal_shape_master
 
 
 ********************************************************************************

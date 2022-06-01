@@ -101,25 +101,28 @@ def __main__(recipe, params):
             WLOG(params, 'info', 'Processing {0}'.format(instrument),
                  colour='magenta')
             WLOG(params, '', params['DRS_HEADER'], colour='magenta')
-        # re-set the instrument
-        params.set('INSTRUMENT', instrument)
+        # re-load params for this instrument
+        iparams = constants.load(instrument=instrument)
+        # constants.load sets default to None we want this back to default
+        if instrument == 'default':
+            iparams.set('INSTRUMENT', instrument)
         # re-get params and recipe
         recipe.reload(instrument)
         # ---------------------------------------------------------------------
         # deal with documenting file definitions
         if run_filedef:
             # get file definitions
-            drs_documentation.compile_file_definitions(params, recipe)
+            drs_documentation.compile_file_definitions(iparams, recipe)
         # ---------------------------------------------------------------------
         # deal with documenting file definitions
         if run_recipedef:
             # get file definitions
-            drs_documentation.compile_recipe_definitions(params, recipe)
+            drs_documentation.compile_recipe_definitions(iparams, recipe)
         # ---------------------------------------------------------------------
         # deal with documenting the recipe sequences
         if run_recipeseq:
             # get the recipe sequences
-            drs_documentation.compile_recipe_sequences(params, recipe)
+            drs_documentation.compile_recipe_sequences(iparams, recipe)
     # ---------------------------------------------------------------------
     # get mode
     mode = params['INPUTS']['MODE']

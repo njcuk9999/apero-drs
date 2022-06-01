@@ -53,7 +53,7 @@ class BlockPath:
     argname: str = None
 
     def __init__(self, params: ParamDict, name: str, key: str,
-                 indexing: bool, logging: bool):
+                 indexing: bool, logging: bool, check: bool = True):
         """
         Construct the block path
 
@@ -63,12 +63,13 @@ class BlockPath:
                     stored
         :param indexing: bool, if True this block is indexed
         :param logging: bool, if True this block is logged
+        :param check: if True raises error when path does not exist
         """
         # convert block path to real path (remove symbolic links)
         try:
             block_path = params[key]
             # check that block path exists
-            if not os.path.exists(block_path):
+            if not os.path.exists(block_path) and check:
                 emsg = 'BlockPathError: Key {0} does not exist\n\tPath={1}'
                 eargs = [key, params[key]]
 
@@ -134,14 +135,15 @@ class RawPath(BlockPath):
     key: str = 'DRS_DATA_RAW'
     argname: str = 'rawdir'
 
-    def __init__(self, params):
+    def __init__(self, params, check: bool=True):
         """
         Construct the raw block path (input data)
 
         :param params: ParamDict, the parameter dictionary of constants
+        :param check: if True raises error when path does not exist
         """
         super().__init__(params, self.name, self.key, indexing=True,
-                         logging=False)
+                         logging=False, check=check)
         self.fileset = 'raw_file'
         self.has_obs_dirs = True
 
@@ -153,14 +155,15 @@ class TmpPath(BlockPath):
     key: str = 'DRS_DATA_WORKING'
     argname: str = 'tmpdir'
 
-    def __init__(self, params):
+    def __init__(self, params, check: bool=True):
         """
-        Construct the tmp block path (preprocessing data)
+        Construct the raw block path (input data)
 
         :param params: ParamDict, the parameter dictionary of constants
+        :param check: if True raises error when path does not exist
         """
         super().__init__(params, self.name, self.key, indexing=True,
-                         logging=True)
+                         logging=True, check=check)
         self.fileset = 'pp_file'
         self.has_obs_dirs = True
 
@@ -172,14 +175,15 @@ class ReducedPath(BlockPath):
     key: str = 'DRS_DATA_REDUC'
     argname: str = 'reddir'
 
-    def __init__(self, params):
+    def __init__(self, params, check: bool=True):
         """
-        Construct the reduced block path (reduced data)
+        Construct the raw block path (input data)
 
         :param params: ParamDict, the parameter dictionary of constants
+        :param check: if True raises error when path does not exist
         """
         super().__init__(params, self.name, self.key, indexing=True,
-                         logging=True)
+                         logging=True, check=check)
         self.has_obs_dirs = True
         self.fileset = 'red_file'
 
@@ -191,14 +195,15 @@ class CalibPath(BlockPath):
     key: str = 'DRS_CALIB_DB'
     argname: str = 'calibdir'
 
-    def __init__(self, params):
+    def __init__(self, params, check: bool=True):
         """
-        Construct the calibration block path (calibration data)
+        Construct the raw block path (input data)
 
         :param params: ParamDict, the parameter dictionary of constants
+        :param check: if True raises error when path does not exist
         """
         super().__init__(params, self.name, self.key, indexing=False,
-                         logging=False)
+                         logging=False, check=check)
         self.has_obs_dirs = False
         self.fileset = 'calib_file'
 
@@ -210,14 +215,15 @@ class TelluPath(BlockPath):
     key: str = 'DRS_TELLU_DB'
     argname: str = 'telludir'
 
-    def __init__(self, params):
+    def __init__(self, params, check: bool=True):
         """
-        Construct the telluric block path (telluric data)
+        Construct the raw block path (input data)
 
         :param params: ParamDict, the parameter dictionary of constants
+        :param check: if True raises error when path does not exist
         """
         super().__init__(params, self.name, self.key, indexing=False,
-                         logging=False)
+                         logging=False, check=check)
         self.has_obs_dirs = False
         self.fileset = 'tellu_file'
 
@@ -229,15 +235,16 @@ class OutPath(BlockPath):
     key: str = 'DRS_DATA_OUT'
     argname: str = 'outdir'
 
-    def __init__(self, params):
+    def __init__(self, params, check: bool=True):
         """
-        Construct the postprocess path (post processed data)
+        Construct the raw block path (input data)
 
         :param params: ParamDict, the parameter dictionary of constants
+        :param check: if True raises error when path does not exist
         """
         # TODO: no PARAM_SNAPSHOT --> can't redo log
         super().__init__(params, self.name, self.key, indexing=True,
-                         logging=False)
+                         logging=False, check=check)
         self.has_obs_dirs = True
         self.fileset = 'out_file'
 
@@ -249,14 +256,15 @@ class AssetPath(BlockPath):
     key: str = 'DRS_DATA_ASSETS'
     argname: str = 'assetsdir'
 
-    def __init__(self, params):
+    def __init__(self, params, check: bool=True):
         """
-        Construct the assets block path (default data supplied with apero)
+        Construct the raw block path (input data)
 
         :param params: ParamDict, the parameter dictionary of constants
+        :param check: if True raises error when path does not exist
         """
         super().__init__(params, self.name, self.key, indexing=False,
-                         logging=False)
+                         logging=False, check=check)
         self.has_obs_dirs = False
 
 
@@ -267,14 +275,15 @@ class PlotPath(BlockPath):
     key: str = 'DRS_DATA_PLOT'
     argname: str = 'plotdir'
 
-    def __init__(self, params):
+    def __init__(self, params, check: bool=True):
         """
-        Construct the plot block path (default data supplied with apero)
+        Construct the raw block path (input data)
 
         :param params: ParamDict, the parameter dictionary of constants
+        :param check: if True raises error when path does not exist
         """
         super().__init__(params, self.name, self.key, indexing=False,
-                         logging=False)
+                         logging=False, check=check)
         self.has_obs_dirs = False
 
 
@@ -285,14 +294,15 @@ class RunPath(BlockPath):
     key: str = 'DRS_DATA_RUN'
     argname: str = 'rundir'
 
-    def __init__(self, params):
+    def __init__(self, params, check: bool=True):
         """
-        Construct the run block path (default data supplied with apero)
+        Construct the raw block path (input data)
 
         :param params: ParamDict, the parameter dictionary of constants
+        :param check: if True raises error when path does not exist
         """
         super().__init__(params, self.name, self.key, indexing=False,
-                         logging=False)
+                         logging=False, check=check)
         self.has_obs_dirs = False
 
 
@@ -303,14 +313,15 @@ class LogPath(BlockPath):
     key: str = 'DRS_DATA_MSG'
     argname: str = 'logdir'
 
-    def __init__(self, params):
+    def __init__(self, params, check: bool=True):
         """
-        Construct the log block path (default data supplied with apero)
+        Construct the raw block path (input data)
 
         :param params: ParamDict, the parameter dictionary of constants
+        :param check: if True raises error when path does not exist
         """
         super().__init__(params, self.name, self.key, indexing=False,
-                         logging=False)
+                         logging=False, check=check)
         self.has_obs_dirs = False
 
 

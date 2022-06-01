@@ -1,1 +1,1 @@
-/data/spirou/drs-bin/apero-drs-spirou-07XXX/apero/recipes/spirou/apero_flat_spirou.py
+/scratch2/spirou/drs-bin/apero-drs-spirou-07XXX/apero/recipes/spirou/apero_flat_spirou.py

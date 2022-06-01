@@ -338,7 +338,8 @@ def base_error(codeid: str, message: str, level: str = 'error',
 #        2. using somewhere override function cannot be used
 # =============================================================================
 def base_get_relative_folder(package: Union[None, str],
-                             folder: Union[str, Path]) -> str:
+                             folder: Union[str, Path],
+                             required: bool = True) -> str:
     """
     BASE FUNCTION OVERRIDED IN apero.base.drs_break
 
@@ -347,6 +348,8 @@ def base_get_relative_folder(package: Union[None, str],
 
     :param package: string, the python package name
     :param folder: string, the relative path of the config folder
+    :param required: bool, if True raises an exception if absolute path does
+                     not exist
 
     :return data: string, the absolute path and filename of the default config
                   file
@@ -372,6 +375,9 @@ def base_get_relative_folder(package: Union[None, str],
         raise DrsBaseError('00-008-00001', arguments=eargs)
     # test that folder exists
     if not os.path.exists(data_folder):
+        # deal with folder not being required
+        if not required:
+            return ''
         # raise exception
         eargs = [os.path.basename(data_folder), os.path.dirname(data_folder)]
         raise DrsBaseError('00-003-00005', arguments=eargs)

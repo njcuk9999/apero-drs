@@ -1,0 +1,12 @@
+ORDER,RECIPE,SHORTNAME,RECIPE KIND,MASTER RECIPE,FILTERS,ARGS
+1,apero_preprocess_nirps_ha.py,PP_CAL,pre-cal,No,KW_RAW_DPRCATG: CALIB,
+2,apero_preprocess_nirps_ha.py,PP_SCI,pre-sci,No,KW_OBJNAME: SCIENCE_TARGETS,
+3,apero_preprocess_nirps_ha.py,PP_TEL,pre-tel,No,KW_OBJNAME: TELLURIC_TARGETS,
+4,apero_preprocess_nirps_ha.py,PP_HC1HC1,pre-hchc,No,--,{files}=[RAW_HCONE_HCONE]
+5,apero_preprocess_nirps_ha.py,PP_FPFP,pre-fpfp,No,--,{files}=[RAW_FP_FP]
+6,apero_preprocess_nirps_ha.py,PP_FF,pre-ff,No,--,{files}=[RAW_FLAT_FLAT]
+7,apero_preprocess_nirps_ha.py,PP_DFP,pre-dfp,No,--,{files}=[RAW_DARK_FP]
+8,apero_preprocess_nirps_ha.py,PP_SKY,pre-sky,No,--,{files}=[RAW_DARK_DARK_SKY]
+9,apero_preprocess_nirps_ha.py,PP_LFC,pre-lfc,No,--,{files}=[RAW_LFC_LFC]
+10,apero_preprocess_nirps_ha.py,PP_LFCFP,pre-lfcfp,No,--,{files}=[RAW_LFC_FP]
+11,apero_preprocess_nirps_ha.py,PP_FPLFC,pre-fplfc,No,--,{files}=[RAW_FP_LFC]

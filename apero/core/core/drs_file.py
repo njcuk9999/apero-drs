@@ -119,7 +119,8 @@ class DrsPath:
                  block_path: Union[str, None] = None,
                  obs_dir: Union[str, None] = None,
                  basename: Union[str, None] = None,
-                 _update: bool = True):
+                 _update: bool = True,
+                 check: bool = True):
         """
         Class for controlling paths in the drs (and sorting them into raw,
         tmp, reduced etc)
@@ -156,22 +157,24 @@ class DrsPath:
         #            block_kind, obs_dir, basename set
         self.path_kind = None
         # set up the directories
-        self.blocks = self.get_blocks(params)
+        self.blocks = self.get_blocks(params, check=check)
         # update kind dir and sub dir
         if _update:
             self.update()
 
     @staticmethod
-    def get_blocks(params: ParamDict) -> List[BlockPath]:
+    def get_blocks(params: ParamDict, check: bool = True) -> List[BlockPath]:
         """
         Definition of blocks (return as list)
 
-        :param params:
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True raises exception when path does not
+                      exist on disk
         :return:
         """
         blocks = []
         for block in pathdef.BLOCKS:
-            blocks.append(block(params))
+            blocks.append(block(params, check=check))
 
         return blocks
 
