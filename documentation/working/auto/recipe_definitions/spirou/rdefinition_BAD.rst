@@ -46,8 +46,8 @@ No description set
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     --flatfiles[FILE:FLAT_FLAT] // BADPIX_FLATFILE_HELP
-     --darkfiles[FILE:DARK_DARK_TEL,DARK_DARK_INT] // BADPIX_DARKFILE_HELP
+     --flatfiles[FILE:FLAT_FLAT] // Current allowed types: FLAT_FLAT
+     --darkfiles[FILE:DARK_DARK_TEL,DARK_DARK_INT] // Current allowed types: DARK_DARK
 
 
 ********************************************************************************
@@ -58,11 +58,11 @@ No description set
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --combine[True/False] // COMBINE_HELP
-     --flipimage[None,x,y,both] // FLIPIMAGE_HELP
-     --fluxunits[ADU/s,e-] // FLUXUNITS_HELP
+     --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
+     --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
+     --fluxunits[ADU/s,e-] // [STRING] Output units for flux
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --resize[True/False] // RESIZE_HELP
+     --resize[True/False] // [BOOLEAN] Whether to resize image
 
 
 ********************************************************************************

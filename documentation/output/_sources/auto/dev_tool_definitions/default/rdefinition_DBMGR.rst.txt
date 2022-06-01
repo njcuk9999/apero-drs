@@ -59,6 +59,7 @@ No optional arguments
      --importdb[calib,tellu,index,log,object,lang] // Import a csv file into a database
      --join[replace,append] // How to add the csv file to database: append adds all lines to the end of current database, replace removes all previous lines from database. Default is replace.
      --delete // Load up the delete table GUI (MySQL only)
+     --reset // Reset current databases
 
 
 ********************************************************************************

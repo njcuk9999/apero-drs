@@ -46,15 +46,15 @@ No optional arguments
 
 .. code-block:: 
 
-     --cores[INT] // FTELLUDB_CORES
-     --filetype[STRING] // FTELLUDB_FILETYPE
-     --fiber[STRING] // FTELLUDB_FIBER
-     --objname[STRING] // FTELLUDB_OBJNAME
-     --dprtype[STRING] // FTELLUDB_DPRTYPES
+     --cores[INT] // [INTEGER] The number of cores to use
+     --filetype[STRING] // [STRING] optional, the filetype (KW_OUTPUT) to use when processing files
+     --fiber[STRING] // [STRING] optional, the fiber type to use when processing files
+     --objname[STRING] // [STRING] the object name to process (optional if not set will do all non-telluric objects)
+     --dprtype[STRING] // [STRING] the DPRTYPE (i.e. OBJ_FP or OBJ_DARK) used for telluric database. Can be a list (separate by commas)
      --test[True,False,1,0,None] // [BOOLEAN] If True does not process any files just prints an output of what recipes would be run
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --wavefile[FILE:WAVESOL_MASTER,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
+     --wavefile[FILE:WAVESOL_MASTER,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
 
 
 ********************************************************************************

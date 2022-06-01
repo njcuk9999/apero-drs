@@ -49,6 +49,7 @@ No optional arguments
      --mode[timing,qc,error] // Stats mode. For timing statistics use "timing".For quality control statistics use "qc".
      --plog[STRING] // Specify a certain log file (full path)
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --sql[STRING] // specify a SQL WHERE clause to narrow the stats
 
 
 ********************************************************************************

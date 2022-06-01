@@ -165,3 +165,30 @@ Once all targets have been matched (or skipped) the online database is updated
           inconsistencies between large redictions whereby changing a targets astrometrics
           could induce differences between unreduced and already reduced observations).
 
+1.2 APERO naming convenions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+APERO will remove spaces (replace with an underscore)
+APERO will remove "-" and replace with an "M"
+APERO will remove "+" and replace with a "P"
+APERO will force upper case
+
+This means some objects will have poor names or names that are seen as unique when they should not be
+i.e.
+    WASP-107b --> WASPM107B
+
+    WASP107b  --> WASP107B
+
+    WASP 107b --> WASP_107B
+
+    WASP107B --> WASP107B
+
+Therefore during the astrometrics code you have the oppotunity to
+    a. define the name apero will use (any white space, "-", "+" and punctuation will be removed as above)
+    b. add to the aliases (add as many combinations as you feel is necessary to describe the target) i.e. add both WASP 107 and WASP107 and WASP-107
+
+Do not use b, c, d for planets - name by the star, multiple-star-systems use A,B,C,D
+
+.. note:: we do not change the raw file headers so all original object names will be preserved
+          (i.e. with SPIRou "OBJNAME" and "OBJECT" are preserved)
+

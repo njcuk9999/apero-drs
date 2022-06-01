@@ -39,7 +39,7 @@ No schematic set
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     [FILE:EXT_E2DS,EXT_E2DS_FF] // [STRING/STRINGS] A list of fits files to use separated by spaces. MKTELL_FILES_HELP
+     [FILE:EXT_E2DS,EXT_E2DS_FF] // [STRING/STRINGS] A list of fits files to use separated by spaces. Currently  allowed types: E2DS, E2DSFF
 
 
 ********************************************************************************
@@ -50,11 +50,11 @@ No schematic set
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --blazefile[FILE:FF_BLAZE] // BLAZEFILE_HELP
+     --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory (CALIBDB=BADPIX)
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --wavefile[FILE:WAVESOL_MASTER,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
-     --use_template[True/False] // USE_TEMP_HELP
-     --template[FILE:TELLU_TEMP] // TEMPLATE_FILE_HELP
+     --wavefile[FILE:WAVESOL_MASTER,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
+     --use_template[True/False] // Whether to use the template provided from the telluric database
+     --template[FILE:TELLU_TEMP] // Filename of the custom template to use (instead of from telluric database)
 
 
 ********************************************************************************

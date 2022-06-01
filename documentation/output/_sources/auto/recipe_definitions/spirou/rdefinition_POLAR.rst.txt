@@ -58,9 +58,10 @@ No schematic set
      --output[STRING] // Output file
      --output_lsd[STRING] // Output LSD file
      --lsd // Run LSD analysis
-     --blazefile[FILE:FF_BLAZE] // BLAZEFILE_HELP
+     --noqccheck // Do not check quality control of inputs
+     --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory (CALIBDB=BADPIX)
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --wavefile[FILE:WAVESOL_MASTER,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
+     --wavefile[FILE:WAVESOL_MASTER,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
 
 
 ********************************************************************************

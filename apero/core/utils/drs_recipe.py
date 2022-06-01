@@ -306,7 +306,9 @@ class DrsRecipe(object):
             storage['LSOPT'].append('{0} // {1}'.format(key, value))
         # ---------------------------------------------------------------------
         # get output directory
-        drs_path = drs_file.DrsPath(params, block_kind=self.out_block_str)
+        #   we don't use real path so don't check here
+        drs_path = drs_file.DrsPath(params, block_kind=self.out_block_str,
+                                    check=False)
         oargs = [drs_path.get_block().key, drs_path.block_kind]
         storage['OUTDIR'] = '{0} // Default: "{1}" directory'.format(*oargs)
         # get output files
