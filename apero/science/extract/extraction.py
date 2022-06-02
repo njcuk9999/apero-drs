@@ -241,6 +241,15 @@ def extract_blaze_flat(params: ParamDict, eprops: ParamDict, fiber: str,
         blaze[order_num] = blazei
         rms[order_num] = rmsi
     # ----------------------------------------------------------------------
+    # remove outliers within flat field to avoid division by small numbers
+    #   or suspiciously large flat response
+    bad_mask = np.abs(1 - flat) > 0.2
+    # apply bad mask
+    e2ds[bad_mask] = np.nan
+    flat[bad_mask] = np.nan
+    blaze[bad_mask] = np.nan
+    rms[bad_mask] = np.nan
+    # ----------------------------------------------------------------------
     # store extraction properties in parameter dictionary
     eprops['E2DS'] = e2ds
     eprops['RMS'] = rms
@@ -275,7 +284,6 @@ def flat_blaze_correction(eprops: ParamDict, flat: Optional[np.ndarray] = None,
     if 'BLAZE' not in eprops:
         eprops['BLAZE'] = blaze
     # create the e2dsff (flat fielded extraction)
-    # TODO: deal with small number division
     eprops['E2DSFF'] = eprops['E2DS'] / flat
     # return eprops
     return eprops
