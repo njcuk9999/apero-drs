@@ -851,6 +851,23 @@ def percentile_bin(image: np.ndarray, bx: int, by: int,
     # return out image
     return outimage
 
+def get_circular_mask(width: int):
+    """
+    create a circular mask
+
+    :param width: int, the diameter of the circle (and size in x and y of the
+                  mask created)
+    :return:
+    """
+    # start mask off as the indices of a width x width square
+    mask = np.indices([width, width])
+    # move to center on the center of the circle (and square)
+    mask = mask - width//2
+    # define points inside the circle as True, outside as False
+    circle_mask = np.sqrt(mask[0]**2 + mask[1]**2) < width / 2
+    # return the circle mask
+    return circle_mask
+
 
 # =============================================================================
 # Define wave functions

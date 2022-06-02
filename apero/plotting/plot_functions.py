@@ -2688,7 +2688,8 @@ def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
     frames[0].legend(loc=0)
     # add labels
     frames[0].set(xlabel='Wavelength [nm]', ylabel='Cavity length [nm]')
-    frames[1].set(xlabel='Wavelength [nm]', ylabel='Cavity length [nm]')
+    frames[1].set(xlabel='Wavelength [nm]',
+                  ylabel='Model - Obs Cavity length [nm]')
     # set title
     plt.suptitle('Comparison between guess and final cavity length fit. '
                  'Iteration {0}'.format(iteration))

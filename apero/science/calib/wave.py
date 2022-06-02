@@ -1511,8 +1511,10 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # get a temporary wave sol
         wave_tmp = cavity_per_order / ordfp_peak_num
         # ---------------------------------------------------------------------
+        # storage for sigma_hc_res_kms
+        sigma_hc_res_kms = np.nan
         # we find the best cavity length estimate
-        for _ in range(cavity_fit_iterations1):
+        for jt in range(cavity_fit_iterations1):
             # we force the cavity length to lead to a median HC peak position
             # error of zero.
             # we could use a better sigma-clipping, but this is hard with a
@@ -1526,8 +1528,27 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             ohcwave_fit = np.polyval(wave_fit, ordhc_pix_meas)
             # work out the residuals
             med_hc_res = mp.nanmedian(1 - ordhc_wave_ref / ohcwave_fit)
+            # work out a robust sigma of the residuals
+            sigma_hc_res = mp.robust_nanstd(1 - ordhc_wave_ref / ohcwave_fit)
+            # convert to a velocity [km/s]
+            sigma_hc_res_kms = sigma_hc_res * speed_of_light
+            # We only update the cavity length for a given order if the RMS
+            #    of HC lines within that other is small
+            #    (i.e., equivalent to <1/2 pixel)
+            # if sigma_hc_res_kms < params['IMAGE_PIXEL_SIZE']/2:
+
             # update the cavity per order by 1 - the median of the res
             cavity_per_order = cavity_per_order * (1 - med_hc_res)
+
+        # TODO: move to language database
+        msg = '\tVelocity RMS of HC lines relative to catalog: {0:.3f} km/s'
+        WLOG(params, '', msg.format(sigma_hc_res_kms))
+        # do not continue if RMS of HC lines is bad
+        # if sigma_hc_res_kms >= params['IMAGE_PIXEL_SIZE']/2:
+        #     # TODO: move to language database
+        #     msg = 'Skipping Order {0} (velocity RMS of HC lines too high)'
+        #     WLOG(params, '', msg.format(order_num))
+        #     continue
         # ---------------------------------------------------------------------
         # we now have a best-guess of the wavelength solution, we update
         #  the WAVE_MEAS in the FP line list. This will be used to constrain the

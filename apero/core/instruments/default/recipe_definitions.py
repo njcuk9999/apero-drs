@@ -47,6 +47,7 @@ remake_doc = drs_recipe(__INSTRUMENT__)
 req_check = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 run_ini = drs_recipe(__INSTRUMENT__)
+static = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 visulise = drs_recipe(__INSTRUMENT__)
 
@@ -55,7 +56,7 @@ recipes = [astrometric, changelog, database_mgr, explorer,
            get_files, go_recipe, langdb, listing,
            precheck, processing,
            remake_db, remake_doc, req_check, reset, run_ini,
-           stats, validate, visulise]
+           static, stats, validate, visulise]
 
 # =============================================================================
 # Recipe definitions
@@ -444,6 +445,21 @@ run_ini.set_kwarg(name='--instrument', dtype='options', default='None',
                   helpstr='Instrument or instruments to create run.ini '
                           'files for')
 run_ini.description_file = 'apero_run_ini.rst'
+
+# -----------------------------------------------------------------------------
+# apero_static.py
+# -----------------------------------------------------------------------------
+static.name = 'apero_static.py'
+static.shortname = 'STATIC'
+static.instrument = __INSTRUMENT__
+static.description = 'Create static files for APERO instrument(s)'
+static.recipe_type = 'nolog-tool'
+static.recipe_kind = 'admin'
+static.set_kwarg(name='--mode', dtype='options', default='None',
+                  options=['LED_FLAT'],
+                  helpstr='Chooses the static file to create',
+                  required=True)
+static.description_file = 'apero_static.rst'
 
 # -----------------------------------------------------------------------------
 # apero_validate.py
