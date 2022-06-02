@@ -18,6 +18,7 @@ Import rules:
 import numpy as np
 import warnings
 import os
+from scipy.ndimage.morphology import binary_erosion, binary_dilation
 from typing import List, Union, Tuple
 
 from apero.base import base
@@ -703,6 +704,22 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     # ----------------------------------------------------------------------
     # return the out image
     return out_image
+
+
+def expand_badpixelmap(params, bad_pixel_map1):
+
+    # define circular masks for the erosion and dilation of the bad pixels
+    erode_mask = mp.get_circular_mask(5)
+    dilate_mask = mp.get_circular_mask(9)
+    # remove small bad pixels (i.e. pixels with one of the dimensions of
+    #    size = 1)
+    bad_pixel_map2 = binary_erosion(bad_pixel_map1, structure=erode_mask)
+    # expand large bad pixel regions
+    bad_pixel_map2 = binary_dilation(bad_pixel_map2, structure=dilate_mask)
+    # bad pixels are a combination of original map and the expanded region
+    bad_pixel_map3 = bad_pixel_map1 | bad_pixel_map2
+    # return
+    return bad_pixel_map3
 
 
 # =============================================================================

@@ -1118,6 +1118,29 @@ class PseudoConstants:
     # =========================================================================
     # DATABASE SETTINGS
     # =========================================================================
+    def GET_DB_COLS(self, tname: str) -> Union[DatabaseColumns, None]:
+        """
+        Get a DB column definition based on tname (database table name)
+
+        :param tname: str, the database table name
+
+        :return: DatabaseColumn class if valid otherwise None
+        """
+        if tname == 'CALIB':
+            return self.CALIBRATION_DB_COLUMNS()
+        elif tname == 'TELLU':
+            return self.TELLURIC_DB_COLUMNS()
+        elif tname == 'INDEX':
+            return self.INDEX_DB_COLUMNS()
+        elif tname == 'REJECT':
+            return self.REJECT_DB_COLUMNS()
+        elif tname == 'LOG':
+            return self.LOG_DB_COLUMNS()
+        elif tname == 'OBJECT':
+            return self.OBJECT_DB_COLUMNS()
+        else:
+            return None
+
     # noinspection PyPep8Naming
     def CALIBRATION_DB_COLUMNS(self) -> DatabaseColumns:
         """

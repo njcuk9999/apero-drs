@@ -111,13 +111,11 @@ class DatabaseHolder:
         # start database
         database = drs_db.database_wrapper(self.kind, self.path)
         # get unique columns
-        if 'INDEX' in database.tname:
-            # get unique columns
-            idb_cols = self.pconst.INDEX_DB_COLUMNS()
-            ucols = list(idb_cols.unique_cols)
-        elif 'OBJECT' in database.tname:
-            odb_cols = self.pconst.OBJECT_DB_COLUMNS()
-            ucols = list(odb_cols.unique_cols)
+        idb_cols = self.pconst.GET_DB_COLS(database.tname)
+        # if tname was valid we now have a DatabaseColumn class and can get
+        #    unique cols from this
+        if idb_cols is not None:
+            ucols = idb_cols.unique_cols
         else:
             ucols = None
         # print we are saving database
