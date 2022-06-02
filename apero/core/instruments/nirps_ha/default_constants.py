@@ -2004,8 +2004,9 @@ TELLUP_CCF_SCAN_RANGE = TELLUP_CCF_SCAN_RANGE.copy(__NAME__)
 TELLUP_CCF_SCAN_RANGE.value = 50
 
 # define whether to clean OH lines
+# TODO: Turn on OH line cleaning
 TELLUP_CLEAN_OH_LINES = TELLUP_CLEAN_OH_LINES.copy(__NAME__)
-TELLUP_CLEAN_OH_LINES.value = True
+TELLUP_CLEAN_OH_LINES.value = False
 
 # Define the number of bright OH lines that will be individually adjusted
 #     in amplitude. Done only on lines that are at an SNR > 1
@@ -2238,7 +2239,7 @@ MKTEMPLATE_FILETYPE.value = 'TELLU_OBJ'
 
 # the fiber required for input template files
 MKTEMPLATE_FIBER_TYPE = MKTEMPLATE_FIBER_TYPE.copy(__NAME__)
-MKTEMPLATE_FIBER_TYPE.value = 'AB'
+MKTEMPLATE_FIBER_TYPE.value = 'A'
 
 # the source of the input files (either "disk" or "telludb")
 MKTEMPLATE_FILESOURCE = MKTEMPLATE_FILESOURCE.copy(__NAME__)

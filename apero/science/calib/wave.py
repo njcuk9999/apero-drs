@@ -274,7 +274,7 @@ def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
     else:
         wavefile = infile.completecopy(infile)
         # set the file name to the wave file
-        wavefile.filename = wavefile.get_hkey('KW_WAVEFILE')
+        wavefile.filename = wavefile.get_hkey('KW_WAVEFILE', dtype=str)
         # if we have a wave time use it
         if params['KW_WAVETIME'][0] in header:
             wavetime = wavefile.get_hkey('KW_WAVETIME')
@@ -422,7 +422,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
                                  required=False)
     wfp_contrast = wavefile.get_hkey('KW_WFP_CONTRAST', dtype=float,
                                      required=False)
-    wfp_mask = wavefile.get_hkey('KW_WFP_MASK', dtype=float,
+    wfp_mask = wavefile.get_hkey('KW_WFP_MASK', dtype=str,
                                  required=False)
     wfp_lines = wavefile.get_hkey('KW_WFP_LINES', dtype=float,
                                   required=False)

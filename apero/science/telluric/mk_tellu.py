@@ -118,7 +118,7 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     # get values from params
     sigma_cut = params['TELLU_TRANS_MODEL_SIG']
     # get the minimum number of trans files required
-    min_trans_files = len(transtable) // 5
+    min_trans_files = np.max([3, len(transtable) // 5])
     # get vectors from table
     expo_water = transtable['EXPO_H2O']
     expo_others = transtable['EXPO_OTHERS']
@@ -162,12 +162,14 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
             # loop until no point is an outlier beyond "sigma cut" sigma
             while worst_offender > sigma_cut:
                 # get the linear minimization between trans files and our sample
-                amp, recon = mp.linear_minimization(trans_slice, sample)
+                try:
+                    amp, recon = mp.linear_minimization(trans_slice, sample)
+                except:
+                    pass
                 # work out the sigma between trans slice and recon
                 res = trans_slice - recon
                 est_sig = mp.estimate_sigma(res)
                 sigma = res / est_sig
-                num = np.sum(np.isfinite(trans_slice))
                 # re-calculate worst offender
                 worst_pos = mp.nanargmax(sigma)
                 worst_offender = sigma[worst_pos]
@@ -181,6 +183,8 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
                     zero_residual[order_num, ix] = amp[0]
                     expo_water_residual[order_num, ix] = amp[1]
                     expo_others_residual[order_num, ix] = amp[2]
+                # recalculate the size of trans_slice
+                num = np.sum(np.isfinite(trans_slice))
                 # if we have less than the minimum number of points left
                 #   stop here
                 if num < min_trans_files:
