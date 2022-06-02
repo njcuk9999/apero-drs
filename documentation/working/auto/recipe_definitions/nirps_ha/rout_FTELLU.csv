@@ -1,0 +1,10 @@
+name,HDR[DRSOUTID],file type,suffix,basename,fibers,dbname,dbkey,input file
+ABSO_NPY,--,.npy,--,tellu_save.npy,--,--,--,--
+ABSO1_NPY,--,.npy,--,tellu_save1.npy,--,--,--,--
+TELLU_OBJ,TELLU_OBJ,.fits,_e2dsff_tcorr,--,A,telluric,TELLU_OBJ,EXT_E2DS_FF
+SC1D_W_FILE,SC1D_W_FILE,.fits,_s1d_w_tcorr,--,A,--,--,EXT_E2DS_FF
+SC1D_V_FILE,SC1D_V_FILE,.fits,_s1d_v_tcorr,--,A,--,--,EXT_E2DS_FF
+TELLU_RECON,TELLU_RECON,.fits,_e2dsff_recon,--,A,telluric,TELLU_RECON,EXT_E2DS_FF
+RC1D_W_FILE,RC1D_W_FILE,.fits,_s1d_w_recon,--,A,--,--,EXT_E2DS_FF
+RC1D_V_FILE,RC1D_V_FILE,.fits,_s1d_v_recon,--,A,--,--,EXT_E2DS_FF
+TELLU_PCLEAN,TELLU_PCLEAN,.fits,_tellu_pclean,--,A,telluric,TELLU_PCLEAN,EXT_E2DS_FF

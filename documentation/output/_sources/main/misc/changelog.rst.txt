@@ -2,6 +2,151 @@ Changelog
 =========
 
 
+0.7.232 (2022-05-06)
+--------------------
+- Merge remote-tracking branch 'origin/v0.7.228-working' into
+  v0.7.228-working. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.228-working' into
+  v0.7.228-working. [njcuk9999]
+- Replace PandasLikeDatabase with PandasLikeDatabaseDuckDB - speeds up
+  post processing by factor of 5. [njcuk9999]
+- Update date/version/docs/changelog. [Neil Cook]
+
+
+0.7.231 (2022-05-06)
+--------------------
+- `Apero.science.polar.gen_pol.py` - shift correctly all parameters stored
+  in headers of the wave solution. [Neil Cook]
+- Create a `pol_calib` to store shifted blaze and wave + add `WAVE_AB` ad
+  `BLAZE_AB` to p.fits from `pol_calib`. [Neil Cook]
+- Add a binary flag for when wave master is forced. [Neil Cook]
+- `Apero.tools.recipes.bin.apero_database.py` - add a reset database
+  option. [Neil Cook]
+- `Apero.io.drs_path.py` - sort directories and `valid_files`. [Neil Cook]
+
+
+0.7.230 (2022-05-04)
+--------------------
+- `Apero.science.polar.gen_pol.py` - deal with polar failing on orders
+  with all NaN. [njcuk9999]
+- `Mk_template` now bins to avoid loading many images + correct berv
+  coverage. [Neil Cook]
+
+
+0.7.229 (2022-04-29)
+--------------------
+- Apero.data.spirou.databases.reset.calib.csv - uhash must be unique -
+  generate hash for default values. [Neil Cook]
+- `Apero.tools.module.database.manage_database.py` - update database
+  creation with additional unique columns in calib/tellu database. [Neil
+  Cook]
+- Update reset calibration database (need UHASH column) [Neil Cook]
+- `Apero.tools.recipes.bin.apero_explorer.py` - correct getting hash arg.
+  [Neil Cook]
+- `Apero.core.core.drs_misc.py` - do not use nan for doubles in stats.
+  [Neil Cook]
+- `Apero.core.utils.drs_utils.py` - do not use nan for doubles. [Neil
+  Cook]
+- Update date/version/docs/changelog. [Neil Cook]
+
+
+0.7.228 (2022-04-28)
+--------------------
+- Add in PID, PDATE to calibration/telluric database add in RAM/SWAP/CPU
+  column to log database. [Neil Cook]
+- `Apero.recipes.spirou.apero_thermal_spirou.py` - for `DARK_DARK_INT` force
+  wave solution to master. [Neil Cook]
+- `Apero.recipes.*.apero_extract_*.py` - add way to force wave master in
+  extraction + update `recipe_definitions.py`. [Neil Cook]
+
+
+0.7.227 (2022-04-26)
+--------------------
+- `Documentation.working.resources.default.descriptions.apero_astrometric`
+  s.rst - update the notes on `apero_astrometrics`. [Neil Cook]
+- `Apero_astrometrics.py` - allow aliases to be added and deal with Teff
+  objname better. [Neil Cook]
+- `Apero.tools.module.processing.drs_precheck.py` - link conditions to
+  run.ini file supplied (for checking `obs_dir` etc) [Neil Cook]
+- `Apero.tools.module.drs_processing.py` - add `UPDATE_IDATABASE_NAME`
+  run.ini parameter (to allow turning off update certain databases)
+  [Neil Cook]
+- Update the default run.ini files. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.225-working' into
+  v0.7.225-working. [Neil Cook]
+- `Apero.core.instruments.*.pseudo_const.py` - fix problem with MJDMID
+  having a NaN (float) value. [njcuk9999]
+- `Apero_extract_spirou.py` - add `EXP_FPLINE` flag. [Neil Cook]
+- `Apero.recipes.spirou.apero_pol_spirou.py` - do not allow files that
+  failed qc to be used in polar recipe (by default) flag and return
+  failure. [Neil Cook]
+- `Apero.tools.module.testing.drs_stats.py` - remove index database
+  crossmatch for qc mode (not required?) [Neil Cook]
+
+
+0.7.226 (2022-04-21)
+--------------------
+- `Apero.tools.resources.run_in.*` - update templates for run.ini files to
+  have `UPDATE_INDEX_DATABASE` flag. [Neil Cook]
+- `Apero.tools.recipes.bin.apero_processing.py` - add
+  `UPDATE_INDEX_DATABASE` flag so user can not update the index database
+  (needs big warning about doing this) [Neil Cook]
+- `Apero.science.calib.leak.py` - add in a second log for fiber loop
+  [untested] [Neil Cook]
+- `Apero.recipes.spirou.apero_leak_master_spirou.py` - leak master has no
+  qc - update recipe.log. [Neil Cook]
+- `Apero.core.utils.drs_utils.py` - `no_qc` must update children as well.
+  [Neil Cook]
+- `Apero.core.utils.drs_startup.py` - add `UPDATE_INDEX_DATABASE` to allow
+  not updating index database in `apero_processing` [UNTESTED] [Neil Cook]
+- `Apero.core.instruments.spirou.default_constants.py` - update
+  `WAVE_FP_DPRLIST` (missed `POLAR_FP)` [Neil Cook]
+- Update some typos in `default_keywords.py`. [Neil Cook]
+- Correct typo and change `NO_DB` = False. [Neil Cook]
+- `Apero.base.base.py` - update `LOG_FLAGS` to include QCPASSED. [Neil Cook]
+- `Apero.base.base.py` - update `LOG_FLAGS` to include OBJ. [Neil Cook]
+- Update date/version/changelog/docs. [Neil Cook]
+
+
+0.7.225 (2022-04-13)
+--------------------
+- `Apero.science.extract.other.py` - flag when extraction file has been
+  found (require RecipeLog as input to `extract_*_files` functions) [Neil
+  Cook]
+- `Apero.core.instruments.*.recipe_definitions.py` - add `INT_EXT` and
+  `EXT_FOUND` flags to recipes that use `apero_extract` internally. [Neil
+  Cook]
+- `Apero.core.instruments.*.file_definitions.py` - `WAVEM_CAV` should only
+  be the main science fiber. [Neil Cook]
+- `Apero.base.base.py` - add log flag descriptions - can only add flags if
+  the are here. [Neil Cook]
+
+
+0.7.224 (2022-04-11)
+--------------------
+- `Apero.tools.processing.drs_processing.py` - update `skip_clean_arguments`
+  to allow additional arguments. [Neil Cook]
+- `Apero.core.instruments.spirou.recipe_definitions.py` -
+  `apero_water_master` should be a master recipe always. [Neil Cook]
+- `Apero.core.instruments.spirou.recipe_definitions.py` - correct typo
+  `"apero_loc.set_flags`" --> `"apero_extract.set_flags`" [Neil Cook]
+
+
+0.7.223 (2022-04-09)
+--------------------
+- Merge branch 'v0.7.219-stable-test' into v0.7.221-working. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.219-stable-test' into
+  v0.7.219-stable-test. [Neil Cook]
+- Fix tellurics and thermal problems. [njcuk9999]
+
+
+0.7.222 (2022-04-03)
+--------------------
+- Update documentation. [Neil Cook]
+- Update documentation. [Neil Cook]
+- Update date/version/docs. [Neil Cook]
+
+
 0.7.221 (2022-04-02)
 --------------------
 - Fixes for outclass (telluric centric fixes) [Neil Cook]

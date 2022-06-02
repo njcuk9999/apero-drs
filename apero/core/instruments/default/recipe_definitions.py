@@ -181,7 +181,7 @@ remake_doc.shortname = 'DOC'
 remake_doc.description = textentry('REMAKE_DOC_DESCRIPTION')
 remake_doc.recipe_type = 'nolog-tool'
 remake_doc.recipe_kind = 'admin'
-remake_doc.set_kwarg(name='--instruments', dtype=str, default='None',
+remake_doc.set_kwarg(name='--instruments', dtype=str, default='ALL',
                      helpstr='Which instrument(s) to run this for '
                              '(default is current instrument) can also write '
                              'ALL to get all instruments or list instruments '

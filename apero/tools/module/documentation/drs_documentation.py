@@ -231,6 +231,9 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     abs_auto_dir = drs_misc.get_relative_folder(__PACKAGE__, AUTO_DIR)
     # add file definitions
     def_dir = os.path.join(abs_auto_dir, FILE_DEF_DIR, instrument.lower())
+    # make sure directory exists
+    if not os.path.exists(def_dir):
+        os.makedirs(def_dir)
     # storage file names
     filenames, absfilenames = dict(), dict()
     # save tables as csv
@@ -470,16 +473,27 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
     recipe_definitions = []
     # load pseudo constants
     pconst = constants.pload(instrument=instrument)
+    # -------------------------------------------------------------------------
     # get the absolute path of the schematics
     schematic_path = SCHEMATIC_PATH.format(instrument=instrument.lower())
-    abs_schem_path = drs_misc.get_relative_folder(__PACKAGE__, schematic_path)
+    abs_schem_path = drs_misc.get_relative_folder(__PACKAGE__, schematic_path,
+                                                  required=False)
     # get schmeatic path relative to current path
-    schem_path = rel_path_from_current(outpath, abs_schem_path)
+    if len(abs_schem_path) == 0:
+        schem_path = None
+    else:
+        schem_path = rel_path_from_current(outpath, abs_schem_path)
+    # -------------------------------------------------------------------------
     # get the absolute path of the description files
     descfile_path = DESC_PATH.format(instrument=instrument.lower())
-    abs_desc_path = drs_misc.get_relative_folder(__PACKAGE__, descfile_path)
+    abs_desc_path = drs_misc.get_relative_folder(__PACKAGE__, descfile_path,
+                                                 required=False)
     # get description path relative to current path
-    desc_path = rel_path_from_current(outpath, abs_desc_path)
+    if len(abs_desc_path) == 0:
+        desc_path = None
+    else:
+        desc_path = rel_path_from_current(outpath, abs_desc_path)
+    # -------------------------------------------------------------------------
     # loop around recipes
     for srecipe in srecipes:
         # print we are analysing recipe
@@ -501,7 +515,7 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
         # add shortname
         markdown.add_text('SHORTNAME: {0}'.format(summary['SHORTNAME']))
         # add description
-        if summary['DESCRIPTION_FILE'] is not None:
+        if summary['DESCRIPTION_FILE'] is not None and desc_path is not None:
             # combine relative path with description file
             dfile = os.path.join(desc_path, summary['DESCRIPTION_FILE'])
             # include a file
@@ -512,7 +526,7 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
         # add section: schematic
         markdown.add_section('2. Schematic')
         # add schematic image
-        if summary['SCHEMATIC_FILE'] is not None:
+        if summary['SCHEMATIC_FILE'] is not None and schem_path is not None:
             # get schematic path
             basename = summary['SCHEMATIC_FILE']
             schpath = os.path.join(schem_path, basename)
