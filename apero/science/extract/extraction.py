@@ -275,6 +275,7 @@ def flat_blaze_correction(eprops: ParamDict, flat: Optional[np.ndarray] = None,
     if 'BLAZE' not in eprops:
         eprops['BLAZE'] = blaze
     # create the e2dsff (flat fielded extraction)
+    # TODO: deal with small number division
     eprops['E2DSFF'] = eprops['E2DS'] / flat
     # return eprops
     return eprops
