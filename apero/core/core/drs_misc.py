@@ -419,13 +419,16 @@ def unix_char_code() -> Tuple[float, str, str]:
 
 
 def get_relative_folder(package: Union[None, str],
-                        folder: Union[str, Path]) -> str:
+                        folder: Union[str, Path],
+                        required: bool = True) -> str:
     """
     Get the absolute path of folder defined at relative path
     folder from package
 
     :param package: string, the python package name
     :param folder: string, the relative path of the config folder
+    :param required: bool, if True raises an exception if absolute path does
+                     not exist
 
     :return data: string, the absolute path and filename of the default config
                   file
@@ -434,7 +437,7 @@ def get_relative_folder(package: Union[None, str],
     func_name = str(__NAME__) + '.get_relative_folder()'
     # try base function
     return drs_base.base_func(drs_base.base_get_relative_folder, func_name,
-                              package, folder)
+                              package, folder, required)
 
 
 # =============================================================================

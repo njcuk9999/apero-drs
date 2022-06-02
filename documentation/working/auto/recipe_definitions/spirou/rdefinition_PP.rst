@@ -46,7 +46,7 @@ No description set
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     [FILE:DRS_RAW] // PREPROCESS_UFILES_HELP
+     [FILE:DRS_RAW] // Any raw files are currently allowed. Multiple files inputted are handled separately (one after the other).
 
 
 ********************************************************************************

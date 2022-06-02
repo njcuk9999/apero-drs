@@ -46,7 +46,7 @@ No description set
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     [FILE:FP_FP] // SHAPE_FPFILES_HELP
+     [FILE:FP_FP] // Current allowed types: FP_FP
 
 
 ********************************************************************************
@@ -57,19 +57,19 @@ No description set
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --badpixfile[FILE:BADPIX] // BADFILE_HELP
-     --badcorr[True/False] // DOBAD_HELP
-     --backsub[True/False] // BACKSUB_HELP
-     --combine[True/False] // COMBINE_HELP
-     --darkfile[FILE:DARKM] // DARKFILE_HELP
-     --darkcorr[True/False] // DODARK_HELP
-     --flipimage[None,x,y,both] // FLIPIMAGE_HELP
-     --fluxunits[ADU/s,e-] // FLUXUNITS_HELP
-     --fpmaster[FILE:MASTER_FP] // FPMASTERFILE_HELP
+     --badpixfile[FILE:BADPIX] // [STRING] Define a custom file to use for bad pixel correction. Checks for an absolute path and then checks directory
+     --badcorr[True/False] // [BOOLEAN] Whether to correct for the bad pixel file
+     --backsub[True/False] // [BOOLEAN] Whether to do background subtraction
+     --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
+     --darkfile[FILE:DARKM] // [STRING] The Dark file to use (CALIBDB=DARKM)
+     --darkcorr[True/False] // [BOOLEAN] Whether to correct for the dark file
+     --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
+     --fluxunits[ADU/s,e-] // [STRING] Output units for flux
+     --fpmaster[FILE:MASTER_FP] // [STRING] Sets the FP Master file to use (CALIBDB = FPMASTER)
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --resize[True/False] // RESIZE_HELP
-     --shapex[FILE:SHAPE_X] // SHAPEXFILE_HELP
-     --shapey[FILE:SHAPE_Y] // SHAPEYFILE_HELP
+     --resize[True/False] // [BOOLEAN] Whether to resize image
+     --shapex[FILE:SHAPE_X] // [STRING] Sets the SHAPE DXMAP file used to get the dx correction map (CALIBDB=SHAPEX)
+     --shapey[FILE:SHAPE_Y] // [STRING] Sets the SHAPE DYMAP file used to get the dy correction map (CALIBDB=SHAPEY)
 
 
 ********************************************************************************

@@ -46,14 +46,14 @@ No optional arguments
 
 .. code-block:: 
 
-     --cores[INT] // MKTELLDB_CORES
-     --filetype[EXT_E2DS,EXT_E2DS_FF] // MKTELLDB_FILETYPE
-     --fiber[AB,A,B,C] // MKTELLDB_FIBER
+     --cores[INT] // [INTEGER] The number of cores to use
+     --filetype[EXT_E2DS,EXT_E2DS_FF] // [STRING] optional, the filetype (KW_OUTPUT) to use when processing files
+     --fiber[AB,A,B,C] // [STRING] optional, the fiber type to use when processing files
      --test[True,False,1,0,None] // [BOOLEAN] If True does not process any files just prints an output of what recipes would be run
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --blazefile[FILE:FF_BLAZE] // BLAZEFILE_HELP
+     --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory (CALIBDB=BADPIX)
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --wavefile[FILE:WAVESOL_MASTER,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
+     --wavefile[FILE:WAVESOL_MASTER,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
 
 
 ********************************************************************************
