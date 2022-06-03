@@ -801,7 +801,7 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
     num_ref = pcheck(params, 'PP_NUM_REF_TOP', func=func_name,
                      override=num_ref)
     # get the image size
-    nbypix, nbxpix = image.shape
+    nbypix, nbxpix = int(image.shape[0]), int(image.shape[1])
     # find the 95th percentile of the center of the image
     xlower, xupper = (nbxpix // 2) - centersize, (nbxpix // 2) + centersize
     ylower, yupper = (nbypix // 2) - centersize, (nbypix // 2) + centersize

@@ -362,12 +362,9 @@ DataHdrType = Union[Tuple[np.ndarray, fits.Header], np.ndarray, None,
 
 def readfits(params: ParamDict, filename: Union[str, Path],
              getdata: bool = True, gethdr: bool = False,
-             fmt: str = 'fits-image',
-             ext: Union[int, None] = None,
-             extname: Union[str, None] = None,
-             func: Union[str, None] = None,
-             log: bool = True, copy: bool = False,
-             return_names: bool = False
+             fmt: str = 'fits-image', ext: Union[int, None] = None,
+             extname: Union[str, None] = None, func: Union[str, None] = None,
+             log: bool = True,  return_names: bool = False
              ) -> Union[DataHdrType, np.ndarray, fits.Header, None]:
     """
     The drs fits file read function
@@ -381,8 +378,6 @@ def readfits(params: ParamDict, filename: Union[str, Path],
     :param extname: str or None, if set tires to read this extension (via name)
     :param func: str, function name of calling function (input function)
     :param log: bool, if True logs that we read file
-    :param copy: bool, if True copies the HDU[i].data and/or HDU[i].header so
-                 HDU can be closed properly
     :param return_names: bool, if True returns extension names
 
     :returns: if getdata and gethdr: returns data, header, if getdata return
@@ -414,22 +409,11 @@ def readfits(params: ParamDict, filename: Union[str, Path],
         data, header = _read_fitsimage(params, filename, getdata, gethdr, ext,
                                        extname, log=log)
         name = None
-        # deal with copying
-        if copy:
-            if getdata:
-                data = np.array(data)
-            if gethdr:
-                header = fits.Header(header)
+
     elif fmt == 'fits-table':
         data, header = _read_fitstable(params, filename, getdata, gethdr, ext,
                                        extname, log=log)
         name = None
-        # deal with copying
-        if copy:
-            if getdata:
-                data = Table(data)
-            if gethdr:
-                header = fits.Header(header)
     elif fmt == 'fits-multi':
         mout = _read_fitsmulti(params, filename, getdata, gethdr, log=log)
         if getdata and gethdr:
@@ -440,10 +424,6 @@ def readfits(params: ParamDict, filename: Union[str, Path],
         else:
             data = None
             header, name = mout
-        # deal with copying
-        if copy:
-            data = deepcopy(data)
-            header = deepcopy(header)
     else:
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
@@ -530,63 +510,73 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
     func_name = display_func('_read_fitsmulti', __NAME__)
     # attempt to open hdu of fits file
     try:
-        hdulist = fits.open(filename)
+        with fits.open(filename) as hdulist:
+            # -----------------------------------------------------------------
+            # get the number of fits files in filename
+            try:
+                n_ext = len(hdulist)
+            except Exception as e:
+                msg = textentry('10-001-00005', args=[type(e), e])
+                WLOG(params, 'warning', msg, sublevel=2)
+                n_ext = None
+            # deal with unknown number of extensions
+            if n_ext is None:
+                bout = deal_with_bad_header(params, hdulist, filename)
+                dataarr, headerarr, names = bout
+            # -----------------------------------------------------------------
+            # else get the data and header based on how many extensions
+            #    there are
+            else:
+                dataarr, headerarr, names = [], [], []
+                for it in range(n_ext):
+                    # ---------------------------------------------------------
+                    # get this iterations header (and copy it)
+                    try:
+                        hdr_it = fits.Header(hdulist[it].header)
+                    except Exception as e:
+                        if log:
+                            eargs = [os.path.basename(filename), it,
+                                     type(e), e, func_name]
+                            msg = textentry('01-001-00008', args=eargs)
+                            WLOG(params, 'error', msg)
+                        else:
+                            raise e
+                    # ---------------------------------------------------------
+                    # get this iterations data
+                    data_it = hdulist[it].data
+                    # ---------------------------------------------------------
+                    # get name
+                    if hdulist[it].name is not None:
+                        names.append(str(hdulist[it].name))
+                    else:
+                        names.append('Unknown')
+                    # get xtension type
+                    if hdr_it is not None:
+                        xtension = hdr_it.get('XTENSION', None)
+                    else:
+                        xtension = None
+                    # append header
+                    headerarr.append(hdr_it)
+                    # append data
+                    try:
+                        if isinstance(data_it, fits.BinTableHDU):
+                            dataarr.append(Table(data_it))
+                        elif xtension is not None and xtension == 'BINTABLE':
+                            dataarr.append(Table(data_it))
+                        else:
+                            dataarr.append(np.array(data_it))
+                    except Exception as e:
+                        if log:
+                            eargs = [os.path.basename(filename), it,
+                                     type(e), e, func_name]
+                            emsg = textentry('01-001-00007', args=eargs)
+                            WLOG(params, 'error', emsg)
+                        else:
+                            raise e
     except Exception as e:
         eargs = [filename, type(e), e, func_name]
         WLOG(params, 'error', textentry('01-001-00006', args=eargs))
-        hdulist = None
-    # -------------------------------------------------------------------------
-    # get the number of fits files in filename
-    try:
-        n_ext = len(hdulist)
-    except Exception as e:
-        WLOG(params, 'warning', textentry('10-001-00005', args=[type(e), e]),
-             sublevel=2)
-        n_ext = None
-    # deal with unknown number of extensions
-    if n_ext is None:
-        bout = deal_with_bad_header(params, hdulist, filename)
-        dataarr, headerarr, names = bout
-    # -------------------------------------------------------------------------
-    # else get the data and header based on how many extnesions there are
-    else:
-        dataarr, headerarr, names = [], [], []
-        for it in range(n_ext):
-            # get name
-            if hdulist[it].name is not None:
-                names.append(str(hdulist[it].name))
-            else:
-                names.append('Unknown')
-            # get xtension type
-            if hdulist[it].header is not None:
-                xtension = hdulist[it].header.get('XTENSION', None)
-            else:
-                xtension = None
-            # append header
-            try:
-                headerarr.append(hdulist[it].header)
-            except Exception as e:
-                if log:
-                    eargs = [os.path.basename(filename), it, type(e), e,
-                             func_name]
-                    WLOG(params, 'error', textentry('01-001-00008', args=eargs))
-                else:
-                    raise e
-            # append data
-            try:
-                if isinstance(hdulist[it].data, fits.BinTableHDU):
-                    dataarr.append(Table(hdulist[it].data))
-                elif xtension is not None and xtension == 'BINTABLE':
-                    dataarr.append(Table(hdulist[it].data))
-                else:
-                    dataarr.append(hdulist[it].data)
-            except Exception as e:
-                if log:
-                    eargs = [os.path.basename(filename), it, type(e), e,
-                             func_name]
-                    WLOG(params, 'error', textentry('01-001-00007', args=eargs))
-                else:
-                    raise e
+
     # -------------------------------------------------------------------------
     # return data and/or header
     if getdata and gethdr:
@@ -648,11 +638,12 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
                         eargs = [filename, extname]
                         WLOG(params, 'error', emsg.format(*eargs))
                     data = np.array(hdulist[extname].data)
-            # just load first valid extension
+            # just load first valid extension (and copy it)
             else:
-                data = fits.getdata(filename)
+                data = np.array(fits.getdata(filename))
         except Exception as _:
             try:
+                print('deal_with_bad_file_single')
                 # try to deal with corrupted data extensions
                 data = deal_with_bad_file_single(filename, ext=ext,
                                                  extname=extname,
@@ -703,9 +694,9 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
                         eargs = [filename, extname]
                         WLOG(params, 'error', emsg.format(*eargs))
                     header = Header(hdulist[extname].header)
-            # just load first valid extension
+            # just load first valid extension (and copy it)
             else:
-                header = fits.getheader(filename)
+                header = fits.Header(fits.getheader(filename))
         except Exception as _:
             try:
                 # try to deal with corrupted data extensions
@@ -765,12 +756,15 @@ def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
     if getdata:
         try:
             with warnings.catch_warnings(record=True) as _:
+                # double Table(Table.read is to make sure it is definitely
+                #   deep copied)
                 if ext is not None:
-                    data = Table.read(filename, format='fits', hdu=ext)
+                    data = Table(Table.read(filename, format='fits', hdu=ext))
                 elif extname is not None:
-                    data = Table.read(filename, format='fits', hdu=extname)
+                    data = Table(Table.read(filename, format='fits',
+                                            hdu=extname))
                 else:
-                    data = Table.read(filename, format='fits')
+                    data = Table(Table.read(filename, format='fits'))
         except Exception as e:
             if log:
                 string_trackback = traceback.format_exc()
@@ -786,7 +780,7 @@ def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
     # deal with getting header
     if gethdr:
         try:
-            header = fits.getheader(filename, ext=ext)
+            header = fits.Header(fits.getheader(filename, ext=ext))
         except Exception as e:
             if log:
                 string_trackback = traceback.format_exc()
@@ -1294,22 +1288,22 @@ def deal_with_bad_file_single(filename, ext=None, extname=None,
     # deal with having an extension number
     if ext is not None:
         if flavour == 'data':
-            return hdulist[ext].data
+            return np.array(hdulist[ext].data)
         else:
-            return hdulist[ext].header
+            return fits.Header(hdulist[ext].header)
     # deal with having a extension name
     if extname is not None:
         if flavour == 'data':
-            return hdulist[extname].data
+            return np.arary(hdulist[extname].data)
         else:
-            return hdulist[extname].header
+            return fits.Header(hdulist[extname].header)
     # else loop around until we find the data we are after
     else:
         for ext in range(len(hdulist)):
             if flavour == 'data' and hdulist[ext].data is not None:
-                return hdulist[ext].data
+                return np.array(hdulist[ext].data)
             elif flavour == 'header' and hdulist[ext].header is not None:
-                return hdulist[ext].header
+                return fits.Header(hdulist[ext].header)
 
 
 # =============================================================================
