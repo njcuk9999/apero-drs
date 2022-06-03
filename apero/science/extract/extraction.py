@@ -234,21 +234,12 @@ def extract_blaze_flat(params: ParamDict, eprops: ParamDict, fiber: str,
         # log process (for fiber # and order # S/N = , FF rms = )
         wargs = [fiber, order_num, snri, rmsi]
         WLOG(params, '', textentry('40-015-00001', args=wargs))
-        # --------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # add to vectors
         e2ds[order_num] = e2dsi
         flat[order_num] = flati
         blaze[order_num] = blazei
         rms[order_num] = rmsi
-    # ----------------------------------------------------------------------
-    # remove outliers within flat field to avoid division by small numbers
-    #   or suspiciously large flat response
-    bad_mask = np.abs(1 - flat) > 0.2
-    # apply bad mask
-    e2ds[bad_mask] = np.nan
-    flat[bad_mask] = np.nan
-    blaze[bad_mask] = np.nan
-    rms[bad_mask] = np.nan
     # ----------------------------------------------------------------------
     # store extraction properties in parameter dictionary
     eprops['E2DS'] = e2ds

@@ -192,7 +192,24 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
     rms = mp.robust_nanstd(flat[keep])
     # remove any very large outliers (set to NaN)
     with warnings.catch_warnings(record=True) as _:
-        flat[np.abs(flat - 1) > 10 * rms] = np.nan
+        bad_mask1 = np.abs(flat - 1) > 10 * rms
+        # apply mask
+        flat[bad_mask1] = np.nan
+        blaze[bad_mask1] = np.nan
+        e2ds_ini[bad_mask1] = np.nan
+    # ----------------------------------------------------------------------
+    # remove outliers within flat field to avoid division by small numbers
+    #   or suspiciously large flat response
+    with warnings.catch_warnings(record=True) as _:
+        bad_mask2 = np.abs(1 - flat) > 0.2
+        # apply mask
+        flat[bad_mask2] = np.nan
+        blaze[bad_mask2] = np.nan
+        e2ds_ini[bad_mask1] = np.nan
+    # ----------------------------------------------------------------------
+    # recalculate calculate the rms
+    # ----------------------------------------------------------------------
+    rms = mp.robust_nanstd(flat[keep])
     # ----------------------------------------------------------------------
     # return values
     return e2ds_ini, flat, blaze, rms
