@@ -210,8 +210,7 @@ def __main__(recipe, params):
         # Make sure the edge of large structures are taken care of
         # ------------------------------------------------------------------
         # expand large bad pixels
-        # TODO: test this!
-        bad_pixel_map3 = drs_image.expand_badpixelmap(bad_pixel_map1)
+        bad_pixel_map3 = drs_image.expand_badpixelmap(params, bad_pixel_map1)
 
         # ------------------------------------------------------------------
         # Create background map mask

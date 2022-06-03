@@ -207,9 +207,15 @@ def __main__(recipe, params):
             bad_pixel_map1 = np.array(bad_pixel_map)
 
         # ------------------------------------------------------------------
+        # Make sure the edge of large structures are taken care of
+        # ------------------------------------------------------------------
+        # expand large bad pixels
+        bad_pixel_map3 = drs_image.expand_badpixelmap(params, bad_pixel_map1)
+
+        # ------------------------------------------------------------------
         # Create background map mask
         # ------------------------------------------------------------------
-        bargs = [flat_image1, bad_pixel_map1]
+        bargs = [flat_image1, bad_pixel_map3]
         backmap = background.create_background_map(params, *bargs)
 
         # ------------------------------------------------------------------
@@ -223,7 +229,7 @@ def __main__(recipe, params):
         # Save bad pixel mask
         # ----------------------------------------------------------------------
         wargs = [flatfile, darkfile, backmap, combine, rawflatfiles,
-                 rawdarkfiles, bstats_a, bstats_b, btotal, bad_pixel_map1,
+                 rawdarkfiles, bstats_a, bstats_b, btotal, bad_pixel_map3,
                  qc_params]
         badpixfile, backmapfile = badpix.write_files(params, recipe, *wargs)
         # ------------------------------------------------------------------

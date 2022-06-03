@@ -706,11 +706,26 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     return out_image
 
 
-def expand_badpixelmap(params, bad_pixel_map1):
+def expand_badpixelmap(params: ParamDict, bad_pixel_map1: np.ndarray
+                       ) -> np.ndarray:
+    """
+    Expand large bad pixel areas to make sure the edges are counted as
+    bad pixels
 
+    Erode size (BAD_PIX_ERODE_SIZE) defines areas that are large/small
+    Dilate size (BAD_PIX_DILATE_SIZE) determines how much larger to make them
+
+    :param params: ParamDict
+    :param bad_pixel_map1: np.ndarray, input bad pixel map (1=bad, 0=good)
+
+    :return: np.ndarray, updated bad pixel map (1=bad, 0=good)
+    """
+    # get erode and dilate size
+    erode_size = pcheck(params, 'BADPIX_ERODE_SIZE', dtype=float)
+    dilate_size = pcheck(params, 'BADPIX_DILATE_SIZE', dtype=float)
     # define circular masks for the erosion and dilation of the bad pixels
-    erode_mask = mp.get_circular_mask(5)
-    dilate_mask = mp.get_circular_mask(9)
+    erode_mask = mp.get_circular_mask(erode_size)
+    dilate_mask = mp.get_circular_mask(dilate_size)
     # remove small bad pixels (i.e. pixels with one of the dimensions of
     #    size = 1)
     bad_pixel_map2 = binary_erosion(bad_pixel_map1, structure=erode_mask)

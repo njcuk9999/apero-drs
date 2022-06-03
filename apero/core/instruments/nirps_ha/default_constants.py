@@ -545,6 +545,14 @@ BADPIX_MAX_HOTPIX.value = 5.0
 BADPIX_FULL_THRESHOLD = BADPIX_FULL_THRESHOLD.copy(__NAME__)
 BADPIX_FULL_THRESHOLD.value = 0.3
 
+#   Defines areas that are large/small for bad pixel erosion
+BADPIX_ERODE_SIZE = BADPIX_ERODE_SIZE.copy(__NAME__)
+BADPIX_ERODE_SIZE.value = 5
+
+#   Defines how much larger to make eroded bad pixel regions
+BADPIX_DILATE_SIZE = BADPIX_DILATE_SIZE.copy(__NAME__)
+BADPIX_DILATE_SIZE.value = 9
+
 # =============================================================================
 # CALIBRATION: BACKGROUND CORRECTION SETTINGS
 # =============================================================================
