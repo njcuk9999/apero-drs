@@ -71,7 +71,7 @@ __all__ = [
     # badpix constants
     'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
     'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
-    'BADPIX_NORM_PERCENTILE',
+    'BADPIX_NORM_PERCENTILE', 'BADPIX_ERODE_SIZE', 'BADPIX_DILATE_SIZE',
     # bkgr constants
     'BKGR_BOXSIZE', 'BKGR_PERCENTAGE', 'BKGR_MASK_CONVOLVE_SIZE',
     'BKGR_N_BAD_NEIGHBOURS', 'BKGR_NO_SUBTRACTION', 'BKGR_KER_AMP',
@@ -1198,6 +1198,18 @@ BADPIX_FULL_THRESHOLD = Const('BADPIX_FULL_THRESHOLD', value=None, dtype=float,
                               description=('Defines the threshold on the full '
                                            'detector flat file to deem pixels '
                                            'as good'))
+
+#   Defines areas that are large/small for bad pixel erosion
+BADPIX_ERODE_SIZE = Const('BADPIX_ERODE_SIZE', value=None, dtype=float,
+                          source=__NAME__, minimum=0.0, group=cgroup,
+                          description=('Defines areas that are large/small '
+                                       'for bad pixel erosion'))
+
+#   Defines how much larger to make eroded bad pixel regions
+BADPIX_DILATE_SIZE = Const('BADPIX_DILATE_SIZE', value=None, dtype=float,
+                           source=__NAME__, minimum=0.0, group=cgroup,
+                           description=('Defines how much larger to make '
+                                        'eroded bad pixel regions'))
 
 # =============================================================================
 # CALIBRATION: BACKGROUND CORRECTION SETTINGS
