@@ -1200,14 +1200,14 @@ BADPIX_FULL_THRESHOLD = Const('BADPIX_FULL_THRESHOLD', value=None, dtype=float,
                                            'as good'))
 
 #   Defines areas that are large/small for bad pixel erosion
-BADPIX_ERODE_SIZE = Const('BADPIX_ERODE_SIZE', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup,
+BADPIX_ERODE_SIZE = Const('BADPIX_ERODE_SIZE', value=None, dtype=int,
+                          source=__NAME__, minimum=1, group=cgroup,
                           description=('Defines areas that are large/small '
                                        'for bad pixel erosion'))
 
 #   Defines how much larger to make eroded bad pixel regions
-BADPIX_DILATE_SIZE = Const('BADPIX_DILATE_SIZE', value=None, dtype=float,
-                           source=__NAME__, minimum=0.0, group=cgroup,
+BADPIX_DILATE_SIZE = Const('BADPIX_DILATE_SIZE', value=None, dtype=int,
+                           source=__NAME__, minimum=1, group=cgroup,
                            description=('Defines how much larger to make '
                                         'eroded bad pixel regions'))
 
