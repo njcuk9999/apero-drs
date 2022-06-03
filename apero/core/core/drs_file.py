@@ -5795,22 +5795,20 @@ class DrsOutFileExtension:
         if self.data_only:
             # want to read data from extname if set
             self.data = drs_fits.readfits(params, self.filename, True, False,
-                                          fmt, extname=self.extname, copy=True)
+                                          fmt, extname=self.extname)
         elif self.header_only:
             # don't want to read header from self.extname (so use primary if
             #   hdr_extname is None -- the default, otherwise use hdr_extname)
             self.header = drs_fits.readfits(params, self.filename, False, True,
-                                            fmt, copy=True,
-                                            extname=self.hdr_extname)
+                                            fmt, extname=self.hdr_extname)
         else:
             # want to read data from extname if set
             self.data = drs_fits.readfits(params, self.filename, True, False,
-                                          fmt, extname=self.extname, copy=True)
+                                          fmt, extname=self.extname)
             # don't want to read header from self.extname (so use primary if
             #   hdr_extname is None -- the default, otherwise use hdr_extname)
             self.header = drs_fits.readfits(params, self.filename, False, True,
-                                            fmt, copy=True,
-                                            extname=self.hdr_extname)
+                                            fmt, extname=self.hdr_extname)
 
     def make_table(self, params: ParamDict, ptable: Any, linkkind: str,
                    criteria: str, mode: str) -> Tuple[bool, textentry]:

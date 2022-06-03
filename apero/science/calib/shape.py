@@ -78,16 +78,15 @@ def construct_fp_table(params, filenames, **kwargs):
         # get the path inst
         path_inst = drs_file.DrsPath(params, abspath=filenames[it])
         # get the observation directory
-        obs_dir = path_inst.obs_dir
+        obs_dir = str(path_inst.obs_dir)
         # read the header
         hdr = drs_fits.read_header(params, filenames[it], copy=True)
         # must load file here to check if fp is valid
-        image = drs_fits.readfits(params, filenames[it], log=False, copy=True)
-        # if image is not valid skip
-        if not gen_calib.check_fp(params, image, filename=filenames[it]):
-            continue
-        # delete image we'll get it again later in more memory efficient manner
+        image = drs_fits.readfits(params, filenames[it])
+        fpcheck =gen_calib.check_fp(params, image, filename=filenames[it])
         del image
+        if not fpcheck:
+            continue
         # get keys from hdr
         acqtime, acqmethod = drs_file.get_mid_obs_time(params, hdr,
                                                        out_fmt='mjd')
