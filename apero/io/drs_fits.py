@@ -564,7 +564,7 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
                         elif xtension is not None and xtension == 'BINTABLE':
                             dataarr.append(Table(data_it))
                         else:
-                            dataarr.append(np.array(data_it))
+                            dataarr.append(deepcopy(data_it))
                     except Exception as e:
                         if log:
                             eargs = [os.path.basename(filename), it,
