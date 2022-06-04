@@ -233,6 +233,8 @@ apero_badpix.set_kwarg(**flipimage)
 apero_badpix.set_kwarg(**fluxunits)
 apero_badpix.set_kwarg(**plot)
 apero_badpix.set_kwarg(**resize)
+apero_badpix.set_min_nfiles('flatfiles', 5)
+apero_badpix.set_min_nfiles('darkfiles', 2)
 apero_badpix.group_func = grouping.group_by_dirname
 apero_badpix.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
@@ -269,6 +271,7 @@ apero_dark.set_arg(name='files', dtype='files',
 apero_dark.set_kwarg(**add_db)
 apero_dark.set_kwarg(default=True, **combine)
 apero_dark.set_kwarg(**plot)
+apero_dark.set_min_nfiles('files', 2)
 apero_dark.group_func = grouping.group_by_dirname
 apero_dark.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -343,6 +346,7 @@ apero_loc.set_kwarg(**flipimage)
 apero_loc.set_kwarg(**fluxunits)
 apero_loc.set_kwarg(**plot)
 apero_loc.set_kwarg(**resize)
+apero_loc.set_min_nfiles('files', 5)
 apero_loc.group_func = grouping.group_by_dirname
 apero_loc.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
@@ -399,6 +403,8 @@ apero_shape_master.set_kwarg(**fluxunits)
 apero_shape_master.set_kwarg(**locofile)
 apero_shape_master.set_kwarg(**plot)
 apero_shape_master.set_kwarg(**resize)
+apero_shape_master.set_min_nfiles('fpfiles', 5)
+apero_shape_master.set_min_nfiles('hcfiles', 2)
 apero_shape_master.set_kwarg(name='--fpmaster', dtype='files',
                              files=[files.out_shape_fpmaster], default='None',
                              helpstr=textentry('SHAPE_FPMASTER_HELP'))
@@ -447,6 +453,8 @@ apero_shape.set_kwarg(**plot)
 apero_shape.set_kwarg(**resize)
 apero_shape.set_kwarg(**shapexfile)
 apero_shape.set_kwarg(**shapeyfile)
+apero_shape.set_min_nfiles('fpfiles', 5)
+apero_shape.set_min_nfiles('hcfiles', 2)
 apero_shape.group_func = grouping.group_by_dirname
 apero_shape.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
@@ -498,6 +506,7 @@ apero_flat.set_kwarg(**resize)
 apero_flat.set_kwarg(**shapexfile)
 apero_flat.set_kwarg(**shapeyfile)
 apero_flat.set_kwarg(**shapelfile)
+apero_flat.set_min_nfiles('files', 5)
 apero_flat.group_func = grouping.group_by_dirname
 apero_flat.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
@@ -550,6 +559,7 @@ apero_thermal.set_kwarg(**shapexfile)
 apero_thermal.set_kwarg(**shapeyfile)
 apero_thermal.set_kwarg(**shapelfile)
 apero_thermal.set_kwarg(**wavefile)
+apero_thermal.set_min_nfiles('files', 2)
 apero_thermal.set_kwarg(name='--forceext', dtype='bool', default=False,
                         default_ref='THERMAL_ALWAYS_EXTRACT',
                         helpstr='THERMAL_EXTRACT_HELP')
@@ -588,40 +598,6 @@ apero_leak_master.group_func = grouping.no_group
 apero_leak_master.group_column = None
 # add to recipe
 recipes.append(apero_leak_master)
-
-# -----------------------------------------------------------------------------
-# apero_leak
-# -----------------------------------------------------------------------------
-# apero_leak = DrsRecipe(__INSTRUMENT__)
-# apero_leak.name = 'apero_leak_{0}.py'.format(INSTRUMENT_ALIAS)
-# apero_leak.shortname = 'LEAK'
-# apero_leak.instrument = __INSTRUMENT__
-# apero_leak.in_block_str = 'red'
-# apero_leak.out_block_str = 'red'
-# apero_leak.extension = 'fits'
-# apero_leak.description = textentry('LEAK_DESC')
-# apero_leak.epilog = textentry('LEAK_EXAMPLE')
-# apero_leak.recipe_type = 'recipe'
-# apero_leak.recipe_kind = 'leak'
-# apero_leak.set_outputs(E2DS_FILE=files.out_ext_e2ds,
-#                        E2DSFF_FILE=files.out_ext_e2dsff,
-#                        E2DSLL_FILE=files.out_ext_e2dsll,
-#                        S1D_W_FILE=files.out_ext_s1d_w,
-#                        S1D_V_FILE=files.out_ext_s1d_v)
-# apero_leak.set_arg(pos=0, **obs_dir)
-# apero_leak.set_arg(name='files', dtype='files', pos='1+',
-#                    files=[files.out_ext_e2dsff],
-#                    helpstr=textentry('FILES_HELP') + textentry('LEAK_FILES_HELP'),
-#                    limit=1)
-# apero_leak.set_kwarg(**add_db)
-# apero_leak.set_kwarg(**plot)
-# apero_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
-#                      files=[files.out_leak_master],
-#                      helpstr=textentry('LEAK_LEAKFILE_HELP'))
-# apero_leak.group_func = grouping.group_individually
-# apero_leak.group_column = 'REPROCESS_OBSDIR_COL'
-# # add to recipe
-# recipes.append(apero_leak)
 
 # -----------------------------------------------------------------------------
 # apero_extract
@@ -762,6 +738,8 @@ apero_wave_master.set_kwarg(**shapexfile)
 apero_wave_master.set_kwarg(**shapeyfile)
 apero_wave_master.set_kwarg(**shapelfile)
 apero_wave_master.set_kwarg(**wavefile)
+apero_wave_master.set_min_nfiles('fpfiles', 5)
+apero_wave_master.set_min_nfiles('hcfiles', 2)
 apero_wave_master.set_kwarg(name='--forceext', dtype='bool',
                             default_ref='WAVE_ALWAYS_EXTRACT',
                             helpstr='WAVE_EXTRACT_HELP')
@@ -830,6 +808,8 @@ apero_wave_night.set_kwarg(**shapexfile)
 apero_wave_night.set_kwarg(**shapeyfile)
 apero_wave_night.set_kwarg(**shapelfile)
 apero_wave_night.set_kwarg(**wavefile)
+apero_wave_night.set_min_nfiles('fpfiles', 5)
+apero_wave_night.set_min_nfiles('hcfiles', 2)
 apero_wave_night.set_kwarg(name='--forceext', dtype='bool',
                            default_ref='WAVE_ALWAYS_EXTRACT',
                            helpstr='WAVE_EXTRACT_HELP')

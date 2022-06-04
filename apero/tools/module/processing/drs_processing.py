@@ -1263,7 +1263,10 @@ def _check_for_sequences(rvalues, mod):
         return sequencelist
 
 
-def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
+def _generate_run_from_sequence(params: ParamDict, sequence,
+                                indexdb: IndexDatabase,
+                                return_recipes: bool = False,
+                                logmsg: bool = True):
     func_name = __NAME__ + '.generate_run_from_sequence()'
     # -------------------------------------------------------------------------
     # get telluric stars and non-telluric stars
@@ -1305,9 +1308,13 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     recipemod = pconst.RECIPEMOD()
     # generate sequence
     sequence[1].process_adds(params, tstars=list(tstars), ostars=list(ostars),
-                             template_stars=template_object_list)
+                             template_stars=template_object_list,
+                             logmsg=logmsg)
     # get the sequence recipe list
     srecipelist = sequence[1].sequence
+    # deal with returning recipes
+    if return_recipes:
+        return srecipelist
     # storage for new runs to add
     newruns = []
     # define the master conditions (that affect all recipes)
@@ -1327,7 +1334,8 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         if not response:
             sys.exit()
     # log that we are processing recipes
-    WLOG(params, 'info', textentry('40-503-00037', args=[idb_len]))
+    if logmsg:
+        WLOG(params, 'info', textentry('40-503-00037', args=[idb_len]))
     # ------------------------------------------------------------------
     # loop around recipes in new list
     for srecipe in srecipelist:
@@ -2859,10 +2867,11 @@ def get_non_telluric_stars(params, indexdb: IndexDatabase,
     return list(np.sort(other_objects))
 
 
-def _get_recipe_module(params, **kwargs):
+def _get_recipe_module(params: ParamDict, logmsg: bool = True, **kwargs):
     func_name = __NAME__ + '.get_recipe_module()'
     # log progress: loading recipe module files
-    WLOG(params, '', textentry('40-503-00014'))
+    if logmsg:
+        WLOG(params, '', textentry('40-503-00014'))
     # get parameters from params/kwargs
     instrument = pcheck(params, 'INSTRUMENT', 'instrument', kwargs, func_name)
     instrument_path = pcheck(params, 'DRS_MOD_INSTRUMENT_CONFIG',
