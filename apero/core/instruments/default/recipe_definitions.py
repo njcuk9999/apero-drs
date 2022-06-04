@@ -48,6 +48,7 @@ req_check = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 run_ini = drs_recipe(__INSTRUMENT__)
 static = drs_recipe(__INSTRUMENT__)
+trigger = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 visulise = drs_recipe(__INSTRUMENT__)
 
@@ -56,7 +57,7 @@ recipes = [astrometric, changelog, database_mgr, explorer,
            get_files, go_recipe, langdb, listing,
            precheck, processing,
            remake_db, remake_doc, req_check, reset, run_ini,
-           static, stats, validate, visulise]
+           static, stats, trigger, validate, visulise]
 
 # =============================================================================
 # Recipe definitions
@@ -338,6 +339,23 @@ stats.set_kwarg(**plot)
 stats.set_kwarg(name='--sql', dtype=str, default='None',
                 helpstr='specify a SQL WHERE clause to narrow the stats')
 stats.description_file = 'apero_stats.rst'
+
+# -----------------------------------------------------------------------------
+# apero_trigger.py
+# -----------------------------------------------------------------------------
+stats.name = 'apero_trigger.py'
+stats.shortname = 'TRIGGER'
+stats.instrument = __INSTRUMENT__
+stats.description = 'Basic trigger for APERO'
+stats.recipe_type = 'nolog-tool'
+stats.recipe_kind = 'processing'
+stats.set_debug_plots()
+stats.set_summary_plots()
+stats.set_kwarg(name='--indir', dtype=str, default='None',
+                   helpstr='The input directory to scan for new data.'
+                           ' (This is not the apero defined raw directory)')
+stats.description_file = None
+
 
 # -----------------------------------------------------------------------------
 # apero_precheck.py

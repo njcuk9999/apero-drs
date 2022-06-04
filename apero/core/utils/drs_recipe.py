@@ -181,6 +181,8 @@ class DrsRecipe(object):
         self.output_files = dict()
         self.debug_plots = []
         self.summary_plots = []
+        # set the minimum number of files (for processing)
+        self.minimum_files = dict()
         # the plotter class
         self.plot = None
         # set the log class
@@ -814,6 +816,13 @@ class DrsRecipe(object):
                 self.params.set('DRS_RECIPE_KIND', self.recipe_kind,
                                 source=func_name)
 
+    def set_min_nfiles(self, filearg: str, limit: int):
+        """
+        Set minimum number of files required to use "filearg" in this recipe
+        (for processing only in trigger mode)
+        """
+        self.minimum_files[filearg] = int(limit)
+
     def set_flags(self, **kwargs: bool):
         """
         Set the initial value of the flags
@@ -1032,6 +1041,10 @@ class DrsRecipe(object):
         # plot options
         self.debug_plots = list(recipe.debug_plots)
         self.summary_plots = list(recipe.summary_plots)
+        # copy minimum files
+        self.minimum_files = dict()
+        for key in recipe.minimum_files:
+            self.minimum_files[key] = int(recipe.minimum_files[key])
         # set up the input validation (should be True to check arguments)
         self.input_validation = recipe.input_validation
         # whether calibration is required (used in precheck)
@@ -1079,6 +1092,22 @@ class DrsRecipe(object):
         pkwargs['help'] = str(arg.helpstr)
         # return argparse argument dictionary
         return pargs, pkwargs
+
+    def has_file_arg(self) -> bool:
+        """
+        Determine whether recipe has files arguments (either in args or kwargs)
+
+        :returns: bool, True if required file argument found
+        """
+        for argname in self.args:
+            if len(self.args[argname].files) > 0:
+                if self.args[argname].required:
+                    return True
+        for kwargname in self.kwargs:
+            if len(self.kwargs[kwargname].files) > 0:
+                if self.kwargs[kwargname].required:
+                    return True
+        return False
 
     # =========================================================================
     # Reprocessing methods
