@@ -1,19 +1,21 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+# CODE NAME HERE
 
 # CODE DESCRIPTION HERE
 
-Created on 2019-11-02 10:10
-@author: ncook
-Version 0.0.1
+Created on 2022-06-03
+
+@author: cook
 """
 from apero.base import base
 from apero import lang
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.utils import drs_startup
+from apero.tools.module.processing import drs_trigger
 
-# TODO: All functionality should be in tools/module/setup/drs_trigger.py
 
 # =============================================================================
 # Define variables
@@ -27,27 +29,20 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = lang.textentry
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-# All recipe code goes in __main__
-#    Only change the following from here:
-#     1) function calls  (i.e. main(arg1, arg2, **kwargs)
-#     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
-#     3) config_main  outputs value   (i.e. None, pp, reduced)
-# Everything else is controlled from recipe_definition
 def main(**kwargs):
     """
-    Main function for apero_trigger.py
+    Main function for apero_changelog.py
 
-    :param instrument: str, the instrument name
-    :param kwargs: additional keyword arguments
+    :param kwargs: any additional keywords
 
-    :type instrument: str
-
-    :keyword debug: int, debug level (0 for None)
+    :type preview: bool
 
     :returns: dictionary of the local space
     :rtype: dict
@@ -70,18 +65,42 @@ def main(**kwargs):
 
 
 def __main__(recipe, params):
-    """
-    Main code: should only call recipe and params (defined from main)
-
-    :param recipe:
-    :param params:
-    :return:
-    """
-    # ----------------------------------------------------------------------
-    # Main Code
-    # ----------------------------------------------------------------------
-
-    # TODO: Main code here
+    # create trigger class
+    trigger = drs_trigger.Trigger(params, recipe)
+    # -------------------------------------------------------------------------
+    # deal with resetting the trigger file
+    if params['INPUTS']['RESET']:
+        trigger.reset()
+    # set test mode
+    if params['INPUTS']['TRIGGER_TEST']:
+        trigger.trigger_test = True
+    # -------------------------------------------------------------------------
+    # add excluded directories
+    exclude_dirs = params['INPUTS']['IGNORE']
+    if not drs_text.null_text(exclude_dirs, ['None', '', 'Null']):
+        trigger.excluded_dirs = params['INPUTS'].listp('IGNORE', dtype=str)
+    else:
+        trigger.excluded_dirs = None
+    # -------------------------------------------------------------------------
+    # set the scripts for calibs and science
+    trigger.calib_script = params['INPUTS']['CALIB']
+    trigger.science_script = params['INPUTS']['SCI']
+    # define time to wait between loops
+    trigger.sleep_time = params['INPUTS']['WAIT']
+    # -------------------------------------------------------------------------
+    # keep track of iterations
+    iteration = 1
+    # run the loop
+    while trigger.active:
+        # update progress
+        # TODO: Add to language database
+        msg = f'Iteration {0} (Ctrl+C to cancel)'
+        margs = [iteration]
+        WLOG(params, 'info', msg.format(*margs), colour='magenta')
+        # run trigger
+        trigger()
+        # update iterator
+        iteration += 1
 
     # ----------------------------------------------------------------------
     # End of main code

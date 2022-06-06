@@ -132,6 +132,8 @@ class Trigger:
         self.recipe = recipe
         # whether the trigger is active
         self.active = True
+        # whether we are in test mode
+        self.trigger_test = False
         # the exlucded directories
         self.excluded_dirs = []
         # define the time to wait to check again
@@ -176,21 +178,38 @@ class Trigger:
         # get and update status table
         table = self.status()
         # ---------------------------------------------------------------------
-        # step 3: run processing
+        # step 3: run processing for calibrations
         # ---------------------------------------------------------------------
         # loop around observation directories
         for row, obs_dir in enumerate(table['OBS_DIR']):
-
+            # skip excluded directories
+            if obs_dir in self.excluded_dirs:
+                continue
             # deal with whether we are in calibration mode
-            #    or science mode
             if not table['DONE_CALIB'][row]:
                 # print progress
                 msg = f'Running apero calibration processing for {obs_dir}'
                 WLOG(self.params, 'info', msg)
                 # run calib script
                 apero_processing.main(runfile=self.calib_script,
-                                      obs_dir=obs_dir, test=True)
-            if not table['DONE_SCI'][row]:
+                                      obs_dir=obs_dir, test=self.trigger_test)
+        # ---------------------------------------------------------------------
+        # step 4: update obs_dir table
+        # ---------------------------------------------------------------------
+        # print progress
+        WLOG(self.params, 'info', 'Updating trigger status')
+        # get and update status table
+        table = self.status()
+        # ---------------------------------------------------------------------
+        # step 5: run processing for science - only if calibrations are done
+        # ---------------------------------------------------------------------
+        # loop around observation directories
+        for row, obs_dir in enumerate(table['OBS_DIR']):
+            # skip excluded directories
+            if obs_dir in self.excluded_dirs:
+                continue
+            # deal with whether we are in science mode
+            if not table['DONE_SCI'][row] and table['DONE_CALIB'][row]:
                 # print progress
                 msg = f'Running apero science processing for {obs_dir}'
                 WLOG(self.params, 'info', msg)
@@ -198,10 +217,9 @@ class Trigger:
                 apero_processing.main(runfile=self.science_script,
                                       obs_dir=obs_dir, test=True)
         # ---------------------------------------------------------------------
-        # step 4: wait
+        # step 6: wait
         # ---------------------------------------------------------------------
         time.sleep(self.sleep_time)
-
 
     def status(self) -> Table:
         """
@@ -214,7 +232,7 @@ class Trigger:
         #       TODO: how do we know?
         #       where DONE_SCI is True if all science are done
         #       TODO: how do we know?
-        sobsdir, sdone_c, sdone_s = self.load_status()
+        sdict = self.load_status()
 
         # step 2: re-index raw database
         self.params.set('UPDATE_IDATABASE_NAMES', 'raw')
@@ -230,6 +248,14 @@ class Trigger:
         # ----------------------------------------------------------------------
         obs_dirs = self.indexdbm.database.unique('OBS_DIR',
                                                  condition='BLOCK_KIND="raw"')
+        # remove obs_dirs that do not exist (for some reason)
+        remove_obs = []
+        for obs_dir in sdict:
+            if obs_dir not in obs_dirs:
+                remove_obs.append(obs_dir)
+        # remove from dictionary
+        for obs_dir in remove_obs:
+            del sdict[obs_dir]
         # ----------------------------------------------------------------------
         # step 4: get a list of recipes for the calib script and the sci script
         # ----------------------------------------------------------------------
@@ -240,28 +266,27 @@ class Trigger:
         # ----------------------------------------------------------------------
         # step 5: determine whether DONE_CALIB and DONE_SCI are True or False
         # ----------------------------------------------------------------------
+        # keep track of number found
+        todo_calib = []
+        todo_sci = []
         # loop around obs dirs
         for obs_dir in obs_dirs:
             # ------------------------------------------------------------------
             # get values of DONE_CALIB and DONE_SCI
-            if obs_dir in sobsdir:
-                # get location of obs_dir in lists
-                pos = sobsdir.index(obs_dir)
+            if obs_dir in sdict:
                 # get the DONE_CALIB and DONE_SCI values
-                calib_done = sdone_c[pos]
-                sci_done = sdone_s[pos]
+                calib_done = sdict[obs_dir][0]
+                sci_done = sdict[obs_dir][1]
             else:
                 # assume calibration is done and science is not done
                 calib_done = False
                 sci_done = False
             # ------------------------------------------------------------------
             # if DONE_CALIB and DONE_SCI skip
-            # ------------------------------------------------------------------
             if calib_done and sci_done:
                 continue
             # ------------------------------------------------------------------
             # deal with no recipes for this night
-            # ------------------------------------------------------------------
             # get database for this observation night
             condition = f'OBS_DIR="{obs_dir}"'
             shortnames = self.logdbm.get_entries('SHORTNAME',
@@ -269,14 +294,14 @@ class Trigger:
             shortnames = np.array(shortnames)
             # deal with no entries
             if len(shortnames) == 0:
-                sobsdir.append(obs_dir)
-                sdone_c.append(False)
-                sdone_s.append(False)
+                sdict[obs_dir] = [False, False]
+                # add to the number that need doing
+                todo_calib.append(obs_dir)
+                todo_sci.append(obs_dir)
                 # condition to next obs dir
                 continue
             # ------------------------------------------------------------------
             # Identify whether all calibrations have been done for this night
-            # ------------------------------------------------------------------
             if not calib_done:
                 # assume calibration is done
                 calib_done = True
@@ -289,7 +314,6 @@ class Trigger:
                         break
             # ------------------------------------------------------------------
             # Identify if all science steps have been done
-            # ------------------------------------------------------------------
             # only check if calibrations steps have for all files
             if not sci_done and calib_done:
                 # assume science files are done
@@ -303,7 +327,8 @@ class Trigger:
                     subconds.append(f'KW_DPRTYPE="{dprtype}"')
                 condition += ' AND ({0})'.format(' OR '.join(subconds))
                 # get all science files
-                scifiles = self.indexdbm.get_entries('FILENAME', condition=condition)
+                scifiles = self.indexdbm.get_entries('FILENAME',
+                                                     condition=condition)
                 # loop around recipes
                 for sname in sci_recipes:
                     # only check recipes with file arguments
@@ -315,39 +340,70 @@ class Trigger:
                             break
             # ------------------------------------------------------------------
             # Add obs_dir to the nights
-            # ------------------------------------------------------------------
+            # add to the number that need doing
+            if not calib_done:
+                todo_calib.append(obs_dir)
+            if not sci_done:
+                todo_sci.append(obs_dir)
             # add night to sdict
-            sobsdir.append(obs_dir)
-            sdone_c.append(calib_done)
-            sdone_s.append(sci_done)
+            sdict[obs_dir] = [calib_done, sci_done]
+        # ---------------------------------------------------------------------
+        # print the obs dirs left to do
+        if len(todo_calib) > 0:
+            msg = 'Processing calib nights:\n\t{0}'
+            WLOG(self.params, '', msg.format(', '.join(todo_calib)))
+        if len(todo_sci) > 0:
+            msg = 'Processing science nights:\n\t{0}'
+            WLOG(self.params, '', msg.format(', '.join(todo_sci)))
         # ---------------------------------------------------------------------
         # 6. convert to table for use elsewhere
         # ---------------------------------------------------------------------
+        # convert into three lists
+        sobsdir, sdone_c, sdone_s = [], [], []
+        for obs_dir in sdict:
+            sobsdir.append(obs_dir)
+            sdone_c.append(sdict[obs_dir][0])
+            sdone_s.append(sdict[obs_dir][1])
+        # ---------------------------------------------------------------------
+        # push into table
         table = Table()
         table['OBS_DIR'] = sobsdir
         table['DONE_CALIB'] = sdone_c
         table['DONE_SCI'] = sdone_s
         # ---------------------------------------------------------------------
+        # 7. write table to file
+        # ---------------------------------------------------------------------
+        # write/overwrite the current table on disk
+        table.write(self.triggr_table, overwrite=True)
+        # ---------------------------------------------------------------------
         # return the updated table
         return table
 
-
-    def load_status(self) -> Tuple[List[str], List[bool], List[bool]]:
-
+    def load_status(self) -> Dict[str, List[bool]]:
+        """
+        Load the status (from the trigger table file)
+        """
         sdict = dict()
         # if we have a table on disk load it here
         if os.path.exists(self.triggr_table):
             table = Table.read(self.triggr_table)
-            obs_dir = list(table['OBS_DIR'])
-            done_calib = list(np.array(table['DONE_CALIB'], dtype=bool))
-            done_sci = list(np.array(table['DONE_SCI'], dtype=bool))
+            # loop around obs dirs
+            for pos, obs_dir in enumerate(table['OBS_DIR']):
+                done_calib = bool(table['DONE_CALIB'][pos])
+                done_sci = bool(table['DONE_SCI'][pos])
+                sdict[obs_dir] = [done_calib, done_sci]
         # else generate a new table
         else:
-            obs_dir = []
-            done_calib = []
-            done_sci = []
+            sdict = dict()
         # return the table
-        return obs_dir, done_calib, done_sci
+        return sdict
+
+    def reset(self):
+        """
+        Reset the trigger table (delete it)
+        """
+        if os.path.exists(self.triggr_table):
+            os.remove(self.triggr_table)
 
 
 def get_recipes(params: ParamDict, runfile: str,

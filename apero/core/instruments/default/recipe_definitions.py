@@ -343,18 +343,42 @@ stats.description_file = 'apero_stats.rst'
 # -----------------------------------------------------------------------------
 # apero_trigger.py
 # -----------------------------------------------------------------------------
-stats.name = 'apero_trigger.py'
-stats.shortname = 'TRIGGER'
-stats.instrument = __INSTRUMENT__
-stats.description = 'Basic trigger for APERO'
-stats.recipe_type = 'nolog-tool'
-stats.recipe_kind = 'processing'
-stats.set_debug_plots()
-stats.set_summary_plots()
-stats.set_kwarg(name='--indir', dtype=str, default='None',
+trigger.name = 'apero_trigger.py'
+trigger.shortname = 'TRIGGER'
+trigger.instrument = __INSTRUMENT__
+trigger.description = 'Basic trigger for APERO'
+trigger.recipe_type = 'nolog-tool'
+trigger.recipe_kind = 'processing'
+trigger.set_debug_plots()
+trigger.set_summary_plots()
+trigger.set_kwarg(name='--indir', dtype=str, default='None',
                    helpstr='The input directory to scan for new data.'
                            ' (This is not the apero defined raw directory)')
-stats.description_file = None
+trigger.set_kwarg(name='--reset', dtype='switch', default=False,
+                  helpstr='Reset the trigger (default is False and thus we use '
+                          'cached files to speed up trigger). This means '
+                          'after nights are marked done (calib/sci) they will'
+                          ' not be reprocessed. Thus --reset to avoid this.')
+trigger.set_kwarg(name='--ignore', dtype=str, default='None',
+                  helpstr='Ignore certain obs_dir (observation directories) '
+                          ' by default all directories in --indir are reduced.'
+                          ' Using ignore will ignore certain directories and '
+                          'not add them to the the sym-linked (DRS_DATA_RAW) '
+                          'directory.')
+trigger.set_kwarg(name='--wait', dtype=int, default=60,
+                  minimum=1, maximum=3600,
+                  helpstr='Number of second to wait between processing '
+                          'runs. Should not be too low (below 10s its too fast)'
+                          ' unless testing, or too high (above 3600s)')
+trigger.set_kwarg(name='--calib', dtype=str,
+                  default='trigger_night_calibrun.ini',
+                  helpstr='The run.ini file to use for calibration trigger run')
+trigger.set_kwarg(name='--sci', dtype=str,
+                  default='trigger_night_scirun.ini',
+                  helpstr='The run.ini file to use for science trigger run')
+trigger.set_kwarg(name='--trigger_test', dtype='switch', default=False,
+                  helpstr='Active test mode (does not run recipes)')
+trigger.description_file = 'apero_trigger.rst'
 
 
 # -----------------------------------------------------------------------------
