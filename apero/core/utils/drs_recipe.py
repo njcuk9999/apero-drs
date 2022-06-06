@@ -2103,7 +2103,6 @@ def make_default_recipe(params: ParamDict = None,
     return DrsRecipe(params=params, name=name)
 
 
-
 def filter_values(values: List[str], filter_list: List[str],
                    mode: str ='keep') -> List[str]:
     """
@@ -2122,12 +2121,18 @@ def filter_values(values: List[str], filter_list: List[str],
     for value in values:
         # if mode = keep, we keep only those in filter list
         if mode == 'keep':
+            # if we have no items in filter list we don't reject values
+            if len(filter_list) == 0:
+                continue
             # we want to reject those in filter_list
             if value in filter_list:
                 valid_values.append(value)
         else:
+            # if we have no items in filter list we keep all valies
+            if len(filter_list) == 0:
+                valid_values.append(value)
             # we want to reject those in filter_list
-            if value not in filter_list:
+            elif value not in filter_list:
                 valid_values.append(value)
     # return values
     return valid_values
