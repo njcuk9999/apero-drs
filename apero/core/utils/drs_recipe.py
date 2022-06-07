@@ -1323,6 +1323,16 @@ class DrsRecipe(object):
         # if we have a positional argument
         else:
             strfmt = '{1}'
+        # ----------------------------------------------------------------------
+        # store_true actions needs just the argname (if True) otherwise they
+        #    should be skipped
+        if 'action' in arg.props:
+            if arg.props['action'] == 'store_true':
+                if drs_text.true_text(values):
+                    self.str_arg_list.append(arg.argname)
+                else:
+                    return
+        # ----------------------------------------------------------------------
         # now add these arguments (as a string) to str_arg_list
         if isinstance(values, list):
             # add the first argument
