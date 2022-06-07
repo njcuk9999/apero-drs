@@ -1055,6 +1055,7 @@ def read_runfile(params: ParamDict, runfile: str,
             # deal with none nulls
             if not drs_text.null_text(_obs_dir, ['None', '', 'All']):
                 params['OBS_DIR'] = _obs_dir
+                params['RUN_OBS_DIR'] = _obs_dir
         # make sure observation directory is str or None
         if drs_text.null_text(params['OBS_DIR'], ['None', '', 'All']):
             params['OBS_DIR'] = None
@@ -1117,8 +1118,11 @@ def read_runfile(params: ParamDict, runfile: str,
             # deal with non null values
             if not drs_text.null_text(_trigger, ['', 'None']):
                 # test for true value
-                params['TRIGGER_RUN'] = drs_text.true_text(_trigger)
-
+                _trigger = drs_text.true_text(_trigger)
+                # update trigger only if trigger is True (otherwise this
+                #   should come from the run file (already in params)
+                if _trigger:
+                    params['TRIGGER_RUN'] = True
             # if trigger if defined night name must be as well
             if params['OBS_DIR'] is None and params['TRIGGER_RUN']:
                 # cause an error if obs_dir not set

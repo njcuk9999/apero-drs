@@ -11,6 +11,7 @@ Created on 2019-07-26 at 09:40
 """
 from apero.base import base
 from apero import lang
+from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
@@ -32,8 +33,8 @@ WLOG = drs_log.wlog
 # Get the text types
 textentry = lang.textentry
 # --------------------------------------------------------------------------
-# define run.ini files
-
+# define run.ini file definition path
+RUNDEF_PATH = 'apero.tools.module.processing.instruments.runfiles_{0}'
 
 
 
@@ -69,16 +70,29 @@ def main(**kwargs):
 
 
 def __main__(recipe, params):
-
     # get instrument variable
     instruments = list(base.INSTRUMENTS)
     if 'INSTRUMENT' in params['INPUTS']:
         if not drs_text.null_text(params['INPUTS']['INSTRUMENT'], ['None', '']):
             instruments = params['INPUTS']['INSTRUMENT'].split(',')
+    # -------------------------------------------------------------------------
     # log progress
     WLOG(params, 'info', 'Generating list of default run.ini files')
     # get default run file instances
-    run_files = drs_run_ini.get_runfiles(params)
+    run_files = []
+    for instrument in instruments:
+        modname = f'runfile_{instrument.lower()}'
+        modpath = RUNDEF_PATH.format(instrument.lower())
+        # try to load run def
+        try:
+            rundef = constants.import_module(modname, modpath, quiet=True)
+        except Exception as _:
+            wmsg = 'Cannot load: {0} skipping'
+            wargs = [modname]
+            WLOG(params, 'warning', wmsg.format(*wargs))
+            continue
+        run_files += rundef.get().get_runfiles(params)
+    # -------------------------------------------------------------------------
     # print how many found
     WLOG(params, '', '\tFound {0} run file templates'.format(len(run_files)))
     # loop around run files

@@ -615,6 +615,9 @@ class CalibrationDatabase(DatabaseManager):
         # set function
         # _ = display_func('add_calib_file', __NAME__,
         #                  self.classname)
+        # deal with nosave
+        if drsfile.nosave:
+            return
         # deal with no database
         if self.database is None:
             self.load_db()
