@@ -307,6 +307,9 @@ class Trigger:
                 calib_done = True
                 # loop aroud calib recipes
                 for calib_recipe in list(calib_recipes.keys()):
+                    # skip if recipe is not a calibration
+                    if 'calib' not in calib_recipes[calib_recipe].recipe_kind:
+                        continue
                     # query log database if recipe does not have a short name
                     #  the calibrations are not done for this night
                     if calib_recipe not in shortnames:
@@ -320,7 +323,7 @@ class Trigger:
                 sci_done = True
                 # index condition
                 condition = 'BLOCK_KIND="raw"'
-                condition += f' AND OBS_DIR="{obs_dir}'
+                condition += f' AND OBS_DIR="{obs_dir}"'
                 # get science files condition (DPRTYPE)
                 subconds = []
                 for dprtype in self.params.listp('PP_OBJ_DPRTYPES',dtype=str):
