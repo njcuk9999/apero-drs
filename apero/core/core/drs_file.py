@@ -772,6 +772,8 @@ class DrsInputFile:
         self.instrument = instrument
         # allow instance to be associated with a filename
         self.set_filename(filename)
+        # set a flag that no save is active
+        self.nosave = False
 
     def __getstate__(self) -> dict:
         """
@@ -972,6 +974,21 @@ class DrsInputFile:
         # set the params
         self.params = params
 
+    def no_save(self) -> bool:
+        """
+        Check for the no save special argument
+        """
+        # check for INPUTS in params
+        if 'INPUTS' in self.params:
+            # check for NOSAVE argument in inputs
+            if 'NOSAVE' in self.params['INPUTS']:
+                # check whether NOSAVE is set to True
+                if drs_text.true_text(self.params['INPUTS']['NOSAVE']):
+                    self.nosave = True
+                    return True
+        # it not return False
+        return False
+
     def newcopy(self, name: Union[str, None] = None,
                 filetype: Union[str, None] = None,
                 suffix: Union[str, None] = None,
@@ -1006,7 +1023,8 @@ class DrsInputFile:
                 infiles: Union[list, None] = None,
                 s1d: Union[list, None] = None,
                 hkeys: Union[Dict[str, str], None] = None,
-                instrument: Optional[str] = None):
+                instrument: Optional[str] = None,
+                nosave: Optional[bool] = None):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -1090,7 +1108,7 @@ class DrsInputFile:
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument)
+                            instrument, nosave)
 
     def check_params(self, func):
         """
@@ -1211,7 +1229,8 @@ class DrsInputFile:
                   infiles: Union[list, None] = None,
                   s1d: Union[list, None] = None,
                   hkeys: Union[Dict[str, str], None] = None,
-                  instrument: Optional[str] = None):
+                  instrument: Optional[str] = None,
+                  nosave: Optional[bool] = None):
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -1295,7 +1314,7 @@ class DrsInputFile:
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument)
+                            instrument, nosave)
 
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
@@ -1332,7 +1351,8 @@ class DrsInputFile:
                      infiles: Union[list, None] = None,
                      s1d: Union[list, None] = None,
                      hkeys: Union[Dict[str, str], None] = None,
-                     instrument: Optional[str] = None):
+                     instrument: Optional[str] = None,
+                     nosave: Optional[bool] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -1415,7 +1435,7 @@ class DrsInputFile:
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument)
+                            instrument, nosave)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -2136,7 +2156,8 @@ class DrsFitsFile(DrsInputFile):
                 infiles: Union[list, None] = None,
                 s1d: Union[list, None] = None,
                 hkeys: Union[Dict[str, str], None] = None,
-                instrument: Optional[str] = None):
+                instrument: Optional[str] = None,
+                nosave: Optional[bool] = None):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -2220,7 +2241,7 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument)
+                            instrument, nosave)
 
     def string_output(self) -> str:
         """
@@ -2289,7 +2310,8 @@ class DrsFitsFile(DrsInputFile):
                   infiles: Union[list, None] = None,
                   s1d: Union[list, None] = None,
                   hkeys: Union[Dict[str, str], None] = None,
-                  instrument: Optional[str] = None):
+                  instrument: Optional[str] = None,
+                  nosave: Optional[bool] = None):
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -2374,7 +2396,8 @@ class DrsFitsFile(DrsInputFile):
                             obs_dir, data, header, fileset, filesetnames,
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, hkeys, instrument)
+                            is_combined, combined_list, s1d, hkeys, instrument,
+                            nosave)
 
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
@@ -2411,7 +2434,8 @@ class DrsFitsFile(DrsInputFile):
                      infiles: Union[list, None] = None,
                      s1d: Union[list, None] = None,
                      hkeys: Union[Dict[str, str], None] = None,
-                     instrument: Optional[str] = None):
+                     instrument: Optional[str] = None,
+                     nosave: Optional[bool] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -2494,7 +2518,7 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument)
+                            instrument, nosave)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -3474,6 +3498,11 @@ class DrsFitsFile(DrsInputFile):
                                  self.class_name)
         # get params
         params = self.params
+        # deal with no save
+        if self.no_save():
+            wmsg = 'NOSAVE active - file not written to disk'
+            WLOG(self.params, 'warning', wmsg)
+            return
         # ---------------------------------------------------------------------
         # check that filename is set
         self.check_filename()
@@ -3543,6 +3572,11 @@ class DrsFitsFile(DrsInputFile):
                                  self.class_name)
         # get params
         params = self.params
+        # deal with no save
+        if self.no_save():
+            wmsg = 'NOSAVE active - file not written to disk'
+            WLOG(self.params, 'warning', wmsg)
+            return
         # ---------------------------------------------------------------------
         # check that filename is set
         self.check_filename()
@@ -5199,6 +5233,11 @@ class DrsNpyFile(DrsInputFile):
         # get parameters
         self.check_params(func_name)
         params = self.params
+        # deal with no save
+        if self.no_save():
+            wmsg = 'NOSAVE active - file not written to disk'
+            WLOG(self.params, 'warning', wmsg)
+            return
         # if filename is not set raise error
         if self.filename is None:
             WLOG(params, 'error', textentry('00-008-00013', args=[func_name]))
@@ -5265,7 +5304,8 @@ class DrsNpyFile(DrsInputFile):
                 infiles: Union[list, None] = None,
                 s1d: Union[list, None] = None,
                 hkeys: Union[Dict[str, str], None] = None,
-                instrument: Optional[str] = None):
+                instrument: Optional[str] = None,
+                nosave: Optional[bool] = None):
         """
         Create a new copy of DRS Npy File object - unset parameters come
         from current instance of Drs Input File
@@ -5325,7 +5365,8 @@ class DrsNpyFile(DrsInputFile):
                             obs_dir, data, header, fileset, filesetnames,
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, hkeys, instrument)
+                            is_combined, combined_list, s1d, hkeys, instrument,
+                            nosave)
 
     def completecopy(self, drsfile: 'DrsNpyFile',
                      name: Union[str, None] = None,
@@ -5362,7 +5403,8 @@ class DrsNpyFile(DrsInputFile):
                      infiles: Union[list, None] = None,
                      s1d: Union[list, None] = None,
                      hkeys: Union[Dict[str, str], None] = None,
-                     instrument: Optional[str] = None):
+                     instrument: Optional[str] = None,
+                     nosave: Optional[bool] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -5424,7 +5466,7 @@ class DrsNpyFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument)
+                            instrument, nosave)
 
     # -------------------------------------------------------------------------
     # database methods
@@ -7015,6 +7057,11 @@ class DrsOutFile(DrsInputFile):
         # set function name
         func_name = display_func('write_file', __NAME__,
                                  self.class_name)
+        # deal with no save
+        if self.no_save():
+            wmsg = 'NOSAVE active - file not written to disk'
+            WLOG(self.params, 'warning', wmsg)
+            return
         # construct data list
         data_list = []
         for ext in self.extensions:
@@ -8169,7 +8216,8 @@ def _copydrsfile(drsfileclass,
                  infiles: Union[list, None] = None,
                  s1d: Union[list, None] = None,
                  hkeys: Union[Dict[str, str], None] = None,
-                 instrument: Optional[str] = None):
+                 instrument: Optional[str] = None,
+                 nosave: Optional[bool] = None):
     """
     Master copier of file instance
     instance1 = self normally
@@ -8391,6 +8439,9 @@ def _copydrsfile(drsfileclass,
     # set instrument
     if instrument is None:
         instrument = deepcopy(instance2.instrument)
+    # set nosave
+    if nosave is None:
+        nosave = deepcopy(instance2.nosave)
     # return new instance
     return drsfileclass(name, filetype, suffix, remove_insuffix, prefix,
                         fibers, fiber, params, filename, intype, path,

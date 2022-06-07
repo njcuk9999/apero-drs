@@ -894,7 +894,9 @@ class DrsRecipe(object):
         # get the name of the outfile
         key = outfile.basename
         # check if outfile has output_dict
-        if hasattr(outfile, 'output_dict'):
+        if outfile.nosave:
+            return
+        elif hasattr(outfile, 'output_dict'):
             self.output_files[key] = outfile.output_dict
         else:
             # log that output file has no attribute 'output_dict'
@@ -1403,6 +1405,9 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # set quiet functionality
         self._make_special(drs_argument.set_quiet, skip=False)
+        # ---------------------------------------------------------------------
+        # set nosave functionality
+        self._make_special(drs_argument.set_nosave, skip=False)
         # ---------------------------------------------------------------------
         # force input and output directories
         self._make_special(drs_argument.set_inputdir, skip=False)
