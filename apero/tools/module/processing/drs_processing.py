@@ -1464,8 +1464,10 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
         # ------------------------------------------------------------------
         # if we are in trigger mode we need to stop when we have no
         #   sruns for recipe
-        if 'TRIGGER' in params['INPUTS']:
-            if params['INPUTS']['TRIGGER'] and len(sruns) == 0:
+        if 'TRIGGER_RUN' in params:
+            trigger_cond = drs_text.true_text(params['TRIGGER_RUN'])
+            # test whether we need to stop here
+            if trigger_cond and len(sruns) == 0:
                 # display message that we stopped here as no files were found
                 wargs = [srecipe.name]
                 WLOG(params, 'info', textentry('40-503-00028', args=wargs))
@@ -1525,6 +1527,9 @@ def generate_runs(params: ParamDict, recipe: DrsRecipe,
     #   there are more than one argument, we then add in the other
     #   arguments and construct the runs
     runargs = group_run_files2(params, recipe, argdict, kwargdict)
+    # now we have to check whether we have the minimum number of files
+    #   per run (only done if TRIGGER_RUN = True and recipe.set_min_nfiles used)
+    runargs = check_minimum_number(params, recipe, runargs)
     # now we have the runargs we can convert to a runlist
     runlist = convert_to_command(recipe, runargs)
     # clear printer
@@ -2717,6 +2722,79 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
         WLOG(params, 'warning', textentry('10-503-00018', args=wargs),
              sublevel=6)
         return []
+
+
+def check_minimum_number(params: ParamDict, recipe: DrsRecipe,
+                         runargs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Check the minimum number of files required for a recipe (only for file
+    arguments) - this is set by the RECIPE.set_min_nfiles argument
+
+    Note this is ONLY done if TRIGGER_RUN = True
+    """
+    # only check minimum number of files for trigger runs
+    if not params['TRIGGER_RUN']:
+        return runargs
+    # get minimum number of files required
+    minimum_files = recipe.minimum_files
+    # deal with no requirements set
+    if minimum_files is None or len(minimum_files) == 0:
+        return runargs
+    # storage for valid file args
+    new_runargs = []
+    # count skipped
+    skipped = dict()
+    # -------------------------------------------------------------------------
+    # loop around runs and determine whether they pass minimum file requirements
+    for r_it, runarg in enumerate(runargs):
+        # assume runarg is good
+        good = True
+        # loop around minimum files (should be a dictionary)
+        for filearg in minimum_files:
+            # check this file arg
+            if filearg in runarg:
+                if len(runarg[filearg]) < minimum_files[filearg]:
+                    good = False
+                    # log debug message
+                    # TODO: Add to language db
+                    dmsg = ('\tArg {0} Row [{1}]: Minimum number of files not '
+                            'met \n\t\t Found {2}, require {3}')
+                    dargs = [filearg, r_it, runarg[filearg],
+                             minimum_files[filearg]]
+                    WLOG(params, 'debug', dmsg.format(*dargs))
+                    # add to skipped
+                    if filearg in skipped:
+                        skipped[filearg] += 1
+                    else:
+                        skipped[filearg] = 1
+        # if still good keep argument
+        if good:
+            new_runargs.append(runarg)
+    # -------------------------------------------------------------------------
+    # tell the user some files were skipped due to minimum requirements
+    if len(new_runargs) != len(runargs):
+        # clear printer
+        drs_log.Printer(None, None, '')
+        # print warning message
+        # TODO: Add to language db
+        wmsg = ('\t\tSkipped {0} runs due to minimum file requirements '
+                '(TRIGGER_RUN=True)')
+        wargs = [len(runargs) - len(new_runargs)]
+        WLOG(params, 'warning', wmsg.format(*wargs))
+        # print number of file arguments skipped
+        for filearg in skipped:
+            wargs = [filearg, skipped[filearg]]
+            WLOG(params, 'warning', '\t\t\t{0} = {1}'.format(*wargs))
+    else:
+        # clear printer
+        drs_log.Printer(None, None, '')
+        # print none skipped
+        # TODO: Add to language db
+        msg = '\t\tTRIGGER_RUN=True all files meet minimum file requirements'
+        WLOG(params, '', msg)
+    # -------------------------------------------------------------------------
+    # return good runargs
+    return new_runargs
 
 
 def convert_to_command(recipe: DrsRecipe,

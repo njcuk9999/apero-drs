@@ -4520,6 +4520,35 @@ def set_quiet(params: ParamDict) -> OrderedDict:
     # return the argument dictionary
     return props
 
+
+def set_nosave(params: ParamDict) -> OrderedDict:
+    """
+    Make a custom special argument: Set the quiet mode
+
+    :param params: ParamDict, Parameter Dictionary of constants
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # no use for params
+    _ = params
+    # set up an output storage dictionary
+    props = OrderedDict()
+    # set the argument name
+    props['name'] = '--nosave'
+    # set any argument alternative names
+    props['altnames'] = []
+    # set the argument action function
+    props['action'] = 'store_true'
+    # set the help message
+    props['help'] = ('Do not save any outputs (debug/information run).'
+                     ' Note some recipes require other recipesto be run.'
+                     ' Only use --nosave after previous recipe runs have '
+                     'been run successfully.')
+    # return the argument dictionary
+    return props
+
+
 # =============================================================================
 # End of code
 # =============================================================================
