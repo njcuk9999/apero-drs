@@ -237,6 +237,27 @@ raw_obj_tun = drs_finput('RAW_OBJ_TUN', outclass=blank_ofile,
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_obj_tun)
 
+raw_sun_fp = drs_finput('RAW_SUN_FP', outclass=blank_ofile,
+                        filetype='.fits', suffix='', inext='.fits',
+                        hkeys=dict(KW_RAW_DPRTYPE='SUN,FP,G2V',
+                                   KW_INST_MODE=INSTRUMENT_MODE,
+                                   KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_sun_fp)
+
+raw_sun_dark = drs_finput('RAW_SUN_DARK', outclass=blank_ofile,
+                          filetype='.fits', suffix='', inext='.fits',
+                          hkeys=dict(KW_RAW_DPRTYPE='SUN,DARK,G2V',
+                                     KW_INST_MODE=INSTRUMENT_MODE,
+                                     KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_sun_dark)
+
+raw_fluxstd_sky = drs_finput('RAW_FLUX_STD_SKY', outclass=blank_ofile,
+                             filetype='.fits', suffix='', inext='.fits',
+                             hkeys=dict(KW_RAW_DPRTYPE='FLUX,STD,SKY',
+                                        KW_INST_MODE=INSTRUMENT_MODE,
+                                        KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_fluxstd_sky)
+
 # -----------------------------------------------------------------------------
 # raw comparison files
 raw_dark_hc1 = drs_finput('RAW_DARK_HCONE', outclass=blank_ofile,
@@ -496,6 +517,28 @@ pp_obj_tun = drs_finput('OBJ_TUN', hkeys=dict(KW_DPRTYPE='OBJ_TUN'),
                         suffix='_pp', intype=raw_obj_tun,
                         inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_obj_tun)
+
+pp_sun_fp = drs_finput('SUN_FP', hkeys=dict(KW_DPRTYPE='SUN_FP'),
+                       filetype='.fits',
+                       suffix='_pp', intype=raw_sun_fp,
+                       inext='.fits', outclass=general_ofile)
+pp_file.addset(pp_sun_fp)
+
+pp_sun_dark = drs_finput('SUN_DARK', hkeys=dict(KW_DPRTYPE='SUN_DARK'),
+                         filetype='.fits',
+                         suffix='_pp', intype=raw_sun_dark,
+                         inext='.fits', outclass=general_ofile)
+pp_file.addset(pp_sun_dark)
+
+pp_fluxstd_sky = drs_finput('FLUXSTD_SKY', hkeys=dict(KW_DPRTYPE='FLUXSTD_SKY'),
+                            filetype='.fits',
+                            suffix='_pp', intype=raw_fluxstd_sky,
+                            inext='.fits', outclass=general_ofile)
+pp_file.addset(pp_fluxstd_sky)
+
+# define all science observations
+science_pp = [pp_obj_dark, pp_obj_fp, pp_obj_sky, pp_obj_tun, pp_fluxstd_sky]
+science_dprtypes = ['OBJ_DARK', 'OBJ_FP', 'OBJ_SKY', 'OBJ_TUN', 'FLUXSTD_SKY']
 
 # -----------------------------------------------------------------------------
 #  comparison
