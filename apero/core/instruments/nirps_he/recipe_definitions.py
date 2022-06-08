@@ -249,8 +249,8 @@ apero_badpix.set_kwarg(**flipimage)
 apero_badpix.set_kwarg(**fluxunits)
 apero_badpix.set_kwarg(**plot)
 apero_badpix.set_kwarg(**resize)
-apero_badpix.set_min_nfiles('flatfiles', 5)
-apero_badpix.set_min_nfiles('darkfiles', 2)
+apero_badpix.set_min_nfiles('flatfiles', 1)
+apero_badpix.set_min_nfiles('darkfiles', 1)
 apero_badpix.group_func = grouping.group_by_dirname
 apero_badpix.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe

@@ -1328,7 +1328,7 @@ class DrsRecipe(object):
         #    should be skipped
         if 'action' in arg.props:
             if arg.props['action'] == 'store_true':
-                if drs_text.true_text(values):
+                if drs_text.true_text(values) and not arg.default:
                     self.str_arg_list.append(arg.argname)
                 else:
                     return
