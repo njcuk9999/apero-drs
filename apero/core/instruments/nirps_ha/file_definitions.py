@@ -258,6 +258,12 @@ raw_fluxstd_sky = drs_finput('RAW_FLUX_STD_SKY', outclass=blank_ofile,
                                      KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_fluxstd_sky)
 
+raw_tellu_sky = drs_finput('RAW_TELLU_SKY', outclass=blank_ofile,
+                          filetype='.fits', suffix='', inext='.fits',
+                          hkeys=dict(KW_RAW_DPRTYPE='TELLURIC,SKY',
+                                     KW_INST_MODE=INSTRUMENT_MODE,
+                                     KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_tellu_sky)
 
 # -----------------------------------------------------------------------------
 # raw comparison files
@@ -537,9 +543,17 @@ pp_fluxstd_sky = drs_finput('FLUXSTD_SKY', hkeys=dict(KW_DPRTYPE='FLUXSTD_SKY'),
                             inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_fluxstd_sky)
 
+pp_tellu_sky = drs_finput('TELLU_SKY', hkeys=dict(KW_DPRTYPE='TELLU_SKY'),
+                          filetype='.fits',
+                          suffix='_pp', intype=raw_tellu_sky,
+                          inext='.fits', outclass=general_ofile)
+pp_file.addset(pp_tellu_sky)
+
 # define all science observations
-science_pp = [pp_obj_dark, pp_obj_fp, pp_obj_sky, pp_obj_tun, pp_fluxstd_sky]
-science_dprtypes = ['OBJ_DARK', 'OBJ_FP', 'OBJ_SKY', 'OBJ_TUN', 'FLUXSTD_SKY']
+science_pp = [pp_obj_dark, pp_obj_fp, pp_obj_sky, pp_obj_tun, pp_fluxstd_sky,
+              pp_tellu_sky]
+science_dprtypes = ['OBJ_DARK', 'OBJ_FP', 'OBJ_SKY', 'OBJ_TUN', 'FLUXSTD_SKY',
+                    'TELLU_SKY']
 
 # -----------------------------------------------------------------------------
 #  comparison
