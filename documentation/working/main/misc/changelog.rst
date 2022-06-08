@@ -2,6 +2,102 @@ Changelog
 =========
 
 
+0.7.237 (2022-06-08)
+--------------------
+- Add FLUX,STD,SKY file definition. [njcuk9999]
+- [APERO] fixes for trigger + [NIRPS] gain header key change.
+  [njcuk9999]
+- [APERO] fix drsfile.nosave in `copy_header/copy_hdict`. [Neil Cook]
+- [APERO] do not check non calib recipes for calib run. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [njcuk9999]
+- Deal with `store_true` action better (when called as an argument) [Neil
+  Cook]
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [njcuk9999]
+- [APERO] add a nosave option for debug/plotting/information purposes
+  (no writing of files) - bug fix. [Neil Cook]
+- [APERO] add a nosave option for debug/plotting/information purposes
+  (no writing of files) [Neil Cook]
+- [APERO] add to trigger code (tested) [Neil Cook]
+- [APERO] add new wave sol for `NIRPS_HA`. [njcuk9999]
+
+
+0.7.236 (2022-06-04)
+--------------------
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [njcuk9999]
+- [APERO] first commit of very basic trigger. [Neil Cook]
+- [APERO] `apero.io.drs_fits.py` - fix `read_multi` extension being None
+  (deepcopy instead of array) [njcuk9999]
+- [APERO] fix memory leak with bottleneck + over copying of fits reader.
+  [njcuk9999]
+- [NIRPS] update `nirps_he` default wave sol. [njcuk9999]
+- [APERO] `apero.core.instruments.default.deafult_constants.py` -
+  `BADPIX_ERODE_SIZE` and `BADPIX_DILATE_SIZE` must be integers. [njcuk9999]
+- [APERO] flat - better deal with bad flat pixels. [njcuk9999]
+- [APERO] badpix - add erosion + dilution factors for large bad pixels.
+  [njcuk9999]
+- [APERO] `apero.science.extract.extraction.py` - fix flat (do not correct
+  too small or too large values) [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [Neil Cook]
+
+  # Conflicts:
+  #    `bin/apero_flat_spirou.py`
+- [NIRPS] add nirps to the documentation. [Neil Cook]
+- [APERO] todo deal with small number division in the flat. [njcuk9999]
+- [APERO] better patch edges of large bad pixel regions [NIRPS] update
+  wave sols + catalogue. [njcuk9999]
+
+
+0.7.235 (2022-05-31)
+--------------------
+- [NIRPS] add in telluric recipes. [njcuk9999]
+- [NIRPS] `apero.tools.module.processing.drs_run_ini.py` - add to run.ini
+  files the nirps helios sequence. [njcuk9999]
+- Add changes to allow helios to be reduced. [njcuk9999]
+- Pep8 changes. [njcuk9999]
+- Update default nirps he wave solution + fix typo in
+  `WAVE_FIBER_OFFSET_MOD` and `WAVE_FIBER_SCALE_MOD`. [njcuk9999]
+- Update default nirps he wave solution. [njcuk9999]
+- `WAVEREF_EXPECTED` to take diffvelo + allow offset/sclae of wave
+  solution by N pixels. [njcuk9999]
+- Update header keys for `nirps_he`. [Neil Cook]
+
+
+0.7.234 (2022-05-20)
+--------------------
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [njcuk9999]
+- Add `mk_tellu` and `mk_model` to `nirps_ha` and `nirps_he` to sequences. [Neil
+  Cook]
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [Neil Cook]
+- Add `mk_tellu` and `mk_model` to `nirps_ha` and `nirps_he`. [Neil Cook]
+- Long and lat flipped for nirps (whoops) [njcuk9999]
+- Update tellu white list and default master wave sol for `nirps_ha`.
+  [njcuk9999]
+
+
+0.7.233 (2022-05-18)
+--------------------
+- Deal with no pmra/pmde in headers. [njcuk9999]
+- Update `nirps_ha` wave sol. [Neil Cook]
+- Update `PP_OBJ_DPRTYPES` (add `OBJ_SKY)` [Neil Cook]
+- For nirps we need to test whether OBJECT not in obstype (for SKY test)
+  [Neil Cook]
+- Object type different for nirps - add `REPROCESS_OBJECT_TYPES`. [Neil
+  Cook]
+- Add `fit_tellu` and `mk_template` for `nirps_he/nirps_ha`. [Neil Cook]
+- Update gain header key for nirps. [Neil Cook]
+- Update exptime for nirps. [Neil Cook]
+- Some speed up tests. [Neil Cook]
+- Update date/version/docs/changelog. [Neil Cook]
+
+
 0.7.232 (2022-05-06)
 --------------------
 - Merge remote-tracking branch 'origin/v0.7.228-working' into
