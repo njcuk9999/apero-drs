@@ -72,7 +72,7 @@ def __main__(recipe, params):
     if params['INPUTS']['RESET']:
         trigger.reset()
     # set test mode
-    if params['INPUTS']['TRIGGER_TEST']:
+    if drs_text.true_text(params['INPUTS']['TRIGGER_TEST']):
         trigger.trigger_test = True
     # -------------------------------------------------------------------------
     # add excluded directories

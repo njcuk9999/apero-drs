@@ -215,7 +215,7 @@ class Trigger:
                 WLOG(self.params, 'info', msg)
                 # run science script
                 apero_processing.main(runfile=self.science_script,
-                                      obs_dir=obs_dir, test=True)
+                                      obs_dir=obs_dir, test=self.trigger_test)
         # ---------------------------------------------------------------------
         # step 6: wait
         # ---------------------------------------------------------------------
