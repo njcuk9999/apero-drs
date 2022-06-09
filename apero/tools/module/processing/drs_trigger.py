@@ -139,7 +139,9 @@ class Trigger:
         # define the time to wait to check again
         self.sleep_time = 60
         # define the path to the trigger table
-        self.triggr_table = TRIGGER_TABLE
+        trigger_dir = os.path.join(params['DRS_DATA_ASSETS'],
+                                   params['DATABASE_DIR'])
+        self.triggr_table = os.path.join(trigger_dir, TRIGGER_TABLE)
         # set the input directory (to scan)
         self.indir = params['INPUTS']['INDIR']
         # set the output path
