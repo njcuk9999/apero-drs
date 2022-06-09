@@ -195,7 +195,6 @@ raw_file.addset(raw_flat_led)
 # raw object files
 raw_obj_dark = drs_finput('RAW_OBJ_DARK', outclass=blank_ofile,
                           hkeys=dict(KW_RAW_DPRTYPE='OBJECT,DARK',
-                                     KW_RAW_DPRCATG='SCIENCE',
                                      KW_TARGET_TYPE='TARGET',
                                      KW_INST_MODE=INSTRUMENT_MODE,
                                      KW_INSTRUMENT=INSTRUMENT_NAME))
@@ -204,7 +203,6 @@ raw_file.addset(raw_obj_dark)
 raw_obj_fp = drs_finput('RAW_OBJ_FP', outclass=blank_ofile, filetype='.fits',
                         suffix='', inext='.fits',
                         hkeys=dict(KW_RAW_DPRTYPE='OBJECT,FP',
-                                   KW_RAW_DPRCATG='SCIENCE',
                                    KW_TARGET_TYPE='TARGET',
                                    KW_INST_MODE=INSTRUMENT_MODE,
                                    KW_INSTRUMENT=INSTRUMENT_NAME))
@@ -213,7 +211,6 @@ raw_file.addset(raw_obj_fp)
 raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', outclass=blank_ofile,
                          filetype='.fits', suffix='', inext='.fits',
                          hkeys=dict(KW_RAW_DPRTYPE='OBJECT,UN1',
-                                    KW_RAW_DPRCATG='SCIENCE',
                                     KW_TARGET_TYPE='TARGET',
                                     KW_INST_MODE=INSTRUMENT_MODE,
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
@@ -222,7 +219,6 @@ raw_file.addset(raw_obj_hc1)
 raw_obj_sky = drs_finput('RAW_OBJ_SKY', outclass=blank_ofile,
                          filetype='.fits', suffix='', inext='.fits',
                          hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
-                                    KW_RAW_DPRCATG='SCIENCE',
                                     KW_TARGET_TYPE='TARGET',
                                     KW_INST_MODE=INSTRUMENT_MODE,
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
@@ -231,7 +227,6 @@ raw_file.addset(raw_obj_sky)
 raw_obj_tun = drs_finput('RAW_OBJ_TUN', outclass=blank_ofile,
                          filetype='.fits', suffix='', inext='.fits',
                          hkeys=dict(KW_RAW_DPRTYPE='OBJECT,TUN',
-                                    KW_RAW_DPRCATG='SCIENCE',
                                     KW_TARGET_TYPE='TARGET',
                                     KW_INST_MODE=INSTRUMENT_MODE,
                                     KW_INSTRUMENT=INSTRUMENT_NAME))
