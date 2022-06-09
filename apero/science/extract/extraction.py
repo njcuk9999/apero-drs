@@ -367,9 +367,6 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
                 spe[ic] = spe[ic] / sum_wfxfx
                 spelong[:, ic] = spelong[:, ic] / sum_wfxfx
                 coslong[:, ic] = weights
-    # multiple spe by gain to convert to e-
-    spe *= gain
-    spelong *= gain
 
     return spe, spelong, cpt, coslong
 
