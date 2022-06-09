@@ -251,7 +251,7 @@ raw_sun_dark = drs_finput('RAW_SUN_DARK', outclass=blank_ofile,
                                    KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_sun_dark)
 
-raw_fluxstd_sky = drs_finput('RAW_FLUX_STD_SKY', outclass=blank_ofile,
+raw_fluxstd_sky = drs_finput('RAW_FLUXSTD_SKY', outclass=blank_ofile,
                           filetype='.fits', suffix='', inext='.fits',
                           hkeys=dict(KW_RAW_DPRTYPE='FLUX,STD,SKY',
                                      KW_INST_MODE=INSTRUMENT_MODE,
