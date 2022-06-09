@@ -398,6 +398,14 @@ raw_test_hc1_fp = drs_finput('RAW_TEST_HCONE_FP', outclass=blank_ofile,
                                         KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_test_hc1_fp)
 
+raw_test_eff_sky = drs_finput('RAW_TEST_EFF_SKY', outclass=blank_ofile,
+                              filetype='.fits', suffix='',
+                              hkeys=dict(KW_RAW_DPRTYPE='EFF,SKY,SKY',
+                                         KW_RAW_DPRCATG='TEST',
+                                         KW_INST_MODE=INSTRUMENT_MODE,
+                                         KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_test_eff_sky)
+
 # =============================================================================
 # Preprocessed Files
 # =============================================================================
@@ -664,6 +672,14 @@ pp_test_hc1_fp = drs_finput('TEST_HCONE_FP',
                             suffix='_pp', intype=raw_test_hc1_fp,
                             inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_test_hc1_fp)
+
+# test eff sky
+pp_test_eff_sky = drs_finput('TEST_EFF_SKY',
+                            hkeys=dict(KW_DPRTYPE='TEST_EFF_SKY'),
+                            filetype='.fits',
+                            suffix='_pp', intype=raw_test_eff_sky,
+                            inext='.fits', outclass=general_ofile)
+pp_file.addset(pp_test_eff_sky)
 
 # =============================================================================
 # Reduced Files
