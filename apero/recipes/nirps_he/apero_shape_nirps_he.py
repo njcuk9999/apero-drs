@@ -95,6 +95,8 @@ def __main__(recipe, params):
     infiles = params['INPUTS']['FILES'][1]
     # must check fp files pass quality control
     infiles = gen_calib.check_fp_files(params, infiles)
+    # check qc
+    infiles = drs_file.check_input_qc(params, infiles, 'files')
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:

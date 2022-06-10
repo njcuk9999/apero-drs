@@ -115,6 +115,8 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get files
     infiles = params['INPUTS']['FILES'][1]
+    # check qc
+    infiles = drs_file.check_input_qc(params, infiles, 'files')
     # get whether we should only do precleaning (not recommended)
     #   debug purposes only
     onlypreclean = False

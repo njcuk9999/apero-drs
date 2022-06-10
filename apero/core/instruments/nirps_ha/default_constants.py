@@ -266,7 +266,7 @@ FIBER_SET_NUM_FIBERS_B.value = 1
 # =============================================================================
 # Define object (science or telluric)
 PP_OBJ_DPRTYPES = PP_OBJ_DPRTYPES.copy(__NAME__)
-PP_OBJ_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, OBJ_SKY'
+PP_OBJ_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, OBJ_SKY, TELLU_SKY, FLUXSTD_SKY'
 
 # Define the bad list google spreadsheet id
 PP_BADLIST_SSID = PP_BADLIST_SSID.copy(__NAME__)
@@ -558,7 +558,7 @@ BADPIX_DILATE_SIZE.value = 9
 # =============================================================================
 #    Width of the box to produce the background mask
 BKGR_BOXSIZE = BKGR_BOXSIZE.copy(__NAME__)
-BKGR_BOXSIZE.value = 128
+BKGR_BOXSIZE.value = 32
 
 #    Do background percentile to compute minimum value (%)
 BKGR_PERCENTAGE = BKGR_PERCENTAGE.copy(__NAME__)
@@ -579,7 +579,7 @@ BKGR_NO_SUBTRACTION.value = False
 
 #    Kernel amplitude determined from drs_local_scatter.py
 BKGR_KER_AMP = BKGR_KER_AMP.copy(__NAME__)
-BKGR_KER_AMP.value = 47
+BKGR_KER_AMP.value = 1e9
 
 #    Background kernel width in in x and y [pixels]
 BKGR_KER_WX = BKGR_KER_WX.copy(__NAME__)
@@ -1197,7 +1197,7 @@ EXT_S1D_EDGE_SMOOTH_SIZE.value = 20
 
 #    Define dprtypes to calculate berv for (should be a string list)
 EXT_ALLOWED_BERV_DPRTYPES = EXT_ALLOWED_BERV_DPRTYPES.copy(__NAME__)
-EXT_ALLOWED_BERV_DPRTYPES.value = 'OBJ_FP, OBJ_DARK, OBJ_SKY'
+EXT_ALLOWED_BERV_DPRTYPES.value = 'OBJ_FP, OBJ_DARK, OBJ_SKY, TELLU_SKY, FLUXSTD_SKY'
 
 #    Define which BERV calculation to use ('barycorrpy' or 'estimate' or 'None')
 EXT_BERV_KIND = EXT_BERV_KIND.copy(__NAME__)
@@ -1972,7 +1972,7 @@ TAPAS_FILE_FMT.value = 'fits'
 
 # The allowed input DPRTYPES for input telluric files
 TELLU_ALLOWED_DPRTYPES = TELLU_ALLOWED_DPRTYPES.copy(__NAME__)
-TELLU_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, OBJ_SKY'
+TELLU_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, OBJ_SKY, TELLU_SKY, FLUXSTD_SKY'
 
 # the INPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input telluric files
@@ -2383,7 +2383,7 @@ CCF_N_ORD_MAX.value = 48
 
 # Allowed input DPRTYPES for input  for CCF recipe
 CCF_ALLOWED_DPRTYPES = CCF_ALLOWED_DPRTYPES.copy(__NAME__)
-CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, OBJ_SKY'
+CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, OBJ_SKY, TELLU_SKY, FLUXSTD_SKY'
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
 CCF_CORRECT_TELLU_TYPES = CCF_CORRECT_TELLU_TYPES.copy(__NAME__)

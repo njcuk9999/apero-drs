@@ -95,6 +95,8 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get files
     infiles = params['INPUTS']['FILES'][1]
+    # check qc
+    infiles = drs_file.check_input_qc(params, infiles, 'files')
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
@@ -151,6 +153,13 @@ def __main__(recipe, params):
                      infile.basename]
             WLOG(params, 'error', textentry('00-013-00001', args=eargs))
             fiber = None
+
+        # set a flag for fiber type in logging
+        science_fiber, _ = pconst.FIBER_KINDS()
+        if fiber in science_fiber:
+            log1.update_flags(SCIFIBER=True)
+        else:
+            log1.update_flags(REFFIBER=True)
         # ------------------------------------------------------------------
         # Construct image order_profile
         # ------------------------------------------------------------------
