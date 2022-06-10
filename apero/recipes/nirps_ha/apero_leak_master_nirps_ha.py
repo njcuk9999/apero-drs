@@ -204,7 +204,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # TODO: Need to add some parameters to header
     medcubes = leak.write_leak_master(params, recipe, rawfiles, medcubes,
-                                      qc_params, cprops)
+                                        qc_params, cprops)
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------

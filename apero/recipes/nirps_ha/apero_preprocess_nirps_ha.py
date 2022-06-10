@@ -269,11 +269,6 @@ def __main__(recipe, params):
         else:
             passed = False
             log1.add_qc(fail_qcparams, passed)
-        if not passed:
-            # end log here
-            log1.end()
-            # go to next iteration
-            continue
 
         # ------------------------------------------------------------------
         # correct image
@@ -322,11 +317,6 @@ def __main__(recipe, params):
         qc_params, passed = prep.quality_control2(params, *qargs2)
         # update recipe log
         log1.add_qc(qc_params, passed)
-        if not passed:
-            # end log here
-            log1.end()
-            # go to next iteration
-            continue
 
         # ------------------------------------------------------------------
         # Save rotated image

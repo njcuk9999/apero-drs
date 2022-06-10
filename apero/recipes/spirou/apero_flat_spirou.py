@@ -94,6 +94,8 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get files
     infiles = params['INPUTS']['FILES'][1]
+    # check qc
+    infiles = drs_file.check_input_qc(params, infiles, 'files')
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
@@ -196,7 +198,6 @@ def __main__(recipe, params):
                                        kind='flat', fiber=fiber)
             # fit blaze and get flat
             eprops = extract.extract_blaze_flat(params, eprops, fiber)
-
             # --------------------------------------------------------------
             # Plots
             # --------------------------------------------------------------
