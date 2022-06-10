@@ -97,6 +97,9 @@ def __main__(recipe, params):
     # get files
     flatfiles = params['INPUTS']['FLATFILES'][1]
     darkfiles = params['INPUTS']['DARKFILES'][1]
+    # check qc
+    flat_files = drs_file.check_input_qc(params, flatfiles, 'flat files')
+    darkfiles = drs_file.check_input_qc(params, darkfiles, 'dark files')
     # get list of filenames (for output)
     rawflatfiles, rawdarkfiles = [], []
     for infile in flatfiles:

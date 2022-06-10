@@ -104,6 +104,8 @@ def __main__(recipe, params):
     pconst = constants.pload()
     # get files
     fpfiles = params['INPUTS']['FPFILES'][1]
+    # check qc
+    fpfiles = drs_file.check_input_qc(params, fpfiles, 'fp files')
     # get list of filenames (for output)
     rawfpfiles = []
     # for infile in hcfiles:

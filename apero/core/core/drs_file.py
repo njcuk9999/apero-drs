@@ -7194,6 +7194,102 @@ class DrsOutFile(DrsInputFile):
 # =============================================================================
 # User DrsFile functions
 # =============================================================================
+def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
+                   filekind: str, required: bool = True) -> List[DrsFitsFile]:
+    """
+    Check the input files pass quality control
+    (unless we are not forcing qc to be correct)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param drsfiles: DrsFitsFile or list of DrsFitsFile, the files to test
+                     (only tests files with headers)
+    :param filekind: str, filename for print outs
+    :param required: bool, if False does not raise error on no files
+
+    :raises: DrsException if no files pass qc
+    :return: updated list of DrsInputFile - if some files pass qc will return
+             only these to be used
+    """
+    # do not check if flag is false
+    if 'INPUTS' in params:
+        if 'NO_IN_QC' in params['INPUTS']:
+            if not drs_text.true_text(params['INPUTS']['NO_IN_QC']):
+                return drsfiles
+    # -------------------------------------------------------------------------
+    # print progress
+    # TODO: add to language database
+    msg = 'Checking input qc for: {0}'
+    margs = [filekind]
+    WLOG(params, '', msg.format(*margs))
+    # -------------------------------------------------------------------------
+    # storage for return
+    valid_drsfiles = []
+    bad_drsfiles = dict()
+    # loop around all files
+    for drsfile in drsfiles:
+        # ---------------------------------------------------------------------
+        # do not check non-fits files
+        if not isinstance(drsfile, DrsFitsFile):
+            valid_drsfiles.append(drsfile)
+            continue
+        # ---------------------------------------------------------------------
+        # if we don't have a header we assume this file is bad
+        if not hasattr(drsfile, 'header'):
+            reason = 'No header attribute'
+            bad_drsfiles[drsfile.filename] = reason
+            continue
+        # ---------------------------------------------------------------------
+        # if header is not populated we assume this file is bad
+        if not isinstance(drsfile.header, (Header, FitsHeader)):
+            reason = 'Header not loaded'
+            bad_drsfiles[drsfile.filename] = reason
+            continue
+        # ---------------------------------------------------------------------
+        # if there is no qc key we assume file passes
+        if not params['KW_DRS_QC'][0] in drsfile.header:
+            valid_drsfiles.append(drsfile)
+            continue
+        # ---------------------------------------------------------------------
+        if drsfile.header[params['KW_DRS_QC'][0]]:
+            valid_drsfiles.append(drsfile)
+            continue
+        else:
+            reason = '{0} = False'.format(params['LW_DRS_QC'][0])
+            bad_drsfiles[drsfile.filename] = reason
+            continue
+    # -------------------------------------------------------------------------
+    # deal with files failing input qc test
+    # print error message if we have no files
+    if len(valid_drsfiles) == 0 and required:
+        # TOOD: move to language adtabase
+        emsg = 'No valid input {0} files after QC test'
+        eargs = [filekind]
+        # loop around bad files
+        for bad_drsfile in bad_drsfiles:
+            eargs1 = [bad_drsfile, bad_drsfiles[bad_drsfile]]
+            emsg += '\t - {0}: {1}'.format(*eargs1)
+        # report error: No valid files after QC
+        WLOG(params, 'error', emsg.format(*eargs))
+    elif len(valid_drsfiles) != len(drsfiles):
+        # TOOD: move to language adtabase
+        wmsg = '\tSome input {0} failed QC test - Removing:'
+        wargs = [filekind]
+        # loop around bad files
+        for bad_drsfile in bad_drsfiles:
+            wargs1 = [bad_drsfile, bad_drsfiles[bad_drsfile]]
+            wmsg += '\t\t - {0}: {1}'.format(*wargs1)
+        # report error: No valid files after QC
+        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
+    else:
+        # print that
+        msg = '\tAll input {0} passed QC'
+        margs = [filekind]
+        WLOG(params, '', msg.format(*margs))
+    # -------------------------------------------------------------------------
+    # deal with return
+    return valid_drsfiles
+
+
 def get_file_definition(params: ParamDict, name: str,
                         block_kind: str = 'raw',
                         instrument: Union[str, None] = None,
