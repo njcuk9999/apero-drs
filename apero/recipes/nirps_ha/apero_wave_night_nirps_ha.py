@@ -287,7 +287,7 @@ def __main__(recipe, params):
         #    achromatic term):
         #    fit_achromatic = False, fig_cavity = False
         fit_cavity = False
-        fit_achromatic = True
+        fit_achromatic = False
         # get solution for other fibers and save all in a list of param dicts
         #   one for each fiber
         wprops_all = wave.process_fibers(params, recipe, wprops, fp_outputs,
