@@ -836,21 +836,27 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
     # set function name
     func_name = display_func('clean_obj_name', __NAME__)
     # ---------------------------------------------------------------------
-    # check KW_OBJNAME and then KW_OBJECTNAME
+    # check KW_OBJNAME and then KW_OBJECTNAME2 and finally KW_OBJECTNAME
     # ---------------------------------------------------------------------
     # get keys from params
+    kwrawobjname1 = params['KW_OBJECTNAME2'][0]
     kwrawobjname = params['KW_OBJECTNAME'][0]
     kwobjname = params['KW_OBJNAME'][0]
     # deal with output key already in header
     if kwobjname in header:
         if not drs_text.null_text(header[kwobjname], NULL_TEXT):
             return header, hdict
+    # start raw object name as None
+    rawobjname = None
+    # check target name
+    if kwrawobjname1 in header:
+        rawobjname = header[kwrawobjname1]
     # get raw object name
-    if kwrawobjname not in header:
+    if rawobjname is None and kwrawobjname not in header:
         eargs = [kwrawobjname, filename]
         raise DrsCodedException('01-001-00027', 'error', targs=eargs,
                                 func_name=func_name)
-    else:
+    elif rawobjname is None:
         rawobjname = header[kwrawobjname]
     # -------------------------------------------------------------------------
     if check_aliases and objdbm is not None:
@@ -897,9 +903,14 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
                                                targs=eargs)
     obstype = header[kwobstype]
     # deal with setting value
-    if 'SKY' in obstype and 'OBJECT' not in obstype:
+    cond1 = 'SKY' in obstype
+    cond2 = 'OBJECT' not in obstype
+    cond3 = 'TELLURIC' not in obstype
+    cond4 = 'FLUX' not in obstype
+
+    if cond1 and cond2 and cond3 and cond4:
         trg_type = 'SKY'
-    elif 'OBJECT' in obstype:
+    elif not cond1 or not cond2 or not cond3:
         trg_type = 'TARGET'
     elif 'STAR' in obstype:
         trg_type = 'TARGET'

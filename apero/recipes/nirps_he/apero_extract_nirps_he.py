@@ -100,6 +100,8 @@ def __main__(recipe, params):
     pconst = constants.pload()
     # get files
     infiles = params['INPUTS']['FILES'][1]
+    # check qc
+    infiles = drs_file.check_input_qc(params, infiles, 'files')
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
@@ -225,6 +227,9 @@ def __main__(recipe, params):
             # ------------------------------------------------------------------
             # add level to recipe log
             log2 = log1.add_level(params, 'fiber', fiber)
+            # flag quick look
+            if quicklook:
+                log2.update_flags(QUICKLOOK=True)
             # ------------------------------------------------------------------
             # log process: processing fiber
             wargs = [fiber, ', '.join(fibertypes)]
@@ -298,7 +303,7 @@ def __main__(recipe, params):
                                        lcoeffs2, nframes, props, fiber=fiber)
             # leak correction
             eprops = leak.manage_leak_correction(params, recipe, eprops,
-                                                    infile, fiber, ref_e2ds)
+                                                 infile, fiber, ref_e2ds)
             # flat correction for e2dsff
             eprops = extract.flat_blaze_correction(eprops, fbprops['FLAT'],
                                                    fbprops['BLAZE'])
@@ -374,6 +379,11 @@ def __main__(recipe, params):
                 if rfpl is not None:
                     rargs = [rfpl, e2dsfile, e2dsfile, fiber, 'EXT_FPLINES']
                     wave.write_fplines(params, recipe, *rargs)
+                    # update flags
+                    log2.update_flags(EXP_FPLINE=True)
+                else:
+                    # update flags
+                    log2.update_flags(EXP_FPLINE=False)
 
             # --------------------------------------------------------------
             # add files to outputs

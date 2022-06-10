@@ -109,11 +109,15 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get files
     hcfiles = params['INPUTS']['HCFILES'][1]
+    # check qc
+    hcfiles = drs_file.check_input_qc(params, hcfiles, 'hc files')
     # deal with (optional fp files)
     if len(params['INPUTS']['FPFILES']) == 0:
         fpfiles = None
     else:
         fpfiles = params['INPUTS']['FPFILES'][1]
+        # check qc
+        fpfiles = drs_file.check_input_qc(params, fpfiles, 'fp files')
         # must check fp files pass quality control
         fpfiles = gen_calib.check_fp_files(params, fpfiles)
     # get list of filenames (for output)
@@ -161,6 +165,7 @@ def __main__(recipe, params):
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()
+
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -282,7 +287,7 @@ def __main__(recipe, params):
         #    achromatic term):
         #    fit_achromatic = False, fig_cavity = False
         fit_cavity = False
-        fit_achromatic = True
+        fit_achromatic = False
         # get solution for other fibers and save all in a list of param dicts
         #   one for each fiber
         wprops_all = wave.process_fibers(params, recipe, wprops, fp_outputs,

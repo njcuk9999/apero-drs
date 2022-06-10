@@ -109,11 +109,15 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get files
     hcfiles = params['INPUTS']['HCFILES'][1]
+    # check qc
+    hcfiles = drs_file.check_input_qc(params, hcfiles, 'hc files')
     # deal with (optional fp files)
     if len(params['INPUTS']['FPFILES']) == 0:
         fpfiles = None
     else:
         fpfiles = params['INPUTS']['FPFILES'][1]
+        # check qc
+        fpfiles = drs_file.check_input_qc(params, fpfiles, 'fp files')
         # must check fp files pass quality control
         fpfiles = gen_calib.check_fp_files(params, fpfiles)
     # get list of filenames (for output)

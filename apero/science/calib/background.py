@@ -242,47 +242,62 @@ def correction(recipe, params, infile, image, bkgrdfile, return_map=False,
         # x and y centers for each background calculation
         xc = np.arange(width, image2.shape[0], width)
         yc = np.arange(width, image2.shape[1], width)
+        # full background map
+        background_image_full = np.zeros_like(image2)
         # background map (binned-down for now)
         background_image = np.zeros((len(xc), len(yc)))
-        # loop around all boxes with centers xc and yc
-        # and find pixels within a given widths
-        # around these centers in the full image
-        for i_it in range(len(xc)):
-            for j_it in range(len(yc)):
-                xci, yci = xc[i_it], yc[j_it]
-                # get the pixels for this box
-                subframe = image2[xci - width:xci + width,
-                                  yci - width:yci + width]
-                subframe = subframe.ravel()
-                # get the (2*size)th minimum pixel
-                with warnings.catch_warnings(record=True) as _:
-                    # do not use the nanpercentile, just a median
-                    # as we masked non-background pixels with NaNs
-                    value = mp.nanmedian(subframe)
+        # iterate round the background image
+        for biteration in range(5):
+            image3 = np.array(image2) - background_image_full
+            # loop around all boxes with centers xc and yc
+            # and find pixels within a given widths
+            # around these centers in the full image
+            for i_it in range(len(xc)):
+                for j_it in range(len(yc)):
+                    xci, yci = xc[i_it], yc[j_it]
+                    # get the pixels for this box
+                    subframe = image3[xci - width:xci + width,
+                                      yci - width:yci + width]
+                    subframe = subframe.ravel()
+                    # get the (2*size)th minimum pixel
+                    with warnings.catch_warnings(record=True) as _:
+                        # do not use the nanpercentile, just a median
+                        # as we masked non-background pixels with NaNs
+                        value = mp.nanmedian(subframe)
+                    # if we have value use it in the background map
+                    if np.isfinite(value):
+                        background_image[i_it, j_it] = value
+                    # otherwise background is zero
+                    else:
+                        background_image[i_it, j_it] = 0.0
+            # ------------------------------------------------------------------
+            # define a mapping grid from size of background_image
+            #     (image1[0]/width) by (image1[1]/width)
+            # get shapes
+            gridshape = background_image.shape
+            imageshape = image3.shape
+            # get fractional positions of the full image
+            indices = np.indices(imageshape)
+            fypix = indices[0] / imageshape[0]
+            fxpix = indices[1] / imageshape[1]
+            # scalge fraction positions to size of background image
+            sypix = (gridshape[0] - 1) * fypix
+            sxpix = (gridshape[1] - 1) * fxpix
+            # coords for mapping
+            coords = np.array([sypix, sxpix])
 
-                if np.isfinite(value):
-                    background_image[i_it, j_it] = value
-                else:
-                    background_image[i_it, j_it] = 0.0
-        # ------------------------------------------------------------------
-        # define a mapping grid from size of background_image
-        #     (image1[0]/width) by (image1[1]/width)
-        # get shapes
-        gridshape = background_image.shape
-        imageshape = image2.shape
-        # get fractional positions of the full image
-        indices = np.indices(imageshape)
-        fypix = indices[0] / imageshape[0]
-        fxpix = indices[1] / imageshape[1]
-        # scalge fraction positions to size of background image
-        sypix = (gridshape[0] - 1) * fypix
-        sxpix = (gridshape[1] - 1) * fxpix
-        # coords for mapping
-        coords = np.array([sypix, sxpix])
-        # expand image onto the grid that matches the size of the input image
-        background_image_full = mapc(background_image, coords,
-                                     order=2, cval=np.nan, output=float,
-                                     mode='constant')
+            delta_background_full = mapc(background_image, coords,
+                                         order=2, cval=np.nan, output=float,
+                                         mode='constant')
+
+            brms = np.nanstd(delta_background_full)
+            msg = 'Background Iteration {0}: delta background rms={1:.3f}'
+            WLOG(params, '', msg.format(biteration, brms))
+            # expand image onto the grid that matches the size of the input
+            # image
+            background_image_full += mapc(background_image, coords,
+                                          order=2, cval=np.nan, output=float,
+                                          mode='constant')
         # ------------------------------------------------------------------
         # correct image
         corrected_image = image - background_image_full

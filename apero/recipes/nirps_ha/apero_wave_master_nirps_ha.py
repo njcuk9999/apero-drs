@@ -109,11 +109,15 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get files
     hcfiles = params['INPUTS']['HCFILES'][1]
+    # check qc
+    hcfiles = drs_file.check_input_qc(params, hcfiles, 'hc files')
     # deal with (optional fp files)
     if len(params['INPUTS']['FPFILES']) == 0:
         fpfiles = None
     else:
         fpfiles = params['INPUTS']['FPFILES'][1]
+        # check qc
+        fpfiles = drs_file.check_input_qc(params, fpfiles, 'fp files')
         # must check fp files pass quality control
         fpfiles = gen_calib.check_fp_files(params, fpfiles)
     # get list of filenames (for output)
@@ -303,8 +307,8 @@ def __main__(recipe, params):
         # Calculate wave solution for other fibers
         # =================================================================
         # other fiber + master wave setup
-        # Master night A, B and C (not AB) -> we force the coefficients to
-        # be the ones found with AB, fit_cavity = False, fit_achromatic = False
+        # Master night B -> we force the coefficients to
+        # be the ones found with A, fit_cavity = False, fit_achromatic = False
         fit_cavity = False
         fit_achromatic = False
         # get solution for other fibers and save all in a list of param dicts

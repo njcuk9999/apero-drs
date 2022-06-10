@@ -157,6 +157,11 @@ KW_OBJDEC.set(key='DEC', unit=uu.deg, comment='Target declination ',
 KW_OBJECTNAME = KW_OBJECTNAME.copy(__NAME__)
 KW_OBJECTNAME.set(key='OBJECT', comment='Target name', group='raw')
 
+# define the observation name
+KW_OBJECTNAME2 = KW_OBJECTNAME2.copy(__NAME__)
+KW_OBJECTNAME2.set(key='HIERARCH ESO OBS TARG NAME', comment='OB target name',
+                   group='raw')
+
 # define the observation equinox HEADER key
 KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
 KW_OBJEQUIN.set(key='EQUINOX', datatype='decimalyear',
