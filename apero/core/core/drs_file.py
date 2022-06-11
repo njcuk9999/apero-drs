@@ -7254,7 +7254,7 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
             valid_drsfiles.append(drsfile)
             continue
         else:
-            reason = '{0} = False'.format(params['LW_DRS_QC'][0])
+            reason = '{0} = False'.format(params['KW_DRS_QC'][0])
             bad_drsfiles[drsfile.filename] = reason
             continue
     # -------------------------------------------------------------------------
