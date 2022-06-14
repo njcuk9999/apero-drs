@@ -940,11 +940,22 @@ def ask_for_teff(astro_obj: AstroObj) -> AstroObj:
             # Ask user for Teff
             question2 = 'Enter Teff in K'
             rawteff = drs_installation.ask(question2, dtype=float)
-            # get user /host
-            nargs = [getpass.getuser(), socket.gethostname()]
             # add to astro_obj
             astro_obj.teff = rawteff
-            astro_obj.teff_source = '{0}@{1}'.format(*nargs)
+            # Ask for source
+            question3 = 'Enter source for Teff (leave blank for no source)'
+            teff_source = drs_installation.ask(question3, required=False,
+                                               dtype=str)
+            # get user /host
+            nargs = [getpass.getuser(), socket.gethostname()]
+            teff_user = 'via {0}@{1}'.format(*nargs)
+            # deal with adding teff source
+            if drs_text.null_text(teff_source, ['None', '', 'Null']):
+                teff_source = teff_user
+            else:
+                teff_source += f' ({teff_user})'
+            # set teff source
+            astro_obj.teff_source = teff_source
     # return the original or update astro_obj
     return astro_obj
 
