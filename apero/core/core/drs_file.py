@@ -7267,7 +7267,7 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
         # loop around bad files
         for bad_drsfile in bad_drsfiles:
             eargs1 = [bad_drsfile, bad_drsfiles[bad_drsfile]]
-            emsg += '\t - {0}: {1}'.format(*eargs1)
+            emsg += '\n\t - {0}: {1}'.format(*eargs1)
         # report error: No valid files after QC
         WLOG(params, 'error', emsg.format(*eargs))
     elif len(valid_drsfiles) != len(drsfiles):
@@ -7277,7 +7277,7 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
         # loop around bad files
         for bad_drsfile in bad_drsfiles:
             wargs1 = [bad_drsfile, bad_drsfiles[bad_drsfile]]
-            wmsg += '\t\t - {0}: {1}'.format(*wargs1)
+            wmsg += '\n\t\t - {0}: {1}'.format(*wargs1)
         # report error: No valid files after QC
         WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
     else:

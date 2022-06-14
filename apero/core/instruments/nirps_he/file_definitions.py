@@ -393,13 +393,13 @@ raw_test_hc1_fp = drs_finput('RAW_TEST_HCONE_FP', outclass=blank_ofile,
                                         KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_test_hc1_fp)
 
-raw_test_eff_sky = drs_finput('RAW_TEST_EFF_SKY', outclass=blank_ofile,
+raw_test_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', outclass=blank_ofile,
                               filetype='.fits', suffix='',
                               hkeys=dict(KW_RAW_DPRTYPE='EFF,SKY,SKY',
                                          KW_RAW_DPRCATG='TEST',
                                          KW_INST_MODE=INSTRUMENT_MODE,
                                          KW_INSTRUMENT=INSTRUMENT_NAME))
-raw_file.addset(raw_test_eff_sky)
+raw_file.addset(raw_test_dark_dark_sky)
 
 # test dark
 raw_test_dark = drs_finput('RAW_TEST_DARK', outclass=blank_ofile,
@@ -519,7 +519,7 @@ pp_obj_fp = drs_finput('OBJ_FP', hkeys=dict(KW_DPRTYPE='OBJ_FP'),
                        suffix='_pp', intype=raw_obj_fp,
                        inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_obj_fp)
-pp_obj_hc1 = drs_finput('OBJ_HC1', hkeys=dict(KW_DPRTYPE='OBJ_HCONE'),
+pp_obj_hc1 = drs_finput('OBJ_HCONE', hkeys=dict(KW_DPRTYPE='OBJ_HCONE'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_obj_hc1,
                         inext='.fits', outclass=general_ofile)
@@ -678,12 +678,12 @@ pp_test_hc1_fp = drs_finput('TEST_HCONE_FP',
 pp_file.addset(pp_test_hc1_fp)
 
 # test eff sky
-pp_test_eff_sky = drs_finput('TEST_EFF_SKY',
-                            hkeys=dict(KW_DPRTYPE='TEST_EFF_SKY'),
+pp_test_dark_dark_sky = drs_finput('TEST_DARK_DARK_SKY',
+                            hkeys=dict(KW_DPRTYPE='TEST_DARK_DARK_SKY'),
                             filetype='.fits',
-                            suffix='_pp', intype=raw_test_eff_sky,
+                            suffix='_pp', intype=raw_test_dark_dark_sky,
                             inext='.fits', outclass=general_ofile)
-pp_file.addset(pp_test_eff_sky)
+pp_file.addset(pp_test_dark_dark_sky)
 
 # test dark
 pp_test_dark = drs_finput('TEST_DARK',
