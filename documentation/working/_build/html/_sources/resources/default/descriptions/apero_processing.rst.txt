@@ -39,7 +39,7 @@ Options are:
 
 - TRIGGER_RUN: For use in online reductions only
 
-- USE_ODO_REJECTLIST: If True checks that odometer code aren't already flagged as bad files
+- USE_REJECTLIST: If True checks that odometer code aren't already flagged as bad files
 
 - RECAL_TEMPLATES: If True recalculates the templates that are already present.
                    .. warning:: This should only be done when re-reducing all data for a single object.

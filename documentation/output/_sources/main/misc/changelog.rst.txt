@@ -3001,7 +3001,7 @@ Changelog
   [Neil Cook]
 - `Apero.science.preprocessing.gen_pp.py` - add getting the rejection list
   from googlesheet. [Neil Cook]
-- `Apero.data.*.reset.runs.*run.ini` - add `USE_ODO_REJECTLIST` and
+- `Apero.data.*.reset.runs.*run.ini` - add `USE_REJECTLIST` and
   `RECAL_TEMPLATES` to run.ini files. [Neil Cook]
 - `Apero.core.instruments.default.recipe_definitions.py` - add
   `--science_targets` and `--telluric_targest` to argumnets of
