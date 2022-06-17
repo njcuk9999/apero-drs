@@ -2764,6 +2764,11 @@ REPROCESS_SEQCOL.value = 'KW_CMPLTEXP'
 REPROCESS_TIMECOL = REPROCESS_TIMECOL.copy(__NAME__)
 REPROCESS_TIMECOL.value = 'KW_ACQTIME'
 
+# Define the rejection sql query (between identifier and reject list col)
+#    must use a valid reject database column and use {identifier} in query
+REPROCESS_REJECT_SQL = REPROCESS_REJECT_SQL.copy(__NAME__)
+REPROCESS_REJECT_SQL.value = 'FILENAME="{identifier}"'
+
 # Define whether we try to create a latex summary pdf
 #   (turn this off if you have any problems with latex/pdflatex)
 SUMMARY_LATEX_PDF = SUMMARY_LATEX_PDF.copy(__NAME__)

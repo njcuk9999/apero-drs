@@ -1279,12 +1279,12 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
     # get odometer reject list (if required)
     # -------------------------------------------------------------------------
     # get whether the user wants to use reject list
-    _use_odo_reject = params['USE_ODO_REJECTLIST']
+    _use_reject = params['USE_REJECTLIST']
     # get the odometer reject list
-    odo_reject_list = []
-    if not drs_text.null_text(_use_odo_reject, ['', 'None']):
-        if drs_text.true_text(_use_odo_reject):
-            odo_reject_list = prep.get_file_reject_list(params)
+    reject_list = []
+    if not drs_text.null_text(_use_reject, ['', 'None']):
+        if drs_text.true_text(_use_reject):
+            reject_list = prep.get_file_reject_list(params)
     # -------------------------------------------------------------------------
     # get template list (if required)
     # -------------------------------------------------------------------------
@@ -1319,7 +1319,7 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
     newruns = []
     # define the master conditions (that affect all recipes)
     master_condition = gen_global_condition(params, indexdb,
-                                            odo_reject_list)
+                                            reject_list)
     # ------------------------------------------------------------------
     # check we have rows left
     # ------------------------------------------------------------------
@@ -1632,7 +1632,7 @@ def conditional_list(strlist: List[str], key: str, logic: str,
 
 
 def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
-                         odo_reject_list: List[str]) -> str:
+                         reject_list: List[str]) -> str:
     """
     Generate the global conditions (based on run.ini) that will affect the
     sql conditions on all recipes i.e.:
@@ -1644,7 +1644,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param indexdb: IndexDatabase instance, the index database instance
-    :param odo_reject_list: list or strings, the list of rejected odometer
+    :param reject_list: list or strings, the list of rejected odometer
                             codes
     :return: str, the sql global condition to apply to all recipes
     """
@@ -1742,24 +1742,28 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
             else:
                 sys.exit()
     # ------------------------------------------------------------------
-    # Deal with odometer reject list
+    # Deal with reject list
     # ------------------------------------------------------------------
     # only continue if we have odocodes to reject
-    if len(odo_reject_list) > 0:
-        # log progress
-        WLOG(params, '', textentry('40-503-00036'))
-        # store sub-conditions
-        subs = []
-        # add to global conditions
-        for odocode in odo_reject_list:
-            # get fkwargs
-            fkwargs = dict(odocode=odocode)
-            # build sub-condition
-            subs += ['FILENAME LIKE "{odocode}%.fits"'.format(**fkwargs)]
-        # generate full subcondition
-        subcondition = ' OR '.join(subs)
-        # add to global condition (in reverse - we don't want these)
-        condition += ' AND NOT ({0})'.format(subcondition)
+    if len(reject_list) > 0:
+        # get reject criteria
+        reject_criteria = params['REPROCESS_REJECT_SQL']
+
+        if not drs_text.null_text(reject_criteria, ['None', '', 'Null']):
+            # log progress
+            WLOG(params, '', textentry('40-503-00036'))
+            # store sub-conditions
+            subs = []
+            # add to global conditions
+            for identifier in reject_list:
+                # get fkwargs
+                fkwargs = dict(identifier=identifier)
+                # build sub-condition
+                subs += [reject_criteria.format(**fkwargs)]
+            # generate full subcondition
+            subcondition = ' OR '.join(subs)
+            # add to global condition (in reverse - we don't want these)
+            condition += ' AND NOT ({0})'.format(subcondition)
     # ------------------------------------------------------------------
     # Return global condition
     # ------------------------------------------------------------------

@@ -2808,7 +2808,8 @@ class RejectDatabase(DatabaseManager):
                     pp_flag: Optional[bool] = None,
                     tel_flag: Optional[bool] = None,
                     rv_flag: Optional[bool] = None,
-                    used: Union[int, None] = None):
+                    used: Union[int, None] = None,
+                    comment: Union[str, None] = None):
         """
         Add a reject entry to database
 
@@ -2817,7 +2818,7 @@ class RejectDatabase(DatabaseManager):
         :return: None - updates database
         """
         # get correct order
-        keys = [identifier, pp_flag, tel_flag, rv_flag, used]
+        keys = [identifier, pp_flag, tel_flag, rv_flag, used, comment]
         # get column names and column datatypes
         rdb_cols = self.pconst.REJECT_DB_COLUMNS()
         coltypes = list(rdb_cols.dtypes)

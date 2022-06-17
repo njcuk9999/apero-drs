@@ -76,7 +76,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     # get odometer reject list (if required)
     # -------------------------------------------------------------------------
     # get whether the user wants to use reject list
-    _use_odo_reject = params['USE_ODO_REJECTLIST']
+    _use_odo_reject = params['USE_REJECTLIST']
     # get the odometer reject list
     odo_reject_list = []
     if not drs_text.null_text(_use_odo_reject, ['', 'None']):
