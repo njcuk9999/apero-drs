@@ -76,6 +76,7 @@ REJECT_DATA_TYPES['PP'] = int
 REJECT_DATA_TYPES['TEL'] = int
 REJECT_DATA_TYPES['RV'] = int
 REJECT_DATA_TYPES['USED'] = int
+REJECT_DATA_TYPES['COMMENT'] = str
 
 
 # =============================================================================

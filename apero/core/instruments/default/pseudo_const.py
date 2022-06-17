@@ -1270,7 +1270,7 @@ class PseudoConstants:
             return self.rejectdb_cols
         # set columns (dictionary form for clarity
         rejectdb_cols = DatabaseColumns(name_prefix='rlog.')
-        rejectdb_cols.add(name='IDENTIFIER', datatype='VARCHAR(16)',
+        rejectdb_cols.add(name='IDENTIFIER', datatype='VARCHAR(255)',
                           is_index=True,
                           comment='Identifier column')
         rejectdb_cols.add(name='PP', datatype='INT',
