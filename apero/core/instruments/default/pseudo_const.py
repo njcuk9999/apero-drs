@@ -1284,6 +1284,7 @@ class PseudoConstants:
         rejectdb_cols.add(name='USED', datatype='INT',
                           comment='Whether flags should be used')
         rejectdb_cols.add(name='DATE_ADDED', datatype='VARCHAR(26)')
+        rejectdb_cols.add(name='COMMENT', datatype='TEXT')
         # return columns and ctypes
         self.rejectdb_cols = rejectdb_cols
         return rejectdb_cols
