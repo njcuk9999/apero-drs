@@ -414,7 +414,7 @@ GL_GAIA_COL_NAME = GL_GAIA_COL_NAME.copy(__NAME__)
 GL_GAIA_COL_NAME.value = 'GAIADR2ID'
 # object col name in google sheet
 GL_OBJ_COL_NAME = GL_OBJ_COL_NAME.copy(__NAME__)
-GL_OBJ_COL_NAME.value = 'OBJECT'
+GL_OBJ_COL_NAME.value = 'OBJNAME'
 # alias col name in google sheet
 GL_ALIAS_COL_NAME = GL_ALIAS_COL_NAME.copy(__NAME__)
 GL_ALIAS_COL_NAME.value = 'ALIASES'
