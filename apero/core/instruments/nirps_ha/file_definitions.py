@@ -412,6 +412,15 @@ raw_test_dark = drs_finput('RAW_TEST_DARK', outclass=blank_ofile,
                                       KW_INSTRUMENT=INSTRUMENT_NAME))
 raw_file.addset(raw_test_dark)
 
+# test dark fp
+raw_test_fp_dark = drs_finput('RAW_TEST_FP_DARK', outclass=blank_ofile,
+                              filetype='.fits', suffix='',
+                              hkeys=dict(KW_RAW_DPRTYPE='CONTAM,FP,DARK',
+                                         KW_RAW_DPRCATG='TEST',
+                                         KW_INST_MODE=INSTRUMENT_MODE,
+                                         KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_test_fp_dark)
+
 # =============================================================================
 # Preprocessed Files
 # =============================================================================
@@ -694,6 +703,14 @@ pp_test_dark = drs_finput('TEST_DARK',
                           suffix='_pp', intype=raw_test_dark,
                           inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_test_dark)
+
+# test dark fp
+pp_test_dark_fp = drs_finput('TEST_DARK_FP',
+                             hkeys=dict(KW_DPRTYPE='TEST_DARK_FP'),
+                             filetype='.fits',
+                             suffix='_pp', intype=raw_test_dark_fp,
+                             inext='.fits', outclass=general_ofile)
+pp_file.addset(pp_test_dark_fp)
 
 # =============================================================================
 # Reduced Files
