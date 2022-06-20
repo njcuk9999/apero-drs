@@ -4306,6 +4306,8 @@ class DrsFitsFile(DrsInputFile):
             # check that data/header is read
             drs_file.check_read(header_only=True)
             fileheader = drs_file.header
+        # remove nan values
+        fileheader = self.deal_with_nans(fileheader)
         # get cards to copy
         _cards = self.copy_cards(fileheader.cards, root, exclude_groups, group,
                                  forbid_keys, allkeys)
@@ -4352,7 +4354,6 @@ class DrsFitsFile(DrsInputFile):
         keyworddict = params.get_instanceof(keyword_inst, nameattr='key')
         # get pconstant
         pconstant = constants.pload()
-
         # filter function
         def __keep_card(card: drs_fits.fits.header.Card) -> bool:
             """
@@ -4422,6 +4423,23 @@ class DrsFitsFile(DrsInputFile):
         _copy_cards = filter(__keep_card, cards)
         # return cards for copy
         return _copy_cards
+
+    def deal_with_nans(self, header: drs_fits.Header) -> drs_fits.Header:
+        """
+        Replace nan values with np.nan
+
+        :param header: drs_fits.Header
+
+        :return: update header
+        """
+        # deal with nan values
+        for key in header:
+            try:
+                _ = header[key]
+            except drs_fits.fits.VerifyError:
+                header[key] = np.nan
+        # return updated header
+        return header
 
     def add_hkey(self, key: Union[str, None] = None,
                  keyword: Union[list, None] = None, value: Any = None,
