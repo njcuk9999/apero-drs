@@ -704,13 +704,13 @@ pp_test_dark = drs_finput('TEST_DARK',
                           inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_test_dark)
 
-# test dark fp
-pp_test_dark_fp = drs_finput('TEST_DARK_FP',
-                             hkeys=dict(KW_DPRTYPE='TEST_DARK_FP'),
+# test fp dark
+pp_test_fp_dark = drs_finput('TEST_FP_DARK',
+                             hkeys=dict(KW_DPRTYPE='TEST_FP_DARK'),
                              filetype='.fits',
-                             suffix='_pp', intype=raw_test_dark_fp,
+                             suffix='_pp', intype=raw_test_fp_dark,
                              inext='.fits', outclass=general_ofile)
-pp_file.addset(pp_test_dark_fp)
+pp_file.addset(pp_test_fp_dark)
 
 # =============================================================================
 # Reduced Files

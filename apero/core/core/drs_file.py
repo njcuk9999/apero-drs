@@ -4432,6 +4432,9 @@ class DrsFitsFile(DrsInputFile):
 
         :return: update header
         """
+        # check header type and convert to one that can handle nans
+        if isinstance(header, drs_fits.fits.Header):
+            header = drs_fits.Header(header)
         # deal with nan values
         for key in header:
             try:
