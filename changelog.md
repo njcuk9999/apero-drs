@@ -2,6 +2,67 @@ Changelog
 =========
 
 
+0.7.241 (2022-06-21)
+--------------------
+- [APERO] apero.core.core.drs_file.py - deal with nans better.
+  [njcuk9999]
+- [APERO] apero.core.core.drs_file.py - deal with nans better.
+  [njcuk9999]
+- [NIRPS] add a test_fp_dark file definition. [njcuk9999]
+
+
+0.7.240 (2022-06-17)
+--------------------
+- [APERO] small changes for update to reject database. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [njcuk9999]
+- [APERO] change slightly how REJECTLIST works (to allow difference
+  between spirou and nirps) [Neil Cook]
+- [NIRPS] default_constants.py - update GL_OBJ_COL_NAME. [njcuk9999]
+
+
+0.7.239 (2022-06-14)
+--------------------
+- [APERO] drs_astrometrics.py - ask user for Teff source. [Neil Cook]
+- [NIRPS] add TEST_DARK_DARK_SKY from EFF,SKY,SKY files and add to
+  engineering seqeuence. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [njcuk9999]
+- [NIRPS] update hot star list. [Neil Cook]
+- [NIRPS] fix typo LW_DRS_QC --> KW_DRS_QC. [njcuk9999]
+- [NIRPS] undo shape change for ha (from he) [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [Neil Cook]
+- [NIRPS] B fiber should be fit_cavity + fit_achromatic = False.
+  [njcuk9999]
+- [APERO] save preprocessing files that fail qc to disk but check in all
+  recipes that qc has passed (unless user forces no_in_qc check)
+  [njcuk9999]
+- [APERO] apero.science.calib.background.py - slightly change how
+  background subtraction is done. [njcuk9999]
+- [NIRPS] add raw test dark. [Neil Cook]
+
+
+0.7.238 (2022-06-09)
+--------------------
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [Neil Cook]
+- [NIRPS] add pp_test_eff_sky file definition. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.232-working' into
+  v0.7.232-working. [njcuk9999]
+- [APERO] tools.module.processing.drs_trigger.py - put the
+  trigger_table.fits in a standard location (not dependent on recipe run
+  location) [Neil Cook]
+- [NIRPS] fix for getting object name. [njcuk9999]
+- [NIRPS] science.extract.extraction.py - remove an extra factor of gain
+  (didn't matter for SPIRou as gain=1) [njcuk9999]
+- [NIRPS] update file_definitions.py for RAW_FLUXSTD_SKY. [njcuk9999]
+- [NIRPS] add TELLU_SKY file definition. [Neil Cook]
+- [APERO] update date/version/doc/changelog. [Neil Cook]
+
+
 0.7.237 (2022-06-08)
 --------------------
 - Add FLUX,STD,SKY file definition. [njcuk9999]
@@ -3097,7 +3158,7 @@ Changelog
   [Neil Cook]
 - Apero.science.preprocessing.gen_pp.py - add getting the rejection list
   from googlesheet. [Neil Cook]
-- Apero.data.*.reset.runs.*run.ini - add USE_REJECTLIST and
+- Apero.data.*.reset.runs.*run.ini - add USE_ODO_REJECTLIST and
   RECAL_TEMPLATES to run.ini files. [Neil Cook]
 - Apero.core.instruments.default.recipe_definitions.py - add
   --science_targets and --telluric_targest to argumnets of
