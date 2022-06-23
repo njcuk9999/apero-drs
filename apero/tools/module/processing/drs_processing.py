@@ -2923,7 +2923,7 @@ def get_non_telluric_stars(params, indexdb: IndexDatabase,
         subcond.append('KW_DPRTYPE="{0}"'.format(dprtype))
     condition = '({0})'.format(' OR '.join(subcond))
     # obstype must be OBJECT
-    condition += ' AND KW_OBSTYPE="OBJECT"'
+    condition += params['REPROCESS_OBJ_SCI_SQL']
     # get columns from index database
     raw_objects = indexdb.get_entries(OBJNAMECOL, block_kind='raw',
                                       condition=condition)
