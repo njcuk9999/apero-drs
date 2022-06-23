@@ -2058,7 +2058,7 @@ TELLUP_ABSO_EXPO_KTHRES.value = 1.0e-6
 
 # define the gaussian width of the kernel used in abso_expo
 TELLUP_ABSO_EXPO_KWID = TELLUP_ABSO_EXPO_KWID.copy(__NAME__)
-TELLUP_ABSO_EXPO_KWID.value = 4.95
+TELLUP_ABSO_EXPO_KWID.value = 4.5
 
 # define the gaussian exponent of the kernel used in abso_expo
 #   a value of 2 is gaussian, a value >2 is boxy
@@ -2155,8 +2155,9 @@ MKTELLU_QC_SNR_MIN = MKTELLU_QC_SNR_MIN.copy(__NAME__)
 MKTELLU_QC_SNR_MIN.value = 100
 
 # Define the allowed difference between recovered and input airmass
+# TODO: Change QC once using tapas from La silla
 MKTELLU_QC_AIRMASS_DIFF = MKTELLU_QC_AIRMASS_DIFF.copy(__NAME__)
-MKTELLU_QC_AIRMASS_DIFF.value = 0.3
+MKTELLU_QC_AIRMASS_DIFF.value = 1.0
 
 # define the sigma cut for tellu transmission model
 TELLU_TRANS_MODEL_SIG = TELLU_TRANS_MODEL_SIG.copy(__NAME__)
@@ -2768,6 +2769,10 @@ REPROCESS_TIMECOL.value = 'KW_ACQTIME'
 #    must use a valid reject database column and use {identifier} in query
 REPROCESS_REJECT_SQL = REPROCESS_REJECT_SQL.copy(__NAME__)
 REPROCESS_REJECT_SQL.value = 'FILENAME="{identifier}"'
+
+# Define the extra SQL science object select critera
+REPROCESS_OBJ_SCI_SQL = REPROCESS_OBJ_SCI_SQL.copy(__NAME__)
+REPROCESS_OBJ_SCI_SQL.value = ' AND KW_OBSTYPE LIKE "OBJECT%"'
 
 # Define whether we try to create a latex summary pdf
 #   (turn this off if you have any problems with latex/pdflatex)
