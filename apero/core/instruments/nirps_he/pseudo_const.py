@@ -46,6 +46,8 @@ DrsCodedException = drs_exceptions.DrsCodedException
 display_func = drs_misc.display_func
 # null text
 NULL_TEXT = ['', 'None', 'Null']
+# get astropy table (don't reload)
+Table = pseudo_const.Table
 
 
 # =============================================================================
@@ -741,6 +743,31 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # _ = display_func('INDIVIDUAL_FIBERS', __NAME__, self.class_name)
         # list the individual fiber names
         return ['A', 'B']
+
+    # tellu fudge
+    def TAPAS_INST_CORR(self, mask_water: Table,
+                        mask_others: Table) -> Tuple[Table, Table]:
+        """
+        TAPAS comes from spirou we need to modify it here
+
+        :param mask_water: astropy table the water TAPAS mask table
+        :param mask_others: astropy table the others TAPAS mask table
+
+        :return: tuple, 1. the updated mask_water table, 2. the update
+                 mask_others table
+        """
+        # TODO: NIRPS ONLY remake files remove these lines
+        nirps_mask_water = (mask_water['ll_mask_s'] < 1350)
+        nirps_mask_water |= (mask_water['ll_mask_s'] > 1450)
+        nirps_mask_water &= mask_water['ll_mask_s'] < 1820
+        mask_water = mask_water[nirps_mask_water]
+
+        nirps_mask_others = (mask_others['ll_mask_s'] < 1350)
+        nirps_mask_others |= (mask_others['ll_mask_s'] > 1450)
+        nirps_mask_others &= mask_others['ll_mask_s'] < 1820
+        mask_others = mask_others[nirps_mask_others]
+
+        return mask_water, mask_others
 
     # =========================================================================
     # DATABASE SETTINGS
