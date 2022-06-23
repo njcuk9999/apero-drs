@@ -338,7 +338,7 @@ __all__ = [
     'REPROCESS_RUN_KEY', 'REPROCESS_OBSDIR_COL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
-    'REPROCESS_REJECT_SQL',
+    'REPROCESS_REJECT_SQL', 'REPROCESS_OBJ_SCI_SQL',
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
     'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_REINDEX_BLOCKS',
@@ -5210,6 +5210,12 @@ REPROCESS_REJECT_SQL = Const('REPROCESS_REJECT_SQL', value=None, dtype=str,
                                          'list col) must use a valid reject '
                                          'database column and use {identifier} '
                                          'in query')
+
+# Define the extra SQL science object select critera
+REPROCESS_OBJ_SCI_SQL = Const('REPROCESS_OBJ_SCI_SQL', value='', dtype=str,
+                              source=__NAME__, group=cgroup,
+                              description='Define the extra SQL science '
+                                          'object select critera')
 
 # define the default database to remake
 REMAKE_DATABASE_DEFAULT = Const('REMAKE_DATABASE_DEFAULT', value='calibration',

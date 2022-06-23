@@ -852,7 +852,7 @@ SHAPE_NUM_ITERATIONS.value = 4
 
 # The order to use on the shape plot
 SHAPE_PLOT_SELECTED_ORDER = SHAPE_PLOT_SELECTED_ORDER.copy(__NAME__)
-SHAPE_PLOT_SELECTED_ORDER.value = 33
+SHAPE_PLOT_SELECTED_ORDER.value = 64
 
 # total width of the order (combined fibers) in pixels
 SHAPE_ORDER_WIDTH = SHAPE_ORDER_WIDTH.copy(__NAME__)
@@ -2057,7 +2057,7 @@ TELLUP_ABSO_EXPO_KTHRES.value = 1.0e-6
 
 # define the gaussian width of the kernel used in abso_expo
 TELLUP_ABSO_EXPO_KWID = TELLUP_ABSO_EXPO_KWID.copy(__NAME__)
-TELLUP_ABSO_EXPO_KWID.value = 4.95
+TELLUP_ABSO_EXPO_KWID.value = 4.0
 
 # define the gaussian exponent of the kernel used in abso_expo
 #   a value of 2 is gaussian, a value >2 is boxy
@@ -2126,7 +2126,7 @@ MKTELLU_PLOT_ORDER_NUMS.value = '19, 26, 35'
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
 MKTELLU_QC_SNR_ORDER = MKTELLU_QC_SNR_ORDER.copy(__NAME__)
-MKTELLU_QC_SNR_ORDER.value = 33
+MKTELLU_QC_SNR_ORDER.value = 64
 
 # Defines the minimum allowed value for the recovered water vapor optical
 #    depth (should not be able 1)
@@ -2154,8 +2154,9 @@ MKTELLU_QC_SNR_MIN = MKTELLU_QC_SNR_MIN.copy(__NAME__)
 MKTELLU_QC_SNR_MIN.value = 100
 
 # Define the allowed difference between recovered and input airmass
+# TODO: Change QC once using tapas from La silla
 MKTELLU_QC_AIRMASS_DIFF = MKTELLU_QC_AIRMASS_DIFF.copy(__NAME__)
-MKTELLU_QC_AIRMASS_DIFF.value = 0.3
+MKTELLU_QC_AIRMASS_DIFF.value = 1.0
 
 # define the sigma cut for tellu transmission model
 TELLU_TRANS_MODEL_SIG = TELLU_TRANS_MODEL_SIG.copy(__NAME__)
@@ -2168,7 +2169,7 @@ TELLU_TRANS_MODEL_SIG.author = base.AUTHORS['EA']
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
 FTELLU_QC_SNR_ORDER = FTELLU_QC_SNR_ORDER.copy(__NAME__)
-FTELLU_QC_SNR_ORDER.value = 33
+FTELLU_QC_SNR_ORDER.value = 64
 
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
@@ -2767,6 +2768,10 @@ REPROCESS_TIMECOL.value = 'KW_ACQTIME'
 #    must use a valid reject database column and use {identifier} in query
 REPROCESS_REJECT_SQL = REPROCESS_REJECT_SQL.copy(__NAME__)
 REPROCESS_REJECT_SQL.value = 'FILENAME="{identifier}"'
+
+# Define the extra SQL science object select critera
+REPROCESS_OBJ_SCI_SQL = REPROCESS_OBJ_SCI_SQL.copy(__NAME__)
+REPROCESS_OBJ_SCI_SQL.value = ' AND KW_OBSTYPE LIKE "OBJECT%"'
 
 # Define whether we try to create a latex summary pdf
 #   (turn this off if you have any problems with latex/pdflatex)

@@ -3072,6 +3072,10 @@ REPROCESS_TIMECOL.value = 'KW_ACQTIME'
 REPROCESS_REJECT_SQL = REPROCESS_REJECT_SQL.copy(__NAME__)
 REPROCESS_REJECT_SQL.value = 'FILENAME LIKE "{identifier}%.fits"'
 
+# Define the extra SQL science object select critera
+REPROCESS_OBJ_SCI_SQL = REPROCESS_OBJ_SCI_SQL.copy(__NAME__)
+REPROCESS_OBJ_SCI_SQL.value = ' AND KW_OBSTYPE="OBJECT"'
+
 # Define whether we try to create a latex summary pdf
 #   (turn this off if you have any problems with latex/pdflatex)
 SUMMARY_LATEX_PDF = SUMMARY_LATEX_PDF.copy(__NAME__)
