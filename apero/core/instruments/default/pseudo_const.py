@@ -1086,6 +1086,22 @@ class PseudoConstants:
                                  self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+
+    # tellu fudge
+    def TAPAS_INST_CORR(self, mask_water: Table,
+                        mask_others: Table) -> Tuple[Table, Table]:
+        """
+        Default here is to do nothing
+
+        :param mask_water: astropy table the water TAPAS mask table
+        :param mask_others: astropy table the others TAPAS mask table
+
+        :return: tuple, 1. the updated mask_water table, 2. the update
+                 mask_others table
+        """
+        # default is to just return full mask in both cases
+        return mask_water, mask_others
+
     # =========================================================================
     # PLOT SETTINGS
     # =========================================================================
