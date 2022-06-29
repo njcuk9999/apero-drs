@@ -157,6 +157,10 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
             # deal with not having enough pixels (skip)
             if np.sum(np.isfinite(trans_slice)) < min_trans_files:
                 continue
+            # if we can all zero values skip
+            # TODO: why do we have values exactly at zero?
+            if mp.nansum(trans_slice) == 0:
+                continue
             # construct a linear model with offset and water+dry components
             worst_offender = np.inf
             # loop until no point is an outlier beyond "sigma cut" sigma
