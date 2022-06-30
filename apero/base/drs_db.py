@@ -1776,6 +1776,10 @@ class MySQLDatabase(Database):
         # set function name
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            'connection')
+        if self.tname is None:
+            tname = 'NONE'
+        else:
+            tname = self.tname
         # deal with no host / user / password / database name
         if host is None:
             host = self.host
@@ -1810,6 +1814,13 @@ class MySQLDatabase(Database):
                 # deal with not trying --> don't wait
                 if self.tries == 0:
                     raise e
+
+                connkind = ('CONNECT-WAIT: {0} || MySQL {1}@{2}:{3}.{4} || '
+                            '{5}:{6} || Tries {7}')
+                connkind = connkind.format(connect_kind, host, user, dbname,
+                                           tname, func, kind, count)
+                print(connkind)
+
                 time.sleep(MYSQL_WAIT + np.random.uniform()*1)
                 count += 1
 
@@ -1817,10 +1828,6 @@ class MySQLDatabase(Database):
         # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
         ecode = '00-002-00045'
         emsg = drs_base.BETEXT[ecode]
-        if self.tname is None:
-            tname = 'NONE'
-        else:
-            tname = self.tname
         # extra error info
         connkind = ('CONNECT: {0} || MySQL {1}@{2}:{3}.{4} || {5}:{6} '
                     '|| Tries {7}')
