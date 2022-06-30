@@ -51,6 +51,9 @@ Time = base.AstropyTime
 # timeout parameter in seconds
 TIMEOUT = 20.0
 MAXWAIT = 1000
+# mysql timeout
+MYSQL_WAIT = 30   # 5
+
 # unique hash column
 UHASH_COL = 'UHASH'
 
@@ -1807,7 +1810,7 @@ class MySQLDatabase(Database):
                 # deal with not trying --> don't wait
                 if self.tries == 0:
                     raise e
-                time.sleep(5 + np.random.uniform()*1)
+                time.sleep(MYSQL_WAIT + np.random.uniform()*1)
                 count += 1
 
         # if we get to this point log an error
