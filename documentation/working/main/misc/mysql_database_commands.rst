@@ -88,3 +88,31 @@ type for each from the object database
     INNER JOIN {object table name} AS c ON c.OBJNAME = m.KW_OBJNAME
     WHERE m.BLOCK_KIND="red" AND m.KW_OUTPUT="EXT_E2DS_FF" AND m.KW_FIBER="AB"
     GROUP BY m.KW_OBJNAME;
+    
+Getting average timings from the LOG database
+
+.. code-block:: MySQL
+
+    SELECT RECIPE, SHORTNAME, AVG(UNIX_TIMESTAMP(STR_TO_DATE(END_TIME, '%Y-%m-%d %T.%f')) - UNIX_TIMESTAMP(STR_TO_DATE(START_TIME, '%Y-%m-%d %T.%f'))) as dt 
+    FROM {log table name} 
+    WHERE ENDED=1 
+    GROUP BY SHORTNAME;
+
+Getting the recipe count, average start/end RAM/CPU usage
+
+.. code-block:: MySQL
+
+    SELECT RECIPE, SHORTNAME, COUNT(SHORTNAME), AVG(RAM_USAGE_START), AVG(RAM_USAGE_END), AVG(CPU_USAGE_START), AVG(CPU_USAGE_END) 
+    FROM {log table name}
+    WHERE ENDED=1
+    GROUP BY SHORTNAME;
+
+Counting recipes that did not finish
+
+.. code-block:: MySQL
+
+    SELECT RECIPE, SHORTNAME, COUNT(SHORTNAME) 
+    FROM LOG_setup_spirou_stable_07_DB 
+    WHERE ENDED=0 
+    GROUP BY SHORTNAME;
+
