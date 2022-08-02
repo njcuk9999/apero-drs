@@ -628,7 +628,7 @@ apero_extract.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                               'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
                               'THERMAL_BACKGROUND', 'EXTRACT_SPECTRAL_ORDER1',
                               'EXTRACT_SPECTRAL_ORDER2', 'EXTRACT_S1D',
-                              'EXTRACT_S1D_WEIGHT')
+                              'EXTRACT_S1D_WEIGHT', 'WAVEREF_EXPECTED')
 apero_extract.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES',
                                 'SUM_EXTRACT_SP_ORDER', 'SUM_EXTRACT_S1D')
 apero_extract.set_arg(pos=0, **obs_dir)
