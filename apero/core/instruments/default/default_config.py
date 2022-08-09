@@ -18,7 +18,7 @@ __all__ = [  # global settings
     'INSTRUMENT', 'OBS_LONG', 'OBS_LAT', 'OBS_ALT',
     # DRS SETTINGS
     'DRS_PACKAGE', 'DRS_USERENV', 'DRS_GROUP', 'DRS_RECIPE_KIND',
-    'DRS_USER_DEFAULT', 'IS_MASTER', 'DRS_RECIPE_TYPE', 'DRS_GROUP_PATH',
+    'DRS_USER_DEFAULT', 'IS_REF', 'DRS_RECIPE_TYPE', 'DRS_GROUP_PATH',
     # DRS INTERNAL PATHS
     'DRS_USER_DEFAULT', 'DRS_MOD_DATA_PATH', 'DRS_MOD_INSTRUMENT_CONFIG',
     'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA',
@@ -250,12 +250,12 @@ DRS_GROUP_PATH = Const('DRS_GROUP_PATH', value=None, dtype=str, source=__NAME__,
                                     '(set in drs_setup)'))
 
 # The recipe kind that this parameter dictionary is associated with
-#   (i.e. master-calib, night-calib, obj-science, obj-tellu)
+#   (i.e. reference-calib, night-calib, obj-science, obj-tellu)
 DRS_RECIPE_KIND = Const('DRS_RECIPE_KIND', value=None, dtype=str,
                         source=__NAME__, group=cgroup,
                         description=('The recipe kind that this parameter '
                                      'dictionary is associated with (i.e. '
-                                     'master-calib, night-calib, obj-science, '
+                                     'reference-calib, night-calib, obj-science, '
                                      'obj-tellu)'))
 
 # The recipe type that this parameter dictionary is associated with
@@ -266,11 +266,11 @@ DRS_RECIPE_TYPE = Const('DRS_RECIPE_TYPE', value=None, dtype=str,
                                      'dictionary is associated with  '
                                      '(i.e. recipe, tool, processing)'))
 
-# Flag for master recipe associated with this param set
-IS_MASTER = Const('IS_MASTER', value=False, dtype=bool, source=__NAME__,
-                  group=cgroup,
-                  description=('Flag for master recipe associated with '
-                               'this param set'))
+# Flag for ref recipe associated with this param set
+IS_REF = Const('IS_REFERENCE', value=False, dtype=bool, source=__NAME__,
+               group=cgroup,
+               description=('Flag for reference recipe associated with '
+                            'this param set'))
 
 # =============================================================================
 # Instrument/Observatory Constants
@@ -548,11 +548,11 @@ DRS_HEADER = Const('DRS_HEADER', value=(' ' + '*' * 75), dtype=str,
                    description='DRS Header string',
                    output=False)
 
-# Defines a master switch, whether to report warnings that are caught in
+# Defines a reference switch, whether to report warnings that are caught in
 DRS_LOG_CAUGHT_WARNINGS = Const('DRS_LOG_CAUGHT_WARNINGS',
                                 value=True, dtype=bool, source=__NAME__,
                                 group=cgroup,
-                                description=('Defines a master switch, '
+                                description=('Defines a reference switch, '
                                              'whether to report warnings '
                                              'that are caught in'),
                                 output=False)

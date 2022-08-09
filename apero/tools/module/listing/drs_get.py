@@ -78,7 +78,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     logdbm = drs_database.LogDatabase(params)
     logdbm.load_db()
     # -------------------------------------------------------------------------
-    # create master condition
+    # create reference condition
     master_condition = ''
     # loop around filters
     for _filter in filters:
@@ -123,7 +123,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         condition = ''
         if obj_condition is not None:
             condition += str(obj_condition)
-        # deal with having a master condition
+        # deal with having a reference condition
         if len(master_condition) > 0:
             # deal with not having an object condition (don't need the AND)
             if obj_condition is None:

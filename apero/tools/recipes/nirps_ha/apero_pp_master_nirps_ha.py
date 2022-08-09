@@ -25,7 +25,7 @@ from apero.science import preprocessing
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_pp_master_nirps_ha.py'
+__NAME__ = 'apero_PP_REF_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -102,7 +102,7 @@ def __main__(recipe, params):
     recipe.plot.set_location()
 
     # ----------------------------------------------------------------------
-    # Get all raw master files
+    # Get all raw reference files
     # ----------------------------------------------------------------------
     infiles, rawfiles = [], []
     # check file type
@@ -169,7 +169,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save mask image
         # ------------------------------------------------------------------
-        outfile = recipe.outputs['PP_MASTER'].newcopy(params=params)
+        outfile = recipe.outputs['PP_REF'].newcopy(params=params)
         # construct out filename
         outfile.construct_filename(infile=infile)
         # copy keys from input file
@@ -184,7 +184,7 @@ def __main__(recipe, params):
         # add input filename
         outfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='infile')
         # set used values from mask creation
-        outfile.add_hkey('KW_PPMSTR_NSIG', value=props['PPM_MASK_NSIG'])
+        outfile.add_hkey('KW_PP_REF_NSIG', value=props['PPM_MASK_NSIG'])
         # ------------------------------------------------------------------
         # copy data
         outfile.data = mask

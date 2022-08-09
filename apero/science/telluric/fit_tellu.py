@@ -55,7 +55,7 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # General functions
 # =============================================================================
-def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
+def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
                       tpreprops, **kwargs):
     func_name = __NAME__ + '.gen_abso_pca_calc()'
     # ----------------------------------------------------------------------
@@ -265,10 +265,10 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
         fit_pc = np.array(pc)
     # ----------------------------------------------------------------------
     # pca components plot (in loop)
-    recipe.plot('FTELLU_PCA_COMP1', image=image, wavemap=mprops['WAVEMAP'],
+    recipe.plot('FTELLU_PCA_COMP1', image=image, wavemap=refprops['WAVEMAP'],
                 pc=pc, add_deriv_pc=add_deriv_pc, npc=npc, order=None)
     # pca components plot (single order)
-    recipe.plot('FTELLU_PCA_COMP2', image=image, wavemap=mprops['WAVEMAP'],
+    recipe.plot('FTELLU_PCA_COMP2', image=image, wavemap=refprops['WAVEMAP'],
                 pc=pc, add_deriv_pc=add_deriv_pc, npc=npc,
                 order=params['FTELLU_SPLOT_ORDER'])
     # ----------------------------------------------------------------------
@@ -300,7 +300,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
 def shift_template(params: ParamDict, recipe: DrsRecipe,
                    image: Optional[np.ndarray],
                    e2dsimage: Optional[np.ndarray],
-                   mprops: ParamDict, wprops: ParamDict, bprops: ParamDict,
+                   refprops: ParamDict, wprops: ParamDict, bprops: ParamDict,
                    **kwargs):
     # set function name
     func_name = display_func('shift_template', __NAME__)
@@ -319,9 +319,9 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     if dv in [np.nan, None] or not isinstance(dv, (int, float)):
         eargs = [dv, func_name]
         WLOG(params, 'error', textentry('09-016-00004', args=eargs))
-    # Get the master wavemap from master wave props
-    masterwavemap = mprops['WAVEMAP']
-    masterwavefile = os.path.basename(mprops['WAVEFILE'])
+    # Get the reference wavemap from reference wave props
+    wavemap_ref = refprops['WAVEMAP']
+    wavefile_ref = os.path.basename(refprops['WAVEFILE'])
     # Get the current wavemap from wave props
     wavemap = wprops['WAVEMAP']
     wavefile = os.path.basename(wprops['WAVEFILE'])
@@ -341,13 +341,13 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
         #     # if we have enough values spline them
         #     if mp.nansum(keep) > fit_keep_num:
         #         # define keep wave
-        #         keepwave = masterwavemap[order_num, keep]
+        #         keepwave = wavemap_ref[order_num, keep]
         #         # define keep temp
         #         keeptemp = e2dsimage[order_num, keep]
         #         # calculate interpolation for keep temp at keep wave
         #         spline = mp.iuv_spline(keepwave, keeptemp, ext=3, k=1)
         #
-        #         waveshift = masterwavemap[order_num, :] * dvshift
+        #         waveshift = wavemap_ref[order_num, :] * dvshift
         #         # interpolate at shifted wavelength
         #         start = order_num * xdim
         #         end = order_num * xdim + xdim
@@ -360,11 +360,11 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
         # Shift the e2ds to correct wave frame
         # ------------------------------------------------------------------
         # log the shifting of PCA components
-        wargs = [masterwavefile, wavefile]
+        wargs = [wavefile_ref, wavefile]
         WLOG(params, '', textentry('40-019-00021', args=wargs))
         # shift template
         e2dsimage2 = gen_tellu.wave_to_wave(params, e2dsimage,
-                                            masterwavemap / dvshift,
+                                            wavemap_ref / dvshift,
                                             wavemap, reshape=True)
 
         # debug plot - reconstructed spline (in loop)
@@ -382,7 +382,7 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     return e2dsimage2
 
 
-def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
+def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops,
                        pca_props, tapas_props, **kwargs):
     func_name = __NAME__ + '.shift_all_to_frame()'
     # ------------------------------------------------------------------
@@ -399,9 +399,9 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
     if dv in [np.nan, None] or not isinstance(dv, (int, float)):
         eargs = [dv, func_name]
         WLOG(params, 'error', textentry('09-016-00004', args=eargs))
-    # Get the master wavemap from master wave props
-    masterwavemap = mprops['WAVEMAP']
-    masterwavefile = os.path.basename(mprops['WAVEFILE'])
+    # Get the reference wavemap from reference wave props
+    wavemap_ref = refprops['WAVEMAP']
+    wavefile_ref = os.path.basename(refprops['WAVEFILE'])
     # Get the current wavemap from wave props
     wavemap = wprops['WAVEMAP']
     wavefile = os.path.basename(wprops['WAVEFILE'])
@@ -432,14 +432,14 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
             # if we have enough values spline them
             if mp.nansum(keep) > fit_keep_num:
                 # define keep wave
-                keepwave = masterwavemap[order_num, keep]
+                keepwave = wavemap_ref[order_num, keep]
                 # define keep temp
                 keeptemp = template[order_num, keep]
                 # calculate interpolation for keep temp at keep wave
                 spline = mp.iuv_spline(keepwave, keeptemp, ext=3)
                 # interpolate at shifted values
                 dvshift = mp.relativistic_waveshift(dv, units='km/s')
-                waveshift = masterwavemap[order_num, :] * dvshift
+                waveshift = wavemap_ref[order_num, :] * dvshift
                 # interpolate at shifted wavelength
                 start = order_num * xdim
                 end = order_num * xdim + xdim
@@ -449,10 +449,10 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
         # Shift the template to correct wave frame
         # ------------------------------------------------------------------
         # log the shifting of PCA components
-        wargs = [masterwavefile, wavefile]
+        wargs = [wavefile_ref, wavefile]
         WLOG(params, '', textentry('40-019-00021', args=wargs))
         # shift template
-        shift_temp = gen_tellu.wave_to_wave(params, template2, masterwavemap,
+        shift_temp = gen_tellu.wave_to_wave(params, template2, wavemap_ref,
                                             wavemap, reshape=True)
         template2 = shift_temp.reshape(template2.shape)
 
@@ -469,27 +469,27 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
     # Shift the pca components to correct wave frame
     # ------------------------------------------------------------------
     # log the shifting of PCA components
-    wargs = [masterwavefile, wavefile]
+    wargs = [wavefile_ref, wavefile]
     WLOG(params, '', textentry('40-019-00018', args=wargs))
     # shift pca components (one by one)
     for comp in range(npc):
-        shift_pc = gen_tellu.wave_to_wave(params, pc2[:, comp], masterwavemap,
+        shift_pc = gen_tellu.wave_to_wave(params, pc2[:, comp], wavemap_ref,
                                           wavemap, reshape=True)
         pc2[:, comp] = shift_pc.reshape(pc2[:, comp].shape)
 
         shift_fpc = gen_tellu.wave_to_wave(params, fit_pc2[:, comp],
-                                           masterwavemap, wavemap, reshape=True)
+                                           wavemap_ref, wavemap, reshape=True)
         fit_pc2[:, comp] = shift_fpc.reshape(fit_pc2[:, comp].shape)
     # ------------------------------------------------------------------
     # Shift the pca components to correct wave frame
     # ------------------------------------------------------------------
     # log the shifting of the tapas spectrum
-    wargs = [masterwavefile, wavefile]
+    wargs = [wavefile_ref, wavefile]
     WLOG(params, '', textentry('40-019-00019', args=wargs))
     # shift tapas species
     for row in range(len(tapas_all_species2)):
         stapas = gen_tellu.wave_to_wave(params, tapas_all_species[row],
-                                        masterwavemap, wavemap, reshape=True)
+                                        wavemap_ref, wavemap, reshape=True)
         tapas_all_species2[row] = stapas.reshape(tapas_all_species[row].shape)
 
     # water is the second column
@@ -827,7 +827,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
 
 
 def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
-                   mprops, wprops) -> ParamDict:
+                   refprops, wprops) -> ParamDict:
     """
     Calculate the residual model and apply it to the image
 
@@ -836,7 +836,7 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     :param image1:
     :param trans_props:
     :param tpreprops:
-    :param mprops:
+    :param refprops:
     :param wprops:
     :param bprops:
     :return:
@@ -850,12 +850,12 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     # get exponent values for this observation from pre-cleaning
     expo_water = tpreprops['EXPO_WATER']
     expo_others = tpreprops['EXPO_OTHERS']
-    # calculate model for predicted residuals (in master frame)
+    # calculate model for predicted residuals (in reference frame)
     pwater = expo_water * water_res
     pothers =  expo_others * others_res
     res_model = np.exp(zero_res + pwater + pothers)
     # shift model to image frame
-    wargs = [params, res_model,  mprops['WAVEMAP'], wprops['WAVEMAP']]
+    wargs = [params, res_model,  refprops['WAVEMAP'], wprops['WAVEMAP']]
     res_model2 = gen_tellu.wave_to_wave(*wargs, splinek=1)
     # ------------------------------------------------------------------
     # Calculate reconstructed absorption + correct E2DS file

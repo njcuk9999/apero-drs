@@ -29,7 +29,7 @@ from apero.science.calib import shape
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_shape_master_spirou.py'
+__NAME__ = 'apero_shape_ref_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -55,7 +55,7 @@ pcheck = constants.PCheck(wlog=WLOG)
 # Everything else is controlled from recipe_definition
 def main(obs_dir=None, hcfiles=None, fpfiles=None, **kwargs):
     """
-    Main function for apero_shape_master_spirou.py
+    Main function for apero_shape_ref_spirou.py
 
     :param obs_dir: string, the night name sub-directory
     :param hcfiles: list of strings or string, the list of hc files
@@ -117,7 +117,7 @@ def __main__(recipe, params):
         rawfpfiles.append(infile.basename)
 
     # set fiber we should use
-    fiber = pcheck(params, 'SHAPE_MASTER_FIBER', func=mainname)
+    fiber = pcheck(params, 'SHAPE_REF_FIBER', func=mainname)
 
     # get combined hcfile
     cout1 = drs_file.combine(params, recipe, hcfiles, math='median')
@@ -140,10 +140,10 @@ def __main__(recipe, params):
                                            database=calibdbm)
 
     # ----------------------------------------------------------------------
-    # Get wave coefficients from master wavefile
+    # Get wave coefficients from reference wavefile
     # ----------------------------------------------------------------------
-    # get master wave map
-    wprops = wave.get_wavesolution(params, recipe, fiber=fiber, master=True,
+    # get reference wave map
+    wprops = wave.get_wavesolution(params, recipe, fiber=fiber, ref=True,
                                    database=calibdbm, log=recipe.log)
 
     # ------------------------------------------------------------------
@@ -181,45 +181,45 @@ def __main__(recipe, params):
     filenames = np.array(filenames)
 
     # ----------------------------------------------------------------------
-    # Obtain FP master (from file or calculate)
+    # Obtain FP reference (from file or calculate)
     # ----------------------------------------------------------------------
-    # deal with having a fp master assigned by user
-    cond1 = 'FPMASTER' in params['INPUTS']
-    # if we have fpmaster defined in inputs load from file - DEBUG ONLY
-    if cond1 and (params['INPUTS']['FPMASTER'] not in [None, 'None', '']):
+    # deal with having a fp reference assigned by user
+    cond1 = 'FPREF' in params['INPUTS']
+    # if we have fpref defined in inputs load from file - DEBUG ONLY
+    if cond1 and (params['INPUTS']['FPREF'] not in [None, 'None', '']):
         # can use from calibDB by setting to 1 or True
-        if params['INPUTS']['FPMASTER'] in ['1', 'True']:
+        if params['INPUTS']['FPREF'] in ['1', 'True']:
             filename = None
         else:
-            filename = params['INPUTS']['FPMASTER'][0][0]
+            filename = params['INPUTS']['FPREF'][0][0]
         # do stuff
         fpkwargs = dict(header=fpfile.get_header(), filename=filename,
                         database=calibdbm)
-        # read fpmaster file
-        masterfp_file, master_fp = shape.get_master_fp(params, **fpkwargs)
+        # read fpref file
+        reffp_file, REF_FP = shape.get_ref_fp(params, **fpkwargs)
         # read table
-        fp_table = drs_table.read_table(params, masterfp_file, fmt='fits')
+        fp_table = drs_table.read_table(params, reffp_file, fmt='fits')
     else:
         # ----------------------------------------------------------------------
         # Get all fp file properties
         # ----------------------------------------------------------------------
         fp_table = shape.construct_fp_table(params, filenames)
         # ----------------------------------------------------------------------
-        # match files by date and median to produce master fp
+        # match files by date and median to produce reference fp
         # ----------------------------------------------------------------------
         cargs = [params, recipe, fpprops['DPRTYPE'], fp_table, fpimage]
-        # fpcube, fp_table = shape.construct_master_fp(*cargs)
-        master_fp, fp_table = shape.construct_master_fp(*cargs)
-        # log process (master construction complete + number of groups added)
+        # fpcube, fp_table = shape.construct_REF_FP(*cargs)
+        REF_FP, fp_table = shape.construct_ref_fp(*cargs)
+        # log process (reference construction complete + number of groups added)
         # wargs = [len(fpcube)]
         # WLOG(params, 'info', textentry('40-014-00011', args=wargs))
         # sum the cube to make fp data
-        # master_fp = np.sum(fpcube, axis=0)
+        # REF_FP = np.sum(fpcube, axis=0)
 
     # ----------------------------------------------------------------------
     # Calculate dx shape map
     # ----------------------------------------------------------------------
-    cargs = [hcimage, master_fp, lprops, fiber]
+    cargs = [hcimage, REF_FP, lprops, fiber]
     dout = shape.calculate_dxmap(params, recipe, *cargs)
     dxmap, max_dxmap_std, max_dxmap_info, dxrms = dout
     # if dxmap is None we shouldn't continue as quality control have failed
@@ -256,7 +256,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Calculate dy shape map
     # ----------------------------------------------------------------------
-    dymap = shape.calculate_dymap(params, master_fp, fpheader)
+    dymap = shape.calculate_dymap(params, REF_FP, fpheader)
 
     # ----------------------------------------------------------------------
     # Need to straighten the dxmap
@@ -278,17 +278,17 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
-    qc_params, passed = shape.shape_master_qc(params, dxrms, qc_params)
+    qc_params, passed = shape.shape_ref_qc(params, dxrms, qc_params)
     # update recipe log
     recipe.log.add_qc(qc_params, passed)
 
     # ------------------------------------------------------------------
     # write files
     # ------------------------------------------------------------------
-    fargs = [fpfile, hcfile, rawfpfiles, rawhcfiles, dxmap, dymap, master_fp,
+    fargs = [fpfile, hcfile, rawfpfiles, rawhcfiles, dxmap, dymap, REF_FP,
              fp_table, fpprops, dxmap0, fpimage, fpimage2, hcimage, hcimage2,
              qc_params]
-    outfiles = shape.write_shape_master_files(params, recipe, *fargs)
+    outfiles = shape.write_shape_ref_files(params, recipe, *fargs)
     outfile1, outfile2, outfile3 = outfiles
 
     # ----------------------------------------------------------------------
@@ -299,10 +299,10 @@ def __main__(recipe, params):
         calibdbm.add_calib_file(outfile1)
         # add dymap
         calibdbm.add_calib_file(outfile2)
-        # add master fp file
+        # add reference fp file
         calibdbm.add_calib_file(outfile3)
     # ---------------------------------------------------------------------
-    # if recipe is a master and QC fail we generate an error
+    # if recipe is a reference and QC fail we generate an error
     # ---------------------------------------------------------------------
     if not passed:
         eargs = [recipe.name]
@@ -310,7 +310,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Construct summary document
     # ------------------------------------------------------------------
-    shape.write_shape_master_summary(recipe, params, fp_table, qc_params)
+    shape.write_shape_ref_summary(recipe, params, fp_table, qc_params)
     # ------------------------------------------------------------------
     # update recipe log file
     # ------------------------------------------------------------------

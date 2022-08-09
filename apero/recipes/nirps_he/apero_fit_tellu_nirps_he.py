@@ -206,14 +206,14 @@ def __main__(recipe, params):
         # get fiber from infile
         fiber = infile.get_fiber(header=header)
         # ------------------------------------------------------------------
-        # load master wavelength solution for this fiber
+        # load reference wavelength solution for this fiber
         # get pseudo constants
         pconst = constants.pload()
         # deal with fibers that we don't have
         usefiber = pconst.FIBER_WAVE_TYPES(fiber)
         # ------------------------------------------------------------------
-        # load master wavelength solution
-        mprops = wave.get_wavesolution(params, recipe, master=True,
+        # load reference wavelength solution
+        refprops = wave.get_wavesolution(params, recipe, ref=True,
                                        fiber=fiber, infile=infile,
                                        database=calibdbm)
         # ------------------------------------------------------------------
@@ -244,9 +244,9 @@ def __main__(recipe, params):
         bprops = extract.get_berv(params, infile)
 
         # ------------------------------------------------------------------
-        # Shift the template from master wave solution --> night wave solution
+        # Shift the template from reference wave solution --> night wave solution
         template = telluric.shift_template(params, recipe, image, template,
-                                           mprops, wprops, bprops)
+                                           refprops, wprops, bprops)
 
         # ------------------------------------------------------------------
         # telluric pre-cleaning
@@ -268,7 +268,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         if not onlypreclean:
             cprops = telluric.calc_res_model(params, recipe, image, image1,
-                                             trans_props, tpreprops, mprops,
+                                             trans_props, tpreprops, refprops,
                                              wprops)
         else:
             cprops = telluric.pclean_only(tpreprops)
@@ -340,7 +340,7 @@ def __main__(recipe, params):
             # print that we are correcting other fibers
             # log: Correcting fiber {0}
             WLOG(params, 'info', textentry('40-019-00049', args=[sfiber]))
-            # skip master fiber
+            # skip reference fiber
             if sfiber == fiber:
                 continue
             # else correct/create s1d/ and save

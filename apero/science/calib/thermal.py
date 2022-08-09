@@ -162,9 +162,9 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     # get fiber dprtype
     fibertype = pconst.FIBER_DATA_TYPE(dprtype, fiber)
     # ----------------------------------------------------------------------
-    # get master wave map
-    # TODO: Are we sure this should be the master solution?
-    wprops = wave.get_wavesolution(params, recipe, master=True,
+    # get reference wave map
+    # TODO: Are we sure this should be the reference solution?
+    wprops = wave.get_wavesolution(params, recipe, ref=True,
                                    database=database)
     # get the wave solution
     wavemap = wprops['WAVEMAP']
@@ -292,7 +292,7 @@ def get_thermal(params, header, fiber, kind, filename=None,
     thermaltime = cfile.mjdmid
     # log which thermal file we are using
     WLOG(params, '', textentry('40-016-00027', args=[thermal_file]))
-    # return the master image
+    # return the reference image
     return thermal_file, thermaltime, thermal
 
 

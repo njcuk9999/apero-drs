@@ -140,11 +140,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         props, image = gen_calib.calibrate_ppfile(params, recipe, infile)
         # ------------------------------------------------------------------
-        # Load master fp, shape dxmap and dymap
+        # Load reference fp, shape dxmap and dymap
         # ------------------------------------------------------------------
         fkwargs = dict(database=calibdbm)
-        masterfp_file, masterfp_image = shape.get_master_fp(params, header,
-                                                            **fkwargs)
+        reffp_file, reffp_image = shape.get_ref_fp(params, header, **fkwargs)
         # get shape x and shape x mjdmid
         sout = shape.get_shapex(params, header, **fkwargs)
         dxmap_file, dxtime, dxmap = sout
@@ -152,12 +151,12 @@ def __main__(recipe, params):
         sout = shape.get_shapey(params, header, **fkwargs)
         dymap_file, dytime, dymap = sout
         # ----------------------------------------------------------------------
-        # Get transform parameters (transform image onto fpmaster)
+        # Get transform parameters (transform image onto fpref)
         # ----------------------------------------------------------------------
         # log progress
         WLOG(params, '', textentry('40-014-00033'))
         # transform
-        targs = [params, recipe, masterfp_image, image]
+        targs = [params, recipe, reffp_image, image]
         transform, xres, yres = shape.get_linear_transform_params(*targs)
         # ----------------------------------------------------------------------
         # For debug purposes straighten the image
@@ -189,9 +188,9 @@ def __main__(recipe, params):
             # add shapel transforms
             calibdbm.add_calib_file(outfile)
         # ---------------------------------------------------------------------
-        # if recipe is a master and QC fail we generate an error
+        # if recipe is a reference and QC fail we generate an error
         # ---------------------------------------------------------------------
-        if not passed and params['INPUTS']['MASTER']:
+        if not passed and params['INPUTS']['REF']:
             eargs = [recipe.name]
             WLOG(params, 'error', textentry('09-000-00011', args=eargs))
         # ------------------------------------------------------------------

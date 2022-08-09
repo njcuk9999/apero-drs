@@ -213,9 +213,9 @@ def __main__(recipe, params):
         qc_params, passed = extgen.qc_leak(params, cprops)
         log1.add_qc(qc_params[fiber], passed)
         # ---------------------------------------------------------------------
-        # if recipe is a master and QC fail we generate an error
+        # if recipe is a reference and QC fail we generate an error
         # ---------------------------------------------------------------------
-        if not passed and params['INPUTS']['MASTER']:
+        if not passed and params['INPUTS']['REF']:
             eargs = [recipe.name]
             WLOG(params, 'error', textentry('09-000-00011', args=eargs))
         # ------------------------------------------------------------------

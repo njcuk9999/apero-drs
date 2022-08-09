@@ -259,13 +259,13 @@ class LocationSection:
             self.master.datastore.combine_files()
         # update mask
         tprocess = threading.Thread(target=update)
-        #self.master.config(cursor="wait")
+        #self.reference.config(cursor="wait")
         self.master.progress.pack(side=tk.LEFT, expand=tk.YES, fill=tk.X)
         self.master.progress.start()
         tprocess.start()
         while tprocess.is_alive():
             tprocess.join(0.1)
-        #self.master.config(cursor="")
+        #self.reference.config(cursor="")
         self.master.progress.stop()
         self.master.progress.pack_forget()
         # reset status
@@ -299,7 +299,7 @@ class LocationSection:
             self.master.datastore.combine_files()
         # update mask
         tprocess = threading.Thread(target=update)
-        #self.master.config(cursor="wait")
+        #self.reference.config(cursor="wait")
         self.master.progress.pack(side=tk.LEFT, expand=tk.YES, fill=tk.X)
         self.master.progress.start()
         tprocess.start()
@@ -307,7 +307,7 @@ class LocationSection:
             self.master.progress.step(2)
             self.master.update_idletasks()
             tprocess.join(0.1)
-        #self.master.config(cursor="")
+        #self.reference.config(cursor="")
         # reset status
         self.master.progress.stop()
         self.master.progress.pack_forget()
@@ -389,7 +389,7 @@ class FilterSection:
             self.master.datastore.calculate_lengths()
         # update mask
         tprocess = threading.Thread(target=update)
-        #self.master.config(cursor="wait")
+        #self.reference.config(cursor="wait")
         self.master.progress.pack(side=tk.LEFT, expand=tk.YES, fill=tk.X)
         self.master.progress.start()
         tprocess.start()
@@ -397,7 +397,7 @@ class FilterSection:
             self.master.progress.step(2)
             self.master.update_idletasks()
             tprocess.join(0.1)
-        #self.master.config(cursor="")
+        #self.reference.config(cursor="")
         self.master.progress.stop()
         self.master.progress.pack_forget()
         # reset status
@@ -720,7 +720,7 @@ class App(tk.Tk):
                                         mode='indeterminate')
         # add nav bar
         self.navbar = Navbar(self)
-        # add menu master
+        # add menu reference
         self.config(menu=self.navbar.menubar)
         # ---------------------------------------------------------------------
         # set up the grid weights (to make it expand to full size)

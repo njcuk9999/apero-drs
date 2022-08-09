@@ -691,7 +691,7 @@ class App(tk.Tk):
         self.r2 = Results2(self.main_bottom2)
         self.s1 = SearchTitle(self.main_middle)
         self.search = Search(self.main_top, self)
-        # add menu master
+        # add menu reference
         self.config(menu=self.navbar.menubar)
         # set up the grid weights (to make it expand to full size)
         self.grid_rowconfigure(0, weight=0)

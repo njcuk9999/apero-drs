@@ -306,7 +306,7 @@ class DatabaseExplorer(tk.Frame):
         self.parent = parent
         # start the super frame instance
         tk.Frame.__init__(self)
-        # set the master to main
+        # set the reference to main
         self.main = self.master
         # set default window size
         self.main.geometry('1024x512+512+256')

@@ -211,7 +211,7 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
 
 
 def calculate_tellu_res_absorption(params, recipe, image, template,
-                                   template_props, header, mprops, wprops,
+                                   template_props, header, refprops, wprops,
                                    bprops, tpreprops, **kwargs):
     func_name = __NAME__ + '.calculate_telluric_absoprtion()'
     # get constatns from params/kwargs
@@ -233,15 +233,15 @@ def calculate_tellu_res_absorption(params, recipe, image, template,
         WLOG(params, 'error', textentry('09-016-00004', args=eargs))
     # get airmass from header
     airmass = header[params['KW_AIRMASS'][0]]
-    # get master wave map
-    mwavemap = mprops['WAVEMAP']
+    # get reference wave map
+    mwavemap = refprops['WAVEMAP']
     # get wave map
     wavemap = wprops['WAVEMAP']
     # get dimensions of data
     nbo, nbpix = image1.shape
 
     # ------------------------------------------------------------------
-    # Shift the image to the master grid
+    # Shift the image to the reference grid
     # ------------------------------------------------------------------
     image1 = gen_tellu.wave_to_wave(params, image1, wavemap, mwavemap)
 
@@ -538,7 +538,7 @@ def mk_model_summary(recipe, params, qc_params, tprops):
 # Write functions
 # =============================================================================
 def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
-                              mprops, nprops, tprops, tpreprops, qc_params):
+                              refprops, nprops, tprops, tpreprops, qc_params):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     transfile = recipe.outputs['TELLU_TRANS'].newcopy(params=params,
@@ -549,7 +549,7 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     # copy keys from input file
     transfile.copy_original_keys(infile, exclude_groups='wave')
     # add wave keys
-    transfile = wave.add_wave_keys(transfile, mprops)
+    transfile = wave.add_wave_keys(transfile, refprops)
     # add version
     transfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
@@ -570,8 +570,8 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     # add  calibration files used
     transfile.add_hkey('KW_CDBBLAZE', value=nprops['BLAZE_FILE'])
     transfile.add_hkey('KW_CDTBLAZE', value=nprops['BLAZE_TIME'])
-    transfile.add_hkey('KW_CDBWAVE', value=mprops['WAVEFILE'])
-    transfile.add_hkey('KW_CDTWAVE', value=mprops['WAVETIME'])
+    transfile.add_hkey('KW_CDBWAVE', value=refprops['WAVEFILE'])
+    transfile.add_hkey('KW_CDTWAVE', value=refprops['WAVETIME'])
     # ----------------------------------------------------------------------
     # add qc parameters
     transfile.add_qckeys(qc_params)

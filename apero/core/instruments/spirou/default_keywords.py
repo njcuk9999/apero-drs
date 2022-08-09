@@ -511,16 +511,16 @@ KW_CDBTHERMAL.set(key='CDBTHERM', comment='The cal THERMAL file used')
 # time of thermal calibration file used
 KW_CDTTHERMAL = KW_CDTTHERMAL.copy(__NAME__)
 KW_CDTTHERMAL.set(key='CDTTHERM', comment='MJDMID of cal THERMAL file used')
-# the leak master calibration file used
+# the leak reference calibration file used
 KW_CDBLEAKM = KW_CDBLEAKM.copy(__NAME__)
 KW_CDBLEAKM.set(key='CDBLEAKM', comment='The cal LEAKM file used')
-# time of the leak master calibration file used
+# time of the leak reference calibration file used
 KW_CDTLEAKM = KW_CDTLEAKM.copy(__NAME__)
 KW_CDTLEAKM.set(key='CDTLEAKM', comment='MJDMID of cal LEAK file used')
-# the ref leak master calibration file used
+# the ref leak reference calibration file used
 KW_CDBLEAKR = KW_CDBLEAKR.copy(__NAME__)
 KW_CDBLEAKR.set(key='CDBLEAKR', comment='The cal ref LEAKM file used')
-# time of the ref leak master calibration file used
+# time of the ref leak reference calibration file used
 KW_CDTLEAKR = KW_CDTLEAKR.copy(__NAME__)
 KW_CDTLEAKR.set(key='CDTLEAKR', comment='MJDMID of cal ref LEAK file used')
 
@@ -963,15 +963,15 @@ KW_LEAK_NP_U = KW_LEAK_NP_U.copy(__NAME__)
 KW_LEAK_NP_U.set(key='LEAK_NPU', datatype=float,
                  comment='LEAK norm percentile used for leakage corr')
 
-# Define the e-width smoothing used for correcting leakage master
+# Define the e-width smoothing used for correcting leakage reference
 KW_LEAK_WSMOOTH = KW_LEAK_WSMOOTH.copy(__NAME__)
 KW_LEAK_WSMOOTH.set(key='LEAKMWSM', datatype=float,
-                    comment='LEAKM e-width smoothing used for leak master corr')
+                    comment='LEAKM e-width smoothing used for leak reference corr')
 
-# Define the kernel size used for correcting leakage master
+# Define the kernel size used for correcting leakage reference
 KW_LEAK_KERSIZE = KW_LEAK_KERSIZE.copy(__NAME__)
 KW_LEAK_KERSIZE.set(key='LEAKMKSZ', datatype=float,
-                    comment='LEAKM kernel size used for leak master corr')
+                    comment='LEAKM kernel size used for leak reference corr')
 
 # Define the lower bound percentile used for correcting leakage
 KW_LEAK_LP_U = KW_LEAK_LP_U.copy(__NAME__)

@@ -214,14 +214,14 @@ def __main__(recipe, params):
         # get fiber from infile
         fiber = infile.get_fiber(header=header)
         # ------------------------------------------------------------------
-        # load master wavelength solution for this fiber
+        # load reference wavelength solution for this fiber
         # get pseudo constants
         pconst = constants.pload()
         # deal with fibers that we don't have
         usefiber = pconst.FIBER_WAVE_TYPES(fiber)
         # ------------------------------------------------------------------
-        # load master wavelength solution
-        mprops = wave.get_wavesolution(params, recipe, master=True,
+        # load reference wavelength solution
+        refprops = wave.get_wavesolution(params, recipe, ref=True,
                                        fiber=fiber, infile=infile,
                                        database=calibdbm, log=log1)
         # ------------------------------------------------------------------
@@ -238,9 +238,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile)
         # ------------------------------------------------------------------
-        # Shift the template from master wave solution --> night wave solution
+        # Shift the template from reference wave solution --> night wave solution
         template = telluric.shift_template(params, recipe, image, template,
-                                           mprops, wprops, bprops)
+                                           refprops, wprops, bprops)
         # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
@@ -258,7 +258,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate telluric absorption
         # ------------------------------------------------------------------
-        cargs = [recipe, image1, template, template_props, header, mprops,
+        cargs = [recipe, image1, template, template_props, header, refprops,
                  wprops, bprops, tpreprops]
         tellu_props = telluric.calculate_tellu_res_absorption(params, *cargs)
         # ------------------------------------------------------------------
@@ -272,7 +272,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save transmission map to file
         # ------------------------------------------------------------------
-        targs = [infile, rawfiles, fiber, combine, mprops,
+        targs = [infile, rawfiles, fiber, combine, refprops,
                  nprops, tellu_props, tpreprops, qc_params]
         transfile = telluric.mk_tellu_write_trans_file(params, recipe, *targs)
         # ------------------------------------------------------------------

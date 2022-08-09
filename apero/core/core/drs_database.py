@@ -876,20 +876,20 @@ class CalibrationDatabase(DatabaseManager):
         # get calibration database entries --> FILENAME
         #   if nentries = 1 : str or None
         #   if nentries > 1 : 1d numpy array
-        ctable = self.get_calib_entry('FILENAME, SUPERCAL, UNIXTIME', key,
+        ctable = self.get_calib_entry('FILENAME, REFCAL, UNIXTIME', key,
                                       fiber, filetime, timemode, nentries)
         # deal with return of two columns (tulpe or pandas table)
         if ctable is None:
             filenames = None
             filetimes = np.nan
-            master = False
+            reference = False
         elif isinstance(ctable, tuple):
             # get filename
             filenames = str(ctable[0])
             # get file time (unix)
             utimes = float(ctable[2])
-            # get whether calibration is a master
-            master = drs_text.true_text(ctable[1])
+            # get whether calibration is a reference
+            reference = drs_text.true_text(ctable[1])
             # get file times in MJD
             filetimes = float(Time(utimes, format='unix').mjd)
         else:
@@ -897,8 +897,8 @@ class CalibrationDatabase(DatabaseManager):
             filenames = np.array(ctable['FILENAME'])
             # get file times (unix)
             utimes = np.array(ctable['UNIXTIME'])
-            # get whether calibrations are masters
-            master = np.array(ctable['SUPERCAL']).astype(bool)
+            # get whether calibrations are references
+            reference = np.array(ctable['REFCAL']).astype(bool)
             # get file times in MJD
             filetimes = np.array(Time(utimes, format='unix').mjd).astype(float)
         # ---------------------------------------------------------------------
@@ -931,7 +931,7 @@ class CalibrationDatabase(DatabaseManager):
             # set output
             outfilename = Path(self.filedir).joinpath(filenames).absolute()
             # return outfilenames
-            return outfilename, float(filetimes), bool(master)
+            return outfilename, float(filetimes), bool(reference)
         # else loop around them (assume they are iterable)
         else:
             # set output storage
@@ -942,7 +942,7 @@ class CalibrationDatabase(DatabaseManager):
                 # append to storage
                 outfilenames.append(outfilename)
             # return outfilenames
-            return outfilenames, list(filetimes), list(master)
+            return outfilenames, list(filetimes), list(reference)
 
     def remove_entries(self, condition):
         # set function
@@ -1488,10 +1488,10 @@ def _get_is_super(drsfile: DrsInputFile) -> int:
     # no outclass - not super
     if drsfile.outclass is None:
         return 0
-    # get master setting from params
-    is_super = drsfile.outclass.master
+    # get reference setting from params
+    is_super = drsfile.outclass.ref
     # change bool to 1 or 0
-    # get master key
+    # get reference key
     if is_super:
         is_super = 1
     else:

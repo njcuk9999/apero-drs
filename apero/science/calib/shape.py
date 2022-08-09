@@ -63,7 +63,7 @@ def construct_fp_table(params, filenames, **kwargs):
     # define function
     func_name = __NAME__ + '.construct_fp_table()'
     # get parameters from params
-    max_num_files = pcheck(params, 'SHAPE_MASTER_MAX_FILES', 'max_num', kwargs,
+    max_num_files = pcheck(params, 'SHAPE_REF_MAX_FILES', 'max_num', kwargs,
                            func_name)
     # define storage for table columns
     fp_time, fp_exp, fp_pp_version = [], [], []
@@ -125,16 +125,16 @@ def construct_fp_table(params, filenames, **kwargs):
     return fp_table
 
 
-# def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
-#     func_name = __NAME__ + '.construct_master_dark'
+# def construct_REF_FP(params, recipe, dprtype, fp_table, image_ref, **kwargs):
+#     func_name = __NAME__ + '.construct_ref_dark'
 #     # get constants from params/kwargs
-#     time_thres = pcheck(params, 'FP_MASTER_MATCH_TIME', 'time_thres', kwargs,
+#     time_thres = pcheck(params, 'FP_REF_MATCH_TIME', 'time_thres', kwargs,
 #                         func_name)
-#     percent_thres = pcheck(params, 'FP_MASTER_PERCENT_THRES', 'percent_thres',
+#     percent_thres = pcheck(params, 'FP_REF_PERCENT_THRES', 'percent_thres',
 #                            kwargs, func_name)
 #     qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res', kwargs,
 #                     func_name)
-#     min_num = pcheck(params, 'SHAPE_FP_MASTER_MIN_IN_GROUP', 'min_num', kwargs,
+#     min_num = pcheck(params, 'SHAPE_FP_REF_MIN_IN_GROUP', 'min_num', kwargs,
 #                      func_name)
 #
 #     # get col data from dark_table
@@ -214,7 +214,7 @@ def construct_fp_table(params, filenames, **kwargs):
 #                            correctback=False)
 #             props, groupfp = general.calibrate_ppfile(*cargs, **ckwargs)
 #             # --------------------------------------------------------------
-#             # shift group to master
+#             # shift group to reference
 #             targs = [image_ref, groupfp]
 #             gout = get_linear_transform_params(params, recipe, *targs)
 #             transforms, xres, yres = gout
@@ -270,12 +270,12 @@ def construct_fp_table(params, filenames, **kwargs):
 #     return fp_cube, valid_fp_table
 
 
-def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
-    func_name = __NAME__ + '.construct_master_dark'
+def construct_ref_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
+    func_name = __NAME__ + '.construct_ref_fp'
     # get constants from params/kwargs
-    time_thres = pcheck(params, 'FP_MASTER_MATCH_TIME', 'time_thres', kwargs,
+    time_thres = pcheck(params, 'FP_REF_MATCH_TIME', 'time_thres', kwargs,
                         func_name)
-    percent_thres = pcheck(params, 'FP_MASTER_PERCENT_THRES', 'percent_thres',
+    percent_thres = pcheck(params, 'FP_REF_PERCENT_THRES', 'percent_thres',
                            kwargs, func_name)
     qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res', kwargs,
                     func_name)
@@ -344,7 +344,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
         ckwargs = dict(n_percentile=percent_thres, correctback=False)
         props, groupfp = gen_calib.calibrate_ppfile(*cargs, **ckwargs)
         # --------------------------------------------------------------
-        # shift group to master
+        # shift group to reference
         targs = [image_ref, groupfp]
         gout = get_linear_transform_params(params, recipe, *targs)
         transforms, xres, yres = gout
@@ -367,7 +367,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
         groupfp = ea_transform(params, groupfp,
                                lin_transform_vect=transforms)
         # save files for medianing later
-        nargs = ['fp_master_cube', row, groupfp, fp_cube_files, fpsubdir,
+        nargs = ['fp_ref_cube', row, groupfp, fp_cube_files, fpsubdir,
                  out_obs_dir]
         fp_cube_files, fpsubdir = drs_image.npy_filelist(params, *nargs)
         # delete groupfp
@@ -387,9 +387,9 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     # ----------------------------------------------------------------------
     # produce the large median (write ribbons to disk to save space)
     with warnings.catch_warnings(record=True) as _:
-        fp_master = drs_image.large_image_combine(params, fp_cube_files,
-                                                  math='mean',
-                                                  outdir=out_obs_dir, fmt='npy')
+        fp_ref = drs_image.large_image_combine(params, fp_cube_files,
+                                               math='mean',
+                                               outdir=out_obs_dir, fmt='npy')
     # clean up npy dir
     drs_image.npy_fileclean(params, fp_cube_files, fpsubdir, out_obs_dir)
     # ----------------------------------------------------------------------
@@ -407,22 +407,22 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     for c_it, col in enumerate(colnames):
         valid_fp_table[col] = values[c_it]
     # ----------------------------------------------------------------------
-    # return fp_master
-    return fp_master, valid_fp_table
+    # return fp_ref
+    return fp_ref, valid_fp_table
 
 
 def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
     func_name = __NAME__ + '.get_linear_transform_params()'
     # get parameters from params/kwargs
-    maxn_percent = pcheck(params, 'SHAPE_MASTER_VALIDFP_PERCENTILE',
+    maxn_percent = pcheck(params, 'SHAPE_REF_VALIDFP_PERCENTILE',
                           'maxn_perecent', kwargs, func_name)
-    maxn_thres = pcheck(params, 'SHAPE_MASTER_VALIDFP_THRESHOLD',
+    maxn_thres = pcheck(params, 'SHAPE_REF_VALIDFP_THRESHOLD',
                         'maxn_thres', kwargs, func_name)
-    niterations = pcheck(params, 'SHAPE_MASTER_LINTRANS_NITER',
+    niterations = pcheck(params, 'SHAPE_REF_LINTRANS_NITER',
                          'niterations', kwargs, func_name)
-    ini_boxsize = pcheck(params, 'SHAPE_MASTER_FP_INI_BOXSIZE',
+    ini_boxsize = pcheck(params, 'SHAPE_REF_FP_INI_BOXSIZE',
                          'ini_boxsize', kwargs, func_name)
-    small_boxsize = pcheck(params, 'SHAPE_MASTER_FP_SMALL_BOXSIZE',
+    small_boxsize = pcheck(params, 'SHAPE_REF_FP_SMALL_BOXSIZE',
                            'small_boxsize', kwargs, func_name)
     # get the shape of the image
     dim1, dim2 = image1.shape
@@ -489,8 +489,8 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
                 boxvalues = mask2[ypeak1 + dd[y_it], xpeak1 + dd[x_it]]
                 # push these values into the map
                 map_dxdy[y_it, x_it] = np.mean(boxvalues)
-        # To determine the  accurate shift between a nightly FP and the master
-        # FP, we first find the round pixel offset. To do so, we put the master
+        # To determine the  accurate shift between a nightly FP and the reference
+        # FP, we first find the round pixel offset. To do so, we put the reference
         # FP peaks on a binary mask of the night's FP peaks and count the
         # number of matches for a range of offsets. Normally, the best match
         # is the shift with the largest fraction of FP peaks falling at peak
@@ -751,7 +751,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
     dypix_arr, cckeep_arr = [], []
     dxrms_arr = []
     # define storage for output
-    master_dxmap = np.zeros_like(fpdata)
+    ref_dxmap = np.zeros_like(fpdata)
     map_orders = np.zeros_like(fpdata) - 1
     order_overlap = np.zeros_like(fpdata)
     slope_all_ord = np.zeros((nbo, dim2))
@@ -778,9 +778,9 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
         # that slice images are as straight as can be
         # ---------------------------------------------------------------------
         # if the map is not zeros, we use it as a starting point
-        if np.sum(master_dxmap != 0) != 0:
-            hcdata2 = ea_transform(params, hcdata, dxmap=master_dxmap)
-            fpdata2 = ea_transform(params, fpdata, dxmap=master_dxmap)
+        if np.sum(ref_dxmap != 0) != 0:
+            hcdata2 = ea_transform(params, hcdata, dxmap=ref_dxmap)
+            fpdata2 = ea_transform(params, fpdata, dxmap=ref_dxmap)
             # if this is not the first iteration, then we must be really close
             # to a slope of 0
             range_slopes_deg = small_angle_range
@@ -1081,7 +1081,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
             wargs = [order_num + 1, nbo]
             WLOG(params, '', textentry('40-014-00021', args=wargs))
             # -------------------------------------------------------------
-            # spline everything onto the master DX map
+            # spline everything onto the reference DX map
             #    ext=3 forces that out-of-range values are set to boundary
             #    value this simply uses the last reliable dx measurement for
             #    the neighbouring slit position
@@ -1114,7 +1114,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
 
             # -------------------------------------------------------------
             # for all field positions along the order, we determine the
-            #    dx+rotation values and update the master DX map
+            #    dx+rotation values and update the reference DX map
             fracs = ypix[order_num] - np.fix(ypix[order_num])
             widths = np.arange(width)
 
@@ -1149,7 +1149,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
                 # add these constraints to the position mask
                 pos_y_mask &= (ypix2 > lower_ylimit_overlap)
                 pos_y_mask &= (ypix2 < upper_ylimit_overlap)
-                # if we have some values add to master DX map
+                # if we have some values add to reference DX map
                 if np.sum(pos_y_mask) != 0:
                     # get positions in y
                     positions = ypix2[pos_y_mask]
@@ -1167,13 +1167,13 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
                     ddx_f = ddx + dx0
                     shifts = ddx_f[pos_y_mask]  # - corr_dx_from_fp[order_num][ix]
                     shifts_all[order_num][ix] = mp.nanmean(shifts)
-                    # apply shifts to master dx map at correct positions
-                    master_dxmap[positions, ix] += shifts
+                    # apply shifts to reference dx map at correct positions
+                    ref_dxmap[positions, ix] += shifts
 
                     # after each iteration updating the dxmap, we verify
                     # that the per-order and per-x-pixel shift is not larger
                     # than the maximum seen over 'normal' images.
-                    dxmap_std = mp.nanstd(master_dxmap[positions, ix])
+                    dxmap_std = mp.nanstd(ref_dxmap[positions, ix])
 
                     dxmap_stds.append(dxmap_std)
 
@@ -1212,11 +1212,11 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
                 nbpix=dim2, fiber=fiber, **pkwargs)
     # ---------------------------------------------------------------------
     # setting to 0 pixels that are NaNs
-    nanmask = ~np.isfinite(master_dxmap)
-    master_dxmap[nanmask] = 0.0
+    nanmask = ~np.isfinite(ref_dxmap)
+    ref_dxmap[nanmask] = 0.0
 
     # distortions where there is some overlap between orders will be wrong
-    master_dxmap[order_overlap != 0] = 0.0
+    ref_dxmap[order_overlap != 0] = 0.0
     # save qc
     max_dxmap_std = mp.nanmax(dxmap_stds)
     max_dxmap_info = [None, None, std_qc]
@@ -1230,7 +1230,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
         dxrms.append(mp.nanstd(dxrms_arr[-1][order_num][keep]))
     # ---------------------------------------------------------------------
     # return parameters
-    return master_dxmap, max_dxmap_std, max_dxmap_info, dxrms
+    return ref_dxmap, max_dxmap_std, max_dxmap_info, dxrms
 
 
 def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
@@ -1281,7 +1281,7 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
     dypix_arr, cckeep_arr = [], []
     dxrms_arr = []
     # define storage for output
-    master_dxmap = np.zeros_like(fpdata)
+    ref_dxmap = np.zeros_like(fpdata)
     map_orders = np.zeros_like(fpdata) - 1
     order_overlap = np.zeros_like(fpdata)
     slope_all_ord = np.zeros((nbo, dim2))
@@ -1307,8 +1307,8 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
         # that slice images are as straight as can be
         # ---------------------------------------------------------------------
         # if the map is not zeros, we use it as a starting point
-        if np.sum(master_dxmap != 0) != 0:
-            fpdata2 = ea_transform(params, fpdata, dxmap=master_dxmap)
+        if np.sum(ref_dxmap != 0) != 0:
+            fpdata2 = ea_transform(params, fpdata, dxmap=ref_dxmap)
             # if this is not the first iteration, then we must be really close
             # to a slope of 0
             range_slopes_deg = small_angle_range
@@ -1591,7 +1591,7 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
             wargs = [order_num + 1, nbo]
             WLOG(params, '', textentry('40-014-00021', args=wargs))
             # -------------------------------------------------------------
-            # spline everything onto the master DX map
+            # spline everything onto the reference DX map
             #    ext=3 forces that out-of-range values are set to boundary
             #    value this simply uses the last reliable dx measurement for
             #    the neighbouring slit position
@@ -1624,7 +1624,7 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
 
             # -------------------------------------------------------------
             # for all field positions along the order, we determine the
-            #    dx+rotation values and update the master DX map
+            #    dx+rotation values and update the reference DX map
             fracs = ypix[order_num] - np.fix(ypix[order_num])
             widths = np.arange(width)
 
@@ -1659,7 +1659,7 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
                 # add these constraints to the position mask
                 pos_y_mask &= (ypix2 > lower_ylimit_overlap)
                 pos_y_mask &= (ypix2 < upper_ylimit_overlap)
-                # if we have some values add to master DX map
+                # if we have some values add to reference DX map
                 if np.sum(pos_y_mask) != 0:
                     # get positions in y
                     positions = ypix2[pos_y_mask]
@@ -1677,13 +1677,13 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
                     ddx_f = ddx + dx0
                     shifts = ddx_f[pos_y_mask]  # - corr_dx_from_fp[order_num][ix]
                     shifts_all[order_num][ix] = mp.nanmean(shifts)
-                    # apply shifts to master dx map at correct positions
-                    master_dxmap[positions, ix] += shifts
+                    # apply shifts to reference dx map at correct positions
+                    ref_dxmap[positions, ix] += shifts
 
                     # after each iteration updating the dxmap, we verify
                     # that the per-order and per-x-pixel shift is not larger
                     # than the maximum seen over 'normal' images.
-                    dxmap_std = mp.nanstd(master_dxmap[positions, ix])
+                    dxmap_std = mp.nanstd(ref_dxmap[positions, ix])
 
                     dxmap_stds.append(dxmap_std)
 
@@ -1722,11 +1722,11 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
                 nbpix=dim2, fiber=fiber, **pkwargs)
     # ---------------------------------------------------------------------
     # setting to 0 pixels that are NaNs
-    nanmask = ~np.isfinite(master_dxmap)
-    master_dxmap[nanmask] = 0.0
+    nanmask = ~np.isfinite(ref_dxmap)
+    ref_dxmap[nanmask] = 0.0
 
     # distortions where there is some overlap between orders will be wrong
-    master_dxmap[order_overlap != 0] = 0.0
+    ref_dxmap[order_overlap != 0] = 0.0
     # save qc
     max_dxmap_std = mp.nanmax(dxmap_stds)
     max_dxmap_info = [None, None, std_qc]
@@ -1740,7 +1740,7 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
         dxrms.append(mp.nanstd(dxrms_arr[-1][order_num][keep]))
     # ---------------------------------------------------------------------
     # return parameters
-    return master_dxmap, max_dxmap_std, max_dxmap_info, dxrms
+    return ref_dxmap, max_dxmap_std, max_dxmap_info, dxrms
 
 
 
@@ -1784,8 +1784,8 @@ def calculate_dymap(params, fpimage, fpheader, **kwargs):
     y0 = np.zeros((nbo * nfibers, dim2))
     # log progress
     WLOG(params, '', textentry('40-014-00023'))
-    # set a master dy map
-    master_dymap = np.zeros_like(fpimage)
+    # set a reference dy map
+    ref_dymap = np.zeros_like(fpimage)
     # loop around orders and get polynomial values for fibers A, B and C
     for order_num in range(nbo):
         iord = order_num * nfibers
@@ -1805,18 +1805,18 @@ def calculate_dymap(params, fpimage, fpheader, **kwargs):
         # fitting the dy to the position of the order
         yfit = mp.nanpolyfit(y0[:, dim2 // 2], dy, 3)
         ypix = np.arange(dim1)
-        # add to the master dy map
-        master_dymap[:, ix] = np.polyval(yfit, ypix)
+        # add to the reference dy map
+        ref_dymap[:, ix] = np.polyval(yfit, ypix)
     # return dymap
-    return master_dymap
+    return ref_dymap
 
 
-def get_master_fp(params, header, filename=None, database=None):
+def get_ref_fp(params, header, filename=None, database=None):
     # get file definition
-    out_fpmaster = drs_file.get_file_definition(params, 'MASTER_FP',
+    out_fpref = drs_file.get_file_definition(params, 'REF_FP',
                                                 block_kind='red')
     # get key
-    key = out_fpmaster.dbkey
+    key = out_fpref.dbkey
     # load database
     if database is None:
         calibdbm = drs_database.CalibrationDatabase(params)
@@ -1824,16 +1824,16 @@ def get_master_fp(params, header, filename=None, database=None):
     else:
         calibdbm = database
     # ----------------------------------------------------------------------
-    # load master fp
+    # load reference fp
     cfile = gen_calib.CalibFile()
     cfile.load_calib_file(params, key, header, filename=filename,
-                          userinputkey='FPMASTER', database=calibdbm)
-    fpmaster, fpmaster_file = cfile.data, cfile.filename
+                          userinputkey='FPREF', database=calibdbm)
+    fpref, FPREF_FILE = cfile.data, cfile.filename
     # ----------------------------------------------------------------------
-    # log which fpmaster file we are using
-    WLOG(params, '', textentry('40-014-00030', args=[fpmaster_file]))
-    # return the master image
-    return fpmaster_file, fpmaster
+    # log which fpref file we are using
+    WLOG(params, '', textentry('40-014-00030', args=[FPREF_FILE]))
+    # return the reference image
+    return FPREF_FILE, fpref
 
 
 def get_shape_calibs(params, header, database):
@@ -1892,7 +1892,7 @@ def get_shapex(params, header, filename=None, database=None):
     # ------------------------------------------------------------------------
     # log which shape x file we are using
     WLOG(params, '', textentry('40-014-00031', args=[shapex_file]))
-    # return the master image
+    # return the reference image
     return shapex_file, shapetime, dxmap
 
 
@@ -1920,7 +1920,7 @@ def get_shapey(params, header, filename=None, database=None):
     # ------------------------------------------------------------------------
     # log which shape y file we are using
     WLOG(params, '', textentry('40-014-00032', args=[shapey_file]))
-    # return the master image
+    # return the reference image
     return shapey_file, shapetime, dymap
 
 
@@ -1947,19 +1947,19 @@ def get_shapelocal(params, header, filename=None, database=None):
     shapel_file = cfile.filename
     shapetime = cfile.mjdmid
     # ------------------------------------------------------------------------
-    # log which fpmaster file we are using
+    # log which fpref file we are using
     WLOG(params, '', textentry('40-014-00039', args=[shapel_file]))
-    # return the master image
+    # return the reference image
     return shapel_file, shapetime, shapel.flatten()
 
 
 # =============================================================================
 # write file functions
 # =============================================================================
-def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
-                             rawhcfiles, dxmap, dymap, master_fp, fp_table,
-                             fpprops, dxmap0, fpimage, fpimage2, hcimage,
-                             hcimage2, qc_params):
+def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
+                          rawhcfiles, dxmap, dymap, REF_FP, fp_table,
+                          fpprops, dxmap0, fpimage, fpimage2, hcimage,
+                          hcimage2, qc_params):
     # ----------------------------------------------------------------------
     # Writing DXMAP to file
     # ----------------------------------------------------------------------
@@ -2053,10 +2053,10 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # add to output files (for indexing)
     recipe.add_output_file(outfile2)
     # ----------------------------------------------------------------------
-    # Writing Master FP to file
+    # Writing reference FP calib to file
     # ----------------------------------------------------------------------
     # define outfile
-    outfile3 = recipe.outputs['FPMASTER_FILE'].newcopy(params=params)
+    outfile3 = recipe.outputs['FPREF_FILE'].newcopy(params=params)
     # construct the filename from file instance
     outfile3.construct_filename(infile=fpfile)
     # copy header from outfile1
@@ -2066,8 +2066,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # set output key
     outfile3.add_hkey('KW_OUTPUT', value=outfile3.name)
     # copy data
-    outfile3.data = master_fp
-    # log that we are saving master_fp to file
+    outfile3.data = REF_FP
+    # log that we are saving REF_FP to file
     WLOG(params, '', textentry('40-014-00028', args=[outfile3.filename]))
     # define multi lists
     data_list = [fp_table]
@@ -2236,8 +2236,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     return outfile1, outfile2, outfile3
 
 
-def shape_master_qc(params, dxrms=None, qc_params=None, **kwargs):
-    func_name = __NAME__ + '.shape_master_qc()'
+def shape_ref_qc(params, dxrms=None, qc_params=None, **kwargs):
+    func_name = __NAME__ + '.shape_ref_qc()'
     # set passed variable and fail message list
     fail_msg = []
     # deal with having qc parameters already
@@ -2246,7 +2246,7 @@ def shape_master_qc(params, dxrms=None, qc_params=None, **kwargs):
     else:
         qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # get dxrms criteria
-    dxrmscut = pcheck(params, 'SHAPE_MASTER_DX_RMS_QC', 'dxrmscut', kwargs,
+    dxrmscut = pcheck(params, 'SHAPE_REF_DX_RMS_QC', 'dxrmscut', kwargs,
                       func_name)
     # ------------------------------------------------------------------
     # dxmap and dxrms can be None
@@ -2289,12 +2289,12 @@ def shape_master_qc(params, dxrms=None, qc_params=None, **kwargs):
     return qc_params, passed
 
 
-def write_shape_master_summary(recipe, params, fp_table, qc_params):
+def write_shape_ref_summary(recipe, params, fp_table, qc_params):
     # add stats
     recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
-    recipe.plot.add_stat('NFPMASTER', value=len(fp_table),
-                         comment='Number FP in Master')
+    recipe.plot.add_stat('N_FPREF', value=len(fp_table),
+                         comment='Number FP in reference')
     # TODO: Add more stats?
     # construct summary
     recipe.plot.summary_document(0, qc_params)

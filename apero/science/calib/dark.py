@@ -182,15 +182,15 @@ def correction(params, image, nfiles, darkfile, return_dark=False):
 
 
 # =============================================================================
-# Define master dark functions
+# Define reference dark functions
 # =============================================================================
 def construct_dark_table(params, filenames, **kwargs):
     # define function
     func_name = __NAME__ + '.construct_dark_table()'
     # get parameters from params
-    time_thres = pcheck(params, 'DARK_MASTER_MATCH_TIME', 'time_thres', kwargs,
+    time_thres = pcheck(params, 'DARK_REF_MATCH_TIME', 'time_thres', kwargs,
                         func_name)
-    max_num_files = pcheck(params, 'DARK_MASTER_MAX_FILES', 'max_num', kwargs,
+    max_num_files = pcheck(params, 'DARK_REF_MAX_FILES', 'max_num', kwargs,
                            func_name)
     # define storage for table columns
     dark_time, dark_exp, dark_pp_version = [], [], []
@@ -273,10 +273,10 @@ def construct_dark_table(params, filenames, **kwargs):
     return dark_table
 
 
-def construct_master_dark(params, recipe, dark_table, **kwargs):
-    func_name = __NAME__ + '.construct_master_dark'
+def construct_ref_dark(params, recipe, dark_table, **kwargs):
+    func_name = __NAME__ + '.construct_ref_dark'
     # get constants from p
-    med_size = pcheck(params, 'DARK_MASTER_MED_SIZE', 'med_size', kwargs,
+    med_size = pcheck(params, 'DARK_REF_MED_SIZE', 'med_size', kwargs,
                       func_name)
     # get col data from dark_table
     filenames = dark_table['FILENAME']
@@ -328,7 +328,7 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     # ----------------------------------------------------------------------
     # produce the large median (write ribbons to disk to save space)
     with warnings.catch_warnings(record=True) as _:
-        master_dark = drs_image.large_image_combine(params, group_dark_files,
+        ref_dark = drs_image.large_image_combine(params, group_dark_files,
                                                     math='median',
                                                     outdir=outdir, fmt='npy')
     # clean up npy dir
@@ -342,14 +342,14 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     infile = infile.newcopy(filename=filenames[lastpos], params=params)
     infile.read_file()
     # -------------------------------------------------------------------------
-    # return master dark and the reference file
-    return master_dark, infile
+    # return reference dark and the reference file
+    return ref_dark, infile
 
 
 # =============================================================================
 # write files and qc functions
 # =============================================================================
-def master_qc(params):
+def reference_qc(params):
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # no quality control currently
@@ -374,10 +374,10 @@ def master_qc(params):
     return qc_params, passed
 
 
-def write_master_files(params, recipe, reffile, master_dark, dark_table,
-                       qc_params):
+def write_reference_files(params, recipe, reffile, ref_dark, dark_table,
+                          qc_params):
     # define outfile
-    outfile = recipe.outputs['DARK_MASTER_FILE'].newcopy(params=params)
+    outfile = recipe.outputs['DARK_REF_FILE'].newcopy(params=params)
     # construct the filename from file instance
     outfile.construct_filename(infile=reffile)
     # ------------------------------------------------------------------
@@ -397,8 +397,8 @@ def write_master_files(params, recipe, reffile, master_dark, dark_table,
     outfile.add_qckeys(qc_params)
     # ------------------------------------------------------------------
     # copy data
-    outfile.data = master_dark
-    # log that we are saving master dark to file
+    outfile.data = ref_dark
+    # log that we are saving reference dark to file
     WLOG(params, '', textentry('40-011-10006', args=[outfile.filename]))
     # define multi lists
     data_list, name_list = [dark_table], ['DARK_TABLE']
@@ -417,12 +417,12 @@ def write_master_files(params, recipe, reffile, master_dark, dark_table,
     return outfile
 
 
-def master_summary(recipe, params, qc_params, dark_table):
+def reference_summary(recipe, params, qc_params, dark_table):
     # add stats
     recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
-    recipe.plot.add_stat('NDMASTER', value=len(dark_table),
-                         comment='Number DARK in Master')
+    recipe.plot.add_stat('ND_REF', value=len(dark_table),
+                         comment='Number DARK in reference')
     # construct summary (outside fiber loop)
     recipe.plot.summary_document(0, qc_params)
 

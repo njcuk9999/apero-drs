@@ -56,8 +56,8 @@ display_func = drs_log.display_func
 textentry = lang.textentry
 # get tqdm (if required)
 tqdm = base.tqdm_module()
-# Define master prefix
-MASTER_PREFIX = 'MASTER_'
+# Define reference prefix
+REF_PREFIX = 'REF_'
 # Define the gaia drs column in database
 GAIA_COL = 'GAIADR2ID'
 
@@ -220,10 +220,10 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
         else:
             file_set = getattr(filemod.get(), file_set_name)
         # ------------------------------------------------------------------
-        # skip default master files
-        if os.path.basename(db_file).startswith(MASTER_PREFIX):
+        # skip default reference files
+        if os.path.basename(db_file).startswith(REF_PREFIX):
             # log skipping
-            wargs = [MASTER_PREFIX]
+            wargs = [REF_PREFIX]
             WLOG(params, 'debug', textentry('40-505-00003', args=wargs))
             # skip
             continue

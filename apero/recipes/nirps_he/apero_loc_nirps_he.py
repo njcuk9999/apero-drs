@@ -221,9 +221,9 @@ def __main__(recipe, params):
             # copy the loco file to the calibDB
             calibdbm.add_calib_file(loco1file)
         # ---------------------------------------------------------------------
-        # if recipe is a master and QC fail we generate an error
+        # if recipe is a reference and QC fail we generate an error
         # ---------------------------------------------------------------------
-        if not passed and params['INPUTS']['MASTER']:
+        if not passed and params['INPUTS']['REF']:
             eargs = [recipe.name]
             WLOG(params, 'error', textentry('09-000-00011', args=eargs))
         # ------------------------------------------------------------------

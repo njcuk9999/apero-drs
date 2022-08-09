@@ -29,8 +29,8 @@ __release__ = base.__release__
 RunIniFile = drs_run_ini.RunIniFile
 # get parameter dictionary class
 ParamDict = constants.ParamDict
-# Define the default master observation directory
-DEFAULT_MASTER_OBSDIR = '2022-05-17'
+# Define the default reference observation directory
+DEFAULT_REF_OBSDIR = drs_run_ini.DEFAULT_REF_OBSDIR[__INSTRUMENT__]
 
 
 # =============================================================================
@@ -91,10 +91,10 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     complete_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'complete_run')
     complete_run_nirps_he.append_sequence('full_seq')
     run_files.append(complete_run_nirps_he)
-    # master calib run
-    mcalib_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'master_calib_run')
+    # reference calib run
+    mcalib_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'ref_calib_run')
     mcalib_run_nirps_he.append_sequence('pp_seq_opt')
-    mcalib_run_nirps_he.append_sequence('master_seq')
+    mcalib_run_nirps_he.append_sequence('ref_seq')
     mcalib_run_nirps_he.modify('RUN_PP_SCI', False)
     mcalib_run_nirps_he.modify('RUN_PP_TEL', False)
     mcalib_run_nirps_he.modify('RUN_PP_HC1HC1', False)
@@ -105,7 +105,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mcalib_run_nirps_he.modify('RUN_PP_LFC', False)
     mcalib_run_nirps_he.modify('RUN_PP_LFCFP', False)
     mcalib_run_nirps_he.modify('RUN_PP_FPLFC', False)
-    mcalib_run_nirps_he.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR)
+    mcalib_run_nirps_he.modify('RUN_OBS_DIR', DEFAULT_REF_OBSDIR)
     run_files.append(mcalib_run_nirps_he)
     # other run
     other_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'other_run')
@@ -192,7 +192,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     # batch run
     # batch_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'batch_run')
     # batch_run_nirps_he.add_sequence_as_command('limited_seq')
-    # batch_run_nirps_he.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR['NIRPS_HE'])
+    # batch_run_nirps_he.modify('RUN_OBS_DIR', DEFAULT_REF_OBSDIR['NIRPS_HE'])
     # run_files.append(batch_run_nirps_he)
     # -------------------------------------------------------------------------
     # return list of RunIniFile instances

@@ -24,7 +24,7 @@ from apero.science.extract import gen_ext as extgen
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_leak_master_nirps_ha.py'
+__NAME__ = 'apero_LEAK_REF_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -50,7 +50,7 @@ EXTRACT_NAME = 'apero_extract_nirps_ha.py'
 # Everything else is controlled from recipe_definition
 def main(obs_dir=None, **kwargs):
     """
-    Main function for apero_leak_master_spirou.py
+    Main function for apero_LEAK_REF_spirou.py
 
     :param kwargs: any additional keywords
 
@@ -91,7 +91,7 @@ def __main__(recipe, params):
     # extract file type from inputs
     filetypes = params['INPUTS'].listp('FILETYPE', dtype=str)
     # get allowed dark types
-    allowedtypes = params.listp('ALLOWED_LEAKM_TYPES', dtype=str)
+    allowedtypes = params.listp('ALLOWED_LEAKREF_TYPES', dtype=str)
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
     # load the calibration database
@@ -133,7 +133,7 @@ def __main__(recipe, params):
     # get the number of infiles
     num_files = len(infiles)
     # ----------------------------------------------------------------------
-    # Deal with no files found (use master)
+    # Deal with no files found (use reference)
     if num_files == 0:
         # log that no dark fp were found for this night
         wargs = [params['OBS_DIR']]
@@ -178,7 +178,7 @@ def __main__(recipe, params):
         wargs = [', '.join(darkfp_extnames)]
         WLOG(params, '', textentry('40-016-00024', args=wargs))
         # correct dark fp
-        cout = leak.correct_master_dark_fp(params, darkfp_extfiles)
+        cout = leak.correct_ref_dark_fp(params, darkfp_extfiles)
         dark_fp_extcorr, cprops = cout
         # ------------------------------------------------------------------
         # add to storage
@@ -193,17 +193,17 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Produce super dark fp from median of all extractions
     # ------------------------------------------------------------------
-    medcubes = leak.master_dark_fp_cube(params, recipe, dark_fp_storage)
+    medcubes = leak.ref_dark_fp_cube(params, recipe, dark_fp_storage)
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
     # TODO: Need to add some QC
-    qc_params, passed = leak.qc_leak_master(params, medcubes)
+    qc_params, passed = leak.qc_LEAK_REF(params, medcubes)
     # ------------------------------------------------------------------
     # Write super dark fp to file
     # ------------------------------------------------------------------
     # TODO: Need to add some parameters to header
-    medcubes = leak.write_leak_master(params, recipe, rawfiles, medcubes,
+    medcubes = leak.write_LEAK_REF(params, recipe, rawfiles, medcubes,
                                         qc_params, cprops)
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
@@ -216,7 +216,7 @@ def __main__(recipe, params):
             # copy the order profile to the calibDB
             calibdbm.add_calib_file(outfile)
     # ---------------------------------------------------------------------
-    # if recipe is a master and QC fail we generate an error
+    # if recipe is a reference and QC fail we generate an error
     # ---------------------------------------------------------------------
     if not passed:
         eargs = [recipe.name]

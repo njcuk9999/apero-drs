@@ -508,7 +508,7 @@ class AstroObj:
         subcondition = []
         for cobjname in cobjnames:
             subcondition.append(f'KW_OBJNAME="{cobjname}"')
-        # add master condition + obj conditions
+        # add reference condition + obj conditions
         condition = mcondition + ' AND ({0})'.format(' OR '.join(subcondition))
         # ---------------------------------------------------------------------
         # get paths from database

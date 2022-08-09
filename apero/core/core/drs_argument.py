@@ -2337,17 +2337,17 @@ class _SetIPythonReturn(DrsAction):
         setattr(namespace, self.dest, value)
 
 
-class _IsMaster(DrsAction):
+class _IsReference(DrsAction):
     def __init__(self, *args, **kwargs):
         """
-        Construct the Is Master action (for setting a recipe to a master
+        Construct the Is Reference action (for setting a recipe to a reference
         via an argument)
 
         :param args: arguments passed to argparse.Action.__init__
         :param kwargs: keyword arguments passed to argparse.Action.__init__
         """
         # set class name
-        self.class_name = '_IsMaster'
+        self.class_name = '_IsReference'
         # set recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
@@ -2378,11 +2378,11 @@ class _IsMaster(DrsAction):
         String representation of this class
         :return:
         """
-        return '_IsMaster[DrsAction]'
+        return '_IsReference[DrsAction]'
 
-    def _set_master(self, value: Any) -> Union[str, None]:
+    def _set_reference(self, value: Any) -> Union[str, None]:
         """
-        Sets the master value to string representation of value
+        Sets the reference value to string representation of value
 
         :param value: Any, value to turn to string representation of value
 
@@ -2398,7 +2398,7 @@ class _IsMaster(DrsAction):
                  namespace: argparse.Namespace, values: Any,
                  option_string: Any = None):
         """
-        Call the action _IsMaster() - sets the _IsMaster.dest
+        Call the action _IsReference() - sets the _IsReference.dest
         to value if valid else raises exception
 
         :param parser: DrsArgumentParser instance
@@ -2413,9 +2413,9 @@ class _IsMaster(DrsAction):
         self.recipe = parser.recipe
         # display listing
         if type(values) == list:
-            value = list(map(self._set_master, values))
+            value = list(map(self._set_reference, values))
         else:
-            value = self._set_master(values)
+            value = self._set_reference(values)
         # make sure value is not a list
         if isinstance(value, list):
             value = value[0]
@@ -2426,8 +2426,7 @@ class _IsMaster(DrsAction):
 class _SetCrunFile(DrsAction):
     def __init__(self, *args, **kwargs):
         """
-        Construct the Is Master action (for setting a recipe to a master
-        via an argument)
+        Construct set config run file action
 
         :param args: arguments passed to argparse.Action.__init__
         :param kwargs: keyword arguments passed to argparse.Action.__init__
@@ -2484,7 +2483,7 @@ class _SetCrunFile(DrsAction):
                  namespace: argparse.Namespace, values: Any,
                  option_string: Any = None):
         """
-        Call the action _IsMaster() - sets the _IsMaster.dest
+        Call the action _IsReference() - sets the _IsReference.dest
         to value if valid else raises exception
 
         :param parser: DrsArgumentParser instance
@@ -4436,7 +4435,7 @@ def set_ipython_return(params: ParamDict) -> OrderedDict:
     return props
 
 
-def is_master(params: ParamDict) -> OrderedDict:
+def is_reference(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Set the use of break_point
 
@@ -4446,20 +4445,20 @@ def is_master(params: ParamDict) -> OrderedDict:
     :rtype: OrderedDict
     """
     # set function name
-    # _ = display_func('is_master', __NAME__)
+    # _ = display_func('is_reference', __NAME__)
     _ = params
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
-    props['name'] = '--master'
+    props['name'] = '--ref'
     # set any argument alternative names
     props['altnames'] = []
     # set the argument action function
-    props['action'] = _IsMaster
+    props['action'] = _IsReference
     # set the number of argument to expect
     props['nargs'] = 1
     # set the help message
-    props['help'] = textentry('IS_MASTER_HELP')
+    props['help'] = textentry('IS_REFERENCE_HELP')
     # return the argument dictionary
     return props
 

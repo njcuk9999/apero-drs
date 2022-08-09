@@ -74,7 +74,7 @@ class CalibFile:
     mode: str
     length: int
     found: bool
-    master: Union[List[bool], bool]
+    reference: Union[List[bool], bool]
     user: bool
 
     def __init__(self):
@@ -102,8 +102,8 @@ class CalibFile:
         self.length = 0
         # whether calibration was found
         self.found = False
-        # whether calibration is a master
-        self.master = False
+        # whether calibration is a reference
+        self.reference = False
         # whether the calibration is from a user input override
         self.user = False
 
@@ -214,12 +214,12 @@ class CalibFile:
                                            nentries=n_entries,
                                            required=required, fiber=fiber)
             # deal with outputs of get calib file
-            self.filename, self.mjdmid, self.master = fout
+            self.filename, self.mjdmid, self.reference = fout
             self.source = 'calibDB'
         # ---------------------------------------------------------------------
-        # if master recipe don't check calib delta
-        if 'MASTER' in params['INPUTS'] and params['INPUTS']['MASTER']:
-            self.master = True
+        # if reference recipe don't check calib delta
+        if 'REF' in params['INPUTS'] and params['INPUTS']['REF']:
+            self.reference = True
         # ---------------------------------------------------------------------
         # deal with filename being a path --> string (unless None)
         if self.filename is not None:
@@ -236,11 +236,12 @@ class CalibFile:
             if isinstance(self.filename, list):
                 for it in range(len(filename)):
                     calib_delta_time_check(params, inheader, self.mjdmid[it],
-                                           self.filename[it], self.master[it],
+                                           self.filename[it],
+                                           self.reference[it],
                                            self.user, self.key)
             else:
                 calib_delta_time_check(params, inheader, self.mjdmid,
-                                       self.filename, self.master, self.user,
+                                       self.filename, self.reference, self.user,
                                        self.key)
         # ---------------------------------------------------------------------
         # if we are just returning filename return here
@@ -449,7 +450,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
         header = infile.get_header()
     # -------------------------------------------------------------------------
     # get loco file instance
-    darkinst = drs_file.get_file_definition(params, 'DARKM', block_kind='red')
+    darkinst = drs_file.get_file_definition(params, 'DARKREF', block_kind='red')
     badinst = drs_file.get_file_definition(params, 'BADPIX', block_kind='red')
     backinst = drs_file.get_file_definition(params, 'BKGRD_MAP',
                                             block_kind='red')
@@ -697,7 +698,7 @@ def add_calibs_to_header(outfile: DrsFitsFile,
 
 def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
                            calib_time: float, calib_filename: str,
-                           master: bool, user: bool, key: str):
+                           ref: bool, user: bool, key: str):
     """
     Check that the delta time between calibration and observation is
     valid (as defined by MAX_CALIB_DTIME)
@@ -706,7 +707,7 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
     :param inheader: Header, the header associated with the observation
     :param calib_time: float, the time of the calibration in MJD
     :param calib_filename: str, the name of the calibration file (for logging)
-    :param master: bool, if True this is a master recipe and should not be
+    :param ref: bool, if True this is a reference recipe and should not be
                    checked
     :param user: bool, if True this calib came from the user and should not
                  be checked
@@ -727,8 +728,8 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
     # extra skip if we are in quick look mode
     quicklook = params['EXT_QUICK_LOOK']
     # ---------------------------------------------------------------------
-    # deal with master and user flags
-    if master or user:
+    # deal with reference and user flags
+    if ref or user:
         return
     # ---------------------------------------------------------------------
     # deal with check (if check is False we do not check)
