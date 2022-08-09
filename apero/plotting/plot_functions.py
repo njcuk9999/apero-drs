@@ -2766,15 +2766,15 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    master_fiber = kwargs['masterfiber']
+    ref_fiber = kwargs['reffiber']
     solutions = kwargs['solutions']
-    master = kwargs['master']
+    reference = kwargs['reference']
     order = kwargs.get('order', None)
     # get number of orders and fibers
-    nbo = master['NBO']
+    nbo = reference['NBO']
     fibers = list(solutions.keys())
-    # get master values
-    m_coeffs = master['COEFFS']
+    # get reference values
+    m_coeffs = reference['COEFFS']
     # ------------------------------------------------------------------
     # get order generator
     if order is None:
@@ -2809,7 +2809,7 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
             y2vals = speed_of_light * (1 - r_waveref[good] / fit2)
             # plot
             frames[it].scatter(xvals, y1vals, color='r', s=5,
-                               label='Fiber {0}'.format(master_fiber))
+                               label='Fiber {0}'.format(ref_fiber))
             frames[it].scatter(xvals, y2vals, color='g', s=5,
                                label='Fiber {0}'.format(fiber))
             frames[it].set(title='Order {0} Fiber {1}'.format(order_num, fiber),

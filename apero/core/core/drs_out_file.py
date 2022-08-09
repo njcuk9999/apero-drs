@@ -42,7 +42,7 @@ display_func = drs_misc.display_func
 class OutFile:
     def __init__(self):
         self.classname = 'OutFile'
-        self.master = False
+        self.reference = False
         self.debug = False
         self.calib = False
         self.tellu = False
@@ -61,7 +61,7 @@ class OutFile:
         """
         Construct a general absolute filename from infile/outfile
 
-        :param params: ParamDict, paremeter dictionary of constants
+        :param params: ParamDict, parameter dictionary of constants
         :param infile: DrsFitsFile, input file - must be defined
         :param outfile: DrsFitsFile, output file - must be defined
         :param fiber: str, the fiber - must be set if infile.fibers is populated
@@ -668,27 +668,27 @@ class TelluOutFile(GeneralOutFile):
                                  prefix, suffix, filename)
 
 
-class MasterCalibOutFile(CalibOutFile):
+class RefCalibOutFile(CalibOutFile):
     def __init__(self):
         super().__init__()
-        self.classname = 'MasterCalibOutFile'
+        self.classname = 'RefCalibOutFile'
         self.calib = True
-        self.master = True
+        self.reference = True
 
-    def copy(self) -> 'MasterCalibOutFile':
-        new = MasterCalibOutFile()
+    def copy(self) -> 'RefCalibOutFile':
+        new = RefCalibOutFile()
         return new
 
 
-class MasterTelluOutFile(CalibOutFile):
+class RefTelluOutFile(CalibOutFile):
     def __init__(self):
         super().__init__()
-        self.classname = 'MasterTelluOutFile'
+        self.classname = 'RefTelluOutFile'
         self.tellu = True
-        self.master = True
+        self.reference = True
 
-    def copy(self) -> 'MasterTelluOutFile':
-        new = MasterTelluOutFile()
+    def copy(self) -> 'RefTelluOutFile':
+        new = RefTelluOutFile()
         return new
 
 

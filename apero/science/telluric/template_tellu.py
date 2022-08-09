@@ -61,7 +61,7 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
                         filenames: Union[str, None], reffile: DrsFitsFile,
-                        mprops: ParamDict, nprops: ParamDict,
+                        refprops: ParamDict, nprops: ParamDict,
                         fiber: str, qc_params: list,
                         calibdb: Union[CalibrationDatabase, None] = None,
                         **kwargs) -> ParamDict:
@@ -86,8 +86,8 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     max_files = pcheck(params, 'MKTEMPLATE_MAX_OPEN_FILES', 'max_files',
                        kwargs, func_name)
 
-    # get master wave map
-    mwavemap = mprops['WAVEMAP']
+    # get reference wave map
+    mwavemap = refprops['WAVEMAP']
     # get the objname
     objname = reffile.get_hkey('KW_OBJNAME', dtype=str)
     # log that we are constructing the cubes

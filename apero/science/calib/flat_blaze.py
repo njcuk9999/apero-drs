@@ -237,10 +237,10 @@ def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
     flat_file = cfile.filename
     flat_time = cfile.mjdmid
     # ------------------------------------------------------------------------
-    # log which fpmaster file we are using
+    # log which fpref file we are using
     if not quiet:
         WLOG(params, '', textentry('40-015-00006', args=[flat_file]))
-    # return the master image
+    # return the reference image
     return flat_file, flat_time, flat
 
 
@@ -267,9 +267,9 @@ def get_blaze(params, header, fiber, filename=None, database=None):
     blaze_file = cfile.filename
     blaze_time = cfile.mjdmid
     # ------------------------------------------------------------------------
-    # log which fpmaster file we are using
+    # log which fpref file we are using
     WLOG(params, '', textentry('40-015-00007', args=[blaze_file]))
-    # return the master image
+    # return the reference image
     return blaze_file, blaze_time, blaze
 
 

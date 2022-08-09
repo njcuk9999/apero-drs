@@ -109,7 +109,7 @@ class Run:
             self.module = mod.copy()
         else:
             self.module = None
-        self.master = False
+        self.reference = False
         self.recipemod = None
         self.kwargs = dict()
         self.fileargs = dict()
@@ -243,8 +243,8 @@ class Run:
         self.recipemod = self.recipe.main
         # turn off the input validation
         self.recipe.input_validation = False
-        # get the master setting
-        self.master = self.recipe.master
+        # get the reference setting
+        self.reference = self.recipe.reference
         # run parser with arguments
         self.kwargs = self.recipe.recipe_setup(self.indexdb, inargs=self.args)
         # ---------------------------------------------------------------------
@@ -1131,10 +1131,10 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
             dargs = [run_object.runstring, params['DRS_DEBUG']]
             run_object.runstring = '{0} --debug={1}'.format(*dargs)
         # ---------------------------------------------------------------------
-        # deal with passing master argument
-        if input_recipe.master:
+        # deal with passing reference argument
+        if input_recipe.reference:
             dargs = [run_object.runstring, 'True']
-            run_object.runstring = '{0} --master={1}'.format(*dargs)
+            run_object.runstring = '{0} --reference={1}'.format(*dargs)
         # ---------------------------------------------------------------------
         # add run file to argument
         if not drs_text.null_text(params['INPUTS']['RUNFILE']):
@@ -1317,17 +1317,17 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
         return srecipelist
     # storage for new runs to add
     newruns = []
-    # define the master conditions (that affect all recipes)
-    master_condition = gen_global_condition(params, indexdb,
+    # define the reference conditions (that affect all recipes)
+    ref_condition = gen_global_condition(params, indexdb,
                                             reject_list)
     # ------------------------------------------------------------------
     # check we have rows left
     # ------------------------------------------------------------------
     # get length of database at this point
-    idb_len = indexdb.database.count(condition=master_condition)
+    idb_len = indexdb.database.count(condition=ref_condition)
     # deal with empty database (after conditions)
     if idb_len == 0:
-        eargs = [master_condition, func_name]
+        eargs = [ref_condition, func_name]
         WLOG(params, 'error', textentry('00-503-00018', args=eargs))
         # get response for how to continue (skip or exit)
         response = prompt()
@@ -1364,8 +1364,8 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
             srecipe.filemod = filemod.copy()
         # add params to srecipe
         srecipe.params = params
-        # copy master condition
-        condition = str(master_condition)
+        # copy reference condition
+        condition = str(ref_condition)
         # ------------------------------------------------------------------
         # Deal with no rows in table
         # ------------------------------------------------------------------
@@ -1395,17 +1395,17 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
                 wargs = [srecipe.shortname]
                 WLOG(params, 'warning', textentry('10-503-00024', args=wargs))
         # ------------------------------------------------------------------
-        # deal with directory filters (master observation directory and
+        # deal with directory filters (reference observation directory and
         # obs_dir filter)
         # ------------------------------------------------------------------
-        # master observation directory
+        # reference observation directory
         # ------------------------------------------------------------------
-        if srecipe.master:
-            # get master observation directory
-            obs_dir = params['MASTER_OBS_DIR']
+        if srecipe.reference:
+            # get reference observation directory
+            obs_dir = params['REF_OBS_DIR']
             # get observation directory
             obs_dirs = indexdb.database.unique('OBS_DIR', condition=condition)
-            # check if master observation directory is valid (in table)
+            # check if reference observation directory is valid (in table)
             if obs_dir not in obs_dirs:
                 wargs = [obs_dir]
                 WLOG(params, 'warning', textentry('10-503-00004', args=wargs),
@@ -1783,8 +1783,8 @@ def _linear_process(params, runlist, number=0, cores=1, event=None,
     for run_item in runlist:
         # get parameters from params
         stop_at_exception = bool(params['STOP_AT_EXCEPTION'])
-        # if master we should always stop at exception
-        if run_item.master:
+        # if reference we should always stop at exception
+        if run_item.reference:
             stop_at_exception = True
         # ------------------------------------------------------------------
         # get the module
@@ -1871,9 +1871,9 @@ def _linear_process(params, runlist, number=0, cores=1, event=None,
                 pp['PASSED'] = False
                 pp['STATE'] = 'SKIPPED:PRERUN'
                 return_dict[priority] = pp
-                # deal with a master not passing
-                #   we cannot idely skip master files
-                if not run_item.master:
+                # deal with a reference not passing
+                #   we cannot idely skip reference files
+                if not run_item.reference:
                     continue
             # --------------------------------------------------------------
             # start time
@@ -2177,7 +2177,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
 
     :param params: ParamDict, parameter dictionary of constants
     :param recipe: DrsRecipe, the recipe for which to find files (uses some
-                   properties (i.e. extras and master) already set previously
+                   properties (i.e. extras and reference) already set previously
     :param indexdb: index database instance, the file database to use to
                     generate runs
     :param condition: str, the condition to apply to the database
@@ -2201,7 +2201,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
     # storage for valid files for each argument
     filedict = OrderedDict()
     # copy condition
-    master_condition = str(condition)
+    ref_condition = str(condition)
     # get valid database column names
     index_colnames = indexdb.database.colnames('*')
     # debug log the number of files found
@@ -2237,7 +2237,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
             continue
         # ------------------------------------------------------------------
         # copy the condition string for this argument
-        argcondition = str(master_condition)
+        argcondition = str(ref_condition)
         # loop around filters
         for tfilter in filters:
             # check if filter is valid
@@ -2417,7 +2417,7 @@ def add_non_file_args(params: ParamDict, recipe: DrsRecipe,
 
     Currently this includes:
 
-    - directory (when recipe is a master) - muset set to master observation
+    - directory (when recipe is a reference) - muset set to reference observation
       directory
     - include_obs_dirs - must push through from processing
     - exclude_obs_dirs - must push through from processing
@@ -2434,9 +2434,9 @@ def add_non_file_args(params: ParamDict, recipe: DrsRecipe,
     :return: OrderedDict, the updated filedict
     """
     # deal with directory (special argument) - if we have a
-    #   master observation directory use as the directory name
-    if arg.dtype == 'obs_dir' and recipe.master:
-        filedict[argname] = params['MASTER_OBS_DIR']
+    #   reference observation directory use as the directory name
+    if arg.dtype == 'obs_dir' and recipe.reference:
+        filedict[argname] = params['REF_OBS_DIR']
     # need to add directory and set it to None
     elif arg.dtype == 'obs_dir':
         filedict[argname] = None
@@ -2616,7 +2616,7 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
     if fout is None:
         # get new run
         new_runs = _gen_run(params, rundict=rundict, runorder=runorder,
-                            master_obs_dir=recipe.master)
+                            ref_obs_dir=recipe.reference)
         # finally add new_run to runs
         runs += new_runs
         run_score += [[0] * len(new_runs)]
@@ -2658,19 +2658,19 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
                 try:
                     new_runs = _gen_run(params, rundict, runorder, obs_dir,
                                         meantime, arg0, gtable0,
-                                        master_obs_dir=recipe.master)
+                                        ref_obs_dir=recipe.reference)
                 # catch exception
                 except DrsRecipeException:
                     continue
                 # finally add new_run to runs
                 runs += new_runs
-                # rank the importance by number of files (for master run)
+                # rank the importance by number of files (for reference run)
                 new_run_score = []
                 for new_run in new_runs:
                     new_run_score.append(len(new_run[arg0]))
                 run_score += [new_run_score]
-    # deal with master (should only be 1)
-    if recipe.master:
+    # deal with reference (should only be 1)
+    if recipe.reference:
         # find the group with the highest score
         pos, score = 0, 0
         # loop round and rank runs (score the position of the highest ranking)
@@ -2703,11 +2703,11 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
     limit = params['GROUP_FILE_LIMIT']
     # get grouping function
     group_function = recipe.group_func
-    # deal with master
-    if recipe.master:
-        master = params['MASTER_OBS_DIR']
+    # deal with reference
+    if recipe.reference:
+        ref = params['REF_OBS_DIR']
     else:
-        master = None
+        ref = None
     # get grouping column
     group_column = recipe.group_column
     if group_column in params:
@@ -2718,7 +2718,7 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
         return group_function(recipe.args, recipe.kwargs,
                               argdict, kwargdict,
                               group_column=group_column,
-                              master=master, limit=limit)
+                              ref=ref, limit=limit)
     # if we don't have one give warning
     else:
         # Log warning: No runs produced for {0} - No group function given'
@@ -3714,7 +3714,7 @@ def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
              runorder: List[str], obs_dir: Union[str, None] = None,
              meantime: Union[float, None] = None,
              arg0: Union[str, None] = None, gtable0: Union[Table, None] = None,
-             master_obs_dir: bool = False) -> List[Dict[str, Any]]:
+             ref_obs_dir: bool = False) -> List[Dict[str, Any]]:
     """
     Generate a recipe run dictionary of arguments based on the argument position
     order and if a secondary argument has a list of files match appriopriately
@@ -3739,10 +3739,10 @@ def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
     :param gtable0: astropy.table.Table or None, if set this is the the case
                     where argname=arg0, and thus the file set should come from
                     a list of files
-    :param master_obs_dir: bool, if True this is a master recipe, and therefore
-                        the obs_dir should be the master observation directory,
-                        master observation directory is obtained from
-                        params['MASTER_OBS_DIR']
+    :param ref_obs_dir: bool, if True this is a reference recipe, and therefore
+                        the obs_dir should be the reference observation directory,
+                        reference observation directory is obtained from
+                        params['REF_OBS_DIR']
 
     :return: a list of runs of this recipe where each entry is a dictionary
              where the key is the argument name and the value is the value(s)
@@ -3757,8 +3757,8 @@ def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
         gtable0 = dict(filecol=None)
     if obs_dir is None:
         obs_dir = params['OBS_DIR']
-    if master_obs_dir:
-        obs_dir = params['MASTER_OBS_DIR']
+    if ref_obs_dir:
+        obs_dir = params['REF_OBS_DIR']
     if meantime is None:
         meantime = 0.0
 

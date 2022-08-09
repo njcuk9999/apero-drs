@@ -29,8 +29,8 @@ __release__ = base.__release__
 RunIniFile = drs_run_ini.RunIniFile
 # get parameter dictionary class
 ParamDict = constants.ParamDict
-# Define the default master observation directory
-DEFAULT_MASTER_OBSDIR = '2020-08-31'
+# Define the default reference observation directory
+DEFAULT_REF_OBSDIR = drs_run_ini.DEFAULT_REF_OBSDIR[__INSTRUMENT__]
 
 
 # =============================================================================
@@ -55,7 +55,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     run_files.append(blank_run_spirou)
     # mini run 1
     mini_run1_spirou = RunIniFile(params, 'SPIROU', 'mini_run1')
-    mini_run1_spirou.rkey('MASTER_OBS_DIR', '2019-04-20')
+    mini_run1_spirou.rkey('REF_OBS_DIR', '2019-04-20')
     mini_run1_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
     mini_run1_spirou.append_sequence('limited_seq')
     run_files.append(mini_run1_spirou)
@@ -99,10 +99,10 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     complete_run_spirou.append_sequence('full_seq')
     complete_run_spirou.modify('CORES', -5)
     run_files.append(complete_run_spirou)
-    # master calib run
-    mcalib_run_spirou = RunIniFile(params, 'SPIROU', 'master_calib_run')
+    # reference calib run
+    mcalib_run_spirou = RunIniFile(params, 'SPIROU', 'ref_calib_run')
     mcalib_run_spirou.append_sequence('pp_seq_opt')
-    mcalib_run_spirou.append_sequence('master_seq')
+    mcalib_run_spirou.append_sequence('ref_seq')
     mcalib_run_spirou.modify('RUN_PP_SCI', False)
     mcalib_run_spirou.modify('RUN_PP_TEL', False)
     mcalib_run_spirou.modify('RUN_PP_HC1HC1', False)
@@ -113,7 +113,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mcalib_run_spirou.modify('RUN_PP_LFC', False)
     mcalib_run_spirou.modify('RUN_PP_LFCFP', False)
     mcalib_run_spirou.modify('RUN_PP_FPLFC', False)
-    mcalib_run_spirou.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR)
+    mcalib_run_spirou.modify('RUN_OBS_DIR', DEFAULT_REF_OBSDIR)
     run_files.append(mcalib_run_spirou)
     # other run
     other_run_spirou = RunIniFile(params, 'SPIROU', 'other_run')
@@ -197,7 +197,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     # batch run
     batch_run_spirou = RunIniFile(params, 'SPIROU', 'batch_run')
     batch_run_spirou.add_sequence_as_command('limited_seq')
-    batch_run_spirou.modify('RUN_OBS_DIR', DEFAULT_MASTER_OBSDIR)
+    batch_run_spirou.modify('RUN_OBS_DIR', DEFAULT_REF_OBSDIR)
     run_files.append(batch_run_spirou)
 
     # return the run files

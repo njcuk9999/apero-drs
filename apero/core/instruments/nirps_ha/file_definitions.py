@@ -47,9 +47,9 @@ debug_ofile = out.DebugOutFile()
 set_ofile = out.SetOutFile()
 post_ofile = out.PostOutFile()
 calib_ofile = out.CalibOutFile()
-mcalib_ofile = out.MasterCalibOutFile()
+refcalib_ofile = out.RefCalibOutFile()
 tellu_ofile = out.TelluOutFile()
-mtellu_ofile = out.MasterTelluOutFile()
+reftellu_ofile = out.RefTelluOutFile()
 tellu_set_ofile = out.TelluSetOutFile()
 
 
@@ -726,17 +726,17 @@ tellu_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
                         intype=pp_file, instrument=__INSTRUMENT__)
 
 # -----------------------------------------------------------------------------
-# pp master files
+# pp reference files
 # -----------------------------------------------------------------------------
-out_pp_master = drs_finput('PPMSTR', hkeys=dict(KW_OUTPUT='PPMSTR'),
-                           filetype='.fits',
-                           intype=[raw_flat_flat],
-                           suffix='_pmaster',
-                           outclass=mcalib_ofile,
-                           dbname='calibration', dbkey='PPMSTR')
+out_pp_ref = drs_finput('PP_REF', hkeys=dict(KW_OUTPUT='PP_REF'),
+                        filetype='.fits',
+                        intype=[raw_flat_flat],
+                        suffix='_ppref',
+                        outclass=refcalib_ofile,
+                        dbname='calibration', dbkey='PP_REF')
 # add dark outputs to output fileset
-red_file.addset(out_pp_master)
-calib_file.addset(out_pp_master)
+red_file.addset(out_pp_ref)
+calib_file.addset(out_pp_ref)
 
 # -----------------------------------------------------------------------------
 # dark files
@@ -760,19 +760,19 @@ out_dark_sky = drs_finput('DARKS', hkeys=dict(KW_OUTPUT='DARKS'),
                           outclass=calib_ofile,
                           dbname='calibration', dbkey='DARKS')
 
-out_dark_master = drs_finput('DARKM', hkeys=dict(KW_OUTPUT='DARKM'),
-                             filetype='.fits',
-                             intype=[pp_dark_dark],
-                             suffix='_dark_master',
-                             outclass=mcalib_ofile,
-                             dbname='calibration', dbkey='DARKM')
+out_dark_ref = drs_finput('DARKREF', hkeys=dict(KW_OUTPUT='DARKREF'),
+                          filetype='.fits',
+                          intype=[pp_dark_dark],
+                          suffix='_dark_ref',
+                          outclass=refcalib_ofile,
+                          dbname='calibration', dbkey='DARKREF')
 # add dark outputs to output fileset
 red_file.addset(out_dark)
 red_file.addset(out_dark_sky)
-red_file.addset(out_dark_master)
+red_file.addset(out_dark_ref)
 calib_file.addset(out_dark)
 calib_file.addset(out_dark_sky)
-calib_file.addset(out_dark_master)
+calib_file.addset(out_dark_ref)
 
 # -----------------------------------------------------------------------------
 # Bad pixel / background files
@@ -839,24 +839,24 @@ calib_file.addset(out_loc_orderp)
 calib_file.addset(out_loc_loco)
 
 # -----------------------------------------------------------------------------
-# shape files (master)
+# shape files (reference)
 # -----------------------------------------------------------------------------
-# shape master
+# shape reference
 out_shape_dxmap = drs_finput('SHAPE_X', hkeys=dict(KW_OUTPUT='SHAPE_X'),
                              filetype='.fits', intype=pp_fp_fp,
                              suffix='_shapex',
-                             outclass=mcalib_ofile,
+                             outclass=refcalib_ofile,
                              dbname='calibration', dbkey='SHAPEX')
 out_shape_dymap = drs_finput('SHAPE_Y', hkeys=dict(KW_OUTPUT='SHAPE_Y'),
                              filetype='.fits', intype=pp_fp_fp,
                              suffix='_shapey',
-                             outclass=mcalib_ofile,
+                             outclass=refcalib_ofile,
                              dbname='calibration', dbkey='SHAPEY')
-out_shape_fpmaster = drs_finput('MASTER_FP', hkeys=dict(KW_OUTPUT='MASTER_FP'),
-                                filetype='.fits', intype=pp_fp_fp,
-                                suffix='_fpmaster',
-                                outclass=mcalib_ofile,
-                                dbname='calibration', dbkey='FPMASTER')
+out_shape_fpref = drs_finput('REF_FP', hkeys=dict(KW_OUTPUT='REF_FP'),
+                             filetype='.fits', intype=pp_fp_fp,
+                             suffix='_fpref',
+                             outclass=refcalib_ofile,
+                             dbname='calibration', dbkey='FPREF')
 out_shape_debug_ifp = drs_finput('SHAPE_IN_FP',
                                  hkeys=dict(KW_OUTPUT='SHAPE_IN_FP'),
                                  filetype='.fits', intype=pp_fp_fp,
@@ -871,17 +871,17 @@ out_shape_debug_bdx = drs_finput('SHAPE_BDX', hkeys=dict(KW_OUTPUT='SHAPE_BDX'),
                                  filetype='.fits', intype=pp_fp_fp,
                                  suffix='_shape_out_bdx',
                                  outclass=debug_ofile)
-# add shape master outputs to output fileset
+# add shape reference outputs to output fileset
 red_file.addset(out_shape_dxmap)
 red_file.addset(out_shape_dymap)
-red_file.addset(out_shape_fpmaster)
+red_file.addset(out_shape_fpref)
 red_file.addset(out_shape_debug_ifp)
 red_file.addset(out_shape_debug_ofp)
 red_file.addset(out_shape_debug_bdx)
 
 calib_file.addset(out_shape_dxmap)
 calib_file.addset(out_shape_dymap)
-calib_file.addset(out_shape_fpmaster)
+calib_file.addset(out_shape_fpref)
 
 # valid ext fibers
 valid_efibers = ['A', 'B']
@@ -1013,84 +1013,84 @@ red_file.addset(out_ext_fplines)
 # leakage files
 # -----------------------------------------------------------------------------
 # thermal from internal dark
-out_leak_master = drs_finput('LEAKM_E2DS', hkeys=dict(KW_OUTPUT='LEAKM_E2DS'),
-                             fibers=valid_efibers,
-                             filetype='.fits',
-                             intype=[out_ext_e2ds, out_ext_e2dsff],
-                             suffix='_leak_master',
-                             dbname='calibration', dbkey='LEAKM',
-                             outclass=mcalib_ofile)
-red_file.addset(out_leak_master)
-calib_file.addset(out_leak_master)
+out_leak_ref = drs_finput('LEAKREF_E2DS', hkeys=dict(KW_OUTPUT='LEAKREF_E2DS'),
+                          fibers=valid_efibers,
+                          filetype='.fits',
+                          intype=[out_ext_e2ds, out_ext_e2dsff],
+                          suffix='_LEAK_REF',
+                          dbname='calibration', dbkey='LEAKREF',
+                          outclass=refcalib_ofile)
+red_file.addset(out_leak_ref)
+calib_file.addset(out_leak_ref)
 
 # -----------------------------------------------------------------------------
-# wave files (master) ea
+# wave files (reference) ea
 # -----------------------------------------------------------------------------
 # wave solution using hc + fp
-out_wavem_sol = drs_finput('WAVESOL_MASTER',
-                           hkeys=dict(KW_OUTPUT='WAVESOL_MASTER'),
+out_wavem_sol = drs_finput('WAVESOL_REF',
+                           hkeys=dict(KW_OUTPUT='WAVESOL_REF'),
                            fibers=valid_efibers,
                            filetype='.fits',
                            intype=[out_ext_e2ds, out_ext_e2dsff],
-                           suffix='_wavesol_master',
-                           dbname='calibration', dbkey='WAVESOL_MASTER',
-                           outclass=mcalib_ofile)
+                           suffix='_WAVESOL_REF',
+                           dbname='calibration', dbkey='WAVESOL_REF',
+                           outclass=refcalib_ofile)
 
-# hc line file from master
-out_wave_hclist_master = drs_finput('WAVE_HCLIST_MASTER',
-                                    hkeys=dict(KW_OUTPUT='WAVE_HCLIST_MASTER'),
-                                    fibers=valid_efibers,
-                                    filetype='.fits',
-                                    intype=[out_ext_e2ds, out_ext_e2dsff],
-                                    suffix='_wavem_hclines',
-                                    dbname='calibration', dbkey='WAVEHCL',
-                                    datatype='table',
-                                    outclass=mcalib_ofile)
+# hc line file from reference
+out_wave_hclist_ref = drs_finput('WAVE_HCLIST_REF',
+                                 hkeys=dict(KW_OUTPUT='WAVE_HCLIST_REF'),
+                                 fibers=valid_efibers,
+                                 filetype='.fits',
+                                 intype=[out_ext_e2ds, out_ext_e2dsff],
+                                 suffix='_wavem_hclines',
+                                 dbname='calibration', dbkey='WAVEHCL',
+                                 datatype='table',
+                                 outclass=refcalib_ofile)
 
-# fp line file from master
-out_wave_fplist_master = drs_finput('WAVE_FPLIST_MASTER',
-                                    hkeys=dict(KW_OUTPUT='WAVE_FPLIST_MASTER'),
-                                    fibers=valid_efibers,
-                                    filetype='.fits',
-                                    intype=[out_ext_e2ds, out_ext_e2dsff],
-                                    suffix='_wavem_fplines',
-                                    dbname='calibration', dbkey='WAVEFPL',
-                                    datatype='table',
-                                    outclass=mcalib_ofile)
+# fp line file from reference
+out_wave_fplist_ref = drs_finput('WAVE_FPLIST_REF',
+                                 hkeys=dict(KW_OUTPUT='WAVE_FPLIST_REF'),
+                                 fibers=valid_efibers,
+                                 filetype='.fits',
+                                 intype=[out_ext_e2ds, out_ext_e2dsff],
+                                 suffix='_wavem_fplines',
+                                 dbname='calibration', dbkey='WAVEFPL',
+                                 datatype='table',
+                                 outclass=refcalib_ofile)
 
 # teh cavity file polynomial file
-out_wavem_cavity = drs_finput('WAVEM_CAV', hkeys=dict(KW_OUTPUT='WAVEM_CAV'),
-                              filetype='.fits',
-                              fibers=['A'],
-                              intype=[out_ext_e2ds, out_ext_e2dsff],
-                              suffix='_wavecav_',
-                              dbname='calibration', dbkey='WAVECAV',
-                              outclass=mcalib_ofile)
+out_WAVEREF_CAVity = drs_finput('WAVEREF_CAV', hkeys=dict(KW_OUTPUT='WAVEREF_CAV'),
+                                filetype='.fits',
+                                fibers=['A'],
+                                intype=[out_ext_e2ds, out_ext_e2dsff],
+                                suffix='_wavecav_',
+                                dbname='calibration', dbkey='WAVECAV',
+                                outclass=refcalib_ofile)
 
-# the default wave master
-out_wave_master = drs_finput('WAVESOL_DEFAULT',
-                             hkeys=dict(KW_OUTPUT='WAVESOL_DEFAULT'),
-                             fibers=valid_efibers,
-                             filetype='.fits',
-                             intype=[out_ext_e2ds, out_ext_e2dsff],
-                             suffix='_wavem',
-                             dbname='calibration', dbkey='WAVESOL_DEFAULT',
-                             outclass=mcalib_ofile)
+# the default wave reference
+out_wave_default_ref = drs_finput('WAVESOL_DEFAULT',
+                                  hkeys=dict(KW_OUTPUT='WAVESOL_DEFAULT'),
+                                  fibers=valid_efibers,
+                                  filetype='.fits',
+                                  intype=[out_ext_e2ds, out_ext_e2dsff],
+                                  suffix='_wave_d_ref',
+                                  dbname='calibration', dbkey='WAVESOL_DEFAULT',
+                                  outclass=refcalib_ofile)
 
 # add wave outputs to output fileset
 red_file.addset(out_wavem_sol)
-red_file.addset(out_wave_hclist_master)
-red_file.addset(out_wave_fplist_master)
-red_file.addset(out_wavem_cavity)
-red_file.addset(out_wave_master)
+red_file.addset(out_wave_hclist_ref)
+red_file.addset(out_wave_fplist_ref)
+red_file.addset(out_WAVEREF_CAVity)
+red_file.addset(out_wave_default_ref)
 calib_file.addset(out_wavem_sol)
-calib_file.addset(out_wave_hclist_master)
-calib_file.addset(out_wave_fplist_master)
-calib_file.addset(out_wavem_cavity)
-calib_file.addset(out_wave_master)
+calib_file.addset(out_wave_hclist_ref)
+calib_file.addset(out_wave_fplist_ref)
+calib_file.addset(out_WAVEREF_CAVity)
+calib_file.addset(out_wave_default_ref)
 
 # -----------------------------------------------------------------------------
-# wave files (master) old
+# wave files (reference) old
 # -----------------------------------------------------------------------------
 # resolution map
 out_wavem_res = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
@@ -1098,7 +1098,7 @@ out_wavem_res = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
                            filetype='.fits',
                            intype=[out_ext_e2ds, out_ext_e2dsff],
                            suffix='_wavemres',
-                           outclass=mcalib_ofile)
+                           outclass=refcalib_ofile)
 
 # hc resolution map
 out_wavem_hcres = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
@@ -1106,7 +1106,7 @@ out_wavem_hcres = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
                              filetype='.fits',
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_wavemres',
-                             outclass=mcalib_ofile)
+                             outclass=refcalib_ofile)
 
 # fp global results table
 out_wavem_res_table = drs_input('WAVE_FPRESTAB',
@@ -1124,7 +1124,7 @@ out_wavem_ll_table = drs_input('WAVE_FPLLTABL',
                                filetype='.tbl',
                                intype=[out_ext_e2ds, out_ext_e2dsff],
                                suffix='_mhc_lines',
-                               outclass=mcalib_ofile)
+                               outclass=refcalib_ofile)
 
 # add wave outputs to output fileset
 red_file.addset(out_wavem_hcres)
@@ -1218,12 +1218,12 @@ out_tellu_pclean = drs_finput('TELLU_PCLEAN',
                               dbname='telluric', dbkey='TELLU_PCLEAN',
                               outclass=tellu_ofile)
 
-# convolved tapas map (with master wave solution)
+# convolved tapas map (with reference wave solution)
 out_tellu_conv = drs_ninput('TELLU_CONV', hkeys=dict(KW_OUTPUT='TELLU_CONV'),
                             fibers=valid_tfibers,
                             filetype='.npy',
                             intype=[out_wavem_sol, out_wave_night,
-                                    out_wave_master],
+                                    out_wave_default_ref],
                             suffix='_tellu_conv', remove_insuffix=True,
                             dbname='telluric', dbkey='TELLU_CONV',
                             outclass=tellu_ofile)
@@ -1413,7 +1413,7 @@ post_file = drs_oinput('DRS_POST', filetype='.fits', suffix='',
 # define a list of wave outputs
 wave_files = DrsFileGroup(name='WAVE_FILES',
                           files=[out_wavem_sol, out_wave_night,
-                                 out_wave_master])
+                                 out_wave_default_ref])
 
 # -----------------------------------------------------------------------------
 # post processed 2D extraction file

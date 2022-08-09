@@ -188,10 +188,10 @@ def __main__(recipe, params):
     #   night name
     recipe.plot.set_location(0)
     # ----------------------------------------------------------------------
-    # load master wavelength solution
-    mkwargs = dict(infile=infile, master=True, fiber=fiber,
+    # load reference wavelength solution
+    mkwargs = dict(infile=infile, ref=True, fiber=fiber,
                    database=calibdbm, log=recipe.log)
-    mprops = wave.get_wavesolution(params, recipe, **mkwargs)
+    refprops = wave.get_wavesolution(params, recipe, **mkwargs)
     # ------------------------------------------------------------------
     # Normalize image by peak blaze
     # ------------------------------------------------------------------
@@ -200,7 +200,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Make data cubes
     # ----------------------------------------------------------------------
-    cargs = [object_filenames, infile, mprops, nprops, fiber, qc_params]
+    cargs = [object_filenames, infile, refprops, nprops, fiber, qc_params]
     cprops = telluric.make_template_cubes(params, recipe, *cargs,
                                           calibdb=calibdbm)
     # ----------------------------------------------------------------------
@@ -249,12 +249,12 @@ def __main__(recipe, params):
     # Write cubes and median to file
     # ----------------------------------------------------------------------
     # write e2ds cubes + median
-    margs = [infile, cprops, filetype, fiber, mprops, qc_params]
+    margs = [infile, cprops, filetype, fiber, refprops, qc_params]
     template_file = telluric.mk_template_write(params, recipe, *margs)
     props1d = None
     # write s1d cubes + median
     for it, s1d_props in enumerate(s1d_cubes):
-        sargs = [infile, s1d_props, infile.s1d[it], fiber, mprops, qc_params,
+        sargs = [infile, s1d_props, infile.s1d[it], fiber, refprops, qc_params,
                  template_file]
         props1d = telluric.mk_1d_template_write(params, recipe, *sargs)
 

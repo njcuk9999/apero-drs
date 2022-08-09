@@ -247,13 +247,13 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # load wavelength solution for this fiber
             if not quicklook:
-                # check forcing master wave solution
+                # check forcing reference wave solution
                 mwave = False
-                if 'FORCE_MASTER_WAVE' in params['INPUTS']:
-                    mwave = params['INPUTS']['FORCE_MASTER_WAVE']
+                if 'FORCE_REF_WAVE' in params['INPUTS']:
+                    mwave = params['INPUTS']['FORCE_REF_WAVE']
                 # get the wave solution
                 wprops = wave.get_wavesolution(params, recipe, header,
-                                               fiber=fiber, master=mwave,
+                                               fiber=fiber, ref=mwave,
                                                database=calibdbm,
                                                nbpix=image.shape[1], log=log2)
             else:

@@ -63,8 +63,8 @@ def no_group(rargs: Dict[str, DrsArgument],
              **kwargs) -> RunType:
     """
     Use this for all instances where we do not have a file argument
-    if directory argument is required it is set to the 'master' kwarg
-    i.e. master='MY_DIRNAME'
+    if directory argument is required it is set to the 'ref' kwarg
+    i.e. ref='MY_DIRNAME'
 
     :param rargs:
     :param rkwargs:
@@ -77,7 +77,7 @@ def no_group(rargs: Dict[str, DrsArgument],
     # _ = display_func('no_group', __NAME__)
     # group column
     group_column = kwargs.get('group_column', None)
-    master_value = kwargs.get('master', None)
+    ref_value = kwargs.get('ref', None)
     # define runs
     run_instances = []
     # ----------------------------------------------------------------------
@@ -98,7 +98,7 @@ def no_group(rargs: Dict[str, DrsArgument],
     # ----------------------------------------------------------------------
     run_inst = drsgf.RunInstance(rargs, rkwargs)
     run_inst.group_column = group_column
-    run_inst.group = master_value
+    run_inst.group = ref_value
     run_instances.append(run_inst)
     # print statement
     pmsg = '\t\tProcessing I run {0}'.format(0)

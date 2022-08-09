@@ -46,8 +46,8 @@ display_func = drs_log.display_func
 textentry = lang.textentry
 # get tqdm (if required)
 tqdm = base.tqdm_module()
-# Define master prefix
-MASTER_PREFIX = 'MASTER_'
+# Define reference prefix
+REF_PREFIX = 'REF_'
 # Define the gaia drs column in database
 GAIA_COL = 'GAIADR2ID'
 

@@ -30,7 +30,7 @@ from apero.science import velocity
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_wave_master_nirps_ha.py'
+__NAME__ = 'apero_wave_ref_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -60,7 +60,7 @@ speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # Everything else is controlled from recipe_definition
 def main(obs_dir=None, hcfiles=None, fpfiles=None, **kwargs):
     """
-    Main function for apero_wave_master
+    Main function for apero_wave_ref
 
     :param obs_dir: string, the night name sub-directory
     :param hcfiles: list of strings or string, the list of hc files
@@ -160,8 +160,8 @@ def __main__(recipe, params):
     num_files = len(hcfiles)
     # get the fiber types from a list parameter (or from inputs)
     fiber_types = drs_image.get_fiber_types(params)
-    # get wave master file (controller fiber)
-    master_fiber = params['WAVE_MASTER_FIBER']
+    # get wave reference file (controller fiber)
+    ref_fiber = params['WAVE_REF_FIBER']
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()
@@ -186,9 +186,9 @@ def __main__(recipe, params):
             fpfile = fpfiles[it]
         # ---------------------------------------------------------------------
         # load initial wavelength solution (start point) for this fiber
-        #    this should only be a master wavelength solution
+        #    this should only be a reference wavelength solution
         iwprops = wave.get_wavesolution(params, recipe, infile=hcfile,
-                                        fiber=master_fiber, master=True,
+                                        fiber=ref_fiber, ref=True,
                                         database=calibdbm, log=log1)
         # check that wave parameters are consistent with required number
         #   of parameters (from constants)
@@ -207,10 +207,10 @@ def __main__(recipe, params):
         # get blaze and initial wave solution
         # =====================================================================
         # log fiber process
-        drs_startup.fiber_processing_update(params, master_fiber)
+        drs_startup.fiber_processing_update(params, ref_fiber)
         # get hc and fp outputs
-        hc_e2ds_file = hc_outputs[master_fiber]
-        fp_e2ds_file = fp_outputs[master_fiber]
+        hc_e2ds_file = hc_outputs[ref_fiber]
+        fp_e2ds_file = fp_outputs[ref_fiber]
         # read these files
         hc_e2ds_file.read_file()
         fp_e2ds_file.read_file()
@@ -218,11 +218,11 @@ def __main__(recipe, params):
         hcheader = hc_e2ds_file.get_header()
         # ---------------------------------------------------------------------
         # load the blaze file for this fiber
-        bout = flat_blaze.get_blaze(params, hcheader, master_fiber)
+        bout = flat_blaze.get_blaze(params, hcheader, ref_fiber)
         blaze_file, blaze_time, blaze = bout
 
         # =====================================================================
-        # Construct HC + FP line reference files for master_fiber
+        # Construct HC + FP line reference files for ref_fiber
         # =====================================================================
         # set the wprops to initial wave solution
         wprops = iwprops.copy()
@@ -254,9 +254,9 @@ def __main__(recipe, params):
                           cavity_poly=wprops['CAVITY'], iteration=iteration + 1)
             fplines = wave.calc_wave_lines(params, recipe, **fpargs)
             # -----------------------------------------------------------------
-            # Calculate the wave solution for master fiber
-            # master fiber + master wave setup
-            # Master night AB -> we fit all coefficients:
+            # Calculate the wave solution for reference fiber
+            # reference fiber + reference wave setup
+            # Ref night AB -> we fit all coefficients:
             #    fit_cavity = True,
             #    fit_achromatic = False
             #    (the fact that we fit all coefficients implies that the
@@ -273,7 +273,7 @@ def __main__(recipe, params):
                                         iteration=iteration + 1)
 
         # =================================================================
-        # Recalculate HC + FP line reference files for master_fiber
+        # Recalculate HC + FP line reference files for ref_fiber
         # =================================================================
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
@@ -306,8 +306,8 @@ def __main__(recipe, params):
         # =================================================================
         # Calculate wave solution for other fibers
         # =================================================================
-        # other fiber + master wave setup
-        # Master night B -> we force the coefficients to
+        # other fiber + reference wave setup
+        # Ref night B -> we force the coefficients to
         # be the ones found with A, fit_cavity = False, fit_achromatic = False
         fit_cavity = False
         fit_achromatic = False
@@ -346,7 +346,7 @@ def __main__(recipe, params):
         # ==================================================================
         # DV from wave measured in the FP line files
         # ==================================================================
-        rvs_all = wave.wave_meas_diff(params, master_fiber, wprops_all, rvs_all)
+        rvs_all = wave.wave_meas_diff(params, ref_fiber, wprops_all, rvs_all)
 
         # =================================================================
         # Quality control
@@ -381,11 +381,11 @@ def __main__(recipe, params):
             # -----------------------------------------------------------------
             fpargs = [recipe, fiber, wprops, hc_e2ds_file, fp_e2ds_file,
                       combine, rawhcfiles, rawfpfiles, qc_params]
-            wavefile = wave.write_wavesol(params, *fpargs, master=True)
+            wavefile = wave.write_wavesol(params, *fpargs, ref=True)
             # -----------------------------------------------------------------
-            # Write cavity file (for master fiber)
+            # Write cavity file (for reference fiber)
             # -----------------------------------------------------------------
-            if fiber == master_fiber:
+            if fiber == ref_fiber:
                 # cavity args
                 cargs = [fp_e2ds_file, wavefile, wprops['CAVITY'], fiber]
                 # write cavity file
@@ -396,12 +396,12 @@ def __main__(recipe, params):
                 wave.write_resolution_map(params, recipe, *rargs)
 
             # -----------------------------------------------------------------
-            # Write master line references to file
-            #   master fiber hclines and fplines for all fibers!
+            # Write reference line references to file
+            #   reference fiber hclines and fplines for all fibers!
             # -----------------------------------------------------------------
             wmargs = [hc_e2ds_file, fp_e2ds_file, wavefile, hclines,
                       fplines, fiber]
-            out = wave.write_wave_lines(params, recipe, *wmargs, master=True)
+            out = wave.write_wave_lines(params, recipe, *wmargs, ref=True)
             hclinefile, fplinefile = out
 
             # ----------------------------------------------------------
@@ -434,8 +434,8 @@ def __main__(recipe, params):
             # Update calibDB with FP solution and line references
             # ----------------------------------------------------------
             if passed and params['INPUTS']['DATABASE']:
-                # only save cavity file for master fiber
-                if fiber == master_fiber:
+                # only save cavity file for reference fiber
+                if fiber == ref_fiber:
                     # copy the cavity solution to calibration database
                     calibdbm.add_calib_file(cavityfile)
                 # copy the hc wave solution file to the calibDB
@@ -448,7 +448,7 @@ def __main__(recipe, params):
             global_passed &= passed
 
         # -----------------------------------------------------------------
-        # if recipe is a master and QC fail we generate an error
+        # if recipe is a reference and QC fail we generate an error
         # -----------------------------------------------------------------
         if not global_passed:
             eargs = [recipe.name]
@@ -457,7 +457,7 @@ def __main__(recipe, params):
         # Construct summary document
         # -----------------------------------------------------------------
         # if we have a wave solution wave summary from fpprops
-        wave.wave_summary(recipe, params, wprops, master_fiber, qc_params)
+        wave.wave_summary(recipe, params, wprops, ref_fiber, qc_params)
 
         # construct summary (outside fiber loop)
         recipe.plot.summary_document(it)

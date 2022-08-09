@@ -24,7 +24,7 @@ from apero.science.calib import dark
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_dark_master_spirou.py'
+__NAME__ = 'apero_dark_ref_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -48,7 +48,7 @@ textentry = lang.textentry
 # Everything else is controlled from recipe_definition
 def main(**kwargs):
     """
-    Main function for apero_dark_master_spirou.py
+    Main function for apero_dark_ref_spirou.py
 
     :param kwargs: any additional keywords
 
@@ -127,10 +127,10 @@ def __main__(recipe, params):
     dark_table = dark.construct_dark_table(params, filenames)
 
     # ----------------------------------------------------------------------
-    # match files by date and median to produce master dark
+    # match files by date and median to produce reference dark
     # ----------------------------------------------------------------------
     cargs = [params, recipe, dark_table]
-    master_dark, reffile = dark.construct_master_dark(*cargs)
+    ref_dark, reffile = dark.construct_ref_dark(*cargs)
     # Have to update obs_dir while locked for all param dicts (do not copy)
     #     Note: do not use 'uparamdicts' unless you know what you are doing.
     ukwargs = dict(key='OBS_DIR', value='other', source=mainname)
@@ -139,15 +139,15 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
-    qc_params, passed = dark.master_qc(params)
+    qc_params, passed = dark.reference_qc(params)
     # update recipe log
     recipe.log.add_qc(qc_params, passed)
 
     # ----------------------------------------------------------------------
-    # Save master dark to file
+    # Save reference dark to file
     # ----------------------------------------------------------------------
-    outfile = dark.write_master_files(params, recipe, reffile, master_dark,
-                                      dark_table, qc_params)
+    outfile = dark.write_reference_files(params, recipe, reffile, ref_dark,
+                                         dark_table, qc_params)
 
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
@@ -155,7 +155,7 @@ def __main__(recipe, params):
     if passed and params['INPUTS']['DATABASE']:
         calibdbm.add_calib_file(outfile)
     # ---------------------------------------------------------------------
-    # if recipe is a master and QC fail we generate an error
+    # if recipe is a reference and QC fail we generate an error
     # ---------------------------------------------------------------------
     if not passed:
         eargs = [recipe.name]
@@ -163,7 +163,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Construct summary document
     # ------------------------------------------------------------------
-    dark.master_summary(recipe, params, qc_params, dark_table)
+    dark.reference_summary(recipe, params, qc_params, dark_table)
 
     # ------------------------------------------------------------------
     # update recipe log file

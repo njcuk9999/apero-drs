@@ -223,7 +223,7 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
         WLOG(params, 'debug', textentry('90-016-000034', args=[dprtype]))
         return None
     # ----------------------------------------------------------------------
-    # get master hc lines and fp lines from calibDB
+    # get reference hc lines and fp lines from calibDB
     wout = wave.get_wavelines(params, fiber, infile=e2dsfile,
                               database=database)
     mhclines, mhclsource, mfplines, mfplsource = wout
@@ -539,11 +539,11 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # add the wave file used
     e2dsfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
     e2dsfile.add_hkey('KW_CDTWAVE', value=wprops['WAVETIME'])
-    # add the leak master calibration file used
-    e2dsfile.add_hkey('KW_CDBLEAKM', value=eprops['LEAKM_FILE'])
-    e2dsfile.add_hkey('KW_CDTLEAKM', value=eprops['LEAKM_TIME'])
-    e2dsfile.add_hkey('KW_CDBLEAKR', value=eprops['LEAKM_REFFILE'])
-    e2dsfile.add_hkey('KW_CDTLEAKR', value=eprops['LEAKM_REFTIME'])
+    # add the leak reference calibration file used
+    e2dsfile.add_hkey('KW_CDBLEAKM', value=eprops['LEAKREF_FILE'])
+    e2dsfile.add_hkey('KW_CDTLEAKM', value=eprops['LEAKREF_TIME'])
+    e2dsfile.add_hkey('KW_CDBLEAKR', value=eprops['LEAKREF_REFFILE'])
+    e2dsfile.add_hkey('KW_CDTLEAKR', value=eprops['LEAKREF_REFTIME'])
     # additional calibration keys
     if 'FIBERTYPE' in eprops:
         e2dsfile.add_hkey('KW_C_FTYPE', value=eprops['FIBERTYPE'])

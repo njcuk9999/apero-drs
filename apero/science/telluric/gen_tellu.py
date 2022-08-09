@@ -2851,7 +2851,7 @@ def get_trans_model(params: ParamDict, header: drs_fits.Header, fiber: str,
 # =============================================================================
 # Tapas functions
 # =============================================================================
-def load_conv_tapas(params, recipe, header, mprops, fiber, database=None,
+def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
                     absorbers: Union[List[str], None] = None,
                     fwhm_lsf: Union[float, None] = None):
     func_name = __NAME__ + '.load_conv_tapas()'
@@ -2892,7 +2892,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, database=None,
     if conv_paths is None:
         conv_paths = []
     # construct the filename from file instance
-    out_tellu_conv.construct_filename(infile=mprops['WAVEINST'],
+    out_tellu_conv.construct_filename(infile=refprops['WAVEINST'],
                                       path=params['DRS_TELLU_DB'],
                                       fiber=fiber)
     # if our npy file already exists then we just need to read it
@@ -2914,9 +2914,9 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, database=None,
         # ------------------------------------------------------------------
         tapas_raw_table, tapas_raw_filename = drs_data.load_tapas(params)
         # ------------------------------------------------------------------
-        # Convolve with master wave solution
+        # Convolve with reference wave solution
         # ------------------------------------------------------------------
-        tapas_all_species = _convolve_tapas(params, tapas_raw_table, mprops,
+        tapas_all_species = _convolve_tapas(params, tapas_raw_table, refprops,
                                             tellu_absorbers, fwhm_pixel_lsf)
         # ------------------------------------------------------------------
         # Save convolution for later use
@@ -3037,12 +3037,12 @@ def load_tapas_spl(params, recipe, header, database=None):
 # =============================================================================
 # Worker functions
 # =============================================================================
-def _convolve_tapas(params, tapas_table, mprops, tellu_absorbers,
+def _convolve_tapas(params, tapas_table, refprops, tellu_absorbers,
                     fwhm_pixel_lsf):
-    # get master wave data
-    masterwave = mprops['WAVEMAP']
-    ydim = mprops['NBO']
-    xdim = mprops['NBPIX']
+    # get reference wave data
+    wavemap_ref = refprops['WAVEMAP']
+    ydim = refprops['NBO']
+    xdim = refprops['NBPIX']
     # ----------------------------------------------------------------------
     # generate kernel for convolution
     # ----------------------------------------------------------------------
@@ -3081,7 +3081,7 @@ def _convolve_tapas(params, tapas_table, mprops, tellu_absorbers,
             start = iord * xdim
             end = (iord * xdim) + xdim
             # interpolate the values at these points
-            svalues = tapas_spline(masterwave[iord, :])
+            svalues = tapas_spline(wavemap_ref[iord, :])
             # convolve with a gaussian function
             nvalues = np.convolve(np.ones_like(svalues), kernel, mode='same')
             cvalues = np.convolve(svalues, kernel, mode='same') / nvalues

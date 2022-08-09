@@ -42,7 +42,7 @@ __all__ = [  # input keys
     'KW_CDBWAVE', 'KW_CDTWAVE', 'KW_CDBTHERMAL', 'KW_CDTTHERMAL',
     'KW_CDBLEAKM', 'KW_CDTLEAKM', 'KW_CDBLEAKR', 'KW_CDTLEAKR',
     # preprocess keys
-    'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PPMSTR_NSIG', 'KW_PPMSTR_FILE',
+    'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PP_REF_NSIG', 'KW_PP_REF_FILE',
     'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE', 'KW_PPC_NBAD_BOTH',
     # dark keys
     'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
@@ -637,18 +637,18 @@ KW_CDBTHERMAL = Keyword('KW_CDBTHERMAL', key='NULL', dtype=str, source=__NAME__,
 # time of thermal calibration file used
 KW_CDTTHERMAL = Keyword('KW_CDTTHERMAL', key='NULL', dtype=str, source=__NAME__,
                         description='time of thermal cal file used in extract')
-# leak master calibration file used
+# leak reference calibration file used
 KW_CDBLEAKM = Keyword('KW_CDBLEAKM', key='NULL', dtype=str, source=__NAME__,
-                        description='leak master calibration file used')
-# time of leak master calibration file used
+                        description='leak reference calibration file used')
+# time of leak reference calibration file used
 KW_CDTLEAKM = Keyword('KW_CDTLEAKM', key='NULL', dtype=str, source=__NAME__,
-                        description='time of leak master calibration file used')
-# ref leak master calibration file used
+                        description='time of leak reference calibration file used')
+# ref leak reference calibration file used
 KW_CDBLEAKR = Keyword('KW_CDBLEAKR', key='NULL', dtype=str, source=__NAME__,
-                        description='ref leak master calibration file used')
-# time of ref leak master calibration file used
+                        description='ref leak reference calibration file used')
+# time of ref leak reference calibration file used
 KW_CDTLEAKR = Keyword('KW_CDTLEAKR', key='NULL', dtype=str, source=__NAME__,
-                        description='time of ref leak master calibration file '
+                        description='time of ref leak reference calibration file '
                                     'used')
 
 # additional properties of calibration
@@ -740,15 +740,15 @@ KW_PPC_NBAD_BOTH = Keyword('KW_PPC_NBAD_INTE', key='NULL', dtype=int,
                                         'both intercept and slope (cosmic '
                                         'ray)'))
 
-# The number of sigma used to construct pp master mask
-KW_PPMSTR_NSIG = Keyword('KW_PPMSTR_NSIG', key='NULL', dtype=float, source=__NAME__,
+# The number of sigma used to construct pp reference mask
+KW_PP_REF_NSIG = Keyword('KW_PP_REF_NSIG', key='NULL', dtype=float, source=__NAME__,
                          description=('The number of sigma used to construct '
-                                      'pp master mask'))
+                                      'pp reference mask'))
 
-# Define the key to store the name of the pp master file used in pp (if used)
-KW_PPMSTR_FILE = Keyword('KW_PPMSTR_FILE', key='NULL', dtype=str, source=__NAME__,
+# Define the key to store the name of the pp reference file used in pp (if used)
+KW_PP_REF_FILE = Keyword('KW_PP_REF_FILE', key='NULL', dtype=str, source=__NAME__,
                          description=('Define the key to store the name of the '
-                                      'pp master file used in pp (if used)'))
+                                      'pp reference file used in pp (if used)'))
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
@@ -1095,17 +1095,17 @@ KW_LEAK_NP_U = Keyword('KW_LEAK_NP_U', key='NULL', dtype=float, source=__NAME__,
                        description=('Define the normalisation percentile used '
                                     'for correcting leakage'))
 
-# Define the e-width smoothing used for correcting leakage master
+# Define the e-width smoothing used for correcting leakage reference
 KW_LEAK_WSMOOTH = Keyword('KW_LEAK_WSMOOTH', key='NULL', dtype=float,
                           source=__NAME__,
                           description=('Define the e-width smoothing used for '
-                                       'correcting leakage master'))
+                                       'correcting leakage reference'))
 
-# Define the kernel size used for correcting leakage master
+# Define the kernel size used for correcting leakage reference
 KW_LEAK_KERSIZE = Keyword('KW_LEAK_KERSIZE', key='NULL', dtype=float,
                           source=__NAME__,
                           description=('Define the kernel size used for '
-                                       'correcting leakage master'))
+                                       'correcting leakage reference'))
 
 # Define the lower bound percentile used for correcting leakage
 KW_LEAK_LP_U = Keyword('KW_LEAK_LP_U', key='NULL', dtype=float, source=__NAME__,

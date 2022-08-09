@@ -126,7 +126,7 @@ class DrsRecipe(object):
                 self.instrument = params['INSTRUMENT']
         # set filters
         self.filters = dict()
-        self.master = False
+        self.reference = False
         self.allowedfibers = None
         # switch for RECAL_TEMPLATES
         #    (should be False unless added in sequences)
@@ -519,9 +519,9 @@ class DrsRecipe(object):
                 psource = '{0} [{1}]'.format(func_name, kwarg.name)
                 input_parameters.set_source(kwarg.default_ref, psource)
         # ---------------------------------------------------------------------
-        if 'MASTER' in input_parameters:
-            if input_parameters['MASTER'] in ['True', 1, True]:
-                self.params['IS_MASTER'] = True
+        if 'REFERENCE' in input_parameters:
+            if input_parameters['REFERENCE'] in ['True', 1, True]:
+                self.params['IS_REF'] = True
         # ---------------------------------------------------------------------
         # add to DRS parameters
         self.params['INPUTS'] = input_parameters
@@ -965,7 +965,7 @@ class DrsRecipe(object):
             self.filemod = recipe.filemod.copy()
         # set filters
         self.filters = dict(recipe.filters)
-        self.master = bool(recipe.master)
+        self.reference = bool(recipe.reference)
         self.allowedfibers = copy.deepcopy(recipe.allowedfibers)
         # switch for RECAL_TEMPLATES
         #    (should be False unless added in sequences)
@@ -1360,7 +1360,7 @@ class DrsRecipe(object):
         --info --usage           Display the recipe usage information
         -- program --prog        Set the program name (for logging)
         --idebug --idb           set ipython return mode
-        --master                 set whether a recipe is a master recipe
+        --reference                 set whether a recipe is a reference recipe
         --breakpoints --break    set whether to use breakpoints
         --breakfunc              set whether to break in a certain function
         --quiet -q               set whether to run in queit mode
@@ -1407,8 +1407,8 @@ class DrsRecipe(object):
         # set ipython return functionality
         self._make_special(drs_argument.set_ipython_return, skip=False)
         # ---------------------------------------------------------------------
-        # set is_master functionality
-        self._make_special(drs_argument.is_master, skip=False)
+        # set is_reference functionality
+        self._make_special(drs_argument.is_reference, skip=False)
         # ---------------------------------------------------------------------
         # set the config run file
         self._make_special(drs_argument.set_crun_file, skip=False)
@@ -1686,7 +1686,7 @@ class DrsRunSequence:
         return '{0}[{1}]'.format(self.class_name, self.name)
 
     def add(self, recipe: DrsRecipe, name: Union[str, None] = None,
-            master: Union[bool, None] = None, fiber: Union[str, None] = None,
+            ref: Union[bool, None] = None, fiber: Union[str, None] = None,
             arguments: Union[Dict[str, Any], None] = None,
             filters: Union[Dict[str, Any], None] = None,
             files: Union[List[DrsInputFile], None] = None,
@@ -1697,7 +1697,7 @@ class DrsRunSequence:
             calib_required: Optional[bool] = None):
         """
         Add a recipe to the sequence, can overwrite default recipe behaviour
-        with the name (shortname), master, fiber keys and add more specialised
+        with the name (shortname), reference, fiber keys and add more specialised
         commands with:
         - arguments: a dictionary of arguments to parse directly to the recipe
                      (i.e. if a recipe has --objname add arguments['objname']
@@ -1720,8 +1720,8 @@ class DrsRunSequence:
                      two nearly identical DrsRecipe instances from each other)
                      i.e. when using apero_dark (shortname=DARK) can have
                      DARK1 and DARK2 in same sequence
-        :param master: bool, if True mark this recipe as a master sequence
-                       affects skipping and adds the --master=True argument
+        :param ref: bool, if True mark this recipe as a reference sequence
+                    affects skipping and adds the --reference=True argument
         :param fiber: str, the fiber allowed for this recipe
         :param arguments: dict, a dictionary of arguments to parse directly
                           to the recipe (i.e. if a recipe has --objname add
@@ -1759,7 +1759,7 @@ class DrsRunSequence:
         add_set = dict()
         add_set['recipe'] = recipe
         add_set['name'] = name
-        add_set['master'] = master
+        add_set['reference'] = ref
         add_set['fiber'] = fiber
         add_set['arguments'] = arguments
         add_set['filters'] = filters
@@ -1778,7 +1778,7 @@ class DrsRunSequence:
         add_set['args'] = rargs
         # add kwargs (optional arguments) to set
         add_set['kwargs'] = rkwargs
-        # append to to adds
+        # append to adds
         self.adds.append(add_set)
 
     def process_adds(self, params: ParamDict,
@@ -1850,9 +1850,9 @@ class DrsRunSequence:
             frecipe = self.update_args(frecipe, arguments=add['arguments'],
                                        rargs=add['args'], rkwargs=add['kwargs'],
                                        template_stars=template_stars)
-            # update master
-            if add['master'] is not None:
-                frecipe.master = add['master']
+            # update reference
+            if add['reference'] is not None:
+                frecipe.reference = add['reference']
             # add to sequence storage
             self.sequence.append(frecipe)
 
@@ -2010,7 +2010,7 @@ class DrsRunSequence:
         # ---------------------------------------------------------------------
         # define table columns
         columns = ['ORDER', 'RECIPE', 'SHORTNAME', 'RECIPE KIND',
-                   'MASTER RECIPE', 'FIBER', 'FILTERS', 'ARGS', 'KWARGS']
+                   'REF RECIPE', 'FIBER', 'FILTERS', 'ARGS', 'KWARGS']
         # ---------------------------------------------------------------------
         # storage dictionary (to be turned into table after)
         table_dict = dict()
@@ -2040,15 +2040,15 @@ class DrsRunSequence:
             else:
                 table_dict['RECIPE KIND'].append(recipe.recipe_kind)
             # -----------------------------------------------------------------
-            # add master column
-            if item['master'] is not None:
-                master_recipe = item['master']
+            # add reference column
+            if item['reference'] is not None:
+                ref_recipe = item['reference']
             else:
-                master_recipe = recipe.master
-            if drs_text.true_text(master_recipe):
-                table_dict['MASTER RECIPE'].append('Yes')
+                ref_recipe = recipe.reference
+            if drs_text.true_text(ref_recipe):
+                table_dict['REF RECIPE'].append('Yes')
             else:
-                table_dict['MASTER RECIPE'].append('No')
+                table_dict['REF RECIPE'].append('No')
             # -----------------------------------------------------------------
             # add fiber columns
             if item['fiber'] is not None:

@@ -67,7 +67,7 @@ __all__ = [
     'IMAGE_Y_RED_HIGH', 'DARK_CUTLIMIT', 'QC_MAX_DARKLEVEL',
     'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
     'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY', 'ALLOWED_DARK_TYPES',
-    'DARK_MASTER_MATCH_TIME', 'DARK_MASTER_MED_SIZE', 'DARK_MASTER_MAX_FILES',
+    'DARK_REF_MATCH_TIME', 'DARK_REF_MED_SIZE', 'DARK_REF_MAX_FILES',
     # badpix constants
     'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
     'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
@@ -93,14 +93,14 @@ __all__ = [
     'LOC_PLOT_CORNER_YZOOM1', 'LOC_PLOT_CORNER_YZOOM2', 'LOC_COEFF_SIGCLIP',
     'LOC_COEFFSIG_DEG', 'LOC_MAX_YPIX_VALUE',
     # shape constants
-    'ALLOWED_FP_TYPES', 'FP_MASTER_MATCH_TIME',
-    'FP_MASTER_PERCENT_THRES', 'SHAPE_QC_LTRANS_RES_THRES',
-    'SHAPE_MASTER_VALIDFP_PERCENTILE', 'SHAPE_MASTER_VALIDFP_THRESHOLD',
-    'SHAPE_MASTER_LINTRANS_NITER', 'SHAPE_MASTER_FP_INI_BOXSIZE',
-    'SHAPE_MASTER_FP_SMALL_BOXSIZE', 'SHAPE_FP_MASTER_MIN_IN_GROUP',
-    'SHAPE_MASTER_FIBER', 'SHAPE_MASTER_MAX_FILES',
+    'ALLOWED_FP_TYPES', 'FP_REF_MATCH_TIME',
+    'FP_REF_PERCENT_THRES', 'SHAPE_QC_LTRANS_RES_THRES',
+    'SHAPE_REF_VALIDFP_PERCENTILE', 'SHAPE_REF_VALIDFP_THRESHOLD',
+    'SHAPE_REF_LINTRANS_NITER', 'SHAPE_REF_FP_INI_BOXSIZE',
+    'SHAPE_REF_FP_SMALL_BOXSIZE', 'SHAPE_FP_REF_MIN_IN_GROUP',
+    'SHAPE_REF_FIBER', 'SHAPE_REF_MAX_FILES',
     'SHAPE_NUM_ITERATIONS', 'SHAPE_ORDER_WIDTH',
-    'SHAPE_NSECTIONS', 'SHAPE_SIGMACLIP_MAX', 'SHAPE_MASTER_DX_RMS_QC',
+    'SHAPE_NSECTIONS', 'SHAPE_SIGMACLIP_MAX', 'SHAPE_REF_DX_RMS_QC',
     'SHAPE_LARGE_ANGLE_MIN', 'SHAPE_LARGE_ANGLE_MAX',
     'SHAPE_SMALL_ANGLE_MIN', 'SHAPE_SMALL_ANGLE_MAX',
     'SHAPE_MEDIAN_FILTER_SIZE', 'SHAPE_MIN_GOOD_CORRELATION',
@@ -124,10 +124,10 @@ __all__ = [
     'FF_BLAZE_SCUT', 'FF_BLAZE_SIGFIT', 'FF_BLAZE_BPERCENTILE',
     'FF_BLAZE_NITER', 'FF_BLAZE_SINC_MED_SIZE',
     # leakage constants
-    'ALLOWED_LEAKM_TYPES', 'LEAKM_ALWAYS_EXTRACT', 'LEAKM_EXTRACT_TYPE',
+    'ALLOWED_LEAKREF_TYPES', 'LEAKREF_ALWAYS_EXTRACT', 'LEAKREF_EXTRACT_TYPE',
     'CORRECT_LEAKAGE', 'LEAK_EXTRACT_FILE', 'LEAK_2D_EXTRACT_FILES',
     'LEAK_1D_EXTRACT_FILES', 'LEAK_BCKGRD_PERCENTILE', 'LEAK_NORM_PERCENTILE',
-    'LEAKM_WSMOOTH', 'LEAKM_KERSIZE', 'LEAK_LOW_PERCENTILE',
+    'LEAKREF_WSMOOTH', 'LEAKREF_KERSIZE', 'LEAK_LOW_PERCENTILE',
     'LEAK_HIGH_PERCENTILE', 'LEAK_BAD_RATIO_OFFSET', 'LEAKAGE_REF_TYPES',
     # extract constants
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
@@ -147,7 +147,7 @@ __all__ = [
     'THERMAL_PLOT_START_ORDER', 'THERMAL_EXCESS_EMISSIVITY_FILE',
     'THERMAL_EXCESS_DPRTYPES',
     # wave general constants
-    'WAVE_MASTER_FIBER', 'WAVE_GUESS_CAVITY_WIDTH', 'WAVE_WAVESOL_FIT_DEGREE',
+    'WAVE_REF_FIBER', 'WAVE_GUESS_CAVITY_WIDTH', 'WAVE_WAVESOL_FIT_DEGREE',
     'WAVE_CAVITY_FIT_DEGREE', 'WAVE_NSIG_CUT',
     'WAVE_MIN_HC_LINES', 'WAVE_MIN_FP_LINES',
     'WAVE_MAX_FP_COUNT_OFFSET', 'WAVE_FP_COUNT_OFFSET_ITRS',
@@ -155,7 +155,7 @@ __all__ = [
     'WAVE_MAX_ORDER_BULK_OFFSET', 'WAVE_CAVITY_CHANGE_ERR_THRES',
     'WAVE_CAVITY_FIT_ITRS2', 'WAVE_HC_VEL_ODD_RATIO', 'WAVE_FWAVESOL_ITRS',
     'WAVE_FIBER_COMP_PLOT_ORD', 'WAVE_REMOVE_ORDERS',
-    # wave master reference constants
+    # wave reference reference constants
     'WAVEREF_NSIG_MIN_HC', 'WAVEREF_NSIG_MIN_FP',
     'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
     'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
@@ -178,7 +178,7 @@ __all__ = [
 
     # TODO: sort out these constants
     # wave general constants
-    'WAVE_MASTER_FIBER', 'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT',
+    'WAVE_REF_FIBER', 'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT',
     'WAVE_LINELIST_AMPCOL', 'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START',
     'WAVE_LINELIST_WAVECOL', 'WAVE_ALWAYS_EXTRACT', 'WAVE_EXTRACT_TYPE',
     'WAVE_FIT_DEGREE', 'WAVE_PIXEL_SHIFT_INTER', 'WAVE_PIXEL_SHIFT_SLOPE',
@@ -977,16 +977,16 @@ PP_DARK_THRES = Const('PP_DARK_THRES', value=None, dtype=float,
                       description='Define the threshold for a suitable dark '
                                   'dprtypes (above this will not be processed)')
 
-# Define allowed preprocess master file types (PP DPRTYPE)
+# Define allowed preprocess reference file types (PP DPRTYPE)
 ALLOWED_PPM_TYPES = Const('ALLOWED_PPM_TYPES', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
-                          description='Define allowed preprocess master '
+                          description='Define allowed preprocess reference '
                                       'filetypes (PP DPRTYPE)')
 
-# Define the allowed number of sigma for preprocessing master mask
+# Define the allowed number of sigma for preprocessing reference mask
 PPM_MASK_NSIG = Const('PPM_MASK_NSIG', value=None, dtype=float,
                       source=__NAME__, group=cgroup,
-                      description='Define allowed preprocess master mask '
+                      description='Define allowed preprocess reference mask '
                                   'number of sigma')
 
 # Define the bin to use to correct low level frequences. This value cannot
@@ -1120,35 +1120,35 @@ USE_SKYDARK_ONLY = Const('USE_SKYDARK_ONLY', value=None, dtype=bool,
                                       ' whether we use the SKYDARK only or use '
                                       'SKYDARK/DARK (whichever is closest)'))
 
-#  Define the allowed DPRTYPES for finding files for DARK_MASTER will
+#  Define the allowed DPRTYPES for finding files for DARK_REF will
 #      only find those types define by 'filetype' but 'filetype' must
 #      be one of theses (strings separated by commas)
 ALLOWED_DARK_TYPES = Const('ALLOWED_DARK_TYPES', value=None, dtype=str,
                            source=__NAME__, group=cgroup,
                            description=('Define the allowed DPRTYPES for '
-                                        'finding files for DARK_MASTER will '
+                                        'finding files for DARK_REF will '
                                         'only find those types define by '
                                         'filetype but filetype must be one '
                                         'of theses (strings separated by '
                                         'commas)'))
 
 # Define the maximum time span to combine dark files over (in hours)
-DARK_MASTER_MATCH_TIME = Const('DARK_MASTER_MATCH_TIME', value=None,
+DARK_REF_MATCH_TIME = Const('DARK_REF_MATCH_TIME', value=None,
                                dtype=float, source=__NAME__, group=cgroup,
                                description=('Define the maximum time span to '
                                             'combine dark files over (in '
                                             'hours)'))
 
-# median filter size for dark master
-DARK_MASTER_MED_SIZE = Const('DARK_MASTER_MED_SIZE', value=None, dtype=int,
-                             source=__NAME__, group=cgroup,
-                             description='median filter size for dark master')
+# median filter size for dark reference
+DARK_REF_MED_SIZE = Const('DARK_REF_MED_SIZE', value=None, dtype=int,
+                          source=__NAME__, group=cgroup,
+                          description='median filter size for dark reference')
 
-# define the maximum number of files to use in the dark master
-DARK_MASTER_MAX_FILES = Const('DARK_MASTER_MAX_FILES', value=None, dtype=int,
-                             source=__NAME__, group=cgroup,
-                             description='define the maximum number of files '
-                                         'to use in the dark master')
+# define the maximum number of files to use in the dark reference
+DARK_REF_MAX_FILES = Const('DARK_REF_MAX_FILES', value=None, dtype=int,
+                           source=__NAME__, group=cgroup,
+                           description='define the maximum number of files '
+                                       'to use in the dark reference')
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
@@ -1569,115 +1569,113 @@ LOC_PLOT_CORNER_YZOOM2 = Const('LOC_PLOT_CORNER_YZOOM2', value=None,
 # CALIBRATION: SHAPE SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: SHAPE SETTINGS'
-#  Define the allowed DPRTYPES for finding files for SHAPE_MASTER will
+#  Define the allowed DPRTYPES for finding files for SHAPE_REF will
 #      only find those types define by 'filetype' but 'filetype' must
 #      be one of theses (strings separated by commas)
 ALLOWED_FP_TYPES = Const('ALLOWED_FP_TYPES', value=None, dtype=str,
                          source=__NAME__, group=cgroup,
                          description=('Define the allowed DPRTYPES for finding '
-                                      'files for SHAPE_MASTER will only find '
+                                      'files for SHAPE_REF will only find '
                                       'those types define by filetype but '
                                       'filetype must be one of theses '
                                       '(strings separated by commas)'))
 
 # Define the maximum time span to combine fp files over (in hours)
-FP_MASTER_MATCH_TIME = Const('FP_MASTER_MATCH_TIME', value=None,
-                             dtype=float, source=__NAME__, group=cgroup,
-                             description=('Define the maximum time span to '
-                                          'combine fp files over (in hours)'))
+FP_REF_MATCH_TIME = Const('FP_REF_MATCH_TIME', value=None,
+                          dtype=float, source=__NAME__, group=cgroup,
+                          description=('Define the maximum time span to '
+                                       'combine fp files over (in hours)'))
 
 # Define the percentile at which the FPs are normalised when getting the
-#    fp master in shape master
-FP_MASTER_PERCENT_THRES = Const('FP_MASTER_PERCENT_THRES', value=None,
-                                dtype=float, minimum=0, maximum=100,
-                                source=__NAME__, group=cgroup,
-                                description=('Define the percentile at which '
-                                             'the FPs are normalised when '
-                                             'getting the fp master in shape '
-                                             'master'))
+#    fp reference in shape reference recipe
+FP_REF_PERCENT_THRES = Const('FP_REF_PERCENT_THRES', value=None,
+                             dtype=float, minimum=0, maximum=100,
+                             source=__NAME__, group=cgroup,
+                             description=('Define the percentile at which '
+                                          'the FPs are normalised when '
+                                          'getting the fp reference in shape '
+                                          'reference recipe'))
 
 #  Define the largest standard deviation allowed for the shift in
-#   x or y when doing the shape master fp linear transform
+#   x or y when doing the shape reference fp linear transform
 SHAPE_QC_LTRANS_RES_THRES = Const('SHAPE_QC_LTRANS_RES_THRES', value=None,
                                   dtype=float, source=__NAME__, group=cgroup,
                                   description=('Define the largest standard '
                                                'deviation allowed for the '
                                                'shift in x or y when doing the '
-                                               'shape master fp linear '
+                                               'shape reference fp linear '
                                                'transform'))
 
-# define the maximum number of files to use in the shape master
-SHAPE_MASTER_MAX_FILES =  Const('SHAPE_MASTER_MAX_FILES', value=None,
-                                  dtype=int, source=__NAME__, group=cgroup,
-                                  description=('define the maximum number of '
-                                               'files to use in the shape '
-                                               'master'))
+# define the maximum number of files to use in the shape reference recipe
+SHAPE_REF_MAX_FILES =  Const('SHAPE_REF_MAX_FILES', value=None,
+                             dtype=int, source=__NAME__, group=cgroup,
+                             description=('define the maximum number of '
+                                          'files to use in the shape '
+                                          'reference recipe'))
 
 #  Define the percentile which defines a true FP peak [0-100]
-SHAPE_MASTER_VALIDFP_PERCENTILE = Const('SHAPE_MASTER_VALIDFP_PERCENTILE',
-                                        value=None, dtype=float, minimum=0,
-                                        maximum=100, source=__NAME__,
-                                        group=cgroup,
-                                        description=('Define the percentile '
-                                                     'which defines a true FP '
-                                                     'peak [0-100]'))
+SHAPE_REF_VALIDFP_PERCENTILE = Const('SHAPE_REF_VALIDFP_PERCENTILE',
+                                     value=None, dtype=float, minimum=0,
+                                     maximum=100, source=__NAME__,
+                                     group=cgroup,
+                                     description=('Define the percentile '
+                                                  'which defines a true FP '
+                                                  'peak [0-100]'))
 
 #  Define the fractional flux an FP much have compared to its neighbours
-SHAPE_MASTER_VALIDFP_THRESHOLD = Const('SHAPE_MASTER_VALIDFP_THRESHOLD',
-                                       value=None, dtype=float, minimum=0,
-                                       source=__NAME__, group=cgroup,
-                                       description=('Define the fractional '
-                                                    'flux an FP much have '
-                                                    'compared to its '
-                                                    'neighbours'))
+SHAPE_REF_VALIDFP_THRESHOLD = Const('SHAPE_REF_VALIDFP_THRESHOLD',
+                                    value=None, dtype=float, minimum=0,
+                                    source=__NAME__, group=cgroup,
+                                    description=('Define the fractional '
+                                                 'flux an FP much have '
+                                                 'compared to its neighbours'))
 
 #  Define the number of iterations used to get the linear transform params
-SHAPE_MASTER_LINTRANS_NITER = Const('SHAPE_MASTER_LINTRANS_NITER', value=None,
-                                    dtype=int, minimum=1, source=__NAME__,
-                                    group=cgroup,
-                                    description=('Define the number of '
-                                                 'iterations used to get the '
-                                                 'linear transform params'))
+SHAPE_REF_LINTRANS_NITER = Const('SHAPE_REF_LINTRANS_NITER', value=None,
+                                 dtype=int, minimum=1, source=__NAME__,
+                                 group=cgroup,
+                                 description=('Define the number of '
+                                              'iterations used to get the '
+                                              'linear transform params'))
 
 #  Define the initial search box size (in pixels) around the fp peaks
-SHAPE_MASTER_FP_INI_BOXSIZE = Const('SHAPE_MASTER_FP_INI_BOXSIZE', value=None,
-                                    dtype=int, minimum=1, source=__NAME__,
-                                    group=cgroup,
-                                    description=('Define the initial search '
-                                                 'box size (in pixels) around '
-                                                 'the fp peaks'))
+SHAPE_REF_FP_INI_BOXSIZE = Const('SHAPE_REF_FP_INI_BOXSIZE', value=None,
+                                 dtype=int, minimum=1, source=__NAME__,
+                                 group=cgroup,
+                                 description=('Define the initial search '
+                                              'box size (in pixels) around '
+                                              'the fp peaks'))
 
 #  Define the small search box size (in pixels) around the fp peaks
-SHAPE_MASTER_FP_SMALL_BOXSIZE = Const('SHAPE_MASTER_FP_SMALL_BOXSIZE',
-                                      value=None, dtype=int, minimum=1,
-                                      source=__NAME__, group=cgroup,
-                                      description=('Define the small search '
-                                                   'box size (in pixels) '
-                                                   'around the fp peaks'))
+SHAPE_REF_FP_SMALL_BOXSIZE = Const('SHAPE_REF_FP_SMALL_BOXSIZE',
+                                   value=None, dtype=int, minimum=1,
+                                   source=__NAME__, group=cgroup,
+                                   description=('Define the small search '
+                                                'box size (in pixels) '
+                                                'around the fp peaks'))
 
 #  Define the minimum number of FP files in a group to mean group is valid
-SHAPE_FP_MASTER_MIN_IN_GROUP = Const('SHAPE_FP_MASTER_MIN_IN_GROUP', value=None,
-                                     dtype=int, minimum=1, source=__NAME__,
-                                     group=cgroup,
-                                     description=('Define the minimum number '
-                                                  'of FP files in a group to '
-                                                  'mean group is valid'))
+SHAPE_FP_REF_MIN_IN_GROUP = Const('SHAPE_FP_REF_MIN_IN_GROUP', value=None,
+                                  dtype=int, minimum=1, source=__NAME__,
+                                  group=cgroup,
+                                  description=('Define the minimum number '
+                                               'of FP files in a group to '
+                                               'mean group is valid'))
 
 #  Define which fiber should be used for fiber-dependent calibrations in
-#   shape master
-SHAPE_MASTER_FIBER = Const('SHAPE_MASTER_FIBER', value=None, dtype=str,
-                           source=__NAME__, group=cgroup,
+#   shape reference recipe
+SHAPE_REF_FIBER = Const('SHAPE_REF_FIBER', value=None, dtype=str,
+                        source=__NAME__, group=cgroup,
+                        description=('Define which fiber should be used '
+                                     'for fiber-dependent calibrations '
+                                     'in shape reference'))
 
-                           description=('Define which fiber should be used '
-                                        'for fiber-dependent calibrations '
-                                        'in shape master'))
-
-#  Define the shape master dx rms quality control criteria (per order)
-SHAPE_MASTER_DX_RMS_QC = Const('SHAPE_MASTER_FIBER', value=None, dtype=float,
-                               source=__NAME__, group=cgroup,
-                               description='Define the shape master dx rms'
-                                           'quality control criteria (per '
-                                           'order)')
+#  Define the shape reference dx rms quality control criteria (per order)
+SHAPE_REF_DX_RMS_QC = Const('SHAPE_REF_FIBER', value=None, dtype=float,
+                            source=__NAME__, group=cgroup,
+                            description='Define the shape reference dx rms'
+                                        'quality control criteria (per '
+                                        'order)')
 
 # The number of iterations to run the shape finding out to
 SHAPE_NUM_ITERATIONS = Const('SHAPE_NUM_ITERATIONS', value=None, dtype=int,
@@ -2019,27 +2017,27 @@ FF_PLOT_ORDER = Const('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__,
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: LEAKAGE SETTINGS'
-# Define the types of input file allowed by the leakage master recipe
-ALLOWED_LEAKM_TYPES = Const('ALLOWED_LEAKM_TYPES', value=None, dtype=str,
+# Define the types of input file allowed by the leakage reference recipe
+ALLOWED_LEAKREF_TYPES = Const('ALLOWED_LEAKREF_TYPES', value=None, dtype=str,
                             source=__NAME__, group=cgroup,
                             description=('Define the types of input file '
-                                         'allowed by the leakage master '
+                                         'allowed by the leakage reference '
                                          'recipe'))
 
-# define whether to always extract leak master files
+# define whether to always extract leak reference files
 #      (i.e. overwrite existing files)
-LEAKM_ALWAYS_EXTRACT = Const('LEAKM_ALWAYS_EXTRACT', value=None, dtype=bool,
+LEAKREF_ALWAYS_EXTRACT = Const('LEAKREF_ALWAYS_EXTRACT', value=None, dtype=bool,
                              source=__NAME__, group=cgroup,
                              description=('define whether to always extract '
-                                          'leak master files (i.e. overwrite '
+                                          'leak reference files (i.e. overwrite '
                                           'existing files)'))
 
-# define the type of file to use for leak master solution
+# define the type of file to use for leak reference solution
 #    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
-LEAKM_EXTRACT_TYPE = Const('LEAKM_EXTRACT_TYPE', value=None, dtype=str,
+LEAKREF_EXTRACT_TYPE = Const('LEAKREF_EXTRACT_TYPE', value=None, dtype=str,
                            source=__NAME__, group=cgroup,
                            description=('define the type of file to use for '
-                                        'leak master solution (currently '
+                                        'leak reference solution (currently '
                                         'allowed are E2DSFF) - must match with '
                                         'LEAK_EXTRACT_FILE'))
 
@@ -2057,14 +2055,14 @@ LEAKAGE_REF_TYPES = Const('LEAKAGE_REF_TYPES', value=None, dtype=str,
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
-#     must match with LEAKM_EXTRACT_TYPE
+#     must match with LEAKREF_EXTRACT_TYPE
 LEAK_EXTRACT_FILE = Const('LEAK_EXTRACT_FILE', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
                           description=('define the type of file to use for the '
                                        'leak correction (currently allowed are '
                                        'E2DS_FILE or E2DSFF_FILE (linked to '
                                        'recipe definition outputs) must match '
-                                       'with LEAKM_EXTRACT_TYPE'))
+                                       'with LEAKREF_EXTRACT_TYPE'))
 
 # define the extraction files which are 2D images (i.e. order num x nbpix)
 LEAK_2D_EXTRACT_FILES = Const('LEAK_2D_EXTRACT_FILES', value=None, dtype=str,
@@ -2079,29 +2077,29 @@ LEAK_1D_EXTRACT_FILES = Const('LEAK_1D_EXTRACT_FILES', value=None, dtype=str,
                               description=('define the extraction files which '
                                            'are 1D spectra'))
 
-# define the thermal background percentile for the leak and leak master
+# define the thermal background percentile for the leak and leak reference
 LEAK_BCKGRD_PERCENTILE = Const('LEAK_BCKGRD_PERCENTILE', value=None, dtype=float,
                                source=__NAME__, group=cgroup,
                                description=('define the thermal background '
                                             'percentile for the leak and '
-                                            'leak master'))
+                                            'leak reference'))
 
-# define the normalisation percentile for the leak and leak master
+# define the normalisation percentile for the leak and leak reference
 LEAK_NORM_PERCENTILE = Const('LEAK_NORM_PERCENTILE', value=None, dtype=float,
                              source=__NAME__, group=cgroup,
                              description=('define the normalisation percentile '
-                                          'for the leak and leak master'))
+                                          'for the leak and leak reference'))
 
-# define the e-width of the smoothing kernel for leak master
-LEAKM_WSMOOTH = Const('LEAKM_WSMOOTH', value=None, dtype=int,
+# define the e-width of the smoothing kernel for leak reference
+LEAKREF_WSMOOTH = Const('LEAKREF_WSMOOTH', value=None, dtype=int,
                       source=__NAME__, minimum=0, group=cgroup,
                       description=('define the e-width of the smoothing kernel '
-                                   'for leak master'))
+                                   'for leak reference'))
 
-# define the kernel size for leak master
-LEAKM_KERSIZE = Const('LEAKM_KERSIZE', value=None, dtype=float,
+# define the kernel size for leak reference
+LEAKREF_KERSIZE = Const('LEAKREF_KERSIZE', value=None, dtype=float,
                       source=__NAME__, minimum=0.0, group=cgroup,
-                      description='define the kernel size for leak master')
+                      description='define the kernel size for leak reference')
 
 # define the lower bound percentile for leak correction
 LEAK_LOW_PERCENTILE = Const('LEAK_LOW_PERCENTILE', value=None, dtype=float,
@@ -2413,11 +2411,11 @@ THERMAL_EXCESS_EMISSIVITY_FILE = Const('THERMAL_EXCESS_EMISSIVITY_FILE',
 # =============================================================================
 cgroup = 'CALIBRATION: WAVE GENERAL SETTING'
 
-# Define wave master fiber (controller fiber)
-WAVE_MASTER_FIBER = Const('WAVE_MASTER_FIBER', value=None, dtype=str,
-                          source=__NAME__, group=cgroup,
-                          description='Define wave master fiber (controller '
-                                      'fiber)')
+# Define wave reference fiber (controller fiber)
+WAVE_REF_FIBER = Const('WAVE_REF_FIBER', value=None, dtype=str,
+                       source=__NAME__, group=cgroup,
+                       description='Define wave reference fiber (controller '
+                                   'fiber)')
 
 # Define the initial value of FP effective cavity width 2xd in nm
 WAVE_GUESS_CAVITY_WIDTH = Const('WAVE_GUESS_CAVITY_WIDTH', value=None,
@@ -2588,10 +2586,10 @@ WAVEREF_HC_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
 WAVEREF_FP_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
                             source=__NAME__, group=cgroup)
 
-# get the degree to fix master wavelength to in hc mode
+# get the degree to fix reference wavelength to in hc mode
 WAVEREF_FITDEG = Const('WAVEREF_FITDEG', value=None, dtype=int,
                        source=__NAME__, minimum=1, group=cgroup,
-                       description=('get the degree to fix master wavelength '
+                       description=('get the degree to fix reference wavelength '
                                     'to in hc mode'))
 
 # define the lowest N for fp peaks
@@ -2617,17 +2615,17 @@ WAVEREF_HC_GUESS_EWID = Const('WAVEREF_HC_GUESS_EWID', value=None, dtype=float,
                               description=('define the guess HC exponetial '
                                            'width [pixels]'))
 
-# Define the fiber offset (in pixels) away from master fiber
+# Define the fiber offset (in pixels) away from reference fiber
 WAVE_FIBER_OFFSET_MOD = Const('WAVE_FIBER_OFFSET_MOD', value=None, dtype=str,
                               source=__NAME__, group=cgroup,
                               description='Define the fiber offset (in pixels) '
-                                          'away from master fiber')
+                                          'away from reference fiber')
 
-# Define the fiber scale factor from master fiber
+# Define the fiber scale factor from reference fiber
 WAVE_FIBER_SCALE_MOD = Const('WAVE_FIBER_SCALE_MOD', value=None, dtype=str,
                              source=__NAME__, group=cgroup,
                              description='Define the fiber scale factor '
-                                         'from master fiber')
+                                         'from reference fiber')
 
 # =============================================================================
 # CALIBRATION: WAVE RESOLUTION MAP SETTINGS
@@ -2784,13 +2782,13 @@ WAVE_CCF_N_ORD_MAX = Const('WAVE_CCF_N_ORD_MAX', value=None, dtype=int,
                                         'to calculate the FP CCF'))
 
 #  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
-#      update the cavity width in the master wave solution recipe
+#      update the cavity width in the reference wave solution recipe
 WAVE_CCF_UPDATE_MASK = Const('WAVE_CCF_UPDATE_MASK', value=None, dtype=bool,
                              source=__NAME__, group=cgroup,
                              description=('Define whether to regenerate the '
                                           'fp mask (WAVE_CCF_MASK) when we '
                                           'update the cavity width in the '
-                                          'master wave solution recipe'))
+                                          'reference wave solution recipe'))
 
 # define the width of the lines in the smart mask [km/s]
 WAVE_CCF_SMART_MASK_WIDTH = Const('WAVE_CCF_SMART_MASK_WIDTH', value=None,
@@ -2843,13 +2841,13 @@ WAVE_CCF_SMART_MASK_DWAVE_THRES = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
                                                      'in smart mask '
                                                      'generation'))
 
-# define the quality control threshold from RV of CCF FP between master
+# define the quality control threshold from RV of CCF FP between reference
 #    fiber and other fibers, above this limit fails QC [m/s]
 WAVE_CCF_RV_THRES_QC = Const('WAVE_CCF_RV_THRES_QC', value=None, dtype=float,
                              source=__NAME__, minimum=0, group=cgroup,
                              description=('define the quality control '
                                           'threshold from RV of CCF FP between '
-                                          'master fiber and other fibers, '
+                                          'reference fiber and other fibers, '
                                           'above this limit fails QC [m/s]'))
 
 # TODO: Sort out wave constants below here

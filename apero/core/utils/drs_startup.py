@@ -80,7 +80,7 @@ RUN_KEYS['RUN_OBS_DIR'] = 'All'
 RUN_KEYS['EXCLUDE_OBS_DIRS'] = 'All'
 RUN_KEYS['INCLUDE_OBS_DIRS'] = 'All'
 RUN_KEYS['PI_NAMES'] = 'All'
-RUN_KEYS['MASTER_OBS_DIR'] = None
+RUN_KEYS['REF_OBS_DIR'] = None
 RUN_KEYS['CORES'] = 1
 RUN_KEYS['STOP_AT_EXCEPTION'] = False
 RUN_KEYS['TEST_RUN'] = False
@@ -220,8 +220,8 @@ def setup(name: str = 'None', instrument: str = 'None',
     recipe.params.set('DRS_GROUP_PATH', drsgrouppath, source=func_name)
     recipe.params.set('DRS_RECIPE_TYPE', recipe_type, source=func_name)
     recipe.params.set('DRS_RECIPE_KIND', recipe_kind, source=func_name)
-    # set master
-    recipe.params.set('IS_MASTER', recipe.master, source=func_name)
+    # set reference
+    recipe.params.set('IS_REF', recipe.reference, source=func_name)
     # -------------------------------------------------------------------------
     # need to set debug mode now
     recipe = _set_debug_from_input(recipe, fkwargs)

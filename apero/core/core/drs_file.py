@@ -103,7 +103,7 @@ BlockPath = pathdef.BlockPath
 # get out file class
 OutFileTypes = Union[out.OutFile, out.GeneralOutFile, out.NpyOutFile,
                      out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
-                     out.MasterCalibOutFile, out.SetOutFile, out.PostOutFile,
+                     out.RefCalibOutFile, out.SetOutFile, out.PostOutFile,
                      None]
 
 
@@ -6342,13 +6342,13 @@ class DrsOutFile(DrsInputFile):
             return translate[name]
 
     def find_files(self, pos: int, indexdbm: Any,
-                   mastercond: Union[str, None]) -> pd.DataFrame:
+                   refcond: Union[str, None]) -> pd.DataFrame:
         """
         Find files that match the extension parameters in the index database
 
         :param pos: int, the position in the extension list
         :param indexdbm: Index database, the index database
-        :param mastercond: str, the master condition
+        :param refcond: str, the reference condition
 
         :return: pandas data frame containing the table of files
         """
@@ -6357,7 +6357,7 @@ class DrsOutFile(DrsInputFile):
         # get the index table for first extension
         table0 = indexdbm.get_entries('*', block_kind=extension.kind,
                                       hkeys=extension.hkeys,
-                                      condition=mastercond)
+                                      condition=refcond)
         # return table
         return table0
 
@@ -8340,7 +8340,8 @@ def _copydrsfile(drsfileclass,
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = None):
     """
-    Master copier of file instance
+    Global copier of file instance
+
     instance1 = self normally
     instance2 = another file instance (if required)
 

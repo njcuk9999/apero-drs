@@ -41,9 +41,9 @@ debug_ofile = out.DebugOutFile()
 set_ofile = out.SetOutFile()
 post_ofile = out.PostOutFile()
 calib_ofile = out.CalibOutFile()
-mcalib_ofile = out.MasterCalibOutFile()
+mcalib_ofile = out.RefCalibOutFile()
 tellu_ofile = out.TelluOutFile()
-mtellu_ofile = out.MasterTelluOutFile()
+mtellu_ofile = out.RefTelluOutFile()
 
 # =============================================================================
 # Raw Files

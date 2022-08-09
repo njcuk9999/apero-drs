@@ -392,11 +392,11 @@ PP_DARK_DPRTYPES.value = 'DARK_DARK'
 PP_DARK_THRES = PP_DARK_THRES.copy(__NAME__)
 PP_DARK_THRES.value = 0.5
 
-# Define allowed preprocessing master file types (PP DPRTYPE)
+# Define allowed preprocessing reference file types (PP DPRTYPE)
 ALLOWED_PPM_TYPES = ALLOWED_PPM_TYPES.copy(__NAME__)
 ALLOWED_PPM_TYPES.value = 'FLAT_FLAT'
 
-# Define the allowed number of sigma for preprocessing master mask
+# Define the allowed number of sigma for preprocessing reference mask
 PPM_MASK_NSIG = PPM_MASK_NSIG.copy(__NAME__)
 PPM_MASK_NSIG.value = 10
 
@@ -495,23 +495,23 @@ HISTO_RANGE_LOW.value = -0.2
 HISTO_RANGE_HIGH = HISTO_RANGE_HIGH.copy(__NAME__)
 HISTO_RANGE_HIGH.value = 0.8
 
-#    Define the allowed DPRTYPES for finding files for DARK_MASTER will
+#    Define the allowed DPRTYPES for finding files for DARK_REF will
 #        only find those types define by 'filetype' but 'filetype' must
 #        be one of theses (strings separated by commas)
 ALLOWED_DARK_TYPES = ALLOWED_DARK_TYPES.copy(__NAME__)
 ALLOWED_DARK_TYPES.value = 'DARK_DARK'
 
 #   Define the maximum time span to combine dark files over (in hours)
-DARK_MASTER_MATCH_TIME = DARK_MASTER_MATCH_TIME.copy(__NAME__)
-DARK_MASTER_MATCH_TIME.value = 2
+DARK_REF_MATCH_TIME = DARK_REF_MATCH_TIME.copy(__NAME__)
+DARK_REF_MATCH_TIME.value = 2
 
-#   median filter size for dark master
-DARK_MASTER_MED_SIZE = DARK_MASTER_MED_SIZE.copy(__NAME__)
-DARK_MASTER_MED_SIZE.value = 4
+#   median filter size for dark reference
+DARK_REF_MED_SIZE = DARK_REF_MED_SIZE.copy(__NAME__)
+DARK_REF_MED_SIZE.value = 4
 
-# define the maximum number of files to use in the dark master
-DARK_MASTER_MAX_FILES = DARK_MASTER_MAX_FILES.copy(__NAME__)
-DARK_MASTER_MAX_FILES.value = 100
+# define the maximum number of files to use in the dark reference
+DARK_REF_MAX_FILES = DARK_REF_MAX_FILES.copy(__NAME__)
+DARK_REF_MAX_FILES.value = 100
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
@@ -789,62 +789,62 @@ LOC_PLOT_CORNER_YZOOM2.value = '600, 600, 3100, 3100'
 # =============================================================================
 # CALIBRATION: SHAPE SETTINGS
 # =============================================================================
-#    Define the allowed DPRTYPES for finding files for DARK_MASTER will
+#    Define the allowed DPRTYPES for finding files for DARK_REF will
 #        only find those types define by 'filetype' but 'filetype' must
 #        be one of theses (strings separated by commas)
 ALLOWED_FP_TYPES = ALLOWED_FP_TYPES.copy(__NAME__)
 ALLOWED_FP_TYPES.value = 'FP_FP'
 
 #   Define the maximum time span to combine dark files over (in hours)
-FP_MASTER_MATCH_TIME = FP_MASTER_MATCH_TIME.copy(__NAME__)
-FP_MASTER_MATCH_TIME.value = 2
+FP_REF_MATCH_TIME = FP_REF_MATCH_TIME.copy(__NAME__)
+FP_REF_MATCH_TIME.value = 2
 
 #   Define the percentile at which the FPs are normalised when getting the
-#      fp master in shape master
-FP_MASTER_PERCENT_THRES = FP_MASTER_PERCENT_THRES.copy(__NAME__)
-FP_MASTER_PERCENT_THRES.value = 95.0
+#      fp reference in shape reference
+FP_REF_PERCENT_THRES = FP_REF_PERCENT_THRES.copy(__NAME__)
+FP_REF_PERCENT_THRES.value = 95.0
 
 #  Define the largest standard deviation allowed for the shift in
-#     x or y when doing the shape master fp linear transform
+#     x or y when doing the shape reference fp linear transform
 SHAPE_QC_LTRANS_RES_THRES = SHAPE_QC_LTRANS_RES_THRES.copy(__NAME__)
 SHAPE_QC_LTRANS_RES_THRES.value = 0.22
 
-# define the maximum number of files to use in the shape master
-SHAPE_MASTER_MAX_FILES = SHAPE_MASTER_MAX_FILES.copy(__NAME__)
-SHAPE_MASTER_MAX_FILES.value = 100
+# define the maximum number of files to use in the shape reference
+SHAPE_REF_MAX_FILES = SHAPE_REF_MAX_FILES.copy(__NAME__)
+SHAPE_REF_MAX_FILES.value = 100
 
 #  Define the percentile which defines a true FP peak [0-100]
-SHAPE_MASTER_VALIDFP_PERCENTILE = SHAPE_MASTER_VALIDFP_PERCENTILE.copy(__NAME__)
-SHAPE_MASTER_VALIDFP_PERCENTILE.value = 95
+SHAPE_REF_VALIDFP_PERCENTILE = SHAPE_REF_VALIDFP_PERCENTILE.copy(__NAME__)
+SHAPE_REF_VALIDFP_PERCENTILE.value = 95
 
 #  Define the fractional flux an FP much have compared to its neighbours
-SHAPE_MASTER_VALIDFP_THRESHOLD = SHAPE_MASTER_VALIDFP_THRESHOLD.copy(__NAME__)
-SHAPE_MASTER_VALIDFP_THRESHOLD.value = 1.5
+SHAPE_REF_VALIDFP_THRESHOLD = SHAPE_REF_VALIDFP_THRESHOLD.copy(__NAME__)
+SHAPE_REF_VALIDFP_THRESHOLD.value = 1.5
 
 #  Define the number of iterations used to get the linear transform params
-SHAPE_MASTER_LINTRANS_NITER = SHAPE_MASTER_LINTRANS_NITER.copy(__NAME__)
-SHAPE_MASTER_LINTRANS_NITER.value = 5
+SHAPE_REF_LINTRANS_NITER = SHAPE_REF_LINTRANS_NITER.copy(__NAME__)
+SHAPE_REF_LINTRANS_NITER.value = 5
 
 #  Define the initial search box size (in pixels) around the fp peaks
-SHAPE_MASTER_FP_INI_BOXSIZE = SHAPE_MASTER_FP_INI_BOXSIZE.copy(__NAME__)
-SHAPE_MASTER_FP_INI_BOXSIZE.value = 11
+SHAPE_REF_FP_INI_BOXSIZE = SHAPE_REF_FP_INI_BOXSIZE.copy(__NAME__)
+SHAPE_REF_FP_INI_BOXSIZE.value = 11
 
 #  Define the small search box size (in pixels) around the fp peaks
-SHAPE_MASTER_FP_SMALL_BOXSIZE = SHAPE_MASTER_FP_SMALL_BOXSIZE.copy(__NAME__)
-SHAPE_MASTER_FP_SMALL_BOXSIZE.value = 2
+SHAPE_REF_FP_SMALL_BOXSIZE = SHAPE_REF_FP_SMALL_BOXSIZE.copy(__NAME__)
+SHAPE_REF_FP_SMALL_BOXSIZE.value = 2
 
 #  Define the minimum number of FP files in a group to mean group is valid
-SHAPE_FP_MASTER_MIN_IN_GROUP = SHAPE_FP_MASTER_MIN_IN_GROUP.copy(__NAME__)
-SHAPE_FP_MASTER_MIN_IN_GROUP.value = 3
+SHAPE_FP_REF_MIN_IN_GROUP = SHAPE_FP_REF_MIN_IN_GROUP.copy(__NAME__)
+SHAPE_FP_REF_MIN_IN_GROUP.value = 3
 
 #  Define which fiber should be used for fiber-dependent calibrations in
-#     shape master
-SHAPE_MASTER_FIBER = SHAPE_MASTER_FIBER.copy(__NAME__)
-SHAPE_MASTER_FIBER.value = 'A'
+#     shape reference
+SHAPE_REF_FIBER = SHAPE_REF_FIBER.copy(__NAME__)
+SHAPE_REF_FIBER.value = 'A'
 
-#  Define the shape master dx rms quality control criteria (per order)
-SHAPE_MASTER_DX_RMS_QC = SHAPE_MASTER_DX_RMS_QC.copy(__NAME__)
-SHAPE_MASTER_DX_RMS_QC.value = 0.3
+#  Define the shape reference dx rms quality control criteria (per order)
+SHAPE_REF_DX_RMS_QC = SHAPE_REF_DX_RMS_QC.copy(__NAME__)
+SHAPE_REF_DX_RMS_QC.value = 0.3
 
 # The number of iterations to run the shape finding out to
 SHAPE_NUM_ITERATIONS = SHAPE_NUM_ITERATIONS.copy(__NAME__)
@@ -1056,19 +1056,19 @@ FF_PLOT_ORDER.value = 4
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
-# Define the types of input file allowed by the leakage master recipe
-ALLOWED_LEAKM_TYPES = ALLOWED_LEAKM_TYPES.copy(__NAME__)
-ALLOWED_LEAKM_TYPES.value = 'DARK_FP'
+# Define the types of input file allowed by the leakage reference recipe
+ALLOWED_LEAKREF_TYPES = ALLOWED_LEAKREF_TYPES.copy(__NAME__)
+ALLOWED_LEAKREF_TYPES.value = 'DARK_FP'
 
-# define whether to always extract leak master files
+# define whether to always extract leak reference files
 #      (i.e. overwrite existing files)
-LEAKM_ALWAYS_EXTRACT = LEAKM_ALWAYS_EXTRACT.copy(__NAME__)
-LEAKM_ALWAYS_EXTRACT.value = False
+LEAKREF_ALWAYS_EXTRACT = LEAKREF_ALWAYS_EXTRACT.copy(__NAME__)
+LEAKREF_ALWAYS_EXTRACT.value = False
 
-# define the type of file to use for leak master solution
+# define the type of file to use for leak reference solution
 #    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
-LEAKM_EXTRACT_TYPE = LEAKM_EXTRACT_TYPE.copy(__NAME__)
-LEAKM_EXTRACT_TYPE.value = 'E2DSFF'
+LEAKREF_EXTRACT_TYPE = LEAKREF_EXTRACT_TYPE.copy(__NAME__)
+LEAKREF_EXTRACT_TYPE.value = 'E2DSFF'
 
 # Define whether we want to correct leakage by default
 CORRECT_LEAKAGE = CORRECT_LEAKAGE.copy(__NAME__)
@@ -1080,7 +1080,7 @@ LEAKAGE_REF_TYPES.value = 'FP'
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
-#     must match with LEAKM_EXTRACT_TYPE
+#     must match with LEAKREF_EXTRACT_TYPE
 LEAK_EXTRACT_FILE = LEAK_EXTRACT_FILE.copy(__NAME__)
 LEAK_EXTRACT_FILE.value = 'E2DSFF_FILE'
 
@@ -1092,21 +1092,21 @@ LEAK_2D_EXTRACT_FILES.value = 'E2DS_FILE, E2DSFF_FILE'
 LEAK_1D_EXTRACT_FILES = LEAK_1D_EXTRACT_FILES.copy(__NAME__)
 LEAK_1D_EXTRACT_FILES.value = 'S1D_W_FILE, S1D_V_FILE'
 
-# define the thermal background percentile for the leak and leak master
+# define the thermal background percentile for the leak and leak reference
 LEAK_BCKGRD_PERCENTILE = LEAK_BCKGRD_PERCENTILE.copy(__NAME__)
 LEAK_BCKGRD_PERCENTILE.value = 5
 
-# define the normalisation perentile for the leak and leak master
+# define the normalisation perentile for the leak and leak reference
 LEAK_NORM_PERCENTILE = LEAK_NORM_PERCENTILE.copy(__NAME__)
 LEAK_NORM_PERCENTILE.value = 90
 
-# define the e-width of the smoothing kernel for leak master
-LEAKM_WSMOOTH = LEAKM_WSMOOTH.copy(__NAME__)
-LEAKM_WSMOOTH.value = 15
+# define the e-width of the smoothing kernel for leak reference
+LEAKREF_WSMOOTH = LEAKREF_WSMOOTH.copy(__NAME__)
+LEAKREF_WSMOOTH.value = 15
 
-# define the kernal size for leak master
-LEAKM_KERSIZE = LEAKM_KERSIZE.copy(__NAME__)
-LEAKM_KERSIZE.value = 3
+# define the kernal size for leak reference
+LEAKREF_KERSIZE = LEAKREF_KERSIZE.copy(__NAME__)
+LEAKREF_KERSIZE.value = 3
 
 # define the lower bound percentile for leak correction
 LEAK_LOW_PERCENTILE = LEAK_LOW_PERCENTILE.copy(__NAME__)
@@ -1245,10 +1245,10 @@ EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1200, 1210, 1300, 1800'
 # =============================================================================
 # CALIBRATION: WAVE EA GENERAL SETTINGS
 # =============================================================================
-# Define wave master fiber (controller fiber)
-WAVE_MASTER_FIBER = WAVE_MASTER_FIBER.copy(__NAME__)
-WAVE_MASTER_FIBER.value = 'A'
-WAVE_MASTER_FIBER.author = base.AUTHORS['NJC']
+# Define wave reference fiber (controller fiber)
+WAVE_REF_FIBER = WAVE_REF_FIBER.copy(__NAME__)
+WAVE_REF_FIBER.value = 'A'
+WAVE_REF_FIBER.author = base.AUTHORS['NJC']
 
 # Define the initial value of FP effective cavity width 2xd in nm
 WAVE_GUESS_CAVITY_WIDTH = WAVE_GUESS_CAVITY_WIDTH.copy(__NAME__)
@@ -1375,7 +1375,7 @@ WAVEREF_FP_FIBTYPES = WAVEREF_FP_FIBTYPES.copy(__NAME__)
 WAVEREF_FP_FIBTYPES.value = 'FP'
 WAVEREF_FP_FIBTYPES.author = base.AUTHORS['NJC']
 
-# get the degree to fix master wavelength to in hc mode
+# get the degree to fix reference wavelength to in hc mode
 WAVEREF_FITDEG = WAVEREF_FITDEG.copy(__NAME__)
 WAVEREF_FITDEG.value = 5
 WAVEREF_FITDEG.author = base.AUTHORS['EA']
@@ -1400,11 +1400,11 @@ WAVEREF_HC_GUESS_EWID = WAVEREF_HC_GUESS_EWID.copy(__NAME__)
 WAVEREF_HC_GUESS_EWID.value = 1
 WAVEREF_HC_GUESS_EWID.author = base.AUTHORS['EA']
 
-# Define the fiber offset (in pixels) away from master fiber
+# Define the fiber offset (in pixels) away from reference fiber
 WAVE_FIBER_OFFSET_MOD = WAVE_FIBER_OFFSET_MOD.copy(__NAME__)
 WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":-24.0}'
 
-# Define the fiber scale factor from master fiber
+# Define the fiber scale factor from reference fiber
 WAVE_FIBER_SCALE_MOD = WAVE_FIBER_SCALE_MOD.copy(__NAME__)
 WAVE_FIBER_SCALE_MOD.value = '{"A":1.0,"B":1.0}'
 
@@ -1508,7 +1508,7 @@ WAVE_CCF_N_ORD_MAX = WAVE_CCF_N_ORD_MAX.copy(__NAME__)
 WAVE_CCF_N_ORD_MAX.value = 48
 
 #  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
-#      update the cavity width in the master wave solution recipe
+#      update the cavity width in the reference wave solution recipe
 WAVE_CCF_UPDATE_MASK = WAVE_CCF_UPDATE_MASK.copy(__NAME__)
 WAVE_CCF_UPDATE_MASK.value = True
 
@@ -1538,7 +1538,7 @@ WAVE_CCF_SMART_MASK_TRIAL_NMAX.value = 27000
 WAVE_CCF_SMART_MASK_DWAVE_THRES = WAVE_CCF_SMART_MASK_DWAVE_THRES.copy(__NAME__)
 WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
 
-# define the quality control threshold from RV of CCF FP between master
+# define the quality control threshold from RV of CCF FP between reference
 #    fiber and other fibers, above this limit fails QC [m/s]
 #  For HE there is an offset between A and B - this will be a high value
 # TODO: We should really think about this a bit more

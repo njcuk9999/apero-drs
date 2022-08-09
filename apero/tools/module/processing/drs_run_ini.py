@@ -47,11 +47,11 @@ IndexDatabase = drs_database.IndexDatabase
 ObjectDatabase = drs_database.ObjectDatabase
 # get text entry instance
 textentry = lang.textentry
-# define default master dir
-DEFAULT_MASTER_OBSDIR = dict()
-DEFAULT_MASTER_OBSDIR['SPIROU'] = '2020-08-31'
-DEFAULT_MASTER_OBSDIR['NIRPS_HA'] = '2022-05-17'
-DEFAULT_MASTER_OBSDIR['NIRPS_HE'] = '2022-05-17'
+# define default reference dir
+DEFAULT_REF_OBSDIR = dict()
+DEFAULT_REF_OBSDIR['SPIROU'] = '2020-08-31'
+DEFAULT_REF_OBSDIR['NIRPS_HA'] = '2022-05-17'
+DEFAULT_REF_OBSDIR['NIRPS_HE'] = '2022-05-17'
 # define default number of cores
 DEFAULT_CORES = 5
 # define relative output path
@@ -61,7 +61,7 @@ TEMPLATE = 'tools/resources/run_ini/run_{instrument}.ini'
 # define groups of recipes
 GROUPS = dict()
 GROUPS['preprocessing'] = ['pre']
-GROUPS['master calibration'] = ['calib-master']
+GROUPS['reference calibration'] = ['calib-reference']
 GROUPS['night calibration'] = ['calib-night']
 GROUPS['extraction'] = ['extract']
 GROUPS['telluric'] = ['tellu']
@@ -91,7 +91,7 @@ class RunIniFile:
         self.rkey('VERSION', __version__)
         self.rkey('DATE', __date__)
         self.rkey('RUN_NAME', 'Run {0}'.format(self.name))
-        self.rkey('MASTER_OBS_DIR', DEFAULT_MASTER_OBSDIR[self.instrument])
+        self.rkey('REF_OBS_DIR', DEFAULT_REF_OBSDIR[self.instrument])
         self.rkey('CORES', DEFAULT_CORES)
         # storage of recipes and sequences
         self.recipes = []

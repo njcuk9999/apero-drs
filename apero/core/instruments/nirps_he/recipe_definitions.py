@@ -90,15 +90,15 @@ blazefile = dict(name='--blazefile', dtype='file', default='None',
                  helpstr=textentry('BLAZEFILE_HELP'))
 # -----------------------------------------------------------------------------
 darkfile = dict(name='--darkfile', dtype='file', default='None',
-                files=[files.out_dark_master],
+                files=[files.out_dark_ref],
                 helpstr=textentry('DARKFILE_HELP'))
 # -----------------------------------------------------------------------------
 flatfile = dict(name='--flatfile', dtype='file', default='None',
                 files=[files.out_ff_flat], helpstr=textentry('FLATFILE_HELP'))
 # -----------------------------------------------------------------------------
-fpmaster = dict(name='--fpmaster', dtype='file', default='None',
-                files=[files.out_shape_fpmaster],
-                helpstr=textentry('FPMASTERFILE_HELP'))
+fpref = dict(name='--fpref', dtype='file', default='None',
+             files=[files.out_shape_fpref],
+             helpstr=textentry('FPREFFILE_HELP'))
 # -----------------------------------------------------------------------------
 locofile = dict(name='--locofile', dtype='file', default='None',
                 files=[files.out_loc_loco], helpstr=textentry('LOCOFILE_HELP'))
@@ -121,7 +121,7 @@ shapelfile = dict(name='--shapel', dtype='file', default='None',
 # -----------------------------------------------------------------------------
 wavefile = dict(name='--wavefile', dtype='file', default='None',
                 files=[files.out_wavem_sol, files.out_wave_night,
-                       files.out_wave_master],
+                       files.out_wave_default_ref],
                 helpstr=textentry('WAVEFILE_HELP'))
 
 # =============================================================================
@@ -166,28 +166,28 @@ raw_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # -----------------------------------------------------------------------------
-# apero_pp_master
+# apero_pp_ref
 # -----------------------------------------------------------------------------
-apero_pp_master = DrsRecipe(__INSTRUMENT__)
-apero_pp_master.name = 'apero_pp_master_{0}.py'.format(INSTRUMENT_ALIAS)
-apero_pp_master.shortname = 'PPM'
-apero_pp_master.instrument = __INSTRUMENT__
-apero_pp_master.in_block_str = 'raw'
-apero_pp_master.out_block_str = 'red'
-apero_pp_master.extension = 'fits'
-apero_pp_master.master = True
-apero_pp_master.description = textentry('PPMASTER_DESC')
-apero_pp_master.epilog = textentry('PPMASTER_EXAMPLE')
-apero_pp_master.recipe_type = 'recipe'
-apero_pp_master.recipe_kind = 'pre-master'
-apero_pp_master.set_outputs(PP_MASTER=files.out_pp_master)
-apero_pp_master.set_arg(pos=0, **obs_dir)
-apero_pp_master.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
-                        helpstr=textentry('PPMASTER_FILETYPE_HELP'))
-apero_pp_master.group_func = grouping.no_group
-apero_pp_master.group_column = None
+apero_pp_ref = DrsRecipe(__INSTRUMENT__)
+apero_pp_ref.name = 'apero_PP_REF_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_pp_ref.shortname = 'PPREF'
+apero_pp_ref.instrument = __INSTRUMENT__
+apero_pp_ref.in_block_str = 'raw'
+apero_pp_ref.out_block_str = 'red'
+apero_pp_ref.extension = 'fits'
+apero_pp_ref.reference = True
+apero_pp_ref.description = textentry('PP_REF_DESC')
+apero_pp_ref.epilog = textentry('PP_REF_EXAMPLE')
+apero_pp_ref.recipe_type = 'recipe'
+apero_pp_ref.recipe_kind = 'pre-reference'
+apero_pp_ref.set_outputs(PP_REF=files.out_pp_ref)
+apero_pp_ref.set_arg(pos=0, **obs_dir)
+apero_pp_ref.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
+                       helpstr=textentry('PP_REF_FILETYPE_HELP'))
+apero_pp_ref.group_func = grouping.no_group
+apero_pp_ref.group_column = None
 # add to recipe
-recipes.append(apero_pp_master)
+recipes.append(apero_pp_ref)
 
 # -----------------------------------------------------------------------------
 # apero_preprocess
@@ -291,31 +291,31 @@ apero_dark.group_column = 'REPROCESS_OBSDIR_COL'
 recipes.append(apero_dark)
 
 # -----------------------------------------------------------------------------
-# apero_dark_master
+# apero_dark_ref
 # -----------------------------------------------------------------------------
-apero_dark_master = DrsRecipe(__INSTRUMENT__)
-apero_dark_master.name = 'apero_dark_master_{0}.py'.format(INSTRUMENT_ALIAS)
-apero_dark_master.shortname = 'DARKM'
-apero_dark_master.master = True
-apero_dark_master.instrument = __INSTRUMENT__
-apero_dark_master.in_block_str = 'tmp'
-apero_dark_master.out_block_str = 'red'
-apero_dark_master.extension = 'fits'
-apero_dark_master.description = textentry('DARK_MASTER_DESC')
-apero_dark_master.epilog = textentry('DARK_MASTER_EXAMPLE')
-apero_dark_master.recipe_type = 'recipe'
-apero_dark_master.recipe_kind = 'calib-master'
-apero_dark_master.calib_required = True
-apero_dark_master.set_outputs(DARK_MASTER_FILE=files.out_dark_master)
-apero_dark_master.set_kwarg(name='--filetype', dtype=str,
-                            default='DARK_DARK',
-                            helpstr=textentry('DARK_MASTER_FILETYPE'))
-apero_dark_master.set_kwarg(**add_db)
-apero_dark_master.set_kwarg(**plot)
-apero_dark_master.group_func = grouping.no_group
-apero_dark_master.group_column = None
+apero_dark_ref = DrsRecipe(__INSTRUMENT__)
+apero_dark_ref.name = 'apero_dark_ref_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_dark_ref.shortname = 'DARKREF'
+apero_dark_ref.reference = True
+apero_dark_ref.instrument = __INSTRUMENT__
+apero_dark_ref.in_block_str = 'tmp'
+apero_dark_ref.out_block_str = 'red'
+apero_dark_ref.extension = 'fits'
+apero_dark_ref.description = textentry('DARK_REF_DESC')
+apero_dark_ref.epilog = textentry('DARK_REF_EXAMPLE')
+apero_dark_ref.recipe_type = 'recipe'
+apero_dark_ref.recipe_kind = 'calib-reference'
+apero_dark_ref.calib_required = True
+apero_dark_ref.set_outputs(DARK_REF_FILE=files.out_dark_ref)
+apero_dark_ref.set_kwarg(name='--filetype', dtype=str,
+                         default='DARK_DARK',
+                         helpstr=textentry('DARK_REF_FILETYPE'))
+apero_dark_ref.set_kwarg(**add_db)
+apero_dark_ref.set_kwarg(**plot)
+apero_dark_ref.group_func = grouping.no_group
+apero_dark_ref.group_column = None
 # add to recipe
-recipes.append(apero_dark_master)
+recipes.append(apero_dark_ref)
 
 # -----------------------------------------------------------------------------
 # apero_loc
@@ -363,61 +363,61 @@ apero_loc.group_column = 'REPROCESS_OBSDIR_COL'
 recipes.append(apero_loc)
 
 # -----------------------------------------------------------------------------
-# apero_shape_master
+# apero_shape_ref
 # -----------------------------------------------------------------------------
-apero_shape_master = DrsRecipe(__INSTRUMENT__)
-apero_shape_master.name = 'apero_shape_master_{0}.py'.format(INSTRUMENT_ALIAS)
-apero_shape_master.shortname = 'SHAPEM'
-apero_shape_master.master = True
-apero_shape_master.instrument = __INSTRUMENT__
-apero_shape_master.in_block_str = 'tmp'
-apero_shape_master.out_block_str = 'red'
-apero_shape_master.extension = 'fits'
-apero_shape_master.description = textentry('SHAPE_DESC')
-apero_shape_master.epilog = textentry('SHAPEMASTER_EXAMPLE')
-apero_shape_master.recipe_type = 'recipe'
-apero_shape_master.recipe_kind = 'calib-master'
-apero_shape_master.calib_required = True
-apero_shape_master.set_outputs(FPMASTER_FILE=files.out_shape_fpmaster,
-                             DXMAP_FILE=files.out_shape_dxmap,
-                             DYMAP_FILE=files.out_shape_dymap,
-                             SHAPE_IN_FP_FILE=files.out_shape_debug_ifp,
-                             SHAPE_OUT_FP_FILE=files.out_shape_debug_ofp,
-                             SHAPE_BDXMAP_FILE=files.out_shape_debug_bdx,
-                             DEBUG_BACK=files.debug_back)
-apero_shape_master.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
+apero_shape_ref = DrsRecipe(__INSTRUMENT__)
+apero_shape_ref.name = 'apero_shape_ref_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_shape_ref.shortname = 'SHAPEREF'
+apero_shape_ref.reference = True
+apero_shape_ref.instrument = __INSTRUMENT__
+apero_shape_ref.in_block_str = 'tmp'
+apero_shape_ref.out_block_str = 'red'
+apero_shape_ref.extension = 'fits'
+apero_shape_ref.description = textentry('SHAPE_DESC')
+apero_shape_ref.epilog = textentry('SHAPEREF_EXAMPLE')
+apero_shape_ref.recipe_type = 'recipe'
+apero_shape_ref.recipe_kind = 'calib-reference'
+apero_shape_ref.calib_required = True
+apero_shape_ref.set_outputs(FPREF_FILE=files.out_shape_fpref,
+                            DXMAP_FILE=files.out_shape_dxmap,
+                            DYMAP_FILE=files.out_shape_dymap,
+                            SHAPE_IN_FP_FILE=files.out_shape_debug_ifp,
+                            SHAPE_OUT_FP_FILE=files.out_shape_debug_ofp,
+                            SHAPE_BDXMAP_FILE=files.out_shape_debug_bdx,
+                            DEBUG_BACK=files.debug_back)
+apero_shape_ref.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
                                  'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
-apero_shape_master.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
-apero_shape_master.set_arg(pos=0, **obs_dir)
-apero_shape_master.set_kwarg(name='--fpfiles', dtype='files',
-                             files=[files.pp_fp_fp],
-                             filelogic='exclusive', required=True,
-                             helpstr=textentry('SHAPE_FPFILES_HELP'), default=[])
-# apero_shape_master.set_kwarg(name='--hcfiles', dtype='files',
+apero_shape_ref.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
+apero_shape_ref.set_arg(pos=0, **obs_dir)
+apero_shape_ref.set_kwarg(name='--fpfiles', dtype='files',
+                          files=[files.pp_fp_fp],
+                          filelogic='exclusive', required=True,
+                          helpstr=textentry('SHAPE_FPFILES_HELP'), default=[])
+# apero_shape_ref.set_kwarg(name='--hcfiles', dtype='files',
 #                              files=[files.pp_hc1_hc1],
 #                              filelogic='exclusive', required=True,
 #                              helpstr=textentry('SHAPE_HCFILES_HELP'), default=[])
-apero_shape_master.set_kwarg(**add_db)
-apero_shape_master.set_kwarg(**badfile)
-apero_shape_master.set_kwarg(**dobad)
-apero_shape_master.set_kwarg(**backsub)
-apero_shape_master.set_kwarg(default=True, **combine)
-apero_shape_master.set_kwarg(**darkfile)
-apero_shape_master.set_kwarg(**dodark)
-apero_shape_master.set_kwarg(**flipimage)
-apero_shape_master.set_kwarg(**fluxunits)
-apero_shape_master.set_kwarg(**locofile)
-apero_shape_master.set_kwarg(**plot)
-apero_shape_master.set_kwarg(**resize)
-apero_shape_master.set_min_nfiles('fpfiles', 1)
-apero_shape_master.set_min_nfiles('hcfiles', 1)
-apero_shape_master.set_kwarg(name='--fpmaster', dtype='files',
-                             files=[files.out_shape_fpmaster], default='None',
-                             helpstr=textentry('SHAPE_FPMASTER_HELP'))
-apero_shape_master.group_func = grouping.group_by_dirname
-apero_shape_master.group_column = 'REPROCESS_OBSDIR_COL'
+apero_shape_ref.set_kwarg(**add_db)
+apero_shape_ref.set_kwarg(**badfile)
+apero_shape_ref.set_kwarg(**dobad)
+apero_shape_ref.set_kwarg(**backsub)
+apero_shape_ref.set_kwarg(default=True, **combine)
+apero_shape_ref.set_kwarg(**darkfile)
+apero_shape_ref.set_kwarg(**dodark)
+apero_shape_ref.set_kwarg(**flipimage)
+apero_shape_ref.set_kwarg(**fluxunits)
+apero_shape_ref.set_kwarg(**locofile)
+apero_shape_ref.set_kwarg(**plot)
+apero_shape_ref.set_kwarg(**resize)
+apero_shape_ref.set_min_nfiles('fpfiles', 1)
+apero_shape_ref.set_min_nfiles('hcfiles', 1)
+apero_shape_ref.set_kwarg(name='--fpref', dtype='files',
+                          files=[files.out_shape_fpref], default='None',
+                          helpstr=textentry('SHAPE_FPREF_HELP'))
+apero_shape_ref.group_func = grouping.group_by_dirname
+apero_shape_ref.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
-recipes.append(apero_shape_master)
+recipes.append(apero_shape_ref)
 
 # -----------------------------------------------------------------------------
 # apero_shape
@@ -452,7 +452,7 @@ apero_shape.set_kwarg(**darkfile)
 apero_shape.set_kwarg(**dodark)
 apero_shape.set_kwarg(**flipimage)
 apero_shape.set_kwarg(**fluxunits)
-apero_shape.set_kwarg(**fpmaster)
+apero_shape.set_kwarg(**fpref)
 apero_shape.set_kwarg(**plot)
 apero_shape.set_kwarg(**resize)
 apero_shape.set_kwarg(**shapexfile)
@@ -515,33 +515,33 @@ apero_flat.group_column = 'REPROCESS_OBSDIR_COL'
 recipes.append(apero_flat)
 
 # -----------------------------------------------------------------------------
-# apero_leak_master
+# apero_leak_ref
 # -----------------------------------------------------------------------------
-apero_leak_master = DrsRecipe(__INSTRUMENT__)
-apero_leak_master.name = 'apero_leak_master_{0}.py'.format(INSTRUMENT_ALIAS)
-apero_leak_master.shortname = 'LEAKM'
-apero_leak_master.master = True
-apero_leak_master.instrument = __INSTRUMENT__
-apero_leak_master.in_block_str = 'tmp'
-apero_leak_master.out_block_str = 'red'
-apero_leak_master.extension = 'fits'
-apero_leak_master.description = textentry('LEAKM_DESC')
-apero_leak_master.epilog = textentry('LEAKM_EXAMPLE')
-apero_leak_master.recipe_type = 'recipe'
-apero_leak_master.recipe_kind = 'calib-master'
-apero_leak_master.calib_required = False
-apero_leak_master.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2ds,
-                              LEAK_MASTER=files.out_leak_master)
-apero_leak_master.set_flags(INT_EXT=True, EXT_FOUND=False)
-apero_leak_master.set_arg(pos=0, **obs_dir)
-apero_leak_master.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
-                            helpstr=textentry('LEAKM_HELP_FILETYPE'))
-apero_leak_master.set_kwarg(**add_db)
-apero_leak_master.set_kwarg(**plot)
-apero_leak_master.group_func = grouping.no_group
-apero_leak_master.group_column = None
+apero_leak_ref = DrsRecipe(__INSTRUMENT__)
+apero_leak_ref.name = 'apero_leak_ref_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_leak_ref.shortname = 'LEAKREF'
+apero_leak_ref.reference = True
+apero_leak_ref.instrument = __INSTRUMENT__
+apero_leak_ref.in_block_str = 'tmp'
+apero_leak_ref.out_block_str = 'red'
+apero_leak_ref.extension = 'fits'
+apero_leak_ref.description = textentry('LEAKREF_DESC')
+apero_leak_ref.epilog = textentry('LEAKREF_EXAMPLE')
+apero_leak_ref.recipe_type = 'recipe'
+apero_leak_ref.recipe_kind = 'calib-reference'
+apero_leak_ref.calib_required = False
+apero_leak_ref.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2ds,
+                           LEAK_REF=files.out_LEAK_REF)
+apero_leak_ref.set_flags(INT_EXT=True, EXT_FOUND=False)
+apero_leak_ref.set_arg(pos=0, **obs_dir)
+apero_leak_ref.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
+                         helpstr=textentry('LEAKREF_HELP_FILETYPE'))
+apero_leak_ref.set_kwarg(**add_db)
+apero_leak_ref.set_kwarg(**plot)
+apero_leak_ref.group_func = grouping.no_group
+apero_leak_ref.group_column = None
 # add to recipe
-recipes.append(apero_leak_master)
+recipes.append(apero_leak_ref)
 
 # -----------------------------------------------------------------------------
 # apero_extract
@@ -608,83 +608,83 @@ apero_extract.set_kwarg(name='--leakcorr', dtype='bool', default=True,
                         helpstr=textentry('LEAKCORR_HELP'),
                         default_ref='CORRECT_LEAKAGE')
 apero_extract.set_kwarg(**wavefile)
-apero_extract.set_kwarg(name='--force_master_wave', dtype='bool',
+apero_extract.set_kwarg(name='--force_ref_wave', dtype='bool',
                         default=False,
-                        helpstr='Force using the master wave solution')
+                        helpstr='Force using the reference wave solution')
 apero_extract.group_func = grouping.group_individually
 apero_extract.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(apero_extract)
 
 # -----------------------------------------------------------------------------
-# apero_wave_master
+# apero_wave_ref
 # -----------------------------------------------------------------------------
-apero_wave_master = DrsRecipe(__INSTRUMENT__)
-apero_wave_master.name = 'apero_wave_master_{0}.py'.format(INSTRUMENT_ALIAS)
-apero_wave_master.shortname = 'WAVEM'
-apero_wave_master.instrument = __INSTRUMENT__
-apero_wave_master.in_block_str = 'tmp'
-apero_wave_master.out_block_str = 'red'
-apero_wave_master.extension = 'fits'
-apero_wave_master.description = textentry('WAVE_DESC')
-apero_wave_master.epilog = textentry('WAVE_EXAMPLE')
-apero_wave_master.recipe_type = 'recipe'
-apero_wave_master.recipe_kind = 'calib-master'
-apero_wave_master.calib_required = True
-apero_wave_master.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
-                              WAVESOL_MASTER=files.out_wavem_sol,
-                              WAVEM_CAVITY=files.out_wavem_cavity,
-                              WAVEM_HCLIST=files.out_wave_hclist_master,
-                              WAVEM_FPLIST=files.out_wave_fplist_master,
-                              WAVEM_RES=files.out_wavem_res,
-                              CCF_RV=files.out_ccf_fits)
-apero_wave_master.set_flags(INT_EXT=True, EXT_FOUND=False)
-apero_wave_master.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
+apero_wave_ref = DrsRecipe(__INSTRUMENT__)
+apero_wave_ref.name = 'apero_wave_ref_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_wave_ref.shortname = 'WAVEREF'
+apero_wave_ref.instrument = __INSTRUMENT__
+apero_wave_ref.in_block_str = 'tmp'
+apero_wave_ref.out_block_str = 'red'
+apero_wave_ref.extension = 'fits'
+apero_wave_ref.description = textentry('WAVE_DESC')
+apero_wave_ref.epilog = textentry('WAVE_EXAMPLE')
+apero_wave_ref.recipe_type = 'recipe'
+apero_wave_ref.recipe_kind = 'calib-reference'
+apero_wave_ref.calib_required = True
+apero_wave_ref.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
+                           WAVESOL_REF=files.out_wavem_sol,
+                           WAVEREF_CAVITY=files.out_WAVEREF_CAVity,
+                           WAVEM_HCLIST=files.out_wave_hclist_ref,
+                           WAVEM_FPLIST=files.out_wave_fplist_ref,
+                           WAVEM_RES=files.out_wavem_res,
+                           CCF_RV=files.out_ccf_fits)
+apero_wave_ref.set_flags(INT_EXT=True, EXT_FOUND=False)
+apero_wave_ref.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                   'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
                                   'WAVEREF_EXPECTED', 'EXTRACT_S1D',
                                   'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
                                   'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
-apero_wave_master.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
-apero_wave_master.set_arg(pos=0, **obs_dir)
-apero_wave_master.set_kwarg(name='--hcfiles', dtype='files',
-                            files=[files.pp_hc1_hc1],
-                            filelogic='exclusive', required=True,
-                            helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
-apero_wave_master.set_kwarg(name='--fpfiles', dtype='files',
-                            files=[files.pp_fp_fp],
-                            filelogic='exclusive', required=True,
-                            helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
-apero_wave_master.set_kwarg(**add_db)
-apero_wave_master.set_kwarg(**badfile)
-apero_wave_master.set_kwarg(**dobad)
-apero_wave_master.set_kwarg(**backsub)
-apero_wave_master.set_kwarg(**blazefile)
-apero_wave_master.set_kwarg(default=True, **combine)
-apero_wave_master.set_kwarg(**darkfile)
-apero_wave_master.set_kwarg(**dodark)
-apero_wave_master.set_kwarg(**fiber)
-apero_wave_master.set_kwarg(**flipimage)
-apero_wave_master.set_kwarg(**fluxunits)
-apero_wave_master.set_kwarg(**locofile)
-apero_wave_master.set_kwarg(**orderpfile)
-apero_wave_master.set_kwarg(**plot)
-apero_wave_master.set_kwarg(**resize)
-apero_wave_master.set_kwarg(**shapexfile)
-apero_wave_master.set_kwarg(**shapeyfile)
-apero_wave_master.set_kwarg(**shapelfile)
-apero_wave_master.set_kwarg(**wavefile)
-apero_wave_master.set_min_nfiles('fpfiles', 1)
-apero_wave_master.set_min_nfiles('hcfiles', 1)
-apero_wave_master.set_kwarg(name='--forceext', dtype='bool',
-                            default_ref='WAVE_ALWAYS_EXTRACT',
-                            helpstr='WAVE_EXTRACT_HELP')
-apero_wave_master.set_kwarg(name='--cavityfile', dtype='file', default='None',
-                            files=[files.out_wavem_cavity],
-                            helpstr=textentry('WAVEM_CAVFILE_HELP'))
-apero_wave_master.group_func = grouping.group_by_dirname
-apero_wave_master.group_column = 'REPROCESS_OBSDIR_COL'
+apero_wave_ref.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
+apero_wave_ref.set_arg(pos=0, **obs_dir)
+apero_wave_ref.set_kwarg(name='--hcfiles', dtype='files',
+                         files=[files.pp_hc1_hc1],
+                         filelogic='exclusive', required=True,
+                         helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
+apero_wave_ref.set_kwarg(name='--fpfiles', dtype='files',
+                         files=[files.pp_fp_fp],
+                         filelogic='exclusive', required=True,
+                         helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
+apero_wave_ref.set_kwarg(**add_db)
+apero_wave_ref.set_kwarg(**badfile)
+apero_wave_ref.set_kwarg(**dobad)
+apero_wave_ref.set_kwarg(**backsub)
+apero_wave_ref.set_kwarg(**blazefile)
+apero_wave_ref.set_kwarg(default=True, **combine)
+apero_wave_ref.set_kwarg(**darkfile)
+apero_wave_ref.set_kwarg(**dodark)
+apero_wave_ref.set_kwarg(**fiber)
+apero_wave_ref.set_kwarg(**flipimage)
+apero_wave_ref.set_kwarg(**fluxunits)
+apero_wave_ref.set_kwarg(**locofile)
+apero_wave_ref.set_kwarg(**orderpfile)
+apero_wave_ref.set_kwarg(**plot)
+apero_wave_ref.set_kwarg(**resize)
+apero_wave_ref.set_kwarg(**shapexfile)
+apero_wave_ref.set_kwarg(**shapeyfile)
+apero_wave_ref.set_kwarg(**shapelfile)
+apero_wave_ref.set_kwarg(**wavefile)
+apero_wave_ref.set_min_nfiles('fpfiles', 1)
+apero_wave_ref.set_min_nfiles('hcfiles', 1)
+apero_wave_ref.set_kwarg(name='--forceext', dtype='bool',
+                         default_ref='WAVE_ALWAYS_EXTRACT',
+                         helpstr='WAVE_EXTRACT_HELP')
+apero_wave_ref.set_kwarg(name='--cavityfile', dtype='file', default='None',
+                         files=[files.out_WAVEREF_CAVity],
+                         helpstr=textentry('WAVEREF_CAVFILE_HELP'))
+apero_wave_ref.group_func = grouping.group_by_dirname
+apero_wave_ref.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
-recipes.append(apero_wave_master)
+recipes.append(apero_wave_ref)
 
 # -----------------------------------------------------------------------------
 # cal wave night
@@ -939,13 +939,13 @@ recipes.append(apero_mk_template)
 #           recipes can be customised by:
 #           - name (shortname)
 #           - allowed files (the name of the file argument)
-#           - whether a file is in the master sequence (use master obs dir only
+#           - whether a file is in the reference sequence (use reference obs dir only
 #             in cases where normally a recipe would use any night)
 #           - any header keyword reference (value must be set in run file)
 #             i.e. those starting with "KW_"
 #       i.e.
 #
-#       run.add(recipe, name='CUSTOM_RECIPE', master=True,
+#       run.add(recipe, name='CUSTOM_RECIPE', reference=True,
 #               files=[files.file_defintion], KW_HEADER='RUN_FILE_VARIABLE')
 #
 #
@@ -953,37 +953,37 @@ recipes.append(apero_mk_template)
 #           # the below example creates a run called 'run'
 #           # it just extracts OBJ_FP files with OBJECT NAME listed in
 #           #  'SCIENCE_TARGETS' in the runfile
-#           # note as master=True it will only extract from the master obs dir
+#           # note as reference=True it will only extract from the reference obs dir
 #
 #           run = drs_recipe.DrsRunSequence('run', __INSTRUMENT__)
-#           run.add(apero_extract, master=True, files=[files.pp_obj_fp],
+#           run.add(apero_extract, reference=True, files=[files.pp_obj_fp],
 #                   KW_OBJNAME='SCIENCE_TARGETS')
 #
 #
 #  Note: must add sequences to sequences list to be able to use!
 #
 # -----------------------------------------------------------------------------
-# full seqeunce (master + nights)
+# full seqeunce (reference + nights)
 # -----------------------------------------------------------------------------
 full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
-# master run
-full_seq.add(apero_pp_master, recipe_kind='pre-master',
+# reference run
+full_seq.add(apero_pp_ref, recipe_kind='pre-reference',
              arguments=dict(obs_dir='RUN_OBS_DIR'))
 full_seq.add(apero_preprocess, recipe_kind='pre-all')
-full_seq.add(apero_dark_master, master=True)
-full_seq.add(apero_badpix, name='BADM', master=True,
-             recipe_kind='calib-master')
-full_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat], master=True,
-             recipe_kind='calib-master-B')
-full_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark], master=True,
-             recipe_kind='calib-master-A')
-full_seq.add(apero_shape_master, master=True)
-full_seq.add(apero_shape, name='SHAPELM', master=True,
-             recipe_kind='calib-master')
-full_seq.add(apero_flat, name='FLATM', master=True,
-             recipe_kind='calib-master')
-full_seq.add(apero_leak_master, master=True)
-full_seq.add(apero_wave_master, master=True,
+full_seq.add(apero_dark_ref, ref=True)
+full_seq.add(apero_badpix, name='BADREF', ref=True,
+             recipe_kind='calib-reference')
+full_seq.add(apero_loc, name='LOCREFB', files=[files.pp_dark_flat], ref=True,
+             recipe_kind='calib-reference-B')
+full_seq.add(apero_loc, name='LOCREFA', files=[files.pp_flat_dark], ref=True,
+             recipe_kind='calib-reference-A')
+full_seq.add(apero_shape_ref, ref=True)
+full_seq.add(apero_shape, name='SHAPELREF', ref=True,
+             recipe_kind='calib-reference')
+full_seq.add(apero_flat, name='FLATREF', ref=True,
+             recipe_kind='calib-reference')
+full_seq.add(apero_leak_ref, ref=True)
+full_seq.add(apero_wave_ref, ref=True,
              rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
                           fpfiles=[files.pp_fp_fp]))
 # night runs
@@ -1035,27 +1035,27 @@ full_seq.add(apero_fit_tellu, name='FTFIT2',
              template_required=True, recipe_kind='tellu-science')
 
 # -----------------------------------------------------------------------------
-# limited sequence (master + nights)
+# limited sequence (reference + nights)
 # -----------------------------------------------------------------------------
 limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
-# master run
-limited_seq.add(apero_pp_master, recipe_kind='pre-master',
+# reference run
+limited_seq.add(apero_pp_ref, recipe_kind='pre-reference',
                 arguments=dict(obs_dir='RUN_OBS_DIR'))
 limited_seq.add(apero_preprocess, recipe_kind='pre-all')
-limited_seq.add(apero_dark_master, master=True)
-limited_seq.add(apero_badpix, name='BADM', master=True,
-                recipe_kind='calib-master')
-limited_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat],
-                master=True, recipe_kind='calib-master-B')
-limited_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark],
-                master=True, recipe_kind='calib-master-A')
-limited_seq.add(apero_shape_master, master=True)
-limited_seq.add(apero_shape, name='SHAPELM', master=True,
-                recipe_kind='calib-master')
-limited_seq.add(apero_flat, name='FLATM', master=True,
-                recipe_kind='calib-master')
-limited_seq.add(apero_leak_master, master=True)
-limited_seq.add(apero_wave_master, master=True,
+limited_seq.add(apero_dark_ref, ref=True)
+limited_seq.add(apero_badpix, name='BADREF', ref=True,
+                recipe_kind='calib-reference')
+limited_seq.add(apero_loc, name='LOCREFB', files=[files.pp_dark_flat],
+                ref=True, recipe_kind='calib-reference-B')
+limited_seq.add(apero_loc, name='LOCREFA', files=[files.pp_flat_dark],
+                ref=True, recipe_kind='calib-reference-A')
+limited_seq.add(apero_shape_ref, ref=True)
+limited_seq.add(apero_shape, name='SHAPELREF', ref=True,
+                recipe_kind='calib-reference')
+limited_seq.add(apero_flat, name='FLATREF', ref=True,
+                recipe_kind='calib-reference')
+limited_seq.add(apero_leak_ref, ref=True)
+limited_seq.add(apero_wave_ref, ref=True,
                 rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
                              fpfiles=[files.pp_fp_fp]))
 # night runs
@@ -1118,11 +1118,11 @@ limited_seq.add(apero_fit_tellu, name='FTFIT2', recipe_kind='tellu-science',
 # pp sequence (for trigger)
 # -----------------------------------------------------------------------------
 pp_seq = drs_recipe.DrsRunSequence('pp_seq', __INSTRUMENT__)
-pp_seq.add(apero_pp_master, recipe_kind='pre-master')
+pp_seq.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq.add(apero_preprocess)
 
 pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
-pp_seq_opt.add(apero_pp_master, recipe_kind='pre-master')
+pp_seq_opt.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq_opt.add(apero_preprocess, name='PP_CAL', recipe_kind='pre-cal',
                filters=dict(KW_RAW_DPRCATG='CALIB'))
 pp_seq_opt.add(apero_preprocess, name='PP_SCI', recipe_kind='pre-sci',
@@ -1149,26 +1149,26 @@ pp_seq_opt.add(apero_preprocess, name='PP_EFFSKY',
                files=[files.pp_test_dark_dark_sky], recipe_kind='pre-effsky')
 
 # -----------------------------------------------------------------------------
-# master sequence (for trigger)
+# reference sequence (for trigger)
 # -----------------------------------------------------------------------------
-master_seq = drs_recipe.DrsRunSequence('master_seq', __INSTRUMENT__)
-master_seq.add(apero_dark_master, master=True)
-master_seq.add(apero_badpix, name='BADM', master=True,
-               recipe_kind='calib-master')
-master_seq.add(apero_loc, name='LOCMB', files=[files.pp_dark_flat],
-               master=True,
-               recipe_kind='calib-master-B')
-master_seq.add(apero_loc, name='LOCMA', files=[files.pp_flat_dark],
-               master=True,
-               recipe_kind='calib-master-A')
-master_seq.add(apero_shape_master, master=True)
-master_seq.add(apero_shape, name='SHAPELM', master=True,
-               recipe_kind='calib-master')
-master_seq.add(apero_flat, name='FLATM', master=True,
-               recipe_kind='calib-master')
-master_seq.add(apero_leak_master, master=True)
-master_seq.add(apero_wave_master, master=True,
-               rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
+ref_seq = drs_recipe.DrsRunSequence('ref_seq', __INSTRUMENT__)
+ref_seq.add(apero_dark_ref, ref=True)
+ref_seq.add(apero_badpix, name='BADREF', ref=True,
+            recipe_kind='calib-reference')
+ref_seq.add(apero_loc, name='LOCREFB', files=[files.pp_dark_flat],
+            ref=True,
+            recipe_kind='calib-reference-B')
+ref_seq.add(apero_loc, name='LOCREFA', files=[files.pp_flat_dark],
+            ref=True,
+            recipe_kind='calib-reference-A')
+ref_seq.add(apero_shape_ref, ref=True)
+ref_seq.add(apero_shape, name='SHAPELREF', ref=True,
+            recipe_kind='calib-reference')
+ref_seq.add(apero_flat, name='FLATREF', ref=True,
+            recipe_kind='calib-reference')
+ref_seq.add(apero_leak_ref, ref=True)
+ref_seq.add(apero_wave_ref, ref=True,
+            rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
                             fpfiles=[files.pp_fp_fp]))
 
 # -----------------------------------------------------------------------------
@@ -1292,5 +1292,5 @@ eng_seq.add(apero_extract, name='EXT_EFFSKY',
 # -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
-sequences = [pp_seq, pp_seq_opt, full_seq, limited_seq, master_seq, calib_seq,
+sequences = [pp_seq, pp_seq_opt, full_seq, limited_seq, ref_seq, calib_seq,
              tellu_seq, science_seq, quick_seq, blank_seq, eng_seq]

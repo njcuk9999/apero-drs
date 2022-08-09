@@ -211,7 +211,7 @@ def __main__(recipe, params):
                                        database=calibdbm)
         # ------------------------------------------------------------------
         # Load the TAPAS atmospheric transmission convolved with the
-        #   master wave solution (1D spectrum)
+        #   reference wave solution (1D spectrum)
         # ------------------------------------------------------------------
         largs = [header, wprops, fiber]
         tapas_props = telluric.load_conv_tapas(params, recipe, *largs)

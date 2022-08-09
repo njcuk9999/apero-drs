@@ -638,7 +638,7 @@ class PseudoConstants:
     # noinspection PyPep8Naming
     def LOG_CAUGHT_WARNINGS(self) -> bool:
         """
-        Defines a master switch, whether to report warnings that are caught in
+        Defines a reference switch, whether to report warnings that are caught in
 
         >> with warnings.catch_warnings(record=True) as w:
         >>     code_that_may_gen_warnings
@@ -1175,7 +1175,7 @@ class PseudoConstants:
                           is_unique=True)
         calib_columns.add(name='FIBER', datatype='VARCHAR(10)',
                           is_unique=True)
-        calib_columns.add(name='SUPERCAL', datatype='INT',
+        calib_columns.add(name='REFCAL', datatype='INT',
                           is_unique=True)
         calib_columns.add(name='FILENAME', datatype='VARCHAR(200)',
                           is_unique=True)
@@ -1205,7 +1205,7 @@ class PseudoConstants:
                           is_unique=True)
         tellu_columns.add(name='FIBER', datatype='VARCHAR(5)',
                           is_unique=True)
-        tellu_columns.add(name='SUPERCAL', datatype='INT',
+        tellu_columns.add(name='REFCAL', datatype='INT',
                           is_unique=True)
         tellu_columns.add(name='FILENAME', datatype='VARCHAR(200)',
                           is_unique=True)

@@ -657,9 +657,9 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     else:
         # ---------------------------------------------------------------------
         # get the mask from the flat
-        ppmstr = drs_file.get_file_definition(params, 'PPMSTR', block_kind='red')
+        PP_REF = drs_file.get_file_definition(params, 'PP_REF', block_kind='red')
         # get the database key for this file
-        dbkey = ppmstr.dbkey
+        dbkey = PP_REF.dbkey
         # load the database
         calibdbm = drs_database.CalibrationDatabase(params)
         calibdbm.load_db()
@@ -729,9 +729,9 @@ def get_pp_mask(params: ParamDict, header: drs_fits.Header,
     """
     # _ = display_func('.get_pp_mask', __NAME__)
     # get file instance
-    ppmstr = drs_file.get_file_definition(params, 'PPMSTR', block_kind='red')
+    PP_REF = drs_file.get_file_definition(params, 'PP_REF', block_kind='red')
     # get calibration key
-    ppkey = ppmstr.get_dbkey()
+    ppkey = PP_REF.get_dbkey()
     # ---------------------------------------------------------------------
     # load database
     if database is None:
