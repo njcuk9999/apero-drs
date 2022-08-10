@@ -1489,7 +1489,7 @@ def _get_is_super(drsfile: DrsInputFile) -> int:
     if drsfile.outclass is None:
         return 0
     # get reference setting from params
-    is_super = drsfile.outclass.ref
+    is_super = drsfile.outclass.reference
     # change bool to 1 or 0
     # get reference key
     if is_super:
