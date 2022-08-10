@@ -24,7 +24,7 @@ from apero.science.extract import gen_ext as extgen
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_LEAK_REF_nirps_ha.py'
+__NAME__ = 'apero_leak_ref_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -50,7 +50,7 @@ EXTRACT_NAME = 'apero_extract_nirps_ha.py'
 # Everything else is controlled from recipe_definition
 def main(obs_dir=None, **kwargs):
     """
-    Main function for apero_LEAK_REF_spirou.py
+    Main function for apero_leak_ref_spirou.py
 
     :param kwargs: any additional keywords
 
