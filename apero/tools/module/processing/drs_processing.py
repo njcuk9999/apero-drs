@@ -1134,7 +1134,7 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
         # deal with passing reference argument
         if input_recipe.reference:
             dargs = [run_object.runstring, 'True']
-            run_object.runstring = '{0} --reference={1}'.format(*dargs)
+            run_object.runstring = '{0} --ref={1}'.format(*dargs)
         # ---------------------------------------------------------------------
         # add run file to argument
         if not drs_text.null_text(params['INPUTS']['RUNFILE']):

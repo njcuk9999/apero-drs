@@ -1360,7 +1360,7 @@ class DrsRecipe(object):
         --info --usage           Display the recipe usage information
         -- program --prog        Set the program name (for logging)
         --idebug --idb           set ipython return mode
-        --reference                 set whether a recipe is a reference recipe
+        --ref                    set whether a recipe is a reference recipe
         --breakpoints --break    set whether to use breakpoints
         --breakfunc              set whether to break in a certain function
         --quiet -q               set whether to run in queit mode
@@ -1721,7 +1721,7 @@ class DrsRunSequence:
                      i.e. when using apero_dark (shortname=DARK) can have
                      DARK1 and DARK2 in same sequence
         :param ref: bool, if True mark this recipe as a reference sequence
-                    affects skipping and adds the --reference=True argument
+                    affects skipping and adds the --ref=True argument
         :param fiber: str, the fiber allowed for this recipe
         :param arguments: dict, a dictionary of arguments to parse directly
                           to the recipe (i.e. if a recipe has --objname add
