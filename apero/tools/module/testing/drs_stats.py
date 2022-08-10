@@ -470,7 +470,7 @@ def print_timing_stats(params: ParamDict, recipe: str,
     return statstr.replace('\t', '\n').format(**stats)
 
 # =============================================================================
-# Define timing stats functions
+# Define qc stats functions
 # =============================================================================
 def qc_stats(params: ParamDict, recipe: DrsRecipe):
     """
@@ -958,7 +958,7 @@ def _get_qcv(stats: dict, xkey: str, ykey: str, return_mask: bool = False
 
 
 # =============================================================================
-# Define timing stats functions
+# Define error stats functions
 # =============================================================================
 class ErrorReportEntry:
     def __init__(self, loglines, start, end):
@@ -1266,6 +1266,98 @@ def error_stats(params: ParamDict):
             # save to file
             with open(os.path.join(report_dir, codestr + '.log'), 'w') as rfile:
                 rfile.write(lines)
+
+
+# =============================================================================
+# Define memory stats functions
+# =============================================================================
+def memory_stats(params: ParamDict):
+    """
+    Create the memory stats plot
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: None, plots graph
+    """
+    # get log database
+    WLOG(params, '', 'Loading log database')
+    logdbm = drs_database.LogDatabase(params)
+    # set up condition
+    condition = 'RECIPE_TYPE="recipe" AND ENDED=1'
+    columns = ('SHORTNAME, UNIXTIME, RAM_USAGE_START, RAM_USAGE_END, '
+               'START_TIME, END_TIME')
+    # get columns from logdbm
+    ltable = logdbm.get_entries(columns, condition=condition)
+    # -------------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', 'Sorting time axis')
+    # change time into time since start
+    time000 = np.min(ltable['UNIXTIME'])
+    time0 = ltable['UNIXTIME'] - time000
+    # change time to hours
+    time0 = time0 / 3600
+    # change start time and end time into time since start
+    starttime = pd.to_datetime(ltable["START_TIME"]).view("int64") / 10**9
+    starttime = (starttime - time000) / 3600
+    endtime = pd.to_datetime(ltable["END_TIME"]).view("int64") / 10**9
+    endtime = (endtime - time000) / 3600
+    # -------------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', 'Getting recipe start and finish limits')
+    # find start and end points for each recipe
+    shortnames = logdbm.database.unique('SHORTNAME', condition=condition)
+    # get first occurrence of each short name
+    unix_short = []
+    for shortname in shortnames:
+        mask = ltable['SHORTNAME'] == shortname
+        unix_short.append(np.min(starttime[mask]))
+    # resort shortnames by occurence
+    shortnames = shortnames[np.argsort(unix_short)[::-1]]
+    # storage box values
+    shortname_values = dict()
+    # find the first and last entry for each shortname
+    for shortname in shortnames:
+        mask = ltable['SHORTNAME'] == shortname
+        # have to deal with one entry
+        if np.sum(mask) == 1:
+            smed = time0[mask].iloc[0]
+            smin = smed - starttime[mask].iloc[0]
+            smax = endtime[mask].iloc[0] - smed
+        else:
+            smed = np.median(time0[mask])
+            smin = smed - np.min(starttime[mask])
+            smax = np.max(endtime[mask]) - smed
+        shortname_values[shortname] = [smin, smed, smax]
+    # -------------------------------------------------------------------------
+    # length
+    window = len(ltable) // 1000
+    # print progress
+    WLOG(params, '', f'Calculating rolling mean of timings (window={window}')
+    # mean results
+    unixtime = time0.rolling(window=window).mean()
+    ram_start = ltable['RAM_USAGE_START'].rolling(window=window).mean()
+    ram_end = ltable['RAM_USAGE_END'].rolling(window=window).mean()
+    rmax_start = ltable['RAM_USAGE_START'].rolling(window=window).max()
+    rmin_start = ltable['RAM_USAGE_START'].rolling(window=window).min()
+    rmax_end = ltable['RAM_USAGE_END'].rolling(window=window).max()
+    rmin_end = ltable['RAM_USAGE_END'].rolling(window=window).min()
+    # -------------------------------------------------------------------------
+    # remove nans
+    nanmask = np.isfinite(unixtime) & np.isfinite(ram_start)
+    nanmask &= np.isfinite(ram_end)
+    time0 = time0[nanmask]
+    ram_start = ram_start[nanmask]
+    ram_end = ram_end[nanmask]
+    rmax_start = rmax_start[nanmask]
+    rmin_start = rmin_start[nanmask]
+    rmax_end = rmax_end[nanmask]
+    rmin_end = rmin_end[nanmask]
+    # -------------------------------------------------------------------------
+    # plot (more to recipe plots)
+    recipe.plot('STAT_RAM_PLOT', time0=time0, ram_start=ram_start,
+                ram_end=ram_end, rmax_start=rmax_start, rmax_end=rmax_end,
+                rmin_start=rmin_start, rmin_end=rmin_end,
+                shortnames=shortnames, shortname_values=shortname_values)
 
 
 # =============================================================================
