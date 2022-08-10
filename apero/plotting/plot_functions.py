@@ -5695,6 +5695,7 @@ def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
     # get plt
     plt = plotter.plt
     # -------------------------------------------------------------------------
+    # get values from kwargs
     xvalues = kwargs['xvalues']
     yvalues = kwargs['yvalues']
     lvalues = kwargs['lvalues']
@@ -5754,6 +5755,75 @@ def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
+def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Log stats bar plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # -------------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    # -------------------------------------------------------------------------
+    # get values from kwargs
+    time0 = kwargs['time0']
+    ram_start = kwargs['ram_start']
+    ram_end = kwargs['ram_end']
+    rmax_start = kwargs['rmax_start']
+    rmax_end = kwargs['rmax_end']
+    rmin_start = kwargs['rmin_start']
+    rmin_end = kwargs['rmin_end']
+    shortnames = kwargs['shortnames']
+    shortname_values = kwargs['shortname_values']
+    # -------------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1,
+                                   sharex='all', figsize=(16, 16))
+    # -------------------------------------------------------------------------
+    # plot ram usage
+    frames[0].fill_between(time0,
+                           np.max([rmax_start, rmax_end], axis=0),
+                           np.min([rmin_start, rmin_end], axis=0),
+                           color='r', alpha=0.2)
+    frames[0].plot(time0, np.mean([ram_start, ram_end], axis=0), 'r-')
+    # -------------------------------------------------------------------------
+    # add error bars for recipes
+    colors = ['r', 'g', 'b', 'k', 'orange', 'purple'] * 50
+    counter = 0
+    for counter, shortname in enumerate(shortnames):
+        smin, smed, smax = shortname_values[shortname]
+
+        frames[1].errorbar([smed], [counter], xerr=[[smin], [smax]],
+                           color=colors[counter])
+    # -------------------------------------------------------------------------
+    frames[1].set_yticks(range(0, counter + 1))
+    frames[1].set_yticklabels(shortnames)
+    # set the ytick colours
+    for it, tick in enumerate(frames[1].yaxis.get_ticklabels()):
+        tick.set_color(colors[it])
+    # -------------------------------------------------------------------------
+    # set labels
+    frames[0].set(ylabel='Mean RAM usuage [GB]')
+    frames[1].set(ylabel='Recipe shortname', xlabel='Time since start [hr]')
+    plt.suptitle('Memory usuage as a function of time')
+    # -------------------------------------------------------------------------
+    # adjust plot
+    plt.subplots_adjust(hspace=0, left=0.05, right=0.99, top=0.95,
+                        bottom=0.05)
+
+    # -------------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+
 logstats_bar = Graph('LOGSTATS_BAR', kind='show', func=plot_logstats_bar)
 
 stats_timing = Graph('STATS_TIMING_PLOT', kind='show',
@@ -5761,6 +5831,9 @@ stats_timing = Graph('STATS_TIMING_PLOT', kind='show',
 
 stats_qc_recipe = Graph('STAT_QC_RECIPE_PLOT', kind='show',
                         func=plot_stats_qc_recipe_plot)
+
+stats_ram_plot = Graph('STAT_RAM_PLOT', kind='show',
+                       func=plot_stats_ram_plot)
 
 # add to definitions
 definitions += [logstats_bar, stats_timing, stats_qc_recipe]
