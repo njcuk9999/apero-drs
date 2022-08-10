@@ -195,10 +195,11 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     tns_run_spirou.modify('USE_ENGINEERING', True)
     run_files.append(tns_run_spirou)
     # batch run
-    batch_run_spirou = RunIniFile(params, 'SPIROU', 'batch_run')
-    batch_run_spirou.add_sequence_as_command('limited_seq')
-    batch_run_spirou.modify('RUN_OBS_DIR', DEFAULT_REF_OBSDIR)
-    run_files.append(batch_run_spirou)
+    # TODO: put back in
+    # batch_run_spirou = RunIniFile(params, 'SPIROU', 'batch_run')
+    # batch_run_spirou.add_sequence_as_command('limited_seq')
+    # batch_run_spirou.modify('RUN_OBS_DIR', DEFAULT_REF_OBSDIR)
+    # run_files.append(batch_run_spirou)
 
     # return the run files
     return run_files

@@ -1290,7 +1290,21 @@ eng_seq.add(apero_extract, name='EXT_EFFSKY',
             recipe_kind='extract-effsky')
 
 # -----------------------------------------------------------------------------
+# helios sequence
+# -----------------------------------------------------------------------------
+helios_seq = drs_recipe.DrsRunSequence('helios_seq', __INSTRUMENT__)
+
+# pp sequences
+helios_seq.add(apero_preprocess, name='PP_SUN',
+               files=[files.raw_sun_fp, files.raw_sun_dark],
+               recipe_kind='pre-sun')
+# extract sequences
+helios_seq.add(apero_extract, name='EXT_SUN',
+               files=[files.pp_sun_fp, files.pp_sun_dark],
+               recipe_kind='extract-sun')
+
+# -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
 sequences = [pp_seq, pp_seq_opt, full_seq, limited_seq, ref_seq, calib_seq,
-             tellu_seq, science_seq, quick_seq, blank_seq, eng_seq]
+             tellu_seq, science_seq, quick_seq, blank_seq, eng_seq, helios_seq]

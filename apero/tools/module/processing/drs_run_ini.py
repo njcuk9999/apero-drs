@@ -181,8 +181,8 @@ class RunIniFile:
             if seq.name == seqstr:
                 return seq
         # if we got to here sequence is invalid
-        emsg = 'Invalid sequence: {0}'
-        eargs = [seqstr]
+        emsg = 'Invalid sequence: {0} [{1}] {2}'
+        eargs = [seqstr, self.instrument, self.name]
         WLOG(self.params, 'error', emsg.format(*eargs))
         return None
 
@@ -457,7 +457,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
 
     :return: list of RunIniFile instances
     """
-
+    pass
 
 
 
