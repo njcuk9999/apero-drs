@@ -581,10 +581,10 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # remove snr from these orders (due to thermal background)
     for order_num in remove_orders:
         snr[order_num] = 0.0
-    # make sure we have at least one order above the min snr requiredment
-    if np.nanmax(snr) < snr_min_thres:
+    # make sure the median snr is above the min snr requirement
+    if mp.nanmedian(snr) < snr_min_thres:
         # update qc params
-        qc_values[0] = mp.nanmax(snr)
+        qc_values[0] = mp.nanmedian(snr)
         qc_pass[0] = 0
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean
@@ -592,7 +592,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                       wave_e2ds, qc_params, sky_model,
                                       database=database)
     else:
-        qc_values[0] = mp.nanmax(snr)
+        qc_values[0] = mp.nanmedian(snr)
         qc_pass[0] = 1
     # mask all orders below min snr
     for order_num in range(nbo):
