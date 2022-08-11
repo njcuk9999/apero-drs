@@ -326,13 +326,16 @@ stats.instrument = __INSTRUMENT__
 stats.description = textentry('LOGSTAT_DESC')
 stats.recipe_type = 'nolog-tool'
 stats.recipe_kind = 'user'
-stats.set_debug_plots('STATS_TIMING_PLOT', 'STAT_QC_RECIPE_PLOT')
+stats.set_debug_plots('STATS_TIMING_PLOT', 'STAT_QC_RECIPE_PLOT',
+                      'STAT_RAM_PLOT')
 stats.set_summary_plots()
 stats.set_kwarg(name='--mode', dtype='options', default='red',
-                   options=['timing', 'qc', 'error'],
+                   options=['timing', 'qc', 'error', 'memory'],
                    helpstr='Stats mode. '
-                           'For timing statistics use "timing".'
-                           'For quality control statistics use "qc".')
+                           'For timing statistics use "timing". '
+                           'For quality control statistics use "qc". '
+                           'For error statistics use "error". '
+                           'For memory statistics use "memory".')
 stats.set_kwarg(name='--plog', dtype=str, default='None',
                    helpstr='Specify a certain log file (full path)')
 stats.set_kwarg(**plot)
