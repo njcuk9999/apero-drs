@@ -5836,7 +5836,7 @@ stats_ram_plot = Graph('STAT_RAM_PLOT', kind='show',
                        func=plot_stats_ram_plot)
 
 # add to definitions
-definitions += [logstats_bar, stats_timing, stats_qc_recipe]
+definitions += [logstats_bar, stats_timing, stats_qc_recipe, stats_ram_plot]
 
 
 # =============================================================================
