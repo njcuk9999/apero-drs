@@ -1271,7 +1271,7 @@ def error_stats(params: ParamDict):
 # =============================================================================
 # Define memory stats functions
 # =============================================================================
-def memory_stats(params: ParamDict):
+def memory_stats(params: ParamDict, recipe: DrsRecipe):
     """
     Create the memory stats plot
 
