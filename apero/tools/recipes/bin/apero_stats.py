@@ -101,7 +101,7 @@ def __main__(recipe, params):
         drs_stats.error_stats(params)
     elif mode.upper() == 'MEMORY':
         # do the memory stats
-        drs_stats.memory_stats(params)
+        drs_stats.memory_stats(params, recipe)
 
     # ----------------------------------------------------------------------
     # End of main code
