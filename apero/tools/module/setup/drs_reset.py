@@ -90,22 +90,21 @@ def is_empty(params: ParamDict, directory: str,
     """
     if os.path.exists(directory):
         # get a raw list of files
-        files = []
+        rawfiles = []
         for root, dirs, files in os.walk(os.path.join(directory)):
             # give root dir
-            TLOG(params, '', root)
+            TLOG(params, '', 'Processing ' + root)
             # deal with excluded files
             if exclude_files is not None:
-                files = []
                 for rawfile in files:
                     if rawfile not in exclude_files:
-                        files.append(os.path.join(root, rawfile))
+                        rawfiles.append(os.path.join(root, rawfile))
             else:
                 for rawfile in files:
-                    files.append(os.path.join(root, rawfile))
+                    rawfiles.append(os.path.join(root, rawfile))
         # exclude directories
         files1 = []
-        for file1 in files:
+        for file1 in rawfiles:
             if not os.path.isdir(file1):
                 files1.append(file1)
         if len(files1) == 0:
