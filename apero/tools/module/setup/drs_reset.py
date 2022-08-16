@@ -93,7 +93,7 @@ def is_empty(params: ParamDict, directory: str,
         rawfiles = []
         for root, dirs, files in os.walk(os.path.join(directory)):
             # give root dir
-            TLOG(params, '', 'Processing ' + root)
+            TLOG(params, '', f'Processing {root}...')
             # deal with excluded files
             if exclude_files is not None:
                 for rawfile in files:
