@@ -633,7 +633,7 @@ apero_wave_ref.recipe_kind = 'calib-reference'
 apero_wave_ref.calib_required = True
 apero_wave_ref.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                            WAVESOL_REF=files.out_wavem_sol,
-                           WAVEREF_CAVITY=files.out_WAVEREF_CAVity,
+                           WAVEREF_CAVITY=files.out_waveref_cavity,
                            WAVEM_HCLIST=files.out_wave_hclist_ref,
                            WAVEM_FPLIST=files.out_wave_fplist_ref,
                            WAVEM_RES=files.out_wavem_res,
@@ -679,7 +679,7 @@ apero_wave_ref.set_kwarg(name='--forceext', dtype='bool',
                          default_ref='WAVE_ALWAYS_EXTRACT',
                          helpstr='WAVE_EXTRACT_HELP')
 apero_wave_ref.set_kwarg(name='--cavityfile', dtype='file', default='None',
-                         files=[files.out_WAVEREF_CAVity],
+                         files=[files.out_waveref_cavity],
                          helpstr=textentry('WAVEREF_CAVFILE_HELP'))
 apero_wave_ref.group_func = grouping.group_by_dirname
 apero_wave_ref.group_column = 'REPROCESS_OBSDIR_COL'

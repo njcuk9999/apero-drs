@@ -50,34 +50,40 @@ mtellu_ofile = out.RefTelluOutFile()
 # =============================================================================
 # generic raw file
 raw_file = drs_finput('DRS_RAW', filetype='.fits', suffix='',
-                      outclass=blank_ofile)
+                      outclass=blank_ofile,
+                      description='Generic raw file')
 
 # =============================================================================
 # Preprocessed Files
 # =============================================================================
 # generic pp file
 pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp',
-                     outclass=general_ofile, intype=raw_file)
+                     outclass=general_ofile, intype=raw_file,
+                     description='Generic pre-processed file')
 
 # =============================================================================
 # Reduced Files
 # =============================================================================
 # generic out file
 red_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
-                      intype=pp_file, outclass=blank_ofile)
+                      intype=pp_file, outclass=blank_ofile,
+                      description='Generic reduced file')
 # calib out file
 calib_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
-                        intype=pp_file, outclass=blank_ofile)
+                        intype=pp_file, outclass=blank_ofile,
+                        description='Generic calibration file')
 # telluric out file
 tellu_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
-                        intype=pp_file, outclass=blank_ofile)
+                        intype=pp_file, outclass=blank_ofile,
+                        description='Generic telluric file')
 
 # =============================================================================
 # Post processed Files
 # =============================================================================
 # generic post processed file
 post_file = drs_oinput('DRS_POST', filetype='.fits', suffix='',
-                       outclass=post_ofile)
+                       outclass=post_ofile,
+                       description='Generic post process file')
 
 # =============================================================================
 # End of code
