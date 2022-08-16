@@ -43,6 +43,7 @@ PseudoConst = pseudo_const.PseudoConstants
 DatabaseM = drs_database.DatabaseManager
 # Get Logging function
 WLOG = drs_log.wlog
+TLOG = drs_log.Printer
 # Get the text types
 textentry = lang.textentry
 # debug mode (test)
@@ -77,7 +78,7 @@ def check_cwd(params: ParamDict):
             WLOG(params, 'error', emsg.format(*eargs))
 
 
-def is_empty(directory: str,
+def is_empty(params: ParamDict, directory: str,
              exclude_files: Union[List[str], None] = None) -> bool:
     """
     Find whether a directory is empty (exluding files is "exclude_files" is set)
@@ -89,23 +90,33 @@ def is_empty(directory: str,
     """
     if os.path.exists(directory):
         # get a raw list of files
-        rawfiles = glob.glob(os.path.join(directory, '**'), recursive=True)
-        # deal with excluded files
-        if exclude_files is not None:
-            files = []
-            for rawfile in rawfiles:
-                if rawfile not in exclude_files:
-                    files.append(rawfile)
-        else:
-            files = list(rawfiles)
+        files = []
+        for root, dirs, files in os.walk(os.path.join(directory)):
+            # give root dir
+            TLOG(params, '', root)
+            # deal with excluded files
+            if exclude_files is not None:
+                files = []
+                for rawfile in files:
+                    if rawfile not in exclude_files:
+                        files.append(os.path.join(root, rawfile))
+            else:
+                for rawfile in files:
+                    files.append(os.path.join(root, rawfile))
         # exclude directories
         files1 = []
         for file1 in files:
             if not os.path.isdir(file1):
                 files1.append(file1)
         if len(files1) == 0:
+            # clear loading message
+            TLOG(params, '', '')
+            # empty
             return True
 
+    # clear loading message
+    TLOG(params, '', '')
+    # not empty
     return False
 
 
@@ -142,7 +153,7 @@ def reset_confirmation(params: ParamDict, name: str,
     # ----------------------------------------------------------------------
     if directory is not None:
         # test if empty
-        empty = is_empty(directory, exclude_files)
+        empty = is_empty(params, directory, exclude_files)
         if empty:
             WLOG(params, '', textentry('40-502-00011'))
             return True
@@ -754,10 +765,10 @@ def remove_files(params, path, log=True, skipfiles=None):
         return
     # log removal
     if log:
-        WLOG(params, '', textentry('40-502-00004', args=[path]))
+        TLOG(params, '', textentry('40-502-00004', args=[path]))
     # if in debug mode just log
     if DEBUG:
-        WLOG(params, '', '\t\tRemoved {0}'.format(path))
+        TLOG(params, '', '\t\tRemoved {0}'.format(path))
     # else remove file
     else:
         try:
@@ -767,7 +778,8 @@ def remove_files(params, path, log=True, skipfiles=None):
             wargs = [path, type(e), str(e)]
             WLOG(params, 'warning', textentry('10-502-00002', args=wargs),
                  sublevel=2)
-
+    # clear loading message
+    TLOG(params, '', '')
 
 # =============================================================================
 # Start of code
