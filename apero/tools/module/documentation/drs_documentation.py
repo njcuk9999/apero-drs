@@ -13,7 +13,7 @@ from astropy.table import Table
 import numpy as np
 import os
 import shutil
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 from apero import lang
 from apero.base import base
@@ -115,6 +115,9 @@ COL_WIDTH_DICT['input file'] = 50
 COL_WIDTH_DICT['description'] = 100
 # define the default column width
 DEFAULT_COL_WIDTH = 30
+# define table width info
+DEFAULT_TABLE_WIDTH = 100
+DEFAULT_TABLE_LENGTH = 6
 
 
 # =============================================================================
@@ -205,9 +208,8 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     add_texts['raw_file'] = RAW_FILE_DEF_TEXT_FILE
     add_texts['post_file'] = POST_FILE_DEF_TEXT_FILE
     # storage of output tables
-    table_storage = dict()
-    mod_storage = dict()
-    cwidth_storage = dict()
+    table_storage, mod_storage = dict(), dict()
+    cwidth_storage, cwidths_storage = dict(), dict()
     # -------------------------------------------------------------------------
     # loop around file types
     for filetype in filetypes:
@@ -234,7 +236,9 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         table_storage[filetype] = table
         mod_storage[filetype] = modded
         # deal with column widths for this file type
-        cwidth_storage[filetype] = _get_column_widths(table)
+        cwidth, cwidths = _get_column_widths(table)
+        cwidth_storage[filetype] = cwidth
+        cwidths_storage[filetype] = cwidths
     # -------------------------------------------------------------------------
     # get directory to save file to
     abs_auto_dir = drs_misc.get_relative_folder(__PACKAGE__, AUTO_DIR)
@@ -278,7 +282,9 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         # get filetype and name
         filetype = filetypes[it]
         name = sectionnames[it]
-        cwidths = cwidth_storage[filetype]
+        # get the table and column widths for this table
+        cwidth = cwidth_storage[filetype]
+        cwidths = cwidths_storage[filetype]
         # ------------------------------------------------------------------
         # get filename as just a filename (assume they are in the same
         #     directory)
@@ -294,9 +300,8 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         markdown.add_sub_section(f'{it + 1}.1  File definition table')
         # add table
         markdown.add_csv_table(title=f'{name} file definition table',
-                               csv_file=filename,
-                               abs_path=absfilename,
-                               widths=cwidths)
+                               csv_file=filename, abs_path=absfilename,
+                               width=cwidth, widths=cwidths)
         # allow multiple lines in table
         markdown.enable_multiline_table()
         # ------------------------------------------------------------------
@@ -439,7 +444,7 @@ def make_devtool_defintions(params: ParamDict, srecipes: List[DrsRecipe],
 
 
 def make_tool_user_defintions(params: ParamDict, srecipes: List[DrsRecipe],
-                            instrument: str):
+                              instrument: str):
     """
     Make recipe definitions for "recipe_type = nolog-tool or tool" and
     "recipe_kind = user or processing"
@@ -686,6 +691,29 @@ def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
     def_dir = os.path.join(abs_auto_dir, RECIPE_SEQ_DIR, instrument.lower())
     # store list of recipe sequences
     recipe_sequences = []
+    # construct outpath
+    outpath = os.path.join(abs_auto_dir, TOOL_DEF_DIR, instrument.lower())
+    # -------------------------------------------------------------------------
+    # get the absolute path of the schematics
+    schematic_path = SCHEMATIC_PATH.format(instrument=instrument.lower())
+    abs_schem_path = drs_misc.get_relative_folder(__PACKAGE__, schematic_path,
+                                                  required=False)
+    # get schmeatic path relative to current path
+    if len(abs_schem_path) == 0:
+        schem_path = None
+    else:
+        schem_path = rel_path_from_current(outpath, abs_schem_path)
+    # -------------------------------------------------------------------------
+    # get the absolute path of the description files
+    descfile_path = DESC_PATH.format(instrument=instrument.lower())
+    abs_desc_path = drs_misc.get_relative_folder(__PACKAGE__, descfile_path,
+                                                 required=False)
+    # get description path relative to current path
+    if len(abs_desc_path) == 0:
+        desc_path = None
+    else:
+        desc_path = rel_path_from_current(outpath, abs_desc_path)
+    # -------------------------------------------------------------------------
     # loop around recipes
     for sequence in sequences:
         # print we are analysing recipe
@@ -702,8 +730,29 @@ def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
         name = summary['NAME']
         markdown.add_title(f'{name}')
         # ---------------------------------------------------------------------
+        # add description
+        if summary['DESCRIPTION_FILE'] is not None and desc_path is not None:
+            # combine relative path with description file
+            dfile = os.path.join(desc_path, summary['DESCRIPTION_FILE'])
+            # include a file
+            markdown.include_file(dfile)
+        else:
+            markdown.add_text('No description set')
+        # ---------------------------------------------------------------------
+        # add section: schematic
+        markdown.add_section('2. Schematic')
+        # add schematic image
+        if summary['SCHEMATIC_FILE'] is not None and schem_path is not None:
+            # get schematic path
+            basename = summary['SCHEMATIC_FILE']
+            schpath = os.path.join(schem_path, basename)
+            # include a file
+            markdown.add_image(schpath, width=100, align='center')
+        else:
+            markdown.add_text('No schematic set')
+        # ---------------------------------------------------------------------
         # add section: output directory
-        markdown.add_section('1. Recipes in sequence')
+        markdown.add_section('3. Recipes in sequence')
         # add code block for run
         markdown.add_csv_table('Recipes', summary['OUTTABLE'],
                                abs_path=summary['OUTTABLE-ABS'])
@@ -964,7 +1013,7 @@ def _remove_cols(table: Table, cols: List[str]) -> Table:
     return table
 
 
-def _get_column_widths(table: Table) -> List[str]:
+def _get_column_widths(table: Table) -> Tuple[Union[str, None], List[str]]:
     """
     Take a table and get columns widths from lookup table
     (or assign default value)
@@ -983,9 +1032,16 @@ def _get_column_widths(table: Table) -> List[str]:
     cwidths = np.floor(100 * cwidths / np.sum(cwidths)).astype(int) - 1
     # widths must be strings
     cwidths = list(cwidths.astype(str))
-
+    # -------------------------------------------------------------------------
+    # deal with table width
+    if len(table.colnames) <= DEFAULT_TABLE_LENGTH:
+        cwidth = None
+    else:
+        cfrac = DEFAULT_TABLE_WIDTH / DEFAULT_TABLE_LENGTH
+        cwidth = '{0}%'.format(int(np.floor(len(table.colnames) * cfrac)))
+    # -------------------------------------------------------------------------
     # return a list of the columns
-    return cwidths
+    return cwidth, cwidths
 
 def _modify_cols(table: Table, cols: List[str],
                  fmt: str = '{0}') -> Tuple[Table, bool]:
@@ -1081,6 +1137,10 @@ def _compile_sequence(params: ParamDict, sequence: DrsRunSequence,
     # save table filename to out table
     summary['OUTTABLE'] = basename
     summary['OUTTABLE-ABS'] = abs_filename
+    # TODO: get and set description file in/from sequence class
+    summary['DESCRIPTION_FILE'] = None
+    # TODO: get and set schematic file in/from sequence class
+    summary['SCHEMATIC_FILE'] = None
     # return the summary dictionary
     return summary
 

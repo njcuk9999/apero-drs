@@ -197,6 +197,7 @@ apero_preprocess.group_func = grouping.group_individually
 apero_preprocess.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
 apero_preprocess.schematic = 'apero_preproces_spirou_schematic.jpg'
+apero_preprocess.description_file = 'apero_preprocess_spirou.rst'
 # add to recipe
 recipes.append(apero_preprocess)
 
