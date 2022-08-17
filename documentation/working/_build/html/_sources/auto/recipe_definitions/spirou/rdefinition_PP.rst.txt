@@ -15,7 +15,7 @@ apero_preprocess_spirou
 SHORTNAME: PP
 
 
-No description set
+.. include:: ../../../resources/spirou/descriptions/apero_preprocess_spirou.rst
 
 
 ********************************************************************************
