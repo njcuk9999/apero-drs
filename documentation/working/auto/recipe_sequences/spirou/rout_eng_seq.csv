@@ -1,4 +1,4 @@
-ORDER,RECIPE,SHORTNAME,RECIPE KIND,MASTER RECIPE,ARGS
+ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,ARGS
 1,apero_extract_spirou.py,EXT_HC1HC1,extract-hchc,No,{files}=[HCONE_HCONE]
 2,apero_extract_spirou.py,EXT_FPFP,extract-fpfp,No,{files}=[FP_FP]
 3,apero_extract_spirou.py,EXT_FF,extract-ff,No,{files}=[FLAT_FLAT]

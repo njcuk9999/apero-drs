@@ -61,11 +61,11 @@ No description set
      --badcorr[True/False] // [BOOLEAN] Whether to correct for the bad pixel file
      --backsub[True/False] // [BOOLEAN] Whether to do background subtraction
      --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
-     --darkfile[FILE:DARKM] // [STRING] The Dark file to use (CALIBDB=DARKM)
+     --darkfile[FILE:DARKREF] // [STRING] The Dark file to use (CALIBDB=DARKM)
      --darkcorr[True/False] // [BOOLEAN] Whether to correct for the dark file
      --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
      --fluxunits[ADU/s,e-] // [STRING] Output units for flux
-     --fpmaster[FILE:MASTER_FP] // [STRING] Sets the FP Master file to use (CALIBDB = FPMASTER)
+     --fpref[FILE:REF_FP] // [STRING] Sets the FP reference file to use (CALIBDB = FPREF)
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --resize[True/False] // [BOOLEAN] Whether to resize image
      --shapex[FILE:SHAPE_X] // [STRING] Sets the SHAPE DXMAP file used to get the dx correction map (CALIBDB=SHAPEX)
@@ -90,9 +90,10 @@ No description set
      --parallel[STRING] // [BOOL] If True this is a run in parellel - disable some features (normally only used in apero_processing.py)
      --shortname[STRING] // [STRING] Set a shortname for a recipe to distinguish it from other runs - this is mainly for use with apero processing but will appear in the log database
      --idebug[STRING] // [BOOLEAN] If True always returns to ipython (or python) at end (via ipdb or pdb)
-     --master[STRING] // If set then recipe is a master recipe (e.g. master recipes write to calibration database as master calibrations)
+     --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

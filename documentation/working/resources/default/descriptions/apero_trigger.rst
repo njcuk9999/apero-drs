@@ -10,7 +10,7 @@ It works as follows:
 
     - copies files from a "live directory" into a sym-linked directory
       (the live directory is defined be --indir, the sym-lined directory
-       is the raw directory defined in installation -- i.e. DRS_DATA_RAW)
+      is the raw directory defined in installation -- i.e. DRS_DATA_RAW)
 
     - tries to figure out what has been done previously
         - this is done in two steps
@@ -44,10 +44,10 @@ Caveats
 
 - results may not be optimal - we recommended running all nights together in
   an offline manner (after having all nights) for optimal results, for example:
-    - calibrations may be sub-optimal (missing/using wrong night etc)
-    - telluric correction may not be using all hot stars
-    - templates may be sub-optimal
-    - polar recipes cannot be produced online
+      - calibrations may be sub-optimal (missing/using wrong night etc)
+      - telluric correction may not be using all hot stars
+      - templates may be sub-optimal
+      - polar recipes cannot be produced online
 - A master night must be run before running `apero_trigger.py`
 - Adding files for older nights after newer nights could result in unwanted behaviour
   (especially when it comes to calibrations)

@@ -46,7 +46,7 @@ No optional arguments
 
 .. code-block:: 
 
-     --mode[timing,qc,error] // Stats mode. For timing statistics use "timing".For quality control statistics use "qc".
+     --mode[timing,qc,error,memory] // Stats mode. For timing statistics use "timing". For quality control statistics use "qc". For error statistics use "error". For memory statistics use "memory".
      --plog[STRING] // Specify a certain log file (full path)
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --sql[STRING] // specify a SQL WHERE clause to narrow the stats
@@ -70,9 +70,10 @@ No optional arguments
      --parallel[STRING] // [BOOL] If True this is a run in parellel - disable some features (normally only used in apero_processing.py)
      --shortname[STRING] // [STRING] Set a shortname for a recipe to distinguish it from other runs - this is mainly for use with apero processing but will appear in the log database
      --idebug[STRING] // [BOOLEAN] If True always returns to ipython (or python) at end (via ipdb or pdb)
-     --master[STRING] // If set then recipe is a master recipe (e.g. master recipes write to calibration database as master calibrations)
+     --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
@@ -106,6 +107,7 @@ N/A
 
     STATS_TIMING_PLOT
     STAT_QC_RECIPE_PLOT
+    STAT_RAM_PLOT
 
 
 ********************************************************************************

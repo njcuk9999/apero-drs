@@ -31,4 +31,5 @@ In general one probably runs this command with all arguments.
 i.e.
 
 .. code-block::
+
     apero_documentation.py --filedef --recipedef --recipeseq --compile --upload --mode=html

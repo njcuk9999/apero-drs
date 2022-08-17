@@ -9,14 +9,14 @@ throughout APERO and the documentation to update the version and date.
 
 A git tag is also created to mark a new version.
 
-.. warn:: This change is hard to undo. Please use carefully and check
-          the current version well before making a new version
+.. warning:: This change is hard to undo. Please use carefully and check
+             the current version well before making a new version
 
 .. note:: This will add all untagged commits to this tag and version. For
           multiple commits see section 1.1.
 
 1.1 Adding a few versions at one time
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If there are many commits and a few versions are required one can
 add tags using `git tag {version} {commit number}` at the points

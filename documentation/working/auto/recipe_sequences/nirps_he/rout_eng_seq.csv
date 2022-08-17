@@ -1,4 +1,4 @@
-ORDER,RECIPE,SHORTNAME,RECIPE KIND,MASTER RECIPE,ARGS
+ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,ARGS
 1,apero_extract_nirps_he.py,EXT_HC1HC1,extract-hchc,No,{files}=[HCONE_HCONE]
 2,apero_extract_nirps_he.py,EXT_FPFP,extract-fpfp,No,{files}=[FP_FP]
 3,apero_extract_nirps_he.py,EXT_FF,extract-ff,No,{files}=[FLAT_FLAT]
@@ -8,3 +8,4 @@ ORDER,RECIPE,SHORTNAME,RECIPE KIND,MASTER RECIPE,ARGS
 7,apero_extract_nirps_he.py,EXT_FPD,extract-fpd,No,{files}=[FP_DARK]
 8,apero_extract_nirps_he.py,EXT_LFCFP,extract-lfcfp,No,{files}=[LFC_FP]
 9,apero_extract_nirps_he.py,EXT_FPLFC,extract-fplfc,No,{files}=[FP_LFC]
+10,apero_extract_nirps_he.py,EXT_EFFSKY,extract-effsky,No,{files}=[TEST_DARK_DARK_SKY]

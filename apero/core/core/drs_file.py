@@ -634,6 +634,7 @@ class DrsInputFile:
                  s1d: Union[list, None] = None,
                  hkeys: Union[Dict[str, str], None] = None,
                  instrument: Optional[str] = None,
+                 nosave: Optional[bool] = False,
                  description: Union[str, None] = None):
         """
         Create a DRS Input File object
@@ -776,7 +777,7 @@ class DrsInputFile:
         # allow instance to be associated with a filename
         self.set_filename(filename)
         # set a flag that no save is active
-        self.nosave = False
+        self.nosave = nosave
 
     def __getstate__(self) -> dict:
         """
@@ -854,6 +855,13 @@ class DrsInputFile:
         columns.append('name')
         values.append(self.name)
         # ---------------------------------------------------------------------
+        # add description
+        columns += ['description']
+        if self.description is not None:
+            values.append(self.description)
+        else:
+            values.append('--')
+        # ---------------------------------------------------------------------
         # add header columns
         for it, hdr_col in enumerate(header_columns):
             columns.append('HDR[{0}]'.format(header_names[it]))
@@ -906,13 +914,6 @@ class DrsInputFile:
                 values.append(', '.join(names))
             elif isinstance(self.intype, DrsInputFile):
                 values.append(self.intype.name)
-        else:
-            values.append('--')
-        # ---------------------------------------------------------------------
-        # add description
-        columns += ['description']
-        if self.description is not None:
-            values.append(self.description)
         else:
             values.append('--')
         # ---------------------------------------------------------------------
@@ -1034,7 +1035,8 @@ class DrsInputFile:
                 s1d: Union[list, None] = None,
                 hkeys: Union[Dict[str, str], None] = None,
                 instrument: Optional[str] = None,
-                nosave: Optional[bool] = None):
+                nosave: Optional[bool] = None,
+                description: Optional[str] = None):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -1105,6 +1107,7 @@ class DrsInputFile:
                        [not used in DrsInputFile]
         :param instrument: str, the instrument this file definition is
                            associated with
+        :param description: str, the description of the file (for documentation)
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -1118,7 +1121,7 @@ class DrsInputFile:
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave)
+                            instrument, nosave, description)
 
     def check_params(self, func):
         """
@@ -1906,6 +1909,7 @@ class DrsFitsFile(DrsInputFile):
                  s1d: Union[list, None] = None,
                  hkeys: Union[Dict[str, str], None] = None,
                  instrument: Optional[str] = None,
+                 nosave: Optional[bool] = False,
                  description: Union[str, None] = None):
         """
         Create a DRS Input File object
@@ -1988,7 +1992,7 @@ class DrsFitsFile(DrsInputFile):
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
                               combined_list, infiles, s1d, hkeys, instrument,
-                              description)
+                              nosave, description)
         # if ext in kwargs then we have a file extension to check
         self.filetype = filetype
         # set the input extension type
@@ -2174,7 +2178,8 @@ class DrsFitsFile(DrsInputFile):
                 s1d: Union[list, None] = None,
                 hkeys: Union[Dict[str, str], None] = None,
                 instrument: Optional[str] = None,
-                nosave: Optional[bool] = None):
+                nosave: Optional[bool] = None,
+                description: Optional[str] = None):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -2245,6 +2250,7 @@ class DrsFitsFile(DrsInputFile):
                        [not used in DrsInputFile]
         :param instrument: str, the instrument this file definition is
                            associated with
+        :param description: str, the description of the file (for documentation)
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -2258,7 +2264,7 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave)
+                            instrument, nosave, description)
 
     def string_output(self) -> str:
         """
@@ -5035,6 +5041,7 @@ class DrsNpyFile(DrsInputFile):
                  s1d: Union[list, None] = None,
                  hkeys: Union[Dict[str, str], None] = None,
                  instrument: Optional[str] = None,
+                 nosave: Optional[bool] = False,
                  description: Union[str, None] = None):
         """
         Create a DRS Npy File Input object
@@ -5098,7 +5105,7 @@ class DrsNpyFile(DrsInputFile):
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
                               combined_list, s1d, hkeys, instrument, 
-                              description)
+                              nosave, description)
         # these keys are not set in DrsInputFile
         self.inext = inext
         # get tag
@@ -5354,7 +5361,8 @@ class DrsNpyFile(DrsInputFile):
                 s1d: Union[list, None] = None,
                 hkeys: Union[Dict[str, str], None] = None,
                 instrument: Optional[str] = None,
-                nosave: Optional[bool] = None):
+                nosave: Optional[bool] = None,
+                description: Optional[str] = None):
         """
         Create a new copy of DRS Npy File object - unset parameters come
         from current instance of Drs Input File
@@ -5403,7 +5411,7 @@ class DrsNpyFile(DrsInputFile):
         :param hkeys: NOT USED FOR NPY FILE CLASS
         :param instrument: str, the instrument this file definition is
                    associated with
-
+        :param description: str, the description of the file (for documentation)
         """
         # set function name
         # _ = display_func('newcopy', __NAME__, self.class_name)
@@ -5415,7 +5423,7 @@ class DrsNpyFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys, instrument,
-                            nosave)
+                            nosave, description)
 
     def completecopy(self, drsfile: 'DrsNpyFile',
                      name: Union[str, None] = None,
@@ -5453,7 +5461,8 @@ class DrsNpyFile(DrsInputFile):
                      s1d: Union[list, None] = None,
                      hkeys: Union[Dict[str, str], None] = None,
                      instrument: Optional[str] = None,
-                     nosave: Optional[bool] = None):
+                     nosave: Optional[bool] = None,
+                     description: Optional[str] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -5504,6 +5513,7 @@ class DrsNpyFile(DrsInputFile):
         :param hkeys: NOT USED FOR NPY FILE CLASS
         :param instrument: str, the instrument this file definition is
                    associated with
+        :param description: str, the description of the file (for documentation)
         """
         # set function name
         # _ = display_func('completecopy', __NAME__, self.class_name)
@@ -5515,7 +5525,7 @@ class DrsNpyFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave)
+                            instrument, nosave, description)
 
     # -------------------------------------------------------------------------
     # database methods
@@ -5570,8 +5580,7 @@ class DrsOutFileExtension:
                  tag: Union[str, None] = None,
                  extname: Union[str, None] = None,
                  hdr_extname: Union[str, None] = None,
-                 datatype: Union[str, None] = None,
-                 description: Union[str, None] = None):
+                 datatype: Union[str, None] = None):
         """
         Properties for an extension of a POST PROCESS file
 
@@ -6151,8 +6160,15 @@ class DrsOutFile(DrsInputFile):
         _ = params, pconst
         # ---------------------------------------------------------------------
         # add name of out file
-        columns += ['NAME']
+        columns += ['name']
         values += [self.name]
+        # ---------------------------------------------------------------------
+        # add description
+        columns += ['description']
+        if self.description is not None:
+            values.append(self.description)
+        else:
+            values.append('--')
         # ---------------------------------------------------------------------
         # get header keys
         header_keys = dict()

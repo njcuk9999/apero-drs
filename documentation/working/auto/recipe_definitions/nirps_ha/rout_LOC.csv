@@ -1,6 +1,6 @@
-name,HDR[DRSOUTID],file type,suffix,fibers,dbname,dbkey,input file
-LOC_ORDERP,LOC_ORDERP,.fits,_order_profile,"A, B",calibration,ORDER_PROFILE,"FLAT_DARK, DARK_FLAT"
-LOC_LOCO,LOC_LOCO,.fits,_loco,"A, B",calibration,LOC,"FLAT_DARK, DARK_FLAT"
-LOC_FWHM,LOC_FWHM,.fits,_fwhm-order,"A, B",--,--,"FLAT_DARK, DARK_FLAT"
-LOC_SUP,LOC_SUP,.fits,_with-order,"A, B",--,--,"FLAT_DARK, DARK_FLAT"
-DEBUG_BACK,DEBUG_BACK,.fits,_background.fits,--,--,--,DRS_PP
+name,description,HDR[DRSOUTID],file type,suffix,fibers,dbname,dbkey,input file
+LOC_ORDERP,Localisation: Order profile calibration file,LOC_ORDERP,.fits,_order_profile,"A, B",calibration,ORDER_PROFILE,"FLAT_DARK, DARK_FLAT"
+LOC_LOCO,Localisation: Position polynomial calibration file,LOC_LOCO,.fits,_loco,"A, B",calibration,LOC,"FLAT_DARK, DARK_FLAT"
+LOC_FWHM,Localisation: Width polynomial calibration file,LOC_FWHM,.fits,_fwhm-order,"A, B",--,--,"FLAT_DARK, DARK_FLAT"
+LOC_SUP,Localisation: Position superpositionimage calibration file,LOC_SUP,.fits,_with-order,"A, B",--,--,"FLAT_DARK, DARK_FLAT"
+DEBUG_BACK,Individual file background map,DEBUG_BACK,.fits,_background.fits,--,--,--,DRS_PP

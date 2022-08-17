@@ -587,7 +587,7 @@ apero_leak_ref.recipe_type = 'recipe'
 apero_leak_ref.recipe_kind = 'calib-reference'
 apero_leak_ref.calib_required = False
 apero_leak_ref.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2ds,
-                           LEAK_REF=files.out_LEAK_REF)
+                           LEAK_REF=files.out_leak_ref)
 apero_leak_ref.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_leak_ref.set_arg(pos=0, **obs_dir)
 apero_leak_ref.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',

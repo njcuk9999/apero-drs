@@ -1026,7 +1026,7 @@ calib_file.addset(out_thermal_e2ds_tel)
 # leakage files
 # -----------------------------------------------------------------------------
 # thermal from internal dark
-out_LEAK_REF = drs_finput('LEAKREF_E2DS', hkeys=dict(KW_OUTPUT='LEAKREF_E2DS'),
+out_leak_ref = drs_finput('LEAKREF_E2DS', hkeys=dict(KW_OUTPUT='LEAKREF_E2DS'),
                           fibers=valid_efibers,
                           filetype='.fits',
                           intype=[out_ext_e2ds, out_ext_e2dsff],
@@ -1035,8 +1035,8 @@ out_LEAK_REF = drs_finput('LEAKREF_E2DS', hkeys=dict(KW_OUTPUT='LEAKREF_E2DS'),
                           outclass=refcalib_ofile,
                           description='Reference leak correction calibration '
                                       'file')
-red_file.addset(out_LEAK_REF)
-calib_file.addset(out_LEAK_REF)
+red_file.addset(out_leak_ref)
+calib_file.addset(out_leak_ref)
 
 # -----------------------------------------------------------------------------
 # wave files (reference) ea

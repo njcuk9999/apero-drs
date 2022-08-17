@@ -43,6 +43,7 @@ In addition to the GUI explorer, apero_explorer can be run in "flag mode".
 This recipes both the --recipe and --flagnum arguments to be used.
 
 .. code-block::
+
     apero_explorer.py --recipe=PP --flagnum=21
 
 Gives the binary flags for "preprocessing" (shortname: PP) when the decimal
@@ -51,6 +52,7 @@ representation of the flags is set to a value of (21)
 The output for apero_explorer is then as follows:
 
 .. code-block::
+
      Flag mode: PP[21]
      recipe = apero_preprocess_spirou.py
        IN_PARALLEL         : True

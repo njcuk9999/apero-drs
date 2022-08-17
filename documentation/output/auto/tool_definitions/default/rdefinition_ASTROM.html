@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>apero_astrometric &#8212; APERO 0.7.232 documentation</title>
+    <title>apero_astrometric &#8212; APERO 0.7.241 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="tools.html" title="User tools"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.232 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.241 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/general/main_general.html" >General User documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="tools.html" accesskey="U">User tools</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_astrometric</a></li> 
@@ -335,10 +335,12 @@ APERO will force upper case</p>
 <p>This means some objects will have poor names or names that are seen as unique when they should not be
 i.e.</p>
 <blockquote>
-<div><p>WASP-107b –&gt; WASPM107B</p>
-<p>WASP107b  –&gt; WASP107B</p>
-<p>WASP 107b –&gt; WASP_107B</p>
-<p>WASP107B –&gt; WASP107B</p>
+<div><ul class="simple">
+<li><p>WASP-107b –&gt; WASPM107B</p></li>
+<li><p>WASP107b  –&gt; WASP107B</p></li>
+<li><p>WASP 107b –&gt; WASP_107B</p></li>
+<li><p>WASP107B –&gt; WASP107B</p></li>
+</ul>
 </div></blockquote>
 <dl class="simple">
 <dt>Therefore during the astrometrics code you have the oppotunity to</dt><dd><ol class="loweralpha simple">
@@ -390,9 +392,10 @@ i.e.</p>
 <span class="o">--</span><span class="n">parallel</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOL</span><span class="p">]</span> <span class="n">If</span> <span class="kc">True</span> <span class="n">this</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">parellel</span> <span class="o">-</span> <span class="n">disable</span> <span class="n">some</span> <span class="n">features</span> <span class="p">(</span><span class="n">normally</span> <span class="n">only</span> <span class="n">used</span> <span class="ow">in</span> <span class="n">apero_processing</span><span class="o">.</span><span class="n">py</span><span class="p">)</span>
 <span class="o">--</span><span class="n">shortname</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Set</span> <span class="n">a</span> <span class="n">shortname</span> <span class="k">for</span> <span class="n">a</span> <span class="n">recipe</span> <span class="n">to</span> <span class="n">distinguish</span> <span class="n">it</span> <span class="kn">from</span> <span class="nn">other</span> <span class="n">runs</span> <span class="o">-</span> <span class="n">this</span> <span class="ow">is</span> <span class="n">mainly</span> <span class="k">for</span> <span class="n">use</span> <span class="k">with</span> <span class="n">apero</span> <span class="n">processing</span> <span class="n">but</span> <span class="n">will</span> <span class="n">appear</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">log</span> <span class="n">database</span>
 <span class="o">--</span><span class="n">idebug</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">If</span> <span class="kc">True</span> <span class="n">always</span> <span class="n">returns</span> <span class="n">to</span> <span class="n">ipython</span> <span class="p">(</span><span class="ow">or</span> <span class="n">python</span><span class="p">)</span> <span class="n">at</span> <span class="n">end</span> <span class="p">(</span><span class="n">via</span> <span class="n">ipdb</span> <span class="ow">or</span> <span class="n">pdb</span><span class="p">)</span>
-<span class="o">--</span><span class="n">master</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">If</span> <span class="nb">set</span> <span class="n">then</span> <span class="n">recipe</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">master</span> <span class="n">recipe</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span> <span class="n">master</span> <span class="n">recipes</span> <span class="n">write</span> <span class="n">to</span> <span class="n">calibration</span> <span class="n">database</span> <span class="k">as</span> <span class="n">master</span> <span class="n">calibrations</span><span class="p">)</span>
+<span class="o">--</span><span class="n">ref</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">If</span> <span class="nb">set</span> <span class="n">then</span> <span class="n">recipe</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">reference</span> <span class="n">recipe</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span> <span class="n">reference</span> <span class="n">recipes</span> <span class="n">write</span> <span class="n">to</span> <span class="n">calibration</span> <span class="n">database</span> <span class="k">as</span> <span class="n">reference</span> <span class="n">calibrations</span><span class="p">)</span>
 <span class="o">--</span><span class="n">crunfile</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Set</span> <span class="n">a</span> <span class="n">run</span> <span class="n">file</span> <span class="n">to</span> <span class="n">override</span> <span class="n">default</span> <span class="n">arguments</span>
 <span class="o">--</span><span class="n">quiet</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Run</span> <span class="n">recipe</span> <span class="n">without</span> <span class="n">start</span> <span class="n">up</span> <span class="n">text</span>
+<span class="o">--</span><span class="n">nosave</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Do</span> <span class="ow">not</span> <span class="n">save</span> <span class="nb">any</span> <span class="n">outputs</span> <span class="p">(</span><span class="n">debug</span><span class="o">/</span><span class="n">information</span> <span class="n">run</span><span class="p">)</span><span class="o">.</span> <span class="n">Note</span> <span class="n">some</span> <span class="n">recipes</span> <span class="n">require</span> <span class="n">other</span> <span class="n">recipesto</span> <span class="n">be</span> <span class="n">run</span><span class="o">.</span> <span class="n">Only</span> <span class="n">use</span> <span class="o">--</span><span class="n">nosave</span> <span class="n">after</span> <span class="n">previous</span> <span class="n">recipe</span> <span class="n">runs</span> <span class="n">have</span> <span class="n">been</span> <span class="n">run</span> <span class="n">successfully</span><span class="o">.</span>
 <span class="o">--</span><span class="n">force_indir</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Force</span> <span class="n">the</span> <span class="n">default</span> <span class="nb">input</span> <span class="n">directory</span> <span class="p">(</span><span class="n">Normally</span> <span class="nb">set</span> <span class="n">by</span> <span class="n">recipe</span><span class="p">)</span>
 <span class="o">--</span><span class="n">force_outdir</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Force</span> <span class="n">the</span> <span class="n">default</span> <span class="n">output</span> <span class="n">directory</span> <span class="p">(</span><span class="n">Normally</span> <span class="nb">set</span> <span class="n">by</span> <span class="n">recipe</span><span class="p">)</span>
 </pre></div>
@@ -437,7 +440,7 @@ i.e.</p>
         <li class="right" >
           <a href="tools.html" title="User tools"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.232 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.241 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/general/main_general.html" >General User documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="tools.html" >User tools</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_astrometric</a></li> 
