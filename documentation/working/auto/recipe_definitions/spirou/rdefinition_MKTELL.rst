@@ -52,7 +52,7 @@ No schematic set
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
      --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory (CALIBDB=BADPIX)
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --wavefile[FILE:WAVESOL_MASTER,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
+     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
      --use_template[True/False] // Whether to use the template provided from the telluric database
      --template[FILE:TELLU_TEMP] // Filename of the custom template to use (instead of from telluric database)
 
@@ -75,9 +75,10 @@ No schematic set
      --parallel[STRING] // [BOOL] If True this is a run in parellel - disable some features (normally only used in apero_processing.py)
      --shortname[STRING] // [STRING] Set a shortname for a recipe to distinguish it from other runs - this is mainly for use with apero processing but will appear in the log database
      --idebug[STRING] // [BOOLEAN] If True always returns to ipython (or python) at end (via ipdb or pdb)
-     --master[STRING] // If set then recipe is a master recipe (e.g. master recipes write to calibration database as master calibrations)
+     --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
@@ -115,6 +116,7 @@ No schematic set
     TELLUP_WAVE_TRANS
     TELLUP_ABSO_SPEC
     TELLUP_CLEAN_OH
+    FTELLU_RECON_SPLINE2
 
 
 ********************************************************************************

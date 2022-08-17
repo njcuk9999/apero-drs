@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>File definitions (SPIROU) &#8212; APERO 0.7.232 documentation</title>
+    <title>File definitions (SPIROU) &#8212; APERO 0.7.241 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="../../tool_definitions/spirou/tools.html" title="User tools (spirou)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.232 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.241 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" accesskey="U">SPIRou documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">File definitions (SPIROU)</a></li> 
       </ul>
@@ -191,20 +191,22 @@
 <h2>1. Raw Files<a class="headerlink" href="#raw-files" title="Permalink to this headline">¶</a></h2>
 <section id="file-definition-table">
 <span id="spirou-raw-file"></span><h3>1.1  File definition table<a class="headerlink" href="#file-definition-table" title="Permalink to this headline">¶</a></h3>
-<table class="csvtable docutils align-default" id="id6">
+<table class="colwidths-given csvtable docutils align-default" id="id6">
 <caption><span class="caption-text">1. Raw Files file definition table</span><a class="headerlink" href="#id6" title="Permalink to this table">¶</a></caption>
 <colgroup>
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
+<col style="width: 8%" />
+<col style="width: 33%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>description</p></th>
 <th class="head"><p>HDR[OBSTYPE]</p></th>
 <th class="head"><p>HDR[SBCCAS_P]</p></th>
 <th class="head"><p>HDR[SBCREF_P]</p></th>
@@ -216,6 +218,7 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>RAW_DARK_DARK_INT</p></td>
+<td><p>Raw sci=DARK calib=DARK file, where dark is an internal dark</p></td>
 <td><p>DARK</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_pk</p></td>
@@ -225,6 +228,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_DARK_DARK_TEL</p></td>
+<td><p>Raw sci=DARK calib=DARK file, where dark is a telescope dark</p></td>
 <td><p>DARK</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_pk</p></td>
@@ -234,6 +238,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_DARK_DARK_SKY</p></td>
+<td><p>Raw sci=DARK calib=DARK file, where dark is a sky dark</p></td>
 <td><p>OBJECT</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_pk</p></td>
@@ -243,6 +248,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_DARK_FP_SKY</p></td>
+<td><p>Raw sci=DARK calib=FP file, where dark is an internal dark</p></td>
 <td><p>OBJECT</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_fp</p></td>
@@ -252,6 +258,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_DARK_FLAT</p></td>
+<td><p>Raw sci=DARK calib=FLAT file, where dark is an internal dark</p></td>
 <td><p>FLAT</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_wl</p></td>
@@ -261,6 +268,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_FLAT_DARK</p></td>
+<td><p>Raw sci=FLAT calib=DARK file, where dark is an internal dark</p></td>
 <td><p>FLAT</p></td>
 <td><p>pos_wl</p></td>
 <td><p>pos_pk</p></td>
@@ -270,6 +278,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_FLAT_FLAT</p></td>
+<td><p>Raw sci=FLAT calib=FLAT file</p></td>
 <td><p>FLAT</p></td>
 <td><p>pos_wl</p></td>
 <td><p>pos_wl</p></td>
@@ -279,6 +288,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_FLAT_FP</p></td>
+<td><p>Raw sci=FLAT calib=FP file</p></td>
 <td><p>FLAT</p></td>
 <td><p>pos_wl</p></td>
 <td><p>pos_fp</p></td>
@@ -288,6 +298,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_DARK_FP</p></td>
+<td><p>Raw sci=DARK calib=FP file, where dark is an internal dark</p></td>
 <td><p>ALIGN</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_fp</p></td>
@@ -297,6 +308,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_FP_DARK</p></td>
+<td><p>Raw sci=FP calib=DARK file,  where dark is an internal dark</p></td>
 <td><p>ALIGN</p></td>
 <td><p>pos_fp</p></td>
 <td><p>pos_pk</p></td>
@@ -306,6 +318,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_FP_FLAT</p></td>
+<td><p>Raw sci=FP calib=FLAT file</p></td>
 <td><p>ALIGN</p></td>
 <td><p>pos_fp</p></td>
 <td><p>pos_wl</p></td>
@@ -315,6 +328,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_FP_FP</p></td>
+<td><p>Raw sci=FP calib=FP file</p></td>
 <td><p>ALIGN</p></td>
 <td><p>pos_fp</p></td>
 <td><p>pos_fp</p></td>
@@ -324,6 +338,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_LFC_LFC</p></td>
+<td><p>Raw sci=LFC calib=LFC file</p></td>
 <td><p>ALIGN</p></td>
 <td><p>pos_rs</p></td>
 <td><p>pos_rs</p></td>
@@ -333,6 +348,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_LFC_FP</p></td>
+<td><p>Raw sci=LFC calib=FP file</p></td>
 <td><p>ALIGN</p></td>
 <td><p>pos_rs</p></td>
 <td><p>pos_fp</p></td>
@@ -342,6 +358,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_FP_LFC</p></td>
+<td><p>Raw sci=FP calib=LFC file</p></td>
 <td><p>ALIGN</p></td>
 <td><p>pos_fp</p></td>
 <td><p>pos_rs</p></td>
@@ -351,6 +368,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_OBJ_DARK</p></td>
+<td><p>Raw sci=OBJ calib=DARK file, where dark is an internal dark</p></td>
 <td><p>OBJECT</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_pk</p></td>
@@ -360,6 +378,7 @@
 <td><p>SPECTROSCOPY</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_OBJ_FP</p></td>
+<td><p>Raw sci=OBJ calib=FP file</p></td>
 <td><p>OBJECT</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_fp</p></td>
@@ -369,6 +388,7 @@
 <td><p>SPECTROSCOPY</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_OBJ_HCONE</p></td>
+<td><p>Raw sci=OBJ calib=Hollow Cathode file, Uranium Neon lamp</p></td>
 <td><p>OBJECT</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_hc1</p></td>
@@ -378,6 +398,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_OBJ_HCTWO</p></td>
+<td><p>Raw sci=OBJ calib=Hollow Cathode file, Thorium Argon lamp</p></td>
 <td><p>OBJECT</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_hc2</p></td>
@@ -387,6 +408,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_POLAR_DARK</p></td>
+<td><p>Raw sci=POLAR calib=DARK, where dark is an internal dark</p></td>
 <td><p>OBJECT</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_pk</p></td>
@@ -396,6 +418,7 @@
 <td><p>POLAR</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_POLAR_FP</p></td>
+<td><p>Raw sci=POLAR calib=FP</p></td>
 <td><p>OBJECT</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_fp</p></td>
@@ -405,6 +428,7 @@
 <td><p>POLAR</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_DARK_HCONE</p></td>
+<td><p>Raw sci=DARK calib=Hollow Cathode file, where dark is an internal dark, Uranium Neon lamp</p></td>
 <td><p>COMPARISON</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_hc1</p></td>
@@ -414,6 +438,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_DARK_HCTWO</p></td>
+<td><p>Raw sci=DARK calib=Hollow Cathode file, where dark is an internal dark, Thorium Argon lamp</p></td>
 <td><p>COMPARISON</p></td>
 <td><p>pos_pk</p></td>
 <td><p>pos_hc2</p></td>
@@ -423,6 +448,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_FP_HCONE</p></td>
+<td><p>Raw sci=FP calib=Hollow Cathode file, Uranium Neon lamp</p></td>
 <td><p>COMPARISON</p></td>
 <td><p>pos_fp</p></td>
 <td><p>pos_hc1</p></td>
@@ -432,6 +458,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_FP_HCTWO</p></td>
+<td><p>Raw sci=FP calib=Hollow Cathode file, Thorium Argon lamp</p></td>
 <td><p>COMPARISON</p></td>
 <td><p>pos_fp</p></td>
 <td><p>pos_hc2</p></td>
@@ -441,6 +468,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_HCONE_FP</p></td>
+<td><p>Raw sci=Hollow Cathode calib=FP file, Uranium Neion lamp</p></td>
 <td><p>COMPARISON</p></td>
 <td><p>pos_hc1</p></td>
 <td><p>pos_fp</p></td>
@@ -450,6 +478,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_HCTWO_FP</p></td>
+<td><p>Raw sci=Hollow Cathode calib=FP file, Thorium Argon lamp</p></td>
 <td><p>COMPARISON</p></td>
 <td><p>pos_hc2</p></td>
 <td><p>pos_fp</p></td>
@@ -459,6 +488,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_HCONE_HCONE</p></td>
+<td><p>Raw sci=Hollow Cathode calib=Hollow Cathode file, Uranium Neon lamp</p></td>
 <td><p>COMPARISON</p></td>
 <td><p>pos_hc1</p></td>
 <td><p>pos_hc1</p></td>
@@ -468,6 +498,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_HCTWO_HCTWO</p></td>
+<td><p>Raw sci=Hollow Cathode calib=Hollow Cathode file, Thorium Argon lamp</p></td>
 <td><p>COMPARISON</p></td>
 <td><p>pos_hc2</p></td>
 <td><p>pos_hc2</p></td>
@@ -477,6 +508,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>RAW_HCONE_DARK</p></td>
+<td><p>Raw sci=Hollow Cathode calib=DARK file, where dark is an internal dark, Uranium Neon lamp</p></td>
 <td><p>COMPARISON</p></td>
 <td><p>pos_hc1</p></td>
 <td><p>pos_pk</p></td>
@@ -486,6 +518,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>RAW_HCTWO_DARK</p></td>
+<td><p>Raw sci=Hollow Cathode calib=DARK file, where dark is an internal dark, Thorium Argon lamp</p></td>
 <td><p>COMPARISON</p></td>
 <td><p>pos_hc2</p></td>
 <td><p>pos_pk</p></td>
@@ -559,17 +592,19 @@
 <h2>2. Preprocesed files<a class="headerlink" href="#preprocesed-files" title="Permalink to this headline">¶</a></h2>
 <section id="spirou-pp-file">
 <span id="id1"></span><h3>2.1  File definition table<a class="headerlink" href="#spirou-pp-file" title="Permalink to this headline">¶</a></h3>
-<table class="csvtable docutils align-default" id="id7">
+<table class="colwidths-given csvtable docutils align-default" id="id7">
 <caption><span class="caption-text">2. Preprocesed files file definition table</span><a class="headerlink" href="#id7" title="Permalink to this table">¶</a></caption>
 <colgroup>
-<col style="width: 20%" />
-<col style="width: 20%" />
-<col style="width: 20%" />
-<col style="width: 20%" />
-<col style="width: 20%" />
+<col style="width: 11%" />
+<col style="width: 39%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 18%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>description</p></th>
 <th class="head"><p>HDR[DPRTYPE]</p></th>
 <th class="head"><p>file type</p></th>
 <th class="head"><p>suffix</p></th>
@@ -578,186 +613,217 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>DARK_DARK_INT</p></td>
+<td><p>Preprocessed sci=DARK calib=DARK file, where dark is an internal dark</p></td>
 <td><p>DARK_DARK_INT</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_DARK_DARK_INT</p></td>
 </tr>
 <tr class="row-odd"><td><p>DARK_DARK_TEL</p></td>
+<td><p>Preprocessed sci=DARK calib=DARK file, where dark is a telescope dark</p></td>
 <td><p>DARK_DARK_TEL</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_DARK_DARK_TEL</p></td>
 </tr>
 <tr class="row-even"><td><p>DARK_DARK_SKY</p></td>
+<td><p>Preprocessed sci=DARK calib=DARK file, where dark is a sky dark</p></td>
 <td><p>DARK_DARK_SKY</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_DARK_DARK_SKY</p></td>
 </tr>
 <tr class="row-odd"><td><p>DARK_FP_SKY</p></td>
+<td><p>Preprocessed sci=DARK calib=FP file, where dark is an internal dark</p></td>
 <td><p>DARK_FP_SKY</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_DARK_FP_SKY</p></td>
 </tr>
 <tr class="row-even"><td><p>FLAT_DARK</p></td>
+<td><p>Preprocessed sci=FLAT calib=DARK file, where dark is an internal dark</p></td>
 <td><p>FLAT_DARK</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_FLAT_DARK</p></td>
 </tr>
 <tr class="row-odd"><td><p>DARK_FLAT</p></td>
+<td><p>Preprocessed sci=DARK calib=FLAT file, where dark is an internal dark</p></td>
 <td><p>DARK_FLAT</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_DARK_FLAT</p></td>
 </tr>
 <tr class="row-even"><td><p>FLAT_FLAT</p></td>
+<td><p>Preprocessed sci=FLAT calib=FLAT file</p></td>
 <td><p>FLAT_FLAT</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_FLAT_FLAT</p></td>
 </tr>
 <tr class="row-odd"><td><p>FLAT_FP</p></td>
+<td><p>Preprocessed sci=FLAT calib=FP file</p></td>
 <td><p>FLAT_FP</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_FLAT_FP</p></td>
 </tr>
 <tr class="row-even"><td><p>DARK_FP</p></td>
+<td><p>Preprocessed sci=DARK calib=FP file, where dark is an internal dark</p></td>
 <td><p>DARK_FP</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_DARK_FP</p></td>
 </tr>
 <tr class="row-odd"><td><p>FP_DARK</p></td>
+<td><p>Preprocessed sci=FP calib=DARK file,  where dark is an internal dark</p></td>
 <td><p>FP_DARK</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_FP_DARK</p></td>
 </tr>
 <tr class="row-even"><td><p>FP_FLAT</p></td>
+<td><p>Preprocessed sci=FP calib=FLAT file</p></td>
 <td><p>FP_FLAT</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_FP_FLAT</p></td>
 </tr>
 <tr class="row-odd"><td><p>FP_FP</p></td>
+<td><p>Preprocessed sci=FP calib=FP file</p></td>
 <td><p>FP_FP</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_FP_FP</p></td>
 </tr>
 <tr class="row-even"><td><p>LFC_LFC</p></td>
+<td><p>Preprocessed sci=LFC calib=LFC file</p></td>
 <td><p>LFC_LFC</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_LFC_LFC</p></td>
 </tr>
 <tr class="row-odd"><td><p>LFC_FP</p></td>
+<td><p>Preprocessed sci=LFC calib=FP file</p></td>
 <td><p>LFC_FP</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_LFC_FP</p></td>
 </tr>
 <tr class="row-even"><td><p>FP_LFC</p></td>
+<td><p>Preprocessed sci=FP calib=LFC file</p></td>
 <td><p>FP_LFC</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_FP_LFC</p></td>
 </tr>
 <tr class="row-odd"><td><p>OBJ_DARK</p></td>
+<td><p>Preprocessed sci=OBJ calib=DARK file, where dark is an internal dark</p></td>
 <td><p>OBJ_DARK</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_OBJ_DARK</p></td>
 </tr>
 <tr class="row-even"><td><p>OBJ_FP</p></td>
+<td><p>Preprocessed sci=OBJ calib=FP file</p></td>
 <td><p>OBJ_FP</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_OBJ_FP</p></td>
 </tr>
 <tr class="row-odd"><td><p>OBJ_HCONE</p></td>
+<td><p>Preprocessed sci=OBJ calib=Hollow Cathode file, Uranium Neon lamp</p></td>
 <td><p>OBJ_HCONE</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_OBJ_HCONE</p></td>
 </tr>
 <tr class="row-even"><td><p>OBJ_HCTWO</p></td>
+<td><p>Preprocessed sci=OBJ calib=Hollow Cathode file, Thorium Argon lamp</p></td>
 <td><p>OBJ_HCTWO</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_OBJ_HCTWO</p></td>
 </tr>
 <tr class="row-odd"><td><p>POLAR_DARK</p></td>
+<td><p>Preprocessed sci=POLAR calib=DARK, where dark is an internal dark</p></td>
 <td><p>POLAR_DARK</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_POLAR_DARK</p></td>
 </tr>
 <tr class="row-even"><td><p>POLAR_FP</p></td>
+<td><p>Preprocessed sci=POLAR calib=FP</p></td>
 <td><p>POLAR_FP</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_POLAR_FP</p></td>
 </tr>
 <tr class="row-odd"><td><p>DARK_HCONE</p></td>
+<td><p>Preprocessed sci=DARK calib=Hollow Cathode file, where dark is an internal dark, Uranium Neon lamp</p></td>
 <td><p>DARK_HCONE</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_DARK_HCONE</p></td>
 </tr>
 <tr class="row-even"><td><p>DARK_HCTWO</p></td>
+<td><p>Preprocessed sci=DARK calib=Hollow  Cathode file, where dark is an internal dark, Thorium Argon lamp</p></td>
 <td><p>DARK_HCTWO</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_DARK_HCTWO</p></td>
 </tr>
 <tr class="row-odd"><td><p>FP_HCONE</p></td>
+<td><p>Preprocessed sci=FP calib=Hollow Cathode file, Uranium Neon lamp</p></td>
 <td><p>FP_HCONE</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_FP_HCONE</p></td>
 </tr>
 <tr class="row-even"><td><p>FP_HCTWO</p></td>
+<td><p>Preprocessed sci=FP calib=Hollow Cathode file, Thorium Argon lamp</p></td>
 <td><p>FP_HCTWO</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_FP_HCTWO</p></td>
 </tr>
 <tr class="row-odd"><td><p>HCONE_FP</p></td>
+<td><p>Preprocessed sci=Hollow Cathode calib=FP file, Uranium Neion lamp</p></td>
 <td><p>HCONE_FP</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_HCONE_FP</p></td>
 </tr>
 <tr class="row-even"><td><p>HCTWO_FP</p></td>
+<td><p>Preprocessed sci=Hollow Cathode calib=FP file, Thorium Argon lamp</p></td>
 <td><p>HCTWO_FP</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_HCTWO_FP</p></td>
 </tr>
 <tr class="row-odd"><td><p>HCONE_HCONE</p></td>
+<td><p>Preprocessed sci=Hollow Cathode calib=Hollow Cathode file, Uranium Neon lamp</p></td>
 <td><p>HCONE_HCONE</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_HCONE_HCONE</p></td>
 </tr>
 <tr class="row-even"><td><p>HCTWO_HCTWO</p></td>
+<td><p>Preprocessed sci=Hollow Cathode calib=Hollow  Cathode file, Thorium Argon lamp</p></td>
 <td><p>HCTWO_HCTWO</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_HCTWO_HCTWO</p></td>
 </tr>
 <tr class="row-odd"><td><p>HCONE_DARK</p></td>
+<td><p>Preprocessed sci=Hollow Cathode calib=DARK file, where dark is an internal dark, Uranium Neon lamp</p></td>
 <td><p>HCONE_DARK</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
 <td><p>RAW_HCONE_DARK</p></td>
 </tr>
 <tr class="row-even"><td><p>HCTWO_DARK</p></td>
+<td><p>Preprocessed sci=Hollow Cathode calib=DARK file, where dark is an internal dark, Thorium Argon lamp</p></td>
 <td><p>HCTWO_DARK</p></td>
 <td><p>.fits</p></td>
 <td><p>_pp</p></td>
@@ -773,19 +839,21 @@
 <h2>3. Reduced Files<a class="headerlink" href="#reduced-files" title="Permalink to this headline">¶</a></h2>
 <section id="spirou-red-file">
 <span id="id2"></span><h3>3.1  File definition table<a class="headerlink" href="#spirou-red-file" title="Permalink to this headline">¶</a></h3>
-<table class="csvtable docutils align-default" id="id8">
+<table class="colwidths-given csvtable docutils align-default" id="id8">
 <caption><span class="caption-text">3. Reduced Files file definition table</span><a class="headerlink" href="#id8" title="Permalink to this table">¶</a></caption>
 <colgroup>
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
+<col style="width: 9%" />
+<col style="width: 32%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 15%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>description</p></th>
 <th class="head"><p>HDR[DRSOUTID]</p></th>
 <th class="head"><p>file type</p></th>
 <th class="head"><p>suffix</p></th>
@@ -796,6 +864,7 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>DARKI</p></td>
+<td><p>Internal dark calibration file</p></td>
 <td><p>DARKI</p></td>
 <td><p>.fits</p></td>
 <td><p>_darki</p></td>
@@ -804,6 +873,7 @@
 <td><p>DARK_DARK_INT</p></td>
 </tr>
 <tr class="row-odd"><td><p>DARKT</p></td>
+<td><p>Telescope dark calibration file</p></td>
 <td><p>DARKT</p></td>
 <td><p>.fits</p></td>
 <td><p>_darkt</p></td>
@@ -812,6 +882,7 @@
 <td><p>DARK_DARK_TEL</p></td>
 </tr>
 <tr class="row-even"><td><p>DARKS</p></td>
+<td><p>Sky dark calibration file</p></td>
 <td><p>DARKS</p></td>
 <td><p>.fits</p></td>
 <td><p>_darks</p></td>
@@ -819,15 +890,17 @@
 <td><p>–</p></td>
 <td><p>DARK_DARK_SKY</p></td>
 </tr>
-<tr class="row-odd"><td><p>DARKM</p></td>
-<td><p>DARKM</p></td>
+<tr class="row-odd"><td><p>DARKREF</p></td>
+<td><p>Reference dark calibration file</p></td>
+<td><p>DARKREF</p></td>
 <td><p>.fits</p></td>
-<td><p>_dark_master</p></td>
+<td><p>_dark_ref</p></td>
 <td><p>–</p></td>
 <td><p>–</p></td>
 <td><p>DARK_DARK_TEL, DARK_DARK_INT</p></td>
 </tr>
 <tr class="row-even"><td><p>BADPIX</p></td>
+<td><p>Bad pixel map</p></td>
 <td><p>BADPIX</p></td>
 <td><p>.fits</p></td>
 <td><p>_badpixel</p></td>
@@ -836,6 +909,7 @@
 <td><p>FLAT_FLAT</p></td>
 </tr>
 <tr class="row-odd"><td><p>BKGRD_MAP</p></td>
+<td><p>Bad pixel background map</p></td>
 <td><p>BKGRD_MAP</p></td>
 <td><p>.fits</p></td>
 <td><p>_bmap.fits</p></td>
@@ -844,6 +918,7 @@
 <td><p>FLAT_FLAT</p></td>
 </tr>
 <tr class="row-even"><td><p>DEBUG_BACK</p></td>
+<td><p>Individual file background map</p></td>
 <td><p>DEBUG_BACK</p></td>
 <td><p>.fits</p></td>
 <td><p>_background.fits</p></td>
@@ -852,6 +927,7 @@
 <td><p>DRS_PP</p></td>
 </tr>
 <tr class="row-odd"><td><p>LOC_ORDERP</p></td>
+<td><p>Localisation: Order profile calibration file</p></td>
 <td><p>LOC_ORDERP</p></td>
 <td><p>.fits</p></td>
 <td><p>_order_profile</p></td>
@@ -860,6 +936,7 @@
 <td><p>FLAT_DARK, DARK_FLAT</p></td>
 </tr>
 <tr class="row-even"><td><p>LOC_LOCO</p></td>
+<td><p>Localisation: Position polynomial calibration file</p></td>
 <td><p>LOC_LOCO</p></td>
 <td><p>.fits</p></td>
 <td><p>_loco</p></td>
@@ -868,6 +945,7 @@
 <td><p>FLAT_DARK, DARK_FLAT</p></td>
 </tr>
 <tr class="row-odd"><td><p>LOC_FWHM</p></td>
+<td><p>Localisation: Width polynomial calibration file</p></td>
 <td><p>LOC_FWHM</p></td>
 <td><p>.fits</p></td>
 <td><p>_fwhm-order</p></td>
@@ -876,6 +954,7 @@
 <td><p>FLAT_DARK, DARK_FLAT</p></td>
 </tr>
 <tr class="row-even"><td><p>LOC_SUP</p></td>
+<td><p>Localisation: Position superpositionimage calibration file</p></td>
 <td><p>LOC_SUP</p></td>
 <td><p>.fits</p></td>
 <td><p>_with-order</p></td>
@@ -884,6 +963,7 @@
 <td><p>FLAT_DARK, DARK_FLAT</p></td>
 </tr>
 <tr class="row-odd"><td><p>SHAPE_X</p></td>
+<td><p>Reference shape dx calibration file</p></td>
 <td><p>SHAPE_X</p></td>
 <td><p>.fits</p></td>
 <td><p>_shapex</p></td>
@@ -892,6 +972,7 @@
 <td><p>FP_FP</p></td>
 </tr>
 <tr class="row-even"><td><p>SHAPE_Y</p></td>
+<td><p>Reference shape dy calibration file</p></td>
 <td><p>SHAPE_Y</p></td>
 <td><p>.fits</p></td>
 <td><p>_shapey</p></td>
@@ -899,15 +980,17 @@
 <td><p>–</p></td>
 <td><p>FP_FP</p></td>
 </tr>
-<tr class="row-odd"><td><p>MASTER_FP</p></td>
-<td><p>MASTER_FP</p></td>
+<tr class="row-odd"><td><p>REF_FP</p></td>
+<td><p>Reference shape master FP calibration file</p></td>
+<td><p>REF_FP</p></td>
 <td><p>.fits</p></td>
-<td><p>_fpmaster</p></td>
+<td><p>_fpref</p></td>
 <td><p>–</p></td>
 <td><p>–</p></td>
 <td><p>FP_FP</p></td>
 </tr>
 <tr class="row-even"><td><p>SHAPE_IN_FP</p></td>
+<td><p>Input FP file for shape comparison</p></td>
 <td><p>SHAPE_IN_FP</p></td>
 <td><p>.fits</p></td>
 <td><p>_shape_in_fp</p></td>
@@ -916,6 +999,7 @@
 <td><p>FP_FP</p></td>
 </tr>
 <tr class="row-odd"><td><p>SHAPE_OUT_FP</p></td>
+<td><p>Output FP file for shape comparison</p></td>
 <td><p>SHAPE_OUT_FP</p></td>
 <td><p>.fits</p></td>
 <td><p>_shape_out_fp</p></td>
@@ -924,6 +1008,7 @@
 <td><p>FP_FP</p></td>
 </tr>
 <tr class="row-even"><td><p>SHAPE_IN_HC</p></td>
+<td><p>Input Hollow Cathode file forshape comparison</p></td>
 <td><p>SHAPE_IN_HC</p></td>
 <td><p>.fits</p></td>
 <td><p>_shape_in_hc</p></td>
@@ -932,6 +1017,7 @@
 <td><p>HCONE_HCONE</p></td>
 </tr>
 <tr class="row-odd"><td><p>SHAPE_OUT_HC</p></td>
+<td><p>Output Hollow Cathode file forshape comparison</p></td>
 <td><p>SHAPE_OUT_HC</p></td>
 <td><p>.fits</p></td>
 <td><p>_shape_out_hc</p></td>
@@ -940,6 +1026,7 @@
 <td><p>HCONE_HCONE</p></td>
 </tr>
 <tr class="row-even"><td><p>SHAPE_BDX</p></td>
+<td><p>Shape transformed dx comparison file</p></td>
 <td><p>SHAPE_BDX</p></td>
 <td><p>.fits</p></td>
 <td><p>_shape_out_bdx</p></td>
@@ -948,6 +1035,7 @@
 <td><p>FP_FP</p></td>
 </tr>
 <tr class="row-odd"><td><p>SHAPEL</p></td>
+<td><p>Nightly shape calibration files</p></td>
 <td><p>SHAPEL</p></td>
 <td><p>.fits</p></td>
 <td><p>_shapel</p></td>
@@ -956,6 +1044,7 @@
 <td><p>FP_FP</p></td>
 </tr>
 <tr class="row-even"><td><p>SHAPEL_IN_FP</p></td>
+<td><p>Input FP file for nightly shape comparison</p></td>
 <td><p>SHAPEL_IN_FP</p></td>
 <td><p>.fits</p></td>
 <td><p>_shapel_in_fp.fits</p></td>
@@ -964,6 +1053,7 @@
 <td><p>FP_FP</p></td>
 </tr>
 <tr class="row-odd"><td><p>SHAPEL_OUT_FP</p></td>
+<td><p>Output FP file for nightly shape comparison</p></td>
 <td><p>SHAPEL_OUT_FP</p></td>
 <td><p>.fits</p></td>
 <td><p>_shapel_out_fp.fits</p></td>
@@ -972,6 +1062,7 @@
 <td><p>FP_FP</p></td>
 </tr>
 <tr class="row-even"><td><p>FF_BLAZE</p></td>
+<td><p>Blaze calibration file</p></td>
 <td><p>FF_BLAZE</p></td>
 <td><p>.fits</p></td>
 <td><p>_blaze</p></td>
@@ -980,6 +1071,7 @@
 <td><p>FLAT_FLAT</p></td>
 </tr>
 <tr class="row-odd"><td><p>FF_FLAT</p></td>
+<td><p>Flat calibration file</p></td>
 <td><p>FF_FLAT</p></td>
 <td><p>.fits</p></td>
 <td><p>_flat</p></td>
@@ -988,6 +1080,7 @@
 <td><p>FLAT_FLAT</p></td>
 </tr>
 <tr class="row-even"><td><p>ORDERP_STRAIGHT</p></td>
+<td><p>Straightened order profile for an individual image</p></td>
 <td><p>ORDERP_STRAIGHT</p></td>
 <td><p>.fits</p></td>
 <td><p>_orderps</p></td>
@@ -996,6 +1089,7 @@
 <td><p>SHAPEL</p></td>
 </tr>
 <tr class="row-odd"><td><p>EXT_E2DS</p></td>
+<td><p>Extracted 2D spectrum</p></td>
 <td><p>EXT_E2DS</p></td>
 <td><p>.fits</p></td>
 <td><p>_e2ds</p></td>
@@ -1004,6 +1098,7 @@
 <td><p>DRS_PP</p></td>
 </tr>
 <tr class="row-even"><td><p>EXT_E2DS_FF</p></td>
+<td><p>Extracted + flat-fielded 2D spectrum</p></td>
 <td><p>EXT_E2DS_FF</p></td>
 <td><p>.fits</p></td>
 <td><p>_e2dsff</p></td>
@@ -1012,6 +1107,7 @@
 <td><p>DRS_PP</p></td>
 </tr>
 <tr class="row-odd"><td><p>EXT_E2DS_LL</p></td>
+<td><p>Pre-extracted straighted stacked spectrum</p></td>
 <td><p>EXT_E2DS_LL</p></td>
 <td><p>.fits</p></td>
 <td><p>_e2dsll</p></td>
@@ -1020,6 +1116,7 @@
 <td><p>DRS_PP, FLAT_FLAT</p></td>
 </tr>
 <tr class="row-even"><td><p>EXT_LOCO</p></td>
+<td><p>Straightened localisation file</p></td>
 <td><p>EXT_LOCO</p></td>
 <td><p>.fits</p></td>
 <td><p>_e2dsloco</p></td>
@@ -1028,6 +1125,7 @@
 <td><p>DRS_PP</p></td>
 </tr>
 <tr class="row-odd"><td><p>EXT_S1D_W</p></td>
+<td><p>1D stitched spectrum (constant wavelength binning)</p></td>
 <td><p>EXT_S1D_W</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_w</p></td>
@@ -1036,6 +1134,7 @@
 <td><p>DRS_PP</p></td>
 </tr>
 <tr class="row-even"><td><p>EXT_S1D_V</p></td>
+<td><p>1D stitched spectrum (constant velocity binning)</p></td>
 <td><p>EXT_S1D_V</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_v</p></td>
@@ -1044,6 +1143,7 @@
 <td><p>DRS_PP</p></td>
 </tr>
 <tr class="row-odd"><td><p>EXT_FPLIST</p></td>
+<td><p>FP lines identified from extracted FP fiber</p></td>
 <td><p>EXT_FPLIST</p></td>
 <td><p>.fits</p></td>
 <td><p>_ext_fplines</p></td>
@@ -1052,6 +1152,7 @@
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-even"><td><p>THERMALI_E2DS</p></td>
+<td><p>Extracted sci=DARK calib=DARK thermal calibration file, where dark is an internal dark</p></td>
 <td><p>THERMALI_E2DS</p></td>
 <td><p>.fits</p></td>
 <td><p>_thermal_e2ds_int</p></td>
@@ -1060,6 +1161,7 @@
 <td><p>DARK_DARK_INT</p></td>
 </tr>
 <tr class="row-odd"><td><p>THERMALT_E2DS</p></td>
+<td><p>Extracted sci=DARK calib=DARK thermal calibration file, where dark is a telescope dark</p></td>
 <td><p>THERMALT_E2DS</p></td>
 <td><p>.fits</p></td>
 <td><p>_thermal_e2ds_tel</p></td>
@@ -1067,63 +1169,71 @@
 <td><p>AB, A, B, C</p></td>
 <td><p>DARK_DARK_TEL</p></td>
 </tr>
-<tr class="row-even"><td><p>LEAKM_E2DS</p></td>
-<td><p>LEAKM_E2DS</p></td>
+<tr class="row-even"><td><p>LEAKREF_E2DS</p></td>
+<td><p>Reference leak correction calibration file</p></td>
+<td><p>LEAKREF_E2DS</p></td>
 <td><p>.fits</p></td>
-<td><p>_leak_master</p></td>
+<td><p>_LEAK_REF</p></td>
 <td><p>–</p></td>
 <td><p>AB, A, B, C</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
-<tr class="row-odd"><td><p>WAVESOL_MASTER</p></td>
-<td><p>WAVESOL_MASTER</p></td>
+<tr class="row-odd"><td><p>WAVESOL_REF</p></td>
+<td><p>Reference wavelength solution calibration file</p></td>
+<td><p>WAVESOL_REF</p></td>
 <td><p>.fits</p></td>
-<td><p>_wavesol_master</p></td>
+<td><p>_WAVESOL_REF</p></td>
 <td><p>–</p></td>
 <td><p>AB, A, B, C</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
-<tr class="row-even"><td><p>WAVE_HCLIST_MASTER</p></td>
-<td><p>WAVE_HCLIST_MASTER</p></td>
+<tr class="row-even"><td><p>WAVE_HCLIST_REF</p></td>
+<td><p>Reference list of Hollow cathode lines calibration file</p></td>
+<td><p>WAVE_HCLIST_REF</p></td>
 <td><p>.fits</p></td>
-<td><p>_wavem_hclines</p></td>
+<td><p>_waveref_hclines</p></td>
 <td><p>–</p></td>
 <td><p>AB, A, B, C</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
-<tr class="row-odd"><td><p>WAVE_FPLIST_MASTER</p></td>
-<td><p>WAVE_FPLIST_MASTER</p></td>
+<tr class="row-odd"><td><p>WAVE_FPLIST_REF</p></td>
+<td><p>Reference list of FP liens calibration file</p></td>
+<td><p>WAVE_FPLIST_REF</p></td>
 <td><p>.fits</p></td>
-<td><p>_wavem_fplines</p></td>
+<td><p>_waveref_fplines</p></td>
 <td><p>–</p></td>
 <td><p>AB, A, B, C</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
-<tr class="row-even"><td><p>WAVEM_CAV</p></td>
-<td><p>WAVEM_CAV</p></td>
+<tr class="row-even"><td><p>WAVEREF_CAV</p></td>
+<td><p>Reference wavelength cavity width polynomial calibration file</p></td>
+<td><p>WAVEREF_CAV</p></td>
 <td><p>.fits</p></td>
-<td><p>_wavecav_</p></td>
+<td><p>_waveref_cav_</p></td>
 <td><p>–</p></td>
 <td><p>AB</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-odd"><td><p>WAVESOL_DEFAULT</p></td>
+<td><p>Default wavelength solution calibration file</p></td>
 <td><p>WAVESOL_DEFAULT</p></td>
 <td><p>.fits</p></td>
-<td><p>_wavem</p></td>
+<td><p>_wave_d_ref</p></td>
 <td><p>–</p></td>
 <td><p>AB, A, B, C</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-even"><td><p>WAVERES</p></td>
+<td><p>Reference wavelength resolution map file</p></td>
 <td><p>WAVE_RES</p></td>
 <td><p>.fits</p></td>
-<td><p>_wavemres</p></td>
+<td><p>_waveref_resmap</p></td>
 <td><p>–</p></td>
 <td><p>AB, A, B, C</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-odd"><td><p>WAVE_FPRESTAB</p></td>
+<td><p>Reference wavelength resolution table</p></td>
 <td><p>–</p></td>
 <td><p>.tbl</p></td>
 <td><p>–</p></td>
@@ -1132,6 +1242,7 @@
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-even"><td><p>WAVE_FPLLTABL</p></td>
+<td><p>Reference wavelength FP line-list table</p></td>
 <td><p>–</p></td>
 <td><p>.tbl</p></td>
 <td><p>_mhc_lines</p></td>
@@ -1140,6 +1251,7 @@
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-odd"><td><p>WAVE_NIGHT</p></td>
+<td><p>Nightly wavelength solution calibration file</p></td>
 <td><p>WAVE_NIGHT</p></td>
 <td><p>.fits</p></td>
 <td><p>_wave_night</p></td>
@@ -1148,6 +1260,7 @@
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-even"><td><p>WAVEHCLL</p></td>
+<td><p>Nightly HC line list calibration file</p></td>
 <td><p>–</p></td>
 <td><p>.dat</p></td>
 <td><p>_linelist</p></td>
@@ -1156,14 +1269,16 @@
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-odd"><td><p>WAVERES</p></td>
+<td><p>Nightly wavelength resolution map file</p></td>
 <td><p>WAVE_RES</p></td>
 <td><p>.fits</p></td>
-<td><p>_waveres</p></td>
+<td><p>_wave_res</p></td>
 <td><p>–</p></td>
 <td><p>AB, A, B, C</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-even"><td><p>WAVE_FPRESTAB</p></td>
+<td><p>Nightly wavelength resolutiontable</p></td>
 <td><p>–</p></td>
 <td><p>.tbl</p></td>
 <td><p>–</p></td>
@@ -1172,6 +1287,7 @@
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-odd"><td><p>WAVE_FPLLTABL</p></td>
+<td><p>Nightly wavelength FP line-list table</p></td>
 <td><p>–</p></td>
 <td><p>.tbl</p></td>
 <td><p>_hc_lines</p></td>
@@ -1180,6 +1296,7 @@
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-even"><td><p>WAVE_HCLIST</p></td>
+<td><p>Nightly wavelength Hollow cathodeline-list table</p></td>
 <td><p>WAVE_HCLIST</p></td>
 <td><p>.fits</p></td>
 <td><p>_wave_hclines</p></td>
@@ -1188,6 +1305,7 @@
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-odd"><td><p>WAVE_FPLIST</p></td>
+<td><p>Nightly wavelength FP line-list calibration file</p></td>
 <td><p>WAVE_FPLIST</p></td>
 <td><p>.fits</p></td>
 <td><p>_wave_fplines</p></td>
@@ -1196,6 +1314,7 @@
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-even"><td><p>TELLU_PCLEAN</p></td>
+<td><p>Telluric pre-cleaning file</p></td>
 <td><p>TELLU_PCLEAN</p></td>
 <td><p>.fits</p></td>
 <td><p>_tellu_pclean</p></td>
@@ -1205,13 +1324,15 @@
 </tr>
 <tr class="row-odd"><td><p>TELLU_CONV</p></td>
 <td><p>–</p></td>
+<td><p>–</p></td>
 <td><p>.npy</p></td>
 <td><p>_tellu_conv</p></td>
 <td><p>–</p></td>
 <td><p>AB, A, B</p></td>
-<td><p>WAVESOL_MASTER, WAVE_NIGHT, WAVESOL_DEFAULT</p></td>
+<td><p>WAVESOL_REF, WAVE_NIGHT, WAVESOL_DEFAULT</p></td>
 </tr>
 <tr class="row-even"><td><p>TELLU_TRANS</p></td>
+<td><p>Telluric transmission file</p></td>
 <td><p>TELLU_TRANS</p></td>
 <td><p>.fits</p></td>
 <td><p>_tellu_trans</p></td>
@@ -1221,6 +1342,7 @@
 </tr>
 <tr class="row-odd"><td><p>TELLU_TAPAS</p></td>
 <td><p>–</p></td>
+<td><p>–</p></td>
 <td><p>.npy</p></td>
 <td><p>–</p></td>
 <td><p>tapas_spl.npy</p></td>
@@ -1228,6 +1350,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>TRANS_MODEL</p></td>
+<td><p>Telluric transmission model file</p></td>
 <td><p>TRANS_MODEL</p></td>
 <td><p>.fits</p></td>
 <td><p>–</p></td>
@@ -1237,6 +1360,7 @@
 </tr>
 <tr class="row-odd"><td><p>ABSO_NPY</p></td>
 <td><p>–</p></td>
+<td><p>–</p></td>
 <td><p>.npy</p></td>
 <td><p>–</p></td>
 <td><p>tellu_save.npy</p></td>
@@ -1244,6 +1368,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>TELLU_OBJ</p></td>
+<td><p>Telluric corrected extracted 2D spectrum</p></td>
 <td><p>TELLU_OBJ</p></td>
 <td><p>.fits</p></td>
 <td><p>_e2dsff_tcorr</p></td>
@@ -1252,6 +1377,7 @@
 <td><p>EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-odd"><td><p>SC1D_W_FILE</p></td>
+<td><p>Telluric corrected extracted 1D spectrum (constant wavelength binning)</p></td>
 <td><p>SC1D_W_FILE</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_w_tcorr</p></td>
@@ -1260,6 +1386,7 @@
 <td><p>EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-even"><td><p>SC1D_V_FILE</p></td>
+<td><p>Telluric corrected extracted 1D spectrum (constant velocity binning)</p></td>
 <td><p>SC1D_V_FILE</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_v_tcorr</p></td>
@@ -1268,6 +1395,7 @@
 <td><p>EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-odd"><td><p>TELLU_RECON</p></td>
+<td><p>Telluric reconstructed 2D absorption file</p></td>
 <td><p>TELLU_RECON</p></td>
 <td><p>.fits</p></td>
 <td><p>_e2dsff_recon</p></td>
@@ -1276,6 +1404,7 @@
 <td><p>EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-even"><td><p>RC1D_W_FILE</p></td>
+<td><p>Telluric reconstructed 1D absorption file (constant wavelength binning)</p></td>
 <td><p>RC1D_W_FILE</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_w_recon</p></td>
@@ -1284,6 +1413,7 @@
 <td><p>EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-odd"><td><p>RC1D_V_FILE</p></td>
+<td><p>Telluric reconstructed 1D absorption file (constant velocity binning)</p></td>
 <td><p>RC1D_V_FILE</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_v_recon</p></td>
@@ -1292,6 +1422,7 @@
 <td><p>EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-even"><td><p>TELLU_TEMP</p></td>
+<td><p>Telluric 2D template file</p></td>
 <td><p>TELLU_TEMP</p></td>
 <td><p>.fits</p></td>
 <td><p>–</p></td>
@@ -1300,6 +1431,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-odd"><td><p>TELLU_BIGCUBE</p></td>
+<td><p>Telluric object 2D stack file (star frame)</p></td>
 <td><p>TELLU_BIGCUBE</p></td>
 <td><p>.fits</p></td>
 <td><p>–</p></td>
@@ -1308,6 +1440,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-even"><td><p>TELLU_BIGCUBE0</p></td>
+<td><p>Telluric object  2D stack file (Earth frame)</p></td>
 <td><p>TELLU_BIGCUBE0</p></td>
 <td><p>.fits</p></td>
 <td><p>–</p></td>
@@ -1316,6 +1449,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-odd"><td><p>TELLU_TEMP_S1D</p></td>
+<td><p>Telluric 1D template file</p></td>
 <td><p>TELLU_TEMP_S1D</p></td>
 <td><p>.fits</p></td>
 <td><p>–</p></td>
@@ -1324,6 +1458,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-even"><td><p>TELLU_BIGCUBE_S1D</p></td>
+<td><p>Telluric object 1D stack file (Earth frame)</p></td>
 <td><p>TELLU_BIGCUBE_S1D</p></td>
 <td><p>.fits</p></td>
 <td><p>–</p></td>
@@ -1332,6 +1467,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-odd"><td><p>CCF_RV</p></td>
+<td><p>Cross-correlation RV results file</p></td>
 <td><p>CCF_RV</p></td>
 <td><p>.fits</p></td>
 <td><p>_ccf</p></td>
@@ -1340,6 +1476,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-even"><td><p>POL_DEG</p></td>
+<td><p>Polarimetry 2D degree of polarisation file</p></td>
 <td><p>POL_DEG</p></td>
 <td><p>.fits</p></td>
 <td><p>_pol</p></td>
@@ -1348,6 +1485,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-odd"><td><p>STOKESI_POL</p></td>
+<td><p>Polarimetry 2D stokes I polarisation file</p></td>
 <td><p>STOKESI_POL</p></td>
 <td><p>.fits</p></td>
 <td><p>_StokesI</p></td>
@@ -1356,6 +1494,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-even"><td><p>NULL_POL1</p></td>
+<td><p>2D Null polarisation 1 file</p></td>
 <td><p>NULL_POL1</p></td>
 <td><p>.fits</p></td>
 <td><p>_null1_pol</p></td>
@@ -1364,6 +1503,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-odd"><td><p>NULL_POL2</p></td>
+<td><p>2D Null polarisation 2 file</p></td>
 <td><p>NULL_POL2</p></td>
 <td><p>.fits</p></td>
 <td><p>_null2_pol</p></td>
@@ -1372,6 +1512,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-even"><td><p>LSD_POL</p></td>
+<td><p>Least squares deconvolution file</p></td>
 <td><p>LSD_POL</p></td>
 <td><p>.fits</p></td>
 <td><p>_lsd_pol</p></td>
@@ -1380,6 +1521,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-odd"><td><p>S1DW_POL</p></td>
+<td><p>Polarimetry 2D degree of polarisation file (constant wavelength binning)</p></td>
 <td><p>S1DW_POL</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_w_pol</p></td>
@@ -1388,6 +1530,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-even"><td><p>S1DV_POL</p></td>
+<td><p>Polarimetry 2D degree of polarisation file (constant velocity binning)</p></td>
 <td><p>S1DV_POL</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_v_pol</p></td>
@@ -1396,6 +1539,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-odd"><td><p>S1DW_NULL1</p></td>
+<td><p>1D Null polarisation 1 file (constant wavelength binning)</p></td>
 <td><p>S1DW_NULL1</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_w_null1</p></td>
@@ -1404,6 +1548,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-even"><td><p>S1DV_NULL1</p></td>
+<td><p>1D Null polarisation 1 file (constant velocity binning)</p></td>
 <td><p>S1DV_NULL1</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_v_null1</p></td>
@@ -1412,6 +1557,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-odd"><td><p>S1DW_NULL2</p></td>
+<td><p>1D Null polarisation 2 file (constant wavelength binning)</p></td>
 <td><p>S1DW_NULL1</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_w_null2</p></td>
@@ -1420,6 +1566,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-even"><td><p>S1DV_NULL2</p></td>
+<td><p>1D Null polarisation 2 file (constant velocity binning)</p></td>
 <td><p>S1DV_NULL2</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_v_null2</p></td>
@@ -1428,6 +1575,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-odd"><td><p>S1DW_STOKESI</p></td>
+<td><p>Polarimetry 1D stokes I polarisation file (constant wavelength binning)</p></td>
 <td><p>S1DW_STOKESI</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_w_stokesi</p></td>
@@ -1436,6 +1584,7 @@
 <td><p>EXT_E2DS_FF, TELLU_OBJ</p></td>
 </tr>
 <tr class="row-even"><td><p>S1DV_STOKESI</p></td>
+<td><p>Polarimetry 1D stokes I polarisation file (constant velocity binning)</p></td>
 <td><p>S1DV_STOKESI</p></td>
 <td><p>.fits</p></td>
 <td><p>_s1d_v_stokesi</p></td>
@@ -1453,20 +1602,22 @@
 <h2>4. Calibration files<a class="headerlink" href="#calibration-files" title="Permalink to this headline">¶</a></h2>
 <section id="spirou-calib-file">
 <span id="id3"></span><h3>4.1  File definition table<a class="headerlink" href="#spirou-calib-file" title="Permalink to this headline">¶</a></h3>
-<table class="csvtable docutils align-default" id="id9">
+<table class="colwidths-given csvtable docutils align-default" id="id9">
 <caption><span class="caption-text">4. Calibration files file definition table</span><a class="headerlink" href="#id9" title="Permalink to this table">¶</a></caption>
 <colgroup>
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
+<col style="width: 8%" />
+<col style="width: 30%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 14%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>description</p></th>
 <th class="head"><p>HDR[DRSOUTID]</p></th>
 <th class="head"><p>file type</p></th>
 <th class="head"><p>suffix</p></th>
@@ -1478,6 +1629,7 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>DARKI</p></td>
+<td><p>Internal dark calibration file</p></td>
 <td><p>DARKI</p></td>
 <td><p>.fits</p></td>
 <td><p>_darki</p></td>
@@ -1487,6 +1639,7 @@
 <td><p>DARK_DARK_INT</p></td>
 </tr>
 <tr class="row-odd"><td><p>DARKT</p></td>
+<td><p>Telescope dark calibration file</p></td>
 <td><p>DARKT</p></td>
 <td><p>.fits</p></td>
 <td><p>_darkt</p></td>
@@ -1496,6 +1649,7 @@
 <td><p>DARK_DARK_TEL</p></td>
 </tr>
 <tr class="row-even"><td><p>DARKS</p></td>
+<td><p>Sky dark calibration file</p></td>
 <td><p>DARKS</p></td>
 <td><p>.fits</p></td>
 <td><p>_darks</p></td>
@@ -1504,16 +1658,18 @@
 <td><p>DARKS</p></td>
 <td><p>DARK_DARK_SKY</p></td>
 </tr>
-<tr class="row-odd"><td><p>DARKM</p></td>
-<td><p>DARKM</p></td>
+<tr class="row-odd"><td><p>DARKREF</p></td>
+<td><p>Reference dark calibration file</p></td>
+<td><p>DARKREF</p></td>
 <td><p>.fits</p></td>
-<td><p>_dark_master</p></td>
+<td><p>_dark_ref</p></td>
 <td><p>–</p></td>
 <td><p>calibration</p></td>
-<td><p>DARKM</p></td>
+<td><p>DARKREF</p></td>
 <td><p>DARK_DARK_TEL, DARK_DARK_INT</p></td>
 </tr>
 <tr class="row-even"><td><p>BADPIX</p></td>
+<td><p>Bad pixel map</p></td>
 <td><p>BADPIX</p></td>
 <td><p>.fits</p></td>
 <td><p>_badpixel</p></td>
@@ -1523,6 +1679,7 @@
 <td><p>FLAT_FLAT</p></td>
 </tr>
 <tr class="row-odd"><td><p>BKGRD_MAP</p></td>
+<td><p>Bad pixel background map</p></td>
 <td><p>BKGRD_MAP</p></td>
 <td><p>.fits</p></td>
 <td><p>_bmap.fits</p></td>
@@ -1532,6 +1689,7 @@
 <td><p>FLAT_FLAT</p></td>
 </tr>
 <tr class="row-even"><td><p>LOC_ORDERP</p></td>
+<td><p>Localisation: Order profile calibration file</p></td>
 <td><p>LOC_ORDERP</p></td>
 <td><p>.fits</p></td>
 <td><p>_order_profile</p></td>
@@ -1541,6 +1699,7 @@
 <td><p>FLAT_DARK, DARK_FLAT</p></td>
 </tr>
 <tr class="row-odd"><td><p>LOC_LOCO</p></td>
+<td><p>Localisation: Position polynomial calibration file</p></td>
 <td><p>LOC_LOCO</p></td>
 <td><p>.fits</p></td>
 <td><p>_loco</p></td>
@@ -1550,6 +1709,7 @@
 <td><p>FLAT_DARK, DARK_FLAT</p></td>
 </tr>
 <tr class="row-even"><td><p>SHAPE_X</p></td>
+<td><p>Reference shape dx calibration file</p></td>
 <td><p>SHAPE_X</p></td>
 <td><p>.fits</p></td>
 <td><p>_shapex</p></td>
@@ -1559,6 +1719,7 @@
 <td><p>FP_FP</p></td>
 </tr>
 <tr class="row-odd"><td><p>SHAPE_Y</p></td>
+<td><p>Reference shape dy calibration file</p></td>
 <td><p>SHAPE_Y</p></td>
 <td><p>.fits</p></td>
 <td><p>_shapey</p></td>
@@ -1567,16 +1728,18 @@
 <td><p>SHAPEY</p></td>
 <td><p>FP_FP</p></td>
 </tr>
-<tr class="row-even"><td><p>MASTER_FP</p></td>
-<td><p>MASTER_FP</p></td>
+<tr class="row-even"><td><p>REF_FP</p></td>
+<td><p>Reference shape master FP calibration file</p></td>
+<td><p>REF_FP</p></td>
 <td><p>.fits</p></td>
-<td><p>_fpmaster</p></td>
+<td><p>_fpref</p></td>
 <td><p>–</p></td>
 <td><p>calibration</p></td>
-<td><p>FPMASTER</p></td>
+<td><p>FPREF</p></td>
 <td><p>FP_FP</p></td>
 </tr>
 <tr class="row-odd"><td><p>SHAPEL</p></td>
+<td><p>Nightly shape calibration files</p></td>
 <td><p>SHAPEL</p></td>
 <td><p>.fits</p></td>
 <td><p>_shapel</p></td>
@@ -1586,6 +1749,7 @@
 <td><p>FP_FP</p></td>
 </tr>
 <tr class="row-even"><td><p>FF_BLAZE</p></td>
+<td><p>Blaze calibration file</p></td>
 <td><p>FF_BLAZE</p></td>
 <td><p>.fits</p></td>
 <td><p>_blaze</p></td>
@@ -1595,6 +1759,7 @@
 <td><p>FLAT_FLAT</p></td>
 </tr>
 <tr class="row-odd"><td><p>FF_FLAT</p></td>
+<td><p>Flat calibration file</p></td>
 <td><p>FF_FLAT</p></td>
 <td><p>.fits</p></td>
 <td><p>_flat</p></td>
@@ -1604,6 +1769,7 @@
 <td><p>FLAT_FLAT</p></td>
 </tr>
 <tr class="row-even"><td><p>THERMALI_E2DS</p></td>
+<td><p>Extracted sci=DARK calib=DARK thermal calibration file, where dark is an internal dark</p></td>
 <td><p>THERMALI_E2DS</p></td>
 <td><p>.fits</p></td>
 <td><p>_thermal_e2ds_int</p></td>
@@ -1613,6 +1779,7 @@
 <td><p>DARK_DARK_INT</p></td>
 </tr>
 <tr class="row-odd"><td><p>THERMALT_E2DS</p></td>
+<td><p>Extracted sci=DARK calib=DARK thermal calibration file, where dark is a telescope dark</p></td>
 <td><p>THERMALT_E2DS</p></td>
 <td><p>.fits</p></td>
 <td><p>_thermal_e2ds_tel</p></td>
@@ -1621,61 +1788,68 @@
 <td><p>THERMALT</p></td>
 <td><p>DARK_DARK_TEL</p></td>
 </tr>
-<tr class="row-even"><td><p>LEAKM_E2DS</p></td>
-<td><p>LEAKM_E2DS</p></td>
+<tr class="row-even"><td><p>LEAKREF_E2DS</p></td>
+<td><p>Reference leak correction calibration file</p></td>
+<td><p>LEAKREF_E2DS</p></td>
 <td><p>.fits</p></td>
-<td><p>_leak_master</p></td>
+<td><p>_LEAK_REF</p></td>
 <td><p>AB, A, B, C</p></td>
 <td><p>calibration</p></td>
-<td><p>LEAKM</p></td>
+<td><p>LEAKREF</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
-<tr class="row-odd"><td><p>WAVESOL_MASTER</p></td>
-<td><p>WAVESOL_MASTER</p></td>
+<tr class="row-odd"><td><p>WAVESOL_REF</p></td>
+<td><p>Reference wavelength solution calibration file</p></td>
+<td><p>WAVESOL_REF</p></td>
 <td><p>.fits</p></td>
-<td><p>_wavesol_master</p></td>
+<td><p>_WAVESOL_REF</p></td>
 <td><p>AB, A, B, C</p></td>
 <td><p>calibration</p></td>
-<td><p>WAVESOL_MASTER</p></td>
+<td><p>WAVESOL_REF</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
-<tr class="row-even"><td><p>WAVE_HCLIST_MASTER</p></td>
-<td><p>WAVE_HCLIST_MASTER</p></td>
+<tr class="row-even"><td><p>WAVE_HCLIST_REF</p></td>
+<td><p>Reference list of Hollow cathode lines calibration file</p></td>
+<td><p>WAVE_HCLIST_REF</p></td>
 <td><p>.fits</p></td>
-<td><p>_wavem_hclines</p></td>
+<td><p>_waveref_hclines</p></td>
 <td><p>AB, A, B, C</p></td>
 <td><p>calibration</p></td>
 <td><p>WAVEHCL</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
-<tr class="row-odd"><td><p>WAVE_FPLIST_MASTER</p></td>
-<td><p>WAVE_FPLIST_MASTER</p></td>
+<tr class="row-odd"><td><p>WAVE_FPLIST_REF</p></td>
+<td><p>Reference list of FP liens calibration file</p></td>
+<td><p>WAVE_FPLIST_REF</p></td>
 <td><p>.fits</p></td>
-<td><p>_wavem_fplines</p></td>
+<td><p>_waveref_fplines</p></td>
 <td><p>AB, A, B, C</p></td>
 <td><p>calibration</p></td>
 <td><p>WAVEFPL</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
-<tr class="row-even"><td><p>WAVEM_CAV</p></td>
-<td><p>WAVEM_CAV</p></td>
+<tr class="row-even"><td><p>WAVEREF_CAV</p></td>
+<td><p>Reference wavelength cavity width polynomial calibration file</p></td>
+<td><p>WAVEREF_CAV</p></td>
 <td><p>.fits</p></td>
-<td><p>_wavecav_</p></td>
+<td><p>_waveref_cav_</p></td>
 <td><p>AB</p></td>
 <td><p>calibration</p></td>
 <td><p>WAVECAV</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-odd"><td><p>WAVESOL_DEFAULT</p></td>
+<td><p>Default wavelength solution calibration file</p></td>
 <td><p>WAVESOL_DEFAULT</p></td>
 <td><p>.fits</p></td>
-<td><p>_wavem</p></td>
+<td><p>_wave_d_ref</p></td>
 <td><p>AB, A, B, C</p></td>
 <td><p>calibration</p></td>
 <td><p>WAVESOL_DEFAULT</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-even"><td><p>WAVE_NIGHT</p></td>
+<td><p>Nightly wavelength solution calibration file</p></td>
 <td><p>WAVE_NIGHT</p></td>
 <td><p>.fits</p></td>
 <td><p>_wave_night</p></td>
@@ -1694,21 +1868,23 @@
 <h2>5. Telluric files<a class="headerlink" href="#telluric-files" title="Permalink to this headline">¶</a></h2>
 <section id="spirou-tellu-file">
 <span id="id4"></span><h3>5.1  File definition table<a class="headerlink" href="#spirou-tellu-file" title="Permalink to this headline">¶</a></h3>
-<table class="csvtable docutils align-default" id="id10">
+<table class="colwidths-given csvtable docutils align-default" id="id10">
 <caption><span class="caption-text">5. Telluric files file definition table</span><a class="headerlink" href="#id10" title="Permalink to this table">¶</a></caption>
 <colgroup>
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
+<col style="width: 7%" />
+<col style="width: 29%" />
+<col style="width: 7%" />
+<col style="width: 7%" />
+<col style="width: 7%" />
+<col style="width: 7%" />
+<col style="width: 7%" />
+<col style="width: 7%" />
+<col style="width: 7%" />
+<col style="width: 13%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>description</p></th>
 <th class="head"><p>HDR[DRSOUTID]</p></th>
 <th class="head"><p>file type</p></th>
 <th class="head"><p>suffix</p></th>
@@ -1721,6 +1897,7 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>TELLU_PCLEAN</p></td>
+<td><p>Telluric pre-cleaning file</p></td>
 <td><p>TELLU_PCLEAN</p></td>
 <td><p>.fits</p></td>
 <td><p>_tellu_pclean</p></td>
@@ -1732,15 +1909,17 @@
 </tr>
 <tr class="row-odd"><td><p>TELLU_CONV</p></td>
 <td><p>–</p></td>
+<td><p>–</p></td>
 <td><p>.npy</p></td>
 <td><p>_tellu_conv</p></td>
 <td><p>–</p></td>
 <td><p>AB, A, B</p></td>
 <td><p>telluric</p></td>
 <td><p>TELLU_CONV</p></td>
-<td><p>WAVESOL_MASTER, WAVE_NIGHT, WAVESOL_DEFAULT</p></td>
+<td><p>WAVESOL_REF, WAVE_NIGHT, WAVESOL_DEFAULT</p></td>
 </tr>
 <tr class="row-even"><td><p>TELLU_TRANS</p></td>
+<td><p>Telluric transmission file</p></td>
 <td><p>TELLU_TRANS</p></td>
 <td><p>.fits</p></td>
 <td><p>_tellu_trans</p></td>
@@ -1752,6 +1931,7 @@
 </tr>
 <tr class="row-odd"><td><p>TELLU_TAPAS</p></td>
 <td><p>–</p></td>
+<td><p>–</p></td>
 <td><p>.npy</p></td>
 <td><p>–</p></td>
 <td><p>tapas_spl.npy</p></td>
@@ -1761,6 +1941,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-even"><td><p>TRANS_MODEL</p></td>
+<td><p>Telluric transmission model file</p></td>
 <td><p>TRANS_MODEL</p></td>
 <td><p>.fits</p></td>
 <td><p>–</p></td>
@@ -1771,6 +1952,7 @@
 <td><p>–</p></td>
 </tr>
 <tr class="row-odd"><td><p>TELLU_OBJ</p></td>
+<td><p>Telluric corrected extracted 2D spectrum</p></td>
 <td><p>TELLU_OBJ</p></td>
 <td><p>.fits</p></td>
 <td><p>_e2dsff_tcorr</p></td>
@@ -1781,6 +1963,7 @@
 <td><p>EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-even"><td><p>TELLU_RECON</p></td>
+<td><p>Telluric reconstructed 2D absorption file</p></td>
 <td><p>TELLU_RECON</p></td>
 <td><p>.fits</p></td>
 <td><p>_e2dsff_recon</p></td>
@@ -1791,6 +1974,7 @@
 <td><p>EXT_E2DS_FF</p></td>
 </tr>
 <tr class="row-odd"><td><p>TELLU_TEMP</p></td>
+<td><p>Telluric 2D template file</p></td>
 <td><p>TELLU_TEMP</p></td>
 <td><p>.fits</p></td>
 <td><p>–</p></td>
@@ -1810,19 +1994,21 @@
 <h2>6. Post-processed files<a class="headerlink" href="#post-processed-files" title="Permalink to this headline">¶</a></h2>
 <section id="spirou-post-file">
 <span id="id5"></span><h3>6.1  File definition table<a class="headerlink" href="#spirou-post-file" title="Permalink to this headline">¶</a></h3>
-<table class="csvtable docutils align-default" id="id11">
+<table class="colwidths-given csvtable docutils align-default" id="id11">
 <caption><span class="caption-text">6. Post-processed files file definition table</span><a class="headerlink" href="#id11" title="Permalink to this table">¶</a></caption>
 <colgroup>
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
+<col style="width: 9%" />
+<col style="width: 36%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
 </colgroup>
 <thead>
-<tr class="row-odd"><th class="head"><p>NAME</p></th>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>description</p></th>
 <th class="head"><p>HDR[KW_DPRTYPE]</p></th>
 <th class="head"><p>suffix</p></th>
 <th class="head"><p>ext name</p></th>
@@ -1833,6 +2019,7 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>DRS_POST_E</p></td>
+<td><p>Post process 2D extracted spectrum collection</p></td>
 <td><p>OBJ_FP <br> OBJ_DARK <br> POLAR_FP <br> POLAR_DARK</p></td>
 <td><p>e.fits</p></td>
 <td><p><br> Primary: PP <br> FluxAB <br> FluxA <br> FluxB <br> FluxC <br> WaveAB <br> WaveA <br> WaveB <br> WaveC <br> BlazeAB <br> BlazeA <br> BlazeB <br> BlazeC</p></td>
@@ -1841,6 +2028,7 @@
 <td><p><br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> –</p></td>
 </tr>
 <tr class="row-odd"><td><p>DRS_POST_S</p></td>
+<td><p>Post process 1D spectrum collection</p></td>
 <td><p>OBJ_FP <br> OBJ_DARK <br> POLAR_FP <br> POLAR_DARK</p></td>
 <td><p>s.fits</p></td>
 <td><p><br> Primary: PP <br> UniformWavelength <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> UniformVelocity <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> –</p></td>
@@ -1849,6 +2037,7 @@
 <td><p><br> – <br> EXT_S1D_W <br> EXT_S1D_W <br> EXT_S1D_W <br> EXT_S1D_W <br> EXT_S1D_W <br> EXT_S1D_W <br> EXT_S1D_W <br> EXT_S1D_W <br> EXT_S1D_W <br> SC1D_W_FILE <br> SC1D_W_FILE <br> SC1D_W_FILE <br> SC1D_W_FILE <br> SC1D_W_FILE <br> SC1D_W_FILE <br> RC1D_W_FILE <br> RC1D_W_FILE <br> EXT_S1D_V <br> EXT_S1D_V <br> EXT_S1D_V <br> EXT_S1D_V <br> EXT_S1D_V <br> EXT_S1D_V <br> EXT_S1D_V <br> EXT_S1D_V <br> EXT_S1D_V <br> SC1D_V_FILE <br> SC1D_V_FILE <br> SC1D_V_FILE <br> SC1D_V_FILE <br> SC1D_V_FILE <br> SC1D_V_FILE <br> RC1D_V_FILE <br> RC1D_V_FILE</p></td>
 </tr>
 <tr class="row-even"><td><p>DRS_POST_T</p></td>
+<td><p>Post process 2D telluric corrected collection</p></td>
 <td><p>OBJ_FP <br> OBJ_DARK <br> POLAR_FP <br> POLAR_DARK</p></td>
 <td><p>t.fits</p></td>
 <td><p><br> Primary: PP <br> FluxAB <br> WaveAB <br> BlazeAB <br> Recon <br> OHLine <br> FluxA <br> WaveA <br> BlazeA <br> FluxB <br> WaveB <br> BlazeB</p></td>
@@ -1857,6 +2046,7 @@
 <td><p><br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> –</p></td>
 </tr>
 <tr class="row-odd"><td><p>DRS_POST_V</p></td>
+<td><p>Post process radial velocity collection</p></td>
 <td><p>OBJ_FP <br> OBJ_DARK <br> POLAR_FP <br> POLAR_DARK</p></td>
 <td><p>v.fits</p></td>
 <td><p><br> Primary: PP <br> CCF</p></td>
@@ -1865,6 +2055,7 @@
 <td><p><br> – <br> –</p></td>
 </tr>
 <tr class="row-even"><td><p>DRS_POST_P</p></td>
+<td><p>Post process polarimetry collection</p></td>
 <td><p>POLAR_FP <br> POLAR_DARK</p></td>
 <td><p>p.fits</p></td>
 <td><p><br> Primary: PP <br> Pol <br> PolErr <br> StokesI <br> StokesIErr <br> Null1 <br> Null2 <br> WaveAB <br> BlazeAB <br> UniformWavelength <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> UniformVelocity <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> – <br> PolTable</p></td>
@@ -1908,7 +2099,7 @@ the default wave solution (WAVESOL_DEFAULT)</p>
         <li class="right" >
           <a href="../../tool_definitions/spirou/tools.html" title="User tools (spirou)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.232 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.241 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">File definitions (SPIROU)</a></li> 
       </ul>

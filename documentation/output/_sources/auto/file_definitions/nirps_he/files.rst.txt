@@ -35,6 +35,7 @@ Contents
 
 .. csv-table:: 1. Raw Files file definition table
    :file: nirps_he_raw_file.csv
+   :widths: 9, 34, 9, 9, 9, 9, 9
    :header-rows: 1
    :class: csvtable
 
@@ -69,6 +70,7 @@ Contents
 
 .. csv-table:: 2. Preprocesed files file definition table
    :file: nirps_he_pp_file.csv
+   :widths: 10, 36, 10, 10, 10, 17
    :header-rows: 1
    :class: csvtable
 
@@ -94,6 +96,7 @@ Contents
 
 .. csv-table:: 3. Reduced Files file definition table
    :file: nirps_he_red_file.csv
+   :widths: 8, 29, 8, 8, 8, 8, 8, 14
    :header-rows: 1
    :class: csvtable
 
@@ -119,6 +122,7 @@ Contents
 
 .. csv-table:: 4. Calibration files file definition table
    :file: nirps_he_calib_file.csv
+   :widths: 7, 26, 7, 7, 7, 7, 7, 7, 12
    :header-rows: 1
    :class: csvtable
 
@@ -144,6 +148,7 @@ Contents
 
 .. csv-table:: 5. Telluric files file definition table
    :file: nirps_he_tellu_file.csv
+   :widths: 6, 24, 6, 6, 6, 6, 6, 6, 6, 11
    :header-rows: 1
    :class: csvtable
 
@@ -169,6 +174,7 @@ Contents
 
 .. csv-table:: 6. Post-processed files file definition table
    :file: nirps_he_post_file.csv
+   :widths: 8, 31, 8, 8, 8, 8, 8, 8
    :header-rows: 1
    :class: csvtable
 

@@ -21,6 +21,7 @@ This section describes all the default dev tools to use with APERO.
     rdefinition_DOC.rst
     rdefinition_DEPEND.rst
     rdefinition_RUN_INI.rst
+    rdefinition_STATIC.rst
 
 .. only:: html
 

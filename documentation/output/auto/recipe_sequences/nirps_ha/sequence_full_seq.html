@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>full_seq &#8212; APERO 0.7.232 documentation</title>
+    <title>full_seq &#8212; APERO 0.7.241 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="sequence_pp_seq_opt.html" title="pp_seq_opt"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.232 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.241 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/nirps_ha/main_nirps_ha.html" >NIRPS HA documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="sequences.html" accesskey="U">Sequences (NIRPS_HA)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">full_seq</a></li> 
@@ -170,7 +170,7 @@
 <th class="head"><p>RECIPE</p></th>
 <th class="head"><p>SHORTNAME</p></th>
 <th class="head"><p>RECIPE KIND</p></th>
-<th class="head"><p>MASTER RECIPE</p></th>
+<th class="head"><p>REF RECIPE</p></th>
 <th class="head"><p>FIBER</p></th>
 <th class="head"><p>FILTERS</p></th>
 <th class="head"><p>ARGS</p></th>
@@ -189,9 +189,9 @@
 <td></td>
 </tr>
 <tr class="row-odd"><td><p>2</p></td>
-<td><p>apero_dark_master_nirps_ha.py</p></td>
-<td><p>DARKM</p></td>
-<td><p>calib-master</p></td>
+<td><p>apero_dark_ref_nirps_ha.py</p></td>
+<td><p>DARKREF</p></td>
+<td><p>calib-reference</p></td>
 <td><p>Yes</p></td>
 <td><p>–</p></td>
 <td><p>–</p></td>
@@ -200,8 +200,8 @@
 </tr>
 <tr class="row-even"><td><p>3</p></td>
 <td><p>apero_badpix_nirps_ha.py</p></td>
-<td><p>BADM</p></td>
-<td><p>calib-master</p></td>
+<td><p>BADREF</p></td>
+<td><p>calib-reference</p></td>
 <td><p>Yes</p></td>
 <td><p>–</p></td>
 <td><p>–</p></td>
@@ -210,8 +210,8 @@
 </tr>
 <tr class="row-odd"><td><p>4</p></td>
 <td><p>apero_loc_nirps_ha.py</p></td>
-<td><p>LOCMB</p></td>
-<td><p>calib-master-B</p></td>
+<td><p>LOCREFB</p></td>
+<td><p>calib-reference-B</p></td>
 <td><p>Yes</p></td>
 <td><p>–</p></td>
 <td><p>–</p></td>
@@ -220,8 +220,8 @@
 </tr>
 <tr class="row-even"><td><p>5</p></td>
 <td><p>apero_loc_nirps_ha.py</p></td>
-<td><p>LOCMA</p></td>
-<td><p>calib-master-A</p></td>
+<td><p>LOCREFA</p></td>
+<td><p>calib-reference-A</p></td>
 <td><p>Yes</p></td>
 <td><p>–</p></td>
 <td><p>–</p></td>
@@ -229,9 +229,9 @@
 <td></td>
 </tr>
 <tr class="row-odd"><td><p>6</p></td>
-<td><p>apero_shape_master_nirps_ha.py</p></td>
-<td><p>SHAPEM</p></td>
-<td><p>calib-master</p></td>
+<td><p>apero_shape_ref_nirps_ha.py</p></td>
+<td><p>SHAPEREF</p></td>
+<td><p>calib-reference</p></td>
 <td><p>Yes</p></td>
 <td><p>–</p></td>
 <td><p>–</p></td>
@@ -240,8 +240,8 @@
 </tr>
 <tr class="row-even"><td><p>7</p></td>
 <td><p>apero_shape_nirps_ha.py</p></td>
-<td><p>SHAPELM</p></td>
-<td><p>calib-master</p></td>
+<td><p>SHAPELREF</p></td>
+<td><p>calib-reference</p></td>
 <td><p>Yes</p></td>
 <td><p>–</p></td>
 <td><p>–</p></td>
@@ -250,8 +250,8 @@
 </tr>
 <tr class="row-odd"><td><p>8</p></td>
 <td><p>apero_flat_nirps_ha.py</p></td>
-<td><p>FLATM</p></td>
-<td><p>calib-master</p></td>
+<td><p>FLATREF</p></td>
+<td><p>calib-reference</p></td>
 <td><p>Yes</p></td>
 <td><p>–</p></td>
 <td><p>–</p></td>
@@ -259,9 +259,9 @@
 <td></td>
 </tr>
 <tr class="row-even"><td><p>9</p></td>
-<td><p>apero_leak_master_nirps_ha.py</p></td>
-<td><p>LEAKM</p></td>
-<td><p>calib-master</p></td>
+<td><p>apero_leak_ref_nirps_ha.py</p></td>
+<td><p>LEAKREF</p></td>
+<td><p>calib-reference</p></td>
 <td><p>Yes</p></td>
 <td><p>–</p></td>
 <td><p>–</p></td>
@@ -269,9 +269,9 @@
 <td></td>
 </tr>
 <tr class="row-odd"><td><p>10</p></td>
-<td><p>apero_wave_master_nirps_ha.py</p></td>
-<td><p>WAVEM</p></td>
-<td><p>calib-master</p></td>
+<td><p>apero_wave_ref_nirps_ha.py</p></td>
+<td><p>WAVEREF</p></td>
+<td><p>calib-reference</p></td>
 <td><p>Yes</p></td>
 <td><p>–</p></td>
 <td><p>–</p></td>
@@ -345,7 +345,7 @@
 <td><p>No</p></td>
 <td><p>–</p></td>
 <td><p>–</p></td>
-<td><p>{files}=[OBJ_DARK, OBJ_FP, OBJ_SKY]</p></td>
+<td><p>{files}=[OBJ_DARK, OBJ_FP, OBJ_SKY, OBJ_TUN, FLUXSTD_SKY, TELLU_SKY]</p></td>
 <td></td>
 </tr>
 <tr class="row-odd"><td><p>18</p></td>
@@ -354,7 +354,7 @@
 <td><p>tellu-hotstar</p></td>
 <td><p>No</p></td>
 <td><p>A</p></td>
-<td><p>KW_OBJNAME: TELLURIC_TARGETS <br> KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY</p></td>
+<td><p>KW_OBJNAME: TELLURIC_TARGETS <br> KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY, OBJ_TUN, FLUXSTD_SKY, TELLU_SKY</p></td>
 <td><p>{files}=[EXT_E2DS_FF]</p></td>
 <td></td>
 </tr>
@@ -374,7 +374,7 @@
 <td><p>tellu-hotstar</p></td>
 <td><p>No</p></td>
 <td><p>A</p></td>
-<td><p>KW_OBJNAME: TELLURIC_TARGETS <br> KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY</p></td>
+<td><p>KW_OBJNAME: TELLURIC_TARGETS <br> KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY, OBJ_TUN, FLUXSTD_SKY, TELLU_SKY</p></td>
 <td><p>{files}=[EXT_E2DS_FF]</p></td>
 <td></td>
 </tr>
@@ -384,7 +384,7 @@
 <td><p>tellu-hotstar</p></td>
 <td><p>No</p></td>
 <td><p>A</p></td>
-<td><p>KW_OBJNAME: TELLURIC_TARGETS <br> KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY</p></td>
+<td><p>KW_OBJNAME: TELLURIC_TARGETS <br> KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY, OBJ_TUN, FLUXSTD_SKY, TELLU_SKY</p></td>
 <td></td>
 <td></td>
 </tr>
@@ -414,7 +414,7 @@
 <td><p>tellu-science</p></td>
 <td><p>No</p></td>
 <td><p>A</p></td>
-<td><p>KW_OBJNAME: SCIENCE_TARGETS <br> KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY</p></td>
+<td><p>KW_OBJNAME: SCIENCE_TARGETS <br> KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY, OBJ_TUN, FLUXSTD_SKY, TELLU_SKY</p></td>
 <td><p>{files}=[EXT_E2DS_FF]</p></td>
 <td></td>
 </tr>
@@ -424,7 +424,7 @@
 <td><p>tellu-science</p></td>
 <td><p>No</p></td>
 <td><p>A</p></td>
-<td><p>KW_OBJNAME: SCIENCE_TARGETS <br> KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY</p></td>
+<td><p>KW_OBJNAME: SCIENCE_TARGETS <br> KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY, OBJ_TUN, FLUXSTD_SKY, TELLU_SKY</p></td>
 <td></td>
 <td></td>
 </tr>
@@ -434,7 +434,7 @@
 <td><p>tellu-science</p></td>
 <td><p>No</p></td>
 <td><p>A</p></td>
-<td><p>KW_OBJNAME: SCIENCE_TARGETS <br> KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY</p></td>
+<td><p>KW_OBJNAME: SCIENCE_TARGETS <br> KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY, OBJ_TUN, FLUXSTD_SKY, TELLU_SKY</p></td>
 <td><p>{files}=[EXT_E2DS_FF]</p></td>
 <td></td>
 </tr>
@@ -462,7 +462,7 @@
         <li class="right" >
           <a href="sequence_pp_seq_opt.html" title="pp_seq_opt"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.232 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.241 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/nirps_ha/main_nirps_ha.html" >NIRPS HA documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="sequences.html" >Sequences (NIRPS_HA)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">full_seq</a></li> 

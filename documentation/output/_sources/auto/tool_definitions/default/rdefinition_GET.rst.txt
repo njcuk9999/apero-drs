@@ -75,9 +75,10 @@ No optional arguments
      --parallel[STRING] // [BOOL] If True this is a run in parellel - disable some features (normally only used in apero_processing.py)
      --shortname[STRING] // [STRING] Set a shortname for a recipe to distinguish it from other runs - this is mainly for use with apero processing but will appear in the log database
      --idebug[STRING] // [BOOLEAN] If True always returns to ipython (or python) at end (via ipdb or pdb)
-     --master[STRING] // If set then recipe is a master recipe (e.g. master recipes write to calibration database as master calibrations)
+     --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

@@ -3997,7 +3997,7 @@ jQuery.extend( {
 			resolveContexts = Array( i ),
 			resolveValues = slice.call( arguments ),
 
-			// the reference Deferred
+			// the master Deferred
 			master = jQuery.Deferred(),
 
 			// subordinate callback factory

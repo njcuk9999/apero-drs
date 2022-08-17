@@ -55,7 +55,7 @@ LATEX_DIR = '../documentation/working/_build/latex/'
 LATEX_FILE = 'apero-docs.tex'
 PDF_FILE = 'apero-docs.pdf'
 # -----------------------------------------------------------------------------
-RSYNC_CMD = 'rsync -avz -e "{SSH}" {INPATH} {USER}@{HOST}:{OUTPATH}'
+RSYNC_CMD = 'rsync -avuz -e "{SSH}" {INPATH} {USER}@{HOST}:{OUTPATH}'
 # -----------------------------------------------------------------------------
 SSH_OPTIONS = 'ssh -oport=5822'
 SSH_USER = 'cook'
@@ -103,12 +103,18 @@ DESC_PATH = '../documentation/working/resources/{instrument}/descriptions/'
 # using apero reference
 USING_APERO_REF = 'using_apero_default'
 # -----------------------------------------------------------------------------
-
 # define raw and post files per instrument
 RAW_FILE_DEF_TEXT_FILE = dict(SPIROU='spirou_raw_file_text.rst',
                               NIRPS_HA='nirps_ha_raw_file_text.rst',
                               NIRPS_HE='nirps_he_raw_file_text.rst')
 POST_FILE_DEF_TEXT_FILE = dict(SPIROU='spirou_post_file_text.rst')
+# -----------------------------------------------------------------------------
+# define width info
+COL_WIDTH_DICT = dict()
+COL_WIDTH_DICT['input file'] = 50
+COL_WIDTH_DICT['description'] = 100
+# define the default column width
+DEFAULT_COL_WIDTH = 30
 
 
 # =============================================================================
@@ -201,6 +207,7 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     # storage of output tables
     table_storage = dict()
     mod_storage = dict()
+    cwidth_storage = dict()
     # -------------------------------------------------------------------------
     # loop around file types
     for filetype in filetypes:
@@ -226,6 +233,8 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         # push to storage
         table_storage[filetype] = table
         mod_storage[filetype] = modded
+        # deal with column widths for this file type
+        cwidth_storage[filetype] = _get_column_widths(table)
     # -------------------------------------------------------------------------
     # get directory to save file to
     abs_auto_dir = drs_misc.get_relative_folder(__PACKAGE__, AUTO_DIR)
@@ -269,6 +278,7 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         # get filetype and name
         filetype = filetypes[it]
         name = sectionnames[it]
+        cwidths = cwidth_storage[filetype]
         # ------------------------------------------------------------------
         # get filename as just a filename (assume they are in the same
         #     directory)
@@ -285,7 +295,8 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         # add table
         markdown.add_csv_table(title=f'{name} file definition table',
                                csv_file=filename,
-                               abs_path=absfilename)
+                               abs_path=absfilename,
+                               widths=cwidths)
         # allow multiple lines in table
         markdown.enable_multiline_table()
         # ------------------------------------------------------------------
@@ -853,6 +864,8 @@ def upload(params: ParamDict):
     package = params['DRS_PACKAGE']
     # get paths
     out_dir = drs_misc.get_relative_folder(package, OUT_DIR)
+    # change permission of all files and directories
+    os.system(f'chmod 777 -R {out_dir}')
     # make sure we copy contents not directory
     if not out_dir.endswith(os.sep):
         out_dir += os.sep
@@ -950,6 +963,29 @@ def _remove_cols(table: Table, cols: List[str]) -> Table:
     # return table
     return table
 
+
+def _get_column_widths(table: Table) -> List[str]:
+    """
+    Take a table and get columns widths from lookup table
+    (or assign default value)
+    """
+    cwidths = []
+    # loop around column names and look up the widths in the lookup table
+    for colname in table.colnames:
+        # if they are in the look up table use this width
+        if colname in COL_WIDTH_DICT:
+            cwidths.append(COL_WIDTH_DICT[colname])
+        # otherwise use the default width
+        else:
+            cwidths.append(DEFAULT_COL_WIDTH)
+    # widths must be percentages (100% total)
+    cwidths = np.array(cwidths)
+    cwidths = np.floor(100 * cwidths / np.sum(cwidths)).astype(int) - 1
+    # widths must be strings
+    cwidths = list(cwidths.astype(str))
+
+    # return a list of the columns
+    return cwidths
 
 def _modify_cols(table: Table, cols: List[str],
                  fmt: str = '{0}') -> Tuple[Table, bool]:

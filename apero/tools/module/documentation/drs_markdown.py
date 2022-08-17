@@ -141,7 +141,8 @@ class MarkDownPage:
         self.add_newline()
 
     def add_csv_table(self, title: str, csv_file: str,
-                      abs_path: Union[str, None] = None):
+                      abs_path: Union[str, None] = None,
+                      widths: Union[List[str], None] = None):
         """
         Create a csv table in the markdown page
 
@@ -170,6 +171,8 @@ class MarkDownPage:
             self.add_newline()
             self.lines += ['.. csv-table:: {0}'.format(title)]
             self.lines += ['   :file: {0}'.format(csv_file)]
+            if widths is not None:
+                self.lines += ['   :widths: {0}'.format(', '.join(widths))]
             self.lines += ['   :header-rows: 1']
             self.lines += ['   :class: csvtable']
             self.add_newline()

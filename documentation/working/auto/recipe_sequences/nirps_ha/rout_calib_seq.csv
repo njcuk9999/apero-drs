@@ -1,4 +1,4 @@
-ORDER,RECIPE,SHORTNAME,RECIPE KIND,MASTER RECIPE,ARGS
+ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,ARGS
 1,apero_badpix_nirps_ha.py,BAD,calib-night,No,
 2,apero_loc_nirps_ha.py,LOCB,calib-night-B,No,{files}=[DARK_FLAT]
 3,apero_loc_nirps_ha.py,LOCA,calib-night-A,No,{files}=[FLAT_DARK]

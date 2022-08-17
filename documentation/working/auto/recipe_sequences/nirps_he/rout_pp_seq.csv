@@ -1,3 +1,3 @@
-ORDER,RECIPE,SHORTNAME,RECIPE KIND,MASTER RECIPE
-1,apero_pp_master_nirps_he.py,PPM,pre-master,Yes
+ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE
+1,apero_PP_REF_nirps_he.py,PPREF,pre-reference,Yes
 2,apero_preprocess_nirps_he.py,PP,pre,No

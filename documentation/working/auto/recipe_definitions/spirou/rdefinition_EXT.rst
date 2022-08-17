@@ -58,7 +58,7 @@ No schematic set
      --combine_method[STRING] // Method to combine files (if --combine=True)
      --objname[STRING] // Sets the object name to extract (filters input files)
      --dprtype[STRING] // [STRING] Sets the DPRTYPE to extract (filters input files)
-     --darkfile[FILE:DARKM] // [STRING] The Dark file to use (CALIBDB=DARKM)
+     --darkfile[FILE:DARKREF] // [STRING] The Dark file to use (CALIBDB=DARKM)
      --darkcorr[True/False] // [BOOLEAN] Whether to correct for the dark file
      --fiber[ALL,AB,A,B,C] // [STRING] Define which fibers to extract
      --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
@@ -74,8 +74,8 @@ No schematic set
      --leakcorr[True/False] // [BOOLEAN] Sets whether to do the leak correction (else defaults to CORRECT_LEAKAGE value in constants)
      --thermal[True/False] // [BOOLEAN] Sets whether to do the thermal correction (else defaults to THERMAL_CORRECT value in constants)
      --thermalfile[FILE:THERMALI_E2DS,THERMALT_E2DS] // [STRING] Sets the Thermal correction file to use (CAILBDB = THERMAL_{fiber})
-     --wavefile[FILE:WAVESOL_MASTER,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
-     --force_master_wave[True/False] // Force using the master wave solution
+     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
+     --force_ref_wave[True/False] // Force using the reference wave solution
 
 
 ********************************************************************************
@@ -96,9 +96,10 @@ No schematic set
      --parallel[STRING] // [BOOL] If True this is a run in parellel - disable some features (normally only used in apero_processing.py)
      --shortname[STRING] // [STRING] Set a shortname for a recipe to distinguish it from other runs - this is mainly for use with apero processing but will appear in the log database
      --idebug[STRING] // [BOOLEAN] If True always returns to ipython (or python) at end (via ipdb or pdb)
-     --master[STRING] // If set then recipe is a master recipe (e.g. master recipes write to calibration database as master calibrations)
+     --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
@@ -140,6 +141,7 @@ No schematic set
     EXTRACT_SPECTRAL_ORDER2
     EXTRACT_S1D
     EXTRACT_S1D_WEIGHT
+    WAVEREF_EXPECTED
 
 
 ********************************************************************************

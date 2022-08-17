@@ -175,13 +175,10 @@ APERO will force upper case
 
 This means some objects will have poor names or names that are seen as unique when they should not be
 i.e.
-    WASP-107b --> WASPM107B
-
-    WASP107b  --> WASP107B
-
-    WASP 107b --> WASP_107B
-
-    WASP107B --> WASP107B
+    - WASP-107b --> WASPM107B
+    - WASP107b  --> WASP107B
+    - WASP 107b --> WASP_107B
+    - WASP107B --> WASP107B
 
 Therefore during the astrometrics code you have the oppotunity to
     a. define the name apero will use (any white space, "-", "+" and punctuation will be removed as above)

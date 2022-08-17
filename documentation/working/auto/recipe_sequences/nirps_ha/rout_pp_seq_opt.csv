@@ -1,4 +1,4 @@
-ORDER,RECIPE,SHORTNAME,RECIPE KIND,MASTER RECIPE,FILTERS,ARGS
+ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,FILTERS,ARGS
 1,apero_preprocess_nirps_ha.py,PP_CAL,pre-cal,No,KW_RAW_DPRCATG: CALIB,
 2,apero_preprocess_nirps_ha.py,PP_SCI,pre-sci,No,KW_OBJNAME: SCIENCE_TARGETS,
 3,apero_preprocess_nirps_ha.py,PP_TEL,pre-tel,No,KW_OBJNAME: TELLURIC_TARGETS,
@@ -10,3 +10,4 @@ ORDER,RECIPE,SHORTNAME,RECIPE KIND,MASTER RECIPE,FILTERS,ARGS
 9,apero_preprocess_nirps_ha.py,PP_LFC,pre-lfc,No,--,{files}=[RAW_LFC_LFC]
 10,apero_preprocess_nirps_ha.py,PP_LFCFP,pre-lfcfp,No,--,{files}=[RAW_LFC_FP]
 11,apero_preprocess_nirps_ha.py,PP_FPLFC,pre-fplfc,No,--,{files}=[RAW_FP_LFC]
+12,apero_preprocess_nirps_ha.py,PP_EFFSKY,pre-effsky,No,--,{files}=[TEST_DARK_DARK_SKY]

@@ -47,7 +47,7 @@ This shows this distribution of timings for each shortname.
 
 
 1.2 Quality control mode
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^6
 
 This mode takes all the :term:`recipe-runs` in the logger database and prints statistics on the quality control
 recorded in each recipe (if present).

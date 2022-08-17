@@ -24,6 +24,7 @@ This section describes all the default user tools to use with APERO.
     rdefinition_PROC.rst
     rdefinition_RESET.rst
     rdefinition_STAT.rst
+    rdefinition_TRIGGER.rst
     rdefinition_VALID.rst
     rdefinition_VISU.rst
 
