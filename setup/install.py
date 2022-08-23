@@ -231,8 +231,6 @@ def check_install() -> Tuple[Any, Any, Any]:
     :return: tuple, 1. the apero.constants sub-module, 2. the apero.installation
              module
     """
-    # get apero
-    drs_path = get_apero()
     # construct module names
     constants_mod = '{0}.{1}'.format(DRS_PATH, CONSTANTS_PATH)
     install_mod = '{0}.{1}'.format(DRS_PATH, INSTALL_PATH)
@@ -253,15 +251,6 @@ def check_install() -> Tuple[Any, Any, Any]:
     except Exception as _:
         # raise error
         raise ImportError(lang.error('00-000-00013').format(base_mod))
-    # add apero to the PYTHONPATH
-    if 'PYTHONPATH' in os.environ:
-        oldpath = os.environ['PYTHONPATH']
-        os.environ['PYTHONPATH'] = str(drs_path) + os.pathsep + oldpath
-    # else we just add it to current PYTHON PATH
-    else:
-        os.environ['PYTHONPATH'] = str(drs_path)
-        # add to active path
-        os.sys.path = [str(drs_path)] + os.sys.path
     # if we have reached this point we can break out of the while loop
     return constants, install, drs_base
 
