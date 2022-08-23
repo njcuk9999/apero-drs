@@ -1,0 +1,233 @@
+
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>How it works &#8212; APERO 0.7.241 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
+
+
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a title="Home" href="../../../index.html">
+        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="install" href="../../../user/general/installation.html">
+        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
+        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="download pdf" href="../../../apero-docs.pdf">
+        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+  </ul>
+    <div>
+    <a href="../../../index.html">
+      <img src="../../../_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.241 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">How it works</a></li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">How it works</a></li>
+<li><a class="reference internal" href="#caveats">Caveats</a></li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/resources/default/descriptions/apero_trigger.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <p>The apero trigger runs continuiously and tries to accurately reduces night data.</p>
+<p>It requires a master night to be processed BEFORE starting.</p>
+<section id="how-it-works">
+<h1>How it works<a class="headerlink" href="#how-it-works" title="Permalink to this headline">¶</a></h1>
+<p>It works as follows:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>copies files from a “live directory” into a sym-linked directory
+(the live directory is defined be –indir, the sym-lined directory
+is the raw directory defined in installation – i.e. DRS_DATA_RAW)</p></li>
+<li><dl class="simple">
+<dt>tries to figure out what has been done previously</dt><dd><ul>
+<li><p>this is done in two steps</p></li>
+<li><dl class="simple">
+<dt>first step: calibrations</dt><dd><ul>
+<li><p>it uses the log database and the <cite>trigger_night_calibrun.ini</cite>
+file to work out (per obs_dir) whether at least one of  each
+recipe has been run (it counts QC failures as done)</p></li>
+<li><p>if all steps are not complete it runs <cite>apero processing</cite> with the
+<cite>trigger_night_calibrun.ini</cite> run.ini file with the standard
+skips in <cite>apero_processing</cite></p></li>
+<li><p>apero_processing will stop if a recipe finds no runs (this is
+only true in <cite>TRIGGER_RUN=True</cite> mode</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>second step: science</dt><dd><ul>
+<li><p>this step is only done once all calibrations are deemed to be
+completed</p></li>
+<li><p>it uses the log database, index database and the
+<cite>trigger_night_scirun.ini</cite> file to work out whether all recipes
+with science DPRTYPES have been run (per obs_dir)</p></li>
+<li><p>if there aren’t the same number of raw science files as recipe
+runs (in the log database) it will attempt to re-run
+<cite>apero processing</cite> with the <cite>trigger_night_scirun.ini</cite> run.ini
+file with the standard skips in <cite>apero_processing</cite></p></li>
+<li><p>apero_processing will stop if a recipe finds no runs (this is
+only true in <cite>TRIGGER_RUN=True</cite> mode</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</section>
+<section id="caveats">
+<h1>Caveats<a class="headerlink" href="#caveats" title="Permalink to this headline">¶</a></h1>
+<ul>
+<li><p>results may not be optimal - we recommended running all nights together in
+an offline manner (after having all nights) for optimal results, for example:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>calibrations may be sub-optimal (missing/using wrong night etc)</p></li>
+<li><p>telluric correction may not be using all hot stars</p></li>
+<li><p>templates may be sub-optimal</p></li>
+<li><p>polar recipes cannot be produced online</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>A master night must be run before running <cite>apero_trigger.py</cite></p></li>
+<li><p>Adding files for older nights after newer nights could result in unwanted behaviour
+(especially when it comes to calibrations)</p></li>
+<li><p>Removing files may result in new calibrations being generated with less calibrations
+than before (apero_processing skip only works with the same number of files)
+and apero will use the most recently reduced calibration</p></li>
+<li><p>Once calibrations are finished for a night remove/adding calibration files will not
+re-trigger the calibration sequence (unless –reset is used)</p></li>
+<li><p>All obs_dir and files in the –indir will be processed, use –ignore to remove
+certain obs_dirs from the obs_dirs list</p></li>
+</ul>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.241 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">How it works</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    </div>
+  </body>
+</html>
