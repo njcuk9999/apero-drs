@@ -22,6 +22,10 @@ from typing import Any, List, Tuple, Union
 
 import setup_lang
 
+from apero.tools.module.setup import drs_installation as install
+from apero.core import constants
+from apero.base import drs_base
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -32,12 +36,6 @@ __PACKAGE__ = 'APERO'
 DRS_PATH = 'apero'
 # instruments
 INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE']
-# define the place where the constant recipes are
-CONSTANTS_PATH = 'core.constants'
-# define the place where the installation recipes are
-INSTALL_PATH = 'tools.module.setup.drs_installation'
-# define the drs_base path for language dict
-BASE_PATH = 'base.drs_base'
 # Requirement files
 REQ_USER = 'requirements_current.txt'
 REQ_DEV = 'requirements_developer.txt'
@@ -221,38 +219,6 @@ def validate():
                 eargs = [DRS_PATH, module, suggested]
                 print(lang.error('00-000-00011').format(*eargs))
                 sys.exit()
-
-
-def check_install() -> Tuple[Any, Any, Any]:
-    """
-    Check for apero installation directory
-
-    :raises ImportError: if unable to find apero installation
-    :return: tuple, 1. the apero.constants sub-module, 2. the apero.installation
-             module
-    """
-    # construct module names
-    constants_mod = '{0}.{1}'.format(DRS_PATH, CONSTANTS_PATH)
-    install_mod = '{0}.{1}'.format(DRS_PATH, INSTALL_PATH)
-    base_mod = '{0}.{1}'.format(DRS_PATH, BASE_PATH)
-    # try to import the modules
-    try:
-        constants = importlib.import_module(constants_mod)
-    except Exception as _:
-        # raise error
-        raise ImportError(lang.error('00-000-00013').format(constants_mod))
-    try:
-        install = importlib.import_module(install_mod)
-    except Exception as _:
-        # raise error
-        raise ImportError(lang.error('00-000-00013').format(install_mod))
-    try:
-        drs_base = importlib.import_module(base_mod)
-    except Exception as _:
-        # raise error
-        raise ImportError(lang.error('00-000-00013').format(base_mod))
-    # if we have reached this point we can break out of the while loop
-    return constants, install, drs_base
 
 
 def get_args() -> argparse.Namespace:
@@ -477,16 +443,6 @@ def main():
         validate()
     # catch Ctrl+C
     signal.signal(signal.SIGINT, catch_sigint)
-    # get install paths
-    constants, install, drs_base = check_install()
-    # this is so we have direct access in IDE to modules
-    # noinspection PyBroadException
-    try:
-        from apero.tools.module.setup import drs_installation as install
-        from apero.core import constants
-        from apero.base import drs_base
-    except Exception as _:
-        pass
     # update the language dict to use the full proxy database
     lang = drs_base.lang_db_proxy()
     # get text entry for remaining text
