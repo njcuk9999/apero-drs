@@ -633,11 +633,11 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         # ----------------------------------------------------------------------
         # Loop through input files
         # ----------------------------------------------------------------------
-        for it, filename in enumerate(vfilenames[pmask]):
+        for it, jt in enumerate(np.where(pmask)[0]):
             # get the infile for this iteration
-            infile = infiles[it]
+            infile = infiles[jt]
             # log progress
-            wargs = [reffile.name, it + 1, len(vfilenames[pmask]), p_it + 1,
+            wargs = [reffile.name, jt + 1, len(pmask), p_it + 1,
                      len(upbins)]
             WLOG(params, '', params['DRS_HEADER'])
             WLOG(params, '', textentry('40-019-00028', args=wargs))
@@ -674,13 +674,13 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
             # get drs date now
             drs_date_now = infile.get_hkey('KW_DRS_DATE_NOW', dtype=str)
             # add values
-            b_cols['RowNum'].append(it)
+            b_cols['RowNum'].append(jt)
             b_cols['Filename'].append(infile.basename)
             b_cols['OBJNAME'].append(infile.get_hkey('KW_OBJNAME', dtype=str))
             b_cols['BERV'].append(berv)
-            b_cols['SNR{0}'.format(snr_order)].append(snr_all[it])
-            b_cols['MidObsHuman'].append(Time(midexps[it], format='mjd').iso)
-            b_cols['MidObsMJD'].append(midexps[it])
+            b_cols['SNR{0}'.format(snr_order)].append(snr_all[jt])
+            b_cols['MidObsHuman'].append(Time(midexps[jt], format='mjd').iso)
+            b_cols['MidObsMJD'].append(midexps[jt])
             b_cols['VERSION'].append(infile.get_hkey('KW_VERSION', dtype=str))
             b_cols['Process_Date'].append(drs_date_now)
             b_cols['DRS_Date'].append(infile.get_hkey('KW_DRS_DATE', dtype=str))
@@ -741,11 +741,11 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
             # ------------------------------------------------------------------
             # skip if bad snr object
             # ------------------------------------------------------------------
-            if it in bad_snr_objects:
+            if jt in bad_snr_objects:
                 # flag that we are not using this file
                 b_cols['USED'].append(0)
                 # log skipping
-                wargs = [it + 1, len(vfilenames), snr_order, snr_all[it],
+                wargs = [jt + 1, len(vfilenames), snr_order, snr_all[jt],
                          snr_thres]
                 WLOG(params, 'warning', textentry('10-019-00006', args=wargs),
                      sublevel=4)
