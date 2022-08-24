@@ -497,6 +497,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     cprint(textentry('40-001-00046', args=[instrument]), 'm')
     cprint(printheader(), 'm')
     # ------------------------------------------------------------------
+    # TODO: This seems to duplicate above
     # set user config
     uconfig = Path(userconfig)
     all_params['USERCONFIG'] = uconfig
