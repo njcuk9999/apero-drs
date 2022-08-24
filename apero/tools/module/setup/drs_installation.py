@@ -867,10 +867,11 @@ def bin_paths(params: ParamDict, all_params: ParamDict) -> ParamDict:
     # add the individual tool directories to all params
     all_params['DRS_OUT_TOOLS'] = []
     for directory in np.sort(list(in_tool_path.glob('*'))):
-        # make out tool paths
-        out_tools = out_tool_path.joinpath(directory.name)
-        # append out tool paths to drs out tools
-        all_params['DRS_OUT_TOOLS'].append(out_tools)
+        if directory.is_dir():
+            # make out tool paths
+            out_tools = out_tool_path.joinpath(directory.name)
+            # append out tool paths to drs out tools
+            all_params['DRS_OUT_TOOLS'].append(out_tools)
     # return the updated all params
     return all_params
 
