@@ -966,13 +966,12 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
     # find setup files
     setup_path = Path(drs_misc.get_relative_folder(package, SETUP_PATH))
     # deal with windows
+    sep = os.pathsep
     if os.name == 'nt':
-        sep = '";"'
         setup_infiles = ['{0}.win.setup'.format(package.lower())]
         setup_outfiles = ['{0}.win.setup'.format(pname.lower())]
     # deal with unix
     elif os.name == 'posix':
-        sep = '":"'
         setup_infiles = ['{0}.bash.setup'.format(package.lower())]
         setup_infiles += ['{0}.sh.setup'.format(package.lower())]
         setup_outfiles = ['{0}.bash.setup'.format(pname.lower())]
