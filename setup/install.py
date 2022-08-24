@@ -48,6 +48,7 @@ module_translation['Pillow'] = 'PIL'
 module_translation['pyyaml'] = 'yaml'
 module_translation['mysql-connector-python'] = 'mysql.connector'
 module_translation['scikit-image'] = 'skimage'
+module_translation['importlib-resources'] = 'importlib_resources'
 module_translation['pandastable'] = ('pandastable', '0.12.2')
 # start the language dictionary
 lang = setup_lang.LangDict()
