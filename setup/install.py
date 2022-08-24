@@ -24,7 +24,7 @@ import setup_lang
 
 from apero.tools.module.setup import drs_installation as install
 from apero.core import constants
-from apero.base import drs_base
+from apero.base import drs_base, base
 
 # =============================================================================
 # Define variables
@@ -39,7 +39,6 @@ INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE']
 # Requirement files
 REQ_USER = 'requirements_current.txt'
 REQ_DEV = 'requirements_developer.txt'
-VERSION_FILE = 'version.txt'
 # modules that don't install like their name
 module_translation = dict()
 module_translation['Pillow'] = 'PIL'
@@ -50,23 +49,8 @@ module_translation['pandastable'] = ('pandastable', '0.12.2')
 # start the language dictionary
 lang = setup_lang.LangDict()
 
-
-# =============================================================================
-# Define functions
-# =============================================================================
-def get_version() -> str:
-    filepath = os.path.abspath(__file__)
-    # get files
-    v_file = Path(filepath).parent.parent.joinpath(VERSION_FILE)
-    # get version
-    with open(v_file, 'r') as vfile:
-        version = vfile.read().split('=')[-1].replace('\n', '')
-    # return version
-    return version
-
-
 # set version
-__version__ = get_version()
+__version__ = base.__version__
 
 
 # need this argument before anything else
