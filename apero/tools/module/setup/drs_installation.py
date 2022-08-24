@@ -1031,8 +1031,6 @@ def clean_install(params: ParamDict, all_params: ParamDict
 
     :return: ParamDict, the updated installation parameter dictionary
     """
-    # get package
-    package = params['DRS_PACKAGE']
     # get clean warning
     if all_params['CLEANWARN'] is None:
         cleanwarn = True
@@ -1051,8 +1049,8 @@ def clean_install(params: ParamDict, all_params: ParamDict
         cprint(textentry('40-001-00059'), 'y')
     # log that we are performing clean install
     cprint(textentry('40-001-00060'), 'm')
-    # add to environment
-    add_paths(all_params)
+    # add userconfig to environment
+    add_env_uconfig(all_params)
     # construct reset command
     reset_args = toolmod.main(quiet=True, warn=cleanwarn, database_timeout=0)
     # deal with a bad reset
@@ -1065,149 +1063,17 @@ def clean_install(params: ParamDict, all_params: ParamDict
     return all_params
 
 
-def create_symlinks(params: ParamDict, all_params: ParamDict) -> ParamDict:
+def add_env_uconfig(all_params: ParamDict):
     """
-    Create the symbolic links in the bin and tools directories and update
-    the installation parameter dictionary
-
-    :param params: ParamDict, the constants parameter dictionary
-    :param all_params: ParamDict, the installation parameter dictionary
-
-    :return: ParamDict, the updated installation parameter dictionary
-    """
-    # get available instruments
-    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
-    # get package
-    package = params['DRS_PACKAGE']
-    # get out paths
-    out_bin_path = all_params['DRS_OUT_BIN_PATH']
-    out_tool_path = all_params['DRS_OUT_TOOL_PATH']
-    # get tools save location
-    in_tool_path = Path(drs_misc.get_relative_folder(package, IN_TOOLPATH))
-    # ------------------------------------------------------------------
-    # Copy bin files (for each instrument)
-    # ------------------------------------------------------------------
-    # log which directory we are populating
-    cprint('\n\t Populating {0} directory\n'.format(out_bin_path), 'm')
-    # get instrument name
-    instrument = all_params['INSTRUMENT']
-    # find recipe folder for this instrument
-    recipe_raw = Path(str(IN_BINPATH).format(instrument.lower()))
-    recipe_dir = Path(drs_misc.get_relative_folder(package, recipe_raw))
-    # define suffix
-    suffix = '*_{0}.py'.format(instrument.lower())
-    # create sym links
-    _create_link(recipe_dir, suffix, out_bin_path)
-
-    # ------------------------------------------------------------------
-    # Copy tools (do not copy tools directories for instruments not being
-    #    installed)
-    # ------------------------------------------------------------------
-    # get list of tool directories
-    dirs = np.sort(list(in_tool_path.glob('*')))
-
-    for directory in dirs:
-        # do not copy tools for instruments we are not installing
-        # note dirs also has other directories so first need to check
-        # we are talking about an instrument directory
-        if directory.name.upper() in drs_instruments:
-            if directory.name.upper() != instrument:
-                continue
-
-        # construct this directories absolute path
-        in_tools = in_tool_path.joinpath(directory.name)
-        out_tools = out_tool_path.joinpath(directory.name)
-
-        # log which directory we are populating
-        cprint(textentry('40-001-00061', args=[out_tools]), 'm')
-        # define suffix
-        suffix = '*.py'
-        # create sym links
-        _create_link(in_tools, suffix, out_tools)
-
-    # ------------------------------------------------------------------
-    # return all_params
-    return all_params
-
-
-def _create_link(recipe_dir: Path, suffix: Union[str, Path], new_dir: Path,
-                 log: bool = True):
-    """
-    Create a symbolic link
-
-    :param recipe_dir: Path, the directory containing real recipes
-    :param suffix: str, the suffix to look for in the original directory
-    :param new_dir: Path, the new directory to create link in
-    :param log: bool, if True logs creating these new links
-
-    :return: None - creates links in "new_dir"
-    """
-    # deal with directories not exists
-    new_dir.mkdir(parents=True, exist_ok=True)
-    # get all python files in recipe folder
-    files = np.sort(list(recipe_dir.glob(suffix)))
-    # loop around files and create symbolic links in bin path
-    for filename in files:
-        # get file base name
-        basename = filename.name
-        # construct new path
-        newpath = new_dir.joinpath(basename)
-        if log:
-            cprint('\t\tMoving {0}'.format(basename))
-        # remove link already present
-        if newpath.exists() or newpath.is_symlink():
-            newpath.unlink()
-        # make symlink
-        newpath.symlink_to(filename)
-        # make executable
-        # noinspection PyBroadException
-        try:
-            newpath.chmod(0o777)
-        except Exception as _:
-            cprint(textentry('00-000-00007', args=[filename]), 'r')
-
-
-def add_paths(all_params: ParamDict):
-    """
-    Add to path and python path (temporarily) while we install apero
+    Add userconfig to environment variables
 
     :param all_params: ParamDict, the installation parameter dictionary
 
-    :return: None, just updates PATH and PYTHONPATH environmental variables
+    :return: None, just updates environment variables to add userconfig
     """
-    # get paths and add in correct order
-    paths = [str(all_params['DRS_ROOT'].parent),
-             str(all_params['DRS_OUT_BIN_PATH'])]
-    # add all the tool directories
-    for directory in all_params['DRS_OUT_TOOLS']:
-        paths.append(str(directory))
     # ----------------------------------------------------------------------
     # set USERCONFIG
     os.environ[ENV_CONFIG] = str(all_params['USERCONFIG'])
-    # ----------------------------------------------------------------------
-    sep = os.pathsep
-    # ----------------------------------------------------------------------
-    # add to PATH
-    if 'PATH' in os.environ:
-        # get old path
-        oldpath = os.environ['PATH']
-        # add to paths
-        paths += oldpath
-        # add to environment
-        os.environ['PATH'] = sep.join(paths)
-    else:
-        # add to environment
-        os.environ['PATH'] = sep.join(paths)
-    # add to PYTHON PATH
-    if 'PYTHONPATH' in os.environ:
-        oldpath = os.environ['PYTHONPATH']
-        # add to paths
-        paths += oldpath
-        # add to environment
-        os.environ['PYTHONPATH'] = sep.join(paths)
-    else:
-        # add to environment
-        os.environ['PYTHONPATH'] = sep.join(paths)
 
 
 def printheader() -> str:
