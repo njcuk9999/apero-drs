@@ -91,28 +91,6 @@ def get_sys_arg(name, kind=None):
         return None
 
 
-def get_apero():
-    """
-    Get the apero module (sounds like a given but need to check)
-    :return:
-    """
-    # start with file definition
-    start = Path(__file__).absolute()
-    # get apero working directory
-    drs_path = start.parent.parent
-    # make aboslute
-    drs_path = drs_path.absolute()
-    # try to import to raise exception
-    try:
-        # add drs path to sys
-        sys.path.append(str(drs_path))
-        _ = importlib.import_module(DRS_PATH)
-    except Exception as _:
-        path = drs_path.joinpath(DRS_PATH)
-        raise ImportError('Import Error: Cannot find {0}'.format(path))
-    return drs_path
-
-
 def catch_sigint(signal_received: Any, frame: Any):
     """
     Deal with Keyboard interupt --> do a sys.exit
