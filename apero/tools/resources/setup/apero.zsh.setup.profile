@@ -1,12 +1,6 @@
 #!/bin/zsh
 # zsh setup file
 
-# setup paths
-export PATH={PATH}:$PATH
-
-# setup up python path
-export PYTHONPATH={PYTHONPATH}:$PYTHONPATH
-
 # setup aliases
 alias gointroot="cd {ROOT_PATH}"
 alias gosetup="cd {USER_CONFIG}"

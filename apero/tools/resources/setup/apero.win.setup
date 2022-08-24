@@ -1,11 +1,5 @@
 # Windows setup file
 
-# setup path
-set PATH={PATH};%PATH%
-
-# setup up python path
-set PYTHONPATH={PYTHONPATH};%PYTHONPATH%
-
 # setup drs config path
 set DRS_UCONFIG="{USER_CONFIG}"
 

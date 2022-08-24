@@ -937,15 +937,6 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
         pname = all_params['PROFILENAME'].replace(' ', '_')
     else:
         pname = package
-    # get tools save location
-    in_tool_path = Path(drs_misc.get_relative_folder(package, IN_TOOLPATH))
-    # ----------------------------------------------------------------------
-    # get paths and add in correct order and add bin directory
-    paths = [str(all_params['DRS_ROOT'].parent),
-             str(all_params['DRS_OUT_BIN_PATH'])]
-    # add all the tool directories
-    for directory in all_params['DRS_OUT_TOOLS']:
-        paths.append(str(directory))
     # ----------------------------------------------------------------------
     # find setup files
     setup_path = Path(drs_misc.get_relative_folder(package, SETUP_PATH))
@@ -975,8 +966,6 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
     text['ROOT_PATH'] = all_params['DRS_ROOT'].parent
     text['USER_CONFIG'] = all_params['USERCONFIG']
     text['NAME'] = all_params['PROFILENAME']
-    text['PATH'] = '"' + sep.join(paths) + '"'
-    text['PYTHONPATH'] = '"' + sep.join(paths) + '"'
     # ----------------------------------------------------------------------
     # loop around setup files
     for it, setup_file in enumerate(setup_infiles):
