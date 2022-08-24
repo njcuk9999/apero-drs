@@ -25,6 +25,7 @@ from apero.tools.module.setup import drs_installation as install
 # =============================================================================
 # Define variables
 # =============================================================================
+# TODO: Change after moving file
 __NAME__ = 'setup.newprofile.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
@@ -34,10 +35,6 @@ __date__ = base.__date__
 __release__ = base.__release__
 # define the drs name (and module name)
 DRS_PATH = 'apero'
-# define the place where the constant recipes are
-CONSTANTS_PATH = 'core.constants'
-# define the place where the installation recipes are
-INSTALL_PATH = 'tools.module.setup.drs_installation'
 # define files to change the name of
 SUFFICES = ['.bash.setup', '.sh.setup', '.zsh.setup']
 # text replace

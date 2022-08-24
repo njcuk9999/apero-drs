@@ -17,14 +17,16 @@ import csv
 import os
 from pathlib import Path
 
+from apero.base import base
 
 # =============================================================================
 # Define variables
 # =============================================================================
+# TODO: Change after moving file
 __NAME__ = 'setup.setup_lang.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = 'APERO'
-VERSION_FILE = 'version.txt'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
 
 # define the default language (must be the same as base.DEAFULT_LANG)
 DEFAULT_LANG = 'ENG'
@@ -38,24 +40,6 @@ KEYS = ['00-000-00009', '00-000-00010', '00-000-00011',
         '00-000-00013',
         '40-001-00075', '40-001-00076', '40-001-00077', '40-001-00078',
         '40-001-00079', '40-001-00080', '40-001-00081']
-
-
-# =============================================================================
-# Define functions
-# =============================================================================
-def get_version() -> str:
-    filepath = os.path.abspath(__file__)
-    # get files
-    v_file = Path(filepath).parent.parent.joinpath(VERSION_FILE)
-    # get version
-    with open(v_file, 'r') as vfile:
-        version = vfile.read().split('=')[-1].replace('\n', '')
-    # return version
-    return version
-
-
-# set version
-__version__ = get_version()
 
 
 class LangDict:

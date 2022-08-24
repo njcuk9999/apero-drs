@@ -18,34 +18,20 @@ from pathlib import Path
 import shutil
 from typing import Union
 
+from apero.base import base
 
 # =============================================================================
 # Define variables
 # =============================================================================
+# TODO: Change after moving file
 __NAME__ = 'setup.copyraw.py'
-__INSTRUMENT__ = 'None'
-__PACKAGE__ = 'APERO'
-VERSION_FILE = 'version.txt'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_version() -> str:
-    filepath = os.path.abspath(__file__)
-    # get files
-    v_file = Path(filepath).parent.parent.joinpath(VERSION_FILE)
-    # get version
-    with open(v_file, 'r') as vfile:
-        version = vfile.read().split('=')[-1].replace('\n', '')
-    # return version
-    return version
-
-
-# set version
-__version__ = get_version()
-
-
 def get_args():
     """
     Get arguments using argparse

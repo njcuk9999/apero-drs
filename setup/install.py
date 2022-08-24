@@ -31,8 +31,9 @@ from apero.base import drs_base, base
 # =============================================================================
 # TODO: Change after moving file
 __NAME__ = 'setup.install.py'
-__INSTRUMENT__ = "None"
+__INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
 # instruments
 INSTRUMENTS = base.INSTRUMENTS[:-1]  # Remove "None"
 # define the drs name (and module name)
@@ -47,9 +48,6 @@ module_translation['importlib-resources'] = 'importlib_resources'
 module_translation['pandastable'] = ('pandastable', '0.12.2')
 # start the language dictionary
 lang = setup_lang.LangDict()
-
-# set version
-__version__ = base.__version__
 
 
 # need this argument before anything else
