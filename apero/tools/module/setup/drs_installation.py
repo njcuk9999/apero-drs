@@ -23,8 +23,6 @@ from apero.base import base
 from apero.core.core import drs_misc
 from apero.core.constants import path_definitions as pathdef
 from apero.core import constants
-from apero.tools.recipes.bin import apero_validate
-from apero.tools.recipes.bin import apero_reset as toolmod
 
 # =============================================================================
 # Define variables
@@ -959,6 +957,8 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
         sys.exit()
     # ----------------------------------------------------------------------
     # construct validation code absolute path
+    # Importing here only because DRS_UCONFIG might not be set at top
+    from apero.tools.recipes.bin import apero_validate
     valid_path = apero_validate.__file__
     # ----------------------------------------------------------------------
     # setup text dictionary
@@ -1052,6 +1052,8 @@ def clean_install(params: ParamDict, all_params: ParamDict
     # add userconfig to environment
     add_env_uconfig(all_params)
     # construct reset command
+    # Importing here only because DRS_UCONFIG might not be set at top
+    from apero.tools.recipes.bin import apero_reset as toolmod
     reset_args = toolmod.main(quiet=True, warn=cleanwarn, database_timeout=0)
     # deal with a bad reset
     if not reset_args['success']:
