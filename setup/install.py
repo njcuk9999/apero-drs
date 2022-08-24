@@ -25,6 +25,8 @@ import setup_lang
 from apero.tools.module.setup import drs_installation as install
 from apero.core import constants
 from apero.base import drs_base, base
+# NOTE: This is built into importlib for python 3.10. Need this package for now
+from importlib_resources import files
 
 # =============================================================================
 # Define variables
@@ -37,8 +39,9 @@ DRS_PATH = 'apero'
 # instruments
 INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE']
 # Requirement files
-REQ_USER = 'requirements_current.txt'
-REQ_DEV = 'requirements_developer.txt'
+REQ_MAIN = 'requirements.txt'
+REQ_MYSQL = 'requirements_mysql.txt'
+REQ_DEV = 'requirements_dev.txt'
 # modules that don't install like their name
 module_translation = dict()
 module_translation['Pillow'] = 'PIL'
@@ -142,16 +145,19 @@ def validate():
     # ------------------------------------------------------------------
     # load requirement files
     # ------------------------------------------------------------------
-    filepath = os.path.abspath(__file__)
+    setup_dir = files("apero.setup")
     # get files
-    user_req_file = Path(filepath).parent.parent.joinpath(REQ_USER)
-    dev_req_file = Path(filepath).parent.parent.joinpath(REQ_DEV)
+    main_req_file = setup_dir.joinpath(REQ_MAIN)
+    mysql_req_file = setup_dir.joinpath(REQ_MAIN)
+    dev_req_file = setup_dir.joinpath(REQ_DEV)
     # get lists of modules
-    user_req = load_requirements(user_req_file)
-    dev_mode = [False] * len(user_req)
+    main_req = load_requirements(main_req_file)
+    mode = ["main"] * len(main_req)
+    mysql_req = load_requirements(mysql_req_file)
+    mode += ["mysql"] * len(mysql_req)
     dev_req = load_requirements(dev_req_file)
-    dev_mode += [True] * len(dev_req)
-    modules = user_req + dev_req
+    mode += ["dev"] * len(dev_req)
+    modules = main_req + mysql_req + dev_req
     # storage of checked modules
     checked = []
     # log check: Module check
@@ -192,10 +198,10 @@ def validate():
             # --------------------------------------------------------------
             # check the version
             check_version(module, imod, modversion, suggested,
-                          required=not dev_mode[m_it])
+                          required=mode[m_it] == "main")
         # --------------------------------------------------------------
         except Exception as _:
-            if dev_mode[m_it]:
+            if mode[m_it] != "main":
                 # {0} recommends {1} to be installed (dev only)'
                 print(lang['40-001-00078'].format(DRS_PATH, module, suggested))
             else:
