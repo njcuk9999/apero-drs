@@ -462,6 +462,11 @@ def main():
     install.cprint(textentry('40-001-00069'), 'm')
     allparams = install.create_configs(params, allparams)
     # ----------------------------------------------------------------------
+    # Add configuration file in user home to map profile name -> config path
+    # TODO: Add proper message and review this with Neil
+    # TODO: In function, how handle case where profile name already defined in yaml?
+    allparams = install.update_home_profiles(params, allparams)
+    # ----------------------------------------------------------------------
     # update config values from allparams
     install.cprint(textentry('40-001-00070'), 'm')
     allparams = install.update_configs(allparams)

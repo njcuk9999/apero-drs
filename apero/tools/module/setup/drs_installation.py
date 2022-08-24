@@ -94,6 +94,60 @@ unset RED BLUE YELLOW WHITE END
 # =============================================================================
 # Define setup/general functions
 # =============================================================================
+def get_home_config_dir() -> Path:
+    """
+    Get home config directory of APERO, where profile names are stored
+
+    :return: Path to home config
+    :rtype: Path
+    """
+
+    # TODO: Where should this var be defined/documented?
+    home_config = os.environ.get("APERO_HOME_CONFIG_DIR")
+    if home_config is not None:
+        home_config = Path(home_config)
+    elif os.name == "nt":
+        # TODO: "apero" -> __package__?
+        home_config = Path(os.environ.get("APPDATA")).joinpath("apero")
+    else:
+        # TODO: "apero" -> __package__?
+        home_config = Path(
+            os.environ.get("XDG_CONFIG_HOME", HOME.joinpath(".config"))
+        ).joinpath("apero")
+
+    return home_config
+
+
+def get_home_profiles_path() -> Path:
+    home_config_dir = get_home_config_dir()
+    # TODO: Should file name be in var/const somewhere
+    return home_config_dir.joinpath("profiles.yaml")
+
+def read_home_profiles() -> dict:
+    home_profiles = get_home_profiles_path()
+    if home_profiles.is_file():
+        return base.load_yaml(home_profiles)
+    else:
+        return {}
+
+
+def update_home_profiles(params: ParamDict, all_params: ParamDict) -> ParamDict:
+    package = params['DRS_PACKAGE']
+    if all_params['PROFILENAME'] not in [None, 'None', '']:
+        pname = all_params['PROFILENAME'].replace(' ', '_')
+    else:
+        pname = package
+    home_profiles = read_home_profiles()
+    home_profiles[pname] = str(all_params["USERCONFIG"])
+    home_profile_path = get_home_profiles_path()
+    home_profile_dir = home_profile_path.parent
+    if not home_profile_dir.is_dir():
+        home_profile_dir.mkdir(parents=True)
+    base.write_yaml(home_profiles, home_profile_path)
+
+    return all_params
+
+
 def cprint(message: Union[lang.Text, str], colour: str = 'g'):
     """
     print coloured message
