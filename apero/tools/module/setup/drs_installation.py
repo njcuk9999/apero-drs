@@ -23,6 +23,8 @@ from apero.base import base
 from apero.core.core import drs_misc
 from apero.core.constants import path_definitions as pathdef
 from apero.core import constants
+from apero.tools.recipes.bin import apero_validate
+from apero.tools.recipes.bin import apero_reset as toolmod
 
 # =============================================================================
 # Define variables
@@ -60,8 +62,6 @@ IN_TOOLPATH = Path('..').joinpath('apero', 'tools', 'recipes')
 ENV_CONFIG = base.USER_ENV
 SETUP_PATH = Path('.').joinpath('tools', 'resources', 'setup')
 
-VALIDATE_CODE = Path('bin').joinpath('apero_validate.py')
-RESET_CODE = 'apero_reset'
 # set descriptions for data paths
 DATA_CLASSES = pathdef.BLOCKS
 # push into dictionary
@@ -985,7 +985,7 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
         sys.exit()
     # ----------------------------------------------------------------------
     # construct validation code absolute path
-    valid_path = in_tool_path.joinpath(VALIDATE_CODE)
+    valid_path = apero_validate.__file__
     # ----------------------------------------------------------------------
     # setup text dictionary
     text = dict()
@@ -1068,11 +1068,6 @@ def clean_install(params: ParamDict, all_params: ParamDict
         cleanwarn = False
     else:
         cleanwarn = True
-    # get tools save location
-    in_tool_path = Path(drs_misc.get_relative_folder(package, IN_TOOLPATH))
-    # append tool path
-    sys.path.append(str(in_tool_path.joinpath('bin')))
-    toolmod = importlib.import_module(RESET_CODE)
     # check if all directories are empty
     cond1 = not reset_paths_empty(all_params)
     cond2 = not all_params['CLEAN_INSTALL']
