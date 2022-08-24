@@ -839,7 +839,7 @@ def clean_profile_name(inname: str) -> str:
 # =============================================================================
 # Define installation functions
 # =============================================================================
-def bin_paths(params: ParamDict, all_params: ParamDict) -> ParamDict:
+def root_path(params: ParamDict, all_params: ParamDict) -> ParamDict:
     """
     Add the bin and tool paths to installation parameter dictionary
 
@@ -852,26 +852,8 @@ def bin_paths(params: ParamDict, all_params: ParamDict) -> ParamDict:
     package = params['DRS_PACKAGE']
     # get root path
     root = Path(drs_misc.get_relative_folder(package, ''))
-    # get out bin path
-    out_bin_path = Path(drs_misc.get_relative_folder(package, OUT_BINPATH))
-    # get out tools bin path
-    out_tool_path = Path(drs_misc.get_relative_folder(package, OUT_TOOLPATH))
-    # get tools save location
-    in_tool_path = Path(drs_misc.get_relative_folder(package, IN_TOOLPATH))
-    # add recipe bin directory to all params
-    all_params['DRS_OUT_BIN_PATH'] = out_bin_path
-    # add toool directory to all params
-    all_params['DRS_OUT_TOOL_PATH'] = out_tool_path
     # add the drs root directory to all params
     all_params['DRS_ROOT'] = root
-    # add the individual tool directories to all params
-    all_params['DRS_OUT_TOOLS'] = []
-    for directory in np.sort(list(in_tool_path.glob('*'))):
-        if directory.is_dir():
-            # make out tool paths
-            out_tools = out_tool_path.joinpath(directory.name)
-            # append out tool paths to drs out tools
-            all_params['DRS_OUT_TOOLS'].append(out_tools)
     # return the updated all params
     return all_params
 

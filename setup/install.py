@@ -445,8 +445,9 @@ def main():
     print('\n')
     # ----------------------------------------------------------------------
     # get binary paths
+    # TODO: Update message and add to language database (just root path now)
     install.cprint(textentry('40-001-00068'), 'm')
-    allparams = install.bin_paths(params, allparams)
+    allparams = install.root_path(params, allparams)
     # ----------------------------------------------------------------------
     # copy config files to config dir
     install.cprint(textentry('40-001-00069'), 'm')
