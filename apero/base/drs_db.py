@@ -24,7 +24,7 @@ import pandas as pd
 from pathlib import Path
 import sqlite3
 import time
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 from apero.base import base
 from apero.base import drs_base
@@ -33,8 +33,10 @@ from apero.base import drs_base
 # noinspection PyBroadException
 try:
     import mysql.connector as mysql
-except Exception as _:
+    MySQLCursorType = mysql.connection.MySQLCursor
+except ImportError:
     mysql = None
+    MySQLCursorType = TypeVar("MySQLCursorType")
 
 # =============================================================================
 # Define variables
@@ -1933,7 +1935,7 @@ class MySQLDatabase(Database):
         # return the sql result
         return result
 
-    def _execute(self, cursor: mysql.connection.MySQLCursor, command: str,
+    def _execute(self, cursor: MySQLCursorType, command: str,
                  fetch: bool = True):
         """
         Dummy function to try to catch database locked errors
