@@ -22,6 +22,8 @@ from apero.base import base
 from apero.core import constants
 from apero.tools.module.setup import drs_installation as install
 
+# TODO: Update after moving files
+from utils import catch_sigint
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -47,22 +49,6 @@ TEXTCHANGE = ['${{yellow}}{PROFILENAME}', '${{YELLOW}}{PROFILENAME}',
 # =============================================================================
 # Define functions
 # =============================================================================
-def catch_sigint(signal_received: Any, frame: Any):
-    """
-    Deal with Keyboard interupt --> do a sys.exit
-
-    :param signal_received: Any, not used (but expected)
-    :param frame: Any, not used (but expected)
-
-    :return: None, exits if this function is called
-    """
-    # we don't use these we just exit
-    _ = signal_received, frame
-    print('\n\nExiting installation script')
-    # raise Keyboard Interrupt
-    sys.exit()
-
-
 def get_args() -> argparse.Namespace:
     """
     Define the command line arguments (via argparse) for this recipe
