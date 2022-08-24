@@ -25,23 +25,18 @@ import setup_lang
 from apero.tools.module.setup import drs_installation as install
 from apero.core import constants
 from apero.base import drs_base, base
-# NOTE: This is built into importlib for python 3.10. Need this package for now
-from importlib_resources import files
 
 # =============================================================================
 # Define variables
 # =============================================================================
+# TODO: Change after moving file
 __NAME__ = 'setup.install.py'
-__INSTRUMENT__ = 'None'
-__PACKAGE__ = 'APERO'
+__INSTRUMENT__ = "None"
+__PACKAGE__ = base.__PACKAGE__
+# instruments
+INSTRUMENTS = base.INSTRUMENTS[:-1]  # Remove "None"
 # define the drs name (and module name)
 DRS_PATH = 'apero'
-# instruments
-INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE']
-# Requirement files
-REQ_MAIN = 'requirements.txt'
-REQ_MYSQL = 'requirements_mysql.txt'
-REQ_DEV = 'requirements_dev.txt'
 # modules that don't install like their name
 module_translation = dict()
 module_translation['Pillow'] = 'PIL'
@@ -124,17 +119,12 @@ def validate():
     # ------------------------------------------------------------------
     # load requirement files
     # ------------------------------------------------------------------
-    setup_dir = files("apero.setup")
-    # get files
-    main_req_file = setup_dir.joinpath(REQ_MAIN)
-    mysql_req_file = setup_dir.joinpath(REQ_MAIN)
-    dev_req_file = setup_dir.joinpath(REQ_DEV)
     # get lists of modules
-    main_req = load_requirements(main_req_file)
+    main_req = load_requirements(base.RECOMM_MAIN)
     mode = ["main"] * len(main_req)
-    mysql_req = load_requirements(mysql_req_file)
+    mysql_req = load_requirements(base.RECOMM_MYSQL)
     mode += ["mysql"] * len(mysql_req)
-    dev_req = load_requirements(dev_req_file)
+    dev_req = load_requirements(base.RECOMM_DEV)
     mode += ["dev"] * len(dev_req)
     modules = main_req + mysql_req + dev_req
     # storage of checked modules

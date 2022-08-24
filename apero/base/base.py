@@ -22,7 +22,8 @@ import string
 from typing import Any
 import warnings
 import yaml
-
+# NOTE: This is built into importlib for python 3.10. Need this package for now
+from importlib_resources import files
 
 # =============================================================================
 # Define variables
@@ -66,8 +67,13 @@ USCRIPTS = ['user_config.ini', 'user_constants.ini', 'user_keywords.ini']
 PSEUDO_CONST_FILE = 'pseudo_const.py'
 PSEUDO_CONST_CLASS = 'PseudoConstants'
 # absolute paths (from relative paths to here)
-RECOMM_USER = __PATH__.parent.joinpath('requirements_current.txt')
-RECOMM_DEV = __PATH__.parent.joinpath('requirements_developer.txt')
+setup_dir = files("apero.setup")
+REQ_MAIN = 'requirements.txt'
+REQ_MYSQL = 'requirements_mysql.txt'
+REQ_DEV = 'requirements_dev.txt'
+RECOMM_USER = setup_dir.joinpath(REQ_MAIN)
+RECOMM_MYSQL = setup_dir.joinpath(REQ_MYSQL)
+RECOMM_DEV = setup_dir.joinpath(REQ_DEV)
 # -----------------------------------------------------------------------------
 # warnings
 # -----------------------------------------------------------------------------
