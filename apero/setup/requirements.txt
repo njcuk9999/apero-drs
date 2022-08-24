@@ -16,3 +16,4 @@ scikit-image==0.19.1
 scipy==1.7.3
 tqdm==4.62.3
 yagmail==0.14.260
+importlib-resources==5.9.0
