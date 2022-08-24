@@ -9,7 +9,7 @@ Created on 2019-11-26 at 15:54
 
 @author: cook
 
-Import Rules: Cannot use anything other than standard python 3 packages
+Import Rules: Cannot use anything other than standard python 3 packages and apero
 (i.e. no numpy, no astropy etc)
 """
 import argparse
@@ -20,12 +20,12 @@ import signal
 import sys
 from typing import Any, List, Union
 
-import setup_lang
-
 from apero.tools.module.setup import drs_installation as install
 from apero.core import constants
 from apero.base import drs_base, base
 
+# TODO: Is this still needed or can we use the DRS (@neil)?
+import setup_lang
 # =============================================================================
 # Define variables
 # =============================================================================
