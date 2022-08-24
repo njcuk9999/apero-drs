@@ -1218,10 +1218,7 @@ def add_paths(all_params: ParamDict):
     # set USERCONFIG
     os.environ[ENV_CONFIG] = str(all_params['USERCONFIG'])
     # ----------------------------------------------------------------------
-    if os.name == 'posix':
-        sep = ':'
-    else:
-        sep = ';'
+    sep = os.pathsep
     # ----------------------------------------------------------------------
     # add to PATH
     if 'PATH' in os.environ:
