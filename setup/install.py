@@ -18,7 +18,7 @@ import os
 from pathlib import Path
 import signal
 import sys
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Union
 
 import setup_lang
 
