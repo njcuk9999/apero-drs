@@ -104,7 +104,7 @@ def validate():
     # load requirement files
     # ------------------------------------------------------------------
     # get lists of modules
-    main_req = load_requirements(base.RECOMM_MAIN)
+    main_req = load_requirements(base.RECOMM_USER)
     mode = ["main"] * len(main_req)
     mysql_req = load_requirements(base.RECOMM_MYSQL)
     mode += ["mysql"] * len(mysql_req)
