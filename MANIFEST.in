@@ -1,1 +1,3 @@
 include apero/setup/*.txt
+include apero/data/*/*/*.csv
+include apero/lang/*/*.csv

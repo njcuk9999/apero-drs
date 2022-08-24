@@ -15,7 +15,8 @@ Import Rules: Cannot use anything other than standard python 3 packages
 """
 import csv
 import os
-from pathlib import Path
+# NOTE: This is built into importlib for python 3.10. Need this package for now
+from importlib_resources import files
 
 from apero.base import base
 
@@ -34,7 +35,8 @@ DEFAULT_LANG = 'ENG'
 LANGUAGES = ['ENG', 'FR']
 # the language database path relative to this file (this is copied to this
 #    directory when updating language database)
-LANG_FILE = '../apero/lang/databases/reset.lang.csv'
+databases_path = files("apero.lang.databases")
+LANG_FILE = databases_path.joinpath("reset.lang.csv")
 # list of all keys required before access to full database allowed
 KEYS = ['00-000-00009', '00-000-00010', '00-000-00011',
         '00-000-00013',
@@ -75,7 +77,7 @@ def get_lang_dict(language: str) -> dict:
     :return: dictionary, the filtered language dictionary
     """
     # get the full path to the language file
-    fullpath = _rel_folder(LANG_FILE)
+    fullpath = str(LANG_FILE)
     # store the raw csv table
     storage = dict()
     with open(fullpath, newline='') as lang_file:
@@ -113,27 +115,6 @@ def get_lang_dict(language: str) -> dict:
             lang_dict[entry] = lang_dict[entry].replace('\\n', '\n')
     # return the language dictionary
     return lang_dict
-
-
-def _rel_folder(reldir: str) -> str:
-    """
-    Get relative directory (compared to this file)
-
-    :param reldir: str, a relative path compared to this file
-    :return:
-    """
-    # Get the config_folder from relative path
-    current = os.getcwd()
-    # change to directory in where this file is
-    os.chdir(os.path.dirname(__file__))
-    # change to relative directory
-    os.chdir(os.path.dirname(reldir))
-    # get the absolute path of the folder
-    absfolder = os.path.abspath(os.path.basename(reldir))
-    # change back to current dir
-    os.chdir(current)
-    # return the absfolder
-    return absfolder
 
 
 # =============================================================================
