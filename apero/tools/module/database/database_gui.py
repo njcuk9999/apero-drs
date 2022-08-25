@@ -67,6 +67,7 @@ class DatabaseHolder:
         self.empty = False
         self.changed = False
         self.hash_col = hash_col
+        self.hash_data = None
 
     def load_dataframe(self, reload=False):
         # if we already have the dataframe don't load it
@@ -91,6 +92,7 @@ class DatabaseHolder:
                 # remove uhash column if it exists (if hash_col is False)
                 if not self.hash_col:
                     if drs_db.UHASH_COL in dataframe:
+                        self.hash_data = np.array(dataframe[drs_db.UHASH_COL])
                         del dataframe[drs_db.UHASH_COL]
 
             except drs_db.DatabaseError as _:
@@ -118,6 +120,11 @@ class DatabaseHolder:
             ucols = idb_cols.unique_cols
         else:
             ucols = None
+
+        # add back hash column if not present
+        if drs_db.UHASH_COL not in df and self.hash_data is not None:
+            df[drs_db.UHASH_COL] = self.hash_data
+
         # print we are saving database
         print('Saving database {0}'.format(self.name))
         # push dataframe to replace SQL table
