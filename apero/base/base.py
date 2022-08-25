@@ -67,7 +67,7 @@ USCRIPTS = ['user_config.ini', 'user_constants.ini', 'user_keywords.ini']
 PSEUDO_CONST_FILE = 'pseudo_const.py'
 PSEUDO_CONST_CLASS = 'PseudoConstants'
 # absolute paths (from relative paths to here)
-setup_dir = files("apero.setup")
+setup_dir = files("apero.setup.data")
 REQ_MAIN = 'requirements.txt'
 REQ_MYSQL = 'requirements_mysql.txt'
 REQ_DEV = 'requirements_dev.txt'
