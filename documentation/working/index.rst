@@ -32,14 +32,33 @@ Latest version: 0.7.241
   * NIRPS HA (Currently under construction)
 
 
+===========================================
+Overview
+===========================================
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
    main/general/main_general.rst
+
+===========================================
+Instrument documentation
+===========================================
+
+.. toctree::
+   :maxdepth: 3
+
    main/spirou/main_spirou.rst
    main/nirps_he/main_nirps_he.rst
    main/nirps_ha/main_nirps_ha.rst
+
+===========================================
+Developer documentation
+===========================================
+
+.. toctree::
+   :maxdepth: 2
+
    main/developer/main_dev.rst
 
 

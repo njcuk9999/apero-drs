@@ -48,7 +48,7 @@ No schematic set
 
 .. code-block:: 
 
-     --filetype[STRING] // [STRING] Specify the DPRTYPE for DARK_FP files
+     --filetype[STRING] // LEAKREF_HELP_FILETYPE
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
 
