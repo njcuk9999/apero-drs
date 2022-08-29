@@ -81,7 +81,9 @@ if WARN_TO_ERROR:
 
 # -----------------------------------------------------------------------------
 # databases
-DATABASE_NAMES = ['calib', 'tellu', 'index', 'log', 'object', 'lang']
+DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'object', 'lang', 'reject']
+DATABASE_FULLNAMES = ['calibration', 'telluric', 'file index', 'recipe log',
+                      'astrometric', 'language', 'rejection']
 # -----------------------------------------------------------------------------
 # language settings
 # -----------------------------------------------------------------------------
@@ -289,12 +291,12 @@ def create_yamls(allparams: Any):
     telludb['PROFILE'] = allparams['SQLITE'].get('TELLU_PROFILE', 'NULL')
     sqlite3['TELLU'] = telludb
     # add index database
-    indexdb = dict()
-    indexdb['PATH'] = allparams['SQLITE'].get('IDX_PATH', 'DRS_DATA_ASSETS')
-    indexdb['NAME'] = allparams['SQLITE'].get('IDX_NAME', 'index.db')
-    indexdb['RESET'] = allparams['SQLITE'].get('IDX_RESET', 'NULL')
-    indexdb['PROFILE'] = allparams['SQLITE'].get('IDX_PROFILE', 'NULL')
-    sqlite3['FILEINDEX'] = indexdb
+    findexdb = dict()
+    findexdb['PATH'] = allparams['SQLITE'].get('IDX_PATH', 'DRS_DATA_ASSETS')
+    findexdb['NAME'] = allparams['SQLITE'].get('IDX_NAME', 'index.db')
+    findexdb['RESET'] = allparams['SQLITE'].get('IDX_RESET', 'NULL')
+    findexdb['PROFILE'] = allparams['SQLITE'].get('IDX_PROFILE', 'NULL')
+    sqlite3['FILEINDEX'] = findexdb
     # add log database
     logdb = dict()
     logdb['PATH'] = allparams['SQLITE'].get('LOG_PATH', 'DRS_DATA_ASSETS')
@@ -303,12 +305,12 @@ def create_yamls(allparams: Any):
     logdb['PROFILE'] = allparams['SQLITE'].get('LOG_PROFILE', 'NULL')
     sqlite3['LOG'] = logdb
     # add object database
-    objectdb = dict()
-    objectdb['PATH'] = allparams['SQLITE'].get('OBJ_PATH', 'DRS_DATA_ASSETS')
-    objectdb['NAME'] = allparams['SQLITE'].get('OBJ_NAME', 'object.db')
-    objectdb['RESET'] = allparams['SQLITE'].get('OBJ_RESET', 'reset.object.csv')
-    objectdb['PROFILE'] = allparams['SQLITE'].get('OBJ_PROFILE', 'NULL')
-    sqlite3['OBJECT'] = objectdb
+    astromdb = dict()
+    astromdb['PATH'] = allparams['SQLITE'].get('OBJ_PATH', 'DRS_DATA_ASSETS')
+    astromdb['NAME'] = allparams['SQLITE'].get('OBJ_NAME', 'object.db')
+    astromdb['RESET'] = allparams['SQLITE'].get('OBJ_RESET', 'reset.object.csv')
+    astromdb['PROFILE'] = allparams['SQLITE'].get('OBJ_PROFILE', 'NULL')
+    sqlite3['ASTROM'] = astromdb
     # add reject database
     rejectdb = dict()
     rejectdb['PATH'] = allparams['SQLITE'].get('REJECT_PATH', 'DRS_DATA_ASSETS')
@@ -351,12 +353,12 @@ def create_yamls(allparams: Any):
     telludb['PROFILE'] = allparams['MYSQL'].get('TELLU_PROFILE', 'MAIN')
     mysql['TELLU'] = telludb
     # add index database
-    indexdb = dict()
-    indexdb['PATH'] = allparams['MYSQL'].get('IDX_PATH', 'NULL')
-    indexdb['NAME'] = allparams['MYSQL'].get('IDX_NAME', 'NULL')
-    indexdb['RESET'] = allparams['MYSQL'].get('IDX_RESET', 'NULL')
-    indexdb['PROFILE'] = allparams['MYSQL'].get('IDX_PROFILE', 'MAIN')
-    mysql['FILEINDEX'] = indexdb
+    findexdb = dict()
+    findexdb['PATH'] = allparams['MYSQL'].get('IDX_PATH', 'NULL')
+    findexdb['NAME'] = allparams['MYSQL'].get('IDX_NAME', 'NULL')
+    findexdb['RESET'] = allparams['MYSQL'].get('IDX_RESET', 'NULL')
+    findexdb['PROFILE'] = allparams['MYSQL'].get('IDX_PROFILE', 'MAIN')
+    mysql['FILEINDEX'] = findexdb
     # add log database
     logdb = dict()
     logdb['PATH'] = allparams['MYSQL'].get('LOG_PATH', 'NULL')
@@ -365,12 +367,12 @@ def create_yamls(allparams: Any):
     logdb['PROFILE'] = allparams['MYSQL'].get('LOG_PROFILE', 'MAIN')
     mysql['LOG'] = logdb
     # add object database
-    objectdb = dict()
-    objectdb['PATH'] = allparams['MYSQL'].get('OBJ_PATH', 'NULL')
-    objectdb['NAME'] = allparams['MYSQL'].get('OBJ_NAME', 'NULL')
-    objectdb['RESET'] = allparams['MYSQL'].get('OBJ_RESET', 'reset.object.csv')
-    objectdb['PROFILE'] = allparams['MYSQL'].get('OBJ_PROFILE', 'MAIN')
-    mysql['OBJECT'] = objectdb
+    astromdb = dict()
+    astromdb['PATH'] = allparams['MYSQL'].get('OBJ_PATH', 'NULL')
+    astromdb['NAME'] = allparams['MYSQL'].get('OBJ_NAME', 'NULL')
+    astromdb['RESET'] = allparams['MYSQL'].get('OBJ_RESET', 'reset.object.csv')
+    astromdb['PROFILE'] = allparams['MYSQL'].get('OBJ_PROFILE', 'MAIN')
+    mysql['ASTROM'] = astromdb
     # add reject database
     rejectdb = dict()
     rejectdb['PATH'] = allparams['MYSQL'].get('REJECT_PATH', 'NULL')

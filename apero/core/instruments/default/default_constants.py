@@ -1001,7 +1001,7 @@ PP_MEDAMP_BINSIZE = Const('PP_MEDAMP_BINSIZE', value=None, dtype=int,
                                       'in the downsized image')
 
 # =============================================================================
-# CALIBRATION: OBJECT DATABASE SETTINGS
+# CALIBRATION: ASTROMETRIC DATABASE SETTINGS
 # =============================================================================
 # gaia col name in google sheet
 GL_GAIA_COL_NAME = Const('GL_GAIA_COL_NAME', value=None, dtype=str,

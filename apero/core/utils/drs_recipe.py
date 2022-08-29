@@ -1150,7 +1150,7 @@ class DrsRecipe(object):
         # get parameters
         params = self.params
         # load object database
-        objdbm = drs_database.ObjectDatabase(params)
+        objdbm = drs_database.AstrometricDatabase(params)
         objdbm.load_db()
         # load pseudo constants
         pconst = constants.pload()

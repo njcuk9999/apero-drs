@@ -37,6 +37,8 @@ WLOG = drs_log.wlog
 PROGRAM_NAME = 'APERO File Explorer'
 # define the default path
 ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC']
+# define database names
+NAMES = dict(zip(base.DATABASE_NAMES, base.DATABASE_FULLNAMES))
 # -----------------------------------------------------------------------------
 
 
@@ -111,10 +113,13 @@ def __main__(recipe, params):
     # push into database holder
     databases = dict()
     for key in dbs:
-        databases[key] = database_gui.DatabaseHolder(params, name=key,
-                                                     kind=dbs[key].kind,
-                                                     path=Path(dbs[key].path),
-                                                     hash_col=hash_col)
+        # get name
+        name = NAMES[key]
+        # load database holder
+        databases[name] = database_gui.DatabaseHolder(params, name=name,
+                                                      kind=dbs[key].kind,
+                                                      path=Path(dbs[key].path),
+                                                      hash_col=hash_col)
     # construct app
     app = database_gui.DatabaseExplorer(databases=databases)
     # set icon?

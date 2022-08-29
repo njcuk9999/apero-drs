@@ -32,7 +32,7 @@ __release__ = base.__release__
 WLOG = drs_log.wlog
 # Get index database
 IndexDatabase = drs_database.FileIndexDatabase
-ObjectDatabase = drs_database.ObjectDatabase
+ObjectDatabase = drs_database.AstrometricDatabase
 # get text entry instance
 textentry = lang.textentry
 

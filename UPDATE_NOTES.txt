@@ -1,296 +1,46 @@
-# Update Note Summary - Version 0.7.182
+# Update Note Summary - Version 0.7.243
 
-Date: 2021-11-11
-
-## summary of big cosmetic changes
-    - any reference to NIGHT or NIGHTNAME or DIRECTORY will now be "obs_dir"
-    - no need to ever reference the INSTRUMENT - this is done at installation
-      new instruments need to be installed under a different apero profile
-    - recipe names changed cal_dark_{instrument}.py --> apero_dark_{instrument}.py
-      this avoids confusing recipes like cal_extract and cal_ccf not
-      being "cal" or "obj"
-    - use apero_explorer.py to read calib/tellu DB and modify them
-    - all output extentions now have no data in primary HDU, all drs header
-      info now stored in primary HDU for all types
-    - "out" directory now exists for CADC outputs (created in APERO)
-    - most OBJ_FP files change DPRTYPE to POLAR_FP unless truly a spectroscopic
-      observation
-
-## Summary of updates since Version 0.6.131
-
-- database
-    - complete code change on how databases are handled. Currently supported
-      databases are
-        - calibration database (instead of master_calib_SPIROU.py)
-        - telluric database (instead of master_tellu_SPIROU.py)
-        - file database (instead of index.fits files in each dir)
-        - log database (instead of index.fits files in each dir)
-        - object database (instead of object_query_list.fits)
-        - language database (instead of the language csv files)
-    - add database options to installation process
-    - added apero_database.py tool for importing/exporting data to/from database/csv
-    - added apero_explorer.py tool to look through import/export databases in a user
-      friendly way
-    - problem with number of TCP connections we are making (TCP conection can
-      only be used every 60s - with many cores we get a pile up) - current
-      hack is to wait and try to reconnect
-    - indexing certain columns for more efficient sql querying
-
-- processing
-    - moving to use multiprocess.Pool instead of multiprocess.Process (should
-      speed up how we handle jobs on multiple cores) - requires classes be
-      pickle-able
-    - can switch between Pool and Process with REPROCESS_MP_TYPE in the user config
-    - add --science_targets and --telluric_targest to arguments of apero_processing
-    - added use of odometer code reject list (USE_REJECTLIST = True) and uses
-      blacklist for odometer codes with column PP
-    - added way to turn off recalculation of templates (RECAL_TEMPLATES = True/False)
-      when False and a template already exists does not run MKTELLU3, MKTELLU3,
-      FTELLU2, or FTELLU3
-    - rewrote file/argument grouping function, now able to have a custom
-      function to group files/arguments (recipe.group_func)
-    - added a UPDATE_OBJECT_DB into run.ini files - if True will update the local
-      object database with the information from the object googlesheet
-    - raw files are updated in index database if last modified time is inconsistent
-      (before only new files were added)
-    - added to other_run.ini the LFCFP and FPLFC (PP, EXT) sequences
-    - added polar sequences to processing sequences
-    - added out post processing to processing sequences
-    - fixed emailing (now recieve email from apero.drs@gmail.com)
-    - apero_precheck tool (check before running apero_processing)
-        - check:
-            - raw calibration files
-            - raw telluric files
-            - raw science files
-            - object names (from object database vs header)
-    - run.ini changes
-        - MKTELLU2, MKTELLU3, MKTELLU4 renamed:
-            MKTELLU1 --> MKTELLU1
-            None     --> MKTMOD1
-            MKTELLU2 --> MKTFIT
-            MKTELLU3 --> MKTEMP
-            MKTELLU4 --> MKTELLU2
-            None     --> MKTMOD2
-        - FTELLU1, FTELLU2, FTELLU3 renamed:
-            FTELLU1 --> FTFIT1
-            FTELLU2 --> FTTEMP
-            FTELLU3 --> FTFIT2
+Date: 2022-08-29
 
 
-- preprocessing
-    - object resolution added to preprocessing (see object resolution section)
-    - add QC to reject exptimes less than 10% required exptime
-      (change using PP_BAD_EXPTIME_FRACTION)
-    - add cosmic ray locating/correction (using slope + intercept)
-    - added header key DRS_MODE to distinguish between SPECTROSCOPY and POLAR files
-        - DRS_MODE = SPECTROSCOPY  for SBRHB1_P = P16 and SBRHB2_P = P16
-        - DRS_MODE = POLAR         for SBRHB1_P = P14 and SBRHB2_P = P16
-        - DRS_MODE = POLAR         for SBRHB1_P = P2  and SBRHB2_P = P16
-        - DRS_MODE = POLAR         for SBRHB1_P = P2  and SBRHB2_P = P4
-        - DRS_MODE = POLAR         for SBRHB1_P = P14 and SBRHB2_P = P4
-        - DRS_MODE = UNKNOWN  otherwise
-    - DRS_MODE also adds/updates DPRTYPES
-        - OBJ_FP, OBJ_DARK + DRS_MODE = SPECTROSCOPY --> OBJ_FP, OBJ_DARK
-        - OBJ_FP, OBJ_DARK + DRS_MODE = POLAR --> POLAR_FP, POLAR_DARK
-    - now reject files from bad odometer list (googlesheet) available here:
-      https://docs.google.com/spreadsheets/d/1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM/edit#gid=0
-      based on the PP column and the odometer code
+## Updates require to upgrade to >0.7.243  (if not resetting everything)
 
-- object resolution
-    - now done in preprocessing (was extraction)
-    - googlesheet master list of Gaia ID / RV / Teff - human editable
-    - then use Gaia ID to crossmatch with Gaia/SIMBAD
-    - fall back to header (properly)
-    - header keys for all parameters DRS will use (+ source) separate from
-      input header keys
 
-- calibrations
-    - now deal with combining files better
-        - combine header keys (MJDEND, RDNOISE, GAIN, SATURATE, EXPTIME,
-          NEXP, MJDMID) properly (rules set in default_keywords.py)
-    - filename is now a checksum based on input files (cannot be composite of
-      any one file as may be different combination of files leading to same
-      filename --> confusion of outputs)
-    - calibrations are filter by a pearson R test against the median of all
-      files bound for combining (warning given when calibration is removed)
-      in the combine table CMETRIC, CTHRES and CPASS are given for all files
-      (passed and failed) to show criteria
-    - can now set a delta time limit (default = 7 days) between observation
-      and calibration [DO_CALIB_DTIME_CHECK and MAX_CALIB_DTIME constants]
+1. Need to update calibration database column:
+	ALTER TABLE CALIB_setup_spirou_stable_07_DB  ADD COLUMN REFCAL int(11);
+	update CALIB_setup_spirou_stable_07_DB SET REFCAL = SUPERCAL;
 
-- localisation
-    - added new fits table extensions - the central position coefficients and
-      width coefficients (as tables of order vs coefficient)
+2. Need to reset telluric database (in apero_reset.py)
 
-- wave solution
-    - complete re-coding of wave solution - same rough idea reorganised
-        - master wave solution finds hc and fp lines, then calculates wave
-          solution on fiber AB (finds cavity) and then find A,B,C solution
-          using cavity width
-        - night solution - finds AB solution + updates cavity then finds
-          A,B,C solution
-    - no hc solution - just a single wave solution per order
-    - added new fits table extension - the wave coefficients (as a table of
-      order vs coefficient)
+3. Need to re-run all telluric hot star + telluric science onwards
+		in run.ini set RUN_XXX = True  and SKIP_XXX = False for tellu steps
 
-- extraction
-    - modify cosmic rejection in extraction code (now use Etienne's sigma clip)
-    - LL file has new extension showing where cosmic rays were rejected
-    - leak correction now moved into extraction recipe (will save a lot of time)
-        - leak correction done on e2ds before e2dsff created
-        - debug-uncorr now only for e2ds
-        - will now correct all observations with FP in ref fiber
-            - before only did OBJ_FP, POLAR_FP
-        - added --leakcorr to extraction (for DARK_FP in leak master don't want
-          to correct FP on extraction)
+4. Need to update database.yaml
+    	INDEX --> FINDEX   (In MySQL and SQLITE sections)
+    	OBJECT --> ASTROM   (In MySQL and SQLITE sections)
 
-- tellurics
-    - added header keys to template file:
-        - MTPNFILE: Number of files used to make template
-        - MTP_HASH: Unique hash for input template files
-        - MTP_TIME: Time template was created
-    - added header keys to mk_tellu files:
-        - MKTTEMPN: Number of files used to make template
-        - MKTTEMPH: Unique hash for input template files
-        - MKTTEMPT: Time template was created
-    - added header keys to fit_tellu files:
-        - FTTTEMPN: Number of files used to make template
-        - FTTTEMPH: Unique hash for input template files
-        - MKTTEMPT: Time template was created
-    - added a RECAL_TEMPLATE = True/False to run.ini - if False and a template
-      exists in database will not re-create template - if recalculating all
-      telluric correction (recommended) this should be set to True
-    - added a berv coverage metric which adds a QC to the template creation
-      whereby a template is not constructed if BERV coverage is too low (stops
-      templates being constructed from too few observations)
-    - can now define a template to use for obj_mk_tellu and obj_fit_tellu codes
-      use the argument --template (can either be a path to a file or a filename
-      in the telluric database directory)
-    - add additional code to find up to 300 brightest OH lines and correct
-      them better - using dot product of derivative vs science spectrum
-      (including the generation of new sky PCA components - supplied with APERO)
-    - now only using the 50 closest (in airmass/water col space)
-      transmission spectra (from hot stars)
+       	MYSQL:
+       	    ASTROM:
+    	        RESET: reset.object.csv   -->   reset.astrom.csv
+    	SQLITE3:
+    	    FINDEX:
+    	        NAME: index.db --> findex.db
+    	    ASTROM:
+    	        NAME: object.db --> astrom.db
+    	        RESET: reset.object.csv   -->   reset.astrom.csv
 
-- ccf
-    - add in ccf mask normalization options 'all', 'order', 'None'
-      access via user_constants.py (CCF_MASK_NORMALIZATION) or
-      cal_ccf_spirou.py --masknormmode
-    - default is to use mask based on TEFF
-        - use teff_mask.csv to define the default mask and temperature ranges
-          current setup is:
-            0 < TEFF < 3000K            GL905_neg.fits
-            3000K < TEFF < 3500K        GL699_neg.fits
-            3500K < TEFF < 50000K       GL846_neg.fits
-            no TEFF or out of bounds    GL846_neg.fits
+5. Need to reset run direction (in apero_reset.py)
 
-        - can still revert to filename using 'CCF_DEFAULT_MASK' and adding a
-          mask to assets/data/spirou/ccf_masks
+6. Need to rename databases:
+    RENAME TABLE {old_table} TO {new_table}
 
-- cal_drift
-    - added support for OBJ_FP, DARK_FP, POLAR_FP, FP_DARK files (controlled via
-      DRIFT_DPRTYPES in the user_constants.ini file)
-    - now deals with non-FP fibers - will skip these entries
+    old_table --> new_table
 
-- out_postprocess
-    - added recipe to run at the end to convert reduced files into e.fits, t.fits
-      s.fits, p.fits, v.fits
-    - can clear reduced files using '--clear' (warning deletes all /reduced/ files)
-    - by default does not overwrite, use '--overwrite' to update old files
-    - added out_post_process to apero_processing.py
+    CALIB_{apero-profile)_DB    -->    calib_{apero-profile}_db
+    INDEX_{apero-profile)_DB    -->    findex_{apero-profile}_db
+    LANG_{apero-profile)_DB    -->    lang_{apero-profile}_db
+    LOG_{apero-profile)_DB    -->    log_{apero-profile}_db
+    OBJECT_{apero-profile)_DB    -->    astrometric_{apero-profile}_db
+    REJECT_{apero-profile)_DB    -->    reject_{apero-profile}_db
+    TELLU_{apero-profile)_DB    -->    tellu_{apero-profile}_db
 
-- general/other/misc
-    - all functions should be pickle-able and python typed and have doc strings
-    - reorganisation of modulular structure - minimize circular importing
-      minimize when certain modules are imported/not imported
-    - tool to generate full user_config.ini / user_constants.ini (all constants)
-      use "apero_constants.py --generate=full"  or regenerate current file
-      (lost/corrupt?) with "apero_constants.py --generate=standard" or choose
-      which constant sections you want with "apero_constants.py --generate=choose"
-    - apero_langdb.py can now be used to locate apero language codes
-        - use apero_langdb.py --find
-    - all outputs now follow standard fits convensions with regards to:
-        - primary hdu empty and only with main header
-        - all other hdu headers are minimal / extension specific
-        - all extensions have names (EXTNAME)
-    - all reduced outputs now have a PARAM_TABLE extension (127 Kb)
-        - this contains all instrument, database, param, recipe, header
-          constants as they were at the time of writing the file - it can be
-          turned off by setting PARAMETER_SNAPSHOT = False
-    - now allowed to turn off debug file outputs
-          constants are:
-            - DEBUG_BACKGROUND_FILE  (default = True)
-                    ~40% space saving in reduced dir
-            - DEBUG_E2DSLL_FILE  (default = False)
-                    ~10% space saving in reduced dir
-                    but these are very useful so left on by default
-            - DEBUG_SHAPE_FILES  (default = False)
-                    ~0.003 % space saving in reduced dir
-                    not a lot of savings so left of by default
-            - DEBUG_UNCORR_EXT_FILES  (default = False)
-                    ~ 0.04 % space saving in reduced dir
-                    not a lot of savings so left of by default
-    - log messages now go into a obs_dir directory if possible (to avoid huge
-      directories with millions of files)
-
-- polar
-    - added polar code
-    - use RUN_POLAR = True and SKIP_POLAR  with full_seq, limited_seq, science_seq
-
-    Reduced Outputs:
-	- pol file (extension = "pol.fits")
-		- HDU[0]: Primary HDU
-		- HDU[1]: Image HDU     name=POL_DEG
-		- HDU[2]: Image HDU     name=POL_ERR
-		- HDU[3]: BinTable HDU  name=POL_TABLE
-		- HDU[4]: BinTable HDU  name=PARAM_TABLE    (standard reduced table output - snapshot of params)
-	- stokes i file (extension = "StokesI.fits")
-		- HDU[0]: Primary HDU
-		- HDU[1]: Image HDU     name=STOKESI_DEG
-		- HDU[2]: Image HDU     name=STOKESI_ERR
-		- HDU[3]: BinTable HDU  name=POL_TABLE
-		- HDU[4]: BinTable HDU  name=PARAM_TABLE    (standard reduced table output - snapshot of params)
-	- null 1 file (extension = "null1.fits")
-		- HDU[0]: Primary HDU
-		- HDU[1]: Image HDU     name=NULL_POL1
-		- HDU[2]: BinTable HDU  name=POL_TABLE
-		- HDU[3]: BinTable HDU  name=PARAM_TABLE    (standard reduced table output - snapshot of params)
-	- null 2 file (extension = "null2.fits")
-		- HDU[0]: Primary HDU
-		- HDU[1]: Image HDU     name=NULL_POL2
-		- HDU[2]: BinTable HDU  name=POL_TABLE
-		- HDU[3]: BinTable HDU  name=PARAM_TABLE    (standard reduced table output - snapshot of params)
-
-	- for FILE = [POL, STOKESI, NULL1, NULL2]  and for GRID = [W, V]
-		extension = "s1d_{GRID}_{FILE.lower()}.fits"
-		- HDU[0]: Primary HDU
-		- HDU[1]: BinTable HDU  name=S1D{GRID}_{FILE}
-		- HDU[2]: BinTable HDU  name=POL_TABLE
-		- HDU[3]: BinTable HDU  name=PARAM_TABLE    (standard reduced table output - snapshot of params)
-
-	- for LSD (extension = "lsd_pol.fits")
-		- HDU[0]: Primary HDU
-		- HDU[1]: BinTable HDU  name=LSD_POL
-		    - Columns = ['Velocity', 'StokesVQU', 'StokesVQU_Err', 'StokesI', 'StokesI_Err', 'StokesIModel', 'Null', 'Null_Err', 'PolTable']
-		- HDU[1]: BinTable HDU  name=POL_TABLE
-		- HDU[2]: BinTable HDU  name=PARAM_TABLE    (standard reduced table output - snapshot of params)
-
-    Post Process Outputs (for CADC):
-        will still be linked to "first exposure" via KW_IDENTIFIER key (FILENAME)
-        therefore this file will not be independent of inputs
-        - p.fits:
-            - HDU[0]: Primary HDU
-            - HDU[1]: Image HDU 	name=Pol
-            - HDU[2]: Image HDU     name=PolErr
-            - HDU[3]: Image HDU     name=StokesI
-            - HDU[4]: Image HDU     name=StokesIErr
-            - HDU[5]: Image HDU     name=Null1
-            - HDU[6]: Image HDU     name=Null2
-            - HDU[7]: Image HDU     name=WaveAB
-            - HDU[8]: Image HDU     name=BlazeAB
-            - HDU[9]: BinTable HDU  name=PolTable
-
-    Merge NIRPS_HA changes into 0.7 version
-        - works for all orders on A fiber up to extract (cannot test
-          science / telluric parts due to no real or simulated data)
-        - problems with localisation of A vs B due to absorption band

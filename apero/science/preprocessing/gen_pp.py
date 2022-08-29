@@ -48,7 +48,7 @@ display_func = drs_log.display_func
 # Get the text types
 textentry = lang.textentry
 # Get database
-ObjectDatabase = drs_database.ObjectDatabase
+ObjectDatabase = drs_database.AstrometricDatabase
 # get param dict
 ParamDict = constants.ParamDict
 PseudoConst = pseudo_const.PseudoConstants

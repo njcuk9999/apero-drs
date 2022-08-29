@@ -74,7 +74,7 @@ def get_tellu_include_list(params: ParamDict,
     # get pseudo constants
     pconst = constants.pload()
     # get object database
-    objdbm = drs_database.ObjectDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', func=func_name,
@@ -103,7 +103,7 @@ def get_tellu_exclude_list(params: ParamDict,
     # get pseudo constants
     pconst = constants.pload()
     # get object database
-    objdbm = drs_database.ObjectDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', func=func_name,

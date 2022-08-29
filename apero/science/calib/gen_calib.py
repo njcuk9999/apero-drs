@@ -322,7 +322,7 @@ def check_files(params: ParamDict,
     # clean (capitalize and remove white spaces)
     dprtype = drs_text.clean_strings(dprtype)
     # load object database
-    objdbm = drs_database.ObjectDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
     # get clean / alias-safe version of object name
     objname, _ = objdbm.find_objname(pconst, objname)

@@ -40,7 +40,7 @@ textentry = lang.textentry
 # Raw prefix
 RAW_PREFIX = file_definitions.raw_prefix
 # get the object database
-ObjectDatabase = drs_database.ObjectDatabase
+ObjectDatabase = drs_database.AstrometricDatabase
 
 
 # =============================================================================

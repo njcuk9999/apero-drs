@@ -213,8 +213,8 @@ def reset_tmp_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_index_database(pconst, databases,
-                                               tries=dtimeout)
+        manage_databases.create_fileindex_database(pconst, databases,
+                                                   tries=dtimeout)
         # get index database
         findexdb = drs_database.FileIndexDatabase(params)
         # load index database
@@ -281,8 +281,8 @@ def reset_reduced_folders(params: ParamDict, log: bool = True,
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_index_database(pconst, databases,
-                                               tries=dtimeout)
+        manage_databases.create_fileindex_database(pconst, databases,
+                                                   tries=dtimeout)
         # get index database
         indexdb = drs_database.FileIndexDatabase(params)
         # load index database
@@ -545,8 +545,8 @@ def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_index_database(pconst, databases,
-                                               tries=dtimeout)
+        manage_databases.create_fileindex_database(pconst, databases,
+                                                   tries=dtimeout)
         # get index database
         indexdb = drs_database.FileIndexDatabase(params)
         # load index database
@@ -605,7 +605,7 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
     reset_dbdir(params, name, asset_path, abs_reset_path, log=log,
                 empty_first=False, relative_path='MODULE')
     # create index databases
-    manage_databases.create_index_database(pconst, databases, tries=dtimeout)
+    manage_databases.create_fileindex_database(pconst, databases, tries=dtimeout)
     # create log database
     manage_databases.create_log_database(pconst, databases, tries=dtimeout)
     # create object database

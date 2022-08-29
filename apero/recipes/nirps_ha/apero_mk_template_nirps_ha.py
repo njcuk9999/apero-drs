@@ -117,7 +117,7 @@ def __main__(recipe, params):
     # need to convert object to drs object name
     pconst = constants.pload()
     # load object database
-    objdbm = drs_database.ObjectDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
     # get clean / alias-safe version of object name
     objname, _ = objdbm.find_objname(pconst, objname)

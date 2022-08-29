@@ -58,7 +58,7 @@ WLOG = drs_log.wlog
 display_func = drs_log.display_func
 # get the databases
 FileIndexDatabase = drs_database.FileIndexDatabase
-ObjectDatabase = drs_database.ObjectDatabase
+ObjectDatabase = drs_database.AstrometricDatabase
 # simbad additional columns
 SIMBAD_COLUMNS = ['ids', 'pmra', 'pmdec', 'pm_bibcode', 'plx',
                   'plx_bibcode', 'rvz_radvel', 'rvz_bibcode',

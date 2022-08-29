@@ -693,9 +693,8 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
     # ----------------------------------------------------------------------
     # Individual database table settings
     # ----------------------------------------------------------------------
-    database_user = ['CALIB', 'TELLU', 'INDEX', 'LOG', 'OBJECT', 'REJECT',
-                     'LANGUAGE']
-    databases_raw = ['CALIB', 'TELLU', 'IDX', 'LOG', 'OBJ', 'REJECT', 'LANG']
+    database_user = base.DATABASE_FULLNAMES
+    databases_raw = base.DATABASE_NAMES
     if db_ask:
         database_ask = [True, True, False, False, False, False, False]
     else:
@@ -706,7 +705,7 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
     for db_it in range(len(database_user)):
         # ---------------------------------------------------------------------
         # db key for all_params
-        dbkey = '{0}_PROFILE'.format(databases_raw[db_it])
+        dbkey = '{0}_profile'.format(databases_raw[db_it])
         # ---------------------------------------------------------------------
         # deal with command line arguments
         if hasattr(args, database_args[db_it]):
@@ -1614,31 +1613,12 @@ def update_dparams(aparams: ParamDict,
     # deal with no settings to update
     if 'MYSQL' not in aparams:
         return dparams
-    #   NOTE: yaml params are uppercase
-    # add calib database
-    value = aparams['MYSQL'].get('CALIB_PROFILE', None)
-    if value is not None:
-        dparams['MYSQL']['CALIB']['PROFILE'] = value
-    # add tellu database
-    value = aparams['MYSQL'].get('TELLU_PROFILE', None)
-    if value is not None:
-        dparams['MYSQL']['TELLU']['PROFILE'] = value
-    # add index database
-    value = aparams['MYSQL'].get('IDX_PROFILE', None)
-    if value is not None:
-        dparams['MYSQL']['INDEX']['PROFILE'] = value
-    # add log database
-    value = aparams['MYSQL'].get('LOG_PROFILE', None)
-    if value is not None:
-        dparams['MYSQL']['LOG']['PROFILE'] = value
-    # add object database
-    value = aparams['MYSQL'].get('OBJ_PROFILE', None)
-    if value is not None:
-        dparams['MYSQL']['OBJECT']['PROFILE'] = value
-    # add language database
-    value = aparams['MYSQL'].get('LANG_PROFILE', None)
-    if value is not None:
-        dparams['MYSQL']['LANG']['PROFILE'] = value
+    # loop around databases
+    for dbname in base.DATABASE_NAMES:
+
+        value = aparams['MYSQL'].get(f'{dbname}_profile', None)
+        if value is not None:
+            dparams['MYSQL'][dbname.upper()]['PROFILE'] = value
     # return dparams
     return dparams
 
@@ -1665,35 +1645,20 @@ def update_db_settings(aparams: ParamDict) -> ParamDict:
     aparams['SQLITE']['USER'] = dparams['SQLITE3']['USER']
     aparams['SQLITE']['PASSWD'] = dparams['SQLITE3']['PASSWD']
     aparams['SQLITE']['DATABASE'] = dparams['SQLITE3']['DATABASE']
-    # add calib database
-    aparams['SQLITE']['CALIB_PATH'] = dparams['SQLITE3']['CALIB']['PATH']
-    aparams['SQLITE']['CALIB_NAME'] = dparams['SQLITE3']['CALIB']['NAME']
-    aparams['SQLITE']['CALIB_RESET'] = dparams['SQLITE3']['CALIB']['RESET']
-    aparams['SQLITE']['CALIB_PROFILE'] = dparams['SQLITE3']['CALIB']['PROFILE']
-    # add tellu database
-    aparams['SQLITE']['TELLU_PATH'] = dparams['SQLITE3']['TELLU']['PATH']
-    aparams['SQLITE']['TELLU_NAME'] = dparams['SQLITE3']['TELLU']['NAME']
-    aparams['SQLITE']['TELLU_RESET'] = dparams['SQLITE3']['TELLU']['RESET']
-    aparams['SQLITE']['TELLU_PROFILE'] = dparams['SQLITE3']['TELLU']['PROFILE']
-    # add index database
-    aparams['SQLITE']['IDX_PATH'] = dparams['SQLITE3']['INDEX']['PATH']
-    aparams['SQLITE']['IDX_NAME'] = dparams['SQLITE3']['INDEX']['NAME']
-    aparams['SQLITE']['IDX_RESET'] = dparams['SQLITE3']['INDEX']['RESET']
-    aparams['SQLITE']['IDX_PROFILE'] = dparams['SQLITE3']['INDEX']['PROFILE']
-    # add log database
-    aparams['SQLITE']['LOG_PATH'] = dparams['SQLITE3']['LOG']['PATH']
-    aparams['SQLITE']['LOG_NAME'] = dparams['SQLITE3']['LOG']['NAME']
-    aparams['SQLITE']['LOG_RESET'] = dparams['SQLITE3']['LOG']['RESET']
-    aparams['SQLITE']['LOG_PROFILE'] = dparams['SQLITE3']['LOG']['PROFILE']
-    # add object database
-    aparams['SQLITE']['OBJ_PATH'] = dparams['SQLITE3']['OBJECT']['PATH']
-    aparams['SQLITE']['OBJ_NAME'] = dparams['SQLITE3']['OBJECT']['NAME']
-    aparams['SQLITE']['OBJ_RESET'] = dparams['SQLITE3']['OBJECT']['RESET']
-    aparams['SQLITE']['OBJ_PROFILE'] = dparams['SQLITE3']['OBJECT']['PROFILE']
-    # add language database
-    aparams['SQLITE']['LANG_PATH'] = dparams['SQLITE3']['LANG']['PATH']
-    aparams['SQLITE']['LANG_NAME'] = dparams['SQLITE3']['LANG']['NAME']
-    aparams['SQLITE']['LANG_PROFILE'] = dparams['SQLITE3']['LANG']['PROFILE']
+    # add database parameters
+    # loop around databases
+    for dbname in base.DATABASE_NAMES:
+        # yaml is upper case
+        ydbname = dbname.upper()
+        # get correct dictionary
+        sdict = dparams['SQLITE3'][ydbname]
+        # add calib database
+        aparams['SQLITE'][f'{ydbname}_PATH'] = sdict['PATH']
+        aparams['SQLITE'][f'{ydbname}_NAME'] = sdict['NAME']
+        if 'RESET' in sdict:
+            aparams['SQLITE'][f'{ydbname}_RESET'] = sdict['RESET']
+        aparams['SQLITE'][f'{ydbname}_PROFILE'] = sdict['PROFILE']
+
     # ------------------------------------------------------------------
     # MySQL Settings
     # ------------------------------------------------------------------
@@ -1705,36 +1670,19 @@ def update_db_settings(aparams: ParamDict) -> ParamDict:
     aparams['MYSQL']['USER'] = dparams['MYSQL']['USER']
     aparams['MYSQL']['PASSWD'] = dparams['MYSQL']['PASSWD']
     aparams['MYSQL']['DATABASE'] = dparams['MYSQL']['DATABASE']
-    # add calib database
-    aparams['MYSQL']['CALIB_PATH'] = dparams['MYSQL']['CALIB']['PATH']
-    aparams['MYSQL']['CALIB_NAME'] = dparams['MYSQL']['CALIB']['NAME']
-    aparams['MYSQL']['CALIB_RESET'] = dparams['MYSQL']['CALIB']['RESET']
-    aparams['MYSQL']['CALIB_PROFILE'] = dparams['MYSQL']['CALIB']['PROFILE']
-    # add tellu database
-    aparams['MYSQL']['TELLU_PATH'] = dparams['MYSQL']['TELLU']['PATH']
-    aparams['MYSQL']['TELLU_NAME'] = dparams['MYSQL']['TELLU']['NAME']
-    aparams['MYSQL']['TELLU_RESET'] = dparams['MYSQL']['TELLU']['RESET']
-    aparams['MYSQL']['TELLU_PROFILE'] = dparams['MYSQL']['TELLU']['PROFILE']
-    # add index database
-    aparams['MYSQL']['IDX_PATH'] = dparams['MYSQL']['INDEX']['PATH']
-    aparams['MYSQL']['IDX_NAME'] = dparams['MYSQL']['INDEX']['NAME']
-    aparams['MYSQL']['IDX_RESET'] = dparams['MYSQL']['INDEX']['RESET']
-    aparams['MYSQL']['IDX_PROFILE'] = dparams['MYSQL']['INDEX']['PROFILE']
-    # add log database
-    aparams['MYSQL']['LOG_PATH'] = dparams['MYSQL']['LOG']['PATH']
-    aparams['MYSQL']['LOG_NAME'] = dparams['MYSQL']['LOG']['NAME']
-    aparams['MYSQL']['LOG_RESET'] = dparams['MYSQL']['LOG']['RESET']
-    aparams['MYSQL']['LOG_PROFILE'] = dparams['MYSQL']['LOG']['PROFILE']
-    # add object database
-    aparams['MYSQL']['OBJ_PATH'] = dparams['MYSQL']['OBJECT']['PATH']
-    aparams['MYSQL']['OBJ_NAME'] = dparams['MYSQL']['OBJECT']['NAME']
-    aparams['MYSQL']['OBJ_RESET'] = dparams['MYSQL']['OBJECT']['RESET']
-    aparams['MYSQL']['OBJ_PROFILE'] = dparams['MYSQL']['OBJECT']['PROFILE']
-    # add language database
-    aparams['MYSQL']['LANG_PATH'] = dparams['MYSQL']['LANG']['PATH']
-    aparams['MYSQL']['LANG_NAME'] = dparams['MYSQL']['LANG']['NAME']
-    aparams['MYSQL']['LANG_RESET'] = dparams['MYSQL']['LANG']['RESET']
-    aparams['MYSQL']['LANG_PROFILE'] = dparams['MYSQL']['LANG']['PROFILE']
+    # add database parameters
+    # loop around databases
+    for dbname in base.DATABASE_NAMES:
+        # yaml is upper case
+        ydbname = dbname.upper()
+        # get correct dictionary
+        sdict = dparams['MYSQL'][ydbname]
+        # add calib database
+        aparams['MYSQL'][f'{ydbname}_PATH'] = sdict['PATH']
+        aparams['MYSQL'][f'{ydbname}_NAME'] = sdict['NAME']
+        if 'RESET' in sdict:
+            aparams['MYSQL'][f'{ydbname}_RESET'] = sdict['RESET']
+        aparams['MYSQL'][f'{ydbname}_PROFILE'] = sdict['PROFILE']
     # ------------------------------------------------------------------
     # return the update all_params (now with the SQLITE and MYSQL dictionaries)
     return aparams
