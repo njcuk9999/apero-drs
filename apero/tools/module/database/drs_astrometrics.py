@@ -57,7 +57,7 @@ WLOG = drs_log.wlog
 # Get function string
 display_func = drs_log.display_func
 # get the databases
-IndexDatabase = drs_database.IndexDatabase
+FileIndexDatabase = drs_database.FileIndexDatabase
 ObjectDatabase = drs_database.ObjectDatabase
 # simbad additional columns
 SIMBAD_COLUMNS = ['ids', 'pmra', 'pmdec', 'pm_bibcode', 'plx',
@@ -486,14 +486,14 @@ class AstroObj:
         self.aliases = '|'.join(update_aliases)
 
     def check_teff(self, params: ParamDict,
-                   indexdbm: drs_database.IndexDatabase):
+                   findexdbm: drs_database.FileIndexDatabase):
 
         # get teff header key
         teff_hkey = params['KW_OBJ_TEMP'][0]
         # ---------------------------------------------------------------------
         # load database if required
-        if indexdbm.database is None:
-            indexdbm.load_db()
+        if findexdbm.database is None:
+            findexdbm.load_db()
         # ---------------------------------------------------------------------
         # get all possible object names
         objnames = [self.objname, self.original_name] + self.aliases.split('|')
@@ -512,7 +512,7 @@ class AstroObj:
         condition = mcondition + ' AND ({0})'.format(' OR '.join(subcondition))
         # ---------------------------------------------------------------------
         # get paths from database
-        otable = indexdbm.get_entries('ABSPATH, OBS_DIR', condition=condition)
+        otable = findexdbm.get_entries('ABSPATH, OBS_DIR', condition=condition)
         # get the absolute path column
         paths = np.array(otable['ABSPATH'])
         obs_dirs = np.array(otable['OBS_DIR'])
@@ -763,9 +763,9 @@ def ask_user(params: ParamDict, astro_obj: AstroObj) -> Tuple[AstroObj, bool]:
     # deal with trying to update Teff automatically
     if params['INPUTS']['GETTEFF'] and add_to_list:
         # get index database
-        indexdbm = drs_database.IndexDatabase(params)
+        findexdbm = drs_database.FileIndexDatabase(params)
         # check for Teff (from files on disk with this objname/aliases)
-        astro_obj.check_teff(params, indexdbm)
+        astro_obj.check_teff(params, findexdbm=findexdbm)
     # ----------------------------------------------------------------
     # Ask user if they want to add a Teff value (as this does not
     #   come from SIMBAD) - note if Teff found in files we don't check
@@ -1139,8 +1139,8 @@ def update_astrometrics(params):
 
 def update_teffs(params):
     # get index database
-    indexdbm = drs_database.IndexDatabase(params)
-    indexdbm.load_db()
+    findexdbm = drs_database.FileIndexDatabase(params)
+    findexdbm.load_db()
     # load table
     table = manage_databases.get_object_database(params)
     # filter rows without teff
@@ -1158,7 +1158,7 @@ def update_teffs(params):
         # add data from the table
         astro_obj.from_gsheet_table_row(table[row])
         # check
-        astro_obj.check_teff(params, indexdbm)
+        astro_obj.check_teff(params, findexdbm=findexdbm)
         # add to list to add
         add_objs.append(astro_obj)
     # -------------------------------------------------------------------------

@@ -57,7 +57,7 @@ textentry = lang.textentry
 # Get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # get index database
-IndexDatabase = drs_database.IndexDatabase
+FileIndexDatabase = drs_database.FileIndexDatabase
 # -----------------------------------------------------------------------------
 # Get Classes from drs_argument
 DrsArgumentParser = drs_argument.DrsArgumentParser
@@ -354,7 +354,7 @@ class DrsRecipe(object):
         self.params['INPUTS'] = ParamDict()
         self.params.set_sources(['INPUTS'], func_name)
 
-    def recipe_setup(self, indexdb: IndexDatabase,
+    def recipe_setup(self, indexdb: FileIndexDatabase,
                      fkwargs: Union[dict, None] = None,
                      inargs: Union[list, None] = None
                      ) -> Union[Dict[str, Any], None]:

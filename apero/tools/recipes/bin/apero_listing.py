@@ -113,19 +113,19 @@ def __main__(recipe, params):
         # print progress
         WLOG(params, '', textentry('40-005-00006', args=[block_kind]))
         # update the index database (taking into account include/exclude lists)
-        indexdbm = drs_utils.update_index_db(params,
-                                             block_kind=block_kind.lower(),
-                                             includelist=include_list,
-                                             excludelist=exclude_list)
+        findexdbm = drs_utils.update_index_db(params,
+                                              block_kind=block_kind.lower(),
+                                              includelist=include_list,
+                                              excludelist=exclude_list)
     else:
         for blockkind in ['raw', 'tmp', 'red', 'out']:
             # print progress
             WLOG(params, '', textentry('40-005-00006', args=[block_kind]))
             # update the index database (taking into account include/exclude
             #    lists)
-            indexdbm = drs_utils.update_index_db(params, block_kind=blockkind,
-                                                 includelist=include_list,
-                                                 excludelist=exclude_list)
+            findexdbm = drs_utils.update_index_db(params, block_kind=blockkind,
+                                                  includelist=include_list,
+                                                  excludelist=exclude_list)
 
     # ----------------------------------------------------------------------
     # End of main code

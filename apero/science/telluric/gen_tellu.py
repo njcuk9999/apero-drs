@@ -46,7 +46,7 @@ ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 # get calibration database
 TelluDatabase = drs_database.TelluricDatabase
-IndexDatabase = drs_database.IndexDatabase
+FileIndexDatabase = drs_database.FileIndexDatabase
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
@@ -198,7 +198,7 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
 
 def get_non_tellu_objs(params: ParamDict, recipe, fiber, filetype=None,
                        dprtypes=None, robjnames: List[str] = None,
-                       indexdbm: Union[IndexDatabase, None] = None):
+                       findexdbm: Union[FileIndexDatabase, None] = None):
     """
     Get the objects of "filetype" and that are not telluric objects
     :param params: ParamDict - the parameter dictionary of constants
@@ -232,7 +232,7 @@ def get_non_tellu_objs(params: ParamDict, recipe, fiber, filetype=None,
         fkwargs['KW_FIBER'] = fiber
     # find files (and return pandas dataframe of all columns
     dataframe = drs_utils.find_files(params, block_kind='red', filters=fkwargs,
-                                     columns='*', indexdbm=indexdbm)
+                                     columns='*', findexdbm=findexdbm)
     # convert data frame to table
     obj_table = Table.from_pandas(dataframe)
     obj_filenames = obj_table['ABSPATH']

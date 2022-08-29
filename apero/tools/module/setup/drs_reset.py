@@ -193,11 +193,11 @@ def reset_tmp_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # remove entries from index database
     # -------------------------------------------------------------------------
     # get index database
-    indexdb = drs_database.IndexDatabase(params)
+    findexdb = drs_database.FileIndexDatabase(params)
     # load index database
-    indexdb.load_db()
+    findexdb.load_db()
     # check that table is in database
-    if not indexdb.database.tname_in_db():
+    if not findexdb.database.tname_in_db():
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
@@ -206,13 +206,13 @@ def reset_tmp_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
         manage_databases.create_index_database(pconst, databases,
                                                tries=dtimeout)
         # get index database
-        indexdb = drs_database.IndexDatabase(params)
+        findexdb = drs_database.FileIndexDatabase(params)
         # load index database
-        indexdb.load_db()
+        findexdb.load_db()
     # set up condition
     condition = 'BLOCK_KIND="tmp"'
     # remove entries
-    indexdb.remove_entries(condition=condition)
+    findexdb.remove_entries(condition=condition)
     # -------------------------------------------------------------------------
     # remove entries from log database
     # -------------------------------------------------------------------------
@@ -261,7 +261,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True,
     # remove entries from index database
     # -------------------------------------------------------------------------
     # get index database
-    indexdb = drs_database.IndexDatabase(params)
+    indexdb = drs_database.FileIndexDatabase(params)
     # load index database
     indexdb.load_db()
     # check that table is in database
@@ -274,7 +274,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True,
         manage_databases.create_index_database(pconst, databases,
                                                tries=dtimeout)
         # get index database
-        indexdb = drs_database.IndexDatabase(params)
+        indexdb = drs_database.FileIndexDatabase(params)
         # load index database
         indexdb.load_db()
     # set up condition
@@ -525,7 +525,7 @@ def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # remove entries from index database
     # -------------------------------------------------------------------------
     # get index database
-    indexdb = drs_database.IndexDatabase(params)
+    indexdb = drs_database.FileIndexDatabase(params)
     # load index database
     indexdb.load_db()
     # check that table is in database
@@ -538,7 +538,7 @@ def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
         manage_databases.create_index_database(pconst, databases,
                                                tries=dtimeout)
         # get index database
-        indexdb = drs_database.IndexDatabase(params)
+        indexdb = drs_database.FileIndexDatabase(params)
         # load index database
         indexdb.load_db()
     # set up condition
