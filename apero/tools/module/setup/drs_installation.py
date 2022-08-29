@@ -1614,6 +1614,7 @@ def update_dparams(aparams: ParamDict,
     # deal with no settings to update
     if 'MYSQL' not in aparams:
         return dparams
+    #   NOTE: yaml params are uppercase
     # add calib database
     value = aparams['MYSQL'].get('CALIB_PROFILE', None)
     if value is not None:

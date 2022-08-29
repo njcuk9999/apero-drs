@@ -562,7 +562,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
-    def INDEX_HEADER_COLS(self) -> DatabaseColumns:
+    def FILEINDEX_HEADER_COLS(self) -> DatabaseColumns:
         """
         Which header keys should we have in the index database.
 
@@ -622,7 +622,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # check that filedef keys are present
         for fkey in self.FILEDEF_HEADER_KEYS():
             if fkey not in header_cols.names:
-                emsg = __NAME__ + '.INDEX_HEADER_COLS() missing key "{0}"'
+                emsg = __NAME__ + '.FILEINDEX_HEADER_COLS() missing key "{0}"'
                 raise AttributeError(emsg.format(fkey))
         # return index header keys
         self.header_cols = header_cols
@@ -952,7 +952,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
     # DATABASE SETTINGS
     # =========================================================================
     # noinspection PyPep8Naming
-    def INDEX_DB_COLUMNS(self) -> DatabaseColumns:
+    def FILEINDEX_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns used in the index database
 
@@ -965,14 +965,14 @@ class PseudoConstants(pseudo_const.PseudoConstants):
                              (for sorting)
             - RUNSTRING: the arguments entered to make this file
                          (used for checksum)
-            - {HKEYS}: see INDEX_HEADER_COLS()
+            - {HKEYS}: see FILEINDEX_HEADER_COLS()
             - USED: int, whether entry should be used or ignored
             - RAW: int, whether raw data has been fixed for the header
 
         :return: list of database columns
         """
         # set function name
-        # _ = display_func('INDEX_DB_COLUMNS', __NAME__, self.class_name)
+        # _ = display_func('FILEINDEX_DB_COLUMNS', __NAME__, self.class_name)
         # check for pre-existing values
         if self.index_cols is not None:
             return self.index_cols
@@ -987,7 +987,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         index_cols.add(name='RUNSTRING', datatype='TEXT')
         index_cols.add(name='INFILES', datatype='TEXT')
         # get header keys
-        header_columns = self.INDEX_HEADER_COLS()
+        header_columns = self.FILEINDEX_HEADER_COLS()
         # add header columns to index columns
         index_cols += header_columns
         # add extra columns

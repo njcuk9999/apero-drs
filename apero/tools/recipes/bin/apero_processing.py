@@ -33,7 +33,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get index database
-IndexDatabase = drs_database.IndexDatabase
+IndexDatabase = drs_database.FileIndexDatabase
 ObjectDatabase = drs_database.ObjectDatabase
 # get text entry instance
 textentry = lang.textentry
@@ -137,11 +137,11 @@ def __main__(recipe, params):
         # find all files via index database
         # ---------------------------------------------------------------------
         # construct the index database instance
-        indexdbm = IndexDatabase(params)
-        indexdbm.load_db()
+        findexdbm = IndexDatabase(params)
+        findexdbm.load_db()
         # there are a few use cases where we want to skip updating the index
         #   database
-        if params['UPDATE_INDEX_DATABASE']:
+        if params['UPDATE_FILEINDEX_DATABASE']:
             # force the parallel key to False here (should not be True
             #   before we run processing)
             params['INPUTS']['PARALLEL'] = False
@@ -155,7 +155,7 @@ def __main__(recipe, params):
         # fix the header data (object name, dprtype, mjdmid and
         #     trg_type etc)
         WLOG(params, '', textentry('40-503-00043'))
-        indexdbm.update_header_fix(recipe, objdbm=objdbm)
+        findexdbm.update_header_fix(recipe, objdbm=objdbm)
 
         # find all previous runs
         skiptable = drs_processing.generate_skip_table(params)
@@ -163,14 +163,14 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Generate run list
         # ----------------------------------------------------------------------
-        rlist = drs_processing.generate_run_list(params, indexdbm, runtable,
+        rlist = drs_processing.generate_run_list(params, findexdbm, runtable,
                                                  skiptable)
 
         # ----------------------------------------------------------------------
         # Process run list
         # ----------------------------------------------------------------------
         out = drs_processing.process_run_list(params, rlist, groupname,
-                                              indexdbm)
+                                              findexdbm)
         outlist, has_errors, ptime = out
 
         # ----------------------------------------------------------------------

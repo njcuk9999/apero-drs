@@ -47,7 +47,7 @@ DrsArgument = drs_argument.DrsArgument
 DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
 # Get index database
-IndexDatabase = drs_database.IndexDatabase
+FileIndexDatabase = drs_database.FileIndexDatabase
 ObjectDatabase = drs_database.ObjectDatabase
 # get text entry instance
 textentry = lang.textentry
@@ -57,21 +57,21 @@ textentry = lang.textentry
 # Define file checking functions
 # =============================================================================
 def file_check(params: ParamDict, recipe: DrsRecipe,
-               indexdbm: Optional[IndexDatabase] = None):
+               findexdbm: Optional[FileIndexDatabase] = None):
     """
     Check the current index database for possible problems in the raw file set
 
     :param params: ParamDict, the parameter dictionary of constants
     :param recipe: DrsRecipe instance, the recipe that called this function
-    :param indexdbm: IndexDatabase instance or None (will load index database)
+    :param findexdbm: IndexDatabase instance or None (will load index database)
 
     :return: None, prints to screen
     """
     # deal with not having index database
-    if indexdbm is None:
+    if findexdbm is None:
         # construct the index database instance
-        indexdbm = IndexDatabase(params)
-        indexdbm.load_db()
+        findexdbm = FileIndexDatabase(params)
+        findexdbm.load_db()
     # -------------------------------------------------------------------------
     # get odometer reject list (if required)
     # -------------------------------------------------------------------------
@@ -85,10 +85,10 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # get the conditions based on params
     # -------------------------------------------------------------------------
-    condition = drs_processing.gen_global_condition(params, indexdbm,
+    condition = drs_processing.gen_global_condition(params, findexdbm,
                                                     odo_reject_list)
     # get unique observations directories
-    uobsdirs = indexdbm.get_unique('OBS_DIR', condition=condition)
+    uobsdirs = findexdbm.get_unique('OBS_DIR', condition=condition)
     # get the recipe module for this instrument
     recipemodule = recipe.recipemod.get()
     filemodule = recipe.filemod.get()
@@ -110,7 +110,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     # get all telluric stars
     tstars = telluric.get_tellu_include_list(params)
     # get all other stars
-    ostars = drs_processing.get_non_telluric_stars(params, indexdbm, tstars)
+    ostars = drs_processing.get_non_telluric_stars(params, findexdbm, tstars)
     # -------------------------------------------------------------------------
     # get a list of calibration files
     # -------------------------------------------------------------------------
@@ -139,8 +139,8 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             WLOG(params, 'info', msg.format(*margs), colour='magenta')
         # ---------------------------------------------------------------------
         # get all raw files for this night
-        itable = indexdbm.get_entries('KW_OUTPUT,KW_MID_OBS_TIME',
-                                      obs_dir=uobsdir, condition=condition)
+        itable = findexdbm.get_entries('KW_OUTPUT,KW_MID_OBS_TIME',
+                                       obs_dir=uobsdir, condition=condition)
         # get columns
         drsoutids = itable['KW_OUTPUT']
         mjdmids = itable['KW_MID_OBS_TIME']
@@ -293,8 +293,8 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             WLOG(params, 'info', msg.format(*margs), colour='magenta')
         # ---------------------------------------------------------------------
         # get all raw files for this night
-        rtable = indexdbm.get_entries('KW_OBJNAME, KW_OUTPUT,KW_MID_OBS_TIME',
-                                      obs_dir=uobsdir, block_kind='raw')
+        rtable = findexdbm.get_entries('KW_OBJNAME, KW_OUTPUT,KW_MID_OBS_TIME',
+                                       obs_dir=uobsdir, block_kind='raw')
         # mask telluric stars
         tellu_mask = np.in1d(rtable['KW_OBJNAME'], tstars)
         sci_mask = np.in1d(rtable['KW_OBJNAME'], ostars)
@@ -573,13 +573,13 @@ def _get_rawfile(drsfile: DrsFitsFile):
 # =============================================================================
 # Define object checking functions
 # =============================================================================
-def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
+def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     """
     Check the index database for unique objects and display which of these
     are not in the object database currently (and not in the rejection list)
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param indexdbm: IndexDatabase instance or None (will load index database)
+    :param findexdbm: IndexDatabase instance or None (will load index database)
 
     :return: None, prints to screen
     """
@@ -591,10 +591,10 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
     # get psuedo constants
     pconst = constants.pload()
     # deal with not having index database
-    if indexdbm is None:
+    if findexdbm is None:
         # construct the index database instance
-        indexdbm = IndexDatabase(params)
-        indexdbm.load_db()
+        findexdbm = FileIndexDatabase(params)
+        findexdbm.load_db()
     # ---------------------------------------------------------------------
     # Update the object database (recommended only for full reprocessing)
     # check that we have entries in the object database
@@ -625,7 +625,7 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
     # construct full condition
     condition = 'BLOCK_KIND="raw" AND ({0})'.format(' OR '.join(subconditions))
     # get list of unique objects from index database
-    uobjnames = indexdbm.get_unique('KW_OBJNAME', condition=condition)
+    uobjnames = findexdbm.get_unique('KW_OBJNAME', condition=condition)
     # ---------------------------------------------------------------------
     # print progress
     # TODO: move to langauge database
@@ -660,7 +660,7 @@ def obj_check(params: ParamDict, indexdbm: Optional[IndexDatabase] = None):
         condition = 'KW_OBJNAME="{0}" AND BLOCK_KIND="raw"'
         condition = condition.format(unfound_object)
         # get all original names for this target
-        orig_name = indexdbm.get_unique('KW_OBJECTNAME', condition=condition)
+        orig_name = findexdbm.get_unique('KW_OBJECTNAME', condition=condition)
         # append to list
         orig_names.append(list(orig_name))
     # ---------------------------------------------------------------------

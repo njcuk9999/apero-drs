@@ -97,7 +97,7 @@ def __main__(recipe, params):
     # deal with list of update arguments
     database_conds = [update_calib, update_tellu, update_index, update_log,
                       update_reject, update_object]
-    database_names = ['calib', 'tellu', 'index', 'log', 'reject', 'object']
+    database_names = ['calib', 'tellu', 'findex', 'log', 'reject', 'object']
     # deal with killing sleeping processes
     if params['INPUTS']['KILL']:
         # kill all user processes in the database that have been running for

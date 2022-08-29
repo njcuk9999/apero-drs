@@ -256,15 +256,15 @@ def index_update(params: ParamDict):
     block_kinds = drs_file.DrsPath.get_block_names(params=params,
                                                    block_filter='indexing')
     # get index database
-    indexdbm = drs_database.IndexDatabase(params)
-    indexdbm.load_db()
+    findexdbm = drs_database.FileIndexDatabase(params)
+    findexdbm.load_db()
     # loop around block kinds (with the indexing filter)
     for block_kind in block_kinds:
         # log block update
         WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
         # update index database for block kind
-        indexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
-                                             indexdbm=indexdbm)
+        findexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
+                                             findexdbm=findexdbm)
 
 
 def log_update(params: ParamDict, pconst: PseudoConstants):

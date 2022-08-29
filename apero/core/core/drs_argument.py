@@ -65,7 +65,7 @@ ParamDict = constants.ParamDict
 # get DrsInputFile (for typing)
 DrsInputFile = drs_file.DrsInputFile
 # get index database
-IndexDatabase = drs_database.IndexDatabase
+FileIndexDatabase = drs_database.FileIndexDatabase
 # get the config error
 DrsCodedException = drs_exceptions.DrsCodedException
 # Get pandas like database class
@@ -92,7 +92,7 @@ ValidFileType = Tuple[List[Union[Any, str]],
 class DrsArgumentParser(argparse.ArgumentParser):
     # argparse.ArgumentParser cannot be pickled
     #   so cannot pickle DrsArgumentParser either
-    def __init__(self, recipe: Any, indexdb: IndexDatabase, **kwargs):
+    def __init__(self, recipe: Any, indexdb: FileIndexDatabase, **kwargs):
         """
         Construct the Drs Argument parser
 
@@ -3169,7 +3169,7 @@ class DrsArgument(object):
 # =============================================================================
 # Check functions
 # =============================================================================
-def valid_obs_dir_no_db(params: ParamDict, indexdb: IndexDatabase,
+def valid_obs_dir_no_db(params: ParamDict, indexdb: FileIndexDatabase,
                         argname: str, input_value: Any,
                         block_kind: str) -> drs_file.DrsPath:
     """
@@ -3237,7 +3237,7 @@ def valid_obs_dir_no_db(params: ParamDict, indexdb: IndexDatabase,
 
 
 # noinspection PyBroadException
-def valid_obs_dir(params: ParamDict, indexdb: IndexDatabase,
+def valid_obs_dir(params: ParamDict, indexdb: FileIndexDatabase,
                   argname: str, input_value: Any,
                   block_kind: str) -> drs_file.DrsPath:
     """
@@ -3404,7 +3404,7 @@ def valid_file_no_db(params: ParamDict, recipe: Any,
 
 
 # noinspection PyBroadException
-def valid_file(params: ParamDict, indexdb: IndexDatabase,
+def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
                argname: str, filename: str, rargs: Dict[str, DrsArgument],
                rkwargs: Dict[str, DrsArgument], obs_dir: drs_file.DrsPath,
                types: List[DrsInputFile]) -> ValidFileType:

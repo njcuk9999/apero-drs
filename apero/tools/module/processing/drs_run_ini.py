@@ -43,7 +43,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
 DrsSequence = drs_recipe.DrsRunSequence
 # Get index database
-IndexDatabase = drs_database.IndexDatabase
+FileIndexDatabase = drs_database.FileIndexDatabase
 ObjectDatabase = drs_database.ObjectDatabase
 # get text entry instance
 textentry = lang.textentry
@@ -312,14 +312,14 @@ class RunIniFile:
                               sequences: Optional[List[DrsSequence]] = None
                               ) -> Union[Dict[str, List[str]], List[DrsRecipe]]:
         # construct the index database instance
-        indexdbm = IndexDatabase(self.params)
-        indexdbm.load_db()
+        findexdbm = FileIndexDatabase(self.params)
+        findexdbm.load_db()
         # get a list of object names with templates
         template_olist = []
         # get all telluric stars
         tstars = telluric.get_tellu_include_list(self.params)
         # get all other stars
-        ostars = drs_processing.get_non_telluric_stars(self.params, indexdbm,
+        ostars = drs_processing.get_non_telluric_stars(self.params, findexdbm,
                                                        tstars)
         # ----------------------------------------------------------------------
         recipes, shortnames = [], []
@@ -427,7 +427,7 @@ class RunIniFile:
         for it, sequence in enumerate(self.cmd_sequences):
             runtable[it] = sequence.name
         # get index database
-        indexdbm = drs_database.IndexDatabase(sparams)
+        findexdbm = drs_database.FileIndexDatabase(sparams)
         # loop around sequences
         for sequence in sequencelist:
             # log progress
@@ -436,7 +436,7 @@ class RunIniFile:
             # generate new runs for sequence
             newruns = drs_processing._generate_run_from_sequence(sparams,
                                                                  sequence,
-                                                                 indexdbm)
+                                                                 findexdbm)
             for newrun in newruns:
                 self.ids.append(newrun[0])
 

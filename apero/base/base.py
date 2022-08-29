@@ -294,7 +294,7 @@ def create_yamls(allparams: Any):
     indexdb['NAME'] = allparams['SQLITE'].get('IDX_NAME', 'index.db')
     indexdb['RESET'] = allparams['SQLITE'].get('IDX_RESET', 'NULL')
     indexdb['PROFILE'] = allparams['SQLITE'].get('IDX_PROFILE', 'NULL')
-    sqlite3['INDEX'] = indexdb
+    sqlite3['FILEINDEX'] = indexdb
     # add log database
     logdb = dict()
     logdb['PATH'] = allparams['SQLITE'].get('LOG_PATH', 'DRS_DATA_ASSETS')
@@ -356,7 +356,7 @@ def create_yamls(allparams: Any):
     indexdb['NAME'] = allparams['MYSQL'].get('IDX_NAME', 'NULL')
     indexdb['RESET'] = allparams['MYSQL'].get('IDX_RESET', 'NULL')
     indexdb['PROFILE'] = allparams['MYSQL'].get('IDX_PROFILE', 'MAIN')
-    mysql['INDEX'] = indexdb
+    mysql['FILEINDEX'] = indexdb
     # add log database
     logdb = dict()
     logdb['PATH'] = allparams['MYSQL'].get('LOG_PATH', 'NULL')
