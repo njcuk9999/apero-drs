@@ -256,15 +256,21 @@ def import_database(params: ParamDict, database_name: str,
     df = pd.read_csv(infilename)
     # -------------------------------------------------------------------
     # get unique columns
-    if 'INDEX' in db.database.tname:
-        idb_cols = pconst.INDEX_DB_COLUMNS()
+    if 'findex' in db.database.tname:
+        idb_cols = pconst.FILEINDEX_DB_COLUMNS()
         ucols = list(idb_cols.unique_cols)
-    elif 'OBJECT' in db.database.tname:
+    elif 'object' in db.database.tname:
         odb_cols = pconst.OBJECT_DB_COLUMNS()
         ucols = list(odb_cols.unique_cols)
-    elif 'REJECT' in db.database.tname:
+    elif 'reject' in db.database.tname:
         rdb_cols = pconst.REJECT_DB_COLUMNS()
         ucols = list(rdb_cols.unique_cols)
+    elif 'calib' in db.database.tname:
+        cdb_cols = pconst.CALIBRATION_DB_COLUMNS()
+        ucols = list(cdb_cols.unique_cols)
+    elif 'tellu' in db.database.tname:
+        tdb_cols = pconst.TELLURIC_DB_COLUMNS()
+        ucols = list(tdb_cols.unique_cols)
     else:
         ucols = None
     # -------------------------------------------------------------------
@@ -287,7 +293,7 @@ def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     # get databases from managers (later databases)
     calibdbm = drs_database.CalibrationDatabase(params, check=False)
     telludbm = drs_database.TelluricDatabase(params, check=False)
-    indexdbm = drs_database.IndexDatabase(params, check=False)
+    findexdbm = drs_database.FileIndexDatabase(params, check=False)
     logdbm = drs_database.LogDatabase(params, check=False)
     objectdbm = drs_database.ObjectDatabase(params, check=False)
     rejectdbm = drs_database.RejectDatabase(params, check=False)
@@ -295,7 +301,7 @@ def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     # add to storage
     databases['calib'] = calibdbm
     databases['tellu'] = telludbm
-    databases['index'] = indexdbm
+    databases['index'] = findexdbm
     databases['log'] = logdbm
     databases['object'] = objectdbm
     databases['reject'] = rejectdbm
@@ -447,7 +453,7 @@ def create_index_database(pconst: PseudoConst,
     :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
-    idb_cols = pconst.INDEX_DB_COLUMNS()
+    idb_cols = pconst.FILEINDEX_DB_COLUMNS()
     columns = list(idb_cols.names)
     ctypes = list(idb_cols.datatypes)
     cuniques = list(idb_cols.unique_cols)
@@ -455,10 +461,11 @@ def create_index_database(pconst: PseudoConst,
     cigroups = idb_cols.get_index_groups()
     # -------------------------------------------------------------------------
     # construct directory
-    indexdbm = databases['index']
+    findexdbm = databases['index']
     # -------------------------------------------------------------------------
     # make database
-    indexdb = drs_db.database_wrapper(indexdbm.kind, indexdbm.path, tries=tries)
+    indexdb = drs_db.database_wrapper(findexdbm.kind, findexdbm.path,
+                                      tries=tries)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if indexdb.tname in indexdb.tables:

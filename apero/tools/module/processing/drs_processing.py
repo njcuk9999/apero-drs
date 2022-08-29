@@ -72,7 +72,7 @@ textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # get database
-IndexDatabase = drs_database.IndexDatabase
+FileIndexDatabase = drs_database.FileIndexDatabase
 # storage for reporting removed engineering directories
 REMOVE_ENG_DIRS = []
 # get special list from recipes
@@ -91,7 +91,7 @@ PLT_MOD = None
 # Define classes
 # =============================================================================
 class Run:
-    def __init__(self, params, indexdb: IndexDatabase, runstring,
+    def __init__(self, params, indexdb: FileIndexDatabase, runstring,
                  mod: Union[base_class.ImportModule, None] = None,
                  priority=0, inrecipe=None):
         self.params = params
@@ -399,12 +399,13 @@ class Run:
 # =============================================================================
 # Define user functions
 # =============================================================================
-def run_process(params: ParamDict, recipe: DrsRecipe, indexdbm: IndexDatabase,
-                module: Any, *gargs, terminate=False, **gkwargs):
+def run_process(params: ParamDict, recipe: DrsRecipe,
+                findexdbm: FileIndexDatabase, module: Any, *gargs,
+                terminate=False, **gkwargs):
     # generate run table (dictionary from reprocessing)
     runtable = generate_run_table(params, module, *gargs, **gkwargs)
     # Generate run list
-    rlist = generate_run_list(params, indexdbm, runtable, None)
+    rlist = generate_run_list(params, findexdbm, runtable, None)
     # Process run list
     outlist, has_errors, _ = process_run_list(params, rlist)
     # display errors
@@ -726,12 +727,12 @@ def reset_files(params):
 
 
 def update_index_db(params: ParamDict,
-                    indexdbm: Optional[IndexDatabase] = None):
+                    findexdbm: Optional[FileIndexDatabase] = None):
     """
     Update the index database
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param indexdbm: IndexDatabase instance, avoids loading this twice if
+    :param findexdbm: IndexDatabase instance, avoids loading this twice if
                      already present
 
     :return: None, updates index database
@@ -757,10 +758,10 @@ def update_index_db(params: ParamDict,
     block_kinds = drs_file.DrsPath.get_block_names(params=params,
                                                    block_filter='indexing')
     # deal with not having database currently
-    if indexdbm is None:
+    if findexdbm is None:
         # construct the index database instance
-        indexdbm = IndexDatabase(params)
-        indexdbm.load_db()
+        findexdbm = FileIndexDatabase(params)
+        findexdbm.load_db()
     # this is really important as we have disabled updating for parallel
     #  runs to make it more efficient
     for block_kind in block_kinds:
@@ -770,13 +771,13 @@ def update_index_db(params: ParamDict,
         # log block update
         WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
         # update index database for block kind
-        indexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
-                                             includelist=includelist,
-                                             excludelist=excludelist,
-                                             indexdbm=indexdbm)
+        findexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
+                                              includelist=includelist,
+                                              excludelist=excludelist,
+                                              findexdbm=findexdbm)
 
 
-def generate_run_list(params, indexdbm: IndexDatabase, runtable,
+def generate_run_list(params, findexdbm: FileIndexDatabase, runtable,
                       skiptable):
     # print progress: generating run list
     WLOG(params, 'info', textentry('40-503-00011'))
@@ -793,26 +794,26 @@ def generate_run_list(params, indexdbm: IndexDatabase, runtable,
     rlist = None
     # if we have found sequences need to deal with them
     #   also table cannot be None at this point
-    if (sequencelist is not None) and (IndexDatabase is not None):
+    if (sequencelist is not None) and (FileIndexDatabase is not None):
         # loop around sequences
         for sequence in sequencelist:
             # log progress
             WLOG(params, 'info', textentry('40-503-00009', args=[sequence[0]]))
             # generate new runs for sequence
             newruns = _generate_run_from_sequence(params, sequence,
-                                                  indexdbm)
+                                                  findexdbm)
             # update runtable with sequence generation
             runtable, rlist = update_run_table(sequence, runtable, newruns,
                                                rlist)
     # all runtable elements should now be in recipe list
     _check_runtable(params, runtable, recipemod)
     # return Run instances for each runtable element
-    return generate_ids(params, indexdbm, runtable, recipemod, skiptable,
+    return generate_ids(params, findexdbm, runtable, recipemod, skiptable,
                         rlist)
 
 
 def process_run_list(params: ParamDict, runlist, group=None,
-                     indexdbm: Optional[IndexDatabase] = None):
+                     findexdbm: Optional[FileIndexDatabase] = None):
     # start a timer
     process_start = time.time()
     # get number of cores
@@ -830,14 +831,14 @@ def process_run_list(params: ParamDict, runlist, group=None,
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process_pool(params, runlist, cores=cores,
-                                    groupname=group, indexdbm=indexdbm)
+                                    groupname=group, findexdbm=findexdbm)
     # use Process to continue parallelization
     else:
         # log process: Running with N cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process_process(params, runlist, cores=cores,
-                                       groupname=group, indexdbm=indexdbm)
+                                       groupname=group, findexdbm=findexdbm)
     # end a timer
     process_end = time.time()
     # remove lock files
@@ -1264,7 +1265,7 @@ def _check_for_sequences(rvalues, mod):
 
 
 def _generate_run_from_sequence(params: ParamDict, sequence,
-                                indexdb: IndexDatabase,
+                                indexdb: FileIndexDatabase,
                                 return_recipes: bool = False,
                                 logmsg: bool = True):
     func_name = __NAME__ + '.generate_run_from_sequence()'
@@ -1484,7 +1485,7 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
 
 
 def generate_runs(params: ParamDict, recipe: DrsRecipe,
-                  indexdb: IndexDatabase, condition: str,
+                  indexdb: FileIndexDatabase, condition: str,
                   filters: Union[Dict[str, Any], None] = None,
                   allowedfibers: Union[List[str], str, None] = None
                   ) -> List[str]:
@@ -1631,7 +1632,7 @@ def conditional_list(strlist: List[str], key: str, logic: str,
         return condition
 
 
-def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
+def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
                          reject_list: List[str]) -> str:
     """
     Generate the global conditions (based on run.ini) that will affect the
@@ -2029,7 +2030,7 @@ def _linear_process(params, runlist, number=0, cores=1, event=None,
 
 
 def _multi_process_process(params, runlist, cores, groupname=None,
-                           indexdbm: Optional[IndexDatabase] = None):
+                           findexdbm: Optional[FileIndexDatabase] = None):
     # first try to group tasks
     grouplist, groupnames = _group_tasks1(runlist, cores)
     # import multiprocessing
@@ -2074,14 +2075,14 @@ def _multi_process_process(params, runlist, cores, groupname=None,
         #  runs to make it more efficient
         # do not update if we are running a test
         if not params['TEST_RUN']:
-            update_index_db(params, indexdbm=indexdbm)
+            update_index_db(params, findexdbm=findexdbm)
 
     # return return_dict
     return dict(return_dict)
 
 
 def _multi_process_pool(params, runlist, cores, groupname=None,
-                        indexdbm: Optional[IndexDatabase] = None):
+                        findexdbm: Optional[FileIndexDatabase] = None):
     # first try to group tasks (now just by recipe)
     grouplist, groupnames = _group_tasks2(runlist)
     # deal with Pool specific imports
@@ -2131,7 +2132,7 @@ def _multi_process_pool(params, runlist, cores, groupname=None,
         #  runs to make it more efficient
         # do not update if we are running a test
         if not params['TEST_RUN']:
-            update_index_db(params, indexdbm=indexdbm)
+            update_index_db(params, findexdbm=findexdbm)
 
     # return return_dict
     return dict(return_dict)
@@ -2164,7 +2165,7 @@ ArgDictType = Union[Dict[str, Table], OrderedDict, None]
 
 
 def find_run_files(params: ParamDict, recipe: DrsRecipe,
-                   indexdb: IndexDatabase, condition: str,
+                   indexdb: FileIndexDatabase, condition: str,
                    args: Dict[str, DrsArgument],
                    filters: Union[Dict[str, Any], None] = None,
                    allowedfibers: Union[List[str], str, None] = None,
@@ -2274,7 +2275,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
 
         # load pconst
         pconst = constants.pload()
-        icols = pconst.INDEX_DB_COLUMNS()
+        icols = pconst.FILEINDEX_DB_COLUMNS()
         # get index column data types
         index_coltypes = dict()
         for c_it, col in enumerate(icols.names):
@@ -2899,7 +2900,7 @@ def vstack_cols(tablelist: List[Table]) -> Union[Table, None]:
 # =============================================================================
 # Define working functions
 # =============================================================================
-def get_non_telluric_stars(params, indexdb: IndexDatabase,
+def get_non_telluric_stars(params, indexdb: FileIndexDatabase,
                            tstars: List[str]) -> List[str]:
     """
     Takes a table and gets all objects (OBJ_DARK and OBJ_FP) that are not in

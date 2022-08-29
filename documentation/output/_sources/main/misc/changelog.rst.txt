@@ -3512,7 +3512,7 @@ Changelog
 - `Apero.core.utils.drs_utils.py` - modify `update_index_db`. [Neil Cook]
 - `Apero.core.utils.drs_recipe.py` - deal with filemod better. [Neil Cook]
 - `Apero.core.utils.drs_database.py` - continue working on
-  IndexDatabaseManager. [Neil Cook]
+  FileIndexDatabaseManager. [Neil Cook]
 - `Apero.core.instruments.spirou.file_definitions.py` - update `drs_finput`
   with hkeys (still need to do this for nirps) [Neil Cook]
 - `Apero.core.instruments.deafult_keywords.py` - `KW_ACQTIME` --> MJDEND.
@@ -3540,10 +3540,10 @@ Changelog
 - `Apero.io.drs_path.py` - allow copytree to log. [Neil Cook]
 - `Apero.core.utils.py` - add utils module for functions that must import
   from all other utils. [Neil Cook]
-- `Core.utils.drs_database.py` - add features to IndexDatabaseManager.
+- `Core.utils.drs_database.py` - add features to FileIndexDatabaseManager.
   [Neil Cook]
 - `Apero.core.instruments.*.pseudo_const.py` - add `INDEX_HEADER_KEYS` and
-  modify `INDEX_DB_COLUMNS`. [Neil Cook]
+  modify `FILEINDEX_DB_COLUMNS`. [Neil Cook]
 - `Core.core.drs_file.py` - tag some functions to be changed to database
   functions. [Neil Cook]
 - `Apero.base.drs_misc.py` - allow `get_uncommon_paths` to accept Path as

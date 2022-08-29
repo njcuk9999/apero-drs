@@ -154,8 +154,8 @@ class Trigger:
         self.calib_script = 'None'
         self.science_script = 'None'
         # start index database
-        self.indexdbm = drs_database.IndexDatabase(params)
-        self.indexdbm.load_db()
+        self.findexdbm = drs_database.FileIndexDatabase(params)
+        self.findexdbm.load_db()
         # start log database
         self.logdbm = drs_database.LogDatabase(params)
         self.logdbm.load_db()
@@ -244,12 +244,12 @@ class Trigger:
         # fix the header data (object name, dprtype, mjdmid and
         #     trg_type etc)
         WLOG(self.params, '', textentry('40-503-00043'))
-        self.indexdbm.update_header_fix(self.recipe, objdbm=self.objdbm)
+        self.findexdbm.update_header_fix(self.recipe, objdbm=self.objdbm)
         # ----------------------------------------------------------------------
         # step 3: get list of obs_dir
         # ----------------------------------------------------------------------
-        obs_dirs = self.indexdbm.database.unique('OBS_DIR',
-                                                 condition='BLOCK_KIND="raw"')
+        obs_dirs = self.findexdbm.database.unique('OBS_DIR',
+                                                  condition='BLOCK_KIND="raw"')
         # remove obs_dirs that do not exist (for some reason)
         remove_obs = []
         for obs_dir in sdict:
@@ -262,9 +262,9 @@ class Trigger:
         # step 4: get a list of recipes for the calib script and the sci script
         # ----------------------------------------------------------------------
         calib_recipes = get_recipes(self.params, self.calib_script,
-                                    self.indexdbm)
+                                    self.findexdbm)
         sci_recipes = get_recipes(self.params, self.science_script,
-                                  self.indexdbm)
+                                  self.findexdbm)
         # ----------------------------------------------------------------------
         # step 5: determine whether DONE_CALIB and DONE_SCI are True or False
         # ----------------------------------------------------------------------
@@ -332,8 +332,8 @@ class Trigger:
                     subconds.append(f'KW_DPRTYPE="{dprtype}"')
                 condition += ' AND ({0})'.format(' OR '.join(subconds))
                 # get all science files
-                scifiles = self.indexdbm.get_entries('FILENAME',
-                                                     condition=condition)
+                scifiles = self.findexdbm.get_entries('FILENAME',
+                                                      condition=condition)
                 # loop around recipes
                 for sname in sci_recipes:
                     # only check recipes with file arguments
@@ -412,13 +412,14 @@ class Trigger:
 
 
 def get_recipes(params: ParamDict, runfile: str,
-                indexdbm: drs_database.IndexDatabase) -> Dict[str, DrsRecipe]:
+                findexdbm: drs_database.FileIndexDatabase
+                ) -> Dict[str, DrsRecipe]:
     """
     Take a runfile and get all recipes that should be run with it
 
     :param params: Paramdict, the parameter dictionary of constants
     :param runfile: str, the runfile name
-    :param indexdbm: index database manager class
+    :param findexdbm: index database manager class
 
     :returns: dictionary, where each key is a recipe short name and each value
               is a recipe class
@@ -442,11 +443,11 @@ def get_recipes(params: ParamDict, runfile: str,
     recipe_names = dict()
     # get recipe short name from the run file and see which ones were meant
     #   to be run
-    if (sequencelist is not None) and (indexdbm is not None):
+    if (sequencelist is not None) and (findexdbm is not None):
         # loop around sequences
         for sequence in sequencelist:
             # generate new runs for sequence
-            gargs = [iparams, sequence, indexdbm, True, False]
+            gargs = [iparams, sequence, findexdbm, True, False]
             srecipes = drs_processing._generate_run_from_sequence(*gargs)
             # loop around recipes in sequence
             for srecipe in srecipes:

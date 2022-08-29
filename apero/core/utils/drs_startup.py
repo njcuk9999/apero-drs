@@ -90,7 +90,7 @@ RUN_KEYS['USE_REJECTLIST'] = True
 RUN_KEYS['RECAL_TEMPLATES'] = True
 RUN_KEYS['UPDATE_OBJ_DATABASE'] = False
 RUN_KEYS['UPDATE_REJECT_DATABASE'] = True
-RUN_KEYS['UPDATE_INDEX_DATABASE'] = True
+RUN_KEYS['UPDATE_FILEINDEX_DATABASE'] = True
 RUN_KEYS['UPDATE_IDATABASE_NAMES'] = 'All'
 RUN_KEYS['TELLURIC_TARGETS'] = 'All'
 RUN_KEYS['SCIENCE_TARGETS'] = 'All'
@@ -250,9 +250,9 @@ def setup(name: str = 'None', instrument: str = 'None',
     TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
     # -------------------------------------------------------------------------
     # load index database manager
-    indexdb = drs_database.IndexDatabase(recipe.params, check=False)
+    findexdb = drs_database.FileIndexDatabase(recipe.params, check=False)
     # interface between "recipe", "fkwargs" and command line (via argparse)
-    recipe.recipe_setup(indexdb, fkwargs)
+    recipe.recipe_setup(findexdb, fkwargs)
     # -------------------------------------------------------------------------
     # deal with options from input_parameters
     recipe.option_manager()
@@ -710,12 +710,12 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
 
 def index_files(params, recipe):
     # load index database
-    indexdb = drs_database.IndexDatabase(params)
-    indexdb.load_db()
+    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb.load_db()
     # get pconstants
     pconst = constants.pload()
     # load index header keys
-    iheader_cols = pconst.INDEX_HEADER_COLS()
+    iheader_cols = pconst.FILEINDEX_HEADER_COLS()
     rkeys = list(iheader_cols.names)
     # loop around output_files
     for okey in recipe.output_files:
@@ -747,7 +747,7 @@ def index_files(params, recipe):
             else:
                 hkeys[rkey] = 'Null'
         # finally add to database
-        indexdb.add_entry(outfile, block_kind, recipename, runstring, infiles,
+        findexdb.add_entry(outfile, block_kind, recipename, runstring, infiles,
                           hkeys, used, rawfix)
 
 

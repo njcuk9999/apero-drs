@@ -1814,7 +1814,7 @@ class DrsInputFile:
         self.check_params(func_name)
         pconst = constants.pload()
         # get required keys for index database
-        iheader_cols = pconst.INDEX_HEADER_COLS()
+        iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         hkeys = list(iheader_cols.names)
         # htypes = list(iheader_cols.dtypes)
         # deal with absolute path of file
@@ -3688,7 +3688,7 @@ class DrsFitsFile(DrsInputFile):
         params = self.params
         pconst = constants.pload()
         # get required keys for index database
-        iheader_cols = pconst.INDEX_HEADER_COLS()
+        iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         hkeys = list(iheader_cols.names)
         htypes = list(iheader_cols.dtypes)
         # ---------------------------------------------------------------------
@@ -5897,7 +5897,7 @@ class DrsOutFileExtension:
         func_name = display_func('make_table', __NAME__, self.class_name)
         # get allowed header keys
         pconst = constants.pload()
-        iheader_cols = pconst.INDEX_HEADER_COLS()
+        iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
         rtypes = list(iheader_cols.dtypes)
         # define table column parameters
@@ -6341,13 +6341,13 @@ class DrsOutFile(DrsInputFile):
         else:
             return translate[name]
 
-    def find_files(self, pos: int, indexdbm: Any,
+    def find_files(self, pos: int, findexdbm: Any,
                    mastercond: Union[str, None]) -> pd.DataFrame:
         """
         Find files that match the extension parameters in the index database
 
         :param pos: int, the position in the extension list
-        :param indexdbm: Index database, the index database
+        :param findexdbm: Index database, the index database
         :param mastercond: str, the master condition
 
         :return: pandas data frame containing the table of files
@@ -6355,9 +6355,9 @@ class DrsOutFile(DrsInputFile):
         # get extension 0
         extension = self.extensions[pos]
         # get the index table for first extension
-        table0 = indexdbm.get_entries('*', block_kind=extension.kind,
-                                      hkeys=extension.hkeys,
-                                      condition=mastercond)
+        table0 = findexdbm.get_entries('*', block_kind=extension.kind,
+                                       hkeys=extension.hkeys,
+                                       condition=mastercond)
         # return table
         return table0
 
@@ -6402,14 +6402,14 @@ class DrsOutFile(DrsInputFile):
         # return value
         return value, names
 
-    def process_links(self, params: ParamDict, indexdbm: Any,
+    def process_links(self, params: ParamDict, findexdbm: Any,
                       calibdbm: Any, telludbm: Any,
                       required: bool = True) -> Tuple[bool, Union[Text, None]]:
         """
         Process the linked extensions
 
         :param params: ParamDict, parameter dictionary of constants
-        :param indexdbm: Index Database instance
+        :param findexdbm: Index Database instance
         :param required: bool, whether file is required or not
 
         :return: bool, whether we successfully linked all extensions
@@ -6418,7 +6418,7 @@ class DrsOutFile(DrsInputFile):
         func_name = display_func('process_links', __NAME__, self.class_name)
         # get allowed header keys
         pconst = constants.pload()
-        iheader_cols = pconst.INDEX_HEADER_COLS()
+        iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
         rtypes = list(iheader_cols.dtypes)
         # must have primary filename set
@@ -6443,7 +6443,7 @@ class DrsOutFile(DrsInputFile):
         WLOG(params, '', textentry('40-090-00003', args=margs))
         # start a clock (reading large database is slow - give user feedback)
         start = time.time()
-        pdataframe = indexdbm.get_entries('*', condition=pcond)
+        pdataframe = findexdbm.get_entries('*', condition=pcond)
         # ptable = PandasLikeDatabase(pdataframe)
         ptable = PandasLikeDatabase(pdataframe)
         # end the clock  (reading large database is slow - give user feedback)
@@ -6452,7 +6452,7 @@ class DrsOutFile(DrsInputFile):
         WLOG(params, '', textentry('40-090-00004', args=[end - start]))
         # get index columns
         # index_cols = ptable.colnames()
-        idbcols = pconst.INDEX_DB_COLUMNS()
+        idbcols = pconst.FILEINDEX_DB_COLUMNS()
         index_cols = list(idbcols.names)
 
         # ---------------------------------------------------------------------
@@ -7141,7 +7141,7 @@ class DrsOutFile(DrsInputFile):
         params = self.params
         pconst = constants.pload()
         # get required keys for index database
-        iheader_cols = pconst.INDEX_HEADER_COLS()
+        iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         hkeys = list(iheader_cols.names)
         htypes = list(iheader_cols.dtypes)
         # deal with absolute path of file

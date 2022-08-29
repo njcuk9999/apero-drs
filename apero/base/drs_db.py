@@ -145,7 +145,7 @@ class Database:
         self.path = None
         self.backup_path = None
         # have a main table name
-        self.tname = 'MAIN'
+        self.tname = 'main'
 
     def connection(self, host: Union[str, None] = None,
                    user: Union[str, None] = None,
@@ -1203,7 +1203,7 @@ class SQLiteDatabase(Database):
         self.backup_path = ''
         self.passwd = None
         self.dbname = None
-        self.tname = 'MAIN'
+        self.tname = 'main'
         # update table list
         self._update_table_list_()
 
@@ -1777,7 +1777,7 @@ class MySQLDatabase(Database):
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            'connection')
         if self.tname is None:
-            tname = 'NONE'
+            tname = 'none'
         else:
             tname = self.tname
         # deal with no host / user / password / database name
@@ -2384,9 +2384,9 @@ class MySQLDatabase(Database):
         # get unique columns
         if pconst is None:
             ucols = None
-        elif 'INDEX' in self.tname:
-            _, _, ucols = pconst.INDEX_DB_COLUMNS()
-        elif 'OBJECT' in self.tname:
+        elif 'findex' in self.tname:
+            _, _, ucols = pconst.FILEINDEX_DB_COLUMNS()
+        elif 'object' in self.tname:
             _, _, ucols = pconst.OBJECT_DB_COLUMNS()
         else:
             ucols = None
@@ -2522,14 +2522,15 @@ def _encode_value(value: str, dtype: Type) -> Union[str, None, float]:
 def _proxy_table(tablename: str) -> str:
     """
     Define a tablename that avoid conflicts with SQL KEYWORDS
+    also make sure it is ALWAYS lower case
 
     :param tablename: table name to change
     :return:
     """
-    if tablename.endswith('_DB'):
-        return tablename
+    if tablename.endswith('_db'):
+        return tablename.lower()
     else:
-        return tablename + '_DB'
+        return tablename.lower() + '_db'
 
 
 def _hash_df(df: pd.DataFrame, unique_cols: List[str]) -> pd.DataFrame:

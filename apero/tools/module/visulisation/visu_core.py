@@ -164,15 +164,15 @@ def get_file(block_kind: str,  obs_dir: str, identifier: str,
              ) -> Tuple[Union[np.ndarray, None], Union[str, None]]:
 
     # get database
-    indexdbm = drs_database.IndexDatabase(PARAMS)
-    indexdbm.load_db()
+    findexdbm = drs_database.FileIndexDatabase(PARAMS)
+    findexdbm.load_db()
     # find file in database
     condition = 'BLOCK_KIND="{0}" AND OBS_DIR="{1}" AND KW_IDENTIFIER="{2}"'
     condition += ' AND KW_OUTPUT="{3}" AND KW_FIBER="{4}"'
     condition = condition.format(block_kind, obs_dir, identifier, output,
                                  fiber)
     # query database
-    table = indexdbm.get_entries('ABSPATH, OBS_DIR', condition=condition)
+    table = findexdbm.get_entries('ABSPATH, OBS_DIR', condition=condition)
     # deal with no entries
     if table is None or len(table) == 0:
         return None, None
@@ -214,10 +214,10 @@ def get_calib(header: drs_fits.Header, key: str) -> Tuple[np.ndarray, str]:
 
 def get_obs_dirs() -> List[str]:
     # get database
-    indexdbm = drs_database.IndexDatabase(PARAMS)
-    indexdbm.load_db()
+    findexdbm = drs_database.FileIndexDatabase(PARAMS)
+    findexdbm.load_db()
     # return observation directories
-    new_obs_dirs = indexdbm.get_unique('OBS_DIR', condition='BLOCK_KIND="raw"')
+    new_obs_dirs = findexdbm.get_unique('OBS_DIR', condition='BLOCK_KIND="raw"')
 
     if len(new_obs_dirs) == 0:
         return []
@@ -227,8 +227,8 @@ def get_obs_dirs() -> List[str]:
 
 def get_identifers(block_kind='red', obs_dir=None) -> List[str]:
     # get database
-    indexdbm = drs_database.IndexDatabase(PARAMS)
-    indexdbm.load_db()
+    findexdbm = drs_database.FileIndexDatabase(PARAMS)
+    findexdbm.load_db()
     # set up condition
     if obs_dir is None:
         condition = 'BLOCK_KIND="{0}"'.format(block_kind)
@@ -238,7 +238,7 @@ def get_identifers(block_kind='red', obs_dir=None) -> List[str]:
 
     condition += ' AND KW_IDENTIFIER IS NOT NULL'
     # return identifiers which conform to these filters
-    newidentifiers = indexdbm.get_unique('KW_IDENTIFIER', condition=condition)
+    newidentifiers = findexdbm.get_unique('KW_IDENTIFIER', condition=condition)
 
     if len(newidentifiers) == 0:
         return []
