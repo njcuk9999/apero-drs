@@ -407,7 +407,7 @@ PP_MEDAMP_BINSIZE = PP_MEDAMP_BINSIZE.copy(__NAME__)
 PP_MEDAMP_BINSIZE.value = 32
 
 # =============================================================================
-# CALIBRATION: OBJECT DATABASE SETTINGS
+# CALIBRATION: ASTROMETRIC DATABASE SETTINGS
 # =============================================================================
 # gaia col name in google sheet
 GL_GAIA_COL_NAME = GL_GAIA_COL_NAME.copy(__NAME__)

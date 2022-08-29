@@ -1468,17 +1468,17 @@ def _display_database_settings(params: ParamDict,
         wmsgs += textentry('\n\tDATABASE: SQLITE3')
         # loop around database names
         for dbname in base.DATABASE_NAMES:
-            # get database key
-            dbkey = dbname.upper()
+            # get yaml key
+            ydbname = dbname.upper()
             # get database path
-            if aparams[dbkey]['PATH'] in params:
-                path = params[aparams[dbkey]['PATH']]
+            if aparams[ydbname]['PATH'] in params:
+                path = params[aparams[ydbname]['PATH']]
             else:
-                path = aparams[dbkey]['PATH']
+                path = aparams[ydbname]['PATH']
             # construct full path to database
-            fullpath = os.path.join(path, aparams[dbkey]['NAME'])
+            fullpath = os.path.join(path, aparams[ydbname]['NAME'])
             # add to wmsgs
-            dargs = [dbkey, fullpath]
+            dargs = [dbname, fullpath]
             wmsgs += textentry('\n\tDATABASE-{0}: {1}'.format(*dargs))
     # -------------------------------------------------------------------------
     # MYSQL DISPLAY
@@ -1490,12 +1490,12 @@ def _display_database_settings(params: ParamDict,
         wmsgs += textentry('\n\tDATABASE: MYSQL')
         # loop around database names
         for dbname in base.DATABASE_NAMES:
-            # get database key
-            dbkey = dbname.upper()
+            # get yaml key
+            ydbname = dbname.upper()
             # construct table name
-            tablename = '{0}_{1}_DB'.format(dbkey, aparams[dbkey]['PROFILE'])
+            tablename = '{0}_{1}_db'.format(dbname, aparams[ydbname]['PROFILE'])
             # add to wmsgs
-            dargs = [dbkey, aparams['DATABASE'], aparams['HOST'],
+            dargs = [dbname, aparams['DATABASE'], aparams['HOST'],
                      tablename]
             wmsgs += textentry('\n\tDATABASE-{0}: {1}@{2}:{3}'.format(*dargs))
     # return lang.text updated (or not if no database was used)

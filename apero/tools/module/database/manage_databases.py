@@ -260,7 +260,7 @@ def import_database(params: ParamDict, database_name: str,
         idb_cols = pconst.FILEINDEX_DB_COLUMNS()
         ucols = list(idb_cols.unique_cols)
     elif 'object' in db.database.tname:
-        odb_cols = pconst.OBJECT_DB_COLUMNS()
+        odb_cols = pconst.ASTROMETRIC_DB_COLUMNS()
         ucols = list(odb_cols.unique_cols)
     elif 'reject' in db.database.tname:
         rdb_cols = pconst.REJECT_DB_COLUMNS()
@@ -295,13 +295,13 @@ def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     telludbm = drs_database.TelluricDatabase(params, check=False)
     findexdbm = drs_database.FileIndexDatabase(params, check=False)
     logdbm = drs_database.LogDatabase(params, check=False)
-    objectdbm = drs_database.ObjectDatabase(params, check=False)
+    objectdbm = drs_database.AstrometricDatabase(params, check=False)
     rejectdbm = drs_database.RejectDatabase(params, check=False)
     landdbm = drs_db.LanguageDatabase(check=False)
     # add to storage
     databases['calib'] = calibdbm
     databases['tellu'] = telludbm
-    databases['index'] = findexdbm
+    databases['findex'] = findexdbm
     databases['log'] = logdbm
     databases['object'] = objectdbm
     databases['reject'] = rejectdbm
@@ -328,8 +328,8 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None):
         _ = create_telluric_database(pconst, databases)
     # -------------------------------------------------------------------------
     # create index database
-    if 'index' not in skip:
-        _ = create_index_database(pconst, databases)
+    if 'findex' not in skip:
+        _ = create_fileindex_database(pconst, databases)
     # -------------------------------------------------------------------------
     # create log database
     if 'log' not in skip:
@@ -440,11 +440,11 @@ def create_telluric_database(pconst: PseudoConst,
 # =============================================================================
 # Define index database functions
 # =============================================================================
-def create_index_database(pconst: PseudoConst,
-                          databases: Dict[str, DatabaseM],
-                          tries: int = 20) -> Database:
+def create_fileindex_database(pconst: PseudoConst,
+                              databases: Dict[str, DatabaseM],
+                              tries: int = 20) -> Database:
     """
-    Setup for the index database
+    Setup for the file index database
 
     :param pconst: Pseudo constants
     :param databases: dictionary of database managers
@@ -532,7 +532,7 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
-    objdb_cols = pconst.OBJECT_DB_COLUMNS()
+    objdb_cols = pconst.ASTROMETRIC_DB_COLUMNS()
     columns = list(objdb_cols.names)
     ctypes = list(objdb_cols.datatypes)
     cuniques = list(objdb_cols.unique_cols)
@@ -564,7 +564,7 @@ def object_db_populated(params: ParamDict) -> bool:
     Check that object database is populated
     """
     # need to load database
-    objdbm = drs_database.ObjectDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
     # count rows in database
     count = objdbm.database.count()
@@ -682,7 +682,7 @@ def update_object_database(params: ParamDict, log: bool = True):
     df['DATE_ADDED'] = np.full(len(df), base.__now__.iso)
     # -------------------------------------------------------------------------
     # get columns and ctypes from pconst
-    objdb_cols = pconst.OBJECT_DB_COLUMNS()
+    objdb_cols = pconst.ASTROMETRIC_DB_COLUMNS()
     columns = list(objdb_cols.names)
     ctypes = list(objdb_cols.datatypes)
     cuniques = list(objdb_cols.unique_cols)

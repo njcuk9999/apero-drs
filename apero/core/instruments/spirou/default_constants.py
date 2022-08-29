@@ -408,7 +408,7 @@ PP_DARK_THRES = PP_DARK_THRES.copy(__NAME__)
 PP_DARK_THRES.value = 0.5
 
 # =============================================================================
-# CALIBRATION: OBJECT DATABASE SETTINGS
+# CALIBRATION: ASTROMETRIC DATABASE SETTINGS
 # =============================================================================
 # gaia col name in google sheet
 GL_GAIA_COL_NAME = GL_GAIA_COL_NAME.copy(__NAME__)

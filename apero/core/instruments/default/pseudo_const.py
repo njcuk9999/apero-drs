@@ -1153,7 +1153,7 @@ class PseudoConstants:
         elif tname == 'log':
             return self.LOG_DB_COLUMNS()
         elif tname == 'object':
-            return self.OBJECT_DB_COLUMNS()
+            return self.ASTROMETRIC_DB_COLUMNS()
         else:
             return None
 
@@ -1415,13 +1415,13 @@ class PseudoConstants:
         return log_columns
 
     # noinspection PyPep8Naming
-    def OBJECT_DB_COLUMNS(self) -> DatabaseColumns:
+    def ASTROMETRIC_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns use in the object database
         :return: list of columns (strings)
         """
         # set function name
-        # _ = display_func('OBJECT_DB_COLUMNS', __NAME__,
+        # _ = display_func('ASTROMETRIC_DB_COLUMNS', __NAME__,
         #                  self.class_name)
         # check for pre-existing values
         if self.objdb_cols is not None:

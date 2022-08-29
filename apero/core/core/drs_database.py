@@ -90,7 +90,7 @@ OBS_NAMES = dict()
 # define reserved object names
 RESERVED_OBJ_NAMES = ['CALIB', 'SKY', 'TEST']
 # define database names
-DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'object', 'lang',
+DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'astrom', 'lang',
                   'reject']
 # cache for google sheet
 GOOGLE_TABLES = dict()
@@ -288,23 +288,25 @@ class DatabaseManager:
         # kind must be one of the following
         if kind not in DATABASE_NAMES:
             raise ValueError('kind=={0} invalid'.format(kind))
+        # for yaml kind is uppercase
+        ykind = kind.upper()
         # set name/path/reset based on ddict
-        self.dbname = sdict[kind]['NAME']
-        self.dbpath = sdict[kind]['PATH']
-        if drs_text.null_text(sdict[kind]['RESET'], ['None']):
+        self.dbname = sdict[ykind]['NAME']
+        self.dbpath = sdict[ykind]['PATH']
+        if drs_text.null_text(sdict[ykind]['RESET'], ['None']):
             self.dbreset = None
         else:
-            self.dbreset = sdict[kind]['RESET']
+            self.dbreset = sdict[ykind]['RESET']
 
 
 # =============================================================================
 # Object database
 # =============================================================================
-class ObjectDatabase(DatabaseManager):
+class AstrometricDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, check: bool = True,
                  dparams: Union[dict, None] = None):
         """
-        Constructor of the Object Database class
+        Constructor of the Astrometric Database class
 
         :param params: ParamDict, parameter dictionary of constants
         :param check: bool, if True makes sure database file exists (otherwise
@@ -313,14 +315,14 @@ class ObjectDatabase(DatabaseManager):
         :return: None
         """
         # save class name
-        self.classname = 'ObjectDatabaseManager'
+        self.classname = 'AstrometricDatabase'
         # set function
         # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
         DatabaseManager.__init__(self, params)
         # set name
-        self.name = 'object'
-        self.kind = 'object'
+        self.name = 'astrom'
+        self.kind = 'astrom'
         # set path
         self.set_path(kind=self.kind, check=check, dparams=dparams)
 
@@ -455,7 +457,7 @@ class ObjectDatabase(DatabaseManager):
                   gmag_s, bpmag, bpmag_s, rpmag, rpmag_s, epoch, epoch_s,
                   teff, teff_s]
         # get unique columns
-        objdb_cols = self.pconst.OBJECT_DB_COLUMNS()
+        objdb_cols = self.pconst.ASTROMETRIC_DB_COLUMNS()
         ucols = list(objdb_cols.unique_cols)
         # deal with null values
         for it, value in enumerate(values):
@@ -2171,7 +2173,7 @@ class FileIndexDatabase(DatabaseManager):
             # add to database
             self.add_entry(req_inst, block_kind, hkeys=hkeys)
 
-    def update_header_fix(self, recipe: Any, objdbm: ObjectDatabase):
+    def update_header_fix(self, recipe: Any, objdbm: AstrometricDatabase):
         """
         Update the index database with the header fixes for block_kind = raw
 

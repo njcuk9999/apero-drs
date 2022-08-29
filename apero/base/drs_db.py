@@ -2386,8 +2386,8 @@ class MySQLDatabase(Database):
             ucols = None
         elif 'findex' in self.tname:
             _, _, ucols = pconst.FILEINDEX_DB_COLUMNS()
-        elif 'object' in self.tname:
-            _, _, ucols = pconst.OBJECT_DB_COLUMNS()
+        elif 'astrometric' in self.tname:
+            _, _, ucols = pconst.ASTROMETRIC_DB_COLUMNS()
         else:
             ucols = None
         # load csv file into pandas table
@@ -2405,7 +2405,8 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
     Database wrapper - takes the database parameter yaml file
     Either uses MySQL or SQLite3
 
-    :param kind: str, the kind of database (CALIB/TELLU/INDEX/LANG/OBJECT)
+    :param kind: str, the kind of database (CALIB/TELLU/FINDEX/LANG/
+                                            ASTROM/REJECT)
     :param path: str or Path, for SQLite3 this is the path to the database file
                  for MySQL this is just user@host
     :param verbose: bool - if True the database prints out debug messages

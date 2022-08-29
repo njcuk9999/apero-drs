@@ -48,7 +48,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
 # Get index database
 FileIndexDatabase = drs_database.FileIndexDatabase
-ObjectDatabase = drs_database.ObjectDatabase
+ObjectDatabase = drs_database.AstrometricDatabase
 # get text entry instance
 textentry = lang.textentry
 

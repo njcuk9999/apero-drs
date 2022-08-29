@@ -3017,7 +3017,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
     # get pseudo constatns
     pconst = constants.pload()
     # need to load object database
-    objdbm = drs_database.ObjectDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
     # set up filter storage
     filters = dict()

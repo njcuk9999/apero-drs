@@ -157,7 +157,7 @@ class DatabaseHolder:
                 path = Path(self.params['DRS_CALIB_DB']).joinpath(value)
             elif self.name == 'tellu':
                 path = Path(self.params['DRS_TELLU_DB']).joinpath(value)
-            elif self.name == 'index':
+            elif self.name == 'findex':
                 path = Path(value)
             else:
                 return False, None

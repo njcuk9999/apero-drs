@@ -72,7 +72,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     findexdb = drs_database.FileIndexDatabase(params)
     findexdb.load_db()
     # load object database
-    objdbm = drs_database.ObjectDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
     # load log database
     logdbm = drs_database.LogDatabase(params)

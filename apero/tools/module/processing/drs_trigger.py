@@ -160,7 +160,7 @@ class Trigger:
         self.logdbm = drs_database.LogDatabase(params)
         self.logdbm.load_db()
         # start object database
-        self.objdbm = drs_database.ObjectDatabase(params)
+        self.objdbm = drs_database.AstrometricDatabase(params)
         self.objdbm.load_db()
 
     def __call__(self):

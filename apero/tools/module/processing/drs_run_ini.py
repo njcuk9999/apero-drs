@@ -44,7 +44,7 @@ DrsInputFile = drs_file.DrsInputFile
 DrsSequence = drs_recipe.DrsRunSequence
 # Get index database
 FileIndexDatabase = drs_database.FileIndexDatabase
-ObjectDatabase = drs_database.ObjectDatabase
+ObjectDatabase = drs_database.AstrometricDatabase
 # get text entry instance
 textentry = lang.textentry
 # define default reference dir
