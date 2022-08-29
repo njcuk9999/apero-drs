@@ -81,7 +81,7 @@ if WARN_TO_ERROR:
 
 # -----------------------------------------------------------------------------
 # databases
-DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'object', 'lang', 'reject']
+DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'astrom', 'lang', 'reject']
 DATABASE_FULLNAMES = ['calibration', 'telluric', 'file index', 'recipe log',
                       'astrometric', 'language', 'rejection']
 # -----------------------------------------------------------------------------

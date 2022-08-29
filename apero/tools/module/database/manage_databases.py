@@ -259,7 +259,7 @@ def import_database(params: ParamDict, database_name: str,
     if 'findex' in db.database.tname:
         idb_cols = pconst.FILEINDEX_DB_COLUMNS()
         ucols = list(idb_cols.unique_cols)
-    elif 'object' in db.database.tname:
+    elif 'astrom' in db.database.tname:
         odb_cols = pconst.ASTROMETRIC_DB_COLUMNS()
         ucols = list(odb_cols.unique_cols)
     elif 'reject' in db.database.tname:
@@ -303,7 +303,7 @@ def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     databases['tellu'] = telludbm
     databases['findex'] = findexdbm
     databases['log'] = logdbm
-    databases['object'] = objectdbm
+    databases['astrom'] = objectdbm
     databases['reject'] = rejectdbm
     databases['lang'] = landdbm
     # return the databases
@@ -336,7 +336,7 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None):
         _ = create_log_database(pconst, databases)
     # -------------------------------------------------------------------------
     # create object database
-    if 'object' not in skip:
+    if 'astrom' not in skip:
         _ = create_object_database(params, pconst, databases)
     # -------------------------------------------------------------------------
     # create reject database
@@ -461,7 +461,7 @@ def create_fileindex_database(pconst: PseudoConst,
     cigroups = idb_cols.get_index_groups()
     # -------------------------------------------------------------------------
     # construct directory
-    findexdbm = databases['index']
+    findexdbm = databases['findex']
     # -------------------------------------------------------------------------
     # make database
     indexdb = drs_db.database_wrapper(findexdbm.kind, findexdbm.path,
@@ -539,7 +539,7 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     cindexs = list(objdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
-    objectdbm = databases['object']
+    objectdbm = databases['astrom']
     # -------------------------------------------------------------------------
     # make database
     objectdb = drs_db.database_wrapper(objectdbm.kind, objectdbm.path,
@@ -689,7 +689,7 @@ def update_object_database(params: ParamDict, log: bool = True):
     cindexs = list(objdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
-    objectdbm = databases['object']
+    objectdbm = databases['astrom']
     # -------------------------------------------------------------------------
     # make database
     objectdb = drs_db.database_wrapper(objectdbm.kind, objectdbm.path)
