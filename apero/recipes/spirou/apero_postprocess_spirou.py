@@ -97,8 +97,8 @@ def __main__(recipe, params):
     clear = params['INPUTS']['CLEAR']
     # ---------------------------------------------------------------------
     # load the databases
-    indexdbm = drs_database.IndexDatabase(params)
-    indexdbm.load_db()
+    findexdbm = drs_database.FileIndexDatabase(params)
+    findexdbm.load_db()
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()
     telludbm = drs_database.TelluricDatabase(params)
@@ -155,7 +155,7 @@ def __main__(recipe, params):
             continue
         # -----------------------------------------------------------------
         # link all other extensions
-        success, reason = filepostfile.process_links(params, indexdbm,
+        success, reason = filepostfile.process_links(params, findexdbm,
                                                      calibdbm, telludbm,
                                                      filepostfile.out_required)
         # deal with writing file
@@ -164,7 +164,7 @@ def __main__(recipe, params):
             filepostfile.process_header(params)
             # deal with database infiles
             filepostfile.set_db_infiles(block_kind=recipe.out_block_str,
-                                        database=indexdbm)
+                                        database=findexdbm)
             # update filename/basename and path
             filepostfile.set_filename(filepostfile.out_filename)
             # write file

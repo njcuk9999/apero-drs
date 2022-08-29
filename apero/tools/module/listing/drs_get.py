@@ -69,8 +69,8 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # -------------------------------------------------------------------------
     # load index database
     WLOG(params, '', 'Loading database...')
-    indexdb = drs_database.IndexDatabase(params)
-    indexdb.load_db()
+    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb.load_db()
     # load object database
     objdbm = drs_database.ObjectDatabase(params)
     objdbm.load_db()
@@ -135,7 +135,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         if len(condition) == 0:
             condition = None
         # get inpaths
-        itable = indexdb.get_entries('ABSPATH, KW_PID', condition=condition)
+        itable = findexdb.get_entries('ABSPATH, KW_PID', condition=condition)
         inpaths = np.array(itable['ABSPATH'])
         ipids = np.array(itable['KW_PID'])
         # ---------------------------------------------------------------------

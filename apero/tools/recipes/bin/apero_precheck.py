@@ -31,7 +31,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get index database
-IndexDatabase = drs_database.IndexDatabase
+IndexDatabase = drs_database.FileIndexDatabase
 ObjectDatabase = drs_database.ObjectDatabase
 # get text entry instance
 textentry = lang.textentry
@@ -103,8 +103,8 @@ def __main__(recipe, params):
     # find all files via index database (required for both checks)
     # -------------------------------------------------------------------------
     # construct the index database instance
-    indexdbm = IndexDatabase(params)
-    indexdbm.load_db()
+    findexdbm = IndexDatabase(params)
+    findexdbm.load_db()
     # construct object database
     objdbm = ObjectDatabase(params)
     objdbm.load_db()
@@ -119,25 +119,25 @@ def __main__(recipe, params):
     #  runs to make it more efficient
     # there are a few use cases where we want to skip updating the index
     #   database
-    if params['UPDATE_INDEX_DATABASE']:
+    if params['UPDATE_FILEINDEX_DATABASE']:
         drs_processing.update_index_db(params)
 
     # fix the header data (object name, dprtype, mjdmid and trg_type etc)
     WLOG(params, '', textentry('40-503-00043'))
-    indexdbm.update_header_fix(recipe, objdbm)
+    findexdbm.update_header_fix(recipe, objdbm)
     # -------------------------------------------------------------------------
     # File check
     #    1. check number of calibrations
     #    2. check number of hot stars / science targets
     # -------------------------------------------------------------------------
     if file_check:
-        drs_precheck.file_check(params, recipe, indexdbm)
+        drs_precheck.file_check(params, recipe, findexdbm=findexdbm)
 
     # -------------------------------------------------------------------------
     # Object check
     # -------------------------------------------------------------------------
     if obj_check:
-        drs_precheck.obj_check(params, indexdbm)
+        drs_precheck.obj_check(params, findexdbm)
 
     # -------------------------------------------------------------------------
     # End of main code

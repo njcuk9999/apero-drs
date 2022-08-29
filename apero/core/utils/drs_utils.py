@@ -50,7 +50,7 @@ BinaryDict = base_class.BinaryDict
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # get databases
-IndexDatabase = drs_database.IndexDatabase
+FileIndexDatabase = drs_database.FileIndexDatabase
 LogDatabase = drs_database.LogDatabase
 # get header classes from io.drs_fits
 Header = drs_fits.Header
@@ -720,8 +720,8 @@ def update_index_db(params: ParamDict, block_kind: str,
                     excludelist: Union[List[str], None] = None,
                     filename: FileType = None,
                     suffix: str = '',
-                    indexdbm: Union[IndexDatabase, None] = None
-                    ) -> IndexDatabase:
+                    findexdbm: Union[FileIndexDatabase, None] = None
+                    ) -> FileIndexDatabase:
     """
     Block function to update index database
 
@@ -737,7 +737,7 @@ def update_index_db(params: ParamDict, block_kind: str,
                      if set the filename or filenames to update
     :param suffix: str, the suffix (i.e. extension of filenames) - filters
                    to only set these files
-    :param indexdbm: IndexDatabase instance or None, if set will not reload
+    :param findexdbm: IndexDatabase instance or None, if set will not reload
                      index database if None will load index database
 
     :return: updated or loaded index database unless
@@ -745,9 +745,9 @@ def update_index_db(params: ParamDict, block_kind: str,
     """
     # -------------------------------------------------------------------------
     # load the index database
-    if indexdbm is None:
-        indexdbm = IndexDatabase(params)
-    indexdbm.load_db()
+    if findexdbm is None:
+        findexdbm = FileIndexDatabase(params)
+    findexdbm.load_db()
     # -------------------------------------------------------------------------
     # check whether we are updating the index
     update_index = True
@@ -755,7 +755,7 @@ def update_index_db(params: ParamDict, block_kind: str,
         if params['INPUTS']['PARALLEL']:
             update_index = False
     if not update_index:
-        return indexdbm
+        return findexdbm
     # -------------------------------------------------------------------------
     # deal with white list and black list
     # no include dirs
@@ -776,7 +776,7 @@ def update_index_db(params: ParamDict, block_kind: str,
         exclude_dirs = list(excludelist)
     # -------------------------------------------------------------------------
     # update index database with raw files
-    indexdbm.update_entries(block_kind=block_kind,
+    findexdbm.update_entries(block_kind=block_kind,
                             exclude_directories=exclude_dirs,
                             include_directories=include_dirs,
                             filename=filename, suffix=suffix)
@@ -786,16 +786,18 @@ def update_index_db(params: ParamDict, block_kind: str,
     store = drs_database.PandasDBStorage()
     store.reset(subkey=block_kind)
     # return the database
-    return indexdbm
+    return findexdbm
 
 
 def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
-               columns='ABSPATH', indexdbm: Union[IndexDatabase, None] = None
+               columns='ABSPATH',
+               findexdbm: Union[FileIndexDatabase, None] = None
                ) -> Union[np.ndarray, pd.DataFrame]:
     # update database
-    indexdbm = update_index_db(params, block_kind=block_kind, indexdbm=indexdbm)
+    findexdbm = update_index_db(params, block_kind=block_kind,
+                                findexdbm=findexdbm)
     # get columns
-    colnames = indexdbm.database.colnames('*')
+    colnames = findexdbm.database.colnames('*')
     # get file list using filters
     condition = 'BLOCK_KIND="{0}"'.format(block_kind)
     # loop around filters
@@ -815,8 +817,8 @@ def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
             # add subconditions to condition
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
     # get columns for this condition
-    return indexdbm.get_entries(columns, block_kind=block_kind,
-                                condition=condition)
+    return findexdbm.get_entries(columns, block_kind=block_kind,
+                                 condition=condition)
 
 
 def uniform_time_list(times: Union[List[float], np.ndarray], number: int

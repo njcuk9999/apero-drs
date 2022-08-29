@@ -49,7 +49,7 @@ WLOG = drs_log.wlog
 ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 # define index columns to get
-INDEX_COLS = ['FILENAME', 'OBS_DIR', 'BLOCK_KIND', 'KW_MID_OBS_TIME',
+FINDEX_COLS = ['FILENAME', 'OBS_DIR', 'BLOCK_KIND', 'KW_MID_OBS_TIME',
               'INFILES', 'KW_OUTPUT', 'KW_DPRTYPE']
 # reegex code for locating errors
 REGEX_ERROR_CODE = r'E\[\d\d-\d\d\d-\d\d\d\d\d\]'
@@ -288,9 +288,9 @@ def get_log_entries(params: ParamDict,
     # get the index database
     if mode == 'index':
         WLOG(params, '', 'Obtaining full index database. Please wait...')
-        indexdbm = drs_database.IndexDatabase(params)
-        indexdbm.load_db()
-        idataframe = indexdbm.get_entries('*')
+        findexdbm = drs_database.FileIndexDatabase(params)
+        findexdbm.load_db()
+        idataframe = findexdbm.get_entries('*')
     else:
         idataframe = pd.DataFrame()
     # -------------------------------------------------------------------------

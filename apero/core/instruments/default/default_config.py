@@ -25,11 +25,9 @@ __all__ = [  # global settings
     'DRS_INSTRUMENT_RECIPE_PATH', 'DRS_DEFAULT_RECIPE_PATH',
     'DRS_BADPIX_DATA', 'DRS_CALIB_DATA',
     'DRS_RESET_ASSETS_PATH', 'DRS_RESET_CALIBDB_PATH',
-    'DRS_RESET_TELLUDB_PATH', 'DRS_USER_PROGRAM', 'DRS_INDEX_FILE',
+    'DRS_RESET_TELLUDB_PATH', 'DRS_USER_PROGRAM',
     'DRS_PDB_RC_FILE', 'IPYTHON_RETURN', 'ALLOW_BREAKPOINTS',
     'DRS_RESET_RUN_PATH', 'DRS_INSTRUMENTS', 'DRS_PDB_RC_FILENAME',
-    # DRS INDEXING SETTINGS
-    'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
     # DATABASE SETTINGS
     'DATABASE_DIR', 'CALIB_DB_MATCH', 'TELLU_DB_MATCH',
     # DISPLAY/LOGGING SETTINGS
@@ -406,24 +404,6 @@ DRS_PDB_RC_FILENAME = Const('DRS_PDB_RC_FILENAME', value=base.PDB_RC_FILENAME,
                             description=('what the pdb file should be called '
                                          '(do not change - just here for use)'),
                             output=False)
-
-# =============================================================================
-# DRS INDEXING SETTINGS
-# =============================================================================
-cgroup = 'DRS INDEXING SETTINGS'
-# Define the name of the index file (in each working/reduced directory)
-DRS_INDEX_FILE = Const('DRS_INDEX_FILE', dtype=str, value='index.fits',
-                       source=__NAME__, group=cgroup,
-                       description=('Define the name of the index file (in '
-                                    'each working/reduced directory)'),
-                       output=False)
-
-# Define the filename column of the index file
-DRS_INDEX_FILENAME = Const('DRS_INDEX_FILENAME', dtype=str, value='FILENAME',
-                           source=__NAME__, group=cgroup,
-                           description=('Define the filename column of '
-                                        'the index file'),
-                           output=False)
 
 # =============================================================================
 # DATABASE SETTINGS

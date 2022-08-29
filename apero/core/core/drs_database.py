@@ -90,7 +90,8 @@ OBS_NAMES = dict()
 # define reserved object names
 RESERVED_OBJ_NAMES = ['CALIB', 'SKY', 'TEST']
 # define database names
-DATABASE_NAMES = ['CALIB', 'TELLU', 'INDEX', 'LOG', 'OBJECT', 'LANG', 'REJECT']
+DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'object', 'lang',
+                  'reject']
 # cache for google sheet
 GOOGLE_TABLES = dict()
 # define standard google base url
@@ -319,7 +320,7 @@ class ObjectDatabase(DatabaseManager):
         DatabaseManager.__init__(self, params)
         # set name
         self.name = 'object'
-        self.kind = 'OBJECT'
+        self.kind = 'object'
         # set path
         self.set_path(kind=self.kind, check=check, dparams=dparams)
 
@@ -595,7 +596,7 @@ class CalibrationDatabase(DatabaseManager):
         DatabaseManager.__init__(self, params)
         # set name
         self.name = 'calibration'
-        self.kind = 'CALIB'
+        self.kind = 'calib'
         # set path
         self.set_path(kind=self.kind, check=check)
         # set database directory
@@ -977,7 +978,7 @@ class TelluricDatabase(DatabaseManager):
         DatabaseManager.__init__(self, params)
         # set name
         self.name = 'telluric'
-        self.kind = 'TELLU'
+        self.kind = 'tellu'
         # set path
         self.set_path(kind=self.kind, check=check)
         # set database directory
@@ -1644,7 +1645,7 @@ def _get_time(params: ParamDict, dbname: str,
 # =============================================================================
 # Define index databases
 # =============================================================================
-class IndexDatabase(DatabaseManager):
+class FileIndexDatabase(DatabaseManager):
 
     def __init__(self, params: ParamDict, check: bool = True):
         """
@@ -1657,14 +1658,14 @@ class IndexDatabase(DatabaseManager):
         :return: None
         """
         # save class name
-        self.classname = 'IndexDatabaseManager'
+        self.classname = 'FileIndexDatabaseManager'
         # set function
         # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
         DatabaseManager.__init__(self, params)
         # set name
-        self.name = 'index'
-        self.kind = 'INDEX'
+        self.name = 'findex'
+        self.kind = 'findex'
         # set path
         self.set_path(kind=self.kind, check=check)
         # store whether an update has been done
@@ -1736,11 +1737,11 @@ class IndexDatabase(DatabaseManager):
             infiles = 'NULL'
         # ------------------------------------------------------------------
         # get allowed header keys
-        iheader_cols = self.pconst.INDEX_HEADER_COLS()
+        iheader_cols = self.pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
         rtypes = list(iheader_cols.dtypes)
         # get unique columns
-        idb_cols = self.pconst.INDEX_DB_COLUMNS()
+        idb_cols = self.pconst.FILEINDEX_DB_COLUMNS()
         ucols = list(idb_cols.unique_cols)
         # store values in correct order for database.add_row
         hvalues = []
@@ -1887,7 +1888,7 @@ class IndexDatabase(DatabaseManager):
             sql['condition'] += ' AND FILENAME = "{0}"'.format(filename)
         # ------------------------------------------------------------------
         # get allowed header keys
-        iheader_cols = self.pconst.INDEX_HEADER_COLS()
+        iheader_cols = self.pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
         rtypes = list(iheader_cols.dtypes)
         # deal with filter by header keys
@@ -2085,10 +2086,10 @@ class IndexDatabase(DatabaseManager):
                               include_files, exclude_files, suffix, elast_mod)
         # ---------------------------------------------------------------------
         # get allowed header keys
-        iheader_cols = self.pconst.INDEX_HEADER_COLS()
+        iheader_cols = self.pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
         # get unique columns
-        idb_cols = self.pconst.INDEX_DB_COLUMNS()
+        idb_cols = self.pconst.FILEINDEX_DB_COLUMNS()
         ikeys = list(idb_cols.names)
         itypes = list(idb_cols.datatypes)
         ucols = list(idb_cols.unique_cols)
@@ -2191,7 +2192,7 @@ class IndexDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # get allowed header keys
-        iheader_cols = self.pconst.INDEX_HEADER_COLS()
+        iheader_cols = self.pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
         # get columns
         columns = ['BLOCK_KIND', 'ABSPATH', 'OBS_DIR', 'FILENAME', 'RAWFIX']
@@ -2480,7 +2481,7 @@ class LogDatabase(DatabaseManager):
         DatabaseManager.__init__(self, params)
         # set name
         self.name = 'log'
-        self.kind = 'LOG'
+        self.kind = 'log'
         # set path
         self.set_path(kind=self.kind, check=check)
 
@@ -2800,7 +2801,7 @@ class RejectDatabase(DatabaseManager):
         DatabaseManager.__init__(self, params)
         # set name
         self.name = 'reject'
-        self.kind = 'REJECT'
+        self.kind = 'reject'
         # set path
         self.set_path(kind=self.kind, check=check)
 

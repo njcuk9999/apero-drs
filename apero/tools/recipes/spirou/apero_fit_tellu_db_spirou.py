@@ -100,8 +100,6 @@ def __main__(recipe, params):
     filetype = params['INPUTS']['FILETYPE']
     # get the fiber type required
     fiber = params['INPUTS']['FIBER']
-    # get the index file col name
-    filecol = params['DRS_INDEX_FILENAME']
     # get the required dprtypes
     dprtypes = params['INPUTS']['DPRTYPE']
     # get the required object names
@@ -119,13 +117,13 @@ def __main__(recipe, params):
             params.set('TEST_RUN', True)
     # ----------------------------------------------------------------------
     # load index database
-    indexdbm = drs_database.IndexDatabase(params)
-    indexdbm.load_db()
+    findexdbm = drs_database.FileIndexDatabase(params)
+    findexdbm.load_db()
     # ----------------------------------------------------------------------
     # get objects that match this object name
     gargs = [fiber, filetype, dprtypes, robjnames]
     obj_stars, obj_names = telluric.get_non_tellu_objs(params, recipe, *gargs,
-                                                       indexdbm=indexdbm)
+                                                       findexdbm=findexdbm)
     # ----------------------------------------------------------------------
     # get night names for each object
     obs_dirs, obj_basenames = [], []
@@ -152,7 +150,7 @@ def __main__(recipe, params):
     gkwargs['--program'] = 'DBFTELLU'
     gkwargs['terminate'] = False
     # run apero_fit_tellu
-    outlist = drs_processing.run_process(params, recipe, indexdbm,
+    outlist = drs_processing.run_process(params, recipe, findexdbm,
                                          apero_fit_tellu, *gargs, **gkwargs)
     # add to global list
     goutlist = drs_processing.combine_outlist('DBFTELLU', goutlist, outlist)
@@ -166,7 +164,7 @@ def __main__(recipe, params):
     gkwargs['--program'] = 'DBMKTEMP'
     gkwargs['terminate'] = False
     # run apero_fit_tellu
-    outlist = drs_processing.run_process(params, recipe, indexdbm,
+    outlist = drs_processing.run_process(params, recipe, findexdbm,
                                          apero_mk_template, *gargs, **gkwargs)
     # add to global list
     goutlist = drs_processing.combine_outlist('DBMKTEMP', goutlist, outlist)
@@ -180,7 +178,7 @@ def __main__(recipe, params):
     gkwargs['--program'] = 'DBFTELLU'
     gkwargs['terminate'] = False
     # run apero_fit_tellu
-    outlist = drs_processing.run_process(params, recipe, indexdbm,
+    outlist = drs_processing.run_process(params, recipe, findexdbm,
                                          apero_fit_tellu, *gargs, **gkwargs)
     # add to global list
     goutlist = drs_processing.combine_outlist('DBFTELLU', goutlist, outlist)
