@@ -1024,7 +1024,7 @@ class TelluricDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # get unique columns
-        telludb_cols = self.pconst.CALIBRATION_DB_COLUMNS()
+        telludb_cols = self.pconst.TELLURIC_DB_COLUMNS()
         ucols = list(telludb_cols.unique_cols)
         # ------------------------------------------------------------------
         # get header and hdict

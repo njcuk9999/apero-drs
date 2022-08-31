@@ -2314,9 +2314,16 @@ def _make_dirs(params: ParamDict, path: str):
     lockfile = os.path.basename(path)
     # start a lock
     lock = drs_lock.Lock(params, lockfile)
-
+    # -------------------------------------------------------------------------
+    # must check that a pid is set
+    if params['PID'] is None:
+        WLOG(params, 'error', textentry('10-005-00006'))
+        pid = None
+    else:
+        pid = params['PID']
+    # -------------------------------------------------------------------------
     # make locked makedirs function
-    @drs_lock.synchronized(lock, params['PID'] + lockfile)
+    @drs_lock.synchronized(lock, pid + lockfile)
     def locked_makedirs():
         # check again path already exists
         if os.path.exists(path):

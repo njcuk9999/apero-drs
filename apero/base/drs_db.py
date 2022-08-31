@@ -829,7 +829,7 @@ class Database:
 
         :return: bool, True if tname (table name) in database, else False
         """
-        if self.tname in self.tables:
+        if self.tname.lower() in self.tables:
             return True
         else:
             return False
@@ -964,8 +964,8 @@ class Database:
                                            '_infer_table_')
         # infer table name from tname
         if self.tname is not None:
-            if self.tname in self.tables:
-                return str(self.tname)
+            if self.tname.lower() in self.tables:
+                return str(self.tname.lower())
             # need to deal with no table
             elif table is None:
                 # log error: tname not defined and multiple tables defined
@@ -1685,7 +1685,7 @@ class SQLiteDatabase(Database):
         self.tables = []
         for _table in _tables:
             # append table name
-            self.tables.append(_table[0])
+            self.tables.append(_table[0].lower())
 
 
 class MySQLDatabase(Database):
@@ -1743,7 +1743,7 @@ class MySQLDatabase(Database):
         # deal with setting table name (we only have one per manager hence
         #   why this is set)
         if absolute_table_name:
-            self.tname = tablename
+            self.tname = tablename.lower()
         else:
             self.tname = _proxy_table(tablename)
         # re-set path after call to super
@@ -2297,7 +2297,7 @@ class MySQLDatabase(Database):
         self.tables = []
         for _table in _tables:
             # append table name
-            self.tables.append(_table[0])
+            self.tables.append(_table[0].lower())
 
     # other methods
     def table_info(self, table: Optional[str] = None
@@ -2381,15 +2381,18 @@ class MySQLDatabase(Database):
         # construct backup path
         if self.backup_path is None:
             return
-        # get unique columns
+        # deal with no pconst
         if pconst is None:
             ucols = None
-        elif 'findex' in self.tname:
-            _, _, ucols = pconst.FILEINDEX_DB_COLUMNS()
-        elif 'astrometric' in self.tname:
-            _, _, ucols = pconst.ASTROMETRIC_DB_COLUMNS()
+        # deal with having pconst --> we can get dbcol
         else:
-            ucols = None
+            dbcol = pconst.GET_DB_COLS(self.tname)
+            # deal with database column
+            if dbcol is not None:
+                ucols = dbcol.unique_cols
+            # else we assume ucols is None
+            else:
+                ucols = None
         # load csv file into pandas table
         df = pd.read_csv(self.backup_path)
         # add pandas table to database

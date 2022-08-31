@@ -35,7 +35,6 @@ from apero import lang
 from apero.core.core import drs_log
 from apero.io import drs_lock
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -202,9 +201,16 @@ def write_table(params: ParamDict, table: Table, filename: str,
     lockfile = os.path.basename(filename)
     # start a lock
     lock = drs_lock.Lock(params, lockfile)
-
+    # -------------------------------------------------------------------------
+    # must check that a pid is set
+    if params['PID'] is None:
+        WLOG(params, 'error', textentry('10-005-00006'))
+        pid = None
+    else:
+        pid = params['PID']
+    # -------------------------------------------------------------------------
     # make locked write function
-    @drs_lock.synchronized(lock, params['PID'])
+    @drs_lock.synchronized(lock, pid)
     def locked_write():
         # try to write table to file
         try:

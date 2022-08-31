@@ -2271,8 +2271,6 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
         # lets apply the filters here
         dataframe = indexdb.get_entries('*', condition=argcondition)
         absfilenames = np.array(dataframe['ABSPATH']).astype(str)
-
-
         # load pconst
         pconst = constants.pload()
         icols = pconst.FILEINDEX_DB_COLUMNS()

@@ -2193,6 +2193,11 @@ def _summary_args(args: Dict[str, Any], argkind: str = 'pos') -> str:
     return args_str
 
 
+# must add a plot lambda function
+def lambda_plot(*args, **kwargs):
+    pass
+
+
 # =============================================================================
 # End of code
 # =============================================================================

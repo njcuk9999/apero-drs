@@ -315,6 +315,8 @@ def __main__(recipe, params):
                                                     props, eprops, fiber=fiber,
                                                     database=calibdbm)
             # --------------------------------------------------------------
+            # S1D creation
+            # --------------------------------------------------------------
             if not quicklook:
                 s1dextfile = params['EXT_S1D_INTYPE']
                 # create 1d spectra (s1d) of the e2ds file

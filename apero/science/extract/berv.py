@@ -484,9 +484,16 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
     lockfile = os.path.basename('{0}_{1}'.format(lfilename, iteration))
     # start a lock
     lock = drs_lock.Lock(params, lockfile)
-
+    # -------------------------------------------------------------------------
+    # must check that a pid is set
+    if params['PID'] is None:
+        WLOG(params, 'error', textentry('10-005-00006'))
+        pid = None
+    else:
+        pid = params['PID']
+    # -------------------------------------------------------------------------
     # make locked bervcalc function
-    @drs_lock.synchronized(lock, params['PID'])
+    @drs_lock.synchronized(lock, pid)
     def locked_bervcalc() -> Tuple[np.ndarray, np.ndarray]:
         # try to calculate bervs and bjds
         try:

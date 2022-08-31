@@ -1667,6 +1667,7 @@ class DrsInputFile:
         if outfile is None:
             outfile = self
         # if we have a function use it
+        error = None
         if self.outclass is not None:
             try:
                 abspath = self.outclass.construct(params, infile, outfile,
@@ -1674,6 +1675,7 @@ class DrsInputFile:
                                                   remove_insuffix, prefix,
                                                   suffix, filename)
             except DrsCodedException as e:
+                error = e
                 level = e.get('level', 'error')
                 eargs = e.get('targs', None)
                 WLOG(params, level, textentry(e.codeid, args=eargs))
@@ -4041,9 +4043,9 @@ class DrsFitsFile(DrsInputFile):
             value = self.header.get(drskey, default)
         # else we must look for the value manually and handle the exception
         else:
-            try:
+            if drskey in self.header:
                 value = self.header[drskey]
-            except KeyError:
+            else:
                 # if we do not require this keyword don't generate an error
                 #   just return None
                 if not required:
