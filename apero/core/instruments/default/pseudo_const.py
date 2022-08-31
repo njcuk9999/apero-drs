@@ -1142,20 +1142,17 @@ class PseudoConstants:
 
         :return: DatabaseColumn class if valid otherwise None
         """
-        if tname == 'calib':
-            return self.CALIBRATION_DB_COLUMNS()
-        elif tname == 'tellu':
-            return self.TELLURIC_DB_COLUMNS()
-        elif tname == 'findex':
-            return self.FILEINDEX_DB_COLUMNS()
-        elif tname == 'reject':
-            return self.REJECT_DB_COLUMNS()
-        elif tname == 'log':
-            return self.LOG_DB_COLUMNS()
-        elif tname == 'object':
-            return self.ASTROMETRIC_DB_COLUMNS()
-        else:
-            return None
+        # get definitions from base
+        database_names = base.DATABASE_NAMES
+        database_col_classes = base.DATABASE_COL_CLASS
+        # loop around database types
+        for it, key in enumerate(database_names):
+            if tname == key:
+
+                if database_col_classes[it] is None:
+                    return None
+                else:
+                    return getattr(self, database_col_classes[it])
 
     # noinspection PyPep8Naming
     def CALIBRATION_DB_COLUMNS(self) -> DatabaseColumns:

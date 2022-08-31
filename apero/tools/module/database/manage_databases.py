@@ -256,21 +256,11 @@ def import_database(params: ParamDict, database_name: str,
     df = pd.read_csv(infilename)
     # -------------------------------------------------------------------
     # get unique columns
-    if 'findex' in db.database.tname:
-        idb_cols = pconst.FILEINDEX_DB_COLUMNS()
-        ucols = list(idb_cols.unique_cols)
-    elif 'astrom' in db.database.tname:
-        odb_cols = pconst.ASTROMETRIC_DB_COLUMNS()
-        ucols = list(odb_cols.unique_cols)
-    elif 'reject' in db.database.tname:
-        rdb_cols = pconst.REJECT_DB_COLUMNS()
-        ucols = list(rdb_cols.unique_cols)
-    elif 'calib' in db.database.tname:
-        cdb_cols = pconst.CALIBRATION_DB_COLUMNS()
-        ucols = list(cdb_cols.unique_cols)
-    elif 'tellu' in db.database.tname:
-        tdb_cols = pconst.TELLURIC_DB_COLUMNS()
-        ucols = list(tdb_cols.unique_cols)
+    dbcol = pconst.GET_DB_COLS(db.database.tname)
+    # deal with database column
+    if dbcol is not None:
+        ucols = dbcol.unique_cols
+    # else we assume ucols is None
     else:
         ucols = None
     # -------------------------------------------------------------------

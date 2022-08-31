@@ -101,6 +101,11 @@ class OutFile:
                                     targs=eargs, func_name=func_name)
         # set infile basename
         inbasename = infile.basename
+        # infile basename should not be None
+        if inbasename is None:
+            # TODO: add to the language db
+            emsg = 'Error: infile.basename must be set when defining infile'
+            raise DrsCodedException('0', '', emsg)
         # get condition to remove input file prefix
         if remove_insuffix is None:
             remove_insuffix = outfile.remove_insuffix
@@ -139,7 +144,7 @@ class OutFile:
                 outpath = None
             # check if outpath is set
             if outpath is None:
-                raise DrsCodedException('00-001-00023', level='error',
+                raise DrsCodedException('01-001-00023', level='error',
                                         targs=[func_name], func_name=func_name)
             # get output night name from params
             if params['OBS_DIR'] is None:
@@ -253,7 +258,7 @@ class GeneralOutFile(OutFile):
                 outpath = None
             # check if outpath is set
             if outpath is None:
-                raise DrsCodedException('00-001-00023', level='error',
+                raise DrsCodedException('01-001-00023', level='error',
                                         targs=[func_name], func_name=func_name)
             # get output night name from params
             if params['OBS_DIR'] is None:
@@ -497,7 +502,7 @@ class SetOutFile(OutFile):
             outpath = params['OUTPATH']
             # check if outpath is set
             if outpath is None:
-                raise DrsCodedException('00-001-00023', level='error',
+                raise DrsCodedException('01-001-00023', level='error',
                                         targs=[func_name], func_name=func_name)
             # get output night name from params
             obs_dir = params['OBS_DIR']
@@ -728,7 +733,7 @@ def get_outfilename(params: ParamDict, infilename: str,
     """
     # set function name
     func_name = display_func('get_outfilename', __NAME__)
-    # make surte infilename is a basename not a path
+    # make sure infilename is a basename not a path
     infilename = os.path.basename(infilename)
     # deal with fiber
     if fiber is not None:

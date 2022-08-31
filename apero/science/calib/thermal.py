@@ -138,8 +138,8 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     filter_wid = pcheck(params, 'THERMAL_FILTER_WID', 'filter_wid', kwargs,
                         func_name)
     torder = pcheck(params, 'THERMAL_ORDER', 'torder', kwargs, func_name)
-    red_limt = pcheck(params, 'THERMAL_RED_LIMIT', 'red_limit', kwargs,
-                      func_name)
+    red_limit = pcheck(params, 'THERMAL_RED_LIMIT', 'red_limit', kwargs,
+                       func_name)
     blue_limit = pcheck(params, 'THERMAL_BLUE_LIMIT', 'blue_limit', kwargs,
                         func_name)
     e2ds = pcheck(params, 'E2DS', 'e2ds', kwargs, func_name, paramdict=eprops)
@@ -215,7 +215,7 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     tkwargs = dict(header=header, fiber=fiber, wavemap=wavemap,
                    tapas_thres=tapas_thres, envelope=envelope,
                    filter_wid=filter_wid, torder=torder,
-                   red_limit=red_limt, blue_limit=blue_limit,
+                   red_limit=red_limit, blue_limit=blue_limit,
                    thermal=thermal, database=database)
     # base thermal correction on fiber type
     if fibertype in corrtype1:
