@@ -2,6 +2,110 @@ Changelog
 =========
 
 
+0.7.248 (2022-08-31)
+--------------------
+- [APERO] manage locking better (when no PID), manage databases better
+  (from one place `pconst.GET_DB_COLS()`  + base) [Neil Cook]
+
+
+0.7.247 (2022-08-29)
+--------------------
+- [APERO] Change object database to astrometric database. [Neil Cook]
+- [APERO] Change object database to astrometric database. [Neil Cook]
+- Merge branch 'v0.7.242-working' into v0.7.243-working. [Neil Cook]
+
+  # Conflicts:
+  #    `apero/core/core/drs_file.py`
+  #    `apero/tools/module/listing/file_explorer.py`
+
+  Conflicts fixed
+- [APERO] update references to INDEX (and make all database lower case
+  for SQL) [Neil Cook]
+- [APERO] documentation - update files. [Neil Cook]
+- [APERO] documentation - add sequence graphml/jpg/pdf files. [Neil
+  Cook]
+- `Apero.tools.module.database.database_gui.py` - save the hash col before
+  removing it and add it back when saving. [Neil Cook]
+- Put the readme files back in /bin/ and /tools/ [Neil Cook]
+- [APERO] `apero.science.telluric.template_tellu.py` - fix s1d template
+  (in similar way to s1d template) [Neil Cook]
+
+
+0.7.246 (2022-08-17)
+--------------------
+- [APERO] add to sequence schematics + descriptions. [Neil Cook]
+- [APERO] update file descriptions + update documentation with file
+  descriptions. [Neil Cook]
+- [APERO] update file descriptions. [Neil Cook]
+- [APERO] `apero.tools.module.setup.drs_reset.py` - correct temporary
+  message. [Neil Cook]
+- [APERO] `apero.tools.module.setup.drs_reset.py` - correct file list.
+  [Neil Cook]
+- [APERO] `apero.tools.module.setup.drs_reset.py` - speed up reset (or at
+  least display a message) [Neil Cook]
+- [APERO] documentation - update overview schematics (yed) [Neil Cook]
+- [APERO] `apero.tools.recipes.bin/apero_stats.py` - need recipe to be
+  passed (for plotting) [Neil Cook]
+- [APERO] `apero.tools.recipes.bin/apero_stats.py` - need recipe to be
+  passed (for plotting) [Neil Cook]
+- [APERO] `apero.science.telluric.gen_tellu.py` - change pre-cleaning SNR
+  criteria to be median SNR (not max) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.243-working' into
+  v0.7.243-working. [Neil Cook]
+- [APERO] `apero.science.telluric.template_tellu.py` - [BAD BUG] fix for
+  templates - binning was incorrect if N>50 files was using only the
+  first sqrt(N) files, if N<50 was using only using the first. [Neil
+  Cook]
+- [APERO] paper - update `apero_overall_flow` diagram. [Neil Cook]
+
+
+0.7.245 (2022-08-10)
+--------------------
+- Merge branch 'v0.7.242-working' into v0.7.243-working. [Neil Cook]
+- [APERO] `apero.tools.recipes.bin.apero_stats.py` - add memory stats to
+  `apero_stats.py`. [Neil Cook]
+- Update filenames master-->ref. [Neil Cook]
+- Update filenames master-->ref. [Neil Cook]
+- Re-add run.ini files after master-->ref. [Neil Cook]
+- Re-add run.ini files after master-->ref. [Neil Cook]
+- Replace "master/MASTER" with "ref/reference"  (do not use "master" as
+  a word) [UNTESTED] [Neil Cook]
+
+
+0.7.244 (2022-08-02)
+--------------------
+- [APERO] `core.instruments.*.recipe_defintions.py` - missing
+  `WAVEREF_EXPECTED` from plots. [Neil Cook]
+- Update `mysql_database_commands.rst`. [Neil Cook]
+
+  Add some extra useful MySQL commands
+- Add files via upload. [Neil Cook]
+
+  add overview for paper
+
+
+0.7.243 (2022-06-30)
+--------------------
+- [APERO] `apero.base.drs_db.py` - up the wait time for database
+  connection failure (5s--> 30s) [Neil Cook]
+- Up the wait time for database connection failure. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.242-working' into
+  v0.7.242-working. [Neil Cook]
+- [APERO] deal with nan slices in transmission. [njcuk9999]
+- Update paper schematics. [Neil Cook]
+
+
+0.7.242 (2022-06-23)
+--------------------
+- [NIRPS] modify tapas to mask unusable regions. [njcuk9999]
+- [APERO] `tools.module.processing.drs_processing.py` - make `KW_OBSTYPE`
+  condition depend on instrument. [njcuk9999]
+- [NIRPS] adjust some tellu parameters for nirps. [njcuk9999]
+- [APERO] remove shortcut to `apero_flat_spirou.py` in bin dir. [Neil
+  Cook]
+- Update version/date/changelog/docs. [Neil Cook]
+
+
 0.7.241 (2022-06-21)
 --------------------
 - [APERO] `apero.core.core.drs_file.py` - deal with nans better.
@@ -3669,7 +3773,7 @@ Changelog
 - `Apero.core.utils.drs_utils.py` - modify `update_index_db`. [Neil Cook]
 - `Apero.core.utils.drs_recipe.py` - deal with filemod better. [Neil Cook]
 - `Apero.core.utils.drs_database.py` - continue working on
-  FileIndexDatabaseManager. [Neil Cook]
+  IndexDatabaseManager. [Neil Cook]
 - `Apero.core.instruments.spirou.file_definitions.py` - update `drs_finput`
   with hkeys (still need to do this for nirps) [Neil Cook]
 - `Apero.core.instruments.deafult_keywords.py` - `KW_ACQTIME` --> MJDEND.
@@ -3697,10 +3801,10 @@ Changelog
 - `Apero.io.drs_path.py` - allow copytree to log. [Neil Cook]
 - `Apero.core.utils.py` - add utils module for functions that must import
   from all other utils. [Neil Cook]
-- `Core.utils.drs_database.py` - add features to FileIndexDatabaseManager.
+- `Core.utils.drs_database.py` - add features to IndexDatabaseManager.
   [Neil Cook]
 - `Apero.core.instruments.*.pseudo_const.py` - add `INDEX_HEADER_KEYS` and
-  modify `FILEINDEX_DB_COLUMNS`. [Neil Cook]
+  modify `INDEX_DB_COLUMNS`. [Neil Cook]
 - `Core.core.drs_file.py` - tag some functions to be changed to database
   functions. [Neil Cook]
 - `Apero.base.drs_misc.py` - allow `get_uncommon_paths` to accept Path as
