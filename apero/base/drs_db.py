@@ -1743,7 +1743,8 @@ class MySQLDatabase(Database):
         # deal with setting table name (we only have one per manager hence
         #   why this is set)
         if absolute_table_name:
-            self.tname = tablename.lower()
+            if tablename is not None:
+                self.tname = tablename.lower()
         else:
             self.tname = _proxy_table(tablename)
         # re-set path after call to super
