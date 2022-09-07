@@ -169,7 +169,7 @@ pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 # apero_pp_ref
 # -----------------------------------------------------------------------------
 apero_pp_ref = DrsRecipe(__INSTRUMENT__)
-apero_pp_ref.name = 'apero_PP_REF_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_pp_ref.name = 'apero_pp_ref_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_pp_ref.shortname = 'PPREF'
 apero_pp_ref.instrument = __INSTRUMENT__
 apero_pp_ref.in_block_str = 'raw'
