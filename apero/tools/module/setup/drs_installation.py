@@ -721,7 +721,7 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
     else:
         database_ask = [False] * 7
     database_args = ['calibtable', 'tellutable', 'findextable', 'logtable',
-                     'findextable', 'rejecttable', 'langtable']
+                     'astromtable', 'rejecttable', 'langtable']
     # loop around databases
     for db_it in range(len(database_user)):
         # ---------------------------------------------------------------------
@@ -1639,8 +1639,8 @@ def update_dparams(aparams: ParamDict,
         return dparams
     # loop around databases
     for dbname in base.DATABASE_NAMES:
-
-        value = aparams['MYSQL'].get(f'{dbname}_profile', None)
+        dbkey = f'{dbname}_profile'.upper()
+        value = aparams['MYSQL'].get(dbkey, None)
         if value is not None:
             dparams['MYSQL'][dbname.upper()]['PROFILE'] = value
     # return dparams
