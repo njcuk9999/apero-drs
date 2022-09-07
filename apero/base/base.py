@@ -299,7 +299,7 @@ def create_yamls(allparams: Any):
     findexdb['NAME'] = allparams['SQLITE'].get('IDX_NAME', 'index.db')
     findexdb['RESET'] = allparams['SQLITE'].get('IDX_RESET', 'NULL')
     findexdb['PROFILE'] = allparams['SQLITE'].get('IDX_PROFILE', 'NULL')
-    sqlite3['FILEINDEX'] = findexdb
+    sqlite3['FINDEX'] = findexdb
     # add log database
     logdb = dict()
     logdb['PATH'] = allparams['SQLITE'].get('LOG_PATH', 'DRS_DATA_ASSETS')
@@ -361,7 +361,7 @@ def create_yamls(allparams: Any):
     findexdb['NAME'] = allparams['MYSQL'].get('IDX_NAME', 'NULL')
     findexdb['RESET'] = allparams['MYSQL'].get('IDX_RESET', 'NULL')
     findexdb['PROFILE'] = allparams['MYSQL'].get('IDX_PROFILE', 'MAIN')
-    mysql['FILEINDEX'] = findexdb
+    mysql['FINDEX'] = findexdb
     # add log database
     logdb = dict()
     logdb['PATH'] = allparams['MYSQL'].get('LOG_PATH', 'NULL')
