@@ -338,11 +338,11 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     print('\n')
     # ------------------------------------------------------------------
     # add dev mode to allparams
-    all_params['DEVMODE'] = getattr(args, 'devmode', False)
+    all_params['DEVMODE'] = getattr(args, 'dev', False)
     # add clean warn
-    all_params['CLEANWARN'] = getattr(args, 'cleanwarn', False)
+    all_params['CLEANWARN'] = getattr(args, 'clean_no_warning', False)
     # get whether to ask user about creating directories
-    askcreate = not getattr(args, 'alwayscreate', True)
+    askcreate = not getattr(args, 'always_create', True)
 
     # ------------------------------------------------------------------
     # Step 0: Ask for profile name (if not given)
@@ -378,6 +378,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     userconfig = userconfig.joinpath(profilename)
     # add user config to all_params
     all_params['USERCONFIG'] = userconfig
+    args.config = userconfig
 
     # ------------------------------------------------------------------
     # Step 2: Ask for instrument (from valid instruments)
@@ -408,9 +409,11 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # set instrument in all params
     all_params['INSTRUMENT'] = instrument
     all_params.set_source('INSTRUMENT', func_name)
+    args.instrument = instrument
     # TODO: set language
     all_params['LANGUAGE'] = lang
     all_params.set_source('LANGUAGE', lang)
+    # args.language = lang
     # ------------------------------------------------------------------
     # Database settings: Choose a database mode
     prompt_db = textentry('40-001-00043')
@@ -433,11 +436,12 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     if db_type is None:
         db_type = ask(prompt_db, options=[1, 2], dtype='int',
                       optiondesc=options_db)
+        args.database_mode = int(db_type)
     # add the database settings (and ask user if required
     if db_type == 2:
-        all_params = get_mysql_settings(all_params, args)
+        all_params, args = get_mysql_settings(all_params, args)
     else:
-        all_params = get_sqlite_settings(all_params)
+        all_params, args = get_sqlite_settings(all_params)
     # ------------------------------------------------------------------
     cprint('\n' + printheader(), 'm')
     cprint(textentry('40-001-00046', args=[instrument]), 'm')
@@ -453,6 +457,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # ------------------------------------------------------------------
     # check data path
     promptuser, datadir = check_path_arg('datadir', args.datadir, askcreate)
+    # update args with data dir
+    args.datadir = datadir
 
     # check for data paths in args
     data_prompts, data_values = dict(), dict()
@@ -487,10 +493,13 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
                 # ask question and assign path
                 all_params[path] = ask(question, 'path', default=defaultpath)
                 all_params.set_source(path, __NAME__)
+                # print header
                 cprint(printheader(), 'g')
             else:
                 all_params[path] = argvalue
                 all_params.set_source(path, 'command line')
+            # update args
+            setattr(args, DATA_ARGS[path], all_params[path])
     # ------------------------------------------------------------------
     elif data_promptuser:
         create = False
@@ -517,6 +526,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
             dpath = directory.joinpath(default)
             all_params[path] = dpath
             all_params.set_source(path, __NAME__)
+            # update args
+            setattr(args, DATA_ARGS[path], all_params[path])
             # check whether path exists
             if not dpath.exists():
                 cprint(textentry('40-001-00048', args=all_params[path]), 'g')
@@ -532,12 +543,14 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
                 all_params[path] = datadir.joinpath(default)
                 all_params.set_source(path, 'command line + default')
                 pargs = [path, all_params[path]]
+                # print header
                 cprint(textentry('40-001-00049', args=pargs))
             else:
                 # assign path
                 all_params[path] = value
                 all_params.set_source(path, 'command line')
-
+            # update args
+            setattr(args, DATA_ARGS[path], all_params[path])
     # ------------------------------------------------------------------
     # Step 4: Ask for plot mode
     # ------------------------------------------------------------------
@@ -553,6 +566,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
                    default=0)
         all_params['DRS_PLOT'] = plot
         all_params.set_source('DRS_PLOT', __NAME__)
+        #update args
+        args.plotmode = plot
         # add header line
         cprint(printheader(), 'g')
     else:
@@ -567,6 +582,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
         all_params['CLEAN_INSTALL'] = ask(textentry('INSTALL_CLEAN_MSG'),
                                           dtype='YN')
         all_params.set_source('CLEAN_INSTALL', func_name)
+        #update args
+        args.clean = all_params['CLEAN_INSTALL']
     else:
         cprint(textentry('40-001-00055', args=[args.clean]))
         all_params['CLEAN_INSTALL'] = eval(args.clean)
@@ -638,6 +655,7 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['HOST'] = response
+        args.database_host = response
     # ----------------------------------------------------------------------
     # ask for the username
     if username is not None:
@@ -648,6 +666,7 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['USER'] = response
+        args.database_user = response
     # ----------------------------------------------------------------------
     # ask for the password
     if password is not None:
@@ -658,6 +677,7 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['PASSWD'] = response
+        args.database_pass = response
     # ----------------------------------------------------------------------
     # ask for the database name
     if name is not None:
@@ -668,11 +688,12 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['DATABASE'] = response
+        args.database_name = response
     # ----------------------------------------------------------------------
     # Individual database table settings
-    all_params = mysql_database_tables(args, all_params)
+    all_params, args = mysql_database_tables(args, all_params)
     # ----------------------------------------------------------------------
-    return all_params
+    return all_params, args
 
 
 def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
@@ -699,8 +720,8 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
         database_ask = [True, True, False, False, False, False, False]
     else:
         database_ask = [False] * 7
-    database_args = ['calibtable', 'tellutable', 'indextable', 'logtable',
-                     'objtable', 'rejecttable', 'langtable']
+    database_args = ['calibtable', 'tellutable', 'findextable', 'logtable',
+                     'findextable', 'rejecttable', 'langtable']
     # loop around databases
     for db_it in range(len(database_user)):
         # ---------------------------------------------------------------------
@@ -715,6 +736,7 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
             if response not in ['None', '', None]:
                 # set key
                 all_params['MYSQL'][dbkey] = str(response)
+                setattr(args, database_args[db_it], str(response))
                 # skip asking the question
                 continue
         # ---------------------------------------------------------------------
@@ -732,10 +754,12 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
         # --------------------------------------------------------------------
         if response not in ['None', '', None]:
             all_params['MYSQL'][dbkey] = response
+            setattr(args, database_args[db_it], response)
         else:
             all_params['MYSQL'][dbkey] = all_params['PROFILENAME']
+            setattr(args, database_args[db_it], all_params['PROFILENAME'])
     # ----------------------------------------------------------------------
-    return all_params
+    return all_params, args
 
 
 def get_sqlite_settings(all_params: ParamDict) -> ParamDict:
