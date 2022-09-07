@@ -376,6 +376,8 @@ def save_args(args: argparse.Namespace):
     """
     # write command
     command = f'python {__NAME__}          \\'
+    # set always create to true (even if False)
+    args.always_create = True
     # convert namespace to dictionary
     argdict = vars(args)
     # add non null arguments

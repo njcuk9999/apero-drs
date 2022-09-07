@@ -3,7 +3,7 @@
 
 
 ################################################################################
-apero_PP_REF_nirps_he
+apero_pp_ref_nirps_he
 ################################################################################
 
 
@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_PP_REF_nirps_he.py {obs_dir}[STRING] {options}
+    apero_pp_ref_nirps_he.py {obs_dir}[STRING] {options}
 
 
 .. code-block:: 
