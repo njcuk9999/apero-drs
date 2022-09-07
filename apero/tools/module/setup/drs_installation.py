@@ -704,8 +704,8 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
     # loop around databases
     for db_it in range(len(database_user)):
         # ---------------------------------------------------------------------
-        # db key for all_params
-        dbkey = '{0}_profile'.format(databases_raw[db_it])
+        # db key for all_params - capitalized to match sqlite
+        dbkey = '{0}_profile'.format(databases_raw[db_it]).upper()
         # ---------------------------------------------------------------------
         # deal with command line arguments
         if hasattr(args, database_args[db_it]):
@@ -714,7 +714,7 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
             # only deal with non Null values
             if response not in ['None', '', None]:
                 # set key
-                all_params['MYSQL'][dbkey.upper()] = str(response)
+                all_params['MYSQL'][dbkey] = str(response)
                 # skip asking the question
                 continue
         # ---------------------------------------------------------------------
