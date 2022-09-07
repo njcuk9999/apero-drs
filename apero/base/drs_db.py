@@ -702,6 +702,9 @@ class Database:
         translator = {str: "TEXT", int: "INTEGER", float: "REAL"}
         # storage for fields
         fields = []
+        # deal with empty unique column list
+        if unique_cols is not None and len(unique_cols) == 0:
+            unique_cols = None
         # deal with index columns
         _ = index_cols
         # make sure field_names and field_types are the same size
@@ -1500,6 +1503,9 @@ class SQLiteDatabase(Database):
         func_name = __NAME__ + '.SQLiteDatabase.add_from_pandas()'
         # infer table name
         table = self._infer_table_(table)
+        # deal with empty unique column list
+        if unique_cols is not None and len(unique_cols) == 0:
+            unique_cols = None
         # need to add uhash column
         if unique_cols is not None:
             df = _hash_df(df, unique_cols)
@@ -2223,8 +2229,11 @@ class MySQLDatabase(Database):
         func_name = __NAME__ + '.Database.add_from_pandas()'
         # infer table name
         table = self._infer_table_(table)
+        # deal with empty unique column list
+        if unique_cols is not None and len(unique_cols) == 0:
+            unique_cols = None
         # need to add uhash column
-        if unique_cols is not None and len(unique_cols) > 0:
+        if unique_cols is not None:
             df = _hash_df(df, unique_cols)
         # check if_exists criteria
         if if_exists not in ['fail', 'replace', 'append']:
