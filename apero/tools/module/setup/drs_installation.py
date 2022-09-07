@@ -714,7 +714,7 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
             # only deal with non Null values
             if response not in ['None', '', None]:
                 # set key
-                all_params['MYSQL'][dbkey] = str(response)
+                all_params['MYSQL'][dbkey.upper()] = str(response)
                 # skip asking the question
                 continue
         # ---------------------------------------------------------------------
