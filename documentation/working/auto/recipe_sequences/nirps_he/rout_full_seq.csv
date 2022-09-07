@@ -1,5 +1,5 @@
 ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,FIBER,FILTERS,ARGS,KWARGS
-1,apero_PP_REF_nirps_he.py,PPREF,pre-reference,Yes,--,--,,
+1,apero_pp_ref_nirps_he.py,PPREF,pre-reference,Yes,--,--,,
 2,apero_preprocess_nirps_he.py,PP,pre-all,No,--,--,,
 3,apero_dark_ref_nirps_he.py,DARKREF,calib-reference,Yes,--,--,,
 4,apero_badpix_nirps_he.py,BADREF,calib-reference,Yes,--,--,,
