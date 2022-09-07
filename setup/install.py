@@ -378,6 +378,9 @@ def save_args(args: argparse.Namespace):
     command = f'python {__NAME__}          \\'
     # set always create to true (even if False)
     args.always_create = True
+    # remove profile name from config path
+    if str(args.config).endswith(args.name):
+        args.config = str(args.config)[:-len(args.name)]
     # convert namespace to dictionary
     argdict = vars(args)
     # add non null arguments
