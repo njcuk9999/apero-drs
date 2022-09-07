@@ -378,7 +378,9 @@ def save_args(args: argparse.Namespace):
     command = f'python {__NAME__}          \\'
     # set always create to true (even if False)
     args.always_create = True
-    # remove profile name from config path
+    # remove profile name from config path (for arguments)
+    #   but keep config_path for saving file to
+    config_path = str(args.config)
     if str(args.config).endswith(args.name):
         args.config = str(args.config)[:-len(args.name)]
     # convert namespace to dictionary
@@ -406,7 +408,7 @@ def save_args(args: argparse.Namespace):
             else:
                 command += prefix + f'--{arg}={str(argdict[arg])}' + suffix
     # construct path
-    path = os.path.join(str(args.config), 'install.sh')
+    path = os.path.join(config_path, 'install.sh')
     # write to file
     with open(path, 'w') as afile:
         afile.write(command)
