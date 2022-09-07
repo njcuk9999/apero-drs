@@ -175,7 +175,7 @@ def group_individually(rargs: Dict[str, DrsArgument],
     # need to loop around drsfiles in file arg 1
     for drsfiletype in drsfile_group:
         # get arg 0 table
-        table0 = alldict[first_arg][drsfiletype]
+        table0 = _get_raw_table(alldict, first_arg, drsfiletype)
         # deal with no table
         if table0 is None:
             continue
@@ -494,24 +494,7 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
     #    each file argument)
     for groupnum, drsfile_group in enumerate(drsfile_groups):
         # get arg 0 table
-        rawtab = alldict[first_arg][drsfile_group[0]]
-        # if rawtable is a single row - we had one row and need to convert
-        #   back to a table
-        if isinstance(rawtab, Table.Row):
-            table0 = Table(rawtab)
-        # if rawtab is a Table then we are good - we have multiple rows
-        elif isinstance(rawtab, Table):
-            table0 = rawtab
-        # rawtab none means no files of this type
-        elif rawtab is None:
-            continue
-        # else we have to deal with an error
-        else:
-            # raise error: alldict[{0}][{1}] is not a valid astropy table
-            eargs = [first_arg, drsfile_group[0], func_name]
-            raise drs_exceptions.DrsCodedException('00-006-00024', 'error',
-                                                   targs=eargs,
-                                                   func_name=func_name)
+        table0 = _get_raw_table(alldict, first_arg, drsfile_group[0])
         # ---------------------------------------------------------------------
         # deal with no table
         if table0 is None:
@@ -845,6 +828,42 @@ def _is_numeric(array: Union[list, np.ndarray, Iterable]) -> np.ndarray:
 
     # return map as a numpy array of True and Falses (a mask)
     return np.array(list(map(test_float, array)))
+
+
+def _get_raw_table(alldict: dict, first_arg: str,
+                   drsfiletype: str) -> Union[Table, None]:
+    """
+    Get the raw table from alldict (which could contain a table or a single
+    row or None
+
+    :param alldict: dict, the all dict dictionary of dictionaries containing
+                    the tables/rows or None entries for each arg
+    :param first_arg: str, the argument to access in alldict
+    :param drsfiletype: str, the file type to access in alldict
+
+    :return: Table or None, returns Table if a Table.Row or Table was found
+    """
+    # get arg 0 table
+    rawtab = alldict[first_arg][drsfiletype]
+    # if rawtable is a single row - we had one row and need to convert
+    #   back to a table
+    if isinstance(rawtab, Table.Row):
+        return Table(rawtab)
+    # if rawtab is a Table then we are good - we have multiple rows
+    elif isinstance(rawtab, Table):
+        return rawtab
+    # rawtab none means no files of this type
+    elif rawtab is None:
+        return None
+    # else we have to deal with an error
+    else:
+        # set function name
+        func_name = display_func('_get_raw_table', __NAME__)
+        # raise error: alldict[{0}][{1}] is not a valid astropy table
+        eargs = [first_arg, drsfiletype, func_name]
+        raise drs_exceptions.DrsCodedException('00-006-00024', 'error',
+                                               targs=eargs,
+                                               func_name=func_name)
 
 
 # =============================================================================
