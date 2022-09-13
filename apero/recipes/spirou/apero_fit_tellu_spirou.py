@@ -286,7 +286,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Create 1d spectra (s1d) of the reconstructed absorption
         # ------------------------------------------------------------------
-        rcargs = [wprops['WAVEMAP'], cprops['RECON_ABSO'], nprops['BLAZE']]
+        # must multiple recon by blaze (for proper weighting in s1d)
+        brecon = cprops['RECON_ABSO'] * nprops['BLAZE']
+        # do s1d
+        rcargs = [wprops['WAVEMAP'], brecon, nprops['BLAZE']]
         rcwprops = extract.e2ds_to_s1d(params, recipe, *rcargs, wgrid='wave',
                                        fiber=fiber, s1dkind='recon')
         rcvprops = extract.e2ds_to_s1d(params, recipe, *rcargs,
