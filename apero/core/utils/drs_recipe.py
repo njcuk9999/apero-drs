@@ -1640,6 +1640,9 @@ class DrsRunSequence:
         self.tstars = None
         # set up storage for the non-telluric stars list
         self.ostars = None
+        # define and store description and schematic file
+        self.description_file = None
+        self.schematic = None
 
     def __getstate__(self) -> dict:
         """

@@ -1256,6 +1256,9 @@ recipes.append(apero_postprocess)
 # full seqeunce (reference + nights)
 # -----------------------------------------------------------------------------
 full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
+# define schematic file and description file
+full_seq.schematic = 'full_seq.jpg'
+full_seq.description_file = None
 # reference run
 full_seq.add(apero_preprocess, recipe_kind='pre-all')
 full_seq.add(apero_dark_ref, ref=True)
@@ -1369,6 +1372,9 @@ full_seq.add(apero_postprocess, name='POSTALL', files=[files.pp_file],
 # limited sequence (reference + nights)
 # -----------------------------------------------------------------------------
 limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
+# define schematic file and description file
+limited_seq.schematic = 'limited_seq.jpg'
+limited_seq.description_file = None
 # reference run
 limited_seq.add(apero_preprocess, recipe_kind='pre-all')
 limited_seq.add(apero_dark_ref, ref=True)
@@ -1508,6 +1514,7 @@ limited_seq.add(apero_postprocess, name='SCIPOST', files=[files.pp_file],
 # pp sequence (for trigger)
 # -----------------------------------------------------------------------------
 pp_seq = drs_recipe.DrsRunSequence('pp_seq', __INSTRUMENT__)
+# add preprocess
 pp_seq.add(apero_preprocess)
 
 pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
@@ -1538,6 +1545,10 @@ pp_seq_opt.add(apero_preprocess, name='PP_FPLFC', files=[files.raw_fp_lfc],
 # reference sequence (for trigger)
 # -----------------------------------------------------------------------------
 ref_seq = drs_recipe.DrsRunSequence('ref_seq', __INSTRUMENT__)
+# define schematic file and description file
+ref_seq.schematic = 'ref_seq.jpg'
+ref_seq.description_file = None
+# add recipes
 ref_seq.add(apero_dark_ref, ref=True)
 ref_seq.add(apero_badpix, name='BADREF', ref=True,
                recipe_kind='calib-reference')
@@ -1566,6 +1577,9 @@ ref_seq.add(apero_thermal, name='THERM_REFT', ref=True,
 # calibration run (for trigger)
 # -----------------------------------------------------------------------------
 calib_seq = drs_recipe.DrsRunSequence('calib_seq', __INSTRUMENT__)
+# define schematic file and description file
+calib_seq.schematic = 'calib_seq.jpg'
+calib_seq.description_file = None
 # night runs
 calib_seq.add(apero_badpix)
 calib_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCC',
@@ -1587,6 +1601,9 @@ calib_seq.add(apero_thermal, name='THERM_T',
 # telluric sequence (for trigger)
 # -----------------------------------------------------------------------------
 tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
+# define schematic file and description file
+tellu_seq.schematic = 'tellu_seq.jpg'
+tellu_seq.description_file = None
 # extract science
 tellu_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
               files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
@@ -1641,6 +1658,9 @@ tellu_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
 # science sequence (for trigger)
 # -----------------------------------------------------------------------------
 science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
+# define schematic file and description file
+science_seq.schematic = 'science_seq.jpg'
+science_seq.description_file = None
 # extract science
 science_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
                 files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
