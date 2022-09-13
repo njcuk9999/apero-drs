@@ -1,10 +1,49 @@
-# Update Note Summary - Version 0.7.243
+# Update Note Summary - Version 0.7.248
 
-Date: 2022-08-29
+Date: 2022-09-13
 
+## Update notes
+
+- NIRPS changes
+
+- badpix: added erode/dilate around large bad pixels
+- badpix: slighty update background calculation
+- flat: dealing with small number regions better
+- telluric: fix template binning incorrectly
+- fix for sqlite during install (not full tested with mini data yet)
+- fix for apero_processing (when 1 type of file on 1 night)
+- fix for s1d_recon being wrong by a blaze factor
+- polar: fix factor of 2
+
+- change in wording "master" --> "reference" or "ref"
+    - "master night" --> "reference night"
+    - "master calibration" --> "reference calibration"
+
+- change database naming
+    - "index database (INDEX)" --> "file index database (FINDEX)"
+    - "object database (OBJECT)" --> "astrometric database (ASTROM)"
+
+
+## Todo before 0.8
+
+- polar changes from Eder (branch created)
+- s1d recon problem
+- 2018 flats (done by Etienne, just need processing?)
+
+
+## TODO 0.8
+
+- need to "kill thermal" in blue end
+- propagate uncertainies
+- create OH lines s1d and add OH line s1d to CADC outputs
+- use LFC (and FP_HC, HC_FP) in wave solution
+- lbl into apero?
+- wave memory issue
+- drs test module (Thomas and Charles are working on this)
+- persistence corrections?
+- install apero with pip (Thomas)
 
 ## Updates require to upgrade to >0.7.243  (if not resetting everything)
-
 
 1. Need to update calibration database column:
 	ALTER TABLE CALIB_setup_spirou_stable_07_DB  ADD COLUMN REFCAL int(11);
@@ -40,7 +79,10 @@ Date: 2022-08-29
     INDEX_{apero-profile)_DB    -->    findex_{apero-profile}_db
     LANG_{apero-profile)_DB    -->    lang_{apero-profile}_db
     LOG_{apero-profile)_DB    -->    log_{apero-profile}_db
-    OBJECT_{apero-profile)_DB    -->    astrometric_{apero-profile}_db
+    OBJECT_{apero-profile)_DB    -->    astrom_{apero-profile}_db
     REJECT_{apero-profile)_DB    -->    reject_{apero-profile}_db
     TELLU_{apero-profile)_DB    -->    tellu_{apero-profile}_db
+
+
+
 
