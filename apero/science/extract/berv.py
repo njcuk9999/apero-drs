@@ -137,10 +137,9 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     if berv_props['USE_BERV'] is not None and not force:
         if np.isfinite(berv_props['USE_BERV']):
             # print progress about berv
-            # TODO: move to language database
-            msg = 'Identified object as {0} with BERV = {1:.4f} km/s'
+            # print msg: Identified object as {0} with BERV = {1:.4f} km/s
             margs = [berv_props['OBJNAME'], berv_props['USE_BERV']]
-            WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', textentry('40-016-00035', args=margs))
             # return the berv properties
             return berv_props
     # -------------------------------------------------------------------------
@@ -196,10 +195,9 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
         if berv_props['USE_BERV'] is not None:
             if np.isfinite(berv_props['USE_BERV']):
                 # print progress about berv
-                # TODO: move to language database
-                msg = 'Identified object as {0} with BERV = {1:.4f} km/s'
+                # print msg: Identified object as {0} with BERV = {1:.4f} km/s
                 margs = [berv_props['OBJNAME'], berv_props['USE_BERV']]
-                WLOG(params, '', msg.format(*margs))
+                WLOG(params, '', textentry('40-016-00035', args=margs))
                 # return the berv properties
                 return berv_props
     # -------------------------------------------------------------------------
@@ -229,10 +227,9 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     # check if we have berv a good berv
     berv_props = assign_use_berv(berv_props)
     # print progress about berv
-    # TODO: move to language database
-    msg = 'Identified object as {0} with BERV = {1:.4f} km/s'
+    # print msg: Identified object as {0} with BERV = {1:.4f} km/s
     margs = [berv_props['OBJNAME'], berv_props['USE_BERV']]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-016-00035', args=margs))
     # return the berv properties
     return berv_props
 

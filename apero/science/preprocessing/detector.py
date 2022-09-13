@@ -493,8 +493,8 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
     # -------------------------------------------------------------------------
     # first basic check: is the full image nans (has happened before)
     if np.sum(np.isfinite(image)) == 0:
-        # TODO: move to language database
-        WLOG(params, 'warning', 'Full image is NaN - cannot fix')
+        # print warning: Full image is NaN - cannot fix
+        WLOG(params, 'warning', textentry('10-010-00006'), sublevel=8)
         # return nans
         return np.nan, (np.nan, np.nan, np.nan, np.nan), np.nan, np.nan
     # -------------------------------------------------------------------------

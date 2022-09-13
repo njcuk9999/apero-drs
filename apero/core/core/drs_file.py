@@ -7288,10 +7288,7 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
                 return drsfiles
     # -------------------------------------------------------------------------
     # print progress
-    # TODO: add to language database
-    msg = 'Checking input qc for: {0}'
-    margs = [filekind]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-005-10004', args=[filekind]))
     # -------------------------------------------------------------------------
     # storage for return
     valid_drsfiles = []
@@ -7332,19 +7329,18 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
     # deal with files failing input qc test
     # print error message if we have no files
     if len(valid_drsfiles) == 0 and required:
-        # TOOD: move to language adtabase
-        emsg = 'No valid input {0} files after QC test'
-        eargs = [filekind]
+        # print msg: no valid input {0} files after QC test:
+        emsg = textentry('09-001-00033', args=[filekind])
         # loop around bad files
         for bad_drsfile in bad_drsfiles:
             eargs1 = [bad_drsfile, bad_drsfiles[bad_drsfile]]
             emsg += '\n\t - {0}: {1}'.format(*eargs1)
         # report error: No valid files after QC
-        WLOG(params, 'error', emsg.format(*eargs))
+        WLOG(params, 'error', emsg)
     elif len(valid_drsfiles) != len(drsfiles):
-        # TOOD: move to language adtabase
-        wmsg = '\tSome input {0} failed QC test - Removing:'
+        # print warning msg: Some input {0} failed QC test - Removing:
         wargs = [filekind]
+        wmsg = textentry('10-001-00013', args=wargs)
         # loop around bad files
         for bad_drsfile in bad_drsfiles:
             wargs1 = [bad_drsfile, bad_drsfiles[bad_drsfile]]
@@ -7352,10 +7348,8 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
         # report error: No valid files after QC
         WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
     else:
-        # print that
-        msg = '\tAll input {0} passed QC'
-        margs = [filekind]
-        WLOG(params, '', msg.format(*margs))
+        # print msg: All input {0} files passed QC'
+        WLOG(params, '', textentry('40-005-10005', args=[filekind]))
     # -------------------------------------------------------------------------
     # deal with return
     return valid_drsfiles

@@ -1540,14 +1540,12 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # update the cavity per order by 1 - the median of the res
             cavity_per_order = cavity_per_order * (1 - med_hc_res)
 
-        # TODO: move to language database
-        msg = '\tVelocity RMS of HC lines relative to catalog: {0:.3f} km/s'
-        WLOG(params, '', msg.format(sigma_hc_res_kms))
+        # print msg: Velocity RMS of HC lines relative to catalog: {0:.3f} km/s
+        WLOG(params, '', textentry('40-017-00069', args=[sigma_hc_res_kms]))
         # do not continue if RMS of HC lines is bad
         # if sigma_hc_res_kms >= params['IMAGE_PIXEL_SIZE']/2:
-        #     # TODO: move to language database
-        #     msg = 'Skipping Order {0} (velocity RMS of HC lines too high)'
-        #     WLOG(params, '', msg.format(order_num))
+        #     # print msg: Skipping Order {0} velocity RMS of HC lines too high
+        #     WLOG(params, '', textentry('40-017-00070', args=[order_num])
         #     continue
         # ---------------------------------------------------------------------
         # we now have a best-guess of the wavelength solution, we update
@@ -1622,10 +1620,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         rms = list(np.array(rms)[offsetsort])
         # deal with too many iterations
         if count > mp.nanmin(fpl_peak_num):
-            # TODO: move to language db
-            emsg = 'Too many iterations for bulk offset N={0}'
-            eargs = [count]
-            WLOG(params, 'error', emsg.format(*eargs))
+            # log error: Too many iterations for bulk offset N={0}
+            WLOG(params, 'error', textentry('09-017-00009', args=[count]))
         # add to count
         count += 1
     # update all peaks with current best offset
@@ -1665,9 +1661,9 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             #              provide a cavity.  This is bad, we cannot change
             #              the achromatic term only if we don't have the
             #              chromatic terms. This produces and error
-            # TODO: move to language database
-            emsg = 'Cannot have fit_achromatic=True without cavity_update input'
-            WLOG(params, 'error', emsg)
+            # log error: Cannot have fit_achromatic=True without
+            #            cavity_update input'
+            WLOG(params, 'error', textentry('00-017-00014'))
             cavity = None
     # -------------------------------------------------------------------------
     # copy the cavity fit

@@ -115,10 +115,8 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     # get a list of calibration files
     # -------------------------------------------------------------------------
     # print progress
-    # TODO: add to language database
-    msg = 'Analysing calibration raw files on disk'
     WLOG(params, 'info', params['DRS_HEADER'])
-    WLOG(params, 'info', msg)
+    WLOG(params, 'info', textentry('40-503-00047'))
     WLOG(params, 'info', params['DRS_HEADER'])
     # get calibration files grouped by recipe
     cout = get_raw_seq_files(params, recipemodule, tstars, ostars,
@@ -134,9 +132,9 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             continue
         # else print observation directory
         else:
-            msg = 'Processing observation directory: {0}'
-            margs = [uobsdir]
-            WLOG(params, 'info', msg.format(*margs), colour='magenta')
+            # print msg: Processing observation directory: {0}
+            WLOG(params, 'info', textentry('40-503-00048', args=[uobsdir]),
+                 colour='magenta')
         # ---------------------------------------------------------------------
         # get all raw files for this night
         itable = findexdbm.get_entries('KW_OUTPUT,KW_MID_OBS_TIME',
@@ -182,9 +180,10 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
                         # ---------------------------------------------------------
                         # print if missing
                         if count == 0 and srecipe.calib_required:
-                            msg = '\t\tMISSING {0}\t(OBS_DIR={1} RECIPE={2})'
-                            margs = [drsfile, uobsdir, recipe_name]
-                            WLOG(params, 'warning', msg.format(*margs))
+                            # print warning: MISSING {0} OBS_DIR={1} RECIPE={2})
+                            wargs = [drsfile, uobsdir, recipe_name]
+                            wmsg = textentry('10-503-00025', args=wargs)
+                            WLOG(params, 'warning', wmsg, sublevel=2)
                             missing = True
                 # deal with inclusive files (combine drsfiles)
                 else:
@@ -208,21 +207,22 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
                     calib_times[uobsdir] += list(np.unique(mjdmids[dmask]))
                     # print if missing
                     if count == 0 and srecipe.calib_required:
-                        msg = '\t\tMISSING {0}\t(OBS_DIR={1} RECIPE={2})'
-                        margs = [drsfilenames, uobsdir, recipe_name]
-                        WLOG(params, 'warning', msg.format(*margs))
+                        # print warning: MISSING {0} OBS_DIR={1} RECIPE={2})
+                        wargs = [drsfilenames, uobsdir, recipe_name]
+                        wmsg = textentry('10-503-00025', args=wargs)
+                        WLOG(params, 'warning', wmsg, sublevel=2)
                         missing = True
         if not missing:
-            msg = '\tMinimum number of calibrations found'
-            WLOG(params, '', msg)
+            # print msg: Minimum number of calibrations found
+            WLOG(params, '', textentry('40-503-00049'))
         else:
             bad_calib_nights.append(uobsdir)
     # -------------------------------------------------------------------------
     # get a list of telluric files and science files
     # -------------------------------------------------------------------------
-    msg = 'Analysing telluric and science raw files on disk'
+    # print msg: Analysing telluric and science raw files on disk
     WLOG(params, 'info', params['DRS_HEADER'])
-    WLOG(params, 'info', msg)
+    WLOG(params, 'info', textentry('40-503-00050'))
     WLOG(params, 'info', params['DRS_HEADER'])
     # get telluric raw files
     tout = get_raw_seq_files(params, recipemodule, tstars, ostars,
@@ -247,10 +247,11 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         del tellu_files[srecipe]
     # report if None found
     if len(tellu_files) == 0:
-        # log a warning if None found
-        msg = 'No telluric RUN instances in run file "{0}". Skipping'
-        margs = params['INPUTS']['RUNFILE']
-        WLOG(params, 'warning', msg.format(*margs))
+        # log a warning if None found:
+        #   No telluric RUN instances in run file "{0}". Skipping
+        wargs = [params['INPUTS']['RUNFILE']]
+        WLOG(params, 'warning', textentry('10-503-00026', args=wargs),
+             sublevel=2)
     # -------------------------------------------------------------------------
     # if we are not using a science run don't include it
     rm_list = []
@@ -265,10 +266,11 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     for srecipe in rm_list:
         del sci_files[srecipe]
     if len(sci_files) == 0:
-        # log a warning if None found
-        msg = 'No science RUN instances in run file "{0}". Skipping'
-        margs = params['INPUTS']['RUNFILE']
-        WLOG(params, 'warning', msg.format(*margs))
+        # log a warning if None found:
+        #   No science RUN instances in run file "{0}". Skipping
+        wargs = [params['INPUTS']['RUNFILE']]
+        WLOG(params, 'warning', textentry('10-503-00027', args=wargs),
+             sublevel=2)
     # -------------------------------------------------------------------------
     # combine file types (we don't care about recipes here)
     tfiles = _flatten_raw_seq_filelist(tellu_files, generic_raw_file)
@@ -288,9 +290,9 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             continue
         # else print observation directory
         else:
-            msg = 'Processing observation directory: {0}'
             margs = [uobsdir]
-            WLOG(params, 'info', msg.format(*margs), colour='magenta')
+            WLOG(params, 'info', textentry('40-503-00048', args=margs),
+                 colour='magenta')
         # ---------------------------------------------------------------------
         # get all raw files for this night
         rtable = findexdbm.get_entries('KW_OBJNAME, KW_OUTPUT,KW_MID_OBS_TIME',
@@ -308,9 +310,9 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             tellu_count[uobsdir][drsfile] = tcount
             # print outs
             if tcount > 0:
-                msg = '\tFound {0} {1} telluic files'
+                # print msg: Found {0} {1} telluic files'
                 margs = [tcount, drsfile]
-                WLOG(params, '', msg.format(*margs))
+                WLOG(params, '', textentry('40-503-00051', args=margs))
                 # we are not missing all telluric files
                 t_missing = False
 
@@ -324,18 +326,20 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             science_count[uobsdir][drsfile] = scount
             # print outs
             if scount > 0:
-                msg = '\tFound {0} {1} science files'
+                # print msg: Found {0} {1} science files
                 margs = [scount, drsfile]
-                WLOG(params, '', msg.format(*margs))
+                WLOG(params, '', textentry('40-503-00052', args=margs))
                 # we are not missing all science files
                 s_missing = False
 
         if t_missing:
-            msg = '\tNo telluric files found for observation directory {0}'
-            WLOG(params, 'warning', msg.format(uobsdir))
+            # print msg: No telluric files found for observation directory {0}
+            WLOG(params, 'warning', textentry('10-503-00028', args=[uobsdir]),
+                 sublevel=2)
         if s_missing:
-            msg = '\tNo science files found for observation directory {0}'
-            WLOG(params, 'warning', msg.format(uobsdir))
+            # print msg: No science files found for observation directory {0}
+            WLOG(params, 'warning', textentry('10-503-00029', args=[uobsdir]),
+                 sublevel=2)
         # deal with assumed engineering observation directories
         #     (no science or tellu)
         if t_missing and s_missing:
@@ -380,29 +384,31 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         if np.sum(diff < params['MAX_CALIB_DTIME'] + 0.5) == 0:
             bad_nights.append(obs_dir)
     # -------------------------------------------------------------------------
-    msg = 'File check summary'
+    # print msg: file check summary
     WLOG(params, 'info', params['DRS_HEADER'])
-    WLOG(params, 'info', msg)
+    WLOG(params, 'info', textentry('40-503-00053'))
     WLOG(params, 'info', params['DRS_HEADER'])
     # -------------------------------------------------------------------------
     # finally print a list of possible bad nights
     if len(bad_nights) > 0:
-        msg = 'The following observation directories will causes errors:'
-        WLOG(params, 'warning', msg, colour='red')
+        # print msg: The following observation directories will causes errors:
+        WLOG(params, 'warning', textentry('10-503-00030'), colour='red',
+             sublevel=8)
         # display bad directories
         WLOG(params, 'warning', '{0}'.format(', '.join(bad_nights)),
-             colour='red')
+             colour='red', sublevel=8)
     if len(engineering_nights) > 0:
-        msg = ('The following observation directories will be skipped as '
-               'engineering directories:')
-        WLOG(params, 'warning', msg)
+        # print msg: The following observation directories will be skipped as
+        #            engineering directories
+        WLOG(params, 'warning', textentry('10-503-00031'), sublevel=3)
         # display engineering directories
-        WLOG(params, 'warning', '{0}'.format(', '.join(engineering_nights)))
+        WLOG(params, 'warning', '{0}'.format(', '.join(engineering_nights)),
+             sublevel=3)
 
     if len(bad_nights) == 0 and len(engineering_nights) == 0:
-        WLOG(params, '', 'All observation directories passed prechecks.')
+        WLOG(params, '', textentry('40-503-00054'))
     else:
-        WLOG(params, '', 'All other observation directories passed prechecks.')
+        WLOG(params, '', textentry('40-503-00054'))
 
 
 RawSeqReturn = Tuple[Dict[str, Dict[str, List[DrsFitsFile]]],
@@ -428,9 +434,8 @@ def get_raw_seq_files(params: ParamDict, recipemod,
 
     :return: dictionary
     """
-    # print progress
-    msg = 'Getting file types for sequence={0}'
-    WLOG(params, '', msg.format(sequence))
+    # print progress: Getting file types for sequence={0}
+    WLOG(params, '', textentry('40-503-00056', args=[sequence]))
     # -------------------------------------------------------------------------
     # get template list (if required)
     # -------------------------------------------------------------------------
@@ -627,11 +632,9 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     # get list of unique objects from index database
     uobjnames = findexdbm.get_unique('KW_OBJNAME', condition=condition)
     # ---------------------------------------------------------------------
-    # print progress
-    # TODO: move to langauge database
-    msg = 'Preparing list of unique objects from index database (N={0})'
+    # print progress: Preparing list of unique objects from file index database
     margs = [len(uobjnames)]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-503-00057', args=margs))
     # get the object rejection list
     reject_list = prep.get_obj_reject_list(params)
     # store list of objects not found in the database currently
@@ -650,10 +653,8 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     # ---------------------------------------------------------------------
     # get original names for objects
     orig_names = []
-    # Print progress
-    # TODO: move to language database
-    msg = 'Finding all original names for each unfound object'
-    WLOG(params, 'info', msg)
+    # Print progress: Finding all original names for each unfound object
+    WLOG(params, 'info', textentry('40-503-00058'))
     # loop around
     for unfound_object in tqdm(unfound_objects):
         # condition for this target
@@ -665,15 +666,13 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
         orig_names.append(list(orig_name))
     # ---------------------------------------------------------------------
     # print any remaining objects
-    # TODO: move to language database
-    msg = 'Objects that will use the header for astrometrics are:'
-    WLOG(params, '', msg, colour='magenta', wrap=False)
+    # print msg: Objects that will use the header for astrometrics are:
+    WLOG(params, '', textentry('40-503-00059'), colour='magenta', wrap=False)
     # deal with having no unfound objects
     if len(unfound_objects) == 0:
         # print that all objects were found
-        # TODO: move to language database
-        msg = '\t All objects found (or in ignore list)!'
-        WLOG(params, '', msg)
+        # print msg: All objects found (or in ignore list)!
+        WLOG(params, '', textentry('40-503-00060'))
     # else we print the unfound objects
     else:
         # loop around objects and put on a new line
@@ -681,13 +680,12 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
             # print the object
             msg = '\t{0}\t{1:30s}\t(APERO: {2})'
             margs = [it + 1, ' or '.join(orig_names[it]), unfound_objects[it]]
-            WLOG(params, 'warning', msg.format(*margs))
+            WLOG(params, 'warning', msg.format(*margs), sublevel=8)
         # print a note that some objects are in ignore list
         if len(reject_list) > 0:
-            # TODO: move to language database
-            msg = 'Note {0} objects are in the ignore list / ignore aliases'
+            # print msg: Note {0} objects are in the ignore list/ignore aliases
             margs = [len(reject_list)]
-            WLOG(params, 'info', msg.format(*margs))
+            WLOG(params, 'info', textentry('40-503-00061', args=margs))
 
 
 # =============================================================================

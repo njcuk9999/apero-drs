@@ -4167,8 +4167,7 @@ def extended_help(params: ParamDict) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 0
     # set the help message
-    # TODO: add to language database
-    props['help'] = 'Extended help menu (with all advanced arguments)'
+    props['help'] = textentry('EXTENDED_HELP')
     # return the argument dictionary
     return props
 
@@ -4486,8 +4485,7 @@ def set_crun_file(params: ParamDict) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 1
     # set the help message
-    # TODO: move to language database
-    props['help'] = 'Set a run file to override default arguments'
+    props['help'] = textentry('SET_RUNFILE_HELP')
     # return the argument dictionary
     return props
 
@@ -4540,10 +4538,7 @@ def set_nosave(params: ParamDict) -> OrderedDict:
     # set the argument action function
     props['action'] = 'store_true'
     # set the help message
-    props['help'] = ('Do not save any outputs (debug/information run).'
-                     ' Note some recipes require other recipesto be run.'
-                     ' Only use --nosave after previous recipe runs have '
-                     'been run successfully.')
+    props['help'] = textentry('SET_NOSAVE_HELP')
     # return the argument dictionary
     return props
 

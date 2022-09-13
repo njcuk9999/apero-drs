@@ -835,11 +835,11 @@ class DrsRecipe(object):
         for kwarg in kwargs:
             # flag must be defined
             if kwarg not in base.LOG_FLAGS:
-                # TODO: move to language database
-                emsg = ('Recipe {0} flag "{1}" not in base.LOG_FLAGS. '
-                        'Please add to use')
+                # print msg: Recipe {0} flag "{1}" not in base.LOG_FLAGS.
+                #            Please add to use
                 eargs = [self.name, kwarg]
-                WLOG(self.params, 'error', emsg.format(*eargs))
+                emsg = textentry('00-007-00004', args=eargs)
+                WLOG(self.params, 'error', emsg)
             # check if kwarg is a string
             if isinstance(kwargs[kwarg], bool):
                 # update the flag

@@ -55,9 +55,8 @@ pcheck = constants.PCheck(wlog=WLOG)
 def make_trans_cube(params: ParamDict, transfiles: List[str]
                     ) -> Tuple[np.ndarray, drs_fits.Table]:
     # -------------------------------------------------------------------------
-    # print progress
-    # TODO: move to language database
-    WLOG(params, '', 'Making Transmission cube')
+    # print progress: Making Transmission cube
+    WLOG(params, '', textentry('40-019-00054'))
     # get parameters from params
     snr_order = params['MKTELLU_QC_SNR_ORDER']
     water_key = params['KW_TELLUP_EXPO_WATER'][0]
@@ -125,9 +124,8 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     # get a reference trans file from cube (first trans file)
     ref_trans = transcube[:, :, 0]
     # -------------------------------------------------------------------------
-    # print progress
-    # TODO: move to language database
-    WLOG(params, '', 'Calculating Transmission model')
+    # print progress: Calculating Transmission model
+    WLOG(params, '', textentry('40-019-00055'))
     # -------------------------------------------------------------------------
     # sample vectors for the reconstruction
     sample = np.zeros([3, len(expo_water)])
@@ -146,10 +144,9 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     # num_map = np.full_like(ref_trans, np.nan)
     # loop around all orders
     for order_num in range(ref_trans.shape[0]):
-        # print progress
-        # TODO: move to language database
+        # print progress: processing order {0} / {1}
         margs = [order_num, ref_trans.shape[0]]
-        WLOG(params, '', '\tProcessing order {0} / {1}'.format(*margs))
+        WLOG(params, '', textentry('40-019-00056', args=margs))
         # loop around all pixels in order
         for ix in range(ref_trans.shape[1]):
             # get one pixel of the trans_cube for all observations

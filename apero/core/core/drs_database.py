@@ -2064,11 +2064,10 @@ class FileIndexDatabase(DatabaseManager):
                 rm_cond = '(OBS_DIR="{0}" AND FILENAME="{0}")'
                 rm_args = [remove_obs_dirs[r_it], remove_file]
                 rm_conditions.append(rm_cond.format(*rm_args))
-                # print removing file
-                # TODO: move to language database
-                msg = ('\t\tFile no longer on disk - removing from '
-                       'index database: {0}')
-                WLOG(self.params, 'warning', msg.format(remove_file))
+                # print removing file: File no longer on disk - removing from
+                #                file index database: {0}
+                wmsg = textentry('10-002-00008', args=[remove_file])
+                WLOG(self.params, 'warning', wmsg)
 
             # remove entries which no longer exist on disk
             if len(rm_conditions) > 0:
@@ -2157,11 +2156,11 @@ class FileIndexDatabase(DatabaseManager):
                     header = drs_fits.read_header(self.params, str(reqfile),
                                                   log=False)
                 except Exception as e:
-                    # TODO: move to language database
-                    wmsg = 'Skipping file {0}\n\tError {1}: {2}'
+                    # print error message as warning:
+                    #       Skipping file {0}\n\tError {1}: {2}'
                     wargs = [str(reqfile), type(e), str(e)]
-                    WLOG(self.params, 'warning', wmsg.format(*wargs),
-                         sublevel=6)
+                    wmsg = textentry('10-002-00009', args=wargs)
+                    WLOG(self.params, 'warning', wmsg, sublevel=6)
                     continue
                 # loop around required keys
                 for rkey in rkeys:

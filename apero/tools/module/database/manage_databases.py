@@ -572,6 +572,8 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
 
     :return: astropy table, the object database
     """
+    # set function name
+    func_name = __NAME__ + '.get_object_database()'
     # get parameters from params
     gsheet_url = params['OBJ_LIST_GOOGLE_SHEET_URL']
     main_id = params['OBJ_LIST_GSHEET_MAIN_LIST_ID']
@@ -591,11 +593,10 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
         try:
             maintable = Table.read(mainpath, format='csv')
         except Exception as e:
-            # TODO: move to language database
-            emsg = ('Error: if OBJ_LIST_GOOGLE_SHEET_URL is local directory'
-                    ' main_id must be a valid csv file. \nError {0}: {1}')
-            eargs = [type(e), str(e)]
-            WLOG(params, 'error', emsg.format(*eargs))
+            # error msg: if OBJ_LIST_GOOGLE_SHEET_URL is local directory
+            #            main_id must be a valid csv file.
+            eargs = [mainpath, type(e), str(e), func_name]
+            WLOG(params, 'error', textentry('09-002-00005', args=eargs))
             maintable = Table()
         # noinspection PyBroadException
         try:
@@ -605,7 +606,8 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
     else:
         # get google sheets
         maintable = drs_database.get_google_sheet(params, gsheet_url, main_id)
-        pendtable = drs_database.get_google_sheet(params, gsheet_url, pending_id)
+        pendtable = drs_database.get_google_sheet(params, gsheet_url,
+                                                  pending_id)
     # force types in main table and pend table (so we can join them)
     maintable = _force_column_dtypes(maintable, OBJ_DATA_TYPES)
     pendtable = _force_column_dtypes(pendtable, OBJ_DATA_TYPES)
@@ -816,6 +818,8 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
 
     :return: astropy table, the object database
     """
+    # set function name
+    func_name = __NAME__ + '.get_reject_database()'
     # get parameters from params
     gsheet_url = params['REJECT_LIST_GOOGLE_SHEET_URL']
     main_id = params['REJECT_LIST_GSHEET_MAIN_LIST_ID']
@@ -829,11 +833,10 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
         try:
             maintable = Table.read(mainpath, format='csv')
         except Exception as e:
-            # TODO: move to language database
-            emsg = ('Error: if REJECT_LIST_GOOGLE_SHEET_URL is local directory'
-                    ' main_id must be a valid csv file. \nError {0}: {1}')
-            eargs = [type(e), str(e)]
-            WLOG(params, 'error', emsg.format(*eargs))
+            # error msg: if REJECT_LIST_GOOGLE_SHEET_URL is local directory
+            #            main_id must be a valid csv file
+            eargs = [mainpath, type(e), str(e), func_name]
+            WLOG(params, 'error', textentry('09-002-00006', args=eargs))
             maintable = Table()
     else:
         # get google sheets

@@ -623,17 +623,16 @@ def __remove_empty__(params: ParamDict, path: str, remove_head: bool = True,
     files = np.sort(os.listdir(path))
     if len(files) == 0 and remove_head:
         if log:
-            # TODO: move to language database
-            WLOG(params, 'debug', "Removing empty folder: {0}".format(path))
+            # print msg: Lock is removing empty folder: {0}
+            WLOG(params, 'debug', textentry('90-008-00015', args=[path]))
         # try to remove or report warning
         try:
             os.rmdir(path)
         except Exception as e:
             eargs = [path, type(e), e, func_name]
-            # TODO: move to language database
-            emsg = ('Cannot remove dir {0}. \n\t Error {1}: {2} '
-                    '\n\t function = {3}')
-            WLOG(params, 'warning', emsg.format(*eargs), sublevel=2)
+            # print msg: Cannot remove dir {0}. Error {1}: {2}
+            WLOG(params, 'warning', textentry('10-001-00014', args=eargs),
+                 sublevel=2)
 
 
 # =============================================================================
