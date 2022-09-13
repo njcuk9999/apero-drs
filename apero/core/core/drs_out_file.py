@@ -103,9 +103,9 @@ class OutFile:
         inbasename = infile.basename
         # infile basename should not be None
         if inbasename is None:
-            # TODO: add to the language db
-            emsg = 'Error: infile.basename must be set when defining infile'
-            raise DrsCodedException('0', '', emsg)
+            # raise error: infile.basename must be set when defining infile
+            eargs = [infile.name, func_name]
+            raise DrsCodedException('00-004-00017', level='error', targs=eargs)
         # get condition to remove input file prefix
         if remove_insuffix is None:
             remove_insuffix = outfile.remove_insuffix

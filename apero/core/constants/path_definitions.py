@@ -242,7 +242,6 @@ class OutPath(BlockPath):
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
         """
-        # TODO: no PARAM_SNAPSHOT --> can't redo log
         super().__init__(params, self.name, self.key, indexing=True,
                          logging=False, check=check)
         self.has_obs_dirs = True

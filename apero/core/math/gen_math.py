@@ -690,7 +690,6 @@ def medbin(image: np.ndarray, by: int, bx: int) -> np.ndarray:
 
     :return: the binned numpy array of dimensions (by, bx)
     """
-    # TODO: Question: are "bx" and "by" the right way around?
     # set function name
     func_name = __NAME__ + 'medbin()'
     # get the shape of the image

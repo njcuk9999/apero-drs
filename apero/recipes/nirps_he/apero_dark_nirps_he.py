@@ -189,8 +189,6 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Identification of bad pixels
         # ------------------------------------------------------------------
-        # Question bad pixel detection is done in cal_BAD_pix
-        # Question:   shouldn't this be used instead of a separate badpix here?
         out = dark.measure_dark_badpix(params, image, nanmask)
         baddark, dadeadall = out
         # ------------------------------------------------------------------

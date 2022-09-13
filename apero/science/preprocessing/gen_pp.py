@@ -168,10 +168,9 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
             resolved = True
 
         except Exception as e:
-            # TODO: move to lanugage database
-            emsg = 'Cannot use object database entry for {0}.\n\t{1}: {2}'
+            # warn msg: Cannot use object database entry for {0}.\n\t{1}: {2}'
             eargs = [correct_objname, type(e), str(e)]
-            WLOG(params, 'warning', emsg.format(*eargs))
+            WLOG(params, 'warning', textentry('10-010-00008', args=eargs))
             # mark resolved as not complete
             resolved = False
             # placeholders to be filled below

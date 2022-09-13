@@ -166,30 +166,6 @@ raw_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # -----------------------------------------------------------------------------
-# apero_pp_ref
-# -----------------------------------------------------------------------------
-# # TODO: remove
-# apero_pp_ref = DrsRecipe(__INSTRUMENT__)
-# apero_pp_ref.name = 'apero_pp_ref_{0}.py'.format(INSTRUMENT_ALIAS)
-# apero_pp_ref.shortname = 'PPM'
-# apero_pp_ref.instrument = __INSTRUMENT__
-# apero_pp_ref.in_block_str = 'raw'
-# apero_pp_ref.out_block_str = 'red'
-# apero_pp_ref.extension = 'fits'
-# apero_pp_ref.description = textentry('PP_REF_DESC')
-# apero_pp_ref.epilog = textentry('PP_REF_EXAMPLE')
-# apero_pp_ref.recipe_type = 'recipe'
-# apero_pp_ref.recipe_kind = 'pre-reference'
-# apero_pp_ref.set_outputs(PP_REF=files.out_pp_ref)
-# apero_pp_ref.set_arg(pos=0, **obs_dir)
-# apero_pp_ref.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
-#                         helpstr=textentry('PP_REF_FILETYPE_HELP'))
-# apero_pp_ref.group_func = grouping.no_group
-# apero_pp_ref.group_column = None
-# # add to recipe
-# recipes.append(apero_pp_ref)
-
-# -----------------------------------------------------------------------------
 # apero_preprocess
 # -----------------------------------------------------------------------------
 apero_preprocess = DrsRecipe(__INSTRUMENT__)

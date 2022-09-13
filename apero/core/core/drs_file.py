@@ -3538,7 +3538,6 @@ class DrsFitsFile(DrsInputFile):
         # copy keys from hdict into header
         self.update_header_with_hdict()
         # ---------------------------------------------------------------------
-        # TODO: Question: can we name these whatever we like?
         # set extension names
         names = [None, self.name]
         # make lists of data + header (primary should not have data)
@@ -3860,7 +3859,6 @@ class DrsFitsFile(DrsInputFile):
             header = headers0[row]
             basename = basenames0[row]
             # deal with metric 1
-            # TODO: Does this metric work for every type?
             if self.get_hkey('KW_DPRTYPE') in combine_metric_1_types:
                 # compute metric 1
                 cout = combine_metric_1(params, row, image1, datacube0)

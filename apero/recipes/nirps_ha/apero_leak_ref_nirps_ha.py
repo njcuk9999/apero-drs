@@ -197,12 +197,10 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
-    # TODO: Need to add some QC
     qc_params, passed = leak.qc_LEAK_REF(params, medcubes)
     # ------------------------------------------------------------------
     # Write super dark fp to file
     # ------------------------------------------------------------------
-    # TODO: Need to add some parameters to header
     medcubes = leak.write_LEAK_REF(params, recipe, rawfiles, medcubes,
                                         qc_params, cprops)
     # ------------------------------------------------------------------

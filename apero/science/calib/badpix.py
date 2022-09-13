@@ -318,7 +318,6 @@ def quality_control(params):
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # ------------------------------------------------------------------
-    # TODO: Needs quality control doing
     # add to qc header lists
     qc_values.append('None')
     qc_names.append('None')
