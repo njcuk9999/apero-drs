@@ -163,7 +163,6 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     fibertype = pconst.FIBER_DATA_TYPE(dprtype, fiber)
     # ----------------------------------------------------------------------
     # get reference wave map
-    # TODO: Are we sure this should be the reference solution?
     wprops = wave.get_wavesolution(params, recipe, ref=True,
                                    database=database)
     # get the wave solution

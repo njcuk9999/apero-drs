@@ -1188,17 +1188,6 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                 diff=diffvelo, fiber=fiber, nbo=nbo, fibtype=fibtype,
                 iteration=iteration)
 
-    # # TODO: move to plotting recipe or remove?
-    # if fibtype in fpfibtypes:
-    #     if recipe.plot.plotoption == 2:
-    #         import matplotlib.pyplot as plt
-    #         fig, frames = plt.subplots(ncols=1, nrows=2)
-    #         frames[0].plot(list_waves, peak_number * (list_waves - wave_m), 'k.')
-    #         frames[1].plot(list_waves, peak_number * list_waves)
-    #         frames[1].plot(list_waves, peak_number * wave_m, 'g.')
-    #         frames[1].set(title='Iteration = {0}'.format(iteration))
-    #         plt.show()
-    #         plt.close()
     # ----------------------------------------------------------------------
     # Create table to store them in
     # ----------------------------------------------------------------------

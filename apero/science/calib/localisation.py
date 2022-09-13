@@ -476,16 +476,6 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
         ypix = np.polyval(final_cent_fit[order_num], xpix - nbxpix // 2)
         # push into the final center fit
         final_cent_fit[order_num] = np.polyfit(xpix, ypix, cent_order_fit)
-    # -------------------------------------------------------------------------
-    # Calculate RMS of fit
-    # -------------------------------------------------------------------------
-    # TODO: Calculate RMS of fit
-    # lets look at the rms
-    # rms_per_order = np.zeros(final_cent_fit.shape[0])
-    # loop around each order
-    for order_num in range(final_cent_fit.shape[0]):
-
-        pass
 
     # -------------------------------------------------------------------------
     # return the final centers fit and widths fit

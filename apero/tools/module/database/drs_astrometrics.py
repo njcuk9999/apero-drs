@@ -559,7 +559,7 @@ class AstroObj:
             medteff = np.median(uteffs)
             # Choose a teff from the headers
             question = 'Multiple Teffs found. Select a Teff to use.'
-            # construct the question (with options)
+            # construct the teff question_ (with options)
             count, options, optionsdesc, values = 0, [], [], dict()
             for count, uteff in enumerate(uteffs):
                 # add option
@@ -574,7 +574,7 @@ class AstroObj:
             options.append(count + 2)
             optionsdesc.append('{0}: [Median] {1} K'.format(count + 2, medteff))
             values[count + 2] = medteff
-            # ask user the question
+            # ask user the question_
             uinput = drs_installation.ask(question, dtype=int, options=options,
                                           optiondesc=optionsdesc)
             # set Teff value
@@ -734,7 +734,7 @@ def ask_user(params: ParamDict, astro_obj: AstroObj) -> Tuple[AstroObj, bool]:
     """
     # display the properties for this object
     astro_obj.display_properties()
-    # construct the object correction question
+    # construct the object correction question_
     question2 = 'Does the data for this object look correct?'
     cond2 = drs_installation.ask(question2, dtype='YN', color='m')
     print()

@@ -115,7 +115,6 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # push into dictionary storage
     drs_dark_files = dict()
-    # TODO: QUESTION: only use PM calibrations?
     # deal with combining internal darks
     if len(internal_infiles) > 0:
         cond1 = drs_file.combine(params, recipe, internal_infiles,
@@ -153,8 +152,6 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         eargs = [params, recipe, EXTRACT_NAME, infile, log1]
         thermal_files = extractother.extract_thermal_files(*eargs)
-
-        # TODO: deal with sky darks here
 
         # ------------------------------------------------------------------
         # Multiple the thermal by excess emissivity
