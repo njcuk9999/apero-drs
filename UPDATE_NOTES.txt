@@ -26,8 +26,6 @@ Date: 2022-09-13
 
 ## Todo before 0.8
 
-- polar changes from Eder (branch created)
-- s1d recon problem
 - 2018 flats (done by Etienne, just need processing?)
 
 
