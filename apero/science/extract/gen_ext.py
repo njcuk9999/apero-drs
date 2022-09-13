@@ -120,28 +120,40 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
             orderpsfile = ospfile.newcopy(params=params, fiber=fiber)
             orderpsfile.construct_filename(infile=oinfile)
         # ------------------------------------------------------------------
+        # flag that order profile has been read (or not read)
+        orderp_read = False
         # check if temporary file exists
         if orderpsfile.file_exists():
-            # load the numpy temporary file
-            #    Note: NpyFitsFile needs arguments params!
-            if isinstance(orderpsfile, DrsFitsFile):
-                # log progress (read file)
-                wargs = [orderpsfile.filename]
-                WLOG(params, '', textentry('40-013-00023', args=wargs))
-                # read npy file
-                orderpsfile.read_file()
-            else:
-                eargs = [orderpsfile.__str__(), func_name]
-                WLOG(params, 'error', textentry('00-016-00023', args=eargs))
-            # push data into orderp
-            orderp = orderpsfile.get_data()
-            orderpfilename = orderpsfile.filename
-            # time is the MJDMID of the order profile
-            orderptime = orderpsfile.get_hkey('KW_MID_OBS_TIME')
+            try:
+                # load the numpy temporary file
+                #    Note: NpyFitsFile needs arguments params!
+                if isinstance(orderpsfile, DrsFitsFile):
+                    # log progress (read file)
+                    wargs = [orderpsfile.filename]
+                    WLOG(params, '', textentry('40-013-00023', args=wargs))
+                    # read npy file
+                    orderpsfile.read_file()
+                else:
+                    eargs = [orderpsfile.__str__(), func_name]
+                    WLOG(params, 'error', textentry('00-016-00023', args=eargs))
+                # push data into orderp
+                orderp = orderpsfile.get_data()
+                orderpfilename = orderpsfile.filename
+                # time is the MJDMID of the order profile
+                orderptime = orderpsfile.get_hkey('KW_MID_OBS_TIME')
+                # mark orderp as read
+                orderp_read = True
+            except Exception as e:
+                # args for warning (from error thrown)
+                wargs = [orderpsfile.filename, type(e), str(e), func_name]
+                # report error as warning
+                WLOG(params, 'warning', textentry('10-016-00026', args=wargs))
+                # make sure we know order profile has not been read
+                orderp_read = False
         # if straighted order profile doesn't exist and we have no filename
         #   defined then we need to figure out the order profile file -
         #   load it and then save it as a straighted version (orderpsfile)
-        else:
+        if not orderp_read:
             # get key
             key = opfile.get_dbkey()
             # get pseudo constants
