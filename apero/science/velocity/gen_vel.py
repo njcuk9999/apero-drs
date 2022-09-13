@@ -444,15 +444,11 @@ def get_ccf_teff_mask(params: ParamDict,
         if teff_key in header:
             teff = float(header[teff_key])
             # log that we are using a Teff key for mask
-            # TODO: move to language database
-            msg = 'Using object temperature = {0} K for mask identification'
-            margs = [teff]
-            WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', textentry('40-020-00008', args=[teff]))
         else:
-            # TODO: move to language database
-            emsg = 'Object temperature key "{0}" not in header'
+            # error msg: Object temperature key "{0}" not in header'
             eargs = [teff_key]
-            WLOG(params, 'error', emsg.format(*eargs))
+            WLOG(params, 'error', textentry('09-020-00008', args=eargs))
             # should never get here
             return '', ''
         # ---------------------------------------------------------------------
@@ -462,10 +458,9 @@ def get_ccf_teff_mask(params: ParamDict,
         # ---------------------------------------------------------------------
         # find default
         if 'default' not in teff_masks['kind']:
-            # TODO: move to language database
-            emsg = 'Cannot use {0} - must have default value in kind column'
+            # error msg: Cannot use {0} - must have default value in kind column
             eargs = [teff_masks_file]
-            WLOG(params, 'error', emsg.format(*eargs))
+            WLOG(params, 'error', textentry('09-020-00009', args=eargs))
             return '', ''
         # get position of defaults
         default_mask = teff_masks['kind'] == 'default'

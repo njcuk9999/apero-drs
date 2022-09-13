@@ -147,7 +147,8 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
                 # args for warning (from error thrown)
                 wargs = [orderpsfile.filename, type(e), str(e), func_name]
                 # report error as warning
-                WLOG(params, 'warning', textentry('10-016-00026', args=wargs))
+                WLOG(params, 'warning', textentry('10-016-00026', args=wargs),
+                     sublevel=2)
                 # make sure we know order profile has not been read
                 orderp_read = False
         # if straighted order profile doesn't exist and we have no filename

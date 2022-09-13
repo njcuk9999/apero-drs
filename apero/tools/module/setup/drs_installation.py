@@ -1060,9 +1060,9 @@ def clean_install(params: ParamDict, all_params: ParamDict
     reset_args = toolmod.main(quiet=True, warn=cleanwarn, database_timeout=0)
     # deal with a bad reset
     if not reset_args['success']:
-        # TODO: Add to language database
-        cprint('\n\nError resetting database (see above) cannot install apero',
-               'r')
+        # error message: Error resetting database (see above) cannot install
+        #                apero
+        cprint(textentry('40-001-00083'), 'r')
         return None
     # return all params
     return all_params

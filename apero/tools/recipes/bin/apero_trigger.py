@@ -92,11 +92,10 @@ def __main__(recipe, params):
     iteration = 1
     # run the loop
     while trigger.active:
-        # update progress
-        # TODO: Add to language database
-        msg = f'Iteration {0} (Ctrl+C to cancel)'
+        # update progress: Iteration {0} (Ctrl+C to cancel)
         margs = [iteration]
-        WLOG(params, 'info', msg.format(*margs), colour='magenta')
+        WLOG(params, 'info', textentry('40-503-00062', args=margs),
+             colour='magenta')
         # run trigger
         trigger()
         # update iterator

@@ -8,7 +8,6 @@ Created on 2019-06-27 at 10:48
 @author: cook
 """
 from astropy.io import fits
-from astropy.table import Table
 import numpy as np
 import os
 from typing import List, Optional, Tuple, Union
@@ -192,15 +191,14 @@ class CalibFile:
                     self.user = True
             else:
                 # warn user that input file was not valid
-                # TODO: add to language database
-                wmsg = ('Warning user file: {0} not found. '
-                        'Using calibration database')
-                WLOG(params, 'warning', wmsg.format(self.filename), sublevel=2)
+                wargs = [self.filename, self.key]
+                WLOG(params, 'warning', textentry('10-001-00012', args=wargs),
+                     sublevel=2)
                 self.filename = None
             # we are finished - return here
             if return_filename:
                 return
-        # -------------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # else we have to load from database
         if self.filename is None:
             # check if we have the database

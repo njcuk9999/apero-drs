@@ -114,9 +114,9 @@ def __main__(recipe, params):
     # if inputs did not pass we stop here
     if not passed:
         # log we are not continuing
-        # TODO: move to language database
-        wmsg = 'Input data did not pass QC. Skipping (Use --noqccheck to force)'
-        WLOG(params, 'warning', wmsg, sublevel=6)
+        # print msg: Input data did not pass QC. Skipping
+        #            (Use --noqccheck to force)'
+        WLOG(params, 'warning', textentry('10-021-00009'), sublevel=6)
         # flag that inputs failed QC
         recipe.log.update_flags(INPUTQC=False)
         # we have no polar qc

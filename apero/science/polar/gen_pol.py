@@ -374,10 +374,10 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # deal with multiple temperatures
     if len(np.unique(objtemps)) != 1:
-        # TODO: Add to language database
-        wmsgs = 'Object temperatures do not match - taking finite median'
+        # Object temperatures do not match - taking finite median
+        wmsgs = textentry('10-021-00010')
         for it in range(len(objtemps)):
-            wmsg = '\n\tFile {0}\t{1}={2}'
+            wmsg = '\n\t- {0}\t{1}={2}'
             wargs = [basenames[it], params['KW_DRS_TEFF'][0], objtemps[it]]
             wmsg = wmsg.format(*wargs)
             wmsgs += wmsg

@@ -621,29 +621,28 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
                 # open fits file
                 with fits.open(filename) as hdulist:
                     if len(hdulist)-1 < ext:
-                        # TODO: move to language database
-                        emsg = ('File {0} does not have extension {1} '
-                                '\n\t File may be corrupted or wrong type')
+                        # print error: File {0} does not have extension {1}
+                        #              File may be corrupted or wrong type
                         eargs = [filename, ext]
-                        WLOG(params, 'error', emsg.format(*eargs))
+                        emsg = textentry('00-004-00015', args=eargs)
+                        WLOG(params, 'error', emsg)
                     data = np.array(hdulist[ext].data)
             # deal with extname being set
             elif extname is not None:
                 # open fits file
                 with fits.open(filename) as hdulist:
                     if extname not in hdulist:
-                        # TODO: move to language database
-                        emsg = ('File {0} does not have extension name {1} '
-                                '\n\t File may be corrupted or wrong type')
+                        # print error: File {0} does not have extension name {1}
+                        #              File may be corrupted or wrong type
                         eargs = [filename, extname]
-                        WLOG(params, 'error', emsg.format(*eargs))
+                        emsg = textentry('00-004-00016', args=eargs)
+                        WLOG(params, 'error', emsg)
                     data = np.array(hdulist[extname].data)
             # just load first valid extension (and copy it)
             else:
                 data = np.array(fits.getdata(filename))
         except Exception as _:
             try:
-                print('deal_with_bad_file_single')
                 # try to deal with corrupted data extensions
                 data = deal_with_bad_file_single(filename, ext=ext,
                                                  extname=extname,
@@ -677,22 +676,22 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
                 # open fits file
                 with fits.open(filename) as hdulist:
                     if len(hdulist) - 1 < ext:
-                        # TODO: move to language database
-                        emsg = ('File {0} does not have extension {1} '
-                                '\n\t File may be corrupted or wrong type')
+                        # print error: File {0} does not have extension {1}
+                        #              File may be corrupted or wrong type
                         eargs = [filename, ext]
-                        WLOG(params, 'error', emsg.format(*eargs))
+                        emsg = textentry('00-004-00015', args=eargs)
+                        WLOG(params, 'error', emsg)
                     header = Header(hdulist[ext].header)
             # deal with extname being set
             elif extname is not None:
                 # open fits file
                 with fits.open(filename) as hdulist:
                     if extname not in hdulist:
-                        # TODO: move to language database
-                        emsg = ('File {0} does not have extension name {1} '
-                                '\n\t File may be corrupted or wrong type')
+                        # print error: File {0} does not have extension name {1}
+                        #              File may be corrupted or wrong type
                         eargs = [filename, extname]
-                        WLOG(params, 'error', emsg.format(*eargs))
+                        emsg = textentry('00-004-00016', args=eargs)
+                        WLOG(params, 'error', emsg)
                     header = Header(hdulist[extname].header)
             # just load first valid extension (and copy it)
             else:
