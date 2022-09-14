@@ -16,7 +16,6 @@ from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.core import drs_exceptions
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -46,7 +45,6 @@ QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
 # Define Path classes
 # =============================================================================
 class BlockPath:
-
     description: lang.Text = None
     name: str = None
     key: str = None
@@ -129,13 +127,12 @@ class BlockPath:
 
 
 class RawPath(BlockPath):
-
     description: lang.Text = textentry('DATA_RAW_DESC')
     name: str = 'raw'
     key: str = 'DRS_DATA_RAW'
     argname: str = 'rawdir'
 
-    def __init__(self, params, check: bool=True):
+    def __init__(self, params, check: bool = True):
         """
         Construct the raw block path (input data)
 
@@ -149,13 +146,12 @@ class RawPath(BlockPath):
 
 
 class TmpPath(BlockPath):
-
     description: lang.Text = textentry('DATA_TMP_DESC')
     name: str = 'tmp'
     key: str = 'DRS_DATA_WORKING'
     argname: str = 'tmpdir'
 
-    def __init__(self, params, check: bool=True):
+    def __init__(self, params, check: bool = True):
         """
         Construct the raw block path (input data)
 
@@ -169,13 +165,12 @@ class TmpPath(BlockPath):
 
 
 class ReducedPath(BlockPath):
-
     description: lang.Text = textentry('DATA_REDUC_DESC')
     name: str = 'red'
     key: str = 'DRS_DATA_REDUC'
     argname: str = 'reddir'
 
-    def __init__(self, params, check: bool=True):
+    def __init__(self, params, check: bool = True):
         """
         Construct the raw block path (input data)
 
@@ -189,13 +184,12 @@ class ReducedPath(BlockPath):
 
 
 class CalibPath(BlockPath):
-
     description: lang.Text = textentry('DATA_CALIB_DESC')
     name: str = 'calib'
     key: str = 'DRS_CALIB_DB'
     argname: str = 'calibdir'
 
-    def __init__(self, params, check: bool=True):
+    def __init__(self, params, check: bool = True):
         """
         Construct the raw block path (input data)
 
@@ -209,13 +203,12 @@ class CalibPath(BlockPath):
 
 
 class TelluPath(BlockPath):
-
     description: lang.Text = textentry('DATA_TELLU_DESC')
     name: str = 'tellu'
     key: str = 'DRS_TELLU_DB'
     argname: str = 'telludir'
 
-    def __init__(self, params, check: bool=True):
+    def __init__(self, params, check: bool = True):
         """
         Construct the raw block path (input data)
 
@@ -229,13 +222,12 @@ class TelluPath(BlockPath):
 
 
 class OutPath(BlockPath):
-
     description: lang.Text = textentry('DATA_OUT_DESC')
     name: str = 'out'
     key: str = 'DRS_DATA_OUT'
     argname: str = 'outdir'
 
-    def __init__(self, params, check: bool=True):
+    def __init__(self, params, check: bool = True):
         """
         Construct the raw block path (input data)
 
@@ -249,13 +241,12 @@ class OutPath(BlockPath):
 
 
 class AssetPath(BlockPath):
-
     description: lang.Text = textentry('DATA_ASSETS_DESC')
     name: str = 'asset'
     key: str = 'DRS_DATA_ASSETS'
     argname: str = 'assetsdir'
 
-    def __init__(self, params, check: bool=True):
+    def __init__(self, params, check: bool = True):
         """
         Construct the raw block path (input data)
 
@@ -268,13 +259,12 @@ class AssetPath(BlockPath):
 
 
 class PlotPath(BlockPath):
-
     description: lang.Text = textentry('DATA_PLOT_DESC')
     name: str = 'plot'
     key: str = 'DRS_DATA_PLOT'
     argname: str = 'plotdir'
 
-    def __init__(self, params, check: bool=True):
+    def __init__(self, params, check: bool = True):
         """
         Construct the raw block path (input data)
 
@@ -287,13 +277,12 @@ class PlotPath(BlockPath):
 
 
 class RunPath(BlockPath):
-
     description: lang.Text = textentry('DATA_RUN_DESC')
     name: str = 'run'
     key: str = 'DRS_DATA_RUN'
     argname: str = 'rundir'
 
-    def __init__(self, params, check: bool=True):
+    def __init__(self, params, check: bool = True):
         """
         Construct the raw block path (input data)
 
@@ -306,13 +295,12 @@ class RunPath(BlockPath):
 
 
 class LogPath(BlockPath):
-
     description: lang.Text = textentry('DATA_LOG_DESC')
     name: str = 'msg'
     key: str = 'DRS_DATA_MSG'
     argname: str = 'logdir'
 
-    def __init__(self, params, check: bool=True):
+    def __init__(self, params, check: bool = True):
         """
         Construct the raw block path (input data)
 
@@ -327,7 +315,6 @@ class LogPath(BlockPath):
 # define the block kinds as a list of classes
 BLOCKS = [RawPath, TmpPath, ReducedPath, CalibPath, TelluPath, OutPath,
           AssetPath, PlotPath, RunPath, LogPath]
-
 
 # =============================================================================
 # Start of code

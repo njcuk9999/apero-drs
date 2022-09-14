@@ -520,6 +520,7 @@ class Keyword(Const):
                        related to or comes from another constant)
         :param combine_method: str, the method used to combine this keyword
                                when combining two or more files
+        :param post_exclude: bool, whether to exclude from post processing
 
         :returns: None
         """
