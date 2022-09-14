@@ -80,7 +80,6 @@ ModLoads = Tuple[List[str], List[Any], List[str], List[Union[Const, Keyword]]]
 CHECKED_SOURCES = dict()
 
 
-
 # =============================================================================
 # Define Custom classes
 # =============================================================================
@@ -812,6 +811,8 @@ class ParamDict(CaseInDict):
         :param key: str, the key that contains a string list
         :param separator: str, the character that separates
         :param dtype: type, the type to cast the list element to
+        :param required: bool, if not required returns None when key is not
+                         in parameter dictionary
 
         :return: the list of values extracted from the string for `key`
         :rtype: list
@@ -860,6 +861,8 @@ class ParamDict(CaseInDict):
 
         :param key: str, the key that contains a string list
         :param dtype: type, the type to cast the list element to
+        :param required: bool, if not required returns None when key is not
+                         in parameter dictionary
 
         :return: the list of values extracted from the string for `key`
         :rtype: dict
@@ -991,10 +994,20 @@ class ParamDict(CaseInDict):
         else:
             print(textentry('40-000-00010', args=[key]))
 
-    def keys(self):
+    def keys(self) -> List:
+        """
+        Return a list of keys for the ParamDict
+
+        :return: list, list of keys for the ParamDict
+        """
         return list(self.data.keys())
 
-    def values(self):
+    def values(self) -> List:
+        """
+        Return a list of values for the ParamDict
+
+        :return: list, list of values for each key
+        """
         return list(self.data.values())
 
     def snapshot_table(self, recipe: Union[Any, None] = None,
@@ -1129,6 +1142,7 @@ class ParamDict(CaseInDict):
             if key not in self.used:
                 continue
             # do not continue if we have not used this key (set to zero)
+            # noinspection PyTypeChecker
             if int(self.used[key]) < 1:
                 continue
             # add param_dict entry (or entries)

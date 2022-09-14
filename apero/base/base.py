@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Some things must be defined once and used throughout the drs
-No functions in here please
+Most functions do not go in here
 
 Created on 2020-08-2020-08-21 19:43
 
@@ -168,10 +168,16 @@ LOG_FLAGS['EXP_FPLINE'] = 'Extraction has an FP ref fiber and addition outputs'
 LOG_FLAGS['INPUTQC'] = 'Polar inputs passed QC (or were forced to)'
 LOG_FLAGS['ONLYPRECLEAN'] = 'Only do preclean part of telluric correction'
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
 def load_database_yaml() -> dict:
+    """
+    Load database yaml file
+
+    :return: dict, the loaded yaml file
+    """
     # check for environmental variable
     if USER_ENV in os.environ:
         # get path
@@ -191,7 +197,12 @@ def load_database_yaml() -> dict:
     raise EnvironmentError(emsg.format(USER_ENV))
 
 
-def load_install_yaml():
+def load_install_yaml() -> dict:
+    """
+    Load installation yaml file
+
+    :return: dict, the loaded installation yaml
+    """
     # check for environmental variable
     if USER_ENV in os.environ:
         # get path

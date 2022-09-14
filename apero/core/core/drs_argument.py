@@ -2380,20 +2380,6 @@ class _IsReference(DrsAction):
         """
         return '_IsReference[DrsAction]'
 
-    def _set_reference(self, value: Any) -> Union[str, None]:
-        """
-        Sets the reference value to string representation of value
-
-        :param value: Any, value to turn to string representation of value
-
-        :return: str: the valid directory (raises exception if invalid)
-        """
-        # deal with unset value
-        if value is None:
-            return None
-        else:
-            return str(value)
-
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
                  option_string: Any = None):
@@ -2413,9 +2399,9 @@ class _IsReference(DrsAction):
         self.recipe = parser.recipe
         # display listing
         if type(values) == list:
-            value = list(map(self._set_reference, values))
+            value = list(map(_set_reference, values))
         else:
-            value = self._set_reference(values)
+            value = _set_reference(values)
         # make sure value is not a list
         if isinstance(value, list):
             value = value[0]
@@ -2465,20 +2451,6 @@ class _SetCrunFile(DrsAction):
         """
         return '_SetCrunFile[DrsAction]'
 
-    def _set_crun_file(self, value: Any) -> Union[str, None]:
-        """
-        Sets the config run file value to string representation of value
-
-        :param value: Any, value to turn to string representation of value
-
-        :return: str: the valid directory (raises exception if invalid)
-        """
-        # deal with unset value
-        if value is None:
-            return None
-        else:
-            return str(value)
-
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
                  option_string: Any = None):
@@ -2498,9 +2470,9 @@ class _SetCrunFile(DrsAction):
         self.recipe = parser.recipe
         # display listing
         if type(values) == list:
-            value = list(map(self._set_crun_file, values))
+            value = list(map(_set_crun_file, values))
         else:
-            value = self._set_crun_file(values)
+            value = _set_crun_file(values)
         # make sure value is not a list
         if isinstance(value, list):
             value = value[0]
@@ -3718,7 +3690,18 @@ def _fits_query(params: ParamDict, recipe: Any,
     return files, types
 
 
-def _check_file_logic(params, argname, logic, filetypes, types):
+def _check_file_logic(params: ParamDict, argname: str, logic: str,
+                      filetypes: List[DrsInputFile], types: List[DrsInputFile]):
+    """
+    Check the file logic for all filetypes
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param argname: str
+    :param logic:
+    :param filetypes:
+    :param types:
+    :return:
+    """
     # deal with types being an empty list
     if len(types) == 0:
         return
@@ -3731,15 +3714,13 @@ def _check_file_logic(params, argname, logic, filetypes, types):
             #   file in types
             if filetype.name != types[-1].name:
                 # raise error if not
-                eargs = [argname, filetype.name, types.name[-1]]
+                eargs = [argname, filetype.name, types[-1].name]
                 WLOG(params, 'error', textentry('09-001-00008', args=eargs))
 
 
 # =============================================================================
 # Worker functions
 # =============================================================================
-
-
 def _get_version_info(params: ParamDict, green: str = '',
                       end: str = '') -> List[str]:
     """
@@ -4053,6 +4034,36 @@ def _check_arg_path(params: ParamDict, arg: DrsArgument,
         return drs_file.DrsPath(params, block_kind=arg.path)
     else:
         return drs_file.DrsPath(params, arg.path)
+
+
+def _set_reference(value: Any) -> Union[str, None]:
+    """
+    Sets the reference value to string representation of value
+
+    :param value: Any, value to turn to string representation of value
+
+    :return: str: the valid directory (raises exception if invalid)
+    """
+    # deal with unset value
+    if value is None:
+        return None
+    else:
+        return str(value)
+
+
+def _set_crun_file(value: Any) -> Union[str, None]:
+    """
+    Sets the config run file value to string representation of value
+
+    :param value: Any, value to turn to string representation of value
+
+    :return: str: the valid directory (raises exception if invalid)
+    """
+    # deal with unset value
+    if value is None:
+        return None
+    else:
+        return str(value)
 
 
 # =============================================================================

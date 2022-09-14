@@ -261,8 +261,6 @@ def get_bokeh_plot_dir(params, pyfile):
 # =============================================================================
 if __name__ == "__main__":
 
-
-    # _path = os.path.join(PARAMS['DRS_DATA_PLOT'], 'test.py')
     # _bplt = BokehPlot(PARAMS, 'test_plot', _path, 'My test plot')
     # _bplt.create(kwargs=dict(power=3, xlabel='x', ylabel='x^3'))
     # _bplt.run()

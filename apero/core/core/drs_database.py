@@ -267,9 +267,10 @@ class DatabaseManager:
     def database_settings(self, kind: str, dparams: Union[dict, None] = None):
         """
         Load the initial database settings
-        :param kind:
-        :param dparams:
-        :return:
+        :param kind: str, the database kind (mysql or sqlite3)
+        :param dparams: dict, the database yaml dictionary
+
+        :return: None updates database settings
         """
         # load database yaml file
         if dparams is None:
@@ -947,7 +948,15 @@ class CalibrationDatabase(DatabaseManager):
             # return outfilenames
             return outfilenames, list(filetimes), list(reference)
 
-    def remove_entries(self, condition):
+    def remove_entries(self, condition: str):
+        """
+        Remove row(s) from a database
+
+        :param condition: str, the sql WHERE condition for removing row(s) from
+                          the database
+
+        :return: None, operation on database
+        """
         # set function
         # _ = display_func('remove_entries', __NAME__,
         #                  self.classname)
@@ -1372,7 +1381,15 @@ class TelluricDatabase(DatabaseManager):
             # return outfilenames
             return outfilenames
 
-    def remove_entries(self, condition):
+    def remove_entries(self, condition: str):
+        """
+        Remove row(s) from a database
+
+        :param condition: str, the sql WHERE condition for removing row(s) from
+                          the database
+
+        :return: None, operation on database
+        """
         # set function
         # _ = display_func('remove_entries', __NAME__,
         #                  self.classname)
@@ -1812,7 +1829,15 @@ class FileIndexDatabase(DatabaseManager):
         self.database.set('*', values=values, condition=condition,
                           unique_cols=ucols)
 
-    def remove_entries(self, condition):
+    def remove_entries(self, condition: str):
+        """
+        Remove row(s) from a database
+
+        :param condition: str, the sql WHERE condition for removing row(s) from
+                          the database
+
+        :return: None, operation on database
+        """
         # set function
         # _ = display_func('remove_entries', __NAME__,
         #                  self.classname)
@@ -2590,6 +2615,9 @@ class LogDatabase(DatabaseManager):
                         fail - divided by ||
         :param errors: str, errors found and passed to this entry - divided by
                        ||
+        :param ended: int, 1 if ended, 0 if still running
+        :param flagnum: int, the integer version of the binary flag number
+        :param flagstr: str, the flag strings for each bit of the binary number
         :param used: int, if entry should be used - always 1 for use internally
         :param ram_usage_start: float, RAM usage GB at start of recipe
         :param ram_usage_end: float, RAM usage GB at end of recipe
@@ -2741,7 +2769,15 @@ class LogDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-    def remove_entries(self, condition):
+    def remove_entries(self, condition: str):
+        """
+        Remove row(s) from a database
+
+        :param condition: str, the sql WHERE condition for removing row(s) from
+                          the database
+
+        :return: None, operation on database
+        """
         # set function
         # _ = display_func('remove_entries', __NAME__,
         #                  self.classname)
@@ -2815,7 +2851,13 @@ class RejectDatabase(DatabaseManager):
         """
         Add a reject entry to database
 
+        :param identifier: str, the identifying unique string for this
+                           observation
+        :param pp_flag: bool, if True reject at the preprocessing level
+        :param tel_flag: bool, if True reject at the telluric processing level
+        :param rv_flag: bool, if True reject at the RV processing level
         :param used: int, if entry should be used - always 1 for use internally
+        :param comment:
 
         :return: None - updates database
         """
@@ -2921,7 +2963,15 @@ class RejectDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-    def remove_entries(self, condition):
+    def remove_entries(self, condition: str):
+        """
+        Remove row(s) from a database
+
+        :param condition: str, the sql WHERE condition for removing row(s) from
+                          the database
+
+        :return: None, operation on database
+        """
         # set function
         # _ = display_func('remove_entries', __NAME__,
         #                  self.classname)
@@ -2945,9 +2995,11 @@ class PandasDBStorage:
         """
         Constructs the Pandas database storage class
         """
-        pass
+        self.obs_paths = dict(OBS_PATHS)
+        self.filedbs = dict(FILEDBS)
 
-    def set(self, key: str, value: Any):
+    @staticmethod
+    def set(key: str, value: Any):
         """
         Setter function to store value of "key" globally
 
@@ -2981,7 +3033,8 @@ class PandasDBStorage:
             emsg = 'Key "{0}" not found in {1}'
             raise KeyError(emsg.format(key, self.classname))
 
-    def reset(self, key: Optional[str] = None, subkey: Optional[str] = None):
+    @staticmethod
+    def reset(key: Optional[str] = None, subkey: Optional[str] = None):
         """
         Resets "key" globally to default value / remove subkey
 

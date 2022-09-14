@@ -17,7 +17,6 @@ Import rules:
 - only from apero.base.base.py
 
 """
-import importlib
 from hashlib import blake2b
 import os
 import pandas as pd
@@ -100,7 +99,15 @@ def lang_db_proxy(language=None) -> dict:
         return dict()
 
 
-def _rel_folder(package, folder):
+def _rel_folder(package: str, folder: str) -> str:
+    """
+    Return the absolute path from a relative 'folder' (relative to 'package')
+
+    :param package: str, the package name
+    :param folder: str, the relative directory
+
+    :return: str, the absolute path of the relative 'folder'
+    """
     # change to this files location
     init = pkg_resources.resource_filename(package, '__init__.py')
     # Get the config_folder from relative path
@@ -118,14 +125,22 @@ def _rel_folder(package, folder):
 
 
 def generate_hash(string_text: str, size: int = 10) -> str:
+    """
+    Generate a hash code based on the 'string_text' of length 'size'
+
+    :param string_text: str, the string to generate hash code from
+    :param size: int, the size of the hash to create
+
+    :return: str, the generated hash code
+    """
     # need to encode string
     encoded = string_text.encode('utf')
     # we want a hash of 10 characters
     digest = blake2b(encoded, digest_size=size)
     # create hash
-    hash = digest.hexdigest()
+    hashstr = digest.hexdigest()
     # return hash
-    return str(hash)
+    return str(hashstr)
 
 
 # =============================================================================
@@ -148,7 +163,15 @@ class DrsBaseException(Exception):
 
 
 class DrsBaseError(DrsBaseException):
-    def __init__(self, code, arguments=None):
+    def __init__(self, code: str, arguments: Union[List, None] = None):
+        """
+        Construct drs base error
+
+        :param code: str, the language code for error string
+
+        :param arguments: list, list of arguments for error string (or None if
+                          no arguments
+        """
         # define the class name
         self.classname = 'DrsBaseError'
         # define the language database code associated with this
@@ -207,14 +230,16 @@ class DrsBaseError(DrsBaseException):
 # =============================================================================
 # Define core base functions
 # =============================================================================
-def base_func(func, _func, *args, **kwargs):
+def base_func(func, _func: str, *args, **kwargs):
     """
-    Wrapper to
-    :param func:
-    :param _func:
-    :param args:
-    :param kwargs:
-    :return:
+    Wrapper to wrap around base functions
+
+    :param func: any function
+    :param _func: str, function name [not used?]
+    :param args: arguments passed to 'func'
+    :param kwargs: keyword arguments passed to 'func'
+
+    :return: call to 'func'
     """
     # try base function
     try:
@@ -317,7 +342,19 @@ def base_error(codeid: str, message: str, level: str = 'error',
                exceptionname: Union[str, None] = None,
                exception: Any = None,
                exit_flag: bool = False) -> Any:
+    """
+    Base error prints the error using base_printer and DrsBaseError
 
+    :param codeid: str, the language code for error string
+    :param message: str, a message to add to the error string
+    :param level: str, level of the message (normally 'error')
+    :param args: list, list of arguments passed to error string
+    :param exceptionname: str, name of the exception
+    :param exception: valid python Exception
+    :param exit_flag: bool, if True forces an exit after error
+
+    :return: DrsBaseError or exception or exit
+    """
     # print error message
     msg = base_printer(codeid, message, level, args, exceptionname,
                        printstatement=exit_flag)
@@ -329,6 +366,7 @@ def base_error(codeid: str, message: str, level: str = 'error',
         else:
             return exception(msg)
     else:
+        # noinspection PyUnresolvedReferences,PyProtectedMember
         os._exit(0)
 
 
@@ -416,8 +454,6 @@ def base_null_text(variable: Any, nulls: Union[None, List[str]] = None) -> bool:
                     return True
     # else in all other cases return False
     return False
-
-
 
 
 # =============================================================================
