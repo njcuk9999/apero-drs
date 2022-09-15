@@ -1,0 +1,26 @@
+# done doc strings + formatting
+
+
+apero
+	base
+		base.py
+		drs_base.py
+		drs_db.py
+	core
+		constants
+			constants_functions.py
+			param_functions.py
+			path_definitions.py
+		core
+			drs_arguments.py
+			drs_base_classes.py
+			drs_database.py
+			drs_exceptions.py
+			drs_file.py
+			drs_log.py
+			drs_misc.py
+
+
+
+
+

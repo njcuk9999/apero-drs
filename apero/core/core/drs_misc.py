@@ -251,7 +251,6 @@ def send_email(params: Any, subject: str, message: Union[List[str], str],
     :param message: str or list of strings, the message to send
     :param email: str or None, if set this is the email address to send the
                   email to
-    :param attach: str or None, if set this attaches a file to the email
 
     :return: None - sends email
     """
@@ -306,6 +305,7 @@ def get_system_stats() -> Dict[str, Any]:
     # storage for stats
     stats = dict()
     # try to get stats
+    # noinspection PyBroadException
     try:
         # default ram value is in bytes
         stats['ram_used'] = psutil.virtual_memory().used / 2**30
