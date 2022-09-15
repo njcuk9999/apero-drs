@@ -441,7 +441,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     if db_type == 2:
         all_params, args = get_mysql_settings(all_params, args)
     else:
-        all_params, args = get_sqlite_settings(all_params)
+        all_params = get_sqlite_settings(all_params)
     # ------------------------------------------------------------------
     cprint('\n' + printheader(), 'm')
     cprint(textentry('40-001-00046', args=[instrument]), 'm')
