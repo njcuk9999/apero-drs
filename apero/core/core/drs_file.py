@@ -1107,6 +1107,8 @@ class DrsInputFile:
                        [not used in DrsInputFile]
         :param instrument: str, the instrument this file definition is
                            associated with
+        :param nosave: bool, if True this drs file should not be saved to disk
+                       even when asking for a write function
         :param description: str, the description of the file (for documentation)
 
         - Parent class for Drs Fits File object (DrsFitsFile)
@@ -1317,6 +1319,8 @@ class DrsInputFile:
                                # set the instrument
         :param instrument: str, the instrument this file definition is 
                            assoicated with
+        :param nosave: bool, if True this drs file should not be saved to disk
+                       even when asking for a write function
         :param description: str, the description of the file (for documentation)
         """
         # set function name
@@ -1440,6 +1444,8 @@ class DrsInputFile:
                        [not used in DrsInputFile]
         :param instrument: str, instrument this file definition is associated
                            with
+        :param nosave: bool, if True this drs file should not be saved to disk
+                       even when asking for a write function
         :param description: str, the description of the file (for documentation)
         """
         # set function name
@@ -1667,7 +1673,6 @@ class DrsInputFile:
         if outfile is None:
             outfile = self
         # if we have a function use it
-        error = None
         if self.outclass is not None:
             try:
                 abspath = self.outclass.construct(params, infile, outfile,
@@ -1675,7 +1680,6 @@ class DrsInputFile:
                                                   remove_insuffix, prefix,
                                                   suffix, filename)
             except DrsCodedException as e:
-                error = e
                 level = e.get('level', 'error')
                 eargs = e.get('targs', None)
                 WLOG(params, level, textentry(e.codeid, args=eargs))
@@ -2252,6 +2256,8 @@ class DrsFitsFile(DrsInputFile):
                        [not used in DrsInputFile]
         :param instrument: str, the instrument this file definition is
                            associated with
+        :param nosave: bool, if True this drs file should not be saved to disk
+                       even when asking for a write function
         :param description: str, the description of the file (for documentation)
 
         - Parent class for Drs Fits File object (DrsFitsFile)
@@ -2409,6 +2415,8 @@ class DrsFitsFile(DrsInputFile):
                        [not used in DrsInputFile]
         :param instrument: str, the instrument this file definition is
                            associated with
+        :param nosave: bool, if True this drs file should not be saved to disk
+                       even when asking for a write function
         :param description: str, the description of the file (for documentation)
         """
         # set function name
@@ -2535,6 +2543,8 @@ class DrsFitsFile(DrsInputFile):
                        [not used in DrsInputFile]
         :param instrument: str, the instrument this file definition is
                    associated with
+        :param nosave: bool, if True this drs file should not be saved to disk
+                       even when asking for a write function
         :param description: str, the description of the file (for documentation)
         """
         # set function name
@@ -2936,16 +2946,17 @@ class DrsFitsFile(DrsInputFile):
         return infile, valid, outfilename
 
     def get_infile_infilename(self, filename: Union[str, None],
-                              fiber: Union[str, None]):
+                              fiber: Union[str, None]) -> str:
         """
         Get an the input file from an input filename string (i.e. the input
         of an input)
 
-        :param filename:
-        :param fiber:
-        :return:
-        """
+        :param filename: str, the infile filename
+        :param fiber: str, the fiber associated with the infile (or None)
 
+        :return: str, the input filename for the given the infile
+                 (the input of the input)
+        """
         # set function name
         func_name = display_func('get_infile_infilename', __NAME__,
                                  self.class_name)
@@ -4381,6 +4392,7 @@ class DrsFitsFile(DrsInputFile):
         keyworddict = params.get_instanceof(keyword_inst, nameattr='key')
         # get pconstant
         pconstant = constants.pload()
+
         # filter function
         def __keep_card(card: drs_fits.fits.header.Card) -> bool:
             """
@@ -4451,7 +4463,8 @@ class DrsFitsFile(DrsInputFile):
         # return cards for copy
         return _copy_cards
 
-    def deal_with_nans(self, header: drs_fits.Header) -> drs_fits.Header:
+    @staticmethod
+    def deal_with_nans(header: drs_fits.Header) -> drs_fits.Header:
         """
         Replace nan values with np.nan
 
@@ -4909,6 +4922,9 @@ class DrsFitsFile(DrsInputFile):
         Copy a hdict entry from drsfile (a DrsFitsFile instance)
 
         :param drsfile: DrsFitsFile instance (containing drsfile.hdict)
+        :param hdict: dict, the header dictionary to be copied 
+                      (if drsfile is None)
+        
         :return: None, updates DrsFitsFile.hdict
         """
         # set function name
@@ -4925,8 +4941,12 @@ class DrsFitsFile(DrsInputFile):
                     header: Optional[Header] = None):
         """
         Copy a header entry from drsfile (a DrsFitsFile instance)
+        
         :param drsfile: DrsFitsFile instance (containing drsfile.hdict)
-        :return: None, updates DrsFitsFile.header
+        :param header: fits Header - the header to be copied (if drsfile
+                       is None)
+        
+        :return: None, updates self.header
         """
         # set function name
         # _ = display_func('copy_header', __NAME__, self.class_name)
@@ -5411,6 +5431,8 @@ class DrsNpyFile(DrsInputFile):
         :param hkeys: NOT USED FOR NPY FILE CLASS
         :param instrument: str, the instrument this file definition is
                    associated with
+        :param nosave: bool, if True this drs file should not be saved to disk
+               even when asking for a write function
         :param description: str, the description of the file (for documentation)
         """
         # set function name
@@ -5513,6 +5535,8 @@ class DrsNpyFile(DrsInputFile):
         :param hkeys: NOT USED FOR NPY FILE CLASS
         :param instrument: str, the instrument this file definition is
                    associated with
+        :param nosave: bool, if True this drs file should not be saved to disk
+               even when asking for a write function
         :param description: str, the description of the file (for documentation)
         """
         # set function name
@@ -5552,11 +5576,24 @@ class DrsNpyFile(DrsInputFile):
 
 
 class DrsFileGroup:
+    """
+    A way to group a set of Drs Files
+    """
+
     def __init__(self, name: str, files: List[DrsInputFile]):
+        """
+        Construct a new drs file group
+        :param name: str, the name of the file group
+        :param files: list, the list of drs input files in the group
+        """
         self.name = name
         self.files = files
 
     def copy(self) -> 'DrsFileGroup':
+        """
+        Copy a drs file group
+        :return: 
+        """
         return DrsFileGroup(self.name, self.files)
 
 
@@ -5608,7 +5645,6 @@ class DrsOutFileExtension:
         :param hdr_extname: str, if set this forces taking the header from
                             the extension named here (otherwise uses primary)
         :param datatype: str, force 'image' or 'table' for extension
-        :param description: str, the description of the file (for documentation)
 
         :return:
         """
@@ -5880,7 +5916,7 @@ class DrsOutFileExtension:
         """
         Load infile for this extension
 
-        :param params:
+        :param params: ParamDict, parameter dictionary of constants
         :return:
         """
         # ---------------------------------------------------------------------
@@ -6407,7 +6443,14 @@ class DrsOutFile(DrsInputFile):
         # return table
         return table0
 
-    def copy(self):
+    def copy(self) -> 'DrsOutFile':
+        """
+        Copy a Drs Out File
+        
+        creates a new DrsOutFile and deep copies attributes into it
+        
+        :return: new DrsOutFile deep copy of 'self'
+        """
         # set function name
         # _ = display_func('__init__', __NAME__, self.class_name)
         # get new copy of drs out file
@@ -6438,7 +6481,13 @@ class DrsOutFile(DrsInputFile):
         # return new copy
         return new
 
-    def has_header(self):
+    def has_header(self) -> Tuple[np.ndarray, List[str]]:
+        """
+        Checks for header in each extension
+        
+        :return: tuple, 1. True or False for each header, 2. the name of each
+                 extension (as defined in header)
+        """
         # assume no headers are loaded
         value = np.zeros(len(self.extensions), dtype=bool)
         names = []
@@ -6458,6 +6507,8 @@ class DrsOutFile(DrsInputFile):
 
         :param params: ParamDict, parameter dictionary of constants
         :param findexdbm: Index Database instance
+        :param calibdbm: Calibration Database instance
+        :param telludbm: Telluric Database instance
         :param required: bool, whether file is required or not
 
         :return: bool, whether we successfully linked all extensions
@@ -6752,12 +6803,13 @@ class DrsOutFile(DrsInputFile):
         # return that we linked successfully
         return True, None
 
-    def process_header(self, params):
+    def process_header(self, params: ParamDict):
         """
         Process the headers now they are all present
 
-        :param params:
-        :return:
+        :param params: ParamDict, parameter dictionary of constants
+        
+        :return: None, updates keys/values in self
         """
         # get pconst
         pconst = constants.pload()
@@ -6831,6 +6883,8 @@ class DrsOutFile(DrsInputFile):
         index database entry for extension 1 (or 0 if 1 not present) and
         puts the "INFILES" column into self.infiles
 
+        :param block_kind: str, which block kind (raw/tmp/red etc) are the
+                           infile coming from
         :param database: IndexDatabase, the database instance
 
         :return: None, updates self.infiles
@@ -8158,9 +8212,17 @@ def get_mid_obs_time(params: ParamDict,
 # =============================================================================
 # Worker functions
 # =============================================================================
-def index_hkey_condition(name, datatype, hkey):
+def index_hkey_condition(name: str, datatype: type,
+                         hkey: Union[List[str], str]) -> str:
     """
     Deal with generating a condition from a hkey (list or str)
+    
+    :param name: str, the name of the header key (column name as in database)
+    :param datatype: type, the data type to force data to
+    :param hkey: list of str or str, the header key(s) as a column name to
+                 add to condition 
+                 
+    :return: str, the updated WHERE condition (starts with an AND)
     """
     # must deal with hkeys as lists
     if isinstance(hkey, list):

@@ -44,12 +44,16 @@ USED_CONFIG_WARNINGS = []
 # Define exception classes
 # =============================================================================
 class DrsException(Exception):
-    """Raised when config file is incorrect"""
+    """
+    Raised when config file is incorrect
+    """
     pass
 
 
 class Exit(SystemExit):
-    # Raised when exit is called
+    """
+    Raised when exit is called
+    """
     pass
 
 
