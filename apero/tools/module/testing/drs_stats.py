@@ -1283,9 +1283,9 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     WLOG(params, '', 'Loading log database')
     logdbm = drs_database.LogDatabase(params)
     # set up condition
-    condition = 'RECIPE_TYPE="recipe" AND ENDED=1'
+    condition = 'RECIPE_TYPE LIKE "%recipe%" AND ENDED=1'
     columns = ('SHORTNAME, UNIXTIME, RAM_USAGE_START, RAM_USAGE_END, '
-               'START_TIME, END_TIME')
+               'START_TIME, END_TIME, RECIPE, RECIPE_TYPE, ENDED')
     # get columns from logdbm
     ltable = logdbm.get_entries(columns, condition=condition)
     # -------------------------------------------------------------------------
