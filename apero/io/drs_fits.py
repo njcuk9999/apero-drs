@@ -28,7 +28,7 @@ from pathlib import Path
 import warnings
 import time
 import traceback
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero.core import constants
@@ -62,6 +62,7 @@ SCALEARGS = dict(bscale=1, bzero=0)
 # Define any simple type for typing
 AnySimple = Union[int, float, str, bool]
 # get header comment cards
+# noinspection PyProtectedMember
 HeaderCommentCards = fits.header._HeaderCommentaryCards
 # filter verify warnings
 warnings.filterwarnings('ignore', category=VerifyWarning)
@@ -174,7 +175,16 @@ class Header(fits.Header):
             value = super().__getitem__(key)
             return self.__nan_check(value, dtype=float)
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: Any = None) -> Any:
+        """
+        Get the value of a header key (with nan support)
+
+        :param key: str, the header key to get
+        :param default: Any, the default value if we do not have key in header
+                        if not give returns None
+
+        :return: Any, the value of header[key] or default if not present
+        """
         value = super().get(key, default)
         return self.__nan_check(value, dtype=float)
 
@@ -364,7 +374,7 @@ def readfits(params: ParamDict, filename: Union[str, Path],
              getdata: bool = True, gethdr: bool = False,
              fmt: str = 'fits-image', ext: Union[int, None] = None,
              extname: Union[str, None] = None, func: Union[str, None] = None,
-             log: bool = True,  return_names: bool = False
+             log: bool = True, return_names: bool = False
              ) -> Union[DataHdrType, np.ndarray, fits.Header, None]:
     """
     The drs fits file read function
@@ -463,6 +473,7 @@ def read_header(params: ParamDict, filename: str, ext: Union[int, None] = None,
                 first extension)
     :param log: bool, if True logs on error, else raises astropy.io.fits
                 exception that generated the error
+    :param copy: bool, if True deepcopy of the header is done
 
     :return: astropy.io.fits.Header instance - the header read from 'filename'
     """
@@ -615,12 +626,13 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
     # -------------------------------------------------------------------------
     # deal with getting data
     if getdata:
+        # noinspection PyBroadException
         try:
             # deal with ext being set
             if ext is not None:
                 # open fits file
                 with fits.open(filename) as hdulist:
-                    if len(hdulist)-1 < ext:
+                    if len(hdulist) - 1 < ext:
                         # print error: File {0} does not have extension {1}
                         #              File may be corrupted or wrong type
                         eargs = [filename, ext]
@@ -670,6 +682,7 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
     # -------------------------------------------------------------------------
     # deal with getting header
     if gethdr:
+        # noinspection PyBroadException
         try:
             # deal with ext being set
             if ext is not None:
@@ -871,34 +884,8 @@ def writefits(params: ParamDict, filename: str, data: ListImageTable,
 
     :return: None - writes Fits HDU to 'filename'
     """
-    # set function name
-    # _ = display_func('writefits', __NAME__)
-    # ------------------------------------------------------------------
-    # define a synchoronized lock for indexing (so multiple instances do not
-    #  run at the same time)
-    # lockfile = os.path.basename(filename)
-    # # start a lock
-    # lock = drs_lock.Lock(params, lockfile)
-
-    # ------------------------------------------------------------------
-    # make locked read function
-    # @drs_lock.synchronized(lock, params['PID'])
-    # def locked_write():
-    #     return _write_fits(params, filename, data, header, datatype, dtype,
-    #                        func)
     return _write_fits(params, filename, data, header, names, datatype, dtype,
                        func)
-    # ------------------------------------------------------------------
-    # try to run locked read function
-    # try:
-    #     locked_write()
-    # except KeyboardInterrupt as e:
-    #     lock.reset()
-    #     raise e
-    # except Exception as e:
-    #     # reset lock
-    #     lock.reset()
-    #     raise e
 
 
 def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
@@ -1271,16 +1258,21 @@ def check_dtype_for_header(value: Any) -> Any:
     return newvalue
 
 
-def deal_with_bad_file_single(filename, ext=None, extname=None,
-                              flavour: str = 'data'):
+def deal_with_bad_file_single(filename: str, ext: Optional[int] = None,
+                              extname: Optional[str] = None,
+                              flavour: str = 'data'
+                              ) -> Union[np.ndarray, fits.Header]:
     """
     One last attempt to read data or header but not both, for a single
     ext or extname
 
-    :param filename:
-    :param ext:
-    :param extname:
-    :return:
+    :param filename: str, fits filename to try to open
+    :param ext: int or None, if given is the extension in the fits file to open
+    :param extname: str or None, if given is the extension name in the fits
+                    file to open
+    :param flavour: str, "data" to open image or "header" to open the meta info
+
+    :return: either a numpy array (if flavour='data') or fits Header
     """
     # open HDU
     hdulist = fits.open(filename)
