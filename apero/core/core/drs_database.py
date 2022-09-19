@@ -495,7 +495,7 @@ class AstrometricDatabase(DatabaseManager):
         return self.database.count(condition=condition)
 
     def find_objnames(self, pconst: constants.PseudoConstants,
-                      objnames: List[str]) -> List[str]:
+                      objnames: Union[List[str], np.ndarray]) -> List[str]:
         """
         Wrapper around find_objname
 

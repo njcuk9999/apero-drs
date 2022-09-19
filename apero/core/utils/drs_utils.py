@@ -24,7 +24,6 @@ from apero.core import constants
 from apero.core.core import drs_database
 from apero.io import drs_fits
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -61,6 +60,9 @@ FitsHeader = drs_fits.fits.Header
 # Define Classes
 # =============================================================================
 class RecipeLog:
+    """
+    Recipe log class - to store recipe log data
+    """
 
     def __init__(self, name: str, sname: str, params: ParamDict, level: int = 0,
                  logger: Union[None, drs_log.Logger] = None,
@@ -416,7 +418,6 @@ class RecipeLog:
 
             ErrorType: ErrorMessage ||
 
-        :param params: ParamDict, the constants parameter dictionary
         :param errortype: Exception or string, the error exception or a string
                           representation of it
         :param errormsg: str, the error message to store
@@ -620,6 +621,12 @@ class RecipeLog:
         self.write_logfile()
 
     def convert_flags(self):
+        """
+        Convert flags from a list to a string (keys separated by |)
+        and decode the flag number from the individual flags
+
+        :return: None, updates flagnum and flagstr
+        """
         self.flagnum = self.flags.decode()
         self.flagstr = '|'.join(list(self.flags.keys()))
 
@@ -644,11 +651,9 @@ class RecipeLog:
         # return rows
         return rows
 
-
     # complex param table return
     ParamTableReturn = Tuple[List[str], List[str], list, List[str], List[str],
                              List[int]]
-
 
     def get_param_table(self) -> ParamTableReturn:
         """
@@ -673,7 +678,7 @@ class RecipeLog:
         # get log keys
         ldb_cols = constants.pload().LOG_DB_COLUMNS()
         log_keys = list(ldb_cols.altnames)
-        log_comments= list(ldb_cols.comments)
+        log_comments = list(ldb_cols.comments)
         # convert the flags
         self.convert_flags()
         # ---------------------------------------------------------------------
@@ -777,9 +782,9 @@ def update_index_db(params: ParamDict, block_kind: str,
     # -------------------------------------------------------------------------
     # update index database with raw files
     findexdbm.update_entries(block_kind=block_kind,
-                            exclude_directories=exclude_dirs,
-                            include_directories=include_dirs,
-                            filename=filename, suffix=suffix)
+                             exclude_directories=exclude_dirs,
+                             include_directories=include_dirs,
+                             filename=filename, suffix=suffix)
     # -------------------------------------------------------------------------
     # we need to reset some globally stored variables - these should be
     #   recalculated when used
@@ -793,6 +798,23 @@ def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
                columns='ABSPATH',
                findexdbm: Union[FileIndexDatabase, None] = None
                ) -> Union[np.ndarray, pd.DataFrame]:
+    """
+    Find a type of files from the file index database using a set of filters
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param block_kind: str, the block kind (raw/tmp/red etc)
+    :param filters: dict, the column names within the file index database
+                    with which to filter by, the values of the dictionary
+                    filter the database. filters are used with "AND" logic
+    :param columns: str, the columns to return from the database (can use
+                    '*' for all, if a single column is given a numpy array
+                    if returned otherwise a pandas dataframe is returned
+    :param findexdbm: FileIndexDatabase class or None, pass a current
+                      file index database class (otherwise reloaded)
+
+    :return: if one column a numpy 1D array is returned, otherwise a pandas
+             dataframe is returned with all the requested columns
+    """
     # update database
     findexdbm = update_index_db(params, block_kind=block_kind,
                                 findexdbm=findexdbm)
@@ -858,6 +880,13 @@ def uniform_time_list(times: Union[List[float], np.ndarray], number: int
 
 
 def display_flag(params: ParamDict):
+    """
+    Print out the binary flags used throughout the logging process
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: None, prints out flags using logger
+    """
     # get inputs
     inputs = params['INPUTS']
     null_text = ['None', '', 'Null']

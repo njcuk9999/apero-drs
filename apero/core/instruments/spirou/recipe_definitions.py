@@ -97,8 +97,8 @@ flatfile = dict(name='--flatfile', dtype='file', default='None',
                 files=[files.out_ff_flat], helpstr=textentry('FLATFILE_HELP'))
 # -----------------------------------------------------------------------------
 fpref = dict(name='--fpref', dtype='file', default='None',
-                files=[files.out_shape_fpref],
-                helpstr=textentry('FPREFFILE_HELP'))
+             files=[files.out_shape_fpref],
+             helpstr=textentry('FPREFFILE_HELP'))
 # -----------------------------------------------------------------------------
 locofile = dict(name='--locofile', dtype='file', default='None',
                 files=[files.out_loc_loco], helpstr=textentry('LOCOFILE_HELP'))
@@ -381,7 +381,7 @@ apero_shape_ref.set_outputs(FPREF_FILE=files.out_shape_fpref,
                             SHAPE_BDXMAP_FILE=files.out_shape_debug_bdx,
                             DEBUG_BACK=files.debug_back)
 apero_shape_ref.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
-                                   'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
+                                'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
 apero_shape_ref.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
 apero_shape_ref.set_arg(pos=0, **obs_dir)
 apero_shape_ref.set_kwarg(name='--fpfiles', dtype='files',
@@ -706,10 +706,10 @@ apero_wave_ref.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                            CCF_RV=files.out_ccf_fits)
 apero_wave_ref.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_wave_ref.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
-                                  'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
-                                  'WAVEREF_EXPECTED', 'EXTRACT_S1D',
-                                  'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
-                                  'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
+                               'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
+                               'WAVEREF_EXPECTED', 'EXTRACT_S1D',
+                               'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
+                               'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 apero_wave_ref.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
 apero_wave_ref.set_arg(pos=0, **obs_dir)
 apero_wave_ref.set_kwarg(name='--hcfiles', dtype='files',
@@ -1551,27 +1551,27 @@ ref_seq.description_file = None
 # add recipes
 ref_seq.add(apero_dark_ref, ref=True)
 ref_seq.add(apero_badpix, name='BADREF', ref=True,
-               recipe_kind='calib-reference')
+            recipe_kind='calib-reference')
 ref_seq.add(apero_loc, name='LOCREFC', files=[files.pp_dark_flat],
-               ref=False, recipe_kind='calib-reference-C')
+            ref=False, recipe_kind='calib-reference-C')
 ref_seq.add(apero_loc, name='LOCREFAB', files=[files.pp_flat_dark],
-               ref=False, recipe_kind='calib-reference-AB')
+            ref=False, recipe_kind='calib-reference-AB')
 ref_seq.add(apero_shape_ref, ref=True)
 ref_seq.add(apero_shape, name='SHAPELREF', ref=True,
-               recipe_kind='calib-reference')
+            recipe_kind='calib-reference')
 ref_seq.add(apero_flat, name='FLATREF', ref=True,
-               recipe_kind='calib-reference')
+            recipe_kind='calib-reference')
 # thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
 ref_seq.add(apero_thermal, name='THERM_REFI', ref=True,
-               recipe_kind='calib-reference-I', files=[files.pp_dark_dark_int])
+            recipe_kind='calib-reference-I', files=[files.pp_dark_dark_int])
 ref_seq.add(apero_leak_ref, ref=True)
 ref_seq.add(apero_wave_ref, ref=True,
-               rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
-                            fpfiles=[files.pp_fp_fp]))
+            rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
+                         fpfiles=[files.pp_fp_fp]))
 # thermal for everything else (requires a wave solution)
 ref_seq.add(apero_thermal, name='THERM_REFT', ref=True,
-               recipe_kind='calib-reference-T', files=[files.pp_dark_dark_tel],
-               calib_required=False)
+            recipe_kind='calib-reference-T', files=[files.pp_dark_dark_tel],
+            calib_required=False)
 
 # -----------------------------------------------------------------------------
 # calibration run (for trigger)
@@ -1590,7 +1590,7 @@ calib_seq.add(apero_shape)
 calib_seq.add(apero_flat, files=[files.pp_flat_flat])
 # thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
 calib_seq.add(apero_thermal, name='THERM_I',
-                recipe_kind='calib-night-I', files=[files.pp_dark_dark_int])
+              recipe_kind='calib-night-I', files=[files.pp_dark_dark_int])
 calib_seq.add(apero_wave_night)
 # thermal for everything else (requires a wave solution)
 calib_seq.add(apero_thermal, name='THERM_T',

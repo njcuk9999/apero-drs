@@ -357,9 +357,8 @@ KW_DRS_DSOURCE.set(key='PP_SRCE', unit=uu.K,
 # The date of the source of the DRS object data (after preprocessing)
 KW_DRS_DDATE = KW_DRS_DDATE.copy(__NAME__)
 KW_DRS_DDATE.set(key='PP_DDATE', unit=uu.K,
-                  comment='The date of source of DRS object data',
-                  group='resolve', post_exclude=True)
-
+                 comment='The date of source of DRS object data',
+                 group='resolve', post_exclude=True)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -595,17 +594,17 @@ KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag',
 # the number of bad pixels found via the intercept (cosmic ray rejection)
 KW_PPC_NBAD_INTE = KW_PPC_NBAD_INTE.copy(__NAME__)
 KW_PPC_NBAD_INTE.set('NBADINTE', comment='No. bad px intercept cosmic reject',
-                post_exclude=True)
+                     post_exclude=True)
 
 # the number of bad pixels found via the slope (cosmic ray rejection)
 KW_PPC_NBAD_SLOPE = KW_PPC_NBAD_SLOPE.copy(__NAME__)
 KW_PPC_NBAD_SLOPE.set('NBADSLOP', comment='No. bad px slope cosmic reject',
-                post_exclude=True)
+                      post_exclude=True)
 
 # the number of bad pixels found with both intercept and slope (cosmic ray)
 KW_PPC_NBAD_BOTH = KW_PPC_NBAD_BOTH.copy(__NAME__)
 KW_PPC_NBAD_BOTH.set('NBADBOTH', comment='No. bad px both cosmic reject',
-                post_exclude=True)
+                     post_exclude=True)
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
@@ -2155,12 +2154,12 @@ KW_POL_METHOD.set(key='POLMETHO', comment='POLAR Polarimetry method')
 # define the MJD at flux-weighted center of 4 exposures
 KW_POL_MJD_FW_CEN = KW_POL_MJD_FW_CEN.copy(__NAME__)
 KW_POL_MJD_FW_CEN.set(key='MJDFWCEN',
-                  comment='MJD at flux-weighted center of the exposures')
+                      comment='MJD at flux-weighted center of the exposures')
 
 # define the BJD at flux-weighted center of 4 exposures
 KW_POL_BJD_FW_CEN = KW_POL_BJD_FW_CEN.copy(__NAME__)
 KW_POL_BJD_FW_CEN.set(key='BJDFWCEN',
-                  comment='BJD at flux-weighted center of the exposures')
+                      comment='BJD at flux-weighted center of the exposures')
 
 # define whether we corrected for BERV
 KW_POL_CORR_BERV = KW_POL_CORR_BERV.copy(__NAME__)

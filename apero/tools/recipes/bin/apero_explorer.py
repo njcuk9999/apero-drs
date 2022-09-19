@@ -102,7 +102,7 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # End of main code
         # ----------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # get instrument
     instrument = str(recipe.instrument)
@@ -130,7 +130,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

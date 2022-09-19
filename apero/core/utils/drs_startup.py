@@ -95,6 +95,7 @@ RUN_KEYS['UPDATE_IDATABASE_NAMES'] = 'All'
 RUN_KEYS['TELLURIC_TARGETS'] = 'All'
 RUN_KEYS['SCIENCE_TARGETS'] = 'All'
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -556,22 +557,6 @@ def run(func: Any, recipe: DrsRecipe,
     return llmain, success
 
 
-def return_locals(params: ParamDict, ll: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Deal with returning into ipython (if params['IPYTHON_RETURN'] is True)
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param ll: dictionary, the local namespace in dictionary form - normally
-               called with locals()
-
-    :return: dictionary, the lcoal namespace in dictionary form
-    """
-    # set function name
-    # _ = display_func('return_locals', __NAME__)
-    # else return ll
-    return ll
-
-
 def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
              recipe: DrsRecipe, success: bool, outputs: str = 'red',
              end: bool = True, quiet: bool = False,
@@ -612,8 +597,6 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
     :return: the updated parameter dictionary
     :rtype: ParamDict
     """
-    # set function name
-    func_name = display_func('end_main', __NAME__)
     # -------------------------------------------------------------------------
     # get params/plotter from llmain if present
     #     (from __main__ function not main)
@@ -650,7 +633,7 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
         # ---------------------------------------------------------------------
         # deal with logging (if log exists in recipe)
         if success and recipe.log is not None:
-                recipe.log.end()
+            recipe.log.end()
         elif recipe.log is not None:
             recipe.log.end(success=False)
         # ---------------------------------------------------------------------
@@ -708,7 +691,16 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
         return outdict
 
 
-def index_files(params, recipe):
+def index_files(params: ParamDict, recipe: DrsRecipe):
+    """
+    Index files in current recipe (via recipe.output_files)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe that called this function
+                   used to get output files (recipe.outputfiles)
+
+    :return: None, adds output files to file index
+    """
     # load index database
     findexdb = drs_database.FileIndexDatabase(params)
     findexdb.load_db()
@@ -748,7 +740,7 @@ def index_files(params, recipe):
                 hkeys[rkey] = 'Null'
         # finally add to database
         findexdb.add_entry(outfile, block_kind, recipename, runstring, infiles,
-                          hkeys, used, rawfix)
+                           hkeys, used, rawfix)
 
 
 def copy_kwargs(params: ParamDict, recipe: Union[DrsRecipe, None] = None,
@@ -1212,7 +1204,7 @@ def _quiet_keys_present(recipe: DrsRecipe, quiet: bool,
     return quiet
 
 
-def _parallel_key_present(fkwargs) -> bool:
+def _parallel_key_present(fkwargs: Dict[str, Any]) -> bool:
     """
     Hack a way to get parallel argument before argparse
 
@@ -1628,6 +1620,7 @@ def _display_python_modules() -> str:
     storage = textentry('40-000-00017')
     # loop around packages and get versions
     for p_it, package in enumerate(packages):
+        # noinspection PyBroadException
         try:
             with warnings.catch_warnings(record=True) as _:
                 mod = importlib.import_module(package)
@@ -1702,7 +1695,15 @@ def _find_ipython() -> bool:
 # =============================================================================
 # Worker functions
 # =============================================================================
-def _update_input_params(params, args):
+def _update_input_params(params: ParamDict, args: Dict[str, Any]):
+    """
+    Update the input parameter dictionary with new arguments
+
+    :param params: ParamDict, parameter dictionary of constants to update
+    :param args: dict, args to use to update params['INPUTS']
+
+    :return: None, updates params in memory
+    """
     # loop around arguments
     for argname in args:
         # if argument isn't in params['INPUTS'] we don't need to worry about it
@@ -2053,6 +2054,12 @@ def _set_obsdir_from_input(recipe: DrsRecipe,
                            ) -> DrsRecipe:
     """
     Get observation directory from inputs
+
+    :param recipe: DrsRecipe, the recipe to set observation directory in
+    :param fkwargs: dict or None, if given is the command line arguments
+                    look in here for obs_dir (from input)
+
+    :return: DrsRecipe, the updated recipe inputted
     """
     # set function name
     func_name = display_func('_set_obsdir_from_input', __NAME__)
@@ -2069,6 +2076,7 @@ def _set_obsdir_from_input(recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # check in args
     if check and ('obs_dir' in recipe.args):
+        # noinspection PyBroadException
         try:
             # get position of obs_dir in arguments
             pos = int(recipe.args['obs_dir'].pos) + 1
@@ -2124,10 +2132,9 @@ def _set_force_dirs(recipe: DrsRecipe,
 
     :param recipe: DrsRecipe instance
     :param fkwargs: dictionary: keys to check from function call
+
     :return:
     """
-    # set function name
-    # _ = display_func('_set_force_dirs', __NAME__)
     # ----------------------------------------------------------------------
     # set debug key
     in_block_key = '--force_indir'
@@ -2321,6 +2328,7 @@ def _make_dirs(params: ParamDict, path: str):
         pid = None
     else:
         pid = params['PID']
+
     # -------------------------------------------------------------------------
     # make locked makedirs function
     @drs_lock.synchronized(lock, pid + lockfile)
@@ -2339,6 +2347,7 @@ def _make_dirs(params: ParamDict, path: str):
             emsg = textentry('01-000-00001', args=[path, type(e_)])
             emsg += '\n\n' + textentry(string_trackback)
             WLOG(params, 'error', emsg, raise_exception=True, wrap=False)
+
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:
@@ -2350,7 +2359,6 @@ def _make_dirs(params: ParamDict, path: str):
         # reset lock
         lock.reset()
         raise e
-
 
 # =============================================================================
 # End of code

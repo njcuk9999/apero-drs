@@ -97,7 +97,7 @@ def __main__(recipe, params):
     if use_gui:
         WLOG(params, 'warning', 'Not Implemented yet',
              sublevel=2)
-        return drs_startup.return_locals(params, locals())
+        return locals()
     # get filters from user inputs
     kw_objnames = inputs.listp('objnames', dtype=str, required=False)
     kw_dprtypes = inputs.listp('dprtypes', dtype=str, required=False)
@@ -123,7 +123,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

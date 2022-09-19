@@ -343,8 +343,8 @@ KW_DRS_DSOURCE.set(key='PP_SRCE', unit=uu.K,
 # The date of the source of the DRS object data (after preprocessing)
 KW_DRS_DDATE = KW_DRS_DDATE.copy(__NAME__)
 KW_DRS_DDATE.set(key='PP_DDATE', unit=uu.K,
-                  comment='The date of source of DRS object data',
-                  group='resolve', post_exclude=True)
+                 comment='The date of source of DRS object data',
+                 group='resolve', post_exclude=True)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -560,17 +560,17 @@ KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag',
 # the number of bad pixels found via the intercept (cosmic ray rejection)
 KW_PPC_NBAD_INTE = KW_PPC_NBAD_INTE.copy(__NAME__)
 KW_PPC_NBAD_INTE.set('NBADINTE', comment='No. bad px intercept cosmic reject',
-                post_exclude=True)
+                     post_exclude=True)
 
 # the number of bad pixels found via the slope (cosmic ray rejection)
 KW_PPC_NBAD_SLOPE = KW_PPC_NBAD_SLOPE.copy(__NAME__)
 KW_PPC_NBAD_SLOPE.set('NBADSLOP', comment='No. bad px slope cosmic reject',
-                post_exclude=True)
+                      post_exclude=True)
 
 # the number of bad pixels found with both intercept and slope (cosmic ray)
 KW_PPC_NBAD_BOTH = KW_PPC_NBAD_BOTH.copy(__NAME__)
 KW_PPC_NBAD_BOTH.set('NBADBOTH', comment='No. bad px both cosmic reject',
-                post_exclude=True)
+                     post_exclude=True)
 
 # The number of sigma used to construct pp reference mask
 KW_PP_REF_NSIG = KW_PP_REF_NSIG.copy(__NAME__)

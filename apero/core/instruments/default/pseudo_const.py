@@ -14,7 +14,7 @@ import numpy as np
 import string
 import sys
 import os
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_db
@@ -51,6 +51,7 @@ NULL_TEXT = ['', 'None', 'Null']
 # =============================================================================
 # Define Constants class (pseudo constants)
 # =============================================================================
+# noinspection PyMethodMayBeStatic,PyPep8Naming
 class PseudoConstants:
     # set class name
     class_name = 'PsuedoConstants'
@@ -135,7 +136,6 @@ class PseudoConstants:
     # =========================================================================
     # File and Recipe definitions
     # =========================================================================
-    # noinspection PyPep8Naming
     def FILEMOD(self) -> base_class.ImportModule:
         """
         The import for the file definitions
@@ -156,7 +156,6 @@ class PseudoConstants:
                            targs=eargs, func_name=func_name)
             raise drs_exceptions.DrsCodedException(**ekwargs)
 
-    # noinspection PyPep8Naming
     def RECIPEMOD(self) -> base_class.ImportModule:
         """
         The import for the recipe defintions
@@ -181,7 +180,6 @@ class PseudoConstants:
     # =========================================================================
     # HEADER SETTINGS
     # =========================================================================
-    # noinspection PyPep8Naming
     def VALID_RAW_FILES(self) -> List[str]:
         """
         Return the extensions that are valid for raw files
@@ -194,7 +192,6 @@ class PseudoConstants:
         valid = ['.fits']
         return valid
 
-    # noinspection PyPep8Naming
     def NON_CHECK_DUPLICATE_KEYS(self) -> List[str]:
         """
         Post process do not check these duplicate keys
@@ -207,7 +204,6 @@ class PseudoConstants:
         # return forbiiden keys
         return keys
 
-    # noinspection PyPep8Naming
     def FORBIDDEN_OUT_KEYS(self) -> List[str]:
         """
         Defines the keys in a HEADER file not to copy when copying over all
@@ -227,7 +223,6 @@ class PseudoConstants:
         # return keys
         return forbidden_keys
 
-    # noinspection PyPep8Naming
     def FORBIDDEN_COPY_KEYS(self):
         """
         Defines the keys in a HEADER file not to copy when copying over all
@@ -241,7 +236,6 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('FORBIDDEN_COPY_KEYS')
 
-    # noinspection PyPep8Naming
     def FORBIDDEN_HEADER_PREFIXES(self) -> List[str]:
         """
         Define the QC keys prefixes that should not be copied (i.e. they are
@@ -257,7 +251,6 @@ class PseudoConstants:
         # return keys
         return prefixes
 
-    # noinspection PyPep8Naming
     def FORBIDDEN_DRS_KEY(self) -> List[str]:
         """
         Define a list of keys that should not be copied from headers to new
@@ -273,7 +266,6 @@ class PseudoConstants:
         # return keys
         return forbidden_keys
 
-    # noinspection PyPep8Naming
     def HEADER_FIXES(self, params: Any, recipe: Any, header: Any,
                      hdict: Any, filename: str, check_aliases: bool = False,
                      objdbm: Any = None):
@@ -301,7 +293,6 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('HEADER_FIXES')
 
-    # noinspection PyPep8Naming
     def DRS_OBJ_NAME(self, objname: str) -> str:
         """
         Clean and standardize an object name
@@ -321,7 +312,6 @@ class PseudoConstants:
         # return object name
         return clean_object(objname)
 
-    # noinspection PyPep8Naming
     def DRS_DPRTYPE(self, params: Any, recipe: Any, header: Any,
                     filename: str):
         """
@@ -342,7 +332,6 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('DRS_DPRTYPE')
 
-    # noinspection PyPep8Naming
     def DRS_MIDMJD(self, params: Any, header: Any, filename: str):
         """
         Get the midmjd for a specific header
@@ -360,7 +349,6 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('DRS_MIDMJD')
 
-    # noinspection PyPep8Naming
     def FRAME_TIME(self, params: Any, header: Any):
         """
         Get the frame time (either from header or constants depending on
@@ -376,7 +364,6 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('FRAME_TIME')
 
-    # noinspection PyPep8Naming
     def SATURATION(self, params: Any, header: Any):
         """
         Get the saturation (either from header or constants depending on
@@ -392,7 +379,6 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('SATURATION')
 
-    # noinspection PyPep8Naming
     def GET_STOKES_FROM_HEADER(self, params: Any, header: Any, wlog: Any):
         """
         Get the stokes parameter and exposure number from the header
@@ -407,7 +393,6 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('DRS_MIDMJD')
 
-    # noinspection PyPep8Naming
     def GET_POLAR_TELLURIC_BANDS(self):
         """
         Define regions where telluric absorption is high
@@ -418,7 +403,6 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('GET_POLAR_TELLURIC_BANDS')
 
-    # noinspection PyPep8Naming
     def GET_LSD_LINE_REGIONS(self):
         """
         Define regions to select lines in the LSD analysis
@@ -429,7 +413,6 @@ class PseudoConstants:
         # raise implementation error
         self._not_implemented('GET_LSD_LINE_REGIONS')
 
-    # noinspection PyPep8Naming
     def GET_LSD_ORDER_RANGES(self):
         """
         Define the valid wavelength ranges for each order in SPIrou.
@@ -442,7 +425,6 @@ class PseudoConstants:
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
-    # noinspection PyPep8Naming
     def FILEINDEX_HEADER_COLS(self) -> DatabaseColumns:
         """
         Which header keys should we have in the index database.
@@ -468,7 +450,6 @@ class PseudoConstants:
         self.header_cols = header_cols
         return header_cols
 
-    # noinspection PyPep8Naming
     def FILEDEF_HEADER_KEYS(self) -> List[str]:
         """
         Define the keys allowed to be used in file definitions
@@ -481,7 +462,6 @@ class PseudoConstants:
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
     # =========================================================================
-    # noinspection PyPep8Naming
     def CHARACTER_LOG_LENGTH(self) -> int:
         """
         Define the maximum length of characters in the log
@@ -495,7 +475,6 @@ class PseudoConstants:
         length = 80
         return length
 
-    # noinspection PyPep8Naming
     def COLOUREDLEVELS(self, params=None) -> dict:
         """
         Defines the colours if using coloured log.
@@ -528,7 +507,6 @@ class PseudoConstants:
                        debug=colors.debug)  # green
         return clevels
 
-    # noinspection PyPep8Naming
     def EXIT(self, params: Any) -> Any:
         """
         Defines how to exit based on the string defined in
@@ -550,7 +528,6 @@ class PseudoConstants:
         # return func that returns nothing in all other circumstances
         return lambda pos: None
 
-    # noinspection PyPep8Naming
     def EXIT_LEVELS(self) -> List[str]:
         """
         Defines which levels (in spirouConst.LOG_TRIG_KEYS and
@@ -569,7 +546,6 @@ class PseudoConstants:
         exit_levels = ['error']
         return exit_levels
 
-    # noinspection PyPep8Naming
     def LOG_FILE_NAME(self, params: Any,
                       dir_data_msg: Union[str, None] = None) -> str:
         """
@@ -617,7 +593,6 @@ class PseudoConstants:
         # return lpath
         return lpath
 
-    # noinspection PyPep8Naming
     def LOG_STORAGE_KEYS(self) -> Dict[str, str]:
         """
         Create a dictionary of all the levels of logging available (values
@@ -635,7 +610,6 @@ class PseudoConstants:
                         debug='LOGGER_DEBUG')
         return storekey
 
-    # noinspection PyPep8Naming
     def LOG_CAUGHT_WARNINGS(self) -> bool:
         """
         Defines a reference switch, whether to report warnings that are caught in
@@ -651,7 +625,6 @@ class PseudoConstants:
         warn = True
         return warn
 
-    # noinspection PyPep8Naming
     def LOG_TRIG_KEYS(self) -> Dict[str, str]:
         """
         The log trigger key characters to use in log. Keys must be the same as
@@ -677,7 +650,6 @@ class PseudoConstants:
                         info='**', graph='~~', debug='++')
         return trig_key
 
-    # noinspection PyPep8Naming
     def ADJUST_SUBLEVEL(self, code: str, sublevel: Optional[int] = None):
         """
         Adjust the log code based on sub level (minor and major)
@@ -697,7 +669,6 @@ class PseudoConstants:
         else:
             return '{0}$'.format(code[0])
 
-    # noinspection PyPep8Naming
     def WRITE_LEVEL(self) -> Dict[str, int]:
         """
         The write levels. Keys must be the same as spirouConst.LOG_TRIG_KEYS()
@@ -728,7 +699,6 @@ class PseudoConstants:
                            graph=0, all=0, debug=0)
         return write_level
 
-    # noinspection PyPep8Naming
     def REPORT_KEYS(self) -> dict:
         """
         The report levels. Keys must be the same as spirouConst.LOG_TRIG_KEYS()
@@ -746,7 +716,6 @@ class PseudoConstants:
                             info=False, graph=False, all=False, debug=False)
         return report_level
 
-    # noinspection PyPep8Naming
     def SPLASH(self) -> List[str]:
         """
         The splash image for the instrument
@@ -755,20 +724,19 @@ class PseudoConstants:
         # set function name
         # _ = display_func('SPLASH', __NAME__, self.class_name)
         # set the logo
-        logo = [r" .----------------.  .----------------.  .----------------.   ",
-                r" | .--------------. || .--------------. || .--------------. | ",
-                r" | |  ________    | || |  _______     | || |    _______   | | ",
-                r" | | |_   ___ `.  | || | |_   __ \    | || |   /  ___  |  | | ",
-                r" | |   | |   `. \ | || |   | |__) |   | || |  |  (__ \_|  | | ",
-                r" | |   | |    | | | || |   |  __ /    | || |   '.___`-.   | | ",
-                r" | |  _| |___.' / | || |  _| |  \ \_  | || |  |`\____) |  | | ",
-                r" | | |________.'  | || | |____| |___| | || |  |_______.'  | | ",
-                r" | |              | || |              | || |              | | ",
-                r" | '--------------' || '--------------' || '--------------' | ",
-                r"  '----------------'  '----------------'  '----------------'  "]
+        logo = [r".----------------.  .----------------.  .----------------.  ",
+                r"| .--------------. || .--------------. || .--------------. |",
+                r"| |  ________    | || |  _______     | || |    _______   | |",
+                r"| | |_   ___ `.  | || | |_   __ \    | || |   /  ___  |  | |",
+                r"| |   | |   `. \ | || |   | |__) |   | || |  |  (__ \_|  | |",
+                r"| |   | |    | | | || |   |  __ /    | || |   '.___`-.   | |",
+                r"| |  _| |___.' / | || |  _| |  \ \_  | || |  |`\____) |  | |",
+                r"| | |________.'  | || | |____| |___| | || |  |_______.'  | |",
+                r"| |              | || |              | || |              | |",
+                r"| '--------------' || '--------------' || '--------------' |",
+                r" '----------------'  '----------------'  '----------------' "]
         return logo
 
-    # noinspection PyPep8Naming
     def LOGO(self) -> List[str]:
         """
         The apero logo (coloured)
@@ -847,7 +815,6 @@ class PseudoConstants:
     # =========================================================================
     # FIBER SETTINGS
     # =========================================================================
-    # noinspection PyPep8Naming
     def FIBER_SETTINGS(self, params: Any, fiber: str) -> Any:
         """
         Get the fiber settings for localisation setup for a specific fiber
@@ -866,7 +833,6 @@ class PseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # noinspection PyPep8Naming
     def FIBER_LOCALISATION(self, fiber):
         """
         Return which fibers to calculate localisation for
@@ -882,7 +848,6 @@ class PseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # noinspection PyPep8Naming
     def FIBER_DILATE(self, fiber: str):
         """
         whether we are dilate the imagine due to fiber configuration this should
@@ -899,7 +864,6 @@ class PseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # noinspection PyPep8Naming
     def FIBER_DOUBLETS(self, fiber: str):
         """
         whether we have orders coming in doublets (i.e. SPIROUs AB --> A + B)
@@ -914,7 +878,7 @@ class PseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # noinspection PyPep8Naming
+    # noinspection PyTypeChecker
     def FIBER_DOUBLET_PARITY(self, fiber: str) -> Union[int, None]:
         """
         Give the doublt fibers parity - all other fibers should not use this
@@ -930,7 +894,6 @@ class PseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # noinspection PyPep8Naming
     def FIBER_LOC_TYPES(self, fiber: str) -> str:
         """
         The fiber localisation types to use (i.e. some fiber types should use
@@ -945,7 +908,6 @@ class PseudoConstants:
         # return input fiber
         return fiber
 
-    # noinspection PyPep8Naming
     def FIBER_WAVE_TYPES(self, fiber: str) -> str:
         """
         The fiber localisation types to use (i.e. some fiber types should use
@@ -960,7 +922,6 @@ class PseudoConstants:
         # return input fiber
         return fiber
 
-    # noinspection PyPep8Naming
     def FIBER_DPR_POS(self, dprtype: str, fiber: str):
         """
         When we have a DPRTYPE figure out what is in the fiber requested
@@ -980,7 +941,6 @@ class PseudoConstants:
         # raise not implemented yet error
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # noinspection PyPep8Naming
     def FIBER_DPRTYPE(self, dprtype: str):
         """
         Input DPRTYPE tells you which fiber we are correcting for
@@ -996,7 +956,6 @@ class PseudoConstants:
         # raise not implemented yet error
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # noinspection PyPep8Naming
     def FIBER_LOC_COEFF_EXT(self, coeffs: np.ndarray, fiber: str):
         """
         Extract the localisation coefficients based on how they are stored
@@ -1015,7 +974,6 @@ class PseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # noinspection PyPep8Naming
     def FIBER_DATA_TYPE(self, dprtype, fiber):
         """
         Return the data type from a DPRTYPE
@@ -1036,7 +994,6 @@ class PseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # noinspection PyPep8Naming
     def FIBER_CCF(self):
         """
         Get the science and reference fiber to use in the CCF process
@@ -1047,7 +1004,6 @@ class PseudoConstants:
         func_name = display_func('FIBER_CCF', __NAME__, self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # noinspection PyPep8Naming
     def FIBER_KINDS(self):
         """
         Set the fiber kinds (those to be though as as "science" and those to be
@@ -1059,7 +1015,6 @@ class PseudoConstants:
         func_name = display_func('FIBER_KINDS', __NAME__, self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # noinspection PyPep8Naming
     def FIBER_LOC(self, fiber: str) -> Any:
         """
         Set the localisation fibers
@@ -1074,7 +1029,6 @@ class PseudoConstants:
         func_name = display_func('FIBER_KINDS', __NAME__, self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # noinspection PyPep8Naming
     def INDIVIDUAL_FIBERS(self):
         """
         List the individual fiber names
@@ -1085,7 +1039,6 @@ class PseudoConstants:
         func_name = display_func('INDIVIDUAL_FIBERS', __NAME__,
                                  self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
-
 
     # tellu fudge
     def TAPAS_INST_CORR(self, mask_water: Table,
@@ -1105,7 +1058,6 @@ class PseudoConstants:
     # =========================================================================
     # PLOT SETTINGS
     # =========================================================================
-    # noinspection PyPep8Naming
     def FONT_DICT(self, params: Any) -> dict:
         """
         Font manager for matplotlib fonts - added to matplotlib.rcParams as a
@@ -1117,7 +1069,8 @@ class PseudoConstants:
                       maplotlbi.rcParams)
 
         see:
-          https://matplotlib.org/api/matplotlib_configuration_api.html#matplotlib.rc
+          https://matplotlib.org/api/
+              matplotlib_configuration_api.html#matplotlib.rc
         """
         # set function name
         # _ = display_func('FONT_DICT', __NAME__, self.class_name)
@@ -1154,7 +1107,6 @@ class PseudoConstants:
                 else:
                     return getattr(self, database_col_classes[it])
 
-    # noinspection PyPep8Naming
     def CALIBRATION_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns used in the calibration database
@@ -1168,8 +1120,8 @@ class PseudoConstants:
             return self.calibration_cols
         # set columns
         calib_columns = DatabaseColumns()
-        calib_columns.add(name='KEYNAME', datatype='VARCHAR(20)', is_index=True,
-                          is_unique=True)
+        calib_columns.add(name='KEYNAME', datatype='VARCHAR(20)',
+                          is_index=True, is_unique=True)
         calib_columns.add(name='FIBER', datatype='VARCHAR(10)',
                           is_unique=True)
         calib_columns.add(name='REFCAL', datatype='INT',
@@ -1185,7 +1137,6 @@ class PseudoConstants:
         self.calibration_cols = calib_columns
         return calib_columns
 
-    # noinspection PyPep8Naming
     def TELLURIC_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns used in the telluric database
@@ -1219,7 +1170,6 @@ class PseudoConstants:
         self.telluric_cols = tellu_columns
         return tellu_columns
 
-    # noinspection PyPep8Naming
     def FILEINDEX_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns used in the index database
@@ -1302,7 +1252,6 @@ class PseudoConstants:
         self.rejectdb_cols = rejectdb_cols
         return rejectdb_cols
 
-    # noinspection PyPep8Naming
     def LOG_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns use in the log database
@@ -1411,7 +1360,6 @@ class PseudoConstants:
         self.logdb_cols = log_columns
         return log_columns
 
-    # noinspection PyPep8Naming
     def ASTROMETRIC_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns use in the object database
@@ -1453,7 +1401,6 @@ class PseudoConstants:
         self.objdb_cols = obj_columns
         return obj_columns
 
-    # noinspection PyPep8Naming
     def GET_EPOCH(self, params, header):
         """
         Get the EPOCH in JD from a input header file (instrument specific)
@@ -1465,7 +1412,7 @@ class PseudoConstants:
     # =========================================================================
     # CROSSMATCHING
     # =========================================================================
-    # noinspection PyPep8Naming
+    # noinspection SqlDialectInspection
     def PM_TAP_DICT(self, params: Any) -> Dict[str, Dict[str, str]]:
         """
         Once we have an id for a proper motion catalogue we can cross-match
@@ -1495,7 +1442,8 @@ class PseudoConstants:
         qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
                       plx='parallax', epoch='ref_epoch',
                       cat='gaiaedr3.gaia_source', id='source_id', idnum='{0}')
-        params.set('TAP_GAIA_EDR3_URL', 'https://gea.esac.esa.int/tap-server/tap')
+        params.set('TAP_GAIA_EDR3_URL',
+                   'https://gea.esac.esa.int/tap-server/tap')
         tap_dict['Gaia EDR3 '] = dict()
         tap_dict['Gaia EDR3 ']['QUERY'] = QUERY1.format(**qkargs)
         tap_dict['Gaia EDR3 ']['URL'] = str(params['TAP_GAIA_EDR3_URL'])
@@ -1505,7 +1453,8 @@ class PseudoConstants:
         qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
                       plx='parallax', epoch='ref_epoch',
                       cat='gaiadr2.gaia_source', id='source_id', idnum='{0}')
-        params.set('TAP_GAIA_DR2_URL', 'https://gea.esac.esa.int/tap-server/tap')
+        params.set('TAP_GAIA_DR2_URL',
+                   'https://gea.esac.esa.int/tap-server/tap')
         tap_dict['Gaia DR2 '] = dict()
         tap_dict['Gaia DR2 ']['QUERY'] = QUERY1.format(**qkargs)
         tap_dict['Gaia DR2 ']['URL'] = str(params['TAP_GAIA_DR2_URL'])
@@ -1515,7 +1464,8 @@ class PseudoConstants:
         qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
                       plx='parallax', epoch='ref_epoch',
                       cat='gaiadr1.gaia_source', id='source_id', idnum='{0}')
-        params.set('TAP_GAIA_DR1_URL', 'https://gea.esac.esa.int/tap-server/tap')
+        params.set('TAP_GAIA_DR1_URL',
+                   'https://gea.esac.esa.int/tap-server/tap')
         tap_dict['Gaia DR1 '] = dict()
         tap_dict['Gaia DR1 ']['QUERY'] = QUERY1.format(**qkargs)
         tap_dict['Gaia DR1 ']['URL'] = str(params['TAP_GAIA_DR1_URL'])
@@ -1555,6 +1505,14 @@ class PseudoConstants:
 # Functions used by pseudo const
 # =============================================================================
 def clean_object(rawobjname: str) -> str:
+    """
+    Clean a 'rawobjname' to allow it to be consistent
+
+    :param rawobjname: str, the raw object name to clean
+
+    :return: str, the cleaned object name
+    """
+    # if raw object name contains null text - return Null string
     if drs_text.null_text(rawobjname, NULL_TEXT):
         return 'Null'
     # strip spaces off raw object
@@ -1571,7 +1529,7 @@ def clean_object(rawobjname: str) -> str:
         objectname = objectname.replace('__', '_')
     # strip leading / trailing '_'
     objectname = objectname.strip('_')
-
+    # return cleaned object name
     return objectname
 
 # =============================================================================

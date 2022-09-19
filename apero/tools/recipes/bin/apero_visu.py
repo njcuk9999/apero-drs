@@ -81,7 +81,7 @@ def __main__(recipe, params):
     # deal with no mode set
     if 'MODE' not in params['INPUTS']:
         WLOG(params, '', 'Must set --mode')
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # get mode
     mode = params['INPUTS']['MODE']
@@ -101,7 +101,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

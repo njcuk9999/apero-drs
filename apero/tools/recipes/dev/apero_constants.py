@@ -126,7 +126,7 @@ def __main__(recipe, params):
         success = constants_tools.deal_with_generate(params)
         # if generation successful stop here
         if success:
-            return drs_startup.return_locals(params, locals())
+            return locals()
 
     # -------------------------------------------------------------------------
     # Cleaning constant python files functionality
@@ -140,7 +140,7 @@ def __main__(recipe, params):
             success = constants_tools.deal_with_clean(params)
             # if cleaning successful stop here
             if success:
-                return drs_startup.return_locals(params, locals())
+                return locals()
 
     # -------------------------------------------------------------------------
     # Create glossary functionality
@@ -154,12 +154,12 @@ def __main__(recipe, params):
             success = constants_tools.create_glossary(params)
             # if creation successful stop here
             if success:
-                return drs_startup.return_locals(params, locals())
+                return locals()
 
     # -------------------------------------------------------------------------
     # End of main code
     # -------------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 

@@ -96,7 +96,7 @@ def __main__(recipe, params):
     if len(unfound_objs) == 0:
         msg = 'All objects found in database'
         WLOG(params, 'info', msg)
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # ----------------------------------------------------------------------
     # step 2: Can we find object automatically from simbad?
@@ -193,7 +193,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

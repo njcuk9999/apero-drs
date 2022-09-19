@@ -113,7 +113,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, dict(locals()))
+    return locals()
 
 
 def get_python_files(path):
