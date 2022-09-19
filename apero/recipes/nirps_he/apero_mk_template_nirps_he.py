@@ -155,7 +155,7 @@ def __main__(recipe, params):
         # update recipe log file
         recipe.log.end()
         # end this run
-        return drs_startup.return_locals(params, locals())
+        return locals()
     else:
         qc_params = [['HAS_OBJ'], ['True'], ['HAS_OBJ==False'], [1]]
     # ----------------------------------------------------------------------
@@ -213,7 +213,7 @@ def __main__(recipe, params):
         # update recipe log file
         recipe.log.end()
         # end here
-        return drs_startup.return_locals(params, locals())
+        return locals()
     # ----------------------------------------------------------------------
     # Make s1d cubes
     # ----------------------------------------------------------------------
@@ -288,7 +288,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

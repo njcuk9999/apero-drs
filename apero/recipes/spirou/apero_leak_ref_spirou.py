@@ -142,7 +142,7 @@ def __main__(recipe, params):
         # update recipe log file
         recipe.log.end()
         # End of main code
-        return drs_startup.return_locals(params, locals())
+        return locals()
     # ----------------------------------------------------------------------
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
@@ -226,7 +226,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

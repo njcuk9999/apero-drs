@@ -1808,7 +1808,7 @@ class DrsInputFile:
             currentfile = currentfile + inext
         # ----------------------------------------------------------------------
         # get re-constructed out file name
-        outfilename = out.get_outfilename(params, currentfile, prefix, suffix,
+        outfilename = out.get_outfilename(currentfile, prefix, suffix,
                                           inext, outext, fiber)
         # ----------------------------------------------------------------------
         # update self

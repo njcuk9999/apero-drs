@@ -762,7 +762,7 @@ def __main__(recipe, params):
     # end with a log message
     WLOG(params, '', 'Program has completed successfully')
     # return a copy of locally defined variables in the memory
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 class LoadData:

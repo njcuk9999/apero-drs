@@ -840,8 +840,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
 def clean_obj_name(params: ParamDict = None, header: Any = None,
-                   hdict: Any = None, objname: Union[str, None] = None,
-                   filename: Union[None, str, Path] = None,
+                   hdict: Any = None, filename: Union[None, str, Path] = None,
                    check_aliases: bool = False,
                    objdbm: Any = None) -> Union[Tuple[Any, Any], str]:
     """
@@ -852,7 +851,6 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
                    check for objname (if "objname" not set)
     :param hdict: drs_fits.Header the output header dictionary to update with
                   objname (as well as "header" if "objname" not set)
-    :param objname: str, the uncleaned object name to clean
     :param filename: str, the filename header came from (for exception)
     :param check_aliases: bool, if True check aliases (using database)
     :param objdbm: drs_database.ObjectDatabase - the database to check aliases

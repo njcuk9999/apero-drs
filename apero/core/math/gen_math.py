@@ -22,7 +22,6 @@ from apero.base import base
 from apero.core.core.drs_exceptions import DrsCodedException
 from apero.core.math import fast
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -189,13 +188,14 @@ def estimate_sigma(tmp: np.ndarray, sigma=1.0) -> float:
     Return a robust estimate of N sigma away from the mean
 
     :param tmp: np.array (1D) - the data to estimate N sigma of
+    :param sigma: int, number of sigma away from mean (default is 1)
 
-    :return: the 1 sigma value
+    :return: the sigma value
     """
     # get formal definition of N sigma
     sig1 = normal_fraction(sigma)
     # get the 1 sigma as a percentile
-    p1 = (1 - (1-sig1)/2) * 100
+    p1 = (1 - (1 - sig1) / 2) * 100
     # work out the lower and upper percentiles for 1 sigma
     upper = fast.nanpercentile(tmp, p1)
     lower = fast.nanpercentile(tmp, 100 - p1)
@@ -736,7 +736,7 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:
     :param input_vect: numpy 1D vector, vector to low pass
     :param width: int, width (box size) of the low pass filter
 
-    :return:
+    :return: np.array, the low-pass of the input_vector
     """
     # set function name
     # _ = display_func('lowpassfilter', __NAME__)
@@ -805,7 +805,7 @@ def xpand_mask(mask1: np.ndarray, mask2: np.ndarray) -> np.ndarray:
     sum_prev = 0
     # loop until increment is zero
     while increment != 0:
-        mask1 = np.array((mask2) * (binary_dilation(mask1)))
+        mask1 = np.array(mask2) * binary_dilation(mask1)
         increment = np.sum(mask1) - sum_prev
         sum_prev = np.sum(mask1)
     # return mask1
@@ -841,14 +841,15 @@ def percentile_bin(image: np.ndarray, bx: int, by: int,
         # loop around the rows (x)
         for b_jt in range(bx):
             # get x,y start,end
-            ystart, yend = b_it * nbypix//by, (b_it+1) * nbypix//by
-            xstart, xend = b_jt * nbxpix//bx, (b_jt+1) * nbxpix//bx
+            ystart, yend = b_it * nbypix // by, (b_it + 1) * nbypix // by
+            xstart, xend = b_jt * nbxpix // bx, (b_jt + 1) * nbxpix // bx
             # slice the image
             imslice = image[ystart:yend, xstart:xend]
             # get the nan percentile
             outimage[b_it, b_jt] = fast.nanpercentile(imslice, percentile)
     # return out image
     return outimage
+
 
 def get_circular_mask(width: int):
     """
@@ -861,9 +862,9 @@ def get_circular_mask(width: int):
     # start mask off as the indices of a width x width square
     mask = np.indices([width, width])
     # move to center on the center of the circle (and square)
-    mask = mask - width//2
+    mask = mask - width // 2
     # define points inside the circle as True, outside as False
-    circle_mask = np.sqrt(mask[0]**2 + mask[1]**2) < width / 2
+    circle_mask = np.sqrt(mask[0] ** 2 + mask[1] ** 2) < width / 2
     # return the circle mask
     return circle_mask
 

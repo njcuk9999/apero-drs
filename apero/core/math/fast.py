@@ -359,6 +359,15 @@ def medfilt_1d(a: Union[list, np.ndarray],
 # must catch if we do not have the jit decorator and define our own
 if not HAS_NUMBA:
     def jit(**options):
+        """
+        Proxy jit class - used to replace jit when no jit from numba is
+        available - decorator just returns original function
+
+        :param options: any options that were to be used as part of the
+               decorator
+
+        :return: decorator function
+        """
         # don't use options but they are required to match jit definition
         _ = options
 

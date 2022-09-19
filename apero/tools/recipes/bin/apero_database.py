@@ -105,7 +105,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # ----------------------------------------------------------------------
     # deal with resetting databasee
@@ -115,7 +115,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # ----------------------------------------------------------------------
     # deal with updates
@@ -126,7 +126,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
     # deal with partial update
     if np.any(database_conds):
         # loop around all databases
@@ -138,7 +138,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # ----------------------------------------------------------------------
     # deal with delete gui
@@ -149,7 +149,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # ----------------------------------------------------------------------
     # get csv file path
@@ -176,7 +176,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
     # ----------------------------------------------------------------------
     # deal with import mode
     # ----------------------------------------------------------------------
@@ -192,7 +192,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # ----------------------------------------------------------------------
     # If we got here user did not define export or import
@@ -203,7 +203,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

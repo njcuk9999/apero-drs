@@ -1,24 +1,69 @@
 # done doc strings + formatting
 
 
-apero
-	base
-		base.py
-		drs_base.py
-		drs_db.py
-	core
-		constants
-			constants_functions.py
-			param_functions.py
-			path_definitions.py
-		core
-			drs_arguments.py
-			drs_base_classes.py
-			drs_database.py
-			drs_exceptions.py
-			drs_file.py
-			drs_log.py
-			drs_misc.py
+apero:
+	base:
+		- base.py
+		- drs_base.py
+		- drs_db.py
+	core:
+		constants:
+			- constants_functions.py
+			- param_functions.py
+			- path_definitions.py
+		core:
+			- drs_arguments.py
+			- drs_base_classes.py
+			- drs_database.py
+			- drs_exceptions.py
+			- drs_file.py
+			- drs_log.py
+			- drs_misc.py
+			- drs_out_file.py
+			- drs_text.py
+		instruments:
+			default:
+				- default_config.py
+				- default_constants.py
+				- default_keywords.py
+				- file_definitions.py
+				- grouping.py
+				- pseudo_const.py
+				- recipe_definitions.py
+			nirps_ha:
+				- default_config.py
+				- default_constants.py
+				- default_keywords.py
+				- file_definitions.py
+				- pseudo_const.py
+				- recipe_definitions.py
+			nirps_he:
+				- default_config.py
+				- default_constants.py
+				- default_keywords.py
+				- file_definitions.py
+				- pseudo_const.py
+				- recipe_definitions.py
+			spirou:
+				- default_config.py
+				- default_constants.py
+				- default_keywords.py
+				- file_definitions.py
+				- pseudo_const.py
+				- recipe_definitions.py
+		math:
+			- fast.py
+			- gauss.py
+			- gen_math.py
+			- nan.py
+			- time.py
+		utils:
+			- drs_data.py
+			- drs_recipe.py
+			- drs_startup.py
+			- drs_utils.py
+
+
 
 
 

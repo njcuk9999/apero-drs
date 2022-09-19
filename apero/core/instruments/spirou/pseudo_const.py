@@ -11,7 +11,7 @@ Created on 2019-01-18 at 14:44
 """
 import numpy as np
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_db
@@ -439,9 +439,10 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # get stokes and exposure number
         stokes = seqlist[0]
         # try to get exposure number
+        # noinspection PyBroadException
         try:
             exp_num = int(seqlist[2].replace(',', ''))
-        except Exception as e:
+        except Exception as _:
             # generate error message
             emsg = 'CMMTSEQ exp_num incorrect'
             emsg += '\n\tExpected {STOKE} exposure {exp_num}, sequence N of M'
@@ -486,6 +487,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
                  and a maximum wavelength of that band
         """
         # storage for bands
+        # noinspection PyListCreation
         bands = []
         # add bands (as tuples for low wave to high wave
         # bands.append([983.0, 1116.0])
@@ -505,6 +507,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return orders: array of float pairs for wavelength ranges
         """
         # storage for order ranges
+        # noinspection PyListCreation
         orders = []
         # add ranges as pairs of wavelengths (low wave to high wave)
         orders.append([963.6, 986.0])
@@ -743,7 +746,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         else:
             return False
 
-    def FIBER_DOUBLET_PARITY(self, fiber:str) -> Union[int, None]:
+    def FIBER_DOUBLET_PARITY(self, fiber: str) -> Union[int, None]:
         """
         Give the doublt fibers parity - all other fibers should not use this
         function
@@ -1448,7 +1451,6 @@ def get_special_objname(params: ParamDict, header: Any,
     hdict[kwobjname] = (objname, kwobjcomment)
     # return header and hdict
     return header, hdict
-
 
 # =============================================================================
 # End of code

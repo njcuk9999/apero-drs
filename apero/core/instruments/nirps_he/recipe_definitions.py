@@ -272,15 +272,15 @@ apero_dark.recipe_type = 'recipe'
 apero_dark.recipe_kind = 'calib-night'
 apero_dark.calib_required = False
 apero_dark.set_outputs(DARK_INT_FILE=files.out_dark,
-                     DARK_TEL_FIEL=files.out_dark,
-                     DARK_SKY_FILE=files.out_dark_sky)
+                       DARK_TEL_FIEL=files.out_dark,
+                       DARK_SKY_FILE=files.out_dark_sky)
 apero_dark.set_debug_plots('DARK_IMAGE_REGIONS', 'DARK_HISTOGRAM')
 apero_dark.set_summary_plots('SUM_DARK_IMAGE_REGIONS', 'SUM_DARK_HISTOGRAM')
 apero_dark.set_arg(pos=0, **obs_dir)
 apero_dark.set_arg(name='files', dtype='files',
-                 files=[files.pp_dark_dark, files.pp_dark_dark_sky],
-                 pos='1+', filelogic='exclusive',
-                 helpstr=textentry('FILES_HELP') + textentry('DARK_FILES_HELP'))
+                   files=[files.pp_dark_dark, files.pp_dark_dark_sky],
+                   pos='1+', filelogic='exclusive',
+                   helpstr=textentry('FILES_HELP') + textentry('DARK_FILES_HELP'))
 apero_dark.set_kwarg(**add_db)
 apero_dark.set_kwarg(default=True, **combine)
 apero_dark.set_kwarg(**plot)
@@ -333,10 +333,10 @@ apero_loc.recipe_type = 'recipe'
 apero_loc.recipe_kind = 'calib-night'
 apero_loc.calib_required = True
 apero_loc.set_outputs(ORDERP_FILE=files.out_loc_orderp,
-                    LOCO_FILE=files.out_loc_loco,
-                    FWHM_FILE=files.out_loc_fwhm,
-                    SUP_FILE=files.out_loc_sup,
-                    DEBUG_BACK=files.debug_back)
+                      LOCO_FILE=files.out_loc_loco,
+                      FWHM_FILE=files.out_loc_fwhm,
+                      SUP_FILE=files.out_loc_sup,
+                      DEBUG_BACK=files.debug_back)
 apero_loc.set_debug_plots('LOC_WIDTH_REGIONS', 'LOC_FIBER_DOUBLET_PARITY',
                           'LOC_GAP_ORDERS', 'LOC_IMAGE_FIT', 'LOC_IM_CORNER',
                           'LOC_IM_REGIONS')
@@ -386,7 +386,7 @@ apero_shape_ref.set_outputs(FPREF_FILE=files.out_shape_fpref,
                             SHAPE_BDXMAP_FILE=files.out_shape_debug_bdx,
                             DEBUG_BACK=files.debug_back)
 apero_shape_ref.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
-                                 'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
+                                'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
 apero_shape_ref.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
 apero_shape_ref.set_arg(pos=0, **obs_dir)
 apero_shape_ref.set_kwarg(name='--fpfiles', dtype='files',
@@ -640,10 +640,10 @@ apero_wave_ref.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                            CCF_RV=files.out_ccf_fits)
 apero_wave_ref.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_wave_ref.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
-                                  'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
-                                  'WAVEREF_EXPECTED', 'EXTRACT_S1D',
-                                  'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
-                                  'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
+                               'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
+                               'WAVEREF_EXPECTED', 'EXTRACT_S1D',
+                               'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
+                               'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 apero_wave_ref.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
 apero_wave_ref.set_arg(pos=0, **obs_dir)
 apero_wave_ref.set_kwarg(name='--hcfiles', dtype='files',
@@ -1113,7 +1113,6 @@ limited_seq.add(apero_fit_tellu, name='FTFIT2', recipe_kind='tellu-science',
                              KW_DPRTYPE=files.science_dprtypes),
                 template_required=True)
 
-
 # -----------------------------------------------------------------------------
 # pp sequence (for trigger)
 # -----------------------------------------------------------------------------
@@ -1169,7 +1168,7 @@ ref_seq.add(apero_flat, name='FLATREF', ref=True,
 ref_seq.add(apero_leak_ref, ref=True)
 ref_seq.add(apero_wave_ref, ref=True,
             rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
-                            fpfiles=[files.pp_fp_fp]))
+                         fpfiles=[files.pp_fp_fp]))
 
 # -----------------------------------------------------------------------------
 # calibration run (for trigger)

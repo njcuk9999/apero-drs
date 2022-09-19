@@ -50,7 +50,6 @@ tellu_ofile = out.TelluOutFile()
 reftellu_ofile = out.RefTelluOutFile()
 tellu_set_ofile = out.TelluSetOutFile()
 
-
 # =============================================================================
 # Raw Files
 # =============================================================================
@@ -427,8 +426,8 @@ pp_flat_dark = drs_finput('FLAT_DARK', filetype='.fits',
                           suffix='_pp', intype=raw_flat_dark,
                           inext='.fits', outclass=general_ofile,
                           hkeys=dict(KW_DPRTYPE='FLAT_DARK'),
-                           description='Preprocessed sci=FLAT calib=DARK file,'
-                                       ' where dark is an internal dark')
+                          description='Preprocessed sci=FLAT calib=DARK file,'
+                                      ' where dark is an internal dark')
 pp_file.addset(pp_flat_dark)
 
 pp_dark_flat = drs_finput('DARK_FLAT', filetype='.fits',
@@ -443,14 +442,14 @@ pp_flat_flat = drs_finput('FLAT_FLAT', filetype='.fits',
                           suffix='_pp', intype=raw_flat_flat,
                           inext='.fits', outclass=general_ofile,
                           hkeys=dict(KW_DPRTYPE='FLAT_FLAT'),
-                           description='Preprocessed sci=FLAT calib=FLAT file')
+                          description='Preprocessed sci=FLAT calib=FLAT file')
 pp_file.addset(pp_flat_flat)
 
 pp_flat_fp = drs_finput('FLAT_FP', filetype='.fits',
                         suffix='_pp', intype=raw_flat_fp,
                         inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='FLAT_FP'),
-                         description='Preprocessed sci=FLAT calib=FP file')
+                        description='Preprocessed sci=FLAT calib=FP file')
 pp_file.addset(pp_flat_fp)
 # -----------------------------------------------------------------------------
 # align
@@ -458,23 +457,23 @@ pp_dark_fp = drs_finput('DARK_FP', filetype='.fits',
                         suffix='_pp', intype=raw_dark_fp,
                         inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='DARK_FP'),
-                         description='Preprocessed sci=DARK calib=FP file,'
-                                     ' where dark is an internal dark')
+                        description='Preprocessed sci=DARK calib=FP file,'
+                                    ' where dark is an internal dark')
 pp_file.addset(pp_dark_fp)
 
 pp_fp_dark = drs_finput('FP_DARK', filetype='.fits',
                         suffix='_pp', intype=raw_fp_dark,
                         inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='FP_DARK'),
-                         description='Preprocessed sci=FP calib=DARK file, '
-                                     ' where dark is an internal dark')
+                        description='Preprocessed sci=FP calib=DARK file, '
+                                    ' where dark is an internal dark')
 pp_file.addset(pp_fp_dark)
 
 pp_fp_flat = drs_finput('FP_FLAT', filetype='.fits',
                         suffix='_pp', intype=raw_fp_flat,
                         inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='FP_FLAT'),
-                         description='Preprocessed sci=FP calib=FLAT file')
+                        description='Preprocessed sci=FP calib=FLAT file')
 pp_file.addset(pp_fp_flat)
 
 pp_fp_fp = drs_finput('FP_FP', filetype='.fits',
@@ -558,9 +557,9 @@ pp_dark_hc1 = drs_finput('DARK_HCONE', hkeys=dict(KW_DPRTYPE='DARK_HCONE'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_dark_hc1,
                          inext='.fits', outclass=general_ofile,
-                          description='Preprocessed sci=DARK calib=Hollow '
-                                      'Cathode file, where dark is an internal '
-                                      'dark, Uranium Neon lamp')
+                         description='Preprocessed sci=DARK calib=Hollow '
+                                     'Cathode file, where dark is an internal '
+                                     'dark, Uranium Neon lamp')
 pp_file.addset(pp_dark_hc1)
 
 pp_dark_hc2 = drs_finput('DARK_HCTWO', hkeys=dict(KW_DPRTYPE='DARK_HCTWO'),
@@ -600,8 +599,8 @@ pp_hc2_fp = drs_finput('HCTWO_FP', hkeys=dict(KW_DPRTYPE='HCTWO_FP'),
                        filetype='.fits',
                        suffix='_pp', intype=raw_hc2_fp,
                        inext='.fits', outclass=general_ofile,
-                        description='Preprocessed sci=Hollow Cathode calib=FP '
-                                    'file, Thorium Argon lamp')
+                       description='Preprocessed sci=Hollow Cathode calib=FP '
+                                   'file, Thorium Argon lamp')
 pp_file.addset(pp_hc2_fp)
 
 pp_hc1_hc1 = drs_finput('HCONE_HCONE', hkeys=dict(KW_DPRTYPE='HCONE_HCONE'),
@@ -617,9 +616,9 @@ pp_hc2_hc2 = drs_finput('HCTWO_HCTWO', hkeys=dict(KW_DPRTYPE='HCTWO_HCTWO'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_hc2_hc2,
                         inext='.fits', outclass=general_ofile,
-                         description='Preprocessed sci=Hollow Cathode '
-                                     'calib=Hollow  Cathode file, Thorium '
-                                     'Argon lamp')
+                        description='Preprocessed sci=Hollow Cathode '
+                                    'calib=Hollow  Cathode file, Thorium '
+                                    'Argon lamp')
 pp_file.addset(pp_hc2_hc2)
 
 pp_hc1_dark = drs_finput('HCONE_DARK', hkeys=dict(KW_DPRTYPE='HCONE_DARK'),
@@ -1200,7 +1199,7 @@ out_wave_ll_table = drs_input('WAVE_FPLLTABL',
                               intype=[out_ext_e2ds, out_ext_e2dsff],
                               suffix='_hc_lines', outclass=calib_ofile,
                               description='Nightly wavelength FP line-list '
-                                           'table')
+                                          'table')
 
 # hc line file from night
 out_wave_hclist = drs_finput('WAVE_HCLIST', hkeys=dict(KW_OUTPUT='WAVE_HCLIST'),
@@ -1409,8 +1408,8 @@ out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
                                 basename='BigCube0',
                                 outclass=tellu_set_ofile,
-                               description='Telluric object  2D stack file'
-                                           ' (Earth frame)')
+                                description='Telluric object  2D stack file'
+                                            ' (Earth frame)')
 
 # s1d template file (median)
 out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',

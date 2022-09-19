@@ -124,7 +124,7 @@ def __main__(recipe, params):
         # end the logging
         recipe.log.end()
         # end the recipe
-        return drs_startup.return_locals(params, locals())
+        return locals()
     # otherwise make sure the inputqc flag is True
     else:
         recipe.log.update_flags(INPUTQC=True)
@@ -248,7 +248,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

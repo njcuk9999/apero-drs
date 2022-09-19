@@ -243,7 +243,7 @@ def __main__(recipe, params):
         recipe.log.end()
 
         # return a copy of locally defined variables in the memory
-        return drs_startup.return_locals(params, locals())
+        return locals()
     else:
         # no quality control currently
         qc_values = [max_dxmap_std]
@@ -319,7 +319,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================
