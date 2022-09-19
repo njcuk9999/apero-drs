@@ -62,7 +62,22 @@ apero:
 			- drs_recipe.py
 			- drs_startup.py
 			- drs_utils.py
-
+	io:
+		- drs_fits.py
+		- drs_image.py
+		- drs_lock.py
+		- drs_path.py
+		- drs_table.py
+	lang:
+		core:
+			- drs_lang.py
+	plotting:
+	recipes:
+		nirps_ha:
+		nirps_he:
+		spirou:
+	science:
+	tools:
 
 
 

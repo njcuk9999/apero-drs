@@ -58,7 +58,7 @@ textentry = lang.textentry
 # -----------------------------------------------------------------------------
 # define list of integers
 INTEGERS = (np.int32, np.int64, int)
-STRINGS = (str)
+STRINGS = str
 FLOATS = (np.float32, np.float64, float)
 
 
@@ -208,6 +208,7 @@ def write_table(params: ParamDict, table: Table, filename: str,
         pid = None
     else:
         pid = params['PID']
+
     # -------------------------------------------------------------------------
     # make locked write function
     @drs_lock.synchronized(lock, pid)
@@ -235,6 +236,7 @@ def write_table(params: ParamDict, table: Table, filename: str,
                 # log error
                 _eargs = [type(exception), exception, func_name]
                 WLOG(params, 'error', textentry('01-002-00009', args=_eargs))
+
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:
@@ -395,7 +397,7 @@ def print_full_table(params: ParamDict, table: Table):
     # set function
     # _ = display_func('print_full_table', __NAME__)
     # print table
-    tablestrings = table.pformat(max_lines=len(table)*10,
+    tablestrings = table.pformat(max_lines=len(table) * 10,
                                  max_width=9999)
     WLOG(params, '', '=' * len(tablestrings[0]), wrap=False)
     WLOG(params, '', tablestrings, wrap=False)
@@ -614,13 +616,11 @@ def deal_with_missing_end_card(params: ParamDict, filename: str,
     return astropy_table
 
 
-def vstack_cols(params: ParamDict,
-                tablelist: List[Table]) -> Union[Table, None]:
+def vstack_cols(tablelist: List[Table]) -> Union[Table, None]:
     """
     Take a list of Astropy Tables and stack into single Astropy Table
     Note same as core.core.drs_recipe.vstack_cols
 
-    :param params: ParamDict, parameter dictionary of constants
     :param tablelist: list of tables, the tables to stack
     :return:
     """
