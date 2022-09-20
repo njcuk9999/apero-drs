@@ -345,7 +345,7 @@ def get_all_non_empty_subdirs(path: Union[Path, str],
         if _dir.is_dir():
             # get uncommon path
             if relative:
-                save_path = get_uncommon_path(str(_dir), str(path))
+                save_path = get_uncommon_path(str(_dir), path)
             else:
                 save_path = str(_dir)
             # flag to keep dir
@@ -365,27 +365,28 @@ def get_all_non_empty_subdirs(path: Union[Path, str],
     return subdirs
 
 
-def listdirs(rootdir: str, empty: bool = False):
+# noinspection PyUnresolvedReferences
+def listdirs(rootdir: str) -> List[str]:
     """
     Fast recursive listing of directories
-    with option to include empty directories
-
     :param rootdir: str, the root path to search
-    :param empty: bool, if True include empty directories
 
     :return: list of strings, the directories under root dir
     """
     # store directories
     directories = []
-    # loop around all sub-directories starting at 'rootdir'
-    for root, dirs, files in os.walk(rootdir):
-        # include empty directories
-        if empty:
-            directories.append(root)
-        # do not include empty directories
-        elif len(files) > 0:
-            directories.append(root)
-    # return directories
+    # loop around items in rootdir
+    for it in os.scandir(rootdir):
+        # check if it 1. is a directory 2. is not empty
+        if it.is_dir():
+            # add to paths
+            if not nofiles(it):
+                directories.append(it.path)
+            # add sub directories
+            directories += listdirs(it)
+    # sort directories
+    directories = sorted(directories)
+    # return sort directories
     return directories
 
 
@@ -423,6 +424,40 @@ def get_dirs(path: str, relative=False) -> List[str]:
             rel_obs_dirs.append(obs_dir)
     # return the relative paths
     return rel_obs_dirs
+
+
+
+def nofiles(rootdir: str) -> bool:
+    """
+    Test wether a a rootdir is empty (if it is a directory at all)
+
+    return True if rootdir is not a directory or is empty
+    else return False
+
+    :param rootdir: str, root directory to test
+
+    :return: bool, True if not a directory or empty
+    """
+    if not os.path.isdir(rootdir):
+        return True
+    if len(listfiles(rootdir)) == 0:
+        return True
+    else:
+        return False
+
+
+def listfiles(rootdir) -> List[str]:
+    """
+    Fast listing of files in a directory
+    :param rootdir: str, the root path to search
+    :return:
+    """
+    files = []
+    for it in os.scandir(rootdir):
+        if it.is_file():
+            files.append(it.path)
+    # return file list
+    return files
 
 
 def recursive_path_glob(params: ParamDict,
