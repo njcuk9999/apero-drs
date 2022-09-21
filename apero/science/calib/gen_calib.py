@@ -236,11 +236,11 @@ class CalibFile:
                     calib_delta_time_check(params, inheader, self.mjdmid[it],
                                            self.filename[it],
                                            self.reference[it],
-                                           self.user, self.key)
+                                           self.user, self.key, required)
             else:
                 calib_delta_time_check(params, inheader, self.mjdmid,
                                        self.filename, self.reference, self.user,
-                                       self.key)
+                                       self.key, required)
         # ---------------------------------------------------------------------
         # if we are just returning filename return here
         if return_filename:
@@ -696,7 +696,8 @@ def add_calibs_to_header(outfile: DrsFitsFile,
 
 def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
                            calib_time: float, calib_filename: str,
-                           ref: bool, user: bool, key: str):
+                           ref: bool, user: bool, key: str,
+                           required: bool = True):
     """
     Check that the delta time between calibration and observation is
     valid (as defined by MAX_CALIB_DTIME)
@@ -758,7 +759,10 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
         # log error
         eargs = [key, calib_filename, delta_time, max_dtime, hobstime,
                  hcalibtime, func_name]
-        WLOG(params, 'error', textentry('09-002-00004', args=eargs))
+        if required:
+            WLOG(params, 'error', textentry('09-002-00004', args=eargs))
+        else:
+            WLOG(params, 'warning', textentry('09-002-00004', args=eargs))
     else:
         margs = [key, delta_time, max_dtime, calib_filename]
         WLOG(params, '', textentry('40-005-10003', args=margs))
