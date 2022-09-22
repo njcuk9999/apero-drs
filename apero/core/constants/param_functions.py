@@ -60,6 +60,7 @@ SCRIPTS = base.SCRIPTS
 USCRIPTS = base.USCRIPTS
 PSEUDO_CONST_FILE = base.PSEUDO_CONST_FILE
 PSEUDO_CONST_CLASS = base.PSEUDO_CONST_CLASS
+DEFAULT_PSEUDO_CONST_CLASS = base.DEFAULT_PSEUDO_CONST_CLASS
 # Get base classes
 CaseInDict = base_class.CaseInsensitiveDict
 # Get the text types
