@@ -1185,7 +1185,7 @@ out_wavem_sol = drs_finput('WAVESOL_REF',
                            fibers=valid_efibers,
                            filetype='.fits',
                            intype=[out_ext_e2ds, out_ext_e2dsff],
-                           suffix='_WAVESOL_REF',
+                           suffix='_wavesol_ref',
                            dbname='calibration', dbkey='WAVESOL_REF',
                            outclass=refcalib_ofile,
                            description='Reference wavelength solution '
