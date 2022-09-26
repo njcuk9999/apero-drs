@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Dark reference calibration recipe for SPIROU
 
 Created on 2019-03-23 at 13:01
 

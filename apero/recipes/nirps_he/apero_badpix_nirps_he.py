@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Bad pixel calibration recipe for NIRPS HE
 
 Created on 2019-05-13 at 11:04
 
 @author: cook
 """
 import numpy as np
+from typing import Any, Dict, List, Optional
 
 from apero.base import base
 from apero import lang
+from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.utils import drs_startup
+from apero.core.utils import drs_recipe
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.io import drs_image
@@ -34,6 +35,10 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -47,7 +52,8 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, flatfiles=None, darkfiles=None, **kwargs):
+def main(obs_dir: Optional[str]=None, flatfiles: List[str]=None,
+         darkfiles: List[str]=None, **kwargs):
     """
     Main function for apero_badpix_spirou.py
 
@@ -82,13 +88,14 @@ def main(obs_dir=None, flatfiles=None, darkfiles=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code

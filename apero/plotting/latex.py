@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO plotting latex functionality
 
-# CODE DESCRIPTION HERE
+How to convert summary plots into latex
 
 Created on 2019-10-04 at 14:14
 
