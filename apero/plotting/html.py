@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO plotting html functionality
 
-# CODE DESCRIPTION HERE
+How to convert summary plots into html
 
 Created on 2019-10-08 at 10:04
 

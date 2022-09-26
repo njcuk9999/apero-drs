@@ -72,10 +72,10 @@ apero:
 		core:
 			- drs_lang.py
 	plotting:
-		# - core.py 
-		# - html.py
-		# - latex.py
-		# - plot_functions.py
+		- core.py 
+		- html.py
+		- latex.py
+		- plot_functions.py
 	recipes:
 		nirps_ha:
 			# - apero_badpix

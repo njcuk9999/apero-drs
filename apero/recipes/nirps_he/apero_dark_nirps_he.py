@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Dark calibration recipe for NIRPS HE (Currently not used)
 
 Created on 2019-03-23 at 13:01
 
