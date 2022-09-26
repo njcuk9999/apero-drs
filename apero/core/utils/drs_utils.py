@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-CODE DESCRIPTION HERE
+APERO core utility and miscellaneous functionality
 
 Created on 2020-10-2020-10-05 17:43
 

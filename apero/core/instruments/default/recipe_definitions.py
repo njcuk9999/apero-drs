@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+APERO Recipe definitions for NO INSTRUMENT
+
+Created on 2018-10-31 at 18:06
+
+@author: cook
+"""
 from apero.base import base
 from apero.core.constants import path_definitions
 from apero.core.utils import drs_recipe

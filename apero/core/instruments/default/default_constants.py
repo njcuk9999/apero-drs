@@ -1,3 +1,13 @@
+"""
+Default constants for NO INSTRUMENT
+
+This is the default constants config file
+
+Created on 2019-01-17
+
+@author: cook
+"""
+
 # This is the main config file
 import numpy as np
 

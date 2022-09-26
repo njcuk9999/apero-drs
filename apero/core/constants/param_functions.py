@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Constants parameter functions
+APERO Constants parameter functions
 
 DRS Import Rules:
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO lock file functionality
 
-# CODE DESCRIPTION HERE
+Mostly for locking and queuing specific files to stop errors when accessing
+at the same time
 
 Created on 2019-01-21 at 09:37
 

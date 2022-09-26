@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+APERO base definitions
+
 Some things must be defined once and used throughout the drs
 Most functions do not go in here
 

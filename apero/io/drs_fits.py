@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+Functionality for dealing with fits files
 
-# CODE DESCRIPTION HERE
+Mostly via astropy.io.fits
 
 Created on 2019-03-21 at 11:36
 

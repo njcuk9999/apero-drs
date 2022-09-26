@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-drs data
-
+APERO data file functionality
 
 Used to load data files from the assets directory only
 

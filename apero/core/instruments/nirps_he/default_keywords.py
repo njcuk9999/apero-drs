@@ -1,5 +1,5 @@
 """
-Default keywords for instrument
+Default keywords for NIRPS HE
 
 Created on 2019-01-17
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO start up functionality
 
-# CODE DESCRIPTION HERE
+dealing with starting a new recipe
 
 Created on 2019-01-19 at 13:37
 

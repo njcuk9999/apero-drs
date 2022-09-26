@@ -1,5 +1,5 @@
 """
-
+Default constants for SPIROU
 
 Created on 2019-01-17
 

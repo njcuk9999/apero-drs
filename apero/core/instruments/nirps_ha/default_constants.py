@@ -1,4 +1,5 @@
 """
+Default constants for NIRPS HA
 
 
 Created on 2019-01-17

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Text and string manipulation functions here
+APERO text and string manipulation functionality
 
 Created on 2019-08-12 at 17:23
 

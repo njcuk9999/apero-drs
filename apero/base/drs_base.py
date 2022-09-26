@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+APERO base functionality
+
 Only for functions that need to be used before or in the following codes:
 - drs_db
 - drs_exceptions

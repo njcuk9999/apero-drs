@@ -1,4 +1,12 @@
-# This is the main config file
+"""
+Default keywords for NO INSTRUMENT
+
+This is the default keyword config file
+
+Created on 2019-01-17
+
+@author: cook
+"""
 from apero.base import base
 from apero.core.constants import constant_functions
 
