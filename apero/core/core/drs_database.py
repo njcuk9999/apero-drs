@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-CODE DESCRIPTION HERE
+APERO database management functionality
 
 Created on 2020-08-2020-08-18 15:15
 

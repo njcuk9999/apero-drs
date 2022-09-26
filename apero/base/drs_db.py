@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-CODE DESCRIPTION HERE
+APERO base database functionality
+
+The direct interface with SQL
 
 Created on 2020-08-2020-08-21 18:13
 

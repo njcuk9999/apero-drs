@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-spirouCore.py
-
-Logging related functions
+APERO logging functionality
 
 Created on 2017-10-11 at 10:59
 

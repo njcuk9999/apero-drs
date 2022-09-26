@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO DrsPath and DrsInputFile functionality
 
-# CODE DESCRIPTION HERE
+Mostly classes to support the path and input file definitions
 
 Created on 2019-01-19 at 12:03
 

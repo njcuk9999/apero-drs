@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Base classes (Most typed dictionaries) go in here
+APERO Base classes (Most typed dictionaries) go in here
 
 Created on 2020-08-2020-08-31 16:07
 

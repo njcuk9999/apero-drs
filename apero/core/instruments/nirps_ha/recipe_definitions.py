@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+APERO Recipe definitions for NIRPS HA
+
+Created on 2020-10-31 at 18:06
+
+@author: cook
+"""
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
 from apero.core.utils import drs_recipe

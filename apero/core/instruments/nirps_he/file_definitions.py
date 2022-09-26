@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-NIRPS Files
+APERO DrsFile definitions for NIRPS HE
 
 # For fits files
 
-file_name = drs_finput("name", KW_KEY1="value1", KW_KEY2="value2",
-                       ext=".fits", filename=)
-
+file_name = drs_finput(name, filetype, suffix=, outclass, instrument,
+                       description)
 
 Created on 2018-10-31 at 18:06
 

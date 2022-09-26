@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO path functionality
 
 Created on 2019-03-21 at 11:36
 

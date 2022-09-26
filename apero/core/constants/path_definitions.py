@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Definitions of path classes (information on the paths should only come from
-here)
+Definitions of path classes "block classes"
+
+information on the paths should only come from here
 
 Created on 2021-07-15
 

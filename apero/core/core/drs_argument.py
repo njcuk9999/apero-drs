@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO argument definitions
 
-# CODE DESCRIPTION HERE
+Mostly for use with argparse
 
 Created on 2019-02-04 at 16:40
 

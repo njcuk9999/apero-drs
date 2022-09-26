@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO recipe functionality
 
-# CODE DESCRIPTION HERE
+dealing with the front-end scripts (a.k.a. the recipes)
 
 Created on 2019-01-19 at 12:02
 

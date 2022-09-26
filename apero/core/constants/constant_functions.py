@@ -1,5 +1,5 @@
 """
-Package containing all constants Classes and functionality
+APERO constants classes and constant functionality
 
 DRS Import Rules:
 

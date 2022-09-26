@@ -1,5 +1,5 @@
 """
-Default parameters for instrument
+Default parameters for SPIROU
 
 Created on 2019-01-17
 

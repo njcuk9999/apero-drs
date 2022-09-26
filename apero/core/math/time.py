@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO time functionality
 
-# CODE DESCRIPTION HERE
+mostly linked to astropy.time
 
 Created on 2019-01-18 at 15:54
 

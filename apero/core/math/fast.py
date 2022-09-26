@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO fast math functions
 
-# CODE DESCRIPTION HERE
+Usually replacing a defined numpy function
 
 Created on 2019-09-18 at 10:53
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-CODE DESCRIPTION HERE
+Language database functionality
 
 Created on 2020-11-2020-11-13 10:41
 

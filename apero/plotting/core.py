@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Core potting functionality
 
 Created on 2019-01-19 at 13:45
 

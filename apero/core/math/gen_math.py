@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO general math functionality
 
 Created on 2019-05-15 at 12:24
 

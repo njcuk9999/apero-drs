@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Functions for dealing with drs images
+Functions for dealing with APERO images
 
 Created on 2019-03-21 at 14:28
 

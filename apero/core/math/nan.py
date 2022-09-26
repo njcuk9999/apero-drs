@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO Not-a-Number (NaN) functionality
 
-# CODE DESCRIPTION HERE
+Mostly linking to the apero fast math module
 
 Created on 2019-05-15 at 12:24
 

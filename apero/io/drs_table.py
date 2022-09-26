@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO table functionality
 
-# CODE DESCRIPTION HERE
+Mostly linked to astropy.table
 
 Created on 2019-01-21 at 09:33
 

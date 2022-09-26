@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Pseudo constants (function) definitions for NO INSTRUMENT
 
 Created on 2019-01-18 at 14:44
 
