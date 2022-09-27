@@ -9,10 +9,12 @@ Created on 2019-07-05 at 16:46
 
 @author: cook
 """
+from typing import Any, Dict, Tuple, Union
+
 from apero.base import base
-from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_dev
 
@@ -31,6 +33,9 @@ __release__ = base.__release__
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+
 # -----------------------------------------------------------------------------
 # Note: move recipe definition to instrument set up when testing is finished
 # -----------------------------------------------------------------------------
@@ -61,18 +66,15 @@ RMOD.add(blank)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(**kwargs):
+def main(**kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for cal_update_berv.py
+    Main function for blank
 
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(**kwargs)
@@ -95,13 +97,14 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
