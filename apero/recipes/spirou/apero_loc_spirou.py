@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+apero_loc_spirou.py [obs dir] [files]
 
-# CODE DESCRIPTION HERE
+APERO localisation calibration recipe for SPIROU
 
 Created on 2019-05-14 at 09:40
 
@@ -18,7 +18,6 @@ from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
-
 
 # =============================================================================
 # Define variables
@@ -49,7 +48,7 @@ pcheck = constants.PCheck(wlog=WLOG)
 # Everything else is controlled from recipe_definition
 def main(obs_dir=None, files=None, **kwargs):
     """
-    Main function for apero_loc_spirou.py
+    Main function for apero_loc
 
     :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process

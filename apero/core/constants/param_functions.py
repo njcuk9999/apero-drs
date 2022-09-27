@@ -1371,9 +1371,7 @@ class PCheck:
 # =============================================================================
 # Define functions
 # =============================================================================
-def update_paramdicts(*args: List[ParamDict], key: str,
-                      value: Any = None,
-                      source: str = None,
+def update_paramdicts(*args, key: str, value: Any = None, source: str = None,
                       instance: Union[None, Const, Keyword] = None):
     """
     Update a set of parameter dictionarys with a key/value/source/instance

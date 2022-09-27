@@ -1957,7 +1957,7 @@ def get_shapelocal(params, header, filename=None, database=None):
 # write file functions
 # =============================================================================
 def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
-                          rawhcfiles, dxmap, dymap, REF_FP, fp_table,
+                          rawhcfiles, dxmap, dymap, ref_fp, fp_table,
                           fpprops, dxmap0, fpimage, fpimage2, hcimage,
                           hcimage2, qc_params):
     # ----------------------------------------------------------------------
@@ -2066,8 +2066,8 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # set output key
     outfile3.add_hkey('KW_OUTPUT', value=outfile3.name)
     # copy data
-    outfile3.data = REF_FP
-    # log that we are saving REF_FP to file
+    outfile3.data = ref_fp
+    # log that we are saving ref_fp to file
     WLOG(params, '', textentry('40-014-00028', args=[outfile3.filename]))
     # define multi lists
     data_list = [fp_table]

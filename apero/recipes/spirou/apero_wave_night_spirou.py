@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+apero_wave_night_spirou.py [obs dir] [HC_HC files] [FP_FP files]
 
-# CODE DESCRIPTION HERE
+APERO wavelength solution nightly calibration recipe for SPIROU
 
 Created on 2019-08-16 at 09:23
 
@@ -12,12 +12,14 @@ Created on 2019-08-16 at 09:23
 from astropy import constants as cc
 from astropy import units as uu
 import numpy as np
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.io import drs_image
@@ -39,6 +41,9 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
 ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
@@ -58,24 +63,21 @@ speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, hcfiles=None, fpfiles=None, **kwargs):
+def main(obs_dir: Optional[str] = None, hcfiles: Optional[List[str]] = None,
+         fpfiles: Optional[List[str]] = None,
+         **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_wave_ref_spirou.py
+    Main function for apero_wave_night
 
     :param obs_dir: string, the night name sub-directory
     :param hcfiles: list of strings or string, the list of hc files
     :param fpfiles: list of strings or string, the list of fp files
     :param kwargs: any additional keywords
 
-    :type obs_dir: str
-    :type hcfiles: list[str]
-    :type fpfiles: list[str]
-
     :keyword debug: int, debug level (0 for None)
     :keyword fpfiles: list of strings or string, the list of fp files (optional)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(obs_dir=obs_dir, hcfiles=hcfiles, fpfiles=fpfiles,
@@ -95,13 +97,14 @@ def main(obs_dir=None, hcfiles=None, fpfiles=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code

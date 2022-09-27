@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+apero_badpix_nirps_he.py [obs dir] [flat files] [dark files]
+
 Bad pixel calibration recipe for NIRPS HE
 
 Created on 2019-05-13 at 11:04
@@ -8,7 +10,7 @@ Created on 2019-05-13 at 11:04
 @author: cook
 """
 import numpy as np
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero import lang
@@ -52,18 +54,16 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir: Optional[str]=None, flatfiles: List[str]=None,
-         darkfiles: List[str]=None, **kwargs):
+def main(obs_dir: Optional[str] = None, flatfiles: List[str] = None,
+         darkfiles: List[str] = None, **kwargs
+         ) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_badpix_spirou.py
+    Main function for apero_badpix
 
     :param obs_dir: string, the night name sub-directory
     :param flatfiles: list of strings or string, the list of flat files
     :param darkfiles: list of strings or string, the list of dark files
     :param kwargs: any additional keywords
-
-    :type obs_dir: str
-    :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
 

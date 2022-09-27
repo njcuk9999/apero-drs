@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-apero_mk_tellu [night_directory] [files]
+apero_mk_tellu_spirou.py [obs_dir] [files]
 
 Creates a flattened transmission spectrum from a hot star observation.
 The continuum is set to 1 and regions with too many tellurics for continuum
@@ -15,31 +15,19 @@ absorption, so the output transmission files meet our pRV requirements in
 terms of wavelength coverage. Extension of the transmission maps to the
 domain between photometric bandpasses is seen as a low priority item.
 
-Usage:
-  apero_mk_tellu night_name telluric_file_name.fits
-
-
-Outputs:
-  telluDB: TELL_MAP file - telluric transmission map for input file
-        file also saved in the reduced folder
-        input file + '_trans.fits'
-
-  telluDB: TELL_CONV file - convolved molecular file (for specific
-                            wavelength solution) if it doesn't already exist
-        file also saved in the reduced folder
-        wavelength solution + '_tapas_convolved.npy'
-
 Created on 2019-09-03 at 14:58
 
 @author: cook
 """
 import numpy as np
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero.science.calib import wave
@@ -56,10 +44,12 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get param dict
-ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -73,21 +63,18 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, files=None, **kwargs):
+def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
+         **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_mk_tellu_spirou.py
+    Main function for apero_mk_tellu
 
     :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
 
-    :type obs_dir: str
-    :type files: list[str]
-
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(obs_dir=obs_dir, files=files, **kwargs)
@@ -106,13 +93,14 @@ def main(obs_dir=None, files=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -222,8 +210,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # load reference wavelength solution
         refprops = wave.get_wavesolution(params, recipe, ref=True,
-                                       fiber=fiber, infile=infile,
-                                       database=calibdbm, log=log1)
+                                         fiber=fiber, infile=infile,
+                                         database=calibdbm, log=log1)
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
