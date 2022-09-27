@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+demo_spirou.py
 
-# CODE DESCRIPTION HERE
+A demo spirou recipe used for demonstrating how to use a top level recipe
 
 Created on 2019-07-05 at 16:46
 

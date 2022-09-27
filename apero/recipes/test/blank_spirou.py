@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+blank_spirou.py
 
-# CODE DESCRIPTION HERE
+An example recipe used for development
 
 Created on 2019-07-05 at 16:46
 
