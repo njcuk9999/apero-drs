@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+apero_shape_ref_nirps_ha.py [obs dir] [FP_FP files]
 
-# CODE DESCRIPTION HERE
+APERO shape reference calibration recipe for NIRPS HE
 
 Created on 2019-03-23 at 13:01
 
 @author: cook
 """
 import numpy as np
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero import lang
@@ -17,14 +18,13 @@ from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.io import drs_table
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
-from apero.science.calib import wave
 from apero.science.calib import shape
-
 
 # =============================================================================
 # Define variables
@@ -38,6 +38,10 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
@@ -53,21 +57,18 @@ pcheck = constants.PCheck(wlog=WLOG)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, fpfiles=None, **kwargs):
+def main(obs_dir: Optional[str] = None, fpfiles: Optional[List[str]] = None,
+         **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_shape_ref_spirou.py
+    Main function for apero_shape_ref
 
     :param obs_dir: string, the night name sub-directory
     :param fpfiles: list of strings or string, the list of fp files
     :param kwargs: any additional keywords
 
-    :type obs_dir: str
-    :type fpfiles: list[str]
-
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(obs_dir=obs_dir, fpfiles=fpfiles, **kwargs)
@@ -86,13 +87,14 @@ def main(obs_dir=None, fpfiles=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -183,7 +185,7 @@ def __main__(recipe, params):
         fpkwargs = dict(header=fpfile.get_header(), filename=filename,
                         database=calibdbm)
         # read fpref file
-        reffp_file, REF_FP = shape.get_ref_fp(params, **fpkwargs)
+        reffp_file, ref_fp = shape.get_ref_fp(params, **fpkwargs)
         # read table
         fp_table = drs_table.read_table(params, reffp_file, fmt='fits')
     else:
@@ -196,24 +198,24 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         cargs = [params, recipe, fpprops['DPRTYPE'], fp_table, fpimage]
         # fpcube, fp_table = shape.construct_REF_FP(*cargs)
-        REF_FP, fp_table = shape.construct_ref_fp(*cargs)
+        ref_fp, fp_table = shape.construct_ref_fp(*cargs)
         # log process (reference construction complete + number of groups added)
         # wargs = [len(fpcube)]
         # WLOG(params, 'info', textentry('40-014-00011', args=wargs))
         # sum the cube to make fp data
-        # REF_FP = np.sum(fpcube, axis=0)
+        # ref_fp = np.sum(fpcube, axis=0)
 
     # ----------------------------------------------------------------------
     # Calculate dx shape map
     # ----------------------------------------------------------------------
 
     # calculate the dx map for fiber A
-    cargs_a = [REF_FP, lprops_sci]
+    cargs_a = [ref_fp, lprops_sci]
     dout = shape.calculate_dxmap_nirpshe(params, recipe, *cargs_a, fiber='A')
     # TODO use max_dxmap_std, max_dxmap_info, dxrms as in spirou (QC?)
     dxmap_a, max_dxmap_std_a, max_dxmap_info_a, dxrms_a = dout
     # calculate the dx map for fiber B
-    cargs_b = [REF_FP, lprops_ref]
+    cargs_b = [ref_fp, lprops_ref]
     dout = shape.calculate_dxmap_nirpshe(params, recipe, *cargs_b, fiber='B')
     # TODO use max_dxmap_std, max_dxmap_info, dxrms as in spirou (QC?)
     dxmap_b, max_dxmap_std_b, max_dxmap_info_b, dxrms_b = dout
@@ -223,7 +225,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Calculate dy shape map
     # ----------------------------------------------------------------------
-    dymap = shape.calculate_dymap(params, REF_FP, fpheader)
+    dymap = shape.calculate_dymap(params, ref_fp, fpheader)
 
     # ----------------------------------------------------------------------
     # Need to straighten the dxmap
@@ -251,7 +253,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # write files
     # ------------------------------------------------------------------
-    fargs = [fpfile, None, rawfpfiles, None, dxmap, dymap, REF_FP,
+    fargs = [fpfile, None, rawfpfiles, None, dxmap, dymap, ref_fp,
              fp_table, fpprops, dxmap0, fpimage, fpimage2, None, None,
              qc_params]
     outfiles = shape.write_shape_ref_files(params, recipe, *fargs)

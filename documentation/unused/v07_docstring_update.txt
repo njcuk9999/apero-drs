@@ -78,53 +78,56 @@ apero:
 		- plot_functions.py
 	recipes:
 		nirps_ha:
-			# - apero_badpix
-			# - apero_dark
-			# - apero_dark_ref
-			# - apero_extract
-			# - apero_fit_tellu
-			# - apero_flat
-			# - apero_leak_ref
-			# - apero_loc
-			# - apero_mk_model
-			# - apero_mk_tellu
-			# - apero_preprocess
-			# - apero_shape
-			# - apero_shape_ref
-			# - apero_wave_night
-			# - apero_wave_ref
+			- apero_badpix
+			- apero_dark
+			- apero_dark_ref
+			- apero_extract
+			- apero_fit_tellu
+			- apero_flat
+			- apero_leak_ref
+			- apero_loc
+			- apero_mk_model
+			- apero_mk_tellu
+			- apero_preprocess
+			- apero_shape
+			- apero_shape_ref
+			- apero_wave_night
+			- apero_wave_ref
 		nirps_he:
-			# - apero_badpix
-			# - apero_dark
-			# - apero_dark_ref
-			# - apero_extract
-			# - apero_fit_tellu
-			# - apero_flat
-			# - apero_leak_ref
-			# - apero_loc
-			# - apero_mk_model
-			# - apero_mk_tellu
-			# - apero_preprocess
-			# - apero_shape
-			# - apero_shape_ref
-			# - apero_wave_night
-			# - apero_wave_ref
+			- apero_badpix
+			- apero_dark
+			- apero_dark_ref
+			- apero_extract
+			- apero_fit_tellu
+			- apero_flat
+			- apero_leak_ref
+			- apero_loc
+			- apero_mk_model
+			- apero_mk_tellu
+			- apero_pp_ref
+			- apero_preprocess
+			- apero_shape
+			- apero_shape_ref
+			- apero_wave_night
+			- apero_wave_ref
 		spirou:
-			# - apero_badpix
-			# - apero_dark
-			# - apero_dark_ref
-			# - apero_extract
-			# - apero_fit_tellu
-			# - apero_flat
-			# - apero_leak_ref
-			# - apero_loc
-			# - apero_mk_model
-			# - apero_mk_tellu
-			# - apero_preprocess
-			# - apero_shape
-			# - apero_shape_ref
-			# - apero_wave_night
-			# - apero_wave_ref
+			- apero_badpix
+			- apero_dark
+			- apero_dark_ref
+			- apero_ccf
+			- apero_extract
+			- apero_fit_tellu
+			- apero_flat
+			- apero_leak_ref
+			- apero_loc
+			- apero_mk_model
+			- apero_mk_tellu
+			- apero_postprocess
+			- apero_preprocess
+			- apero_shape
+			- apero_shape_ref
+			- apero_wave_night
+			- apero_wave_ref
 	science:
 		calib:
 			# - background.py
@@ -233,10 +236,3 @@ apero:
 				# - apero_uberv_spirou.py
 			utils:
 				# - get_grid_models.py
-
-
-
-
-
-
-
