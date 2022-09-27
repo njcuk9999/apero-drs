@@ -128,6 +128,9 @@ apero:
 			- apero_shape_ref
 			- apero_wave_night
 			- apero_wave_ref
+		test:
+			- blank_spirou.py
+			- demo_spirou.py
 	science:
 		calib:
 			# - background.py
