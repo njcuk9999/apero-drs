@@ -15,8 +15,15 @@ No description set
 ********************************************************************************
 
 
-No schematic set
+.. only:: html
 
+    .. image:: ../../../_static/yed/spirou/limited_seq.jpg
+        :width: 100%
+        :align: center
+
+.. only:: latex
+
+    This section can only currently be viewed in the html documentation.
 
 ********************************************************************************
 3. Recipes in sequence

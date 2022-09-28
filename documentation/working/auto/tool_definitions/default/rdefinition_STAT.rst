@@ -46,10 +46,10 @@ No optional arguments
 
 .. code-block:: 
 
-     --mode[timing,qc,error,memory] // [STRING] Stats mode. For timing statistics use "timing". For quality control statistics use "qc". For error statistics use "error". For memory statistics use "memory".
-     --plog[STRING] // [STRING] Specify a certain log file (full path)
+     --mode[timing,qc,error,memory] // LOGSTAT_MODE_HELP
+     --plog[STRING] // LOGSTAT_PLOG_HELP
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --sql[STRING] // [STRING] Specify a SQL WHERE clause to narrow the stats
+     --sql[STRING] // LOGSTAT_SQL_HELP
 
 
 ********************************************************************************
@@ -59,7 +59,7 @@ No optional arguments
 
 .. code-block:: 
 
-     --xhelp[STRING] // Extended help menu (with all advanced arguments)
+     --xhelp[STRING] // EXTENDED_HELP
      --debug[STRING] // Activates debug mode (Advanced mode [INTEGER] value must be an integer greater than 0, setting the debug level)
      --listing[STRING] // Lists the night name directories in the input directory if used without a 'directory' argument or lists the files in the given 'directory' (if defined). Only lists up to 15 files/directories
      --listingall[STRING] // Lists ALL the night name directories in the input directory if used without a 'directory' argument or lists the files in the given 'directory' (if defined)
@@ -71,9 +71,9 @@ No optional arguments
      --shortname[STRING] // [STRING] Set a shortname for a recipe to distinguish it from other runs - this is mainly for use with apero processing but will appear in the log database
      --idebug[STRING] // [BOOLEAN] If True always returns to ipython (or python) at end (via ipdb or pdb)
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
-     --crunfile[STRING] // Set a run file to override default arguments
+     --crunfile[STRING] // SET_RUNFILE_HELP
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
+     --nosave[STRING] // SET_NOSAVE_HELP
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
