@@ -1137,10 +1137,8 @@ def _compile_sequence(params: ParamDict, sequence: DrsRunSequence,
     # save table filename to out table
     summary['OUTTABLE'] = basename
     summary['OUTTABLE-ABS'] = abs_filename
-    # TODO: get and set description file in/from sequence class
-    summary['DESCRIPTION_FILE'] = None
-    # TODO: get and set schematic file in/from sequence class
-    summary['SCHEMATIC_FILE'] = None
+    summary['DESCRIPTION_FILE'] = sequence.description_file
+    summary['SCHEMATIC_FILE'] = sequence.schematic
     # return the summary dictionary
     return summary
 
