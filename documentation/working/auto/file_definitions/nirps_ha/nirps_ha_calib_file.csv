@@ -14,7 +14,7 @@ SHAPEL,Nightly shape calibration files,SHAPEL,.fits,_shapel,--,calibration,SHAPE
 FF_BLAZE,Blaze calibration file,FF_BLAZE,.fits,_blaze,"A, B",calibration,BLAZE,FLAT_FLAT
 FF_FLAT,Flat calibration file,FF_FLAT,.fits,_flat,"A, B",calibration,FLAT,FLAT_FLAT
 LEAKREF_E2DS,Reference leak correction calibration file,LEAKREF_E2DS,.fits,_LEAK_REF,"A, B",calibration,LEAKREF,"EXT_E2DS, EXT_E2DS_FF"
-WAVESOL_REF,Reference wavelength solution calibration file,WAVESOL_REF,.fits,_WAVESOL_REF,"A, B",calibration,WAVESOL_REF,"EXT_E2DS, EXT_E2DS_FF"
+WAVESOL_REF,Reference wavelength solution calibration file,WAVESOL_REF,.fits,_wavesol_ref,"A, B",calibration,WAVESOL_REF,"EXT_E2DS, EXT_E2DS_FF"
 WAVE_HCLIST_REF,Reference list of Hollow cathode lines calibration file,WAVE_HCLIST_REF,.fits,_waveref_hclines,"A, B",calibration,WAVEHCL,"EXT_E2DS, EXT_E2DS_FF"
 WAVE_FPLIST_REF,--,WAVE_FPLIST_REF,.fits,_waveref_fplines,"A, B",calibration,WAVEFPL,"EXT_E2DS, EXT_E2DS_FF"
 WAVEREF_CAV,Reference wavelength cavity width polynomial calibration file,WAVEREF_CAV,.fits,_waveref_cav_,A,calibration,WAVECAV,"EXT_E2DS, EXT_E2DS_FF"

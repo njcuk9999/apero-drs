@@ -48,7 +48,7 @@ No optional arguments
 
      --log[True/False] // [BOOLEAN] If True logs the reset else is quite
      --warn[True/False] // [BOOLEAN] If True asks for user to type 'YES' before each reset
-     --database_timeout[INT] // Set the database timeout tries
+     --database_timeout[INT] // [INTEGER] Set the database timeout number of tries
 
 
 ********************************************************************************
@@ -72,7 +72,7 @@ No optional arguments
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

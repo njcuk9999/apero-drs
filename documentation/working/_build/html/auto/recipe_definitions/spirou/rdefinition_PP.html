@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>apero_preprocess_spirou &#8212; APERO 0.7.241 documentation</title>
+    <title>apero_preprocess_spirou &#8212; APERO 0.7.252 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="recipes.html" title="Recipes (SPIROU)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.241 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.252 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" accesskey="U">Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_preprocess_spirou</a></li> 
@@ -112,7 +112,19 @@
   <h3><a href="../../../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">apero_preprocess_spirou</a><ul>
-<li><a class="reference internal" href="#description">1. Description</a></li>
+<li><a class="reference internal" href="#description">1. Description</a><ul>
+<li><a class="reference internal" href="#pre-processing">Pre-processing</a><ul>
+<li><a class="reference internal" href="#header-fixes-and-object-resolution">Header fixes and object resolution</a></li>
+<li><a class="reference internal" href="#file-corruption-check">File corruption check</a></li>
+<li><a class="reference internal" href="#top-and-bottom-pixel-correction">Top and bottom pixel correction</a></li>
+<li><a class="reference internal" href="#median-filter-dark-amplifiers">Median filter dark amplifiers</a></li>
+<li><a class="reference internal" href="#f-noise-correction">1/f noise correction</a></li>
+<li><a class="reference internal" href="#cosmic-ray-rejection">Cosmic ray rejection</a></li>
+<li><a class="reference internal" href="#rotation-of-image">Rotation of image</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
 <li><a class="reference internal" href="#usage">3. Usage</a></li>
 <li><a class="reference internal" href="#optional-arguments">4. Optional Arguments</a></li>
@@ -161,7 +173,101 @@
 <section id="description">
 <h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
 <p>SHORTNAME: PP</p>
-<p>This is a apero preprocess spirou test</p>
+<section id="pre-processing">
+<h3>Pre-processing<a class="headerlink" href="#pre-processing" title="Permalink to this headline">¶</a></h3>
+<p>The raw images (those retrieved from the telescope after the ramp fitting algorithm has been run) require some preliminary
+processing to remove detector artifacts that are due to the detector. These artifacts are documented in this section.
+Note all frames independent of DPRTYPE are preprocessed in the same manner before any other step of APERO is run.</p>
+<section id="header-fixes-and-object-resolution">
+<h4>Header fixes and object resolution<a class="headerlink" href="#header-fixes-and-object-resolution" title="Permalink to this headline">¶</a></h4>
+<p>The SPIRou header provides the required information to process files. However, to facilitate data reduction a few header keys are added and updated.</p>
+<p>The first header key we add is the APERO object name (DRSOBJN), this header key is the object name used throughout APERO.
+In general, it is the object name taken from the raw input file but all punctuation and white spaces are removed and replaced
+with underscores and all characters are capitalized (+ and - are also replaced with <cite>P</cite> and <cite>M</cite> respectively). This avoids
+names with slightly different names being considered as different objects (e.g., TRAPPIST-1 vs Trappist 1) and allows for use in
+filenames. Next, the target type (TRG_TYPE) with a value of either TARGET, SKY or a blank string is added.
+This key exists in the raw file header of newer files (2020 and later) but has been found to be incorrect or missing
+for older files, especially when dealing with some sky frames (sky frames can usually be identified by a suffix or prefix <cite>sky</cite> in
+the object name if not already identified as a sky by the target type header key). As well as this a mid-exposure time
+(MJDMID) is added which is equivalent to the time recorded at the end of exposure minus half the exposure time
+(MJDEND - EXPTIME/2) this time is used throughout APERO and is the recommended time to use, as opposed to other header
+keys such as MJSTART, which isn’t strictly the start of observation time but the time the observation request is sent.
+The last two keys added are the DRSMODE and DPRTYPE.</p>
+<p>Once the headers are fixed with the above additions and corrections (if the raw files are of DPRTYPE OBJ_FP, OBJ_DARK,
+POL_FP, or POL_DARK) we cross-match the OBJECTNAME with an object database of object names, positions, motions, parallax,
+known radial velocity estimates, temperatures and aliases. These are mostly sourced directly from SIMBAD, and cross-matched with the
+most up-to-date proper motion and parallax catalogues (based on an id cross-match from SIMBAD with Gaia EDR3; DR2; DR1;
+UCAC4; or Hipparcos; ipp_1997). This ensures the object name given is not already known by another object name, and all astrometric
+parameters are consistent even from differing PIs. This is important for steps in the telluric process where we combine all objects
+of the same DRSOBJN where possible. This local database of object names can be updated and is maintained in such a way to keep consistency
+or inform users when updates have been made. All reductions of a single DRSOBJN should always be done with a single set of astrometric parameters.</p>
+</section>
+<section id="file-corruption-check">
+<h4>File corruption check<a class="headerlink" href="#file-corruption-check" title="Permalink to this headline">¶</a></h4>
+<p>Not every raw file contains good data. For example, a rare occurrence where the detector acquisition system has a synchronization
+issue in retrieving the pixel stream leads to a 1-pixel offset of the readout. Therefore as part of the pre-processing, we check for
+corrupt files. We do this by comparing images to a list of known hot pixels. We verify that hot pixels are at the expected position.
+If they are not at the expected position, this is corrected by registering the pixel grid to the nominal pixel position.
+Missed lines or columns at the edge of the array are replaced by NAN values. This does not lead to a loss in science pixels as the
+4-pixel edge of the array consists of non-light-sensitive reference pixels.</p>
+</section>
+<section id="top-and-bottom-pixel-correction">
+<h4>Top and bottom pixel correction<a class="headerlink" href="#top-and-bottom-pixel-correction" title="Permalink to this headline">¶</a></h4>
+<p>The first part of the correlated noise filtering accounts for gradients along the slow axis of the amplifier readout by removing
+the slope between the first and last read reference pixels within each amplifier. We take a median of the amplifier <cite>bottom</cite> and <cite>top</cite>
+reference pixels and subtract for each amplifier the slope between these regions. This accounts for fluctuations in the detector
+electronics on timescales comparable to or longer than the readout time. Higher-frequency noises are handled as a common-mode
+between amplifiers in the following step. High-frequency readout noise that is not correlated
+between amplifiers cannot be corrected as it overlaps with science data and cannot be measured independently; it represents the
+limiting factor for the fainter targets observed with SPIRou.</p>
+</section>
+<section id="median-filter-dark-amplifiers">
+<h4>Median filter dark amplifiers<a class="headerlink" href="#median-filter-dark-amplifiers" title="Permalink to this headline">¶</a></h4>
+<p>High-frequency common-mode noise between amplifiers is removed by using side reference pixels. We take <cite>left</cite> and <cite>right</cite> reference pixels
+and median the 8 lateral reference pixels into a 4088-pixel long <cite>fast axis</cite> reference unilluminated pixel. This measurement of
+the common noise is a combination of both pixel-to-pixel readout noise and actual 1/f noise that we are attempting to remove.
+The readout noise component is a high-frequency component while the 1/f dominates on larger spatial scales. We, therefore, median-filter
+the reference pixel vector in order to minimize the impact of readout noise while maximizing the subtraction of lower frequencies in
+the 1/f noise. The optimal median filter size was found to be 32 pixels. Once filtered, this common-mode 1/f noise is subtracted from
+all columns of the science array.</p>
+</section>
+<section id="f-noise-correction">
+<h4>1/f noise correction<a class="headerlink" href="#f-noise-correction" title="Permalink to this headline">¶</a></h4>
+<p>While the lower frequency component of the common-mode 1/.f noise is handled using non-light-sensitive reference pixels,
+the large (~800-pixel wide beyond K-band orders) region of the SPIRou array that is not illuminated by diffraction orders allows
+for a measurement of the high-frequency component of the common mode. While the region does see some large-scale scattered light from
+the rest of the array, there are no high-spatial frequency structures illuminating this part of the array. We, therefore, apply
+high-spatial filtering of this area and take a median along the cross-dispersion axis. We construct the equivalent of a
+reference pixel column, but with an effective readout noise ~10 times smaller than what can be obtained with the 8 reference
+pixels (4 on each side) available for each along-the-dispersion-axis position. We replicate this structure and subtract it column-wise,
+further reducing the contribution of common-mode noise in illuminated pixels.</p>
+</section>
+<section id="cosmic-ray-rejection">
+<h4>Cosmic ray rejection<a class="headerlink" href="#cosmic-ray-rejection" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><p>Cosmic rays hits are easier to flag with infrared arrays than they are with CCD data sets due to the acquisition through multiple</p>
+</div></blockquote>
+<p>readouts. Pixels without a cosmic ray hit are expected to see an accumulation of electrons in their well that is linear with time
+while a cosmic ray hit would induce a glitch in that accumulation that can easily be flagged. One could attempt to reconstruct a
+ramp while including a discontinuity at the moment of the hit; considering that cosmic rays are rare
+and that this would add a significant burden in terms of data processing, we opt to simply flag pixels hit by a cosmic ray as invalid
+(NAN values). The flagging of cosmic rays is done in two steps.</p>
+<blockquote>
+<div><p>First, we check for the consistency between the total number of photons received over the entire ramp and the formal ramp error</p>
+</div></blockquote>
+<p>statistics from the linear fit. Discrepant points, even if they remain within the unsaturated regime of the pixel dynamic range,
+are flagged as invalid. Second, the ramp fitting of the pixel value provides both a slope and an intercept. The slope is the signal
+used for scientific analysis, and the intercept is discarded. This intercept value corresponds to the state of the detector prior
+to the first readout, which, for HxRG arrays, is a structured signal. The intercept values have a typical dispersion of ~1000, ADUs,
+and discrepant values indicate that photons within a given pixel do not follow a linear accumulation with time. The consistency of
+the intercept value with expected statistics is used to further flag invalid pixels within a ramp.</p>
+</section>
+<section id="rotation-of-image">
+<h4>Rotation of image<a class="headerlink" href="#rotation-of-image" title="Permalink to this headline">¶</a></h4>
+<p>The pre-processed images are then rotated to match the HARPS orientation. This is a legacy change left over from when some algorithms
+shared a common ancestry with the HARPS DRS pipeline. For SPIRou data this is equivalent to a 90-degree clockwise rotation.</p>
+</section>
+</section>
 </section>
 <section id="schematic">
 <h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
@@ -199,7 +305,7 @@
 <span class="o">--</span><span class="n">ref</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">If</span> <span class="nb">set</span> <span class="n">then</span> <span class="n">recipe</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">reference</span> <span class="n">recipe</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span> <span class="n">reference</span> <span class="n">recipes</span> <span class="n">write</span> <span class="n">to</span> <span class="n">calibration</span> <span class="n">database</span> <span class="k">as</span> <span class="n">reference</span> <span class="n">calibrations</span><span class="p">)</span>
 <span class="o">--</span><span class="n">crunfile</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Set</span> <span class="n">a</span> <span class="n">run</span> <span class="n">file</span> <span class="n">to</span> <span class="n">override</span> <span class="n">default</span> <span class="n">arguments</span>
 <span class="o">--</span><span class="n">quiet</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Run</span> <span class="n">recipe</span> <span class="n">without</span> <span class="n">start</span> <span class="n">up</span> <span class="n">text</span>
-<span class="o">--</span><span class="n">nosave</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Do</span> <span class="ow">not</span> <span class="n">save</span> <span class="nb">any</span> <span class="n">outputs</span> <span class="p">(</span><span class="n">debug</span><span class="o">/</span><span class="n">information</span> <span class="n">run</span><span class="p">)</span><span class="o">.</span> <span class="n">Note</span> <span class="n">some</span> <span class="n">recipes</span> <span class="n">require</span> <span class="n">other</span> <span class="n">recipesto</span> <span class="n">be</span> <span class="n">run</span><span class="o">.</span> <span class="n">Only</span> <span class="n">use</span> <span class="o">--</span><span class="n">nosave</span> <span class="n">after</span> <span class="n">previous</span> <span class="n">recipe</span> <span class="n">runs</span> <span class="n">have</span> <span class="n">been</span> <span class="n">run</span> <span class="n">successfully</span><span class="o">.</span>
+<span class="o">--</span><span class="n">nosave</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Do</span> <span class="ow">not</span> <span class="n">save</span> <span class="nb">any</span> <span class="n">outputs</span> <span class="p">(</span><span class="n">debug</span><span class="o">/</span><span class="n">information</span> <span class="n">run</span><span class="p">)</span><span class="o">.</span> <span class="n">Note</span> <span class="n">some</span> <span class="n">recipes</span> <span class="n">require</span> <span class="n">other</span> <span class="n">recipesto</span> <span class="n">be</span> <span class="n">run</span><span class="o">.</span> <span class="n">Only</span> <span class="n">use</span> <span class="o">--</span><span class="n">nosave</span> <span class="n">after</span> <span class="n">previous</span> <span class="n">recipe</span> <span class="n">runs</span> <span class="n">have</span> <span class="n">been</span> <span class="n">run</span> <span class="n">successfully</span> <span class="n">at</span> <span class="n">least</span> <span class="n">once</span><span class="o">.</span>
 <span class="o">--</span><span class="n">force_indir</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Force</span> <span class="n">the</span> <span class="n">default</span> <span class="nb">input</span> <span class="n">directory</span> <span class="p">(</span><span class="n">Normally</span> <span class="nb">set</span> <span class="n">by</span> <span class="n">recipe</span><span class="p">)</span>
 <span class="o">--</span><span class="n">force_outdir</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Force</span> <span class="n">the</span> <span class="n">default</span> <span class="n">output</span> <span class="n">directory</span> <span class="p">(</span><span class="n">Normally</span> <span class="nb">set</span> <span class="n">by</span> <span class="n">recipe</span><span class="p">)</span>
 </pre></div>
@@ -269,7 +375,7 @@
         <li class="right" >
           <a href="recipes.html" title="Recipes (SPIROU)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.241 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.252 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" >Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_preprocess_spirou</a></li> 

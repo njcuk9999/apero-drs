@@ -51,8 +51,8 @@ No schematic set
      --obs_dir[STRING] // PROCESS_OBS_DIR_HELP
      --exclude_obs_dirs[STRING] // PROCESS_EXCLUDE_OBS_DIRS_HELP
      --include_obs_dirs[STRING] // PROCESS_INCLUDE_OBS_DIRS_HELP
-     --no_file_check // Check the number of files on disk and flag possible errors
-     --no_obj_check // Check the object database with current set of raw files and flag possible problems
+     --no_file_check // Dont check the number of files on disk and dont flag these errors
+     --no_obj_check // Dont check object database with current set of raw files and dont flag these errors
 
 
 ********************************************************************************
@@ -76,7 +76,7 @@ No schematic set
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

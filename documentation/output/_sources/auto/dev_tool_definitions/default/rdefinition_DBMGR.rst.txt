@@ -50,13 +50,13 @@ No optional arguments
      --calibdb // Update calibration database
      --telludb // Update telluric database
      --logdb // Update log database
-     --indexdb // Update index database
-     --objdb // Update object database
+     --findexdb // Update file index database
+     --astromdb // Update astrometric database
      --rejectdb // Update rejection database
      --update // Use this to update the database based on files on disk in the correct directories (Currently updates calib/tellu/log and index databases)
      --csv[STRING] // Path to csv file. For --importdb this is the csv file you wish to add. For --exportdb this is the csv file that will be saved.
-     --exportdb[calib,tellu,index,log,object,lang] // Export a database to a csv file
-     --importdb[calib,tellu,index,log,object,lang] // Import a csv file into a database
+     --exportdb[calib,tellu,findex,log,astrom,lang,reject] // Export a database to a csv file
+     --importdb[calib,tellu,findex,log,astrom,lang,reject] // Import a csv file into a database
      --join[replace,append] // How to add the csv file to database: append adds all lines to the end of current database, replace removes all previous lines from database. Default is replace.
      --delete // Load up the delete table GUI (MySQL only)
      --reset // Reset current databases
@@ -83,7 +83,7 @@ No optional arguments
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

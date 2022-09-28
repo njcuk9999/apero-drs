@@ -49,7 +49,7 @@ No schematic set
 .. code-block:: 
 
      --overwrite // Do not check if object is currently in database. Overwrite old value.
-     --getteff // Attempt to get Teff from header value.Requires a raw file of this object and the index database to be up-to-date
+     --getteff // Attempt to get Teff from header value. Requires a raw file of this object and the index database to be up-to-date
      --nopmrequired // Do not require proper motion (not recommended)
      --test // Run in test mode (do not add to database)
 
@@ -75,7 +75,7 @@ No schematic set
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

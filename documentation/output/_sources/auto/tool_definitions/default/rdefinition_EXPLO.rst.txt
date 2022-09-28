@@ -47,8 +47,8 @@ No optional arguments
 .. code-block:: 
 
      --hash // Display all hash columns (hidden by default)
-     --recipe[STRING] // Recipe or shortname for recipe (must used in combination with --flagnum)
-     --flagnum[INT] // Instead of running explorer converts a binary flag to a set of binary flags for a recipe (must be used in combination with --recipe)
+     --recipe[STRING] // [STRING] Recipe or shortname for recipe (must be used in combination with flagnum)
+     --flagnum[INT] // [INTEGER] Instead of running explorer converts a binary flagg to a set of binary flags for a recipe (must be used in combination with recipe)
 
 
 ********************************************************************************
@@ -72,7 +72,7 @@ No optional arguments
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

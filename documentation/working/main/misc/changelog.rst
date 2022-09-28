@@ -2,6 +2,87 @@ Changelog
 =========
 
 
+0.7.252 (2022-09-27)
+--------------------
+- [APERO] continue update doc string + pep8. [Neil Cook]
+- [APERO] continue update doc string + pep8. [Neil Cook]
+- [APERO] continue update doc string + pep8. [Neil Cook]
+- [APERO] continue update doc string + pep8. [Neil Cook]
+- [APERO] `apero.core.instruments.*.file_definitions.py` - fix typo
+  `_WAVESOL_REF` --> `_wavesol_ref`. [Neil Cook]
+- [APERO] update program descriptions and some doc strings + pep8. [Neil
+  Cook]
+- [APERO] `documentation.unused.v07_docstring_update.txt` - add more
+  recipes to check. [Neil Cook]
+- [APERO] `documentation.unused.v07_docstring_update.txt` - add more
+  recipes to check. [Neil Cook]
+- [APERO] `apero.science.calib.gen_calib.py` - if not required do not
+  cause error. [Neil Cook]
+- [APERO] correct flat codes - combine method should be "flat" [Neil
+  Cook]
+- [APERO] `apero.io.drs_path.py` - reset the listdir function. [njcuk9999]
+
+
+0.7.251 (2022-09-19)
+--------------------
+- [APERO] update doc strings + pep8 (see `v07_docstring_update.txt)` [Neil
+  Cook]
+- [APERO] documentation - add to useful mysql commands. [Neil Cook]
+- [APERO] update doc strings + pep8 (see progress in
+  `v07_docstring_update.txt)` [Neil Cook]
+- [APERO] `apero.tools.module.testing.drs_stats.py` - for sqlite need the
+  LIKE parameter for recipe. [Neil Cook]
+- [APERO] `apero.tools.module.setup.drs_installation.py` - fix arg return
+  of `get_sqlite_settings`. [Neil Cook]
+- [APERO] update doc-string + deal with pep8. [Neil Cook]
+- [APERO] update doc-string + deal with pep8. [Neil Cook]
+
+
+0.7.250 (2022-09-13)
+--------------------
+- [APERO] update language database. [Neil Cook]
+- [SPIROU] documentation: add schematics back to `recipe_definitions.py`.
+  [Neil Cook]
+- [APERO] update some todo messages. [Neil Cook]
+- [APERO] update language database to replace some text (in TODO) [Neil
+  Cook]
+- [APERO] `apero.science.extract.gen_ext.py` - try to stop errors when
+  order profile exists but cannot be read (parallelisation issue) [Neil
+  Cook]
+- Update `UPDATE_NOTES.txt`. [Neil Cook]
+- Update `UPDATE_NOTES.txt`. [Neil Cook]
+- [APERO] `apero.recipes.*.apero_fit_tellu*.py` - recon must be multiplied
+  by blaze before creating s1d (for proper weighting) [Neil Cook]
+- [APERO] `apero.science.polar.gen_pol.py` - fix factor 2 in exponent
+  (from Eder) [Neil Cook]
+
+
+0.7.249 (2022-09-07)
+--------------------
+- [APERO] `setup.install.py` - make sure config path is still the full
+  path. [Neil Cook]
+- [APERO] `apero.base.base.py` - fix references to allparams. [Neil Cook]
+- [NIRPS] correct typo `apero_PP_REF_nirps` --> `apero_pp_ref_nirps`. [Neil
+  Cook]
+- [NIRPS] correct typo `apero_PP_REF_nirps` --> `apero_pp_ref_nirps`. [Neil
+  Cook]
+- [APERO] `apero.tools.module.setup.drs_installation.py` - save install
+  params to `DRS_UCONFIG` (for re-use / debug) in install.sh. [Neil Cook]
+- [APERO] `apero.tools.module.setup.drs_installation.py` -
+  `all_params['MYSQL']` parameters should be uppercase (to match sqlite)
+  [Neil Cook]
+- [APERO] `apero.tools.module.setup.drs_installation.py` -
+  `all_params['MYSQL']` parameters should be uppercase (to match sqlite)
+  [Neil Cook]
+- [APERO] `apero.core.instruments.default.grouping.py` - fix problem where
+  1 entry leads to a crash. [Neil Cook]
+- [APERO] fix sqlite installation error (Issue #682) [Neil Cook]
+- [APERO] apero.base.base.py: typo FILEINDEX --> FINDEX. [Neil Cook]
+- [APERO] test recipe documentation. [Neil Cook]
+- [APERO] correct `drs_db` change. [Neil Cook]
+- [APERO] update version/date/changelog/documentation. [Neil Cook]
+
+
 0.7.248 (2022-08-31)
 --------------------
 - [APERO] manage locking better (when no PID), manage databases better

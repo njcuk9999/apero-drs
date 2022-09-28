@@ -16,7 +16,7 @@ FF_FLAT,Flat calibration file,FF_FLAT,.fits,_flat,"AB, A, B, C",calibration,FLAT
 THERMALI_E2DS,"Extracted sci=DARK calib=DARK thermal calibration file, where dark is an internal dark",THERMALI_E2DS,.fits,_thermal_e2ds_int,"AB, A, B, C",calibration,THERMALI,DARK_DARK_INT
 THERMALT_E2DS,"Extracted sci=DARK calib=DARK thermal calibration file, where dark is a telescope dark",THERMALT_E2DS,.fits,_thermal_e2ds_tel,"AB, A, B, C",calibration,THERMALT,DARK_DARK_TEL
 LEAKREF_E2DS,Reference leak correction calibration file,LEAKREF_E2DS,.fits,_LEAK_REF,"AB, A, B, C",calibration,LEAKREF,"EXT_E2DS, EXT_E2DS_FF"
-WAVESOL_REF,Reference wavelength solution calibration file,WAVESOL_REF,.fits,_WAVESOL_REF,"AB, A, B, C",calibration,WAVESOL_REF,"EXT_E2DS, EXT_E2DS_FF"
+WAVESOL_REF,Reference wavelength solution calibration file,WAVESOL_REF,.fits,_wavesol_ref,"AB, A, B, C",calibration,WAVESOL_REF,"EXT_E2DS, EXT_E2DS_FF"
 WAVE_HCLIST_REF,Reference list of Hollow cathode lines calibration file,WAVE_HCLIST_REF,.fits,_waveref_hclines,"AB, A, B, C",calibration,WAVEHCL,"EXT_E2DS, EXT_E2DS_FF"
 WAVE_FPLIST_REF,Reference list of FP liens calibration file,WAVE_FPLIST_REF,.fits,_waveref_fplines,"AB, A, B, C",calibration,WAVEFPL,"EXT_E2DS, EXT_E2DS_FF"
 WAVEREF_CAV,Reference wavelength cavity width polynomial calibration file,WAVEREF_CAV,.fits,_waveref_cav_,AB,calibration,WAVECAV,"EXT_E2DS, EXT_E2DS_FF"

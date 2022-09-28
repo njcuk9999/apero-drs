@@ -46,10 +46,10 @@ No optional arguments
 
 .. code-block:: 
 
-     --mode[timing,qc,error,memory] // Stats mode. For timing statistics use "timing". For quality control statistics use "qc". For error statistics use "error". For memory statistics use "memory".
-     --plog[STRING] // Specify a certain log file (full path)
+     --mode[timing,qc,error,memory] // [STRING] Stats mode. For timing statistics use "timing". For quality control statistics use "qc". For error statistics use "error". For memory statistics use "memory".
+     --plog[STRING] // [STRING] Specify a certain log file (full path)
      --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --sql[STRING] // specify a SQL WHERE clause to narrow the stats
+     --sql[STRING] // [STRING] Specify a SQL WHERE clause to narrow the stats
 
 
 ********************************************************************************
@@ -73,7 +73,7 @@ No optional arguments
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
