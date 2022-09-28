@@ -30,7 +30,7 @@ EXT_S1D_W,1D stitched spectrum (constant wavelength binning),EXT_S1D_W,.fits,_s1
 EXT_S1D_V,1D stitched spectrum (constant velocity binning),EXT_S1D_V,.fits,_s1d_v,--,"A, B",DRS_PP
 EXT_FPLIST,FP lines identified from extracted FP fiber,EXT_FPLIST,.fits,_ext_fplines,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
 LEAKREF_E2DS,Reference leak correction calibration file,LEAKREF_E2DS,.fits,_LEAK_REF,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
-WAVESOL_REF,Reference wavelength solution calibration file,WAVESOL_REF,.fits,_WAVESOL_REF,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
+WAVESOL_REF,Reference wavelength solution calibration file,WAVESOL_REF,.fits,_wavesol_ref,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
 WAVE_HCLIST_REF,Reference list of Hollow cathode lines calibration file,WAVE_HCLIST_REF,.fits,_waveref_hclines,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
 WAVE_FPLIST_REF,--,WAVE_FPLIST_REF,.fits,_waveref_fplines,--,"A, B","EXT_E2DS, EXT_E2DS_FF"
 WAVEREF_CAV,Reference wavelength cavity width polynomial calibration file,WAVEREF_CAV,.fits,_waveref_cav_,--,A,"EXT_E2DS, EXT_E2DS_FF"

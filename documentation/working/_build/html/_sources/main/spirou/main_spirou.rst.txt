@@ -8,7 +8,7 @@ SPIRou documentation
 SPIRou is a near-infrared (0.98-2.5um) spectro-polarimeter that saw first light at the Canada France Hawaii telescope
 in April 2018. SPIRou was designed to have spectral resolving power better than 70,000 and achieve a radial-velocity
 stability better than 1 \mps (i.e. precision radial velocity, pRV). The detector is a H4RG-15 HgCdTe array
-(Manufacturer specifications can be found [here](http://www.teledyne-si.com/products-and-services/imaging-sensors/hawaii-4rg)
+(Manufacturer specifications can be found [here](http://www.teledyne-si.com/products-and-services/imaging-sensors/hawaii-4rg))
 with 4096x4096 pixels, with 4 of these pixels at the top, bottom, left and right reserved as reference pixels; they are not
 light-sensitive and used only for common-mode readout noise rejection.
 Two science fibers (hereafter fibers A and B or when combined AB) are fed from the Cassegrain unit where light either comes
