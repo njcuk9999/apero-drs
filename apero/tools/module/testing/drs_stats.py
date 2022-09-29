@@ -28,7 +28,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_database
 from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
-
+from apero.io import drs_fits
 
 # =============================================================================
 # Define variables
@@ -1279,6 +1279,13 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
 
     :return: None, plots graph
     """
+    # ---------------------------------------------------------------------
+    # construct report directory
+    report_dir = os.path.join(params['DRS_DATA_MSG'], 'report')
+    # deal with report directory not existing
+    if not os.path.exists(report_dir):
+        os.makedirs(report_dir)
+    # ---------------------------------------------------------------------
     # get log database
     WLOG(params, '', 'Loading log database')
     logdbm = drs_database.LogDatabase(params)
@@ -1358,6 +1365,38 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
                 ram_end=ram_end, rmax_start=rmax_start, rmax_end=rmax_end,
                 rmin_start=rmin_start, rmin_end=rmin_end,
                 shortnames=shortnames, shortname_values=shortname_values)
+    # -------------------------------------------------------------------------
+    # make table 1 output
+    table1 = Table()
+    table1['TIME_SINCE_START'] = time0
+    table1['RAM_MIN_START'] = rmin_start
+    table1['RAM_MIN_END'] = rmin_end
+    table1['RAM_MAX_START'] = rmax_start
+    table1['RAM_MAX_END'] = rmax_end
+    table1['RAM_MIN_MIN'] = np.min([rmin_start, rmin_end], axis=0)
+    table1['RAM_MAX_MAX'] = np.max([rmax_start, rmax_end], axis=0)
+    table1['RAM_MEAN'] = np.mean([ram_start, ram_end], axis=0)
+    # -------------------------------------------------------------------------
+    # get data for table 2
+    tabledict2 = dict(SHORTNAME=[], START_UNIX=[],
+                      MED_UNIX=[], END_UNIX=[])
+    for shortname in shortname_values:
+        smin, smed, smax = shortname_values[shortname]
+        tabledict2['SHORTNAME'].append(shortname)
+        tabledict2['START_UNIX'].append(smin)
+        tabledict2['MED_UNIX'].append(smed)
+        tabledict2['END_UNIX'].append(smax)
+    # push table 2 data into table
+    table2 = Table(tabledict2)
+    # -------------------------------------------------------------------------
+    # construct filename
+    filename = os.path.join(report_dir, 'apero_stats_memory.fits')
+    # write memory data
+    drs_fits.writefits(params, filename, data=[None, table1, table2],
+                       header=[None, None, None], names=[None, 'ram', 'recipe'],
+                       datatype=[None, 'table', 'table'],
+                       dtype=[None, None, None])
+    # -------------------------------------------------------------------------
 
 
 # =============================================================================
