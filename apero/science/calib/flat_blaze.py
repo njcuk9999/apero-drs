@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO flat and blaze calibration functionality
 
 Created on 2019-07-10 at 09:30
 
@@ -11,15 +9,17 @@ Created on 2019-07-10 at 09:30
 """
 import numpy as np
 from scipy.optimize import curve_fit
-from typing import Union
+from typing import List, Optional, Tuple, Union
 import warnings
 
 from apero.base import base
 from apero.core import constants
 from apero import lang
 from apero.core import math as mp
-from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core.core import drs_database
+from apero.core.utils import drs_recipe
 from apero.science.calib import gen_calib
 
 # =============================================================================
@@ -32,11 +32,14 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get param dict
-ParamDict = constants.ParamDict
-DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
+# Get the input fits file class
+DrsFitsFile = drs_file.DrsFitsFile
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
@@ -46,21 +49,31 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Define functions
 # =============================================================================
+blaze_flat_return = Tuple[np.ndarray, np.ndarray, np.ndarray, float]
+
+
 def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
                               peak_cut: float, badpercentile: float,
                               order_num: int, fiber: str,
-                              sinc_med_size: Union[int, None] = None):
+                              sinc_med_size: Optional[int] = None
+                              ) -> blaze_flat_return:
     """
     Calculate the blaze function using a sinc function
 
-    :param params:
-    :param e2ds_ini:
-    :param peak_cut:
-    :param badpercentile:
-    :param order_num:
-    :param fiber:
-    :param sinc_med_size:
-    :return:
+    :param params: ParamDict, parameter dictionary of constants
+    :param e2ds_ini: numpy (1D) array: the extracted flux for this order
+    :param peak_cut: float, the threshold expressed as the fraction of the
+                     maximum peak, below this threshold the blaze is set to NaN
+    :param badpercentile: float, the hot pixel percentile level
+    :param order_num: int, the order number we are dealing with
+    :param fiber: str, the fiber name we are dealing with
+    :param sinc_med_size: int or None, optional, the sinc fit median filter
+                          width, overrides params['FF_BLAZE_SINC_MED_SIZE']
+
+    :return: tuple, 1. the updated extracted flux for this order
+             2. the flat profile for this order
+             3. the blaze fit for this order
+             4. the rms for this order
     """
     # get function name
     func_name = __NAME__ + '.calculate_blaze_flat_sinc()'
@@ -174,7 +187,6 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
                                  strupper, type(e), str(e), func_name]
                         emsg = textentry('40-015-00009', args=eargs)
                         WLOG(params, 'error', emsg)
-                        return
     # ------------------------------------------------------------------
     # calculate the blaze from the curve_fit coefficients
     blaze = mp.sinc(xpix, *popt, peak_cut=peak_cut)
@@ -215,7 +227,27 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
     return e2ds_ini, flat, blaze, rms
 
 
-def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
+def get_flat(params: ParamDict, header: Union[drs_file.Header, None],
+             fiber: str, filename: Optional[str] = None, quiet: bool = False,
+             database: Optional[drs_database.CalibrationDatabase] = None
+             ) -> Tuple[str, float, np.ndarray]:
+    """
+    Get the flat calibration file from the calibration database
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param header: fits Header, the fits header associated with the input
+                   file (required to get closest in time) can be None if
+                   filename is given
+    :param fiber: str, the fiber name
+    :param filename: str or None, the filename of the flat calibration to
+                     load, overrides getting it from calibration database
+                     header not require for this
+    :param quiet: bool, whether to log/print loading messages
+    :param database: CalibrationDatabase or None, if passed does not reload
+                     the calibration database
+    :return: tuple, 1. the flat file name used, 2. the MJD time of the flat file
+             3. numpy (2D) array, the loaded flat file
+    """
     # get file definition
     out_flat = drs_file.get_file_definition(params, 'FF_FLAT', block_kind='red')
     # get key
@@ -244,7 +276,26 @@ def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
     return flat_file, flat_time, flat
 
 
-def get_blaze(params, header, fiber, filename=None, database=None):
+def get_blaze(params: ParamDict, header: Union[drs_file.Header, None],
+              fiber: str, filename: Optional[str] = None,
+              database: Optional[drs_database.CalibrationDatabase] = None
+              ) -> Tuple[str, float, np.ndarray]:
+    """
+    Get the blaze calibration file from the calibration database
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param header: fits Header, the fits header associated with the input
+                   file (required to get closest in time) can be None if
+                   filename is given
+    :param fiber: str, the fiber name
+    :param filename: str or None, the filename of the blaze calibration to
+                     load, overrides getting it from calibration database
+                     header not require for this
+    :param database: CalibrationDatabase or None, if passed does not reload
+                     the calibration database
+    :return: tuple, 1. the blaze file name used, 2. the MJD time of the blaze
+             file 3. numpy (2D) array, the loaded blaze file
+    """
     # get file definition
     out_blaze = drs_file.get_file_definition(params, 'FF_BLAZE',
                                              block_kind='red')
@@ -276,7 +327,17 @@ def get_blaze(params, header, fiber, filename=None, database=None):
 # =============================================================================
 # Define write and qc functions
 # =============================================================================
-def flat_blaze_qc(params, eprops, fiber):
+def flat_blaze_qc(params: ParamDict, eprops: ParamDict, fiber: str
+                  ) -> Tuple[List[list], int]:
+    """
+    Calculate the flat and blaze quality control criteria
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param eprops: dictionary, the extraction dictionary
+    :param fiber: str, the fiber name
+
+    :return: tuple, 1. the qc lists, 2. int 1 if passed 0 if failed
+    """
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names = [], [], [],
     qc_logic, qc_pass = [], []
@@ -318,8 +379,29 @@ def flat_blaze_qc(params, eprops, fiber):
     return qc_params, passed
 
 
-def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
-                     props, lprops, sprops, qc_params):
+def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+                     eprops: ParamDict, fiber: str, rawfiles: List[str],
+                     combine: bool, shapeprops: ParamDict, lprops: ParamDict,
+                     sprops: ParamDict, qc_params: List[list]
+                     ) -> Tuple[DrsFitsFile, DrsFitsFile]:
+    """
+    Write the flat and blaze calibration files to disk
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param infile: DrsFitsFile, the input fits file class
+    :param eprops: ParamDict, the extraction parameter dictionary
+    :param fiber: str, the fiber name
+    :param rawfiles: list of strings, the raw filenames
+    :param combine: bool, if True input files were combined
+    :param shapeprops: ParamDict, the shape parameter dictionary
+    :param lprops: ParamDict, the localisation parameter dictionary
+    :param sprops: ParamDict, the s1d parameter dictionary
+    :param qc_params: list of lists, the quality control lists
+
+    :return: tuple, 1. DrsFitsFile, the output blaze fits file class
+             2. DrsFitsFile, the output flat fits file class
+    """
     # --------------------------------------------------------------
     # Store Blaze in file
     # --------------------------------------------------------------
@@ -353,7 +435,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     # add qc parameters
     blazefile.add_qckeys(qc_params)
     # add the calibration files use
-    blazefile = gen_calib.add_calibs_to_header(blazefile, props)
+    blazefile = gen_calib.add_calibs_to_header(blazefile, shapeprops)
     # --------------------------------------------------------------
     # add the other calibration files used
     blazefile.add_hkey('KW_CDBORDP', value=lprops['ORDERPFILE'])
@@ -477,7 +559,19 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     return blazefile, flatfile
 
 
-def flat_blaze_summary(recipe, params, qc_params, eprops, fiber):
+def flat_blaze_summary(recipe: DrsRecipe, params: ParamDict,
+                       qc_params: List[list], eprops: ParamDict, fiber: str):
+    """
+    Produce the flat and blaze summary document
+
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param params: ParamDict, parameter dictionary of constants
+    :param qc_params: list of lists, the quality control lists
+    :param eprops: ParamDict, the extraction parameter dictionary
+    :param fiber: str, the fiber name
+
+    :return: None, produces the summary document
+    """
     # alias to eprops
     epp = eprops
     # add qc params (fiber specific)
