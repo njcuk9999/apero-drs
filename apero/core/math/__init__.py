@@ -61,6 +61,8 @@ iuv_spline = gen_math.iuv_spline
 
 killnan = nan.killnan
 
+largest_divisor_below = gen_math.largest_divisor_below
+
 lowpassfilter = gen_math.lowpassfilter
 
 measure_box_min_max = gen_math.measure_box_min_max
