@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-General calibration functions in here only
+General calibration functionality
 
 Created on 2019-06-27 at 10:48
 
@@ -63,6 +63,9 @@ display_func = drs_log.display_func
 # Define classes
 # =============================================================================
 class CalibFile:
+    """
+    Calibration file class
+    """
     key: Optional[str]
     fiber: Optional[str]
     filename: Optional[Union[List[str], str]]
