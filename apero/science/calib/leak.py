@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Apero FP leakage functionality
 
 Created on 2022-01-26
 
@@ -13,7 +11,7 @@ import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
 import os
-from typing import Optional
+from typing import Dict, Optional, Tuple
 import warnings
 
 from apero.base import base
@@ -51,6 +49,8 @@ WLOG = drs_log.wlog
 textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
+# define the calibration database class
+CalibrationDatabase = drs_database.CalibrationDatabase
 # -----------------------------------------------------------------------------
 # Speed of light
 # noinspection PyUnresolvedReferences
@@ -64,18 +64,42 @@ display_func = drs_log.display_func
 # =============================================================================
 # Define leakage functions
 # =============================================================================
-def correct_ref_dark_fp(params, extractdict, **kwargs):
+def correct_ref_dark_fp(params: ParamDict, extractdict: ParamDict,
+                        bckgrd_percentile: Optional[int] = None,
+                        norm_percentile: Optional[int] = None,
+                        wsmooth: Optional[int] = None,
+                        kersize: Optional[int] = None
+                        ) -> Tuple[Dict[str, DrsFitsFile], ParamDict]:
+    """
+    Correction for the reference dark fp
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param extractdict: ParamDict, the extraction parameter dictionary
+    :param bckgrd_percentile: int or None, optional, the thermal background
+                              percentile, overrides
+                              params['LEAK_BCKGRD_PERCENTILE']
+    :param norm_percentile: int or None, optional, the normalisation percentile
+                            overrides params['LEAK_NORM_PERCENTILE']
+    :param wsmooth: int or None, optional, the e-width of the smoothing kernel,
+                    overrides params['LEAKREF_WSMOOTH']
+    :param kersize: int or None, optional, the kernel size, overrides
+                    params['LEAKREF_KERSIZE']
+
+    :return: tuple, 1. the output diction of corrected fits file classes
+                       (keys are for each fiber)
+                    2. the leak correction parameter dictionary
+    """
     # set function name
     func_name = __NAME__ + '.correct_ref_dark_fp'
-
     # load parameters from params/kwargs
-    bckgrd_percentile = pcheck(params, 'LEAK_BCKGRD_PERCENTILE',
-                               'bckgrd_percentile', kwargs, func_name)
-    norm_percentile = pcheck(params, 'LEAK_NORM_PERCENTILE', 'norm_percentile',
-                             kwargs, func_name)
-    w_smooth = pcheck(params, 'LEAKREF_WSMOOTH', 'w_smooth', kwargs, func_name)
-    ker_size = pcheck(params, 'LEAKREF_KERSIZE', 'ker_size', kwargs, func_name)
-
+    bckgrd_percentile = pcheck(params, 'LEAK_BCKGRD_PERCENTILE', func=func_name,
+                               override=bckgrd_percentile)
+    norm_percentile = pcheck(params, 'LEAK_NORM_PERCENTILE', func=func_name,
+                             override=norm_percentile)
+    w_smooth = pcheck(params, 'LEAKREF_WSMOOTH', func=func_name,
+                      override=wsmooth)
+    ker_size = pcheck(params, 'LEAKREF_KERSIZE', func=func_name,
+                      override=kersize)
     # define a gaussian kernel that goes from +/- ker_size * w_smooth
     xkernel = np.arange(-ker_size * w_smooth, ker_size * w_smooth)
     ykernel = np.exp(-0.5 * (xkernel / w_smooth) ** 2)
@@ -301,8 +325,11 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     return eprops
 
 
-def correct_ext_dark_fp(params, sciimage, refimage, header, fiber,
-                        database=None, **kwargs):
+def correct_ext_dark_fp(params: ParamDict, sciimage: np.ndarray,
+                        refimage: np.ndarray, header: drs_file.Header,
+                        fiber: str,
+                        database: Optional[CalibrationDatabase] = None,
+                        **kwargs):
     # set the function name
     func_name = __NAME__ + '.correct_ext_dark_fp()'
     # get properties from parameters

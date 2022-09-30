@@ -1097,7 +1097,7 @@ LEAK_1D_EXTRACT_FILES.value = 'S1D_W_FILE, S1D_V_FILE'
 LEAK_BCKGRD_PERCENTILE = LEAK_BCKGRD_PERCENTILE.copy(__NAME__)
 LEAK_BCKGRD_PERCENTILE.value = 5
 
-# define the normalisation perentile for the leak and leak reference
+# define the normalisation percentile for the leak and leak reference
 LEAK_NORM_PERCENTILE = LEAK_NORM_PERCENTILE.copy(__NAME__)
 LEAK_NORM_PERCENTILE.value = 90
 
@@ -1105,7 +1105,7 @@ LEAK_NORM_PERCENTILE.value = 90
 LEAKREF_WSMOOTH = LEAKREF_WSMOOTH.copy(__NAME__)
 LEAKREF_WSMOOTH.value = 15
 
-# define the kernal size for leak reference
+# define the kernel size for leak reference
 LEAKREF_KERSIZE = LEAKREF_KERSIZE.copy(__NAME__)
 LEAKREF_KERSIZE.value = 3
 
