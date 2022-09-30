@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+0.7.253 (2022-09-29)
+--------------------
+- [APERO] add apero_stats memory table to report directory. [Neil Cook]
+- [APERO] correct documentation schematics not appearing. [Neil Cook]
+- [APERO] correct documentation schematics not appearing. [Neil Cook]
+- [APERO] update versionn/date/docs/changelog. [Neil Cook]
+
+
 0.7.252 (2022-09-27)
 --------------------
 - [APERO] continue update doc string + pep8. [Neil Cook]
