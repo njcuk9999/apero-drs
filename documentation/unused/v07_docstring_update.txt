@@ -136,7 +136,7 @@ apero:
 			- background.py
 			- badpix.py
 			- dark.py
-			# - flat_blaze.py
+			- flat_blaze.py
 			# - gen_calib.py
 			# - leak.py
 			# - localisation.py
