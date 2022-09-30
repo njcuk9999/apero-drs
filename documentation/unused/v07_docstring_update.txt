@@ -133,9 +133,9 @@ apero:
 			- demo_spirou.py
 	science:
 		calib:
-			# - background.py
-			# - badpix.py
-			# - dark.py
+			- background.py
+			- badpix.py
+			- dark.py
 			# - flat_blaze.py
 			# - gen_calib.py
 			# - leak.py

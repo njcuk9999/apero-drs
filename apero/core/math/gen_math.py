@@ -181,6 +181,24 @@ def median_absolute_deviation(sigma: float = 1.0) -> float:
     return sigma * np.sqrt(2) * erfinv(0.5)
 
 
+def largest_divisor_below(n1: int, n2: int) -> float:
+    """
+    finds the largest divisor of a large number below a certain limit
+    for 4088 and 9, we would get 8 (511*8 = 4088)
+    Useful to downsize images.
+
+    :param n1: int, first number (larger of the two numbers)
+    :param n2: int, second number (smaller of the two numbers)
+
+    :return: largest divisor of the two numbers
+    """
+    for i in range(n2, 0, -1):
+        if n1 % i == 0:
+            return i
+    # if there is a problem return NaN
+    return np.nan
+
+
 def estimate_sigma(tmp: np.ndarray, sigma=1.0) -> float:
     """
     Return a robust estimate of N sigma away from the mean

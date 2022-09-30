@@ -135,7 +135,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # match files by date and median to produce reference dark
     # ----------------------------------------------------------------------
-    cargs = [params, recipe, dark_table]
+    cargs = [params, dark_table]
     ref_dark, reffile = dark.construct_ref_dark(*cargs)
     # Have to update obs_dir while locked for all param dicts (do not copy)
     #     Note: do not use 'uparamdicts' unless you know what you are doing.

@@ -561,11 +561,11 @@ BADPIX_DILATE_SIZE.value = 9
 BKGR_BOXSIZE = BKGR_BOXSIZE.copy(__NAME__)
 BKGR_BOXSIZE.value = 128
 
-#    Do background percentile to compute minimum value (%)
+#    the background percentile to compute minimum value (%)
 BKGR_PERCENTAGE = BKGR_PERCENTAGE.copy(__NAME__)
 BKGR_PERCENTAGE.value = 5.0
 
-#    Size in pixels of the convolve tophat for the background mask
+#    Size in pixels of to convolve tophat for the background mask
 BKGR_MASK_CONVOLVE_SIZE = BKGR_MASK_CONVOLVE_SIZE.copy(__NAME__)
 BKGR_MASK_CONVOLVE_SIZE.value = 7
 
@@ -578,11 +578,11 @@ BKGR_N_BAD_NEIGHBOURS.value = 3
 BKGR_NO_SUBTRACTION = BKGR_NO_SUBTRACTION.copy(__NAME__)
 BKGR_NO_SUBTRACTION.value = False
 
-#    Kernel amplitude determined from drs_local_scatter.py
+#    background kernel amplitude
 BKGR_KER_AMP = BKGR_KER_AMP.copy(__NAME__)
 BKGR_KER_AMP.value = 47
 
-#    Background kernel width in in x and y [pixels]
+#    Background kernel width in x and y [pixels]
 BKGR_KER_WX = BKGR_KER_WX.copy(__NAME__)
 BKGR_KER_WX.value = 1
 BKGR_KER_WY = BKGR_KER_WY.copy(__NAME__)

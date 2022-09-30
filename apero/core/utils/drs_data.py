@@ -257,15 +257,8 @@ def load_full_flat_badpix(params: ParamDict,
         func_name = display_func('load_full_flat_badpix', __NAME__)
     else:
         func_name = func
-    # set parameters from params (or override)
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
-                      override=assetsdir)
-    relfolder = pcheck(params, 'DRS_BADPIX_DATA', func=func_name,
-                       override=badpix_dir)
-    filename = pcheck(params, 'BADPIX_FULL_FLAT', func=func_name,
-                      override=filename)
     # deal with return_filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
+    absfilename = os.path.join(assetsdir, badpix_dir, filename)
     if return_filename:
         return absfilename
     # return image
