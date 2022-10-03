@@ -1614,8 +1614,9 @@ def _display_python_modules() -> str:
     """
 
     # load user requirements
-    packages, versions = np.loadtxt(base.RECOMM_USER, dtype=str,
-                                    delimiter='==', unpack=True)
+    # TODO: can this go back to np.loadtxt once numpy 1.23 bug fixed?
+    packages, versions = np.genfromtxt(base.RECOMM_USER, dtype=str,
+                                       delimiter='==', unpack=True)
     # storage
     storage = textentry('40-000-00017')
     # loop around packages and get versions
