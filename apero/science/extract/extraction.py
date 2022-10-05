@@ -346,8 +346,8 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
                 # get the amplitude (ratio between flux and flat)
                 amp = mp.nanmedian(sx / fx)
                 # residuals
-                res = sx - fx / amp
-                # work out number of sigma away from the the median res
+                res = sx - fx * amp
+                # work out number of sigma away from the median res
                 ares = np.abs(res)
                 nsig = ares / mp.nanmedian(ares)
                 # work out weights (0 or 1 based on number of sigma)
@@ -355,18 +355,21 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
                 # add to the number of rejected cosmics
                 cpt += np.sum(~weights)
                 # weights to floats
-                weights = np.array(weights).astype(float)
+                weights_float = np.array(weights).astype(float)
                 # some matrix manipulation
-                wsxfx = weights * sx * fx
-                wfxfx = weights * fx ** 2
+                wsxfx = weights_float * sx * fx
+                wfxfx = weights_float * fx ** 2
                 sum_wfxfx = mp.nansum(wfxfx)
                 # set the value of this pixel to the weighted sum
                 spelong[:, ic] = wsxfx
+                # nan the cosmic rays (to keep it consistent with spe)
+                spelong[:, ic][~weights] = np.nan
+                # collapse spectrum
                 spe[ic] = mp.nansum(wsxfx)
                 # normalise spe
                 spe[ic] = spe[ic] / sum_wfxfx
                 spelong[:, ic] = spelong[:, ic] / sum_wfxfx
-                coslong[:, ic] = weights
+                coslong[:, ic] = weights_float
 
     return spe, spelong, cpt, coslong
 
