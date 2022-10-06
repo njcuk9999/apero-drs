@@ -40,7 +40,7 @@ DatabaseM = drs_database.DatabaseManager
 BaseDatabaseM = drs_db.BaseDatabaseManager
 # Get ParamDict
 ParamDict = constants.ParamDict
-PseudoConst = pseudo_const.PseudoConstants
+PseudoConst = constants.PseudoConstants
 # Get Logging function
 WLOG = drs_log.wlog
 # get textentry

@@ -1453,7 +1453,7 @@ def load_config(instrument: Union[str, None] = None,
 
 
 def load_pconfig(instrument: Union[str, None] = None
-                 ) -> pseudo_const.PseudoConstants:
+                 ) -> pseudo_const.DefaultPseudoConstants:
     """
     Load an instrument pseudo constants
 
@@ -1481,6 +1481,10 @@ def load_pconfig(instrument: Union[str, None] = None
     # check that we have class and import it
     if hasattr(mod, PSEUDO_CONST_CLASS):
         psconst = getattr(mod, PSEUDO_CONST_CLASS)
+    # deal with case where we want to use the default pseudo class
+    #     (non-instrument dependent)
+    elif hasattr(mod, DEFAULT_PSEUDO_CONST_CLASS):
+        psconst = getattr(mod, DEFAULT_PSEUDO_CONST_CLASS)
     # else raise error
     else:
         eargs = [modules[0], PSEUDO_CONST_CLASS, func_name]

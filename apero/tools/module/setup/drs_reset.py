@@ -39,7 +39,7 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
-PseudoConst = pseudo_const.PseudoConstants
+PseudoConst = constants.PseudoConstants
 DatabaseM = drs_database.DatabaseManager
 # Get Logging function
 WLOG = drs_log.wlog

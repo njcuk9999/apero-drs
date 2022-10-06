@@ -50,9 +50,9 @@ NULL_TEXT = ['', 'None', 'Null']
 # Define Constants class (pseudo constants)
 # =============================================================================
 # noinspection PyMethodMayBeStatic,PyPep8Naming
-class PseudoConstants:
+class DefaultPseudoConstants:
     # set class name
-    class_name = 'PsuedoConstants'
+    class_name = 'DefaultPseudoConstants'
 
     def __init__(self, instrument: Union[str, None] = None):
         """

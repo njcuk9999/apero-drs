@@ -67,6 +67,7 @@ SCRIPTS = ['default_config.py', 'default_constants.py', 'default_keywords.py']
 USCRIPTS = ['user_config.ini', 'user_constants.ini', 'user_keywords.ini']
 PSEUDO_CONST_FILE = 'pseudo_const.py'
 PSEUDO_CONST_CLASS = 'PseudoConstants'
+DEFAULT_PSEUDO_CONST_CLASS = 'DefaultPseudoConstants'
 # absolute paths (from relative paths to here)
 RECOMM_USER = __PATH__.parent.joinpath('requirements_current.txt')
 RECOMM_DEV = __PATH__.parent.joinpath('requirements_developer.txt')
