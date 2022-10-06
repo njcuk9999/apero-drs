@@ -2,6 +2,21 @@ Changelog
 =========
 
 
+0.7.254 (2022-09-22)
+--------------------
+- [APERO] test fix for pickling PseudoConstants. [Neil Cook]
+- [APERO] Apply fixes for pickling Run Class. [Neil Cook]
+- [APERO] apero.science.extract.extraction.py - fix bug is cosmic check
+  res = sx - fx/amp --> res = sx - fx*amp. [Neil Cook]
+- [APERO] apero.core.utils.drs_startup.py - use np.genfromtxt instead of
+  np.loadtxt as there is a bug in numpy 1.23. [Neil Cook]
+- [APERO] doc + pep8 [gen_calib.py] [Neil Cook]
+- [APERO] doc + pep8 [flat_blaze.py] [Neil Cook]
+- [APERO] doc + pep8 [background.py, badpix.py, dark.py] [Neil Cook]
+- [APERO] update docs. [Neil Cook]
+- [APERO] update date/version/changelog/docs. [Neil Cook]
+
+
 0.7.253 (2022-09-29)
 --------------------
 - [APERO] add apero_stats memory table to report directory. [Neil Cook]

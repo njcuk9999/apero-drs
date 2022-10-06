@@ -47,19 +47,19 @@ No optional arguments
 .. code-block:: 
 
      --kill // Use this when database is stuck and you have no other opens (mysql only)
-     --calibdb // DBMGR_CALIBDB_HELP
-     --telludb // DBMGR_TELLUDB_HELP
-     --logdb // DBMGR_LOGDB_HELP
-     --findexdb // DBMGR_FINDEXDB_HELP
-     --astromdb // DBMGR_ASTROMDB_HELP
-     --rejectdb // DBMGR_REJECTDB_HELP
+     --calibdb // Update calibration database
+     --telludb // Update telluric database
+     --logdb // Update log database
+     --findexdb // Update file index database
+     --astromdb // Update astrometric database
+     --rejectdb // Update rejection database
      --update // Use this to update the database based on files on disk in the correct directories (Currently updates calib/tellu/log and index databases)
      --csv[STRING] // Path to csv file. For --importdb this is the csv file you wish to add. For --exportdb this is the csv file that will be saved.
      --exportdb[calib,tellu,findex,log,astrom,lang,reject] // Export a database to a csv file
      --importdb[calib,tellu,findex,log,astrom,lang,reject] // Import a csv file into a database
      --join[replace,append] // How to add the csv file to database: append adds all lines to the end of current database, replace removes all previous lines from database. Default is replace.
-     --delete // DBMGR_DELETE_HELP
-     --reset // DBMGR_RESET_HELP
+     --delete // Load up the delete table GUI (MySQL only)
+     --reset // Reset current databases
 
 
 ********************************************************************************
@@ -69,7 +69,7 @@ No optional arguments
 
 .. code-block:: 
 
-     --xhelp[STRING] // EXTENDED_HELP
+     --xhelp[STRING] // Extended help menu (with all advanced arguments)
      --debug[STRING] // Activates debug mode (Advanced mode [INTEGER] value must be an integer greater than 0, setting the debug level)
      --listing[STRING] // Lists the night name directories in the input directory if used without a 'directory' argument or lists the files in the given 'directory' (if defined). Only lists up to 15 files/directories
      --listingall[STRING] // Lists ALL the night name directories in the input directory if used without a 'directory' argument or lists the files in the given 'directory' (if defined)
@@ -81,9 +81,9 @@ No optional arguments
      --shortname[STRING] // [STRING] Set a shortname for a recipe to distinguish it from other runs - this is mainly for use with apero processing but will appear in the log database
      --idebug[STRING] // [BOOLEAN] If True always returns to ipython (or python) at end (via ipdb or pdb)
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
-     --crunfile[STRING] // SET_RUNFILE_HELP
+     --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // SET_NOSAVE_HELP
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
