@@ -36,8 +36,6 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 ParamDict = constants.ParamDict
 # Get the Database Columns class
 DatabaseColumns = drs_db.DatabaseColumns
-# get default Constant class
-DefaultConstants = pseudo_const.PseudoConstants
 # get error
 DrsCodedException = drs_exceptions.DrsCodedException
 # get display func
@@ -49,7 +47,7 @@ NULL_TEXT = ['', 'None', 'Null', 'nan', 'inf']
 # =============================================================================
 # Define Constants class (pseudo constants)
 # =============================================================================
-class PseudoConstants(pseudo_const.PseudoConstants):
+class PseudoConstants(pseudo_const.DefaultPseudoConstants):
     # set class name
     class_name = 'PsuedoConstants'
 
@@ -62,7 +60,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # set function name
         # _ = display_func('__init__', __NAME__, self.class_name)
         # set instrument name
-        self.instrument = instrument
+        super().__init__(instrument)
         # storage of things we don't want to compute twice without need
         self.exclude = ['header_cols', 'index_cols', 'calibration_cols',
                         'telluric_cols', 'logdb_cols', 'objdb_cols',

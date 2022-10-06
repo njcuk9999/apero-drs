@@ -91,9 +91,9 @@ PLT_MOD = None
 # Define classes
 # =============================================================================
 class Run:
-    def __init__(self, params, indexdb: FileIndexDatabase, runstring,
+    def __init__(self, params, indexdb: FileIndexDatabase, runstring: str,
                  mod: Union[base_class.ImportModule, None] = None,
-                 priority=0, inrecipe=None):
+                 priority: int = 0, inrecipe=None):
         self.params = params
         self.indexdb = indexdb
         self.pconst = constants.pload(params['INSTRUMENT'])
@@ -122,6 +122,8 @@ class Run:
         self.obs_dir = None
         # update parameters given runstring
         self.update()
+        # pickle recipe name (only used for pickling)
+        self.pickle_recipe_name = None
 
     def filename_args(self):
         """
@@ -394,6 +396,54 @@ class Run:
 
     def __repr__(self):
         return 'Run[{0}]'.format(self.runstring)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # add a new constant for getting recipe and recipemod
+        if self.recipe is not None:
+            self.pickle_recipe_name = self.recipe.name
+        # what to exclude from state (may not be pickle-able)
+        exclude = ['pconst', 'indexdb', 'recipe', 'recipemod']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__.items():
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # reload excluded attributes
+        self.pconst = constants.pload(self.params['INSTRUMENT'])
+        self.indexdb = FileIndexDatabase(self.params)
+        # need to re-find and set recipe and recipe modd
+        self.reload_recipe()
+
+    def reload_recipe(self):
+        # deal with no pickable recipe name
+        if self.pickle_recipe_name is None:
+            return
+        # load the recipe mod
+        rmod = self.pconst.RECIPEMOD()
+        # set up the arguments to find the recipe
+        fkwargs = dict(name=self.pickle_recipe_name,
+                       instrument=self.params['INSTRUMENT'],
+                       mod=rmod)
+        # set recipe
+        self.recipe, _ = drs_startup.find_recipe(**fkwargs)
+        # recipe mod in this sense is the recipe.main
+        self.recipemod = self.recipe.main
 
 
 # =============================================================================
@@ -1776,7 +1826,7 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
 # Define processing functions
 # =============================================================================
 def _linear_process(params, runlist, number=0, cores=1, event=None,
-                    group=None, return_dict=None, ):
+                    group=None, return_dict=None):
     # deal with empty return_dict
     if return_dict is None:
         return_dict = dict()

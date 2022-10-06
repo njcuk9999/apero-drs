@@ -39,7 +39,7 @@ WLOG = drs_log.wlog
 # get parameter dictionary
 ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
-PseudoConstants = pseudo_const.PseudoConstants
+PseudoConstants = constants.PseudoConstants
 # get display func
 display_func = drs_log.display_func
 # Get the text types

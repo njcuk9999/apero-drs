@@ -51,7 +51,7 @@ textentry = lang.textentry
 ObjectDatabase = drs_database.AstrometricDatabase
 # get param dict
 ParamDict = constants.ParamDict
-PseudoConst = pseudo_const.PseudoConstants
+PseudoConst = constants.PseudoConstants
 
 # cache for google sheet
 GOOGLE_TABLES = dict()
