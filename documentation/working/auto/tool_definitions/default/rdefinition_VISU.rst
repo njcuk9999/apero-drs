@@ -46,7 +46,7 @@ No optional arguments
 
 .. code-block:: 
 
-     --mode[e2ds] // VISU_MODE_HELP
+     --mode[e2ds] // [STRING] Which type of graph to plot
 
 
 ********************************************************************************
@@ -56,7 +56,7 @@ No optional arguments
 
 .. code-block:: 
 
-     --xhelp[STRING] // EXTENDED_HELP
+     --xhelp[STRING] // Extended help menu (with all advanced arguments)
      --debug[STRING] // Activates debug mode (Advanced mode [INTEGER] value must be an integer greater than 0, setting the debug level)
      --listing[STRING] // Lists the night name directories in the input directory if used without a 'directory' argument or lists the files in the given 'directory' (if defined). Only lists up to 15 files/directories
      --listingall[STRING] // Lists ALL the night name directories in the input directory if used without a 'directory' argument or lists the files in the given 'directory' (if defined)
@@ -68,9 +68,9 @@ No optional arguments
      --shortname[STRING] // [STRING] Set a shortname for a recipe to distinguish it from other runs - this is mainly for use with apero processing but will appear in the log database
      --idebug[STRING] // [BOOLEAN] If True always returns to ipython (or python) at end (via ipdb or pdb)
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
-     --crunfile[STRING] // SET_RUNFILE_HELP
+     --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // SET_NOSAVE_HELP
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

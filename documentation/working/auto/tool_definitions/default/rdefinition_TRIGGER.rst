@@ -46,13 +46,13 @@ No optional arguments
 
 .. code-block:: 
 
-     --indir[STRING] // TRIGGER_INDIR_HELP
-     --reset // TRIGGER_RESET_HELP
-     --ignore[STRING] // TRIGGER_IGNORE_HELP
-     --wait[1>INT>3600] // TRIGGER_WAIT_HELP
-     --calib[STRING] // TRIGGER_CALIB_HELP
-     --sci[STRING] // TRIGGER_SCI_HELP
-     --trigger_test // TRIGGER_TEST_HELP
+     --indir[STRING] // [STRING] The input directory to scan for new data. (This is not the apero defined raw directory)
+     --reset // Reset the trigger (default is False and thus we use cached files to speed up trigger). This means after nights are marked done (calib/sci) they will not be reprocessed. Thus --reset to avoid this.
+     --ignore[STRING] // [STRING] Ignore certain obs_dir (observation directories) by default all directories in --indir are reduced. Using ignore will ignore certain directories and not add them to the the sym-linked (DRS_DATA_RAW) directory.
+     --wait[1>INT>3600] // [INTEGER] Number of second to wait between processing runs. Should not be too low (below 10s its too fast) unless testing, or too high (above 3600s)
+     --calib[STRING] // [STRING] The run.ini file to use for calibration trigger run
+     --sci[STRING] // [STRING] The run.ini file to use for science trigger run
+     --trigger_test // Active test mode (does not run recipes)
 
 
 ********************************************************************************
@@ -62,7 +62,7 @@ No optional arguments
 
 .. code-block:: 
 
-     --xhelp[STRING] // EXTENDED_HELP
+     --xhelp[STRING] // Extended help menu (with all advanced arguments)
      --debug[STRING] // Activates debug mode (Advanced mode [INTEGER] value must be an integer greater than 0, setting the debug level)
      --listing[STRING] // Lists the night name directories in the input directory if used without a 'directory' argument or lists the files in the given 'directory' (if defined). Only lists up to 15 files/directories
      --listingall[STRING] // Lists ALL the night name directories in the input directory if used without a 'directory' argument or lists the files in the given 'directory' (if defined)
@@ -74,9 +74,9 @@ No optional arguments
      --shortname[STRING] // [STRING] Set a shortname for a recipe to distinguish it from other runs - this is mainly for use with apero processing but will appear in the log database
      --idebug[STRING] // [BOOLEAN] If True always returns to ipython (or python) at end (via ipdb or pdb)
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
-     --crunfile[STRING] // SET_RUNFILE_HELP
+     --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // SET_NOSAVE_HELP
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
