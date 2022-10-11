@@ -1529,6 +1529,12 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # update the cavity per order by 1 - the median of the res
             cavity_per_order = cavity_per_order * (1 - med_hc_res)
 
+            # TODO: Add to language database
+            msg = (f'\tCavity fit {jt+1}: med hc res = '
+                   f'{med_hc_res * speed_of_light_ms:.3e} m/s '
+                   f'{sigma_hc_res * speed_of_light_ms:.3e} m/s ')
+            WLOG(params, '', msg)
+
         # print msg: Velocity RMS of HC lines relative to catalog: {0:.3f} km/s
         WLOG(params, '', textentry('40-017-00069', args=[sigma_hc_res_kms]))
         # do not continue if RMS of HC lines is bad
