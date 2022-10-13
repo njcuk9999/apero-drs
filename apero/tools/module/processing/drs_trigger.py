@@ -430,8 +430,10 @@ def get_recipes(params: ParamDict, runfile: str,
     # copy params
     iparams = params.copy()
     # deal with run file
-    iparams, runtable = drs_startup.read_runfile(iparams, runfile, rkind='run',
-                                                log_overwrite=True)
+    iparams, runtable = drs_startup.read_runfile(iparams, recipe=None,
+                                                 runfile=runfile,
+                                                 rkind='run',
+                                                 log_overwrite=True)
     # get recipe definitions module (for this instrument)
     recipemod = drs_processing._get_recipe_module(iparams, logmsg=False)
     # get all values (upper case) using map function

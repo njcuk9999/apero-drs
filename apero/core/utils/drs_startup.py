@@ -273,7 +273,7 @@ def setup(name: str = 'None', instrument: str = 'None',
         runfile = recipe.params['INPUTS']['CRUNFILE']
         # deal with run file
         if not drs_text.null_text(runfile):
-            recipe.params, _ = read_runfile(recipe.params, runfile,
+            recipe.params, _ = read_runfile(recipe.params, recipe, runfile,
                                             log_overwrite=False)
     # -------------------------------------------------------------------------
     # display
@@ -931,13 +931,14 @@ def group_name(params: ParamDict, suffix: str = 'group') -> str:
     return groupname
 
 
-def read_runfile(params: ParamDict, runfile: str,
-                 rkind: str = 'start',
+def read_runfile(params: ParamDict, recipe: Union[DrsRecipe, None],
+                 runfile: str, rkind: str = 'start',
                  log_overwrite: bool = False) -> Tuple[ParamDict, OrderedDict]:
     """
     Read a provided run file and update params / return the run file sequence
 
     :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe that called this function
     :param runfile: str, the path to the run file
     :param rkind: str, either 'start' for startup or 'run' for processing mode
     :param log_overwrite: bool, if True prevents messages about overwriting
@@ -972,6 +973,8 @@ def read_runfile(params: ParamDict, runfile: str,
     # table storage
     runtable = OrderedDict()
     keytable = OrderedDict()
+    # keep check if we are overwriting any param keys already set
+    overwrite_keys = []
     # ----------------------------------------------------------------------
     # unlock params
     if params.locked:
@@ -979,6 +982,8 @@ def read_runfile(params: ParamDict, runfile: str,
         params.unlock()
     else:
         relock = False
+    # copy params (for comparison)
+    old_params = params.copy()
     # ----------------------------------------------------------------------
     # sort out keys into id keys and values for params
     for it in range(len(keys)):
@@ -1014,6 +1019,8 @@ def read_runfile(params: ParamDict, runfile: str,
                 value = None
             # log if we are overwriting value
             if key in params:
+                # store these
+                overwrite_keys.append(key)
                 # don't log if log overwrite is set to True
                 if log_overwrite:
                     continue
@@ -1022,9 +1029,21 @@ def read_runfile(params: ParamDict, runfile: str,
                     wargs = [key, params[key], value]
                     wmsg = textentry('10-503-00002', args=wargs)
                     WLOG(params, 'warning', wmsg, sublevel=2)
-            # add to params
-            params[key] = value
-            params.set_source(key, func_name)
+                # get instance
+                instance = params.instances[key]
+                # add to parameters (after forcing data type)
+                try:
+                    params[key] = instance.dtype(value)
+                    params.set_source(key, func_name)
+                except Exception as _:
+                    # TODO: Add to language database
+                    emsg = ('Run File Error: keyword "{0}"={1} invalid '
+                            '(required "{2}")')
+                    eargs = [key, value, instance.dtype]
+                    WLOG(params, 'error', emsg.format(*eargs))
+            else:
+                params[key] = value
+                params.set_source(key, func_name)
     # ----------------------------------------------------------------------
     if rkind == 'run':
         # push default values (in case we don't have values in run file)
@@ -1155,12 +1174,77 @@ def read_runfile(params: ParamDict, runfile: str,
                 # set value
                 params['UPDATE_OBJ_DATABASE'] = _update_objdb
     # -------------------------------------------------------------------------
+    # deal with recipe arguments
+    if recipe is not None:
+        # we only update at the start of the recipe and if we have keys that
+        #   have been overwritten
+        if rkind == 'start' and len(overwrite_keys) > 0:
+            params = _update_inputs_from_runfile(params, recipe, old_params,
+                                                 log_overwrite=log_overwrite)
+
+    # -------------------------------------------------------------------------
     # relock params
     if relock:
         params.lock()
     # -------------------------------------------------------------------------
     # return parameter dictionary and runtable
     return params, runtable
+
+
+def _update_inputs_from_runfile(params: ParamDict, recipe: DrsRecipe,
+                                old_params: ParamDict,
+                                log_overwrite: bool = False) -> ParamDict:
+    """
+    Update optional inputs from runfile
+
+    If runfile contains parameter dictionary updates and we had kwargs
+    we need to update the default reference and thus maybe update the
+    params['INPUTS'][kwargname] variable
+
+    :param params: ParamDict, parameter dictionary of constants (updated)
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param old_params: ParamDict, parameter dictionary of constants (original)
+    :param log_overwrite: bool, if True does not log change
+
+    :return: ParamDict, the update parameter dictionary
+    """
+    # set function name
+    func_name = display_func('_update_inputs_from_runfile', __NAME__)
+    # loop through keyword arguments
+    for kwargname in recipe.kwargs:
+        # get the argument
+        kwarg = recipe.kwargs[kwargname]
+        # if kwargname not in inputs we don't care
+        if kwargname not in params['INPUTS']:
+            continue
+        # if we were using a default from param reference we must
+        #   update if here
+        if kwarg.default_ref is not None:
+            if kwarg.default_ref in params:
+                # get old, current, new values for comparison
+                currentvalue = params['INPUTS'][kwargname]
+                oldvalue = old_params[kwarg.default_ref]
+                newvalue = params[kwarg.default_ref]
+                # if the current value was not set from the old value
+                #   we just skip this step
+                if currentvalue != oldvalue:
+                    continue
+                # if value hasn't changed continue
+                if newvalue == oldvalue:
+                    continue
+                # else we did assign the value from the default ref
+                #   and thus need to re-assign it now
+                else:
+                    params['INPUTS'][kwargname] = newvalue
+                    params['INPUTS'].set_source(kwargname, func_name)
+                    # print that we are updating values
+                    if not log_overwrite:
+                        # TODO: Add to language database
+                        msg = 'Updating INPUTS[{0}] from {1} to {2}'
+                        margs = [kwargname.upper(), oldvalue, newvalue]
+                        WLOG(params, 'warning', msg.format(*margs), sublevel=1)
+    # -------------------------------------------------------------------------
+    return params
 
 
 # =============================================================================
