@@ -953,7 +953,7 @@ def read_runfile(params: ParamDict, recipe: Union[DrsRecipe, None],
     run_dir = params['DRS_DATA_RUN']
     # ----------------------------------------------------------------------
     # check if run file exists
-    if not os.path.exists(runfile):
+    if runfile is not None and not os.path.exists(runfile):
         # construct run file
         runfile = os.path.join(run_dir, runfile)
         # check that it exists
