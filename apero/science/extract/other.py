@@ -133,9 +133,9 @@ def extract_leak_files(params, recipe, extname, darkfpfile, logger,
     func_name = __NAME__ + '.extract_leak_files()'
     # get parameters from params/kwargs
     leak_always_extract = pcheck(params, 'LEAKREF_ALWAYS_EXTRACT',
-                                  'always_extract', kwargs, func_name)
+                                 'always_extract', kwargs, func_name)
     leak_extract_type = pcheck(params, 'LEAKREF_EXTRACT_TYPE', 'extract_type',
-                                kwargs, func_name)
+                               kwargs, func_name)
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
                                            mod=recipe.recipemod)
