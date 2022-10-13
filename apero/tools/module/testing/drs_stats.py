@@ -1294,7 +1294,8 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     columns = ('SHORTNAME, UNIXTIME, RAM_USAGE_START, RAM_USAGE_END, '
                'START_TIME, END_TIME, RECIPE, RECIPE_TYPE, ENDED')
     # get columns from logdbm
-    ltable = logdbm.get_entries(columns, condition=condition)
+    ltable = logdbm.get_entries(columns, condition=condition,
+                                groupby='PID')
     # -------------------------------------------------------------------------
     # print progress
     WLOG(params, '', 'Sorting time axis')
@@ -1327,17 +1328,20 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
         mask = ltable['SHORTNAME'] == shortname
         # have to deal with one entry
         if np.sum(mask) == 1:
+            s_start = np.array([starttime[mask].iloc[0]])
+            s_end = np.array([endtime[mask].iloc[0]])
             smed = time0[mask].iloc[0]
-            smin = smed - starttime[mask].iloc[0]
-            smax = endtime[mask].iloc[0] - smed
         else:
+            s_start = starttime[mask]
+            s_end = endtime[mask]
             smed = np.median(time0[mask])
-            smin = smed - np.min(starttime[mask])
-            smax = np.max(endtime[mask]) - smed
-        shortname_values[shortname] = [smin, smed, smax]
+        smin = smed - np.min(s_start)
+        smax = np.max(s_end) - smed
+        shortname_values[shortname] = [smin, smed, smax, s_start, s_end]
     # -------------------------------------------------------------------------
     # length
     window = len(ltable) // 1000
+    window = 1
     # print progress
     WLOG(params, '', f'Calculating rolling mean of timings (window={window}')
     # mean results
@@ -1381,7 +1385,7 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     tabledict2 = dict(SHORTNAME=[], START_UNIX=[],
                       MED_UNIX=[], END_UNIX=[])
     for shortname in shortname_values:
-        smin, smed, smax = shortname_values[shortname]
+        smin, smed, smax, _, _ = shortname_values[shortname]
         tabledict2['SHORTNAME'].append(shortname)
         tabledict2['START_UNIX'].append(smin)
         tabledict2['MED_UNIX'].append(smed)

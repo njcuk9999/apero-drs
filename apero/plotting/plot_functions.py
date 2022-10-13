@@ -5252,6 +5252,7 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
         return
     # get plt
     plt = plotter.plt
+    mlines = plotter.matplotlib.lines
     # -------------------------------------------------------------------------
     # get values from kwargs
     time0 = kwargs['time0']
@@ -5273,16 +5274,37 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
                            np.max([rmax_start, rmax_end], axis=0),
                            np.min([rmin_start, rmin_end], axis=0),
                            color='r', alpha=0.2)
-    frames[0].plot(time0, np.mean([ram_start, ram_end], axis=0), 'r-')
+
+    y = np.mean([ram_start, ram_end], axis=0)
+    eyl = y - np.min([ram_start, ram_end], axis=0)
+    eyu = np.max([ram_start, ram_end], axis=0) - y
+
+    frames[0].plot(time0, y, color='r',  marker='None')
+    # frames[0].errorbar(time0, y, yerr=[eyl, eyu], color='r',
+    #                    marker='o', ls='None', alpha=0.25, capsize=5)
     # -------------------------------------------------------------------------
     # add error bars for recipes
     colors = ['r', 'g', 'b', 'k', 'orange', 'purple'] * 50
     counter = 0
     for counter, shortname in enumerate(shortnames):
-        smin, smed, smax = shortname_values[shortname]
+        _, _, _, s_start, s_end = shortname_values[shortname]
+        smed = np.median([s_start, s_end], axis=0)
+        smin = smed - s_start
+        smax = s_end - smed
+        counts = counter + np.linspace(0, 1, len(smed) + 2)[1:-1] - 0.5
+        frames[1].errorbar(smed, counts, xerr=[smin, smax],
+                           color=colors[counter], ls='None')
+        frames[1].plot(s_start, counts, marker='+', ms=7,
+                       color=colors[counter], ls='None')
+        frames[1].plot(s_end, counts, marker='x', ms=7,
+                       color=colors[counter], ls='None')
 
-        frames[1].errorbar([smed], [counter], xerr=[[smin], [smax]],
-                           color=colors[counter])
+    # add a fill between to separate coloured bands
+    for counter, shortname in enumerate(shortnames):
+
+        frames[1].fill_between(time0, counter - 0.5, counter + 0.5,
+                               color=colors[counter], alpha=0.25)
+
     # -------------------------------------------------------------------------
     frames[1].set_yticks(range(0, counter + 1))
     frames[1].set_yticklabels(shortnames)
@@ -5294,6 +5316,18 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     frames[0].set(ylabel='Mean RAM usuage [GB]')
     frames[1].set(ylabel='Recipe shortname', xlabel='Time since start [hr]')
     plt.suptitle('Memory usuage as a function of time')
+
+    # set limits
+    frames[1].set(xlim=[0, np.max(time0)],
+                  ylim=[-0.5, len(shortnames)-0.5])
+
+    # custom legend
+    start = mlines.Line2D([], [], color='k', marker='+', ls='None',
+                          label='Start of recipe', ms=7)
+    end = mlines.Line2D([], [], color='k', marker='x', ls='None',
+                        label='End of recipe', ms=7)
+    frames[1].legend(handles=[start, end], loc=0)
+
     # -------------------------------------------------------------------------
     # adjust plot
     plt.subplots_adjust(hspace=0, left=0.05, right=0.99, top=0.95,
