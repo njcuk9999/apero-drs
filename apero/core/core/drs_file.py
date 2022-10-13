@@ -635,7 +635,8 @@ class DrsInputFile:
                  hkeys: Union[Dict[str, str], None] = None,
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = False,
-                 description: Union[str, None] = None):
+                 description: Union[str, None] = None,
+                 inpath: Union[str, None] = None):
         """
         Create a DRS Input File object
 
@@ -705,6 +706,9 @@ class DrsInputFile:
                        [not used in DrsInputFile]
         :param instrument: str, the instrument this file definition is for
         :param description: str, the description of the file (for documentation)
+        :param inpath: str or None, if set is a directory to look for the file
+                       in - this is in exceptional cases and overrides normal
+                       functionality
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -776,6 +780,8 @@ class DrsInputFile:
         self.instrument = instrument
         # allow instance to be associated with a filename
         self.set_filename(filename)
+        # set the inpath (used to force finding an input file only)
+        self.inpath = inpath
         # set a flag that no save is active
         self.nosave = nosave
 
@@ -1036,7 +1042,8 @@ class DrsInputFile:
                 hkeys: Union[Dict[str, str], None] = None,
                 instrument: Optional[str] = None,
                 nosave: Optional[bool] = None,
-                description: Optional[str] = None):
+                description: Optional[str] = None,
+                inpath: Union[str, None] = None):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -1110,6 +1117,9 @@ class DrsInputFile:
         :param nosave: bool, if True this drs file should not be saved to disk
                        even when asking for a write function
         :param description: str, the description of the file (for documentation)
+        :param inpath: str or None, if set is a directory to look for the file
+                       in - this is in exceptional cases and overrides normal
+                       functionality
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -1123,7 +1133,7 @@ class DrsInputFile:
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description)
+                            instrument, nosave, description, inpath)
 
     def check_params(self, func):
         """
@@ -1246,7 +1256,8 @@ class DrsInputFile:
                   hkeys: Union[Dict[str, str], None] = None,
                   instrument: Optional[str] = None,
                   nosave: Optional[bool] = None,
-                  description: Union[str, None] = None):
+                  description: Union[str, None] = None,
+                  inpath: Union[str, None] = None):
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -1322,6 +1333,9 @@ class DrsInputFile:
         :param nosave: bool, if True this drs file should not be saved to disk
                        even when asking for a write function
         :param description: str, the description of the file (for documentation)
+                :param inpath: str or None, if set is a directory to look for the file
+                       in - this is in exceptional cases and overrides normal
+                       functionality
         """
         # set function name
         # _ = display_func('copyother', __NAME__, self.class_name)
@@ -1333,7 +1347,7 @@ class DrsInputFile:
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description)
+                            instrument, nosave, description, inpath)
 
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
@@ -1372,7 +1386,8 @@ class DrsInputFile:
                      hkeys: Union[Dict[str, str], None] = None,
                      instrument: Optional[str] = None,
                      nosave: Optional[bool] = None,
-                     description: Union[str, None] = None):
+                     description: Union[str, None] = None,
+                     inpath: Union[str, None] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -1447,6 +1462,9 @@ class DrsInputFile:
         :param nosave: bool, if True this drs file should not be saved to disk
                        even when asking for a write function
         :param description: str, the description of the file (for documentation)
+        :param inpath: str or None, if set is a directory to look for the file
+               in - this is in exceptional cases and overrides normal
+               functionality
         """
         # set function name
         # _ = display_func('completecopy', __NAME__, self.class_name)
@@ -1458,7 +1476,7 @@ class DrsInputFile:
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description)
+                            instrument, nosave, description, inpath)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -1774,7 +1792,7 @@ class DrsInputFile:
                                  self.class_name)
         # get parameters
         self.check_params(func_name)
-        params = self.params
+        _ = self.params
         # get current path and filename
         currentpath = os.path.dirname(self.filename)
         currentfile = self.basename
@@ -1916,7 +1934,8 @@ class DrsFitsFile(DrsInputFile):
                  hkeys: Union[Dict[str, str], None] = None,
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = False,
-                 description: Union[str, None] = None):
+                 description: Union[str, None] = None,
+                 inpath: Union[str, None] = None):
         """
         Create a DRS Input File object
 
@@ -1981,6 +2000,9 @@ class DrsFitsFile(DrsInputFile):
                       Header key reference -- "KW_HEADERKEY")
         :param instrument: str, the instrument this file definition is for
         :param description: str, the description of the file (for documentation)
+        :param inpath: str or None, if set is a directory to look for the file
+                       in - this is in exceptional cases and overrides normal
+                       functionality
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -1998,7 +2020,7 @@ class DrsFitsFile(DrsInputFile):
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
                               combined_list, infiles, s1d, hkeys, instrument,
-                              nosave, description)
+                              nosave, description, inpath)
         # if ext in kwargs then we have a file extension to check
         self.filetype = filetype
         # set the input extension type
@@ -2185,7 +2207,8 @@ class DrsFitsFile(DrsInputFile):
                 hkeys: Union[Dict[str, str], None] = None,
                 instrument: Optional[str] = None,
                 nosave: Optional[bool] = None,
-                description: Optional[str] = None):
+                description: Optional[str] = None,
+                inpath: Union[str, None] = None):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -2259,6 +2282,9 @@ class DrsFitsFile(DrsInputFile):
         :param nosave: bool, if True this drs file should not be saved to disk
                        even when asking for a write function
         :param description: str, the description of the file (for documentation)
+        :param inpath: str or None, if set is a directory to look for the file
+                       in - this is in exceptional cases and overrides normal
+                       functionality
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -2272,7 +2298,7 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description)
+                            instrument, nosave, description, inpath)
 
     def string_output(self) -> str:
         """
@@ -2343,7 +2369,8 @@ class DrsFitsFile(DrsInputFile):
                   hkeys: Union[Dict[str, str], None] = None,
                   instrument: Optional[str] = None,
                   nosave: Optional[bool] = None,
-                  description: Union[str, None] = None):
+                  description: Union[str, None] = None,
+                  inpath: Union[str, None] = None):
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -2418,6 +2445,9 @@ class DrsFitsFile(DrsInputFile):
         :param nosave: bool, if True this drs file should not be saved to disk
                        even when asking for a write function
         :param description: str, the description of the file (for documentation)
+        :param inpath: str or None, if set is a directory to look for the file
+               in - this is in exceptional cases and overrides normal
+               functionality
         """
         # set function name
         func_name = display_func('copyother', __NAME__,
@@ -2432,7 +2462,7 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys, instrument,
-                            nosave, description)
+                            nosave, description, inpath)
 
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
@@ -2471,7 +2501,8 @@ class DrsFitsFile(DrsInputFile):
                      hkeys: Union[Dict[str, str], None] = None,
                      instrument: Optional[str] = None,
                      nosave: Optional[bool] = None,
-                     description: Union[str, None] = None):
+                     description: Union[str, None] = None,
+                     inpath: Union[str, None] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -2546,6 +2577,9 @@ class DrsFitsFile(DrsInputFile):
         :param nosave: bool, if True this drs file should not be saved to disk
                        even when asking for a write function
         :param description: str, the description of the file (for documentation)
+        :param inpath: str or None, if set is a directory to look for the file
+               in - this is in exceptional cases and overrides normal
+               functionality
         """
         # set function name
         # _ = display_func('completecopy', __NAME__, self.class_name)
@@ -2557,7 +2591,7 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description)
+                            instrument, nosave, description, inpath)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -5062,7 +5096,8 @@ class DrsNpyFile(DrsInputFile):
                  hkeys: Union[Dict[str, str], None] = None,
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = False,
-                 description: Union[str, None] = None):
+                 description: Union[str, None] = None,
+                 inpath: Union[str, None] = None):
         """
         Create a DRS Npy File Input object
 
@@ -5109,6 +5144,9 @@ class DrsNpyFile(DrsInputFile):
         :param s1d: NOT USED FOR NPY FILE CLASS
         :param hkeys: NOT USED FOR NPY FILE CLASS
         :param description: str, the description of the file (for documentation)
+        :param inpath: str or None, if set is a directory to look for the file
+                       in - this is in exceptional cases and overrides normal
+                       functionality
         """
         # set class name
         self.class_name = 'DrsNpyFile'
@@ -5125,7 +5163,7 @@ class DrsNpyFile(DrsInputFile):
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
                               combined_list, s1d, hkeys, instrument,
-                              nosave, description)
+                              nosave, description, inpath)
         # these keys are not set in DrsInputFile
         self.inext = inext
         # get tag
@@ -5382,7 +5420,8 @@ class DrsNpyFile(DrsInputFile):
                 hkeys: Union[Dict[str, str], None] = None,
                 instrument: Optional[str] = None,
                 nosave: Optional[bool] = None,
-                description: Optional[str] = None):
+                description: Optional[str] = None,
+                inpath: Union[str, None] = None):
         """
         Create a new copy of DRS Npy File object - unset parameters come
         from current instance of Drs Input File
@@ -5434,6 +5473,9 @@ class DrsNpyFile(DrsInputFile):
         :param nosave: bool, if True this drs file should not be saved to disk
                even when asking for a write function
         :param description: str, the description of the file (for documentation)
+        :param inpath: str or None, if set is a directory to look for the file
+                       in - this is in exceptional cases and overrides normal
+                       functionality
         """
         # set function name
         # _ = display_func('newcopy', __NAME__, self.class_name)
@@ -5484,7 +5526,8 @@ class DrsNpyFile(DrsInputFile):
                      hkeys: Union[Dict[str, str], None] = None,
                      instrument: Optional[str] = None,
                      nosave: Optional[bool] = None,
-                     description: Optional[str] = None):
+                     description: Optional[str] = None,
+                     inpath: Union[str, None] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -5538,6 +5581,9 @@ class DrsNpyFile(DrsInputFile):
         :param nosave: bool, if True this drs file should not be saved to disk
                even when asking for a write function
         :param description: str, the description of the file (for documentation)
+        :param inpath: str or None, if set is a directory to look for the file
+                       in - this is in exceptional cases and overrides normal
+                       functionality
         """
         # set function name
         # _ = display_func('completecopy', __NAME__, self.class_name)
@@ -5549,7 +5595,7 @@ class DrsNpyFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description)
+                            instrument, nosave, description, inpath)
 
     # -------------------------------------------------------------------------
     # database methods
@@ -6139,7 +6185,8 @@ class DrsOutFile(DrsInputFile):
                  inext=None, required: bool = True,
                  exclude_keys: EXCLUDE_KEYS_TYPE = None,
                  instrument: Optional[str] = None,
-                 description: Union[str, None] = None):
+                 description: Union[str, None] = None,
+                 inpath: Union[str, None] = None):
         """
         Drs class for post-processed output files
 
@@ -6154,7 +6201,9 @@ class DrsOutFile(DrsInputFile):
         :param instrument: str, the instrument this file definition is
                            associated with
         :param description: str, the description of the file (for documentation)
-
+        :param inpath: str or None, if set is a directory to look for the file
+                       in - this is in exceptional cases and overrides normal
+                       functionality
         """
         # set function name
         # _ = display_func('__init__', __NAME__, self.class_name)
@@ -6162,7 +6211,7 @@ class DrsOutFile(DrsInputFile):
         self.name = name
         # get super init
         DrsInputFile.__init__(self, name, filetype, suffix, outclass=outclass,
-                              inext=inext, instrument=instrument)
+                              inext=inext, instrument=instrument, inpath=inpath)
         # store extensions
         self.extensions = dict()
         self.header_add = dict()
@@ -8443,7 +8492,8 @@ def _copydrsfile(drsfileclass,
                  hkeys: Union[Dict[str, str], None] = None,
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = None,
-                 description: Union[str, None] = None):
+                 description: Union[str, None] = None,
+                 inpath: Union[str, None] = None):
     """
     Global copier of file instance
 
@@ -8522,6 +8572,9 @@ def _copydrsfile(drsfileclass,
     :param instrument: str, the instrument this file definition is associated
                        with
     :param description: str, the description of the file (for documentation)
+    :param inpath: str or None, if set is a directory to look for the file
+                   in - this is in exceptional cases and overrides normal
+                   functionality
 
     - Parent class for Drs Fits File object (DrsFitsFile)
     """
@@ -8673,6 +8726,9 @@ def _copydrsfile(drsfileclass,
     # set description
     if description is None:
         description = deepcopy(instance2.description)
+    # set in path
+    if inpath is None:
+        inpath = deepcopy(instance2.inpath)
     # return new instance
     return drsfileclass(name, filetype, suffix, remove_insuffix, prefix,
                         fibers, fiber, params, filename, intype, path,
@@ -8681,7 +8737,7 @@ def _copydrsfile(drsfileclass,
                         dbkey, rkeys, numfiles, shape, hdict,
                         output_dict, datatype, dtype, is_combined,
                         combined_list, infiles, s1d, new_hkeys, instrument,
-                        nosave, description)
+                        nosave, description, inpath)
 
 # =============================================================================
 # End of code

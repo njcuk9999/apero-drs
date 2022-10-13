@@ -3400,6 +3400,11 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
     # get the argument that we are checking the file of
     arg = _get_arg(rargs, rkwargs, argname)
     drsfiles = arg.files
+
+    # need to check inpath in drsfiles - this changes the strategy
+    for drsfile in drsfiles:
+        if drsfile.inpath is not None:
+            return _inpath_file(params, argname, filename, drsfile)
     # get the drs logic
     drs_logic = arg.filelogic
     # check whether we are updating the index
@@ -3716,6 +3721,37 @@ def _check_file_logic(params: ParamDict, argname: str, logic: str,
                 # raise error if not
                 eargs = [argname, filetype.name, types[-1].name]
                 WLOG(params, 'error', textentry('09-001-00008', args=eargs))
+
+
+def _inpath_file(params: ParamDict, argname: str, filename: str,
+                 drsfile: DrsInputFile) -> Tuple[List[str], List[DrsInputFile]]:
+    """
+    Special case of finding a file where path is defined and forced
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param argname: str, the argument name (used for error reporting)
+    :param filename: str, the filename (absolute or base) for the mask
+    :param drsfile: DrsInputFile, the File Definition class we are checking
+
+    :return: tuple, 1. one element list: The absolute path of the file,
+                    2. one element list: the updated DrsInputFile
+    """
+    # construct absolute filename
+    if not os.path.exists(filename):
+        abspath = os.path.join(drsfile.inpath, filename)
+    else:
+        abspath = filename
+    # only if absolute path exists do we do this
+    if os.path.exists(abspath):
+        # create an instance of this drs_file with the filename set
+        file_in = drsfile.newcopy(filename=filename, params=params)
+        # return the absolute path and the drs input file with filename updated
+        return [abspath], [file_in]
+    # if we have reached this point we cannot file filename
+    eargs = [argname, filename, abspath]
+    WLOG(params, 'error', textentry('09-001-00005', args=eargs))
+    # return placeholders (should not get to here)
+    return [abspath], [drsfile]
 
 
 # =============================================================================

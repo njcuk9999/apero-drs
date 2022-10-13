@@ -98,7 +98,8 @@ def __main__(recipe, params):
     # Deal with run file
     # -------------------------------------------------------------------------
     # deal with run file
-    params, runtable = drs_startup.read_runfile(params, runfile, rkind='run')
+    params, runtable = drs_startup.read_runfile(params, recipe, runfile,
+                                                rkind='run')
     # -------------------------------------------------------------------------
     # find all files via index database (required for both checks)
     # -------------------------------------------------------------------------
