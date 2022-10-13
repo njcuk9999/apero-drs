@@ -74,6 +74,8 @@ def extract_thermal_files(params, recipe, extname, thermalfile,
         force_ref_wave = True
     elif dprtype == 'DARK_DARK_TEL':
         force_ref_wave = False
+    else:
+        force_ref_wave = False
     # get output e2ds filetype
     thfileinst = recipe.outputs['THERMAL_E2DS_FILE']
     # get outputs
@@ -82,7 +84,6 @@ def extract_thermal_files(params, recipe, extname, thermalfile,
                                     therm_extract_type, kind='thermal',
                                     func_name=func_name, logger=logger,
                                     force_ref_wave=force_ref_wave)
-
 
     # TODO: Add sky dark here
     if dprtype == 'DARK_DARK_INT':
