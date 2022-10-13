@@ -401,7 +401,7 @@ class Database:
             condition: Optional[str] = None, sort_by: Optional[str] = None,
             sort_descending: bool = True, max_rows: Optional[int] = None,
             return_array: bool = False, return_table: bool = False,
-            return_pandas: bool = False
+            return_pandas: bool = False, groupby: Optional[str] = None
             ) -> Union[tuple, pd.DataFrame, np.ndarray, Table]:
         """
         Retrieves data from the database with a variety of options.
@@ -435,6 +435,7 @@ class Database:
                              table - takes slightly longer than return_array
         :param return_pandas: Whether to transform the results into a pandas
                               table - takes slightly longer than return_array
+        :param groupby: str or None, if set sets the group by sql criteria
 
         :returns:
             The requested data (if any) filtered, sorted, and truncated
@@ -460,6 +461,7 @@ class Database:
         table = self._infer_table_(table)
         # construct basic command SELECT {COLUMNS} FROM {TABLE}
         command = 'SELECT {} FROM {}'.format(columns, table)
+        # ---------------------------------------------------------------------
         # add WHERE statement if condition is set
         if condition is not None:
             # make sure condition is a string
@@ -472,7 +474,13 @@ class Database:
                 raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                           exceptionname='DatabaseError',
                                           exception=DatabaseError)
+
             command += " WHERE {} ".format(condition)
+        # ---------------------------------------------------------------------
+        # add the group by column
+        if groupby is not None:
+            command += " GROUP BY {}".format(groupby)
+        # ---------------------------------------------------------------------
         # add ORDER BY if sort_by is set
         if sort_by is not None:
             command += " ORDER BY {} ".format(sort_by)
@@ -481,6 +489,7 @@ class Database:
                 command += "DESC"
             else:
                 command += "ASC"
+        # ---------------------------------------------------------------------
         # if max rows is set use it to set the limit
         if max_rows is not None:
             # make sure max_rows is an integer
@@ -495,6 +504,7 @@ class Database:
                                           exception=DatabaseError)
             # add LIMIT command
             command += " LIMIT {}".format(max_rows)
+        # ---------------------------------------------------------------------
         # if a pandas table is requested use the _to_pandas method to
         #  execute the command
         if return_pandas:

@@ -2566,7 +2566,9 @@ class LogDatabase(DatabaseManager):
                     swap_total: Union[float, None] = None,
                     cpu_usage_start: Union[float, None] = None,
                     cpu_usage_end: Union[float, None] = None,
-                    cpu_num: Union[int, None] = None):
+                    cpu_num: Union[int, None] = None,
+                    log_start: Union[str, None] = None,
+                    log_end: Union[str, None] = None):
         """
         Add a log entry to database
 
@@ -2628,6 +2630,8 @@ class LogDatabase(DatabaseManager):
         :param cpu_usage_start: float, CPU usage (percentage) at start of recipe
         :param cpu_usage_end: float, CPU usage (percentrage) at end of recipe
         :param cpu_num: int, number of CPUs at start
+        :param log_start: str, the human time log sub-level started
+        :param log_end: str, the human time log sub-level ended
 
         :return: None - updates database
         """
@@ -2643,7 +2647,7 @@ class LogDatabase(DatabaseManager):
                 clean_error, ended, flagnum, flagstr, used,
                 ram_usage_start, ram_usage_end, ram_total, swap_usage_start,
                 swap_usage_end, swap_total, cpu_usage_start, cpu_usage_end,
-                cpu_num]
+                cpu_num, log_start, log_end]
         # get column names and column datatypes
         ldb_cols = self.pconst.LOG_DB_COLUMNS()
         coltypes = list(ldb_cols.dtypes)
@@ -2671,6 +2675,7 @@ class LogDatabase(DatabaseManager):
                     exclude_obs_dirs: Union[List[str], None] = None,
                     nentries: Union[int, None] = None,
                     condition: Union[str, None] = None,
+                    groupby: Union[str, None] = None,
                     ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
         """
         Get an entry from the index database (can set columns to return, or
@@ -2684,6 +2689,7 @@ class LogDatabase(DatabaseManager):
         :param nentries: int or None, if set limits the number of entries to get
                          back - sorted newest to oldest
         :param condition: str or None, if set the SQL query to add
+        :param groupby: str or None, if set the SQL group by column
 
         :return: the entries of columns, if nentries = 1 returns either that
                  entry (as a tuple) or None, if len(columns) = 1, returns
@@ -2723,13 +2729,17 @@ class LogDatabase(DatabaseManager):
                 subcondition = 'OBS_DIR="{0}"'.format(obs_dir)
                 subconditions.append(subcondition)
             # add to conditions
-            condition += ' AND ({0})'.format(' OR '.join(subconditions))
+            sql['condition'] += ' AND ({0})'.format(' OR '.join(subconditions))
         # ------------------------------------------------------------------
         # deal with blacklist directory set
         if exclude_obs_dirs is not None:
             for obs_dir in exclude_obs_dirs:
                 # add to condition
-                condition += ' AND (OBS_DIR!="{0}")'.format(obs_dir)
+                sql['condition'] += ' AND (OBS_DIR!="{0}")'.format(obs_dir)
+        # ------------------------------------------------------------------
+        # add a group by argument
+        if groupby is not None:
+            sql['groupby'] = groupby
         # ------------------------------------------------------------------
         # add the number of entries to get
         if isinstance(nentries, int):

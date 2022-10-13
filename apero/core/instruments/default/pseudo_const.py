@@ -1354,6 +1354,13 @@ class DefaultPseudoConstants:
                         comment='CPU usage at the end  or recipe (percent)')
         log_columns.add(name='CPU_NUM', datatype='INT',
                         comment='Total number of CPUs at start')
+        log_columns.add(name='LOG_START', datatype='VARCHAR(25)',
+                        comment='log sub-level start time '
+                                'YYYY-mm-dd HH:MM:SS.SSS')
+        log_columns.add(name='LOG_END', datatype='VARCHAR(25)',
+                        comment='Log sub-level end time '
+                                'YYYY-mm-dd HH:MM:SS.SSS')
+
         # return columns and ctypes
         self.logdb_cols = log_columns
         return log_columns
