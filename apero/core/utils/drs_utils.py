@@ -111,6 +111,8 @@ class RecipeLog:
         self.utime = Time(self.htime).unix
         self.start_time = str(params['DATE_NOW'])
         self.end_time = 'None'
+        self.log_start = 'None'
+        self.log_end = 'None'
         # set the group name
         self.group = str(params['DRS_GROUP'])
         # set the night name directory (and deal with no value)
@@ -329,6 +331,8 @@ class RecipeLog:
                            flags=self.flags)
         # copy from parent
         newlog.copy(self)
+        # set log start time
+        newlog.log_start = str(Time.now().iso)
         # record level criteria
         newlog.level_criteria += '{0}={1} '.format(key, value)
         # update the level iteration
@@ -462,7 +466,10 @@ class RecipeLog:
         # set function name
         _ = drs_misc.display_func('end', __NAME__, self.class_name)
         # add the end time
-        self.end_time = str(Time.now().iso)
+        end_time = str(Time.now().iso)
+        # both log end (for child) and full end time are updated
+        self.log_end = end_time
+        self.end_time = end_time
         # set the ended parameter to True
         if success:
             self.flags['ENDED'] = True
@@ -519,7 +526,8 @@ class RecipeLog:
                                     runstring=inst.runstring, args=inst.args,
                                     kwargs=inst.kwargs, skwargs=inst.skwargs,
                                     start_time=inst.start_time,
-                                    end_time=inst.end_time,
+                                    # end time has to be taken from parent
+                                    end_time=self.end_time,
                                     started=inst.started,
                                     passed_all_qc=inst.passed_qc,
                                     qc_string=inst.qc_string,
@@ -540,7 +548,9 @@ class RecipeLog:
                                     swap_total=inst.swap_total,
                                     cpu_usage_start=inst.cpu_usage_start,
                                     cpu_usage_end=inst.cpu_usage_end,
-                                    cpu_num=inst.cpu_num)
+                                    cpu_num=inst.cpu_num,
+                                    log_start=inst.log_start,
+                                    log_end=inst.log_end)
 
     def _make_row(self) -> OrderedDict:
         """
@@ -602,6 +612,8 @@ class RecipeLog:
         row['CPU_USAGE_START'] = self.cpu_usage_start
         row['CPU_USAGE_END'] = self.cpu_usage_end
         row['CPU_NUM'] = self.cpu_num
+        row['LOG_START'] = self.log_start
+        row['LOG_END'] = self.log_end
         # return row
         return row
 
@@ -698,7 +710,8 @@ class RecipeLog:
                       self.flagnum, self.flagstr, 1, self.ram_usage_start,
                       self.ram_usage_end, self.ram_total, self.swap_usage_start,
                       self.swap_usage_end, self.swap_total,
-                      self.cpu_usage_start, self.cpu_usage_end, self.cpu_num]
+                      self.cpu_usage_start, self.cpu_usage_end, self.cpu_num,
+                      self.log_start, self.log_end]
         # ---------------------------------------------------------------------
         # loop around all rows and add to params
         for it in range(len(log_keys)):
