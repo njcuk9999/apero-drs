@@ -5287,7 +5287,7 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     colors = ['r', 'g', 'b', 'k', 'orange', 'purple'] * 50
     counter = 0
     for counter, shortname in enumerate(shortnames):
-        _, _, _, s_start, s_end = shortname_values[shortname]
+        _, _, _, s_start, s_end, r_start, r_end = shortname_values[shortname]
         smed = np.median([s_start, s_end], axis=0)
         smin = smed - s_start
         smax = s_end - smed
@@ -5298,6 +5298,16 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
                        color=colors[counter], ls='None')
         frames[1].plot(s_end, counts, marker='x', ms=7,
                        color=colors[counter], ls='None')
+
+        # plot rise in ram from start to end
+        for row in range(len(s_start)):
+            frames[0].plot([s_start[row], s_end[row]],
+                           [r_start[row], r_end[row]], color=colors[counter],
+                           alpha=0.3)
+        frames[0].plot(s_start, r_start, marker='+', ms=7,
+                       color=colors[counter], ls='None', alpha=0.3)
+        frames[0].plot(s_end, r_end, marker='x', ms=7,
+                       color=colors[counter], ls='None', alpha=0.3)
 
     # add a fill between to separate coloured bands
     for counter, shortname in enumerate(shortnames):
@@ -5326,6 +5336,9 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
                           label='Start of recipe', ms=7)
     end = mlines.Line2D([], [], color='k', marker='x', ls='None',
                         label='End of recipe', ms=7)
+    mean = mlines.Line2D([], [], label='Running mean', color='r',
+                         marker='None')
+    frames[0].legend(handles=[mean, start, end], loc=0)
     frames[1].legend(handles=[start, end], loc=0)
 
     # -------------------------------------------------------------------------

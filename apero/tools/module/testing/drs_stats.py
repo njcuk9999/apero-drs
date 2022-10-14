@@ -1331,13 +1331,18 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
             s_start = np.array([starttime[mask].iloc[0]])
             s_end = np.array([endtime[mask].iloc[0]])
             smed = time0[mask].iloc[0]
+            r_start = np.array([ltable['RAM_USAGE_START'][mask].iloc[0]])
+            r_end = np.array([ltable['RAM_USAGE_END'][mask].iloc[0]])
         else:
-            s_start = starttime[mask]
-            s_end = endtime[mask]
+            s_start = np.array(starttime[mask])
+            s_end = np.array(endtime[mask])
             smed = np.median(time0[mask])
+            r_start = np.array(ltable['RAM_USAGE_START'][mask])
+            r_end = np.array(ltable['RAM_USAGE_END'][mask])
         smin = smed - np.min(s_start)
         smax = np.max(s_end) - smed
-        shortname_values[shortname] = [smin, smed, smax, s_start, s_end]
+        shortname_values[shortname] = [smin, smed, smax, s_start, s_end,
+                                       r_start, r_end]
     # -------------------------------------------------------------------------
     # length
     window = len(ltable) // 1000
@@ -1385,7 +1390,7 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     tabledict2 = dict(SHORTNAME=[], START_UNIX=[],
                       MED_UNIX=[], END_UNIX=[])
     for shortname in shortname_values:
-        smin, smed, smax, _, _ = shortname_values[shortname]
+        smin, smed, smax, _, _, _, _ = shortname_values[shortname]
         tabledict2['SHORTNAME'].append(shortname)
         tabledict2['START_UNIX'].append(smin)
         tabledict2['MED_UNIX'].append(smed)
