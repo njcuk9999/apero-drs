@@ -130,7 +130,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
             opos = pos[order_num]
             # extract 1D for this order
             eout = extraction(simage, orderp, opos, range1, range2, gain,
-                              cosmic_sigcut)
+                              cosmic_sigcut, sigdet)
             e2dsi, e2dslli, cpti, e2dscci = eout
             # --------------------------------------------------------------
             # calculate the signal to noise ratio
@@ -280,7 +280,8 @@ def flat_blaze_correction(eprops: ParamDict, flat: Optional[np.ndarray] = None,
     return eprops
 
 
-def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
+def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut,
+               sigdet):
     """
     Extract order using tilt and weight (sigdet and badpix) and cosmic
     correction
@@ -329,6 +330,7 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
     coslong = np.zeros((mp.nanmax(j2s - j1s) + 1, dim2), dtype=float)
     # define the number of cosmics found
     cpt = 0
+
     # loop around each pixel along the order
     with warnings.catch_warnings(record=True) as _:
         for ic in ics:
@@ -343,8 +345,16 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
                     fx = fx / sumfx
                 else:
                     fx = np.ones(fx.shape, dtype=float)
+
+                # TODO: Start of Blame Etienne --------------------------------
                 # get the amplitude (ratio between flux and flat)
-                amp = mp.nanmedian(sx / fx)
+                amp0 = mp.nanmedian(sx / fx)
+                amp1 = mp.nanmedian(sx[0:len(sx)//2]/fx[0:len(sx)//2])
+                amp2 = mp.nanmedian(sx[len(sx)//2:]/fx[len(sx)//2:])
+                amp = np.ones_like(sx)
+                amp[0:len(sx)//2]*=amp1
+                amp[len(sx)//2:]*=amp2
+
                 # residuals
                 res = sx - fx * amp
                 # work out number of sigma away from the median res
@@ -356,9 +366,30 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
                 cpt += np.sum(~weights)
                 # weights to floats
                 weights_float = np.array(weights).astype(float)
-                # some matrix manipulation
-                wsxfx = weights_float * sx * fx
-                wfxfx = weights_float * fx ** 2
+
+
+                case = 2
+                # work out the optimal weighting
+                if case == 1:
+                    # some matrix manipulation
+                    wsxfx = weights_float * sx * fx
+                    wfxfx = weights_float * fx * fx
+                if case == 2:
+                    expected_noise = np.sqrt(np.abs(fx*amp0) + sigdet**2)
+                    weight_from_noise = (fx*amp0 / expected_noise**2)
+                    # some matrix manipulation
+                    wsxfx = weights_float * sx * weight_from_noise
+                    wfxfx = weights_float * fx * weight_from_noise
+                elif case == 3:
+                    # expected_noise = np.sqrt(np.abs(fx*amp0) + sigdet**2)
+                    # mp.odd_ratio_mean()
+
+                    # some matrix manipulation
+                    wsxfx = weights_float * sx * fx
+                    wfxfx = weights_float * fx * fx
+
+                # TODO: End of blame Etienne ----------------------------------
+
                 sum_wfxfx = mp.nansum(wfxfx)
                 # set the value of this pixel to the weighted sum
                 spelong[:, ic] = wsxfx
