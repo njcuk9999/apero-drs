@@ -697,7 +697,8 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
 
 
 def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
-                          db_ask: bool = True) -> ParamDict:
+                          db_ask: bool = True
+                          ) -> Tuple[ParamDict, argparse.Namespace]:
     """
     Get/ask for the MYSQL database table names
 
@@ -1608,7 +1609,7 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
         all_params.set_source('CLEAN_INSTALL', func_name)
     # ------------------------------------------------------------------
     # Individual database table settings
-    all_params = mysql_database_tables(args, all_params, db_ask=False)
+    all_params, args = mysql_database_tables(args, all_params, db_ask=False)
     # ------------------------------------------------------------------
     # update base.PARAMS with all params
     base.DPARAMS = update_dparams(all_params, base.DPARAMS)
