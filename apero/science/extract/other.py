@@ -343,6 +343,11 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
             WLOG(params, 'error', textentry('09-016-00002', args=eargs))
         # get qc
         passed = llout['passed']
+
+        # let's free up some memory
+        del kwargs
+        del data_dict
+
         # deal with hc failure
         if not passed:
             # log error: extraction of file failed
@@ -357,7 +362,11 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
             # construct output key
             outkey = '{0}_{1}'.format(extract_type, fiber)
             # copy file to dictionary
-            outputs[fiber] = llout['e2dsoutputs'][outkey]
+            drsfile = llout['e2dsoutputs'][outkey]
+            # do a complete copy of the drs file
+            outputs[fiber] = drsfile.completecopy(drsfile)
+        # clean up
+        del llout
     # else we just need to read the header of the output file
     else:
         # update flag saying extraction file found previous
