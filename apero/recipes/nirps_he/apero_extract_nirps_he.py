@@ -112,7 +112,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # deal with input data from function
     if 'files' in params['DATA_DICT']:
         # get list of in files from data dict (passed in)
-        infiles = params['DATA_DICT']['files']
+        if params['DATA_DICT']['files'] is not None:
+            infiles = params['DATA_DICT']['files']
         # get list of raw files from data dict (passed in)
         rawfiles = params['DATA_DICT']['rawfiles']
         # get combine parameter from data dict (passed in)
@@ -391,15 +392,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # --------------------------------------------------------------
             # add files to outputs
             # --------------------------------------------------------------
-            if not quicklook:
-                ekeys = ['E2DS', 'E2DSFF']
-                efiles = [e2dsfile, e2dsfffile]
-                # loop around keys to add
-                for key, efile in zip(ekeys, efiles):
-                    # construct output key
-                    outkey = '{0}_{1}'.format(key, fiber)
-                    # copy file to dictionary
-                    e2dsoutputs[outkey] = efile.completecopy(efile)
+            # if not quicklook:
+            #     ekeys = ['E2DS', 'E2DSFF']
+            #     efiles = [e2dsfile, e2dsfffile]
+            #     # loop around keys to add
+            #     for key, efile in zip(ekeys, efiles):
+            #         # construct output key
+            #         outkey = '{0}_{1}'.format(key, fiber)
+            #         # copy file to dictionary
+            #         e2dsoutputs[outkey] = efile.completecopy(efile)
             # ------------------------------------------------------------------
             # Summary plots
             # ------------------------------------------------------------------

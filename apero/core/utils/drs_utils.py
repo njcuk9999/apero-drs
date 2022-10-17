@@ -102,6 +102,14 @@ class RecipeLog:
         self.outputdir = str(params['OUTPATH'])
         # the parameter dictionary of constants
         self.params = params
+        # ---------------------------------------------------------------------
+        self.no_log = False
+        # deal with no save --> no log
+        if 'INPUTS' in params:
+            if 'NOSAVE' in params['INPUTS']:
+                if params['INPUTS']['NOSAVE']:
+                    self.no_log = True
+        # ---------------------------------------------------------------------
         # the Logger instances (or None)
         self.wlog = logger
         # set the pid
@@ -322,7 +330,8 @@ class RecipeLog:
                  all children are stored inside a parent
         """
         # set function name
-        _ = drs_misc.display_func('add_level', __NAME__, self.class_name)
+        # _ = drs_misc.display_func('add_level', __NAME__, self.class_name)
+
         # get new level
         level = self.level + 1
         # create new log
@@ -339,6 +348,7 @@ class RecipeLog:
         newlog.level_iteration = len(self.set)
         # add newlog to set
         self.set.append(newlog)
+        # ---------------------------------------------------------------------
         # whether to write (update) recipe log file
         if write:
             self.write_logfile()
@@ -494,6 +504,9 @@ class RecipeLog:
         # set function name
         _ = drs_misc.display_func('write_logfile', __NAME__,
                                   self.class_name)
+        # do not write log if we have the no log flag
+        if self.no_log:
+            return
         # ---------------------------------------------------------------------
         # remove all entries with this pid
         self.logdbm.remove_pids(self.pid)

@@ -278,9 +278,12 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         kwargs['force_ref_wave'] = force_ref_wave
         # force the input directory (combined files go to reduced dir)
         kwargs['force_indir'] = path_ins.block_kind
-        # push data to extractiong code
+
+        # push data to extraction code
         data_dict = ParamDict()
-        data_dict['files'] = [infile]
+        # data_dict['files'] = [infile]
+        # We need to load these again
+        data_dict['files'] = None
         data_dict['rawfiles'] = [infile.basename]
         data_dict['combine'] = params['INPUT_COMBINE_IMAGES']
         # add leak correction argument if set
@@ -304,21 +307,28 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         # ------------------------------------------------------------------
         # pipe into apero_extract
         try:
-            llout = extrecipe.main(**kwargs)
+            # llout = extrecipe.main(**kwargs)
+            extrecipe.main(**kwargs)
+            llout = dict()
+            llout['params'] = dict()
+            llout['params']['LOGGER_ERROR'] = []
+            llout['params']['LOGGER_WARNING'] = []
+            llout['success'] = True
+            # llout['passed'] = True
         except Exception as e:
             llout = dict()
             llout['params'] = dict()
             llout['params']['LOGGER_ERROR'] = [['', str(e)]]
             llout['params']['LOGGER_WARNING'] = [[]]
             llout['success'] = False
-            llout['passed'] = False
+            # llout['passed'] = False
         except SystemExit as e:
             llout = dict()
             llout['params'] = dict()
             llout['params']['LOGGER_ERROR'] = [['', str(e)]]
             llout['params']['LOGGER_WARNING'] = [[]]
             llout['success'] = False
-            llout['passed'] = False
+            # llout['passed'] = False
         # pipe errors and warnings
         for error in llout['params']['LOGGER_ERROR']:
             # make sure we have an error listed
@@ -330,7 +340,7 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
                 WLOG.logger_storage(params, 'error', ttime=error[0],
                                     mess=errormsg)
         for warn in llout['params']['LOGGER_WARNING']:
-            # make sure we have an warning listed
+            # make sure we have a warning listed
             if len(warn) > 0:
                 # warning should show it was from extraction recipe
                 warnmsg = '[FROM {0}] '.format(extrecipe.name.upper())
@@ -341,48 +351,56 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         if not llout['success']:
             eargs = [recipe.name, func_name]
             WLOG(params, 'error', textentry('09-016-00002', args=eargs))
-        # get qc
-        passed = llout['passed']
+        # # get qc
+        # passed = bool(llout['passed'])
 
         # let's free up some memory
         del kwargs
         del data_dict
-
-        # deal with hc failure
-        if not passed:
-            # log error: extraction of file failed
-            eargs = [kind, infile.basename, func_name]
-            WLOG(params, 'error', textentry('09-016-00003', args=eargs))
-
-        # loop around fibers
-        for fiber in fiber_types:
-            # log that we are reading file
-            wargs = [e2ds_files[fiber]]
-            WLOG(params, '', textentry('40-016-00023', args=wargs))
-            # construct output key
-            outkey = '{0}_{1}'.format(extract_type, fiber)
-            # copy file to dictionary
-            drsfile = llout['e2dsoutputs'][outkey]
-            # do a complete copy of the drs file
-            outputs[fiber] = drsfile.completecopy(drsfile)
-        # clean up
         del llout
+
+        # # deal with hc failure
+        # if not passed:
+        #     # log error: extraction of file failed
+        #     eargs = [kind, infile.basename, func_name]
+        #     WLOG(params, 'error', textentry('09-016-00003', args=eargs))
+
+        # # loop around fibers
+        # for fiber in fiber_types:
+        #     # log that we are reading file
+        #     wargs = [e2ds_files[fiber]]
+        #     WLOG(params, '', textentry('40-016-00023', args=wargs))
+        #     # construct output key
+        #     outkey = '{0}_{1}'.format(extract_type, fiber)
+        #     # copy file to dictionary
+        #     drsfile = llout['e2dsoutputs'][outkey]
+        #     # do a complete copy of the drs file
+        #     outputs[fiber] = drsfile.completecopy(drsfile)
+        # # clean up
+        # del llout
     # else we just need to read the header of the output file
     else:
         # update flag saying extraction file found previous
         if logger is not None:
             logger.update_flags(EXT_FOUND=True)
-        # loop around fibers
-        for fiber in fiber_types:
-            # construct out file
-            outfile = e2ds_files[fiber]
-            # log that we are reading file
-            wargs = [outfile.filename]
-            WLOG(params, '', textentry('40-016-00021', args=wargs))
-            # read file header and push into outputs
-            outfile.read_file()
-            # copy file to dictionary
-            outputs[fiber] = outfile.completecopy(outfile)
+    # loop around fibers
+    for fiber in fiber_types:
+        # construct out file
+        outfile = e2ds_files[fiber]
+        # log that we are reading file
+        wargs = [outfile.filename]
+        WLOG(params, '', textentry('40-016-00021', args=wargs))
+        # read file header and push into outputs
+        outfile.read_file()
+        # deal with quality control failure
+        passed = bool(outfile.header[params['KW_DRS_QC'][0]])
+        # if not passed flag error here
+        if not passed:
+            # log error: extraction of file failed
+            eargs = [kind, infile.basename, func_name]
+            WLOG(params, 'error', textentry('09-016-00003', args=eargs))
+        # copy file to dictionary
+        outputs[fiber] = outfile.completecopy(outfile)
     # return dictionary of outputs (one key for each fiber)
     return outputs
 
