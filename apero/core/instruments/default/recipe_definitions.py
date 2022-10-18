@@ -333,6 +333,10 @@ stats.set_kwarg(name='--plog', dtype=str, default='None',
 stats.set_kwarg(**plot)
 stats.set_kwarg(name='--sql', dtype=str, default='None',
                 helpstr=textentry('LOGSTAT_SQL_HELP'))
+stats.set_kwarg(name='--limit', dtype=int, default=0,
+                helpstr='Limit the number of entries in memory plot '
+                        '(any recipe with more than this limit is left '
+                        'out of stats)')
 stats.description_file = 'apero_stats.rst'
 
 # -----------------------------------------------------------------------------
