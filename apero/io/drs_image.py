@@ -316,6 +316,7 @@ def clean_hotpix(image: np.ndarray, badpix: np.ndarray) -> np.ndarray:
         rms[rms < (0.5 * mp.nanmedian(rms))] = 0.5 * mp.nanmedian(rms)
         # determining a proxy of N sigma
         nsig = image_rms_measurement / rms
+        # TODO: remove hard-coded 10 value
         bad = np.array((np.abs(nsig) > 10), dtype=bool)
     # known bad pixels are also considered bad even if they are
     # within the +-N sigma rejection
