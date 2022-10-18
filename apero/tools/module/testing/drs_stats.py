@@ -1293,9 +1293,38 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     condition = 'RECIPE_TYPE LIKE "%recipe%" AND ENDED=1'
     columns = ('SHORTNAME, UNIXTIME, RAM_USAGE_START, RAM_USAGE_END, '
                'START_TIME, END_TIME, RECIPE, RECIPE_TYPE, ENDED')
+    # -------------------------------------------------------------------------
+    # use sql to turn off certain recipes
+    if not drs_text.null_text(params['INPUTS']['SQL'], ['None', '', 'Null']):
+        condition += 'AND' + params['INPUTS']['SQL']
+    # -------------------------------------------------------------------------
+    # get limit
+    if params['INPUTS']['LIMIT'] != 0:
+        limit = params['INPUTS']['LIMIT']
+    else:
+        limit = None
+    # -------------------------------------------------------------------------
     # get columns from logdbm
     ltable = logdbm.get_entries(columns, condition=condition,
                                 groupby='PID')
+    # find start and end points for each recipe
+    shortnames = logdbm.database.unique('SHORTNAME', condition=condition)
+    # -------------------------------------------------------------------------
+    # deal with limit
+    if limit is not None:
+        # store valid shortnames
+        new_shortnames = []
+        # loop around all shortnames
+        for shortname in shortnames:
+            # get a mask for this shortname
+            mask = ltable['SHORTNAME'] == shortname
+            # remove any able limit
+            if np.sum(mask) > limit:
+                ltable = ltable[~mask]
+            else:
+                new_shortnames.append(shortname)
+        # overwrite original list
+        shortnames = np.array(new_shortnames)
     # -------------------------------------------------------------------------
     # print progress
     WLOG(params, '', 'Sorting time axis')
@@ -1312,8 +1341,6 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     # -------------------------------------------------------------------------
     # print progress
     WLOG(params, '', 'Getting recipe start and finish limits')
-    # find start and end points for each recipe
-    shortnames = logdbm.database.unique('SHORTNAME', condition=condition)
     # get first occurrence of each short name
     unix_short = []
     for shortname in shortnames:
