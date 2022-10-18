@@ -1320,7 +1320,7 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
         mask = ltable['SHORTNAME'] == shortname
         unix_short.append(np.min(starttime[mask]))
     # resort shortnames by occurence
-    shortnames = shortnames[np.argsort(unix_short)[::-1]]
+    shortnames = shortnames[np.argsort(unix_short)]
     # storage box values
     shortname_values = dict()
     # find the first and last entry for each shortname
@@ -1368,6 +1368,17 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     rmin_start = rmin_start[nanmask]
     rmax_end = rmax_end[nanmask]
     rmin_end = rmin_end[nanmask]
+    # -------------------------------------------------------------------------
+    # print stats to screen
+    for shortname in shortname_values:
+
+        _, _, _, _, _, r_start, r_end = shortname_values[shortname]
+        WLOG(params, 'info', 'Recipe = {0}'.format(shortname))
+        WLOG(params, '', '\tMin RAM start: {0:.3f} GB'.format(np.min(r_start)))
+        WLOG(params, '', '\tMax RAM start: {0:.3f} GB'.format(np.max(r_start)))
+        WLOG(params, '', '\tMin RAM end: {0:.3f} GB'.format(np.min(r_end)))
+        WLOG(params, '', '\tMax RAM end: {0:.3f} GB'.format(np.max(r_end)))
+
     # -------------------------------------------------------------------------
     # plot (more to recipe plots)
     recipe.plot('STAT_RAM_PLOT', time0=time0, ram_start=ram_start,

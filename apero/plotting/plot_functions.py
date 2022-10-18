@@ -5273,27 +5273,46 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     frames[0].fill_between(time0,
                            np.max([rmax_start, rmax_end], axis=0),
                            np.min([rmin_start, rmin_end], axis=0),
-                           color='r', alpha=0.2)
+                           color='k', alpha=0.2)
 
     y = np.mean([ram_start, ram_end], axis=0)
     eyl = y - np.min([ram_start, ram_end], axis=0)
     eyu = np.max([ram_start, ram_end], axis=0) - y
 
-    frames[0].plot(time0, y, color='r',  marker='None')
+    frames[0].plot(time0, y, color='k',  marker='None', ls=':')
     # frames[0].errorbar(time0, y, yerr=[eyl, eyu], color='r',
     #                    marker='o', ls='None', alpha=0.25, capsize=5)
     # -------------------------------------------------------------------------
     # add error bars for recipes
-    colors = ['r', 'g', 'b', 'k', 'orange', 'purple'] * 50
+    colors = ['r', 'g', 'b', 'm', 'c', 'orange', 'purple'] * 50
     counter = 0
+    # flip the list of shortnames
+    shortnames = list(shortnames)[::-1]
+
     for counter, shortname in enumerate(shortnames):
+
+        if 'EXT' in shortname:
+            linestyle = '--'
+            linewidth = 2
+        else:
+            linestyle = '-'
+            linewidth = 1
+
+
         _, _, _, s_start, s_end, r_start, r_end = shortname_values[shortname]
+
+        pargs = [shortname, len(s_start)]
+        print('\tAdding recipe {0} [{1} entries]'.format(*pargs))
+
         smed = np.median([s_start, s_end], axis=0)
         smin = smed - s_start
         smax = s_end - smed
         counts = counter + np.linspace(0, 1, len(smed) + 2)[1:-1] - 0.5
-        frames[1].errorbar(smed, counts, xerr=[smin, smax],
-                           color=colors[counter], ls='None')
+
+        for row in range(len(s_start)):
+            frames[1].plot([s_start[row], s_end[row]],
+                           [counts[row], counts[row]], color=colors[counter],
+                           alpha=0.3, ls=linestyle, linewidth=linewidth)
         frames[1].plot(s_start, counts, marker='+', ms=7,
                        color=colors[counter], ls='None')
         frames[1].plot(s_end, counts, marker='x', ms=7,
@@ -5303,7 +5322,7 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
         for row in range(len(s_start)):
             frames[0].plot([s_start[row], s_end[row]],
                            [r_start[row], r_end[row]], color=colors[counter],
-                           alpha=0.3)
+                           alpha=0.3, ls=linestyle, linewidth=linewidth)
         frames[0].plot(s_start, r_start, marker='+', ms=7,
                        color=colors[counter], ls='None', alpha=0.3)
         frames[0].plot(s_end, r_end, marker='x', ms=7,
