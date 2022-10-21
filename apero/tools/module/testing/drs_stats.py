@@ -337,7 +337,7 @@ def _index_database_crossmatch(idataframe: pd.DataFrame,
 # =============================================================================
 # Define timing stats functions
 # =============================================================================
-def timing_stats(params: ParamDict, recipe: DrsRecipe):
+def timing_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
     """
     Print and plot timing stats
 
@@ -345,6 +345,8 @@ def timing_stats(params: ParamDict, recipe: DrsRecipe):
     :param recipe:
     :return:
     """
+    # set function name
+    func_name = __NAME__ + '.timing_stats()'
     # print progress
     WLOG(params, 'info', 'Running timing code')
     # -------------------------------------------------------------------------
@@ -392,6 +394,18 @@ def timing_stats(params: ParamDict, recipe: DrsRecipe):
     # -------------------------------------------------------------------------
     # plot timing graph
     recipe.plot('STATS_TIMING_PLOT', logs=log_entries, pstats=pdict)
+    # -------------------------------------------------------------------------
+    # save outputs to return
+    outputs = ParamDict()
+    # loop around stat dictionary
+    for recipe_name in stat_dict:
+        # add outputs
+        oname = f'{recipe_name}_NRUNS'
+        outputs[oname] = stat_dict[recipe_name]['NUMBER']
+        # set source
+        outputs.set_source(oname, func_name)
+    # return outputs
+    return outputs
 
 
 def get_timing_stats(logs: List[LogEntry]) -> Dict[str, Dict[str, Any]]:
@@ -472,7 +486,7 @@ def print_timing_stats(params: ParamDict, recipe: str,
 # =============================================================================
 # Define qc stats functions
 # =============================================================================
-def qc_stats(params: ParamDict, recipe: DrsRecipe):
+def qc_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
     """
     Print and plot quality control / running / error stats
 
@@ -480,6 +494,8 @@ def qc_stats(params: ParamDict, recipe: DrsRecipe):
     :param recipe:
     :return:
     """
+    # set function name
+    func_name = __NAME__ + '.qc_stats()'
     # print progress
     WLOG(params, 'info', 'Running timing code')
     # get log entries
@@ -503,6 +519,38 @@ def qc_stats(params: ParamDict, recipe: DrsRecipe):
             recipe.plot('STAT_QC_RECIPE_PLOT', xvalues=xvalues,
                         yvalues=yvalues, lvalues=lvalues, llabels=llabels,
                         recipe_name=recipe_name)
+
+    # -------------------------------------------------------------------------
+    # save outputs to return
+    outputs = ParamDict()
+    # loop around stat dictionary
+    for recipe_name in stat_dict:
+        crits = stat_crit[recipe_name]
+        # loop around log levels
+        for crit in crits:
+            # deal with log levels as stat_dict key
+            if crit == 'None':
+                cstring = ''
+            else:
+                cstring = f'::{crit.strip()}'
+            # set number passed
+            oname = f'{recipe_name}_QC_NPASSED'
+            outputs[oname] = stat_dict[recipe_name]['NUM_PASSED' + cstring]
+            # set source
+            outputs.set_source(oname, func_name)
+            # set number failed
+            oname = f'{recipe_name}_QC_NFAILED'
+            outputs[oname] = stat_dict[recipe_name]['NUM_FAILED' + cstring]
+            # set source
+            outputs.set_source(oname, func_name)
+            # set number ended
+            oname = f'{recipe_name}_QC_NENDED'
+            outputs[oname] = stat_dict[recipe_name]['NUM_ENDED' + cstring]
+            # set source
+            outputs.set_source(oname, func_name)
+
+    # return outputs
+    return outputs
 
 
 def _get_list_param(data, key: str, delimiter='||'):
@@ -1049,7 +1097,8 @@ def error_stats(params: ParamDict):
 
     :return: None, writes log files to {DRS_DATA_MSG}/reports/LOG_NAME/
     """
-
+    # set function name
+    func_name = __NAME__ + '.error_stats()'
     # deal with plog from arguments
     plog_files = []
     if 'INPUTS' in params:
@@ -1071,6 +1120,8 @@ def error_stats(params: ParamDict):
                 if filename.endswith('apero_processing.log'):
                     plog_files.append(os.path.join(_root, filename))
     # -------------------------------------------------------------------------
+    # storage for output
+    recipe_count_all = dict()
     # loop around log files
     for p_it, plog_file in enumerate(plog_files):
         # print progress
@@ -1081,6 +1132,8 @@ def error_stats(params: ParamDict):
         # read the log file
         with open(plog_file, 'r') as plogfile:
             lines = plogfile.readlines()
+        # storage for this processing log
+        recipe_count_all[plog_file] = dict()
         # ---------------------------------------------------------------------
         # get the reports in a directory
         report_subdir = os.path.basename(plog_file).replace('.log', '')
@@ -1150,6 +1203,10 @@ def error_stats(params: ParamDict):
         for recipename in recipe_count:
             msg = '\t- There were {0} errors for recipe {1}'
             WLOG(params, '', msg.format(recipe_count[recipename], recipename))
+
+        # save all plog recipe counts
+        recipe_count_all[plog_file]['TCOUNT'] = len(error_rentries)
+        recipe_count_all[plog_file]['RCOUNT'] = recipe_count
         # ---------------------------------------------------------------------
         # print progress
         WLOG(params, 'info', 'Counting number of unique errors')
@@ -1175,6 +1232,8 @@ def error_stats(params: ParamDict):
                     all_error_codes_runstrings[code] += [entry.runstring]
                     all_error_codes_instance[code] += [entry]
                     all_error_codes_recipe_names[code] += [entry.recipename]
+        # update full plog
+        recipe_count_all[plog_file]['EXPECTED_COUNT'] = all_error_codes
         # ---------------------------------------------------------------------
         # print out error codes into groups
         for code in all_error_codes:
@@ -1214,7 +1273,9 @@ def error_stats(params: ParamDict):
         # deal with no unhandled errors found
         if UNHANDLED_ERROR_CODE not in all_error_codes_instance:
             WLOG(params, 'info', '\tNo unhandled errors found')
-            return
+            # update full plog
+            recipe_count_all[plog_file]['UNEXPECTED_COUNT'] = dict()
+            continue
         # get unhandled instances
         uinstances = all_error_codes_instance[UNHANDLED_ERROR_CODE]
         uerror_reports = list(map(lambda x: x.error_report, uinstances))
@@ -1239,6 +1300,8 @@ def error_stats(params: ParamDict):
         # write unhandled groups to log files
         # print progress
         WLOG(params, 'info', 'Writing unhandled errors to group log files')
+        # store unhandled
+        unhandled_store = dict()
         # loop around groups and save
         for key in group_instances:
             # define the code string
@@ -1256,6 +1319,8 @@ def error_stats(params: ParamDict):
             # log how many instances found
             msg = '\t\t Found {0} recipes with this error'
             WLOG(params, '', msg.format(len(instance_group)))
+            # store number
+            unhandled_store[key] = len(instance_group)
             # print unique recipe names
             WLOG(params, '', '\t\t({0})'.format(','.join(urecipe_names)))
             # reset lines
@@ -1266,6 +1331,19 @@ def error_stats(params: ParamDict):
             # save to file
             with open(os.path.join(report_dir, codestr + '.log'), 'w') as rfile:
                 rfile.write(lines)
+        # update full plog
+        recipe_count_all[plog_file]['UNEXPECTED_COUNT'] = unhandled_store
+    # -------------------------------------------------------------------------
+    # save outputs to return
+    outputs = ParamDict()
+    # loop around stat dictionary
+    for plog_file in recipe_count_all:
+        # each plog file creates one entry
+        outputs[plog_file] = recipe_count_all[plog_file]
+        # set source
+        outputs.set_source(plog_file, func_name)
+    # return outputs
+    return outputs
 
 
 # =============================================================================
@@ -1279,6 +1357,8 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
 
     :return: None, plots graph
     """
+    # set function name
+    func_name = __NAME__ + '.memory_stats()'
     # ---------------------------------------------------------------------
     # construct report directory
     report_dir = os.path.join(params['DRS_DATA_MSG'], 'report')
@@ -1444,6 +1524,65 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
                        datatype=[None, 'table', 'table'],
                        dtype=[None, None, None])
     # -------------------------------------------------------------------------
+    # save outputs to return
+    outputs = ParamDict()
+    # loop around stat dictionary
+    for shortname in shortnames:
+        # add outputs
+        sout = shortname_values[shortname]
+        smin, smed, smax, s_start, s_end, r_start, r_end = sout
+
+        oname = f'{shortname}_TIMESTART'
+        outputs[oname] = smed - smin
+        outputs.set_source(oname, func_name)
+
+        oname = f'{shortname}_TIMEMED'
+        outputs[oname] = smed
+        outputs.set_source(oname, func_name)
+
+        oname = f'{shortname}_TIMEEND'
+        outputs[oname] = smed + smax
+        outputs.set_source(oname, func_name)
+
+        oname = f'{shortname}_RAMSTART_MIN'
+        outputs[oname] = np.nanmin(r_start)
+        outputs.set_source(oname, func_name)
+
+        oname = f'{shortname}_RAMSTART_MAX'
+        outputs[oname] = np.nanmax(r_start)
+        outputs.set_source(oname, func_name)
+
+        oname = f'{shortname}_RAMEND_MIN'
+        outputs[oname] = np.nanmin(r_end)
+        outputs.set_source(oname, func_name)
+
+        oname = f'{shortname}_RAMEND_MAX'
+        outputs[oname] = np.nanmax(r_end)
+        outputs.set_source(oname, func_name)
+
+    # return outputs
+    return outputs
+
+
+
+# =============================================================================
+# Define combine stats functions
+# =============================================================================
+def combine_stats(params: ParamDict,
+                  tout: Optional[ParamDict] = None,
+                  qout: Optional[ParamDict] = None,
+                  eout: Optional[ParamDict] = None,
+                  mout: Optional[ParamDict] = None):
+    """
+    Combine the various outputs into a text file
+    :param tout: optional, the timing outputs
+    :param qout: optional, the qc outputs
+    :param eout: optional, the error outputs
+    :param mout: optional, the memory outputs
+    :return:
+    """
+    # TODO: fill this out
+    pass
 
 
 # =============================================================================

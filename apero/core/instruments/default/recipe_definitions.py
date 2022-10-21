@@ -325,8 +325,7 @@ stats.recipe_kind = 'user'
 stats.set_debug_plots('STATS_TIMING_PLOT', 'STAT_QC_RECIPE_PLOT',
                       'STAT_RAM_PLOT')
 stats.set_summary_plots()
-stats.set_kwarg(name='--mode', dtype='options', default='red',
-                options=['timing', 'qc', 'error', 'memory'],
+stats.set_kwarg(name='--mode', dtype=str, default='red',
                 helpstr=textentry('LOGSTAT_MODE_HELP'))
 stats.set_kwarg(name='--plog', dtype=str, default='None',
                 helpstr=textentry('LOGSTAT_PLOG_HELP'))
