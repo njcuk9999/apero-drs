@@ -177,7 +177,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # load reference wavelength solution
     mkwargs = dict(infile=infile, ref=True, fiber=fiber,
-                   database=calibdbm, log=recipe.log)
+                   database=calibdbm, rlog=recipe.log)
     refprops = wave.get_wavesolution(params, recipe, **mkwargs)
     # ------------------------------------------------------------------
     # Normalize image by peak blaze

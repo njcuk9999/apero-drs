@@ -324,7 +324,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
                   order in pixels
     :param kwargs: keyword arguments passed to function
     :param rlog: Recipe log or None, if defined recipe must have
-                 FROCE_REFWAVE as one if its FLAGS
+                 FORCE_REFWAVE as one if its FLAGS
 
     :keyword force: bool, if True forces wave solution to come from calibDB
     :keyword filename: str or None, the filename to get wave solution from
@@ -335,7 +335,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     func_name = display_func('get_wavesolution', __NAME__)
     # deal with logging that a reference wave sol was forced
     if rlog is not None:
-        rlog.update_flags(FROCE_REFWAVE=ref)
+        rlog.update_flags(FORCE_REFWAVE=ref)
     # get parameters from params/kwargs
     inwavefile = kwargs.get('filename', None)
     # deal with wave file in the inputs

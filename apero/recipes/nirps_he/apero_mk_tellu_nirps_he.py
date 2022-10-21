@@ -211,7 +211,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # load reference wavelength solution
         refprops = wave.get_wavesolution(params, recipe, ref=True,
                                          fiber=fiber, infile=infile,
-                                         database=calibdbm, log=log1)
+                                         database=calibdbm, rlog=log1)
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
