@@ -192,7 +192,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         #    this should only be a reference wavelength solution
         iwprops = wave.get_wavesolution(params, recipe, infile=hcfile,
                                         fiber=ref_fiber, ref=True,
-                                        database=calibdbm, log=log1)
+                                        database=calibdbm)
         # check that wave parameters are consistent with required number
         #   of parameters (from constants)
         iwprops = wave.check_wave_consistency(params, iwprops)

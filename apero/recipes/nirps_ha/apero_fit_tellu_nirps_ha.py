@@ -203,8 +203,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
-                                       infile=infile, database=calibdbm,
-                                       log=log1)
+                                       infile=infile, database=calibdbm)
 
         # ------------------------------------------------------------------
         # Get template file (if available)

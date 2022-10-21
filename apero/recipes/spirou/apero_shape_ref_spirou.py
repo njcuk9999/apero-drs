@@ -147,7 +147,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # get reference wave map
     wprops = wave.get_wavesolution(params, recipe, fiber=fiber, ref=True,
-                                   database=calibdbm, log=recipe.log)
+                                   database=calibdbm, rlog=recipe.log)
 
     # ------------------------------------------------------------------
     # Correction of fp file
