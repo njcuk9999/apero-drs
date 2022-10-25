@@ -121,7 +121,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # run the file index stats
     if 'FINDEX' in mode or 'ALL' in mode:
         # do the file index stats
-        fout = drs_stats.file_index_stats(params, recipe)
+        fout = drs_stats.file_index_stats(params)
     # ----------------------------------------------------------------------
     # combine all outputs into a single file that can be compared between
     #   runs

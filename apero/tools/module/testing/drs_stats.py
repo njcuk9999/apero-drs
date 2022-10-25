@@ -1649,7 +1649,7 @@ class FileStat:
                         # add to count
                         count += 1
             # save to storage
-            self.disk_counts[self.names[it]] = count
+            self.disk_counts['disk_' + self.names[it]] = count
 
     def count_in_db(self, database: drs_database.drs_db.Database):
         """
@@ -1667,7 +1667,7 @@ class FileStat:
             else:
                 count = np.nan
             # save to storage
-            self.db_counts[self.names[it]] = count
+            self.db_counts['db_' + self.names[it]] = count
 
 
 def file_index_stats(params: ParamDict) -> ParamDict:
