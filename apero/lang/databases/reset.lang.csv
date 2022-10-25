@@ -222,7 +222,7 @@ however you may want to link this database to another apero profile","","","INST
 "None","[STRING] The run.ini file to use for calibration trigger run","","","TRIGGER_CALIB_HELP","HELP"
 "None","[STRING] The run.ini file to use for science trigger run","","","TRIGGER_SCI_HELP","HELP"
 "None","Active test mode (does not run recipes)","","","TRIGGER_TEST_HELP","HELP"
-"None","[STRING] Stats mode. For timing statistics use ""timing"". For quality control statistics use ""qc"". For error statistics use ""error"". For memory statistics use ""memory"".","","","LOGSTAT_MODE_HELP","HELP"
+"None","[STRING] Stats mode. Any combination of the following (separated by a comma, no white spaces). For all use all. For timing statistics use ""timing"". For quality control statistics use ""qc"". For error statistics use ""error"". For memory statistics use ""memory"". For file index use findex.  I.e. --mode=qc,memory  runs the qc and memory stats.","","","LOGSTAT_MODE_HELP","HELP"
 "None","[STRING] Specify a certain log file (full path)","","","LOGSTAT_PLOG_HELP","HELP"
 "None","[STRING] Specify a SQL WHERE clause to narrow the stats","","","LOGSTAT_SQL_HELP","HELP"
 "None","Create default run.ini files for APERO instrument(s)","","","RUN_INI_DESCRIPTION","HELP"

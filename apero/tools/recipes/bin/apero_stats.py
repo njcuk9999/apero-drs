@@ -92,7 +92,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
     # set output to None initially
-    tout, qout, eout, mout = None, None, None, None
+    tout, qout, eout, mout, fout = None, None, None, None, None
     # ----------------------------------------------------------------------
     # run the timing stats
     if 'TIMING' in mode or 'ALL' in mode:
@@ -118,9 +118,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
         # do the memory stats
         mout = drs_stats.memory_stats(params, recipe)
     # ----------------------------------------------------------------------
+    # run the file index stats
+    if 'FINDEX' in mode or 'ALL' in mode:
+        # do the file index stats
+        fout = drs_stats.file_index_stats(params, recipe)
+    # ----------------------------------------------------------------------
     # combine all outputs into a single file that can be compared between
     #   runs
-    drs_stats.combine_stats(params, tout=tout, qout=qout, eout=eout, mout=mout)
+    drs_stats.combine_stats(params, [tout, qout, eout, mout, fout])
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
