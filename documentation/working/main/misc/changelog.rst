@@ -2,6 +2,47 @@ Changelog
 =========
 
 
+0.7.257 (2022-10-25)
+--------------------
+- [APERO] correct columns in `apero_stats.py`. [Neil Cook]
+- [APERO] add file index mode to `apero_stats.py` + write
+  `apero_stats_static.txt` and `apero_stats_varying.txt` to msg/report
+  directory. [Neil Cook]
+- [APERO] remove cook@localhost.mysql.backup file from calib reset (it
+  shouldn't be here) [Neil Cook]
+- [APERO] start adding "all" mode to `apero_stats.py`. [Neil Cook]
+- [APERO] fix `FORCE_REFWAVE` flag in `get_wavelength` function calls. [Neil
+  Cook]
+- [APERO] add conda and git documentation to other documentation. [Neil
+  Cook]
+- [APERO] add TODO re: hard coded value. [Neil Cook]
+- [APERO] add a limit to `apero_stats` memory mode. [Neil Cook]
+- [APERO] update `apero_stats` memory plot. [Neil Cook]
+- [APERO] add to `apero_get` documentation. [Neil Cook]
+- [APERO] test of wave [EXT] memory issue. [Neil Cook]
+- [APERO] test of wave [EXT] memory issue. [Neil Cook]
+- [APERO] fix problem with using `setup/install.py` --update mode. [Neil
+  Cook]
+- [APERO] update `apero_stats` plot. [Neil Cook]
+
+
+0.7.256 (2022-10-13)
+--------------------
+- [APERO] pep8 fixes. [Neil Cook]
+- [APERO] fixes for adding log start/log end + ccf `run_file`. [Neil Cook]
+- [APERO] add `LOG_START` and `LOG_END` to log database (and fix `END_TIME)` -
+  will require new log database. [Neil Cook]
+- [APERO] improve memory stats plot. [Neil Cook]
+- [APERO] add an exact requirements module to test all packages being
+  the same. [Neil Cook]
+- [APERO] fix custom arguments [INPUTS] coming from run.ini file and
+  --mask argument not looking in the `assets/ccf_masks` directory. [Neil
+  Cook]
+- [APERO] add a printout to `wave_ref_spirou` + update `apero_overall_flow`
+  graph. [Neil Cook]
+- [APERO] update date/version/changelog/docs. [Neil Cook]
+
+
 0.7.254 (2022-09-22)
 --------------------
 - [APERO] test fix for pickling PseudoConstants. [Neil Cook]
@@ -10,6 +51,10 @@ Changelog
   res = sx - fx/amp --> res = sx - `fx*amp`. [Neil Cook]
 - [APERO] `apero.core.utils.drs_startup.py` - use np.genfromtxt instead of
   np.loadtxt as there is a bug in numpy 1.23. [Neil Cook]
+
+
+0.7.255 (2022-09-30)
+--------------------
 - [APERO] doc + pep8 `[gen_calib.py]` [Neil Cook]
 - [APERO] doc + pep8 `[flat_blaze.py]` [Neil Cook]
 - [APERO] doc + pep8 [background.py, badpix.py, dark.py] [Neil Cook]

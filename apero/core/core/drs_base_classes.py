@@ -16,20 +16,20 @@ only from
 - apero.core.core.drs_text
 - apero.core.core.drs_exceptions
 """
-from collections import UserDict
 import importlib
-import duckdb
 import os
+import sys
+from collections import UserDict
+from typing import Any, List, Optional, Union
+
+import duckdb
 import pandas as pd
 from pandasql import sqldf
-from typing import Any, List, Optional, Union
-import sys
 
 from apero.base import base
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core.core import drs_exceptions
-
 
 # =============================================================================
 # Define variables
