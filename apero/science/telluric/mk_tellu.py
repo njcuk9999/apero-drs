@@ -8,22 +8,21 @@ Created on 2020-07-2020-07-15 17:56
 @author: cook
 """
 import warnings
+from typing import List, Tuple
 
 import numpy as np
-from typing import List, Tuple
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
-from apero.core.core import drs_file
 from apero.core import math as mp
+from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 from apero.io import drs_table
 from apero.science.calib import wave
 from apero.science.telluric import gen_tellu
-
 
 # =============================================================================
 # Define variables

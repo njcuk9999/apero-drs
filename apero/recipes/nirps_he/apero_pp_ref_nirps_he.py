@@ -9,19 +9,20 @@ Created on 2019-03-05 16:38
 
 @author: ncook
 """
-import numpy as np
 from typing import Any, Dict, Optional, Tuple, Union
 
-from apero.base import base
+import numpy as np
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
-from apero.core.core import drs_file
 from apero.core.core import drs_database
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.instruments.spirou import file_definitions
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-from apero.core.instruments.spirou import file_definitions
 from apero.science import preprocessing
 
 # =============================================================================

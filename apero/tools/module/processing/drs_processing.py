@@ -12,38 +12,37 @@ Created on 2019-08-06 at 11:57
 
 
 """
-from astropy.table import Table
-from collections import OrderedDict
-from copy import deepcopy
 import itertools
-import numpy as np
 import os
-import pandas as pd
 import sys
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
 import warnings
+from collections import OrderedDict
+from copy import deepcopy
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
+from astropy.table import Table
+
+from apero import lang
 from apero.base import base
-from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_text
-from apero.core.core import drs_misc
-from apero.core.core import drs_log
+from apero.core import constants
 from apero.core.core import drs_argument
+from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_database
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-from apero.core.core import drs_database
-from apero.core.core import drs_file
-from apero import lang
-from apero.core import constants
-from apero.io import drs_table
 from apero.io import drs_lock
+from apero.io import drs_table
 from apero.science import preprocessing as prep
 from apero.science import telluric
 from apero.tools.module.setup import drs_reset
-
 
 # =============================================================================
 # Define variables

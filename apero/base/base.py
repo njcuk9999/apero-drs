@@ -15,16 +15,16 @@ import rules:
 - no imports from apero
 
 """
-from astropy.time import Time, TimeDelta
-from collections import OrderedDict
-import numpy as np
 import os
-from pathlib import Path
 import string
-from typing import Any
 import warnings
-import yaml
+from collections import OrderedDict
+from pathlib import Path
+from typing import Any
 
+import numpy as np
+import yaml
+from astropy.time import Time, TimeDelta
 
 # =============================================================================
 # Define variables

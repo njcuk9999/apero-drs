@@ -9,35 +9,35 @@ Created on
 
 @author: 
 """
-from astropy.table import Table
+import os
+import warnings
+from copy import deepcopy
+from typing import Any, Dict, List, Tuple, Union
+
+import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
-from copy import deepcopy
-import numpy as np
-import os
+from astropy.table import Table
 from scipy.optimize import curve_fit
-from typing import Any, Dict, List, Tuple, Union
-import warnings
 
+from apero import lang
 from apero.core import constants
 from apero.core import math as mp
-from apero import lang
-from apero.core.core import drs_log
-from apero.core.core import drs_file
 from apero.core.core import drs_database
+from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.core import drs_text
-from apero.core.utils import drs_startup
-from apero.core.utils import drs_recipe
 from apero.core.utils import drs_data
+from apero.core.utils import drs_recipe
+from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-from apero.io import drs_image
 from apero.io import drs_fits
+from apero.io import drs_image
 from apero.io import drs_table
-from apero.science.calib import gen_calib
-from apero.science.calib import flat_blaze
 from apero.science import extract
 from apero.science import velocity
-
+from apero.science.calib import flat_blaze
+from apero.science.calib import gen_calib
 
 # =============================================================================
 # Define variables

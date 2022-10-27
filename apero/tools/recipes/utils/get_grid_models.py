@@ -9,16 +9,16 @@ Created on 2019-03-23 at 13:01
 
 @author: cook
 """
-import numpy as np
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as uu
 import os
 import shutil
 
+import numpy as np
+from astropy import units as uu
+from astropy.io import fits
+from astropy.table import Table
+
 from apero.base import base
 from apero.core import constants
-from apero import lang
 from apero.core.core import drs_log
 
 # =============================================================================

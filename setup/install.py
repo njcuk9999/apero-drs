@@ -15,9 +15,9 @@ Import Rules: Cannot use anything other than standard python 3 packages
 import argparse
 import importlib
 import os
-from pathlib import Path
 import signal
 import sys
+from pathlib import Path
 from typing import Any, List, Tuple, Union
 
 import setup_lang

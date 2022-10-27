@@ -9,33 +9,34 @@ Created on 2019-01-19 at 13:37
 
 @author: cook
 """
-import warnings
-from collections import OrderedDict
 import importlib
-import numpy as np
 import os
-from signal import signal, SIGINT
 import sys
 import traceback
+import warnings
+from collections import OrderedDict
+from signal import signal, SIGINT
 from typing import Any, Dict, List, Tuple, Union
 
+import numpy as np
+
 from apero import lang
+from apero import plotting
 from apero.base import base
-from apero.base import drs_db
 from apero.base import drs_base
-from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
+from apero.base import drs_db
 from apero.core import constants
 from apero.core.core import drs_argument
+from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_database
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
-from apero.core.core import drs_database
 from apero.io import drs_lock
-from apero import plotting
 
 # =============================================================================
 # Define variables

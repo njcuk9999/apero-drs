@@ -9,18 +9,11 @@ Created on 2019-09-16 at 14:07
 
 @author: cook
 """
-import numpy as np
-import os
-import copy
-from collections import OrderedDict
 
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.io import drs_fits
-from apero.io import drs_path
 
 # =============================================================================
 # Define variables

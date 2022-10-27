@@ -9,25 +9,26 @@ Created on 2019-01-19 at 12:02
 
 @author: cook
 """
-from astropy.table import Table
 import argparse
-from collections import OrderedDict
 import copy
-import numpy as np
-from pathlib import Path
 import sys
+from collections import OrderedDict
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
+
+import numpy as np
+from astropy.table import Table
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_argument
 from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
+from apero.core.core import drs_database
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_log, drs_file
-from apero.core.core import drs_argument
-from apero.core.core import drs_database
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 
 # =============================================================================
 # Define variables

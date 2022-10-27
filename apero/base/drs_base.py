@@ -19,15 +19,15 @@ Import rules:
 - only from apero.base.base.py
 
 """
-from hashlib import blake2b
 import os
-import pandas as pd
+from hashlib import blake2b
 from pathlib import Path
-import pkg_resources
 from typing import Any, List, Union
 
-from apero.base import base
+import pandas as pd
+import pkg_resources
 
+from apero.base import base
 
 # =============================================================================
 # Define variables

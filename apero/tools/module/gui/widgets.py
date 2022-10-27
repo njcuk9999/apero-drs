@@ -16,11 +16,8 @@ if sys.version_info.major > 2:
     import tkinter as tk
     from tkinter import ttk
     from tkinter import filedialog
-    from tkinter import messagebox
-    import tkinter.font as tkFont
 else:
     import Tkinter as tk
-    import tkFont
     import ttk
     import tkFileFialog as filedialog
 

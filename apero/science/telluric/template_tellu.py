@@ -7,11 +7,12 @@ Created on 2020-07-2020-07-15 17:58
 
 @author: cook
 """
-from astropy.table import Table
-from collections import OrderedDict
-import numpy as np
 import os
+from collections import OrderedDict
 from typing import Tuple, Union
+
+import numpy as np
+from astropy.table import Table
 
 from apero import lang
 from apero.base import base
@@ -19,12 +20,12 @@ from apero.base import drs_base
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_database
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.io import drs_table
-from apero.science.calib import wave
 from apero.science import extract
+from apero.science.calib import wave
 from apero.science.telluric import gen_tellu
 
 # =============================================================================

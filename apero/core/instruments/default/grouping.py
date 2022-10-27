@@ -21,18 +21,18 @@ Created on 2020-12-2020-12-01 11:28
 
 @author: cook
 """
-from astropy.table import Table
-from collections import OrderedDict
 import itertools
-import numpy as np
+from collections import OrderedDict
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
+import numpy as np
+from astropy.table import Table
+
 from apero.base import base
-from apero.core.core import drs_exceptions
 from apero.core.core import drs_argument
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
 from apero.tools.module.processing import drs_grouping_functions as drsgf
-
 
 # =============================================================================
 # Define variables

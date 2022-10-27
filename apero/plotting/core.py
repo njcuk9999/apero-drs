@@ -7,14 +7,15 @@ Created on 2019-01-19 at 13:45
 
 @author: cook
 """
-from astropy.table import Table
-from collections import OrderedDict
-from collections.abc import Iterable
-import matplotlib
-import numpy as np
 import os
 import sys
+from collections import OrderedDict
+from collections.abc import Iterable
 from typing import Any, Generator, List, Tuple, Union
+
+import matplotlib
+import numpy as np
+from astropy.table import Table
 
 from apero import lang
 from apero.base import base
@@ -23,9 +24,9 @@ from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.io import drs_path
-from apero.plotting import plot_functions
-from apero.plotting import latex
 from apero.plotting import html
+from apero.plotting import latex
+from apero.plotting import plot_functions
 
 # =============================================================================
 # Define variables

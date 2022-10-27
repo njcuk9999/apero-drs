@@ -18,7 +18,6 @@ from apero.core.core import drs_log
 from apero.science.calib import localisation
 from apero.science.calib import shape
 
-
 # =============================================================================
 # Define variables
 # =============================================================================

@@ -9,8 +9,9 @@ Created on 2019-05-30 at 10:47
 
 @author: cook
 """
-import numpy as np
 import datetime
+
+import numpy as np
 
 from apero.base import base
 

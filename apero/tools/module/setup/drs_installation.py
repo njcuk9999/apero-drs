@@ -9,20 +9,21 @@ Created on 2019-11-09 10:44
 Version 0.0.1
 """
 import argparse
-from collections import OrderedDict
 import importlib
-import numpy as np
 import os
-from pathlib import Path
 import string
 import sys
+from collections import OrderedDict
+from pathlib import Path
 from typing import Any, List, Dict, Tuple, Union
+
+import numpy as np
 
 from apero import lang
 from apero.base import base
-from apero.core.core import drs_misc
-from apero.core.constants import path_definitions as pathdef
 from apero.core import constants
+from apero.core.constants import path_definitions as pathdef
+from apero.core.core import drs_misc
 
 # =============================================================================
 # Define variables

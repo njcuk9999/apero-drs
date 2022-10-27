@@ -14,13 +14,12 @@ import os
 
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.science import extract
 from apero.tools.module.testing import drs_dev
-
 
 # =============================================================================
 # Define variables

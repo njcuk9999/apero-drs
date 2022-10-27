@@ -8,13 +8,11 @@ Created on 2019-03-05 16:37
 @author: ncook
 Version 0.0.1
 """
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_recipe
-from apero import lang
-from apero.io import drs_fits
-
 
 # =============================================================================
 # Define variables

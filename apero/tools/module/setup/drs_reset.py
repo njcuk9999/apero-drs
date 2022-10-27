@@ -9,22 +9,20 @@ Created on 2019-05-07 at 15:22
 
 @author: cook
 """
-import glob
 import os
 import shutil
 import sys
 from typing import List, Union
 
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.constants import path_definitions
-from apero.core.core import drs_log
 from apero.core.core import drs_database
-from apero.core.instruments.default import pseudo_const
-from apero import lang
+from apero.core.core import drs_log
+from apero.core.utils import drs_data
 from apero.io import drs_lock
 from apero.io import drs_path
-from apero.core.utils import drs_data
 from apero.tools.module.database import manage_databases
 
 # =============================================================================

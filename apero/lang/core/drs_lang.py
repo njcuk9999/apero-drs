@@ -15,11 +15,12 @@ only from:
     - apero.base.drs_db
 
 """
-import numpy as np
 import os
-import pandas as pd
 import shutil
 from typing import Any, Dict, List, Union
+
+import numpy as np
+import pandas as pd
 
 from apero.base import base
 from apero.base import drs_base

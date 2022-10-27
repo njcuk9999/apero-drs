@@ -8,9 +8,9 @@ Created on 2019-03-05 16:35
 @author: ncook
 Version 0.0.1
 """
-from apero.science.preprocessing import identification
 from apero.science.preprocessing import detector
 from apero.science.preprocessing import gen_pp
+from apero.science.preprocessing import identification
 
 __all__ = []
 

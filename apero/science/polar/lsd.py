@@ -9,18 +9,19 @@ Created on 2019-10-25 at 13:25
 
 @author: cook
 """
-from astropy import constants as cc
-from astropy.table import Table
-from astropy import units as uu
-import numpy as np
 import os
-from scipy.optimize import curve_fit
 from typing import Tuple
 
-from apero.base import base
-from apero.core import math as mp
+import numpy as np
+from astropy import constants as cc
+from astropy import units as uu
+from astropy.table import Table
+from scipy.optimize import curve_fit
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core import math as mp
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_data
 from apero.core.utils import drs_recipe

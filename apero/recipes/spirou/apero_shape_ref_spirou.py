@@ -9,23 +9,24 @@ Created on 2019-03-23 at 13:01
 
 @author: cook
 """
-import numpy as np
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from apero.base import base
+import numpy as np
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_database
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.io import drs_table
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
-from apero.science.calib import wave
 from apero.science.calib import shape
+from apero.science.calib import wave
 
 # =============================================================================
 # Define variables

@@ -9,17 +9,18 @@ Created on 2019-03-23 at 13:01
 
 @author: cook
 """
-import numpy as np
 from typing import Any, Dict, Tuple, Union
 
-from apero.base import base
+import numpy as np
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-from apero.core.core import drs_database
 from apero.science.calib import dark
 
 # =============================================================================

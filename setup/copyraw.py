@@ -14,10 +14,9 @@ Import Rules: Cannot use anything other than standard python 3 packages
 """
 import argparse
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Union
-
 
 # =============================================================================
 # Define variables

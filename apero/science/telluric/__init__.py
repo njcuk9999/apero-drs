@@ -9,9 +9,9 @@ Created on 2019-01-17 at 14:31
 
 @author: cook
 """
+from apero.science.telluric import fit_tellu
 from apero.science.telluric import gen_tellu
 from apero.science.telluric import mk_tellu
-from apero.science.telluric import fit_tellu
 from apero.science.telluric import template_tellu
 
 __all__ = ['calculate_tellu_res_absorption', 'get_tellu_exclude_list',

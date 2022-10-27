@@ -9,9 +9,10 @@ Created on 2019-05-15 at 12:24
 
 @author: cook
 """
-import numpy as np
-from typing import Any, Union
 import warnings
+from typing import Any, Union
+
+import numpy as np
 
 from apero.base import base
 from apero.core.math import fast

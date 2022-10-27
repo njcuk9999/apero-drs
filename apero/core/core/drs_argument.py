@@ -23,25 +23,26 @@ only from
 
 """
 import argparse
-from collections import OrderedDict
 import copy
 import glob
-import numpy as np
 import os
 import sys
+from collections import OrderedDict
 from typing import Any, IO, Dict, List, Tuple, Type, Union
+
+import numpy as np
 
 from apero import lang
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
+from apero.core.core import drs_base_classes
+from apero.core.core import drs_database
 from apero.core.core import drs_exceptions
+from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core.core import drs_log
-from apero.core.core import drs_file
-from apero.core.core import drs_database
-from apero.core.core import drs_base_classes
 from apero.io import drs_fits
 
 # =============================================================================

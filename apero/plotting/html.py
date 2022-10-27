@@ -9,12 +9,13 @@ Created on 2019-10-08 at 10:04
 
 @author: cook
 """
-from astropy.table import Table
 import glob
-import numpy as np
 import os
 import shutil
 from typing import Dict, List, Union
+
+import numpy as np
+from astropy.table import Table
 
 from apero.base import base
 from apero.core import constants

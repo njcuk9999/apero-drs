@@ -7,15 +7,16 @@ Created on 2019-05-15 at 12:24
 
 @author: cook
 """
+import warnings
+from typing import Any, Tuple, Union
+
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
-from typing import Any, Tuple, Union
-import warnings
 
 from apero.base import base
-from apero.core.math import gen_math
 from apero.core.math import fast
+from apero.core.math import gen_math
 
 # =============================================================================
 # Define variables

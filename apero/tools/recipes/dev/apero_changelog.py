@@ -13,13 +13,12 @@ import os
 import shutil
 
 import apero
-from apero.base import base
-from apero.core.core import drs_misc
 from apero import lang
+from apero.base import base
 from apero.core.core import drs_log
+from apero.core.core import drs_misc
 from apero.core.utils import drs_startup
 from apero.tools.module.documentation import drs_changelog
-
 
 # =============================================================================
 # Define variables

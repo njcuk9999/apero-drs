@@ -8,13 +8,14 @@ Created on 2019-05-15 at 12:24
 @author: cook
 """
 import copy
+from typing import Tuple, Union
+
 import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.ndimage.morphology import binary_dilation
 from scipy.special import erf, erfinv
-from typing import Tuple, Union
 
 from apero.base import base
 from apero.core.core.drs_exceptions import DrsCodedException

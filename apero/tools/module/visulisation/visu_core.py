@@ -9,17 +9,17 @@ Created on 2022-02-22
 
 @author: cook
 """
-import numpy as np
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from apero.base import base
+import numpy as np
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
-from apero.core.instruments.default import pseudo_const
-from apero.core.core import drs_database
 from apero.io import drs_fits
 
 # =============================================================================

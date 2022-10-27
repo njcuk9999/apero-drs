@@ -18,30 +18,30 @@ only from
 - apero.core.math.*
 - apero.io.drs_fits
 """
-from astropy.table import Table
-from astropy.io.ascii.core import InconsistentTableError
-import numpy as np
 import os
-import pandas as pd
-from pandasql import sqldf
-from pathlib import Path
-import requests
 import shutil
 import time
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import warnings
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
+
+import numpy as np
+import pandas as pd
+import requests
+from astropy.io.ascii.core import InconsistentTableError
+from astropy.table import Table
+from pandasql import sqldf
 
 from apero import lang
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
 from apero.core.core import drs_exceptions
-from apero.core.core import drs_text
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
-
 
 # =============================================================================
 # Define variables

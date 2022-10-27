@@ -9,16 +9,17 @@ Created on 2019-07-26 at 09:39
 
 @author: cook
 """
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 
 from apero import lang
 from apero.base import base
 from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
-from apero.tools.module.database import manage_databases
 from apero.tools.module.database import database_update
+from apero.tools.module.database import manage_databases
 from apero.tools.module.database import manage_db_gui
 
 # =============================================================================

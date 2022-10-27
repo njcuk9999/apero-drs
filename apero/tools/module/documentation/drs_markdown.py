@@ -9,10 +9,11 @@ Created on 2021-06-29
 
 @author: cook
 """
-from astropy.table import Table
-import numpy as np
-import os
 from typing import Optional, List, Union
+
+import numpy as np
+from astropy.table import Table
+
 
 # =============================================================================
 # Define variables

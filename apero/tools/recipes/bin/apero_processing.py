@@ -14,11 +14,11 @@ import traceback
 
 from apero import lang
 from apero.base import base
-from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.tools.module.processing import drs_processing
 from apero.tools.module.database import manage_databases
+from apero.tools.module.processing import drs_processing
 
 # =============================================================================
 # Define variables

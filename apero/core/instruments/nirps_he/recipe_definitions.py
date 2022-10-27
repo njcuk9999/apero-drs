@@ -7,12 +7,12 @@ Created on 2020-10-31 at 18:06
 
 @author: cook
 """
+from apero import lang
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
-from apero.core.utils import drs_recipe
-from apero import lang
-from apero.core.instruments.nirps_he import file_definitions as files
 from apero.core.instruments.default import grouping
+from apero.core.instruments.nirps_he import file_definitions as files
+from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
