@@ -947,8 +947,10 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
         sep = '":"'
         setup_infiles = ['{0}.bash.setup'.format(package.lower())]
         setup_infiles += ['{0}.sh.setup'.format(package.lower())]
+        setup_infiles += ['{0}.zsh.setup'.format(package.lower())]
         setup_outfiles = ['{0}.bash.setup'.format(pname.lower())]
         setup_outfiles += ['{0}.sh.setup'.format(pname.lower())]
+        setup_outfiles += ['{0}.zsh.setup'.format(pname.lower())]
     # else generate error message
     else:
         # print error message: Error APERO does not support OS
