@@ -7,26 +7,26 @@ Created on 2022-01-26
 
 @author: cook
 """
+import os
+import warnings
+from typing import Dict, Optional, Tuple
+
 import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
-import os
-from typing import Dict, Optional, Tuple
-import warnings
 
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero import lang
+from apero.core.core import drs_database
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
-from apero.core.core import drs_database
-from apero.science.calib import wave
-from apero.science.calib import gen_calib
 from apero.science.calib import flat_blaze
+from apero.science.calib import gen_calib
+from apero.science.calib import wave
 from apero.science.extract import gen_ext
-
 
 # =============================================================================
 # Define variables

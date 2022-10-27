@@ -11,12 +11,13 @@ Created on 2019-11-26 at 15:54
 """
 
 import argparse
-import numpy as np
-from pathlib import Path
 import shutil
 import signal
 import sys
+from pathlib import Path
 from typing import Any
+
+import numpy as np
 
 from apero.base import base
 from apero.core import constants

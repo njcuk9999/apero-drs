@@ -7,22 +7,22 @@ Created on 2019-05-13 at 12:40
 
 @author: cook
 """
-import numpy as np
 import warnings
-from scipy.signal import convolve2d
-from scipy.ndimage import map_coordinates as mapc
-from scipy.ndimage import zoom
 from typing import List, Optional
 
-from apero.base import base
+import numpy as np
+from scipy.ndimage import map_coordinates as mapc
+from scipy.ndimage import zoom
+from scipy.signal import convolve2d
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.io import drs_fits
-
 
 # =============================================================================
 # Define variables

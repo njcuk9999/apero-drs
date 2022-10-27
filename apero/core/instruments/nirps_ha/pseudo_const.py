@@ -7,18 +7,19 @@ Created on 2019-01-18 at 14:44
 
 @author: cook
 """
-import numpy as np
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Union
 
+import numpy as np
+
 from apero.base import base
 from apero.base import drs_db
+from apero.core import constants
 from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core import constants
 from apero.core.instruments.default import pseudo_const
-from apero.core.core import drs_exceptions
 
 # =============================================================================
 # Define variables

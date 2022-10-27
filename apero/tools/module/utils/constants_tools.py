@@ -7,21 +7,21 @@ Created on 2021-01-2021-01-13 15:56
 
 @author: cook
 """
-import numpy as np
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Tuple, Union
 
-from apero.base import base
+import numpy as np
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core.constants import constant_functions as cf
 from apero.core.core import drs_log
-from apero.core.core import drs_text
 from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.tools.module.setup import drs_installation as install
-
 
 # =============================================================================
 # Define variables

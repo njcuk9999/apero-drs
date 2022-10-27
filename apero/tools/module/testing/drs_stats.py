@@ -9,23 +9,24 @@ Created on 2021-12-06
 
 @author: cook
 """
-from astropy.table import Table
 import glob
-import numpy as np
 import os
-from pandasql import sqldf
-import pandas as pd
 import re
 import string
-from typing import Any, Dict, List, Optional, Tuple, Union
 import warnings
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+import pandas as pd
+from astropy.table import Table
+from pandasql import sqldf
 
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_log
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
 from apero.core.utils import drs_recipe

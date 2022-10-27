@@ -7,19 +7,20 @@ Created on 2019-01-18 at 14:44
 
 @author: cook
 """
-from astropy.table import Table
-import numpy as np
+import os
 import string
 import sys
-import os
 from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+from astropy.table import Table
 
 from apero.base import base
 from apero.base import drs_db
-from apero.core.core import drs_text
 from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_misc
 from apero.core.core import drs_exceptions
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 
 # =============================================================================
 # Define variables

@@ -9,25 +9,26 @@ Created on 2019-08-12 at 17:16
 
 @author: cook
 """
+import os
+import warnings
+from typing import List, Optional, Tuple, Union
+
+import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
 from astropy.table import Table
-import numpy as np
-import os
 from scipy.optimize import curve_fit
-from typing import List, Optional, Tuple, Union
-import warnings
 
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero import lang
-from apero.core.core import drs_log
+from apero.core.core import drs_database
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_data
 from apero.core.utils import drs_utils
-from apero.core.core import drs_database
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
 

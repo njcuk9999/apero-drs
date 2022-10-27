@@ -7,14 +7,13 @@ Created on 2021-01-2021-01-13 14:42
 
 @author: cook
 """
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_dev
 from apero.tools.module.utils import constants_tools
-
 
 # =============================================================================
 # Define variables

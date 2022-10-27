@@ -7,8 +7,9 @@ Created on 2019-01-17 at 15:24
 
 @author: cook
 """
-from setuptools import setup
 import sys
+
+from setuptools import setup
 
 # =============================================================================
 # Define variables

@@ -9,13 +9,12 @@ Created on 2022-06-03
 
 @author: cook
 """
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.tools.module.processing import drs_trigger
-
 
 # =============================================================================
 # Define variables

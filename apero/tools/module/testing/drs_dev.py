@@ -12,9 +12,9 @@ Created on 2020-02-04 at 13:37
 import sys
 
 from apero.base import base
-from apero.core.core import drs_misc
 from apero.core import constants
 from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_misc
 from apero.core.utils import drs_recipe
 
 # =============================================================================

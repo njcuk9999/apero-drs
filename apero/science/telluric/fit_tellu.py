@@ -7,26 +7,25 @@ Created on 2020-07-2020-07-15 17:55
 
 @author: cook
 """
-import numpy as np
 import os
 import time
 import warnings
 from typing import Optional
 
+import numpy as np
+
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero import lang
 from apero.core.core import drs_log, drs_file
+from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 from apero.io import drs_path
-from apero.io import drs_table
-from apero.core.utils import drs_recipe
+from apero.science import extract
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
-from apero.science import extract
 from apero.science.telluric import gen_tellu
-
 
 # =============================================================================
 # Define variables

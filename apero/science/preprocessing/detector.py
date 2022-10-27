@@ -8,21 +8,22 @@ Created on 2019-03-05 16:37
 @author: ncook
 Version 0.0.1
 """
-import numpy as np
-from pathlib import Path
-from scipy import ndimage
-from typing import Tuple, Union
 import warnings
+from pathlib import Path
+from typing import Tuple, Union
+
+import numpy as np
+from scipy import ndimage
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.core import drs_database
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
-from apero.core.core import drs_file
 from apero.core.utils import drs_data
-from apero.core.core import drs_database
 from apero.io import drs_fits
 
 # =============================================================================

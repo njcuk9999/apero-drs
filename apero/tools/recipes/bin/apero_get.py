@@ -7,15 +7,11 @@ Created on 2021-06-11
 
 @author: cook
 """
-import numpy as np
 import os
-import shutil
-from typing import Dict, List, Tuple
 
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
-from apero.core.core import drs_database
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.tools.module.listing import drs_get

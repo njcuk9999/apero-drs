@@ -9,14 +9,15 @@ Created on 2019-10-03 at 10:51
 
 @author: cook
 """
+import copy
+import os
+import warnings
+from collections.abc import Iterable
+from typing import Any, Dict, Generator, Tuple, Union
+
+import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
-from collections.abc import Iterable
-import copy
-import numpy as np
-import os
-from typing import Any, Dict, Generator, Tuple, Union
-import warnings
 
 from apero.base import base
 from apero.core import constants

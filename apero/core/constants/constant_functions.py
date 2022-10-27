@@ -9,20 +9,21 @@ Created on 2019-01-17 at 14:09
 
 @author: cook
 """
-from astropy import units as uu
-import numpy as np
 import os
-from pathlib import Path
 import sys
 import traceback
+from pathlib import Path
 from typing import Any, List, Tuple, Union
 
+import numpy as np
+from astropy import units as uu
+
+from apero import lang
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero import lang
 
 # =============================================================================
 # Define variables

@@ -16,20 +16,21 @@ Import rules:
     do not import from core.core.drs_argument
     do not import from core.core.drs_database
 """
-import numpy as np
-from astropy import units as uu
 import os
 import shutil
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
+import numpy as np
+from astropy import units as uu
+
+from apero import lang
 from apero.base import base
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_misc
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
-from apero import lang
+from apero.core.core import drs_misc
 
 # =============================================================================
 # Define variables

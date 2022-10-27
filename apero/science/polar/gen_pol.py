@@ -9,30 +9,30 @@ Created on 2019-10-25 at 13:25
 
 @author: cook
 """
-from astropy.table import Table
-from astropy import units as uu
-import numpy as np
-from scipy import interpolate
-from scipy import stats
-from scipy import signal
-from scipy.interpolate import UnivariateSpline
-from typing import Any, List, Tuple, Union
 import warnings
+from typing import Any, List, Tuple, Union
 
-from apero.base import base
-from apero.core import math as mp
+import numpy as np
+from astropy import units as uu
+from astropy.table import Table
+from scipy import interpolate
+from scipy import signal
+from scipy import stats
+from scipy.interpolate import UnivariateSpline
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core import math as mp
 from apero.core.core import drs_database
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
+from apero.io import drs_fits
+from apero.science import extract
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
-from apero.science import extract
-from apero.io import drs_fits
-
 
 # =============================================================================
 # Define variables

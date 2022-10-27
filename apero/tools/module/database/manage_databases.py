@@ -7,20 +7,20 @@ Created on 2020-08-2020-08-18 17:13
 
 @author: cook
 """
-from astropy.table import Table, vstack, MaskedColumn
-import numpy as np
 import os
-import pandas as pd
 from typing import Dict, List, Union
 
+import numpy as np
+import pandas as pd
+from astropy.table import Table, vstack, MaskedColumn
+
+from apero import lang
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
-from apero.core.instruments.default import pseudo_const
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_text
-from apero import lang
 
 # =============================================================================
 # Define variables

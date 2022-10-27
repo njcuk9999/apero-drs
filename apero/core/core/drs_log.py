@@ -21,11 +21,12 @@ only from
 
 Version 0.0.1
 """
-import numpy as np
 import os
 import sys
 from time import sleep
 from typing import Any, List, Optional, Tuple, Union
+
+import numpy as np
 
 from apero import lang
 from apero.base import base

@@ -9,7 +9,6 @@ Created on 2022-02-08
 
 @author: cook
 """
-import os
 
 from apero.base import base
 from apero.core import constants

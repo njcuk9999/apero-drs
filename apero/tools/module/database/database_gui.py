@@ -7,23 +7,23 @@ Created on 2020-08-2020-08-18 11:25
 
 @author: cook
 """
-import numpy as np
 import os
+import shutil
+import tkinter as tk
+from pathlib import Path
+from tkinter import messagebox
+
+import numpy as np
 import pandas as pd
 from pandastable import Table, TableModel, applyStyle
 from pandastable import dialogs
-from pathlib import Path
-import shutil
-import tkinter as tk
-from tkinter import messagebox
 
 from apero.base import base
 from apero.base import drs_db
+from apero.core import constants
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core import constants
 from apero.tools.module.database import manage_databases
-
 
 # =============================================================================
 # Define variables

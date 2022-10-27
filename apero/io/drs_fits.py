@@ -18,22 +18,23 @@ Import rules:
     do not import from core.io.drs_image
     do not import from core.core.drs_database
 """
+import os
+import time
+import traceback
+import warnings
+from copy import deepcopy
+from pathlib import Path
+from typing import Any, List, Optional, Tuple, Union
+
 import numpy as np
 from astropy.io import fits
 from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
-from copy import deepcopy
-import os
-from pathlib import Path
-import warnings
-import time
-import traceback
-from typing import Any, List, Optional, Tuple, Union
 
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
-from apero import lang
 
 # =============================================================================
 # Define variables

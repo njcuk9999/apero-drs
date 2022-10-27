@@ -9,16 +9,15 @@ Created on 2020-05-05
 
 @author: cook
 """
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.core.core import drs_database
-from apero.science.calib import wave
 from apero.science import extract
+from apero.science.calib import wave
 from apero.tools.module.testing import drs_dev
-
 
 # =============================================================================
 # Define variables

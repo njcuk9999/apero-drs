@@ -15,14 +15,15 @@ only from
 - apero.core.core.drs_break
 - apero.core.core.drs_exceptions
 """
-import numpy as np
 import os
-from pathlib import Path
-import psutil
 import random
 import string
 import time
+from pathlib import Path
 from typing import Any, Dict, List, Union, Tuple
+
+import numpy as np
+import psutil
 
 from apero import lang
 from apero.base import base

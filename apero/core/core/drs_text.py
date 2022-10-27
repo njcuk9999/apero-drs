@@ -14,16 +14,16 @@ only from:
 - apero.lang.*
 - apero.core.core.drs_exceptions
 """
-import numpy as np
+import warnings
 from pathlib import Path
 from typing import Any, Union, List
-import warnings
+
+import numpy as np
 
 from apero import lang
 from apero.base import base
 from apero.base import drs_base
 from apero.core.core import drs_exceptions
-
 
 # =============================================================================
 # Define variables

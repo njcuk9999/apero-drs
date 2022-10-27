@@ -16,9 +16,8 @@ from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-
-from apero.tools.module.database import manage_databases
 from apero.tools.module.database import database_gui
+from apero.tools.module.database import manage_databases
 
 # =============================================================================
 # Define variables

@@ -9,19 +9,20 @@ Created on 2020-10-2020-10-05 17:43
 
 """
 from collections import OrderedDict
-import numpy as np
-import pandas as pd
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
+import pandas as pd
+
 from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_database
 from apero.core.core import drs_exceptions
+from apero.core.core import drs_log
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core.core import drs_log
-from apero.core import constants
-from apero.core.core import drs_database
 from apero.io import drs_fits
 
 # =============================================================================

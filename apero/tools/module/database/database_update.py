@@ -9,30 +9,25 @@ Created on 2021-05-10
 
 @author: cook
 """
-from astropy.table import Table, vstack
-from astropy.io import fits
-import numpy as np
-import os
 import glob
+import os
 from pathlib import Path
-import shutil
 from typing import Any, List, Tuple
 
-from apero.base import base
+import numpy as np
+from astropy.io import fits
+from astropy.table import Table
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_database
-from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
-from apero.io import drs_fits
 from apero.io import drs_table
 from apero.tools.module.database import manage_databases
-from apero.core.instruments.default import pseudo_const
-from apero.science import preprocessing as prep
-
 
 # =============================================================================
 # Define variables

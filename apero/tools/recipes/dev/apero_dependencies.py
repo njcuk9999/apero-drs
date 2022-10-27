@@ -9,15 +9,15 @@ Created on 2019-11-27 at 13:58
 
 @author: cook
 """
-import numpy as np
 import os
 from collections import OrderedDict
 
-from apero.base import base
-from apero.core.core import drs_misc
-from apero.core.core import drs_log
-from apero.core.utils import drs_startup
+import numpy as np
 
+from apero.base import base
+from apero.core.core import drs_log
+from apero.core.core import drs_misc
+from apero.core.utils import drs_startup
 
 # =============================================================================
 # Define variables

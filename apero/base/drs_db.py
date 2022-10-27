@@ -16,18 +16,18 @@ only from:
     - apero.base.drs_base
 
 """
-import warnings
-
-import pandas
-from astropy.table import Table
-from contextlib import closing
-import numpy as np
 import os
-import pandas as pd
-from pathlib import Path
 import sqlite3
 import time
+import warnings
+from contextlib import closing
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
+
+import numpy as np
+import pandas
+import pandas as pd
+from astropy.table import Table
 
 from apero.base import base
 from apero.base import drs_base

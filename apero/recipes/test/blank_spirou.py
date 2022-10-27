@@ -18,7 +18,6 @@ from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_dev
 
-
 # =============================================================================
 # Define variables
 # =============================================================================

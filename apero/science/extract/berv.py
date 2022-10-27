@@ -7,25 +7,25 @@ Created on 2020-10-2020-10-29 15:40
 
 @author: cook
 """
+import os
+import warnings
+from typing import List, Tuple, Union
+
+import numpy as np
 from astropy import units as uu
 from astropy.coordinates import SkyCoord, Distance
-import numpy as np
-import os
-from typing import List, Tuple, Union
-import warnings
 
-from apero.base import base
-from apero.core.core import drs_exceptions
 from apero import lang
+from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
-from apero.core.core import drs_file
 from apero.core import math as mp
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.io import drs_fits
 from apero.io import drs_lock
 from apero.io import drs_path
-from apero.io import drs_fits
 from apero.science.extract import bervest
-
 
 # =============================================================================
 # Define variables

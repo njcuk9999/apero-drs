@@ -13,11 +13,10 @@ from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
-from apero.core.core import drs_database
 from apero.core.utils import drs_startup
+from apero.tools.module.database import drs_astrometrics
 from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_installation
-from apero.tools.module.database import drs_astrometrics
 
 # =============================================================================
 # Define variables

@@ -9,9 +9,10 @@ Created on 2019-09-18 at 10:53
 
 @author: cook
 """
+from typing import Tuple, Union
+
 import numpy as np
 from scipy import signal
-from typing import Tuple, Union
 
 from apero.base import base
 

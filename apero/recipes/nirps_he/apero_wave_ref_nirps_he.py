@@ -9,25 +9,26 @@ Created on 2019-08-16 at 09:23
 
 @author: cook
 """
-from astropy import constants as cc
-from astropy import units as uu
-import numpy as np
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from apero.base import base
+import numpy as np
+from astropy import constants as cc
+from astropy import units as uu
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
-from apero.core.core import drs_database
 from apero.io import drs_image
-from apero.science.calib import gen_calib
+from apero.science import velocity
 from apero.science.calib import flat_blaze
+from apero.science.calib import gen_calib
 from apero.science.calib import wave
 from apero.science.extract import other as extractother
-from apero.science import velocity
 
 # =============================================================================
 # Define variables

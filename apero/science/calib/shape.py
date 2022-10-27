@@ -9,31 +9,30 @@ Created on 2019-06-27 at 10:13
 
 @author: cook
 """
-import numpy as np
 import os
-from scipy.ndimage import filters
-from scipy.ndimage import map_coordinates as mapc
-from scipy.optimize import curve_fit
-from scipy.signal import convolve2d
-from scipy.stats import stats
 import warnings
 
+import numpy as np
+from scipy.ndimage import filters
+from scipy.ndimage import map_coordinates as mapc
+from scipy.signal import convolve2d
+from scipy.stats import stats
+
+from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero import lang
 from apero.core import math as mp
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_database
 from apero.core.utils import drs_data
 from apero.core.utils import drs_utils
-from apero.io import drs_path
 from apero.io import drs_fits
 from apero.io import drs_image
+from apero.io import drs_path
 from apero.io import drs_table
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
-
 
 # =============================================================================
 # Define variables

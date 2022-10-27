@@ -8,20 +8,20 @@ Created on 2019-02-13 11:47
 @author: ncook
 Version 0.0.1
 """
-import numpy as np
 import os
+import re
 import tkinter as tk
 from tkinter import font
 from tkinter import messagebox
-import re
+
+import numpy as np
 
 from apero.base import base
 from apero.base import drs_db
-from apero.core.core import drs_misc
 from apero.core.core import drs_log
+from apero.core.core import drs_misc
 from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_dev
-
 
 # =============================================================================
 # Define variables

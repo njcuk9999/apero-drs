@@ -10,15 +10,15 @@ Created on 2021-11-08
 @author: cook
 """
 import os
-from typing import Any, Dict, List, Optional, Union
 from collections import OrderedDict
+from typing import Any, Dict, List, Optional, Union
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
 from apero.core.core import drs_database
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.io import drs_path

@@ -8,24 +8,25 @@ Created on 2019-11-02 10:09
 @author: ncook
 Version 0.0.1
 """
-from astropy.table import Table
-import numpy as np
 import os
 import shutil
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
-from apero.base import base
+import numpy as np
+from astropy.table import Table
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core.core import drs_database
-from apero.core.utils import drs_startup
 from apero.core.utils import drs_recipe
-from apero.tools.recipes.bin import apero_processing
+from apero.core.utils import drs_startup
 from apero.tools.module.processing import drs_processing
+from apero.tools.recipes.bin import apero_processing
 
 # =============================================================================
 # Define variables

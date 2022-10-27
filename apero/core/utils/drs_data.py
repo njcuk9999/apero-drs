@@ -9,22 +9,23 @@ Created on 2019-07-02 at 09:24
 
 @author: cook
 """
-from astropy.table import Table
 import glob
-import numpy as np
 import os
 from pathlib import Path
 from typing import List, Tuple, Type, Union
 
-from apero.base import base
-from apero.core.core import drs_misc
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_text
-from apero.core import constants
+import numpy as np
+from astropy.table import Table
+
 from apero import lang
+from apero.base import base
+from apero.core import constants
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
-from apero.io import drs_path
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.io import drs_fits
+from apero.io import drs_path
 from apero.io import drs_table
 
 # =============================================================================

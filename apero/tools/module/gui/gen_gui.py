@@ -8,20 +8,17 @@ Created on 2019-11-02 10:11
 @author: ncook
 Version 0.0.1
 """
-import sys
-import os
 import tkinter as tk
 from tkinter import Tk as ThemedTk
 from tkinter import ttk
+
 from ttkthemes import ThemedTk
 
 from apero.base import base
-from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.gui import widgets
-
 
 # =============================================================================
 # Define variables

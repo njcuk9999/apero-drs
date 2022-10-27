@@ -9,21 +9,21 @@ Created on 2022-01-26
 
 @author: cook
 """
-import numpy as np
-from typing import Dict, List, Optional, Tuple, Union
 import warnings
+from typing import Dict, List, Optional, Tuple, Union
 
+import numpy as np
+
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero import lang
+from apero.core.core import drs_database
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_data
 from apero.core.utils import drs_recipe
-from apero.core.core import drs_database
-from apero.science.calib import wave
 from apero.science.calib import gen_calib
-
+from apero.science.calib import wave
 
 # =============================================================================
 # Define variables

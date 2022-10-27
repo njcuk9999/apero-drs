@@ -22,34 +22,35 @@ Import rules:
     do not import from core.utils.drs_recipe
     do not import from core.core.drs_argument
 """
-from astropy.table import Table, vstack
+import os
+import textwrap
+import time
+import warnings
 from collections import OrderedDict
 from copy import deepcopy
 from hashlib import blake2b
-import numpy as np
-import os
-import pandas as pd
 from pathlib import Path
-from scipy.stats import pearsonr
-import textwrap
-import time
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
-import warnings
+
+import numpy as np
+import pandas as pd
+from astropy.table import Table, vstack
+from scipy.stats import pearsonr
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.constants import path_definitions as pathdef
+from apero.core.core import drs_base_classes
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
-from apero.core.core import drs_text
 from apero.core.core import drs_misc
-from apero.core.core import drs_base_classes
 from apero.core.core import drs_out_file as out
+from apero.core.core import drs_text
 from apero.io import drs_fits
-from apero.io import drs_table
 from apero.io import drs_path
+from apero.io import drs_table
 
 # =============================================================================
 # Define variables

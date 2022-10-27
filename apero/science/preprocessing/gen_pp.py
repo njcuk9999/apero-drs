@@ -9,24 +9,19 @@ Created on 2019-12-12 at 09:45
 
 @author: cook
 """
-from astropy import units as uu
-from astropy.io.ascii.core import InconsistentTableError
-from astropy.table import Table
+from typing import Any, Tuple, Union
+
 import numpy as np
 import pandas as pd
-import requests
-import time
-from typing import Any, List, Tuple, Union
-import warnings
+from astropy import units as uu
 
+from apero import lang
 from apero.base import base
-from apero.core.core import drs_text
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_database
-from apero.core.instruments.default import pseudo_const
-from apero import lang
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.io import drs_fits
 
 # =============================================================================

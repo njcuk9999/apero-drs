@@ -9,16 +9,17 @@ Created on 2022-02-07
 
 @author: cook
 """
-import numpy as np
 import os
 import shutil
 from typing import Dict, List, Tuple
 
+import numpy as np
+
 from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_log
 from apero.core.core import drs_text
 
 # =============================================================================

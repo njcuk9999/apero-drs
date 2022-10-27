@@ -9,23 +9,23 @@ Created on 2020-01-07 at 14:59
 
 @author: cook
 """
-from astropy.table import Table
-import numpy as np
 import os
 import shutil
 from typing import Any, Dict, List, Tuple, Union
 
+import numpy as np
+from astropy.table import Table
+
 from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_misc
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.core import drs_misc
 from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.io import drs_path
 from apero.tools.module.documentation import drs_markdown
-
 
 # =============================================================================
 # Define variables

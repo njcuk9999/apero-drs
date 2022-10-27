@@ -15,21 +15,21 @@ Import rules:
     do not import from core.core.drs_argument
     do not import from core.core.drs_database
 """
-import numpy as np
-import warnings
 import os
-from scipy.ndimage.morphology import binary_erosion, binary_dilation
+import warnings
 from typing import List, Union, Tuple
 
+import numpy as np
+from scipy.ndimage.morphology import binary_erosion, binary_dilation
+
+from apero import lang
 from apero.base import base
-from apero.core.core import drs_misc
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log
-from apero import lang
+from apero.core.core import drs_misc
 from apero.io import drs_fits
 from apero.io import drs_path
-
 
 # =============================================================================
 # Define variables

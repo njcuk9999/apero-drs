@@ -9,32 +9,32 @@ Created on 2021-12-15
 
 @author: cook
 """
-import numpy as np
-import pandas as pd
-from astroquery.simbad import Simbad
-from astropy.table import Row
 import getpass
-import gspread_pandas as gspd
 import os
 import socket
 import sys
 import time
-from typing import Dict, List, Optional, Tuple, Union
 import warnings
+from typing import Dict, List, Optional, Tuple, Union
+
+import gspread_pandas as gspd
+import numpy as np
+import pandas as pd
+from astropy.table import Row
+from astroquery.simbad import Simbad
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_base_classes
-from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.io import drs_fits
 from apero.science import preprocessing as prep
 from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_installation
-
 
 # =============================================================================
 # Define variables

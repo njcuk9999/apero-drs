@@ -9,18 +9,16 @@ Created on 2021-06-24
 
 @author: cook
 """
-import sys
-import os
 import tkinter as tk
 from tkinter import Tk as ThemedTk
 from tkinter import ttk, messagebox
+
 from ttkthemes import ThemedTk
 
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
 from apero.core.core import drs_log
-from apero.core.utils import drs_startup
 from apero.tools.module.gui import gen_gui
 from apero.tools.module.gui import widgets
 

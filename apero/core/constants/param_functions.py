@@ -11,24 +11,25 @@ Created on 2019-01-17 at 15:24
 
 @author: cook
 """
-from astropy.io import fits
-from astropy.table import Table
-from collections import OrderedDict
 import copy
-import numpy as np
 import os
 import shutil
-from typing import Any, List, Tuple, Type, Union
+from collections import OrderedDict
 from pathlib import Path
+from typing import Any, List, Tuple, Type, Union
 
+import numpy as np
+from astropy.io import fits
+from astropy.table import Table
+
+from apero import lang
 from apero.base import base
 from apero.core import math as mp
+from apero.core.constants import constant_functions
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero import lang
-from apero.core.constants import constant_functions
 from apero.core.instruments.default import pseudo_const
 
 # =============================================================================

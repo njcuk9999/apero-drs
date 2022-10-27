@@ -9,12 +9,11 @@ Created on 2019-01-18 at 15:53
 
 @author: cook
 """
-import numpy as np
 
-from apero.core.math import gen_math
-from apero.core.math import gauss
-from apero.core.math import nan
 from apero.core.math import fast
+from apero.core.math import gauss
+from apero.core.math import gen_math
+from apero.core.math import nan
 
 # =============================================================================
 # Define functions

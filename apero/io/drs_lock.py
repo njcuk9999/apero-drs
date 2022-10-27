@@ -21,15 +21,16 @@ Import rules:
     do not import from core.core.drs_argument
     do not import from core.core.drs_database
 """
-import numpy as np
 import os
 import random
 import time
 from typing import Any, Tuple, Union
 
+import numpy as np
+
+from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero import lang
 from apero.core.core import drs_log
 
 # =============================================================================

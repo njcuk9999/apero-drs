@@ -17,22 +17,23 @@ Import rules:
     do not import from core.core.drs_argument
     do not import from core.core.drs_database
 """
-from astropy.table import Column, Table, vstack
-from astropy.table import TableMergeError
-from astropy.io.registry import get_formats
-from astropy.io import fits
-from collections import OrderedDict
-import numpy as np
 import os
 import shutil
-from typing import List, Tuple, Type, Union
 import warnings
+from collections import OrderedDict
+from typing import List, Tuple, Type, Union
 
-from apero.base import base
-from apero.core.core import drs_text
-from apero.core import constants
+import numpy as np
+from astropy.io import fits
+from astropy.io.registry import get_formats
+from astropy.table import Column, Table, vstack
+from astropy.table import TableMergeError
+
 from apero import lang
+from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.io import drs_lock
 
 # =============================================================================

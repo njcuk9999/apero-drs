@@ -11,12 +11,11 @@ Created on 2019-09-16 at 13:48
 """
 from apero import lang
 from apero.base import base
-from apero.core.core import drs_text
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-
 
 # =============================================================================
 # Define variables
