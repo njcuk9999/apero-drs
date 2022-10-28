@@ -9,6 +9,7 @@ Created on 2019-05-07 at 15:22
 
 @author: cook
 """
+import glob
 import os
 import shutil
 import sys
@@ -388,7 +389,8 @@ def reset_telludb(params: ParamDict, log: bool = True, dtimeout: int = 20):
 def reset_dbdir(params: ParamDict, name: str, db_dir: str,
                 reset_path: str, log: bool = True,
                 empty_first: bool = True,
-                relative_path: Union[str, None] = None):
+                relative_path: Union[str, None] = None,
+                backup: bool = False):
     """
     Resets a database file directory (i.e. calibDB or telluDB)
 
@@ -405,17 +407,22 @@ def reset_dbdir(params: ParamDict, name: str, db_dir: str,
     """
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=[name]))
-    # loop around files and folders in calib_dir
-    if empty_first:
-        remove_all(params, db_dir, log)
-    # remake path
-    if not os.path.exists(db_dir):
-        os.makedirs(db_dir)
     # construct relative path if None given
     if relative_path is None:
         reset_path = os.path.join(params['DRS_DATA_ASSETS'], reset_path)
     else:
         reset_path = os.path.abspath(reset_path)
+    # loop around files and folders in calib_dir
+    if backup:
+        # find files that aren't common between reset_path we backup
+        # then we remove all
+        backup_all_diff(params, reset_path, db_dir)
+
+    elif empty_first:
+        remove_all(params, db_dir, log)
+    # remake path
+    if not os.path.exists(db_dir):
+        os.makedirs(db_dir)
     # copy default data back
     copy_default_db(params, name, db_dir, reset_path)
 
@@ -596,12 +603,15 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
     asset_path = params['DRS_DATA_ASSETS']
     reset_path = os.path.join(params['DRS_RESET_ASSETS_PATH'],
                               params['INSTRUMENT'].lower())
+
     # get reset_path from apero module dir
     abs_reset_path = drs_data.construct_path(params, '', reset_path)
 
     # loop around files and folders in assets dir
+    #   we want to backup any new files the user as copied
+    #   i.e. new masks etc
     reset_dbdir(params, name, asset_path, abs_reset_path, log=log,
-                empty_first=False, relative_path='MODULE')
+                relative_path='MODULE', backup=True)
     # create index databases
     manage_databases.create_fileindex_database(pconst, databases, tries=dtimeout)
     # create log database
@@ -655,6 +665,53 @@ def remove_all(params, path, log=True, skipfiles=None):
         remove_files(params, filename, log, skipfiles)
     # remove dirs
     drs_lock.__remove_empty__(params, path, log=True, remove_head=False)
+
+
+def backup_all_diff(params, old_path, new_path):
+    """
+    Back up all files that are different between paths (based on filename)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param old_path: str, the old path (things to compare to)
+    :param new_path: str, the new path (things to back up)
+    :return:
+    """
+    # get all files in old_path
+    old_basenames = []
+    for root, dirs, files in os.walk(old_path):
+        for filename in files:
+            old_basenames.append(os.path.basename(filename))
+
+    # find all files in new_path that aren't in old path
+    diff_files = []
+    for root, dirs, files in os.walk(new_path):
+        for filename in files:
+            if os.path.basename(filename) not in old_basenames:
+                diff_files.append(os.path.join(root, filename))
+    # construct backup dir
+    backup_dir = os.path.join(new_path, 'backup')
+    # make a backup dir in the new path
+    if not os.path.exists(backup_dir):
+        os.mkdir(os.path.join(backup_dir))
+    # move all files to here
+    for filename in diff_files:
+        # construct new path
+        new_filename = os.path.join(backup_dir, os.path.basename(filename))
+        # move files
+        print(f'Backing up {filename}')
+        shutil.move(filename, new_filename)
+    # now remove everything in new_path other than backup
+    files = glob.glob(new_path +  '/*')
+    # loop around files/directories in new_path
+    for filename in files:
+        # if it is a directory empty it
+        if os.path.isdir(filename):
+            # unless it is the backup directory
+            if filename != backup_dir:
+                remove_all(params, filename)
+        else:
+            print(f'Removing {filename}')
+            os.remove(filename)
 
 
 # noinspection PyBroadException
