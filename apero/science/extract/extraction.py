@@ -311,8 +311,7 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
     # create array of pixel values
     ics = np.arange(dim2)
     # get positions across the orders for each pixel value along the order
-    # jcs = np.polyval(pos[::-1], ics)
-    jcs = np.repeat(np.polyval(pos[::-1], dim2 // 2), dim2)
+    jcs = np.repeat(pos[0], dim2)
     # get the lower bound of the order for each pixel value along the order
     lim1s = jcs - r1
     # get the upper bound of the order for each pixel value along the order

@@ -30,6 +30,8 @@ fit_gauss_with_slope = gauss.fit_gauss_with_slope
 
 fit2dpoly = gen_math.fit2dpoly
 
+fit_cheby = gen_math.fit_cheby
+
 fitgaussian = gauss.fitgaussian
 
 fwhm = gen_math.fwhm
@@ -88,6 +90,8 @@ nanmedian = fast.nanmedian
 
 nanpad = nan.nanpad
 
+nanchebyfit = nan.nanchebyfit
+
 nanpolyfit = nan.nanpolyfit
 
 nanstd = fast.nanstd
@@ -108,6 +112,8 @@ relativistic_waveshift = gen_math.relativistic_waveshift
 
 robust_nanstd = gen_math.robust_nanstd
 
+robust_chebyfit = gen_math.robust_chebyfit
+
 robust_polyfit = gen_math.robust_polyfit
 
 rot8 = gen_math.rot8
@@ -115,6 +121,8 @@ rot8 = gen_math.rot8
 sinc = gen_math.sinc
 
 sigfig = gen_math.sigfig
+
+val_cheby = gen_math.val_cheby
 
 xpand_mask = gen_math.xpand_mask
 

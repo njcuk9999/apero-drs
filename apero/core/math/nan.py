@@ -10,7 +10,7 @@ Created on 2019-05-15 at 12:24
 @author: cook
 """
 import warnings
-from typing import Any, Union
+from typing import Any, List, Union
 
 import numpy as np
 
@@ -74,6 +74,36 @@ def nanpad(oimage: np.ndarray) -> np.ndarray:
     # return padded image
     return image
 
+def nanchebyfit(x: np.ndarray, y: np.ndarray, deg: int,
+               w: Union[np.ndarray, None] = None, domain = List[float], **kwargs) -> Any:
+    """
+    A polyfit that takes into account NaNs in the array (masks them)
+
+    :param x: np.array, the x data
+    :param y: np.array, the y data
+    :param w: None or np.array - the weight vector
+    :param deg: int, the degree of the polynomial fit
+    :param kwargs: passed to np.polyfit
+
+    :return: same as np.polyfit
+    """
+    # set function name
+    # _ = display_func('nanpolyfit', __NAME__)
+    # check if there is a weight input in kwargs
+    if w is not None:
+        # find the NaNs in x, y, w
+        nanmask = np.isfinite(y) & np.isfinite(x) & np.isfinite(w)
+        # mask the weight in kwargs
+        w = w[nanmask]
+    else:
+        # find the NaNs in x and y
+        nanmask = np.isfinite(y) & np.isfinite(x)
+
+    domain_cheby = 2 * (x - domain[0]) / (domain[1] - domain[0]) - 1
+    fit = np.polynomial.chebyshev.chebfit(domain_cheby[nanmask], y[nanmask],
+                                          deg, w = w)
+    # return polyfit without the nans
+    return fit
 
 def nanpolyfit(x: np.ndarray, y: np.ndarray, deg: int,
                w: Union[np.ndarray, None] = None, **kwargs) -> Any:

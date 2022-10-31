@@ -316,11 +316,17 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
         #     array. We'll return the proper fit at the end, but for all
         #     intermediate steps, the fit assumes that x = 0 is the *center*
         #     of the image, not it's border.
-        cent_fit = np.polyfit(xpos - nbxpix / 2, ypos, cent_order_fit)
+        #cent_fit = np.polyfit(xpos - nbxpix / 2, ypos, cent_order_fit)
+        cent_fit = mp.fit_cheby(xpos,ypos,cent_order_fit,
+                                      domain = [0,image.shape[1]])
+
+
         # save fit to all fits
         all_fits[order_num] = cent_fit
         # position of the order at the center of the image
-        order_centers[order_num] = np.polyval(cent_fit, 0)
+        #order_centers[order_num] = np.polyval(cent_fit, 0)
+        # term 0 of a Cheby polynomial is midpoint
+        order_centers[order_num] = cent_fit[0]
     # -------------------------------------------------------------------------
     # keep only orders that have a center within the allowed y range
     keep = (order_centers > ydet_min) & (order_centers < ydet_max)
@@ -345,6 +351,9 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     #    other orders
     if fiber_doublets:
         index = np.arange(len(order_centers))
+        # ok as a polyfit, it's just the position of order centers along the
+        # y axis of the array. This is used to ID orders that have problematic
+        # gaps.
         cent_fit = np.polyfit(index, order_centers, 5)
         residuals = order_centers - np.polyval(cent_fit, index)
         # doublet fibers have a parity
@@ -364,6 +373,8 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # find the gap between consecutive orders and use this to confirm the
     #    numbering
     orderdiff = order_centers[1:] - order_centers[:-1]
+    # same as above, the polyfit is used to identify orders that do not
+    # follo the right stepping expected from cross-dispersion.
     fit_gap, gapmask = mp.robust_polyfit(order_centers[1:], orderdiff, 3, 5)
     # -------------------------------------------------------------------------
     recipe.plot('LOC_GAP_ORDERS', centers=order_centers, mask=gapmask,
@@ -403,13 +414,13 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # force continuity between the localisation parameters
     for it in range(valid_fits.shape[1]):
         # robustly fit in the order direction
-        cfit, cmask = mp.robust_polyfit(index2, valid_fits[:, it],
-                                        nth_ord[it], 5)
+        cfit, cmask = mp.robust_chebyfit(index2, valid_fits[:, it],
+                                        nth_ord[it], 5, [0, image.shape[1]])
         # update the full fits
-        fits_full[:, it] = np.polyval(cfit, index_full)
+        fits_full[:, it] = mp.val_cheby(cfit, index_full, [0, image.shape[1]])
     # get the central pixel position (note x=0 at the center here)
     for it in range(fits_full.shape[0]):
-        center_full[it] = np.polyval(fits_full[it], 0)
+        center_full[it] = fits_full[0, it]
     # -------------------------------------------------------------------------
     # keep only orders that have a center within the allowed y range
     keep = (center_full > ydet_min) & (center_full < ydet_max)
@@ -442,8 +453,8 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
         # we convolve this with a box to smooth it out
         csumpixmap = np.convolve(sumpixmap_x, np.ones(15)/15, mode='same')
         # we then fit this robustly with a polyfit
-        wfit, wmask = mp.robust_polyfit(xpix[imin:imax], csumpixmap[imin:imax],
-                                        wid_order_fit, 5)
+        wfit, wmask = mp.robust_chebyfit(xpix[imin:imax], csumpixmap[imin:imax],
+                                        wid_order_fit, 5, [0,image.shape[1]])
         # add this to the fit
         width_fit[wit] = wfit
         # get the mean position of region in y
@@ -474,9 +485,10 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # convert back to start at x = 0
     for order_num in range(len(final_cent_fit)):
         # get the current y values (centers at x half detector width)
-        ypix = np.polyval(final_cent_fit[order_num], xpix - nbxpix // 2)
+        #ypix = np.polyval(final_cent_fit[order_num], xpix - nbxpix // 2)
         # push into the final center fit
-        final_cent_fit[order_num] = np.polyfit(xpix, ypix, cent_order_fit)
+        #final_cent_fit[order_num] = np.polyfit(xpix, ypix, cent_order_fit)
+        final_cent_fit[order_num] = cent_order_fit[0]
 
     # -------------------------------------------------------------------------
     # return the final centers fit and widths fit
@@ -513,8 +525,8 @@ def merge_coeffs(params: ParamDict,
     # merge lidct into a single array
     if len(_fibers) == 1:
         # get coefficients - need to be flipped
-        cent_coeffs = ldict[_fibers[0]][0][:, ::-1]
-        wid_coeffs = ldict[_fibers[0]][1][:, ::-1]
+        cent_coeffs = ldict[_fibers[0]][0]
+        wid_coeffs = ldict[_fibers[0]][1]
         fiber_name = _fibers[0]
         # return arrays
         return np.array(cent_coeffs), np.array(wid_coeffs), fiber_name
@@ -545,8 +557,8 @@ def merge_coeffs(params: ParamDict,
                     eargs = [fiber0, nbo, _fiber, fiber_nbo, func_name]
                     WLOG(params, 'error', textentry('00-013-00008', args=eargs))
                 # add to merged coeffs - need to be flipped
-                cent_coeffs.append(ldict[_fiber][0][order_num][::-1])
-                wid_coeffs.append(ldict[_fiber][1][order_num][::-1])
+                cent_coeffs.append(ldict[_fiber][0][order_num])
+                wid_coeffs.append(ldict[_fiber][1][order_num])
         # convert to numpy arrays
         cent_coeffs = np.array(cent_coeffs)
         wid_coeffs = np.array(wid_coeffs)
@@ -579,7 +591,7 @@ def image_superimp(image, coeffs):
     for order_num in range(n_orders):
         # get the pixel positions across the order (from fit coeffs in position)
         # add 0.5 to account for later conversion to int
-        fity = np.polyval(coeffs[order_num][::-1], xdata) + 0.5
+        fity = mp.chebyval(coeffs[order_num], xdata, [0,image.shape[1]]) + 0.5
         # elements must be > 0 and less than image.shape[0]
         mask = (fity > 0) & (fity < image.shape[0])
         # Add good values to storage array
@@ -696,7 +708,7 @@ def loc_stats(params: ParamDict, fiber: str, cent_coeffs: np.ndarray,
     # loop around orders
     for order_num in range(nbo):
         # get this orders coefficients (flipped for numpy)
-        ord_coeffs = cent_coeffs[order_num, ::-1]
+        ord_coeffs = cent_coeffs[order_num]
         # load these values into the center fits arrays
         center_fits[order_num] = np.polyval(ord_coeffs, xpix)
     # -------------------------------------------------------------------------
@@ -705,7 +717,7 @@ def loc_stats(params: ParamDict, fiber: str, cent_coeffs: np.ndarray,
     # loop around orders
     for order_num in range(nbo):
         # get this orders coefficients (flipped for numpy)
-        ord_coeffs = wid_coeffs[order_num, ::-1]
+        ord_coeffs = wid_coeffs[order_num]
         # load these values into the center fits arrays
         width_fits[order_num] = np.polyval(ord_coeffs, xpix)
     # -------------------------------------------------------------------------
@@ -749,9 +761,11 @@ def loc_stats(params: ParamDict, fiber: str, cent_coeffs: np.ndarray,
     lprops['NCOEFFS'] = nbcoeffs
     lprops['MAX_SIGNAL'] = max_signal
     lprops['MEAN_BACKGRD'] = mean_backgrd
+    lprops['NBXPIX'] = nbxpix
     # add source
     keys = ['CENT_COEFFS', 'WID_COEFFS', 'CENTER_FITS', 'WIDTH_FITS', 'FIBER',
-            'CENTER_DIFF', 'NORDERS', 'NCOEFFS', 'MAX_SIGNAL', 'MEAN_BACKGRD']
+            'CENTER_DIFF', 'NORDERS', 'NCOEFFS', 'MAX_SIGNAL', 'MEAN_BACKGRD',
+            'NBXPIX']
     lprops.set_sources(keys, func_name)
     # return stats parameter dictionary
     return lprops
@@ -1297,7 +1311,7 @@ def locate_order_center(values, threshold, min_width=None):
     return position, width
 
 
-def initial_order_fit(params, x, y, f_order, ccol, kind):
+def initial_order_fit(params, x, y, f_order, ccol, kind, domain):
     """
     Performs a crude initial fit for this order, uses the ctro positions or
     sigo width values found in "FindOrderCtrs" or "find_order_centers" to do
@@ -1336,7 +1350,7 @@ def initial_order_fit(params, x, y, f_order, ccol, kind):
         max_ptp_frac = mp.nanmax(abs_res / y) * 100
     # -------------------------------------------------------------------------
     # Work out the fit value at ic_cent_col (for logging)
-    cfitval = np.polyval(acoeffs[::-1], ccol)
+    cfitval = mp.val_cheby(acoeffs, ccol, domain)
     # -------------------------------------------------------------------------
     # return fit data
     fitdata = dict(a=acoeffs, fit=fit, res=res, abs_res=abs_res, rms=rms,
@@ -1346,7 +1360,7 @@ def initial_order_fit(params, x, y, f_order, ccol, kind):
 
 def sigmaclip_order_fit(params, recipe, x, y, fitdata, f_order, max_rmpts,
                         rnum, ic_max_ptp, ic_max_ptp_frac, ic_ptporms,
-                        ic_max_rms, kind):
+                        ic_max_rms, kind, domain):
     """
     Performs a sigma clip fit for this order, uses the ctro positions or
     sigo width values found in "FindOrderCtrs" or "find_order_centers" to do
@@ -1454,7 +1468,7 @@ def sigmaclip_order_fit(params, recipe, x, y, fitdata, f_order, max_rmpts,
         # get the new x and y values (without largest residual)
         xo, yo = xo[wmask], yo[wmask]
         # fit the new x and y
-        fdata = calculate_fit(xo, yo, f_order)
+        fdata = calculate_fit(xo, yo, f_order, domain)
         acoeffs, fit, res, abs_res, rms, max_ptp = fdata
         # max_ptp_frac is different for different cases
         if kind == 'center':
@@ -1481,7 +1495,7 @@ def sigmaclip_order_fit(params, recipe, x, y, fitdata, f_order, max_rmpts,
     return fitdata
 
 
-def calculate_fit(x, y, f):
+def calculate_fit(x, y, deg, domain):
     """
     Calculate the polynomial fit between x and y, for "f" fit parameters,
     also calculate the residuals, absolute residuals, RMS and max peak-to-peak
@@ -1504,9 +1518,9 @@ def calculate_fit(x, y, f):
                      residuals i.e. max(abs_res)
     """
     # Do initial fit (revere due to fortran compatibility)
-    a = mp.nanpolyfit(x, y, deg=f)[::-1]
+    a = mp.nanchebyfit(x, y, deg, domain)
     # Get the intial fit data
-    fit = np.polyval(a[::-1], x)
+    fit = mp.chebyval(a, x, domain)
     # work out residuals
     res = y - fit
     # Work out absolute residuals
