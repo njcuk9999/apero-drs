@@ -540,7 +540,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     orders, _ = np.indices(wave_e2ds.shape)
     # loop around 2nd to last-1 order and compare -1th and +1th order
     for order_num in range(1, nbo - 1):
-        # get wavelengths not in order beforetellu_preclean
+        # get wavelengths not in order before tellu_preclean
         before = wave_e2ds[order_num] > wave_e2ds[order_num - 1][::-1]
         # get wavelengths not in order after
         after = wave_e2ds[order_num] < wave_e2ds[order_num + 1][::-1]

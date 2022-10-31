@@ -13,7 +13,7 @@ import copy
 import os
 import warnings
 from collections.abc import Iterable
-from typing import Any, Dict, Generator, Tuple, Union
+from typing import Any, Dict, Generator, List, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -797,8 +797,8 @@ def plot_loc_width_regions(plotter: Plotter, graph: Graph,
     plt = plotter.plt
     # -------------------------------------------------------------------------
     # get the arguments from kwargs
-    coeffs1 = np.array(kwargs['coeffs1'])[:, ::-1]
-    coeffs2 = np.array(kwargs['coeffs2'])[:, ::-1]
+    coeffs1 = np.array(kwargs['coeffs1'])
+    coeffs2 = np.array(kwargs['coeffs2'])
     # -------------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, ncols=coeffs1.shape[1], nrows=1)
@@ -958,10 +958,10 @@ def plot_loc_image_fit(plotter: Plotter, graph: Graph,
         for order_num in range(coeffs_old.shape[0]):
             # deal with reverse coefficients
             if reverse:
-                cfit = np.polyval(coeffs_old[order_num][::-1], xpix + offset)
+                cfit = mp.val_cheby(coeffs_old[order_num], xpix + offset,[0,image.shape[1]])
             # else just fit
             else:
-                cfit = np.polyval(coeffs_old[order_num], xpix + offset)
+                cfit = np.val_cheby(coeffs_old[order_num], xpix + offset,[0,image.shape[1]])
             # plot this orders coefficients
             oldlabel = 'old fit (Norders={0})'.format(coeffs_old.shape[0])
             frame.plot(xpix, cfit, ls='-', color='blue', lw=1,
@@ -975,19 +975,19 @@ def plot_loc_image_fit(plotter: Plotter, graph: Graph,
     for order_num in range(coeffs.shape[0]):
         # deal with reverse coefficients
         if reverse:
-            cfit = np.polyval(coeffs[order_num][::-1], xpix + offset)
+            cfit = mp.val_cheby(coeffs[order_num], xpix + offset,[0,image.shape[1]])
         # else just fit
         else:
-            cfit = np.polyval(coeffs[order_num], xpix + offset)
+            cfit = mp.val_cheby(coeffs[order_num], xpix + offset,[0,image.shape[1]])
         # plot this orders coefficients
         frame.plot(xpix, cfit, ls='--', color='red', lw=1, label=newlabel)
         # plot widths
         if width_coeffs is not None:
             # get the width fit per pixel
             if reverse:
-                wfit = np.polyval(width_coeffs[order_num][::-1], xpix)
+                wfit = mp.val_cheby(width_coeffs[order_num], xpix,[0,image.shape[1]])
             else:
-                wfit = np.polyval(width_coeffs[order_num], xpix)
+                wfit = mp.val_cheby(width_coeffs[order_num], xpix,[0,image.shape[1]])
             # plot these on the edge
             frame.plot(xpix, cfit + wfit / 2, ls=':', color='m', lw=1,
                        alpha=0.75, label=newlabel)
@@ -1079,13 +1079,14 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
         # loop around xarr and yarr and plot
         for order_num in range(coeffs.shape[0]):
             # get ypix
-            ypix = np.polyval(coeffs[order_num][::-1], xpix)
+            ypix = mp.val_cheby(coeffs[order_num], xpix, [0,image.shape[0]])
             # plot full fit
             frame.plot(xpix, ypix, linewidth=1, color='red', ls='--', zorder=1)
             # add the width poly + ypix if widths are given
             if width_coeffs is not None:
                 # get the width fit
-                wfit = np.polyval(width_coeffs[order_num][::-1], xpix)
+                wfit = mp.val_cheby(width_coeffs[order_num], xpix,
+                                    [0,image.shape[0]])
                 # plot these on the edge
                 frame.plot(xpix, ypix + wfit / 2, ls=':', color='m', lw=1,
                            alpha=0.75)
@@ -1610,17 +1611,17 @@ def plot_flat_order_fit_edges(plotter: Plotter, graph: Graph,
         ocoeffs1 = coeffs1[order_num]
         ocoeffs2 = coeffs2[order_num]
         # get fit and edge fits (for raw image)
-        yfit1 = np.polyval(ocoeffs1[::-1], xfit1)
-        yfitlow1 = np.polyval(ocoeffs1[::-1], xfit1) - range1
-        yfithigh1 = np.polyval(ocoeffs1[::-1], xfit1) + range2
-        ylower1 = np.polyval(ocoeffs1[::-1], xfit1) - 2 * range1
-        yupper1 = np.polyval(ocoeffs1[::-1], xfit1) + 2 * range2
+        yfit1 = mp.val_cheby(ocoeffs1, xfit1, [0,image1.shape[1]])
+        yfitlow1 = mp.val_cheby(ocoeffs1, xfit1, [0,image1.shape[1]]) - range1
+        yfithigh1 = mp.val_cheby(ocoeffs1, xfit1, [0,image1.shape[1]]) + range2
+        ylower1 = mp.val_cheby(ocoeffs1, xfit1, [0,image1.shape[1]]) - 2 * range1
+        yupper1 = mp.val_cheby(ocoeffs1, xfit1, [0,image1.shape[1]]) + 2 * range2
         # get fit and edge fits (for straight image)
-        yfit2 = np.polyval(ocoeffs2[::-1], xfit2)
-        yfitlow2 = np.polyval(ocoeffs2[::-1], xfit2) - range1
-        yfithigh2 = np.polyval(ocoeffs2[::-1], xfit2) + range2
-        ylower2 = np.polyval(ocoeffs2[::-1], xfit2) - 6 * range1
-        yupper2 = np.polyval(ocoeffs2[::-1], xfit2) + 6 * range2
+        yfit2 = mp.val_cheby(ocoeffs2, xfit2, [0,image1.shape[1]])
+        yfitlow2 = mp.val_cheby(ocoeffs2, xfit2, [0,image1.shape[1]]) - range1
+        yfithigh2 = mp.val_cheby(ocoeffs2, xfit2, [0,image1.shape[1]]) + range2
+        ylower2 = mp.val_cheby(ocoeffs2, xfit2, [0,image1.shape[1]]) - 6 * range1
+        yupper2 = mp.val_cheby(ocoeffs2, xfit2, [0,image1.shape[1]]) + 6 * range2
         # get image bounds
         ymin1 = np.max([np.min(ylower1), 0])
         ymax1 = np.min([np.max(yupper1), image1.shape[0]])
@@ -2233,7 +2234,7 @@ def plot_wave_hc_diff_hist(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
-                               kwargs: Dict[str, Any]):
+                               kwargs: Dict[str, Any], domain: List[float]):
     """
     Graph: Wave solution fiber comparison plot
 
@@ -2285,8 +2286,8 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
             # get the x values for the graph
             xvals = r_waveref[good]
             # get the line fit values
-            fit1 = np.polyval(m_coeffs[order_num][::-1], r_pixel[good])
-            fit2 = np.polyval(r_coeffs[order_num][::-1], r_pixel[good])
+            fit1 = mp.val_cheby(m_coeffs[order_num], r_pixel[good], domain)
+            fit2 = mp.val_cheby(r_coeffs[order_num], r_pixel[good], domain)
             # get the y values
             y1vals = speed_of_light * (1 - r_waveref[good] / fit1)
             y2vals = speed_of_light * (1 - r_waveref[good] / fit2)
@@ -2937,7 +2938,7 @@ def plot_wave_fp_lwid_offset(plotter: Plotter, graph: Graph,
     fp_dopd = llprops['FP_DOPD_OFFSET']
     fp_dopd_coeff = llprops['FP_DOPD_OFFSET_COEFF']
     # get fit values
-    fp_dopd_fit = np.polyval(fp_dopd_coeff[::-1], np.sort(fp_m))
+    fp_dopd_fit = np.polyval(fp_dopd_coeff, np.sort(fp_m))
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -3184,6 +3185,7 @@ def plot_wave_fp_ll_diff(plotter: Plotter, graph: Graph,
     fp_ord_new = llprops['FP_ORD_NEW']
     fp_xx_new = llprops['FP_XX_NEW']
     fp_ll_new = llprops['FP_LL_NEW']
+    nbxpix = llprops['NBPIX']
     # ------------------------------------------------------------------
     # get colours
     # noinspection PyUnresolvedReferences
@@ -3195,13 +3197,13 @@ def plot_wave_fp_ll_diff(plotter: Plotter, graph: Graph,
     # loop through the orders
     for ind_ord in range(n_fin - n_init):
         # get parameters for initial wavelength solution
-        c_aux = np.poly1d(poly_wave_sol[ind_ord + n_init][::-1])
         # order mask
         ord_mask = np.where(fp_ord_new == ind_ord + n_init)
         # get FP line pixel positions for the order
         fp_x_ord = fp_xx_new[ord_mask]
         # derive FP line wavelengths using initial solution
-        fp_ll_orig = c_aux(fp_x_ord)
+        fp_ll_orig = mp.val_cheby(poly_wave_sol[ind_ord + n_init], fp_x_ord,
+                                  [0,nbxpix])
         # get new FP line wavelengths for the order
         fp_ll_new_ord = fp_ll_new[ord_mask]
         # plot old-new wavelengths
