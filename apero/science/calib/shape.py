@@ -1294,7 +1294,7 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
     for order_num in range(nbo):
         # x pixel vector that is used with polynomials to
         # find the order center y order center
-        ypix[order_num] = mp.chebyval(acc[order_num], xpix, [0,dim2])
+        ypix[order_num] = mp.val_cheby(acc[order_num], xpix, domain=[0,dim2])
     # -------------------------------------------------------------------------
     # storage of the dxmap standard deviations
     dxmap_stds = []
@@ -1794,7 +1794,7 @@ def calculate_dymap(params, fpimage, fpheader, **kwargs):
             # get this order + fibers coefficients
             acco = accs[fiber][order_num, :]
             # get the poly values
-            ypoly = mp.chebyval(acco, xpix, [0,dim2])
+            ypoly = mp.val_cheby(acco, xpix, domain=[0, dim2])
             # work out this order + fibers y values: polynomial(x position)
             y0[iord + f_it, :] = ypoly
     # loop around each x pixel (columns)

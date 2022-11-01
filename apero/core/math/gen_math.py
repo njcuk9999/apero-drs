@@ -8,7 +8,7 @@ Created on 2019-05-15 at 12:24
 @author: cook
 """
 import copy
-from typing import List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -474,8 +474,9 @@ def iuv_spline(x: np.ndarray, y: np.ndarray, **kwargs
     # return spline
     return InterpolatedUnivariateSpline(x, y, **kwargs)
 
+
 def robust_chebyfit(x: np.ndarray, y: np.ndarray, degree: int,
-                   nsigcut: float, domain: List[float]) -> Tuple[np.ndarray, np.ndarray]:
+                    nsigcut: float, domain: List[float]) -> Tuple[np.ndarray, np.ndarray]:
     """
     A robust polyfit (iterating on the residuals) until nsigma is below the
     nsigcut threshold. Takes care of NaNs before fitting
@@ -514,6 +515,7 @@ def robust_chebyfit(x: np.ndarray, y: np.ndarray, degree: int,
         keep = nsig < nsigcut
     # return the fit and the mask of good values
     return np.array(fit), np.array(keep)
+
 
 def robust_polyfit(x: np.ndarray, y: np.ndarray, degree: int,
                    nsigcut: float) -> Tuple[np.ndarray, np.ndarray]:
@@ -971,7 +973,7 @@ def get_ll_from_coefficients(pixel_shift_inter: float,
         # (numpy needs them backwards)
         coeffs = allcoeffs[order_num]
         # get the y fit using the coefficients for this order and xfit
-        yfit = val_cheby(coeffs, xfit,[0,nx])
+        yfit = val_cheby(coeffs, xfit, [0, nx])
         # add to line list storage
         ll[order_num, :] = yfit
     # return line list
@@ -1106,11 +1108,12 @@ def relativistic_waveshift(dv: Union[float, np.ndarray],
     return corrv
 
 
-def fit_cheby(x: np.ndarray,y: np.ndarray,order: int,domain:List[float])->np.ndarray:
+def fit_cheby(x: np.ndarray, y: np.ndarray, deg: int,
+              domain: List[float]) -> Union[np.ndarray, Any]:
     """
     :param x: x value for the fit
     :param y: y value for the fit
-    :param order: Nth order of the fit
+    :param deg: Nth order of the fit
     :param domain: domain to be transformed to -1 -- 1. This is important to
     keep the components orthogonal. For SPIRou orders, the default is 0--4088.
     You *must* use the same domain when getting values with val_cheby
@@ -1118,12 +1121,13 @@ def fit_cheby(x: np.ndarray,y: np.ndarray,order: int,domain:List[float])->np.nda
     """
 
     # transform to a -1 to 1 domain
-    domain_cheby = 2*(x-domain[0])/(domain[1]-domain[0])-1
+    domain_cheby = 2 * (x - domain[0]) / (domain[1] - domain[0]) - 1
 
-    return np.polynomial.chebyshev.chebfit(domain_cheby, y, order)
+    return np.polynomial.chebyshev.chebfit(domain_cheby, y, deg)
 
 
-def val_cheby(x: np.ndarray,fit: np.ndarray, domain:List[float])->np.ndarray:
+def val_cheby(fit: np.ndarray, x: Union[np.ndarray, int, float],
+              domain: List[float]) -> Union[np.ndarray, int, float]:
     """
     :param x: x value for the y values with fit
     :param fit: output from fit_cheby
@@ -1134,7 +1138,7 @@ def val_cheby(x: np.ndarray,fit: np.ndarray, domain:List[float])->np.ndarray:
     """
 
     # transform to a -1 to 1 domain
-    domain_cheby = 2*(x-domain[0])/(domain[1]-domain[0])-1
+    domain_cheby = 2 * (x - domain[0]) / (domain[1] - domain[0]) - 1
 
     return np.polynomial.chebyshev.chebval(domain_cheby, fit)
 

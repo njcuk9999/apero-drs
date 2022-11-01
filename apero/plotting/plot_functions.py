@@ -813,15 +813,10 @@ def plot_loc_width_regions(plotter: Plotter, graph: Graph,
         frames[coeff].plot(coeffs2[:, coeff], 'r.', label='final fit')
         # add axis labels
         frames[coeff].set(xlabel='Order Number',
-                          ylabel='Coefficient $c_' + scoeff + '$')
+                          ylabel='Coefficient $T_{{{'+ scoeff + '}}}$')
         frames[coeff].legend(loc=0)
-        # construct coeffcient string
-        if coeff == 0:
-            str_coeffs += ['$c_0$']
-        elif coeff == 1:
-            str_coeffs += ['$c_1$x']
-        else:
-            str_coeffs += ['$c_{' + scoeff + '}x^{' + str(coeff - 1) + '}$']
+        # construct coefficient string
+        str_coeffs += ['$T_{{{'+ scoeff + '}}}$']
     # set global title
     title = 'Localisation width calculation per order: {0}'
     plt.suptitle(title.format(' + '.join(str_coeffs)))
@@ -958,10 +953,12 @@ def plot_loc_image_fit(plotter: Plotter, graph: Graph,
         for order_num in range(coeffs_old.shape[0]):
             # deal with reverse coefficients
             if reverse:
-                cfit = mp.val_cheby(coeffs_old[order_num], xpix + offset,[0,image.shape[1]])
+                cfit = mp.val_cheby(coeffs_old[order_num], xpix + offset,
+                                    domain=[0,image.shape[1]])
             # else just fit
             else:
-                cfit = np.val_cheby(coeffs_old[order_num], xpix + offset,[0,image.shape[1]])
+                cfit = mp.val_cheby(coeffs_old[order_num], xpix + offset,
+                                    domain=[0,image.shape[1]])
             # plot this orders coefficients
             oldlabel = 'old fit (Norders={0})'.format(coeffs_old.shape[0])
             frame.plot(xpix, cfit, ls='-', color='blue', lw=1,
@@ -975,19 +972,23 @@ def plot_loc_image_fit(plotter: Plotter, graph: Graph,
     for order_num in range(coeffs.shape[0]):
         # deal with reverse coefficients
         if reverse:
-            cfit = mp.val_cheby(coeffs[order_num], xpix + offset,[0,image.shape[1]])
+            cfit = mp.val_cheby(coeffs[order_num], xpix + offset,
+                                domain=[0,image.shape[1]])
         # else just fit
         else:
-            cfit = mp.val_cheby(coeffs[order_num], xpix + offset,[0,image.shape[1]])
+            cfit = mp.val_cheby(coeffs[order_num], xpix + offset,
+                                domain=[0,image.shape[1]])
         # plot this orders coefficients
         frame.plot(xpix, cfit, ls='--', color='red', lw=1, label=newlabel)
         # plot widths
         if width_coeffs is not None:
             # get the width fit per pixel
             if reverse:
-                wfit = mp.val_cheby(width_coeffs[order_num], xpix,[0,image.shape[1]])
+                wfit = mp.val_cheby(width_coeffs[order_num], xpix,
+                                    domain=[0, nbxpix])
             else:
-                wfit = mp.val_cheby(width_coeffs[order_num], xpix,[0,image.shape[1]])
+                wfit = mp.val_cheby(width_coeffs[order_num], xpix,
+                                    domain=[0, nbxpix])
             # plot these on the edge
             frame.plot(xpix, cfit + wfit / 2, ls=':', color='m', lw=1,
                        alpha=0.75, label=newlabel)
@@ -1079,14 +1080,15 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
         # loop around xarr and yarr and plot
         for order_num in range(coeffs.shape[0]):
             # get ypix
-            ypix = mp.val_cheby(coeffs[order_num], xpix, [0,image.shape[0]])
+            ypix = mp.val_cheby(coeffs[order_num], xpix,
+                                domain=[0, image.shape[1]])
             # plot full fit
             frame.plot(xpix, ypix, linewidth=1, color='red', ls='--', zorder=1)
             # add the width poly + ypix if widths are given
             if width_coeffs is not None:
                 # get the width fit
                 wfit = mp.val_cheby(width_coeffs[order_num], xpix,
-                                    [0,image.shape[0]])
+                                    domain=[0, image.shape[1]])
                 # plot these on the edge
                 frame.plot(xpix, ypix + wfit / 2, ls=':', color='m', lw=1,
                            alpha=0.75)
