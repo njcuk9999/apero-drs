@@ -384,7 +384,7 @@ if not HAS_NUMBA:
 
 
 # Set "nopython" mode for best performance, equivalent to @nji
-@jit(nopython=True)
+@jit(nopython=True, fastmath=False)
 def lin_mini(vector: np.ndarray, sample: np.ndarray, mm: np.ndarray,
              v: np.ndarray, sz_sample: Tuple[int], case: int,
              recon: np.ndarray, amps: np.ndarray,
@@ -470,7 +470,7 @@ def lin_mini(vector: np.ndarray, sample: np.ndarray, mm: np.ndarray,
 
 
 # Set "nopython" mode for best performance, equivalent to @nji
-@jit(nopython=True)
+@jit(nopython=True, fastmath=False)
 def odd_ratio_mean(value: np.ndarray, error: np.ndarray,
                    odd_ratio: float = 2e-4, nmax: int = 10,
                    conv_cut=1e-2) -> Tuple[float, float]:
