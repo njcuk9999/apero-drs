@@ -183,7 +183,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             ldict[_fiber] = lout
         # deal with merging coefficients and formatting for use as they
         #   were in older codes (may be redundant in future)
-        m_out = localisation.merge_coeffs(params, ldict)
+        m_out = localisation.merge_coeffs(params, ldict, image.shape[1])
         cent_coeffs, wid_coeffs, fibername = m_out
         # ------------------------------------------------------------------
         # Localisation stats (for header and quality control)
