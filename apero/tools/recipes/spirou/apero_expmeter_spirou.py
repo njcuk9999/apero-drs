@@ -98,9 +98,8 @@ def main(obs_dir=None, **kwargs):
     """
     Main function for exposuremeter_spirou.py
 
+    :param obs_dir: the observation directory
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -252,7 +251,7 @@ def __main__(recipe, params):
         header = wave_infiles[fiber].get_header()
         # get the localisation parameters for this fiber
         WLOG(params, '', '\t Getting localisation for Fiber={0}'.format(fiber))
-        cents, wids = inverse.calc_central_localisation(params, recipe, fiber,
+        cents, wids = inverse.calc_central_localisation(params, fiber,
                                                         header=header)
         # add to storage
         centers[fiber] = cents
