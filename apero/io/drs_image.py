@@ -356,10 +356,10 @@ def clean_hotpix(image: np.ndarray, badpix: np.ndarray) -> np.ndarray:
     image1 = np.array(image)
     # correcting bad pixels with a 2D fit to valid neighbours
     # pre-computing some values that are needed below
-    xx2 = xx ** 2
-    yy2 = yy ** 2
-    xy = xx * yy
-    ones = np.ones_like(xx)
+    # xx2 = xx ** 2
+    # yy2 = yy ** 2
+    # xy = xx * yy
+    # ones = np.ones_like(xx)
     # loop around the x axis
     for it in range(len(x)):
         # get the keep and box values for this iteration
@@ -368,24 +368,28 @@ def clean_hotpix(image: np.ndarray, badpix: np.ndarray) -> np.ndarray:
         if nvalid[it] == 8:
             # we fall in a special case where there is only a central pixel
             # that is bad surrounded by valid pixel. The central value is
-            # straightfward to compute by using the means of 4 immediate
+            # straightforward to compute by using the means of 4 immediate
             # neighbours and the 4 corner neighbours.
             m1 = np.mean(box[[0, 1, 1, 2], [1, 0, 2, 1]])
             m2 = np.mean(box[[0, 0, 2, 2], [2, 0, 2, 0]])
             image1[x[it], y[it]] = 2 * m1 - m2
         else:
-            # fitting a 2D 2nd order polynomial surface. As the xx=0, yy=0
-            # corresponds to the bad pixel, then the first coefficient
-            # of the fit (its zero point) corresponds to the value that
-            # must be given to the pixel
-            a = np.array([ones[keep], xx[keep], yy[keep], xx2[keep], yy2[keep],
-                          xy[keep]])
-            b = box[keep]
-            # perform a least squares fit on a and b
-            coeff, _ = mp.linear_minimization(b, a, no_recon=True)
-            # this is equivalent to the slower command :
-            # coeff = fit2dpoly(xx[keep], yy[keep], box[keep])
-            image1[x[it], y[it]] = coeff[0]
+
+            image1[x[it], y[it]] = np.nanmean(box[keep])
+
+        # else:
+        #     # fitting a 2D 2nd order polynomial surface. As the xx=0, yy=0
+        #     # corresponds to the bad pixel, then the first coefficient
+        #     # of the fit (its zero point) corresponds to the value that
+        #     # must be given to the pixel
+        #     a = np.array([ones[keep], xx[keep], yy[keep], xx2[keep], yy2[keep],
+        #                   xy[keep]])
+        #     b = box[keep]
+        #     # perform a least squares fit on a and b
+        #     coeff, _ = mp.linear_minimization(b, a, no_recon=True)
+        #     # this is equivalent to the slower command :
+        #     # coeff = fit2dpoly(xx[keep], yy[keep], box[keep])
+        #     image1[x[it], y[it]] = coeff[0]
     # return the cleaned image
     return image1
 
