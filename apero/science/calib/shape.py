@@ -693,12 +693,13 @@ def ea_transform_coeff(image, coeffs, lin_transform_vect):
         # get this orders coefficients
         ocoeff = coeffs[order_num]
         # get the poly fit values for coeffs
-        yfit = np.polyval(ocoeff[::-1], xpix)
+        yfit = mp.val_cheby(ocoeff, xpix, domain=[0, image.shape[1]])
         # transform the x pixel positions and fit positions
         xpix2 = -dx0 + xpix * lin_a + yfit * lin_b
         yfit2 = -dy0 + xpix * lin_c + yfit * lin_d
         # refit polynomial
-        coeffs2[order_num] = np.polyfit(xpix2, yfit2, len(ocoeff) - 1)[::-1]
+        coeffs2[order_num] = mp.fit_cheby(xpix2, yfit2, len(ocoeff) - 1,
+                                          domain=[0, image.shape[1]])
     # return new coefficients
     return coeffs2
 
@@ -765,7 +766,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
         # x pixel vector that is used with polynomials to
         # find the order center y order center
         # TODO: This is spirou-centric *2 for A and B
-        ypix[order_num] = np.polyval(acc[order_num * 2][::-1], xpix)
+        ypix[order_num] = mp.val_cheby(acc[order_num * 2], xpix,
+                                       domain=[0, dim2])
     # -------------------------------------------------------------------------
     # storage of the dxmap standard deviations
     dxmap_stds = []
@@ -1294,7 +1296,7 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
     for order_num in range(nbo):
         # x pixel vector that is used with polynomials to
         # find the order center y order center
-        ypix[order_num] = np.polyval(acc[order_num][::-1], xpix)
+        ypix[order_num] = mp.val_cheby(acc[order_num], xpix, domain=[0, dim2])
     # -------------------------------------------------------------------------
     # storage of the dxmap standard deviations
     dxmap_stds = []
@@ -1792,9 +1794,9 @@ def calculate_dymap(params, fpimage, fpheader, **kwargs):
         #   fibers coefficients (for each order)
         for f_it, fiber in enumerate(accs.keys()):
             # get this order + fibers coefficients
-            acco = accs[fiber][order_num, :][::-1]
+            acco = accs[fiber][order_num, :]
             # get the poly values
-            ypoly = np.polyval(acco, xpix)
+            ypoly = mp.val_cheby(acco, xpix, domain=[0, dim2])
             # work out this order + fibers y values: polynomial(x position)
             y0[iord + f_it, :] = ypoly
     # loop around each x pixel (columns)

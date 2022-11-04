@@ -10,7 +10,7 @@ Created on 2019-05-15 at 12:24
 @author: cook
 """
 import warnings
-from typing import Any, Union
+from typing import Any, List, Union
 
 import numpy as np
 
@@ -75,14 +75,47 @@ def nanpad(oimage: np.ndarray) -> np.ndarray:
     return image
 
 
-def nanpolyfit(x: np.ndarray, y: np.ndarray, deg: int,
-               w: Union[np.ndarray, None] = None, **kwargs) -> Any:
+def nanchebyfit(xvector: np.ndarray, yvector: np.ndarray, deg: int,
+                weight: Union[np.ndarray, None] = None,
+                domain = List[float]) -> Any:
+    """
+    A Chebyshev polyfit that takes into account NaNs in the array (masks them)
+
+    :param xvector: np.array, the x data
+    :param yvector: np.array, the y data
+    :param w: None or np.array - the weight vector
+    :param deg: int, the degree of the polynomial fit
+
+    :return: same as np.polyfit
+    """
+    # set function name
+    # _ = display_func('nanpolyfit', __NAME__)
+    # check if there is a weight input in kwargs
+    if weight is not None:
+        # find the NaNs in x, y, w
+        nanmask = np.isfinite(yvector) & np.isfinite(xvector)
+        nanmask &= np.isfinite(weight)
+        # mask the weight in kwargs
+        weight = weight[nanmask]
+    else:
+        # find the NaNs in x and y
+        nanmask = np.isfinite(yvector) & np.isfinite(xvector)
+
+    domain_cheby = 2 * (xvector - domain[0]) / (domain[1] - domain[0]) - 1
+    fit = np.polynomial.chebyshev.chebfit(domain_cheby[nanmask],
+                                          yvector[nanmask], deg, w=weight)
+    # return polyfit without the nans
+    return fit
+
+
+def nanpolyfit(xvector: np.ndarray, yvector: np.ndarray, deg: int,
+               weight: Union[np.ndarray, None] = None, **kwargs) -> Any:
     """
     A polyfit that takes into account NaNs in the array (masks them)
 
-    :param x: np.array, the x data
-    :param y: np.array, the y data
-    :param w: None or np.array - the weight vector
+    :param xvector: np.array, the x data
+    :param yvector: np.array, the y data
+    :param weight: None or np.array - the weight vector
     :param deg: int, the degree of the polynomial fit
     :param kwargs: passed to np.polyfit
 
@@ -91,16 +124,18 @@ def nanpolyfit(x: np.ndarray, y: np.ndarray, deg: int,
     # set function name
     # _ = display_func('nanpolyfit', __NAME__)
     # check if there is a weight input in kwargs
-    if w is not None:
+    if weight is not None:
         # find the NaNs in x, y, w
-        nanmask = np.isfinite(y) & np.isfinite(x) & np.isfinite(w)
+        nanmask = np.isfinite(yvector) & np.isfinite(xvector)
+        nanmask &= np.isfinite(weight)
         # mask the weight in kwargs
-        w = w[nanmask]
+        weight = weight[nanmask]
     else:
         # find the NaNs in x and y
-        nanmask = np.isfinite(y) & np.isfinite(x)
+        nanmask = np.isfinite(yvector) & np.isfinite(x)
     # return polyfit without the nans
-    return np.polyfit(x[nanmask], y[nanmask], deg, w=w, **kwargs)
+    return np.polyfit(xvector[nanmask], yvector[nanmask], deg, w=weight,
+                      **kwargs)
 
 
 def killnan(invector: np.ndarray, value: float = 0.0) -> np.ndarray:

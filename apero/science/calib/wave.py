@@ -549,9 +549,9 @@ def get_wavemap_from_coeffs(wave_coeffs: np.ndarray, nbo: int,
     # loop aroun each order
     for order_num in range(nbo):
         # get this order coefficients
-        ocoeffs = wave_coeffs[order_num][::-1]
+        ocoeffs = wave_coeffs[order_num]
         # calculate polynomial values and push into wavemap
-        wavemap[order_num] = np.polyval(ocoeffs, xpixels)
+        wavemap[order_num] = mp.val_cheby(ocoeffs, xpixels, domain=[0, nbx])
     return wavemap
 
 
@@ -799,9 +799,11 @@ def check_wave_consistency(params: ParamDict, props: ParamDict,
         # loop around each order
         for order_num in range(nbo):
             # get the wave map for this order
-            yfit = np.polyval(props['COEFFS'][order_num][::-1], xfit)
+            yfit = mp.val_cheby(props['COEFFS'][order_num], xfit,
+                                domain=[0, output_map.shape[1]])
             # get the new coefficients based on a fit to this wavemap
-            coeffs = mp.nanpolyfit(xfit, yfit, required_deg)[::-1]
+            coeffs = mp.nanchebyfit(xfit, yfit, required_deg,
+                                    domain=[0, output_map.shape[1]])
             # push into storage
             output_coeffs[order_num] = coeffs
             output_map[order_num] = yfit
@@ -928,6 +930,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             if np.sum(good) != 0:
                 # fit wave --> pix
                 with warnings.catch_warnings(record=True) as _:
+                    # we cannot use a cheby fit as we do not kno the domain
+                    # precisely in wavelength yet
                     fit_reverse = np.polyfit(owave, xpix, fitdeg)
                 # get the pixels positions based on out owave fit
                 pixfit = np.polyval(fit_reverse, wavell[good])
@@ -975,6 +979,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         wave0 = wave0 * mp.nanmean(wavemap)
         # need a few iterations to invert polynomial relations
         for _ in range(fp_inv_itr):
+            # do not (yet) convert to cheby polynomials
             wave0 = np.polyval(cavity_length_poly, wave0) / nth_peak
         # keep lines within the ref_wavelength domain
         keep = (wave0 > np.min(wavemap)) & (wave0 < np.max(wavemap))
@@ -1142,8 +1147,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                         # fit to get the measured wavelength for the center
                         #   of our FP peak
                         midpoint = int(popt[1])
-                        wcoeffs = np.polyfit([midpoint, midpoint+1],
-                                             owave[[midpoint, midpoint+1]], 1)
+                        wcoeffs = np.polyfit([midpoint, midpoint + 1],
+                                             owave[[midpoint, midpoint + 1]], 1)
                         wave_m[good[it]] = np.polyval(wcoeffs, popt[1])
                         ewidth[good[it]] = popt[2]
                         nsig[good[it]] = np.abs(popt[0]) / rms
@@ -1179,7 +1184,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     wave_m[bad] = np.nan
     # calculate the difference
     diffpix = pixel_m - list_pixels
-    diffvelo = speed_of_light_ms * (1 - (wave_m/list_waves))
+    diffvelo = speed_of_light_ms * (1 - (wave_m / list_waves))
     # ----------------------------------------------------------------------
     # Plot the expected lines vs measured line positions
     # ----------------------------------------------------------------------
@@ -1400,8 +1405,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         xfit1 = ordfp_pix_meas[1:]
         yfit1 = ordfp_pix_meas[1:] - ordfp_pix_meas[:-1]
         # fit the step between FP lines
-        fit_step, _ = mp.robust_polyfit(xfit1, yfit1, wavesol_fit_degree,
-                                        nsig_cut)
+        fit_step, _ = mp.robust_chebyfit(xfit1, yfit1, wavesol_fit_degree,
+                                         nsig_cut, domain=[0, nbxpix])
         # ---------------------------------------------------------------------
         # counting steps backward
         # maybe first step is wrong, we'll see later by x-matching with HC lines
@@ -1412,7 +1417,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # We start numbering at 1 as the 0th serves as a relative
             # starting point
             diff = ordfp_pix_meas[step_fp] - ordfp_pix_meas[step_fp - 1]
-            dfit = np.polyval(fit_step, ordfp_pix_meas[step_fp - 1])
+            dfit = mp.val_cheby(fit_step, ordfp_pix_meas[step_fp - 1],
+                                domain=[0, nbxpix])
             dnum = diff / dfit
             # dnum is always very close to an integer value, we round it
             # we subtract the steps, FP peaks go in decreasing number
@@ -1437,14 +1443,16 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # ---------------------------------------------------------------------
         # we fit an approximate wavelength solution
         with warnings.catch_warnings(record=True) as _:
-            hc_wave_fit, _ = mp.robust_polyfit(ordhc_pix_meas, ordhc_wave_ref,
-                                               wavesol_fit_degree, nsig_cut)
+            hc_wave_fit, _ = mp.robust_chebyfit(ordhc_pix_meas, ordhc_wave_ref,
+                                                wavesol_fit_degree, nsig_cut,
+                                                domain=[0, nbxpix])
         # we find the steps in FP lines at the position of all HC lines
-        step_hc = np.polyval(fit_step, ordhc_pix_meas)
+        step_hc = mp.val_cheby(fit_step, ordhc_pix_meas, domain=[0, nbxpix])
         # get the derivative of the wave fit
-        d_hc_wave_fit = np.polyder(hc_wave_fit)
+        d_hc_wave_fit = np.polynomial.chebyshev.chebder(hc_wave_fit)
         # get the step in waves
-        step_hc_wave = np.polyval(d_hc_wave_fit, ordhc_pix_meas) * step_hc
+        step_hc_wave = mp.val_cheby(d_hc_wave_fit, ordhc_pix_meas,
+                                    domain=[0, nbxpix]) * step_hc
         # -----------------------------------------------------------------
         # convert step in cavity through the order. We assume a constant
         #    cavity through the order
@@ -1467,6 +1475,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # get a temporary wave sol
             wave_tmp = cavity_per_order / peak_num_offset
             # fit this wave solution for FP lines
+            # expressed as the Nth FP peak, does not have a clean 'domain'
+            # leave as a polyfit
             ofpwave_fit = np.polyfit(ordfp_pix_meas, wave_tmp,
                                      wavesol_fit_degree)
             # -----------------------------------------------------------------
@@ -1475,9 +1485,13 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                 # get a temporary wave sol
                 wave_tmp = cavity_per_order / peak_num_offset
                 # fit this wave solution for FP lines
+                # expressed as the Nth FP peak, does not have a clean 'domain'
+                # leave as a polyfit
                 ofpwave_fit = np.polyfit(ordfp_pix_meas, wave_tmp,
                                          wavesol_fit_degree)
                 # fit the inverse for the hc lines
+                # expressed as the Nth FP peak, does not have a clean 'domain'
+                # leave as a polyfit
                 ohcwave_fit = np.polyval(ofpwave_fit, ordhc_pix_meas)
                 # work out the median of the residuals to the fit for the
                 #   hc lines
@@ -1486,6 +1500,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                 cavity_per_order = cavity_per_order * (1 - med_hc_res)
             # -----------------------------------------------------------------
             # if the inverse for the hc lines once more
+            # expressed as the Nth FP peak, does not have a clean 'domain'
+            # leave as a polyfit
             ohcwave_fit = np.polyval(ofpwave_fit, ordhc_pix_meas)
             # calculate the hc residuals
             hc_res = 1 - ordhc_wave_ref / ohcwave_fit
@@ -1530,7 +1546,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             cavity_per_order = cavity_per_order * (1 - med_hc_res)
 
             # TODO: Add to language database
-            msg = (f'\tCavity fit {jt+1}: med hc res = '
+            msg = (f'\tCavity fit {jt + 1}: med hc res = '
                    f'{med_hc_res * speed_of_light_ms:.3e} m/s '
                    f'{sigma_hc_res * speed_of_light_ms:.3e} m/s ')
             WLOG(params, '', msg)
@@ -1546,9 +1562,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # we now have a best-guess of the wavelength solution, we update
         #  the WAVE_MEAS in the FP line list. This will be used to constrain the
         # cavity length below
-        wave_fit = np.polyfit(ordfp_pix_meas, wave_tmp, wavesol_fit_degree)
+        wave_fit = mp.fit_cheby(ordfp_pix_meas, wave_tmp,
+                                wavesol_fit_degree, domain=[0, nbxpix])
         # re-fit wave solution on all lines --> measured wave sol
-        ordfp_wave_meas = np.polyval(wave_fit, ordfp_pix_meas)
+        ordfp_wave_meas = mp.val_cheby(wave_fit, ordfp_pix_meas,
+                                       domain=[0, nbxpix])
         # ---------------------------------------------------------------------
         # put into the table. If we had enough HC lines, the WAVE_MEAS has
         #    been updated if not, at least the FP peak counting is valid.
@@ -1639,6 +1657,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # now we have valid numbering and best-guess WAVE_MEAS, we find the
         #    cavity length
         wavepeak = fpl_wave_meas * fpl_peak_num
+        # expressed in wavelength, does not have a clean 'domain'
+        # leave as a polyfit
         cavity, _ = mp.robust_polyfit(fpl_wave_meas, wavepeak,
                                       cavity_fit_degree, nsig_cut)
         cavity = np.array(cavity)
@@ -1678,6 +1698,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # get the proper cavity length from the cavity polynomial
         for _ in range(cavity_fit_iterations2):
             # update wave ref based on the fit
+            # expressed in cavity length, does not have a clean 'domain'
+            # leave as a polyfit
             fpl_wave_ref = np.polyval(cavity, fpl_wave_ref) / fpl_peak_num
         # ---------------------------------------------------------------------
         # get the wavelength solution for the order and the HC line position
@@ -1698,13 +1720,16 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # mask the hclines
             ordhc_pix_meas = hcl_pix_meas[good_hc]
             # get wave fit
-            wave_fit, _ = mp.robust_polyfit(ordfp_pix_meas, ordfp_wave_ref,
-                                            wavesol_fit_degree, nsig_cut)
+            wave_fit, _ = mp.robust_chebyfit(ordfp_pix_meas, ordfp_wave_ref,
+                                             wavesol_fit_degree, nsig_cut,
+                                             domain=[0, nbxpix])
             # update wave measure from this fit
-            fpl_wave_meas[good_fp] = np.polyval(wave_fit, ordfp_pix_meas)
+            fpl_wave_meas[good_fp] = mp.val_cheby(wave_fit, ordfp_pix_meas,
+                                                  domain=[0, nbxpix])
             # if we have some HC lines update these too
             if np.sum(good_hc) > 0:
-                hcl_wave_meas[good_hc] = np.polyval(wave_fit, ordhc_pix_meas)
+                hcl_wave_meas[good_hc] = mp.val_cheby(wave_fit, ordhc_pix_meas,
+                                                      domain=[0, nbxpix])
         # ---------------------------------------------------------------------
         # in velocity, diff between measured and catalog HC line positions
         res = hcl_wave_meas / hcl_wave_ref
@@ -1792,10 +1817,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         ordfp_wave_ref = fpl_wave_ref[good_fp]
         # fit the solution to this order
         with warnings.catch_warnings(record=True) as _:
-            ord_wave_sol, _ = mp.robust_polyfit(ordfp_pix_meas, ordfp_wave_ref,
-                                                wavesol_fit_degree, nsig_cut)
+            ord_wave_sol, _ = mp.robust_chebyfit(ordfp_pix_meas, ordfp_wave_ref,
+                                                 wavesol_fit_degree, nsig_cut,
+                                                 domain=[0, nbxpix])
         # add to wave coefficients
-        wave_coeffs[order_num] = ord_wave_sol[::-1]
+        wave_coeffs[order_num] = ord_wave_sol
     # -------------------------------------------------------------------------
     # deal with removed orders (insert them by using a consistency check)
     if len(remove_orders) > 0:
@@ -1818,7 +1844,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # loop around orders
     for order_num in orders:
         # generate wave map for order
-        wave_map[order_num] = np.polyval(wave_coeffs[order_num][::-1], xpix)
+        wave_map[order_num] = mp.val_cheby(wave_coeffs[order_num], xpix,
+                                           domain=[0, nbxpix])
     # -------------------------------------------------------------------------
     # update the fplines and hclines tables
     fplines['WAVE_MEAS'] = fpl_wave_meas
@@ -1873,11 +1900,11 @@ def wprop_pixel_wave_shift(wprops: ParamDict, offset: float = 0.0,
     # loop around each order
     for order_num in range(nbo):
         xx = np.arange(nbpix)
-        wave = np.polyval(coeffs[order_num][::-1], xx)
+        wave = mp.val_cheby(coeffs[order_num], xx, domain=[0, nbpix])
         xx2 = (xx + offset) * scale
-        fit2 = np.polyfit(xx2, wave, deg)
-        wavemap[order_num] = np.polyval(fit2, xx)
-        coeffs[order_num] = fit2[::-1]
+        fit2 = mp.fit_cheby(xx2, wave, deg, domain=[0, nbpix])
+        wavemap[order_num] = mp.val_cheby(fit2, xx, domain=[0, nbpix])
+        coeffs[order_num] = fit2
     # create new wprops
     wprops1 = ParamDict()
     wprops1['COEFFS'] = coeffs
@@ -2345,7 +2372,6 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
                             velo_cutoff1: Union[float, None] = None,
                             velo_cutoff2: Union[float, None] = None
                             ) -> ParamDict:
-
     # set the function name
     func_name = display_func('generate_resolution_map', __NAME__)
     # -------------------------------------------------------------------------
@@ -3025,7 +3051,7 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     # get copy of instance of wave file (WAVE_HCMAP)
     if ref:
         wavefile = recipe.outputs['WAVESOL_REF'].newcopy(params=params,
-                                                            fiber=fiber)
+                                                         fiber=fiber)
     else:
         wavefile = recipe.outputs['WAVEMAP_NIGHT'].newcopy(params=params,
                                                            fiber=fiber)
