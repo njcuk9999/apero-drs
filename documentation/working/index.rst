@@ -26,6 +26,10 @@ Latest version: 0.7.259
 
   * `SPIROU <https://www.cfht.hawaii.edu/Instruments/SPIRou/>`_ (SPectropolarimeter InfraROUge) on the Canada-France-Hawaii Telescope `CFHT <https://www.cfht.hawaii.edu/>`_.
 
+  APERO Publications:
+
+  * `APERO: A PipelinE to Reduce Observations -- Demonstration with SPIRou <https://arxiv.org/abs/2211.01358>`_
+
   APERO can also be used for:
 
   * NIRPS HE (Currently under construction)
