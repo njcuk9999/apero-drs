@@ -9,17 +9,9 @@ Created on 2019-11-02 12:51
 Version 0.0.1
 """
 import os
-import sys
-
-# try to deal with python 2/3 compatibility
-if sys.version_info.major > 2:
-    import tkinter as tk
-    from tkinter import ttk
-    from tkinter import filedialog
-else:
-    import Tkinter as tk
-    import ttk
-    import tkFileFialog as filedialog
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import ttk
 
 from PIL import Image, ImageTk
 
@@ -43,6 +35,7 @@ WLOG = drs_log.wlog
 RESOURCE_PATH = drs_misc.get_relative_folder(__PACKAGE__, 'tools/resources')
 IMAGEDIR = os.path.join(RESOURCE_PATH, 'images')
 
+
 # =============================================================================
 # Define widget classes
 # =============================================================================
@@ -62,7 +55,8 @@ class DropDown(ttk.OptionMenu):
         # add the callback function to the dropdown
         dd.add_callback(callback)
     """
-    def __init__(self, parent, options:list, initial_value:str=None):
+
+    def __init__(self, parent, options: list, initial_value: str = None):
         """
         Constructor for drop down entry
 
@@ -85,7 +79,9 @@ class DropDown(ttk.OptionMenu):
         :param callback: callable function
         :return:
         """
+
         def internal_callback(*args):
+            _ = args
             callback()
 
         self.var.trace("w", internal_callback)
@@ -114,10 +110,10 @@ class StatusBar(ttk.Frame):
 
         self.frame = tk.Frame(self, relief=tk.SUNKEN)
 
-        self.status=tk.StringVar()
-        self.label=tk.Label(self.frame, bd=1, relief=tk.SUNKEN, anchor=tk.W,
-                           textvariable=self.status,
-                           font=('arial',10,'normal'))
+        self.status = tk.StringVar()
+        self.label = tk.Label(self.frame, bd=1, relief=tk.SUNKEN, anchor=tk.W,
+                              textvariable=self.status,
+                              font=('arial', 10, 'normal'))
         self.status.set('')
         self.label.pack(side=tk.LEFT)
 
@@ -144,6 +140,10 @@ class PageButtonPanel(ttk.Frame):
         self.parent = parent
         self.controller = controller
         self.button_panel(number)
+        self.button1 = None
+        self.button2 = None
+        self.button3 = None
+        self.button4 = None
 
     def button_panel(self, number=0):
 
@@ -180,7 +180,6 @@ class PageButtonPanel(ttk.Frame):
             current = self.num_pages - 1
         self.controller.current = current
         self._goto_page(current)
-
 
     def __previouspage(self):
         current = self.controller.current
@@ -244,7 +243,9 @@ class SettingsPage(ttk.Frame):
         for name in self.elements:
             # get element
             element = self.elements[name]
-            self.results[name] = element.get()
+            if hasattr(element, 'get'):
+                # noinspection PyTypeChecker
+                self.results[name] = element.get()
 
 
 class BrowseSetting(ttk.Frame):
@@ -341,9 +342,6 @@ class CheckBoxes(ttk.Frame):
             rvalue = self.checkboxes[option]
             values[option] = rvalue.get()
         return values
-
-
-
 
 
 # =============================================================================

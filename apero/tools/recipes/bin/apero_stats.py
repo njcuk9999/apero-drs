@@ -48,10 +48,7 @@ def main(**kwargs):
     """
     Main function for apero_log_stats.py
 
-    :param instrument: str, the instrument name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 

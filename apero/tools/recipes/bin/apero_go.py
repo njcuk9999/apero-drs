@@ -28,6 +28,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# Get parameter class
+ParamDict = constants.ParamDict
 
 
 # =============================================================================
@@ -65,17 +67,8 @@ def get_args() -> Dict[str, Any]:
 
 def main():
     """
-    Main function for apero_listing.py
+    Main function for apero_go.py
 
-    :param instrument: str, the instrument name
-    :param kwargs: additional keyword arguments
-
-    :type instrument: str
-
-    :keyword debug: int, debug level (0 for None)
-
-    :returns: dictionary of the local space
-    :rtype: dict
     """
     # get parameters for this instrument
     params = constants.load()
@@ -85,13 +78,15 @@ def main():
     return __main__(None, params)
 
 
-def __main__(recipe, params):
+def __main__(recipe: None, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: None, no recipe needed but kept here to match
+                   other calls to __main__
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code

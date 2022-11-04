@@ -138,8 +138,8 @@ def rel_path_from_current(current: str, required: str) -> str:
     # find common most path
     root = os.path.commonpath([current, required])
     # remove root from paths
-    current = current[len(root)+1:]
-    required = required[len(root)+1:]
+    current = current[len(root) + 1:]
+    required = required[len(root) + 1:]
     # get the number of levels up to go
     levels = len(os.path.split(current)) + 1
     # construct new relative path
@@ -225,7 +225,7 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         if filetype in remove_cols:
             table = _remove_cols(table, remove_cols[filetype])
         # modifiy column names
-        table, modded = _modify_cols(table, mod_cols, fmt='{0}\*')
+        table, modded = _modify_cols(table, mod_cols, fmt=r'{0}\*')
         # print progress - number of file types
         msg = '\tAdding {0} file types'
         WLOG(params, '', msg.format(len(table)))
@@ -308,7 +308,7 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         # add text if required
         if mod_storage[filetype]:
             # construct text to add
-            modtext = ('\* these columns may be added/updated by APERO '
+            modtext = (r'\* these columns may be added/updated by APERO '
                        'before use.')
             markdown.add_text(text=modtext)
         # ------------------------------------------------------------------
@@ -660,7 +660,7 @@ def make_blank_definitions(instrument: str, kind: str, outpath: str,
     else:
         markdown.add_title(f'{strkind} ({instrument})'.capitalize())
     # add text
-    text = (f'There are currently no documented {strkind} for {instrument}')
+    text = f'There are currently no documented {strkind} for {instrument}'
     markdown.add_text(text)
     # write instrument definitions list file
     markdown.write_page(os.path.join(outpath, listfile))
@@ -1042,6 +1042,7 @@ def _get_column_widths(table: Table) -> Tuple[Union[str, None], List[str]]:
     # -------------------------------------------------------------------------
     # return a list of the columns
     return cwidth, cwidths
+
 
 def _modify_cols(table: Table, cols: List[str],
                  fmt: str = '{0}') -> Tuple[Table, bool]:

@@ -536,7 +536,7 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
             cube_hotpix[posx, posy] = data_hot
     # only keep the darkest 25% of the pixels
     mask = cube_hotpix[0][0].ravel() < mp.nanpercentile(cube_hotpix[0][0], 25)
-    cube_hotpix = cube_hotpix[:,:,mask]
+    cube_hotpix = cube_hotpix[:, :, mask]
     # remove the dc from background
     for ibox in range(np.sum(mask)):
         cube_hotpix[:, :, ibox] -= mp.nanmedian(cube_hotpix[:, :, ibox])
@@ -594,6 +594,9 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param image: np.ndarray, the image to correct
+    :param create_mask: bool, if True create a mask, otherwise try to read
+                        it from calibration database (and raise error if not
+                        found)
 
     :return: numpy 2D array, the corrected image
     """
@@ -658,9 +661,9 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     else:
         # ---------------------------------------------------------------------
         # get the mask from the flat
-        PP_REF = drs_file.get_file_definition(params, 'PP_REF', block_kind='red')
+        pp_ref = drs_file.get_file_definition(params, 'PP_REF', block_kind='red')
         # get the database key for this file
-        dbkey = PP_REF.dbkey
+        dbkey = pp_ref.dbkey
         # load the database
         calibdbm = drs_database.CalibrationDatabase(params)
         calibdbm.load_db()
@@ -686,7 +689,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     # set NaN pixels to zero (for the zoom)
     tmp[~np.isfinite(tmp)] = 0.0
     # use the zoom to bin the data
-    lowf = ndimage.zoom(tmp, np.array(image2.shape)//binsize)
+    lowf = ndimage.zoom(tmp, np.array(image2.shape) // binsize)
     # subtract the low frequency
     image2 = image2 - lowf
     # remove correlated profile in Y axis
@@ -699,7 +702,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     # remove from input image
     image = image - yprofile
     # first pixel of each amplifier
-    amppix = np.arange(namps//2) * ampwid * 2
+    amppix = np.arange(namps // 2) * ampwid * 2
     first_col_x = np.append(amppix, amppix - 1 + (ampwid * 2))
     first_col_x = np.sort(first_col_x)
     # median-filter the first and last ref pixel, which trace the
@@ -730,9 +733,9 @@ def get_pp_mask(params: ParamDict, header: drs_fits.Header,
     """
     # _ = display_func('.get_pp_mask', __NAME__)
     # get file instance
-    PP_REF = drs_file.get_file_definition(params, 'PP_REF', block_kind='red')
+    pp_ref = drs_file.get_file_definition(params, 'PP_REF', block_kind='red')
     # get calibration key
-    ppkey = PP_REF.get_dbkey()
+    ppkey = pp_ref.get_dbkey()
     # ---------------------------------------------------------------------
     # load database
     if database is None:
@@ -743,7 +746,7 @@ def get_pp_mask(params: ParamDict, header: drs_fits.Header,
     # ---------------------------------------------------------------------
     # load filename from database
     fout = calibdbm.get_calib_file(ppkey, header=header, nentries=1,
-                                        required=True)
+                                   required=True)
     ppfile, _, _ = fout
     # ---------------------------------------------------------------------
     # read file
@@ -820,12 +823,8 @@ def nirps_order_mask(params: ParamDict,
     """
     # set function name
     func_name = __NAME__ + '.nirps_order_mask()'
-    # get nsig value
-    nsig = params['PPM_MASK_NSIG']
     # normalise by the median
     image = mask_image - mp.nanmedian(mask_image)
-    # calculate the sigma array (distance away from median)
-    sig_image = mp.nanmedian(np.abs(image))
     # find pixels that are more than nsig absolute deviations from the image
     # median
     # with warnings.catch_warnings(record=True):

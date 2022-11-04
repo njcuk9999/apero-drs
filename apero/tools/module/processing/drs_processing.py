@@ -81,7 +81,7 @@ OBJNAMECOL = 'KW_OBJNAME'
 # list of arguments to remove from skip check
 SKIP_REMOVE_ARGS = ['--skip', '--program', '--prog', '--debug',
                     '--verbose' '--plot', '--shortname', '--short'
-                    '--rkind', '--recipe_kind', '--parallel', '--crunfile']
+                                                         '--rkind', '--recipe_kind', '--parallel', '--crunfile']
 # keep a global copy of plt
 PLT_MOD = None
 
@@ -1369,7 +1369,7 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
     newruns = []
     # define the reference conditions (that affect all recipes)
     ref_condition = gen_global_condition(params, indexdb,
-                                            reject_list)
+                                         reject_list)
     # ------------------------------------------------------------------
     # check we have rows left
     # ------------------------------------------------------------------
@@ -1635,50 +1635,50 @@ def prompt():
 
 def conditional_list(strlist: List[str], key: str, logic: str,
                      condition: Optional[str] = None) -> str:
-        """
-        Add a condition list to a condition (or create a condition if condition
-        is not given)
+    """
+    Add a condition list to a condition (or create a condition if condition
+    is not given)
 
-        :param strlist: List of strings, the items to add
-        :param key: str, the column name to check against
-        :param logic: str, eitehr 'include' or 'exclude'
-        :param condition: str or None, if set a previous condition to add to
+    :param strlist: List of strings, the items to add
+    :param key: str, the column name to check against
+    :param logic: str, eitehr 'include' or 'exclude'
+    :param condition: str or None, if set a previous condition to add to
 
-        :return: str, the updated (or new) condition
-        """
-        # ---------------------------------------------------------------------
-        # deal with no starting condition
-        if condition is None:
-            condition = ''
-            add = ''
-        else:
-            add = ' AND '
-        # ---------------------------------------------------------------------
-        # deal with include logic
-        if logic == 'include':
-            # define a subcondition
-            subconditions = []
-            # loop around white listed nights and set them to False
-            for item in strlist:
-                # add subcondition
-                subcondition = '{0}="{1}"'.format(key, item)
-                subconditions.append(subcondition)
-            # add to conditions
-            condition += add + '({0})'.format(' OR '.join(subconditions))
-        # ---------------------------------------------------------------------
-        # else we have exclude logic
-        else:
-            # define a subcondition
-            subconditions = []
-            # loop around white listed nights and set them to False
-            for item in strlist:
-                # add subcondition
-                subcondition = '{0}!="{1}"'.format(key, item)
-                subconditions.append(subcondition)
-            # add to conditions
-            condition += add + '({0})'.format(' AND '.join(subconditions))
-        # ---------------------------------------------------------------------
-        return condition
+    :return: str, the updated (or new) condition
+    """
+    # ---------------------------------------------------------------------
+    # deal with no starting condition
+    if condition is None:
+        condition = ''
+        add = ''
+    else:
+        add = ' AND '
+    # ---------------------------------------------------------------------
+    # deal with include logic
+    if logic == 'include':
+        # define a subcondition
+        subconditions = []
+        # loop around white listed nights and set them to False
+        for item in strlist:
+            # add subcondition
+            subcondition = '{0}="{1}"'.format(key, item)
+            subconditions.append(subcondition)
+        # add to conditions
+        condition += add + '({0})'.format(' OR '.join(subconditions))
+    # ---------------------------------------------------------------------
+    # else we have exclude logic
+    else:
+        # define a subcondition
+        subconditions = []
+        # loop around white listed nights and set them to False
+        for item in strlist:
+            # add subcondition
+            subcondition = '{0}!="{1}"'.format(key, item)
+            subconditions.append(subcondition)
+        # add to conditions
+        condition += add + '({0})'.format(' AND '.join(subconditions))
+    # ---------------------------------------------------------------------
+    return condition
 
 
 def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,

@@ -43,6 +43,7 @@ INSTRUMENTS = base.INSTRUMENTS
 # =============================================================================
 class TestApp(ThemedTk):
     def __init__(self, *args, **kwargs):
+        _ = args, kwargs
         # run the super
         ThemedTk.__init__(self, themebg=True)
         self.set_theme('plastik')
@@ -56,7 +57,7 @@ class TestApp(ThemedTk):
         # this container contains all the pages
         container = tk.Frame(self)
         container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        container.grid_rowconfigure(0,  weight=1)
+        container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
         # the pages
@@ -92,6 +93,7 @@ class TestApp(ThemedTk):
 
 class StartPage(ttk.Frame):
     def __init__(self, parent, controller):
+        _ = controller
         ttk.Frame.__init__(self, parent)
 
     def show(self):
@@ -130,11 +132,11 @@ class Page2(StartPage):
 
         settings_dict = dict()
         settings_dict['uconfig'] = dict(name='uconfig',
-                                      kind='browse',
-                                      keyword=base.USER_ENV,
-                                      default='~',
-                                      comment='User config path',
-                                      initialdir='~')
+                                        kind='browse',
+                                        keyword=base.USER_ENV,
+                                        default='~',
+                                        comment='User config path',
+                                        initialdir='~')
 
         settings_dict['instruments'] = dict(name='instruments',
                                             kind='checkboxes',
@@ -223,11 +225,10 @@ def test(instrument=None):
     app.geometry("1024x768")
     app.mainloop()
 
-    llmain = dict(params=params)
+    # llmain = dict(params=params)
     # return a copy of locally defined variables in the memory
     # return core.end_main(params, llmain, recipe, True)
     return app
-
 
 
 # =============================================================================

@@ -197,18 +197,18 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
     return image1, nprops
 
 
-def get_non_tellu_objs(params: ParamDict, recipe, fiber, filetype=None,
+def get_non_tellu_objs(params: ParamDict, fiber, filetype=None,
                        dprtypes=None, robjnames: List[str] = None,
                        findexdbm: Union[FileIndexDatabase, None] = None):
     """
     Get the objects of "filetype" and that are not telluric objects
     :param params: ParamDict - the parameter dictionary of constants
-    :param recipe: DrsRecipe
     :param fiber:
     :param filetype:
     :param dprtypes:
     :param robjnames: list of strings - a list of all object names (only return
                       if found and in this list
+    :param findexdbm:
 
     :return:
     """
@@ -376,6 +376,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     :param rawfiles:
     :param combine:
     :param database:
+    :param template:
 
     :return:
     """
@@ -652,13 +653,13 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     WLOG(params, '', textentry('40-019-00040'))
     # ----------------------------------------------------------------------
     # get reference trans
-    trans_others = get_abso_expo(params, wavemap, hdr_airmass, 0.0,
-                                 spl_others, spl_water, ww=ker_width,
+    trans_others = get_abso_expo(wavemap, hdr_airmass, 0.0, spl_others,
+                                 spl_water, ww=ker_width,
                                  ex_gau=ker_shape, dv_abso=dv_abso,
                                  ker_thres=ker_thres, wavestart=wavestart,
                                  waveend=waveend, dvgrid=dvgrid)
-    trans_water = get_abso_expo(params, wavemap, 0.0, 4.0,
-                                spl_others, spl_water, ww=ker_width,
+    trans_water = get_abso_expo(wavemap, 0.0, 4.0, spl_others, spl_water,
+                                ww=ker_width,
                                 ex_gau=ker_shape, dv_abso=dv_abso,
                                 ker_thres=ker_thres, wavestart=wavestart,
                                 waveend=waveend, dvgrid=dvgrid)
@@ -687,7 +688,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         args = [iteration, dexpo, expo_water, expo_others, dv_abso * 1000]
         WLOG(params, '', textentry('40-019-00041', args=args))
         # get the absorption spectrum
-        trans = get_abso_expo(params, wavemap, expo_others, expo_water,
+        trans = get_abso_expo(wavemap, expo_others, expo_water,
                               spl_others, spl_water, ww=ker_width,
                               ex_gau=ker_shape, dv_abso=dv_abso,
                               ker_thres=ker_thres, wavestart=wavestart,
@@ -983,13 +984,13 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # plot to show absorption spectrum
     # TODO: add switch to change labels based on template = None
     recipe.plot('TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
-                thres=trans_thres, spectrum=spectrum/template2,
-                spectrum_ini=spectrum_ini/template2,
+                thres=trans_thres, spectrum=spectrum / template2,
+                spectrum_ini=spectrum_ini / template2,
                 objname=infile.get_hkey('KW_OBJNAME', dtype=str),
                 clean_ohlines=clean_ohlines)
     recipe.plot('SUM_TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
-                thres=trans_thres, spectrum=spectrum/template2,
-                spectrum_ini=spectrum_ini/template2,
+                thres=trans_thres, spectrum=spectrum / template2,
+                spectrum_ini=spectrum_ini / template2,
                 objname=infile.get_hkey('KW_OBJNAME', dtype=str),
                 clean_ohlines=clean_ohlines)
     # ----------------------------------------------------------------------
@@ -998,7 +999,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # get the final absorption spectrum to be used on the science data.
     #     No trimming done on the wave grid
-    abso_e2ds = get_abso_expo(params, wave_e2ds, expo_others, expo_water,
+    abso_e2ds = get_abso_expo(wave_e2ds, expo_others, expo_water,
                               spl_others, spl_water, ww=ker_width,
                               ex_gau=ker_shape, dv_abso=0.0,
                               ker_thres=ker_thres, wavestart=wavestart,
@@ -1165,20 +1166,20 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
         # find brightest sky pixel that has not yet been looked at
         imax = mp.nanargmax(sky_model + mask)
         # keep track of where we looked
-        mask[imax-width:imax+width] = np.nan
+        mask[imax - width:imax + width] = np.nan
         # segment of science spectrum minus current best guess of sky
-        tmp1 = (ribbon_e2ds - sky_model * amp_sky)[imax-width:imax+width]
+        tmp1 = (ribbon_e2ds - sky_model * amp_sky)[imax - width:imax + width]
         # segment of sky sp
-        tmp2 = (sky_model * amp_sky)[imax-width:imax+width]
+        tmp2 = (sky_model * amp_sky)[imax - width:imax + width]
         # work out the gradients
         gtmp1 = np.gradient(tmp1)
         gtmp2 = np.gradient(tmp2)
         # find rms of derivative of science vs sky line
-        snr_line = (mp.nanstd(gtmp2)/mp.nanstd(gtmp1))
+        snr_line = (mp.nanstd(gtmp2) / mp.nanstd(gtmp1))
         # if above 1 sigma, we adjust
         if snr_line > 1:
             # dot product of derivative vs science sp
-            part1 =mp.nansum(gtmp1 * gtmp2 * weight ** 2)
+            part1 = mp.nansum(gtmp1 * gtmp2 * weight ** 2)
             part2 = mp.nansum(gtmp2 ** 2 * weight ** 2)
             amp = part1 / part2
             # do not deal with absorption features (sky must be emission)
@@ -1188,7 +1189,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
             amp_sky[imax - width:imax + width] *= (amp * weight + 1)
             # mask_plot[imax-width:imax+width] = 0
             # for plotting and the min and max area masked
-            mask_limits.append([imax-width, imax+width])
+            mask_limits.append([imax - width, imax + width])
             # add to the line count
             masked_lines += 1
     # -------------------------------------------------------------------------
@@ -1210,14 +1211,13 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     return image - sky_model, sky_model
 
 
-def get_abso_expo(params, wavemap, expo_others, expo_water, spl_others,
+def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
                   spl_water, ww, ex_gau, dv_abso, ker_thres, wavestart,
                   waveend, dvgrid):
     """
     Returns an absorption spectrum from exponents describing water and 'others'
     in absorption
 
-    :param params: ParamDict, parameter dictionary of constants
     :param wavemap: numpy nd array, wavelength grid onto which the spectrum is
                     splined
     :param expo_others: float, optical depth of all species other than water
@@ -1308,6 +1308,7 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     Provides an exit point for tellu_preclean via a quality control failure
 
     :param params:
+    :param recipe:
     :param image:
     :param infile:
     :param wavemap:
@@ -1377,7 +1378,7 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     expo_others = float(hdr_airmass)
     expo_water = float(default_water_abso)
     # get the absorption
-    abso_e2ds = get_abso_expo(params, wavemap, expo_others, expo_water,
+    abso_e2ds = get_abso_expo(wavemap, expo_others, expo_water,
                               spl_others, spl_water, ww=qc_ker_width,
                               ex_gau=qc_ker_shape, dv_abso=0.0,
                               ker_thres=ker_thres, wavestart=wavestart,
@@ -2444,6 +2445,7 @@ def wave_to_wave(params, spectrum, wave1, wave2, reshape=False, splinek=5):
     :param wave2: numpy array (2D), destination wavelength grid
     :param reshape: bool, if True try to reshape spectrum to the shape of
                     the output wave solution
+    :param splinek: int, the splinke k value
 
     :return output_spectrum: numpy array (2D), spectrum resampled to "wave2"
     """
@@ -2457,6 +2459,7 @@ def wave_to_wave(params, spectrum, wave1, wave2, reshape=False, splinek=5):
             eargs = [spectrum.shape, wave2.shape, func_name]
             WLOG(params, 'error', textentry('09-019-00004', args=eargs))
     # if they are the same
+    # noinspection PyTypeChecker
     if mp.nansum(wave1 != wave2) == 0:
         return spectrum
     # size of array, assumes wave1, wave2 and spectrum have same shape

@@ -57,7 +57,7 @@ __all__ = [
     'OBJ_LIST_RESOLVE_FROM_GLIST', 'OBJ_LIST_RESOLVE_FROM_COORDS',
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'REJECT_LIST_GOOGLE_SHEET_URL',
-    'REJECT_LIST_GSHEET_MAIN_LIST_ID','GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
+    'REJECT_LIST_GSHEET_MAIN_LIST_ID', 'GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
     'DO_CALIB_DTIME_CHECK',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
@@ -596,9 +596,9 @@ OBJ_LIST_GOOGLE_SHEET_URL = Const('OBJ_LIST_GOOGLE_SHEET_URL', value=None,
 # Define the google sheet objname list main list id number (may be set to a
 #     csv file for completely offline reduction)
 OBJ_LIST_GSHEET_MAIN_LIST_ID = Const('OBJ_LIST_GSHEET_MAIN_LIST_ID', value=None,
-                                  dtype=str, source=__NAME__, group=cgroup,
-                                  description='Define the google sheet objname '
-                                              'list main list id number')
+                                     dtype=str, source=__NAME__, group=cgroup,
+                                     description='Define the google sheet objname '
+                                                 'list main list id number')
 
 # Define the google sheet objname list pending list id number (may be set to a
 # #     csv file for completely offline reduction)
@@ -713,15 +713,15 @@ OBJ_LIST_GAIA_MAG_CUT = Const('OBJ_LIST_GAIA_MAG_CUT', value=None, dtype=float,
 
 # Define the google sheet to use for update the reject list
 REJECT_LIST_GOOGLE_SHEET_URL = Const('REJECT_LIST_GOOGLE_SHEET_URL', value=None,
-                                  dtype=str, source=__NAME__, group=cgroup,
-                                  description=('Define the google sheet to use '
-                                               'for crossmatch'))
+                                     dtype=str, source=__NAME__, group=cgroup,
+                                     description=('Define the google sheet to use '
+                                                  'for crossmatch'))
 
 # Define the google sheet id to use for update the reject list
 REJECT_LIST_GSHEET_MAIN_LIST_ID = Const('REJECT_LIST_GSHEET_MAIN_LIST_ID', value=None,
-                                  dtype=str, source=__NAME__, group=cgroup,
-                                  description='Define the google sheet objname '
-                                              'list main list id number')
+                                        dtype=str, source=__NAME__, group=cgroup,
+                                        description='Define the google sheet objname '
+                                                    'list main list id number')
 
 # # Define the odometer code rejection google sheet id
 # ODOCODE_REJECT_GSHEET_ID = Const('ODOCODE_REJECT_GSHEET_ID', value=None,
@@ -976,9 +976,9 @@ SKIP_DONE_PP = Const('SKIP_DONE_PP', value=None, dtype=bool,
 
 # Define dark dprtypes for threshold quality control check (PP_DARK_THRES)
 PP_DARK_DPRTYPES = Const('PP_DARK_DPRTYPES', value=None, dtype=str,
-                           source=__NAME__, active=False, group=cgroup,
-                           description='Define dark dprtypes for threshold '
-                                       'quality control check (PP_DARK_THRES)')
+                         source=__NAME__, active=False, group=cgroup,
+                         description='Define dark dprtypes for threshold '
+                                     'quality control check (PP_DARK_THRES)')
 
 # Define the threshold for a suitable dark dprtypes (above this will not be
 #    processed)
@@ -1144,10 +1144,10 @@ ALLOWED_DARK_TYPES = Const('ALLOWED_DARK_TYPES', value=None, dtype=str,
 
 # Define the maximum time span to combine dark files over (in hours)
 DARK_REF_MATCH_TIME = Const('DARK_REF_MATCH_TIME', value=None,
-                               dtype=float, source=__NAME__, group=cgroup,
-                               description=('Define the maximum time span to '
-                                            'combine dark files over (in '
-                                            'hours)'))
+                            dtype=float, source=__NAME__, group=cgroup,
+                            description=('Define the maximum time span to '
+                                         'combine dark files over (in '
+                                         'hours)'))
 
 # median filter size for dark reference
 DARK_REF_MED_SIZE = Const('DARK_REF_MED_SIZE', value=None, dtype=int,
@@ -1269,7 +1269,7 @@ BKGR_KER_AMP = Const('BKGR_KER_AMP', value=None, dtype=float, source=__NAME__,
 #  Background kernel width in x and y [pixels]
 BKGR_KER_WX = Const('BKGR_KER_WX', value=None, dtype=int, source=__NAME__,
                     group=cgroup,
-                    description=('Background kernel width in x [pixels]'))
+                    description='Background kernel width in x [pixels]')
 BKGR_KER_WY = Const('BKGR_KER_WY', value=None, dtype=int, source=__NAME__,
                     group=cgroup,
                     description='Background kernel width in y [pixels]')
@@ -1617,11 +1617,11 @@ SHAPE_QC_LTRANS_RES_THRES = Const('SHAPE_QC_LTRANS_RES_THRES', value=None,
                                                'transform'))
 
 # define the maximum number of files to use in the shape reference recipe
-SHAPE_REF_MAX_FILES =  Const('SHAPE_REF_MAX_FILES', value=None,
-                             dtype=int, source=__NAME__, group=cgroup,
-                             description=('define the maximum number of '
-                                          'files to use in the shape '
-                                          'reference recipe'))
+SHAPE_REF_MAX_FILES = Const('SHAPE_REF_MAX_FILES', value=None,
+                            dtype=int, source=__NAME__, group=cgroup,
+                            description=('define the maximum number of '
+                                         'files to use in the shape '
+                                         'reference recipe'))
 
 #  Define the percentile which defines a true FP peak [0-100]
 SHAPE_REF_VALIDFP_PERCENTILE = Const('SHAPE_REF_VALIDFP_PERCENTILE',
@@ -2029,27 +2029,27 @@ FF_PLOT_ORDER = Const('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__,
 cgroup = 'CALIBRATION: LEAKAGE SETTINGS'
 # Define the types of input file allowed by the leakage reference recipe
 ALLOWED_LEAKREF_TYPES = Const('ALLOWED_LEAKREF_TYPES', value=None, dtype=str,
-                            source=__NAME__, group=cgroup,
-                            description=('Define the types of input file '
-                                         'allowed by the leakage reference '
-                                         'recipe'))
+                              source=__NAME__, group=cgroup,
+                              description=('Define the types of input file '
+                                           'allowed by the leakage reference '
+                                           'recipe'))
 
 # define whether to always extract leak reference files
 #      (i.e. overwrite existing files)
 LEAKREF_ALWAYS_EXTRACT = Const('LEAKREF_ALWAYS_EXTRACT', value=None, dtype=bool,
-                             source=__NAME__, group=cgroup,
-                             description=('define whether to always extract '
-                                          'leak reference files (i.e. overwrite '
-                                          'existing files)'))
+                               source=__NAME__, group=cgroup,
+                               description=('define whether to always extract '
+                                            'leak reference files (i.e. overwrite '
+                                            'existing files)'))
 
 # define the type of file to use for leak reference solution
 #    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
 LEAKREF_EXTRACT_TYPE = Const('LEAKREF_EXTRACT_TYPE', value=None, dtype=str,
-                           source=__NAME__, group=cgroup,
-                           description=('define the type of file to use for '
-                                        'leak reference solution (currently '
-                                        'allowed are E2DSFF) - must match with '
-                                        'LEAK_EXTRACT_FILE'))
+                             source=__NAME__, group=cgroup,
+                             description=('define the type of file to use for '
+                                          'leak reference solution (currently '
+                                          'allowed are E2DSFF) - must match with '
+                                          'LEAK_EXTRACT_FILE'))
 
 # Define whether we want to correct leakage by default
 CORRECT_LEAKAGE = Const('CORRECT_LEAKAGE', value=None, dtype=str,
@@ -2059,9 +2059,9 @@ CORRECT_LEAKAGE = Const('CORRECT_LEAKAGE', value=None, dtype=str,
 
 # Define DPRTYPE in reference fiber to do correction
 LEAKAGE_REF_TYPES = Const('LEAKAGE_REF_TYPES', value=None, dtype=str,
-                        source=__NAME__, group=cgroup,
-                        description='Define DPRTYPE in reference fiber to do '
-                                    'correction')
+                          source=__NAME__, group=cgroup,
+                          description='Define DPRTYPE in reference fiber to do '
+                                      'correction')
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
@@ -2102,14 +2102,14 @@ LEAK_NORM_PERCENTILE = Const('LEAK_NORM_PERCENTILE', value=None, dtype=float,
 
 # define the e-width of the smoothing kernel for leak reference
 LEAKREF_WSMOOTH = Const('LEAKREF_WSMOOTH', value=None, dtype=int,
-                      source=__NAME__, minimum=0, group=cgroup,
-                      description=('define the e-width of the smoothing kernel '
-                                   'for leak reference'))
+                        source=__NAME__, minimum=0, group=cgroup,
+                        description=('define the e-width of the smoothing kernel '
+                                     'for leak reference'))
 
 # define the kernel size for leak reference
 LEAKREF_KERSIZE = Const('LEAKREF_KERSIZE', value=None, dtype=float,
-                      source=__NAME__, minimum=0.0, group=cgroup,
-                      description='define the kernel size for leak reference')
+                        source=__NAME__, minimum=0.0, group=cgroup,
+                        description='define the kernel size for leak reference')
 
 # define the lower bound percentile for leak correction
 LEAK_LOW_PERCENTILE = Const('LEAK_LOW_PERCENTILE', value=None, dtype=float,
@@ -2404,10 +2404,10 @@ THERMAL_PLOT_START_ORDER = Const('THERMAL_PLOT_START_ORDER', value=None,
 
 # define the dprtypes for which to apply the excess emissivity file
 THERMAL_EXCESS_DPRTYPES = Const('THERMAL_EXCESS_DPRTYPES', value=None,
-                                 dtype=str, source=__NAME__, group=cgroup,
-                                 description=('define the dprtypes for which '
-                                              'to apply the excess emissivity '
-                                              'file'))
+                                dtype=str, source=__NAME__, group=cgroup,
+                                description=('define the dprtypes for which '
+                                             'to apply the excess emissivity '
+                                             'file'))
 
 # define the thermal emissivity file
 THERMAL_EXCESS_EMISSIVITY_FILE = Const('THERMAL_EXCESS_EMISSIVITY_FILE',
@@ -3830,9 +3830,9 @@ MKTELLU_QC_AIRMASS_DIFF = Const('MKTELLU_QC_AIRMASS_DIFF', value=None,
 
 # define the sigma cut for tellu transmission model
 TELLU_TRANS_MODEL_SIG = Const('TELLU_TRANS_MODEL_SIG', value=None,
-                                dtype=float, source=__NAME__, group=cgroup,
-                                description=('define the sigma cut for tellu '
-                                             'transmission model'))
+                              dtype=float, source=__NAME__, group=cgroup,
+                              description=('define the sigma cut for tellu '
+                                           'transmission model'))
 
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
@@ -4100,7 +4100,6 @@ MKTEMPLATE_MAX_OPEN_FILES = Const('MKTEMPLATE_MAX_OPEN_FILES', value=50,
                                               'to be allowed into a bin '
                                               '(if not in debug mode)')
 
-
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================
@@ -4127,7 +4126,7 @@ OBJRV_NULL_VAL = Const('OBJRV_NULL_VAL', value=1000, dtype=float,
                        source=__NAME__, group=cgroup,
                        description=('Define target rv header null value '
                                     '(values greater than absolute value '
-                                      'are set to zero)'))
+                                    'are set to zero)'))
 
 # Define the default CCF MASK to use (filename or TEFF to decide based on
 #    object temperature) - for TEFF setup see CCF_TEFF_MASK_TABLE file
@@ -4615,33 +4614,33 @@ PLOT_LOC_WIDTH_REGIONS = Const('PLOT_LOC_WIDTH_REGIONS', value=False,
 # turn on localisation fiber doublet paroty plot
 PLOT_LOC_FIBER_DOUBLET_PARITY = Const('PLOT_LOC_FIBER_DOUBLET_PARITY',
                                       value=False, dtype=bool, source=__NAME__,
-                                      user=True,  active=False, group=cgroup,
+                                      user=True, active=False, group=cgroup,
                                       description='turn on localisation fiber '
                                                   'doublet paroty plot')
 
 # turn on localisation gap in orders plot
 PLOT_LOC_GAP_ORDERS = Const('PLOT_LOC_GAP_ORDERS', value=False, dtype=bool,
-                            source=__NAME__, user=True,  active=False,
+                            source=__NAME__, user=True, active=False,
                             group=cgroup,
                             description='turn on localisation gap in orders '
                                         'plot')
 
 # turn on localisation image fit plot
 PLOT_LOC_IMAGE_FIT = Const('PLOT_LOC_IMAGE_FIT', value=False, dtype=bool,
-                            source=__NAME__, user=True,  active=False,
-                            group=cgroup,
-                            description='turn on localisation image fit plot')
+                           source=__NAME__, user=True, active=False,
+                           group=cgroup,
+                           description='turn on localisation image fit plot')
 
 # turn on localisation image corners plot
 PLOT_LOC_IM_CORNER = Const('PLOT_LOC_IM_CORNER', value=False, dtype=bool,
-                            source=__NAME__, user=True,  active=False,
-                            group=cgroup,
-                            description='turn on localisation image corners '
-                                        'plot')
+                           source=__NAME__, user=True, active=False,
+                           group=cgroup,
+                           description='turn on localisation image corners '
+                                       'plot')
 
 # turn on localisation image regions plot
 PLOT_LOC_IM_REGIONS = Const('PLOT_LOC_IM_REGIONS', value=False, dtype=bool,
-                            source=__NAME__, user=True,  active=False,
+                            source=__NAME__, user=True, active=False,
                             group=cgroup,
                             description='turn on localisation image regions '
                                         'plot')
@@ -4963,9 +4962,9 @@ PLOT_MKTELLU_WAVE_FLUX2 = Const('PLOT_MKTELLU_WAVE_FLUX2', value=False,
 
 # turn on the make tellu model plot
 PLOT_MKTELLU_MODEL = Const('PLOT_MKTELLU_MODEL', value=False,
-                                dtype=bool, source=__NAME__, user=True,
-                                active=False, group=cgroup,
-                                description='turn on the make tellu model plot')
+                           dtype=bool, source=__NAME__, user=True,
+                           active=False, group=cgroup,
+                           description='turn on the make tellu model plot')
 
 # turn on the fit tellu pca component debug plot (in loop)
 PLOT_FTELLU_PCA_COMP1 = Const('PLOT_FTELLU_PCA_COMP1', value=False,

@@ -52,11 +52,9 @@ def main(obs_dir=None, **kwargs):
     Main function for apero_preprocess_spirou.py
 
     :param obs_dir: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
 
     :type obs_dir: str
-    :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
 
@@ -125,8 +123,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # get all "filetype" filenames
         files = drs_utils.find_files(params, block_kind='raw',
-                                    filters=dict(KW_DPRTYPE=filetype,
-                                                 OBS_DIR=params['OBS_DIR']))
+                                     filters=dict(KW_DPRTYPE=filetype,
+                                                  OBS_DIR=params['OBS_DIR']))
         # create infiles
         for filename in files:
             infile = rawfile.newcopy(filename=filename, params=params)

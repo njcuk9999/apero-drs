@@ -524,8 +524,8 @@ def robust_polyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
     A robust polyfit (iterating on the residuals) until nsigma is below the
     nsigcut threshold. Takes care of NaNs before fitting
 
-    :param x: np.ndarray, the x array to pass to np.polyval
-    :param y: np.ndarray, the y array to pass to np.polyval
+    :param xvector: np.ndarray, the x array to pass to np.polyval
+    :param yvector: np.ndarray, the y array to pass to np.polyval
     :param degree: int, the degree of polynomial fit passed to np.polyval
     :param nsigcut: float, the threshold sigma required to return result
     :return:

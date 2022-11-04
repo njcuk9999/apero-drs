@@ -139,7 +139,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # identification of file drs type
         # ------------------------------------------------------------------
         # identify this iterations file type
-        cond, infile = prep.drs_infile_id(params, recipe, file_instance)
+        cond, infile = prep.drs_infile_id(params, file_instance)
 
         # ------------------------------------------------------------------
         # For OBJECT files we need to resolve object and update header

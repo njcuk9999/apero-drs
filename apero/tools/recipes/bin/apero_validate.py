@@ -41,12 +41,7 @@ def main(**kwargs):
     """
     Main function for apero_validate.py
 
-    :param directory: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
-
-    :type directory: str
-    :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
 

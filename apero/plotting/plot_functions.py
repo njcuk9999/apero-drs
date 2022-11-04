@@ -13,7 +13,7 @@ import copy
 import os
 import warnings
 from collections.abc import Iterable
-from typing import Any, Dict, Generator, List, Tuple, Union
+from typing import Any, Dict, Generator, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -813,10 +813,10 @@ def plot_loc_width_regions(plotter: Plotter, graph: Graph,
         frames[coeff].plot(coeffs2[:, coeff], 'r.', label='final fit')
         # add axis labels
         frames[coeff].set(xlabel='Order Number',
-                          ylabel='Coefficient $T_{{{'+ scoeff + '}}}$')
+                          ylabel='Coefficient $T_{{{' + scoeff + '}}}$')
         frames[coeff].legend(loc=0)
         # construct coefficient string
-        str_coeffs += ['$T_{{{'+ scoeff + '}}}$']
+        str_coeffs += ['$T_{{{' + scoeff + '}}}$']
     # set global title
     title = 'Localisation width calculation per order: {0}'
     plt.suptitle(title.format(' + '.join(str_coeffs)))
@@ -954,11 +954,11 @@ def plot_loc_image_fit(plotter: Plotter, graph: Graph,
             # deal with reverse coefficients
             if reverse:
                 cfit = mp.val_cheby(coeffs_old[order_num], xpix + offset,
-                                    domain=[0,image.shape[1]])
+                                    domain=[0, image.shape[1]])
             # else just fit
             else:
                 cfit = mp.val_cheby(coeffs_old[order_num], xpix + offset,
-                                    domain=[0,image.shape[1]])
+                                    domain=[0, image.shape[1]])
             # plot this orders coefficients
             oldlabel = 'old fit (Norders={0})'.format(coeffs_old.shape[0])
             frame.plot(xpix, cfit, ls='-', color='blue', lw=1,
@@ -973,11 +973,11 @@ def plot_loc_image_fit(plotter: Plotter, graph: Graph,
         # deal with reverse coefficients
         if reverse:
             cfit = mp.val_cheby(coeffs[order_num], xpix + offset,
-                                domain=[0,image.shape[1]])
+                                domain=[0, image.shape[1]])
         # else just fit
         else:
             cfit = mp.val_cheby(coeffs[order_num], xpix + offset,
-                                domain=[0,image.shape[1]])
+                                domain=[0, image.shape[1]])
         # plot this orders coefficients
         frame.plot(xpix, cfit, ls='--', color='red', lw=1, label=newlabel)
         # plot widths
@@ -5283,10 +5283,10 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
                            color='k', alpha=0.2)
 
     y = np.mean([ram_start, ram_end], axis=0)
-    eyl = y - np.min([ram_start, ram_end], axis=0)
-    eyu = np.max([ram_start, ram_end], axis=0) - y
+    # eyl = y - np.min([ram_start, ram_end], axis=0)
+    # eyu = np.max([ram_start, ram_end], axis=0) - y
 
-    frames[0].plot(time0, y, color='k',  marker='None', ls=':')
+    frames[0].plot(time0, y, color='k', marker='None', ls=':')
     # frames[0].errorbar(time0, y, yerr=[eyl, eyu], color='r',
     #                    marker='o', ls='None', alpha=0.25, capsize=5)
     # -------------------------------------------------------------------------
@@ -5305,15 +5305,14 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
             linestyle = '-'
             linewidth = 1
 
-
         _, _, _, s_start, s_end, r_start, r_end = shortname_values[shortname]
 
         pargs = [shortname, len(s_start)]
         print('\tAdding recipe {0} [{1} entries]'.format(*pargs))
 
         smed = np.median([s_start, s_end], axis=0)
-        smin = smed - s_start
-        smax = s_end - smed
+        # smin = smed - s_start
+        # smax = s_end - smed
         counts = counter + np.linspace(0, 1, len(smed) + 2)[1:-1] - 0.5
 
         for row in range(len(s_start)):
@@ -5337,7 +5336,6 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
 
     # add a fill between to separate coloured bands
     for counter, shortname in enumerate(shortnames):
-
         frames[1].fill_between(time0, counter - 0.5, counter + 0.5,
                                color=colors[counter], alpha=0.25)
 
@@ -5355,7 +5353,7 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
 
     # set limits
     frames[1].set(xlim=[0, np.max(time0)],
-                  ylim=[-0.5, len(shortnames)-0.5])
+                  ylim=[-0.5, len(shortnames) - 0.5])
 
     # custom legend
     start = mlines.Line2D([], [], color='k', marker='+', ls='None',

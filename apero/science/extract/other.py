@@ -56,8 +56,6 @@ def extract_thermal_files(params, recipe, extname, thermalfile,
     # get parameters from params/kwargs
     therm_always_extract = pcheck(params, 'THERMAL_ALWAYS_EXTRACT',
                                   'always_extract', kwargs, func_name)
-    therm_extract_type = pcheck(params, 'THERMAL_EXTRACT_TYPE', 'extract_type',
-                                kwargs, func_name)
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
                                            mod=recipe.recipemod)
@@ -81,8 +79,8 @@ def extract_thermal_files(params, recipe, extname, thermalfile,
     # get outputs
     thermal_outputs = extract_files(params, recipe, thermalfile, thfileinst,
                                     therm_always_extract, extrecipe,
-                                    therm_extract_type, kind='thermal',
-                                    func_name=func_name, logger=logger,
+                                    kind='thermal', func_name=func_name,
+                                    logger=logger,
                                     force_ref_wave=force_ref_wave)
 
     # TODO: Add sky dark here
@@ -134,8 +132,6 @@ def extract_leak_files(params, recipe, extname, darkfpfile, logger,
     # get parameters from params/kwargs
     leak_always_extract = pcheck(params, 'LEAKREF_ALWAYS_EXTRACT',
                                  'always_extract', kwargs, func_name)
-    leak_extract_type = pcheck(params, 'LEAKREF_EXTRACT_TYPE', 'extract_type',
-                               kwargs, func_name)
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
                                            mod=recipe.recipemod)
@@ -147,9 +143,8 @@ def extract_leak_files(params, recipe, extname, darkfpfile, logger,
     # get outputs
     darkfp_outputs = extract_files(params, recipe, darkfpfile, fileinst,
                                    leak_always_extract, extrecipe,
-                                   leak_extract_type, kind='leakage',
-                                   func_name=func_name, leakcorr=False,
-                                   logger=logger)
+                                   kind='leakage', func_name=func_name,
+                                   leakcorr=False, logger=logger)
     
     # ----------------------------------------------------------------------
     # return extraction outputs
@@ -164,8 +159,6 @@ def extract_wave_files(params, recipe, extname, hcfile,
     # get parameters from params/kwargs
     wave_always_extract = pcheck(params, 'WAVE_ALWAYS_EXTRACT',
                                  'always_extract', kwargs, func_name)
-    wave_extract_type = pcheck(params, 'WAVE_EXTRACT_TYPE', 'extract_type',
-                               kwargs, func_name)
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
                                            mod=recipe.recipemod)
@@ -179,9 +172,8 @@ def extract_wave_files(params, recipe, extname, hcfile,
     # get outputs
     hc_outputs = extract_files(params, recipe, hcfile, hcfileinst,
                                wave_always_extract, extrecipe,
-                               wave_extract_type, kind='hc',
-                               func_name=func_name, wavefile=wavefile,
-                               logger=logger)
+                               kind='hc', func_name=func_name,
+                               wavefile=wavefile, logger=logger)
     # ----------------------------------------------------------------------
     # extract fp files
     # ----------------------------------------------------------------------
@@ -191,10 +183,8 @@ def extract_wave_files(params, recipe, extname, hcfile,
         # get outputs
         fp_outputs = extract_files(params, recipe, fpfile, fpfileinst,
                                    wave_always_extract, extrecipe,
-                                   wave_extract_type, kind='fp',
-                                   func_name=func_name,
-                                   wavefile=wavefile,
-                                   logger=logger)
+                                   kind='fp', func_name=func_name,
+                                   wavefile=wavefile, logger=logger)
     else:
         # make storage for fp outputs
         fp_outputs = dict()
@@ -214,7 +204,7 @@ def extract_wave_files(params, recipe, extname, hcfile,
 def extract_files(params: ParamDict, recipe: DrsRecipe,
                   infile: DrsFitsFile, outfile: DrsFitsFile,
                   always_extract: bool, extrecipe: Union[DrsRecipe, None],
-                  extract_type: str, kind: str = 'gen',
+                  kind: str = 'gen',
                   func_name: Union[str, None] = None,
                   leakcorr: Optional[bool] = None,
                   wavefile: Optional[str] = None,

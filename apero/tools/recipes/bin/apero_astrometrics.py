@@ -149,7 +149,7 @@ def __main__(recipe, params):
                     # append to add list
                     add_objs.append(astro_obj)
                 # add to astro_objs
-                astro_objs  = [astro_obj]
+                astro_objs = [astro_obj]
         # --------------------------------------------------------------------
         # if we still have no objects deal with no objects
         if len(astro_objs) == 0:

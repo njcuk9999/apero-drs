@@ -105,7 +105,7 @@ def __main__(recipe, params):
     # read and ask for new version
     WLOG(params, '', textentry('40-501-00009'))
     # set new version
-    version = drs_changelog.ask_for_new_version(params)
+    version = drs_changelog.ask_for_new_version()
     # add tag of version
     if version is not None:
         # tag head with version

@@ -78,8 +78,6 @@ def main(obs_dir=None, files=None, **kwargs):
     :param files: str or None, the list of files
     :param kwargs: additional keyword arguments
 
-    :type instrument: str
-
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space

@@ -82,9 +82,11 @@ def is_empty(params: ParamDict, directory: str,
     """
     Find whether a directory is empty (exluding files is "exclude_files" is set)
 
+    :param params: ParamDict, parameter dictionary of constants
     :param directory: str, the directory to check
     :param exclude_files: list or strings or None - the files to exlucde from
                           a directory
+
     :return: bool, True if empty or False otherwise
     """
     if os.path.exists(directory):
@@ -130,9 +132,9 @@ def reset_title(params: ParamDict, name: str):
     # blank lines
     print()
     print()
-    WLOG(params, 'info', '='*50)
+    WLOG(params, 'info', '=' * 50)
     WLOG(params, 'info', textentry('40-502-00012', args=[name]))
-    WLOG(params, 'info', '='*50)
+    WLOG(params, 'info', '=' * 50)
 
 
 def reset_confirmation(params: ParamDict, name: str,
@@ -186,6 +188,7 @@ def reset_tmp_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
+    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets tmp (preprocessed) directory
     """
@@ -254,6 +257,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
+    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets reduced directory
     """
@@ -321,6 +325,7 @@ def reset_calibdb(params: ParamDict, log: bool = True, dtimeout: int = 20):
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
+    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets telluDB
     """
@@ -357,6 +362,7 @@ def reset_telludb(params: ParamDict, log: bool = True, dtimeout: int = 20):
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
+    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets telluDB
     """
@@ -402,6 +408,9 @@ def reset_dbdir(params: ParamDict, name: str, db_dir: str,
     :param empty_first: bool, if True deletes contents first
     :param relative_path: str or None if set this mean the reset path is inside
                           the ASSETS directory
+    :param backup: bool, if True we backup the files to a sub-directory
+                   before resetting (only if files wouldn't have been
+                   originally overwritten)
 
     :return: None copys files to database file directory
     """
@@ -524,6 +533,7 @@ def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
+    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets reduced directory
     """
@@ -591,6 +601,7 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
 
     :param params: ParamDict, parameter dictionary of constants
     :param log: bool - if True logs process
+    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets assets dir and databases
     """
@@ -701,7 +712,7 @@ def backup_all_diff(params, old_path, new_path):
         print(f'Backing up {filename}')
         shutil.move(filename, new_filename)
     # now remove everything in new_path other than backup
-    files = glob.glob(new_path +  '/*')
+    files = glob.glob(new_path + '/*')
     # loop around files/directories in new_path
     for filename in files:
         # if it is a directory empty it
@@ -834,6 +845,7 @@ def remove_files(params, path, log=True, skipfiles=None):
                  sublevel=2)
     # clear loading message
     TLOG(params, '', '')
+
 
 # =============================================================================
 # Start of code

@@ -71,8 +71,6 @@ def main(**kwargs):
 
     :param kwargs: additional keyword arguments
 
-    :type instrument: str
-
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space

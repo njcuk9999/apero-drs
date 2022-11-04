@@ -344,7 +344,7 @@ def get_all_non_empty_subdirs(path: Union[Path, str],
         if _dir.is_dir():
             # get uncommon path
             if relative:
-                save_path = get_uncommon_path(str(_dir), path)
+                save_path = get_uncommon_path(str(_dir), str(path))
             else:
                 save_path = str(_dir)
             # flag to keep dir
@@ -423,7 +423,6 @@ def get_dirs(path: str, relative=False) -> List[str]:
             rel_obs_dirs.append(obs_dir)
     # return the relative paths
     return rel_obs_dirs
-
 
 
 def nofiles(rootdir: str) -> bool:

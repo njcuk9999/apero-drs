@@ -263,7 +263,7 @@ def check_install() -> Tuple[Any, Any, Any]:
     else:
         os.environ['PYTHONPATH'] = str(drs_path)
         # add to active path
-        os.sys.path = [str(drs_path)] + os.sys.path
+        sys.path = [str(drs_path)] + sys.path
     # if we have reached this point we can break out of the while loop
     return constants, install, drs_base
 
@@ -536,7 +536,7 @@ def main():
         lang = setup_lang.LangDict(langarg)
     else:
         lang = setup_lang.LangDict()
-    LANGUAGE = lang.language
+    language = lang.language
     # ----------------------------------------------------------------------
     # deal with validation
     if not get_sys_arg('--skip') and not get_sys_arg('--help', 'switch'):
@@ -574,7 +574,7 @@ def main():
         sys.exit()
     # get parameters from user input
     elif not args.update:
-        allparams, args = install.user_interface(params, args, LANGUAGE)
+        allparams, args = install.user_interface(params, args, language)
         # save current arguments to disk
         afile = save_args(args)
         install.cprint(f'Saved installation parameters to: {afile}')

@@ -35,7 +35,6 @@ textentry = lang.textentry
 RUNDEF_PATH = 'apero.tools.module.processing.instruments.runfiles_{0}'
 
 
-
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -44,8 +43,6 @@ def main(**kwargs):
     Main function for apero_changelog.py
 
     :param kwargs: any additional keywords
-
-    :type preview: bool
 
     :returns: dictionary of the local space
     :rtype: dict
@@ -79,9 +76,12 @@ def __main__(recipe, params):
     # get default run file instances
     run_files = []
     for instrument in instruments:
+        if instruments == 'None':
+            continue
         modname = f'runfile_{instrument.lower()}'
         modpath = RUNDEF_PATH.format(instrument.lower())
         # try to load run def
+        # noinspection PyBroadException
         try:
             rundef = constants.import_module(modname, modpath, quiet=True)
         except Exception as _:

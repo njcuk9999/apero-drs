@@ -150,7 +150,8 @@ class Demo:
         # get package
         self.package = params['DRS_PACKAGE']
 
-    def setup(self):
+    @staticmethod
+    def setup():
         # deal with arguments
         if isinstance(sys.argv, list):
             args = list(sys.argv)
@@ -175,7 +176,6 @@ class Demo:
     def test_data(self, params):
         # TODO: get test data from data/spirou/demo
         pass
-
 
 
 # =============================================================================

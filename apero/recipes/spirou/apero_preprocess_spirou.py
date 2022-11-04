@@ -151,7 +151,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # identification of file drs type
         # ------------------------------------------------------------------
         # identify this iterations file type
-        cond, infile = prep.drs_infile_id(params, recipe, file_instance)
+        cond, infile = prep.drs_infile_id(params, file_instance)
 
         # ------------------------------------------------------------------
         # For OBJECT files we need to resolve object and update header
@@ -340,7 +340,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # update recipe log
         log1.add_qc(qc_params, passed)
         if passed:
-           log1.update_flags(QCPASSED=True)
+            log1.update_flags(QCPASSED=True)
 
         # ------------------------------------------------------------------
         # Save rotated image

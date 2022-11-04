@@ -224,6 +224,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
 
     return all_inpaths, all_outpaths
 
+
 # =============================================================================
 # Start of code
 # =============================================================================

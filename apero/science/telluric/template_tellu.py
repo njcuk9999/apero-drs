@@ -498,7 +498,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     return props
 
 
-def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
+def make_1d_template_cube(params, filenames, reffile, fiber, **kwargs):
     # set function mame
     func_name = display_func('make_1d_template_cube', __NAME__)
     # get parameters from params/kwargs
