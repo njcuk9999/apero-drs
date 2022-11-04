@@ -101,7 +101,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
                                 path=params['DRS_TELLU_DB'])
     abso1_npy_filename = 'tellu_save1_{0}.npy'.format(recent_filetime)
     abso1_npy.construct_filename(filename=abso1_npy_filename,
-                                path=params['DRS_TELLU_DB'])
+                                 path=params['DRS_TELLU_DB'])
     # noinspection PyBroadException
     try:
         # try loading from file
@@ -299,8 +299,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
 def shift_template(params: ParamDict, recipe: DrsRecipe,
                    image: Optional[np.ndarray],
                    e2dsimage: Optional[np.ndarray],
-                   refprops: ParamDict, wprops: ParamDict, bprops: ParamDict,
-                   **kwargs):
+                   refprops: ParamDict, wprops: ParamDict, bprops: ParamDict):
     # set function name
     func_name = display_func('shift_template', __NAME__)
 
@@ -331,7 +330,7 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
         # Log that we are shifting the template
         WLOG(params, '', textentry('40-019-00017'))
         # set up storage for template
-        #e2dsimage2 = np.zeros(np.product(e2dsimage.shape))
+        # e2dsimage2 = np.zeros(np.product(e2dsimage.shape))
         # ydim, xdim = e2dsimage.shape
         # # loop around orders
         # for order_num in range(ydim):
@@ -351,7 +350,6 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
         #         start = order_num * xdim
         #         end = order_num * xdim + xdim
         #         e2dsimage2[start:end] = spline(waveshift)
-
 
         # interpolate at shifted values
         dvshift = mp.relativistic_waveshift(dv, units='km/s')
@@ -832,12 +830,13 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
 
     :param params: ParamDict, parameter dictionary of constants
     :param recipe:
+    :param image:
     :param image1:
     :param trans_props:
     :param tpreprops:
     :param refprops:
     :param wprops:
-    :param bprops:
+
     :return:
     """
     # set function name
@@ -851,10 +850,10 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     expo_others = tpreprops['EXPO_OTHERS']
     # calculate model for predicted residuals (in reference frame)
     pwater = expo_water * water_res
-    pothers =  expo_others * others_res
+    pothers = expo_others * others_res
     res_model = np.exp(zero_res + pwater + pothers)
     # shift model to image frame
-    wargs = [params, res_model,  refprops['WAVEMAP'], wprops['WAVEMAP']]
+    wargs = [params, res_model, refprops['WAVEMAP'], wprops['WAVEMAP']]
     res_model2 = gen_tellu.wave_to_wave(*wargs, splinek=1)
     # ------------------------------------------------------------------
     # Calculate reconstructed absorption + correct E2DS file
@@ -868,9 +867,9 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     # Plot wavelength vs vectors
     # ------------------------------------------------------------------
     # set up plot args
-    pkwargs = dict( wprops=wprops, image=image,
-                image1=image1, sp_out=sp_out, res_model2=res_model2,
-                tpreprops=tpreprops, recon_abso=recon_abso)
+    pkwargs = dict(wprops=wprops, image=image,
+                   image1=image1, sp_out=sp_out, res_model2=res_model2,
+                   tpreprops=tpreprops, recon_abso=recon_abso)
     # debug plot
     recipe.plot('FTELLU_RES_MODEL', **pkwargs)
     # summary plot
@@ -1044,7 +1043,6 @@ def fit_tellu_summary(recipe, it, params, qc_params, tpreprops, fiber):
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                               nprops, wprops, trans_props, cprops,
                               qc_params, template_props, tpreprops, **kwargs):
-    func_name = __NAME__ + '.fit_tellu_write_corrected()'
     # get parameters from cprops
     sp_out = kwargs.get('CORRECTED_SP', cprops['CORRECTED_SP'])
     # ------------------------------------------------------------------
@@ -1360,6 +1358,7 @@ def _remove_absonpy_files(params, path, prefix):
             # debug log removal of other abso files
             WLOG(params, 'debug', textentry('90-019-00002', args=[abspath]))
             # remove file
+            # noinspection PyBroadException
             try:
                 os.remove(abspath)
             except Exception as _:

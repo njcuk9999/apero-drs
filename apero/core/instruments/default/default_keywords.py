@@ -347,8 +347,8 @@ KW_OBJNAME = Keyword('KW_OBJNAME', key='NULL', dtype=str, source=__NAME__,
 KW_OBJECTNAME = Keyword('KW_OBJECTNAME', key='NULL', dtype=str, source=__NAME__,
                         description='define the raw observation name')
 KW_OBJECTNAME2 = Keyword('KW_OBJECTNAME2', key='NULL', dtype=str, source=__NAME__,
-                        description='another object name which may need to be'
-                                    'checked')
+                         description='another object name which may need to be'
+                                     'checked')
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = Keyword('KW_OBJEQUIN', key='NULL', dtype=float, source=__NAME__,
@@ -647,17 +647,17 @@ KW_CDTTHERMAL = Keyword('KW_CDTTHERMAL', key='NULL', dtype=str, source=__NAME__,
                         description='time of thermal cal file used in extract')
 # leak reference calibration file used
 KW_CDBLEAKM = Keyword('KW_CDBLEAKM', key='NULL', dtype=str, source=__NAME__,
-                        description='leak reference calibration file used')
+                      description='leak reference calibration file used')
 # time of leak reference calibration file used
 KW_CDTLEAKM = Keyword('KW_CDTLEAKM', key='NULL', dtype=str, source=__NAME__,
-                        description='time of leak reference calibration file used')
+                      description='time of leak reference calibration file used')
 # ref leak reference calibration file used
 KW_CDBLEAKR = Keyword('KW_CDBLEAKR', key='NULL', dtype=str, source=__NAME__,
-                        description='ref leak reference calibration file used')
+                      description='ref leak reference calibration file used')
 # time of ref leak reference calibration file used
 KW_CDTLEAKR = Keyword('KW_CDTLEAKR', key='NULL', dtype=str, source=__NAME__,
-                        description='time of ref leak reference calibration file '
-                                    'used')
+                      description='time of ref leak reference calibration file '
+                                  'used')
 
 # additional properties of calibration
 
@@ -679,9 +679,9 @@ KW_FIBER = Keyword('KW_FIBER', key='NULL', dtype=str, source=__NAME__,
                    description='the fiber name')
 # the ratio used for thermal correction (method=tapas or envelope)
 KW_THERM_RATIO = Keyword('KW_THERM_RATIO', key='NULL', dtype=float,
-                           source=__NAME__,
-                           description='the ratio used for thermal correction '
-                                       '(method=tapas or envelope)')
+                         source=__NAME__,
+                         description='the ratio used for thermal correction '
+                                     '(method=tapas or envelope)')
 
 # the ratio method used for thermal correction
 KW_THERM_RATIO_U = Keyword('KW_THERM_RATIO_U', key='NULL', dtype=str,
@@ -737,9 +737,9 @@ KW_PPC_NBAD_INTE = Keyword('KW_PPC_NBAD_INTE', key='NULL', dtype=int,
 
 # the number of bad pixels found via the slope (cosmic ray rejection)
 KW_PPC_NBAD_SLOPE = Keyword('KW_PPC_NBAD_INTE', key='NULL', dtype=int,
-                           source=__NAME__,
-                           description=('the number of bad pixels found via '
-                                        'the slope (cosmic ray rejection)'))
+                            source=__NAME__,
+                            description=('the number of bad pixels found via '
+                                         'the slope (cosmic ray rejection)'))
 
 # the number of bad pixels found with both intercept and slope (cosmic ray)
 KW_PPC_NBAD_BOTH = Keyword('KW_PPC_NBAD_INTE', key='NULL', dtype=int,
@@ -1174,13 +1174,13 @@ KW_CAVITY_WIDTH = Keyword('KW_CAVITY_WIDTH', key='NULL', dtype=float,
 
 # define the cavity fit degree used
 KW_CAVITY_DEG = Keyword('KW_CAVITY_DEG', key='NULL', dtype=int,
-                          source=__NAME__,
-                          description='define the cavity fit degree used')
+                        source=__NAME__,
+                        description='define the cavity fit degree used')
 
 # define the mean hc velocity calculated
 KW_WAVE_MEANHC = Keyword('KW_WAVE_MEANHC', key='NULL', dtype=float,
-                          source=__NAME__,
-                          description='define the mean hc velocity calculated')
+                         source=__NAME__,
+                         description='define the mean hc velocity calculated')
 
 # define the err on mean hc velocity calculated
 KW_WAVE_EMEANHC = Keyword('KW_WAVE_EMEANHC', key='NULL', dtype=float,
@@ -1651,8 +1651,8 @@ KW_WNT_NSIG_FIT = Keyword('KW_WNT_NSIG_FIT', key='NULL', dtype=int, source=__NAM
 # -----------------------------------------------------------------------------
 # number of orders for the resolution map header
 KW_RESMAP_NBO = Keyword('KW_RESMAP_NBO', key='NULL', dtype=int, source=__NAME__,
-                          description='number of orders for the resolution '
-                                      'map header')
+                        description='number of orders for the resolution '
+                                    'map header')
 
 # number of pixels in an order for the resolution map header
 KW_RESMAP_NBPIX = Keyword('KW_RESMAP_NBO', key='NULL', dtype=int, source=__NAME__,
@@ -1679,20 +1679,20 @@ KW_RESMAP_BINPIX = Keyword('KW_RESMAP_BINPIX', key='NULL', dtype=int,
 
 # total number of bins in spatial direction for the resolution map header
 KW_RESMAP_NBINPIX = Keyword('KW_RESMAP_NBINPIX', key='NULL', dtype=int,
-                           source=__NAME__,
-                           description='total number of bins in spatial '
-                                       'direction for the resolution map '
-                                       'header')
+                            source=__NAME__,
+                            description='total number of bins in spatial '
+                                        'direction for the resolution map '
+                                        'header')
 
 # First order used in this sector
 KW_RES_MAP_ORDLOW = Keyword('KW_RES_MAP_ORDLOW', key='NULL', dtype=int,
-                           source=__NAME__,
-                           description='First order used in this sector')
+                            source=__NAME__,
+                            description='First order used in this sector')
 
 # Last order used in this sector
 KW_RES_MAP_ORDHIGH = Keyword('KW_RES_MAP_ORDHIGH', key='NULL', dtype=int,
-                           source=__NAME__,
-                           description='Last order used in this sector')
+                             source=__NAME__,
+                             description='Last order used in this sector')
 
 # First pixel used in this sector
 KW_RES_MAP_PIXLOW = Keyword('KW_RES_MAP_PIXLOW', key='NULL', dtype=int,
@@ -1977,9 +1977,9 @@ KW_MKMODEL_NFILES = Keyword('KW_MKMODEL_NFILES', key='NULL', dtype=int,
 
 # The min number of files in the trans file model
 KW_MKMODEL_MIN_FILES = Keyword('KW_MKMODEL_MIN_FILES', key='NULL', dtype=int,
-                            source=__NAME__,
-                            description='The min number of files in the trans '
-                                        'file model')
+                               source=__NAME__,
+                               description='The min number of files in the trans '
+                                           'file model')
 
 # The sigma cut for the trans file model
 KW_MKMODEL_SIGCUT = Keyword('KW_MKMODEL_NFILES', key='NULL', dtype=float,
@@ -2398,7 +2398,6 @@ KW_POL_NEXP = Keyword('KW_POL_NEXP', key='NULL', dtype=int, source=__NAME__,
 KW_POL_METHOD = Keyword('KW_POL_METHOD', key='NULL', dtype=str, source=__NAME__,
                         description='defines the Polarimetry method')
 
-
 # define the Total exposure time (sec)
 KW_POL_EXPTIME = Keyword('KW_POL_EXPTIME', key='NULL', dtype=float, source=__NAME__,
                          description='define the Total exposure time (sec)')
@@ -2446,9 +2445,9 @@ KW_POL_SIGCLIP = Keyword('KW_POL_SIGCLIP', key='NULL', dtype=bool,
 
 # define the number of sigma swithin which to apply sigma clipping
 KW_POL_NSIGMA = Keyword('KW_POL_NSIGMA', key='NULL', dtype=int,
-                         source=__NAME__,
-                         description='define the number of sigma swithin which '
-                                     'to apply sigma clipping')
+                        source=__NAME__,
+                        description='define the number of sigma swithin which '
+                                    'to apply sigma clipping')
 
 # define whether we removed continuum polarization
 KW_POL_REMOVE_CONT = Keyword('KW_POL_REMOVE_CONT', key='NULL', dtype=int,
@@ -2463,16 +2462,16 @@ KW_POL_SCONT_DET_ALG = Keyword('KW_POL_SCONT_DET_ALG', key='NULL', dtype=str,
                                            'detection algorithm')
 
 # define the polar continuum detection algorithm
-KW_POL_PCONT_DET_ALG =  Keyword('KW_POL_PCONT_DET_ALG', key='NULL', dtype=str,
+KW_POL_PCONT_DET_ALG = Keyword('KW_POL_PCONT_DET_ALG', key='NULL', dtype=str,
                                source=__NAME__,
                                description='define the polar continuum '
                                            'detection algorithm')
 
 # define whether we used polynomial fit for continuum polarization
 KW_POL_CONT_POLYFIT = Keyword('KW_POL_CONT_POLYFIT', key='NULL', dtype=bool,
-                               source=__NAME__,
-                               description='define whether we used polynomial '
-                                           'fit for continuum polarization')
+                              source=__NAME__,
+                              description='define whether we used polynomial '
+                                          'fit for continuum polarization')
 
 # define polynomial degree of fit continuum polarization
 KW_POL_CONT_DEG_POLY = Keyword('KW_POL_CONT_DEG_POLY', key='NULL', dtype=int,
@@ -2515,8 +2514,8 @@ KW_POL_CONT_BINSIZE = Keyword('KW_POL_CONT_BINSIZE', key='NULL', dtype=int,
 # define the polar continuum overlap size used
 KW_POL_CONT_OVERLAP = Keyword('KW_POL_CONT_OVERLAP', key='NULL', dtype=int,
                               source=__NAME__,
-                               description='define the polar continuum overlap '
-                                           'size used')
+                              description='define the polar continuum overlap '
+                                          'size used')
 
 # define the telluric mask parameters (1D list)
 KW_POL_CONT_TELLMASK = Keyword('KW_POL_CONT_TELLMASK', key='NULL', dtype=str,
@@ -2528,7 +2527,6 @@ KW_POL_CONT_TELLMASK = Keyword('KW_POL_CONT_TELLMASK', key='NULL', dtype=str,
 KW_LSD_ORIGIN = Keyword('KW_LSD_ORIGIN', key='NULL', dtype=str,
                         source=__NAME__,
                         description='define the lsd origin')
-
 
 # define the rv from lsd gaussian fit
 KW_LSD_FIT_RV = Keyword('KW_LSD_FIT_RV', key='NULL', dtype=float,
@@ -2560,9 +2558,9 @@ KW_LSD_POL_MEDABSDEV = Keyword('KW_LSD_POL_MEDABSDEV', key='NULL', dtype=float,
 
 # define the mean of stokes VQU lsd profile
 KW_LSD_STOKESVQU_MEAN = Keyword('KW_LSD_STOKESVQU_MEAN', key='NULL', dtype=float,
-                               source=__NAME__,
-                               description='define the mean of stokes VQU '
-                                           'lsd profile')
+                                source=__NAME__,
+                                description='define the mean of stokes VQU '
+                                            'lsd profile')
 
 # define the std deviation of stokes VQU LSD profile
 KW_LSD_STOKESVQU_STDDEV = Keyword('KW_LSD_STOKESVQU_STDDEV', key='NULL',
@@ -2578,9 +2576,9 @@ KW_LSD_NULL_MEAN = Keyword('KW_LSD_NULL_MEAN', key='NULL', dtype=float,
 
 # define the std deviation of stokes vqu lsd null profile
 KW_LSD_NULL_STDDEV = Keyword('KW_LSD_NULL_STDDEV', key='NULL', dtype=float,
-                           source=__NAME__,
-                           description='define the std deviation of stokes '
-                                       'vqu lsd null profile')
+                             source=__NAME__,
+                             description='define the std deviation of stokes '
+                                         'vqu lsd null profile')
 
 # define the mask file used in the lsd analysis
 KW_LSD_MASK_FILE = Keyword('KW_LSD_MASK_FILE', key='NULL', dtype=str,
@@ -2596,15 +2594,15 @@ KW_LSD_MASK_NUMLINES = Keyword('KW_LSD_MASK_NUMLINES', key='NULL', dtype=int,
 
 # define the number of lines used in the LSD analysis
 KW_LSD_MASKLINES_USED = Keyword('KW_LSD_MASK_NUMLINES', key='NULL', dtype=int,
-                               source=__NAME__,
-                               description='define the number of lines used '
-                                           'in the LSD analysis')
+                                source=__NAME__,
+                                description='define the number of lines used '
+                                            'in the LSD analysis')
 
 # define the mean wavelength of lines use din lsd analysis
 KW_LSD_NORM_WLC = Keyword('KW_LSD_NORM_WLC', key='NULL', dtype=float,
-                                source=__NAME__,
-                                description='define the mean wavelength of '
-                                            'lines use din lsd analysis')
+                          source=__NAME__,
+                          description='define the mean wavelength of '
+                                      'lines use din lsd analysis')
 
 # define the mean lande of lines used in lsd analysis
 KW_LSD_NORM_LANDE = Keyword('KW_LSD_NORM_LANDE', key='NULL',

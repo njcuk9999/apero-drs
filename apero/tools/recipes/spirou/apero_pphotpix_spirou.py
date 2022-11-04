@@ -39,7 +39,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-textentry= lang.textentry
+textentry = lang.textentry
 
 # whether this is a debug run (produces mask image)
 DEBUG = False
@@ -87,9 +87,9 @@ def main(obs_dir=None, darkfile=None, **kwargs):
     """
     Main function for exposuremeter_spirou.py
 
+    :param obs_dir: str, observation directory
+    :param darkfile: str, dark file name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 

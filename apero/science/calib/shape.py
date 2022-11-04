@@ -82,7 +82,7 @@ def construct_fp_table(params, filenames, **kwargs):
         hdr = drs_fits.read_header(params, filenames[it], copy=True)
         # must load file here to check if fp is valid
         image = drs_fits.readfits(params, filenames[it])
-        fpcheck =gen_calib.check_fp(params, image, filename=filenames[it])
+        fpcheck = gen_calib.check_fp(params, image, filename=filenames[it])
         del image
         if not fpcheck:
             continue
@@ -1744,8 +1744,6 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
     return ref_dxmap, max_dxmap_std, max_dxmap_info, dxrms
 
 
-
-
 def calculate_dymap(params, fpimage, fpheader, **kwargs):
     func_name = __NAME__ + '.calculate_dymap()'
     # get properties from property dictionaries
@@ -1815,7 +1813,7 @@ def calculate_dymap(params, fpimage, fpheader, **kwargs):
 def get_ref_fp(params, header, filename=None, database=None):
     # get file definition
     out_fpref = drs_file.get_file_definition(params, 'REF_FP',
-                                                block_kind='red')
+                                             block_kind='red')
     # get key
     key = out_fpref.dbkey
     # load database
@@ -1829,12 +1827,12 @@ def get_ref_fp(params, header, filename=None, database=None):
     cfile = gen_calib.CalibFile()
     cfile.load_calib_file(params, key, header, filename=filename,
                           userinputkey='FPREF', database=calibdbm)
-    fpref, FPREF_FILE = cfile.data, cfile.filename
+    fpref, fpref_file = cfile.data, cfile.filename
     # ----------------------------------------------------------------------
     # log which fpref file we are using
-    WLOG(params, '', textentry('40-014-00030', args=[FPREF_FILE]))
+    WLOG(params, '', textentry('40-014-00030', args=[fpref_file]))
     # return the reference image
-    return FPREF_FILE, fpref
+    return fpref_file, fpref
 
 
 def get_shape_calibs(params, header, database):
@@ -2550,7 +2548,6 @@ def xy_acc_peak(xpeak, ypeak, im):
     y1 = -0.5 * my / ay + ypeak
 
     return x1, y1
-
 
 # =============================================================================
 # End of code

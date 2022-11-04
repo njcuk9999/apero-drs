@@ -41,8 +41,6 @@ def main(**kwargs):
 
     :param kwargs: any additional keywords
 
-    :type preview: bool
-
     :returns: dictionary of the local space
     :rtype: dict
     """

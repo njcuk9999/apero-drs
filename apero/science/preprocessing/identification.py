@@ -37,7 +37,7 @@ textentry = lang.textentry
 # =============================================================================
 # Define functions
 # =============================================================================
-def drs_infile_id(params, recipe, given_drs_file):
+def drs_infile_id(params, given_drs_file):
     """
     Given a generic drs file (i.e. "raw_file") -- must have a fileset --
     identifies which sub-file (from fileset) this file is (based on
@@ -73,6 +73,7 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     :param infile: DrsFitsFile, the input drs_file
     :param drsfileset: DrsFitsFile, the drs file (with file set) to look
                            for sub-types
+    :param prefix: str, a prefix to remove from filename
 
     :type params: ParamDict
     :type recipe: DrsRecipe

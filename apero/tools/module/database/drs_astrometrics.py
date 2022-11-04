@@ -195,11 +195,9 @@ class AstroObj:
         sheets)
 
         :param table_row: astropy.table.row.Row
-        :param update: bool, whether we are running new or updating all rows
 
         :return: None populates attributes
         """
-        pconst = constants.pload()
         # set objname as cleaned version of name
         self.objname = table_row['OBJNAME']
         # store the original name
@@ -591,7 +589,6 @@ class AstroObj:
         WLOG(params, '', msg.format(*margs))
 
 
-
 def query_simbad(params: ParamDict, rawobjname: str,
                  report: bool = True, update: bool = False
                  ) -> Tuple[List[AstroObj], str]:
@@ -627,7 +624,7 @@ def query_simbad(params: ParamDict, rawobjname: str,
     astroobjs = []
     # deal with not having object
     if (table is None) or (len(table) == 0):
-        msg = ('Object "{0}" not found in SIMBAD.')
+        msg = 'Object "{0}" not found in SIMBAD.'
         if report:
             WLOG(params, 'warning', msg.format(rawobjname))
         return astroobjs, msg.format(rawobjname)
@@ -793,7 +790,7 @@ def lookup(params: ParamDict, rawobjname: str
     astroobj = AstroObj(rawobjname)
     # set values of astroobj
     astroobj.objname = objname
-    astroobj.original_name =  rawobjname
+    astroobj.original_name = rawobjname
     astroobj.aliases = '|'.join([rawobjname, objname])
     # update notes - this object was not found in simbad
     astroobj.notes = 'Not in SIMBAD. '
@@ -896,7 +893,7 @@ def ask_for_aliases(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
     for alias in aliases0:
         aliaslist += f'\n\t - {alias}'
     # but first check whether main name
-    question1 = (f'\nAdd to aliases?\n\tCurrent aliases:{aliaslist}')
+    question1 = f'\nAdd to aliases?\n\tCurrent aliases:{aliaslist}'
     cond = drs_installation.ask(question1, dtype='YN', color='m')
     # if user want to modify name let them
     if cond:
@@ -1024,7 +1021,7 @@ def update_astrometrics(params):
         # get object name for simbad search
         objname = str(table[row]['ORIGINAL_NAME'])
         # update
-        margs = [objname, row+1, len(table)]
+        margs = [objname, row + 1, len(table)]
         msg = 'Processing original name = {0}  ({1}/{2})'.format(*margs)
         WLOG(params, 'info', params['DRS_HEADER'])
         WLOG(params, 'info', msg)
@@ -1176,7 +1173,6 @@ def update_teffs(params):
         manage_databases.update_object_database(params, log=False)
 
 
-
 def very_similar_obj_names(pconst, objname1: str, objname2: str) -> bool:
     """
     Check if two objects are the same just with underscores differing them
@@ -1212,7 +1208,6 @@ if __name__ == "__main__":
     # deal with teff update
     elif '--update_teffs' in args:
         update_teffs(_params)
-
 
 # =============================================================================
 # End of code

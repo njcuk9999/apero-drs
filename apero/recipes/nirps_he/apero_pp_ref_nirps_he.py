@@ -62,7 +62,6 @@ def main(obs_dir: Optional[str] = None, **kwargs
     Main function for apero_pp_ref
 
     :param obs_dir: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
 
     :keyword debug: int, debug level (0 for None)

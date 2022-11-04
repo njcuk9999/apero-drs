@@ -8,7 +8,7 @@ Created on 2019-05-13 at 11:28
 @author: cook
 """
 import warnings
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from scipy.ndimage import filters
@@ -252,7 +252,7 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
                            assetsdir: Optional[str] = None,
                            badpix_dir: Optional[str] = None,
                            filename: Optional[str] = None
-                           ) -> Tuple[np.ndarray, float]:
+                           ) -> Tuple[np.ndarray, List[float]]:
     """
     Locate the bad pixels identified from the full engineering flat image
     (location defined from p['BADPIX_FULL_FLAT'])
@@ -305,15 +305,15 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
     mask = np.abs(mp.rot8(mdata, rotnum) - 1) > threshold
     # -------------------------------------------------------------------------
     # log results
-    badpix_stats = 100.0 * (np.sum(mask) / np.array(mask).size)
-    WLOG(params, '', textentry('40-012-00004', args=[badpix_stats]))
+    badpix_stats = [100.0 * (np.sum(mask) / np.array(mask).size)]
+    WLOG(params, '', textentry('40-012-00004', args=[badpix_stats[0]]))
     # return mask
     # noinspection PyTypeChecker
     return mask, badpix_stats
 
 
-def correction(params: ParamDict, image: np.ndarray, badpixfile: str,
-               return_map: bool = False) -> np.ndarray:
+def correction(params: ParamDict, image: Union[np.ndarray, None],
+               badpixfile: str, return_map: bool = False) -> np.ndarray:
     """
     Corrects "image" for bad pixels using badpixfile
 
@@ -333,6 +333,11 @@ def correction(params: ParamDict, image: np.ndarray, badpixfile: str,
     # create mask from badpixmask
     mask = np.array(badpiximage, dtype=bool)
     # -------------------------------------------------------------------------
+    if image is None and not return_map:
+        # TODO: Add to language database
+        emsg = ('Image cannot be None if we are not just returning the map'
+                ' please set "image" or set "return_map=True"')
+        WLOG(params, 'error', emsg)
     # if return map just return the bad pixel map
     if return_map:
         return mask
@@ -523,7 +528,7 @@ def summary(recipe: DrsRecipe, it: int, params: ParamDict,
     recipe.plot.add_stat('KW_BNDARK', value=bstats_a[2])
     recipe.plot.add_stat('KW_BNFLAT', value=bstats_a[3])
     recipe.plot.add_stat('KW_BBAD', value=bstats_a[4])
-    recipe.plot.add_stat('KW_BNILUM', value=bstats_b)
+    recipe.plot.add_stat('KW_BNILUM', value=bstats_b[0])
     recipe.plot.add_stat('KW_BTOT', value=btotal)
     # construct summary
     recipe.plot.summary_document(it)

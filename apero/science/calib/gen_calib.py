@@ -714,6 +714,7 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
     :param user: bool, if True this calib came from the user and should not
                  be checked
     :param key: str, the calibration key for the calib file
+    :param required: bool, if True raises an error if calib file not found
 
     :raises: DrsLogException if DO_CALIB_DTIME_CHECK = True and delta time is
              greater than MAX_CALIB_DTIME

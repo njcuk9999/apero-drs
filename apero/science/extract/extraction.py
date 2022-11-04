@@ -129,7 +129,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
             # get the coefficients for this order
             opos = pos[order_num]
             # extract 1D for this order
-            eout = extraction(simage, orderp, opos, range1, range2, gain,
+            eout = extraction(simage, orderp, opos, range1, range2,
                               cosmic_sigcut)
             e2dsi, e2dslli, cpti, e2dscci = eout
             # --------------------------------------------------------------
@@ -280,7 +280,7 @@ def flat_blaze_correction(eprops: ParamDict, flat: Optional[np.ndarray] = None,
     return eprops
 
 
-def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
+def extraction(simage, orderp, pos, r1, r2, cosmic_sigcut):
     """
     Extract order using tilt and weight (sigdet and badpix) and cosmic
     correction
@@ -297,8 +297,6 @@ def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
     :param r2: float, the distance away from center to extract out to (bottom)
                across the orders direction
     :param orderp: numpy array (2D), the image with fit superposed (zero filled)
-    :param gain: float, the gain of the image (for conversion from ADU/s to e-)
-
     :param cosmic_sigcut: float, the sigma cut for cosmic rays
 
     :return spe: numpy array (1D), the extracted pixel values,

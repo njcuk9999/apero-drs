@@ -131,7 +131,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Get all dark file properties
     # ----------------------------------------------------------------------
-    dark_table = dark.construct_dark_table(params, filenames)
+    dark_table = dark.construct_dark_table(params, list(filenames))
 
     # ----------------------------------------------------------------------
     # match files by date and median to produce reference dark

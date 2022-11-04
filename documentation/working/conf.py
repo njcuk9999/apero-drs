@@ -30,19 +30,19 @@ release = '0.7.257'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.ifconfig',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
-    ] #'sphinx.ext.autosectionlabel']
+              'sphinx.ext.doctest',
+              'sphinx.ext.intersphinx',
+              'sphinx.ext.todo',
+              'sphinx.ext.coverage',
+              'sphinx.ext.mathjax',
+              'sphinx.ext.ifconfig',
+              'sphinx.ext.viewcode',
+              'sphinx.ext.githubpages',
+              ]  # 'sphinx.ext.autosectionlabel']
 
 # make sure to add the prefix
-#autoselectionlabel_prefix_document = True
-#autoselectionlabel_maxdepth = 5
+# autoselectionlabel_prefix_document = True
+# autoselectionlabel_maxdepth = 5
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -68,8 +68,9 @@ html_static_path = ['_static']
 
 # add custom css
 def setup(app):
-   app.add_css_file('apero.css')  # give a filename you created.
-   
+    app.add_css_file('apero.css')  # give a filename you created.
+
+
 # -- Options for LaTeX output ---------------------------------------------
 latex_title = r'''
         \pagenumbering{Roman} %%% to avoid page 1 conflict with actual page 1
@@ -120,13 +121,13 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     'papersize': 'a4paper',
-    'releasename':" ",
+    'releasename': " ",
     # Sonny, Lenny, Glenn, Conny, Rejne, Bjarne and Bjornstrup
     # 'fncychap': '\\usepackage[Lenny]{fncychap}',
     'fncychap': '\\usepackage{fncychap}',
     'fontpkg': '\\usepackage{amsmath,amsfonts,amssymb,amsthm}',
 
-    'figure_align':'htbp',
+    'figure_align': 'htbp',
     # The font size ('10pt', '11pt' or '12pt').
     #
     'pointsize': '10pt',
@@ -215,7 +216,6 @@ latex_elements = {
         \newcommand{\sectionquote}[2]{{\quote{\textit{``#1''}}{\textbf {\textit{--#2}}}}}
     ''',
 
-
     'maketitle': latex_title,
     # Latex figure (float) alignment
     #
@@ -228,9 +228,7 @@ latex_elements = {
         InnerLinkColor={rgb}{0,0,1}, \
         OuterLinkColor={rgb}{0,0,1}',
 
-        'tableofcontents':' ',
-
-
+    'tableofcontents': ' ',
 
 }
 

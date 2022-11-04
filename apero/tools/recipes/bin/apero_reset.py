@@ -44,10 +44,7 @@ def main(**kwargs):
     """
     Main function for apero_reset.py
 
-    :param instrument: str, the instrument name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -154,8 +151,7 @@ def __main__(recipe, params):
     # progress
     drs_reset.reset_title(params, 'Log')
     # deal with files to skip
-    exclude_files = []
-    exclude_files.append(drs_log.get_logfilepath(WLOG, params))
+    exclude_files = [drs_log.get_logfilepath(WLOG, params)]
     # log folder
     if warn:
         reset5 = drs_reset.reset_confirmation(params, 'Log',

@@ -206,11 +206,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
-    qc_params, passed = leak.qc_LEAK_REF(params, medcubes)
+    qc_params, passed = leak.qc_leak_ref(params, medcubes)
     # ------------------------------------------------------------------
     # Write super dark fp to file
     # ------------------------------------------------------------------
-    medcubes = leak.write_LEAK_REF(params, recipe, rawfiles, medcubes,
+    medcubes = leak.write_leak_ref(params, recipe, rawfiles, medcubes,
                                    qc_params, cprops)
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB

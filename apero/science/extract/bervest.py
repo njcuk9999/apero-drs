@@ -26,17 +26,16 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 
-
 ra = 269.4479583333333
 dec = 4.746166666666666
 jd = 2458262.9810702
 
 pyaslberv = 11.823836844502578
-pyaslbjd =  2458262.9856787324
+pyaslbjd = 2458262.9856787324
 headerberv = 11.82468020013925
-obs_long =  -(155+28/60+12/3600) # West
-obs_lat =19+49/60.+31/3600  # North
-obs_alt = 4204. # in meters
+obs_long = -(155 + 28 / 60 + 12 / 3600)  # West
+obs_lat = 19 + 49 / 60. + 31 / 3600  # North
+obs_alt = 4204.  # in meters
 
 
 # =============================================================================
@@ -150,7 +149,7 @@ def baryvel(dje, deq):
     dcbes = 0.313
     dctrop = 365.24219572  # days in tropical year (...572 insig)
     dc1900 = 1900.0
-    AU = 1.4959787e8
+    au = 1.4959787e8
 
     # Constants dcfel(i,k) of fast changing elements.
     dcfel = [1.7400353e00, 6.2833195099091e02, 5.2796e-6, 6.2565836e00,
@@ -247,19 +246,19 @@ def baryvel(dje, deq):
     tvec = np.array([1e0, dt, dt * dt])
 
     # Values of all elements for the instant(aneous?) dje.
-    temp = idlMod(np.dot(dcfel, tvec), dc2pi)
+    temp = idl_mod(np.dot(dcfel, tvec), dc2pi)
 
     dml = temp[0]
     forbel = temp[1:8]
     g = forbel[0]  # old fortran equivalence
 
-    deps = idlMod(np.sum(tvec * dceps), dc2pi)
-    sorbel = idlMod(np.dot(ccsel, tvec), dc2pi)
+    deps = idl_mod(np.sum(tvec * dceps), dc2pi)
+    sorbel = idl_mod(np.dot(ccsel, tvec), dc2pi)
     e = sorbel[0]  # old fortran equivalence
 
     # Secular perturbations in longitude.
     dummy = np.cos(2.0)
-    sn = np.sin(idlMod(np.dot(ccsec[::, 1:3], tvec[0:2]), cc2pi))
+    sn = np.sin(idl_mod(np.dot(ccsec[::, 1:3], tvec[0:2]), cc2pi))
 
     # Periodic perturbations of the emb (earth-moon barycenter).
     pertl = np.sum(ccsec[::, 0] * sn) + (dt * ccsec3 * sn[2])
@@ -267,7 +266,7 @@ def baryvel(dje, deq):
     pertr = 0.0
     pertrd = 0.0
     for k in range(15):
-        a = idlMod((dcargs[k, 0] + dt * dcargs[k, 1]), dc2pi)
+        a = idl_mod((dcargs[k, 0] + dt * dcargs[k, 1]), dc2pi)
         cosa = np.cos(a)
         sina = np.sin(a)
         pertl = pertl + ccamps[k, 0] * cosa + ccamps[k, 1] * sina
@@ -293,7 +292,7 @@ def baryvel(dje, deq):
     d1pdro = dc1 + pertr
     drd = d1pdro * (psid + dpsi * pertrd)
     drld = d1pdro * dpsi * (dcsld + phid + pertld)
-    dtl = idlMod((dml + phi + pertl), dc2pi)
+    dtl = idl_mod((dml + phi + pertl), dc2pi)
     dsinls = np.sin(dtl)
     dcosls = np.cos(dtl)
     dxhd = drd * dcosls - drld * dsinls
@@ -306,7 +305,7 @@ def baryvel(dje, deq):
     pertp = 0.0
     pertpd = 0.0
     for k in range(3):
-        a = idlMod((dcargm[k, 0] + dt * dcargm[k, 1]), dc2pi)
+        a = idl_mod((dcargm[k, 0] + dt * dcargm[k, 1]), dc2pi)
         sina = np.sin(a)
         cosa = np.cos(a)
         pertl = pertl + ccampm[k, 0] * sina
@@ -333,7 +332,7 @@ def baryvel(dje, deq):
         plon = forbel[k + 3]
         pomg = sorbel[k + 1]
         pecc = sorbel[k + 9]
-        tl = idlMod((plon + 2.0 * pecc * np.sin(plon - pomg)), cc2pi)
+        tl = idl_mod((plon + 2.0 * pecc * np.sin(plon - pomg)), cc2pi)
         dxbd = dxbd + ccpamv[k] * (np.sin(tl) + pecc * np.sin(pomg))
         dybd = dybd - ccpamv[k] * (np.cos(tl) + pecc * np.cos(pomg))
         dzbd = dzbd - ccpamv[k] * sorbel[k + 13] * np.cos(plon - sorbel[k + 5])
@@ -349,20 +348,20 @@ def baryvel(dje, deq):
     # Epoch of mean equinox (deq) of zero implies that we should use
     # Julian ephemeris date (dje) as epoch of mean equinox.
     if deq == 0:
-        dvelh = AU * np.array([dxhd, dyahd, dzahd])
-        dvelb = AU * np.array([dxbd, dyabd, dzabd])
+        dvelh = au * np.array([dxhd, dyahd, dzahd])
+        dvelb = au * np.array([dxbd, dyabd, dzabd])
         return dvelh, dvelb
 
     # General precession from epoch dje to deq.
     deqdat = (dje - dcto - dcbes) / dctrop + dc1900
-    prema = np.transpose(premat(deqdat, deq, FK4=True))
+    prema = np.transpose(premat(deqdat, deq, fk4=True))
 
-    dvelh = AU * np.dot([dxhd, dyahd, dzahd], prema)
-    dvelb = AU * np.dot([dxbd, dyabd, dzabd], prema)
+    dvelh = au * np.dot([dxhd, dyahd, dzahd], prema)
+    dvelb = au * np.dot([dxbd, dyabd, dzabd], prema)
     return dvelh, dvelb
 
 
-def baryCorr(jd, ra, dec, deq=0.0):
+def bary_corr(jd, ra, dec, deq=0.0):
     """
     Calculate barycentric correction.
 
@@ -413,7 +412,7 @@ def helcorr(obs_long, obs_lat, obs_alt, ra2000, dec2000, jd, debug=False):
 
     This function calculates the motion of an observer in
     the direction of a star. In contrast to :py:func:`baryvel`
-    and :py:func:`baryCorr`, the rotation of the Earth is
+    and :py:func:`bary_corr`, the rotation of the Earth is
     taken into account.
 
     The coordinates (ra2000, dec2000) are precessed to the epoch
@@ -443,6 +442,8 @@ def helcorr(obs_long, obs_lat, obs_alt, ra2000, dec2000, jd, debug=False):
         Declination of object for epoch 2000.0 [deg]
     jd : float
         Julian date for the middle of exposure.
+    debug: bool
+        If True works in debug mode
 
     Returns
     -------
@@ -552,11 +553,11 @@ def helcorr(obs_long, obs_lat, obs_alt, ra2000, dec2000, jd, debug=False):
     gmst = 6.697374558 + ut + \
            (236.555367908 * (rjd - 51545.0) +
             0.093104 * tu ** 2 - 6.2e-6 * tu ** 3) / 3600.0
-    lmst = idlMod(gmst - obs_long / 15., 24)
+    lmst = idl_mod(gmst - obs_long / 15., 24)
 
     # Projection of rotational velocity along the line of sight
     vdiurnal = v * np.cos(np.deg2rad(lat)) * np.cos(np.deg2rad(dec)
-                                                  ) * np.sin(
+                                                    ) * np.sin(
         np.deg2rad(ra - lmst * 15))
 
     # BARICENTRIC and HELIOCENTRIC VELOCITIES
@@ -589,7 +590,7 @@ def helcorr(obs_long, obs_lat, obs_alt, ra2000, dec2000, jd, debug=False):
         print('(jd) Julian date (middle of exposure) (JD): ', jd)
         print('(hjd) Heliocentric Julian date (middle of exposure) (HJD): ',
               hjd)
-        print('(gmst) Greenwich mean sidereal time [hrs]: ', idlMod(gmst, 24))
+        print('(gmst) Greenwich mean sidereal time [hrs]: ', idl_mod(gmst, 24))
         print('(lmst) Local mean sidereal time [hrs]: ', lmst)
         print('(dlat) Latitude correction [deg]: ', dlat)
         print('(lat) Geocentric latitude of observer [deg]: ', lat)
@@ -612,7 +613,7 @@ def helcorr(obs_long, obs_lat, obs_alt, ra2000, dec2000, jd, debug=False):
 # =============================================================================
 # Worker functions
 # =============================================================================
-def idlMod(a, b):
+def idl_mod(a, b):
     """
       Emulate 'modulo' behavior of IDL.
 
@@ -638,7 +639,7 @@ def idlMod(a, b):
     return m
 
 
-def premat(equinox1, equinox2, FK4=False):
+def premat(equinox1, equinox2, fk4=False):
     """
     Return the precession matrix needed to go from EQUINOX1 to EQUINOX2.
 
@@ -646,7 +647,7 @@ def premat(equinox1, equinox2, FK4=False):
     ----------
     equinox1, equinox2 : float
         EQUINOX1 and EQUINOX2
-    FK4 : boolean
+    fk4 : boolean
         Set this to True to obtain output in FK4 system
 
     Notes
@@ -700,7 +701,7 @@ def premat(equinox1, equinox2, FK4=False):
 
     t = 0.001 * (equinox2 - equinox1)
 
-    if not FK4:
+    if not fk4:
         st = 0.001 * (equinox1 - 2000.0)
         # Compute 3 rotation angles
         A = sec_to_rad * t * (23062.181 + st * (139.656 + 0.0139 * st)
@@ -809,7 +810,7 @@ def daycnv(xjd, mode="idl"):
 
     if not mode in ('idl', 'dtlist', 'dt'):
         solution = "Use any of 'idl', 'dtlist', or 'dt'."
-        emsg = ("Unknown mode: {0} \n\t function = {1} \n\t solution = {2}")
+        emsg = "Unknown mode: {0} \n\t function = {1} \n\t solution = {2}"
         raise ValueError(emsg.format(mode, 'daycnv', solution))
 
     # Adjustment needed because Julian day starts at noon, calendar day
@@ -881,6 +882,8 @@ def bprecess(ra, dec, mu_radec=None,
         The parallax of the target
     rad_vel : float
         Radial velocity [km/s]
+    epoch : float
+        Epoch of the observation (i.e. 2000.0 for J2000)
 
     Returns
     -------
@@ -978,17 +981,17 @@ def bprecess(ra, dec, mu_radec=None,
     sec_to_radian = 1.0 / radeg / 3600.0
 
     M = np.array([[+0.9999256795, -0.0111814828, -0.0048590040,
-                      -0.000551, -0.238560, +0.435730],
-                     [+0.0111814828, +0.9999374849, -0.0000271557,
-                      +0.238509, -0.002667, -0.008541],
-                     [+0.0048590039, -0.0000271771, +0.9999881946,
-                      -0.435614, +0.012254, +0.002117],
-                     [-0.00000242389840, +0.00000002710544, +0.00000001177742,
-                      +0.99990432, -0.01118145, -0.00485852],
-                     [-0.00000002710544, -0.00000242392702, +0.00000000006585,
-                      +0.01118145, +0.99991613, -0.00002716],
-                     [-0.00000001177742, +0.00000000006585, -0.00000242404995,
-                      +0.00485852, -0.00002717, +0.99996684]])
+                   -0.000551, -0.238560, +0.435730],
+                  [+0.0111814828, +0.9999374849, -0.0000271557,
+                   +0.238509, -0.002667, -0.008541],
+                  [+0.0048590039, -0.0000271771, +0.9999881946,
+                   -0.435614, +0.012254, +0.002117],
+                  [-0.00000242389840, +0.00000002710544, +0.00000001177742,
+                   +0.99990432, -0.01118145, -0.00485852],
+                  [-0.00000002710544, -0.00000242392702, +0.00000000006585,
+                   +0.01118145, +0.99991613, -0.00002716],
+                  [-0.00000001177742, +0.00000000006585, -0.00000242404995,
+                   +0.00485852, -0.00002717, +0.99996684]])
 
     # in arc seconds per century
     A_dot = 1e-3 * np.array([1.244, -1.579, -0.660])
@@ -1013,8 +1016,8 @@ def bprecess(ra, dec, mu_radec=None,
         mu_d = mu_radec[1]
         # Velocity vector
         r0_dot = np.array([-mu_a * sinra * cosdec - mu_d * cosra * sindec,
-                              mu_a * cosra * cosdec - mu_d * sinra * sindec,
-                              mu_d * cosdec]) + 21.095 * rad_vel * parallax * r0
+                           mu_a * cosra * cosdec - mu_d * sinra * sindec,
+                           mu_d * cosdec]) + 21.095 * rad_vel * parallax * r0
     else:
         r0_dot = np.zeros(3)
 
@@ -1039,6 +1042,7 @@ def bprecess(ra, dec, mu_radec=None,
     s1_dot = r1_dot / rmag
 
     s = s1
+    r = s1
     for j in range(2):
         r = s1 + A - ((s * A).sum()) * s
         s = r / rmag
@@ -1049,11 +1053,11 @@ def bprecess(ra, dec, mu_radec=None,
     r2 = x ** 2 + y ** 2 + z ** 2
     rmag = np.sqrt(r2)
 
+    r_dot = s1_dot + A_dot - ((s * A_dot).sum()) * s
+    x_dot = r_dot[0]
+    y_dot = r_dot[1]
+    z_dot = r_dot[2]
     if mu_radec is not None:
-        r_dot = s1_dot + A_dot - ((s * A_dot).sum()) * s
-        x_dot = r_dot[0]
-        y_dot = r_dot[1]
-        z_dot = r_dot[2]
         mu_radec[0] = (x * y_dot - y * x_dot) / (x ** 2 + y ** 2)
         mu_radec[1] = (z_dot * (x ** 2 + y ** 2) - z *
                        (x * x_dot + y * y_dot)) / (r2 * np.sqrt(x ** 2 + y ** 2))
@@ -1062,8 +1066,7 @@ def bprecess(ra, dec, mu_radec=None,
     ra_1950 = np.arctan2(y, x)
 
     if parallax > 0.0:
-        rad_vel = (x * x_dot + y * y_dot + z * z_dot) / \
-                  (21.095 * parallax * rmag)
+        rad_vel = (x * x_dot + y * y_dot + z * z_dot) / (21.095 * parallax * rmag)
         parallax = parallax / rmag
 
     if ra_1950 < 0.0:
@@ -1194,7 +1197,7 @@ def precess(ra, dec, equinox1, equinox2, FK4=False, radian=False):
 
     # Use PREMAT function to get precession matrix from Equinox1 to Equinox2
 
-    r = premat(equinox1, equinox2, FK4=FK4)
+    r = premat(equinox1, equinox2, fk4=FK4)
 
     x2 = np.dot(r, x)  # rotate to get output direction cosines
 
@@ -1343,7 +1346,7 @@ def helio_jd(date, ra, dec, B1950=False, TIME_DIFF=False):
     if TIME_DIFF:
         return time
     else:
-        return (date + time / 86400.0)
+        return date + time / 86400.0
 
 
 def xyz(date, velocity=False, equinox=1950.0):

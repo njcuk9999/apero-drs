@@ -108,7 +108,7 @@ class BokehPlot:
         Add keyword arguments (int/float/bool/str) in string form - for passing
         to our script
 
-        :param args: list of
+        :param kwargs: list of keyword arguments
         :return:
         """
         # deal with no keyword arguments --> empty string
@@ -127,6 +127,7 @@ class BokehPlot:
                 continue
             # -----------------------------------------------------------------
             # deal with others
+            # noinspection PyBroadException
             try:
                 strarg = '{0}={1}'.format(key, str(kwargs[key]))
                 # test as dictionary entry
@@ -196,8 +197,12 @@ def get_calib(header: drs_fits.Header, key: str) -> Tuple[np.ndarray, str]:
     """
     Get a calibration file for a speific file and get
 
-    :param filename: str, the filename
+    :param header: fits.Header - the header to get the time of calibration
+                   from
     :param key: str, the db key for the specific type of calibration
+
+    :return: tuple, 1. the calibration file data (extension 1)
+                    2. the calibration file name
     """
     # get database
     calibdbm = drs_database.CalibrationDatabase(PARAMS)

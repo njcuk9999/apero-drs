@@ -65,7 +65,12 @@ def raw_files(user_indir: str, user_outdir: str, do_copy: bool = False,
     :param user_outdir: str, proposed out raw directory (absolute path)
     :param do_copy: bool, hard copies files
     :param do_symlink: bool, symlinks files (overrides do_copy if True)
-    :return:
+    :param exclude_obs_dir: list of strings or None, if set these files
+                            will not be reduced
+    :param log: bool, if True logs outputs
+    :param replace: bool, if True replaces existing files
+
+    :return: None, copies files
     """
 
     if exclude_obs_dir is None:
@@ -167,7 +172,7 @@ class Trigger:
     def __call__(self):
         # ---------------------------------------------------------------------
         # step 1: sync raw directory
-        #----------------------------------------------------------------------
+        # ----------------------------------------------------------------------
         # print progress
         WLOG(self.params, 'info', 'Creating new symlinks')
         # update raw file symlinks
@@ -329,7 +334,7 @@ class Trigger:
                 condition += f' AND OBS_DIR="{obs_dir}"'
                 # get science files condition (DPRTYPE)
                 subconds = []
-                for dprtype in self.params.listp('PP_OBJ_DPRTYPES',dtype=str):
+                for dprtype in self.params.listp('PP_OBJ_DPRTYPES', dtype=str):
                     subconds.append(f'KW_DPRTYPE="{dprtype}"')
                 condition += ' AND ({0})'.format(' OR '.join(subconds))
                 # get all science files

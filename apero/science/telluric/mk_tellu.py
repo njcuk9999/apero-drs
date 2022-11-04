@@ -162,10 +162,11 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
             # loop until no point is an outlier beyond "sigma cut" sigma
             while worst_offender > sigma_cut:
                 # get the linear minimization between trans files and our sample
+                # noinspection PyBroadException
                 try:
                     amp, recon = mp.linear_minimization(trans_slice, sample)
-                except:
-                    pass
+                except Exception as _:
+                    break
                 # work out the sigma between trans slice and recon
                 res = trans_slice - recon
                 est_sig = mp.estimate_sigma(res)

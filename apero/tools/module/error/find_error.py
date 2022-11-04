@@ -13,13 +13,16 @@ import re
 import tkinter as tk
 from tkinter import font
 from tkinter import messagebox
+from typing import Any, Dict
 
 import numpy as np
 
 from apero.base import base
 from apero.base import drs_db
+from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_dev
 
@@ -35,6 +38,10 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # get tqdm
 tqdm = base.tqdm_module()
 
@@ -112,6 +119,7 @@ class AutocompleteEntry(tk.Entry):
         self.lb_up = False
 
     def changed(self, name, index, mode):
+        _ = name, index, mode
 
         if self.var.get() == '':
             self.lb.destroy()
@@ -136,7 +144,7 @@ class AutocompleteEntry(tk.Entry):
                     self.lb_up = False
 
     def selection(self, event):
-
+        _ = event
         if self.lb_up:
             self.var.set(self.lb.get(tk.ACTIVE))
             self.lb.destroy()
@@ -144,7 +152,7 @@ class AutocompleteEntry(tk.Entry):
             self.icursor(tk.END)
 
     def up(self, event):
-
+        _ = event
         if self.lb_up:
             if self.lb.curselection() == ():
                 index = '0'
@@ -157,7 +165,7 @@ class AutocompleteEntry(tk.Entry):
                 self.lb.activate(index)
 
     def down(self, event):
-
+        _ = event
         if self.lb_up:
             if self.lb.curselection() == ():
                 index = '0'
@@ -174,6 +182,7 @@ class AutocompleteEntry(tk.Entry):
         return [w for w in self.lista if re.match(pattern, w)]
 
     def destroy_tab(self, event=None):
+        _ = event
         if self.lb is not None:
             self.lb.destroy()
             self.lb_up = False
@@ -305,6 +314,7 @@ class Search:
         :param event: tk Event or None
         :return:
         """
+        _ = event
         # destroy autocomplete box
         self.entry.destroy_tab()
         # get search text
@@ -459,7 +469,7 @@ class Results1:
         # add table
         self.result_entry(self.frame)
         # add frame
-        self.frame.pack_propagate(0)
+        self.frame.pack_propagate(False)
         self.frame.pack(expand=tk.YES, fill=tk.BOTH, padx=10, pady=10)
 
     def result_entry(self, frame):
@@ -499,7 +509,7 @@ class Results2:
 
         self.result_entry(self.frame)
         # add frame
-        self.frame.pack_propagate(0)
+        self.frame.pack_propagate(False)
         self.frame.pack(expand=tk.YES, fill=tk.BOTH, padx=10, pady=10)
 
     def result_entry(self, frame):
@@ -557,6 +567,7 @@ class Table:
         :param event: tk.Event
         :return: None
         """
+        _ = event
         # update scrollregion after starting 'mainloop'
         # when all widgets are in canvas
         self.canvas.configure(scrollregion=self.canvas.bbox('all'))
@@ -639,6 +650,7 @@ class Table:
             widget.destroy()
 
 
+# noinspection PyTypeChecker
 class App(tk.Tk):
     """
     Main Application for error finder
@@ -712,10 +724,7 @@ def main(**kwargs):
     """
     Main function for apero_explorer.py
 
-    :param instrument: str, the instrument name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -741,16 +750,17 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main function - takes the instrument name, index the databases and python
     script (in real time due to any changes in code) and then runs the
     application to find errors
 
-    :param instrument: string, the instrument name
-    :type: str
-    :return: returns the local namespace as a dictionary
-    :rtype: dict
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
+
     """
     # get datastore
     datastore = LoadData(params, instrument=recipe.instrument)

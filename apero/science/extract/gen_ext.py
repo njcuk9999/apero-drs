@@ -122,6 +122,9 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
         # ------------------------------------------------------------------
         # flag that order profile has been read (or not read)
         orderp_read = False
+        orderp = None
+        orderpfilename = None
+        orderptime = None
         # check if temporary file exists
         if orderpsfile.file_exists():
             try:

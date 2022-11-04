@@ -85,9 +85,9 @@ def main(obs_dir=None, darkfile=None, **kwargs):
     """
     Main function for exposuremeter_spirou.py
 
+    :param obs_dir: str, observation directory
+    :param darkfile: str, dark file name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 

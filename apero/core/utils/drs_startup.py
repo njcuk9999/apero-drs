@@ -1033,6 +1033,7 @@ def read_runfile(params: ParamDict, recipe: Union[DrsRecipe, None],
                 # get instance
                 instance = params.instances[key]
                 # add to parameters (after forcing data type)
+                # noinspection PyBroadException
                 try:
                     params[key] = instance.dtype(value)
                     params.set_source(key, func_name)

@@ -109,7 +109,7 @@ def cprint(message: Union[lang.Text, str], colour: str = 'g'):
 def ask(question: str, dtype: Union[str, type, None] = None,
         options: Union[List[Any], None] = None,
         optiondesc: Union[List[str], None] = None, default: Any = None,
-        required: bool = True, color='g'):
+        required: bool = True, color='g') -> Any:
     """
     Ask a question
 
@@ -121,7 +121,9 @@ def ask(question: str, dtype: Union[str, type, None] = None,
                     if required
     :param required: bool, if False and dtype=path does not create a path
                      else does not change anything
-    :return:
+    :param color: str, the color of the text printed out
+
+    :return: the response from the user or the default
     """
     # set up check criteria as True at first
     check = True
@@ -314,13 +316,13 @@ def check_path_arg(name: str, value: Union[str, Path],
 
 
 def user_interface(params: ParamDict, args: argparse.Namespace,
-                   lang: str) -> Tuple[ParamDict, argparse.Namespace]:
+                   user_lang: str) -> Tuple[ParamDict, argparse.Namespace]:
     """
     Ask the user the questions required to install apero
 
     :param params: ParamDict, the parameter dictionary of constants
     :param args: passed from argparse
-    :param lang: str, the language the user requires
+    :param user_lang: str, the language the user requires
 
     :return: tuple, 1. all parameters dict, 2. the argparse namespace
     """
@@ -412,8 +414,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     all_params.set_source('INSTRUMENT', func_name)
     args.instrument = instrument
     # TODO: set language
-    all_params['LANGUAGE'] = lang
-    all_params.set_source('LANGUAGE', lang)
+    all_params['LANGUAGE'] = user_lang
+    all_params.set_source('LANGUAGE', user_lang)
     # args.language = lang
     # ------------------------------------------------------------------
     # Database settings: Choose a database mode
@@ -567,7 +569,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
                    default=0)
         all_params['DRS_PLOT'] = plot
         all_params.set_source('DRS_PLOT', __NAME__)
-        #update args
+        # update args
         args.plotmode = plot
         # add header line
         cprint(printheader(), 'g')
@@ -583,7 +585,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
         all_params['CLEAN_INSTALL'] = ask(textentry('INSTALL_CLEAN_MSG'),
                                           dtype='YN')
         all_params.set_source('CLEAN_INSTALL', func_name)
-        #update args
+        # update args
         args.clean = all_params['CLEAN_INSTALL']
     else:
         cprint(textentry('40-001-00055', args=[args.clean]))
@@ -597,7 +599,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     return all_params, args
 
 
-def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
+def get_mysql_settings(all_params: ParamDict,
+                       args: Any) -> Tuple[ParamDict, Any]:
     """
     Ask the user for the MySQL settings
 

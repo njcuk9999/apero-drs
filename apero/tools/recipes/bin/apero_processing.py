@@ -52,7 +52,6 @@ def main(runfile=None, **kwargs):
     """
     Main function for apero_explorer.py
 
-    :param instrument: str, the instrument name
     :param runfile: str, the run file to run (see the /run/ folder)
     :param kwargs: additional keyword arguments
 

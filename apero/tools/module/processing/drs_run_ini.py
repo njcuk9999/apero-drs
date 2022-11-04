@@ -447,22 +447,6 @@ class RunIniFile:
 
 
 # =============================================================================
-# Define functions
-# =============================================================================
-def get_runfiles(params: ParamDict) -> List[RunIniFile]:
-    """
-    Defines all possible run files
-
-    :param params: ParamDict, parameter dictionary of constants
-
-    :return: list of RunIniFile instances
-    """
-    pass
-
-
-
-
-# =============================================================================
 # Start of code
 # =============================================================================
 if __name__ == "__main__":

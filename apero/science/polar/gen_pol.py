@@ -1200,7 +1200,7 @@ def get_interp_flux(params: ParamDict, wavemap0: np.ndarray, flux0: np.ndarray,
     # output flux and flux error maps
     flux1 = np.full_like(flux0, np.nan)
     fluxerr1 = np.full_like(flux0, np.nan)
-    blaze1 = np.full_like(flux0, np.nan)
+    # blaze1 = np.full_like(flux0, np.nan)
     # loop around each order (per order spline)
     for order_num in range(wavemap0.shape[0]):
         # only keep clean data
@@ -1247,7 +1247,6 @@ def get_interp_blaze(params: ParamDict, wavemap0: np.ndarray,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param wavemap0: np.array, the initial wave grid of the flux data
-    :param flux0: np.array, the initial flux values
     :param blaze0: np.array, the initial blaze values
     :param wavemap1: np.array, the final wave grid to interpolate to
 
@@ -1495,6 +1494,7 @@ def remove_continuum_polarization(params: ParamDict, props: ParamDict
     """
         Function to remove the continuum polarization
 
+        :param params: ParamDict, parameter dictionary of constants
         :param props: parameter dictionary, ParamDict containing data
 
         Must contain at least:
@@ -1574,6 +1574,7 @@ def normalize_stokes_i(params: ParamDict, props: ParamDict) -> ParamDict:
     """
         Function to normalize Stokes I by the continuum flux
 
+        :param params: ParamDict, parameter dictionary of constants
         :param props: parameter dictionary, ParamDict containing data
             Must contain at least:
                 WAVE: numpy array (2D), e2ds wavelength data

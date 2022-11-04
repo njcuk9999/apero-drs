@@ -508,7 +508,7 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
     for fiber in all_fibers:
         # get leak reference for file
         _, leakref, _ = get_leak_ref(params, ref_header, fiber,
-                                           'LEAKREF_E2DS', database=database)
+                                     'LEAKREF_E2DS', database=database)
         # append to storage
         ref_leaks[fiber] = leakref
     # ----------------------------------------------------------------------
@@ -597,9 +597,9 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
             # if we are dealing with the E2DS we need the flat
             if extfiletype == 'E2DS_FILE':
                 # load the flat file for this fiber
-                flat_file, flat = flat_blaze.get_flat(params,
-                                                      extfile.get_header(),
-                                                      fiber, quiet=True)
+                fout = flat_blaze.get_flat(params, extfile.get_header(),
+                                           fiber, quiet=True)
+                flat_file, flat_time, flat = fout
             # else we set it to None
             else:
                 flat = np.ones_like(extimage)
@@ -738,7 +738,7 @@ def ref_dark_fp_cube(params, recipe, extractdict):
         extfile = extfiles[0]
         # construct the leak reference file instance
         outfile = recipe.outputs['LEAK_REF'].newcopy(params=params,
-                                                        fiber=fiber)
+                                                     fiber=fiber)
         # construct the filename from file instance
         outfile.construct_filename(infile=extfile)
         # copy keys from input file
@@ -915,7 +915,7 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     return rfpl
 
 
-def qc_LEAK_REF(params, medcubes):
+def qc_leak_ref(params, medcubes):
     # output storage
     qc_params = dict()
     passed = True
@@ -994,7 +994,7 @@ def qc_leak(params, props, **kwargs):
     return qc_params, passed
 
 
-def write_LEAK_REF(params, recipe, rawfiles, medcubes, qc_params, props):
+def write_leak_ref(params, recipe, rawfiles, medcubes, qc_params, props):
     # loop around fibers
     for fiber in medcubes:
         # get outfile for this fiber

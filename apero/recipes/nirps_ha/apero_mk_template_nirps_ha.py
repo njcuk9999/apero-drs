@@ -219,7 +219,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                              filters=filters)
         # make s1d cube
         margs = [s1d_filenames, s1d_file, fiber]
-        s1d_props = telluric.make_1d_template_cube(params, recipe, *margs)
+        s1d_props = telluric.make_1d_template_cube(params, *margs)
         # append to storage
         s1d_cubes.append(s1d_props)
 

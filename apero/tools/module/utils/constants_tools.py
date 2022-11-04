@@ -332,7 +332,7 @@ def create_glossary(params):
     const_dir = drs_misc.get_relative_folder(__PACKAGE__, base.CORE_PATH)
     # ---------------------------------------------------------------------
     # store instances without descriptions
-    constants, keywords = dict(), dict()
+    constants_dict, keywords_dict = dict(), dict()
     # ---------------------------------------------------------------------
     # loop around all types
     for filename in base.SCRIPTS:
@@ -350,9 +350,9 @@ def create_glossary(params):
             if isinstance(instance, (cf.Const, cf.Keyword)):
                 # sort into keywords and constants
                 if isinstance(instance, cf.Keyword):
-                    keywords[instance.name] = instance
+                    keywords_dict[instance.name] = instance
                 elif isinstance(instance, cf.Const):
-                    constants[instance.name] = instance
+                    constants_dict[instance.name] = instance
     # ---------------------------------------------------------------------
     # generate entry for glossary
     glossary_text = ''
@@ -360,17 +360,17 @@ def create_glossary(params):
     glossary_text += '\n\nConstants (Autogen)\n======================\n'
     glossary_text += '\n.. glossary::  \n\n'
     # need to sort into alphabetical order
-    alpha_constants = np.sort(list(constants.keys()))
-    alpha_keywords = np.sort(list(keywords.keys()))
+    alpha_constants = np.sort(list(constants_dict.keys()))
+    alpha_keywords = np.sort(list(keywords_dict.keys()))
     # loop around constants and add them as entries
     for key in alpha_constants:
-        glossary_text += generate_entry(constants[key])
+        glossary_text += generate_entry(constants_dict[key])
     # add keywords
     glossary_text += '\n\nKeywords (Autogen)\n======================\n'
     glossary_text += '\n.. glossary::  \n\n'
     # loop around keywords and add them as entries
     for key in alpha_keywords:
-        glossary_text += generate_entry(keywords[key])
+        glossary_text += generate_entry(keywords_dict[key])
     # ---------------------------------------------------------------------
     # write to file (in current directory)
     with open(out_filename, 'w') as glossary:

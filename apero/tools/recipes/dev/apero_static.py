@@ -40,8 +40,6 @@ def main(**kwargs):
 
     :param kwargs: any additional keywords
 
-    :type preview: bool
-
     :returns: dictionary of the local space
     :rtype: dict
     """
@@ -63,13 +61,9 @@ def main(**kwargs):
 
 
 def __main__(recipe, params):
-
-
-
     # switch between static files here
     if params['INPUTS']['MODE'] == 'LED_FLAT':
         drs_static.led_flat_static_calib(params)
-
 
     # ----------------------------------------------------------------------
     # End of main code
