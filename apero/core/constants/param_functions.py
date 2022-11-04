@@ -153,10 +153,7 @@ class ParamDict(CaseInDict):
         func_name = display_func('__getitem__', __NAME__, self.class_name)
         # store:
         if key in self.data.keys():
-            if key not in self.used:
-                self.used[key] = 0
-            else:
-                self.used[key] += 1
+            self.count_used(key)
         # try to get item from super
         try:
             return super(ParamDict, self).__getitem__(key)
@@ -249,6 +246,21 @@ class ParamDict(CaseInDict):
         # get string from string print
         return self._string_print()
 
+    def count_used(self, key: str, start_value: int = 0):
+        """
+        Counts the usage of key and stores it in self.used
+
+        :param key: str, the key name
+        :param start_value: str, the start position (normally zero) but if
+                            forcing this should be 1
+
+        :return: None, updates self.used
+        """
+        if key not in self.used:
+            self.used[key] = start_value
+        else:
+            self.used[key] += 1
+
     def set(self, key: str, value: Any,
             source: Union[None, str] = None,
             instance: Union[None, Const, Keyword] = None,
@@ -270,10 +282,7 @@ class ParamDict(CaseInDict):
         """
         # update used
         if key in self.data.keys() and record_use:
-            if key not in self.used:
-                self.used[key] = 0
-            else:
-                self.used[key] += 1
+            self.count_used(key)
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
             self.sources[key] = source

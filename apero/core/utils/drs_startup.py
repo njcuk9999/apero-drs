@@ -243,6 +243,9 @@ def setup(name: str = 'None', instrument: str = 'None',
     else:
         recipe.params['INPUTS']['PARALLEL'] = False
     # -------------------------------------------------------------------------
+    # get the python stats
+    recipe.params = drs_misc.python_git_stats(recipe.params)
+    # -------------------------------------------------------------------------
     # display (print only no log)
     if (not quiet) and ('instrument' not in recipe.args):
         # display title
@@ -1340,10 +1343,14 @@ def _display_drs_title(params: ParamDict, group: Union[str, None] = None,
     title = ' * '
     title += colors.RED1 + ' {0} ' + colors.okgreen + '@{1}'
     title += ' (' + colors.BLUE1 + 'V{2}' + colors.okgreen + ')'
-    title += colors.ENDC
     title = title.format(params['INSTRUMENT'], params['PID'],
                          params['DRS_VERSION'])
-
+    title += '\n' + ' * '
+    title += colors.BLUE1 + ' '*len(params['INSTRUMENT'])
+    title += '  py' + params['PYVERSION']
+    if params['GIT_BRANCH'] != 'Unknown':
+        title += '  git:' + params['GIT_BRANCH']
+    title += colors.ENDC
     # Log title
     _display_title(params, title, group, printonly, logonly)
     # print only
