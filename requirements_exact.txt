@@ -24,6 +24,8 @@ executing==0.8.2
 fonttools==4.29.1
 future==0.18.2
 gitchangelog==3.0.4
+gitdb==4.0.9
+GitPython==3.1.29
 google-auth==2.6.0
 google-auth-oauthlib==0.4.6
 greenlet==1.1.2
@@ -88,6 +90,7 @@ scikit-image==0.19.1
 scipy==1.7.3
 SecretStorage==3.3.1
 six==1.16.0
+smmap==5.0.0
 snowballstemmer==2.2.0
 soupsieve==2.3.1
 Sphinx==4.3.2
