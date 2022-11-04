@@ -2,6 +2,43 @@ Changelog
 =========
 
 
+0.7.259 (2022-11-04)
+--------------------
+- [APERO] add git branch + git hash + python modules + python version to
+  PARAM_TABLE. [Neil Cook]
+- [APERO] pep8 and warning fixes. [Neil Cook]
+- Merge branch 'v0.7.254-working' into v0.7.254-cheby. [Neil Cook]
+
+  # Conflicts:
+  #	apero/core/math/gen_math.py
+  #	apero/plotting/plot_functions.py
+  #	apero/science/calib/shape.py
+  #	apero/science/calib/wave.py
+  #	apero/tools/module/utils/inverse.py
+- [APERO] push chevyshev + clean hot pix lin mini fix into working
+  branch. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.254-cheby' into
+  v0.7.254-cheby. [Neil Cook]
+- [APERO] apero.tools.recipes.spirou.apero_expmeter_spirou.py. [Neil
+  Cook]
+- [APERO] remove linear minimization from clean_hotpix function. [Neil
+  Cook]
+- [APERO] fixes for chebyshev. [Neil Cook]
+- [APERO] force jit functions to not use fastmath mode. [Neil Cook]
+- [APERO] fixes to EA chebyshev code. [Neil Cook]
+
+
+0.7.258 (2022-10-31)
+--------------------
+- Adding cheby stuff all over the place. [eartigau]
+- [APERO] make sure assets directory is reset (but copy all "new" files
+  to a backup assets dir) [Neil Cook]
+- [APERO] re-run template after best telluric correction. [Neil Cook]
+- [APERO] add zsh profiles to setup dir. [Neil Cook]
+- [APERO] update import order (pycharm Ctrl+Alt+O to sort) [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
 0.7.257 (2022-10-25)
 --------------------
 - [APERO] correct columns in apero_stats.py. [Neil Cook]
