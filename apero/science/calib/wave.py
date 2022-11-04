@@ -551,7 +551,7 @@ def get_wavemap_from_coeffs(wave_coeffs: np.ndarray, nbo: int,
         # get this order coefficients
         ocoeffs = wave_coeffs[order_num]
         # calculate polynomial values and push into wavemap
-        wavemap[order_num] = mp.val_cheby(ocoeffs, xpixels, [0, nbx])
+        wavemap[order_num] = mp.val_cheby(ocoeffs, xpixels, domain=[0, nbx])
     return wavemap
 
 
@@ -1406,7 +1406,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         yfit1 = ordfp_pix_meas[1:] - ordfp_pix_meas[:-1]
         # fit the step between FP lines
         fit_step, _ = mp.robust_chebyfit(xfit1, yfit1, wavesol_fit_degree,
-                                         nsig_cut, [0, nbxpix])
+                                         nsig_cut, domain=[0, nbxpix])
         # ---------------------------------------------------------------------
         # counting steps backward
         # maybe first step is wrong, we'll see later by x-matching with HC lines
@@ -1417,7 +1417,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # We start numbering at 1 as the 0th serves as a relative
             # starting point
             diff = ordfp_pix_meas[step_fp] - ordfp_pix_meas[step_fp - 1]
-            dfit = mp.val_cheby(fit_step, ordfp_pix_meas[step_fp - 1], [0, nbxpix])
+            dfit = mp.val_cheby(fit_step, ordfp_pix_meas[step_fp - 1],
+                                domain=[0, nbxpix])
             dnum = diff / dfit
             # dnum is always very close to an integer value, we round it
             # we subtract the steps, FP peaks go in decreasing number
@@ -1444,12 +1445,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         with warnings.catch_warnings(record=True) as _:
             hc_wave_fit, _ = mp.robust_chebyfit(ordhc_pix_meas, ordhc_wave_ref,
                                                 wavesol_fit_degree, nsig_cut,
-                                                [0, nbxpix])
+                                                domain=[0, nbxpix])
         # we find the steps in FP lines at the position of all HC lines
-        step_hc = mp.val_cheby(fit_step, ordhc_pix_meas, [0, nbxpix])
+        step_hc = mp.val_cheby(fit_step, ordhc_pix_meas, domain=[0, nbxpix])
         # get the derivative of the wave fit
         d_hc_wave_fit = np.polynomial.chebyshev.chebder(hc_wave_fit)
-
         # get the step in waves
         step_hc_wave = mp.val_cheby(d_hc_wave_fit, ordhc_pix_meas,
                                     domain=[0, nbxpix]) * step_hc
@@ -1563,9 +1563,10 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         #  the WAVE_MEAS in the FP line list. This will be used to constrain the
         # cavity length below
         wave_fit = mp.fit_cheby(ordfp_pix_meas, wave_tmp,
-                                wavesol_fit_degree, [0, nbxpix])
+                                wavesol_fit_degree, domain=[0, nbxpix])
         # re-fit wave solution on all lines --> measured wave sol
-        ordfp_wave_meas = mp.val_cheby(wave_fit, ordfp_pix_meas, [0, nbxpix])
+        ordfp_wave_meas = mp.val_cheby(wave_fit, ordfp_pix_meas,
+                                       domain=[0, nbxpix])
         # ---------------------------------------------------------------------
         # put into the table. If we had enough HC lines, the WAVE_MEAS has
         #    been updated if not, at least the FP peak counting is valid.
@@ -1721,14 +1722,14 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # get wave fit
             wave_fit, _ = mp.robust_chebyfit(ordfp_pix_meas, ordfp_wave_ref,
                                              wavesol_fit_degree, nsig_cut,
-                                             [0, nbxpix])
+                                             domain=[0, nbxpix])
             # update wave measure from this fit
             fpl_wave_meas[good_fp] = mp.val_cheby(wave_fit, ordfp_pix_meas,
-                                                  [0, nbxpix])
+                                                  domain=[0, nbxpix])
             # if we have some HC lines update these too
             if np.sum(good_hc) > 0:
                 hcl_wave_meas[good_hc] = mp.val_cheby(wave_fit, ordhc_pix_meas,
-                                                      [0, nbxpix])
+                                                      domain=[0, nbxpix])
         # ---------------------------------------------------------------------
         # in velocity, diff between measured and catalog HC line positions
         res = hcl_wave_meas / hcl_wave_ref
@@ -1818,7 +1819,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         with warnings.catch_warnings(record=True) as _:
             ord_wave_sol, _ = mp.robust_chebyfit(ordfp_pix_meas, ordfp_wave_ref,
                                                  wavesol_fit_degree, nsig_cut,
-                                                 [0, nbxpix])
+                                                 domain=[0, nbxpix])
         # add to wave coefficients
         wave_coeffs[order_num] = ord_wave_sol
     # -------------------------------------------------------------------------
@@ -1844,7 +1845,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     for order_num in orders:
         # generate wave map for order
         wave_map[order_num] = mp.val_cheby(wave_coeffs[order_num], xpix,
-                                           [0, nbxpix])
+                                           domain=[0, nbxpix])
     # -------------------------------------------------------------------------
     # update the fplines and hclines tables
     fplines['WAVE_MEAS'] = fpl_wave_meas
@@ -1899,10 +1900,10 @@ def wprop_pixel_wave_shift(wprops: ParamDict, offset: float = 0.0,
     # loop around each order
     for order_num in range(nbo):
         xx = np.arange(nbpix)
-        wave = mp.val_cheby(coeffs[order_num], xx, [0, nbpix])
+        wave = mp.val_cheby(coeffs[order_num], xx, domain=[0, nbpix])
         xx2 = (xx + offset) * scale
-        fit2 = mp.fit_cheby(xx2, wave, deg, [0, nbpix])
-        wavemap[order_num] = mp.val_cheby(fit2, xx, [0, nbpix])
+        fit2 = mp.fit_cheby(xx2, wave, deg, domain=[0, nbpix])
+        wavemap[order_num] = mp.val_cheby(fit2, xx, domain=[0, nbpix])
         coeffs[order_num] = fit2
     # create new wprops
     wprops1 = ParamDict()

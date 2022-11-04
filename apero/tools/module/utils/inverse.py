@@ -60,8 +60,8 @@ def calc_central_localisation(params, fiber, header=None, filename=None):
         acc = lprops['CENT_COEFFS'][order_num]
         ass = lprops['WID_COEFFS'][order_num]
         # get value at xpix center of detector
-        cfit = mp.val_cheby(acc, nbxpix // 2, [0,nbxpix])
-        wfit = mp.val_cheby(ass, nbxpix // 2, [0,nbxpix])
+        cfit = mp.val_cheby(acc, nbxpix // 2, domain=[0, nbxpix])
+        wfit = mp.val_cheby(ass, nbxpix // 2, domain=[0, nbxpix])
         # store to file
         centers.append(cfit)
         widths.append(wfit)

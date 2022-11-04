@@ -475,14 +475,15 @@ def iuv_spline(x: np.ndarray, y: np.ndarray, **kwargs
     return InterpolatedUnivariateSpline(x, y, **kwargs)
 
 
-def robust_chebyfit(x: np.ndarray, y: np.ndarray, degree: int,
-                    nsigcut: float, domain: List[float]) -> Tuple[np.ndarray, np.ndarray]:
+def robust_chebyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
+                    nsigcut: float, domain: List[float]
+                    ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    A robust polyfit (iterating on the residuals) until nsigma is below the
-    nsigcut threshold. Takes care of NaNs before fitting
+    A robust chebyshev polyfit (iterating on the residuals) until nsigma is
+    below the nsigcut threshold. Takes care of NaNs before fitting
 
-    :param x: np.ndarray, the x array to pass to np.polyval
-    :param y: np.ndarray, the y array to pass to np.polyval
+    :param xvector: np.ndarray, the x array to pass to np.polyval
+    :param yvector: np.ndarray, the y array to pass to np.polyval
     :param degree: int, the degree of polynomial fit passed to np.polyval
     :param nsigcut: float, the threshold sigma required to return result
     :param domain: list of 2 values mapped to -1 ... 1 for Cheby polynomial
@@ -491,7 +492,7 @@ def robust_chebyfit(x: np.ndarray, y: np.ndarray, degree: int,
     # set function name
     # _ = display_func('robust_polyfit', __NAME__)
     # set up mask
-    keep = np.isfinite(y)
+    keep = np.isfinite(yvector)
     # set the nsigmax to infinite
     nsigmax = np.inf
     # set the fit as unset at first
@@ -499,9 +500,9 @@ def robust_chebyfit(x: np.ndarray, y: np.ndarray, degree: int,
     # while sigma is greater than sigma cut keep fitting
     while nsigmax > nsigcut:
         # calculate the polynomial fit (of the non-NaNs)
-        fit = fit_cheby(x[keep], y[keep], degree, domain)
+        fit = fit_cheby(xvector[keep], yvector[keep], degree, domain)
         # calculate the residuals of the polynomial fit
-        res = y - val_cheby(fit, x, domain)
+        res = yvector - val_cheby(fit, xvector, domain)
         # work out the new sigma values
         sig = fast.nanmedian(np.abs(res))
         if sig == 0:
@@ -517,7 +518,7 @@ def robust_chebyfit(x: np.ndarray, y: np.ndarray, degree: int,
     return np.array(fit), np.array(keep)
 
 
-def robust_polyfit(x: np.ndarray, y: np.ndarray, degree: int,
+def robust_polyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
                    nsigcut: float) -> Tuple[np.ndarray, np.ndarray]:
     """
     A robust polyfit (iterating on the residuals) until nsigma is below the
@@ -532,7 +533,7 @@ def robust_polyfit(x: np.ndarray, y: np.ndarray, degree: int,
     # set function name
     # _ = display_func('robust_polyfit', __NAME__)
     # set up mask
-    keep = np.isfinite(y)
+    keep = np.isfinite(yvector)
     # set the nsigmax to infinite
     nsigmax = np.inf
     # set the fit as unset at first
@@ -540,9 +541,9 @@ def robust_polyfit(x: np.ndarray, y: np.ndarray, degree: int,
     # while sigma is greater than sigma cut keep fitting
     while nsigmax > nsigcut:
         # calculate the polynomial fit (of the non-NaNs)
-        fit = np.polyfit(x[keep], y[keep], degree)
+        fit = np.polyfit(xvector[keep], yvector[keep], degree)
         # calculate the residuals of the polynomial fit
-        res = y - np.polyval(fit, x)
+        res = yvector - np.polyval(fit, xvector)
         # work out the new sigma values
         sig = fast.nanmedian(np.abs(res))
         if sig == 0:
@@ -973,7 +974,7 @@ def get_ll_from_coefficients(pixel_shift_inter: float,
         # (numpy needs them backwards)
         coeffs = allcoeffs[order_num]
         # get the y fit using the coefficients for this order and xfit
-        yfit = val_cheby(coeffs, xfit, [0, nx])
+        yfit = val_cheby(coeffs, xfit, domain=[0, nx])
         # add to line list storage
         ll[order_num, :] = yfit
     # return line list
@@ -1108,39 +1109,48 @@ def relativistic_waveshift(dv: Union[float, np.ndarray],
     return corrv
 
 
-def fit_cheby(x: np.ndarray, y: np.ndarray, deg: int,
+def fit_cheby(xvector: np.ndarray, yvector: np.ndarray, deg: int,
               domain: List[float]) -> Union[np.ndarray, Any]:
     """
-    :param x: x value for the fit
-    :param y: y value for the fit
+    Fit a chebyshev polynomial in form y(x) = T0(x) + T1(x) + ... Tn(x)
+    returns the chebyshev polynomial coefficients
+
+    :param xvector: x value for the fit
+    :param yvector: y value for the fit
     :param deg: Nth order of the fit
     :param domain: domain to be transformed to -1 -- 1. This is important to
-    keep the components orthogonal. For SPIRou orders, the default is 0--4088.
-    You *must* use the same domain when getting values with val_cheby
+                   keep the components orthogonal. You *must* use the same
+                   domain when getting values with val_cheby
+
     :return: coefficients of the chebyshev fit
     """
-
     # transform to a -1 to 1 domain
-    domain_cheby = 2 * (x - domain[0]) / (domain[1] - domain[0]) - 1
+    domain_cheby = 2 * (xvector - domain[0]) / (domain[1] - domain[0]) - 1
+    # calcualte the coefficients
+    coeffs = np.polynomial.chebyshev.chebfit(domain_cheby, yvector, deg)
+    # return the coefficients
+    return coeffs
 
-    return np.polynomial.chebyshev.chebfit(domain_cheby, y, deg)
 
-
-def val_cheby(fit: np.ndarray, x: Union[np.ndarray, int, float],
+def val_cheby(coeffs: np.ndarray, xvector: Union[np.ndarray, int, float],
               domain: List[float]) -> Union[np.ndarray, int, float]:
     """
-    :param x: x value for the y values with fit
-    :param fit: output from fit_cheby
+    Using the output of fit_cheby calculate the fit to x  (i.e. y(x))
+    where y(x) = T0(x) + T1(x) + ... Tn(x)
+
+    :param coeffs: output from fit_cheby
+    :param xvector: x value for the y values with fit
     :param domain: domain to be transformed to -1 -- 1. This is important to
     keep the components orthogonal. For SPIRou orders, the default is 0--4088.
     You *must* use the same domain when getting values with fit_cheby
     :return: corresponding y values to the x inputs
     """
-
     # transform to a -1 to 1 domain
-    domain_cheby = 2 * (x - domain[0]) / (domain[1] - domain[0]) - 1
-
-    return np.polynomial.chebyshev.chebval(domain_cheby, fit)
+    domain_cheby = 2 * (xvector - domain[0]) / (domain[1] - domain[0]) - 1
+    # fit values using the domain and coefficients
+    yvector = np.polynomial.chebyshev.chebval(domain_cheby, coeffs)
+    # return y vector
+    return yvector
 
 
 # =============================================================================
