@@ -693,12 +693,13 @@ def ea_transform_coeff(image, coeffs, lin_transform_vect):
         # get this orders coefficients
         ocoeff = coeffs[order_num]
         # get the poly fit values for coeffs
-        yfit = mp.val_cheby(ocoeff, xpix, [0,image.shape[1]])
+        yfit = mp.val_cheby(ocoeff, xpix, domain=[0, image.shape[1]])
         # transform the x pixel positions and fit positions
         xpix2 = -dx0 + xpix * lin_a + yfit * lin_b
         yfit2 = -dy0 + xpix * lin_c + yfit * lin_d
         # refit polynomial
-        coeffs2[order_num] = mp.fit_cheby(xpix2, yfit2, len(ocoeff) - 1,[0,image.shape[1]])
+        coeffs2[order_num] = mp.fit_cheby(xpix2, yfit2, len(ocoeff) - 1,
+                                          domain=[0, image.shape[1]])
     # return new coefficients
     return coeffs2
 
@@ -765,7 +766,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
         # x pixel vector that is used with polynomials to
         # find the order center y order center
         # TODO: This is spirou-centric *2 for A and B
-        ypix[order_num] = mp.val_cheby(acc[order_num * 2], xpix, [0,dim2])
+        ypix[order_num] = mp.val_cheby(acc[order_num * 2], xpix,
+                                       domain=[0, dim2])
     # -------------------------------------------------------------------------
     # storage of the dxmap standard deviations
     dxmap_stds = []
@@ -1294,7 +1296,7 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
     for order_num in range(nbo):
         # x pixel vector that is used with polynomials to
         # find the order center y order center
-        ypix[order_num] = mp.val_cheby(acc[order_num], xpix, domain=[0,dim2])
+        ypix[order_num] = mp.val_cheby(acc[order_num], xpix, domain=[0, dim2])
     # -------------------------------------------------------------------------
     # storage of the dxmap standard deviations
     dxmap_stds = []

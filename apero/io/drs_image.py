@@ -332,7 +332,7 @@ def clean_hotpix(image: np.ndarray, badpix: np.ndarray) -> np.ndarray:
     box3d = np.zeros([len(x), 3, 3])
     keep3d = np.zeros([len(x), 3, 3], dtype=bool)
     # centering on zero
-    yy, xx = np.indices([3, 3]) - 1
+    # yy, xx = np.indices([3, 3]) - 1
 
     sz = image.shape
     # loop around the pixels in x and y

@@ -1613,17 +1613,18 @@ def plot_flat_order_fit_edges(plotter: Plotter, graph: Graph,
         ocoeffs1 = coeffs1[order_num]
         ocoeffs2 = coeffs2[order_num]
         # get fit and edge fits (for raw image)
-        yfit1 = mp.val_cheby(ocoeffs1, xfit1, [0,image1.shape[1]])
-        yfitlow1 = mp.val_cheby(ocoeffs1, xfit1, [0,image1.shape[1]]) - range1
-        yfithigh1 = mp.val_cheby(ocoeffs1, xfit1, [0,image1.shape[1]]) + range2
-        ylower1 = mp.val_cheby(ocoeffs1, xfit1, [0,image1.shape[1]]) - 2 * range1
-        yupper1 = mp.val_cheby(ocoeffs1, xfit1, [0,image1.shape[1]]) + 2 * range2
+        domain = [0, image1.shape[1]]
+        yfit1 = mp.val_cheby(ocoeffs1, xfit1, domain=domain)
+        yfitlow1 = mp.val_cheby(ocoeffs1, xfit1, domain=domain) - range1
+        yfithigh1 = mp.val_cheby(ocoeffs1, xfit1, domain=domain) + range2
+        ylower1 = mp.val_cheby(ocoeffs1, xfit1, domain=domain) - 2 * range1
+        yupper1 = mp.val_cheby(ocoeffs1, xfit1, domain=domain) + 2 * range2
         # get fit and edge fits (for straight image)
-        yfit2 = mp.val_cheby(ocoeffs2, xfit2, [0,image1.shape[1]])
-        yfitlow2 = mp.val_cheby(ocoeffs2, xfit2, [0,image1.shape[1]]) - range1
-        yfithigh2 = mp.val_cheby(ocoeffs2, xfit2, [0,image1.shape[1]]) + range2
-        ylower2 = mp.val_cheby(ocoeffs2, xfit2, [0,image1.shape[1]]) - 6 * range1
-        yupper2 = mp.val_cheby(ocoeffs2, xfit2, [0,image1.shape[1]]) + 6 * range2
+        yfit2 = mp.val_cheby(ocoeffs2, xfit2, domain=domain)
+        yfitlow2 = mp.val_cheby(ocoeffs2, xfit2, domain=domain) - range1
+        yfithigh2 = mp.val_cheby(ocoeffs2, xfit2, domain=domain) + range2
+        ylower2 = mp.val_cheby(ocoeffs2, xfit2, domain=domain) - 6 * range1
+        yupper2 = mp.val_cheby(ocoeffs2, xfit2, domain=domain) + 6 * range2
         # get image bounds
         ymin1 = np.max([np.min(ylower1), 0])
         ymax1 = np.min([np.max(yupper1), image1.shape[0]])
@@ -2236,7 +2237,7 @@ def plot_wave_hc_diff_hist(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
-                               kwargs: Dict[str, Any], domain: List[float]):
+                               kwargs: Dict[str, Any]):
     """
     Graph: Wave solution fiber comparison plot
 
@@ -2283,6 +2284,7 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
             r_pixel = rfpl['PIXEL_MEAS']
             r_order = rfpl['ORDER']
             r_coeffs = solutions[fiber]['COEFFS']
+            domain = [0, solutions[fiber]['NBPIX']]
             # get the order mask
             good = (r_order == order_num) & np.isfinite(r_pixel)
             # get the x values for the graph
@@ -3205,7 +3207,7 @@ def plot_wave_fp_ll_diff(plotter: Plotter, graph: Graph,
         fp_x_ord = fp_xx_new[ord_mask]
         # derive FP line wavelengths using initial solution
         fp_ll_orig = mp.val_cheby(poly_wave_sol[ind_ord + n_init], fp_x_ord,
-                                  [0,nbxpix])
+                                  domain=[0, nbxpix])
         # get new FP line wavelengths for the order
         fp_ll_new_ord = fp_ll_new[ord_mask]
         # plot old-new wavelengths
