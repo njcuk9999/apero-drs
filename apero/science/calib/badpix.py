@@ -449,7 +449,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, flatfile: DrsFitsFile,
     badpixfile.add_hkey('KW_BNDARK', value=bstats_a[2])
     badpixfile.add_hkey('KW_BNFLAT', value=bstats_a[3])
     badpixfile.add_hkey('KW_BBAD', value=bstats_a[4])
-    badpixfile.add_hkey('KW_BNILUM', value=bstats_b)
+    badpixfile.add_hkey('KW_BNILUM', value=bstats_b[0])
     badpixfile.add_hkey('KW_BTOT', value=btotal)
     # write to file
     bad_pixel_map1 = np.array(bad_pixel_map1, dtype=int)
