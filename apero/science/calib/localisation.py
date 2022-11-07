@@ -411,13 +411,15 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # for the curvature, we use a high-order-fit
     nth_ord[2] = 3
     # -------------------------------------------------------------------------
+    # domain across the orders
+    domain = [np.min(index_full), np.max(index_full)]
     # force continuity between the localisation parameters
     for it in range(valid_fits.shape[1]):
         # robustly fit in the order direction
-        cfit, cmask = mp.robust_polyfit(index2, valid_fits[:, it], nth_ord[it],
-                                        5)
+        cfit, cmask = mp.robust_chebyfit(index2, valid_fits[:, it], nth_ord[it],
+                                         5, domain=domain)
         # update the full fits
-        fits_full[:, it] = np.polyval(cfit, index_full)
+        fits_full[:, it] = np.val_cheby(cfit, index_full, domain=domain)
     # get the central pixel position (note x=0 at the center here)
     for it in range(fits_full.shape[0]):
         center_full[it] = mp.val_cheby(fits_full[it], image.shape[1] // 2,
