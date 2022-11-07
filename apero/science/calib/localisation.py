@@ -415,6 +415,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     domain = [np.min(index_full), np.max(index_full)]
     # force continuity between the localisation parameters
     for it in range(valid_fits.shape[1]):
+        print('Cheby continuity')
         # robustly fit in the order direction
         cfit, cmask = mp.robust_chebyfit(index2, valid_fits[:, it], nth_ord[it],
                                          5, domain=domain)
