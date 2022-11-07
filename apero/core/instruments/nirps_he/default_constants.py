@@ -1606,7 +1606,7 @@ WAVE_N_ORD_START.value = 0
 
 #  Defines order to which the solution is calculated (last order)
 WAVE_N_ORD_FINAL = WAVE_N_ORD_FINAL.copy(__NAME__)
-WAVE_N_ORD_FINAL.value = 73
+WAVE_N_ORD_FINAL.value = 74
 
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
@@ -1836,12 +1836,12 @@ WAVE_LITTROW_ORDER_INIT_2.value = 0
 
 #  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = WAVE_LITTROW_ORDER_FINAL_1.copy(__NAME__)
-WAVE_LITTROW_ORDER_FINAL_1.value = 73
+WAVE_LITTROW_ORDER_FINAL_1.value = 74
 
 #  Define the order to end the Littrow fit at for the FP wave solution
 # TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = WAVE_LITTROW_ORDER_FINAL_2.copy(__NAME__)
-WAVE_LITTROW_ORDER_FINAL_2.value = 73
+WAVE_LITTROW_ORDER_FINAL_2.value = 74
 
 #  Define orders to ignore in Littrow fit (should be a string list separated
 #      by commas
