@@ -728,14 +728,18 @@ def get_leak_ref(params, header, fiber, kind, filename=None,
 def ref_dark_fp_cube(params, recipe, extractdict):
     # median cube storage dictionary
     medcubedict = dict()
+    medcubetable = dict()
     # loop around fibers
     for fiber in extractdict:
         # add level to recipe log
         log2 = recipe.log.add_level(params, 'fiber', fiber)
         # get the file list for this fiber
         extfiles = extractdict[fiber]
-        # get the first file as reference
-        extfile = extfiles[0]
+        # construct the combined file
+        extout = extfiles[0].combine(extfiles[1:], 'median',
+                                     test_similarity=False)
+        # get outfile and table
+        extfile, outtable = extout
         # construct the leak reference file instance
         outfile = recipe.outputs['LEAK_REF'].newcopy(params=params,
                                                      fiber=fiber)
@@ -743,26 +747,15 @@ def ref_dark_fp_cube(params, recipe, extractdict):
         outfile.construct_filename(infile=extfile)
         # copy keys from input file
         outfile.copy_original_keys(extfile)
-        # storage for cube
-        cube = []
-        # loop around files and get data cube
-        for it in range(len(extfiles)):
-            # add to cube
-            cube.append(extfiles[it].get_data())
-        # make cube a numpy array
-        cube = np.array(cube)
-        # produce super dark using median
-        medcube = mp.nanmedian(cube, axis=0)
-        # delete cube
-        del cube
         # add median cube to outfile instance
-        outfile.data = medcube
+        outfile.data = extfile.data
         # add to median cube storage
         medcubedict[fiber] = outfile
+        medcubetable[fiber] = outtable
         # end this log level
         log2.end()
     # return median cube storage dictionary
-    return medcubedict
+    return medcubedict, medcubetable
 
 
 def get_extraction_files(params, recipe, infile, extname):
@@ -994,7 +987,8 @@ def qc_leak(params, props, **kwargs):
     return qc_params, passed
 
 
-def write_leak_ref(params, recipe, rawfiles, medcubes, qc_params, props):
+def write_leak_ref(params, recipe, rawfiles, medcubes, medtables,
+                   qc_params, props):
     # loop around fibers
     for fiber in medcubes:
         # get outfile for this fiber
@@ -1033,13 +1027,17 @@ def write_leak_ref(params, recipe, rawfiles, medcubes, qc_params, props):
         wargs = [fiber, outfile.filename]
         WLOG(params, '', textentry('40-016-00025', args=wargs))
         # define multi lists
-        data_list, name_list = [], []
+        data_list = [medtables[fiber]]
+        datatype_list = ['table']
+        name_list = ['COMBINE_TABLE']
         # snapshot of parameters
         if params['PARAMETER_SNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
+            datatype_list += ['table']
             name_list += ['PARAM_TABLE']
         # write image to file
         outfile.write_multi(data_list=data_list, name_list=name_list,
+                            datatype_list=datatype_list,
                             block_kind=recipe.out_block_str,
                             runstring=recipe.runstring)
         # add to output files (for indexing)

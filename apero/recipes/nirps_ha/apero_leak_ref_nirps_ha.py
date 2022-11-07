@@ -202,7 +202,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ------------------------------------------------------------------
     # Produce super dark fp from median of all extractions
     # ------------------------------------------------------------------
-    medcubes = leak.ref_dark_fp_cube(params, recipe, dark_fp_storage)
+    dout = leak.ref_dark_fp_cube(params, recipe, dark_fp_storage)
+    medcubes, medtables = dout
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
@@ -211,7 +212,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Write super dark fp to file
     # ------------------------------------------------------------------
     medcubes = leak.write_leak_ref(params, recipe, rawfiles, medcubes,
-                                   qc_params, cprops)
+                                   medtables, qc_params, cprops)
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
