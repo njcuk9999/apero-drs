@@ -1032,7 +1032,7 @@ out_leak_ref = drs_finput('LEAKREF_E2DS', hkeys=dict(KW_OUTPUT='LEAKREF_E2DS'),
                           fibers=valid_efibers,
                           filetype='.fits',
                           intype=[out_ext_e2ds, out_ext_e2dsff],
-                          suffix='_LEAK_REF',
+                          suffix='_leak_ref',
                           dbname='calibration', dbkey='LEAKREF',
                           outclass=refcalib_ofile,
                           description='Reference leak correction calibration '

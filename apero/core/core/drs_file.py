@@ -3831,7 +3831,8 @@ class DrsFitsFile(DrsInputFile):
 
     def combine(self, infiles: List['DrsFitsFile'], math: str = 'sum',
                 same_type: bool = True,
-                path: Union[str, None] = None) -> Tuple['DrsFitsFile', Table]:
+                path: Union[str, None] = None,
+                test_similarity: bool = True) -> Tuple['DrsFitsFile', Table]:
         """
         Combine a set of DrsFitsFiles into a single file using the "math"
         operation (i.e. sum, mean, median etc)
@@ -3905,7 +3906,11 @@ class DrsFitsFile(DrsInputFile):
             header = headers0[row]
             basename = basenames0[row]
             # deal with metric 1
-            if self.get_hkey('KW_DPRTYPE') in combine_metric_1_types:
+            if not test_similarity:
+                metric = np.nan
+                metric_threshold = np.nan
+                passed = True
+            elif self.get_hkey('KW_DPRTYPE') in combine_metric_1_types:
                 # compute metric 1
                 cout = combine_metric_1(params, row, image1, datacube0)
                 metric, metric_threshold, passed = cout
