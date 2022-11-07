@@ -2255,7 +2255,7 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
     # get the arguments from kwargs
     ref_fiber = kwargs['reffiber']
     solutions = kwargs['solutions']
-    reference = kwargs['reference']
+    reference = kwargs['ref']
     order = kwargs.get('order', None)
     # get number of orders and fibers
     nbo = reference['NBO']
