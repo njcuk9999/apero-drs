@@ -419,7 +419,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
         cfit, cmask = mp.robust_chebyfit(index2, valid_fits[:, it], nth_ord[it],
                                          5, domain=domain)
         # update the full fits
-        fits_full[:, it] = np.val_cheby(cfit, index_full, domain=domain)
+        fits_full[:, it] = mp.val_cheby(cfit, index_full, domain=domain)
     # get the central pixel position (note x=0 at the center here)
     for it in range(fits_full.shape[0]):
         center_full[it] = mp.val_cheby(fits_full[it], image.shape[1] // 2,
