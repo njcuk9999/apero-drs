@@ -327,6 +327,8 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
         # term 0 of a Cheby polynomial is midpoint
         order_centers[order_num] = mp.val_cheby(cent_fit, image.shape[1] // 2,
                                                 domain=[0, image.shape[1]])
+
+    measured_order_centers = np.array(order_centers)
     # -------------------------------------------------------------------------
     # keep only orders that have a center within the allowed y range
     keep = (order_centers > ydet_min) & (order_centers < ydet_max)
@@ -424,16 +426,30 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     for it in range(fits_full.shape[0]):
         center_full[it] = mp.val_cheby(fits_full[it], image.shape[1] // 2,
                                        domain=[0, image.shape[1]])
-    # TODO: Remove
-    print('Center full')
-    print(center_full)
-    print(np.diff(center_full))
     # -------------------------------------------------------------------------
     # keep only orders that have a center within the allowed y range
     keep = (center_full > ydet_min) & (center_full < ydet_max)
     # copy to the final center fits
     final_cent_fit = fits_full[keep]
     center_full = center_full[keep]
+    # -------------------------------------------------------------------------
+    # Remove cross term between coefficients in the fit by using the original
+    #   measured centers of the labels (orders)
+    # -------------------------------------------------------------------------
+    # get the max offset to allow correction using order separation
+    max_measured_offset = np.median(abs(np.diff(center_full)))/4
+    # loop around each order
+    for order_num in range(len(center_full)):
+        # get the difference in final position and measure position
+        diff = center_full[order_num] - measured_order_centers
+        # get the minimum offset between the order in the original labelled fits
+        #   (measured position)
+        pos = np.argmin(abs(diff))
+        # if the difference is small then we take this as a correction to the
+        #   order center and fit
+        if abs(diff[pos]) < max_measured_offset:
+            final_cent_fit[order_num, 0] -= diff[pos]
+            center_full[order_num] -= diff[pos]
     # -------------------------------------------------------------------------
     # log final number of orders
     msg = 'Final number of Orders: {0}'
