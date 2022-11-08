@@ -67,16 +67,18 @@ RMOD.add(exposuremeter)
 # get file definitions for this instrument
 FMOD = drs_dev.FileDefinition(instrument=__INSTRUMENT__)
 # make files for this tool
-exp_pp_file = drs_dev.TmpFitsFile('EXP_PP_FILE', KW_OUTPUT='EXP_PP_FILE',
+exp_pp_file = drs_dev.TmpFitsFile('EXP_PP_FILE',
+                                  hkeys=dict(KW_OUTPUT='EXP_PP_FILE'),
                                   filetype='.fits', prefix='EXPMETER_',
                                   suffix='_PPTYPE', remove_insuffix=True,
                                   intype=[FMOD.files.out_wave_night],
-                                  outfunc=FMOD.out.general_file)
-exp_raw_file = drs_dev.TmpFitsFile('EXP_RAW_FILE', KW_OUTPUT='EXP_PP_FILE',
+                                  outclass=FMOD.files.general_ofile)
+exp_raw_file = drs_dev.TmpFitsFile('EXP_RAW_FILE',
+                                   hkeys=dict(KW_OUTPUT='EXP_PP_FILE'),
                                    filetype='.fits', prefix='EXPMETER_',
                                    suffix='_RAWTYPE', remove_insuffix=True,
                                    intype=[FMOD.files.out_wave_night],
-                                   outfunc=FMOD.out.general_file)
+                                   outclass=FMOD.files.general_ofile)
 
 # header keys
 EM_MIN_WAVE = ['EM_MNWAV', 0.0, 'Exposure meter min wave for mask']
@@ -203,12 +205,12 @@ def __main__(recipe, params):
     for fiber in fibers:
         # wave infile
         header = wave_infiles[fiber].get_header()
-        ishape = wave_images[fiber].get_data().shape
+        ishape = wave_images[fiber].shape
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe,
                                        filename=wave_infiles[fiber].filename,
-                                       database=calibdbm)
+                                       header=header, database=calibdbm)
         # ------------------------------------------------------------------
         # Load the TAPAS atmospheric transmission convolved with the
         #   reference wave solution (1D spectrum)
@@ -232,8 +234,8 @@ def __main__(recipe, params):
     # get the x and y position images
     yimage, ximage = np.indices(ishape)
     # get shape files
-    shapexfile, shapex = shape.get_shapex(params, ref_header)
-    shapeyfile, shapey = shape.get_shapey(params, ref_header)
+    _, _, shapex = shape.get_shapex(params, ref_header)
+    _, _, shapey = shape.get_shapey(params, ref_header)
     # transform the shapex map
     WLOG(params, '', 'Transforming shapex map')
     shapex2 = shape.ea_transform(params, shapex, dymap=-shapey)
