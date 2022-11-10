@@ -7472,7 +7472,7 @@ def get_file_definition(params: ParamDict, name: str,
     Finds a given recipe in the instruments definitions
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param name: string, the recipe name
+    :param name: string, the DrsInputFile name
     :param instrument: string, the instrument name
     :param block_kind: string, the type of file to look for ('raw',
                        'tmp', 'red')

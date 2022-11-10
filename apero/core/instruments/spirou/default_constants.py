@@ -658,6 +658,11 @@ LOC_YDET_MAX = LOC_YDET_MAX.copy(__NAME__)
 LOC_YDET_MAX.value = 3050
 LOC_YDET_MAX.author = base.AUTHORS['EA']
 
+# define the number of width samples to use in localisation
+LOC_NUM_WID_SAMPLES = LOC_NUM_WID_SAMPLES.copy(__NAME__)
+LOC_NUM_WID_SAMPLES.value = 10
+LOC_NUM_WID_SAMPLES.author = base.AUTHORS['EA']
+
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
 # =============================================================================
@@ -1117,7 +1122,7 @@ LEAK_LOW_PERCENTILE.value = 1
 LEAK_HIGH_PERCENTILE = LEAK_HIGH_PERCENTILE.copy(__NAME__)
 LEAK_HIGH_PERCENTILE.value = 99
 
-# define the limit on surpious FP ratio (1 +/- limit)
+# define the limit on spurious FP ratio (1 +/- limit)
 LEAK_BAD_RATIO_OFFSET = LEAK_BAD_RATIO_OFFSET.copy(__NAME__)
 LEAK_BAD_RATIO_OFFSET.value = 0.1
 
