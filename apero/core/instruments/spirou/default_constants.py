@@ -802,7 +802,7 @@ LOC_PLOT_CORNER_YZOOM2.value = '600, 600, 3100, 3100'
 ALLOWED_FP_TYPES = ALLOWED_FP_TYPES.copy(__NAME__)
 ALLOWED_FP_TYPES.value = 'FP_FP'
 
-#   Define the maximum time span to combine dark files over (in hours)
+#   Define the maximum time span to combine fp files over (in hours)
 FP_REF_MATCH_TIME = FP_REF_MATCH_TIME.copy(__NAME__)
 FP_REF_MATCH_TIME.value = 2
 

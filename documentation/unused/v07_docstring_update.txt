@@ -138,7 +138,7 @@ apero:
 			- dark.py
 			- flat_blaze.py
 			- gen_calib.py
-			# - leak.py
+			- leak.py
 			# - localisation.py
 			# - shape.py
 			# - thermal.py
