@@ -1334,7 +1334,7 @@ WAVE_HC_VEL_ODD_RATIO.author = base.AUTHORS['EA']
 
 # Define orders that we cannot fit HC or FP lines to (list of strings)
 WAVE_REMOVE_ORDERS = WAVE_REMOVE_ORDERS.copy(__NAME__)
-WAVE_REMOVE_ORDERS.value = '45, 46, 47'
+WAVE_REMOVE_ORDERS.value = '44, 45, 46'
 
 # Define the number of iterations required to do the final fplines
 #   wave solution
@@ -1344,7 +1344,7 @@ WAVE_FWAVESOL_ITRS.author = base.AUTHORS['EA']
 
 # define the wave fiber comparison plot order number
 WAVE_FIBER_COMP_PLOT_ORD = WAVE_FIBER_COMP_PLOT_ORD.copy(__NAME__)
-WAVE_FIBER_COMP_PLOT_ORD.value = 35
+WAVE_FIBER_COMP_PLOT_ORD.value = 53
 WAVE_FIBER_COMP_PLOT_ORD.author = base.AUTHORS['NJC']
 
 # =============================================================================
