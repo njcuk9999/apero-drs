@@ -251,8 +251,8 @@ FIBER_FIRST_ORDER_JUMP_B.value = 0
 FIBER_MAX_NUM_ORDERS_A = FIBER_MAX_NUM_ORDERS_A.copy(__NAME__)
 FIBER_MAX_NUM_ORDERS_B = FIBER_MAX_NUM_ORDERS_B.copy(__NAME__)
 # set values
-FIBER_MAX_NUM_ORDERS_A.value = 73
-FIBER_MAX_NUM_ORDERS_B.value = 73
+FIBER_MAX_NUM_ORDERS_A.value = 75
+FIBER_MAX_NUM_ORDERS_B.value = 75
 
 #   Number of fibers
 FIBER_SET_NUM_FIBERS_A = FIBER_SET_NUM_FIBERS_A.copy(__NAME__)
@@ -648,13 +648,13 @@ LOC_RANGE_WID_SUM.author = base.AUTHORS['EA']
 # define the minimum detector position where the centers of the orders should
 #   fall (across order direction)
 LOC_YDET_MIN = LOC_YDET_MIN.copy(__NAME__)
-LOC_YDET_MIN.value = 78
+LOC_YDET_MIN.value = 40
 LOC_YDET_MIN.author = base.AUTHORS['EA']
 
 # define the maximum detector position where the centers of the orders should
 #   fall (across order direction)
 LOC_YDET_MAX = LOC_YDET_MAX.copy(__NAME__)
-LOC_YDET_MAX.value = 4050
+LOC_YDET_MAX.value = 4088
 LOC_YDET_MAX.author = base.AUTHORS['EA']
 
 # =============================================================================
@@ -1606,7 +1606,7 @@ WAVE_N_ORD_START.value = 0
 
 #  Defines order to which the solution is calculated (last order)
 WAVE_N_ORD_FINAL = WAVE_N_ORD_FINAL.copy(__NAME__)
-WAVE_N_ORD_FINAL.value = 73
+WAVE_N_ORD_FINAL.value = 75
 
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
@@ -1836,12 +1836,12 @@ WAVE_LITTROW_ORDER_INIT_2.value = 0
 
 #  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = WAVE_LITTROW_ORDER_FINAL_1.copy(__NAME__)
-WAVE_LITTROW_ORDER_FINAL_1.value = 73
+WAVE_LITTROW_ORDER_FINAL_1.value = 75
 
 #  Define the order to end the Littrow fit at for the FP wave solution
 # TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = WAVE_LITTROW_ORDER_FINAL_2.copy(__NAME__)
-WAVE_LITTROW_ORDER_FINAL_2.value = 73
+WAVE_LITTROW_ORDER_FINAL_2.value = 75
 
 #  Define orders to ignore in Littrow fit (should be a string list separated
 #      by commas
