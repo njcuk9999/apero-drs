@@ -1498,7 +1498,8 @@ def _display_initial_parameterisation(params: ParamDict,
     # set function name
     # _ = display_func('_display_initial_parameterisation', __NAME__)
     # Add initial parameterisation
-    wmsgs = textentry('\n\tDRS_DATA_RAW: {}'.format(params['DRS_DATA_RAW']))
+    wmsgs = textentry('\n\tDRS_ROOT: {}'.format(params['DRS_ROOT']))
+    wmsgs += textentry('\n\tDRS_DATA_RAW: {}'.format(params['DRS_DATA_RAW']))
     wmsgs += textentry('\n\tDRS_DATA_REDUC: {}'
                        ''.format(params['DRS_DATA_REDUC']))
     wmsgs += textentry('\n\tDRS_DATA_WORKING: {}'
