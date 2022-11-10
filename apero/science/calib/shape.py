@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO shape, order geometry functionality
 
 Created on 2019-06-27 at 10:13
 
@@ -11,7 +9,9 @@ Created on 2019-06-27 at 10:13
 """
 import os
 import warnings
+from typing import List, Optional, Tuple, Union
 
+from astropy.table import Table
 import numpy as np
 from scipy.ndimage import filters
 from scipy.ndimage import map_coordinates as mapc
@@ -58,12 +58,24 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Define user functions
 # =============================================================================
-def construct_fp_table(params, filenames, **kwargs):
+def construct_fp_table(params: ParamDict, filenames: List[str],
+                       max_nfiles: Optional[int] = None) -> Table:
+    """
+    Construct the FP table
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param filenames: list of strs, the list of FP filenames
+    :param max_nfiles: int or None, the maximum number of files to use in
+                       shape reference file, if set overrides
+                       "SHAPE_REF_MAX_FILES" from params
+
+    :return: astropy table, the FP table
+    """
     # define function
     func_name = __NAME__ + '.construct_fp_table()'
     # get parameters from params
-    max_num_files = pcheck(params, 'SHAPE_REF_MAX_FILES', 'max_num', kwargs,
-                           func_name)
+    max_num_files = pcheck(params, 'SHAPE_REF_MAX_FILES', func=func_name,
+                           override=max_nfiles)
     # define storage for table columns
     fp_time, fp_exp, fp_pp_version = [], [], []
     basenames, obs_dirs = [], []

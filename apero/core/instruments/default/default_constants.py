@@ -91,7 +91,7 @@ __all__ = [
     'LOC_PERCENTILE_FILTER_SIZE',
     'LOC_FIBER_DILATE_ITERATIONS', 'LOC_MIN_ORDER_AREA', 'LOC_WIDTH_POLY_DEG',
     'LOC_CENT_POLY_DEG', 'LOC_RANGE_WID_SUM', 'LOC_RANGE_WID_SUM',
-    'LOC_YDET_MIN', 'LOC_YDET_MAX',
+    'LOC_YDET_MIN', 'LOC_YDET_MAX', 'LOC_NUM_WID_SAMPLES',
     # localisation constants
     'LOC_ORDERP_BOX_SIZE', 'LOC_START_ROW_OFFSET', 'LOC_CENTRAL_COLUMN',
     'LOC_HALF_ORDER_SPACING', 'LOC_MINPEAK_AMPLITUDE', 'LOC_COLUMN_SEP_FITTING',
@@ -1373,6 +1373,12 @@ LOC_YDET_MAX = Const('LOC_YDET_MIN', value=None, dtype=int, source=__NAME__,
                      description='define the maximum detector position where '
                                  'the centers of the orders should fall '
                                  '(across order direction)')
+
+# define the number of width samples to use in localisation
+LOC_NUM_WID_SAMPLES = Const('LOC_NUM_WID_SAMPLES', value=None, dtype=int,
+                            source=__NAME__, group=cgroup, minimum=1,
+                            description='define the number of width samples to '
+                                        'use in localisation')
 
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS

@@ -9,11 +9,12 @@ Created on 2022-01-26
 """
 import os
 import warnings
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
+from astropy.table import Table
 
 from apero import lang
 from apero.base import base
@@ -22,8 +23,6 @@ from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_recipe
-from apero.core.utils import drs_startup
-from apero.science.calib import flat_blaze
 from apero.science.calib import gen_calib
 from apero.science.calib import wave
 from apero.science.extract import gen_ext
@@ -329,23 +328,64 @@ def correct_ext_dark_fp(params: ParamDict, sciimage: np.ndarray,
                         refimage: np.ndarray, header: drs_file.Header,
                         fiber: str,
                         database: Optional[CalibrationDatabase] = None,
-                        **kwargs):
+                        leak2dext: Optional[List[str]] = None,
+                        extfiletype: Optional[str] = None,
+                        bckgrd_percentile: Optional[float] = None,
+                        norm_percentile: Optional[float] = None,
+                        low_percentile: Optional[float] = None,
+                        high_percentile: Optional[float] = None,
+                        bad_ratio: Optional[float] = None
+                        ) -> Tuple[np.ndarray, np.ndarray, ParamDict]:
+    """
+    Correct the extracted file using the dark fp leak reference file
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param sciimage: numpy 2D array, the extracted image (science fiber)
+    :param refimage: numpy 2D array, the extracted image (reference fiber)
+    :param header: fits.Header, the input image header, used to get closest
+                   reference file
+    :param fiber: str, the science fiber of the sciimage
+    :param database: CalibrationDatabase instance or None, if None loads the
+                     calibration database instance, otherwise uses open one
+    :param leak2dext: str, allowed extraction file format (overrides
+                      LEAK_2D_EXTRACT_FILES from parameters if defined)
+    :param extfiletype: str, file to use for leak correction (e2ds or e2dsff)
+                        (overrides LEAK_EXTRACT_FILE from parameters if defined)
+    :param bckgrd_percentile: float, the thermal background percentile for
+                              leak correction (overrides LEAK_BCKGRD_PERCENTILE
+                              from parameters if defined)
+    :param norm_percentile: float, the normalisation percentile for leak
+                            correction (overrides LEAK_NORM_PERCENTILE from
+                            parameters if defined)
+    :param low_percentile: float, lower bound percentile for leak correction
+                           (overrides LEAK_LOW_PERCENTILE from parameters if
+                            defined)
+    :param high_percentile: float, upper bound percentile for leak correction
+                            (overrides LEAK_HIGH_PERCENTILE from parameters if
+                             defined)
+    :param bad_ratio: float, limit on spruious FP ratio 1 +/- limit (overrides
+                      LEAK_BAD_RATIO_OFFSET from parameters if defined)
+
+    :return: tuple, 1. the updated sciimage, 2. the ratios used in leak corr
+             3. leak correction parameter dictionary
+    """
     # set the function name
     func_name = __NAME__ + '.correct_ext_dark_fp()'
     # get properties from parameters
-    leak2dext = pcheck(params, 'LEAK_2D_EXTRACT_FILES', 'leak2dext', kwargs,
-                       func_name, mapf='list')
-    extfiletype = pcheck(params, 'LEAK_EXTRACT_FILE', 'extfiletype', kwargs,
-                         func_name)
-    bckgrd_percentile = pcheck(params, 'LEAK_BCKGRD_PERCENTILE',
-                               'bckgrd_percentile', kwargs, func_name)
-    norm_percentile = pcheck(params, 'LEAK_NORM_PERCENTILE', 'norm_percentile',
-                             kwargs, func_name)
-    low_percentile = pcheck(params, 'LEAK_LOW_PERCENTILE', 'low_percentile',
-                            kwargs, func_name)
-    high_percentile = pcheck(params, 'LEAK_HIGH_PERCENTILE', 'high_percentile',
-                             kwargs, func_name)
-    bad_ratio = pcheck(params, 'LEAK_BAD_RATIO_OFFSET', 'bad_ratio')
+    leak2dext = pcheck(params, 'LEAK_2D_EXTRACT_FILES', func=func_name,
+                       override=leak2dext, mapf='list')
+    extfiletype = pcheck(params, 'LEAK_EXTRACT_FILE', func=func_name,
+                         override=extfiletype)
+    bckgrd_percentile = pcheck(params, 'LEAK_BCKGRD_PERCENTILE', func=func_name,
+                               override=bckgrd_percentile)
+    norm_percentile = pcheck(params, 'LEAK_NORM_PERCENTILE', func=func_name,
+                             override=norm_percentile)
+    low_percentile = pcheck(params, 'LEAK_LOW_PERCENTILE', func=func_name,
+                            override=low_percentile)
+    high_percentile = pcheck(params, 'LEAK_HIGH_PERCENTILE', func=func_name,
+                             override=high_percentile)
+    bad_ratio = pcheck(params, 'LEAK_BAD_RATIO_OFFSET', func=func_name,
+                       override=bad_ratio)
     # group bounding percentiles
     bpercents = [low_percentile, high_percentile]
     # get size of reference image
@@ -469,234 +509,25 @@ def correct_ext_dark_fp(params: ParamDict, sciimage: np.ndarray,
     return sciimage, ratio_leak, props
 
 
-def correct_dark_fp(params, extractdict, database=None, **kwargs):
-    # set the function name
-    func_name = __NAME__ + '.correct_dark_fp()'
-    # get properties from parameters
-    leak2dext = pcheck(params, 'LEAK_2D_EXTRACT_FILES', 'leak2dext', kwargs,
-                       func_name, mapf='list')
-    extfiletype = pcheck(params, 'LEAK_EXTRACT_FILE', 'extfiletype', kwargs,
-                         func_name)
-    bckgrd_percentile = pcheck(params, 'LEAK_BCKGRD_PERCENTILE',
-                               'bckgrd_percentile', kwargs, func_name)
-    norm_percentile = pcheck(params, 'LEAK_NORM_PERCENTILE', 'norm_percentile',
-                             kwargs, func_name)
-    low_percentile = pcheck(params, 'LEAK_LOW_PERCENTILE', 'low_percentile',
-                            kwargs, func_name)
-    high_percentile = pcheck(params, 'LEAK_HIGH_PERCENTILE', 'high_percentile',
-                             kwargs, func_name)
-    bad_ratio = pcheck(params, 'LEAK_BAD_RATIO_OFFSET', 'bad_ratio')
-    # group bounding percentiles
-    bpercents = [low_percentile, high_percentile]
-    # ----------------------------------------------------------------------
-    # get this instruments science fibers and reference fiber
-    pconst = constants.pload()
-    # science fibers should be list of strings, reference fiber should be string
-    sci_fibers, ref_fiber = pconst.FIBER_KINDS()
-    all_fibers = sci_fibers + [ref_fiber]
-    # ----------------------------------------------------------------------
-    # get reference file
-    ref_file = extractdict[ref_fiber][extfiletype]
-    refimage = ref_file.get_data(copy=True)
-    ref_header = ref_file.get_header()
-    # get size of reference image
-    nbo, nbpix = refimage.shape
-    # ----------------------------------------------------------------------
-    # storage for reference files
-    ref_leaks = dict()
-    # load reference data
-    for fiber in all_fibers:
-        # get leak reference for file
-        _, leakref, _ = get_leak_ref(params, ref_header, fiber,
-                                     'LEAKREF_E2DS', database=database)
-        # append to storage
-        ref_leaks[fiber] = leakref
-    # ----------------------------------------------------------------------
-    # store the ratio of observe to global reference
-    ref_ratio_arr = np.zeros(nbo)
-    dot_ratio_arr = np.zeros(nbo)
-    approx_ratio_arr = np.zeros(nbo)
-    # store the method used (either "dot" or "approx")
-    method = []
-    # loop around reference image orders and normalise by percentile
-    for order_num in range(nbo):
-        # get order values for reference
-        global_ref_ord = ref_leaks[ref_fiber][order_num]
-        # remove the pedestal from the FP to avoid an offset from
-        #     thermal background
-        background = mp.nanpercentile(refimage[order_num], bckgrd_percentile)
-        refimage[order_num] = refimage[order_num] - background
-        # only perform the measurement of the amplitude of the leakage signal
-        #  on the lower and upper percentiles. This allows for a small number
-        #  of hot/dark pixels along the order. Without this, we end up with
-        #  some spurious amplitude values in the frames
-        with warnings.catch_warnings(record=True) as _:
-            # get percentiles
-            low, high = mp.nanpercentile(refimage[order_num], bpercents)
-            lowm, highm = mp.nanpercentile(global_ref_ord, bpercents)
-            # translate this into a mask
-            mask = refimage[order_num] > low
-            mask &= refimage[order_num] < high
-            mask &= global_ref_ord > lowm
-            mask &= global_ref_ord < highm
-        # approximate ratio, we know that frames were normalized with their
-        #  "norm_percentile" percentile prior to median combining
-        amplitude = mp.nanpercentile(refimage[order_num], norm_percentile)
-        approx_ratio = 1 / amplitude
-        # save to storage
-        approx_ratio_arr[order_num] = float(approx_ratio)
-        # much more accurate ratio from a dot product
-        part1 = mp.nansum(global_ref_ord[mask] * refimage[order_num][mask])
-        part2 = mp.nansum(refimage[order_num][mask] ** 2)
-        ratio = part1 / part2
-        # save to storage
-        dot_ratio_arr[order_num] = float(ratio)
-        # deal with spurious ref FP ratio
-        cond1 = (ratio / approx_ratio) < (1 - bad_ratio)
-        cond2 = (ratio / approx_ratio) > (1 + bad_ratio)
-        # Ratio must be within (1-badratio) to (1+badratio) of the approximate
-        #   ratio -- otherwise ratio is bad
-        if cond1 or cond2:
-            # log warning that ref FP ratio is spurious
-            wargs = [order_num, ratio, approx_ratio, ratio / approx_ratio,
-                     1 - bad_ratio, 1 + bad_ratio]
-            WLOG(params, 'warning', textentry('10-016-00024', args=wargs),
-                 sublevel=4)
-            # set the ratio to the approx ratio
-            ratio = float(approx_ratio)
-            # set the ratio method
-            method.append('approx')
-        else:
-            # set method
-            method.append('dot')
-        # save ratios to storage
-        ref_ratio_arr[order_num] = float(ratio)
+def get_leak_ref(params: ParamDict, header: drs_file.Header, fiber: str,
+                 kind: str, filename: Optional[str] = None,
+                 database: Optional[CalibrationDatabase] = None
+                 ) -> Tuple[str, np.ndarray, float]:
+    """
+    Get the leak reference file from the calibration database
 
-    # ----------------------------------------------------------------------
-    # storage for extraction outputs
-    outputs = dict()
-    leakage = dict()
-    # ----------------------------------------------------------------------
-    # loop around science fibers
-    for fiber in sci_fibers:
-        # storage for fiber outputs
-        outputs[fiber] = dict()
-        leakage[fiber] = dict()
-        # get the reference for this fiber
-        ref_sci = ref_leaks[fiber]
-        # loop around extraction types
-        for extfiletype in leak2dext:
-            # log progress
-            wargs = [fiber, extfiletype]
-            WLOG(params, 'info', textentry('40-016-00029', args=wargs))
-            # get extfile
-            extfile = extractdict[fiber][extfiletype]
-            # get the extraction image
-            extimage = extfile.get_data(copy=True)
-            # --------------------------------------------------------------
-            # if we are dealing with the E2DS we need the flat
-            if extfiletype == 'E2DS_FILE':
-                # load the flat file for this fiber
-                fout = flat_blaze.get_flat(params, extfile.get_header(),
-                                           fiber, quiet=True)
-                flat_file, flat_time, flat = fout
-            # else we set it to None
-            else:
-                flat = np.ones_like(extimage)
-            # --------------------------------------------------------------
-            # storage for the ratio of leakage
-            ratio_leak = np.zeros(nbo)
-            # loop around orders
-            for order_num in range(nbo):
-                # scale the leakage for that order to the observed amplitude
-                scale = ref_sci[order_num] / ref_ratio_arr[order_num]
-                # correct for the flat (in E2DS case) - reference is E2DSFF
-                scale = scale * flat[order_num]
-                # apply leakage scaling
-                extimage[order_num] = extimage[order_num] - scale
-                # calculate the ratio of the leakage
-                rpart1 = mp.nanpercentile(refimage[order_num], norm_percentile)
-                rpart2 = mp.nanmedian(extimage[order_num])
-                ratio_leak[order_num] = rpart1 / rpart2
-            # update ext file
-            extfile.data = extimage
-            # add to output
-            outputs[fiber][extfiletype] = extfile
-            leakage[fiber][extfiletype] = ratio_leak
-    # ----------------------------------------------------------------------
-    # generate a properties dictionary
-    props = ParamDict()
-    # ----------------------------------------------------------------------
-    # add outputs
-    props['OUTPUTS'] = outputs
-    props['LEAKAGE'] = leakage
-    # set sources
-    props.set_sources(['OUTPUTS', 'LEAKAGE'], func_name)
-    # ----------------------------------------------------------------------
-    # add used parameters
-    props['LEAK_2D_EXTRACT_FILES_USED'] = leak2dext
-    props['LEAK_EXTRACT_FILE_USED'] = extfiletype
-    props['LEAK_BCKGRD_PERCENTILE_USED'] = bckgrd_percentile
-    props['LEAK_NORM_PERCENTILE_USED'] = norm_percentile
-    props['LEAK_LOW_PERCENTILE_USED'] = low_percentile
-    props['LEAK_HIGH_PERCENTILE_USED'] = high_percentile
-    props['LEAK_BAD_RATIO_OFFSET_USED'] = bad_ratio
-    # set sources
-    keys = ['LEAK_2D_EXTRACT_FILES_USED', 'LEAK_EXTRACT_FILE_USED',
-            'LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
-            'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
-            'LEAK_BAD_RATIO_OFFSET_USED']
-    props.set_sources(keys, func_name)
-    # ----------------------------------------------------------------------
-    # return properties
-    return props
-
-
-def dark_fp_regen_s1d(params, recipe, props, database=None, **kwargs):
-    # set function name
-    func_name = __NAME__ + '.dark_fp_regen_s1d()'
-    # get outputs from props
-    outputs = props['OUTPUTS']
-    # get the leak extract file type
-    s1dextfile = pcheck(params, 'EXT_S1D_INFILE', 's1dextfile', kwargs,
-                        func_name)
-    # leak2dext = params.listp('LEAK_2D_EXTRACT_FILES', dtype=str)
-    # storage for s1d outputs
-    s1dv_outs = dict()
-    s1dw_outs = dict()
-    # loop around fibers
-    for fiber in outputs:
-        # get the e2ds in file type
-        extfile = outputs[fiber][s1dextfile]
-        # --------------------------------------------------------------
-        # load the blaze file for this fiber
-        bout = flat_blaze.get_blaze(params, extfile.header, fiber)
-        blaze_file, blaze_time, blaze = bout
-        # --------------------------------------------------------------
-        # load wavelength solution for this fiber (must be from the e2ds file)
-        wprops = wave.get_wavesolution(params, recipe, infile=extfile,
-                                       fiber=fiber, database=database)
-        # --------------------------------------------------------------
-        # create 1d spectra (s1d) of the e2ds file
-        sargs = [wprops['WAVEMAP'], extfile.get_data(), blaze]
-        swprops = gen_ext.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
-                                      fiber=fiber, s1dkind=s1dextfile)
-        svprops = gen_ext.e2ds_to_s1d(params, recipe, *sargs, wgrid='velocity',
-                                      fiber=fiber, s1dkind=s1dextfile)
-        # add to outputs
-        s1dw_outs[fiber] = swprops
-        s1dv_outs[fiber] = svprops
-    # push updated outputs into props
-    props['S1DW'] = s1dw_outs
-    props['S1DV'] = s1dv_outs
-    props.set_sources(['S1DW', 'S1DV'], func_name)
-    # return outputs
-    return props
-
-
-def get_leak_ref(params, header, fiber, kind, filename=None,
-                 database=None):
-    # get file definition
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: fits Header, the header to get the time for the closest
+                   leak reference file
+    :param fiber: str, the fiber to get the leak reference file for
+    :param kind: str, the DrsInputFile name
+    :param filename: str or None, if set this is the leak reference file used
+    :param database: Calibration database instance or None, if None we reload
+                     the calibration database
+    :return: tuple, 1. the leak ref filename, 2. the leak ref image,
+             3. the observation time of the leak reference file
+    """
+    # get file definition1
     out_leak = drs_file.get_file_definition(params, kind, block_kind='red')
     # get key
     key = out_leak.get_dbkey()
@@ -725,7 +556,19 @@ def get_leak_ref(params, header, fiber, kind, filename=None,
     return leak_file, leak, leak_time
 
 
-def ref_dark_fp_cube(params, recipe, extractdict):
+def ref_dark_fp_cube(params: ParamDict, recipe: DrsRecipe,
+                     extractdict: Dict[str, List[DrsFitsFile]]
+                     ) -> Tuple[Dict[str, DrsFitsFile], Dict[str, Table]]:
+    """
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe class that called this function
+    :param extractdict: dictionary of lists of drs fits files - each list
+                        should have the fibers extraction DrsFitsFile files
+                        each key should be a fiber
+    :return: tuple, 1. dictionary the dark fp cube for each fiber (key),
+             2. the combine table for each dark fp cube for each fiber (key)
+    """
     # median cube storage dictionary
     medcubedict = dict()
     medcubetable = dict()
@@ -758,63 +601,32 @@ def ref_dark_fp_cube(params, recipe, extractdict):
     return medcubedict, medcubetable
 
 
-def get_extraction_files(params, recipe, infile, extname):
-    # get properties from parameters
-    leak2dext = params.listp('LEAK_2D_EXTRACT_FILES', dtype=str)
-    leak1dext = params.listp('LEAK_1D_EXTRACT_FILES', dtype=str)
-    # get this instruments science fibers and reference fiber
-    pconst = constants.pload()
-    # science fibers should be list of strings, reference fiber should be string
-    sci_fibers, ref_fiber = pconst.FIBER_KINDS()
-    all_fibers = sci_fibers + [ref_fiber]
-    # get the input pp list
-    rawfiles = infile.get_hkey_1d('KW_INFILE1', dtype=str)
-    # get the preprocessed file
-    ppfile = infile.intype.newcopy(params=params)
-    # get the preprocessed file path
-    pppath = os.path.join(params['DRS_DATA_WORKING'], params['OBS_DIR'])
-    # get the pp filename
-    ppfile.set_filename(os.path.join(pppath, rawfiles[0]))
-    # ------------------------------------------------------------------
-    # find the extraction recipe
-    extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
-                                           mod=recipe.recipemod)
-    extrecipe.params = params
-    # ------------------------------------------------------------------
-    # storage for outputs
-    extouts = recipe.outputs.keys()
-    outputs = dict()
-    for fiber in all_fibers:
-        outputs[fiber] = dict()
-    # ------------------------------------------------------------------
-    # loop around fibers
-    for fiber in all_fibers:
-        # loop around extraction outputs
-        for extout in extouts:
-            # get extraction file instance
-            outfile = extrecipe.outputs[extout].newcopy(params=params,
-                                                        fiber=fiber)
-            # construct filename
-            outfile.construct_filename(infile=ppfile)
-            # read 2D image (not 1D images -- these will be re-generated)
-            if extout in leak2dext:
-                outfile.read_file()
-                # push to storage
-                outputs[fiber][extout] = outfile
-            # puash 1D images to storage
-            if extout in leak1dext:
-                # push to storage
-                outputs[fiber][extout] = outfile
-    # return outputs
-    return outputs
-
-
 def save_uncorrected_ext_fp(params: ParamDict, recipe: DrsRecipe,
                             infile: DrsFitsFile, eprops: ParamDict,
-                            fiber: str):
+                            fiber: str, debug_uncorr: Optional[bool] = None):
+    """
+    Save un-corrected extracted file (before correction) for debugging
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
+    :param infile: DrsFitsFile, the input file instance
+    :param eprops: ParamDict, parameter dictionary for extraction
+    :param fiber: str, the fiber
+    :param debug_uncorr: bool or None, if set to False does not save debug
+                         file, if set overrides 'DEBUG_UNCOOR_EXT_FILES' from
+                         params
+
+    :return: None, saves debug file to disk
+    """
+    # set function name
+    func_name = display_func('save_uncorrected_ext_fp', __NAME__)
+    # ------------------------------------------------------------------------
+    # get parameters from params
+    debug_uncorr_ext_files = pcheck(params, 'DEBUG_UNCORR_EXT_FILES',
+                                    func=func_name, override=debug_uncorr)
     # -------------------------------------------------------------------------
     # check we want to save uncorrected
-    if not params['DEBUG_UNCORR_EXT_FILES']:
+    if not debug_uncorr_ext_files:
         return
     # check that we have corrected leak
     if not eprops['LEAK_CORRECTED']:
@@ -867,13 +679,30 @@ def save_uncorrected_ext_fp(params: ParamDict, recipe: DrsRecipe,
     recipe.add_output_file(e2dsfile)
 
 
-def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
-                **kwargs):
+def ref_fplines(params: ParamDict, recipe: DrsRecipe, e2dsfile: DrsFitsFile,
+                wavemap: np.ndarray, fiber: str,
+                database: Optional[CalibrationDatabase] = None,
+                fptypes: Optional[List[str]] = None) -> Union[Table, None]:
+    """
+    Construct the reference FP line table
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
+    :param e2dsfile: DrsFitsFile, the extracted file instance
+    :param wavemap: numpy 2D array, the wave map to use
+    :param fiber: str, the fiber we are using
+    :param database: Calibration database or None, if not set reloads the
+                     calibration database
+    :param fptypes: list of strings or None, the allowed FP DPRTYPES, if set
+                    overrides the params constant WAVE_FP_DPRLIST
+
+    :return: either None or the FP line table
+    """
     # set up function name
     func_name = display_func('ref_fplines', __NAME__)
     # get constant from params
-    allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', 'fptypes', kwargs, func_name,
-                        mapf='list')
+    allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', func=func_name,
+                        override=fptypes, mapf='list')
     # get dprtype
     dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
     # get psuedo constants
@@ -908,7 +737,18 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     return rfpl
 
 
-def qc_leak_ref(params, medcubes):
+def qc_leak_ref(params: ParamDict, medcubes: Dict[str, DrsFitsFile]
+                ) -> Tuple[Dict[str, List[list]], bool]:
+    """
+    Perform the quality control for the leak reference recipe
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param medcubes: dictionary of drs fits file per fiber (key=fiber)
+
+    :return: tuple, 1. the quality control dictionary one key for each fiber
+             each value is a list of quality control params, 2. whether
+             quality control was passed
+    """
     # output storage
     qc_params = dict()
     passed = True
@@ -943,14 +783,27 @@ def qc_leak_ref(params, medcubes):
     return qc_params, passed
 
 
-def qc_leak(params, props, **kwargs):
+def qc_leak(params: ParamDict, props: ParamDict, extname: Optional[str] = None
+            ) -> Tuple[Dict[str, List[list]], bool]:
+    """
+    Quality control for the leak correction
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param props: ParamDict, the leak ref parameter dictionary
+    :param extname: str or None, the e2ds file name to use as the extract
+                    file for quality control
+
+    :return: tuple, 1. the quality control dictionary one key for each fiber
+             each value is a list of quality control params, 2. whether
+             quality control was passed
+    """
     # set function name
     func_name = __NAME__ + '.qc_leak()'
     # get outputs from props
     outputs = props['OUTPUTS']
     # get leak extract file
-    extname = pcheck(params, 'LEAK_EXTRACT_FILE', 'extname', kwargs,
-                     func_name)
+    extname = pcheck(params, 'LEAK_EXTRACT_FILE', func=func_name,
+                     override=extname)
     # output storage
     qc_params = dict()
     passed = True
@@ -987,8 +840,25 @@ def qc_leak(params, props, **kwargs):
     return qc_params, passed
 
 
-def write_leak_ref(params, recipe, rawfiles, medcubes, medtables,
-                   qc_params, props):
+def write_leak_ref(params: ParamDict, recipe: DrsRecipe, rawfiles: List[str],
+                   medcubes: Dict[str, DrsFitsFile],
+                   medtables: Dict[str, Table],
+                   qc_params: Dict[str, List[list]],
+                   props: ParamDict) -> Dict[str, DrsFitsFile]:
+    """
+    Write the leak reference files to disk
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
+    :param rawfiles: list of strings, the input files for this recipe
+    :param medcubes: dictionary of DrsFitsFiles, one for each fiber
+    :param medtables: dictionary of tables, one for each fiber
+    :param qc_params: dictionary of quality control lists, one for each fiber
+    :param props: ParamDict, the leak reference parameter dictionary
+
+    :return: dictionary of DrsFitsFiles, the DrsFitsFile for each fiber
+             as written to disk
+    """
     # loop around fibers
     for fiber in medcubes:
         # get outfile for this fiber
@@ -1049,7 +919,24 @@ def write_leak_ref(params, recipe, rawfiles, medcubes, medtables,
     return medcubes
 
 
-def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
+def write_leak(params: ParamDict, recipe: DrsRecipe,
+               inputs: Dict[str, Dict[str, DrsFitsFile]],
+               props: ParamDict, qc_params: Dict[str, List[list]],
+               s1dextfile: Optional[str] = None):
+    """
+    Write the leak file to disk
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
+    :param inputs: dictionary key per fiber, the input extraction DrsFitsFiles
+                   each inner key is a type of extraction file
+    :param props: ParamDict, the leak parameter dictionary
+    :param qc_params: dictionary key per fiber, the quality control lists
+    :param s1dextfile: str or None, this is the s1d file instance name to use,
+                       if set overrides "EXT_S1D_INFILE" from params
+
+    :return: None, writes leak files to disk
+    """
     # set function name
     func_name = __NAME__ + '.write_leak()'
     # get outputs from props
@@ -1104,8 +991,8 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
     # S1D files
     # ----------------------------------------------------------------------
     # get the leak extract file type
-    s1dextfile = pcheck(params, 'EXT_S1D_INFILE', 's1dextfile', kwargs,
-                        func_name)
+    s1dextfile = pcheck(params, 'EXT_S1D_INFILE',
+                        func=func_name, override=s1dextfile)
     # loop around fibers
     for fiber in outputs:
         # get extfile

@@ -658,6 +658,11 @@ LOC_YDET_MAX = LOC_YDET_MAX.copy(__NAME__)
 LOC_YDET_MAX.value = 4088
 LOC_YDET_MAX.author = base.AUTHORS['EA']
 
+# define the number of width samples to use in localisation
+LOC_NUM_WID_SAMPLES = LOC_NUM_WID_SAMPLES.copy(__NAME__)
+LOC_NUM_WID_SAMPLES.value = 10
+LOC_NUM_WID_SAMPLES.author = base.AUTHORS['EA']
+
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
 # =============================================================================
