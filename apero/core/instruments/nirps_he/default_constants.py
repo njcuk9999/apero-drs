@@ -1407,12 +1407,12 @@ WAVEREF_HC_GUESS_EWID.author = base.AUTHORS['EA']
 
 # Define the fiber offset (in pixels) away from reference fiber
 WAVE_FIBER_OFFSET_MOD = WAVE_FIBER_OFFSET_MOD.copy(__NAME__)
-WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":-24.0}'
+WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":-20.0}'
 WAVE_FIBER_OFFSET_MOD.author = base.AUTHORS['EA']
 
 # Define the fiber scale factor from reference fiber
 WAVE_FIBER_SCALE_MOD = WAVE_FIBER_SCALE_MOD.copy(__NAME__)
-WAVE_FIBER_SCALE_MOD.value = '{"A":1.0,"B":1.0}'
+WAVE_FIBER_SCALE_MOD.value = '{"A":1.0, "B":0.99766}'
 WAVE_FIBER_SCALE_MOD.author = base.AUTHORS['EA']
 
 # =============================================================================

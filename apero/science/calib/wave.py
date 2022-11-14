@@ -1120,7 +1120,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                     if fibtype in hcfibtypes:
                         # get up a gauss fit guess
                         #   [amplitude, mean position, FWHM, DC, slope]
-                        guess = [ymax - ymin, xcen, guess_hc_ewid, ymin, 0]
+                        guess = [ymax - ymin, index[posmax], guess_hc_ewid, ymin, 0]
                         out = mp.fit_gauss_with_slope(index, ypix, guess, True)
                         # get parameters from fit
                         popt, pcov, model = out
@@ -1417,9 +1417,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # We start numbering at 1 as the 0th serves as a relative
             # starting point
             diff = ordfp_pix_meas[step_fp] - ordfp_pix_meas[step_fp - 1]
-            dfit = mp.val_cheby(fit_step, ordfp_pix_meas[step_fp - 1],
+
+            dfit = mp.val_cheby(fit_step, ordfp_pix_meas[step_fp - 1:step_fp + 1],
                                 domain=[0, nbxpix])
-            dnum = diff / dfit
+
+            dnum = diff / np.mean(dfit)
             # dnum is always very close to an integer value, we round it
             # we subtract the steps, FP peaks go in decreasing number
             rdnum = np.round(dnum)
@@ -1434,7 +1436,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             fpl_peak_num[good_fp] = ordfp_peak_num
             # log skipping orders: Skipped Order {0} (too few {1} lines)
             margs = [order_num, 'HC', np.sum(good_hc), min_hc_lines]
-            WLOG(params, '', textentry('40-017-00065', args=margs))
+            WLOG(params, 'warning', textentry('40-017-00065', args=margs),
+                 sublevel=2)
             # skip to next order
             continue
         # ---------------------------------------------------------------------
