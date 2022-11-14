@@ -2,6 +2,42 @@ Changelog
 =========
 
 
+0.7.261 (2022-11-10)
+--------------------
+- [APERO]doc string / typing /pcheck / pep8 update. [Neil Cook]
+- Merge branch 'v0.7.259-working' into v0.7.259-nirps-test. [Neil Cook]
+- Merge branch 'v0.7.259-nirps-test' into v0.7.259-working. [Neil Cook]
+- [APERO] fix exposure meter. [Neil Cook]
+- [APERO] doc string/ typing / pcheck / pep8 updates. [Neil Cook]
+- [APERO] localisation.py - remove cross term between coefficients in
+  the loco fit. [Neil Cook]
+- [NIRPS] update orders and order position. [Neil Cook]
+
+
+0.7.260 (2022-11-07)
+--------------------
+- [NIRPS] use chebyshev in the continuity fit. [Neil Cook]
+- [NIRPS] use chebyshev in the continuity fit. [Neil Cook]
+- [NIRPS] use chebyshev in the continuity fit. [Neil Cook]
+- [NIRPS] use chebyshev in the continuity fit. [Neil Cook]
+- [NIRPS] update number of orders (75--> 74) and LOC_YDET_MIN. [Neil
+  Cook]
+- [NIRPS] update number of orders (74--> 75) [Neil Cook]
+- [NIRPS] update LOC_YDET_MAX, LOC_YDET_MAX. [Neil Cook]
+- [NIRPS] back to 74 orders but move LOC_YDET_MAX. [Neil Cook]
+- [NIRPS] back to 73 orders but move LOC_YDET_MAX. [Neil Cook]
+- [NIRPS] update number of orders 73 --> 74. [Neil Cook]
+- [NIRPS] update number of orders 73 --> 74. [Neil Cook]
+- [APERO] install.py - fix git python version. [Neil Cook]
+- [APERO] fix problem with leak_ref not being a hash code file (was just
+  using first file) [Neil Cook]
+- [APERO] apero.plotting.plot_functions.py - fix broken plot (type
+  reference-->ref) [Neil Cook]
+- [APERO] add paper to main page. [Neil Cook]
+- [APERO] fix for badpix (bstatsb) [Neil Cook]
+- [APERO] update version/date/changelog/docs. [Neil Cook]
+
+
 0.7.259 (2022-11-04)
 --------------------
 - [APERO] add git branch + git hash + python modules + python version to
