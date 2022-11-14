@@ -1335,7 +1335,7 @@ WAVE_HC_VEL_ODD_RATIO.author = base.AUTHORS['EA']
 
 # Define orders that we cannot fit HC or FP lines to (list of strings)
 WAVE_REMOVE_ORDERS = WAVE_REMOVE_ORDERS.copy(__NAME__)
-WAVE_REMOVE_ORDERS.value = '44, 45, 46'
+WAVE_REMOVE_ORDERS.value = '44, 45'
 
 # Define the number of iterations required to do the final fplines
 #   wave solution
@@ -1409,10 +1409,12 @@ WAVEREF_HC_GUESS_EWID.author = base.AUTHORS['EA']
 # Define the fiber offset (in pixels) away from reference fiber
 WAVE_FIBER_OFFSET_MOD = WAVE_FIBER_OFFSET_MOD.copy(__NAME__)
 WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":0.0}'
+WAVE_FIBER_OFFSET_MOD.author = base.AUTHORS['EA']
 
 # Define the fiber scale factor from reference fiber
 WAVE_FIBER_SCALE_MOD = WAVE_FIBER_SCALE_MOD.copy(__NAME__)
 WAVE_FIBER_SCALE_MOD.value = '{"A":1.0, "B":1.0}'
+WAVE_FIBER_SCALE_MOD.author = base.AUTHORS['EA']
 
 # =============================================================================
 # CALIBRATION: WAVE RESOLUTION MAP SETTINGS
