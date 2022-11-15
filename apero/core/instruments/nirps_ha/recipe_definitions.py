@@ -1154,7 +1154,9 @@ pp_seq_opt.add(apero_preprocess, name='PP_LFCFP', files=[files.raw_lfc_fp],
 pp_seq_opt.add(apero_preprocess, name='PP_FPLFC', files=[files.raw_fp_lfc],
                recipe_kind='pre-fplfc')
 pp_seq_opt.add(apero_preprocess, name='PP_EFFSKY',
-               files=[files.pp_test_dark_dark_sky], recipe_kind='pre-effsky')
+               files=[files.raw_test_dark_dark_sky], recipe_kind='pre-effsky')
+pp_seq_opt.add(apero_preprocess, name='PP_EVERY',
+               files=[files.raw_file])
 
 # -----------------------------------------------------------------------------
 # reference sequence (for trigger)
@@ -1311,6 +1313,8 @@ eng_seq.add(apero_extract, name='EXT_FPLFC', files=[files.pp_fp_lfc],
 eng_seq.add(apero_extract, name='EXT_EFFSKY',
             files=[files.pp_test_dark_dark_sky],
             recipe_kind='extract-effsky')
+eng_seq.add(apero_extract, name='EXT_EVERY', files=[files.pp_file],
+            recipe_kind='extract-everything')
 
 # -----------------------------------------------------------------------------
 # helios sequence
