@@ -523,7 +523,8 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
         sumpixmap_x = np.sum(ordpixmap, axis=0)
         sumpixmap_y = np.sum(ordpixmap, axis=1)
         # get valid pixels within this order
-        validsumpixmap = np.where(sumpixmap_x > 0.5 * np.max(sumpixmap_x))[0]
+        thres = np.nanpercentile(sumpixmap_x, 90)
+        validsumpixmap = np.where(sumpixmap_x > 0.5 * thres)[0]
         imin = np.min(validsumpixmap) + 15
         imax = np.max(validsumpixmap) - 15
         # we convolve this with a box to smooth it out
