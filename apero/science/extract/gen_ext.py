@@ -221,11 +221,17 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     # get constant from params
     allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', 'fptypes', kwargs, func_name,
                         mapf='list')
+
+    allowfibers = pcheck(params, 'WAVE_FP_FIBERTYPES', 'fpfibers', kwargs,
+                         func_name, mapf='list')
     # get dprtype
     dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
     # get psuedo constants
     pconst = constants.pload()
-    sfibers, rfiber = pconst.FIBER_KINDS()
+    if fiber in allowfibers:
+        rfiber = str(fiber)
+    else:
+        sfibers, rfiber = pconst.FIBER_KINDS()
     # ----------------------------------------------------------------------
     # deal with fiber being the reference fiber
     if fiber != rfiber:
