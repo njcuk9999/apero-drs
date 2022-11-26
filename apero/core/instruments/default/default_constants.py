@@ -222,7 +222,7 @@ __all__ = [
     'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE',
     'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX',
     'WAVE_FP_SIGCLIP', 'WAVE_FP_PLOT_MULTI_INIT', 'WAVE_FP_PLOT_MULTI_NBO',
-    'WAVE_FP_DPRLIST',
+    'WAVE_FP_DPRLIST', 'WAVE_FP_FIBERTYPES',
     # wave night constants
     'WAVE_NIGHT_NITERATIONS1', 'WAVE_NIGHT_NITERATIONS2', 'WAVE_NIGHT_DCAVITY',
     'WAVE_NIGHT_HC_SIGCLIP', 'WAVE_NIGHT_MED_ABS_DEV',
@@ -3461,6 +3461,14 @@ WAVE_FP_DPRLIST = Const('WAVE_FP_DPRLIST', value=None, dtype=str,
                         source=__NAME__, group=cgroup,
                         description=('define the dprtype for generating '
                                      'FPLINES (string list)'))
+
+# define the override for reference fiber for generating FPLINES
+#    None for no override
+WAVE_FP_FIBERTYPES = Const('WAVE_FP_FIBERTYPES', value='None', dtype=str,
+                           source=__NAME__, group=cgroup,
+                           description='define the override for reference '
+                                       'fiber for generating FPLINES (None for '
+                                       'no override)')
 
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS

@@ -1888,6 +1888,11 @@ WAVE_FP_PLOT_MULTI_NBO.value = 5
 WAVE_FP_DPRLIST = WAVE_FP_DPRLIST.copy(__NAME__)
 WAVE_FP_DPRLIST.value = 'OBJ_FP, POLAR_FP'
 
+# define the override for reference fiber for generating FPLINES
+#    None for no override
+WAVE_FP_FIBERTYPES = WAVE_FP_FIBERTYPES.copy(__NAME__)
+WAVE_FP_FIBERTYPES.value = 'None'
+
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
