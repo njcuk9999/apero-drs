@@ -78,6 +78,7 @@ __all__ = [
     'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
     'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY', 'ALLOWED_DARK_TYPES',
     'DARK_REF_MATCH_TIME', 'DARK_REF_MED_SIZE', 'DARK_REF_MAX_FILES',
+    'DARK_REF_MIN_EXPTIME',
     # badpix constants
     'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
     'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
@@ -1159,6 +1160,13 @@ DARK_REF_MAX_FILES = Const('DARK_REF_MAX_FILES', value=None, dtype=int,
                            source=__NAME__, group=cgroup,
                            description='define the maximum number of files '
                                        'to use in the dark reference')
+
+# define the minimimum allowed exptime for dark files to be used in
+#    dark ref
+DARK_REF_MIN_EXPTIME = Const('DARK_REF_MIN_EXPTIME', value=None, dtype=int,
+                             source=__NAME__, group=cgroup,
+                             description='define the minimimum allowed exptime '
+                                         'for dark files to be used in')
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS

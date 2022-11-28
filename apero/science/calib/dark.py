@@ -241,7 +241,11 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
                         override=match_time)
     max_num_files = pcheck(params, 'DARK_REF_MAX_FILES', func=func_name,
                            override=max_files)
+
+    dark_ref_min_exptime = pcheck(params, 'DARK_REF_MIN_EXPTIME',
+                                  func=func_name, override=max_files)
     # define storage for table columns
+    dark_files = []
     dark_time, dark_exp, dark_pp_version = [], [], []
     basenames, obs_dirs, dprtypes = [], [], []
     dark_wt_temp, dark_cass_temp, dark_humidity = [], [], []
@@ -262,6 +266,11 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
                                                        out_fmt='mjd')
         exptime = hdr[params['KW_EXPTIME'][0]]
         ppversion = hdr[params['KW_PPVERSION'][0]]
+
+        # do not consider dark exp time below this value
+        if exptime < dark_ref_min_exptime:
+            continue
+
         # TODO: Cannot get this value from headers currently [NIRPS]
         wt_temp = hdr.get(params['KW_WEATHER_TOWER_TEMP'][0], np.nan)
         # TODO: Cannot get this value from headers currently [NIRPS]
@@ -270,6 +279,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
         humidity = hdr.get(params['KW_HUMIDITY'][0], np.nan)
         dprtype = hdr[params['KW_DPRTYPE'][0]]
         # append to lists
+        dark_files.append(filenames[it])
         dark_time.append(float(acqtime))
         dark_exp.append(float(exptime))
         dark_pp_version.append(ppversion)
