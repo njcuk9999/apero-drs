@@ -315,6 +315,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         mid_obs_time, mid_obs_method = mout
 
         # ------------------------------------------------------------------
+        # divide by LED FLAT
+        # ------------------------------------------------------------------
+        # TODO: Add to PPREF and get from calibDB
+        from apero.core.utils import drs_data
+        led_flat = drs_data.load_led_flat(params)
+        image = image / led_flat
+
+        # ------------------------------------------------------------------
         # rotate image
         # ------------------------------------------------------------------
         # rotation to match HARPS orientation (expected by DRS)
