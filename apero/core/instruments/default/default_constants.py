@@ -25,7 +25,8 @@ __all__ = [
     'PP_OBJ_DPRTYPES', 'PP_BADLIST_SSID',
     'PP_BADLIST_SSWB', 'PP_BADLIST_DRS_HKEY', 'PP_BADLIST_SS_VALCOL',
     'PP_BADLIST_SS_MASKCOL', 'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES',
-    'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE', 'PP_TOTAL_AMP_NUM',
+    'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE',
+    'PP_LED_FLAT_FILE', 'PP_TOTAL_AMP_NUM',
     'PP_CORRUPT_MED_SIZE', 'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM',
     'PP_NUM_REF_LEFT', 'PP_NUM_REF_RIGHT',
     'PP_RMS_PERCENTILE', 'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
@@ -876,6 +877,12 @@ PP_HOTPIX_FILE = Const('PP_HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
                        group=cgroup,
                        description=('Defines the pp hot pixel file (located in '
                                     'the data folder)'))
+
+# Defines the pp led flat file (located in the data folder)
+PP_LED_FLAT_FILE  = Const('PP_LED_FLAT_FILE', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          description='Defines the pp led flat file '
+                                      '(located in the data folder)')
 
 # Define the number of un-illuminated reference pixels at top of image
 PP_NUM_REF_TOP = Const('PP_NUM_REF_TOP', value=None, dtype=int,
