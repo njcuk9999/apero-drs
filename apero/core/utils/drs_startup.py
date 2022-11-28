@@ -683,9 +683,9 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
             outdict['passed'] = bool(llmain['passed'])
         else:
             outdict['passed'] = True
-        # special (shallow) copy from apero_extract
-        if 'e2dsoutputs' in llmain:
-            outdict['e2dsoutputs'] = llmain['e2dsoutputs']
+        # # special (shallow) copy from apero_extract
+        # if 'e2dsoutputs' in llmain:
+        #     outdict['e2dsoutputs'] = llmain['e2dsoutputs']
         # deal with special keys
         if keys is not None:
             for key in keys:
