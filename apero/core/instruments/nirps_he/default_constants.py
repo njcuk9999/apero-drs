@@ -513,6 +513,11 @@ DARK_REF_MED_SIZE.value = 4
 DARK_REF_MAX_FILES = DARK_REF_MAX_FILES.copy(__NAME__)
 DARK_REF_MAX_FILES.value = 100
 
+# define the minimimum allowed exptime for dark files to be used in
+#    dark ref
+DARK_REF_MIN_EXPTIME = DARK_REF_MIN_EXPTIME.copy(__NAME__)
+DARK_REF_MIN_EXPTIME.value = 300
+
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
 # =============================================================================
