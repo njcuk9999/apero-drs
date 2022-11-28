@@ -245,6 +245,12 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
         WLOG(params, 'debug', textentry('90-016-000034', args=[dprtype]))
         return None
     # ----------------------------------------------------------------------
+    # make sure fiber is FP
+    if pconst.FIBER_DPR_POS(dprtype, fiber) != 'FP':
+        # Skipping FPLINES (Fiber = {0})'
+        WLOG(params, 'debug', textentry('90-016-00003', args=[fiber]))
+        return None
+    # ----------------------------------------------------------------------
     # get reference hc lines and fp lines from calibDB
     wout = wave.get_wavelines(params, fiber, infile=e2dsfile,
                               database=database)
