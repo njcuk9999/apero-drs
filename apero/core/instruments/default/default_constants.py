@@ -234,6 +234,7 @@ __all__ = [
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
     'TELLU_LIST_DIRECTORY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
+    'TELLU_ONLY_PRECLEAN',
     # telluric pre-cleaning constants
     'TELLUP_DO_PRECLEANING', 'TELLUP_CCF_SCAN_RANGE', 'TELLUP_CLEAN_OH_LINES',
     'TELLUP_OHLINE_PCA_FILE', 'TELLUP_REMOVE_ORDS', 'TELLUP_SNR_MIN_THRES',
@@ -3591,6 +3592,13 @@ TELLU_WHITELIST_NAME = Const('TELLU_WHITELIST_NAME', value=None, dtype=str,
 TELLU_BLACKLIST_NAME = Const('TELLU_BLACKLIST_NAME', value=None, dtype=str,
                              source=__NAME__, group=cgroup,
                              description='Define telluric black list name')
+
+
+# Force only pre-cleaning (not recommended - only for debugging)
+TELLU_ONLY_PRECLEAN = Const('TELLU_ONLY_PRECLEAN', value=None, dtype=bool,
+                             source=__NAME__, group=cgroup,
+                             description='Force only pre-cleaning (not '
+                                         'recommended - only for debugging)')
 
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
