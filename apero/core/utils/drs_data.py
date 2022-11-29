@@ -410,6 +410,8 @@ def load_led_flat(params: ParamDict,
         return absfilename
     # return table
     led_image = load_fits_file(params, absfilename, func_name=func_name)
+    # must set NaN values to 1
+    led_image[~np.isfinite(led_image)] = 1
     # TODO: Does this text entry need to change? (was for hotpix file)
     WLOG(params, '', textentry('40-010-00011', args=absfilename))
     return led_image

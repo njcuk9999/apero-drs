@@ -296,10 +296,10 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
     dark_time = np.array(dark_time)
     time_mask = drs_utils.uniform_time_list(dark_time, max_num_files)
     # mask all lists (as numpy arrays)
+    dark_files = np.array(dark_files)[time_mask]
     dark_time = np.array(dark_time)[time_mask]
     dark_exp = np.array(dark_exp)[time_mask]
     dark_pp_version = np.array(dark_pp_version)[time_mask]
-    filenames = np.array(filenames)[time_mask]
     basenames = np.array(basenames)[time_mask]
     obs_dirs = np.array(obs_dirs)[time_mask]
     dprtypes = np.array(dprtypes)[time_mask]
@@ -323,7 +323,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
     columns = ['OBS_DIR', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
                'PPVERSION', 'WT_TEMP', 'CASS_TEMP', 'HUMIDITY', 'DPRTYPE',
                'GROUP']
-    values = [obs_dirs, basenames, filenames, dark_time, dark_exp,
+    values = [obs_dirs, basenames, dark_files, dark_time, dark_exp,
               dark_pp_version, dark_wt_temp, dark_cass_temp, dark_humidity,
               dprtypes, matched_id]
     # make table using columns and values
