@@ -1195,7 +1195,7 @@ EXT_S1D_WAVESTART.value = 965
 
 # Define the end s1d wavelength (in nm)
 EXT_S1D_WAVEEND = EXT_S1D_WAVEEND.copy(__NAME__)
-EXT_S1D_WAVEEND.value = 1808
+EXT_S1D_WAVEEND.value = 1950
 
 #  Define the s1d spectral bin for S1D spectra (nm) when uniform in wavelength
 EXT_S1D_BIN_UWAVE = EXT_S1D_BIN_UWAVE.copy(__NAME__)
