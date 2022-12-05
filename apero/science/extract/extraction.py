@@ -348,7 +348,11 @@ def extraction(simage, orderp, pos, r1, r2, cosmic_sigcut):
                 ares = np.abs(res)
                 nsig = ares / mp.nanmedian(ares)
                 # work out weights (0 or 1 based on number of sigma)
-                weights = nsig < cosmic_sigcut
+                # TODO: Look at this later for the narrow NIRPS fiber
+                if (r1 + r2) > 10:
+                    weights = nsig < cosmic_sigcut
+                else:
+                    weights = np.isfinite(nsig)
                 # add to the number of rejected cosmics
                 cpt += np.sum(~weights)
                 # weights to floats
