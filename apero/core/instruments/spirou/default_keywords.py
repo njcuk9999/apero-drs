@@ -685,6 +685,10 @@ KW_LOC_NBO = KW_LOC_NBO.copy(__NAME__)
 KW_LOC_NBO.set(key=root_loc + 'NBO', comment='nb orders localised',
                group='loc')
 
+# Polynomial type for localization
+KW_LOC_POLYT = KW_LOC_POLYT.copy(__NAME__)
+KW_LOC_POLYT.set(key='LOCPOLYT')
+
 # fit degree for order centers
 KW_LOC_DEG_C = KW_LOC_DEG_C.copy(__NAME__)
 KW_LOC_DEG_C.set(key=root_loc + 'DEGCTR', comment='degree fit ctr ord',
@@ -999,6 +1003,11 @@ KW_WAVE_NBO.set(key='WAVEORDN', comment='nb orders in total',
 KW_WAVE_DEG = KW_WAVE_DEG.copy(__NAME__)
 KW_WAVE_DEG.set(key='WAVEDEGN', comment='degree of wave polyn fit',
                 parent=None, group='wave')
+
+# wave polynomial type
+KW_WAVE_POLYT = KW_WAVE_POLYT.copy(__NAME__)
+KW_WAVE_POLYT.set(key='WAVEPOLY', comment='type of wave polynomial',
+                  parent=None, group='wave')
 
 # the wave file used
 KW_WAVEFILE = KW_WAVEFILE.copy(__NAME__)

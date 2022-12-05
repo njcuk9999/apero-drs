@@ -461,6 +461,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     wprops['WAVEINIT'] = wavefile.filename
     wprops['WAVESOURCE'] = wavesource
     wprops['NBO'] = nbo
+    wprops['WAVE_POLY_TYPE'] = 'Chebyshev'
     if wavemap is not None:
         wprops['NBPIX'] = wavemap.shape[1]
     else:
@@ -497,8 +498,8 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
             wprops[wfp_keys[wfpi]] = wfp_values[wfpi]
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'NBO', 'DEG',
-            'COEFFS', 'WAVETIME', 'WAVEINST', 'NBPIX', 'CAVITY',
-            'CAVITY_DEG', 'MEAN_HC_VEL', 'ERR_HC_VEL'] + wfp_keys
+            'WAVE_POLY_TYPE', 'COEFFS', 'WAVETIME', 'WAVEINST', 'NBPIX',
+            'CAVITY', 'CAVITY_DEG', 'MEAN_HC_VEL', 'ERR_HC_VEL'] + wfp_keys
     wprops.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # get the echelle order numbers
@@ -3188,6 +3189,7 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
     infile.add_hkey('KW_CAVITY_DEG', value=props['CAVITY_DEG'])
     infile.add_hkey('KW_WAVE_MEANHC', value=props['MEAN_HC_VEL'])
     infile.add_hkey('KW_WAVE_EMEANHC', value=props['ERR_HC_VEL'])
+    infile.add_hkey('KW_WAVE_POLYT', value=props['WAVE_POLY_TYPE'])
     # return infile
     return infile
 

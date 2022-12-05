@@ -59,8 +59,8 @@ __all__ = [  # input keys
     'KW_BHOT', 'KW_BBFLAT', 'KW_BNDARK', 'KW_BNFLAT', 'KW_BBAD',
     'KW_BNILUM', 'KW_BTOT',
     # loc keys
-    'ROOT_DRS_LOC', 'KW_LOC_BCKGRD',
-    'KW_LOC_NBO', 'KW_LOC_DEG_C', 'KW_LOC_DEG_W', 'KW_LOC_MAXFLX',
+    'ROOT_DRS_LOC', 'KW_LOC_BCKGRD', 'KW_LOC_NBO', 'KW_LOC_POLYT',
+    'KW_LOC_DEG_C', 'KW_LOC_DEG_W', 'KW_LOC_MAXFLX',
     'KW_LOC_SMAXPTS_CTR', 'KW_LOC_SMAXPTS_WID', 'KW_LOC_RMS_CTR',
     'KW_LOC_RMS_WID', 'KW_LOC_CTR_COEFF', 'KW_LOC_WID_COEFF',
     # shape keys
@@ -82,7 +82,8 @@ __all__ = [  # input keys
     'KW_LEAK_CORR', 'KW_LEAK_BP_U', 'KW_LEAK_NP_U', 'KW_LEAK_WSMOOTH',
     'KW_LEAK_KERSIZE', 'KW_LEAK_LP_U', 'KW_LEAK_UP_U', 'KW_LEAK_BADR_U',
     # wave values
-    'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE', 'KW_WAVESOURCE',
+    'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVE_POLYT',
+    'KW_WAVEFILE', 'KW_WAVESOURCE',
     'KW_WAVECOEFFS', 'KW_WAVE_FITDEG', 'KW_WAVE_MODE_HC', 'KW_WAVE_ECHELLE',
     'KW_WAVE_MODE_FP', 'KW_WAVE_ECHELLE_START', 'KW_WAVE_HCG_WSIZE',
     'KW_WAVE_HCG_SIGPEAK', 'KW_WAVE_HCG_GFITMODE',
@@ -839,6 +840,9 @@ KW_LOC_BCKGRD = Keyword('KW_LOC_BCKGRD', key='NULL', dtype=float, source=__NAME_
 # Number of orders located
 KW_LOC_NBO = Keyword('KW_LOC_NBO', key='NULL', dtype=int, source=__NAME__,
                      description='Number of orders located')
+# Polynomial type for localization
+KW_LOC_POLYT = Keyword('KW_LOC_POLYT', key='NULL', dtype=str, source=__NAME__,
+                       description='Polynomial type for localization')
 # fit degree for order centers
 KW_LOC_DEG_C = Keyword('KW_LOC_DEG_C', key='NULL', dtype=int, source=__NAME__,
                        description='fit degree for order centers')
@@ -1140,6 +1144,10 @@ KW_WAVE_NBO = Keyword('KW_WAVE_NBO', key='NULL', dtype=int, source=__NAME__,
 # fit degree for wave solution
 KW_WAVE_DEG = Keyword('KW_WAVE_DEG', key='NULL', dtype=int, source=__NAME__,
                       description='fit degree for wave solution')
+
+# wave polynomial type
+KW_WAVE_POLYT = Keyword('KW_WAVE_POLYT', key='NULL', dtype=str, source=__NAME__,
+                        description='type of wave polynomial')
 
 # the wave file used
 KW_WAVEFILE = Keyword('KW_WAVEFILE', key='NULL', dtype=str, source=__NAME__,
