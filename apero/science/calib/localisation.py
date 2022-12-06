@@ -748,7 +748,8 @@ def get_coefficients(params: ParamDict, header: drs_file.Header,
     nbo = locofile.get_hkey('KW_LOC_NBO', dtype=int)
     deg_c = locofile.get_hkey('KW_LOC_DEG_C', dtype=int)
     deg_w = locofile.get_hkey('KW_LOC_DEG_W', dtype=int)
-    poly_type = locofile.get_hkey('KW_LOC_POLYT', dtype=str)
+    # TODO: Should be required v0.8
+    poly_type = locofile.get_hkey('KW_LOC_POLYT', dtype=str, required=False)
     nset = params['FIBER_SET_NUM_FIBERS_{0}'.format(fiber)]
     # extract coefficients from header
     cent_coeffs = locofile.get_hkey_2d('KW_LOC_CTR_COEFF',
