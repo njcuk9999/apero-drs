@@ -559,7 +559,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
                            swprops, svprops, sprops, fbprops, qc_params):
 
     # create extraction order table
-    order_table = create_order_table(params, lprops, wprops, eprops)
+    order_table = create_order_table(lprops, wprops, eprops)
     # ----------------------------------------------------------------------
     # Store E2DS in file
     # ----------------------------------------------------------------------
