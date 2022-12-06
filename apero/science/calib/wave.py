@@ -1873,9 +1873,10 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     wprops['CAVITY_DEG'] = cavity_fit_degree
     wprops['MEAN_HC_VEL'] = mean_hc_vel
     wprops['ERR_HC_VEL'] = err_hc_vel
+    wprops['WAVE_POLY_TYPE'] = 'Chebyshev'
     # set source
     keys = ['WAVEMAP', 'NBO', 'DEG', 'COEFFS', 'NBPIX', 'CAVITY', 'CAVITY_DEG',
-            'MEAN_HC_VEL', 'ERR_HC_VEL']
+            'MEAN_HC_VEL', 'ERR_HC_VEL', 'WAVE_POLY_TYPE']
     wprops.set_sources(keys, func_name)
     # return wave properties
     return wprops
