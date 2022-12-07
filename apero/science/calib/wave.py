@@ -206,6 +206,14 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
                                                         database=database)
             # deal with out_wave from reference
             source = 'reference'
+        # ---------------------------------------------------------------------
+        # if we don't have a reference file wave solution, it should be within
+        #   limits (if limits were checked)
+        if not cfile.reference and not cfile.dtime_pass:
+            # get error arguments
+            eargs = cfile.dtime_eargs
+            # log error
+            WLOG(params, 'error', textentry('09-002-00004', args=eargs))
     # -------------------------------------------------------------------------
     # construct new infile instance (first fp solution then hc solutions)
     wavefile = out_wave.newcopy(filename=inwavefile, params=params,
