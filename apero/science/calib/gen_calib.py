@@ -78,6 +78,8 @@ class CalibFile:
     found: bool
     reference: Union[List[bool], bool]
     user: bool
+    dtime_pass: bool
+    dtime_eargs: list
 
     def __init__(self):
         """
@@ -108,6 +110,10 @@ class CalibFile:
         self.reference = False
         # whether the calibration is from a user input override
         self.user = False
+        # whether delta time criteria was passed
+        self.dtime_pass = True
+        # store args for failure
+        self.dtime_eargs = []
 
     def load_calib_file(self, params: ParamDict, key: str,
                         inheader: Union[drs_fits.Header, None] = None,
@@ -236,14 +242,24 @@ class CalibFile:
         if inheader is not None:
             if isinstance(self.filename, list):
                 for it in range(len(filename)):
-                    calib_delta_time_check(params, inheader, self.mjdmid[it],
-                                           self.filename[it],
-                                           self.reference[it],
-                                           self.user, self.key, required)
+                    # get args for calib delta time check
+                    cargs = [inheader, self.mjdmid[it], self.filename[it],
+                             self.reference[it], self.user, self.key, required]
+                    # run the time check
+                    cout = calib_delta_time_check(params, *cargs)
+                    # if time check failed store this info
+                    if not cout:
+                        self.dtime_pass = cout[0]
+                        self.dtime_eargs  = cout[1]
+
             else:
-                calib_delta_time_check(params, inheader, self.mjdmid,
-                                       self.filename, self.reference, self.user,
-                                       self.key, required)
+                cargs = [inheader, self.mjdmid, self.filename, self.reference,
+                         self.user, self.key, required]
+                # run the time check
+                cout = calib_delta_time_check(params, *cargs)
+                self.dtime_pass = cout[0]
+                self.dtime_eargs = cout[1]
+
         # ---------------------------------------------------------------------
         # if we are just returning filename return here
         if return_filename:
@@ -700,7 +716,7 @@ def add_calibs_to_header(outfile: DrsFitsFile,
 def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
                            calib_time: float, calib_filename: str,
                            ref: bool, user: bool, key: str,
-                           required: bool = True):
+                           required: bool = True) -> Tuple[bool, list]:
     """
     Check that the delta time between calibration and observation is
     valid (as defined by MAX_CALIB_DTIME)
@@ -733,25 +749,25 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
     # ---------------------------------------------------------------------
     # deal with reference and user flags
     if ref or user:
-        return
+        return True, []
     # ---------------------------------------------------------------------
     # deal with check (if check is False we do not check)
     if not do_check:
-        return
+        return True, []
     # deal with quick look mode (extraction only)
     if quicklook:
-        return
+        return True, []
     # ---------------------------------------------------------------------
     # get and check observation time
     if timekey in inheader:
         # observation time (MJDMID)
         obstime = inheader[timekey]
     else:
-        return
+        return True, []
     # ---------------------------------------------------------------------
     # check calibration time is finite (if it isn't we can't check this)
     if not np.isfinite(calib_time):
-        return
+        return True, []
     # ---------------------------------------------------------------------
     # work out delta time
     delta_time = np.abs(obstime - calib_time)
@@ -765,11 +781,15 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
                  hcalibtime, func_name]
         if required:
             WLOG(params, 'error', textentry('09-002-00004', args=eargs))
+            return False, eargs
         else:
             WLOG(params, 'warning', textentry('09-002-00004', args=eargs))
+            return False, eargs
+    # time check successful
     else:
         margs = [key, delta_time, max_dtime, calib_filename]
         WLOG(params, '', textentry('40-005-10003', args=margs))
+        return True, []
 
 
 def check_fp(params: ParamDict, image: np.ndarray, filename: str,
