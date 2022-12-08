@@ -250,7 +250,7 @@ class CalibFile:
                     # if time check failed store this info
                     if not cout:
                         self.dtime_pass = cout[0]
-                        self.dtime_eargs  = cout[1]
+                        self.dtime_eargs = cout[1]
 
             else:
                 cargs = [inheader, self.mjdmid, self.filename, self.reference,
