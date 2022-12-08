@@ -106,11 +106,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         kw_objnames = None
     elif '*' in kw_objnames:
         kw_objnames = drs_get.all_objects(params)
-    if drs_text.null_text(kw_dprtypes, ['None', '', 'Null']):
+    if drs_text.null_text(kw_dprtypes, ['None', '', 'Null', '*']):
         kw_dprtypes = None
-    if drs_text.null_text(kw_outputs, ['None', '', 'Null']):
+    if drs_text.null_text(kw_outputs, ['None', '', 'Null', '*']):
         kw_outputs = None
-    if drs_text.null_text(kw_fibers, ['None', '', 'Null']):
+    if drs_text.null_text(kw_fibers, ['None', '', 'Null', '*']):
         kw_fibers = None
     # push filters into dictionary (not object names these are special)
     filters = dict()
