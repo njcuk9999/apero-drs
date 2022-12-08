@@ -263,26 +263,32 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
         obs_dir = path_inst.obs_dir
         # read the header
         hdr = drs_fits.read_header(params, filenames[it])
+        # ---------------------------------------------------------------------
         # get keys from hdr
+        # ---------------------------------------------------------------------
+        # deal with mid_obs_time (will not be set in raw files)
         if mode == 'pp':
             acqtime, _ = drs_file.get_mid_obs_time(params, hdr, out_fmt='mjd')
         else:
             acqtime = hdr[params['KW_MJDATE'][0]]
-
+        # get exposure time
         exptime = hdr[params['KW_EXPTIME'][0]]
+        # get pp version (will not be set in raw files)
         ppversion = hdr.get(params['KW_PPVERSION'][0], 'None')
-
         # do not consider dark exp time below this value
         if exptime < dark_ref_min_exptime:
             continue
-
         # TODO: Cannot get this value from headers currently [NIRPS]
         wt_temp = hdr.get(params['KW_WEATHER_TOWER_TEMP'][0], np.nan)
         # TODO: Cannot get this value from headers currently [NIRPS]
         cass_temp = hdr.get(params['KW_CASS_TEMP'][0], np.nan)
         # TODO: Cannot get this value from headers currently [NIRPS]
         humidity = hdr.get(params['KW_HUMIDITY'][0], np.nan)
-        dprtype = hdr.get(params['KW_DPRTYPE'][0], 'None')
+        # deal with DPRTYPE (will not be set in raw files)
+        if mode == 'pp':
+            dprtype = hdr.get(params['KW_DPRTYPE'][0])
+        else:
+            dprtype = 'DARK_DARK'
         # append to lists
         dark_files.append(filenames[it])
         dark_time.append(float(acqtime))
