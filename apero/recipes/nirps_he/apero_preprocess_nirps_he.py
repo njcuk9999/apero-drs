@@ -317,12 +317,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         mid_obs_time, mid_obs_method = mout
 
         # ------------------------------------------------------------------
-        # divide by LED FLAT
+        # divide by LED flat
         # ------------------------------------------------------------------
-        # TODO: Add to PPREF and get from calibDB
+        # TODO: Add to language database
         WLOG(params, '', 'Performing LED flat')
-        from apero.core.utils import drs_data
-        led_flat = drs_data.load_led_flat(params)
+        # load the LED flat from calibration database
+        led_flat = prep.load_led_flat(params)
+        # divide image by LED flat
         image = image / led_flat
 
         # ------------------------------------------------------------------

@@ -671,7 +671,8 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     # ----------------------------------------------------------------------
     # Get all dark file properties
     # ----------------------------------------------------------------------
-    dark_table = dark.construct_dark_table(params, list(raw_dark_files))
+    dark_table = dark.construct_dark_table(params, list(raw_dark_files),
+                                           mode='raw')
     # ----------------------------------------------------------------------
     # match files by date and median to produce reference dark
     # ----------------------------------------------------------------------
@@ -866,22 +867,9 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     else:
         # ---------------------------------------------------------------------
         # get the mask from the flat
-        pp_ref = drs_file.get_file_definition(params, 'PP_REF', block_kind='red')
-        # get the database key for this file
-        dbkey = pp_ref.dbkey
-        # load the database
-        calibdbm = drs_database.CalibrationDatabase(params)
-        calibdbm.load_db()
-        # get mask file
-        ppmaskfile, ppmasktime, _ = calibdbm.get_calib_file(dbkey, nentries=1,
-                                                            no_times=True)
-        # load mask file
-        ppmask = drs_fits.readfits(params, ppmaskfile)
-
-        ppmask = np.array(ppmask, dtype=bool)
-
+        ppmask, ppfile = get_pp_mask(params)
+        # set the the zero values to NaN
         image2[~ppmask] = np.nan
-
     # -------------------------------------------------------------------------
     # we find the low level frequencies
     # we bin in regions of binsize x binsize pixels. This CANNOT be
@@ -922,15 +910,13 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     return image
 
 
-def get_pp_mask(params: ParamDict, header: drs_fits.Header,
+def get_pp_mask(params: ParamDict,
                 database: Union[CalibrationDatabase, None] = None
                 ) -> Tuple[np.ndarray, Union[Path, str]]:
     """
     Locate and open the PP mask (for NIRPS)
 
     :param params: ParamDict, parameter dictionary of constants
-    :param header: fits.Header - the header of the input file (to decide which
-                   mask to get from calibration database)
     :param database: Calibration database or None - if set avoids reloading the
                      calibration database
 
@@ -949,15 +935,50 @@ def get_pp_mask(params: ParamDict, header: drs_fits.Header,
     else:
         calibdbm = database
     # ---------------------------------------------------------------------
-    # load filename from database
-    fout = calibdbm.get_calib_file(ppkey, header=header, nentries=1,
-                                   required=True)
-    ppfile, _, _ = fout
+    # get mask file
+    ppmaskfile, ppmasktime, _ = calibdbm.get_calib_file(ppkey, nentries=1,
+                                                        no_times=True)
     # ---------------------------------------------------------------------
     # read file
-    mask = drs_fits.readfits(params, ppfile)
+    mask = drs_fits.readfits(params, ppmaskfile)
     # return use_file
-    return mask, ppfile
+    return mask, ppmaskfile
+
+
+def load_led_flat(params: ParamDict,
+                  database: Union[CalibrationDatabase, None] = None
+                ) -> Tuple[np.ndarray, Union[Path, str]]:
+    """
+    Load the preprocessing LED FLAT image
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param database: Calibration database or None - if set avoids reloading the
+                     calibration database
+
+    :return: either the filename (return_filename=True) or np.ndarray the
+             hot pix image
+    """
+    # get file instance
+    pp_led_flat = drs_file.get_file_definition(params, 'PP_LED_FLAT',
+                                            block_kind='red')
+    # get calibration key
+    led_key = pp_led_flat.get_dbkey()
+    # ---------------------------------------------------------------------
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
+    # ---------------------------------------------------------------------
+    # get mask file
+    led_file, led_time, _ = calibdbm.get_calib_file(led_key, nentries=1,
+                                                    no_times=True)
+    # ---------------------------------------------------------------------
+    # read file
+    led_image = drs_fits.readfits(params, led_file)
+    # return use_file
+    return led_image, led_file
 
 
 def med_amplifiers(image: np.ndarray, namps: int) -> np.ndarray:
