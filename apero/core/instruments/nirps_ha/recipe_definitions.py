@@ -976,6 +976,8 @@ recipes.append(apero_mk_template)
 # -----------------------------------------------------------------------------
 full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 # reference run
+full_seq.add(apero_pp_ref, recipe_kind='pre-reference',
+             arguments=dict(obs_dir='RUN_OBS_DIR'))
 full_seq.add(apero_preprocess, recipe_kind='pre-all')
 full_seq.add(apero_dark_ref, ref=True)
 full_seq.add(apero_badpix, name='BADREF', ref=True,
@@ -1062,6 +1064,8 @@ full_seq.add(apero_mk_template, name='FTTEMP2',
 # -----------------------------------------------------------------------------
 limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
 # reference run
+limited_seq.add(apero_pp_ref, recipe_kind='pre-reference',
+                arguments=dict(obs_dir='RUN_OBS_DIR'))
 limited_seq.add(apero_preprocess, recipe_kind='pre-all')
 limited_seq.add(apero_dark_ref, ref=True)
 limited_seq.add(apero_badpix, name='BADREF', ref=True,
@@ -1152,9 +1156,11 @@ limited_seq.add(apero_mk_template, name='FTTEMP2', recipe_kind='tellu-science',
 # pp sequence (for trigger)
 # -----------------------------------------------------------------------------
 pp_seq = drs_recipe.DrsRunSequence('pp_seq', __INSTRUMENT__)
+pp_seq.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq.add(apero_preprocess)
 
 pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
+pp_seq_opt.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq_opt.add(apero_preprocess, name='PP_CAL', recipe_kind='pre-cal',
                filters=dict(KW_RAW_DPRCATG='CALIB'))
 pp_seq_opt.add(apero_preprocess, name='PP_SCI', recipe_kind='pre-sci',

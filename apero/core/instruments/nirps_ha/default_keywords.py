@@ -580,6 +580,18 @@ KW_PP_REF_NSIG.set(key='PPMNSIG', comment='PP reference mask nsig used')
 KW_PP_REF_FILE = KW_PP_REF_FILE.copy(__NAME__)
 KW_PP_REF_FILE.set(key='PPMFILE', comment='PP reference mask file used')
 
+# Define the percentile stats for LED flat in pp (50th percentile)
+KW_PP_LED_FLAT_P50 = KW_PP_LED_FLAT_P50.copy(__NAME__)
+KW_PP_LED_FLAT_P50.set(key='PPLEDP50', comment='LED RMS 50th percentile')
+
+# Define the percentile stats for LED flat in pp (16th percentile)
+KW_PP_LED_FLAT_P16 = KW_PP_LED_FLAT_P16.copy(__NAME__)
+KW_PP_LED_FLAT_P16.set(key='PPLEDP16', comment='LED RMS 16th percentile')
+
+# Define the percentile stats for LED flat in pp (84th percentile)
+KW_PP_LED_FLAT_P84 = KW_PP_LED_FLAT_P84.copy(__NAME__)
+KW_PP_LED_FLAT_P84.set(key='PPLEDP84', comment='LED RMS 84th percentile')
+
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
 # -----------------------------------------------------------------------------

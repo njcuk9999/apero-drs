@@ -51,6 +51,7 @@ __all__ = [  # input keys
     'KW_CDBLEAKM', 'KW_CDTLEAKM', 'KW_CDBLEAKR', 'KW_CDTLEAKR',
     # preprocess keys
     'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PP_REF_NSIG', 'KW_PP_REF_FILE',
+    'KW_PP_LED_FLAT_P50', 'KW_PP_LED_FLAT_P16', 'KW_PP_LED_FLAT_P84',
     'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE', 'KW_PPC_NBAD_BOTH',
     # dark keys
     'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
@@ -758,6 +759,25 @@ KW_PP_REF_NSIG = Keyword('KW_PP_REF_NSIG', key='NULL', dtype=float, source=__NAM
 KW_PP_REF_FILE = Keyword('KW_PP_REF_FILE', key='NULL', dtype=str, source=__NAME__,
                          description=('Define the key to store the name of the '
                                       'pp reference file used in pp (if used)'))
+
+# Define the percentile stats for LED flat in pp (50th percentile)
+KW_PP_LED_FLAT_P50 = Keyword('KW_PP_LED_FLAT_P50', key='NULL', dtype=float,
+                             source=__NAME__,
+                             description='Define the percentile stats for LED '
+                                         'flat in pp (50th percentile)')
+
+
+# Define the percentile stats for LED flat in pp (16th percentile)
+KW_PP_LED_FLAT_P16 = Keyword('KW_PP_LED_FLAT_P16', key='NULL', dtype=float,
+                             source=__NAME__,
+                             description='Define the percentile stats for LED '
+                                         'flat in pp (16th percentile)')
+
+# Define the percentile stats for LED flat in pp (84th percentile)
+KW_PP_LED_FLAT_P84 = Keyword('KW_PP_LED_FLAT_P84', key='NULL', dtype=float,
+                             source=__NAME__,
+                             description='Define the percentile stats for LED '
+                                         'flat in pp (84th percentile)')
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables

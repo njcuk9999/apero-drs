@@ -39,6 +39,8 @@ get_file_reject_list = gen_pp.get_file_reject_list
 
 intercept_correct = detector.intercept_correct
 
+load_led_flat = detector.load_led_flat
+
 median_filter_dark_amps = detector.median_filter_dark_amp
 
 median_one_over_f_noise = detector.median_one_over_f_noise

@@ -367,56 +367,6 @@ def load_hotpix(params: ParamDict,
     return table
 
 
-def load_led_flat(params: ParamDict,
-                  assetsdir: Union[str, None] = None,
-                  eng_dir: Union[str, None] = None,
-                  filename: Union[str, None] = None,
-                  func: Union[str, None] = None,
-                  fmt: str = 'csv', datastart: int = 1,
-                  return_filename: bool = False) -> Union[str, np.ndarray]:
-    """
-    Load the preprocessing LED FLAT image
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
-    :param eng_dir: str, where the hotpix file is stored (within assets
-                      directory) -- overrides params['DATA_ENGINEERING']
-    :param filename: str, the hotpix file name
-                     -- overrides params['PP_HOTPIX_FILE']
-    :param func: str, the function name calling this function
-    :param fmt: str, the data format (astropy.table format)
-    :param datastart: int, the row at which to start reading the file
-    :param return_filename: bool, if True returns filename else returns image
-
-    :return: either the filename (return_filename=True) or np.ndarray the
-             hot pix image
-    """
-    # set function name
-    if func is None:
-        func_name = display_func('load_led_flat', __NAME__)
-    else:
-        func_name = func
-    # set parameters from params (or override)
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
-                      override=assetsdir)
-    relfolder = pcheck(params, 'DATA_ENGINEERING', func=func_name,
-                       override=eng_dir)
-    filename = pcheck(params, 'PP_LED_FLAT_FILE', func=func_name,
-                      override=filename)
-    # deal with return_filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
-    if return_filename:
-        return absfilename
-    # return table
-    led_image = load_fits_file(params, absfilename, func_name=func_name)
-    # must set NaN values to 1
-    led_image[~np.isfinite(led_image)] = 1
-    # TODO: Does this text entry need to change? (was for hotpix file)
-    WLOG(params, '', textentry('40-010-00011', args=absfilename))
-    return led_image
-
-
 def load_tapas(params: ParamDict,
                assetsdir: Union[str, None] = None,
                tellu_dir: Union[str, None] = None,
