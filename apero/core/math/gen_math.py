@@ -813,7 +813,7 @@ def square_medbin(image: np.ndarray, binexpo: int = 8):
 
     #intermediate image with median binned version of input image
     image2 = np.zeros([2**binexpo, 2**binexpo])
-    npix = 2 ** (nsize-binexpo)
+    npix = int(2 ** (nsize-binexpo))
     # loop around both dimensions
     for ypix_it in range(2**binexpo):
         for xpix_it in range(2**binexpo):

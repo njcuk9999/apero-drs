@@ -601,6 +601,8 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
 
     :return: tuple, 1. the LED file cube, 2. astropy table, the LED table
     """
+    # number of iterations
+    n_iterations = 5
     # load first image
     led_data_0 = drs_fits.readfits(params, led_files[0])
     # ----------------------------------------------------------------------
@@ -611,6 +613,10 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
     # ----------------------------------------------------------------------
     # loop around LED files
     for it, led_file in enumerate(led_files):
+        # print progres
+        # TODO: Add to language database
+        pargs = [it + 1, len(led_files)]
+        WLOG(params, '', '\tLED file {0} of {1}'.format(*pargs))
         # get the basename from filenames
         basename = os.path.basename(led_file)
         # get the path inst
@@ -618,11 +624,17 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
         # load the LED data
         led_data, led_hdr = drs_fits.readfits(params, led_file, gethdr=True)
         # remove the dark
-        led_med = led_data - ref_dark
+        with warnings.catch_warnings(record=True) as _:
+            led_med = led_data - ref_dark
         # as the filtering is a non-linear process, one wants to do it
         #  iteratively, if you do it just once you end up with a residual from
         #  the bright fringe of the illumination
-        for _ in range(5):
+        for iteration in range(n_iterations):
+            # print progres
+            # TODO: Add to language database
+            pargs = [iteration + 1, n_iterations]
+            WLOG(params, '', '\t\tIteration {0} of {1}'.format(*pargs))
+
             led_med = led_med / mp.square_medbin(led_data)
         # append to cube
         cube[it] = led_med
@@ -656,13 +668,16 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     :return:
     """
     # get the required header keys for led and dark files
-    led_hkeys = led_file.required_header_keys
-    dark_hkeys = dark_file.required_header_keys
+    led_hkeys = dict(led_file.required_header_keys)
+    dark_hkeys = dict(dark_file.required_header_keys)
+    # remove INST_MODE filter
+    del led_hkeys['KW_INST_MODE']
+    del dark_hkeys['KW_INST_MODE']
     # get all files that match these raw file definitions
     raw_led_files = drs_utils.find_files(params, block_kind='raw',
-                                         filters=dict(led_hkeys))
+                                         filters=led_hkeys)
     raw_dark_files = drs_utils.find_files(params, block_kind='raw',
-                                          filters=dict(dark_hkeys))
+                                          filters=dark_hkeys)
     # check whether filetype is allowed for instrument
     rawfiletype = led_file.name
     # get definition
@@ -701,6 +716,8 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
         # append to storage
         infiles.append(infile)
         rawfiles.append(infile.basename)
+
+    WLOG(params, '', '\tFound {0} LED files'.format(len(led_times)))
 
     # ----------------------------------------------------------------------
     # Create medianed version of LED
