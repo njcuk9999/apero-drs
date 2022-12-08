@@ -122,6 +122,8 @@ sinc = gen_math.sinc
 
 sigfig = gen_math.sigfig
 
+square_medbin = gen_math.square_medbin
+
 val_cheby = gen_math.val_cheby
 
 xpand_mask = gen_math.xpand_mask

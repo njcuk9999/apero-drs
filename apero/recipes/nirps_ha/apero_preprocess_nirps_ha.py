@@ -165,14 +165,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # get flux image from the data list
         image = datalist[0]
         # ------------------------------------------------------------------
-        # divide by LED FLAT
-        # ------------------------------------------------------------------
-        # TODO: Add to PPREF and get from calibDB
-        WLOG(params, '', 'Performing LED flat')
-        from apero.core.utils import drs_data
-        led_flat = drs_data.load_led_flat(params)
-        image = image / led_flat
-        # ------------------------------------------------------------------
         # get intercept from the data list
         intercept = datalist[1]
         # get frame time
@@ -322,6 +314,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         mout = drs_file.get_mid_obs_time(params, infile.get_header())
         mid_obs_time, mid_obs_method = mout
+
+        # ------------------------------------------------------------------
+        # divide by LED FLAT
+        # ------------------------------------------------------------------
+        # TODO: Add to PPREF and get from calibDB
+        WLOG(params, '', 'Performing LED flat')
+        from apero.core.utils import drs_data
+        led_flat = drs_data.load_led_flat(params)
+        image = image / led_flat
 
         # ------------------------------------------------------------------
         # rotate image
