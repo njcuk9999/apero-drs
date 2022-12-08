@@ -19,7 +19,7 @@ from apero.core import constants
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.instruments.nirps_he import file_definitions
+from apero.core.instruments.nirps_ha import file_definitions
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
@@ -28,7 +28,7 @@ from apero.science import preprocessing
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_pp_ref_nirps_he.py'
+__NAME__ = 'apero_pp_ref_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HE'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

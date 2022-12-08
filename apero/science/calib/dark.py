@@ -219,7 +219,9 @@ def correction(params: ParamDict, image: np.ndarray, nfiles: int,
 # =============================================================================
 def construct_dark_table(params: ParamDict, filenames: List[str],
                          match_time: Optional[float] = None,
-                         max_files: Optional[int] = None) -> Table:
+                         max_files: Optional[int] = None,
+                         min_exptime: Optional[float] = None,
+                         mode: str = 'pp') -> Table:
     """
     Construct the dark file table - consisting of all darks to use in
     dark reference calibration
@@ -231,6 +233,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
                        params['DARK_REF_MATCH_TIME']
     :param max_files: int or None, optional, the maximum number of files to use
                       in the dark reference calibration
+    :param mode: str, 'raw' or 'pp' - changes the keywords which are used
 
     :return: astropy table, the filled dark file table
     """
@@ -241,9 +244,8 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
                         override=match_time)
     max_num_files = pcheck(params, 'DARK_REF_MAX_FILES', func=func_name,
                            override=max_files)
-
     dark_ref_min_exptime = pcheck(params, 'DARK_REF_MIN_EXPTIME',
-                                  func=func_name, override=max_files)
+                                  func=func_name, override=min_exptime)
     # define storage for table columns
     dark_files = []
     dark_time, dark_exp, dark_pp_version = [], [], []
@@ -262,10 +264,13 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
         # read the header
         hdr = drs_fits.read_header(params, filenames[it])
         # get keys from hdr
-        acqtime, acqmethod = drs_file.get_mid_obs_time(params, hdr,
-                                                       out_fmt='mjd')
+        if mode == 'pp':
+            acqtime, _ = drs_file.get_mid_obs_time(params, hdr, out_fmt='mjd')
+        else:
+            acqtime = hdr[params['KW_MJDATE'][0]]
+
         exptime = hdr[params['KW_EXPTIME'][0]]
-        ppversion = hdr[params['KW_PPVERSION'][0]]
+        ppversion = hdr.get(params['KW_PPVERSION'][0], 'None')
 
         # do not consider dark exp time below this value
         if exptime < dark_ref_min_exptime:
@@ -277,7 +282,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
         cass_temp = hdr.get(params['KW_CASS_TEMP'][0], np.nan)
         # TODO: Cannot get this value from headers currently [NIRPS]
         humidity = hdr.get(params['KW_HUMIDITY'][0], np.nan)
-        dprtype = hdr[params['KW_DPRTYPE'][0]]
+        dprtype = hdr.get(params['KW_DPRTYPE'][0], 'None')
         # append to lists
         dark_files.append(filenames[it])
         dark_time.append(float(acqtime))

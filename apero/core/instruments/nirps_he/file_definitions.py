@@ -846,9 +846,18 @@ out_pp_ref = drs_finput('PP_REF', hkeys=dict(KW_OUTPUT='PP_REF'),
                         outclass=refcalib_ofile,
                         dbname='calibration', dbkey='PP_REF',
                         description='PP Reference flat calibration file')
+
+out_pp_led_flat = drs_finput('PP_LED_FLAT', hkeys=dict(KW_OUTPUT='PP_LED_FLAT'),
+                             filetype='.fits', intype=[raw_flat_flat],
+                             suffix='_led_flat', outclass=refcalib_ofile,
+                             dbname='calibration', dbkey='PP_REF',
+                             description='Reference LED flat calibration file')
+
 # add dark outputs to output fileset
 red_file.addset(out_pp_ref)
+red_file.addset(out_pp_led_flat)
 calib_file.addset(out_pp_ref)
+calib_file.addset(out_pp_led_flat)
 
 # -----------------------------------------------------------------------------
 # dark files

@@ -23,6 +23,8 @@ correct_top_bottom = detector.ref_top_bottom
 
 correct_left_right = detector.correct_left_right
 
+create_led_flat = detector.create_led_flat
+
 drs_infile_id = identification.drs_infile_id
 
 drs_outfile_id = identification.drs_outfile_id
