@@ -104,6 +104,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # check for None
     if drs_text.null_text(kw_objnames, ['None', '', 'Null']):
         kw_objnames = None
+    elif kw_objnames == '*':
+        kw_objnames = drs_get.all_objects(params)
     if drs_text.null_text(kw_dprtypes, ['None', '', 'Null']):
         kw_dprtypes = None
     if drs_text.null_text(kw_outputs, ['None', '', 'Null']):
