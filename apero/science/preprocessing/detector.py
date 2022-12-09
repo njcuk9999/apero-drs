@@ -625,7 +625,13 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
         led_data, led_hdr = drs_fits.readfits(params, led_file, gethdr=True)
         # remove the dark
         with warnings.catch_warnings(record=True) as _:
-            led_med = led_data - ref_dark
+            led_data2 = led_data - ref_dark
+        # normalize spectrum
+        led_data3 = led_data2 / mp.nanmedian(led_data2)
+        # set everything below 0.5 to nan
+        led_data3[led_data3 < 0.5] = np.nan
+        # start this value as the median
+        led_med = np.array(led_data3)
         # as the filtering is a non-linear process, one wants to do it
         #  iteratively, if you do it just once you end up with a residual from
         #  the bright fringe of the illumination
@@ -634,8 +640,8 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
             # TODO: Add to language database
             pargs = [iteration + 1, n_iterations]
             WLOG(params, '', '\t\tIteration {0} of {1}'.format(*pargs))
-
-            led_med = led_med / mp.square_medbin(led_data)
+            # median filter square image
+            led_med = led_med / mp.square_medbin(led_med)
         # append to cube
         cube[it] = led_med
         # append to lists
@@ -671,6 +677,7 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     led_hkeys = dict(led_file.required_header_keys)
     dark_hkeys = dict(dark_file.required_header_keys)
     # remove INST_MODE filter
+    # TODO: remove once we have LEDs for HA and HE
     del led_hkeys['KW_INST_MODE']
     del dark_hkeys['KW_INST_MODE']
     # get all files that match these raw file definitions
@@ -683,6 +690,9 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     # get definition
     fdkwargs = dict(block_kind='raw', required=False)
     rawfile = drs_file.get_file_definition(params, rawfiletype, **fdkwargs)
+    # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', 'Creating dark for LED flat')
     # ----------------------------------------------------------------------
     # Get all dark file properties
     # ----------------------------------------------------------------------
@@ -727,6 +737,7 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     # only keep 10 LED files (uniformly distributed in time)
     time_mask = drs_utils.uniform_time_list(led_times, 10)
     led_files = raw_led_files[time_mask]
+    infiles = np.array(infiles)[time_mask]
     # get cube and led table
     cube, led_table = construct_led_cube(params, led_files, ref_dark)
     # led output is the median of the cube
@@ -734,15 +745,18 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     # rms array
     rms = mp.nanstd(cube, axis=0) / np.sqrt(len(led_files) - 1)
     # snr array
-    snr = led / rms
+    with warnings.catch_warnings(record=True) as _:
+        snr = led / rms
     # ----------------------------------------------------------------------
     # Produce stats
     # ----------------------------------------------------------------------
-    p16, p50, p84 = mp.nanpercentile(rms, [16, 50, 84])
+    # percentile values
+    with warnings.catch_warnings(record=True) as _:
+        p16, p50, p84 = mp.nanpercentile(rms, [16, 50, 84])
     # print stats
-    pargs = [p50, p50-p16, p84-p50]
+    pargs = [p50, p50 - p16, p84 - p50]
     # TODO: move to language database
-    WLOG(params, '', 'LED FLAT RMS: {0:.3f} +{1:.3f} -{2:.3f}'.format(*pargs))
+    WLOG(params, '', 'LED FLAT RMS: {0:.3e} +{1:.3e} -{2:.3e}'.format(*pargs))
     # ----------------------------------------------------------------------
     # Set the reference pixels to a value of 1
     # ----------------------------------------------------------------------
@@ -753,15 +767,20 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     led[-4:] = 1
     led[:, 0:4] = 1
     led[:, -4:] = 1
-    # ------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Combine LEDs for output (hash code)
+    # -------------------------------------------------------------------------
+    # combine leds
+    combfile, combtable = infiles[0].combine(infiles[1:], math=None,
+                                             same_type=True)
+    # -------------------------------------------------------------------------
     # Save mask image
-    # ------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     outfile = recipe.outputs['PP_LED_FLAT'].newcopy(params=params)
     # construct out filename
-    outfile.construct_filename(infile=infiles[0])
+    outfile.construct_filename(infile=combfile)
     # copy keys from input file
-    # TODO: Should we be combining here?
-    outfile.copy_original_keys(infiles[0])
+    outfile.copy_original_keys(combfile)
     # add version
     outfile.add_hkey('KW_PPVERSION', value=params['DRS_VERSION'])
     # add dates
@@ -783,9 +802,9 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     wargs = [outfile.filename]
     WLOG(params, '', textentry('40-010-00015', args=wargs))
     # define multi lists
-    data_list = [rms, snr, dark_table, led_table]
-    name_list = ['RMS', 'SNR', 'DARK_TABLE', 'LED_TABLE']
-    datatype_list = ['image', 'image', 'image', 'table', 'table']
+    data_list = [rms, snr, dark_table, led_table, combtable]
+    name_list = ['RMS', 'SNR', 'DARK_TABLE', 'LED_TABLE', 'COMB_TABLE']
+    datatype_list = ['image', 'image', 'image', 'table', 'table', 'table']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
@@ -964,7 +983,7 @@ def get_pp_mask(params: ParamDict,
 
 def load_led_flat(params: ParamDict,
                   database: Union[CalibrationDatabase, None] = None
-                ) -> Tuple[np.ndarray, Union[Path, str]]:
+                  ) -> Tuple[np.ndarray, Union[Path, str]]:
     """
     Load the preprocessing LED FLAT image
 
@@ -977,7 +996,7 @@ def load_led_flat(params: ParamDict,
     """
     # get file instance
     pp_led_flat = drs_file.get_file_definition(params, 'PP_LED_FLAT',
-                                            block_kind='red')
+                                               block_kind='red')
     # get calibration key
     led_key = pp_led_flat.get_dbkey()
     # ---------------------------------------------------------------------

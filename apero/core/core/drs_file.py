@@ -3829,7 +3829,8 @@ class DrsFitsFile(DrsInputFile):
             if not found:
                 self.output_dict[key] = 'None'
 
-    def combine(self, infiles: List['DrsFitsFile'], math: str = 'sum',
+    def combine(self, infiles: List['DrsFitsFile'],
+                math: Union[str, None] = 'sum',
                 same_type: bool = True,
                 path: Union[str, None] = None,
                 test_similarity: bool = True) -> Tuple['DrsFitsFile', Table]:
@@ -3841,6 +3842,7 @@ class DrsFitsFile(DrsInputFile):
         :param math: str, the way to mathematically combine files
                      valid options are: sum, average, mean, median, med,
                      add, +, subtract, -, divide, /, multiple, times, *
+                     if none does not combine files
         :param same_type: bool, if True input DrsFitsFile must be the same
                           type (DrsFitsFile.name identical) to combine otherwise
                           exception is raised
@@ -3856,7 +3858,7 @@ class DrsFitsFile(DrsInputFile):
         # define usable math
         available_math = ['sum', 'average', 'mean', 'median', 'med',
                           'add', '+', 'subtract', '-', 'divide', '/',
-                          'multiply', 'times', '*']
+                          'multiply', 'times', '*', 'None']
         # --------------------------------------------------------------------
         # check that params is set
         self.check_params(func_name)
@@ -4001,7 +4003,7 @@ class DrsFitsFile(DrsInputFile):
         elif math in ['median', 'med']:
             with warnings.catch_warnings(record=True) as _:
                 data = mp.nanmedian(datacube, axis=0)
-        elif math in ['None']:
+        elif math in ['None', None, 'Null']:
             data = np.zeros_like(datacube[0])
         # else we have an error in math
         else:

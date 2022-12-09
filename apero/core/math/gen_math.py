@@ -811,12 +811,12 @@ def square_medbin(image: np.ndarray, binexpo: int = 8):
     # nsize (N)
     nsize = squ_shape[0]
 
-    #intermediate image with median binned version of input image
-    image2 = np.zeros([2**binexpo, 2**binexpo])
-    npix = int(2 ** (nsize-binexpo))
+    # intermediate image with median binned version of input image
+    image2 = np.zeros([2 ** binexpo, 2 ** binexpo])
+    npix = int(2 ** (nsize - binexpo))
     # loop around both dimensions
-    for ypix_it in range(2**binexpo):
-        for xpix_it in range(2**binexpo):
+    for ypix_it in range(2 ** binexpo):
+        for xpix_it in range(2 ** binexpo):
             # get slicing parameters
             y_start = ypix_it * npix
             y_end = y_start + npix
@@ -828,14 +828,14 @@ def square_medbin(image: np.ndarray, binexpo: int = 8):
             with warnings.catch_warnings(record=True) as _:
                 image2[ypix_it, xpix_it] = fast.nanmedian(simage)
     # filter with a 3x3 box
-    image2 = median_filter(image2, size=[3,3])
+    image2 = median_filter(image2, size=[3, 3])
 
     # mask points that are NaNs in the binned image
-    mask = np.array(np.isfinite(image2),dtype = float)
+    mask = np.array(np.isfinite(image2), dtype=float)
     image2[~np.isfinite(image2)] = 0
-    image2b = zoom(image2, npix,order = 1)
-    mask2 = zoom(mask,npix,order = 1)
-    image2b[mask2<0.5] = np.nan
+    image2b = zoom(image2, npix, order=1)
+    mask2 = zoom(mask, npix, order=1)
+    image2b[mask2 < 0.5] = np.nan
 
     # return image that is scaled back to full size
     return image2b
