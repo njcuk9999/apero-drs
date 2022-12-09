@@ -209,7 +209,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Calculate dx shape map
     # ----------------------------------------------------------------------
-
     # calculate the dx map for fiber A
     cargs_a = [ref_fp, lprops_sci]
     dout = shape.calculate_dxmap_nirps(params, recipe, *cargs_a, fiber='A')
