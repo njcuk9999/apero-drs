@@ -25,7 +25,8 @@ __all__ = [
     'PP_OBJ_DPRTYPES', 'PP_BADLIST_SSID',
     'PP_BADLIST_SSWB', 'PP_BADLIST_DRS_HKEY', 'PP_BADLIST_SS_VALCOL',
     'PP_BADLIST_SS_MASKCOL', 'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES',
-    'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE', 'PP_TOTAL_AMP_NUM',
+    'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE',
+    'PP_LED_FLAT_FILE', 'PP_TOTAL_AMP_NUM',
     'PP_CORRUPT_MED_SIZE', 'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM',
     'PP_NUM_REF_LEFT', 'PP_NUM_REF_RIGHT',
     'PP_RMS_PERCENTILE', 'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
@@ -78,6 +79,7 @@ __all__ = [
     'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
     'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY', 'ALLOWED_DARK_TYPES',
     'DARK_REF_MATCH_TIME', 'DARK_REF_MED_SIZE', 'DARK_REF_MAX_FILES',
+    'DARK_REF_MIN_EXPTIME',
     # badpix constants
     'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
     'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
@@ -222,7 +224,7 @@ __all__ = [
     'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE',
     'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX',
     'WAVE_FP_SIGCLIP', 'WAVE_FP_PLOT_MULTI_INIT', 'WAVE_FP_PLOT_MULTI_NBO',
-    'WAVE_FP_DPRLIST',
+    'WAVE_FP_DPRLIST', 'WAVE_FP_FIBERTYPES',
     # wave night constants
     'WAVE_NIGHT_NITERATIONS1', 'WAVE_NIGHT_NITERATIONS2', 'WAVE_NIGHT_DCAVITY',
     'WAVE_NIGHT_HC_SIGCLIP', 'WAVE_NIGHT_MED_ABS_DEV',
@@ -232,6 +234,7 @@ __all__ = [
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
     'TELLU_LIST_DIRECTORY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
+    'TELLU_ONLY_PRECLEAN',
     # telluric pre-cleaning constants
     'TELLUP_DO_PRECLEANING', 'TELLUP_CCF_SCAN_RANGE', 'TELLUP_CLEAN_OH_LINES',
     'TELLUP_OHLINE_PCA_FILE', 'TELLUP_REMOVE_ORDS', 'TELLUP_SNR_MIN_THRES',
@@ -876,6 +879,12 @@ PP_HOTPIX_FILE = Const('PP_HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
                        description=('Defines the pp hot pixel file (located in '
                                     'the data folder)'))
 
+# Defines the pp led flat file (located in the data folder)
+PP_LED_FLAT_FILE  = Const('PP_LED_FLAT_FILE', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          description='Defines the pp led flat file '
+                                      '(located in the data folder)')
+
 # Define the number of un-illuminated reference pixels at top of image
 PP_NUM_REF_TOP = Const('PP_NUM_REF_TOP', value=None, dtype=int,
                        source=__NAME__, group=cgroup,
@@ -1159,6 +1168,13 @@ DARK_REF_MAX_FILES = Const('DARK_REF_MAX_FILES', value=None, dtype=int,
                            source=__NAME__, group=cgroup,
                            description='define the maximum number of files '
                                        'to use in the dark reference')
+
+# define the minimimum allowed exptime for dark files to be used in
+#    dark ref
+DARK_REF_MIN_EXPTIME = Const('DARK_REF_MIN_EXPTIME', value=None, dtype=int,
+                             source=__NAME__, group=cgroup,
+                             description='define the minimimum allowed exptime '
+                                         'for dark files to be used in')
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
@@ -3462,6 +3478,14 @@ WAVE_FP_DPRLIST = Const('WAVE_FP_DPRLIST', value=None, dtype=str,
                         description=('define the dprtype for generating '
                                      'FPLINES (string list)'))
 
+# define the override for reference fiber for generating FPLINES
+#    None for no override
+WAVE_FP_FIBERTYPES = Const('WAVE_FP_FIBERTYPES', value='None', dtype=str,
+                           source=__NAME__, group=cgroup,
+                           description='define the override for reference '
+                                       'fiber for generating FPLINES (None for '
+                                       'no override)')
+
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
 # =============================================================================
@@ -3568,6 +3592,13 @@ TELLU_WHITELIST_NAME = Const('TELLU_WHITELIST_NAME', value=None, dtype=str,
 TELLU_BLACKLIST_NAME = Const('TELLU_BLACKLIST_NAME', value=None, dtype=str,
                              source=__NAME__, group=cgroup,
                              description='Define telluric black list name')
+
+
+# Force only pre-cleaning (not recommended - only for debugging)
+TELLU_ONLY_PRECLEAN = Const('TELLU_ONLY_PRECLEAN', value=None, dtype=bool,
+                             source=__NAME__, group=cgroup,
+                             description='Force only pre-cleaning (not '
+                                         'recommended - only for debugging)')
 
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS

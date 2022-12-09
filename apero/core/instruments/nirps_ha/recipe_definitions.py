@@ -11,6 +11,7 @@ from apero import lang
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
 from apero.core.instruments.default import grouping
+from apero.core.instruments.default import recipe_definitions as rd
 from apero.core.instruments.nirps_ha import file_definitions as files
 from apero.core.utils import drs_recipe
 
@@ -36,8 +37,9 @@ sf = base_class.ImportModule('nirps_ha.file_definitions',
 # =============================================================================
 # Commonly used arguments
 # =============================================================================
-obs_dir = dict(name='obs_dir', dtype='obs_dir',
-               helpstr=textentry('OBS_DIR_HELP'))
+obs_dir = rd.obs_dir
+# -----------------------------------------------------------------------------
+plot = rd.plot
 
 # =============================================================================
 # Option definitions
@@ -71,9 +73,6 @@ flipimage = dict(name='--flipimage', dtype='options', default='both',
 # -----------------------------------------------------------------------------
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=textentry('FLUXUNITS_HELP'), options=['ADU/s', 'e-'])
-# -----------------------------------------------------------------------------
-plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
-            default_ref='DRS_PLOT', minimum=0, maximum=3)
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
               helpstr=textentry('RESIZE_HELP'),
@@ -173,6 +172,31 @@ recipes = []
 # -----------------------------------------------------------------------------
 raw_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
+
+# -----------------------------------------------------------------------------
+# apero_pp_ref
+# -----------------------------------------------------------------------------
+apero_pp_ref = DrsRecipe(__INSTRUMENT__)
+apero_pp_ref.name = 'apero_pp_ref_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_pp_ref.shortname = 'PPREF'
+apero_pp_ref.instrument = __INSTRUMENT__
+apero_pp_ref.in_block_str = 'raw'
+apero_pp_ref.out_block_str = 'red'
+apero_pp_ref.extension = 'fits'
+apero_pp_ref.reference = True
+apero_pp_ref.description = textentry('PP_REF_DESC')
+apero_pp_ref.epilog = textentry('PP_REF_EXAMPLE')
+apero_pp_ref.recipe_type = 'recipe'
+apero_pp_ref.recipe_kind = 'pre-reference'
+apero_pp_ref.set_outputs(PP_REF=files.out_pp_ref,
+                         PP_LED_FLAT=files.out_pp_led_flat)
+apero_pp_ref.set_arg(pos=0, **obs_dir)
+apero_pp_ref.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
+                       helpstr=textentry('PP_REF_FILETYPE_HELP'))
+apero_pp_ref.group_func = grouping.no_group
+apero_pp_ref.group_column = None
+# add to recipe
+recipes.append(apero_pp_ref)
 
 # -----------------------------------------------------------------------------
 # apero_preprocess
@@ -952,6 +976,8 @@ recipes.append(apero_mk_template)
 # -----------------------------------------------------------------------------
 full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 # reference run
+full_seq.add(apero_pp_ref, recipe_kind='pre-reference',
+             arguments=dict(obs_dir='RUN_OBS_DIR'))
 full_seq.add(apero_preprocess, recipe_kind='pre-all')
 full_seq.add(apero_dark_ref, ref=True)
 full_seq.add(apero_badpix, name='BADREF', ref=True,
@@ -1038,6 +1064,8 @@ full_seq.add(apero_mk_template, name='FTTEMP2',
 # -----------------------------------------------------------------------------
 limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
 # reference run
+limited_seq.add(apero_pp_ref, recipe_kind='pre-reference',
+                arguments=dict(obs_dir='RUN_OBS_DIR'))
 limited_seq.add(apero_preprocess, recipe_kind='pre-all')
 limited_seq.add(apero_dark_ref, ref=True)
 limited_seq.add(apero_badpix, name='BADREF', ref=True,
@@ -1128,9 +1156,11 @@ limited_seq.add(apero_mk_template, name='FTTEMP2', recipe_kind='tellu-science',
 # pp sequence (for trigger)
 # -----------------------------------------------------------------------------
 pp_seq = drs_recipe.DrsRunSequence('pp_seq', __INSTRUMENT__)
+pp_seq.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq.add(apero_preprocess)
 
 pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
+pp_seq_opt.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq_opt.add(apero_preprocess, name='PP_CAL', recipe_kind='pre-cal',
                filters=dict(KW_RAW_DPRCATG='CALIB'))
 pp_seq_opt.add(apero_preprocess, name='PP_SCI', recipe_kind='pre-sci',
@@ -1154,7 +1184,9 @@ pp_seq_opt.add(apero_preprocess, name='PP_LFCFP', files=[files.raw_lfc_fp],
 pp_seq_opt.add(apero_preprocess, name='PP_FPLFC', files=[files.raw_fp_lfc],
                recipe_kind='pre-fplfc')
 pp_seq_opt.add(apero_preprocess, name='PP_EFFSKY',
-               files=[files.pp_test_dark_dark_sky], recipe_kind='pre-effsky')
+               files=[files.raw_test_dark_dark_sky], recipe_kind='pre-effsky')
+pp_seq_opt.add(apero_preprocess, name='PP_EVERY',
+               files=[files.raw_file])
 
 # -----------------------------------------------------------------------------
 # reference sequence (for trigger)
@@ -1311,6 +1343,8 @@ eng_seq.add(apero_extract, name='EXT_FPLFC', files=[files.pp_fp_lfc],
 eng_seq.add(apero_extract, name='EXT_EFFSKY',
             files=[files.pp_test_dark_dark_sky],
             recipe_kind='extract-effsky')
+eng_seq.add(apero_extract, name='EXT_EVERY', files=[files.pp_file],
+            recipe_kind='extract-everything')
 
 # -----------------------------------------------------------------------------
 # helios sequence

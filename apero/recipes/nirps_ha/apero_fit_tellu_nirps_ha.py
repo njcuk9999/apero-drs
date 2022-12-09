@@ -107,6 +107,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     onlypreclean = False
     if 'ONLYPRECLEAN' in params['INPUTS']:
         onlypreclean = params['INPUTS']['ONLYPRECLEAN']
+    # force only preclean from params
+    if params['TELLU_ONLY_PRECLEAN']:
+        onlypreclean = True
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
@@ -221,6 +224,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                                    database=telludbm)
         else:
             trans_props = ParamDict()
+            trans_props['TRANS_TABLE'] = None
 
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)

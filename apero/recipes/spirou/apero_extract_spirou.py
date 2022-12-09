@@ -401,15 +401,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # --------------------------------------------------------------
             # add files to outputs
             # --------------------------------------------------------------
-            # if not quicklook:
-            #     ekeys = ['E2DS', 'E2DSFF']
-            #     efiles = [e2dsfile, e2dsfffile]
-            #     # loop around keys to add
-            #     for key, efile in zip(ekeys, efiles):
-            #         # construct output key
-            #         outkey = '{0}_{1}'.format(key, fiber)
-            #         # copy file to dictionary
-            #         e2dsoutputs[outkey] = efile.completecopy(efile)
+            if not quicklook:
+                ekeys = ['E2DS', 'E2DSFF']
+                efiles = [e2dsfile, e2dsfffile]
+                # loop around keys to add
+                for key, efile in zip(ekeys, efiles):
+                    # construct output key
+                    outkey = '{0}_{1}'.format(key, fiber)
+                    # copy file to dictionary
+                    e2dsoutputs[outkey] = efile.completecopy(efile)
             # ------------------------------------------------------------------
             # Summary plots
             # ------------------------------------------------------------------

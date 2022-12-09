@@ -101,14 +101,16 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kw_dprtypes = inputs.listp('dprtypes', dtype=str, required=False)
     kw_outputs = inputs.listp('outtypes', dtype=str, required=False)
     kw_fibers = inputs.listp('fibers', dtype=str, required=False)
-    # check for None
+    # check for None / *
     if drs_text.null_text(kw_objnames, ['None', '', 'Null']):
         kw_objnames = None
-    if drs_text.null_text(kw_dprtypes, ['None', '', 'Null']):
+    elif '*' in kw_objnames:
+        kw_objnames = drs_get.all_objects(params)
+    if drs_text.null_text(kw_dprtypes, ['None', '', 'Null', '*']):
         kw_dprtypes = None
-    if drs_text.null_text(kw_outputs, ['None', '', 'Null']):
+    if drs_text.null_text(kw_outputs, ['None', '', 'Null', '*']):
         kw_outputs = None
-    if drs_text.null_text(kw_fibers, ['None', '', 'Null']):
+    if drs_text.null_text(kw_fibers, ['None', '', 'Null', '*']):
         kw_fibers = None
     # push filters into dictionary (not object names these are special)
     filters = dict()

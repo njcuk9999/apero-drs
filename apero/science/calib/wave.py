@@ -206,6 +206,14 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
                                                         database=database)
             # deal with out_wave from reference
             source = 'reference'
+        # ---------------------------------------------------------------------
+        # if we don't have a reference file wave solution, it should be within
+        #   limits (if limits were checked)
+        if not cfile.reference and not cfile.dtime_pass:
+            # get error arguments
+            eargs = cfile.dtime_eargs
+            # log error
+            WLOG(params, 'error', textentry('09-002-00004', args=eargs))
     # -------------------------------------------------------------------------
     # construct new infile instance (first fp solution then hc solutions)
     wavefile = out_wave.newcopy(filename=inwavefile, params=params,
@@ -461,6 +469,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     wprops['WAVEINIT'] = wavefile.filename
     wprops['WAVESOURCE'] = wavesource
     wprops['NBO'] = nbo
+    wprops['WAVE_POLY_TYPE'] = 'Chebyshev'
     if wavemap is not None:
         wprops['NBPIX'] = wavemap.shape[1]
     else:
@@ -497,8 +506,8 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
             wprops[wfp_keys[wfpi]] = wfp_values[wfpi]
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'NBO', 'DEG',
-            'COEFFS', 'WAVETIME', 'WAVEINST', 'NBPIX', 'CAVITY',
-            'CAVITY_DEG', 'MEAN_HC_VEL', 'ERR_HC_VEL'] + wfp_keys
+            'WAVE_POLY_TYPE', 'COEFFS', 'WAVETIME', 'WAVEINST', 'NBPIX',
+            'CAVITY', 'CAVITY_DEG', 'MEAN_HC_VEL', 'ERR_HC_VEL'] + wfp_keys
     wprops.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # get the echelle order numbers
@@ -1120,7 +1129,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                     if fibtype in hcfibtypes:
                         # get up a gauss fit guess
                         #   [amplitude, mean position, FWHM, DC, slope]
-                        guess = [ymax - ymin, xcen, guess_hc_ewid, ymin, 0]
+                        guess = [ymax - ymin, index[posmax], guess_hc_ewid, ymin, 0]
                         out = mp.fit_gauss_with_slope(index, ypix, guess, True)
                         # get parameters from fit
                         popt, pcov, model = out
@@ -1417,9 +1426,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # We start numbering at 1 as the 0th serves as a relative
             # starting point
             diff = ordfp_pix_meas[step_fp] - ordfp_pix_meas[step_fp - 1]
-            dfit = mp.val_cheby(fit_step, ordfp_pix_meas[step_fp - 1],
+
+            dfit = mp.val_cheby(fit_step, ordfp_pix_meas[step_fp - 1:step_fp + 1],
                                 domain=[0, nbxpix])
-            dnum = diff / dfit
+
+            dnum = diff / np.mean(dfit)
             # dnum is always very close to an integer value, we round it
             # we subtract the steps, FP peaks go in decreasing number
             rdnum = np.round(dnum)
@@ -1434,7 +1445,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             fpl_peak_num[good_fp] = ordfp_peak_num
             # log skipping orders: Skipped Order {0} (too few {1} lines)
             margs = [order_num, 'HC', np.sum(good_hc), min_hc_lines]
-            WLOG(params, '', textentry('40-017-00065', args=margs))
+            WLOG(params, 'warning', textentry('40-017-00065', args=margs),
+                 sublevel=2)
             # skip to next order
             continue
         # ---------------------------------------------------------------------
@@ -1869,9 +1881,10 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     wprops['CAVITY_DEG'] = cavity_fit_degree
     wprops['MEAN_HC_VEL'] = mean_hc_vel
     wprops['ERR_HC_VEL'] = err_hc_vel
+    wprops['WAVE_POLY_TYPE'] = 'Chebyshev'
     # set source
     keys = ['WAVEMAP', 'NBO', 'DEG', 'COEFFS', 'NBPIX', 'CAVITY', 'CAVITY_DEG',
-            'MEAN_HC_VEL', 'ERR_HC_VEL']
+            'MEAN_HC_VEL', 'ERR_HC_VEL', 'WAVE_POLY_TYPE']
     wprops.set_sources(keys, func_name)
     # return wave properties
     return wprops
@@ -3185,6 +3198,7 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
     infile.add_hkey('KW_CAVITY_DEG', value=props['CAVITY_DEG'])
     infile.add_hkey('KW_WAVE_MEANHC', value=props['MEAN_HC_VEL'])
     infile.add_hkey('KW_WAVE_EMEANHC', value=props['ERR_HC_VEL'])
+    infile.add_hkey('KW_WAVE_POLYT', value=props['WAVE_POLY_TYPE'])
     # return infile
     return infile
 

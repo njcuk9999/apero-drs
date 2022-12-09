@@ -669,7 +669,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # get the mask wavelength
     ll_mask_s_others = mask_others['ll_mask_s']
     ll_mask_s_water = mask_water['ll_mask_s']
-    # set the depths to the tranmission (using the reference splines)
+    # set the depths to the transmission (using the reference splines)
     wmask_others = 1 - spline_ref_others(mask_others['ll_mask_s'])
     wmask_water = 1 - spline_ref_water(mask_water['ll_mask_s'])
     # mask lines that are deep but not too deep

@@ -219,7 +219,9 @@ def correction(params: ParamDict, image: np.ndarray, nfiles: int,
 # =============================================================================
 def construct_dark_table(params: ParamDict, filenames: List[str],
                          match_time: Optional[float] = None,
-                         max_files: Optional[int] = None) -> Table:
+                         max_files: Optional[int] = None,
+                         min_exptime: Optional[float] = None,
+                         mode: str = 'pp') -> Table:
     """
     Construct the dark file table - consisting of all darks to use in
     dark reference calibration
@@ -231,6 +233,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
                        params['DARK_REF_MATCH_TIME']
     :param max_files: int or None, optional, the maximum number of files to use
                       in the dark reference calibration
+    :param mode: str, 'raw' or 'pp' - changes the keywords which are used
 
     :return: astropy table, the filled dark file table
     """
@@ -241,7 +244,10 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
                         override=match_time)
     max_num_files = pcheck(params, 'DARK_REF_MAX_FILES', func=func_name,
                            override=max_files)
+    dark_ref_min_exptime = pcheck(params, 'DARK_REF_MIN_EXPTIME',
+                                  func=func_name, override=min_exptime)
     # define storage for table columns
+    dark_files = []
     dark_time, dark_exp, dark_pp_version = [], [], []
     basenames, obs_dirs, dprtypes = [], [], []
     dark_wt_temp, dark_cass_temp, dark_humidity = [], [], []
@@ -257,19 +263,34 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
         obs_dir = path_inst.obs_dir
         # read the header
         hdr = drs_fits.read_header(params, filenames[it])
+        # ---------------------------------------------------------------------
         # get keys from hdr
-        acqtime, acqmethod = drs_file.get_mid_obs_time(params, hdr,
-                                                       out_fmt='mjd')
+        # ---------------------------------------------------------------------
+        # deal with mid_obs_time (will not be set in raw files)
+        if mode == 'pp':
+            acqtime, _ = drs_file.get_mid_obs_time(params, hdr, out_fmt='mjd')
+        else:
+            acqtime = hdr[params['KW_MJDATE'][0]]
+        # get exposure time
         exptime = hdr[params['KW_EXPTIME'][0]]
-        ppversion = hdr[params['KW_PPVERSION'][0]]
+        # get pp version (will not be set in raw files)
+        ppversion = hdr.get(params['KW_PPVERSION'][0], 'None')
+        # do not consider dark exp time below this value
+        if exptime < dark_ref_min_exptime:
+            continue
         # TODO: Cannot get this value from headers currently [NIRPS]
         wt_temp = hdr.get(params['KW_WEATHER_TOWER_TEMP'][0], np.nan)
         # TODO: Cannot get this value from headers currently [NIRPS]
         cass_temp = hdr.get(params['KW_CASS_TEMP'][0], np.nan)
         # TODO: Cannot get this value from headers currently [NIRPS]
         humidity = hdr.get(params['KW_HUMIDITY'][0], np.nan)
-        dprtype = hdr[params['KW_DPRTYPE'][0]]
+        # deal with DPRTYPE (will not be set in raw files)
+        if mode == 'pp':
+            dprtype = hdr.get(params['KW_DPRTYPE'][0])
+        else:
+            dprtype = 'DARK_DARK'
         # append to lists
+        dark_files.append(filenames[it])
         dark_time.append(float(acqtime))
         dark_exp.append(float(exptime))
         dark_pp_version.append(ppversion)
@@ -286,10 +307,10 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
     dark_time = np.array(dark_time)
     time_mask = drs_utils.uniform_time_list(dark_time, max_num_files)
     # mask all lists (as numpy arrays)
+    dark_files = np.array(dark_files)[time_mask]
     dark_time = np.array(dark_time)[time_mask]
     dark_exp = np.array(dark_exp)[time_mask]
     dark_pp_version = np.array(dark_pp_version)[time_mask]
-    filenames = np.array(filenames)[time_mask]
     basenames = np.array(basenames)[time_mask]
     obs_dirs = np.array(obs_dirs)[time_mask]
     dprtypes = np.array(dprtypes)[time_mask]
@@ -313,7 +334,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
     columns = ['OBS_DIR', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
                'PPVERSION', 'WT_TEMP', 'CASS_TEMP', 'HUMIDITY', 'DPRTYPE',
                'GROUP']
-    values = [obs_dirs, basenames, filenames, dark_time, dark_exp,
+    values = [obs_dirs, basenames, dark_files, dark_time, dark_exp,
               dark_pp_version, dark_wt_temp, dark_cass_temp, dark_humidity,
               dprtypes, matched_id]
     # make table using columns and values

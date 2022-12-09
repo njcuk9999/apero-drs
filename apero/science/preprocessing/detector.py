@@ -8,11 +8,13 @@ Created on 2019-03-05 16:37
 @author: ncook
 Version 0.0.1
 """
+import os
 import warnings
 from pathlib import Path
 from typing import Tuple, Union
 
 import numpy as np
+from astropy.table import Table
 from scipy import ndimage
 
 from apero import lang
@@ -24,7 +26,11 @@ from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
 from apero.core.utils import drs_data
+from apero.core.utils import drs_recipe
+from apero.core.utils import drs_utils
 from apero.io import drs_fits
+from apero.io import drs_table
+from apero.science.calib import dark
 
 # =============================================================================
 # Define variables
@@ -40,12 +46,18 @@ __release__ = base.__release__
 WLOG = drs_log.wlog
 # get param dict
 ParamDict = constants.ParamDict
+# get the recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# get fits file class
+DrsFitsFile = drs_file.DrsFitsFile
 # get display func
 display_func = drs_misc.display_func
 # get the calibration database
 CalibrationDatabase = drs_database.CalibrationDatabase
 # Get the text types
 textentry = lang.textentry
+# alias pcheck
+pcheck = constants.PCheck(wlog=WLOG)
 
 
 # =============================================================================
@@ -578,6 +590,236 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
     return snr_hotpix, (rms0, rms1, rms2, rms3), dx, dy
 
 
+def construct_led_cube(params: ParamDict, led_files: np.ndarray,
+                       ref_dark: np.ndarray) -> Tuple[np.ndarray, Table]:
+    """
+    Construct the LED cube and LED table
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param led_files: numpy 1D array, list of absolute paths to LED files
+    :param ref_dark: numpy 2D array, the dark to subtract off the LED [ADU/s]
+
+    :return: tuple, 1. the LED file cube, 2. astropy table, the LED table
+    """
+    # number of iterations
+    n_iterations = 5
+    # load first image
+    led_data_0 = drs_fits.readfits(params, led_files[0])
+    # ----------------------------------------------------------------------
+    # storage
+    cube = np.zeros([len(led_files), led_data_0.shape[0], led_data_0.shape[1]])
+    # storage for led table
+    led_time, led_exp, obs_dirs, basenames = [], [], [], []
+    # ----------------------------------------------------------------------
+    # loop around LED files
+    for it, led_file in enumerate(led_files):
+        # print progres
+        # TODO: Add to language database
+        pargs = [it + 1, len(led_files)]
+        WLOG(params, '', '\tLED file {0} of {1}'.format(*pargs))
+        # get the basename from filenames
+        basename = os.path.basename(led_file)
+        # get the path inst
+        path_inst = drs_file.DrsPath(params, abspath=led_file)
+        # load the LED data
+        led_data, led_hdr = drs_fits.readfits(params, led_file, gethdr=True)
+        # remove the dark
+        with warnings.catch_warnings(record=True) as _:
+            led_data2 = led_data - ref_dark
+        # normalize spectrum
+        led_data3 = led_data2 / mp.nanmedian(led_data2)
+        # set everything below 0.5 to nan
+        led_data3[led_data3 < 0.5] = np.nan
+        # start this value as the median
+        led_med = np.array(led_data3)
+        # as the filtering is a non-linear process, one wants to do it
+        #  iteratively, if you do it just once you end up with a residual from
+        #  the bright fringe of the illumination
+        for iteration in range(n_iterations):
+            # print progres
+            # TODO: Add to language database
+            pargs = [iteration + 1, n_iterations]
+            WLOG(params, '', '\t\tIteration {0} of {1}'.format(*pargs))
+            # median filter square image
+            led_med = led_med / mp.square_medbin(led_med)
+        # append to cube
+        cube[it] = led_med
+        # append to lists
+        basenames.append(basename)
+        obs_dirs.append(path_inst.obs_dir)
+        led_time.append(led_hdr[params['KW_MJDATE'][0]])
+        led_exp.append(led_hdr[params['KW_EXPTIME'][0]])
+    # ----------------------------------------------------------------------
+    # Make LED table
+    # ----------------------------------------------------------------------
+    # convert lists to table
+    columns = ['OBS_DIR', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME']
+    values = [obs_dirs, basenames, led_files, led_time, led_exp]
+    # make table using columns and values
+    led_table = drs_table.make_table(params, columns, values)
+    # ----------------------------------------------------------------------
+    # return cube and table
+    return cube, led_table
+
+
+def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
+                    dark_file: DrsFitsFile) -> DrsFitsFile:
+    """
+    Creates the LED flats for use in preprocessing
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe class that called this function
+    :param led_file: DrsFitsFile class describing the LED file
+    :param dark_file: DrsFitsFile class describing the DARK file
+    :return:
+    """
+    # get the required header keys for led and dark files
+    led_hkeys = dict(led_file.required_header_keys)
+    dark_hkeys = dict(dark_file.required_header_keys)
+    # remove INST_MODE filter
+    # TODO: remove once we have LEDs for HA and HE
+    del led_hkeys['KW_INST_MODE']
+    del dark_hkeys['KW_INST_MODE']
+    # get all files that match these raw file definitions
+    raw_led_files = drs_utils.find_files(params, block_kind='raw',
+                                         filters=led_hkeys)
+    raw_dark_files = drs_utils.find_files(params, block_kind='raw',
+                                          filters=dark_hkeys)
+    # check whether filetype is allowed for instrument
+    rawfiletype = led_file.name
+    # get definition
+    fdkwargs = dict(block_kind='raw', required=False)
+    rawfile = drs_file.get_file_definition(params, rawfiletype, **fdkwargs)
+    # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', 'Creating dark for LED flat')
+    # ----------------------------------------------------------------------
+    # Get all dark file properties
+    # ----------------------------------------------------------------------
+    dark_table = dark.construct_dark_table(params, list(raw_dark_files),
+                                           mode='raw')
+    # ----------------------------------------------------------------------
+    # match files by date and median to produce reference dark
+    # ----------------------------------------------------------------------
+    cargs = [params, dark_table]
+    ref_dark, _ = dark.construct_ref_dark(*cargs)
+    # ----------------------------------------------------------------------
+    # Select our LED files
+    # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', 'Selecting LED files')
+    # loop around led files
+    led_times, infiles, rawfiles = [], [], []
+    for filename in raw_led_files:
+        # read the header
+        hdr = drs_fits.read_header(params, filename)
+        # get the raw time
+        acqtime = float(hdr[params['KW_MJDATE'][0]])
+        # store the times
+        led_times.append(acqtime)
+        # make new raw file
+        infile = rawfile.newcopy(filename=filename, params=params)
+        # read file
+        infile.read_file()
+        # fix header
+        infile = drs_file.fix_header(params, recipe, infile)
+        # append to storage
+        infiles.append(infile)
+        rawfiles.append(infile.basename)
+
+    WLOG(params, '', '\tFound {0} LED files'.format(len(led_times)))
+
+    # ----------------------------------------------------------------------
+    # Create medianed version of LED
+    # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', 'Medianing LED files to produced binned LED')
+    # only keep 10 LED files (uniformly distributed in time)
+    time_mask = drs_utils.uniform_time_list(led_times, 10)
+    led_files = raw_led_files[time_mask]
+    infiles = np.array(infiles)[time_mask]
+    # get cube and led table
+    cube, led_table = construct_led_cube(params, led_files, ref_dark)
+    # led output is the median of the cube
+    led = mp.nanmedian(cube, axis=0)
+    # rms array
+    rms = mp.nanstd(cube, axis=0) / np.sqrt(len(led_files) - 1)
+    # snr array
+    with warnings.catch_warnings(record=True) as _:
+        snr = led / rms
+    # ----------------------------------------------------------------------
+    # Produce stats
+    # ----------------------------------------------------------------------
+    # percentile values
+    with warnings.catch_warnings(record=True) as _:
+        p16, p50, p84 = mp.nanpercentile(rms, [16, 50, 84])
+    # print stats
+    pargs = [p50, p50 - p16, p84 - p50]
+    # TODO: move to language database
+    WLOG(params, '', 'LED FLAT RMS: {0:.3e} +{1:.3e} -{2:.3e}'.format(*pargs))
+    # ----------------------------------------------------------------------
+    # Set the reference pixels to a value of 1
+    # ----------------------------------------------------------------------
+    # keep reference pixels to a value of 1 and not NaN
+    # ref pixels will be set to NaN when we mask outliers as they do not
+    # respond to light
+    led[0:4] = 1
+    led[-4:] = 1
+    led[:, 0:4] = 1
+    led[:, -4:] = 1
+    # -------------------------------------------------------------------------
+    # Combine LEDs for output (hash code)
+    # -------------------------------------------------------------------------
+    # combine leds
+    combfile, combtable = infiles[0].combine(infiles[1:], math=None,
+                                             same_type=True)
+    # -------------------------------------------------------------------------
+    # Save mask image
+    # -------------------------------------------------------------------------
+    outfile = recipe.outputs['PP_LED_FLAT'].newcopy(params=params)
+    # construct out filename
+    outfile.construct_filename(infile=combfile)
+    # copy keys from input file
+    outfile.copy_original_keys(combfile)
+    # add version
+    outfile.add_hkey('KW_PPVERSION', value=params['DRS_VERSION'])
+    # add dates
+    outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    outfile.add_hkey('KW_PID', value=params['PID'])
+    # add input filename
+    outfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='infile')
+    # add stats
+    outfile.add_hkey('KW_PP_LED_FLAT_P50', value=p50)
+    outfile.add_hkey('KW_PP_LED_FLAT_P16', value=p16)
+    outfile.add_hkey('KW_PP_LED_FLAT_P84', value=p84)
+    # ------------------------------------------------------------------
+    # copy data
+    outfile.data = led
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [outfile.filename]
+    WLOG(params, '', textentry('40-010-00015', args=wargs))
+    # define multi lists
+    data_list = [rms, snr, dark_table, led_table, combtable]
+    name_list = ['RMS', 'SNR', 'DARK_TABLE', 'LED_TABLE', 'COMB_TABLE']
+    datatype_list = ['image', 'image', 'image', 'table', 'table', 'table']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
+        name_list += ['PARAM_TABLE']
+    # write image to file
+    outfile.write_multi(data_list=data_list, name_list=name_list,
+                        datatype_list=datatype_list,
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile)
+    # ------------------------------------------------------------------
+    return outfile
+
+
 # =============================================================================
 # Define nirps detector functions
 # =============================================================================
@@ -661,22 +903,9 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     else:
         # ---------------------------------------------------------------------
         # get the mask from the flat
-        pp_ref = drs_file.get_file_definition(params, 'PP_REF', block_kind='red')
-        # get the database key for this file
-        dbkey = pp_ref.dbkey
-        # load the database
-        calibdbm = drs_database.CalibrationDatabase(params)
-        calibdbm.load_db()
-        # get mask file
-        ppmaskfile, ppmasktime, _ = calibdbm.get_calib_file(dbkey, nentries=1,
-                                                            no_times=True)
-        # load mask file
-        ppmask = drs_fits.readfits(params, ppmaskfile)
-
-        ppmask = np.array(ppmask, dtype=bool)
-
+        ppmask, ppfile = get_pp_mask(params)
+        # set the the zero values to NaN
         image2[~ppmask] = np.nan
-
     # -------------------------------------------------------------------------
     # we find the low level frequencies
     # we bin in regions of binsize x binsize pixels. This CANNOT be
@@ -717,15 +946,13 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     return image
 
 
-def get_pp_mask(params: ParamDict, header: drs_fits.Header,
+def get_pp_mask(params: ParamDict,
                 database: Union[CalibrationDatabase, None] = None
                 ) -> Tuple[np.ndarray, Union[Path, str]]:
     """
     Locate and open the PP mask (for NIRPS)
 
     :param params: ParamDict, parameter dictionary of constants
-    :param header: fits.Header - the header of the input file (to decide which
-                   mask to get from calibration database)
     :param database: Calibration database or None - if set avoids reloading the
                      calibration database
 
@@ -744,15 +971,50 @@ def get_pp_mask(params: ParamDict, header: drs_fits.Header,
     else:
         calibdbm = database
     # ---------------------------------------------------------------------
-    # load filename from database
-    fout = calibdbm.get_calib_file(ppkey, header=header, nentries=1,
-                                   required=True)
-    ppfile, _, _ = fout
+    # get mask file
+    ppmaskfile, ppmasktime, _ = calibdbm.get_calib_file(ppkey, nentries=1,
+                                                        no_times=True)
     # ---------------------------------------------------------------------
     # read file
-    mask = drs_fits.readfits(params, ppfile)
+    mask = drs_fits.readfits(params, ppmaskfile)
     # return use_file
-    return mask, ppfile
+    return mask, ppmaskfile
+
+
+def load_led_flat(params: ParamDict,
+                  database: Union[CalibrationDatabase, None] = None
+                  ) -> Tuple[np.ndarray, Union[Path, str]]:
+    """
+    Load the preprocessing LED FLAT image
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param database: Calibration database or None - if set avoids reloading the
+                     calibration database
+
+    :return: either the filename (return_filename=True) or np.ndarray the
+             hot pix image
+    """
+    # get file instance
+    pp_led_flat = drs_file.get_file_definition(params, 'PP_LED_FLAT',
+                                               block_kind='red')
+    # get calibration key
+    led_key = pp_led_flat.get_dbkey()
+    # ---------------------------------------------------------------------
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
+    # ---------------------------------------------------------------------
+    # get mask file
+    led_file, led_time, _ = calibdbm.get_calib_file(led_key, nentries=1,
+                                                    no_times=True)
+    # ---------------------------------------------------------------------
+    # read file
+    led_image = drs_fits.readfits(params, led_file)
+    # return use_file
+    return led_image, led_file
 
 
 def med_amplifiers(image: np.ndarray, namps: int) -> np.ndarray:

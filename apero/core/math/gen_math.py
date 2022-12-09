@@ -8,6 +8,7 @@ Created on 2019-05-15 at 12:24
 @author: cook
 """
 import copy
+import warnings
 from typing import Any, List, Tuple, Union
 
 import numpy as np
@@ -15,6 +16,7 @@ from astropy import constants as cc
 from astropy import units as uu
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.ndimage.morphology import binary_dilation
+from scipy.ndimage import median_filter, zoom
 from scipy.special import erf, erfinv
 
 from apero.base import base
@@ -771,6 +773,72 @@ def medbin(image: np.ndarray, by: int, bx: int) -> np.ndarray:
     med2 = fast.nanmedian(med1, axis=2)
     # return median-binned array
     return med2
+
+
+def square_medbin(image: np.ndarray, binexpo: int = 8):
+    """
+    Produce a median binned image of a 2**N x 2**N image - scaled back to
+    original 2**N by 2**N size
+
+    :param image: Should be a 2**N,2**N image, returns a smoothed version on a
+    spatial scale equivalent to 2**(N-binexpo)
+    :param binexpo: Exponent for binning.
+        binexpo = 3, filter size 2**N/2**3 pix
+        binexpo = 4, filter size 2**N/2**4 pix
+        binexpo = 5, filter size 2**N/2**5 pix
+        binexpo = 6, filter size 2**N/2**6 pix
+        binexpo = 7, filter size 2**N/2**7 pix
+        binexpo = 8, filter size 2**N/2**8 pix
+        binexpo = 9, filter size 2**N/2**9 pix
+        binexpo = 10, filter size 2**N/2**10 pix
+
+    :return: 2**N,2**N image binned
+    """
+    # set function name
+    func_name = __NAME__ + '.square_medbin()'
+    # calculate 2**N for the shape
+    squ_shape = np.log2(image.shape)
+    # square shape must be integers
+    if squ_shape[0] % 1 != 0 or squ_shape[1] % 1 != 0:
+        # TODO: move to language database
+        emsg = 'Image is not 2**N. Shape={0}'.format(image.shape)
+        raise DrsCodedException('0', 'error', message=emsg, func_name=func_name)
+    if squ_shape[0] != squ_shape[1]:
+        # TODO: move to language database
+        emsg = 'Image is not square. Shape={0}'.format(image.shape)
+        raise DrsCodedException('0', 'error', message=emsg, func_name=func_name)
+
+    # nsize (N)
+    nsize = squ_shape[0]
+
+    # intermediate image with median binned version of input image
+    image2 = np.zeros([2 ** binexpo, 2 ** binexpo])
+    npix = int(2 ** (nsize - binexpo))
+    # loop around both dimensions
+    for ypix_it in range(2 ** binexpo):
+        for xpix_it in range(2 ** binexpo):
+            # get slicing parameters
+            y_start = ypix_it * npix
+            y_end = y_start + npix
+            x_start = xpix_it * npix
+            x_end = x_start + npix
+            # image slice
+            simage = image[y_start:y_end, x_start:x_end]
+            # calculate the median of this slice
+            with warnings.catch_warnings(record=True) as _:
+                image2[ypix_it, xpix_it] = fast.nanmedian(simage)
+    # filter with a 3x3 box
+    image2 = median_filter(image2, size=[3, 3])
+
+    # mask points that are NaNs in the binned image
+    mask = np.array(np.isfinite(image2), dtype=float)
+    image2[~np.isfinite(image2)] = 0
+    image2b = zoom(image2, npix, order=1)
+    mask2 = zoom(mask, npix, order=1)
+    image2b[mask2 < 0.5] = np.nan
+
+    # return image that is scaled back to full size
+    return image2b
 
 
 def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:

@@ -326,6 +326,10 @@ PP_DARK_MED_BINNUM.value = 32
 PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
 PP_HOTPIX_FILE.value = 'hotpix_pp.csv'
 
+# Defines the pp led flat file (located in the data folder)
+PP_LED_FLAT_FILE = PP_LED_FLAT_FILE.copy(__NAME__)
+PP_LED_FLAT_FILE.value = 'led_flat_he.fits'
+
 #   Define the number of un-illuminated reference pixels at top of image
 PP_NUM_REF_TOP = PP_NUM_REF_TOP.copy(__NAME__)
 PP_NUM_REF_TOP.value = 4
@@ -512,6 +516,11 @@ DARK_REF_MED_SIZE.value = 4
 # define the maximum number of files to use in the dark reference
 DARK_REF_MAX_FILES = DARK_REF_MAX_FILES.copy(__NAME__)
 DARK_REF_MAX_FILES.value = 100
+
+# define the minimimum allowed exptime for dark files to be used in
+#    dark ref
+DARK_REF_MIN_EXPTIME = DARK_REF_MIN_EXPTIME.copy(__NAME__)
+DARK_REF_MIN_EXPTIME.value = 300
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
@@ -1143,11 +1152,11 @@ EXT_END_ORDER.value = None
 
 #   Half-zone extraction width left side (formally plage1)
 EXT_RANGE1 = EXT_RANGE1.copy(__NAME__)
-EXT_RANGE1.value = '{"A":9, "B":4}'
+EXT_RANGE1.value = '{"A":9, "B":2}'
 
 #   Half-zone extraction width right side (formally plage2)
 EXT_RANGE2 = EXT_RANGE2.copy(__NAME__)
-EXT_RANGE2.value = '{"A":9, "B":4}'
+EXT_RANGE2.value = '{"A":9, "B":2}'
 
 #   Define the orders to skip extraction on (will set all order values
 #      to NaN. If empty list no orders are skipped. Should be a string
@@ -1186,7 +1195,7 @@ EXT_S1D_WAVESTART.value = 965
 
 # Define the end s1d wavelength (in nm)
 EXT_S1D_WAVEEND = EXT_S1D_WAVEEND.copy(__NAME__)
-EXT_S1D_WAVEEND.value = 1808
+EXT_S1D_WAVEEND.value = 1950
 
 #  Define the s1d spectral bin for S1D spectra (nm) when uniform in wavelength
 EXT_S1D_BIN_UWAVE = EXT_S1D_BIN_UWAVE.copy(__NAME__)
@@ -1334,7 +1343,7 @@ WAVE_HC_VEL_ODD_RATIO.author = base.AUTHORS['EA']
 
 # Define orders that we cannot fit HC or FP lines to (list of strings)
 WAVE_REMOVE_ORDERS = WAVE_REMOVE_ORDERS.copy(__NAME__)
-WAVE_REMOVE_ORDERS.value = '45, 46, 47'
+WAVE_REMOVE_ORDERS.value = '44, 45'
 
 # Define the number of iterations required to do the final fplines
 #   wave solution
@@ -1344,7 +1353,7 @@ WAVE_FWAVESOL_ITRS.author = base.AUTHORS['EA']
 
 # define the wave fiber comparison plot order number
 WAVE_FIBER_COMP_PLOT_ORD = WAVE_FIBER_COMP_PLOT_ORD.copy(__NAME__)
-WAVE_FIBER_COMP_PLOT_ORD.value = 35
+WAVE_FIBER_COMP_PLOT_ORD.value = 53
 WAVE_FIBER_COMP_PLOT_ORD.author = base.AUTHORS['NJC']
 
 # =============================================================================
@@ -1407,11 +1416,13 @@ WAVEREF_HC_GUESS_EWID.author = base.AUTHORS['EA']
 
 # Define the fiber offset (in pixels) away from reference fiber
 WAVE_FIBER_OFFSET_MOD = WAVE_FIBER_OFFSET_MOD.copy(__NAME__)
-WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":-24.0}'
+WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":-20.0}'
+WAVE_FIBER_OFFSET_MOD.author = base.AUTHORS['EA']
 
 # Define the fiber scale factor from reference fiber
 WAVE_FIBER_SCALE_MOD = WAVE_FIBER_SCALE_MOD.copy(__NAME__)
-WAVE_FIBER_SCALE_MOD.value = '{"A":1.0,"B":1.0}'
+WAVE_FIBER_SCALE_MOD.value = '{"A":1.0, "B":0.99766}'
+WAVE_FIBER_SCALE_MOD.author = base.AUTHORS['EA']
 
 # =============================================================================
 # CALIBRATION: WAVE RESOLUTION MAP SETTINGS
@@ -1827,6 +1838,11 @@ WAVE_FP_PLOT_MULTI_NBO.value = 5
 WAVE_FP_DPRLIST = WAVE_FP_DPRLIST.copy(__NAME__)
 WAVE_FP_DPRLIST.value = 'OBJ_FP'
 
+# define the override for reference fiber for generating FPLINES
+#    None for no override
+WAVE_FP_FIBERTYPES = WAVE_FP_FIBERTYPES.copy(__NAME__)
+WAVE_FP_FIBERTYPES.value = 'None'
+
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
@@ -2006,6 +2022,10 @@ TELLU_WHITELIST_NAME.value = 'tellu_whitelist.txt'
 # Define telluric black list name
 TELLU_BLACKLIST_NAME = TELLU_BLACKLIST_NAME.copy(__NAME__)
 TELLU_BLACKLIST_NAME.value = 'tellu_blacklist.txt'
+
+# Force only pre-cleaning (not recommended - only for debugging)
+TELLU_ONLY_PRECLEAN = TELLU_ONLY_PRECLEAN.copy(__NAME__)
+TELLU_ONLY_PRECLEAN.value = False
 
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS

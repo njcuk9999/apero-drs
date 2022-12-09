@@ -18,6 +18,8 @@ from apero.plotting import core
 # Plotter class
 Plotter = core.Plotter
 
+plot_selection = core.plot_selection
+
 # Individual plotter
 main = core.main
 

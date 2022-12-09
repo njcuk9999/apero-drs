@@ -200,9 +200,25 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
                                                     drsfitsfile=orderpsfile)]
                 name_list += ['PARAM_TABLE']
             # write image to file
-            orderpsfile.write_multi(data_list=data_list, name_list=name_list,
-                                    block_kind=recipe.out_block_str,
-                                    runstring=recipe.runstring)
+            successful, tries = False, 0
+            # this may fail if two processes are trying to write it at the
+            #   same time
+            while not successful:
+                try:
+                    # write the shapel file
+                    orderpsfile.write_multi(data_list=data_list,
+                                            name_list=name_list,
+                                            block_kind=recipe.out_block_str,
+                                            runstring=recipe.runstring)
+                    # if we get here we are successful
+                    successful = True
+                except Exception as e:
+                    # record the number of tries
+                    tries += 1
+                    # after 10 tries raise the error
+                    if tries > 10:
+                        raise e
+
             # add to output files (for indexing)
             recipe.add_output_file(orderpsfile)
 
@@ -221,11 +237,17 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     # get constant from params
     allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', 'fptypes', kwargs, func_name,
                         mapf='list')
+
+    allowfibers = pcheck(params, 'WAVE_FP_FIBERTYPES', 'fpfibers', kwargs,
+                         func_name, mapf='list')
     # get dprtype
     dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
     # get psuedo constants
     pconst = constants.pload()
-    sfibers, rfiber = pconst.FIBER_KINDS()
+    if fiber in allowfibers:
+        rfiber = str(fiber)
+    else:
+        sfibers, rfiber = pconst.FIBER_KINDS()
     # ----------------------------------------------------------------------
     # deal with fiber being the reference fiber
     if fiber != rfiber:
@@ -237,6 +259,12 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     if dprtype not in allowtypes:
         # Skipping FPLINES (DPRTYPE = {0})
         WLOG(params, 'debug', textentry('90-016-000034', args=[dprtype]))
+        return None
+    # ----------------------------------------------------------------------
+    # make sure fiber is FP
+    if pconst.FIBER_DPR_POS(dprtype, fiber) != 'FP':
+        # Skipping FPLINES (Fiber = {0})'
+        WLOG(params, 'debug', textentry('90-016-00003', args=[fiber]))
         return None
     # ----------------------------------------------------------------------
     # get reference hc lines and fp lines from calibDB
@@ -488,9 +516,66 @@ def qc_extraction(params, eprops):
     return qc_params, passed
 
 
+def create_order_table(lprops: ParamDict, wprops: ParamDict,
+                       eprops: ParamDict) -> Table:
+    """
+    Create the order table with statistics about each order
+    and the wave and loc coefficients
+
+    :param lprops: ParamDict, the localisation parameter dictionary
+    :param wprops: ParamDict, the wave solution parameter dictionary
+    :param eprops: ParamDict, the extraction parameter dictionary
+
+    :return: astropy.Table - the order table
+    """
+    # number of orders
+    nbo = wprops['NBO']
+    nbxpix = wprops['NBPIX']
+    # start the table
+    order_table = Table()
+    # order number
+    order_table['order_num'] = np.arange(nbo).astype(int)
+    # echelle number
+    order_table['echelle_num'] = wprops['EORDERS']
+    # wave min/max/med
+    order_table['WAVE_MIN'] = mp.nanmin(wprops['WAVEMAP'], axis=1)
+    order_table['WAVE_MED'] = mp.nanmedian(wprops['WAVEMAP'], axis=1)
+    order_table['WAVE_MEAN'] = mp.nanmean(wprops['WAVEMAP'], axis=1)
+    order_table['WAVE_MAX'] = mp.nanmax(wprops['WAVEMAP'], axis=1)
+    # central y pixel position
+    order_table['YPIX_CENT'] = lprops['LOCOOBJECT'].data[:, nbxpix//2]
+    # extract parameters
+    order_table['SNR'] = eprops['SNR']
+    order_table['NCOSMIC'] = eprops['N_COSMIC']
+    order_table['FLUXVAL'] = eprops['FLUX_VAL']
+    # loop around e2ds frames
+    keys = ['E2DS', 'E2DSFF', 'FLAT', 'BLAZE']
+    for key in keys:
+        order_table[f'{key}_MIN'] = mp.nanmin(eprops[key], axis=1)
+        order_table[f'{key}_MAX'] = mp.nanmax(eprops[key], axis=1)
+        order_table[f'{key}_MED'] = mp.nanmedian(eprops[key], axis=1)
+        order_table[f'{key}_MEAN'] = mp.nanmean(eprops[key], axis=1)
+    # loc parameters
+    for n_coeff in range(lprops['CENT_COEFFS'].shape[1]):
+        keyname = f'LOC_POS_COEFF_{n_coeff}'
+        order_table[keyname] = lprops['CENT_COEFFS'][:, n_coeff]
+    for n_coeff in range(lprops['WID_COEFFS'].shape[1]):
+        keyname = f'LOC_WID_COEFF_{n_coeff}'
+        order_table[keyname] = lprops['WID_COEFFS'][:, n_coeff]
+    # wave parameters
+    for n_coeff in range(wprops['COEFFS'].shape[1]):
+        keyname = f'WAVE_COEFF_{n_coeff}'
+        order_table[keyname] = wprops['COEFFS'][:, n_coeff]
+    # return the table
+    return order_table
+
+
 def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
                            props, lprops, wprops, eprops, bprops,
                            swprops, svprops, sprops, fbprops, qc_params):
+
+    # create extraction order table
+    order_table = create_order_table(lprops, wprops, eprops)
     # ----------------------------------------------------------------------
     # Store E2DS in file
     # ----------------------------------------------------------------------
@@ -628,7 +713,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsfile.filename]
     WLOG(params, '', textentry('40-016-00005', args=wargs))
     # define multi lists
-    data_list, name_list = [], []
+    data_list, name_list = [order_table], ['ORDER_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfile)]
@@ -667,7 +752,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsfffile.filename]
     WLOG(params, '', textentry('40-016-00006', args=wargs))
     # define multi lists
-    data_list, name_list = [], []
+    data_list, name_list = [order_table], ['ORDER_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfffile)]
@@ -862,6 +947,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # add SNR parameters to header
     e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
                          dim1name='order')
+    e2dsfile.add_hkey('KW_EXT_NBO', value=len(eprops['SNR']))
     # add start and end extraction order used
     e2dsfile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
     e2dsfile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
