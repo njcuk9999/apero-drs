@@ -592,6 +592,10 @@ KW_PP_LED_FLAT_P16.set(key='PPLEDP16', comment='LED RMS 16th percentile')
 KW_PP_LED_FLAT_P84 = KW_PP_LED_FLAT_P84.copy(__NAME__)
 KW_PP_LED_FLAT_P84.set(key='PPLEDP84', comment='LED RMS 84th percentile')
 
+# Define the LED flat file used
+KW_PP_LED_FLAT_FILE = KW_PP_LED_FLAT_FILE.copy(__NAME__)
+KW_PP_LED_FLAT_FILE.set(key='PPLEDFIL', comment='LED flat file used')
+
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
 # -----------------------------------------------------------------------------
