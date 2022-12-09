@@ -193,7 +193,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ----------------------------------------------------------------------
         # Get all fp file properties
         # ----------------------------------------------------------------------
-        fp_table = shape.construct_fp_table(params, filenames)
+        fp_table = shape.construct_fp_table(params, list(filenames))
         # ----------------------------------------------------------------------
         # match files by date and median to produce reference fp
         # ----------------------------------------------------------------------

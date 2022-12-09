@@ -23,6 +23,8 @@ correct_top_bottom = detector.ref_top_bottom
 
 correct_left_right = detector.correct_left_right
 
+create_led_flat = detector.create_led_flat
+
 drs_infile_id = identification.drs_infile_id
 
 drs_outfile_id = identification.drs_outfile_id
@@ -36,6 +38,8 @@ get_obj_reject_list = gen_pp.get_obj_reject_list
 get_file_reject_list = gen_pp.get_file_reject_list
 
 intercept_correct = detector.intercept_correct
+
+load_led_flat = detector.load_led_flat
 
 median_filter_dark_amps = detector.median_filter_dark_amp
 

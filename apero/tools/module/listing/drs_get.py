@@ -225,6 +225,16 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     return all_inpaths, all_outpaths
 
 
+def all_objects(params):
+    # load index database
+    WLOG(params, '', textentry('40-509-00001', args='file index'))
+    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb.load_db()
+    # return all object names
+    return findexdb.get_unique(column='KW_OBJNAME',
+                               condition='BLOCK_KIND="raw"')
+
+
 # =============================================================================
 # Start of code
 # =============================================================================

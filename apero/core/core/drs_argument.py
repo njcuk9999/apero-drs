@@ -3427,8 +3427,9 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
         WLOG(params, 'error', textentry('09-001-00005', args=eargs))
     # clean up
     filename = filename.strip()
+
     # -------------------------------------------------------------------------
-    # deal with database (either gettings + updating or coming from stored)
+    # deal with database (either getting + updating or coming from stored)
     # -------------------------------------------------------------------------
     # deal with instrument == 'None'
     if indexdb.instrument == 'None':
@@ -3448,6 +3449,7 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
     if not drs_text.null_text(obs_dir.obs_dir, ['None', '', 'Null']):
         condition += ' AND OBS_DIR="{0}"'.format(obs_dir.obs_dir)
     # get filedb
+    # TODO: Do we really need to get all entries for this night??
     dbtable = indexdb.get_entries('*', condition=condition)
     filedb = PandasLikeDatabase(dbtable)
     # deal with wildcards
@@ -3459,6 +3461,7 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
     else:
         # make a path cond
         pathcond = 'FILENAME="{0}"'
+
     # ---------------------------------------------------------------------
     # Step 2: Check whether filename itself is in database
     # ---------------------------------------------------------------------
@@ -4063,11 +4066,18 @@ def _check_arg_path(params: ParamDict, arg: DrsArgument,
     """
     # set function name
     # _ = display_func('_check_arg_path', __NAME__)
+
+
+    # get block names
+    blocks = drs_file.DrsPath.get_blocks(params)
+    block_names = drs_file.DrsPath.get_block_names(blocks)
     # set the path as directory if arg.path is None
     if arg.path is None:
         return obs_dir
     # deal with arg.path being a block kind
     if arg.path in params:
+        return drs_file.DrsPath(params, params['arg.path'])
+    elif arg.path in block_names:
         return drs_file.DrsPath(params, block_kind=arg.path)
     else:
         return drs_file.DrsPath(params, arg.path)

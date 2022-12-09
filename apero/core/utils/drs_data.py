@@ -362,6 +362,7 @@ def load_hotpix(params: ParamDict,
     # return table
     table = load_table_file(params, absfilename, fmt=fmt,
                             datastart=datastart, func_name=func_name)
+
     WLOG(params, '', textentry('40-010-00011', args=absfilename))
     return table
 

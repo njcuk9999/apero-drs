@@ -341,6 +341,10 @@ PP_DARK_MED_BINNUM.value = 32
 PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
 PP_HOTPIX_FILE.value = 'hotpix_pp.csv'
 
+# Defines the pp led flat file (located in the data folder)
+PP_LED_FLAT_FILE = PP_LED_FLAT_FILE.copy(__NAME__)
+PP_LED_FLAT_FILE.value = 'None'
+
 #   Define the number of un-illuminated reference pixels at top of image
 PP_NUM_REF_TOP = PP_NUM_REF_TOP.copy(__NAME__)
 PP_NUM_REF_TOP.value = 4
@@ -513,6 +517,11 @@ DARK_REF_MED_SIZE.value = 4
 # define the maximum number of files to use in the dark reference
 DARK_REF_MAX_FILES = DARK_REF_MAX_FILES.copy(__NAME__)
 DARK_REF_MAX_FILES.value = 100
+
+# define the minimimum allowed exptime for dark files to be used in
+#    dark ref
+DARK_REF_MIN_EXPTIME = DARK_REF_MIN_EXPTIME.copy(__NAME__)
+DARK_REF_MIN_EXPTIME.value = 10
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
@@ -1888,6 +1897,11 @@ WAVE_FP_PLOT_MULTI_NBO.value = 5
 WAVE_FP_DPRLIST = WAVE_FP_DPRLIST.copy(__NAME__)
 WAVE_FP_DPRLIST.value = 'OBJ_FP, POLAR_FP'
 
+# define the override for reference fiber for generating FPLINES
+#    None for no override
+WAVE_FP_FIBERTYPES = WAVE_FP_FIBERTYPES.copy(__NAME__)
+WAVE_FP_FIBERTYPES.value = 'None'
+
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
@@ -2066,6 +2080,10 @@ TELLU_WHITELIST_NAME.value = 'tellu_whitelist.txt'
 # Define telluric black list name
 TELLU_BLACKLIST_NAME = TELLU_BLACKLIST_NAME.copy(__NAME__)
 TELLU_BLACKLIST_NAME.value = 'tellu_blacklist.txt'
+
+# Force only pre-cleaning (not recommended - only for debugging)
+TELLU_ONLY_PRECLEAN = TELLU_ONLY_PRECLEAN.copy(__NAME__)
+TELLU_ONLY_PRECLEAN.value = False
 
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS

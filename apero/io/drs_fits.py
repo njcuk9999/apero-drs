@@ -35,6 +35,8 @@ from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_base_classes
+
 
 # =============================================================================
 # Define variables
@@ -1275,8 +1277,27 @@ def deal_with_bad_file_single(filename: str, ext: Optional[int] = None,
 
     :return: either a numpy array (if flavour='data') or fits Header
     """
+    # set function name
+    func_name = display_func('deal_with_bad_file_single', __NAME__)
     # open HDU
-    hdulist = fits.open(filename)
+    loaded, it = False, 0
+    hdulist = None
+    # try to open the file
+    while not loaded:
+        try:
+            hdulist = fits.open(filename)
+            loaded = True
+        except Exception as e:
+            # sometimes the file is open by another process --> wait
+            time.sleep(0.5)
+            it += 1
+            # if we have tried a few times stop
+            if it > 10:
+                # raise an error
+                eargs = [filename, ext, type(e)]
+                ekwargs = dict(codeid='01-001-00014', level='error',
+                               targs=eargs, func_name=func_name)
+                raise drs_base_classes.DrsCodedException(**ekwargs)
     # deal with having an extension number
     if ext is not None:
         if flavour == 'data':

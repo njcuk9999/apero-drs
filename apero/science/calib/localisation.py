@@ -523,7 +523,8 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
         sumpixmap_x = np.sum(ordpixmap, axis=0)
         sumpixmap_y = np.sum(ordpixmap, axis=1)
         # get valid pixels within this order
-        validsumpixmap = np.where(sumpixmap_x > 0.5 * np.max(sumpixmap_x))[0]
+        thres = np.nanpercentile(sumpixmap_x, 90)
+        validsumpixmap = np.where(sumpixmap_x > 0.5 * thres)[0]
         imin = np.min(validsumpixmap) + 15
         imax = np.max(validsumpixmap) - 15
         # we convolve this with a box to smooth it out
@@ -747,6 +748,8 @@ def get_coefficients(params: ParamDict, header: drs_file.Header,
     nbo = locofile.get_hkey('KW_LOC_NBO', dtype=int)
     deg_c = locofile.get_hkey('KW_LOC_DEG_C', dtype=int)
     deg_w = locofile.get_hkey('KW_LOC_DEG_W', dtype=int)
+    # TODO: Should be required v0.8
+    poly_type = locofile.get_hkey('KW_LOC_POLYT', dtype=str, required=False)
     nset = params['FIBER_SET_NUM_FIBERS_{0}'.format(fiber)]
     # extract coefficients from header
     cent_coeffs = locofile.get_hkey_2d('KW_LOC_CTR_COEFF',
@@ -771,9 +774,10 @@ def get_coefficients(params: ParamDict, header: drs_file.Header,
     props['WID_COEFFS'] = wid_coeffs
     props['MERGED'] = merge
     props['NSET'] = nset
+    props['LOC_POLY_TYPE'] = poly_type
     # set sources
     keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'LOCOOBJECT', 'NBO',
-            'DEG_C', 'DEG_W', 'MERGED', 'NSET']
+            'DEG_C', 'DEG_W', 'MERGED', 'NSET', 'LOC_POLY_TYPE']
     props.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return the coefficients and properties
@@ -904,10 +908,11 @@ def loc_stats(params: ParamDict, fiber: str, cent_coeffs: np.ndarray,
     lprops['MAX_SIGNAL'] = max_signal
     lprops['MEAN_BACKGRD'] = mean_backgrd
     lprops['NBXPIX'] = nbxpix
+    lprops['LOC_POLY_TYPE'] = 'Chebyshev'
     # add source
     keys = ['CENT_COEFFS', 'WID_COEFFS', 'CENTER_FITS', 'WIDTH_FITS', 'FIBER',
             'CENTER_DIFF', 'NORDERS', 'NCOEFFS', 'MAX_SIGNAL', 'MEAN_BACKGRD',
-            'NBXPIX']
+            'NBXPIX', 'LOC_POLY_TYPE']
     lprops.set_sources(keys, func_name)
     # return stats parameter dictionary
     return lprops
@@ -1210,6 +1215,8 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     # write 2D list of width fit coefficients
     loco1file.add_hkey_2d('KW_LOC_WID_COEFF', values=wid_coeffs,
                           dim1name='order', dim2name='coeff')
+    # add loco polynomial type
+    loco1file.add_hkey('KW_LOC_POLYT', value=lprops['LOC_POLY_TYPE'])
     # add qc parameters
     loco1file.add_qckeys(qc_params)
     # copy data

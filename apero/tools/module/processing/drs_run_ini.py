@@ -50,8 +50,8 @@ textentry = lang.textentry
 # define default reference dir
 DEFAULT_REF_OBSDIR = dict()
 DEFAULT_REF_OBSDIR['SPIROU'] = '2020-08-31'
-DEFAULT_REF_OBSDIR['NIRPS_HA'] = '2022-05-17'
-DEFAULT_REF_OBSDIR['NIRPS_HE'] = '2022-05-17'
+DEFAULT_REF_OBSDIR['NIRPS_HA'] = '2022-11-24'
+DEFAULT_REF_OBSDIR['NIRPS_HE'] = '2022-11-24'
 # define default number of cores
 DEFAULT_CORES = 5
 # define relative output path

@@ -19,7 +19,7 @@ from apero.core import constants
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.instruments.spirou import file_definitions
+from apero.core.instruments.nirps_he import file_definitions
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
@@ -221,6 +221,21 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # update recipe log file
         # ------------------------------------------------------------------
         log1.end()
+
+    # ----------------------------------------------------------------------
+    # Create LED flat
+    # ----------------------------------------------------------------------
+    # get raw file definitions
+    raw_led_file = file_definitions.raw_led_led
+    raw_dark_file = file_definitions.raw_dark_dark
+    # create the led flat
+    led_outfile = preprocessing.create_led_flat(params, recipe, raw_led_file,
+                                                raw_dark_file)
+    # ------------------------------------------------------------------
+    # add LED flat to calibration database
+    # ------------------------------------------------------------------
+    # copy the mask to the calibDB
+    calibdbm.add_calib_file(led_outfile)
 
     # ----------------------------------------------------------------------
     # End of main code

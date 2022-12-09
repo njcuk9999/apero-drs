@@ -500,12 +500,12 @@ def generate_skip_table(params):
     if drs_text.null_text(params['INCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         include_list = None
     else:
-        include_list = params['INCLUDE_OBS_DIRS']
+        include_list = params.listp('INCLUDE_OBS_DIRS')
     # deal with black list for directories
     if drs_text.null_text(params['EXCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         exclude_list = None
     else:
-        exclude_list = params['EXCLUDE_OBS_DIRS']
+        exclude_list = params.listp('EXCLUDE_OBS_DIRS')
     # deal with obs_dir set (take precedences over white list)
     if not drs_text.null_text(params['RUN_OBS_DIR'], ['', 'None', 'All']):
         include_list = [params['RUN_OBS_DIR']]
