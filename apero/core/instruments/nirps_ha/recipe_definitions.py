@@ -189,7 +189,8 @@ apero_pp_ref.description = textentry('PP_REF_DESC')
 apero_pp_ref.epilog = textentry('PP_REF_EXAMPLE')
 apero_pp_ref.recipe_type = 'recipe'
 apero_pp_ref.recipe_kind = 'pre-reference'
-apero_pp_ref.set_outputs(PP_REF=files.out_pp_ref)
+apero_pp_ref.set_outputs(PP_REF=files.out_pp_ref,
+                         PP_LED_FLAT=files.out_pp_led_flat)
 apero_pp_ref.set_arg(pos=0, **obs_dir)
 apero_pp_ref.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
                        helpstr=textentry('PP_REF_FILETYPE_HELP'))
