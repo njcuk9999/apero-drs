@@ -1263,8 +1263,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
     return ref_dxmap, max_dxmap_std, max_dxmap_info, dxrms
 
 
-def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
-    func_name = __NAME__ + '.calculate_dxmap()'
+def calculate_dxmap_nirps(params, recipe, fpdata, lprops, fiber, **kwargs):
+    func_name = __NAME__ + '.calculate_dxmap_nirps()'
 
     # get parameters from params/kwargs
     nbanana = pcheck(params, 'SHAPE_NUM_ITERATIONS', 'nbanana', kwargs,

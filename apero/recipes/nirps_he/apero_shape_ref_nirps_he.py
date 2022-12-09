@@ -212,12 +212,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
 
     # calculate the dx map for fiber A
     cargs_a = [ref_fp, lprops_sci]
-    dout = shape.calculate_dxmap_nirpshe(params, recipe, *cargs_a, fiber='A')
+    dout = shape.calculate_dxmap_nirps(params, recipe, *cargs_a, fiber='A')
     # TODO use max_dxmap_std, max_dxmap_info, dxrms as in spirou (QC?)
     dxmap_a, max_dxmap_std_a, max_dxmap_info_a, dxrms_a = dout
     # calculate the dx map for fiber B
     cargs_b = [ref_fp, lprops_ref]
-    dout = shape.calculate_dxmap_nirpshe(params, recipe, *cargs_b, fiber='B')
+    dout = shape.calculate_dxmap_nirps(params, recipe, *cargs_b, fiber='B')
     # TODO use max_dxmap_std, max_dxmap_info, dxrms as in spirou (QC?)
     dxmap_b, max_dxmap_std_b, max_dxmap_info_b, dxrms_b = dout
     # TODO: Question do we just sum dxmap_a and dxmap_b?
