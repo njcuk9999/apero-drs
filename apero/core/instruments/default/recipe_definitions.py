@@ -32,7 +32,7 @@ obs_dir = dict(name='obs_dir', dtype='obs_dir',
                helpstr=textentry('OBS_DIR_HELP'))
 # -----------------------------------------------------------------------------
 plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
-            default_ref='DRS_PLOT', minimum=0, maximum=3)
+            default_ref='DRS_PLOT', minimum=0, maximum=4)
 
 # =============================================================================
 # List of usable recipes

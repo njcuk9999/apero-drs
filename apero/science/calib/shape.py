@@ -92,12 +92,6 @@ def construct_fp_table(params: ParamDict, filenames: List[str],
         obs_dir = str(path_inst.obs_dir)
         # read the header
         hdr = drs_fits.read_header(params, filenames[it], copy=True)
-        # must load file here to check if fp is valid
-        image = drs_fits.readfits(params, filenames[it])
-        fpcheck = gen_calib.check_fp(params, image, filename=filenames[it])
-        del image
-        if not fpcheck:
-            continue
         # get keys from hdr
         acqtime, acqmethod = drs_file.get_mid_obs_time(params, hdr,
                                                        out_fmt='mjd')
@@ -124,7 +118,30 @@ def construct_fp_table(params: ParamDict, filenames: List[str],
     basenames = np.array(basenames)[time_mask]
     obs_dirs = np.array(obs_dirs)[time_mask]
     valid_files = np.array(valid_files)[time_mask]
-
+    # ----------------------------------------------------------------------
+    # check that all fps valid
+    # ----------------------------------------------------------------------
+    # store mask for
+    check_mask = np.zeros(len(valid_files)).astype(bool)
+    # loop through file valid_files
+    for it in range(len(valid_files)):
+        # must load file here to check if fp is valid
+        image = drs_fits.readfits(params, valid_files[it])
+        fpcheck = gen_calib.check_fp(params, image, filename=valid_files[it],
+                                     iterator=it, total_num=len(valid_files))
+        del image
+        if not fpcheck:
+            continue
+        else:
+            check_mask[it] = True
+    # mask all lists
+    fp_time = fp_time[check_mask]
+    fp_exp = fp_exp[check_mask]
+    fp_pp_version = fp_pp_version[check_mask]
+    basenames = basenames[check_mask]
+    obs_dirs = obs_dirs[check_mask]
+    valid_files = valid_files[check_mask]
+    # ----------------------------------------------------------------------
     # convert lists to table
     columns = ['OBS_DIR', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
                'PPVERSION']

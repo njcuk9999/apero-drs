@@ -11,6 +11,7 @@ from apero import lang
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
 from apero.core.instruments.default import grouping
+from apero.core.instruments.default import recipe_definitions as rd
 from apero.core.instruments.nirps_ha import file_definitions as files
 from apero.core.utils import drs_recipe
 
@@ -36,8 +37,9 @@ sf = base_class.ImportModule('nirps_ha.file_definitions',
 # =============================================================================
 # Commonly used arguments
 # =============================================================================
-obs_dir = dict(name='obs_dir', dtype='obs_dir',
-               helpstr=textentry('OBS_DIR_HELP'))
+obs_dir = rd.obs_dir
+# -----------------------------------------------------------------------------
+plot = rd.plot
 
 # =============================================================================
 # Option definitions
@@ -71,9 +73,6 @@ flipimage = dict(name='--flipimage', dtype='options', default='both',
 # -----------------------------------------------------------------------------
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=textentry('FLUXUNITS_HELP'), options=['ADU/s', 'e-'])
-# -----------------------------------------------------------------------------
-plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
-            default_ref='DRS_PLOT', minimum=0, maximum=3)
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
               helpstr=textentry('RESIZE_HELP'),
