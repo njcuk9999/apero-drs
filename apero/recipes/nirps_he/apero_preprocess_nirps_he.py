@@ -322,7 +322,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # TODO: Add to language database
         WLOG(params, '', 'Performing LED flat')
         # load the LED flat from calibration database
-        led_flat = prep.load_led_flat(params)
+        led_flat, led_file = prep.load_led_flat(params)
         # divide image by LED flat
         image = image / led_flat
 
@@ -374,6 +374,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         outfile.add_hkey('KW_PPC_NBAD_INTE', value=cprops['NUM_BAD_INTERCEPT'])
         outfile.add_hkey('KW_PPC_NBAD_SLOPE', value=cprops['NUM_BAD_SLOPE'])
         outfile.add_hkey('KW_PPC_NBAD_BOTH', value=cprops['NUM_BAD_BOTH'])
+        # Add the LED flat file used
+        outfile.add_hkey('KW_PP_LED_FLAT_FILE',
+                         value=os.path.basename(led_file))
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image

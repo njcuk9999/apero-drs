@@ -29,7 +29,7 @@ from apero.science import preprocessing
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_pp_ref_nirps_ha.py'
-__INSTRUMENT__ = 'NIRPS_HE'
+__INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__

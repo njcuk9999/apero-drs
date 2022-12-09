@@ -52,6 +52,7 @@ __all__ = [  # input keys
     # preprocess keys
     'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PP_REF_NSIG', 'KW_PP_REF_FILE',
     'KW_PP_LED_FLAT_P50', 'KW_PP_LED_FLAT_P16', 'KW_PP_LED_FLAT_P84',
+    'KW_PP_LED_FLAT_FILE',
     'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE', 'KW_PPC_NBAD_BOTH',
     # dark keys
     'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
@@ -778,6 +779,11 @@ KW_PP_LED_FLAT_P84 = Keyword('KW_PP_LED_FLAT_P84', key='NULL', dtype=float,
                              source=__NAME__,
                              description='Define the percentile stats for LED '
                                          'flat in pp (84th percentile)')
+
+# Define the LED flat file used
+KW_PP_LED_FLAT_FILE = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
+                             source=__NAME__,
+                             description='Define the LED flat file used')
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
