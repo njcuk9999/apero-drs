@@ -366,6 +366,10 @@ def setup(name: str = 'None', instrument: str = 'None',
         # print out of the parameters used
         _display_run_time_arguments(recipe, fkwargs, logonly=True)
     # -------------------------------------------------------------------------
+    # deal with plot mode = 4 (special mode that prompts user to select
+    #    which plots to plot)
+    if params['DRS_PLOT'] == 4:
+        params, recipe = plotting.plot_selection(params, recipe)
     # add in the plotter
     if enable_plotter:
         recipe.plot = plotting.Plotter(params, recipe)

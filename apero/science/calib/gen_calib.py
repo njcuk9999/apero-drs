@@ -796,7 +796,9 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
              percentile: Union[float, None] = None,
              fp_qc_thres: Union[float, None] = None,
              centersize: Union[int, None] = None,
-             num_ref: Union[int, None] = None) -> bool:
+             num_ref: Union[int, None] = None,
+             iterator: Optional[int] = None,
+             total_num: Optional[int] = None) -> bool:
     """
     Checks that a 2D image containing FP is valid
 
@@ -817,7 +819,13 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
     # set the function name
     func_name = __NAME__ + '.check_fp()'
     # log: Validating FP file
-    WLOG(params, '', textentry('40-014-00043', args=[filename]))
+    if iterator is None or total_num is None:
+        WLOG(params, '', textentry('40-014-00043', args=[filename]))
+    else:
+        # TODO: Add to language database
+        pmsg = 'Validating FP file {0} of {1}: {2} '
+        args = [iterator + 1, total_num, filename]
+        WLOG(params, '', pmsg.format(*args))
     # get properties from params
     percentile = pcheck(params, 'CALIB_CHECK_FP_PERCENTILE', func=func_name,
                         override=percentile)

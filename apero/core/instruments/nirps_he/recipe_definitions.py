@@ -10,6 +10,7 @@ Created on 2020-10-31 at 18:06
 from apero import lang
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
+from apero.core.instruments.default import recipe_definitions as rd
 from apero.core.instruments.default import grouping
 from apero.core.instruments.nirps_he import file_definitions as files
 from apero.core.utils import drs_recipe
@@ -36,8 +37,10 @@ sf = base_class.ImportModule('nirps_he.file_definitions',
 # =============================================================================
 # Commonly used arguments
 # =============================================================================
-obs_dir = dict(name='obs_dir', dtype='obs_dir',
-               helpstr=textentry('OBS_DIR_HELP'))
+obs_dir = rd.obs_dir
+# -----------------------------------------------------------------------------
+plot = rd.plot
+
 
 # =============================================================================
 # Option definitions
@@ -72,9 +75,6 @@ flipimage = dict(name='--flipimage', dtype='options', default='both',
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=textentry('FLUXUNITS_HELP'), options=['ADU/s', 'e-'])
 # -----------------------------------------------------------------------------
-plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
-            default_ref='DRS_PLOT', minimum=0, maximum=3)
-# -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
               helpstr=textentry('RESIZE_HELP'),
               default_ref='INPUT_RESIZE_IMAGE')
@@ -106,7 +106,7 @@ flatfile = dict(name='--flatfile', dtype='file', default='None',
                 files=[files.out_ff_flat], helpstr=textentry('FLATFILE_HELP'))
 # -----------------------------------------------------------------------------
 fpref = dict(name='--fpref', dtype='file', default='None',
-             files=[files.out_shape_fpref],
+             files=[files.out_shape_fpref], path='red',
              helpstr=textentry('FPREFFILE_HELP'))
 # -----------------------------------------------------------------------------
 locofile = dict(name='--locofile', dtype='file', default='None',
@@ -421,9 +421,7 @@ apero_shape_ref.set_kwarg(**plot)
 apero_shape_ref.set_kwarg(**resize)
 apero_shape_ref.set_min_nfiles('fpfiles', 1)
 apero_shape_ref.set_min_nfiles('hcfiles', 1)
-apero_shape_ref.set_kwarg(name='--fpref', dtype='files',
-                          files=[files.out_shape_fpref], default='None',
-                          helpstr=textentry('SHAPE_FPREF_HELP'))
+apero_shape_ref.set_kwarg(**fpref)
 apero_shape_ref.group_func = grouping.group_by_dirname
 apero_shape_ref.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
