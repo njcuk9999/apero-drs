@@ -200,9 +200,25 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
                                                     drsfitsfile=orderpsfile)]
                 name_list += ['PARAM_TABLE']
             # write image to file
-            orderpsfile.write_multi(data_list=data_list, name_list=name_list,
-                                    block_kind=recipe.out_block_str,
-                                    runstring=recipe.runstring)
+            successful, tries = False, 0
+            # this may fail if two processes are trying to write it at the
+            #   same time
+            while not successful:
+                try:
+                    # write the shapel file
+                    orderpsfile.write_multi(data_list=data_list,
+                                            name_list=name_list,
+                                            block_kind=recipe.out_block_str,
+                                            runstring=recipe.runstring)
+                    # if we get here we are successful
+                    successful = True
+                except Exception as e:
+                    # record the number of tries
+                    tries += 1
+                    # after 10 tries raise the error
+                    if tries > 10:
+                        raise e
+
             # add to output files (for indexing)
             recipe.add_output_file(orderpsfile)
 
