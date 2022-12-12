@@ -1175,7 +1175,8 @@ pp_seq_opt.add(apero_preprocess, name='PP_FF', files=[files.raw_flat_flat],
                recipe_kind='pre-ff')
 pp_seq_opt.add(apero_preprocess, name='PP_DFP', files=[files.raw_dark_fp],
                recipe_kind='pre-dfp')
-pp_seq_opt.add(apero_preprocess, name='PP_SKY', files=[files.raw_dark_dark_sky],
+pp_seq_opt.add(apero_preprocess, name='PP_SKY',
+               files=[files.raw_dark_dark_sky, files.raw_test_dark_dark_sky],
                recipe_kind='pre-sky')
 pp_seq_opt.add(apero_preprocess, name='PP_LFC', files=[files.raw_lfc_lfc],
                recipe_kind='pre-lfc')
@@ -1183,8 +1184,6 @@ pp_seq_opt.add(apero_preprocess, name='PP_LFCFP', files=[files.raw_lfc_fp],
                recipe_kind='pre-lfcfp')
 pp_seq_opt.add(apero_preprocess, name='PP_FPLFC', files=[files.raw_fp_lfc],
                recipe_kind='pre-fplfc')
-pp_seq_opt.add(apero_preprocess, name='PP_EFFSKY',
-               files=[files.raw_test_dark_dark_sky], recipe_kind='pre-effsky')
 pp_seq_opt.add(apero_preprocess, name='PP_EVERY',
                files=[files.raw_file])
 
@@ -1330,7 +1329,8 @@ eng_seq.add(apero_extract, name='EXT_FF', files=[files.pp_flat_flat],
             recipe_kind='extract-ff')
 eng_seq.add(apero_extract, name='EXT_DFP', files=[files.pp_dark_fp],
             recipe_kind='extract-dfp')
-eng_seq.add(apero_extract, name='EXT_SKY', files=[files.pp_dark_dark_sky],
+eng_seq.add(apero_extract, name='EXT_SKY',
+            files=[files.pp_dark_dark_sky, files.pp_test_dark_dark_sky],
             recipe_kind='extract-sky')
 eng_seq.add(apero_extract, name='EXT_LFC', files=[files.pp_lfc_lfc],
             recipe_kind='extract-lfc')
@@ -1340,9 +1340,6 @@ eng_seq.add(apero_extract, name='EXT_LFCFP', files=[files.pp_lfc_fp],
             recipe_kind='extract-lfcfp')
 eng_seq.add(apero_extract, name='EXT_FPLFC', files=[files.pp_fp_lfc],
             recipe_kind='extract-fplfc')
-eng_seq.add(apero_extract, name='EXT_EFFSKY',
-            files=[files.pp_test_dark_dark_sky],
-            recipe_kind='extract-effsky')
 eng_seq.add(apero_extract, name='EXT_EVERY', files=[files.pp_file],
             recipe_kind='extract-everything')
 
