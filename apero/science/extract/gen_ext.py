@@ -543,7 +543,7 @@ def create_order_table(lprops: ParamDict, wprops: ParamDict,
     order_table['WAVE_MEAN'] = mp.nanmean(wprops['WAVEMAP'], axis=1)
     order_table['WAVE_MAX'] = mp.nanmax(wprops['WAVEMAP'], axis=1)
     # central y pixel position
-    order_table['YPIX_CENT'] = lprops['LOCOOBJECT'].data[:, nbxpix//2]
+    order_table['YPIX_CENT'] = lprops['YCENT']
     # extract parameters
     order_table['SNR'] = eprops['SNR']
     order_table['NCOSMIC'] = eprops['N_COSMIC']
