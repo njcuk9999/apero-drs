@@ -766,7 +766,8 @@ def get_coefficients(params: ParamDict, header: drs_file.Header,
     nbxpix = locofile.data.shape[1]
     ycents = []
     for order_num in range(nbo):
-        ycents.append(mp.val_cheby(cent_coeffs, nbxpix//2, domain=[0, nbxpix]))
+        ycents.append(mp.val_cheby(cent_coeffs[order_num], nbxpix//2,
+                                   domain=[0, nbxpix]))
     # -------------------------------------------------------------------------
     # store localisation properties in parameter dictionary
     props = ParamDict()
