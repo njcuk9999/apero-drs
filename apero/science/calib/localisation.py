@@ -784,7 +784,7 @@ def get_coefficients(params: ParamDict, header: drs_file.Header,
     props['NSET'] = nset
     props['LOC_POLY_TYPE'] = poly_type
     # set sources
-    keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'LOCOOBJECT', 'YCENT' 
+    keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'LOCOOBJECT', 'YCENT',
             'NBO', 'NBXPIX', 'DEG_C', 'DEG_W', 'MERGED', 'NSET',
             'LOC_POLY_TYPE']
     props.set_sources(keys, func_name)
