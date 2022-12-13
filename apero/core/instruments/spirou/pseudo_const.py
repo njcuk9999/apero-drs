@@ -852,13 +852,14 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
             # get shape
             nbo, ncoeff = coeffs.shape
             # set up acc
-            acc = np.zeros([int(nbo / 2), ncoeff])
+            acc = np.zeros([int(nbo // 2), ncoeff])
             # get sum of 0 to step pixels
             cosum = np.array(coeffs[0:nbo:2, :])
             # add the sum of 1 to step
             cosum = cosum + coeffs[1:nbo:2, :]
             # overwrite values into coeffs array
-            acc[0:int(nbo / 2), :] = (1 / 2) * cosum
+            acc[0:int(nbo // 2), :] = (1 / 2) * cosum
+            nbo = nbo // 2
         # for A we only need the A components
         elif fiber == 'A':
             acc = coeffs[1::2]
