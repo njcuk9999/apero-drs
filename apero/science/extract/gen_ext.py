@@ -11,7 +11,7 @@ Created on 2019-07-09 at 13:42
 """
 import os
 import warnings
-from typing import Union
+from typing import Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -27,6 +27,7 @@ from apero.core.core import drs_log, drs_file
 from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.io import drs_fits
+from apero.io import drs_lock
 from apero.science.calib import gen_calib
 from apero.science.calib import shape
 from apero.science.calib import wave
@@ -68,7 +69,6 @@ display_func = drs_log.display_func
 # =============================================================================
 def order_profiles(params, recipe, infile, fibertypes, sprops,
                    filenames=None, database=None):
-    func_name = __NAME__ + '.order_profiles()'
     # filenames must be a dictionary
     if not isinstance(filenames, dict):
         filenames = dict()
@@ -119,115 +119,166 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
             # construct order profile straightened
             orderpsfile = ospfile.newcopy(params=params, fiber=fiber)
             orderpsfile.construct_filename(infile=oinfile)
+        # ----------------------------------------------------------------------
+        # define a synchronized lock for indexing (so multiple instances do not
+        #  run at the same time)
+        lockfile = os.path.basename(filename)
+        # start a lock
+        lock = drs_lock.Lock(params, lockfile)
+        # -------------------------------------------------------------------------
+        # must check that a pid is set
+        if params['PID'] is None:
+            WLOG(params, 'error', textentry('10-005-00006'))
+            pid = None
+        else:
+            pid = params['PID']
         # ------------------------------------------------------------------
-        # flag that order profile has been read (or not read)
-        orderp_read = False
-        orderp = None
-        orderpfilename = None
-        orderptime = None
-        # check if temporary file exists
-        if orderpsfile.file_exists():
-            try:
-                # load the numpy temporary file
-                #    Note: NpyFitsFile needs arguments params!
-                if isinstance(orderpsfile, DrsFitsFile):
-                    # log progress (read file)
-                    wargs = [orderpsfile.filename]
-                    WLOG(params, '', textentry('40-013-00023', args=wargs))
-                    # read npy file
-                    orderpsfile.read_file()
-                else:
-                    eargs = [orderpsfile.__str__(), func_name]
-                    WLOG(params, 'error', textentry('00-016-00023', args=eargs))
-                # push data into orderp
-                orderp = orderpsfile.get_data()
-                orderpfilename = orderpsfile.filename
-                # time is the MJDMID of the order profile
-                orderptime = orderpsfile.get_hkey('KW_MID_OBS_TIME')
-                # mark orderp as read
-                orderp_read = True
-            except Exception as e:
-                # args for warning (from error thrown)
-                wargs = [orderpsfile.filename, type(e), str(e), func_name]
-                # report error as warning
-                WLOG(params, 'warning', textentry('10-016-00026', args=wargs),
-                     sublevel=2)
-                # make sure we know order profile has not been read
-                orderp_read = False
-        # if straighted order profile doesn't exist and we have no filename
-        #   defined then we need to figure out the order profile file -
-        #   load it and then save it as a straighted version (orderpsfile)
-        if not orderp_read:
-            # get key
-            key = opfile.get_dbkey()
-            # get pseudo constants
-            pconst = constants.pload()
-            # get fiber to use for ORDERPFILE (i.e. AB,A,B --> AB  and C-->C)
-            usefiber = pconst.FIBER_LOC_TYPES(fiber)
-            # get the order profile filename
-            cfile = gen_calib.CalibFile()
-            cfile.load_calib_file(params, key, header, filename=filename,
-                                  userinputkey='ORDERPFILE', database=calibdbm,
-                                  fiber=usefiber, return_filename=True)
-            # get properties from calibration file
-            filename, orderptime = cfile.filename, cfile.mjdmid
-            # load order profile
-            orderp, orderhdr = drs_fits.readfits(params, filename, getdata=True,
-                                                 gethdr=True)
-            orderpfilename = filename
-            # straighten orders
-            orderp = shape.ea_transform(params, orderp, sprops['SHAPEL'],
-                                        dxmap=sprops['SHAPEX'],
-                                        dymap=sprops['SHAPEY'],)
-            # copy full header from order profile
-            orderpsfile.copy_header(header=orderhdr)
-            orderpsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
-            orderpsfile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
-            orderpsfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
-            orderpsfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
-            orderpsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
-            orderpsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
-            # push into orderpsfile
-            orderpsfile.data = orderp
-            # log progress (saving to file)
-            wargs = [orderpsfile.filename]
-            WLOG(params, '', textentry('40-013-00024', args=wargs))
-            # define multi lists
-            data_list, name_list = [], []
-            # snapshot of parameters
-            if params['PARAMETER_SNAPSHOT']:
-                data_list += [params.snapshot_table(recipe,
-                                                    drsfitsfile=orderpsfile)]
-                name_list += ['PARAM_TABLE']
-            # write image to file
-            successful, tries = False, 0
-            # this may fail if two processes are trying to write it at the
-            #   same time
-            while not successful:
-                try:
-                    # write the shapel file
-                    orderpsfile.write_multi(data_list=data_list,
-                                            name_list=name_list,
-                                            block_kind=recipe.out_block_str,
-                                            runstring=recipe.runstring)
-                    # if we get here we are successful
-                    successful = True
-                except Exception as e:
-                    # record the number of tries
-                    tries += 1
-                    # after 10 tries raise the error
-                    if tries > 10:
-                        raise e
-
-            # add to output files (for indexing)
-            recipe.add_output_file(orderpsfile)
-
+        # need a lock here as orderps temporary file can be writing to disk
+        #    and other cores then try to read the file while writing
+        @drs_lock.synchronized(lock, pid)
+        def locked_save_file():
+            return save_tmp_orderps_file(params, recipe, orderpsfile, opfile,
+                                         fiber, header, filename, calibdbm,
+                                         sprops)
+        # -----------------------------------------------------------------
+        # try to run locked makedirs
+        try:
+            orderp, orderpfilename, orderptime = locked_save_file()
+        except KeyboardInterrupt as e:
+            lock.reset()
+            raise e
+        except Exception as e:
+            # reset lock
+            lock.reset()
+            raise e
+        # -----------------------------------------------------------------
         # store in storage dictionary
         orderprofiles[fiber] = orderp
         orderfiles[fiber] = orderpfilename
         ordertimes[fiber] = orderptime
     # return order profiles
     return orderprofiles, orderfiles, ordertimes
+
+
+OrderPSReturn = Tuple[Union[DrsFitsFile, None], str, float]
+
+
+def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
+                          orderpsfile: DrsFitsFile, opfile: DrsFitsFile,
+                          fiber: str, header: drs_fits.Header,
+                          filename: str,
+                          calibdbm: drs_database.CalibrationDatabase,
+                          sprops: ParamDict) -> OrderPSReturn:
+    """
+    We need to find the temporary order ps file one core at a time (if we
+    don't find the file we create it) this can lead to problems when we are
+    writing it at the same time as trying to find it on another core
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
+    :param orderpsfile: DrsFitsFile, the output straightened order profile
+                        file class instance
+    :param opfile: DrsFitsFile, the input order profile file class instance
+    :param fiber: str, the fiber name
+    :param header: Header, the fits Header class for the input file
+    :param filename: str, the input filename
+    :param calibdbm: Calibration database, the calibration database class
+    :param sprops: ParamDict, the shape parameter dictionary
+
+    :return: tuple, 1. return the order profile, 2. the filename and
+             3. the time of this file
+    """
+    # set function name
+    func_name = display_func('save_tmp_orderps_file', __NAME__)
+    # flag that order profile has been read (or not read)
+    orderp_read = False
+    orderp = None
+    orderpfilename = 'Unknown'
+    orderptime = np.nan
+    # check if temporary file exists
+    if orderpsfile.file_exists():
+        # we need to wait (as file may exist but still be writing to disk
+        try:
+            # load the numpy temporary file
+            #    Note: NpyFitsFile needs arguments params!
+            if isinstance(orderpsfile, DrsFitsFile):
+                # log progress (read file)
+                wargs = [orderpsfile.filename]
+                WLOG(params, '', textentry('40-013-00023', args=wargs))
+                # read npy file
+                orderpsfile.read_file()
+            else:
+                eargs = [orderpsfile.__str__(), func_name]
+                WLOG(params, 'error', textentry('00-016-00023', args=eargs))
+            # push data into orderp
+            orderp = orderpsfile.get_data()
+            orderpfilename = orderpsfile.filename
+            # time is the MJDMID of the order profile
+            orderptime = orderpsfile.get_hkey('KW_MID_OBS_TIME')
+            # mark orderp as read
+            orderp_read = True
+        except Exception as e:
+            # args for warning (from error thrown)
+            wargs = [orderpsfile.filename, type(e), str(e), func_name]
+            # report error as warning
+            WLOG(params, 'warning', textentry('10-016-00026', args=wargs),
+                 sublevel=2)
+            # make sure we know order profile has not been read
+            orderp_read = False
+    # if straighted order profile doesn't exist and we have no filename
+    #   defined then we need to figure out the order profile file -
+    #   load it and then save it as a straighted version (orderpsfile)
+    if not orderp_read:
+        # get key
+        key = opfile.get_dbkey()
+        # get pseudo constants
+        pconst = constants.pload()
+        # get fiber to use for ORDERPFILE (i.e. AB,A,B --> AB  and C-->C)
+        usefiber = pconst.FIBER_LOC_TYPES(fiber)
+        # get the order profile filename
+        cfile = gen_calib.CalibFile()
+        cfile.load_calib_file(params, key, header, filename=filename,
+                              userinputkey='ORDERPFILE', database=calibdbm,
+                              fiber=usefiber, return_filename=True)
+        # get properties from calibration file
+        filename, orderptime = cfile.filename, cfile.mjdmid
+        # load order profile
+        orderp, orderhdr = drs_fits.readfits(params, filename, getdata=True,
+                                             gethdr=True)
+        orderpfilename = filename
+        # straighten orders
+        orderp = shape.ea_transform(params, orderp, sprops['SHAPEL'],
+                                    dxmap=sprops['SHAPEX'],
+                                    dymap=sprops['SHAPEY'], )
+        # copy full header from order profile
+        orderpsfile.copy_header(header=orderhdr)
+        orderpsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
+        orderpsfile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
+        orderpsfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
+        orderpsfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
+        orderpsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
+        orderpsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
+        # push into orderpsfile
+        orderpsfile.data = orderp
+        # log progress (saving to file)
+        wargs = [orderpsfile.filename]
+        WLOG(params, '', textentry('40-013-00024', args=wargs))
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(recipe,
+                                                drsfitsfile=orderpsfile)]
+            name_list += ['PARAM_TABLE']
+        # write the shapel file
+        orderpsfile.write_multi(data_list=data_list,
+                                name_list=name_list,
+                                block_kind=recipe.out_block_str,
+                                runstring=recipe.runstring)
+        # add to output files (for indexing)
+        recipe.add_output_file(orderpsfile)
+    # return the order profile, the filename and the time of this file
+    return orderp, orderpfilename, orderptime
 
 
 def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
@@ -543,7 +594,7 @@ def create_order_table(lprops: ParamDict, wprops: ParamDict,
     order_table['WAVE_MEAN'] = mp.nanmean(wprops['WAVEMAP'], axis=1)
     order_table['WAVE_MAX'] = mp.nanmax(wprops['WAVEMAP'], axis=1)
     # central y pixel position
-    order_table['YPIX_CENT'] = lprops['LOCOOBJECT'].data[:, nbxpix//2]
+    order_table['YPIX_CENT'] = lprops['YCENT']
     # extract parameters
     order_table['SNR'] = eprops['SNR']
     order_table['NCOSMIC'] = eprops['N_COSMIC']

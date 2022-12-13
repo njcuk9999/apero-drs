@@ -26,6 +26,7 @@ from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_data
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
 from apero.io import drs_fits
 from apero.io import drs_image
@@ -44,13 +45,16 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get param dict
-ParamDict = constants.ParamDict
-DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
+# Get function string
+display_func = drs_log.display_func
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -58,7 +62,8 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Define user functions
 # =============================================================================
-def construct_fp_table(params: ParamDict, filenames: List[str],
+def construct_fp_table(params: ParamDict,
+                       filenames: Union[List[str], np.ndarray],
                        max_nfiles: Optional[int] = None) -> Table:
     """
     Construct the FP table
@@ -71,8 +76,8 @@ def construct_fp_table(params: ParamDict, filenames: List[str],
 
     :return: astropy table, the FP table
     """
-    # define function
-    func_name = __NAME__ + '.construct_fp_table()'
+    # set function name
+    func_name = display_func('construct_fp_table', __NAME__)
     # get parameters from params
     max_num_files = pcheck(params, 'SHAPE_REF_MAX_FILES', func=func_name,
                            override=max_nfiles)
@@ -153,160 +158,43 @@ def construct_fp_table(params: ParamDict, filenames: List[str],
     return fp_table
 
 
-# def construct_REF_FP(params, recipe, dprtype, fp_table, image_ref, **kwargs):
-#     func_name = __NAME__ + '.construct_ref_dark'
-#     # get constants from params/kwargs
-#     time_thres = pcheck(params, 'FP_REF_MATCH_TIME', 'time_thres', kwargs,
-#                         func_name)
-#     percent_thres = pcheck(params, 'FP_REF_PERCENT_THRES', 'percent_thres',
-#                            kwargs, func_name)
-#     qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res', kwargs,
-#                     func_name)
-#     min_num = pcheck(params, 'SHAPE_FP_REF_MIN_IN_GROUP', 'min_num', kwargs,
-#                      func_name)
-#
-#     # get col data from dark_table
-#     filenames = fp_table['FILENAME']
-#     fp_times = fp_table['MJDATE']
-#
-#     # ----------------------------------------------------------------------
-#     # match files by date
-#     # ----------------------------------------------------------------------
-#     # log progress
-#     WLOG(params, '', textentry('40-014-00004', args=[time_thres]))
-#     # match files by time
-#     matched_id = drs_path.group_files_by_time(params, fp_times, time_thres)
-#
-#     # ----------------------------------------------------------------------
-#     # Read individual files and sum groups
-#     # ----------------------------------------------------------------------
-#     # log process
-#     WLOG(params, '', textentry('40-014-00005'))
-#     # Find all unique groups
-#     u_groups = np.unique(matched_id)
-#     # storage of dark cube
-#     valid_dark_files, valid_badpfiles, valid_backfiles = [], [], []
-#     fp_cube, transforms_list, valid_matched_id = [], [], []
-#     table_mask = np.zeros(len(fp_table), dtype=bool)
-#     # loop through groups
-#     for g_it, group_num in enumerate(u_groups):
-#         # log progress
-#         wargs = [g_it + 1, len(u_groups)]
-#         WLOG(params, 'info', textentry('40-014-00006', args=wargs))
-#         # find all files for this group
-#         fp_ids = filenames[matched_id == group_num]
-#         indices = np.arange(len(filenames))[matched_id == group_num]
-#         # only combine if 3 or more images were taken
-#         if len(fp_ids) >= min_num:
-#             # load this groups files into a cube
-#             cube = []
-#             # get infile from filetype
-#             file_inst = core.get_file_definition(dprtype, params['INSTRUMENT'],
-#                                                  kind='tmp')
-#             # get this groups storage
-#             vheaders = []
-#             # loop around fp ids
-#             for f_it, filename in enumerate(fp_ids):
-#                 # log reading of data
-#                 wargs = [os.path.basename(filename), f_it + 1, len(fp_ids)]
-#                 WLOG(params, 'info', textentry('40-014-00007', args=wargs))
-#                 # construct new infile instance
-#                 fpfile_it = file_inst.newcopy(filename=filename, recipe=recipe)
-#                 fpfile_it.read_file()
-#                 # append to cube
-#                 cube.append(np.array(fpfile_it.data))
-#                 vheaders.append(drs_fits.Header(fpfile_it.header))
-#                 # delete fits data
-#                 del fpfile_it
-#             # convert to numpy array
-#             cube = np.array(cube)
-#             # log process
-#             WLOG(params, '', textentry('40-014-00008', args=[len(fp_ids)]))
-#             # median fp cube
-#             with warnings.catch_warnings(record=True) as _:
-#                 groupfp = mp.nanmedian(cube, axis=0)
-#
-#             # --------------------------------------------------------------
-#             # calibrate group fp
-#             # --------------------------------------------------------------
-#             # construct new infile instance
-#             groupfile = file_inst.newcopy(params=params)
-#             groupfile.data = groupfp
-#             groupfile.header = vheaders[0]
-#             groupfile.filename = fp_ids[0]
-#             groupfile.basename = os.path.basename(fp_ids[0])
-#
-#             # get and correct file
-#             cargs = [params, recipe, groupfile]
-#             ckwargs = dict(n_percentile=percent_thres,
-#                            correctback=False)
-#             props, groupfp = general.calibrate_ppfile(*cargs, **ckwargs)
-#             # --------------------------------------------------------------
-#             # shift group to reference
-#             targs = [image_ref, groupfp]
-#             gout = get_linear_transform_params(params, recipe, *targs)
-#             transforms, xres, yres = gout
-#             # quality control on group
-#             if transforms is None:
-#                 # log that image quality too poor
-#                 wargs = [g_it + 1]
-#                 WLOG(params, 'warning', textentry('10-014-00001', args=wargs))
-#                 # skip adding to group
-#                 continue
-#             if (xres > qc_res) or (yres > qc_res):
-#                 # log that xres and yres too larger
-#                 wargs = [xres, yres, qc_res]
-#                 WLOG(params, 'warning', textentry('10-014-00002', args=wargs))
-#                 # skip adding to group
-#                 continue
-#             # perform a final transform on the group
-#             groupfp = ea_transform(params, groupfp,
-#                                    lin_transform_vect=transforms)
-#             # append to cube
-#             fp_cube.append(groupfp)
-#             # append transforms to list
-#             for _ in fp_ids:
-#                 transforms_list.append(transforms)
-#                 # now add extract properties to main group
-#                 valid_matched_id.append(group_num)
-#                 valid_dark_files.append(props['DARKFILE'])
-#                 valid_badpfiles.append(props['BADPFILE'])
-#                 valid_backfiles.append(props['BACKFILE'])
-#             # validate table mask
-#             table_mask[indices] = True
-#         else:
-#             eargs = [g_it + 1, min_num]
-#             WLOG(params, '', textentry('40-014-00015', args=eargs))
-#     # ----------------------------------------------------------------------
-#     # convert fp cube to array
-#     fp_cube = np.array(fp_cube)
-#     # convert transform_list to array
-#     tarrary = np.array(transforms_list)
-#     # cut down fp_table to valid
-#     valid_fp_table = fp_table[table_mask]
-#     # ----------------------------------------------------------------------
-#     # add columns to fp_table
-#     colnames = ['GROUPID', 'DARKFILE', 'BADPFILE', 'BACKFILE', 'DXREF',
-#                 'DYREF', 'A', 'B', 'C', 'D']
-#     values = [valid_matched_id, valid_dark_files, valid_badpfiles,
-#               valid_backfiles, tarrary[:, 0], tarrary[:, 1],
-#               tarrary[:, 2], tarrary[:, 3], tarrary[:, 4], tarrary[:, 5]]
-#     for c_it, col in enumerate(colnames):
-#         valid_fp_table[col] = values[c_it]
-#     # ----------------------------------------------------------------------
-#     # return fp_cube
-#     return fp_cube, valid_fp_table
+def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
+                     fp_table: Table, image_ref: np.ndarray,
+                     time_thres: Optional[float] = None,
+                     percent_thres: Optional[float] = None,
+                     qc_res: Optional[float]=None) -> Tuple[np.ndarray, Table]:
+    """
+    Construct the reference FP
 
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, reipce instance that called this function
+    :param dprtype: str, the data product type
+    :param fp_table: astropy Table, the FP Table from construct_fp_table()
+    :param image_ref: numpy 2D array, the reference FP image (FP_FP from
+                      reference observation directory)
+    :param time_thres: float or None, maximum time span to combine fp files
+                       over in hours, if set overrides "FP_REF_MATCH_TIME"
+                       in params
+    :param percent_thres: float or None, the percentile at which the FPs are
+                          normalised when getting the fp reference, if set
+                          overrides "FP_REF_PERCENT_THRES" in params
+    :param qc_res: float or None, the largest standard deviation allowed for
+                   the shift in x or y when doing the shape reference fp linear
+                   transform, if set overrides "SHAPE_QC_LTRANS_RES_THRES"
+                   in params
 
-def construct_ref_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
-    func_name = __NAME__ + '.construct_ref_fp'
+    :return: tuple, 1. numpy 2D array, the reference FP, 2. astropy Table: the
+             updated fp_table
+    """
+    # set function name
+    func_name = display_func('construct_ref_fp', __NAME__)
     # get constants from params/kwargs
-    time_thres = pcheck(params, 'FP_REF_MATCH_TIME', 'time_thres', kwargs,
-                        func_name)
+    time_thres = pcheck(params, 'FP_REF_MATCH_TIME', 'time_thres',
+                        func=func_name, override=time_thres)
     percent_thres = pcheck(params, 'FP_REF_PERCENT_THRES', 'percent_thres',
-                           kwargs, func_name)
-    qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res', kwargs,
-                    func_name)
+                           func=func_name, override=percent_thres)
+    qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res',
+                    func=func_name, override=qc_res)
     # get temporary output dir
     out_obs_dir = params['INPUTS']['OBS_DIR']
     # get col data from dark_table
@@ -439,19 +327,27 @@ def construct_ref_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     return fp_ref, valid_fp_table
 
 
-def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
-    func_name = __NAME__ + '.get_linear_transform_params()'
+def get_linear_transform_params(params: ParamDict, recipe: DrsRecipe,
+                                image1: np.ndarray, image2: np.ndarray,
+                                maxn_percent: Optional[float] = None,
+                                maxn_thres: Optional[float] = None,
+                                niterations: Optional[int] = None,
+                                ini_boxsize: Optional[int] = None,
+                                small_boxsize: Optional[int] = None
+                                ) -> Tuple[np.ndarray, float, float]:
+    # set function name
+    func_name = display_func('get_linear_transform_params', __NAME__)
     # get parameters from params/kwargs
     maxn_percent = pcheck(params, 'SHAPE_REF_VALIDFP_PERCENTILE',
-                          'maxn_perecent', kwargs, func_name)
+                          func=func_name, override=maxn_percent)
     maxn_thres = pcheck(params, 'SHAPE_REF_VALIDFP_THRESHOLD',
-                        'maxn_thres', kwargs, func_name)
+                        func=func_name, override=maxn_thres)
     niterations = pcheck(params, 'SHAPE_REF_LINTRANS_NITER',
-                         'niterations', kwargs, func_name)
+                         func=func_name, override=niterations)
     ini_boxsize = pcheck(params, 'SHAPE_REF_FP_INI_BOXSIZE',
-                         'ini_boxsize', kwargs, func_name)
+                         func=func_name, override=ini_boxsize)
     small_boxsize = pcheck(params, 'SHAPE_REF_FP_SMALL_BOXSIZE',
-                           'small_boxsize', kwargs, func_name)
+                           func=func_name, override=small_boxsize)
     # get the shape of the image
     dim1, dim2 = image1.shape
     # check that image is correct shape
