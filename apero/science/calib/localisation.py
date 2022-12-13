@@ -761,13 +761,21 @@ def get_coefficients(params: ParamDict, header: drs_file.Header,
         cent_coeffs, nbo = pconst.FIBER_LOC_COEFF_EXT(cent_coeffs, fiber)
         wid_coeffs, nbo = pconst.FIBER_LOC_COEFF_EXT(wid_coeffs, fiber)
         nset = 1
+
+    # get y centers
+    nbxpix = locofile.data.shape[1]
+    ycents = []
+    for order_num in range(nbo):
+        ycents.append(mp.val_cheby(cent_coeffs, nbxpix//2, domain=[0, nbxpix]))
     # -------------------------------------------------------------------------
     # store localisation properties in parameter dictionary
     props = ParamDict()
     props['LOCOFILE'] = locofilepath
     props['LOCOTIME'] = locotime
     props['LOCOOBJECT'] = locofile
+    props['YCENT'] = np.array(ycents)
     props['NBO'] = int(nbo // nset)
+    props['NBXPIX'] = nbxpix
     props['DEG_C'] = int(deg_c)
     props['DEG_W'] = int(deg_w)
     props['CENT_COEFFS'] = cent_coeffs
@@ -776,8 +784,9 @@ def get_coefficients(params: ParamDict, header: drs_file.Header,
     props['NSET'] = nset
     props['LOC_POLY_TYPE'] = poly_type
     # set sources
-    keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'LOCOOBJECT', 'NBO',
-            'DEG_C', 'DEG_W', 'MERGED', 'NSET', 'LOC_POLY_TYPE']
+    keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'LOCOOBJECT', 'YCENT' 
+            'NBO', 'NBXPIX', 'DEG_C', 'DEG_W', 'MERGED', 'NSET',
+            'LOC_POLY_TYPE']
     props.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return the coefficients and properties
