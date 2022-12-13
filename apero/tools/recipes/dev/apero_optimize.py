@@ -152,7 +152,7 @@ def check_for_usused_functions(path: str) -> Dict[str, List[str]]:
     import dis
 
     # The module you want to analyze
-    module = some_module
+    module = 'apero'
 
     # Get the bytecode for the module
     bytecode = dis.Bytecode(module)
