@@ -237,6 +237,21 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                            refprops, wprops, bprops)
 
         # ------------------------------------------------------------------
+        # apply sky correction
+        # ------------------------------------------------------------------
+        if dprtype in params.listp('ALLOWED_SKYCORR_DPRTYPES', dtype=str):
+            # correct sky using model and B fiber
+            scprops = telluric.correct_sky(params, recipe, infile, wprops,
+                                           rawfiles, combine, calibdbm,
+                                           telludbm)
+            # update infile
+            infile.data = scprops[f'CORR_EXT_{fiber}']
+            # turn off cleaning of OH lines in pre-cleaning
+            clean_ohlines = False
+        else:
+            clean_ohlines = True
+
+        # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,

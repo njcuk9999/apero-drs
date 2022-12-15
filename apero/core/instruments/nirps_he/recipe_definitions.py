@@ -780,7 +780,8 @@ apero_mk_tellu.recipe_kind = 'tellu-hotstar'
 apero_mk_tellu.set_outputs(TELLU_CONV=files.out_tellu_conv,
                            TELLU_TRANS=files.out_tellu_trans,
                            TELLU_PCLEAN=files.out_tellu_pclean)
-apero_mk_tellu.set_debug_plots('MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2',
+apero_mk_tellu.set_debug_plots('TELLU_SKY_CORR_PLOT',
+                               'MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2',
                                'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
                                'TELLUP_CLEAN_OH', 'FTELLU_RECON_SPLINE2')
 apero_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX',
@@ -853,7 +854,8 @@ apero_fit_tellu.set_outputs(ABSO_NPY=files.out_tellu_abso_npy,
                             RC1D_W_FILE=files.out_tellu_rc1d_w,
                             RC1D_V_FILE=files.out_tellu_rc1d_v,
                             TELLU_PCLEAN=files.out_tellu_pclean)
-apero_fit_tellu.set_debug_plots('EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT',
+apero_fit_tellu.set_debug_plots('TELLU_SKY_CORR_PLOT',
+                                'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT',
                                 'FTELLU_PCA_COMP1', 'FTELLU_PCA_COMP2',
                                 'FTELLU_RECON_SPLINE1', 'FTELLU_RECON_SPLINE2',
                                 'FTELLU_WAVE_SHIFT1', 'FTELLU_WAVE_SHIFT2',

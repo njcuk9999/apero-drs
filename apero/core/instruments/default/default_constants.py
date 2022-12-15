@@ -230,6 +230,10 @@ __all__ = [
     'WAVE_NIGHT_HC_SIGCLIP', 'WAVE_NIGHT_MED_ABS_DEV',
     'WAVE_NIGHT_NSIG_FIT_CUT', 'WAVENIGHT_PLT_BINL', 'WAVENIGHT_PLT_BINU',
     'WAVENIGHT_PLT_NBINS',
+    # sky correction constants
+    'ALLOWED_SKYCORR_DPRTYPES', 'SKYCORR_WEIGHT_ITERATIONS',
+    'SKYCORR_LOWPASS_SIZE1', 'SKYCORR_LOWPASS_SIZE2',
+    'SKYCORR_LOWPASS_ITERATIONS', 'SKYCORR_NSIG_THRES',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
@@ -317,7 +321,6 @@ __all__ = [
     # debug wave plot settings
     'PLOT_WAVE_FIBER_COMPARISON', 'PLOT_WAVE_FIBER_COMP',
     'PLOT_WAVE_WL_CAV', 'PLOT_WAVE_HC_DIFF_HIST', 'PLOT_WAVEREF_EXPECTED',
-
     # debug wave plot settings
     'PLOT_WAVE_HC_GUESS', 'PLOT_WAVE_HC_TFIT_GRID',
     'PLOT_WAVE_HC_BRIGHTEST_LINES', 'PLOT_WAVE_HC_RESMAP',
@@ -329,6 +332,8 @@ __all__ = [
     'PLOT_WAVE_FP_MULTI_ORDER', 'PLOT_WAVE_FP_SINGLE_ORDER',
     'PLOT_WAVENIGHT_ITERPLOT', 'PLOT_WAVENIGHT_HISTPLOT',
     'PLOT_WAVE_RESMAP',
+    # sky corr plot settings
+    'PLOT_TELLU_SKY_CORR_PLOT',
     # debug telluric plot settings
     'PLOT_TELLUP_WAVE_TRANS', 'PLOT_TELLUP_ABSO_SPEC',
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
@@ -345,7 +350,7 @@ __all__ = [
     # debug polar plot settings
     'PLOT_POLAR_FIT_CONT', 'PLOT_POLAR_CONTINUUM', 'PLOT_POLAR_RESULTS',
     'PLOT_POLAR_STOKES_I', 'PLOT_POLAR_LSD',
-    # post processing settings
+    # post-processing settings
     'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_OBSDIR_COL', 'REPROCESS_ABSFILECOL',
@@ -880,10 +885,10 @@ PP_HOTPIX_FILE = Const('PP_HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
                                     'the data folder)'))
 
 # Defines the pp led flat file (located in the data folder)
-PP_LED_FLAT_FILE  = Const('PP_LED_FLAT_FILE', value=None, dtype=str,
-                          source=__NAME__, group=cgroup,
-                          description='Defines the pp led flat file '
-                                      '(located in the data folder)')
+PP_LED_FLAT_FILE = Const('PP_LED_FLAT_FILE', value=None, dtype=str,
+                         source=__NAME__, group=cgroup,
+                         description='Defines the pp led flat file '
+                                     '(located in the data folder)')
 
 # Define the number of un-illuminated reference pixels at top of image
 PP_NUM_REF_TOP = Const('PP_NUM_REF_TOP', value=None, dtype=int,
@@ -3549,6 +3554,50 @@ WAVENIGHT_PLT_BINU = Const('WAVENIGHT_PLT_BINU', value=None, dtype=float,
                                         'multiples of rms'))
 
 # =============================================================================
+# OBJECT: SKY CORR SETTINGS
+# =============================================================================
+cgroup = 'OBJECT: SKY CORR SETTINGS'
+# Define the allowed DPRTYPEs for sky correction
+ALLOWED_SKYCORR_DPRTYPES = Const('ALLOWED_SKYCORR_DPRTYPES', value=None,
+                                 dtype=str, source=__NAME__, group=cgroup,
+                                 description='Define the allowed DPRTYPEs for'
+                                             ' sky correction')
+
+# Define the number of iterations used to create sky correction weights
+SKYCORR_WEIGHT_ITERATIONS = Const('SKYCORR_WEIGHT_ITERATIONS', value=None,
+                                  dtype=int, source=__NAME__, group=cgroup,
+                                  description='Define the number of iterations '
+                                              'used to create sky correction '
+                                              'weights')
+
+# Define the size of the fine low pass filter (must be an odd integer)
+SKYCORR_LOWPASS_SIZE1 = Const('SKYCORR_LOWPASS_SIZE1', value=None,
+                              dtype=int, source=__NAME__, group=cgroup,
+                              description='Define the size of the fine low '
+                                          'pass filter (must be an odd '
+                                          'integer)')
+
+# Define the size of the coarse low pass filter (msut be an odd integer)
+SKYCORR_LOWPASS_SIZE2 = Const('SKYCORR_LOWPASS_SIZE2', value=None,
+                              dtype=int, source=__NAME__, group=cgroup,
+                              description='Define the size of the coarse low '
+                                          'pass filter (msut be an odd '
+                                          'integer)')
+
+# Define the number of iterations to use for the coarse low pass filter
+SKYCORR_LOWPASS_ITERATIONS = Const('SKYCORR_LOWPASS_ITERATIONS', value=None,
+                                   dtype=int, source=__NAME__, group=cgroup,
+                                   description='Define the number of iterations'
+                                               ' to use for the coarse low '
+                                               'pass filter')
+
+# Define the number of sigma threshold for sky corr sigma clipping
+SKYCORR_NSIG_THRES = Const('SKYCORR_NSIG_THRES', value=None, dtype=int,
+                           source=__NAME__, group=cgroup,
+                           description='Define the number of sigma threshold '
+                                       'for sky corr sigma clipping')
+
+# =============================================================================
 # OBJECT: TELLURIC SETTINGS
 # =============================================================================
 cgroup = 'OBJECT: TELLURIC SETTINGS'
@@ -3593,12 +3642,11 @@ TELLU_BLACKLIST_NAME = Const('TELLU_BLACKLIST_NAME', value=None, dtype=str,
                              source=__NAME__, group=cgroup,
                              description='Define telluric black list name')
 
-
 # Force only pre-cleaning (not recommended - only for debugging)
 TELLU_ONLY_PRECLEAN = Const('TELLU_ONLY_PRECLEAN', value=None, dtype=bool,
-                             source=__NAME__, group=cgroup,
-                             description='Force only pre-cleaning (not '
-                                         'recommended - only for debugging)')
+                            source=__NAME__, group=cgroup,
+                            description='Force only pre-cleaning (not '
+                                        'recommended - only for debugging)')
 
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
@@ -4961,6 +5009,13 @@ PLOT_WAVENIGHT_HISTPLOT = Const('PLOT_WAVENIGHT_HISTPLOT', value=False,
                                 active=False, group=cgroup,
                                 description='turn on the wave per night '
                                             'hist debug plot')
+
+# turn on the sky correction debug plot
+PLOT_TELLU_SKY_CORR_PLOT = Const('PLOT_TELLU_SKY_CORR_PLOT', value=False,
+                                 dtype=bool, source=__NAME__, user=True,
+                                 active=False, group=cgroup,
+                                 description='turn on the sky correction debug '
+                                             'plot')
 
 # turn on the telluric pre-cleaning ccf debug plot
 PLOT_TELLUP_WAVE_TRANS = Const('PLOT_TELLUP_WAVE_TRANS', value=False,

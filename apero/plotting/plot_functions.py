@@ -3607,6 +3607,47 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
 # =============================================================================
 # Define telluric plotting functions
 # =============================================================================
+def plot_tellu_sky_corr(plotter: Plotter, graph: Graph,
+                        kwargs: Dict[str, Any]):
+    """
+    Graph: Sky Correction plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    sci_fiber = kwargs['props']['SCI_FIBER']
+    ref_fiber = kwargs['props']['REF_FIBER']
+    # get sci vectors
+    wave_sci = kwargs['props']['WAVE_SCI'].ravel()
+    sp_sci = kwargs['props'][f'UNCORR_EXT_{sci_fiber}'].ravel()
+    sp_sci_corr = kwargs['props'][f'CORR_EXT_{sci_fiber}'].ravel()
+    # get ref vectors
+    wave_ref = kwargs['props']['WAVE_REF'].ravel()
+    sp_ref = kwargs['props'][f'UNCORR_EXT_{ref_fiber}'].ravel()
+    sp_ref_corr = kwargs['props'][f'CORR_EXT_{ref_fiber}'].ravel()
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex='all')
+    # plot science fiber
+    frames[0].plot(wave_sci, sp_sci, alpha=0.5, color='b', label='Original')
+    frames[0].plot(wave_sci, sp_sci_corr, color='r', label='Corrected')
+    # plot calib (ref) fiber
+    frames[1].plot(wave_ref, sp_ref, alpha=0.5, color='b', label='Original')
+    frames[1].plot(wave_ref, sp_ref_corr, color='r', label='Corrected')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 def plot_tellup_wave_trans(plotter: Plotter, graph: Graph,
                            kwargs: Dict[str, Any]):
     """
@@ -4350,6 +4391,10 @@ def plot_mktemp_berv_cov(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
+# sky correction graph instance
+tellu_sky_corr = Graph('TELLU_SKY_CORR_PLOT', kind='debug',
+                       func=plot_tellu_sky_corr)
+
 # telluric pre clean graph instances
 tellup_wave_trans = Graph('TELLUP_WAVE_TRANS', kind='debug',
                           func=plot_tellup_wave_trans)
@@ -4421,8 +4466,8 @@ sum_mktemp_berv_cov = Graph('SUM_MKTEMP_BERV_COV', kind='summary',
                             func=plot_mktemp_berv_cov, figsize=(16, 10),
                             dpi=150, description=sum_desc)
 # add to definitions
-definitions += [mktellu_wave_flux1, mktellu_wave_flux2, sum_mktellu_wave_flux,
-                mktellu_model, sum_mktellu_model,
+definitions += [tellu_sky_corr, mktellu_wave_flux1, mktellu_wave_flux2,
+                sum_mktellu_wave_flux,  mktellu_model, sum_mktellu_model,
                 ftellu_pca_comp1, ftellu_pca_comp2, ftellu_recon_spline1,
                 ftellu_recon_spline2, ftellu_wave_shift1, ftellu_wave_shift2,
                 ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso,

@@ -520,6 +520,11 @@ KW_C_FTYPE = KW_C_FTYPE.copy(__NAME__)
 KW_C_FTYPE.set(key='CAL_FTYP', comment='What this fiber was identified as')
 KW_FIBER = KW_FIBER.copy(__NAME__)
 KW_FIBER.set(key='FIBER', comment='The fiber name')
+
+# define the sky model used for sky correction
+KW_TDBSKY = KW_TDBSKY.copy(__NAME__)
+KW_TDBSKY.set(key='TDTSKYCO', comment='Sky model used for sky correction')
+
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------

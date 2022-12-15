@@ -214,7 +214,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         if has_fp:
             # find the c fiber file
-            infile_r = velocity.locate_reference_file(params, infile)
+            infile_r = drs_file.locate_calibfiber_file(params, infile)
             # get the wave solution associated with this file
             wprops_r = wave.get_wavesolution(params, recipe, fiber='C',
                                              infile=infile_r,
