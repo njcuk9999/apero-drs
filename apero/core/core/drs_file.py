@@ -97,15 +97,15 @@ PandasLikeDatabase = drs_base_classes.PandasLikeDatabaseDuckDB
 # -----------------------------------------------------------------------------
 # define complex typing
 QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
-                    List[Union[List[str], List[int], List[Any]]]]
+List[Union[List[str], List[int], List[Any]]]]
 # -----------------------------------------------------------------------------
 # path definitions
 BlockPath = pathdef.BlockPath
 # get out file class
 OutFileTypes = Union[out.OutFile, out.GeneralOutFile, out.NpyOutFile,
-                     out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
-                     out.RefCalibOutFile, out.SetOutFile, out.PostOutFile,
-                     None]
+out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
+out.RefCalibOutFile, out.SetOutFile, out.PostOutFile,
+None]
 
 
 # =============================================================================
@@ -8264,6 +8264,41 @@ def get_mid_obs_time(params: ParamDict,
         kinds = ['None', 'human', 'iso', 'unix', 'mjd', 'jd', 'decimalyear']
         eargs = [dbname, ' or '.join(kinds), out_fmt, func_name]
         WLOG(params, 'error', textentry('00-001-00030', args=eargs))
+
+
+def locate_calibfiber_file(params: ParamDict, infile: DrsFitsFile):
+    """
+    Locate a reference fiber file for science fiber file
+
+    :param params:
+    :param infile:
+    :return:
+    """
+    # deal with infile being telluric file (we do not have reference file
+    #   for telluric files) --> must use the telluric files "intype file"
+    if infile.name == 'TELLU_OBJ':
+        instance = infile.intype
+        # need to get filename of input file
+        inbasename = infile.get_infile_infilename(filename=infile.filename,
+                                                  fiber=infile.fiber)
+        # get absolute path
+        infilename = os.path.join(infile.path, inbasename)
+        # set filename
+        instance.set_filename(infilename)
+    else:
+        instance = infile
+
+    pconst = constants.pload()
+
+    sci_fibers, ref_fiber = pconst.FIBER_KINDS()
+
+    # switch fiber and read file
+    outfile = get_another_fiber_file(params, instance, fiber=ref_fiber,
+                                     in_block_kind='tmp',
+                                     out_block_kind='red',
+                                     getdata=True, gethdr=True)
+    # return outfile
+    return outfile
 
 
 # =============================================================================
