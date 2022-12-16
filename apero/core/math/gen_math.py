@@ -543,7 +543,7 @@ def robust_polyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
     A robust polyfit function that iteratively fits a polynomial to the data until
     the dispersion of values is accounted for by a weight vector. This is
     equivalent to a soft-edged sigma-clipping
-​
+
     :param xvector: np.ndarray, the x array to pass to np.polyval
     :param yvector: np.ndarray, the y array to pass to np.polyval
     :param degree: int, the degree of polynomial fit passed to np.polyval
