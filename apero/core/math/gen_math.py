@@ -481,8 +481,9 @@ def robust_chebyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
                     nsigcut: float, domain: List[float]
                     ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    A robust chebyshev polyfit (iterating on the residuals) until nsigma is
-    below the nsigcut threshold. Takes care of NaNs before fitting
+    A robust chebyshev polyfit function that iteratively fits a polynomial
+    to the data until the dispersion of values is accounted for by a weight
+    vector. This is equivalent to a soft-edged sigma-clipping
 
     :param xvector: np.ndarray, the x array to pass to np.polyval
     :param yvector: np.ndarray, the y array to pass to np.polyval
