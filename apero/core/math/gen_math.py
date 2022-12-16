@@ -536,7 +536,6 @@ def robust_chebyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
     return fit, keep
 
 
-
 def robust_polyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
                    nsigcut: float) -> Tuple[np.ndarray, np.ndarray]:
     """
