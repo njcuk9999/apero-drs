@@ -9,7 +9,7 @@ Created on 2019-05-15 at 12:24
 """
 import copy
 import warnings
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -491,74 +491,110 @@ def robust_chebyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
     :param domain: list of 2 values mapped to -1 ... 1 for Cheby polynomial
     :return:
     """
-    # set function name
-    # _ = display_func('robust_polyfit', __NAME__)
-    # set up mask
-    keep = np.isfinite(yvector)
-    # set the nsigmax to infinite
-    nsigmax = np.inf
-    # set the fit as unset at first
+    # Initialize the fit to None
     fit = None
-    # while sigma is greater than sigma cut keep fitting
-    while nsigmax > nsigcut:
-        # calculate the polynomial fit (of the non-NaNs)
-        fit = fit_cheby(xvector[keep], yvector[keep], degree, domain)
-        # calculate the residuals of the polynomial fit
+    # Create an array of weights, initialized to 1 for all values
+    weight = np.ones_like(xvector)
+    # Pre-compute the odd_cut value
+    odd_cut = np.exp(-.5 * nsigcut ** 2)
+    # Initialize an array of weights from the previous iteration,
+    # set to 0 for all values
+    weight_before = np.zeros_like(weight)
+    # Set the maximum number of iterations and initialize the iteration counter
+    nite_max = 20
+    count = 0
+    # Enter a loop that will iterate until either the maximum difference
+    # between the current and previous weights
+    # becomes smaller than a certain threshold, or until the maximum number of
+    # iterations is reached
+    while (np.max(abs(weight - weight_before)) > 1e-9) and (count < nite_max):
+        # Calculate the polynomial fit using the x- and y-values, and the
+        # given degree, weighting the fit by the weights. Weights are computed
+        # from the dispersion to the fit and the sigmax
+        fit = fit_cheby(xvector, yvector, degree, domain, weight=weight)
+        # Calculate the residuals of the polynomial fit by subtracting the
+        # result of np.polyval from the original y-values
         res = yvector - val_cheby(fit, xvector, domain)
-        # work out the new sigma values
+        # Calculate the new sigma values as the median absolute deviation of
+        # the residuals
         sig = fast.nanmedian(np.abs(res))
-        if sig == 0:
-            nsig = np.zeros_like(res)
-            nsig[res != 0] = np.inf
-        else:
-            nsig = np.abs(res) / sig
-        # work out the maximum sigma
-        nsigmax = np.max(nsig[keep])
-        # re-work out the keep criteria
-        keep = nsig < nsigcut
-    # return the fit and the mask of good values
-    return np.array(fit), np.array(keep)
+        # Calculate the odds of being part of the "valid" values
+        num = np.exp(-0.5 * (res / sig) ** 2) * (1 - odd_cut)
+        # Calculate the odds of being an outlier
+        den = odd_cut + num
+        # Update the weights from the previous iteration
+        weight_before = np.array(weight)
+        # Calculate the new weights as the odds ratio that is fed back to
+        # the fit
+        weight = num / den
+        # Increment the iteration counter
+        count += 1
+    # Set the mask of good values to be those for which there is a 50%
+    # likelihood of being valid
+    keep = np.array(weight > 0.5)
+    # return the fit and keep vectors
+    return fit, keep
+
 
 
 def robust_polyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
                    nsigcut: float) -> Tuple[np.ndarray, np.ndarray]:
     """
-    A robust polyfit (iterating on the residuals) until nsigma is below the
-    nsigcut threshold. Takes care of NaNs before fitting
-
+    A robust polyfit function that iteratively fits a polynomial to the data until
+    the dispersion of values is accounted for by a weight vector. This is
+    equivalent to a soft-edged sigma-clipping
+​
     :param xvector: np.ndarray, the x array to pass to np.polyval
     :param yvector: np.ndarray, the y array to pass to np.polyval
     :param degree: int, the degree of polynomial fit passed to np.polyval
-    :param nsigcut: float, the threshold sigma required to return result
-    :return:
+    :param nsigcut: float, the threshold sigma above which a point is considered
+    and outlier
+    :return: a tuple containing the polynomial fit (as a NumPy array)
+    and a boolean mask of the good values (p>50% of valid)
     """
-    # set function name
-    # _ = display_func('robust_polyfit', __NAME__)
-    # set up mask
-    keep = np.isfinite(yvector)
-    # set the nsigmax to infinite
-    nsigmax = np.inf
-    # set the fit as unset at first
+    # Initialize the fit to None
     fit = None
-    # while sigma is greater than sigma cut keep fitting
-    while nsigmax > nsigcut:
-        # calculate the polynomial fit (of the non-NaNs)
-        fit = np.polyfit(xvector[keep], yvector[keep], degree)
-        # calculate the residuals of the polynomial fit
+    # Create an array of weights, initialized to 1 for all values
+    weight = np.ones_like(xvector)
+    # Pre-compute the odd_cut value
+    odd_cut = np.exp(-.5 * nsigcut ** 2)
+    # Initialize an array of weights from the previous iteration,
+    # set to 0 for all values
+    weight_before = np.zeros_like(weight)
+    # Set the maximum number of iterations and initialize the iteration counter
+    nite_max = 20
+    count = 0
+    # Enter a loop that will iterate until either the maximum difference
+    # between the current and previous weights
+    # becomes smaller than a certain threshold, or until the maximum number of
+    # iterations is reached
+    while (np.max(abs(weight - weight_before)) > 1e-9) and (count < nite_max):
+        # Calculate the polynomial fit using the x- and y-values, and the
+        # given degree, weighting the fit by the weights. Weights are computed
+        # from the dispersion to the fit and the sigmax
+        fit = np.polyfit(xvector, yvector, degree, w=weight)
+        # Calculate the residuals of the polynomial fit by subtracting the
+        # result of np.polyval from the original y-values
         res = yvector - np.polyval(fit, xvector)
-        # work out the new sigma values
+        # Calculate the new sigma values as the median absolute deviation of
+        # the residuals
         sig = fast.nanmedian(np.abs(res))
-        if sig == 0:
-            nsig = np.zeros_like(res)
-            nsig[res != 0] = np.inf
-        else:
-            nsig = np.abs(res) / sig
-        # work out the maximum sigma
-        nsigmax = np.max(nsig[keep])
-        # re-work out the keep criteria
-        keep = nsig < nsigcut
-    # return the fit and the mask of good values
-    return np.array(fit), np.array(keep)
+        # Calculate the odds of being part of the "valid" values
+        num = np.exp(-0.5 * (res / sig) ** 2) * (1 - odd_cut)
+        # Calculate the odds of being an outlier
+        den = odd_cut + num
+        # Update the weights from the previous iteration
+        weight_before = np.array(weight)
+        # Calculate the new weights as the odds ratio that is fed back to
+        # the fit
+        weight = num / den
+        # Increment the iteration counter
+        count += 1
+    # Set the mask of good values to be those for which there is a 50%
+    # likelihood of being valid
+    keep = np.array(weight > 0.5)
+    # return the fit and keep vectors
+    return fit, keep
 
 
 def robust_nanstd(x: np.ndarray) -> float:
@@ -1178,7 +1214,8 @@ def relativistic_waveshift(dv: Union[float, np.ndarray],
 
 
 def fit_cheby(xvector: np.ndarray, yvector: np.ndarray, deg: int,
-              domain: List[float]) -> Union[np.ndarray, Any]:
+              domain: List[float], weight: Optional[np.ndarray] = None
+              ) -> Union[np.ndarray, Any]:
     """
     Fit a chebyshev polynomial in form y(x) = T0(x) + T1(x) + ... Tn(x)
     returns the chebyshev polynomial coefficients
@@ -1189,13 +1226,15 @@ def fit_cheby(xvector: np.ndarray, yvector: np.ndarray, deg: int,
     :param domain: domain to be transformed to -1 -- 1. This is important to
                    keep the components orthogonal. You *must* use the same
                    domain when getting values with val_cheby
+    :param weight: weight applied to each vector element
 
     :return: coefficients of the chebyshev fit
     """
     # transform to a -1 to 1 domain
     domain_cheby = 2 * (xvector - domain[0]) / (domain[1] - domain[0]) - 1
     # calcualte the coefficients
-    coeffs = np.polynomial.chebyshev.chebfit(domain_cheby, yvector, deg)
+    coeffs = np.polynomial.chebyshev.chebfit(domain_cheby, yvector, deg,
+                                             w=weight)
     # return the coefficients
     return coeffs
 
