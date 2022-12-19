@@ -1544,9 +1544,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # inverse this fit using the HC lines
             ohcwave_fit = np.polyval(wave_fit, ordhc_pix_meas)
             # work out the residuals
-            med_hc_res = mp.nanmedian(1 - ordhc_wave_ref / ohcwave_fit)
+            residual = 1 - ordhc_wave_ref / ohcwave_fit
+            sigma_hc_res = mp.robust_nanstd(residual)
+            err = np.ones_like(residual)*sigma_hc_res
+            med_hc_res, err_med_hc_res = mp.odd_ratio_mean(residual, err)
             # work out a robust sigma of the residuals
-            sigma_hc_res = mp.robust_nanstd(1 - ordhc_wave_ref / ohcwave_fit)
             # convert to a velocity [km/s]
             sigma_hc_res_kms = sigma_hc_res * speed_of_light
             # We only update the cavity length for a given order if the RMS
@@ -1560,7 +1562,9 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # TODO: Add to language database
             msg = (f'\tCavity fit {jt + 1}: med hc res = '
                    f'{med_hc_res * speed_of_light_ms:.3e} m/s '
-                   f'{sigma_hc_res * speed_of_light_ms:.3e} m/s ')
+                   f'{sigma_hc_res * speed_of_light_ms:.3e} m/s '
+                   f'{ err_med_hc_res * speed_of_light_ms:.3e} m/s '
+                   )
             WLOG(params, '', msg)
 
         # print msg: Velocity RMS of HC lines relative to catalog: {0:.3f} km/s
@@ -2628,25 +2632,27 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
             pcoeffs1, _ = curve_fit(*cargs, p0=guess)
         # calculate the residuals between flux and fit
         fluxfit1 = mp.centered_super_gauss(all_dv, *pcoeffs1)
-        residuals = all_flux - fluxfit1
-        # sigma clip the residuals
-        sigclip = np.abs(residuals) < sigclipthres
-        # update the all_dv and all_flux vectors
-        all_dv, all_flux = all_dv[sigclip], all_flux[sigclip]
-        all_wave, all_order = all_wave[sigclip], all_order[sigclip]
-        # re-fit based on sigma clipped vectors
-        cargs = [mp.centered_super_gauss, all_dv, all_flux]
-        with warnings.catch_warnings(record=True) as _:
-            pcoeffs2, _ = curve_fit(*cargs, p0=guess)
-        # calculate fit
-        fluxfit2 = mp.centered_super_gauss(all_dv, *pcoeffs2)
+        # residuals = all_flux - fluxfit1
+        # # sigma clip the residuals
+        # sigclip = np.abs(residuals) < sigclipthres
+        # # update the all_dv and all_flux vectors
+        # all_dv, all_flux = all_dv[sigclip], all_flux[sigclip]
+        # all_wave, all_order = all_wave[sigclip], all_order[sigclip]
+        # # re-fit based on sigma clipped vectors
+        # cargs = [mp.centered_super_gauss, all_dv, all_flux]
+        # with warnings.catch_warnings(record=True) as _:
+        #     pcoeffs2, _ = curve_fit(*cargs, p0=guess)
+        # # calculate fit
+        # fluxfit2 = mp.centered_super_gauss(all_dv, *pcoeffs2)
         # calculate resolution
-        fwhm, amp, expo = pcoeffs2
+        #fwhm, amp, expo = pcoeffs2
+        fwhm, amp, expo = pcoeffs1
         res_eff = speed_of_light / fwhm
     except ValueError as e:
         # set values to NaN
         fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
-        fluxfit2 = np.full_like(all_dv, np.nan)
+        # fluxfit2 = np.full_like(all_dv, np.nan)
+        fluxfit1 = np.full_like(all_dv, np.nan)
         # Fit failed for order bin {0} spectral bin {1}
         wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
                  map_lower_ords[mapkey], map_high_ords[mapkey],
@@ -2657,7 +2663,8 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
     except RuntimeError as e:
         # set values to NaN
         fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
-        fluxfit2 = np.full_like(all_dv, np.nan)
+        # fluxfit2 = np.full_like(all_dv, np.nan)
+        fluxfit1 = np.full_like(all_dv, np.nan)
         # Fit failed for order bin {0} spectral bin {1}
         wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
                  map_lower_ords[mapkey], map_high_ords[mapkey],
@@ -2666,7 +2673,9 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
         WLOG(params, 'warning', textentry('10-017-00013', wargs),
              sublevel=4)
     # return outputs
-    fout = [fwhm, amp, expo, res_eff, fluxfit2, all_dv, all_flux,
+    # fout = [fwhm, amp, expo, res_eff, fluxfit2, all_dv, all_flux,
+    #         all_wave, all_order]
+    fout = [fwhm, amp, expo, res_eff, fluxfit1, all_dv, all_flux,
             all_wave, all_order]
     return fout
 
@@ -2709,26 +2718,28 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
             pcoeffs1, _ = curve_fit(*cargs, p0=guess)
         # calculate the residuals between flux and fit
         fluxfit1 = mp.gauss_function(all_dv, *pcoeffs1)
-        residuals = all_flux - fluxfit1
-        # sigma clip the residuals
-        sigclip = np.abs(residuals) < sigclipthres
-        # update the all_dv and all_flux vectors
-        all_dv, all_flux = all_dv[sigclip], all_flux[sigclip]
-        all_wave, all_order = all_wave[sigclip], all_order[sigclip]
-        # re-fit based on sigma clipped vectors
-        cargs = [mp.gauss_function, all_dv, all_flux]
-        with warnings.catch_warnings(record=True) as _:
-            pcoeffs2, _ = curve_fit(*cargs, p0=guess)
-        # calculate fit
-        fluxfit2 = mp.gauss_function(all_dv, *pcoeffs2)
+        # residuals = all_flux - fluxfit1
+        # # sigma clip the residuals
+        # sigclip = np.abs(residuals) < sigclipthres
+        # # update the all_dv and all_flux vectors
+        # all_dv, all_flux = all_dv[sigclip], all_flux[sigclip]
+        # all_wave, all_order = all_wave[sigclip], all_order[sigclip]
+        # # re-fit based on sigma clipped vectors
+        # cargs = [mp.gauss_function, all_dv, all_flux]
+        # with warnings.catch_warnings(record=True) as _:
+        #     pcoeffs2, _ = curve_fit(*cargs, p0=guess)
+        # # calculate fit
+        # fluxfit2 = mp.gauss_function(all_dv, *pcoeffs2)
         # calculate resolution
-        amp, _, sigma, _ = pcoeffs2
+        # amp, _, sigma, _ = pcoeffs2
+        amp, _, sigma, _ = pcoeffs1
         fwhm = sigma * np.sqrt(2 * np.log(2)) * 2
         res_eff = speed_of_light / fwhm
     except ValueError as e:
         # set values to NaN
         fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
-        fluxfit2 = np.full_like(all_dv, np.nan)
+        # fluxfit2 = np.full_like(all_dv, np.nan)
+        fluxfit1 = np.full_like(all_dv, np.nan)
         # Fit failed for order bin {0} spectral bin {1}
         wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
                  map_lower_ords[mapkey], map_high_ords[mapkey],
@@ -2739,7 +2750,8 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
     except RuntimeError as e:
         # set values to NaN
         fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
-        fluxfit2 = np.full_like(all_dv, np.nan)
+        # fluxfit2 = np.full_like(all_dv, np.nan)
+        fluxfit1 = np.full_like(all_dv, np.nan)
         # Fit failed for order bin {0} spectral bin {1}
         wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
                  map_lower_ords[mapkey], map_high_ords[mapkey],
@@ -2748,9 +2760,10 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
         WLOG(params, 'warning', textentry('10-017-00013', wargs),
              sublevel=4)
     # return outputs
-    fout = [fwhm, amp, 2.0, res_eff, fluxfit2, all_dv, all_flux,
+    # fout = [fwhm, amp, 2.0, res_eff, fluxfit2, all_dv, all_flux,
+    #         all_wave, all_order]
+    fout = [fwhm, amp, 2.0, res_eff, fluxfit1, all_dv, all_flux,
             all_wave, all_order]
-
     return fout
 
 

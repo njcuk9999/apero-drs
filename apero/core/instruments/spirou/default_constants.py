@@ -1471,7 +1471,7 @@ WAVEREF_FP_NHIGH.author = base.AUTHORS['EA']
 
 # define the number of iterations required to do the FP polynomial inversion
 WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
-WAVEREF_FP_POLYINV.value = 4
+WAVEREF_FP_POLYINV.value = 10
 WAVEREF_FP_POLYINV.author = base.AUTHORS['EA']
 
 # define the guess HC exponetial width [pixels]
