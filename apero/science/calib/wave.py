@@ -18,6 +18,7 @@ import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
 from astropy.table import Table
+from scipy.ndimage import zoom
 from scipy.optimize import curve_fit
 
 from apero import lang
@@ -2657,9 +2658,12 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
                 map_high_pix=map_high_pix, xlim=xlim, ylim=res_ylim)
     # -------------------------------------------------------------------------
     # produce the resolution e2ds files
-    e2ds_amp =
-    e2ds_fwhm =
-    e2ds_expo =
+    e2ds_amp = map_res_e2ds(map_amp, (n_order_bin, n_spatial_bin),
+                            wavemap.shape)
+    e2ds_fwhm = map_res_e2ds(map_fwhm, (n_order_bin, n_spatial_bin),
+                            wavemap.shape)
+    e2ds_expo = map_res_e2ds(map_expo, (n_order_bin, n_spatial_bin),
+                            wavemap.shape)
     # -------------------------------------------------------------------------
     # push to wprops
     wprops['RES_MAP_DVS'] = map_dvs
@@ -2692,6 +2696,34 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # return updated wprops
     return wprops
+
+
+def map_res_e2ds(map_values: Dict[tuple, float], inshape: Tuple[int],
+                 outshape: Tuple[int]) -> np.ndarray:
+    """
+    Take the resolution map values and expand into a image of shape outshape
+    (an e2ds)
+
+    :param map_values: dictionary, dictionary where the keys are a tuple giving
+                       the position in the inshape map
+    :param inshape: tuple, 1. number of in rows (y), 2. number of in cols (x)
+    :param outshape: tuple, 1. number of out rows (y), 2. number of out cols (x)
+
+    :return: numpy (2D) array: the expanded map, shape = outshape
+    """
+    # -------------------------------------------------------------------------
+    # generate map of input parameters
+    inmap = np.zeros(inshape)
+    for it in range(inshape[0]):
+        for jt in range(inshape[1]):
+            inmap[it, jt] = map_values[(it, jt)]
+    # -------------------------------------------------------------------------
+    # use ndimage zoom
+    outmap = zoom(inmap, np.array(outshape)/np.array(inmap.shape))
+    # -------------------------------------------------------------------------
+    # return the expanded map, shape = outshape
+    return outmap
+
 
 
 def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
@@ -2791,7 +2823,7 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
     func_name = display_func('res_fit_gauss', __NAME__)
     # -----------------------------------------------------------------
     # get sigma clip
-    sigclipthres = pcheck(params, 'WAVE_HC_RESMAP_SIGCLIP', func=func_name)
+    # sigclipthres = pcheck(params, 'WAVE_HC_RESMAP_SIGCLIP', func=func_name)
     # -----------------------------------------------------------------
     # prepare all dvs and flux for fitting
     # -----------------------------------------------------------------
@@ -3717,7 +3749,7 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
     rf_e2ds.construct_filename(infile=fpe2ds)
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
-    rf_e2ds.copy_header(rf_e2ds)
+    rf_e2ds.copy_header(resfile)
     # set data
     rf_e2ds.data = wprops['RES_E2DS_AMP']
     rf_e2ds.datatype = 'image'
@@ -3739,8 +3771,8 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # add to output files (for indexing)
     recipe.add_output_file(rf_e2ds)
     # write image to file
-    rf_e2ds.write_multi(data_list=data_list, header_list=header_list,
-                        name_list=name_list,
+    rf_e2ds.write_multi(data_list=data_list, name_list=name_list,
+                        datatype_list=datatype_list,
                         block_kind=recipe.out_block_str,
                         runstring=recipe.runstring)
     # ------------------------------------------------------------------
