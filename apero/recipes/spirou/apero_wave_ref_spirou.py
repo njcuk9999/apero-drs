@@ -390,7 +390,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # -----------------------------------------------------------------
             if fiber == ref_fiber:
                 # cavity args
-                cargs = [fp_e2ds_file, wavefile, wprops['CAVITY'], fiber]
+                cargs = [fp_e2ds_file, wavefile, wprops['CAVITY'],
+                         wprops['CAVITY_PEDESTAL'], fiber]
                 # write cavity file
                 cavityfile = wave.write_cavity_file(params, recipe, *cargs)
                 # resolution args

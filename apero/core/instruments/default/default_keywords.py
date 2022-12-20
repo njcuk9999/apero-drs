@@ -98,7 +98,8 @@ __all__ = [  # input keys
     'KW_WAVE_TRP_DVCUTORD', 'KW_WAVE_TRP_DVCUTALL',
     'KW_WAVE_RES_MAPSIZE', 'KW_WAVE_RES_WSIZE',
     'KW_WAVE_RES_MAXDEVTHRES', 'KW_INIT_WAVE', 'KW_WAVETIME',
-    'KW_CAVITY_WIDTH', 'KW_CAVITY_DEG', 'KW_WAVE_MEANHC', 'KW_WAVE_EMEANHC',
+    'KW_CAVITY_WIDTH', 'KW_CAVITY_DEG', 'KW_CAV_PEDESTAL',
+    'KW_WAVE_MEANHC', 'KW_WAVE_EMEANHC',
     # wave littrow values
     'KW_WAVE_LIT_START_1', 'KW_WAVE_LIT_END_1', 'KW_WAVE_LIT_RORDERS',
     'KW_WAVE_LIT_ORDER_INIT_1', 'KW_WAVE_LIT_ORDER_START_1',
@@ -767,7 +768,6 @@ KW_PP_LED_FLAT_P50 = Keyword('KW_PP_LED_FLAT_P50', key='NULL', dtype=float,
                              description='Define the percentile stats for LED '
                                          'flat in pp (50th percentile)')
 
-
 # Define the percentile stats for LED flat in pp (16th percentile)
 KW_PP_LED_FLAT_P16 = Keyword('KW_PP_LED_FLAT_P16', key='NULL', dtype=float,
                              source=__NAME__,
@@ -782,8 +782,8 @@ KW_PP_LED_FLAT_P84 = Keyword('KW_PP_LED_FLAT_P84', key='NULL', dtype=float,
 
 # Define the LED flat file used
 KW_PP_LED_FLAT_FILE = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
-                             source=__NAME__,
-                             description='Define the LED flat file used')
+                              source=__NAME__,
+                              description='Define the LED flat file used')
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
@@ -1214,6 +1214,12 @@ KW_CAVITY_WIDTH = Keyword('KW_CAVITY_WIDTH', key='NULL', dtype=float,
 KW_CAVITY_DEG = Keyword('KW_CAVITY_DEG', key='NULL', dtype=int,
                         source=__NAME__,
                         description='define the cavity fit degree used')
+
+# define the cavity poly zero point (to be added on when using)
+KW_CAV_PEDESTAL = Keyword('KW_CAVITY_DEG', key='NULL', dtype=int,
+                          source=__NAME__,
+                          description='define the cavity poly zero point '
+                                      '(to be added on when using)')
 
 # define the mean hc velocity calculated
 KW_WAVE_MEANHC = Keyword('KW_WAVE_MEANHC', key='NULL', dtype=float,

@@ -1334,6 +1334,8 @@ WAVE_GUESS_CAVITY_WIDTH = WAVE_GUESS_CAVITY_WIDTH.copy(__NAME__)
 WAVE_GUESS_CAVITY_WIDTH.value = 2.4e7
 WAVE_GUESS_CAVITY_WIDTH.author = base.AUTHORS['EA']
 
+#
+
 # Define the wave solution polynomial fit degree
 WAVE_WAVESOL_FIT_DEGREE = WAVE_WAVESOL_FIT_DEGREE.copy(__NAME__)
 WAVE_WAVESOL_FIT_DEGREE.value = 5
@@ -1972,7 +1974,9 @@ WAVE_MODE_FP.value = 1
 # Define the initial value of FP effective cavity width 2xd in nm
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
 WAVE_FP_DOPD0 = WAVE_FP_DOPD0.copy(__NAME__)
-WAVE_FP_DOPD0.value = 2.44962434814043e7  # 2.44999e7  # 2.45e7
+# WAVE_FP_DOPD0.value = 2.44962434814043e7  # 2.44999e7  # 2.45e7
+WAVE_FP_DOPD0.value = 24498000
+WAVE_FP_DOPD0.author = base.AUTHORS['EA']
 
 #  Define the polynomial fit degree between FP line numbers and the
 #      measured cavity width for each line
