@@ -15,8 +15,9 @@ import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
 from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.ndimage.morphology import binary_dilation
 from scipy.ndimage import median_filter, zoom
+from scipy.ndimage.morphology import binary_dilation
+from scipy.optimize import curve_fit
 from scipy.special import erf, erfinv
 
 from apero.base import base
@@ -616,6 +617,63 @@ def robust_nanstd(x: np.ndarray) -> float:
     high = fast.nanpercentile(x, erfvalue)
     # return the 1 sigma value
     return (high - low) / 2.0
+
+
+def fuzzy_curve_fit(func, xvector: np.ndarray, yvector: np.ndarray,
+                    p0: List[float], nsigcut: float = 5.0
+                    ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Replace scipy.optimize.curve_fit with a sigma clipped version
+
+    :param func: function that is fitted with fuzzy sigma cutting
+    :param xvector: x values to the fitted function
+    :param yvector: y values to the fitted function
+    :param p0: initial values to the fit
+    :param nsigcut: N-sigma fuzzy cut
+    :return: fit to the function and mask of values with p<50% of being valid
+    """
+    # se up the odd mean ratio style cut
+    odd_cut = np.exp(-.5 * nsigcut ** 2)
+    # set up the weights
+    weight = np.ones_like(yvector, dtype=float)
+    weight_before = np.zeros_like(weight, dtype=float)
+    # Set the maximum number of iterations and initialize the iteration counter
+    nite_max = 20
+    nite = 0
+    # Enter a loop that will iterate until either the maximum difference
+    #     between the current and previous weights becomes smaller than a
+    #     certain threshold, or until the maximum number of iterations
+    #     is reached
+    while (np.max(np.abs(weight - weight_before)) > 1e-9) and (nite < nite_max):
+        # sigma starts off as infinite anywhere (1/inf = 0) - we don't want
+        #   nans in the curve_fit
+        sigma = np.full(weight.shape, np.inf)
+        # work out the square of the weights
+        weight2 = weight ** 2
+        mask = weight2 != 0
+        sigma[mask] = 1 / weight2[mask]
+        fit, _ = curve_fit(func, xvector, yvector, p0=p0, sigma=sigma)
+        # Calculate the residuals of the polynomial fit by subtracting the
+        # result of np.polyval from the original y-values
+        res = yvector - func(xvector, *fit)
+        # Calculate the new sigma values as the median absolute deviation of
+        #     the residuals
+        sig = np.nanmedian(np.abs(res))
+        # Calculate the odds of being part of the "valid" values
+        num = np.exp(-0.5 * (res / sig) ** 2) * (1 - odd_cut)
+        # Calculate the odds of being an outlier
+        den = odd_cut + num
+        # Update the weights from the previous iteration
+        weight_before = np.array(weight)
+        # Calculate the new weights as the odds ratio that is fed back to
+        #     the fit
+        weight = num / den
+        # Increment the iteration counter
+        nite += 1
+    # generate a mask of values we are keeping
+    keep = weight > 0.5
+    # return the fit and the keep vector
+    return fit, keep
 
 
 def sinc(x: np.ndarray, amp: float, period: float, lin_center: float,

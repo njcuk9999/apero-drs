@@ -1129,6 +1129,16 @@ out_wavem_res = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
                            outclass=refcalib_ofile,
                            description='Reference wavelength resolution map '
                                        'file')
+# resolution e2ds file
+out_wavem_res_e2ds = drs_finput('WAVEM_RES_E2DS',
+                                hkeys=dict(KW_OUTPUT='WAVEM_RES_E2DS'),
+                                fibers=valid_efibers,
+                                filetype='.fits',
+                                intype=[out_ext_e2ds, out_ext_e2dsff],
+                                suffix='_waveref_res_e2ds',
+                                outclass=refcalib_ofile,
+                                description='Reference wavelength resolution '
+                                            'e2ds file')
 
 # fp global results table
 out_wavem_res_table = drs_input('WAVE_FPRESTAB',
