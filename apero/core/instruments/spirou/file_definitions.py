@@ -1136,7 +1136,8 @@ out_wavem_res_e2ds = drs_finput('WAVEM_RES_E2DS',
                                 filetype='.fits',
                                 intype=[out_ext_e2ds, out_ext_e2dsff],
                                 suffix='_waveref_res_e2ds',
-                                outclass=refcalib_ofile,
+                                dbname='calibration',
+                                dbkey='WAVR_E2DS', outclass=calib_ofile,
                                 description='Reference wavelength resolution '
                                             'e2ds file')
 
@@ -1166,6 +1167,8 @@ out_wavem_ll_table = drs_input('WAVE_FPLLTABL',
 red_file.addset(out_wavem_res)
 red_file.addset(out_wavem_res_table)
 red_file.addset(out_wavem_ll_table)
+red_file.addset(out_wavem_res_e2ds)
+calib_file.addset(out_wavem_res_e2ds)
 
 # -----------------------------------------------------------------------------
 # wave files

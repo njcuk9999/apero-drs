@@ -645,6 +645,7 @@ apero_wave_ref.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                            WAVEM_HCLIST=files.out_wave_hclist_ref,
                            WAVEM_FPLIST=files.out_wave_fplist_ref,
                            WAVEM_RES=files.out_wavem_res,
+                           WAVEM_RES_E2DS=files.out_wavem_res_e2ds,
                            CCF_RV=files.out_ccf_fits)
 apero_wave_ref.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_wave_ref.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
