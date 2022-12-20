@@ -2656,6 +2656,11 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
                 map_high_ords=map_high_ords, map_lower_pix=map_lower_pix,
                 map_high_pix=map_high_pix, xlim=xlim, ylim=res_ylim)
     # -------------------------------------------------------------------------
+    # produce the resolution e2ds files
+    e2ds_amp =
+    e2ds_fwhm =
+    e2ds_expo =
+    # -------------------------------------------------------------------------
     # push to wprops
     wprops['RES_MAP_DVS'] = map_dvs
     wprops['RES_MAP_LINES'] = map_fluxes
@@ -2674,11 +2679,15 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     wprops['RES_MAP_NBIN_PIX'] = n_spatial_bin
     wprops['RES_NBO'] = nbo
     wprops['RES_NBPIX'] = nbpix
+    wprops['RES_E2DS_AMP'] = e2ds_amp
+    wprops['RES_E2DS_FWHM'] = e2ds_fwhm
+    wprops['RES_E2DS_EXPO'] = e2ds_expo
     # set source
     keys = ['RES_MAP_DVS', 'RES_MAP_LINES', 'RES_MAP_FITS', 'RES_MAP_LOW_ORD',
             'RES_MAP_HIGH_ORD', 'RES_MAP_LOW_PIX', 'RES_MAP_HIGH_PIX',
             'RES_MAP_FWHM', 'RES_MAP_EXPO', 'RES_MAP_AMP', 'RES_MAP_EFFRES',
-            'RES_MAP_NBIN_ORD', 'RES_MAP_NBIN_PIX']
+            'RES_MAP_NBIN_ORD', 'RES_MAP_NBIN_PIX', 'RES_E2DS_AMP',
+            'RES_E2DS_FWHM', 'RES_E2DS_EXPO']
     wprops.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return updated wprops
@@ -2720,7 +2729,7 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
         # attempt a first fit on the flux
         cargs = [mp.centered_super_gauss, all_dv, all_flux]
         with warnings.catch_warnings(record=True) as _:
-            pcoeffs1, _ = curve_fit(*cargs, p0=guess)
+            pcoeffs1, _ = mp.fuzzy_curve_fit(*cargs, p0=guess)
         # calculate the residuals between flux and fit
         fluxfit1 = mp.centered_super_gauss(all_dv, *pcoeffs1)
         # residuals = all_flux - fluxfit1
@@ -3569,7 +3578,8 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
 
 def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
                          fpe2ds: DrsFitsFile, fiber: str,
-                         wavefile: DrsFitsFile, wprops: ParamDict):
+                         wavefile: DrsFitsFile, wprops: ParamDict
+                         ) -> DrsFitsFile:
     # set function name
     # _ = display_func('write_cavity_file', __NAME__)
 
@@ -3697,8 +3707,44 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
                         name_list=name_list,
                         block_kind=recipe.out_block_str,
                         runstring=recipe.runstring)
+    # ------------------------------------------------------------------
+    # Write RES E2DS files
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    rf_e2ds = recipe.outputs['WAVEM_RES_E2DS'].newcopy(params=params,
+                                                       fiber=fiber)
+    # construct the filename from file instance
+    rf_e2ds.construct_filename(infile=fpe2ds)
+    # ------------------------------------------------------------------
+    # copy keys from hcwavefile
+    rf_e2ds.copy_header(rf_e2ds)
+    # set data
+    rf_e2ds.data = wprops['RES_E2DS_AMP']
+    rf_e2ds.datatype = 'image'
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [fiber, rf_e2ds.filename]
+    WLOG(params, '', textentry('40-017-00020', args=wargs))
+    # define multi lists
+    data_list = [wprops['RES_E2DS_FWHM'], wprops['RES_E2DS_EXPO']]
+    name_list = ['E2DS_FWHM', 'E2DS_EXPO']
+    datatype_list = ['image', 'image']
+    # ------------------------------------------------------------------
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=resfile)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
+    # ------------------------------------------------------------------
     # add to output files (for indexing)
-    recipe.add_output_file(resfile)
+    recipe.add_output_file(rf_e2ds)
+    # write image to file
+    rf_e2ds.write_multi(data_list=data_list, header_list=header_list,
+                        name_list=name_list,
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
+    # ------------------------------------------------------------------
+    return rf_e2ds
 
 
 def res_map_hdr(params: ParamDict, header: drs_fits.Header,

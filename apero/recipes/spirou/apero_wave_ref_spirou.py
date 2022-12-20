@@ -360,8 +360,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         passed = np.all(qc_params[-1])
         # update recipe log
         log1.add_qc(qc_params, passed)
-        # proxy cavity file
-        cavityfile = None
+        # proxy cavity + resolution e2ds files
+        cavityfile, rf_e2ds = None, None
         # store global passed
         global_passed = bool(passed)
         # =================================================================
@@ -397,7 +397,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 # resolution args
                 rargs = [fp_e2ds_file, fiber, wavefile, wprops]
                 # write to file
-                wave.write_resolution_map(params, recipe, *rargs)
+                rf_e2ds = wave.write_resolution_map(params, recipe, *rargs)
 
             # -----------------------------------------------------------------
             # Write reference line references to file
@@ -442,6 +442,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 if fiber == ref_fiber:
                     # copy the cavity solution to calibration database
                     calibdbm.add_calib_file(cavityfile)
+                    # copy the resolution e2ds file
+                    calibdbm.add_calib_file(rf_e2ds)
                 # copy the hc wave solution file to the calibDB
                 calibdbm.add_calib_file(wavefile)
                 # copy the hc line ref file to the calibDB
