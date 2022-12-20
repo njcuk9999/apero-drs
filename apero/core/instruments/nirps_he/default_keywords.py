@@ -1043,6 +1043,11 @@ KW_CAVITY_DEG = KW_CAVITY_DEG.copy(__NAME__)
 KW_CAVITY_DEG.set(key='WCAV_DEG', comment='Wave cavity fit degree',
                   parent=None, group='wave')
 
+# define the cavity poly zero point (to be added on when using)
+KW_CAV_PEDESTAL = KW_CAV_PEDESTAL.copy(__NAME__)
+KW_CAV_PEDESTAL.set(key='WCAV_PED', comment='Wave cavity pedestal',
+                    parent=None, group='wave')
+
 # define the mean hc velocity calculated
 KW_WAVE_MEANHC = KW_WAVE_MEANHC.copy(__NAME__)
 KW_WAVE_MEANHC.set(key='WAVEMHC', comment='Wave mean hc velocity')

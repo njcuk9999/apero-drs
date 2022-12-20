@@ -231,8 +231,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # set the wprops to initial wave solution
         wprops = iwprops.copy()
         # get cavity solution from database
-        wprops['CAVITY'] = wave.get_cavity_file(params, infile=fp_e2ds_file,
-                                                database=calibdbm)
+        params, wprops['CAVITY'] = wave.get_cavity_file(params,
+                                                        infile=fp_e2ds_file,
+                                                        database=calibdbm)
         # -----------------------------------------------------------------
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
