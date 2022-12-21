@@ -1243,28 +1243,26 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # TODO -- all stars. At some point, have a temperature-dependent
         # TODO -- LUT of weights.
         # ------------------------------------------------------------------
-        # reject rubbish orders (using a sigma cut)
-        dev = ccf_ord - np.nanmedian(ccf_ord)
-        # deal with absorption CCF
         if fit_type == 0:
-            dev = dev * -1
-        # calculate how many sigma the peak of the CCF is away from the median
-        nsig = np.max(dev) / np.median(abs(dev))
-        # if the nsig of the CCF peak is below the threshold reject it
-        if nsig < ccf_nsig_threshold:
-            # log all NaN
-            wargs = [order_num, nsig, ccf_nsig_threshold]
-            wmsg = 'CCF order {0} rejected (nsig CCF peak = {1:.3f} < {2})'
-            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=6)
-            # set all values to NaN
-            ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
-            ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
-            ccf_all_results.append(np.repeat(np.nan, 4))
-            ccf_noise_all.append(np.nan)
-            ccf_lines.append(0)
-            ccf_all_snr.append(np.nan)
-            ccf_norm_all.append(np.nan)
-            continue
+            # reject rubbish orders (using a sigma cut)
+            dev = ccf_ord - np.nanmedian(ccf_ord)
+            # calculate how many sigma the peak of the CCF is away from the median
+            nsig = -np.min(dev) / np.median(abs(dev))
+            # if the nsig of the CCF peak is below the threshold reject it
+            if nsig < ccf_nsig_threshold:
+                # log all NaN
+                wargs = [order_num, nsig, ccf_nsig_threshold]
+                wmsg = 'CCF order {0} rejected (nsig CCF peak = {1:.3f} < {2})'
+                WLOG(params, 'warning', wmsg.format(*wargs), sublevel=6)
+                # set all values to NaN
+                ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
+                ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
+                ccf_all_results.append(np.repeat(np.nan, 4))
+                ccf_noise_all.append(np.nan)
+                ccf_lines.append(0)
+                ccf_all_snr.append(np.nan)
+                ccf_norm_all.append(np.nan)
+                continue
         # ------------------------------------------------------------------
         ccf_norm = mp.nanmedian(ccf_ord)
         # ccf_ord = ccf_ord / ccf_norm
