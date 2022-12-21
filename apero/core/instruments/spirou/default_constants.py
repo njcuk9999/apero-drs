@@ -2506,6 +2506,11 @@ CCF_FIT_TYPE.value = 0
 CCF_BLAZE_NORM_PERCENTILE = CCF_BLAZE_NORM_PERCENTILE.copy(__NAME__)
 CCF_BLAZE_NORM_PERCENTILE.value = 90
 
+# Define the minimum number of sigma the peak CCF must have to be acceptable
+CCF_NSIG_THRESHOLD = CCF_NSIG_THRESHOLD.copy(__NAME__)
+CCF_NSIG_THRESHOLD.value = 5
+CCF_NSIG_THRESHOLD.author = base.AUTHORS['EA']
+
 # =============================================================================
 # GENERAL POLARISATION SETTINGS
 # =============================================================================
