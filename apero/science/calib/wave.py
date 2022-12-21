@@ -486,12 +486,15 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     if cavdeg is None:
         cavdeg = params['WAVE_CAVITY_FIT_DEGREE']
         cav_coeffs = np.full(cavdeg + 1, np.nan)
+        cav_pedestal = params['WAVE_FP_DOPD0']
     else:
         cavdeg = int(cavdeg)
         cav_coeffs = wavefile.get_hkey_1d('KW_CAVITY_WIDTH', cavdeg + 1)
+        cav_pedestal = wavefile.get_hkey('KW_CAV_PEDESTAL')
     # add cavity keys to wprops
     wprops['CAVITY'] = cav_coeffs
     wprops['CAVITY_DEG'] = cavdeg
+    wprops['CAVITY_PEDESTAL'] = cav_pedestal
     wprops['MEAN_HC_VEL'] = wavefile.get_hkey('KW_WAVE_MEANHC', required=False)
     wprops['ERR_HC_VEL'] = wavefile.get_hkey('KW_WAVE_EMEANHC', required=False)
     # add the wfp keys
@@ -508,7 +511,8 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'NBO', 'DEG',
             'WAVE_POLY_TYPE', 'COEFFS', 'WAVETIME', 'WAVEINST', 'NBPIX',
-            'CAVITY', 'CAVITY_DEG', 'MEAN_HC_VEL', 'ERR_HC_VEL'] + wfp_keys
+            'CAVITY', 'CAVITY_DEG', 'CAVITY_PEDESTAL', 'MEAN_HC_VEL',
+            'ERR_HC_VEL'] + wfp_keys
     wprops.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # get the echelle order numbers
