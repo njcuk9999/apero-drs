@@ -1933,10 +1933,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # loop around coefficients
         for icoeff in range(wavesol_fit_degree + 1):
             # fit along orders
-            fitcoeffs, _ = mp.robust_polyfit(orders, wave_coeffs[:, icoeff],
-                                             9, 10)
+            fitcoeffs, _ = mp.robust_chebyfit(orders, wave_coeffs[:, icoeff],
+                                              9, 10, domain=[0, nbo])
             # update wave coeffs for all values
-            wave_coeffs_new[:, icoeff] = np.polyval(fitcoeffs, orders)
+            wave_coeffs_new[:, icoeff] = mp.val_cheby(fitcoeffs, orders,
+                                                      domain=[0, nbo])
         # insert the values for "removed orders"
         wave_coeffs = np.array(wave_coeffs)
         for order_num in remove_orders:
