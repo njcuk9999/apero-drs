@@ -557,6 +557,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     wavemap = wave_e2ds.ravel()[flatkeep]
     spectrum = image_e2ds.ravel()[flatkeep]
     spectrum_ini = image_e2ds_ini.ravel()[flatkeep]
+    # TODO: propagate flatkeep onto res_e2ds_fwhm and res_e2ds_expo
     orders = orders.ravel()[flatkeep]
     # deal with having a template
     if template is not None:
@@ -653,11 +654,13 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     WLOG(params, '', textentry('40-019-00040'))
     # ----------------------------------------------------------------------
     # get reference trans
+    # TODO: pass ww and ex_gau as the maps res_e2ds_fwhm and res_e2ds_expo
     trans_others = get_abso_expo(wavemap, hdr_airmass, 0.0, spl_others,
                                  spl_water, ww=ker_width,
                                  ex_gau=ker_shape, dv_abso=dv_abso,
                                  ker_thres=ker_thres, wavestart=wavestart,
                                  waveend=waveend, dvgrid=dvgrid)
+    # TODO: pass ww and ex_gau as the maps res_e2ds_fwhm and res_e2ds_expo
     trans_water = get_abso_expo(wavemap, 0.0, 4.0, spl_others, spl_water,
                                 ww=ker_width,
                                 ex_gau=ker_shape, dv_abso=dv_abso,
@@ -1245,6 +1248,7 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
     # define the convolution kernel for the model. This shape factor can be
     #    modified if needed
     #   divide by fwhm of a gaussian of exp = 2.0
+    # TODO: from here: This disappears when passing res_e2ds_fwhm and res_e2ds_expo
     width = ww / mp.fwhm()
     # defining the convolution kernel x grid, defined over 4 fwhm
     kernel_width = int(ww * 4)
@@ -1255,10 +1259,16 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
     ker = ker[ker > ker_thres * np.max(ker)]
     # normalize the kernel
     ker /= np.sum(ker)
+    # TODO: down to here: This disappears when passing res_e2ds_fwhm and res_e2ds_expo
     # ----------------------------------------------------------------------
     # create a magic grid onto which we spline our transmission, same as
     #   for the s1d_v in km/s
     magic_grid = mp.get_magic_grid(wavestart, waveend, dvgrid * 1000)
+
+    # TODO: Need to spline onto magic grid the shape parameters that are
+    #       currently expressed on the wavemap grid
+    #         fwhm_magic = mp.iuv_spline(wavemap, res_e2ds_fwhm, k=1, ext=3)
+    #         expo_magic = mp.iuv_spline(wavemap, res_e2ds_expo, k=1, ext=3)
     # spline onto magic grid
     sp_others = spl_others(magic_grid)
     sp_water = spl_water(magic_grid)
@@ -1274,6 +1284,7 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
     # getting the full absorption at full resolution
     trans = trans_others * trans_water
     # convolving after product (to avoid the infamous commutativity problem
+    # TODO: Replace with EA variable convolve function
     trans_convolved = np.convolve(trans, ker, mode='same')
     # ----------------------------------------------------------------------
     # spline that onto the input grid and allow a velocity shift
