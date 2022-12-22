@@ -718,6 +718,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                            kwargs, func_name)
     maxwsr = pcheck(params, 'CCF_MAX_CCF_WID_STEP_RATIO', 'maxwsr', kwargs,
                     func_name)
+    nsig_fwhm_threshold = pcheck(params, 'CCF_FWHM_SIGCUT', func=func_name)
     # get image size
     nbo, nbpix = image.shape
     # get parameters from inputs
@@ -817,9 +818,13 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     # Calculate the mean CCF
     # ----------------------------------------------------------------------
-    # get the average ccf
-    mean_ccf = mp.nanmean(props['CCF'][: ccfnmax], axis=0)
-
+    # find spurious fwhm
+    fwhm = props['CCF_FIT_COEFFS'][:, 2]
+    nsig = (fwhm - np.nanmedian(fwhm)) / mp.estimate_sigma(fwhm)
+    # create a mask based on good sigma values
+    nsig_mask = nsig < nsig_fwhm_threshold
+    # get the average ccf (after fwhm sigma clip)
+    mean_ccf = mp.nanmean(props['CCF'][nsig_mask], axis=0)
     # get the fit for the normalized average ccf
     mean_ccf_coeffs, mean_ccf_fit = fit_ccf(params, 'mean', props['RV_CCF'],
                                             mean_ccf, fit_type=fit_type)

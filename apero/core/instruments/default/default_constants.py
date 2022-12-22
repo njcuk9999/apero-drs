@@ -4321,6 +4321,14 @@ CCF_NSIG_THRESHOLD = Const('CCF_NSIG_THRESHOLD', value=None, dtype=float,
                            description='Define the minimum number of sigma the '
                                        'peak CCF must have to be acceptable')
 
+
+# Define the minimum number of sigma the FWHM of CCF must have to be acceptable
+CCF_FWHM_SIGCUT = Const('CCF_FWHM_SIGCUT', value=None, dtype=float,
+                        source=__NAME__, minimum=0, group=cgroup,
+                        description='Define the minimum number of sigma the '
+                                    'FWHM of CCF must have to be acceptable')
+
+
 # =============================================================================
 # GENERAL POLARISATION SETTINGS
 # =============================================================================
