@@ -93,10 +93,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # deal with update arguments
     update_calib = params['INPUTS']['CALIBDB']
     update_tellu = params['INPUTS']['TELLUDB']
-    update_index = params['INPUTS']['INDEXDB']
+    update_index = params['INPUTS']['FINDEXDB']
     update_log = params['INPUTS']['LOGDB']
     update_reject = params['INPUTS']['REJECTDB']
-    update_object = params['INPUTS']['OBJDB']
+    update_object = params['INPUTS']['ASTROMDB']
     update = params['INPUTS']['UPDATE']
     reset = params['INPUTS']['RESET']
     # deal with list of update arguments
