@@ -2,6 +2,142 @@ Changelog
 =========
 
 
+0.7.267 (2022-12-22)
+--------------------
+- [APERO] change continuity for wave to chebyshev. [Neil Cook]
+- [APERO] add sigma cut criteria on the CCF FWHM for the mean CCF
+  profile. [Neil Cook]
+- [APERO] add sigma cut criteria on the CCF FWHM for the mean CCF
+  profile. [Neil Cook]
+- [APERO] do not do nsig CCF cut for FP. [Neil Cook]
+- [APERO] set a minimum value for allowed CCF fit (peak CCF < 5sigma)
+  [Neil Cook]
+
+
+0.7.266 (2022-12-21)
+--------------------
+- [APERO] fix key error with CAVITY_PEDESTAL. [Neil Cook]
+- [APERO] add res e2ds to wave sol. [njcuk9999]
+- [APERO] add a resolution e2ds map for amp/fwhm/expo. [Neil Cook]
+- [APERO] improve wave solution with more cavity fit using chebyshev.
+  [njcuk9999]
+- [APERO] try making wave solution converge across machines. [Neil Cook]
+- [APERO] apero.core.math.gen_math.py - update robust_polyfit and
+  robust_chebyfit to be fuzzy at edges. [Neil Cook]
+- [APERO] apero.core.math.gen_math.py - update robust_polyfit and
+  robust_chebyfit to be fuzzy at edges. [Neil Cook]
+- [APERO] apero.core.math.gen_math.py - update robust_polyfit and
+  robust_chebyfit to be fuzzy at edges. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.261-live' into
+  v0.7.261-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.261-live' into
+  v0.7.261-live. [Neil Cook]
+- [APERO] correct typo. [Neil Cook]
+- [APERO] apero.core.math.gen_math.py - update robust_polyfit and
+  robust_chebyfit to be fuzzy at edges. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.259-nirps-test' into
+  v0.7.259-nirps-test. [njcuk9999]
+
+  # Conflicts:
+  #	apero/data/spirou/telluric/sky_PCs.fits
+- [APERO] update sky_PCs.fits. [Neil Cook]
+- [SPIROU] update sky_PCs.fits (needed to be flipped in shape)
+  [njcuk9999]
+
+
+0.7.265 (2022-12-13)
+--------------------
+- [APERO] storage for optimizing code. [Neil Cook]
+- [APERO] storage for optimizing code. [Neil Cook]
+- Merge branch 'v0.7.261-live' into v0.7.259-nirps-test. [Neil Cook]
+- [APERO] implement a locking for orderps file so we don't try to write
+  it and read it at the same time (should prevent an error we are
+  getting in extraction) [Neil Cook]
+- [APERO] fix ycents for AB,A,B spirou (change added for NIRPS) in order
+  table. [Neil Cook]
+- [APERO] fix ycents for AB,A,B spirou (change added for NIRPS) in order
+  table. [Neil Cook]
+- [APERO] fix ycents for AB,A,B spirou (change added for NIRPS) in order
+  table. [Neil Cook]
+- Merge branch 'v0.7.259-nirps-test' into v0.7.261-live. [Neil Cook]
+- [APERO] update date/version/docs. [Neil Cook]
+- [NIRPS] switch sequences for EFF,SKY,SKY and DARK,SKY. [njcuk9999]
+- [NIRPS] add calculate_dxmap_nirps to both modes (rename from
+  calculate_dxmap_nirpshe) [njcuk9999]
+- [NIRPS] add calculate_dxmap_nirps to both modes (rename from
+  calculate_dxmap_nirpshe) [njcuk9999]
+- [APERO] apero.science.extract.gen_ext.py - better handle trying shapel
+  file (when multiple files try to write it at once) [Neil Cook]
+- [NIRPS] apero.recipes.nirps_ha.apero_preprocess_nirps_ha.py - fix
+  loading of led lat. [Neil Cook]
+- [APERO] add --plot=4 (select plots) and fix --fpref. [njcuk9999]
+- [NIRPS] fix LED flat creation + update run.ini files. [Neil Cook]
+- [NIRPS] fix LED flat creation + combine (for hash code) + save to
+  calibDB. [Neil Cook]
+
+
+0.7.264 (2022-12-08)
+--------------------
+- [NIRPS] update LED flat creation. [Neil Cook]
+- [NIRPS] update preprocessing codes to use LED_FLAT from calibrations.
+  [Neil Cook]
+- [APERO] update apero_get + documentation. [Neil Cook]
+- [APERO] update apero_get.py. [njcuk9999]
+- [APERO] apero_get.py allow wildcard for --objnames. [Neil Cook]
+- [NIRPS] Add LED flat creation to PP_REF. [Neil Cook]
+- [APERO] update sky model. [njcuk9999]
+- [APERO] require wavelength solution to be within 7 days if a night
+  calibration. [njcuk9999]
+- [APERO] try to fix problem with shapel_orderps FileNotFoundError.
+  [Neil Cook]
+- [APERO] add order table (for extracted files) + WAVE_POLY_TYPE +
+  LOC_POLY_TYPE. [Neil Cook]
+- [APERO] add order table (for extracted files) + WAVE_POLY_TYPE +
+  LOC_POLY_TYPE. [Neil Cook]
+- [APERO] add order table (for extracted files) + WAVE_POLY_TYPE +
+  LOC_POLY_TYPE. [Neil Cook]
+- [APERO] add poly type to loco keys loaded from locofile. [njcuk9999]
+- [NIRPS] remove extraction bad pixel flagging for HA-A, HA-B, HE-B
+  fibers [APERO] add loc and wave poly coeff type (Chebyshev)
+  [njcuk9999]
+
+
+0.7.263 (2022-11-30)
+--------------------
+- [NIRPS] change s1d max wavelength. [njcuk9999]
+- [APERO] add led_flat code + allow forcing only telluric preclean.
+  [njcuk9999]
+- [APERO] add led_flat. [njcuk9999]
+- [APERO] allow a constant to determine the min exptime for darks in the
+  dark_ref. [njcuk9999]
+- [APERO] must add to e2dsoutputs for leak correction to work.
+  [njcuk9999]
+- [NIRPS] update the list of telluric stars. [njcuk9999]
+- [NIRPS] apero.tools.module.processing.drs_processing.py - fix skip
+  list with INCLUDE_OBS_DIRS and EXCLUDE_OBS_DIRS (param--> param.listp)
+  [njcuk9999]
+- [NIRPS] apero.science.gen_ext.py - allow override of fibers for
+  fplines calculation (for FP_FP tests) [njcuk9999]
+- [NIRPS] apero.science.calib.localisation.py - change max to a
+  percentile in the order loc label (avoids picking up pixels outside
+  order for width measurement) [njcuk9999]
+- [NIRPS] update nirps_he recipe_definitions (add PP_EVERY and
+  EXT_EVERY) [Neil Cook]
+
+
+0.7.262 (2022-11-15)
+--------------------
+- [APERO] Add PP_EVERY to pp_seq_opt and EXTRACT_EVERY to eng_seq (used
+  in other_run.ini) to preprocess and extract everything (no calibs)
+  [Neil Cook]
+- [NIRPS] update HE and HA default wave solution. [Neil Cook]
+- [NIRPS] updates for nirps HE wave solution. [Neil Cook]
+- [APERO] update reset.calib.csv and deafult_constants for wave
+  constants. [Neil Cook]
+- [APERO] update nirps ref wave solutions. [Neil Cook]
+- [APERO] nirps updates for wave sol. [Neil Cook]
+
+
 0.7.261 (2022-11-10)
 --------------------
 - [APERO]doc string / typing /pcheck / pep8 update. [Neil Cook]
