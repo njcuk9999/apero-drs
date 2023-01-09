@@ -244,7 +244,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # turn off cleaning of OH lines in pre-cleaning
             clean_ohlines = False
         else:
-            clean_ohlines = params['TELLUP_CLEAN_OH_LINES']
+            # correct sky using model and B fiber
+            scprops = telluric.correct_sky_no_ref(params, recipe, infile,
+                                                  wprops, rawfiles, combine,
+                                                  calibdbm, telludbm)
+            # update infile
+            infile.data = scprops[f'CORR_EXT_{fiber}']
+            # turn off cleaning of OH lines in pre-cleaning
+            clean_ohlines = False
 
         # ------------------------------------------------------------------
         # telluric pre-cleaning
