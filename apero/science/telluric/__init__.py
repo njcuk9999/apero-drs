@@ -29,7 +29,9 @@ calc_res_model = fit_tellu.calc_res_model
 
 calculate_tellu_res_absorption = mk_tellu.calculate_tellu_res_absorption
 
-correct_sky = sky_corr.correct_sky
+correct_sky_with_ref = sky_corr.correct_sky_with_ref
+
+correct_sky_no_ref = sky_corr.correct_sky_no_ref
 
 correct_other_science = fit_tellu.correct_other_science
 
