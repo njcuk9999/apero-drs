@@ -18,6 +18,7 @@ import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
 from astropy.table import Table
+from scipy.ndimage import zoom
 from scipy.optimize import curve_fit
 
 from apero import lang
@@ -485,12 +486,15 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     if cavdeg is None:
         cavdeg = params['WAVE_CAVITY_FIT_DEGREE']
         cav_coeffs = np.full(cavdeg + 1, np.nan)
+        cav_pedestal = params['WAVE_FP_DOPD0']
     else:
         cavdeg = int(cavdeg)
         cav_coeffs = wavefile.get_hkey_1d('KW_CAVITY_WIDTH', cavdeg + 1)
+        cav_pedestal = wavefile.get_hkey('KW_CAV_PEDESTAL')
     # add cavity keys to wprops
     wprops['CAVITY'] = cav_coeffs
     wprops['CAVITY_DEG'] = cavdeg
+    wprops['CAVITY_PEDESTAL'] = cav_pedestal
     wprops['MEAN_HC_VEL'] = wavefile.get_hkey('KW_WAVE_MEANHC', required=False)
     wprops['ERR_HC_VEL'] = wavefile.get_hkey('KW_WAVE_EMEANHC', required=False)
     # add the wfp keys
@@ -507,7 +511,8 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'NBO', 'DEG',
             'WAVE_POLY_TYPE', 'COEFFS', 'WAVETIME', 'WAVEINST', 'NBPIX',
-            'CAVITY', 'CAVITY_DEG', 'MEAN_HC_VEL', 'ERR_HC_VEL'] + wfp_keys
+            'CAVITY', 'CAVITY_DEG', 'CAVITY_PEDESTAL', 'MEAN_HC_VEL',
+            'ERR_HC_VEL'] + wfp_keys
     wprops.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # get the echelle order numbers
@@ -607,7 +612,7 @@ def shift_wavesolution(wprops: ParamDict, dvshift: float) -> ParamDict:
 def get_cavity_file(params: ParamDict, header: HeaderType = None,
                     infile: Union[DrsFitsFile, None] = None,
                     database: Union[CalibDB, None] = None
-                    ) -> Union[np.array, None]:
+                    ) -> Tuple[ParamDict, Union[np.array, None]]:
     """
     Get the cavity file
 
@@ -620,8 +625,11 @@ def get_cavity_file(params: ParamDict, header: HeaderType = None,
     :param database: calibration database instance or None, stops us reloading
                      the calibration database when already loaded
 
-    :return: the cavity polynomial coefficients (as a numpy array)
+    :return: tuple, 1. the update parameter dictionary, 2. the cavity
+                    polynomial coefficients (as a numpy array)
     """
+    # set function name
+    func_name = display_func('get_cavity_file', __NAME__)
     # get cavity file
     cavity_file = drs_file.get_file_definition(params, 'WAVEREF_CAV',
                                                block_kind='red')
@@ -645,18 +653,24 @@ def get_cavity_file(params: ParamDict, header: HeaderType = None,
     # load filename from inputs/calibDB
     # ---------------------------------------------------------------------
     lkwargs = dict(userinputkey='CAVITYFILE', database=calibdbm, key=cavity_key,
-                   inheader=header, required=True)
+                   get_header=True,  inheader=header, required=True)
     # load wave fp file
     cfile = gen_calib.CalibFile()
     cfile.load_calib_file(params, **lkwargs)
     # deal with no cavity file
     if not cfile.found:
-        return None
+        return params, None
     else:
         cimage = cfile.data
+        chdr = cfile.header
+    # get the cavity pedestal from the header
+    cavity_pedestal = chdr[params['KW_CAV_PEDESTAL'][0]]
+    # ---------------------------------------------------------------------
+    # update cavity pedestal in params
+    params.set('WAVE_FP_DOPD0', value=cavity_pedestal, source=func_name)
     # ---------------------------------------------------------------------
     # return cavity image
-    return np.array(cimage)
+    return params, np.array(cimage)
 
 
 def get_wavelines(params: ParamDict, fiber: str,
@@ -860,6 +874,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                         func=func_name, mapf='list', dtype=str)
     # get the degree to fix reference wavelength to in hc mode
     fitdeg = pcheck(params, 'WAVEREF_FITDEG', 'fitdeg', func=func_name)
+    # cavity fit degree
+    cfitdeg = pcheck(params, 'WAVE_FP_CAVFIT_DEG', func=func_name)
     # define the lowest N for fp peaks
     fp_nlow = pcheck(params, 'WAVEREF_FP_NLOW', 'fp_nlow', func=func_name)
     # define the highest N for fp peaks
@@ -872,6 +888,11 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # define orders not to fit
     remove_orders = pcheck(params, 'WAVE_REMOVE_ORDERS', func=func_name,
                            mapf='list', dtype=int)
+    # define the bulk offset to be added to the cavity length
+    cavity_pedestal = pcheck(params, 'WAVE_FP_DOPD0', func=func_name)
+    # define the wavelength bounds of the instrument
+    inst_wavestart = pcheck(params, 'EXT_S1D_WAVESTART', func=func_name)
+    inst_waveend = pcheck(params, 'EXT_S1D_WAVEEND', func=func_name)
     # ------------------------------------------------------------------
     # get psuedo constants
     pconst = constants.pload(params['INSTRUMENT'])
@@ -979,6 +1000,13 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             # load the first guess cavity polynomial from file
             _, fit_ll = drs_data.load_cavity_files(params)
             cavity_length_poly = fit_ll * 2
+            # get a temporary cavity
+            tmp_x = np.arange(inst_wavestart, inst_waveend)
+            tmp_cavity = np.polyval(cavity_length_poly, tmp_x) - cavity_pedestal
+            # re-work out the cavity poly in chebyshev
+            cavity_length_poly = mp.fit_cheby(tmp_x, tmp_cavity, cfitdeg,
+                                              domain=[inst_wavestart,
+                                                      inst_waveend])
         # ------------------------------------------------------------------
         # range of the N FP peaks
         nth_peak = np.arange(fp_nlow, fp_nhigh)
@@ -988,8 +1016,13 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         wave0 = wave0 * mp.nanmean(wavemap)
         # need a few iterations to invert polynomial relations
         for _ in range(fp_inv_itr):
-            # do not (yet) convert to cheby polynomials
-            wave0 = np.polyval(cavity_length_poly, wave0) / nth_peak
+            #
+            tmp_cavity = mp.val_cheby(cavity_length_poly, wave0,
+                                      domain=[inst_wavestart, inst_waveend])
+            tmp_cavity = tmp_cavity + cavity_pedestal
+            # recalculate the initial guess at wavelength using the cavity
+            #   width polynomial guess
+            wave0 = tmp_cavity / nth_peak
         # keep lines within the ref_wavelength domain
         keep = (wave0 > np.min(wavemap)) & (wave0 < np.max(wavemap))
         wave0 = wave0[keep]
@@ -1003,7 +1036,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # loop around orders and get the lines that fall within each
         #    diffraction order
         for order_num in range(nbo):
-            # do not add lines lines from remove lines
+            # do not add lines from remove orders
             if order_num in remove_orders:
                 continue
             # we have a wavelength value, we get an approximate pixel
@@ -1050,7 +1083,10 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # wavelength solutions by changing the achromatic part of the cavity
         # length relative to the reference observation directory. By construction,
         # this is always an integer.
-        cavfit = np.polyval(cavity_length_poly, list_waves)
+        cavfit = mp.val_cheby(cavity_length_poly, list_waves,
+                              domain=[inst_wavestart, inst_waveend])
+        cavfit = cavfit + cavity_pedestal
+
         peak_number = np.round(cavfit / list_waves, 0).astype(int)
     # ----------------------------------------------------------------------
     # else we break
@@ -1123,13 +1159,14 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                     posmin = mp.nanargmin(ypix)
                     ymax, ymin = ypix[posmax], ypix[posmin]
                     # xcen = index[posmax]
-                    xcen = order_pixels[it]
+                    # xcen = order_pixels[it]
 
                     # if HC fit a gaussian with a slope
                     if fibtype in hcfibtypes:
                         # get up a gauss fit guess
                         #   [amplitude, mean position, FWHM, DC, slope]
-                        guess = [ymax - ymin, index[posmax], guess_hc_ewid, ymin, 0]
+                        guess = [ymax - ymin, index[posmax], guess_hc_ewid,
+                                 ymin, 0]
                         out = mp.fit_gauss_with_slope(index, ypix, guess, True)
                         # get parameters from fit
                         popt, pcov, model = out
@@ -1351,6 +1388,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # define orders not to fit
     remove_orders = pcheck(params, 'WAVE_REMOVE_ORDERS', func=func_name,
                            mapf='list', dtype=int)
+    # define the bulk offset to be added to the cavity length
+    cavity_pedestal = pcheck(params, 'WAVE_FP_DOPD0', func=func_name)
+    # define the wavelength bounds of the instrument
+    inst_wavestart = pcheck(params, 'EXT_S1D_WAVESTART', func=func_name)
+    inst_waveend = pcheck(params, 'EXT_S1D_WAVEEND', func=func_name)
     # -------------------------------------------------------------------------
     # setup parameters
     # -------------------------------------------------------------------------
@@ -1544,9 +1586,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # inverse this fit using the HC lines
             ohcwave_fit = np.polyval(wave_fit, ordhc_pix_meas)
             # work out the residuals
-            med_hc_res = mp.nanmedian(1 - ordhc_wave_ref / ohcwave_fit)
+            residual = 1 - ordhc_wave_ref / ohcwave_fit
+            sigma_hc_res = mp.robust_nanstd(residual)
+            err = np.ones_like(residual)*sigma_hc_res
+            med_hc_res, err_med_hc_res = mp.odd_ratio_mean(residual, err)
             # work out a robust sigma of the residuals
-            sigma_hc_res = mp.robust_nanstd(1 - ordhc_wave_ref / ohcwave_fit)
             # convert to a velocity [km/s]
             sigma_hc_res_kms = sigma_hc_res * speed_of_light
             # We only update the cavity length for a given order if the RMS
@@ -1560,7 +1604,9 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # TODO: Add to language database
             msg = (f'\tCavity fit {jt + 1}: med hc res = '
                    f'{med_hc_res * speed_of_light_ms:.3e} m/s '
-                   f'{sigma_hc_res * speed_of_light_ms:.3e} m/s ')
+                   f'{sigma_hc_res * speed_of_light_ms:.3e} m/s '
+                   f'{ err_med_hc_res * speed_of_light_ms:.3e} m/s '
+                   )
             WLOG(params, '', msg)
 
         # print msg: Velocity RMS of HC lines relative to catalog: {0:.3f} km/s
@@ -1668,11 +1714,14 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         #              fit and all  coefficients should be fitted
         # now we have valid numbering and best-guess WAVE_MEAS, we find the
         #    cavity length
-        wavepeak = fpl_wave_meas * fpl_peak_num
+        wavepeak = (fpl_wave_meas * fpl_peak_num) - cavity_pedestal
         # expressed in wavelength, does not have a clean 'domain'
         # leave as a polyfit
-        cavity, _ = mp.robust_polyfit(fpl_wave_meas, wavepeak,
-                                      cavity_fit_degree, nsig_cut)
+        cavity, _ = mp.robust_chebyfit(fpl_wave_meas, wavepeak,
+                                       cavity_fit_degree, nsig_cut,
+                                       domain=[inst_wavestart, inst_waveend])
+        # cavity1, _ = mp.robust_polyfit(fpl_wave_meas, wavepeak,
+        #                               cavity_fit_degree, nsig_cut)
         cavity = np.array(cavity)
     else:
         # if we have a cavity polynomial supplied as input use it here
@@ -1712,7 +1761,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # update wave ref based on the fit
             # expressed in cavity length, does not have a clean 'domain'
             # leave as a polyfit
-            fpl_wave_ref = np.polyval(cavity, fpl_wave_ref) / fpl_peak_num
+            # fpl_wave_ref = np.polyval(cavity, fpl_wave_ref) / fpl_peak_num
+
+            vtmp = mp.val_cheby(cavity, fpl_wave_ref,
+                                        domain=[inst_wavestart, inst_waveend])
+            fpl_wave_ref = (vtmp + cavity_pedestal) / fpl_peak_num
         # ---------------------------------------------------------------------
         # get the wavelength solution for the order and the HC line position
         #     that it implies. The diff between the HC position found here and
@@ -1763,21 +1816,28 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             mean2error = np.abs(mean_hc_vel / err_hc_vel)
             # update last coefficient of the cavity fit
             cavity = np.array(cavity)
-            cavity[-1] = cavity[-1] * (1 + mean_hc_vel / speed_of_light_ms)
+            cavity[0] = cavity[0] * (1 + mean_hc_vel / speed_of_light_ms)
         # else update the cavity
         else:
             # set mean2error to zero
             mean2error = 0.0
+            # set domain
+            cdomain = [inst_wavestart, inst_waveend]
             # create a temporary value of cavity length at each wave point
-            tmp_cavity = np.polyval(cavity, fpl_wave_ref)
+            # tmp_cavity = np.polyval(cavity, fpl_wave_ref)
+            tmp_cavity = mp.val_cheby(cavity, fpl_wave_ref, domain=cdomain)
+            tmp_cavity = tmp_cavity + cavity_pedestal
             # fit cavity length to find a correction
             dv_cav = (1 + diff_hc / speed_of_light_ms)
-            cav_corr, _ = mp.robust_polyfit(hcl_wave_meas, dv_cav,
-                                            cavity_fit_degree, nsig_cut)
+            cav_corr, _ = mp.robust_chebyfit(hcl_wave_meas, dv_cav,
+                                             cavity_fit_degree, nsig_cut,
+                                             domain=cdomain)
             # update the cavity length at all points by the cavity correction
-            tmp_cavity *= np.polyval(cav_corr, fpl_wave_ref)
+            tmp_cavity *= mp.val_cheby(cav_corr, fpl_wave_ref, domain=cdomain)
+            tmp_cavity = tmp_cavity - cavity_pedestal
             # fit cavity length again with this new correction
-            cavity = np.polyfit(fpl_wave_ref, tmp_cavity, cavity_fit_degree)
+            cavity = mp.fit_cheby(fpl_wave_ref, tmp_cavity, cavity_fit_degree,
+                                  domain=cdomain)
         # ---------------------------------------------------------------------
         # log message: Iteration {0}: Mean HC position {1:6.2f}+-{2:.2f} m/s'
         margs = [count + 1, mean_hc_vel, err_hc_vel]
@@ -1786,18 +1846,52 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         count += 1
     # -------------------------------------------------------------------------
     # log message: Change in cavity length {0:6.2f} nm'
-    cavlen1 = np.polyval(cavity, fpl_wave_ref)
-    cavlen0 = np.polyval(cavity0, fpl_wave_ref)
+    cavlen1 = mp.val_cheby(cavity, fpl_wave_ref,
+                           domain=[inst_wavestart, inst_waveend])
+    cavlen0 = mp.val_cheby(cavity0, fpl_wave_ref,
+                           domain=[inst_wavestart, inst_waveend])
     margs = [mp.nanmean(cavlen1) - mp.nanmean(cavlen0)]
     WLOG(params, '', textentry('40-017-00058', args=margs))
+    
+    # TODO: fp_peak_num_3, fp_wave_meas_3, fp_wave_ref3
+    # -------------------------------------------------------------------------
+    # get the proper cavity length from the cavity polynomial
+    # update wave_ref now we have a good cavity length
+    for _ in range(cavity_fit_iterations2):
+        # update wave ref based on the fit
+        # expressed in cavity length, does not have a clean 'domain'
+        # leave as a polyfit
+        # fpl_wave_ref = np.polyval(cavity, fpl_wave_ref) / fpl_peak_num
+        vtmp = mp.val_cheby(cavity, fpl_wave_ref,
+                            domain=[inst_wavestart, inst_waveend])
+        fpl_wave_ref = (vtmp + cavity_pedestal) / fpl_peak_num
     # -------------------------------------------------------------------------
     # save some information for plotting later
     fp_peak_num_2 = np.array(fpl_peak_num)
     fp_wave_meas_2 = np.array(fpl_wave_meas)
     fp_wave_ref_2 = np.array(fpl_wave_ref)
     # -------------------------------------------------------------------------
+    # loop around orders to update wave meas ONLY for plot based on new
+    #    fpl_wave_ref
+    for order_num in orders:
+        # skip orders flagged for removal
+        if order_num in remove_orders:
+            continue
+        # find the hc and fp lines for the current oder
+        good_fp = fpl_order == order_num
+        # get the fplines for this order
+        ordfp_pix_meas2 = fp_wave_meas_2[good_fp]
+        ordfp_wave_ref2 = fp_wave_ref_2[good_fp]
+        # get wave fit
+        wave_fit, _ = mp.robust_chebyfit(ordfp_pix_meas2, ordfp_wave_ref2,
+                                         wavesol_fit_degree, nsig_cut,
+                                         domain=[0, nbxpix])
+        # update wave measure from this fit
+        fp_wave_meas_2[good_fp] = mp.val_cheby(wave_fit, ordfp_pix_meas2,
+                                               domain=[0, nbxpix])
+    # -------------------------------------------------------------------------
     # plot the wavelength vs cavity width plot
-    recipe.plot('WAVE_WL_CAV', cavity=cavity, orders=fpl_order,
+    recipe.plot('WAVE_WL_CAV', params=params, cavity=cavity, orders=fpl_order,
                 fp_wave_meas1=fp_wave_meas_1, fp_peak_num_1=fp_peak_num_1,
                 fp_wave_meas2=fp_wave_meas_2, fp_peak_num_2=fp_peak_num_2,
                 fp_wave_ref_1=fp_wave_ref_1, fp_wave_ref_2=fp_wave_ref_2,
@@ -1806,9 +1900,6 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # plot the wavelength hc diff histograms
     recipe.plot('WAVE_HC_DIFF_HIST', diff_hc=diff_hc, error=hcsigma,
                 iteration=iteration)
-    # -------------------------------------------------------------------------
-    # update wave solution for fplines
-    fpl_wave_ref = np.polyval(cavity, fpl_wave_ref) / fpl_peak_num
     # -------------------------------------------------------------------------
     # Construct the wavelength coefficients / wave map
     # -------------------------------------------------------------------------
@@ -1842,10 +1933,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # loop around coefficients
         for icoeff in range(wavesol_fit_degree + 1):
             # fit along orders
-            fitcoeffs, _ = mp.robust_polyfit(orders, wave_coeffs[:, icoeff],
-                                             9, 10)
+            fitcoeffs, _ = mp.robust_chebyfit(orders, wave_coeffs[:, icoeff],
+                                              9, 10, domain=[0, nbo])
             # update wave coeffs for all values
-            wave_coeffs_new[:, icoeff] = np.polyval(fitcoeffs, orders)
+            wave_coeffs_new[:, icoeff] = mp.val_cheby(fitcoeffs, orders,
+                                                      domain=[0, nbo])
         # insert the values for "removed orders"
         wave_coeffs = np.array(wave_coeffs)
         for order_num in remove_orders:
@@ -1878,13 +1970,14 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     wprops['DEG'] = wavesol_fit_degree
     wprops['NBPIX'] = nbxpix
     wprops['CAVITY'] = cavity
+    wprops['CAVITY_PEDESTAL'] = cavity_pedestal
     wprops['CAVITY_DEG'] = cavity_fit_degree
     wprops['MEAN_HC_VEL'] = mean_hc_vel
     wprops['ERR_HC_VEL'] = err_hc_vel
     wprops['WAVE_POLY_TYPE'] = 'Chebyshev'
     # set source
     keys = ['WAVEMAP', 'NBO', 'DEG', 'COEFFS', 'NBPIX', 'CAVITY', 'CAVITY_DEG',
-            'MEAN_HC_VEL', 'ERR_HC_VEL', 'WAVE_POLY_TYPE']
+            'CAVITY_PEDESTAL', 'MEAN_HC_VEL', 'ERR_HC_VEL', 'WAVE_POLY_TYPE']
     wprops.set_sources(keys, func_name)
     # return wave properties
     return wprops
@@ -2070,6 +2163,11 @@ def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
                   func_name)
     threshold = pcheck(params, 'WAVE_CCF_SMART_MASK_DWAVE_THRES', 'threshold',
                        kwargs, func_name)
+    # define the bulk offset to be added to the cavity length
+    cavity_pedestal = pcheck(params, 'WAVE_FP_DOPD0', func=func_name)
+    # define the wavelength bounds of the instrument
+    inst_wavestart = pcheck(params, 'EXT_S1D_WAVESTART', func=func_name)
+    inst_waveend = pcheck(params, 'EXT_S1D_WAVEEND', func=func_name)
     # if we don't want to update the mask then don't
     if not update_mask:
         return
@@ -2098,7 +2196,10 @@ def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
         # keep track of the central line to check convergence
         prev = wave_fp_peak[len(wave_fp_peak) // 2]
         # derive a new wavelength for each fp peak
-        wave_fp_peak = np.polyval(cavity, wave_fp_peak) / n_fp_fpeak
+        tmp_cavity = mp.val_cheby(cavity, wave_fp_peak,
+                                  domain=[inst_wavestart, inst_waveend])
+        tmp_cavity = tmp_cavity + cavity_pedestal
+        wave_fp_peak = tmp_cavity / n_fp_fpeak
         # check convergnce
         dwave = prev - wave_fp_peak[len(wave_fp_peak) // 2]
     # ----------------------------------------------------------------------
@@ -2561,6 +2662,14 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
                 map_high_ords=map_high_ords, map_lower_pix=map_lower_pix,
                 map_high_pix=map_high_pix, xlim=xlim, ylim=res_ylim)
     # -------------------------------------------------------------------------
+    # produce the resolution e2ds files
+    e2ds_amp = map_res_e2ds(map_amp, (n_order_bin, n_spatial_bin),
+                            wavemap.shape)
+    e2ds_fwhm = map_res_e2ds(map_fwhm, (n_order_bin, n_spatial_bin),
+                            wavemap.shape)
+    e2ds_expo = map_res_e2ds(map_expo, (n_order_bin, n_spatial_bin),
+                            wavemap.shape)
+    # -------------------------------------------------------------------------
     # push to wprops
     wprops['RES_MAP_DVS'] = map_dvs
     wprops['RES_MAP_LINES'] = map_fluxes
@@ -2579,15 +2688,47 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     wprops['RES_MAP_NBIN_PIX'] = n_spatial_bin
     wprops['RES_NBO'] = nbo
     wprops['RES_NBPIX'] = nbpix
+    wprops['RES_E2DS_AMP'] = e2ds_amp
+    wprops['RES_E2DS_FWHM'] = e2ds_fwhm
+    wprops['RES_E2DS_EXPO'] = e2ds_expo
     # set source
     keys = ['RES_MAP_DVS', 'RES_MAP_LINES', 'RES_MAP_FITS', 'RES_MAP_LOW_ORD',
             'RES_MAP_HIGH_ORD', 'RES_MAP_LOW_PIX', 'RES_MAP_HIGH_PIX',
             'RES_MAP_FWHM', 'RES_MAP_EXPO', 'RES_MAP_AMP', 'RES_MAP_EFFRES',
-            'RES_MAP_NBIN_ORD', 'RES_MAP_NBIN_PIX']
+            'RES_MAP_NBIN_ORD', 'RES_MAP_NBIN_PIX', 'RES_E2DS_AMP',
+            'RES_E2DS_FWHM', 'RES_E2DS_EXPO']
     wprops.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return updated wprops
     return wprops
+
+
+def map_res_e2ds(map_values: Dict[tuple, float], inshape: Tuple[int],
+                 outshape: Tuple[int]) -> np.ndarray:
+    """
+    Take the resolution map values and expand into a image of shape outshape
+    (an e2ds)
+
+    :param map_values: dictionary, dictionary where the keys are a tuple giving
+                       the position in the inshape map
+    :param inshape: tuple, 1. number of in rows (y), 2. number of in cols (x)
+    :param outshape: tuple, 1. number of out rows (y), 2. number of out cols (x)
+
+    :return: numpy (2D) array: the expanded map, shape = outshape
+    """
+    # -------------------------------------------------------------------------
+    # generate map of input parameters
+    inmap = np.zeros(inshape)
+    for it in range(inshape[0]):
+        for jt in range(inshape[1]):
+            inmap[it, jt] = map_values[(it, jt)]
+    # -------------------------------------------------------------------------
+    # use ndimage zoom
+    outmap = zoom(inmap, np.array(outshape)/np.array(inmap.shape))
+    # -------------------------------------------------------------------------
+    # return the expanded map, shape = outshape
+    return outmap
+
 
 
 def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
@@ -2625,28 +2766,30 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
         # attempt a first fit on the flux
         cargs = [mp.centered_super_gauss, all_dv, all_flux]
         with warnings.catch_warnings(record=True) as _:
-            pcoeffs1, _ = curve_fit(*cargs, p0=guess)
+            pcoeffs1, _ = mp.fuzzy_curve_fit(*cargs, p0=guess)
         # calculate the residuals between flux and fit
         fluxfit1 = mp.centered_super_gauss(all_dv, *pcoeffs1)
-        residuals = all_flux - fluxfit1
-        # sigma clip the residuals
-        sigclip = np.abs(residuals) < sigclipthres
-        # update the all_dv and all_flux vectors
-        all_dv, all_flux = all_dv[sigclip], all_flux[sigclip]
-        all_wave, all_order = all_wave[sigclip], all_order[sigclip]
-        # re-fit based on sigma clipped vectors
-        cargs = [mp.centered_super_gauss, all_dv, all_flux]
-        with warnings.catch_warnings(record=True) as _:
-            pcoeffs2, _ = curve_fit(*cargs, p0=guess)
-        # calculate fit
-        fluxfit2 = mp.centered_super_gauss(all_dv, *pcoeffs2)
+        # residuals = all_flux - fluxfit1
+        # # sigma clip the residuals
+        # sigclip = np.abs(residuals) < sigclipthres
+        # # update the all_dv and all_flux vectors
+        # all_dv, all_flux = all_dv[sigclip], all_flux[sigclip]
+        # all_wave, all_order = all_wave[sigclip], all_order[sigclip]
+        # # re-fit based on sigma clipped vectors
+        # cargs = [mp.centered_super_gauss, all_dv, all_flux]
+        # with warnings.catch_warnings(record=True) as _:
+        #     pcoeffs2, _ = curve_fit(*cargs, p0=guess)
+        # # calculate fit
+        # fluxfit2 = mp.centered_super_gauss(all_dv, *pcoeffs2)
         # calculate resolution
-        fwhm, amp, expo = pcoeffs2
+        #fwhm, amp, expo = pcoeffs2
+        fwhm, amp, expo = pcoeffs1
         res_eff = speed_of_light / fwhm
     except ValueError as e:
         # set values to NaN
         fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
-        fluxfit2 = np.full_like(all_dv, np.nan)
+        # fluxfit2 = np.full_like(all_dv, np.nan)
+        fluxfit1 = np.full_like(all_dv, np.nan)
         # Fit failed for order bin {0} spectral bin {1}
         wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
                  map_lower_ords[mapkey], map_high_ords[mapkey],
@@ -2657,7 +2800,8 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
     except RuntimeError as e:
         # set values to NaN
         fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
-        fluxfit2 = np.full_like(all_dv, np.nan)
+        # fluxfit2 = np.full_like(all_dv, np.nan)
+        fluxfit1 = np.full_like(all_dv, np.nan)
         # Fit failed for order bin {0} spectral bin {1}
         wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
                  map_lower_ords[mapkey], map_high_ords[mapkey],
@@ -2666,7 +2810,9 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
         WLOG(params, 'warning', textentry('10-017-00013', wargs),
              sublevel=4)
     # return outputs
-    fout = [fwhm, amp, expo, res_eff, fluxfit2, all_dv, all_flux,
+    # fout = [fwhm, amp, expo, res_eff, fluxfit2, all_dv, all_flux,
+    #         all_wave, all_order]
+    fout = [fwhm, amp, expo, res_eff, fluxfit1, all_dv, all_flux,
             all_wave, all_order]
     return fout
 
@@ -2682,7 +2828,7 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
     func_name = display_func('res_fit_gauss', __NAME__)
     # -----------------------------------------------------------------
     # get sigma clip
-    sigclipthres = pcheck(params, 'WAVE_HC_RESMAP_SIGCLIP', func=func_name)
+    # sigclipthres = pcheck(params, 'WAVE_HC_RESMAP_SIGCLIP', func=func_name)
     # -----------------------------------------------------------------
     # prepare all dvs and flux for fitting
     # -----------------------------------------------------------------
@@ -2709,26 +2855,28 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
             pcoeffs1, _ = curve_fit(*cargs, p0=guess)
         # calculate the residuals between flux and fit
         fluxfit1 = mp.gauss_function(all_dv, *pcoeffs1)
-        residuals = all_flux - fluxfit1
-        # sigma clip the residuals
-        sigclip = np.abs(residuals) < sigclipthres
-        # update the all_dv and all_flux vectors
-        all_dv, all_flux = all_dv[sigclip], all_flux[sigclip]
-        all_wave, all_order = all_wave[sigclip], all_order[sigclip]
-        # re-fit based on sigma clipped vectors
-        cargs = [mp.gauss_function, all_dv, all_flux]
-        with warnings.catch_warnings(record=True) as _:
-            pcoeffs2, _ = curve_fit(*cargs, p0=guess)
-        # calculate fit
-        fluxfit2 = mp.gauss_function(all_dv, *pcoeffs2)
+        # residuals = all_flux - fluxfit1
+        # # sigma clip the residuals
+        # sigclip = np.abs(residuals) < sigclipthres
+        # # update the all_dv and all_flux vectors
+        # all_dv, all_flux = all_dv[sigclip], all_flux[sigclip]
+        # all_wave, all_order = all_wave[sigclip], all_order[sigclip]
+        # # re-fit based on sigma clipped vectors
+        # cargs = [mp.gauss_function, all_dv, all_flux]
+        # with warnings.catch_warnings(record=True) as _:
+        #     pcoeffs2, _ = curve_fit(*cargs, p0=guess)
+        # # calculate fit
+        # fluxfit2 = mp.gauss_function(all_dv, *pcoeffs2)
         # calculate resolution
-        amp, _, sigma, _ = pcoeffs2
+        # amp, _, sigma, _ = pcoeffs2
+        amp, _, sigma, _ = pcoeffs1
         fwhm = sigma * np.sqrt(2 * np.log(2)) * 2
         res_eff = speed_of_light / fwhm
     except ValueError as e:
         # set values to NaN
         fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
-        fluxfit2 = np.full_like(all_dv, np.nan)
+        # fluxfit2 = np.full_like(all_dv, np.nan)
+        fluxfit1 = np.full_like(all_dv, np.nan)
         # Fit failed for order bin {0} spectral bin {1}
         wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
                  map_lower_ords[mapkey], map_high_ords[mapkey],
@@ -2739,7 +2887,8 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
     except RuntimeError as e:
         # set values to NaN
         fwhm, amp, expo, res_eff = np.nan, np.nan, np.nan, np.nan
-        fluxfit2 = np.full_like(all_dv, np.nan)
+        # fluxfit2 = np.full_like(all_dv, np.nan)
+        fluxfit1 = np.full_like(all_dv, np.nan)
         # Fit failed for order bin {0} spectral bin {1}
         wargs = [i_order_bin, i_spatial_bin, np.sum(valid_lines),
                  map_lower_ords[mapkey], map_high_ords[mapkey],
@@ -2748,9 +2897,10 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
         WLOG(params, 'warning', textentry('10-017-00013', wargs),
              sublevel=4)
     # return outputs
-    fout = [fwhm, amp, 2.0, res_eff, fluxfit2, all_dv, all_flux,
+    # fout = [fwhm, amp, 2.0, res_eff, fluxfit2, all_dv, all_flux,
+    #         all_wave, all_order]
+    fout = [fwhm, amp, 2.0, res_eff, fluxfit1, all_dv, all_flux,
             all_wave, all_order]
-
     return fout
 
 
@@ -3196,6 +3346,7 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
     infile.add_hkey_1d('KW_CAVITY_WIDTH', values=props['CAVITY'],
                        dim1name='coeffs')
     infile.add_hkey('KW_CAVITY_DEG', value=props['CAVITY_DEG'])
+    infile.add_hkey('KW_CAV_PEDESTAL', value=props['CAVITY_PEDESTAL'])
     infile.add_hkey('KW_WAVE_MEANHC', value=props['MEAN_HC_VEL'])
     infile.add_hkey('KW_WAVE_EMEANHC', value=props['ERR_HC_VEL'])
     infile.add_hkey('KW_WAVE_POLYT', value=props['WAVE_POLY_TYPE'])
@@ -3403,7 +3554,8 @@ def write_fplines(params: ParamDict, recipe: DrsRecipe, rfpl: Table,
 
 def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
                       fpe2ds: DrsFitsFile, wavefile: DrsFitsFile,
-                      cavity: np.ndarray, fiber: str) -> DrsFitsFile:
+                      cavity: np.ndarray, cavity_pedestal: float,
+                      fiber: str) -> DrsFitsFile:
     """
     Write the cavity file to disk
 
@@ -3412,6 +3564,8 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     :param fpe2ds: DrsFitsFile, the FP e2ds fits file instance
     :param wavefile: DrsFitsFile, the wave solution file instance
     :param cavity: np.array, the cavity solution to save to file
+    :param cavity_pedestal: float, the zero point cavity (to be added on
+                            when using the cavity width)
     :param fiber: str, the fiber for which the cavity file was generated from
 
     :return: DrsFitsFile, the cavity file instance
@@ -3434,6 +3588,7 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     # set output key
     cavfile.add_hkey('KW_OUTPUT', value=cavfile.name)
     cavfile.add_hkey('KW_FIBER', value=fiber)
+    cavfile.add_hkey('KW_CAV_PEDESTAL', value=cavity_pedestal)
     # set data
     cavfile.data = cavity
     cavfile.datatype = 'image'
@@ -3460,7 +3615,8 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
 
 def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
                          fpe2ds: DrsFitsFile, fiber: str,
-                         wavefile: DrsFitsFile, wprops: ParamDict):
+                         wavefile: DrsFitsFile, wprops: ParamDict
+                         ) -> DrsFitsFile:
     # set function name
     # _ = display_func('write_cavity_file', __NAME__)
 
@@ -3588,8 +3744,44 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
                         name_list=name_list,
                         block_kind=recipe.out_block_str,
                         runstring=recipe.runstring)
+    # ------------------------------------------------------------------
+    # Write RES E2DS files
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    rf_e2ds = recipe.outputs['WAVEM_RES_E2DS'].newcopy(params=params,
+                                                       fiber=fiber)
+    # construct the filename from file instance
+    rf_e2ds.construct_filename(infile=fpe2ds)
+    # ------------------------------------------------------------------
+    # copy keys from hcwavefile
+    rf_e2ds.copy_header(resfile)
+    # set data
+    rf_e2ds.data = wprops['RES_E2DS_AMP']
+    rf_e2ds.datatype = 'image'
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [fiber, rf_e2ds.filename]
+    WLOG(params, '', textentry('40-017-00020', args=wargs))
+    # define multi lists
+    data_list = [wprops['RES_E2DS_FWHM'], wprops['RES_E2DS_EXPO']]
+    name_list = ['E2DS_FWHM', 'E2DS_EXPO']
+    datatype_list = ['image', 'image']
+    # ------------------------------------------------------------------
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=resfile)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
+    # ------------------------------------------------------------------
     # add to output files (for indexing)
-    recipe.add_output_file(resfile)
+    recipe.add_output_file(rf_e2ds)
+    # write image to file
+    rf_e2ds.write_multi(data_list=data_list, name_list=name_list,
+                        datatype_list=datatype_list,
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
+    # ------------------------------------------------------------------
+    return rf_e2ds
 
 
 def res_map_hdr(params: ParamDict, header: drs_fits.Header,

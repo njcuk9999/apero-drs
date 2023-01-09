@@ -275,6 +275,7 @@ __all__ = [
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
     'CCF_MAX_CCF_WID_STEP_RATIO', 'CCF_BLAZE_NORM_PERCENTILE',
+    'CCF_NSIG_THRESHOLD', 'CCF_FWHM_SIGCUT',
     'OBJRV_NULL_VAL', 'CCF_MASK_NORMALIZATION', 'CCF_TEFF_MASK_TABLE',
     # general polar constants
     'POLAR_FIBERS', 'POLAR_STOKES_PARAMS', 'POLAR_BERV_CORRECT',
@@ -4361,6 +4362,20 @@ CCF_BLAZE_NORM_PERCENTILE = Const('CCF_BLAZE_NORM_PERCENTILE', value=None,
                                   description=('Define the percentile the '
                                                'blaze is normalised by before '
                                                'using in CCF calc'))
+
+# Define the minimum number of sigma the peak CCF must have to be acceptable
+CCF_NSIG_THRESHOLD = Const('CCF_NSIG_THRESHOLD', value=None, dtype=float,
+                           source=__NAME__, minimum=0, group=cgroup,
+                           description='Define the minimum number of sigma the '
+                                       'peak CCF must have to be acceptable')
+
+
+# Define the minimum number of sigma the FWHM of CCF must have to be acceptable
+CCF_FWHM_SIGCUT = Const('CCF_FWHM_SIGCUT', value=None, dtype=float,
+                        source=__NAME__, minimum=0, group=cgroup,
+                        description='Define the minimum number of sigma the '
+                                    'FWHM of CCF must have to be acceptable')
+
 
 # =============================================================================
 # GENERAL POLARISATION SETTINGS

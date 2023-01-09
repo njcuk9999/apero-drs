@@ -1429,12 +1429,12 @@ WAVE_FIBER_SCALE_MOD.author = base.AUTHORS['EA']
 # =============================================================================
 # define the number of bins in order direction to use in the resolution map
 WAVE_RES_MAP_ORDER_BINS = WAVE_RES_MAP_ORDER_BINS.copy(__NAME__)
-WAVE_RES_MAP_ORDER_BINS.value = 3
+WAVE_RES_MAP_ORDER_BINS.value = 4
 WAVE_RES_MAP_ORDER_BINS.author = base.AUTHORS['EA']
 
 # define the number of bins in spatial direction to use in the resolution map
 WAVE_RES_MAP_SPATIAL_BINS = WAVE_RES_MAP_SPATIAL_BINS.copy(__NAME__)
-WAVE_RES_MAP_SPATIAL_BINS.value = 3
+WAVE_RES_MAP_SPATIAL_BINS.value = 4
 WAVE_RES_MAP_SPATIAL_BINS.author = base.AUTHORS['EA']
 
 # define the low pass filter size for the HC E2DS file in the resolution map
@@ -1752,7 +1752,7 @@ WAVE_HC_RESMAP_YLIM.value = '-0.05, 0.7'
 
 # Define whether to fit line profiles with "gaussian" or "super-gaussian"
 WAVE_HC_RESMAP_FITTYPE = WAVE_HC_RESMAP_FITTYPE.copy(__NAME__)
-WAVE_HC_RESMAP_FITTYPE.value = 'gaussian'
+WAVE_HC_RESMAP_FITTYPE.value = 'super-gaussian'
 
 # Define the sigma clip for line profiles for the resolution map
 WAVE_HC_RESMAP_SIGCLIP = WAVE_HC_RESMAP_SIGCLIP.copy(__NAME__)
@@ -2477,6 +2477,16 @@ CCF_FIT_TYPE.value = 0
 # Define the percentile the blaze is normalised by before using in CCF calc
 CCF_BLAZE_NORM_PERCENTILE = CCF_BLAZE_NORM_PERCENTILE.copy(__NAME__)
 CCF_BLAZE_NORM_PERCENTILE.value = 90
+
+# Define the minimum number of sigma the peak CCF must have to be acceptable
+CCF_NSIG_THRESHOLD = CCF_NSIG_THRESHOLD.copy(__NAME__)
+CCF_NSIG_THRESHOLD.value = 5
+CCF_NSIG_THRESHOLD.author = base.AUTHORS['EA']
+
+# Define the minimum number of sigma the FWHM of CCF must have to be acceptable
+CCF_FWHM_SIGCUT = CCF_FWHM_SIGCUT.copy(__NAME__)
+CCF_FWHM_SIGCUT.value = 8
+CCF_FWHM_SIGCUT.author = base.AUTHORS['EA']
 
 # =============================================================================
 # DEBUG PLOT SETTINGS

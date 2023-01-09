@@ -2138,6 +2138,7 @@ def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
     plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
+    params = kwargs['params']
     cavity = kwargs['cavity']
     # get vectors from tables
     fp_wave_meas1 = kwargs['fp_wave_meas1']
@@ -2146,8 +2147,16 @@ def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
     fp_cavity2 = fp_wave_meas2 * kwargs['fp_peak_num_2']
     orders = kwargs['orders']
     iteration = kwargs.get('iteration', 0)
+    # get values from params
+    # define the bulk offset to be added to the cavity length
+    cavity_pedestal = params['WAVE_FP_DOPD0']
+    # define the wavelength bounds of the instrument
+    inst_wavestart = params['EXT_S1D_WAVESTART']
+    inst_waveend = params['EXT_S1D_WAVEEND']
     # work out residuals (when compared to the model)
-    res = fp_cavity2 - np.polyval(cavity, kwargs['fp_wave_ref_2'])
+    tmp_cavity = mp.val_cheby(cavity, kwargs['fp_wave_ref_2'],
+                              domain=[inst_wavestart, inst_waveend])
+    res = fp_cavity2 - (tmp_cavity + cavity_pedestal)
     # ------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex=True)
@@ -2290,8 +2299,10 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
             # get the x values for the graph
             xvals = r_waveref[good]
             # get the line fit values
-            fit1 = mp.val_cheby(m_coeffs[order_num], r_pixel[good], domain)
-            fit2 = mp.val_cheby(r_coeffs[order_num], r_pixel[good], domain)
+            fit1 = mp.val_cheby(m_coeffs[order_num], r_pixel[good],
+                                domain=domain)
+            fit2 = mp.val_cheby(r_coeffs[order_num], r_pixel[good],
+                                domain=domain)
             # get the y values
             y1vals = speed_of_light * (1 - r_waveref[good] / fit1)
             y2vals = speed_of_light * (1 - r_waveref[good] / fit2)
