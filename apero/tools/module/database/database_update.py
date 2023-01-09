@@ -172,7 +172,7 @@ def calib_tellu_update(params: ParamDict, pconst: PseudoConstants,
         dbmanager = drs_database.CalibrationDatabase(params)
         dbmanager.load_db()
     elif db_type == 'telluric':
-        manage_databases.create_telluric_database(pconst, db_list)
+        manage_databases.create_telluric_database(params, pconst, db_list)
         # reload the telluric database
         dbmanager = drs_database.TelluricDatabase(params)
         dbmanager.load_db()

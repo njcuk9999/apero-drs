@@ -62,10 +62,12 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Correction skycorr functions
 # =============================================================================
-def correct_sky(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
-                wprops: ParamDict, rawfiles: List[str], combine: bool,
-                calibdbm: Optional[CalibrationDatabase] = None,
-                telludbm: Optional[TelluricDatabase] = None) -> ParamDict:
+def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
+                         infile: DrsFitsFile, wprops: ParamDict,
+                         rawfiles: List[str], combine: bool,
+                         calibdbm: Optional[CalibrationDatabase] = None,
+                         telludbm: Optional[TelluricDatabase] = None
+                         ) -> ParamDict:
     """
     Correct a observation for sky-lines when observation has a sky in the
     reference fiber
@@ -102,7 +104,7 @@ def correct_sky(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     pconst = constants.pload()
     # get the science and calib fiber names
     sci_fibers, calib_fiber = pconst.FIBER_KINDS()
-    # find the refernce (calibration) fiber file
+    # find the reference (calibration) fiber file
     infile_calib = drs_file.locate_calibfiber_file(params, infile)
     # get the wave solution associated with this file
     wprops_calib = wave.get_wavesolution(params, recipe, fiber=calib_fiber,
@@ -122,23 +124,9 @@ def correct_sky(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     sky_model_sci = np.array(sc_props['SKY_MODEL_SCI'])
     sky_model_ref = np.array(sc_props['SKY_MODEL_REF'])
     reg_id = np.array(sc_props['SKY_REG_ID'])
+    weights = np.array(sc_props['SKY_WEIGHTS'])
     # record the shape of e2ds
     nbo, nbxpix = sky_model_sci.shape
-    # -------------------------------------------------------------------------
-    # define weights for regions
-    weights = np.array(reg_id != 0, dtype=float).ravel()
-    # make a copy for binary erosion
-    weights2 = np.array(weights)
-    # loop around iteratively and add eroded weights
-    # Question: Why?
-    for _ in range(weight_iters):
-        weights2 = binary_erosion(weights2, structure=np.ones(3))
-        weights += np.array(weights2, dtype=float)
-
-    # normalize weights back between 1 and 0
-    weights = weights / np.nanmax(weights)
-    # reshape back to e2ds format
-    weights = weights.reshape((nbo, nbxpix))
     # -------------------------------------------------------------------------
     # loop around orders and map the calib fiber on to the reference calib fiber
     for order_num in range(nbo):
@@ -235,6 +223,129 @@ def correct_sky(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     return sc_props
 
 
+def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
+                       infile: DrsFitsFile, wprops: ParamDict,
+                       rawfiles: List[str], combine: bool,
+                       calibdbm: Optional[CalibrationDatabase] = None,
+                       telludbm: Optional[TelluricDatabase] = None
+                       ) -> ParamDict:
+    """
+    Correct a observation for sky-lines when observation has a sky in the
+    reference fiber
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe class that called this function
+    :param infile: DrsFitsFile, the fits file instance to correct sky on
+    :param wprops: ParamDict, the wave solution associated with infile
+    :param rawfiles: List[str], list of raw filenames
+    :param combine: bool, if True input has been combined
+    :param calibdbm: CalibrationDatabase instance (if none is reloaded)
+    :param telludbm: TelluricDatabase instance (if none is reloaded)
+    :return:
+    """
+    # set function name
+    func_name = display_func('correct_sky', __NAME__)
+    # -------------------------------------------------------------------------
+    # deal with no calibration database
+    if calibdbm is None:
+        calibdbm = CalibrationDatabase(params)
+        calibdbm.load_db()
+    # deal with no telluric database
+    if telludbm is None:
+        telludbm = TelluricDatabase(params)
+        telludbm.load_db()
+    # -------------------------------------------------------------------------
+    # load psuedo constants
+    pconst = constants.pload()
+    # get the science and calib fiber names
+    sci_fibers, calib_fiber = pconst.FIBER_KINDS()
+    # -------------------------------------------------------------------------
+    # copy the science image
+    image = np.array(infile.data)
+    # copy the science wave map
+    wavemap = np.array(wprops['WAVEMAP'])
+    # -------------------------------------------------------------------------
+    # load sky model from telluric database
+    sc_props = get_sky_model(params, infile.header, infile.fiber,
+                             telludbm)
+    # extract properties from sky model (and deep copy)
+    sky_wavemap = np.array(sc_props['SKY_WAVEMAP'])
+    sky_model_sci = np.array(sc_props['SKY_MODEL_SCI'])
+    sky_model_ref = np.array(sc_props['SKY_MODEL_REF'])
+    reg_id = np.array(sc_props['SKY_REG_ID'])
+    weights = np.array(sc_props['SKY_WEIGHTS'])
+    gradient = np.array(sc_props['SKY_GRADIENT'])
+    # -------------------------------------------------------------------------
+    # shift the image on to the sky wave grid
+    image1 = gen_tellu.wave_to_wave(params, image, wavemap, sky_wavemap,
+                                    reshape=True)
+
+    # TODO subtract template here. Each order is scaled to its median. OH lines
+    # TODO contribute very little to the median flux, so this is fine
+
+    # find the gradients of this image
+    grad = np.gradient(image1, axis=1)
+    # -------------------------------------------------------------------------
+    # create a model scaled to the image calib fiber data
+    # -------------------------------------------------------------------------
+    # create vectors for the sky correction
+    sky_corr_sci1 = np.zeros_like(image1)
+    # find unique region ids
+    region_ids = set(reg_id)
+    # remove 0 (this means no line)
+    region_ids.remove(0)
+    # create a finite mask
+    finite_mask = np.isfinite(image1)
+    finite_mask &= np.isfinite(sky_model_ref)
+    # loop around each line
+    for region_id in region_ids:
+        # mask all areas with this region id
+        reg_mask = region_ids == region_id
+        # make sure calib and model are finite
+        reg_maskf = reg_mask & finite_mask
+        # get the gradients for this region
+        grad1 = grad[reg_maskf]
+        grad1_ref = gradient[reg_maskf]
+        # dot product of the gradients
+        amp = np.nansum(grad1 * grad1_ref) / np.nqnwum(grad1_ref ** 2)
+        # apply to weights and scale (including areas with nans)
+        sfactor = amp * weights[reg_mask]
+        sky_corr_sci1[reg_mask] = sky_model_sci[reg_mask] * sfactor
+    # -------------------------------------------------------------------------
+    # shift the image back to the original wave grid
+    sky_corr_sci = gen_tellu.wave_to_wave(params, sky_corr_sci1, sky_wavemap,
+                                          wavemap, reshape=True)
+    # -------------------------------------------------------------------------
+    # re-copy the science image
+    image_sci = np.array(infile.data)
+    # save to dict
+    sc_props[f'CORR_EXT_{infile.fiber}'] = image_sci - sky_corr_sci
+    sc_props[f'CORR_EXT_{calib_fiber}'] = None
+    sc_props[f'UNCORR_EXT_{infile.fiber}'] = image_sci
+    sc_props[f'UNCORR_EXT_{calib_fiber}'] = None
+    sc_props['SKY_CORR_SCI'] = sky_corr_sci
+    sc_props['SKY_CORR_REF'] = None
+    sc_props['SCI_FIBER'] = infile.fiber
+    sc_props['REF_FIBER'] = calib_fiber
+    sc_props['WAVE_SCI'] = wprops['WAVEMAP']
+    sc_props['WAVE_REF'] = None
+    # set source
+    keys = [f'CORR_EXT_{infile.fiber}', f'CORR_EXT_{calib_fiber}',
+            f'UNCORR_EXT_{infile.fiber}', f'UNCORR_EXT_{calib_fiber}',
+            'SKY_CORR_SCI', 'SKY_CORR_REF', 'SCI_FIBER', 'REF_FIBER',
+            'WAVE_SCI', 'WAVE_REF']
+    sc_props.set_sources(keys, func_name)
+    # -------------------------------------------------------------------------
+    # plot
+    recipe.plot('TELLU_SKY_CORR_PLOT', props=sc_props)
+    # -------------------------------------------------------------------------
+    # write debug file
+    skyclean_write(params, recipe, infile, rawfiles, combine, wprops, sc_props)
+    # -------------------------------------------------------------------------
+    # return sky parameter dictionary
+    return sc_props
+
+
 def get_sky_model(params: ParamDict, header: drs_fits.Header, fiber: str,
                   database: Optional[drs_database.TelluricDatabase] = None
                   ) -> ParamDict:
@@ -264,18 +375,22 @@ def get_sky_model(params: ParamDict, header: drs_fits.Header, fiber: str,
                                           get_image=False, database=database,
                                           return_filename=True)
     # load extensions
-    exts = drs_fits.readfits(params, sky_model, getdata=True,
-                             fmt='fits-multi')
+    exts, extnames = drs_fits.readfits(params, sky_model, getdata=True,
+                                       fmt='fits-multi', return_names=True)
+    # push into dictionary
+    extdict = dict(zip(extnames, exts))
     # push into parameter dictionary
     props = ParamDict()
-    props['SKY_MODEL_SCI'] = exts[1]
-    props['SKY_MODEL_REF'] = exts[2]
-    props['SKY_REG_ID'] = exts[3]
-    props['SKY_WAVEMAP'] = exts[4]
+    props['SKY_MODEL_SCI'] = extdict['SCI_SKY']
+    props['SKY_MODEL_REF'] = extdict['CAL_SKY']
+    props['SKY_REG_ID'] = extdict['REG_ID']
+    props['SKY_WAVEMAP'] = extdict['WAVE']
+    props['SKY_WEIGHTS'] = extdict['WEIGHTS']
+    props['SKY_GRADIENT'] = extdict['GRADIENT']
     props['SKY_MODEL_FILE'] = sky_model
     # set source
     keys = ['SKY_MODEL_SCI', 'SKY_MODEL_REF', 'SKY_REG_ID', 'SKY_WAVEMAP',
-            'SKY_MODEL_FILE']
+            'SKY_MODEL_FILE', 'SKY_WEIGHTS', 'SKY_GRADIENT']
     props.set_sources(keys, func_name)
     # return all valid sorted in time
     return props

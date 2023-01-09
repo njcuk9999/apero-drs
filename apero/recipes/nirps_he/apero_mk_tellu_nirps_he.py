@@ -236,22 +236,23 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         if dprtype in params.listp('ALLOWED_SKYCORR_DPRTYPES', dtype=str):
             # correct sky using model and B fiber
-            scprops = telluric.correct_sky(params, recipe, infile, wprops,
-                                           rawfiles, combine, calibdbm,
-                                           telludbm)
+            scprops = telluric.correct_sky_with_ref(params, recipe, infile,
+                                                    wprops, rawfiles, combine,
+                                                    calibdbm, telludbm)
             # update infile
             infile.data = scprops[f'CORR_EXT_{fiber}']
             # turn off cleaning of OH lines in pre-cleaning
             clean_ohlines = False
         else:
-            clean_ohlines = True
+            clean_ohlines = params['TELLUP_CLEAN_OH_LINES']
 
         # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine,
-                                            template=template)
+                                            template=template,
+                                            clean_ohlines=clean_ohlines)
         # get variables out of tpreprops
         image1 = tpreprops['CORRECTED_E2DS']
         # ------------------------------------------------------------------

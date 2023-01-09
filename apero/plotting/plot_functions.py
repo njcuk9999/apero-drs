@@ -3641,8 +3641,11 @@ def plot_tellu_sky_corr(plotter: Plotter, graph: Graph,
     frames[0].plot(wave_sci, sp_sci, alpha=0.5, color='b', label='Original')
     frames[0].plot(wave_sci, sp_sci_corr, color='r', label='Corrected')
     # plot calib (ref) fiber
-    frames[1].plot(wave_ref, sp_ref, alpha=0.5, color='b', label='Original')
-    frames[1].plot(wave_ref, sp_ref_corr, color='r', label='Corrected')
+    if sp_ref is not None:
+        frames[1].plot(wave_ref, sp_ref, alpha=0.5, color='b', label='Original')
+        frames[1].plot(wave_ref, sp_ref_corr, color='r', label='Corrected')
+    else:
+        frames[1].plot(wave_sci, sp_sci_corr, color='r', label='Corrected')
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)

@@ -305,7 +305,7 @@ def create_yamls(allparams: Any):
     telludb = dict()
     telludb['PATH'] = sdict.get('TELLU_PATH', 'DRS_TELLU_DB')
     telludb['NAME'] = sdict.get('TELLU_NAME', 'tellu.db')
-    telludb['RESET'] = sdict.get('TELLU_RESET', 'NULL')
+    telludb['RESET'] = sdict.get('TELLU_RESET', 'reset.tellu.csv')
     telludb['PROFILE'] = sdict.get('TELLU_PROFILE', 'NULL')
     sqlite3['TELLU'] = telludb
     # add index database
@@ -368,7 +368,7 @@ def create_yamls(allparams: Any):
     telludb = dict()
     telludb['PATH'] = mdict.get('TELLU_PATH', 'NULL')
     telludb['NAME'] = mdict.get('TELLU_NAME', 'NULL')
-    telludb['RESET'] = mdict.get('TELLU_RESET', 'NULL')
+    telludb['RESET'] = mdict.get('TELLU_RESET', 'reset.tellu.csv')
     telludb['PROFILE'] = mdict.get('TELLU_PROFILE', 'MAIN')
     mysql['TELLU'] = telludb
     # add index database
