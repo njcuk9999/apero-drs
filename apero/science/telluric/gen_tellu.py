@@ -1107,7 +1107,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     n_components = ohpcdata.shape[1] - 1
     # get the ohline wave grid
     ohwave = ohpcdata[:, 0].reshape(nbo, nbpix)
-    # get the principle components
+    # get the principal components
     ohpcas = ohpcdata[:, 1:].reshape(nbo, nbpix, n_components)
     # ----------------------------------------------------------------------
     # replace NaNs in the science data with zeros to avoid problems in the

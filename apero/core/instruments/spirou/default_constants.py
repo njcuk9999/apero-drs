@@ -1334,6 +1334,8 @@ WAVE_GUESS_CAVITY_WIDTH = WAVE_GUESS_CAVITY_WIDTH.copy(__NAME__)
 WAVE_GUESS_CAVITY_WIDTH.value = 2.4e7
 WAVE_GUESS_CAVITY_WIDTH.author = base.AUTHORS['EA']
 
+#
+
 # Define the wave solution polynomial fit degree
 WAVE_WAVESOL_FIT_DEGREE = WAVE_WAVESOL_FIT_DEGREE.copy(__NAME__)
 WAVE_WAVESOL_FIT_DEGREE.value = 5
@@ -1471,7 +1473,7 @@ WAVEREF_FP_NHIGH.author = base.AUTHORS['EA']
 
 # define the number of iterations required to do the FP polynomial inversion
 WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
-WAVEREF_FP_POLYINV.value = 4
+WAVEREF_FP_POLYINV.value = 10
 WAVEREF_FP_POLYINV.author = base.AUTHORS['EA']
 
 # define the guess HC exponetial width [pixels]
@@ -1972,7 +1974,9 @@ WAVE_MODE_FP.value = 1
 # Define the initial value of FP effective cavity width 2xd in nm
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
 WAVE_FP_DOPD0 = WAVE_FP_DOPD0.copy(__NAME__)
-WAVE_FP_DOPD0.value = 2.44962434814043e7  # 2.44999e7  # 2.45e7
+# WAVE_FP_DOPD0.value = 2.44962434814043e7  # 2.44999e7  # 2.45e7
+WAVE_FP_DOPD0.value = 24498000
+WAVE_FP_DOPD0.author = base.AUTHORS['EA']
 
 #  Define the polynomial fit degree between FP line numbers and the
 #      measured cavity width for each line
@@ -2501,6 +2505,16 @@ CCF_FIT_TYPE.value = 0
 # Define the percentile the blaze is normalised by before using in CCF calc
 CCF_BLAZE_NORM_PERCENTILE = CCF_BLAZE_NORM_PERCENTILE.copy(__NAME__)
 CCF_BLAZE_NORM_PERCENTILE.value = 90
+
+# Define the minimum number of sigma the peak CCF must have to be acceptable
+CCF_NSIG_THRESHOLD = CCF_NSIG_THRESHOLD.copy(__NAME__)
+CCF_NSIG_THRESHOLD.value = 5
+CCF_NSIG_THRESHOLD.author = base.AUTHORS['EA']
+
+# Define the minimum number of sigma the FWHM of CCF must have to be acceptable
+CCF_FWHM_SIGCUT = CCF_FWHM_SIGCUT.copy(__NAME__)
+CCF_FWHM_SIGCUT.value = 8
+CCF_FWHM_SIGCUT.author = base.AUTHORS['EA']
 
 # =============================================================================
 # GENERAL POLARISATION SETTINGS

@@ -693,6 +693,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                            kwargs, func_name)
     maxwsr = pcheck(params, 'CCF_MAX_CCF_WID_STEP_RATIO', 'maxwsr', kwargs,
                     func_name)
+    nsig_fwhm_threshold = pcheck(params, 'CCF_FWHM_SIGCUT', func=func_name)
     # get image size
     nbo, nbpix = image.shape
     # get parameters from inputs
@@ -792,9 +793,13 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     # Calculate the mean CCF
     # ----------------------------------------------------------------------
-    # get the average ccf
-    mean_ccf = mp.nanmean(props['CCF'][: ccfnmax], axis=0)
-
+    # find spurious fwhm
+    fwhm = props['CCF_FIT_COEFFS'][:, 2]
+    nsig = (fwhm - np.nanmedian(fwhm)) / mp.estimate_sigma(fwhm)
+    # create a mask based on good sigma values
+    nsig_mask = nsig < nsig_fwhm_threshold
+    # get the average ccf (after fwhm sigma clip)
+    mean_ccf = mp.nanmean(props['CCF'][nsig_mask], axis=0)
     # get the fit for the normalized average ccf
     mean_ccf_coeffs, mean_ccf_fit = fit_ccf(params, 'mean', props['RV_CCF'],
                                             mean_ccf, fit_type=fit_type)
@@ -1016,6 +1021,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
                                    'blaze_norm_percentile', kwargs, func_name)
     blaze_threshold = pcheck(params, 'WAVE_FP_BLAZE_THRES', 'blaze_threshold',
                              kwargs, func_name)
+    ccf_nsig_threshold = pcheck(params, 'CCF_NSIG_THRESHOLD', func=func_name)
     # get rvmin and rvmax
     rvmin = targetrv - ccfwidth
     rvmin = pcheck(params, 'RVMIN', 'rvmin', kwargs, func_name, default=rvmin)
@@ -1216,6 +1222,28 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # TODO -- with reasonable mid-M values and use these values for
         # TODO -- all stars. At some point, have a temperature-dependent
         # TODO -- LUT of weights.
+        # ------------------------------------------------------------------
+        if fit_type == 0:
+            # reject rubbish orders (using a sigma cut)
+            dev = ccf_ord - np.nanmedian(ccf_ord)
+            # calculate how many sigma the peak of the CCF is away from the median
+            nsig = -np.min(dev) / np.median(abs(dev))
+            # if the nsig of the CCF peak is below the threshold reject it
+            if nsig < ccf_nsig_threshold:
+                # log all NaN
+                wargs = [order_num, nsig, ccf_nsig_threshold]
+                wmsg = 'CCF order {0} rejected (nsig CCF peak = {1:.3f} < {2})'
+                WLOG(params, 'warning', wmsg.format(*wargs), sublevel=6)
+                # set all values to NaN
+                ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
+                ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
+                ccf_all_results.append(np.repeat(np.nan, 4))
+                ccf_noise_all.append(np.nan)
+                ccf_lines.append(0)
+                ccf_all_snr.append(np.nan)
+                ccf_norm_all.append(np.nan)
+                continue
+        # ------------------------------------------------------------------
         ccf_norm = mp.nanmedian(ccf_ord)
         # ccf_ord = ccf_ord / ccf_norm
         # ------------------------------------------------------------------

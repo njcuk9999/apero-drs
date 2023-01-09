@@ -34,6 +34,8 @@ fit_cheby = gen_math.fit_cheby
 
 fitgaussian = gauss.fitgaussian
 
+fuzzy_curve_fit = gen_math.fuzzy_curve_fit
+
 fwhm = gen_math.fwhm
 
 gauss_fit_nn = gauss.gauss_fit_nn
