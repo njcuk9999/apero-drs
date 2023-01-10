@@ -1392,6 +1392,13 @@ calib_file.addset(out_wave_night)
 valid_tfibers = ['A']
 
 # cleaned spectrum
+out_tellu_sclean = drs_finput('TELLU_SCLEAN',
+                              hkeys=dict(KW_OUTPUT='TELLU_SCLEAN'),
+                              filetype='.fits', intype=pp_file,
+                              suffix='_tellu_sclean.fits', outclass=debug_ofile,
+                              description='Sky-cleaning file')
+
+# cleaned spectrum
 out_tellu_pclean = drs_finput('TELLU_PCLEAN',
                               hkeys=dict(KW_OUTPUT='TELLU_PCLEAN'),
                               fibers=valid_tfibers,

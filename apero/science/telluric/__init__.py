@@ -13,6 +13,8 @@ from apero.science.telluric import fit_tellu
 from apero.science.telluric import gen_tellu
 from apero.science.telluric import mk_tellu
 from apero.science.telluric import template_tellu
+from apero.science.telluric import sky_corr
+
 
 __all__ = ['calculate_tellu_res_absorption', 'get_tellu_exclude_list',
            'get_tellu_include_list', 'load_conv_tapas', 'load_templates',
@@ -26,6 +28,10 @@ calc_recon_and_correct = fit_tellu.calc_recon_and_correct
 calc_res_model = fit_tellu.calc_res_model
 
 calculate_tellu_res_absorption = mk_tellu.calculate_tellu_res_absorption
+
+correct_sky_with_ref = sky_corr.correct_sky_with_ref
+
+correct_sky_no_ref = sky_corr.correct_sky_no_ref
 
 correct_other_science = fit_tellu.correct_other_science
 

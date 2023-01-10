@@ -40,7 +40,7 @@ __all__ = [  # input keys
     'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
     'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE', 'KW_FIBER',
     'KW_THERM_RATIO', 'KW_THERM_RATIO_U', 'KW_MID_OBS_TIME',
-    'KW_MID_OBSTIME_METHOD',
+    'KW_MID_OBSTIME_METHOD', 'KW_TDBSKY',
     # calibration file header keys
     'KW_CDBDARK', 'KW_CDTDARK', 'KW_CDBBAD', 'KW_CDTBAD',
     'KW_CDBBACK', 'KW_CDTBACK', 'KW_CDBORDP', 'KW_CDTORDP',
@@ -681,6 +681,7 @@ KW_C_FTYPE = Keyword('KW_C_FTYPE', key='NULL', dtype=str, source=__NAME__,
 # the fiber name
 KW_FIBER = Keyword('KW_FIBER', key='NULL', dtype=str, source=__NAME__,
                    description='the fiber name')
+
 # the ratio used for thermal correction (method=tapas or envelope)
 KW_THERM_RATIO = Keyword('KW_THERM_RATIO', key='NULL', dtype=float,
                          source=__NAME__,
@@ -692,6 +693,10 @@ KW_THERM_RATIO_U = Keyword('KW_THERM_RATIO_U', key='NULL', dtype=str,
                            source=__NAME__,
                            description='the ratio method used for thermal '
                                        'correction')
+
+# define the sky model used for sky correction
+KW_TDBSKY = Keyword('KW_TDBSKY', key='NULL', dtype=str, source=__NAME__,
+                    description='the sky model used for sky correction')
 
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
