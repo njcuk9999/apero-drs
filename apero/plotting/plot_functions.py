@@ -3660,7 +3660,8 @@ def plot_tellu_sky_corr(plotter: Plotter, graph: Graph,
         frames[1].plot(wave_ref.ravel(), sp_ref_corr.ravel(), color='r',
                        label='Corrected')
     else:
-        frames[1].plot(wave_sci, sp_sci_corr, color='r', label='Corrected')
+        frames[1].plot(wave_sci.ravel(), sp_sci_corr.ravel(), color='r',
+                       label='Corrected')
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
