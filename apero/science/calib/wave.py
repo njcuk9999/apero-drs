@@ -482,15 +482,15 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     wprops['WAVETIME'] = wavetime
     # add the cavity polynomial degree (if present)
     cavdeg = wavefile.get_hkey('KW_CAVITY_DEG', required=False)
+    cav_pedestal = wavefile.get_hkey('KW_CAV_PEDESTAL', required=False)
     # deal with no cavity key (i.e. the default reference file)
-    if cavdeg is None:
+    if cavdeg is None or cav_pedestal is None:
         cavdeg = params['WAVE_CAVITY_FIT_DEGREE']
         cav_coeffs = np.full(cavdeg + 1, np.nan)
         cav_pedestal = params['WAVE_FP_DOPD0']
     else:
         cavdeg = int(cavdeg)
         cav_coeffs = wavefile.get_hkey_1d('KW_CAVITY_WIDTH', cavdeg + 1)
-        cav_pedestal = wavefile.get_hkey('KW_CAV_PEDESTAL')
     # add cavity keys to wprops
     wprops['CAVITY'] = cav_coeffs
     wprops['CAVITY_DEG'] = cavdeg
@@ -2666,9 +2666,9 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     e2ds_amp = map_res_e2ds(map_amp, (n_order_bin, n_spatial_bin),
                             wavemap.shape)
     e2ds_fwhm = map_res_e2ds(map_fwhm, (n_order_bin, n_spatial_bin),
-                            wavemap.shape)
+                             wavemap.shape)
     e2ds_expo = map_res_e2ds(map_expo, (n_order_bin, n_spatial_bin),
-                            wavemap.shape)
+                             wavemap.shape)
     # -------------------------------------------------------------------------
     # push to wprops
     wprops['RES_MAP_DVS'] = map_dvs
