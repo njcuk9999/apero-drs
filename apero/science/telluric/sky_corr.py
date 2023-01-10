@@ -158,7 +158,7 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
     sky_corr_sci = np.zeros_like(image_sci)
     sky_corr_ref = np.zeros_like(image_calib)
     # find unique region ids
-    region_ids = set(reg_id)
+    region_ids = set(np.unique(reg_id))
     # remove 0 (this means no line)
     region_ids.remove(0)
     # create a finite mask
@@ -167,7 +167,7 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
     # loop around each line
     for region_id in region_ids:
         # mask all areas with this region id
-        reg_mask = region_ids == region_id
+        reg_mask = reg_id == region_id
         # make sure calib and model are finite
         reg_maskf = reg_mask & finite_mask
         # fit amplitude in calib fiber and apply to science fiber
@@ -182,8 +182,10 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
     # spline back to the input files wavelength grid
     for order_num in range(nbo):
         # keyword arguments for splines
-        spkwargs_s = dict(x=sky_wavemap, y=sky_corr_sci[order_num], ext=1, k=3)
-        spkwargs_c = dict(x=sky_wavemap, y=sky_corr_ref[order_num], ext=1, k=3)
+        spkwargs_s = dict(x=sky_wavemap[order_num], y=sky_corr_sci[order_num],
+                          ext=1, k=3)
+        spkwargs_c = dict(x=sky_wavemap[order_num], y=sky_corr_ref[order_num],
+                          ext=1, k=3)
         # make splines
         sci_spline = mp.iuv_spline(**spkwargs_s)
         ref_spline = mp.iuv_spline(**spkwargs_c)
@@ -291,7 +293,7 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
     # create vectors for the sky correction
     sky_corr_sci1 = np.zeros_like(image1)
     # find unique region ids
-    region_ids = set(reg_id)
+    region_ids = set(np.unique(reg_id))
     # remove 0 (this means no line)
     region_ids.remove(0)
     # create a finite mask
@@ -300,7 +302,7 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
     # loop around each line
     for region_id in region_ids:
         # mask all areas with this region id
-        reg_mask = region_ids == region_id
+        reg_mask = reg_id == region_id
         # make sure calib and model are finite
         reg_maskf = reg_mask & finite_mask
         # get the gradients for this region
@@ -315,6 +317,8 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
     # shift the image back to the original wave grid
     sky_corr_sci = gen_tellu.wave_to_wave(params, sky_corr_sci1, sky_wavemap,
                                           wavemap, reshape=True)
+    # set nans to zeros
+    sky_corr_sci[np.isnan(sky_corr_sci)] = 0.0
     # -------------------------------------------------------------------------
     # re-copy the science image
     image_sci = np.array(infile.data)

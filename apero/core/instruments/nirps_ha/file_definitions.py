@@ -1452,11 +1452,15 @@ out_tellu_model = drs_finput('TRANS_MODEL', hkeys=dict(KW_OUTPUT='TRANS_MODEL'),
                              description='Telluric transmission model file')
 
 # add make_telluric outputs to output fileset
+red_file.addset(out_sky_model)
+red_file.addset(out_tellu_sclean)
 red_file.addset(out_tellu_pclean)
 red_file.addset(out_tellu_conv)
 red_file.addset(out_tellu_trans)
 red_file.addset(out_tellu_spl_npy)
 red_file.addset(out_tellu_model)
+tellu_file.addset(out_sky_model)
+tellu_file.addset(out_tellu_sclean)
 tellu_file.addset(out_tellu_pclean)
 tellu_file.addset(out_tellu_conv)
 tellu_file.addset(out_tellu_trans)
