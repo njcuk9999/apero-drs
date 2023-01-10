@@ -306,7 +306,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         WLOG(params, 'info', textentry('40-017-00010'))
         # generate resolution map and update wprops
         wprops = wave.generate_resolution_map(params, recipe, wprops,
-                                              hc_e2ds_file)
+                                              hc_e2ds_file, fiber=ref_fiber)
         # =================================================================
         # Calculate wave solution for other fibers
         # =================================================================

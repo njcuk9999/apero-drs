@@ -2480,7 +2480,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
 
 def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
                             wprops: ParamDict, hc_e2ds_file: DrsFitsFile,
-                            nbin_order: Union[int, None] = None,
+                            fiber: str, nbin_order: Union[int, None] = None,
                             nbin_spatial: Union[int, None] = None,
                             filtersize: Union[int, None] = None,
                             velo_cutoff1: Union[float, None] = None,
@@ -2669,6 +2669,17 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
                              wavemap.shape)
     e2ds_expo = map_res_e2ds(map_expo, (n_order_bin, n_spatial_bin),
                              wavemap.shape)
+    # -------------------------------------------------------------------------
+    # create 1d spectra (s1d) of the e2ds file
+     #TODO: Finish this
+    sargs = [wprops['WAVEMAP'], e2ds_fwhm, eprops['BLAZE']]
+    swprops = extract.e2ds_to_s1d(params, recipe, *sargs,
+                                  wgrid='velocity', fiber=fiber,
+                                  s1dkind='res_fwhm')
+    svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
+                                  wgrid='velocity', fiber=fiber,
+                                  s1dkind='res_expo')
+
     # -------------------------------------------------------------------------
     # push to wprops
     wprops['RES_MAP_DVS'] = map_dvs
