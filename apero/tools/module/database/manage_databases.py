@@ -315,7 +315,7 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None):
     # -------------------------------------------------------------------------
     # create telluric database
     if 'tellu' not in skip:
-        _ = create_telluric_database(pconst, databases)
+        _ = create_telluric_database(params, pconst, databases)
     # -------------------------------------------------------------------------
     # create index database
     if 'findex' not in skip:
@@ -391,18 +391,22 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
 # =============================================================================
 # Define telluric database functions
 # =============================================================================
-def create_telluric_database(pconst: PseudoConst,
+def create_telluric_database(params: ParamDict, pconst: PseudoConst,
                              databases: Dict[str, DatabaseM],
                              tries: int = 20) -> Database:
     """
     Setup for the telluric database
 
+    :param params: ParamDict, parmaeter dictionary of constants
     :param pconst: Pseudo constants
     :param databases: dictionary of database managers
     :param tries: int, the number of tries before reporting a database error
 
     :returns: database - the telluric database
     """
+    # get parameters from params
+    asset_dir = params['DRS_DATA_ASSETS']
+    reset_path = params['DATABASE_DIR']
     # get columns and ctypes from pconst
     tdb_cols = pconst.TELLURIC_DB_COLUMNS()
     columns = list(tdb_cols.names)
@@ -423,7 +427,16 @@ def create_telluric_database(pconst: PseudoConst,
     # add main table
     telludb.add_table(telludb.tname, columns, ctypes, index_cols=cicols,
                       unique_cols=cuniques)
-    # -------------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    # construct reset file
+    reset_abspath = os.path.join(asset_dir, reset_path, telludbm.dbreset)
+    # the rest file may not exist - this is okay for the telluric database
+    if os.path.exists(reset_abspath):
+        # get rows from reset file
+        reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
+        # add rows from reset text file
+        telludb.add_from_pandas(reset_entries)
+    # ---------------------------------------------------------------------
     return telludb
 
 

@@ -669,31 +669,6 @@ def fill_e2ds_nans(params, image, **kwargs):
     return image2
 
 
-def locate_reference_file(params, infile):
-    # set function name
-    # _ = display_func('locate_reference_file', __NAME__)
-    # deal with infile being telluric file (we do not have reference file
-    #   for telluric files) --> must use the telluric files "intype file"
-    if infile.name == 'TELLU_OBJ':
-        instance = infile.intype
-        # need to get filename of input file
-        inbasename = infile.get_infile_infilename(filename=infile.filename,
-                                                  fiber=infile.fiber)
-        # get absolute path
-        infilename = os.path.join(infile.path, inbasename)
-        # set filename
-        instance.set_filename(infilename)
-    else:
-        instance = infile
-    # switch fiber and read file
-    outfile = drs_file.get_another_fiber_file(params, instance, fiber='C',
-                                              in_block_kind='tmp',
-                                              out_block_kind='red',
-                                              getdata=True, gethdr=True)
-    # return outfile
-    return outfile
-
-
 # =============================================================================
 # Define CCF calculation functions
 # =============================================================================

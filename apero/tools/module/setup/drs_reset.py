@@ -379,7 +379,8 @@ def reset_telludb(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # reset files
     reset_dbdir(params, name, tellu_dir, reset_path, log=log)
     # create telluric database
-    manage_databases.create_telluric_database(pconst, databases, tries=dtimeout)
+    manage_databases.create_telluric_database(params, pconst, databases,
+                                              tries=dtimeout)
     # -------------------------------------------------------------------------
     # remove entries from telluric database
     # -------------------------------------------------------------------------
