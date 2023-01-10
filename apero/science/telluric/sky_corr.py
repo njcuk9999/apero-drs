@@ -307,7 +307,7 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
         grad1 = grad[reg_maskf]
         grad1_ref = gradient[reg_maskf]
         # dot product of the gradients
-        amp = np.nansum(grad1 * grad1_ref) / np.nqnwum(grad1_ref ** 2)
+        amp = np.nansum(grad1 * grad1_ref) / np.nansum(grad1_ref ** 2)
         # apply to weights and scale (including areas with nans)
         sfactor = amp * weights[reg_mask]
         sky_corr_sci1[reg_mask] = sky_model_sci[reg_mask] * sfactor
