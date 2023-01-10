@@ -3638,23 +3638,27 @@ def plot_tellu_sky_corr(plotter: Plotter, graph: Graph,
     sci_fiber = kwargs['props']['SCI_FIBER']
     ref_fiber = kwargs['props']['REF_FIBER']
     # get sci vectors
-    wave_sci = kwargs['props']['WAVE_SCI'].ravel()
-    sp_sci = kwargs['props'][f'UNCORR_EXT_{sci_fiber}'].ravel()
-    sp_sci_corr = kwargs['props'][f'CORR_EXT_{sci_fiber}'].ravel()
+    wave_sci = kwargs['props']['WAVE_SCI']
+    sp_sci = kwargs['props'][f'UNCORR_EXT_{sci_fiber}']
+    sp_sci_corr = kwargs['props'][f'CORR_EXT_{sci_fiber}']
     # get ref vectors
-    wave_ref = kwargs['props']['WAVE_REF'].ravel()
-    sp_ref = kwargs['props'][f'UNCORR_EXT_{ref_fiber}'].ravel()
-    sp_ref_corr = kwargs['props'][f'CORR_EXT_{ref_fiber}'].ravel()
+    wave_ref = kwargs['props']['WAVE_REF']
+    sp_ref = kwargs['props'][f'UNCORR_EXT_{ref_fiber}']
+    sp_ref_corr = kwargs['props'][f'CORR_EXT_{ref_fiber}']
     # ------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex='all')
     # plot science fiber
-    frames[0].plot(wave_sci, sp_sci, alpha=0.5, color='b', label='Original')
-    frames[0].plot(wave_sci, sp_sci_corr, color='r', label='Corrected')
+    frames[0].plot(wave_sci.ravel(), sp_sci.ravel(), alpha=0.5, color='b',
+                   label='Original')
+    frames[0].plot(wave_sci.ravel(), sp_sci_corr.ravel(), color='r',
+                   label='Corrected')
     # plot calib (ref) fiber
     if sp_ref is not None:
-        frames[1].plot(wave_ref, sp_ref, alpha=0.5, color='b', label='Original')
-        frames[1].plot(wave_ref, sp_ref_corr, color='r', label='Corrected')
+        frames[1].plot(wave_ref.ravel(), sp_ref.ravel(), alpha=0.5, color='b',
+                       label='Original')
+        frames[1].plot(wave_ref.ravel(), sp_ref_corr.ravel(), color='r',
+                       label='Corrected')
     else:
         frames[1].plot(wave_sci, sp_sci_corr, color='r', label='Corrected')
     # ------------------------------------------------------------------

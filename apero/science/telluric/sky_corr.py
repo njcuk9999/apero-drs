@@ -328,7 +328,7 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
     sc_props['SCI_FIBER'] = infile.fiber
     sc_props['REF_FIBER'] = calib_fiber
     sc_props['WAVE_SCI'] = wprops['WAVEMAP']
-    sc_props['WAVE_REF'] = None
+    sc_props['WAVE_REF'] = sky_wavemap
     # set source
     keys = [f'CORR_EXT_{infile.fiber}', f'CORR_EXT_{calib_fiber}',
             f'UNCORR_EXT_{infile.fiber}', f'UNCORR_EXT_{calib_fiber}',
