@@ -1250,6 +1250,22 @@ calib_file.addset(out_wave_night)
 valid_tfibers = ['AB', 'A', 'B']
 
 # cleaned spectrum
+out_sky_model = drs_finput('SKY_MODEL',
+                           hkeys=dict(KW_OUTPUT='SKY_MODEL'),
+                           filetype='.fits', intype=out_ext_e2dsff,
+                           suffix='_sky_model', remove_insuffix=True,
+                           dbname='telluric', dbkey='SKY_MODEL',
+                           outclass=tellu_ofile,
+                           description='Telluric sky model file')
+
+# cleaned spectrum
+out_tellu_sclean = drs_finput('TELLU_SCLEAN',
+                              hkeys=dict(KW_OUTPUT='TELLU_SCLEAN'),
+                              filetype='.fits', intype=out_ext_e2dsff,
+                              suffix='_tellu_sclean.fits', outclass=debug_ofile,
+                              description='Sky-cleaning file')
+
+# cleaned spectrum
 out_tellu_pclean = drs_finput('TELLU_PCLEAN',
                               hkeys=dict(KW_OUTPUT='TELLU_PCLEAN'),
                               fibers=valid_tfibers,
@@ -1295,11 +1311,15 @@ out_tellu_model = drs_finput('TRANS_MODEL', hkeys=dict(KW_OUTPUT='TRANS_MODEL'),
                              description='Telluric transmission model file')
 
 # add make_telluric outputs to output fileset
+red_file.addset(out_sky_model)
+red_file.addset(out_tellu_sclean)
 red_file.addset(out_tellu_pclean)
 red_file.addset(out_tellu_conv)
 red_file.addset(out_tellu_trans)
 red_file.addset(out_tellu_spl_npy)
 red_file.addset(out_tellu_model)
+tellu_file.addset(out_sky_model)
+tellu_file.addset(out_tellu_sclean)
 tellu_file.addset(out_tellu_pclean)
 tellu_file.addset(out_tellu_conv)
 tellu_file.addset(out_tellu_trans)
