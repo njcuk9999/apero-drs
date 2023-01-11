@@ -496,6 +496,7 @@ def robust_chebyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
     # Initialize the fit to None
     fit = None
     # Create an array of weights, initialized to 1 for all values
+    good = np.isfinite(yvector) & np.isfinite(xvector)
     weight = np.ones_like(xvector)
     # Pre-compute the odd_cut value
     odd_cut = np.exp(-.5 * nsigcut ** 2)
@@ -513,13 +514,14 @@ def robust_chebyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
         # Calculate the polynomial fit using the x- and y-values, and the
         # given degree, weighting the fit by the weights. Weights are computed
         # from the dispersion to the fit and the sigmax
-        fit = fit_cheby(xvector, yvector, degree, domain, weight=weight)
+        fit = fit_cheby(xvector[good], yvector[good], degree,
+                        domain, weight=weight[good])
         # Calculate the residuals of the polynomial fit by subtracting the
         # result of np.polyval from the original y-values
         res = yvector - val_cheby(fit, xvector, domain)
         # Calculate the new sigma values as the median absolute deviation of
         # the residuals
-        sig = fast.nanmedian(np.abs(res))
+        sig = fast.nanmedian(np.abs(res[good]))
         # Calculate the odds of being part of the "valid" values
         num = np.exp(-0.5 * (res / sig) ** 2) * (1 - odd_cut)
         # Calculate the odds of being an outlier
