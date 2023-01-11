@@ -34,6 +34,16 @@ except Exception as _:
     jit = None
     HAS_NUMBA = False
 
+# try to import numexpr
+# noinspection PyBroadException
+try:
+    import numexpr as ne
+    HAS_NUMEXPR = True
+except Exception as _:
+    ne = None
+    HAS_NUMEXPR = False
+
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -530,6 +540,39 @@ def odd_ratio_mean(value: np.ndarray, error: np.ndarray,
 
     # return the guess and bulk error
     return guess, bulk_error
+
+
+# =============================================================================
+# numexpr functions
+# =============================================================================
+def super_gauss_fast(xvector: np.ndarray, fwhm: np.ndarray, expo: np.ndarray):
+    """
+    Super gaussian using numexpr if possible
+
+    ew = (fwhm/2)/(2*np.log(2))**(1/expo)
+    supergauss = exp(-0.5*abs(xvector/ew_string)**expo)
+
+    :param xvector: the xvector points to calculate the super gaussian from
+    :param fwhm: np.ndarray, the full width half max value for the gaussian
+                 at each pixel position
+    :param expo: np.ndarray, the exponent of the super gaussian at each pixel
+                 position
+
+    :return: np.ndarray, the super gaussian profile for xvector, fwhm and expo
+    """
+    # if we have numexpr use it to do this fast
+    if HAS_NUMEXPR:
+        # do not need to reference these using numexpr
+        _ = xvector, fwhm, expo
+        # need to write as a string
+        ew_string = '(fwhm/2)/(2*log(2))**(1/expo)'
+        calc_string = f'exp(-0.5*abs(xvector/({ew_string}))**expo)'
+        # evaluate string in numexpr
+        return ne.evaluate(calc_string)
+    # otherwise we fall back to the slow method
+    else:
+        ew = (fwhm/2)/(2*np.log(2))**(1/expo)
+        return np.exp(-0.5*np.abs(xvector/ew)**expo)
 
 
 # =============================================================================
