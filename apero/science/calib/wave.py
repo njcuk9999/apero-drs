@@ -2480,6 +2480,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
 
 def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
                             wprops: ParamDict, hc_e2ds_file: DrsFitsFile,
+                            blaze: np.ndarray,
                             fiber: str, nbin_order: Union[int, None] = None,
                             nbin_spatial: Union[int, None] = None,
                             filtersize: Union[int, None] = None,
@@ -2670,16 +2671,23 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     e2ds_expo = map_res_e2ds(map_expo, (n_order_bin, n_spatial_bin),
                              wavemap.shape)
     # -------------------------------------------------------------------------
-    # create 1d spectra (s1d) of the e2ds file
-     #TODO: Finish this
-    sargs = [wprops['WAVEMAP'], e2ds_fwhm, eprops['BLAZE']]
-    swprops = extract.e2ds_to_s1d(params, recipe, *sargs,
-                                  wgrid='velocity', fiber=fiber,
-                                  s1dkind='res_fwhm')
-    svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
-                                  wgrid='velocity', fiber=fiber,
-                                  s1dkind='res_expo')
-
+    # create 1d spectra (s1d) of the res_e2ds file
+    skwargs = dict(params=params, recipe=recipe, wavemap=wprops['WAVEMAP'], 
+                   blaze=blaze, fiber=fiber)
+    # define vectors and names
+    e2ds_vectors = [e2ds_amp, e2ds_fwhm, e2ds_expo]
+    kinds = ['res_amp', 'res_fwhm', 'res_expo']
+    s1dv_props, s1dw_props = dict(), dict()
+    # loop around e2ds vectors and compute s1d files
+    for it, e2ds in enumerate(e2ds_vectors):
+        # create the velocity grid s1d
+        s1dv_prop = extract.e2ds_to_s1d(e2ds=e2ds_fwhm, wgrid='velocity',
+                                        s1dkind=kinds[it], **skwargs)
+        s1dv_props[kinds[it]] = s1dv_prop
+        # create the wave grid s1d
+        s1dw_prop = extract.e2ds_to_s1d(e2ds=e2ds_fwhm, wgrid='wave',
+                                        s1dkind=kinds[it], **skwargs)
+        s1dw_props[kinds[it]] = s1dw_prop
     # -------------------------------------------------------------------------
     # push to wprops
     wprops['RES_MAP_DVS'] = map_dvs
@@ -2702,19 +2710,21 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     wprops['RES_E2DS_AMP'] = e2ds_amp
     wprops['RES_E2DS_FWHM'] = e2ds_fwhm
     wprops['RES_E2DS_EXPO'] = e2ds_expo
+    wprops['RES_S1DV_LIST'] = s1dv_props
+    wprops['RES_S1DW_LIST'] = s1dw_props
     # set source
     keys = ['RES_MAP_DVS', 'RES_MAP_LINES', 'RES_MAP_FITS', 'RES_MAP_LOW_ORD',
             'RES_MAP_HIGH_ORD', 'RES_MAP_LOW_PIX', 'RES_MAP_HIGH_PIX',
             'RES_MAP_FWHM', 'RES_MAP_EXPO', 'RES_MAP_AMP', 'RES_MAP_EFFRES',
             'RES_MAP_NBIN_ORD', 'RES_MAP_NBIN_PIX', 'RES_E2DS_AMP',
-            'RES_E2DS_FWHM', 'RES_E2DS_EXPO']
+            'RES_E2DS_FWHM', 'RES_E2DS_EXPO', 'RES_S1DV_LIST', 'RES_S1DW_LIST']
     wprops.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return updated wprops
     return wprops
 
 
-def map_res_e2ds(map_values: Dict[tuple, float], inshape: Tuple[int],
+def map_res_e2ds(map_values: Dict[tuple, float], inshape: Tuple[int, int],
                  outshape: Tuple[int]) -> np.ndarray:
     """
     Take the resolution map values and expand into a image of shape outshape
@@ -3720,6 +3730,10 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # write resolution map
     # ------------------------------------------------------------------
+    # create s1d tables from s1d props
+    s1dvtable = res_s1d_table(wprops['RES_S1DV_LIST'])
+    s1dwtable = res_s1d_table(wprops['RES_S1DW_LIST'])
+    # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     resfile = recipe.outputs['WAVEM_RES'].newcopy(params=params,
                                                   fiber=fiber)
@@ -3774,9 +3788,10 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
     wargs = [fiber, rf_e2ds.filename]
     WLOG(params, '', textentry('40-017-00020', args=wargs))
     # define multi lists
-    data_list = [wprops['RES_E2DS_FWHM'], wprops['RES_E2DS_EXPO']]
-    name_list = ['E2DS_FWHM', 'E2DS_EXPO']
-    datatype_list = ['image', 'image']
+    data_list = [wprops['RES_E2DS_FWHM'], wprops['RES_E2DS_EXPO'],
+                 s1dvtable, s1dwtable]
+    name_list = ['E2DS_FWHM', 'E2DS_EXPO', 'S1DV', 'S1DW']
+    datatype_list = ['image', 'image', 'table', 'table']
     # ------------------------------------------------------------------
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
@@ -3793,6 +3808,33 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
                         runstring=recipe.runstring)
     # ------------------------------------------------------------------
     return rf_e2ds
+
+
+def res_s1d_table(s1dproplist: Dict[str, ParamDict]) -> Table:
+    """
+    Construct an S1D table from a set of S1D property parameter dictionaries
+    all s1ds must be on the same wave grid
+
+    :param s1dproplist: list of s1d property parameter dictionaries
+
+    :return: astropy.Table filled with the composite s1d properties
+    """
+    # construct the output table
+    outtable = Table()
+    # loop around keys and add columns
+    for key in s1dproplist:
+        # get the s1d table
+        s1dtable = s1dproplist[key]['S1DTABLE']
+        # deal with already having wavelength col - wavelength grid
+        #  must be shared between all entries of s1dproplist
+        if 'wavelength' not in outtable:
+            outtable['wavelength'] = s1dtable['wavelength']
+        # add the columns for the flux/error in flux and weight
+        outtable[f'flux_{key}'] = s1dtable['flux']
+        outtable[f'eflux_{key}'] = s1dtable['eflux']
+        outtable[f'weight_{key}'] = s1dtable['weight']
+    # return populated table
+    return outtable
 
 
 def res_map_hdr(params: ParamDict, header: drs_fits.Header,
