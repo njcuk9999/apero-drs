@@ -2680,12 +2680,14 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     s1dv_props, s1dw_props = dict(), dict()
     # loop around e2ds vectors and compute s1d files
     for it, e2ds in enumerate(e2ds_vectors):
+        # input needs to not be blaze corrected
+        e2ds_blaze = e2ds * blaze
         # create the velocity grid s1d
-        s1dv_prop = extract.e2ds_to_s1d(e2ds=e2ds_fwhm, wgrid='velocity',
+        s1dv_prop = extract.e2ds_to_s1d(e2ds=e2ds_blaze, wgrid='velocity',
                                         s1dkind=kinds[it], **skwargs)
         s1dv_props[kinds[it]] = s1dv_prop
         # create the wave grid s1d
-        s1dw_prop = extract.e2ds_to_s1d(e2ds=e2ds_fwhm, wgrid='wave',
+        s1dw_prop = extract.e2ds_to_s1d(e2ds=e2ds_blaze, wgrid='wave',
                                         s1dkind=kinds[it], **skwargs)
         s1dw_props[kinds[it]] = s1dw_prop
     # -------------------------------------------------------------------------

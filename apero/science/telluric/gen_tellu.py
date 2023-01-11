@@ -990,11 +990,13 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 thres=trans_thres, spectrum=spectrum / template2,
                 spectrum_ini=spectrum_ini / template2,
                 objname=infile.get_hkey('KW_OBJNAME', dtype=str),
+                dprtype=infile.get_hkey('KW_DPRTYPE', dtype=str),
                 clean_ohlines=clean_ohlines)
     recipe.plot('SUM_TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
                 thres=trans_thres, spectrum=spectrum / template2,
                 spectrum_ini=spectrum_ini / template2,
                 objname=infile.get_hkey('KW_OBJNAME', dtype=str),
+                dprtype=infile.get_hkey('KW_DPRTYPE', dtype=str),
                 clean_ohlines=clean_ohlines)
     # ----------------------------------------------------------------------
     # create qc_params (all passed now but we have updated values)

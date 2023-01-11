@@ -174,6 +174,9 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
         amp_num = np.sum(image_calib[reg_maskf] * sky_model_ref[reg_maskf])
         amp_den = np.sum(sky_model_ref[reg_maskf] ** 2)
         amp = amp_num / amp_den
+        # negative amps should be set to zero
+        if amp < 0:
+            amp = 0
         # apply to weights and scale (including areas with nans)
         sfactor = amp * weights[reg_mask]
         sky_corr_sci[reg_mask] = sky_model_sci[reg_mask] * sfactor
@@ -310,6 +313,9 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
         grad1_ref = gradient[reg_maskf]
         # dot product of the gradients
         amp = np.nansum(grad1 * grad1_ref) / np.nansum(grad1_ref ** 2)
+        # negative amps should be set to zero
+        if amp < 0:
+            amp = 0
         # apply to weights and scale (including areas with nans)
         sfactor = amp * weights[reg_mask]
         sky_corr_sci1[reg_mask] = sky_model_sci[reg_mask] * sfactor

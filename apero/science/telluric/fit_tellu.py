@@ -824,7 +824,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
 
 
 def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
-                   refprops, wprops) -> ParamDict:
+                   refprops, wprops, infile) -> ParamDict:
     """
     Calculate the residual model and apply it to the image
 
@@ -869,7 +869,9 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     # set up plot args
     pkwargs = dict(wprops=wprops, image=image,
                    image1=image1, sp_out=sp_out, res_model2=res_model2,
-                   tpreprops=tpreprops, recon_abso=recon_abso)
+                   tpreprops=tpreprops, recon_abso=recon_abso,
+                   objname = infile.get_hkey('KW_OBJNAME', dtype=str),
+                   dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str))
     # debug plot
     recipe.plot('FTELLU_RES_MODEL', **pkwargs)
     # summary plot
