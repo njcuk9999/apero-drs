@@ -31,6 +31,7 @@ from apero.core.utils import drs_data
 from apero.core.utils import drs_utils
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
+from apero.science.calib import gen_calib
 
 # =============================================================================
 # Define variables
@@ -46,6 +47,7 @@ __release__ = base.__release__
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 # get calibration database
+CalibDatabase = drs_database.CalibrationDatabase
 TelluDatabase = drs_database.TelluricDatabase
 FileIndexDatabase = drs_database.FileIndexDatabase
 # Get function string
@@ -345,7 +347,8 @@ def get_sp_linelists(params, **kwargs):
 # pre-cleaning functions
 # =============================================================================
 def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
-                   database: Union[TelluDatabase, None] = None,
+                   calibdbm: Union[CalibDatabase, None] = None,
+                   telludbm: Union[TelluDatabase, None] = None,
                    template: Optional[np.ndarray] = None, **kwargs):
     """
     Main telluric pre-cleaning functionality.
@@ -375,7 +378,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     :param fiber:
     :param rawfiles:
     :param combine:
-    :param database:
+    :param calibdbm:
+    :param telludbm:
     :param template:
 
     :return:
@@ -420,6 +424,14 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                        func_name)
     waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', kwargs, func_name)
     dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
+    ccf_control_radius = 5 * params['IMAGE_PIXEL_SIZE']
+    # ----------------------------------------------------------------------
+    # load database
+    if calibdbm is None:
+        calibdbm = CalibDatabase(params)
+        calibdbm.load_db()
+    if telludbm is None:
+        telludbm = TelluDatabase(params)
     # ----------------------------------------------------------------------
     # get image and header from infile
     header = infile.get_header()
@@ -431,6 +443,28 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     nbo, nbpix = image_e2ds_ini.shape
     # get wave map for the input e2ds
     wave_e2ds = wprops['WAVEMAP']
+    # ----------------------------------------------------------------------
+    # get loco file instance
+    res_e2ds = drs_file.get_file_definition(params, 'WAVEM_RES_E2DS',
+                                            block_kind='red')
+    # get calibration key
+    key = res_e2ds.get_dbkey()
+    # define the fiber to use (this is the one that was used in the wave ref
+    #   code to make the resolution map)
+    usefiber = params['WAVE_REF_FIBER']
+    # load loco file
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key, header, database=calibdbm,
+                          fiber=usefiber, return_filename=True)
+    # get properties from calibration file
+    res_e2ds_path = cfile.filename
+    # construct new infile instance and read data/header
+    res_e2ds = res_e2ds.newcopy(filename=res_e2ds_path, params=params,
+                                fiber=usefiber)
+    datalist = res_e2ds.get_data(copy=True, extnames=['E2DS_FWHM', 'E2DS_EXPO'])
+    # get the data from the data list
+    res_e2ds_fwhm = datalist['E2DS_FWHM']
+    res_e2ds_expo = datalist['E2DS_EXPO']
     # ----------------------------------------------------------------------
     # define storage of quality control
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
@@ -557,7 +591,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     wavemap = wave_e2ds.ravel()[flatkeep]
     spectrum = image_e2ds.ravel()[flatkeep]
     spectrum_ini = image_e2ds_ini.ravel()[flatkeep]
-    # TODO: propagate flatkeep onto res_e2ds_fwhm and res_e2ds_expo
+    res_fwhm = res_e2ds_fwhm.ravel()[flatkeep]
+    res_expo = res_e2ds_expo.ravel()[flatkeep]
     orders = orders.ravel()[flatkeep]
     # deal with having a template
     if template is not None:
@@ -575,7 +610,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # load tapas in correct format
     spl_others, spl_water = load_tapas_spl(params, recipe, header,
-                                           database=database)
+                                           database=telludbm)
     # ----------------------------------------------------------------------
     # load the snr from e2ds file
     snr = infile.get_hkey_1d('KW_EXT_SNR', nbo, dtype=float)
@@ -593,7 +628,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # return qc_exit_tellu_preclean
         return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
                                       wave_e2ds, qc_params, sky_model,
-                                      database=database)
+                                      res_fwhm, res_expo,
+                                      database=telludbm)
     else:
         qc_values[0] = mp.nanmedian(snr)
         qc_pass[0] = 1
@@ -654,17 +690,14 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     WLOG(params, '', textentry('40-019-00040'))
     # ----------------------------------------------------------------------
     # get reference trans
-    # TODO: pass ww and ex_gau as the maps res_e2ds_fwhm and res_e2ds_expo
     trans_others = get_abso_expo(wavemap, hdr_airmass, 0.0, spl_others,
-                                 spl_water, ww=ker_width,
-                                 ex_gau=ker_shape, dv_abso=dv_abso,
-                                 ker_thres=ker_thres, wavestart=wavestart,
+                                 spl_water, res_fwhm=res_fwhm,
+                                 res_expo=res_expo, dv_abso=dv_abso,
+                                 wavestart=wavestart,
                                  waveend=waveend, dvgrid=dvgrid)
-    # TODO: pass ww and ex_gau as the maps res_e2ds_fwhm and res_e2ds_expo
     trans_water = get_abso_expo(wavemap, 0.0, 4.0, spl_others, spl_water,
-                                ww=ker_width,
-                                ex_gau=ker_shape, dv_abso=dv_abso,
-                                ker_thres=ker_thres, wavestart=wavestart,
+                                res_fwhm=res_fwhm, res_expo=res_expo,
+                                dv_abso=dv_abso, wavestart=wavestart,
                                 waveend=waveend, dvgrid=dvgrid)
     # spline the reference other and water transmission
     spline_ref_others = mp.iuv_spline(wavemap, trans_others, k=1, ext=1)
@@ -692,9 +725,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         WLOG(params, '', textentry('40-019-00041', args=args))
         # get the absorption spectrum
         trans = get_abso_expo(wavemap, expo_others, expo_water,
-                              spl_others, spl_water, ww=ker_width,
-                              ex_gau=ker_shape, dv_abso=dv_abso,
-                              ker_thres=ker_thres, wavestart=wavestart,
+                              spl_others, spl_water, res_fwhm=res_fwhm,
+                              res_expo=res_expo, dv_abso=dv_abso,
+                              wavestart=wavestart,
                               waveend=waveend, dvgrid=dvgrid)
         # divide spectrum by transmission
         spectrum_tmp = spectrum / (trans * template2)
@@ -770,7 +803,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # ------------------------------------------------------------------
         # get the amplitude of the middle of the CCF
         # work out the internal part mask
-        internal_mask = np.abs(drange) < params['IMAGE_PIXEL_SIZE']
+        internal_mask = np.abs(drange) < ccf_control_radius
         amp_water = mp.nansum(ccf_water[internal_mask])
         if not force_airmass:
             amp_others = mp.nansum(ccf_others[internal_mask])
@@ -973,17 +1006,18 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # return qc_exit_tellu_preclean
         return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
                                       wave_e2ds, qc_params, sky_model,
-                                      database=database)
+                                      res_fwhm, res_expo,
+                                      database=telludbm)
     # ----------------------------------------------------------------------
     # show CCF plot to see if correlation peaks have been killed
     recipe.plot('TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
                 ccf_water_arr=ccf_water_iterations,
                 ccf_others_arr=ccf_others_iterations,
-                size=params['IMAGE_PIXEL_SIZE'])
+                size=ccf_control_radius)
     recipe.plot('SUM_TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
                 ccf_water_arr=ccf_water_iterations,
                 ccf_others_arr=ccf_others_iterations,
-                size=params['IMAGE_PIXEL_SIZE'])
+                size=ccf_control_radius)
     # plot to show absorption spectrum
     # TODO: add switch to change labels based on template = None
     recipe.plot('TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
@@ -1005,9 +1039,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # get the final absorption spectrum to be used on the science data.
     #     No trimming done on the wave grid
     abso_e2ds = get_abso_expo(wave_e2ds, expo_others, expo_water,
-                              spl_others, spl_water, ww=ker_width,
-                              ex_gau=ker_shape, dv_abso=0.0,
-                              ker_thres=ker_thres, wavestart=wavestart,
+                              spl_others, spl_water, res_fwhm=res_fwhm,
+                              res_expo=res_expo, dv_abso=0.0,
+                              wavestart=wavestart,
                               waveend=waveend, dvgrid=dvgrid)
     # all absorption deeper than exp(trans_thres) is considered too deep to
     #    be corrected. We set values there to NaN
@@ -1076,7 +1110,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # save pre-cleaned file
     tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
-                         props, wprops, database=database)
+                         props, wprops, database=telludbm)
     # ----------------------------------------------------------------------
     # return props
     return props
@@ -1217,7 +1251,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
 
 
 def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
-                  spl_water, ww, ex_gau, dv_abso, ker_thres, wavestart,
+                  spl_water, res_fwhm, res_expo, dv_abso, wavestart,
                   waveend, dvgrid):
     """
     Returns an absorption spectrum from exponents describing water and 'others'
@@ -1229,11 +1263,9 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
     :param expo_water: float, optical depth of water
     :param spl_others: spline function from tapas of other species
     :param spl_water: spline function from tapas of water
-    :param ww: gaussian width of the kernel
-    :param ex_gau: exponent of the gaussian (ex_gau = 2 is a gaussian, >2
-                   is boxy)
+    :param res_fwhm: fwhm map from the resolution map
+    :param res_expo: exponent map from the resolution map
     :param dv_abso: velocity of the absorption
-    :param ker_thres:
     :param wavestart:
     :param waveend:
     :param dvgrid:
@@ -1250,30 +1282,29 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
     # define the convolution kernel for the model. This shape factor can be
     #    modified if needed
     #   divide by fwhm of a gaussian of exp = 2.0
-    # TODO: from here: This disappears when passing res_e2ds_fwhm and res_e2ds_expo
-    width = ww / mp.fwhm()
-    # defining the convolution kernel x grid, defined over 4 fwhm
-    kernel_width = int(ww * 4)
-    dd = np.arange(-kernel_width, kernel_width + 1.0, 1.0)
-    # normalization of the kernel
-    ker = np.exp(-0.5 * np.abs(dd / width) ** ex_gau)
-    # shorten then kernel to keep only pixels that are more than 1e-6 of peak
-    ker = ker[ker > ker_thres * np.max(ker)]
-    # normalize the kernel
-    ker /= np.sum(ker)
-    # TODO: down to here: This disappears when passing res_e2ds_fwhm and res_e2ds_expo
+    # width = ww / mp.fwhm()
+    # # defining the convolution kernel x grid, defined over 4 fwhm
+    # kernel_width = int(ww * 4)
+    # dd = np.arange(-kernel_width, kernel_width + 1.0, 1.0)
+    # # normalization of the kernel
+    # ker = np.exp(-0.5 * np.abs(dd / width) ** ex_gau)
+    # # shorten then kernel to keep only pixels that are more than 1e-6 of peak
+    # ker = ker[ker > ker_thres * np.max(ker)]
+    # # normalize the kernel
+    # ker /= np.sum(ker)
     # ----------------------------------------------------------------------
     # create a magic grid onto which we spline our transmission, same as
     #   for the s1d_v in km/s
     magic_grid = mp.get_magic_grid(wavestart, waveend, dvgrid * 1000)
-
-    # TODO: Need to spline onto magic grid the shape parameters that are
-    #       currently expressed on the wavemap grid
-    #         fwhm_magic = mp.iuv_spline(wavemap, res_e2ds_fwhm, k=1, ext=3)
-    #         expo_magic = mp.iuv_spline(wavemap, res_e2ds_expo, k=1, ext=3)
     # spline onto magic grid
     sp_others = spl_others(magic_grid)
     sp_water = spl_water(magic_grid)
+    # spline the res fwhm and res expo
+    sp_fwhm_magic = mp.iuv_spline(wavemap, res_fwhm, k=1, ext=3)
+    sp_expo_magic = mp.iuv_spline(wavemap, res_expo, k=1, ext=3)
+    # push res fwhm and res expo onto magic grid
+    res_fwhm_magic = sp_fwhm_magic(magic_grid)
+    res_expo_magic = sp_expo_magic(magic_grid)
     # ----------------------------------------------------------------------
     # for numerical stability, we may have values very slightly below 0 from
     #     the spline above. negative values don't work with fractional exponents
@@ -1285,9 +1316,30 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
     trans_water = sp_water ** expo_water
     # getting the full absorption at full resolution
     trans = trans_others * trans_water
+
+
+    # TODO: REMOVE FROM HERE ----------------------------------->
+    params = constants.load()
+    ww = pcheck(params, 'TELLUP_ABSO_EXPO_KWID')
+    ex_gau = pcheck(params, 'TELLUP_ABSO_EXPO_KEXP')
+    ker_thres = pcheck(params, 'TELLUP_ABSO_EXPO_KTHRES')
     # convolving after product (to avoid the infamous commutativity problem
-    # TODO: Replace with EA variable convolve function
-    trans_convolved = np.convolve(trans, ker, mode='same')
+    width = ww / mp.fwhm()
+    # defining the convolution kernel x grid, defined over 4 fwhm
+    kernel_width = int(ww * 4)
+    dd = np.arange(-kernel_width, kernel_width + 1.0, 1.0)
+    # normalization of the kernel
+    ker = np.exp(-0.5 * np.abs(dd / width) ** ex_gau)
+    # shorten then kernel to keep only pixels that are more than 1e-6 of peak
+    ker = ker[ker > ker_thres * np.max(ker)]
+    # normalize the kernel
+    ker /= np.sum(ker)
+    trans_convolved_old = np.convolve(trans, ker, mode='same')
+    # TODO: REMOVE TO HERE <-------------------------------------------
+
+
+    trans_convolved = variable_res_conv(magic_grid, trans, res_fwhm_magic,
+                                        res_expo_magic, fwhm_scan=10)
     # ----------------------------------------------------------------------
     # spline that onto the input grid and allow a velocity shift
     magic_shift = magic_grid * (1 + dv_abso / speed_of_light)
@@ -1315,8 +1367,74 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
     return out_vector
 
 
+def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
+                      res_fwhm: np.ndarray, res_expo: np.ndarray,
+                      fwhm_scan: float = 3.0) -> np.ndarray:
+    """
+    Convolve with a variable kernel in resolution space
+
+    :param wavemap: np.ndarray, wavelength grid
+    :param spectrum: np.ndarray, spectrum to be convolved
+    :param res_fwhm: np.ndarray, fwhm at each pixel, same shape as wave and
+                     spectrum
+    :param res_expo: np.ndarray, expoenent parameter for the PSF, expo=2
+                     would be gaussian
+    :param fwhm_scan: float, optional, over how many FWHM we construct a kernel
+
+    :return: np.ndarray, the convolved spectrum
+    """
+    # get shape of spectrum (2D or 1D)
+    shape0 = spectrum.shape
+    # -------------------------------------------------------------------------
+    # if we have an e2ds ravel
+    if len(shape0) == 2:
+        res_fwhm = res_fwhm.ravel()
+        res_expo = res_expo.ravel()
+        wavemap = wavemap.ravel()
+        spectrum = spectrum.ravel()
+    # -------------------------------------------------------------------------
+    # convolved outputs
+    sumker = np.zeros_like(spectrum)
+    spectrum2 = np.zeros_like(spectrum)
+    # -------------------------------------------------------------------------
+    # get the width of the scanning of the kernel. Default is 3 FWHM
+    scale1 = np.max(res_fwhm)
+    scale2 = np.median(np.gradient(wavemap) / wavemap) * speed_of_light
+    range_scan = fwhm_scan * (scale1 / scale2)
+    # round scan range to pixel level
+    range_scan = int(np.ceil(range_scan))
+    # mask nan pixels
+    valid_pix = np.isfinite(spectrum)
+    # set to zero the pixels that are NaNs
+    spectrum[~valid_pix] = 0.0
+    # convert non valid pixels to floats
+    valid_pix = valid_pix.astype(float)
+    # -------------------------------------------------------------------------
+    # loop around each offset scanning the sum and constructing local kernels
+    for offset in range(-range_scan, range_scan):
+        # get the dv offset
+        dv = speed_of_light * (wavemap / np.roll(wavemap, offset) - 1)
+        # calculate the kernel at this offset
+        ker = mp.super_gauss_fast(dv, res_fwhm, res_expo)
+        # no weight if the pixel was a NaN value
+        ker = ker * valid_pix
+        # add this kernel to the convolved spectrum
+        spectrum2 = spectrum2 + np.roll(spectrum, offset) * ker
+        # save the kernel
+        sumker = sumker + ker
+    # -------------------------------------------------------------------------
+    # normalize convovled spectrum to kernel sum
+    spectrum2 = spectrum2 / sumker
+    # reshape if necessary
+    if len(shape0) == 2:
+        spectrum2 = spectrum2.reshape(shape0)
+    # return convolved spectrum
+    return spectrum2
+
+
 def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
-                           qc_params, sky_model, database=None, **kwargs):
+                           qc_params, sky_model, res_fwhm, res_expo,
+                           database=None, **kwargs):
     """
     Provides an exit point for tellu_preclean via a quality control failure
 
@@ -1328,6 +1446,8 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     :param qc_params:
     :param sky_model:
     :param database:
+    :param res_fwhm:
+    :param res_expo:
 
     :return:
     """
@@ -1356,10 +1476,6 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
                        func_name)
     ker_shape = pcheck(params, 'TELLUP_ABSO_EXPO_KEXP', 'ker_shape', kwargs,
                        func_name)
-    qc_ker_width = pcheck(params, 'TELLUP_ABSO_EXPO_KWID', 'qc_ker_width',
-                          kwargs, func_name)
-    qc_ker_shape = pcheck(params, 'TELLUP_ABSO_EXPO_KEXP', 'qc_ker_shape',
-                          kwargs, func_name)
     trans_thres = pcheck(params, 'TELLUP_TRANS_THRES', 'trans_thres', kwargs,
                          func_name)
     trans_siglim = pcheck(params, 'TELLUP_TRANS_SIGLIM', 'trans_siglim', kwargs,
@@ -1392,9 +1508,9 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     expo_water = float(default_water_abso)
     # get the absorption
     abso_e2ds = get_abso_expo(wavemap, expo_others, expo_water,
-                              spl_others, spl_water, ww=qc_ker_width,
-                              ex_gau=qc_ker_shape, dv_abso=0.0,
-                              ker_thres=ker_thres, wavestart=wavestart,
+                              spl_others, spl_water, res_fwhm=res_fwhm,
+                              res_expo=res_expo, dv_abso=0.0,
+                              wavestart=wavestart,
                               waveend=waveend, dvgrid=dvgrid)
     # mask transmission below certain threshold
     mask = abso_e2ds < np.exp(trans_thres)

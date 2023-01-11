@@ -1203,7 +1203,7 @@ EXT_S1D_BIN_UWAVE.value = 0.005
 
 #  Define the s1d spectral bin for S1D spectra (km/s) when uniform in velocity
 EXT_S1D_BIN_UVELO = EXT_S1D_BIN_UVELO.copy(__NAME__)
-EXT_S1D_BIN_UVELO.value = 1.0
+EXT_S1D_BIN_UVELO.value = 0.5
 
 #  Define the s1d smoothing kernel for the transition between orders in pixels
 EXT_S1D_EDGE_SMOOTH_SIZE = EXT_S1D_EDGE_SMOOTH_SIZE.copy(__NAME__)

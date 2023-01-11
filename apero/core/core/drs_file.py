@@ -3273,7 +3273,9 @@ class DrsFitsFile(DrsInputFile):
 
     def read_data(self, ext: Union[int, None] = None, log: bool = True,
                   copy: bool = False,
-                  return_data: bool = False) -> Union[None, np.ndarray, Table]:
+                  return_data: bool = False,
+                  extname: Union[str, None] = None
+                  ) -> Union[None, np.ndarray, Table]:
         """
         Read an image from DrsFitsFile.filename into DrsFitsFile.data
 
@@ -3295,7 +3297,8 @@ class DrsFitsFile(DrsInputFile):
         # get params
         params = self.params
         # get data
-        data = drs_fits.readfits(params, self.filename, ext=ext, log=log)
+        data = drs_fits.readfits(params, self.filename, ext=ext,
+                                 extname=extname, log=log)
         # set number of data sets to 1
         self.numfiles = 1
         # assign to object
@@ -3409,8 +3412,9 @@ class DrsFitsFile(DrsInputFile):
         return 1
 
     def get_data(self, copy: bool = False,
-                 extensions: Union[List[int], None] = None
-                 ) -> Union[np.ndarray, Table, list, None]:
+                 extensions: Union[List[int], None] = None,
+                 extnames: Union[List[str], None] = None
+                 ) -> Union[np.ndarray, Table, list, dict, None]:
         """
         return the data array
 
@@ -3435,6 +3439,20 @@ class DrsFitsFile(DrsInputFile):
                 datalist.append(data)
             # return datalist
             return datalist
+        # check whether extension names is populated
+        if extnames is not None:
+            # storage of incoming data
+            datalist = dict()
+            # loop around extensions
+            for extname in extnames:
+                # get this extensions data
+                data = self.read_data(extname=extname, copy=copy,
+                                      return_data=True)
+                # add to list
+                datalist[extname] = data
+            # return datalist
+            return datalist
+
         # check data exists
         if self.data is None:
             self.check_read(data_only=True)

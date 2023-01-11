@@ -1280,7 +1280,7 @@ out_wavem_res_e2ds = drs_finput('WAVEM_RES_E2DS',
                                 intype=[out_ext_e2ds, out_ext_e2dsff],
                                 suffix='_waveref_res_e2ds',
                                 dbname='calibration',
-                                dbkey='WAVR_E2DS', outclass=calib_ofile,
+                                dbkey='WAVR_E2DS', outclass=refcalib_ofile,
                                 description='Reference wavelength resolution '
                                             'e2ds file')
 # fp global results table
