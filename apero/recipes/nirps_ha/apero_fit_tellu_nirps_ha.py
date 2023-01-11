@@ -280,7 +280,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         if not onlypreclean:
             cprops = telluric.calc_res_model(params, recipe, image, image1,
                                              trans_props, tpreprops, refprops,
-                                             wprops)
+                                             wprops, infile)
         else:
             cprops = telluric.pclean_only(tpreprops)
 

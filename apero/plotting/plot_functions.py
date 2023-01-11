@@ -3825,6 +3825,7 @@ def plot_tellup_abso_spec(plotter: Plotter, graph: Graph,
     spectrum = kwargs['spectrum']
     spectrum_ini = kwargs['spectrum_ini']
     objname = kwargs['objname']
+    dprtype = kwargs['dprtype']
     clean_ohlines = kwargs['clean_ohlines']
     # ------------------------------------------------------------------
     # calculate normalisation
@@ -3860,7 +3861,8 @@ def plot_tellup_abso_spec(plotter: Plotter, graph: Graph,
     ymax = mp.nanmax(spectrum_ini / (trans * mask) / scale) * 1.05
     # set limits
     frame.set(xlabel='Wavelength [nm]', ylabel='Normalized flux\n transmission',
-              title='OBJECT = {0}'.format(objname), ylim=[0, ymax])
+              title='OBJECT = {0} [{1}]'.format(objname, dprtype),
+              ylim=[0, ymax])
     # make figure tight
     fig.tight_layout()
     # ------------------------------------------------------------------
@@ -4309,6 +4311,9 @@ def plot_ftellu_res_model(plotter: Plotter, graph: Graph,
     res_model2 = kwargs['res_model2']
     tpreprops = kwargs['tpreprops']
     recon_abso = kwargs['recon_abso']
+    objname = kwargs['objname']
+    dprtype =  kwargs['dprtype']
+
     # -------------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex='all')
@@ -4367,6 +4372,8 @@ def plot_ftellu_res_model(plotter: Plotter, graph: Graph,
     # set the labels
     frame1.set(ylabel='Normalized flux')
     frame2.set(xlabel='Wavelength [nm]', ylabel='Tranmission')
+    # add title
+    plt.suptitle('OBJECT = {0} [{1}]'.format(objname, dprtype))
     # -------------------------------------------------------------------------
     plt.subplots_adjust(hspace=0.01)
     # wrap up using plotter
