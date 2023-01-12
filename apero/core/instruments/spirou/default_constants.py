@@ -341,6 +341,10 @@ PP_DARK_MED_BINNUM.value = 32
 PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
 PP_HOTPIX_FILE.value = 'hotpix_pp.csv'
 
+#   Defines the pp amplifier bias model (located in the data folder)
+PP_AMP_ERROR_MODEL = PP_AMP_ERROR_MODEL.copy(__NAME__)
+PP_AMP_ERROR_MODEL.value = 'amplifier_bias_model_spirou.fits'
+
 # Defines the pp led flat file (located in the data folder)
 PP_LED_FLAT_FILE = PP_LED_FLAT_FILE.copy(__NAME__)
 PP_LED_FLAT_FILE.value = 'None'
