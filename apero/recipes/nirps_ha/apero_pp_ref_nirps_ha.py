@@ -162,6 +162,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         drs_startup.file_processing_update(params, it, num_files)
         # get file for this iteration
         infile = infiles[it]
+        # get image and header for this file
+        image = infile.get_data()
+        header = infile.get_header()
         # ------------------------------------------------------------------
         # Fix the nirps header
         # ------------------------------------------------------------------
@@ -171,7 +174,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # print progress
         WLOG(params, '', textentry('40-010-00014', args=[infile.name]))
         # make order mask
-        mask, props = preprocessing.nirps_order_mask(params, infile.get_data())
+        mask, props = preprocessing.nirps_order_mask(params, image, header)
         # convert to integers
         mask = np.array(mask).astype(int)
         # ------------------------------------------------------------------
