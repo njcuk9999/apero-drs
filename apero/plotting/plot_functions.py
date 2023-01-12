@@ -3633,6 +3633,8 @@ def plot_tellu_sky_corr(plotter: Plotter, graph: Graph,
     # start the plotting process
     if not plotter.plotstart(graph):
         return
+    # get plt
+    plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     sci_fiber = kwargs['props']['SCI_FIBER']
@@ -3645,23 +3647,33 @@ def plot_tellu_sky_corr(plotter: Plotter, graph: Graph,
     wave_ref = kwargs['props']['WAVE_REF']
     sp_ref = kwargs['props'][f'UNCORR_EXT_{ref_fiber}']
     sp_ref_corr = kwargs['props'][f'CORR_EXT_{ref_fiber}']
+    # get objname and dprtype
+    objname = kwargs['objname']
+    dprtype = kwargs['dprtype']
     # ------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex='all')
     # plot science fiber
     frames[0].plot(wave_sci.ravel(), sp_sci.ravel(), alpha=0.5, color='b',
-                   label='Original')
+                   label='Original [sci fiber]')
     frames[0].plot(wave_sci.ravel(), sp_sci_corr.ravel(), color='r',
-                   label='Corrected')
+                   label='Corrected [sci fiber]')
     # plot calib (ref) fiber
     if sp_ref is not None:
         frames[1].plot(wave_ref.ravel(), sp_ref.ravel(), alpha=0.5, color='b',
-                       label='Original')
+                       label='Original [calib fiber]')
         frames[1].plot(wave_ref.ravel(), sp_ref_corr.ravel(), color='r',
-                       label='Corrected')
+                       label='Corrected [calib fiber]')
     else:
         frames[1].plot(wave_sci.ravel(), sp_sci_corr.ravel(), color='r',
-                       label='Corrected')
+                       label='Corrected [sci fiber]')
+
+    frames[0].set(ylabel='Flux')
+    frames[1].set(xlabel='Wavelength [nm]', ylabel='Flux')
+    frames[0].legend(loc=0)
+    frames[1].legend(loc=0)
+
+    plt.suptitle(f'{objname} [{dprtype}]')
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
