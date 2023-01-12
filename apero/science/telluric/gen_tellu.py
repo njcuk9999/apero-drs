@@ -1038,11 +1038,23 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # get the final absorption spectrum to be used on the science data.
     #     No trimming done on the wave grid
-    abso_e2ds = get_abso_expo(wave_e2ds, expo_others, expo_water,
-                              spl_others, spl_water, res_fwhm=res_fwhm,
-                              res_expo=res_expo, dv_abso=0.0,
-                              wavestart=wavestart,
-                              waveend=waveend, dvgrid=dvgrid)
+    abso_e2ds = np.zeros_like(wave_e2ds)
+    for order_num in range(wave_e2ds.shape[0]):
+
+        owavestep = np.nanmedian(np.gradient(wave_e2ds[order_num]))
+        # wave start and end need to be extended a little bit to avoid
+        #     edge effects
+        owavestart = np.nanmin(wave_e2ds[order_num]) - 10*owavestep
+        owaveend = np.nanmax(wave_e2ds[order_num]) + 10*owavestep
+
+        abso_tmp = get_abso_expo(wave_e2ds[order_num], expo_others, expo_water,
+                                 spl_others, spl_water,
+                                 res_fwhm=res_e2ds_fwhm[order_num],
+                                 res_expo=res_e2ds_expo[order_num],
+                                 dv_abso=0.0, wavestart=owavestart,
+                                 waveend=owaveend, dvgrid=dvgrid)
+        # push back into e2ds
+        abso_e2ds[order_num] = abso_tmp
     # all absorption deeper than exp(trans_thres) is considered too deep to
     #    be corrected. We set values there to NaN
     mask = abso_e2ds < np.exp(2 * trans_thres)
@@ -1319,27 +1331,27 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
 
 
     # TODO: REMOVE FROM HERE ----------------------------------->
-    params = constants.load()
-    ww = pcheck(params, 'TELLUP_ABSO_EXPO_KWID')
-    ex_gau = pcheck(params, 'TELLUP_ABSO_EXPO_KEXP')
-    ker_thres = pcheck(params, 'TELLUP_ABSO_EXPO_KTHRES')
-    # convolving after product (to avoid the infamous commutativity problem
-    width = ww / mp.fwhm()
-    # defining the convolution kernel x grid, defined over 4 fwhm
-    kernel_width = int(ww * 4)
-    dd = np.arange(-kernel_width, kernel_width + 1.0, 1.0)
-    # normalization of the kernel
-    ker = np.exp(-0.5 * np.abs(dd / width) ** ex_gau)
-    # shorten then kernel to keep only pixels that are more than 1e-6 of peak
-    ker = ker[ker > ker_thres * np.max(ker)]
-    # normalize the kernel
-    ker /= np.sum(ker)
-    trans_convolved_old = np.convolve(trans, ker, mode='same')
+    # params = constants.load()
+    # ww = pcheck(params, 'TELLUP_ABSO_EXPO_KWID')
+    # ex_gau = pcheck(params, 'TELLUP_ABSO_EXPO_KEXP')
+    # ker_thres = pcheck(params, 'TELLUP_ABSO_EXPO_KTHRES')
+    # # convolving after product (to avoid the infamous commutativity problem
+    # width = ww / mp.fwhm()
+    # # defining the convolution kernel x grid, defined over 4 fwhm
+    # kernel_width = int(ww * 4)
+    # dd = np.arange(-kernel_width, kernel_width + 1.0, 1.0)
+    # # normalization of the kernel
+    # ker = np.exp(-0.5 * np.abs(dd / width) ** ex_gau)
+    # # shorten then kernel to keep only pixels that are more than 1e-6 of peak
+    # ker = ker[ker > ker_thres * np.max(ker)]
+    # # normalize the kernel
+    # ker /= np.sum(ker)
+    # trans_convolved_old = np.convolve(trans, ker, mode='same')
     # TODO: REMOVE TO HERE <-------------------------------------------
 
 
     trans_convolved = variable_res_conv(magic_grid, trans, res_fwhm_magic,
-                                        res_expo_magic, fwhm_scan=10)
+                                        res_expo_magic)
     # ----------------------------------------------------------------------
     # spline that onto the input grid and allow a velocity shift
     magic_shift = magic_grid * (1 + dv_abso / speed_of_light)
@@ -1369,7 +1381,7 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
 
 def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
                       res_fwhm: np.ndarray, res_expo: np.ndarray,
-                      fwhm_scan: float = 3.0) -> np.ndarray:
+                      ker_thres: float = 1e-4) -> np.ndarray:
     """
     Convolve with a variable kernel in resolution space
 
@@ -1379,7 +1391,8 @@ def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
                      spectrum
     :param res_expo: np.ndarray, expoenent parameter for the PSF, expo=2
                      would be gaussian
-    :param fwhm_scan: float, optional, over how many FWHM we construct a kernel
+    :param ker_thres: float, optional, amplitude of kernel at which we stop
+                      convolution
 
     :return: np.ndarray, the convolved spectrum
     """
@@ -1400,7 +1413,7 @@ def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
     # get the width of the scanning of the kernel. Default is 3 FWHM
     scale1 = np.max(res_fwhm)
     scale2 = np.median(np.gradient(wavemap) / wavemap) * speed_of_light
-    range_scan = fwhm_scan * (scale1 / scale2)
+    range_scan = 20 * (scale1 / scale2)
     # round scan range to pixel level
     range_scan = int(np.ceil(range_scan))
     # mask nan pixels
@@ -1409,13 +1422,21 @@ def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
     spectrum[~valid_pix] = 0.0
     # convert non valid pixels to floats
     valid_pix = valid_pix.astype(float)
+    # sorting by distance to center of kernel
+    range2 = np.arange(-range_scan, range_scan)
+    range2 = range2[np.argsort(abs(range2))]
+    # calculate the super gaussian width
+    ew = (res_fwhm / 2) / (2 * np.log(2)) ** (1 / res_expo)
     # -------------------------------------------------------------------------
     # loop around each offset scanning the sum and constructing local kernels
-    for offset in range(-range_scan, range_scan):
+    for offset in range2:
         # get the dv offset
         dv = speed_of_light * (wavemap / np.roll(wavemap, offset) - 1)
         # calculate the kernel at this offset
-        ker = mp.super_gauss_fast(dv, res_fwhm, res_expo)
+        ker = mp.super_gauss_fast(dv, ew, res_expo)
+        # stop convolving when threshold reached
+        if np.max(ker) < ker_thres:
+            break
         # no weight if the pixel was a NaN value
         ker = ker * valid_pix
         # add this kernel to the convolved spectrum

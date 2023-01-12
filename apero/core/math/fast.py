@@ -545,7 +545,7 @@ def odd_ratio_mean(value: np.ndarray, error: np.ndarray,
 # =============================================================================
 # numexpr functions
 # =============================================================================
-def super_gauss_fast(xvector: np.ndarray, fwhm: np.ndarray, expo: np.ndarray):
+def super_gauss_fast(xvector: np.ndarray, ew: np.ndarray, expo: np.ndarray):
     """
     Super gaussian using numexpr if possible
 
@@ -563,15 +563,13 @@ def super_gauss_fast(xvector: np.ndarray, fwhm: np.ndarray, expo: np.ndarray):
     # if we have numexpr use it to do this fast
     if HAS_NUMEXPR:
         # do not need to reference these using numexpr
-        _ = xvector, fwhm, expo
+        _ = xvector, expo
         # need to write as a string
-        ew_string = '(fwhm/2)/(2*log(2))**(1/expo)'
-        calc_string = f'exp(-0.5*abs(xvector/({ew_string}))**expo)'
+        calc_string = f'exp(-0.5*abs(xvector/ew)**expo)'
         # evaluate string in numexpr
         return ne.evaluate(calc_string)
     # otherwise we fall back to the slow method
     else:
-        ew = (fwhm/2)/(2*np.log(2))**(1/expo)
         return np.exp(-0.5*np.abs(xvector/ew)**expo)
 
 
