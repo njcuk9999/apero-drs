@@ -820,8 +820,8 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     return outfile
 
 
-def correct_capacitive_coupling_pattern(params: ParamDict, image: np.ndarray,
-                                        exptime: float) -> np.ndarray:
+def correct_capacitive_coupling(params: ParamDict, image: np.ndarray,
+                                exptime: float) -> np.ndarray:
     """
     Correct the capacitive coupling pattern using the amplifier bias model
 
@@ -863,6 +863,7 @@ def correct_capacitive_coupling_pattern(params: ParamDict, image: np.ndarray,
 # Define nirps detector functions
 # =============================================================================
 def nirps_correction(params: ParamDict, image: np.ndarray,
+                     header: drs_fits.Header,
                      create_mask: bool = True) -> np.ndarray:
     """
     Pre-processing of NIRPS images with only left/right and top/bottom pixels
@@ -889,10 +890,11 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     nbypix, nbxpix = image.shape
     # define the width of amplifiers
     ampwid = nbxpix // namps
-
+    # get the exposure time from the header
+    exptime = header[params['KW_EXPTIME'][0]]
     # -------------------------------------------------------------------------
     # correct the capacitive coupling pattern
-    image = correct_capacitive_coupling_pattern(params, image)
+    image = correct_capacitive_coupling(params, image, exptime)
     # -------------------------------------------------------------------------
     # before we even get started, we remove top/bottom ref pixels
     # to reduce DC level differences between ampliers
@@ -1115,14 +1117,17 @@ def med_amplifiers(image: np.ndarray, namps: int) -> np.ndarray:
     return image2
 
 
-def nirps_order_mask(params: ParamDict,
-                     mask_image: np.ndarray) -> Tuple[np.ndarray, ParamDict]:
+def nirps_order_mask(params: ParamDict, mask_image: np.ndarray,
+                     mask_header: drs_fits.Header
+                     ) -> Tuple[np.ndarray, ParamDict]:
     """
     Calculate the mask used for removing the orders (preprocessing correction)
     for NIRPS
 
     :param params: ParamDict - the parameter dictionary of constants
     :param mask_image: np.array, the image to be masked
+    :param mask_header: fits.Header, the header for the image to be masked
+
     :return: tuple, 1. the mask for the image, 2. ParamDict - statistics from
              mask building
     """
@@ -1135,7 +1140,7 @@ def nirps_order_mask(params: ParamDict,
     # with warnings.catch_warnings(record=True):
     #     mask = image > nsig * sig_image
     # correct the image (as in preprocessing)
-    image2 = nirps_correction(params, image)
+    image2 = nirps_correction(params, image, mask_header)
     # generate a better estimate of the mask (after correction)
     with warnings.catch_warnings(record=True):
         mask = image2 < 0

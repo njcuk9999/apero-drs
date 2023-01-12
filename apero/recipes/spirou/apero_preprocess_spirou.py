@@ -295,6 +295,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # correct image
         # ------------------------------------------------------------------
+        # get the exposure time from the header
+        exptime = infile.header[params['KW_EXPTIME'][0]]
+        # correct the capacitive coupling pattern
+        image = prep.correct_capacitive_coupling_pattern(params, image, exptime)
         # correct for the top and bottom reference pixels
         WLOG(params, '', textentry('40-010-00003'))
         image = prep.correct_top_bottom(params, image)
