@@ -415,7 +415,7 @@ def load_amp_bias_model(params: ParamDict,
     msg = 'Loading amplifer bias model: {0}'
     WLOG(params, '', msg.format(absfilename))
     # return the slope (ext=1) and intercept (ext=2)
-    return data[0], data[1]
+    return data[1], data[2]
 
 
 def load_tapas(params: ParamDict,
