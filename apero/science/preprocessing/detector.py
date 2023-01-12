@@ -820,6 +820,45 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     return outfile
 
 
+def correct_capacitive_coupling_pattern(params: ParamDict, image: np.ndarray,
+                                        exptime: float) -> np.ndarray:
+    """
+    Correct the capacitive coupling pattern using the amplifier bias model
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image: np.ndarray, the image to correct
+    :param exptime: float, the exposure time in seconds
+
+    :return: np.ndarray, the corrected image
+    """
+    # get the total number of amplifiers (for this image)
+    tamp = params['PP_TOTAL_AMP_NUM']
+    # get number of pixels in amplifier
+    pix_in_amp = image.shape[1] // tamp
+    # get the amplifier error model file
+    amp_slope, amp_intercept = drs_data.load_amp_bias_model(params)
+    # construct the amplifier model
+    amplifier_model = amp_slope + amp_intercept / exptime
+    # storage for correction
+    corr = np.zeros_like(image)
+    # loop around amplifiers
+    for it in range(tamp):
+        # unfold the butterfly pattern
+        if it % 2 == 0:
+            flip = 1
+        else:
+            flip = -1
+        # start and end of the amplifier
+        start = pix_in_amp * it
+        end = pix_in_amp * (it + 1)
+        # add this amplifier to the correction matrix
+        corr[:, start:end] = amplifier_model[:, ::flip]
+    # apply correction
+    image = image - corr
+    # return the corrected image
+    return image
+
+
 # =============================================================================
 # Define nirps detector functions
 # =============================================================================
@@ -850,6 +889,10 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     nbypix, nbxpix = image.shape
     # define the width of amplifiers
     ampwid = nbxpix // namps
+
+    # -------------------------------------------------------------------------
+    # correct the capacitive coupling pattern
+    image = correct_capacitive_coupling_pattern(params, image)
     # -------------------------------------------------------------------------
     # before we even get started, we remove top/bottom ref pixels
     # to reduce DC level differences between ampliers
