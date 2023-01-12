@@ -841,6 +841,8 @@ def correct_capacitive_coupling(params: ParamDict, image: np.ndarray,
     amplifier_model = amp_slope + amp_intercept / exptime
     # storage for correction
     corr = np.zeros_like(image)
+    # print progress
+    WLOG(params, '', 'Creating correction for capacitive coupling')
     # loop around amplifiers
     for it in range(tamp):
         # unfold the butterfly pattern
