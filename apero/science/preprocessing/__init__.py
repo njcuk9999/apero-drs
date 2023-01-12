@@ -17,6 +17,8 @@ __all__ = []
 # =============================================================================
 # Define functions
 # =============================================================================
+correct_capacitive_coupling = detector.correct_capacitive_coupling
+
 correct_cosmics = detector.correct_cosmics
 
 correct_top_bottom = detector.ref_top_bottom

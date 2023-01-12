@@ -167,11 +167,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
         infile = drs_file.fix_header(params, recipe, infile)
+        # get image and header for this file
+        image = infile.get_data()
+        header = infile.get_header()
         # ------------------------------------------------------------------
         # print progress
         WLOG(params, '', textentry('40-010-00014', args=[infile.name]))
         # make order mask
-        mask, props = preprocessing.nirps_order_mask(params, infile.get_data())
+        mask, props = preprocessing.nirps_order_mask(params, image, header)
         # convert to integers
         mask = np.array(mask).astype(int)
         # ------------------------------------------------------------------
