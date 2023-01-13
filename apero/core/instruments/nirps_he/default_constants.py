@@ -2232,7 +2232,7 @@ TELLU_TRANS_MODEL_SIG.author = base.AUTHORS['EA']
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
 FTELLU_QC_SNR_ORDER = FTELLU_QC_SNR_ORDER.copy(__NAME__)
-FTELLU_QC_SNR_ORDER.value = 33
+FTELLU_QC_SNR_ORDER.value = 64
 
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
