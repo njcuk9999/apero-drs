@@ -1816,7 +1816,13 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             mean2error = np.abs(mean_hc_vel / err_hc_vel)
             # update last coefficient of the cavity fit
             cavity = np.array(cavity)
-            cavity[0] = cavity[0] * (1 + mean_hc_vel / speed_of_light_ms)
+            # must add the cavity pedestal back in to the first term
+            #     (before correcting by mean hc velocity)
+            tmp_cavity = cavity[0] + cavity_pedestal
+            # update the first term by mean_hc_vel
+            tmp_cavity = tmp_cavity * (1 + mean_hc_vel / speed_of_light_ms)
+            # now we can subtract the cavity pedestal off again
+            cavity[0] = tmp_cavity - cavity_pedestal
         # else update the cavity
         else:
             # set mean2error to zero
