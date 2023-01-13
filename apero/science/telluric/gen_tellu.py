@@ -628,7 +628,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # return qc_exit_tellu_preclean
         return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
                                       wave_e2ds, qc_params, sky_model,
-                                      res_fwhm, res_expo,
+                                      res_e2ds_fwhm, res_e2ds_expo,
                                       database=telludbm)
     else:
         qc_values[0] = mp.nanmedian(snr)
@@ -1006,7 +1006,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # return qc_exit_tellu_preclean
         return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
                                       wave_e2ds, qc_params, sky_model,
-                                      res_fwhm, res_expo,
+                                      res_e2ds_fwhm, res_e2ds_expo,
                                       database=telludbm)
     # ----------------------------------------------------------------------
     # show CCF plot to see if correlation peaks have been killed
@@ -1454,7 +1454,7 @@ def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
 
 
 def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
-                           qc_params, sky_model, res_fwhm, res_expo,
+                           qc_params, sky_model, res_e2ds_fwhm, res_e2ds_expo,
                            database=None, **kwargs):
     """
     Provides an exit point for tellu_preclean via a quality control failure
@@ -1527,12 +1527,27 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     # force expo values
     expo_others = float(hdr_airmass)
     expo_water = float(default_water_abso)
-    # get the absorption
-    abso_e2ds = get_abso_expo(wavemap, expo_others, expo_water,
-                              spl_others, spl_water, res_fwhm=res_fwhm,
-                              res_expo=res_expo, dv_abso=0.0,
-                              wavestart=wavestart,
-                              waveend=waveend, dvgrid=dvgrid)
+    # ----------------------------------------------------------------------
+    # get the final absorption spectrum to be used on the science data.
+    #     No trimming done on the wave grid
+    abso_e2ds = np.zeros_like(wavemap)
+    for order_num in range(wavemap.shape[0]):
+
+        owavestep = np.nanmedian(np.gradient(wavemap[order_num]))
+        # wave start and end need to be extended a little bit to avoid
+        #     edge effects
+        owavestart = np.nanmin(wavemap[order_num]) - 10*owavestep
+        owaveend = np.nanmax(wavemap[order_num]) + 10*owavestep
+
+        abso_tmp = get_abso_expo(wavemap[order_num], expo_others, expo_water,
+                                 spl_others, spl_water,
+                                 res_fwhm=res_e2ds_fwhm[order_num],
+                                 res_expo=res_e2ds_expo[order_num],
+                                 dv_abso=0.0, wavestart=owavestart,
+                                 waveend=owaveend, dvgrid=dvgrid)
+        # push back into e2ds
+        abso_e2ds[order_num] = abso_tmp
+    # ----------------------------------------------------------------------
     # mask transmission below certain threshold
     mask = abso_e2ds < np.exp(trans_thres)
     # correct e2ds
