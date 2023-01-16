@@ -4429,6 +4429,49 @@ def plot_mktemp_berv_cov(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
+def plot_mktemp_deconv(plotter: Plotter, graph: Graph,
+                       kwargs: Dict[str, Any]):
+    """
+    Graph: Make telluric template deconvolution plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    wavemap = kwargs['wavemap']
+    flux = kwargs['flux']
+    mask = kwargs['mask']
+    deconv = kwargs['deconv']
+    reconv = kwargs['reconv']
+    res = kwargs['res']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1,
+                                   sharex='all')
+    # plot
+    frames[0].plot(wavemap, flux * mask, color='red', label='input')
+    frames[0].plot(wavemap, reconv * mask, color='blue', label='reconvolved',
+               ls='--', alpha=0.6)
+    frames[1].plot(wavemap, res * mask, color='green', alpha=0.9)
+    frames[0].plot(wavemap, deconv * mask, color='black', label='deconvolved',
+               alpha=0.6)
+    # add legends
+    frames[0].legend(loc=0)
+    frames[0].set(xlabel='Wavelength [nm]', ylabel='Normalized flux')
+    frames[1].set(xlabel='Wavelength [nm]', ylabel='Measured - reconvolved')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 # sky correction graph instance
 tellu_sky_corr = Graph('TELLU_SKY_CORR_PLOT', kind='debug',
                        func=plot_tellu_sky_corr)
@@ -4503,6 +4546,10 @@ sum_desc = 'Template coverage'
 sum_mktemp_berv_cov = Graph('SUM_MKTEMP_BERV_COV', kind='summary',
                             func=plot_mktemp_berv_cov, figsize=(16, 10),
                             dpi=150, description=sum_desc)
+
+mktemp_deconv = Graph('MKTEMP_S1D_DECONV', kind='debug',
+                      func=plot_mktemp_deconv)
+
 # add to definitions
 definitions += [tellu_sky_corr, mktellu_wave_flux1, mktellu_wave_flux2,
                 sum_mktellu_wave_flux,  mktellu_model, sum_mktellu_model,
@@ -4511,7 +4558,8 @@ definitions += [tellu_sky_corr, mktellu_wave_flux1, mktellu_wave_flux2,
                 ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso,
                 tellup_wave_trans, sum_tellup_wave_trans, tellup_abso_spec,
                 tellup_clean_oh, sum_tellup_abso_spec, mktemp_berv_cov,
-                sum_mktemp_berv_cov, ftellu_res_model, sum_ftellu_res_model]
+                mktemp_deconv, sum_mktemp_berv_cov, ftellu_res_model,
+                sum_ftellu_res_model]
 
 
 # =============================================================================

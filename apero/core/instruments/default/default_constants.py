@@ -268,7 +268,9 @@ __all__ = [
     'MKTEMPLATE_E2DS_ITNUM', 'MKTEMPLATE_E2DS_LOWF_SIZE',
     'MKTEMPLATE_S1D_ITNUM', 'MKTEMPLATE_S1D_LOWF_SIZE', 'MKTEMPLATE_FILESOURCE',
     'MKTEMPLATE_BERVCOR_QCMIN', 'MKTEMPLATE_BERVCOV_CSNR',
-    'MKTEMPLATE_BERVCOV_RES', 'MKTEMPLATE_DEBUG_MODE', 'MKTEMPLATE_MAX_OPEN_FILES',
+    'MKTEMPLATE_BERVCOV_RES', 'MKTEMPLATE_DEBUG_MODE',
+    'MKTEMPLATE_MAX_OPEN_FILES', 'MKTEMPLATE_DECONV_ITR_THRES',
+    'MKTEMPLATE_DECONV_ITR_MAX',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_NO_RV_VAL', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_UNITS', 'CCF_MASK_FMT',
@@ -345,8 +347,8 @@ __all__ = [
     'PLOT_FTELLU_RECON_SPLINE1', 'PLOT_FTELLU_RECON_SPLINE2',
     'PLOT_FTELLU_WAVE_SHIFT1', 'PLOT_FTELLU_WAVE_SHIFT2',
     'PLOT_FTELLU_RECON_ABSO1', 'PLOT_FTELLU_RECON_ABSO2',
-    'PLOT_MKTEMP_BERV_COV', 'PLOT_TELLUP_CLEAN_OH',
-    'PLOT_FTELLU_RES_MODEL',
+    'PLOT_MKTEMP_BERV_COV', 'PLOT_MKTEMP_S1D_DECONV',
+    'PLOT_TELLUP_CLEAN_OH', 'PLOT_FTELLU_RES_MODEL',
     # debug ccf plot settings
     'PLOT_CCF_RV_FIT_LOOP', 'PLOT_CCF_RV_FIT', 'PLOT_CCF_SWAVE_REF',
     'PLOT_CCF_PHOTON_UNCERT',
@@ -4222,6 +4224,27 @@ MKTEMPLATE_MAX_OPEN_FILES = Const('MKTEMPLATE_MAX_OPEN_FILES', value=50,
                                               'to be allowed into a bin '
                                               '(if not in debug mode)')
 
+# Define the threshold for the Lucy-Richardson deconvolution steps. This is
+#    the maximum  value of the 99th percentile of the feed-back term
+MKTEMPLATE_DECONV_ITR_THRES = Const('MKTEMPLATE_DECONV_ITR_THRES', value=None,
+                                    dtype=float, source=__NAME__, minimum=0,
+                                    group=cgroup,
+                                    description='Define the threshold for the '
+                                                'Lucy-Richardson deconvolution '
+                                                'steps. This is the maximum '
+                                                'value of the 99th percentile '
+                                                'of the feed-back term')
+
+# Define the max number of iterations to run if the iteration threshold
+#     is not met
+MKTEMPLATE_DECONV_ITR_MAX = Const('MKTEMPLATE_DECONV_ITR_MAX', value=None,
+                                    dtype=float, source=__NAME__, minimum=0,
+                                    group=cgroup,
+                                    description='Define the max number of '
+                                                'iterations to run if the '
+                                                'iteration threshold is not '
+                                                'met')
+
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================
@@ -5182,6 +5205,13 @@ PLOT_MKTEMP_BERV_COV = Const('PLOT_MKTEMP_BERV_COV', value=False,
                              active=False, group=cgroup,
                              description='turn on the berv coverage '
                                          'debug plot')
+
+# turn on the template s1d deconvolution plot
+PLOT_MKTEMP_S1D_DECONV = Const('MKTEMP_S1D_DECONV', value=False,
+                               dtype=bool, source=__NAME__, user=True,
+                               active=False, group=cgroup,
+                               description='turn on the template s1d '
+                                           'deconvolution plot')
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = Const('PLOT_CCF_RV_FIT_LOOP', value=False,

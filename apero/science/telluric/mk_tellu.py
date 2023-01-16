@@ -207,8 +207,8 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     return props
 
 
-def calculate_tellu_res_absorption(params, recipe, image, template,
-                                   template_props, header, refprops, wprops,
+def calculate_tellu_res_absorption(params, recipe, image, template_props,
+                                   header, refprops, wprops,
                                    bprops, tpreprops, **kwargs):
     func_name = __NAME__ + '.calculate_telluric_absoprtion()'
     # get constatns from params/kwargs
@@ -236,7 +236,8 @@ def calculate_tellu_res_absorption(params, recipe, image, template,
     wavemap = wprops['WAVEMAP']
     # get dimensions of data
     nbo, nbpix = image1.shape
-
+    # get the e2ds template
+    template = template_props['TEMP_S2D']
     # ------------------------------------------------------------------
     # Shift the image to the reference grid
     # ------------------------------------------------------------------

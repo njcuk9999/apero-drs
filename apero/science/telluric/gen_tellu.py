@@ -30,6 +30,7 @@ from apero.core.core import drs_text
 from apero.core.utils import drs_data
 from apero.core.utils import drs_utils
 from apero.io import drs_fits
+from apero.io import drs_table
 from apero.science.calib import flat_blaze
 from apero.science.calib import gen_calib
 
@@ -347,9 +348,9 @@ def get_sp_linelists(params, **kwargs):
 # pre-cleaning functions
 # =============================================================================
 def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
+                   template_props: ParamDict,
                    calibdbm: Union[CalibDatabase, None] = None,
-                   telludbm: Union[TelluDatabase, None] = None,
-                   template: Optional[np.ndarray] = None, **kwargs):
+                   telludbm: Union[TelluDatabase, None] = None, **kwargs):
     """
     Main telluric pre-cleaning functionality.
 
@@ -444,7 +445,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # get wave map for the input e2ds
     wave_e2ds = wprops['WAVEMAP']
     # ----------------------------------------------------------------------
-    # get loco file instance
+    # get res_e2ds file instance
     res_e2ds = drs_file.get_file_definition(params, 'WAVEM_RES_E2DS',
                                             block_kind='red')
     # get calibration key
@@ -465,6 +466,12 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # get the data from the data list
     res_e2ds_fwhm = datalist['E2DS_FWHM']
     res_e2ds_expo = datalist['E2DS_EXPO']
+    # get the res table
+    res_table = drs_table.read_table(params, res_e2ds_path, fmt='fits',
+                                     hdu='S1DV')
+    # get the fwhm and expo from the table
+    res_s1d_fwhm = np.array(res_table['flux_res_fwhm'])
+    res_s1d_expo = np.array(res_table['flux_res_expo'])
     # ----------------------------------------------------------------------
     # define storage of quality control
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
@@ -595,8 +602,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     res_expo = res_e2ds_expo.ravel()[flatkeep]
     orders = orders.ravel()[flatkeep]
     # deal with having a template
-    if template is not None:
-        template1 = np.array(template)
+    if template_props['HAS_TEMPLATE']:
+        template1 = np.array(template_props['TEMP_S2D'])
         template2 = template1.ravel()[flatkeep]
         # template? measure dv_abso
         force_dv_abso = False
@@ -1063,6 +1070,50 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # now correct the original e2ds file
     corrected_e2ds = (image_e2ds_ini - sky_model) / abso_e2ds
+    # ----------------------------------------------------------------------
+    # correct for finite resolution effects
+    # ----------------------------------------------------------------------
+    # TODO: Move to function
+    if template_props['HAS_TEMPLATE']:
+
+        # get the deconvolved s1d template
+        s1d_wave = template_props['TEMP_S1D_TABLE']['wavelength']
+        s1d_deconv = template_props['TEMP_S1D_TABLE']['deconv']
+        deconv_template = np.array(s1d_deconv[0])
+
+        s1d_wavestart = np.min(s1d_wave)
+        s1d_waveend = np.max(s1d_wave)
+
+        s1d_abso = get_abso_expo(s1d_wave, expo_others, expo_water,
+                                 spl_others, spl_water, res_fwhm=res_s1d_fwhm,
+                                 res_expo=res_s1d_expo, dv_abso=0.0,
+                                 wavestart=s1d_wavestart,  waveend=s1d_waveend,
+                                 dvgrid=dvgrid)
+
+        finite_error_numer = variable_res_conv(s1d_wave,deconv_template*s1d_abso,
+                                         res_s1d_fwhm,res_s1d_expo)
+
+        finite_error_denom = variable_res_conv(s1d_wave,s1d_abso,
+                                         res_s1d_fwhm,res_s1d_expo)
+
+        pristine_conv_s1d = variable_res_conv(s1d_wave,deconv_template,
+                                         res_s1d_fwhm,res_s1d_expo)
+
+        s1d_with_error = finite_error_numer/finite_error_denom
+
+        finite_err_ratio = s1d_with_error/pristine_conv_s1d
+
+        spl_finite_res = mp.iuv_spline(s1d_wave,finite_err_ratio)
+
+        finite_res_e2ds = np.zeros_like(corrected_e2ds)
+        for order_num in wave_e2ds.shape[0]:
+            finite_res_e2ds[order_num] = spl_finite_res(wave_e2ds[order_num])
+
+
+    # TODO: Check whether this is multiply or divide
+    corrected_e2ds = corrected_e2ds / finite_res_e2ds
+    # TODO: Add finite_res_e2ds to the pclean file
+
     # ----------------------------------------------------------------------
     # calculate CCF power
     keep = np.abs(drange) < (ccf_scan_range / 4)
@@ -2202,8 +2253,7 @@ def load_templates(params: ParamDict,
                    header: Union[drs_fits.Header, None] = None,
                    objname: Union[str, None] = None,
                    fiber: Union[str, None] = None,
-                   database: Union[TelluDatabase, None] = None
-                   ) -> Tuple[Union[np.ndarray, None], ParamDict]:
+                   database: Union[TelluDatabase, None] = None) -> ParamDict:
     """
     Load the most recent template from the telluric database for 'objname'
 
@@ -2225,15 +2275,19 @@ def load_templates(params: ParamDict,
         if not params['INPUTS']['USE_TEMPLATE']:
             # store template properties
             temp_props = ParamDict()
+            temp_props['HAS_TEMPLATE'] = False
+            temp_props['TEMP_S2D'] = None
             temp_props['TEMP_FILE'] = 'None'
             temp_props['TEMP_NUM'] = 0
             temp_props['TEMP_HASH'] = 'None'
             temp_props['TEMP_TIME'] = 'None'
+            temp_props['TEMP_S1D_TABLE'] = None
+            temp_props['TEMP_S1D_FILE'] = 'None'
             # set source
             tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME']
             temp_props.set_sources(tkeys, func_name)
             # return null entries
-            return None, temp_props
+            return temp_props
     # -------------------------------------------------------------------------
     # set template filename to None
     template_filename = None
@@ -2275,30 +2329,53 @@ def load_templates(params: ParamDict,
         WLOG(params, '', textentry('40-019-00003'))
         # store template properties
         temp_props = ParamDict()
+        temp_props['HAS_TEMPLATE'] = False
+        temp_props['TEMP_S2D'] = None
         temp_props['TEMP_FILE'] = 'None'
         temp_props['TEMP_NUM'] = 0
         temp_props['TEMP_HASH'] = 'None'
         temp_props['TEMP_TIME'] = 'None'
+        temp_props['TEMP_S1D_TABLE'] = None
+        temp_props['TEMP_S1D_FILE'] = 'None'
         # set source
         tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME']
         temp_props.set_sources(tkeys, func_name)
         # return null entries
-        return None, temp_props
+        return temp_props
+    # -------------------------------------------------------------------------
+
+    # get res_e2ds file instance
+    s1d_template = drs_file.get_file_definition(params, 'TELLU_TEMP_S1DV',
+                                                block_kind='red')
+    # get calibration key
+    s1d_key = s1d_template.get_dbkey()
+    # load tellu file, header and abspaths
+    temp_out = load_tellu_file(params, s1d_key, header, n_entries=1,
+                               required=False, fiber=fiber,
+                               objname=objname,
+                               database=database, mode=None,
+                               get_header=True, kind='table')
+    s1d_table, _, temp_filename = temp_out
     # -------------------------------------------------------------------------
     # log which template we are using
     wargs = [temp_filename]
     WLOG(params, 'info', textentry('40-019-00005', args=wargs))
     # store template properties
     temp_props = ParamDict()
+    temp_props['HAS_TEMPLATE'] = True
+    temp_props['TEMP_S2D'] = temp_image
     temp_props['TEMP_FILE'] = temp_filename
     temp_props['TEMP_NUM'] = temp_header[params['KW_MKTEMP_NFILES'][0]]
     temp_props['TEMP_HASH'] = temp_header[params['KW_MKTEMP_HASH'][0]]
     temp_props['TEMP_TIME'] = temp_header[params['KW_MKTEMP_TIME'][0]]
+    temp_props['TEMP_S1D_TABLE'] = s1d_table
+    temp_props['TEMP_S1D_FILE'] = temp_filename
     # set source
-    tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME']
+    tkeys = ['TEMP_S2D', 'TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME',
+             'TEMP_S1D_TABLE', 'TEMP_S1D_FILE']
     temp_props.set_sources(tkeys, func_name)
     # only return most recent template
-    return temp_image, temp_props
+    return temp_props
 
 
 def get_transmission_files(params, header, fiber, database=None):

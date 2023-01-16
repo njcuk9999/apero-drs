@@ -2385,6 +2385,18 @@ MKTEMPLATE_DEBUG_MODE.value = False
 MKTEMPLATE_MAX_OPEN_FILES = MKTEMPLATE_MAX_OPEN_FILES.copy(__NAME__)
 MKTEMPLATE_MAX_OPEN_FILES.value = 50
 
+# Define the threshold for the Lucy-Richardson deconvolution steps. This is
+#    the maximum  value of the 99th percentile of the feed-back term
+MKTEMPLATE_DECONV_ITR_THRES = MKTEMPLATE_DECONV_ITR_THRES.copy(__NAME__)
+MKTEMPLATE_DECONV_ITR_THRES.value = 1.0e-3
+MKTEMPLATE_DECONV_ITR_THRES.author = base.AUTHORS['EA']
+
+# Define the max number of iterations to run if the iteration threshold
+#     is not met
+MKTEMPLATE_DECONV_ITR_MAX = MKTEMPLATE_DECONV_ITR_MAX.copy(__NAME__)
+MKTEMPLATE_DECONV_ITR_MAX.value = 100
+MKTEMPLATE_DECONV_ITR_MAX.author = base.AUTHORS['EA']
+
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================
@@ -2778,6 +2790,10 @@ PLOT_FTELLU_RES_MODEL.value = True
 # turn on the berv coverage debug plot
 PLOT_MKTEMP_BERV_COV = PLOT_MKTEMP_BERV_COV.copy(__NAME__)
 PLOT_MKTEMP_BERV_COV.value = True
+
+# turn on the template s1d deconvolution plot
+PLOT_MKTEMP_S1D_DECONV = PLOT_MKTEMP_S1D_DECONV.copy(__NAME__)
+PLOT_MKTEMP_S1D_DECONV.value = True
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = PLOT_CCF_RV_FIT_LOOP.copy(__NAME__)

@@ -9,10 +9,11 @@ Created on 2020-07-2020-07-15 17:58
 """
 import os
 from collections import OrderedDict
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 from astropy.table import Table
+from scipy.signal import savgol_filter
 
 from apero import lang
 from apero.base import base
@@ -24,8 +25,10 @@ from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.io import drs_table
+from apero.io import drs_fits
 from apero.science import extract
 from apero.science.calib import wave
+from apero.science.calib import gen_calib
 from apero.science.telluric import gen_tellu
 
 # =============================================================================
@@ -498,7 +501,8 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     return props
 
 
-def make_1d_template_cube(params, filenames, reffile, fiber, **kwargs):
+def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
+                          calibdbm, **kwargs):
     # set function mame
     func_name = display_func('make_1d_template_cube', __NAME__)
     # get parameters from params/kwargs
@@ -521,7 +525,11 @@ def make_1d_template_cube(params, filenames, reffile, fiber, **kwargs):
     reffile.read_file()
     # get the reference wave map
     rwavemap = np.array(reffile.get_data()['wavelength'])
-
+    # get s1d type
+    if reffile.name == 'SC1D_W_FILE':
+        s1d_type = 'S1DW'
+    else:
+        s1d_type = 'S1DV'
     # ----------------------------------------------------------------------
     # Compile a median SNR for rejection of bad files
     # ----------------------------------------------------------------------
@@ -812,8 +820,14 @@ def make_1d_template_cube(params, filenames, reffile, fiber, **kwargs):
     # calculate rms (median of residuals)
     rms = mp.nanmedian(np.abs(residual_cube), axis=1)
     # ----------------------------------------------------------------------
+    # create the deconvolved template (used to correct finite resolution
+    #   effects)
+    deconv = create_deconvolved_template(params, recipe, rwavemap, median,
+                                         header, s1d_type, calibdbm)
+    # ----------------------------------------------------------------------
     # setup output parameter dictionary
     props = ParamDict()
+    props['S1D_TYPE'] = s1d_type
     props['S1D_BIG_CUBE'] = big_cube.T
     props['S1D_BIG_COLS'] = b_cols
     props['S1D_WAVELENGTH'] = rwavemap
@@ -823,10 +837,11 @@ def make_1d_template_cube(params, filenames, reffile, fiber, **kwargs):
     props['QC_SNR_THRES'] = snr_thres
     props['S1D_ITERATIONS'] = s1d_iterations
     props['S1D_LOWF_SIZE'] = s1d_lowf_size
+    props['S1D_DECONV'] = deconv
     # set sources
-    keys = ['S1D_BIG_CUBE', 'S1D_BIG_COLS', 'S1D_MEDIAN', 'S1D_WAVELENGTH',
-            'S1D_RMS', 'QC_SNR_ORDER', 'QC_SNR_THRES', 'S1D_ITERATIONS',
-            'S1D_LOWF_SIZE']
+    keys = ['S1D_TYPE', 'S1D_BIG_CUBE', 'S1D_BIG_COLS', 'S1D_MEDIAN',
+            'S1D_WAVELENGTH', 'S1D_RMS', 'QC_SNR_ORDER', 'QC_SNR_THRES',
+            'S1D_ITERATIONS', 'S1D_LOWF_SIZE', 'S1D_DECONV']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return outputs
@@ -919,6 +934,157 @@ def calculate_berv_coverage(params: ParamDict, recipe: DrsRecipe,
                                  units=['km/s', None, None])
     # return table
     return table, berv_cov
+
+
+def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
+                                wavemap: np.ndarray, flux: np.ndarray,
+                                header: drs_fits.Header,
+                                s1d_type: str,
+                                calibdbm: Optional[CalibrationDatabase] = None,
+                                p99_itr_thres: Optional[float] = None,
+                                p99_itr_max: Optional[int] = None
+                                ) -> np.ndarray:
+    """
+    Deconvolves the s1d template (for finite resolution correction later)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param wavemap: np.ndarray (1D), the s1d wavelength solution vector
+    :param flux: np.ndarray (1D), the s1d flux vector
+    :param header: fits.Header, the header assoicated with the s1d
+    :param s1d_type: str, the type of s1d (either S1DW or S1DV) this also
+                     corresponds to the hdu extname in the res_e2ds file
+    :param calibdbm: Calibration database (or None), if not passed will load
+                     calibration database again
+    :param p99_itr_thres: float, threshold for the Lucy-Richardson
+                          deconvolution steps (max value of 99th percentile),
+                          overrides MKTEMPLATE_DECONV_ITR_THRES in params if
+                          set
+    :param p99_itr_max: int, maximum number of iterations to run if the
+                        iteration threshold is not met, overrides
+                        MKTEMPLATE_DECONV_ITR_MAX in params if set.
+
+    :return: np.ndarray, the deconvolved vector (same shape as flux)
+    """
+    # set function name
+    func_name = display_func('create_deconvolved_template', __NAME__)
+    # -------------------------------------------------------------------------
+    # get parameters from params
+    # -------------------------------------------------------------------------
+    # Threshold for the Lucy-Richardson deconvolution steps. This is the maximum
+    #    value of the 99th percentile of the feed-back term
+    p99_iteration_threshold = pcheck(params, 'MKTEMPLATE_DECONV_ITR_THRES',
+                                     func=func_name, override=p99_itr_thres)
+    # Max number of iterations to run if the iteration threshold is not met
+    niterations_max = pcheck(params, 'MKTEMPLATE_DECONV_ITR_MAX',
+                                     func=func_name, override=p99_itr_max)
+    # -------------------------------------------------------------------------
+    # get database if none
+    if calibdbm is None:
+        calibdbm = CalibrationDatabase(params)
+        calibdbm.load_db()
+    # -------------------------------------------------------------------------
+    # keep track of valid pixels within template
+    valid = np.isfinite(flux)
+    mask = np.ones_like(flux)
+    mask[~valid] = np.nan
+    # spline NaNs with linear slopes in gaps. Avoids having any NaN in the
+    # deconvolution
+    spline_flux = mp.iuv_spline(wavemap[valid], flux[valid], k=1, ext=3)
+    flux = spline_flux(wavemap)
+    # ----------------------------------------------------------------------
+    # get the map of resolution in the s1d
+    # ----------------------------------------------------------------------
+    # get res_e2ds file instance
+    res_e2ds = drs_file.get_file_definition(params, 'WAVEM_RES_E2DS',
+                                            block_kind='red')
+    # get calibration key
+    key = res_e2ds.get_dbkey()
+    # define the fiber to use (this is the one that was used in the wave ref
+    #   code to make the resolution map)
+    usefiber = params['WAVE_REF_FIBER']
+    # load loco file
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key, header, database=calibdbm,
+                          fiber=usefiber, return_filename=True)
+    # get properties from calibration file
+    res_e2ds_path = cfile.filename
+    # get the res table
+    res_table = drs_table.read_table(params, res_e2ds_path, fmt='fits',
+                                     hdu=s1d_type)
+    # get the fwhm and expo from the table
+    res_fwhm = np.array(res_table['flux_res_fwhm'])
+    res_expo = np.array(res_table['flux_res_expo'])
+    # -------------------------------------------------------------------------
+    # print progress
+    # TODO: Add to language database
+    msg = 'Calculating deconvolution of template'
+    WLOG(params, '', msg)
+    # -------------------------------------------------------------------------
+    # spline with slopes in domains that are not defined. We cannot have a NaN
+    # in these maps.
+    # -------------------------------------------------------------------------
+    # pixel positions
+    index = np.arange(len(res_fwhm))
+    # valid map for FWHM
+    fwhm_valid = np.isfinite(res_fwhm)
+    # spline for FWHM
+    spline_fwhm = mp.iuv_spline(index[fwhm_valid], res_fwhm[fwhm_valid],
+                                k=1, ext=3)
+    # map back onto original fwhm vector
+    res_fwhm = spline_fwhm(index)
+    # valid map for expo
+    expo_valid = np.isfinite(res_expo)
+    # spline for expo
+    spline_expo = mp.iuv_spline(index[expo_valid], res_expo[expo_valid],
+                                k=1, ext=3)
+    # map back on to original expo vector
+    res_expo = spline_expo(index)
+    # -------------------------------------------------------------------------
+    # calculate the first iteration in the Lucy-Richardson deconvolution
+    deconv = gen_tellu.variable_res_conv(wavemap, flux, res_fwhm, res_expo)
+    # reconvolve (should be very similar to the flux)
+    reconv = gen_tellu.variable_res_conv(wavemap, deconv, res_fwhm,
+                                         res_expo)
+    # find the difference
+    res = reconv - flux
+    # -------------------------------------------------------------------------
+    # find the incremental update to the deconvolved spectrum at each step of
+    #    Lucy-Richardson
+    p99 = np.inf
+    # window that is 1.5 resolution element.
+    savgol_window = int((np.ceil(np.nanmedian(res_fwhm) / 1.5) * 2) + 1)
+    # start a counter
+    iteration = 0
+    # loop around until we reach our iteration threshold
+    while (p99 > p99_iteration_threshold) and (iteration < niterations_max):
+        # reconvolve the deconvolve spectrum
+        reconv = gen_tellu.variable_res_conv(wavemap, deconv, res_fwhm,
+                                             res_expo)
+        # find the difference
+        res = reconv - flux
+        # we filter residuals such that we only keep derivatives of the 2 over
+        # the width of a window that is 1.5 FWHM in size.
+        res = savgol_filter(res, savgol_window, 2)
+        # convolve the difference
+        corr = gen_tellu.variable_res_conv(wavemap, res, res_fwhm, res_expo)
+        # find the amplitude of the feedback term
+        p99 = np.nanpercentile(corr[valid], 99)
+        # update the deconvolved spectrum
+        deconv = deconv - corr
+        # update the iteration
+        iteration += 1
+        # log the progress
+        # TODO: Add to language database
+        msg = '\tIteration {0}. residual (99th percentile) = {1:.3e}'
+        WLOG(params, '', msg.format(iteration, p99))
+    # -------------------------------------------------------------------------
+    # plot the deconv plot
+    recipe.plot('MKTEMP_S1D_DECONV', wavemap=wavemap, flux=flux, mask=mask,
+                deconv=deconv, reconv=reconv, res=res)
+    # -------------------------------------------------------------------------
+    # return the deconvolution vector
+    return deconv
 
 
 # =============================================================================
@@ -1135,7 +1301,6 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     objname = infile.get_hkey('KW_OBJNAME', dtype=str)
     # construct suffix
     suffix = '_{0}_{1}_{2}'.format(objname, filetype.lower(), fiber)
-
     # ------------------------------------------------------------------
     # Set up template big table
     # ------------------------------------------------------------------
@@ -1153,13 +1318,18 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     s1dtable['flux'] = props['S1D_MEDIAN']
     s1dtable['eflux'] = np.zeros_like(props['S1D_MEDIAN'])
     s1dtable['rms'] = props['S1D_RMS']
+    s1dtable['deconv'] = props['S1D_DECONV']
 
     # ------------------------------------------------------------------
     # write the s1d template file (TELLU_TEMP)
     # ------------------------------------------------------------------
+    # deal with difference file type for s1dv and s1dw
+    if props['S1D_TYPE'] == 'S1DV':
+        drs_file = 'TELLU_TEMP_S1DV'
+    else:
+        drs_file = 'TELLU_TEMP_S1DW'
     # get copy of instance of file
-    template_file = recipe.outputs['TELLU_TEMP_S1D'].newcopy(params=params,
-                                                             fiber=fiber)
+    template_file = recipe.outputs[drs_file].newcopy(params=params, fiber=fiber)
     # construct the filename from file instance
     template_file.construct_filename(infile=infile, suffix=suffix)
     # copy keys from input file
@@ -1236,6 +1406,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # return props
     props = ParamDict()
     props['S1DTABLE'] = s1dtable
+    props['S1DFILE'] = template_file
     return props
 
 

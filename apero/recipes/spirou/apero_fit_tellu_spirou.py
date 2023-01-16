@@ -210,10 +210,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Get template file (if available)
         # ------------------------------------------------------------------
-        tout = telluric.load_templates(params, header, objname, fiber,
-                                       database=telludbm)
-        template, template_props = tout
-
+        template_props = telluric.load_templates(params, header, objname, fiber,
+                                                 database=telludbm)
         # ------------------------------------------------------------------
         # Load transmission model
         # ------------------------------------------------------------------
@@ -230,9 +228,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         bprops = extract.get_berv(params, infile)
 
         # ------------------------------------------------------------------
-        # Shift the template from reference wave solution --> night wave solution
-        template = telluric.shift_template(params, recipe, image, template,
-                                           refprops, wprops, bprops)
+        # Shift the template from reference wave solution --> night
+        #    wave solution
+        template_props = telluric.shift_template(params, recipe, image,
+                                                 template_props, refprops,
+                                                 wprops, bprops)
 
         # ------------------------------------------------------------------
         # telluric pre-cleaning
@@ -240,7 +240,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine,
                                             database=telludbm,
-                                            template=template)
+                                            template_props=template_props)
         # get corrected image out of pre-cleaning parameter dictionary
         image1 = tpreprops['CORRECTED_E2DS']
 

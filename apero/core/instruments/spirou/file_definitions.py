@@ -1447,15 +1447,27 @@ out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0',
                                 description='Telluric object  2D stack file'
                                             ' (Earth frame)')
 
-# s1d template file (median)
-out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',
-                                    hkeys=dict(KW_OUTPUT='TELLU_TEMP_S1D'),
-                                    fibers=valid_tfibers,
-                                    filetype='.fits',
-                                    intype=[out_ext_e2dsff, out_tellu_obj],
-                                    basename='Template_s1d', datatype='table',
-                                    outclass=tellu_set_ofile,
-                                    description='Telluric 1D template file')
+# s1d template file (median) wavelength grid
+out_tellu_s1dw_template = drs_finput('TELLU_TEMP_S1DW',
+                                     hkeys=dict(KW_OUTPUT='TELLU_TEMP_S1DW'),
+                                     fibers=valid_tfibers,
+                                     filetype='.fits',
+                                     intype=[out_ext_e2dsff, out_tellu_obj],
+                                     basename='Template_s1dw', datatype='table',
+                                     dbname='telluric', dbkey='TELLU_TEMP_S1DW',
+                                     outclass=tellu_set_ofile,
+                                     description='Telluric 1D template file')
+
+# s1d template file (median) velocity grid
+out_tellu_s1dv_template = drs_finput('TELLU_TEMP_S1DV',
+                                     hkeys=dict(KW_OUTPUT='TELLU_TEMP_S1DV'),
+                                     fibers=valid_tfibers,
+                                     filetype='.fits',
+                                     intype=[out_ext_e2dsff, out_tellu_obj],
+                                     basename='Template_s1dv', datatype='table',
+                                     dbname='telluric', dbkey='TELLU_TEMP_S1DV',
+                                     outclass=tellu_set_ofile,
+                                     description='Telluric 1D template file')
 
 # s1d cibe file (after shift)
 out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
@@ -1472,9 +1484,12 @@ out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
 red_file.addset(out_tellu_template)
 red_file.addset(out_tellu_bigcube)
 red_file.addset(out_tellu_bigcube0)
-red_file.addset(out_tellu_s1d_template)
+red_file.addset(out_tellu_s1dw_template)
+red_file.addset(out_tellu_s1dv_template)
 red_file.addset(out_tellu_s1d_bigcube)
 tellu_file.addset(out_tellu_template)
+tellu_file.addset(out_tellu_s1dw_template)
+tellu_file.addset(out_tellu_s1dv_template)
 
 # -----------------------------------------------------------------------------
 # ccf
