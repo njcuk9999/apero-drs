@@ -415,6 +415,27 @@ PP_DARK_DPRTYPES.value = 'DARK_DARK_INT,DARK_DARK_TEL'
 PP_DARK_THRES = PP_DARK_THRES.copy(__NAME__)
 PP_DARK_THRES.value = 0.5
 
+# Define the amplitude of the flux-dependent along-readout-axis derivative
+#     component
+# TODO: Add calculation to static apero-utils.general.apero_statics.corr_xtalk.py
+PP_CORR_XTALK_AMP_FLUX = PP_CORR_XTALK_AMP_FLUX.copy(__NAME__)
+PP_CORR_XTALK_AMP_FLUX.value = 1.490711e-04
+PP_CORR_XTALK_AMP_FLUX.author = base.AUTHORS['EA']
+
+# Define amplitude of the flux-dependent along-readout-axis 1st derivative
+#     component
+# TODO: Add calculation to static apero-utils.general.apero_statics.corr_xtalk.py
+PP_COR_XTALK_AMP_DFLUX = PP_COR_XTALK_AMP_DFLUX.copy(__NAME__)
+PP_COR_XTALK_AMP_DFLUX.value = 8.080468e-04
+PP_COR_XTALK_AMP_DFLUX.author = base.AUTHORS['EA']
+
+# Define amplitude of the flux-dependent along-readout-axis 2nd derivative
+#     component
+# TODO: Add calculation to static apero-utils.general.apero_statics.corr_xtalk.py
+PP_COR_XTALK_AMP_D2FLUX = PP_COR_XTALK_AMP_D2FLUX.copy(__NAME__)
+PP_COR_XTALK_AMP_D2FLUX.value = -6.523985e-04
+PP_COR_XTALK_AMP_D2FLUX.author = base.AUTHORS['EA']
+
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
 # =============================================================================

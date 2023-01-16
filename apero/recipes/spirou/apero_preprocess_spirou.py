@@ -322,6 +322,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         WLOG(params, '', textentry('40-010-00018'))
         image, cprops = prep.correct_cosmics(params, image, intercept,
                                              errslope1, inttime)
+        # correct between amplifier capacity coupling from science flux
+        image = prep.correct_sci_capacitive_coupling(params, image)
 
         # ------------------------------------------------------------------
         # calculate mid observation time
