@@ -288,6 +288,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # nirps correction for preprocessing (specific to NIRPS)
         image = prep.nirps_correction(params, image, infile.header,
                                       create_mask=False)
+        # correct between amplifier capacity coupling from science flux
+        image = prep.correct_sci_capacitive_coupling(params, image)
+
         # ----------------------------------------------------------------------
         # Correct for cosmic rays before the possible pixel shift
         # ----------------------------------------------------------------------
