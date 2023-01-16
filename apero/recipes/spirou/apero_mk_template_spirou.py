@@ -221,8 +221,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         s1d_filenames = drs_utils.find_files(params, block_kind='red',
                                              filters=filters)
         # make s1d cube
-        margs = [s1d_filenames, s1d_file, fiber]
-        s1d_props = telluric.make_1d_template_cube(params, *margs)
+        margs = [s1d_filenames, s1d_file, fiber, infile.header, calibdbm]
+        s1d_props = telluric.make_1d_template_cube(params, recipe, *margs)
         # append to storage
         s1d_cubes.append(s1d_props)
 
@@ -239,12 +239,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # write e2ds cubes + median
     margs = [infile, cprops, filetype, fiber, refprops, qc_params]
     template_file = telluric.mk_template_write(params, recipe, *margs)
-    props1d = None
+    props1d = []
     # write s1d cubes + median
     for it, s1d_props in enumerate(s1d_cubes):
         sargs = [infile, s1d_props, infile.s1d[it], fiber, refprops, qc_params,
                  template_file]
-        props1d = telluric.mk_1d_template_write(params, recipe, *sargs)
+        props1d.append(telluric.mk_1d_template_write(params, recipe, *sargs))
 
     # ----------------------------------------------------------------------
     # Update the telluric database with the template
@@ -252,16 +252,21 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if passed and params['INPUTS']['DATABASE']:
         # copy the big cube median to the calibDB
         telludbm.add_tellu_file(template_file)
+        # add s1d templates to telluric database
+        for prop1d in props1d:
+            telludbm.add_tellu_file(prop1d['S1DFILE'])
 
     # ----------------------------------------------------------------------
     # plots
     # ----------------------------------------------------------------------
-    # plot debug plot
-    recipe.plot('EXTRACT_S1D', params=params, props=props1d, fiber=fiber,
-                kind='Template')
-    # plot summary plot
-    recipe.plot('SUM_EXTRACT_S1D', params=params, props=props1d, fiber=fiber,
-                kind='Template')
+    for prop1d in props1d:
+        # plot debug plot
+        recipe.plot('EXTRACT_S1D', params=params, props=prop1d, fiber=fiber,
+                    kind='Template')
+        # plot summary plot
+        recipe.plot('SUM_EXTRACT_S1D', params=params, props=prop1d, fiber=fiber,
+                    kind='Template')
+
     # ----------------------------------------------------------------------
     # Construct summary document
     # ----------------------------------------------------------------------

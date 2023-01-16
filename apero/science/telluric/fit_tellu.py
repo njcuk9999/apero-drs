@@ -298,16 +298,17 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
 
 def shift_template(params: ParamDict, recipe: DrsRecipe,
                    image: Optional[np.ndarray],
-                   e2dsimage: Optional[np.ndarray],
-                   refprops: ParamDict, wprops: ParamDict, bprops: ParamDict):
+                   template_props: ParamDict,
+                   refprops: ParamDict, wprops: ParamDict,
+                   bprops: ParamDict) -> ParamDict:
+
+
     # set function name
     func_name = display_func('shift_template', __NAME__)
-
     # ------------------------------------------------------------------
-    # get constants from params/kwargs
-    # ------------------------------------------------------------------
-    # fit_keep_num = pcheck(params, 'FTELLU_FIT_KEEP_NUM', 'fit_keep_num',
-    #                       kwargs, func_name)
+    # no template - do nothing
+    if not template_props['HAS_TEMPLATE']:
+        return template_props
     # ------------------------------------------------------------------
     # get data from property dictionaries
     # ------------------------------------------------------------------
@@ -326,57 +327,46 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # Interpolate at shifted wavelengths (if we have a e2dsimage)
     # ------------------------------------------------------------------
-    if e2dsimage is not None:
-        # Log that we are shifting the template
-        WLOG(params, '', textentry('40-019-00017'))
-        # set up storage for template
-        # e2dsimage2 = np.zeros(np.product(e2dsimage.shape))
-        # ydim, xdim = e2dsimage.shape
-        # # loop around orders
-        # for order_num in range(ydim):
-        #     # find good (not NaN) pixels
-        #     keep = np.isfinite(e2dsimage[order_num, :])
-        #     # if we have enough values spline them
-        #     if mp.nansum(keep) > fit_keep_num:
-        #         # define keep wave
-        #         keepwave = wavemap_ref[order_num, keep]
-        #         # define keep temp
-        #         keeptemp = e2dsimage[order_num, keep]
-        #         # calculate interpolation for keep temp at keep wave
-        #         spline = mp.iuv_spline(keepwave, keeptemp, ext=3, k=1)
-        #
-        #         waveshift = wavemap_ref[order_num, :] * dvshift
-        #         # interpolate at shifted wavelength
-        #         start = order_num * xdim
-        #         end = order_num * xdim + xdim
-        #         e2dsimage2[start:end] = spline(waveshift)
-
-        # interpolate at shifted values
-        dvshift = mp.relativistic_waveshift(dv, units='km/s')
-        # ------------------------------------------------------------------
-        # Shift the e2ds to correct wave frame
-        # ------------------------------------------------------------------
-        # log the shifting of PCA components
-        wargs = [wavefile_ref, wavefile]
-        WLOG(params, '', textentry('40-019-00021', args=wargs))
-        # shift template
-        e2dsimage2 = gen_tellu.wave_to_wave(params, e2dsimage,
-                                            wavemap_ref / dvshift,
-                                            wavemap, reshape=True)
-
-        # debug plot - reconstructed spline (in loop)
-        recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
-                    template=e2dsimage2.ravel(), order=None)
-        # debug plot - reconstructed spline (selected order)
-        recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
-                    template=e2dsimage2.ravel(),
-                    order=params['FTELLU_SPLOT_ORDER'])
-
-    else:
-        e2dsimage2 = None
-
+    # Log that we are shifting the template
+    WLOG(params, '', textentry('40-019-00017'))
+    # interpolate at shifted values
+    dvshift = mp.relativistic_waveshift(dv, units='km/s')
+    # ------------------------------------------------------------------
+    # Shift the e2ds to correct wave frame
+    # ------------------------------------------------------------------
+    # log the shifting of PCA components
+    wargs = [wavefile_ref, wavefile]
+    WLOG(params, '', textentry('40-019-00021', args=wargs))
+    # shift template e2ds
+    template_e2ds = gen_tellu.wave_to_wave(params, template_props['TEMP_S2D'],
+                                           wavemap_ref / dvshift,
+                                           wavemap, reshape=True)
+    # push into 2D vector shape = 1 by len(s1d_table)
+    tmp_wave = np.array([template_props['TEMP_S1D_TABLE']['wavelength']])
+    tmp_s1d = np.array([template_props['TEMP_S1D_TABLE']['flux']])
+    tmp_s1d_deconv = np.array([template_props['TEMP_S1D_TABLE']['deconv']])
+    # shift template s1d
+    template_s1d = gen_tellu.wave_to_wave(params, tmp_s1d,
+                                          tmp_wave / dvshift,
+                                          tmp_wave, reshape=False)
+    template_s1d_deconv = gen_tellu.wave_to_wave(params, tmp_s1d_deconv,
+                                                 tmp_wave / dvshift,
+                                                 tmp_wave, reshape=False)
+    # debug plot - reconstructed spline (in loop)
+    recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
+                template=template_e2ds.ravel(), order=None)
+    # debug plot - reconstructed spline (selected order)
+    recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
+                template=template_e2ds.ravel(),
+                order=params['FTELLU_SPLOT_ORDER'])
+    # -------------------------------------------------------------------------
+    # push back into template props
+    template_props['TEMP_S2D'] = template_e2ds
+    template_props['TEMP_S1D_TABLE']['flux'] = template_s1d
+    template_props['TEMP_S1D_TABLE']['deconv'] = template_s1d_deconv
+    # -------------------------------------------------------------------------
     # return the updated e2ds (if present)
-    return e2dsimage2
+    return template_props
 
 
 def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops,

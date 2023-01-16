@@ -220,22 +220,23 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Get template file (if available)
         # ------------------------------------------------------------------
-        tout = telluric.load_templates(params, header, objname, fiber)
-        template, template_props = tout
+        template_props = telluric.load_templates(params, header, objname, fiber)
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile)
         # ------------------------------------------------------------------
-        # Shift the template from reference wave solution --> night wave solution
-        template = telluric.shift_template(params, recipe, image, template,
-                                           refprops, wprops, bprops)
+        # Shift the template from reference wave solution --> night wave
+        #    solution
+        template_props = telluric.shift_template(params, recipe, image,
+                                                 template_props, refprops,
+                                                 wprops, bprops)
         # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine,
-                                            template=template)
+                                            template_props=template_props)
         # get variables out of tpreprops
         image1 = tpreprops['CORRECTED_E2DS']
         # ------------------------------------------------------------------
@@ -247,7 +248,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Calculate telluric absorption
         # ------------------------------------------------------------------
-        cargs = [recipe, image1, template, template_props, header, refprops,
+        cargs = [recipe, image1, template_props, header, refprops,
                  wprops, bprops, tpreprops]
         tellu_props = telluric.calculate_tellu_res_absorption(params, *cargs)
         # ------------------------------------------------------------------

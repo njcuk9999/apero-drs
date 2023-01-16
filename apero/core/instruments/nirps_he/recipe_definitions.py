@@ -910,9 +910,11 @@ apero_mk_template.recipe_kind = 'tellu'
 apero_mk_template.set_outputs(TELLU_TEMP=files.out_tellu_template,
                               TELLU_BIGCUBE=files.out_tellu_bigcube,
                               TELLU_BIGCUBE0=files.out_tellu_bigcube0,
-                              TELLU_TEMP_S1D=files.out_tellu_s1d_template,
+                              TELLU_TEMP_S1DV=files.out_tellu_s1dv_template,
+                              TELLU_TEMP_S1DW=files.out_tellu_s1dw_template,
                               TELLU_BIGCUBE_S1D=files.out_tellu_s1d_bigcube)
-apero_mk_template.set_debug_plots('EXTRACT_S1D', 'MKTEMP_BERV_COV')
+apero_mk_template.set_debug_plots('EXTRACT_S1D', 'MKTEMP_BERV_COV',
+                                  'MKTEMP_S1D_DECONV')
 apero_mk_template.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_MKTEMP_BERV_COV')
 apero_mk_template.set_arg(name='objname', pos=0, dtype=str,
                           helpstr=textentry('MKTEMP_OBJNAME_HELP'))
