@@ -35,6 +35,8 @@ __all__ = [
     'PP_COSMIC_BOXSIZE', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
     'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
     'PP_BAD_EXPTIME_FRACTION', 'PP_DARK_DPRTYPES', 'PP_DARK_THRES',
+    'PP_CORR_XTALK_AMP_FLUX', 'PP_COR_XTALK_AMP_DFLUX',
+    'PP_COR_XTALK_AMP_D2FLUX',
     # object database settings
     'GL_GAIA_COL_NAME', 'GL_OBJ_COL_NAME', 'GL_ALIAS_COL_NAME',
     'GL_RV_COL_NAME', 'GL_RVREF_COL_NAME', 'GL_TEFF_COL_NAME',
@@ -1030,6 +1032,34 @@ PP_MEDAMP_BINSIZE = Const('PP_MEDAMP_BINSIZE', value=None, dtype=int,
                                       'smaller than the order footprint on the '
                                       'array as it would lead to a set of NaNs '
                                       'in the downsized image')
+
+
+# Define the amplitude of the flux-dependent along-readout-axis derivative
+#     component
+PP_CORR_XTALK_AMP_FLUX = Const('PP_CORR_XTALK_AMP_FLUX', value=None,
+                               dtype=float, minimum=0.0, source=__NAME__,
+                               group=cgroup,
+                               description='Define the amplitude of the '
+                                           'flux-dependent along-readout-axis '
+                                           'derivative component')
+
+# Define amplitude of the flux-dependent along-readout-axis 1st derivative
+#     component
+PP_COR_XTALK_AMP_DFLUX = Const('PP_COR_XTALK_AMP_DFLUX', value=None,
+                               dtype=float, minimum=0.0, source=__NAME__,
+                               group=cgroup,
+                               description='Define amplitude of the '
+                                           'flux-dependent along-readout-axis '
+                                           '2nd derivative component')
+
+# Define amplitude of the flux-dependent along-readout-axis 2nd derivative
+#     component
+PP_COR_XTALK_AMP_D2FLUX = Const('PP_COR_XTALK_AMP_D2FLUX', value=None,
+                                dtype=float, minimum=0.0, source=__NAME__,
+                                group=cgroup,
+                                description='Define amplitude of the '
+                                            'flux-dependent along-readout-axis '
+                                            '2nd derivative component')
 
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS

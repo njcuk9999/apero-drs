@@ -11,7 +11,7 @@ Version 0.0.1
 import os
 import warnings
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 from astropy.table import Table
@@ -832,9 +832,9 @@ def correct_capacitive_coupling(params: ParamDict, image: np.ndarray,
     :return: np.ndarray, the corrected image
     """
     # get the total number of amplifiers (for this image)
-    tamp = params['PP_TOTAL_AMP_NUM']
+    total_amps = params['PP_TOTAL_AMP_NUM']
     # get number of pixels in amplifier
-    pix_in_amp = image.shape[1] // tamp
+    pix_in_amp = image.shape[1] // total_amps
     # get the amplifier error model file
     amp_slope, amp_intercept = drs_data.load_amp_bias_model(params)
     # construct the amplifier model
@@ -844,21 +844,185 @@ def correct_capacitive_coupling(params: ParamDict, image: np.ndarray,
     # print progress
     WLOG(params, '', 'Creating correction for capacitive coupling')
     # loop around amplifiers
-    for it in range(tamp):
+    for amp_it in range(total_amps):
         # unfold the butterfly pattern
-        if it % 2 == 0:
+        if amp_it % 2 == 0:
             flip = 1
         else:
             flip = -1
         # start and end of the amplifier
-        start = pix_in_amp * it
-        end = pix_in_amp * (it + 1)
+        start = pix_in_amp * amp_it
+        end = pix_in_amp * (amp_it + 1)
         # add this amplifier to the correction matrix
         corr[:, start:end] = amplifier_model[:, ::flip]
     # apply correction
     image = image - corr
     # return the corrected image
     return image
+
+
+def correct_sci_capacitive_coupling(params: ParamDict, image: np.ndarray,
+                                    amp_flux: Optional[float] = None,
+                                    amp_dflux: Optional[float] = None,
+                                    amp_d2flux: Optional[float] = None):
+    """
+    Correct the amplifier capacitive coupling between amplifiers due to
+    science (or calibration) flux
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image: np.ndarray, the image to be corrected
+    :param amp_flux: optional float, amplitude of the flux-dependent component,
+                     overrides PP_CORR_XTALK_AMP_FLUX from params if set
+    :param amp_dflux: optional float, amplitude of the flux-dependent
+                      along-readout-axis derivative component, overrides
+                      PP_COR_XTALK_AMP_DFLUX from params if set
+    :param amp_d2flux: optional float, amplitude of the flux-dependent
+                       along-readout-axis 2nd derivative component, overrides
+                       PP_COR_XTALK_AMP_DFLUX from params if set
+
+    :return: np.ndarray, the corrected image
+    """
+    # set function name
+    func_name = display_func('correct_sci_capacitive_coupling', __NAME__)
+    # get the amplitudes from constants
+    # TODO: Add values and add to constants
+    amp_flux = pcheck(params, 'PP_CORR_XTALK_AMP_FLUX', func=func_name,
+                      override=amp_flux)
+    amp_dflux = pcheck(params, 'PP_COR_XTALK_AMP_DFLUX', func=func_name,
+                      override=amp_dflux)
+    amp_d2flux = pcheck(params, 'PP_COR_XTALK_AMP_D2FLUX', func=func_name,
+                      override=amp_d2flux)
+    # get the map
+    full_butterfly, _, _, _ = get_butterfly_maps(params, image, amp_flux,
+                                                 amp_dflux, amp_d2flux,
+                                                 fast=True)
+    # correct the image
+    return image - full_butterfly
+
+
+ButterflyReturn = Tuple[np.ndarray, Union[np.ndarray, None],
+                        Union[np.ndarray, None], Union[np.ndarray, None]]
+
+
+def get_butterfly_maps(params: ParamDict, image: np.ndarray,
+                       amp_flux: float = 1.0, amp_dflux: float = 1.0,
+                       amp_d2flux: float = 1.0,
+                       fast: bool = False) -> ButterflyReturn:
+    """
+    Create full detector "butterfly maps" (repeated but flipped by even/odd
+    amplifier) based on the amplitudes given
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image: np.ndarray raw image (unprocessed by APERO) for which we want
+                  to derive the butterfly pattern arising from capacitive
+                  coupling. The image should be an output of the fits2ramp and
+                  not a preprocessed file (_pp file)
+    :param amp_flux: float, amplitude of the flux-dependent component,
+                     is optional only when calculating the amplitudes (defaults
+                     to a value of 1.0)
+    :param amp_dflux: float, amplitude of the flux-dependent along-readout-axis
+                      derivative component is optional only when calculating
+                      the amplitudes (defaults to a value of 1.0)
+    :param amp_d2flux: float, amplitude of the flux-dependent along-readout-axis
+                       2nd derivative component is optional only when
+                       calculating the amplitudes (defaults to a value of 1.0)
+    :param fast: If True only compute the total map (if calculating the
+                 amplitudes do not set this to True)
+
+    :return: tuple, 1. np.ndarray, the full butterfly pattern, 2. np.ndarray or
+             None (if fast=True) the amplitude butterfly pattern, 3. np.ndarray
+             or None (if fast=True) the first derivative butterfly patterhn
+             4. np.ndarray or None (if fast=True) the second derivative
+             butteryfly pattern
+    """
+    # number of amplifier
+    total_amps = params['PP_TOTAL_AMP_NUM']
+    # pixel width of each amplifier
+    pix_in_amp = image.shape[1] // total_amps
+    # cube of all amplifiers
+    cube = np.zeros([image.shape[0], pix_in_amp, total_amps])
+    # -------------------------------------------------------------------------
+    # loop around each amplifier and fill in the cube
+    for amp_it in range(total_amps):
+        #  logics for the butterfly symmetry of amplifiers
+        if (amp_it % 2) == 0:
+            flip = 1
+        else:
+            flip = -1
+        # start and end of the amplifier
+        start = pix_in_amp * amp_it
+        end = pix_in_amp * (amp_it + 1)
+        # fill the amplifier cube with amps in the same direction
+        cube[:, :, amp_it] = image[:, start:end][:, ::flip]
+    # -------------------------------------------------------------------------
+    # work out the sum and gradients
+    avg_amp = -mp.nansum(cube, axis=2)
+    _, grad_y = np.gradient(avg_amp)
+    _, grad_y2 = np.gradient(grad_y)
+    # -------------------------------------------------------------------------
+    # storage for the full butterfly
+    image_zeros = np.zeros_like(image)
+    full_butterfly = np.array(image_zeros)
+    # we do not compute the full image of each component and do the sum on the
+    #   ribbons if in fast mode
+    if fast:
+        dy = amp_dflux * grad_y
+        dy2 = amp_d2flux * grad_y2
+        # make the map
+        map_fast = (amp_flux * avg_amp) + dy + dy2
+        # flip the map
+        map_fast_flip = map_fast[:, ::-1]
+        # set the other arrays to None - these are not calculated in fast mode
+        flux_buttefly = None
+        deriv_butterfly = None
+        deriv2_butterfly = None
+        avg_amp_flip = None
+        grad_y_flip = None
+        grad_y2_flip = None
+    else:
+        # set the arrays
+        flux_buttefly = np.array(image_zeros)
+        deriv_butterfly = np.array(image_zeros)
+        deriv2_butterfly = np.array(image_zeros)
+        # calculate the flipped arrays
+        avg_amp_flip = avg_amp[:, ::-1]
+        grad_y_flip = grad_y[:, ::-1]
+        grad_y2_flip = grad_y2[:, ::-1]
+        # set the maps to None
+        map_fast = None
+        map_fast_flip = None
+    # -------------------------------------------------------------------------
+    # loop around the amplifiers
+    for amp_it in range(total_amps):
+        # pixels defining the region of the amplifier
+        start = pix_in_amp * amp_it
+        end = pix_in_amp * (amp_it + 1)
+        #  logics for the butterfly symmetry of amplifiers
+        if not fast:
+            if (amp_it % 2) == 0:
+                flux_buttefly[:, start:end] = avg_amp
+                deriv_butterfly[:, start:end] = grad_y
+                deriv2_butterfly[:, start:end] = grad_y2
+            else:
+                flux_buttefly[:, start:end] = avg_amp_flip
+                deriv_butterfly[:, start:end] = grad_y_flip
+                deriv2_butterfly[:, start:end] = grad_y2_flip
+        else:
+            if (amp_it % 2) == 0:
+                full_butterfly[:, start:end] = map_fast
+            else:
+                full_butterfly[:, start:end] = map_fast_flip
+    # -------------------------------------------------------------------------
+    # if not in fast mode we need to construct the full butterfly
+    if not fast:
+        part1 = amp_flux * flux_buttefly
+        part2 = amp_dflux * deriv_butterfly
+        part3 = amp_d2flux * deriv2_butterfly
+
+        full_butterfly = part1 + part2 + part3
+    # -------------------------------------------------------------------------
+    # return the four vectors (or one vector and Nones in fast mode)
+    return full_butterfly, flux_buttefly, deriv_butterfly, deriv2_butterfly
 
 
 # =============================================================================
