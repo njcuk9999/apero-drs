@@ -884,6 +884,8 @@ def correct_sci_capacitive_coupling(params: ParamDict, image: np.ndarray,
     """
     # set function name
     func_name = display_func('correct_sci_capacitive_coupling', __NAME__)
+    # print progress
+    WLOG(params, '', 'Correcting capacitive coupling due to sci/calib flux')
     # get the amplitudes from constants
     # TODO: Add values and add to constants
     amp_flux = pcheck(params, 'PP_CORR_XTALK_AMP_FLUX', func=func_name,
