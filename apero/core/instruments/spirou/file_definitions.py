@@ -1916,11 +1916,10 @@ post_t_file.add_ext('RECON_AB', out_tellu_recon, pos=4, fiber='AB',
                     link='TELLU_AB', hlink='KW_IDENTIFIER',
                     block_kind='red', clear_file=True, tag='Recon')
 
-# TODO: If precleaning fails --> no OHLINE file produced
 post_t_file.add_ext('OHLINE', out_tellu_pclean, pos=5, fiber='AB',
                     link='TELLU_AB', hlink='KW_IDENTIFIER',
                     block_kind='red', clear_file=True, tag='OHLine',
-                    extname='SKY_MODEL')
+                    extname='PCA_SKY')
 
 post_t_file.add_ext('TELLU_A', out_tellu_obj, pos=6, fiber='A',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
