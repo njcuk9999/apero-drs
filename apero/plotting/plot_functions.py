@@ -492,6 +492,32 @@ def add_grid(frame: Any):
                alpha=0.5, zorder=0)
 
 
+def get_arr_limits(*arrays: np.ndarray, plow: float = 1,
+                   phigh: float = 99) -> Tuple[float, float]:
+    """
+    Get the percentile limits of a set of arrays
+
+    :param arrays: list of np.ndarrays
+    :param plow: float, the lower perenctile
+    :param phigh: float, the upper percentile
+
+    :return: tuple, 1. the lower bound, 2. the upper bound
+    """
+    low = np.inf
+    high = -np.inf
+
+    for array in arrays:
+
+        alow, ahigh = np.nanpercentile(array, [plow, phigh])
+
+        if alow < low:
+            low = alow
+        if ahigh > high:
+            high = ahigh
+
+    return low, high
+
+
 # =============================================================================
 # After this point all plotting functions
 # =============================================================================
@@ -4330,6 +4356,13 @@ def plot_ftellu_res_model(plotter: Plotter, graph: Graph,
     # set up plot
     fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex='all')
     frame1, frame2 = frames[0], frames[1]
+
+    # get limits
+    ylim1 = get_arr_limits(image / mp.nanmedian(image),
+                           image1 / mp.nanmedian(image),
+                           sp_out / mp.nanmedian(image),  plow=0.1, phigh=99.9)
+    ylim2 = get_arr_limits(tpreprops['ABSO_E2DS'], res_model2, recon_abso,
+                           plow=0.1, phigh=99.9)
     # -------------------------------------------------------------------------
     # loop around order and plot
     for order_num in range(image.shape[0]):
@@ -4382,8 +4415,9 @@ def plot_ftellu_res_model(plotter: Plotter, graph: Graph,
         frame.legend(handles, labels, loc=0)
     # -------------------------------------------------------------------------
     # set the labels
-    frame1.set(ylabel='Normalized flux')
-    frame2.set(xlabel='Wavelength [nm]', ylabel='Tranmission')
+    frame1.set(ylabel='Normalized flux', ylim=ylim1)
+    frame2.set(xlabel='Wavelength [nm]', ylabel='Tranmission', ylim=ylim2)
+
     # add title
     plt.suptitle('OBJECT = {0} [{1}]'.format(objname, dprtype))
     # -------------------------------------------------------------------------
@@ -4472,6 +4506,57 @@ def plot_mktemp_deconv(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
+def plot_tellu_finite_res_corr(plotter: Plotter, graph: Graph,
+                               kwargs: Dict[str, Any]):
+    """
+    Graph: Make telluric template deconvolution plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    wavemap = kwargs['wavemap']
+    e2ds0 = kwargs['e2ds0']
+    e2ds1 = kwargs['e2ds1']
+    corr = kwargs['corr']
+    abso_e2ds = kwargs['abso_e2ds']
+    # get sample order from parameters
+    sample_order = params['TELLU_FINITE_RES_ORDER']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=3, ncols=1,
+                                   sharex='all')
+    # plot
+    frames[0].plot(wavemap[sample_order], e2ds0[sample_order], color='k',
+                   label='prior to correction')
+    frames[0].plot(wavemap[sample_order], e2ds1[sample_order], color='orange',
+                   label='after correction')
+    frames[1].plot(wavemap[sample_order], corr[sample_order], color='r',
+                   label='Finite resolution effect')
+    frames[2].plot(wavemap[sample_order], abso_e2ds[sample_order], color='b',
+                   label='Transmission')
+    # add legends, labels and titles
+    frames[0].legend(loc=0)
+    frames[1].legend(loc=0)
+    frames[2].legend(loc=0)
+    title = 'Before/after correction [Order {0}]'.format(sample_order)
+    frames[0].set(title=title, ylabel='Normalized flux', xlabel='Wavelength [nm]')
+    frames[1].set(ylabel='Residual',  xlabel='Wavelength [nm]')
+    frames[2].set(ylabel='Transmission', xlabel='Wavelength [nm]')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 # sky correction graph instance
 tellu_sky_corr = Graph('TELLU_SKY_CORR_PLOT', kind='debug',
                        func=plot_tellu_sky_corr)
@@ -4550,6 +4635,9 @@ sum_mktemp_berv_cov = Graph('SUM_MKTEMP_BERV_COV', kind='summary',
 mktemp_deconv = Graph('MKTEMP_S1D_DECONV', kind='debug',
                       func=plot_mktemp_deconv)
 
+tellu_finite_res_cor = Graph('TELLU_FINITE_RES_CORR', kind='debug',
+                             func=plot_tellu_finite_res_corr)
+
 # add to definitions
 definitions += [tellu_sky_corr, mktellu_wave_flux1, mktellu_wave_flux2,
                 sum_mktellu_wave_flux,  mktellu_model, sum_mktellu_model,
@@ -4558,8 +4646,8 @@ definitions += [tellu_sky_corr, mktellu_wave_flux1, mktellu_wave_flux2,
                 ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso,
                 tellup_wave_trans, sum_tellup_wave_trans, tellup_abso_spec,
                 tellup_clean_oh, sum_tellup_abso_spec, mktemp_berv_cov,
-                mktemp_deconv, sum_mktemp_berv_cov, ftellu_res_model,
-                sum_ftellu_res_model]
+                mktemp_deconv, tellu_finite_res_cor, sum_mktemp_berv_cov,
+                ftellu_res_model, sum_ftellu_res_model]
 
 
 # =============================================================================

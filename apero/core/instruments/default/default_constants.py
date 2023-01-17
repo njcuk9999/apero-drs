@@ -248,7 +248,8 @@ __all__ = [
     'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KTHRES',
     'TELLUP_ABSO_EXPO_KWID', 'TELLUP_ABSO_EXPO_KEXP', 'TELLUP_TRANS_THRES',
     'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS', 'TELLUP_D_WATER_ABSO',
-    'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS', 'TELLUP_OHLINE_NBRIGHT',
+    'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS', 'TELLU_FINITE_RES_ORDER',
+    'TELLUP_OHLINE_NBRIGHT',
     # make telluric constants
     'MKTELLU_BLAZE_PERCENTILE', 'MKTELLU_CUT_BLAZE_NORM', 'TELLU_ABSORBERS',
     'MKTELLU_DEFAULT_CONV_WIDTH', 'MKTELLU_TEMP_MED_FILT',
@@ -349,6 +350,7 @@ __all__ = [
     'PLOT_FTELLU_RECON_ABSO1', 'PLOT_FTELLU_RECON_ABSO2',
     'PLOT_MKTEMP_BERV_COV', 'PLOT_MKTEMP_S1D_DECONV',
     'PLOT_TELLUP_CLEAN_OH', 'PLOT_FTELLU_RES_MODEL',
+    'PLOT_TELLU_FINITE_RES_CORR',
     # debug ccf plot settings
     'PLOT_CCF_RV_FIT_LOOP', 'PLOT_CCF_RV_FIT', 'PLOT_CCF_SWAVE_REF',
     'PLOT_CCF_PHOTON_UNCERT',
@@ -3834,6 +3836,12 @@ TELLUP_WATER_BOUNDS = Const('TELLUP_WATER_BOUNDS', value=None, dtype=str,
                                          '(string list) for the exponent of '
                                          'water absorber'))
 
+# set the plot order for the finite resolution plot
+TELLU_FINITE_RES_ORDER = Const('TELLUP_WATER_BOUNDS', value=None, dtype=int,
+                               minimum=0,  source=__NAME__, group=cgroup,
+                               description='set the plot order for the finite '
+                                           'resolution plot')
+
 # =============================================================================
 # OBJECT: MAKE TELLURIC SETTINGS
 # =============================================================================
@@ -5196,8 +5204,15 @@ PLOT_FTELLU_RECON_ABSO2 = Const('PLOT_FTELLU_RECON_ABSO12', value=False,
 PLOT_FTELLU_RES_MODEL = Const('PLOT_FTELLU_RES_MODEL', value=False,
                               dtype=bool, source=__NAME__, user=True,
                               active=False, group=cgroup,
-                              description=' turn on the fit tellu res model '
+                              description='turn on the fit tellu res model '
                                           'debug plot')
+
+# turn on the finite resolution correction debug plot
+PLOT_TELLU_FINITE_RES_CORR = Const('PLOT_TELLU_FINITE_RES_CORR', value=False,
+                                   dtype=bool, source=__NAME__, user=True,
+                                   active=False, group=cgroup,
+                                   description='turn on the finite resolution '
+                                               'correction debug plot')
 
 # turn on the berv coverage debug plot
 PLOT_MKTEMP_BERV_COV = Const('PLOT_MKTEMP_BERV_COV', value=False,
