@@ -902,12 +902,37 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     bout = flat_blaze.get_blaze(params, header, fiber)
     blaze_file, blaze_time, blaze = bout
     # ------------------------------------------------------------------
+    # Correct for sky
+    # ------------------------------------------------------------------
+    # calculate the ratio between this fibers image and the usm of all fibers
+    ratio = mp.nanmedian(image / tpreprops['PRE_SKYCORR_IMAGE'])
+    # print ratio
+    # TODO: Add to language database
+    msg = '\tRatio of individual fiber={0} to sum of all fibers is: {1:.3f}'
+    margs = [fiber, ratio]
+    WLOG(params, '', msg.format(*margs))
+    # deal with out of bounds ratios
+    if not (0.45 < ratio < 0.55):
+        ratio = 0.5
+        # TODO: Add to language database
+        wmsg = ('Ratio of individual fiber={0} to sum of all fibers is out of'
+                'bounds (0.45 < ratio < 0.55)')
+        wargs = [fiber]
+        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
+    # correct for the sky
+    image1 = image - ratio * tpreprops['SKY_MODEL']
+
+    # ------------------------------------------------------------------
     # Correct spectrum with simple division
     # ------------------------------------------------------------------
     # corrected data is just input data / recon
     # recon here was multiplied by the blazeAB so this needs to be taken into
     #   account again by multipling image by blazeAB (from nprops)
-    scorr = image / cprops['RECON_ABSO']
+    scorr = image1 / cprops['RECON_ABSO']
+    # ------------------------------------------------------------------
+    # Correct for finite resolution
+    # ------------------------------------------------------------------
+    scorr = scorr / tpreprops['TELLU_FINITE_RES']
     # ------------------------------------------------------------------
     # fake nprop dict
     nprops = dict()

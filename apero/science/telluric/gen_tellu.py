@@ -509,9 +509,13 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     #  (mk_tellu and fit_tellu)
     # ----------------------------------------------------------------------
     # remove OH lines if required
-    if clean_ohlines:
+    if clean_ohlines and sky_props is None:
         image_e2ds, sky_model = clean_ohline_pca(params, recipe,
                                                  image_e2ds_ini, wave_e2ds)
+    # if we did the sky cleaning before pre-cleaning use this
+    elif sky_props is not None:
+        image_e2ds = np.array(image_e2ds_ini)
+        sky_model = sky_props['SKY_CORR_SCI']
     # else just copy the image and set the sky model to zeros
     else:
         image_e2ds = np.array(image_e2ds_ini)
@@ -528,6 +532,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         props['TRANS_MASK'] = np.ones_like(image_e2ds_ini).astype(bool)
         props['ABSO_E2DS'] = np.ones_like(image_e2ds_ini)
         props['SKY_MODEL'] = sky_model
+        props['PRE_SKYCORR_IMAGE'] = image_e2ds_ini
         props['EXPO_WATER'] = np.nan
         props['EXPO_OTHERS'] = np.nan
         props['DV_WATER'] = np.nan
@@ -538,7 +543,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # set sources
         keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
                 'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-                'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL']
+                'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL',
+                'PRE_SKYCORR_IMAGE']
         props.set_sources(keys, func_name)
         # ------------------------------------------------------------------
         # add constants used (can come from kwargs)
@@ -1103,6 +1109,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     props['TRANS_MASK'] = mask
     props['ABSO_E2DS'] = abso_e2ds
     props['SKY_MODEL'] = sky_model
+    props['PRE_SKYCORR_IMAGE'] = image_e2ds_ini
     props['EXPO_WATER'] = expo_water
     props['EXPO_OTHERS'] = expo_others
     props['DV_WATER'] = dv_water
@@ -1113,7 +1120,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
             'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL']
+            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL', 'PRE_SKYCORR_IMAGE']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
