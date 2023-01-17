@@ -640,7 +640,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         qc_pass[0] = 0
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean
-        return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
+        return qc_exit_tellu_preclean(params, recipe, image_e2ds,
+                                      image_e2ds_ini, infile,
                                       wave_e2ds, qc_params, sky_model,
                                       res_e2ds_fwhm, res_e2ds_expo,
                                       template_props, wave_e2ds, res_s1d_fwhm,
@@ -1019,7 +1020,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean
-        return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
+        return qc_exit_tellu_preclean(params, recipe, image_e2ds,
+                                      image_e2ds_ini, infile,
                                       wave_e2ds, qc_params, sky_model,
                                       res_e2ds_fwhm, res_e2ds_expo,
                                       template_props, wave_e2ds, res_s1d_fwhm,
@@ -1567,10 +1569,10 @@ def finite_res_correction(template_props: ParamDict, wave_e2ds: np.ndarray,
 
 
 
-def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
-                           qc_params, sky_model, res_e2ds_fwhm, res_e2ds_expo,
-                           template_props, wave_e2ds, res_s1d_fwhm,
-                           res_s1d_expo, database=None, **kwargs):
+def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
+                           wavemap, qc_params, sky_model, res_e2ds_fwhm,
+                           res_e2ds_expo, template_props, wave_e2ds,
+                           res_s1d_fwhm, res_s1d_expo, database=None, **kwargs):
     """
     Provides an exit point for tellu_preclean via a quality control failure
 
@@ -1694,6 +1696,7 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     props['TRANS_MASK'] = mask
     props['ABSO_E2DS'] = abso_e2ds
     props['SKY_MODEL'] = sky_model
+    props['PRE_SKYCORR_IMAGE'] = image_e2ds_ini
     props['EXPO_WATER'] = expo_water
     props['EXPO_OTHERS'] = expo_others
     props['DV_WATER'] = np.nan
@@ -1704,7 +1707,7 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
             'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL']
+            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL', 'PRE_SKYCORR_IMAGE']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
