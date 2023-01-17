@@ -1118,7 +1118,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
         # get the mask from the flat
         ppmask, ppfile = get_pp_mask(params)
         # set the the zero values to NaN
-        image2[~ppmask] = np.nan
+        image2[ppmask == 0] = np.nan
     # -------------------------------------------------------------------------
     # we find the low level frequencies
     # we bin in regions of binsize x binsize pixels. This CANNOT be
@@ -1127,7 +1127,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     # image and chaos afterward
     WLOG(params, '', textentry('40-010-00020'))
     # find 25th percentile, more robust against outliers
-    tmp = mp.percentile_bin(image2, binsize, binsize, percentile=25)
+    tmp = mp.percentile_bin(image2, binsize, binsize, percentile=50)
     # set NaN pixels to zero (for the zoom)
     tmp[~np.isfinite(tmp)] = 0.0
     # use the zoom to bin the data
@@ -1143,18 +1143,19 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     yprofile = np.repeat(yprofile1d, nbypix).reshape(nbypix, nbxpix)
     # remove from input image
     image = image - yprofile
-    # first pixel of each amplifier
-    amppix = np.arange(namps // 2) * ampwid * 2
-    first_col_x = np.append(amppix, amppix - 1 + (ampwid * 2))
-    first_col_x = np.sort(first_col_x)
-    # median-filter the first and last ref pixel, which trace the
-    # behavior of the first-col per amp.
-    med_first = ndimage.median_filter(image[:, 0], 7)
-    med_last = ndimage.median_filter(image[:, -1], 7)
-    amp0 = (med_first + med_last) / 2
-    # subtract first column behavior
-    for col_x in first_col_x:
-        image[:, col_x] = image[:, col_x] - amp0
+
+    # # first pixel of each amplifier
+    # amppix = np.arange(namps // 2) * ampwid * 2
+    # first_col_x = np.append(amppix, amppix - 1 + (ampwid * 2))
+    # first_col_x = np.sort(first_col_x)
+    # # median-filter the first and last ref pixel, which trace the
+    # # behavior of the first-col per amp.
+    # med_first = ndimage.median_filter(image[:, 0], 7)
+    # med_last = ndimage.median_filter(image[:, -1], 7)
+    # amp0 = (med_first + med_last) / 2
+    # # subtract first column behavior
+    # for col_x in first_col_x:
+    #     image[:, col_x] = image[:, col_x] - amp0
     # return corrected image
     return image
 
