@@ -11,7 +11,7 @@ Created on 2019-08-12 at 17:16
 """
 import os
 import warnings
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -349,6 +349,7 @@ def get_sp_linelists(params, **kwargs):
 # =============================================================================
 def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                    template_props: ParamDict,
+                   sky_props: Optional[ParamDict] = None,
                    calibdbm: Union[CalibDatabase, None] = None,
                    telludbm: Union[TelluDatabase, None] = None, **kwargs):
     """
@@ -636,7 +637,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
                                       wave_e2ds, qc_params, sky_model,
                                       res_e2ds_fwhm, res_e2ds_expo,
-                                      database=telludbm)
+                                      template_props, wave_e2ds, res_s1d_fwhm,
+                                      res_s1d_expo, database=telludbm)
     else:
         qc_values[0] = mp.nanmedian(snr)
         qc_pass[0] = 1
@@ -1014,7 +1016,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
                                       wave_e2ds, qc_params, sky_model,
                                       res_e2ds_fwhm, res_e2ds_expo,
-                                      database=telludbm)
+                                      template_props, wave_e2ds, res_s1d_fwhm,
+                                      res_s1d_expo, database=telludbm)
     # ----------------------------------------------------------------------
     # show CCF plot to see if correlation peaks have been killed
     recipe.plot('TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
@@ -1047,12 +1050,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     #     No trimming done on the wave grid
     abso_e2ds = np.zeros_like(wave_e2ds)
     for order_num in range(wave_e2ds.shape[0]):
-
         owavestep = np.nanmedian(np.gradient(wave_e2ds[order_num]))
         # wave start and end need to be extended a little bit to avoid
         #     edge effects
-        owavestart = np.nanmin(wave_e2ds[order_num]) - 10*owavestep
-        owaveend = np.nanmax(wave_e2ds[order_num]) + 10*owavestep
+        owavestart = np.nanmin(wave_e2ds[order_num]) - 10 * owavestep
+        owaveend = np.nanmax(wave_e2ds[order_num]) + 10 * owavestep
 
         abso_tmp = get_abso_expo(wave_e2ds[order_num], expo_others, expo_water,
                                  spl_others, spl_water,
@@ -1073,47 +1075,22 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # correct for finite resolution effects
     # ----------------------------------------------------------------------
-    # TODO: Move to function
     if template_props['HAS_TEMPLATE']:
-
-        # get the deconvolved s1d template
-        s1d_wave = template_props['TEMP_S1D_TABLE']['wavelength']
-        s1d_deconv = template_props['TEMP_S1D_TABLE']['deconv']
-        deconv_template = np.array(s1d_deconv[0])
-
-        s1d_wavestart = np.min(s1d_wave)
-        s1d_waveend = np.max(s1d_wave)
-
-        s1d_abso = get_abso_expo(s1d_wave, expo_others, expo_water,
-                                 spl_others, spl_water, res_fwhm=res_s1d_fwhm,
-                                 res_expo=res_s1d_expo, dv_abso=0.0,
-                                 wavestart=s1d_wavestart,  waveend=s1d_waveend,
-                                 dvgrid=dvgrid)
-
-        finite_error_numer = variable_res_conv(s1d_wave,deconv_template*s1d_abso,
-                                         res_s1d_fwhm,res_s1d_expo)
-
-        finite_error_denom = variable_res_conv(s1d_wave,s1d_abso,
-                                         res_s1d_fwhm,res_s1d_expo)
-
-        pristine_conv_s1d = variable_res_conv(s1d_wave,deconv_template,
-                                         res_s1d_fwhm,res_s1d_expo)
-
-        s1d_with_error = finite_error_numer/finite_error_denom
-
-        finite_err_ratio = s1d_with_error/pristine_conv_s1d
-
-        spl_finite_res = mp.iuv_spline(s1d_wave,finite_err_ratio)
-
-        finite_res_e2ds = np.zeros_like(corrected_e2ds)
-        for order_num in wave_e2ds.shape[0]:
-            finite_res_e2ds[order_num] = spl_finite_res(wave_e2ds[order_num])
-
-
-    # TODO: Check whether this is multiply or divide
-    corrected_e2ds = corrected_e2ds / finite_res_e2ds
-    # TODO: Add finite_res_e2ds to the pclean file
-
+        # copy the original corrected e2ds
+        corrected_e2ds0 = np.array(corrected_e2ds)
+        # calculate the finite resolution e2ds matrix
+        finite_res_e2ds = finite_res_correction(template_props, wave_e2ds,
+                                                res_s1d_fwhm, res_s1d_expo,
+                                                expo_others, expo_water,
+                                                spl_others,  spl_water, dvgrid)
+        # correction the spectrum
+        corrected_e2ds = corrected_e2ds / finite_res_e2ds
+        # plot the finite resolution correction plot
+        recipe.plot('TELLU_FINITE_RES_CORR', params=params, wavemap=wave_e2ds,
+                    e2ds0=corrected_e2ds0, e2ds1=corrected_e2ds,
+                    corr=finite_res_e2ds, abso_e2ds=abso_e2ds)
+    else:
+        finite_res_e2ds = np.ones_like(corrected_e2ds)
     # ----------------------------------------------------------------------
     # calculate CCF power
     keep = np.abs(drange) < (ccf_scan_range / 4)
@@ -1159,6 +1136,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     props['TELLUP_WAVE_START'] = wavestart
     props['TELLUP_WAVE_END'] = waveend
     props['TELLUP_DVGRID'] = dvgrid
+    props['TELLU_FINITE_RES'] = finite_res_e2ds
     # set sources
     keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',
             'TELLUP_CLEAN_OH_LINES', 'TELLUP_REMOVE_ORDS',
@@ -1168,12 +1146,13 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS',
             'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
             'TELLUP_ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
-            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'TELLUP_DO_PRECLEANING']
+            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'TELLUP_DO_PRECLEANING',
+            'TELLU_FINITE_RES']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # save pre-cleaned file
     tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
-                         props, wprops, database=telludbm)
+                         props, wprops, sky_props, database=telludbm)
     # ----------------------------------------------------------------------
     # return props
     return props
@@ -1315,7 +1294,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
 
 def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
                   spl_water, res_fwhm, res_expo, dv_abso, wavestart,
-                  waveend, dvgrid):
+                  waveend, dvgrid, no_convolve: bool = False):
     """
     Returns an absorption spectrum from exponents describing water and 'others'
     in absorption
@@ -1331,7 +1310,10 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
     :param dv_abso: velocity of the absorption
     :param wavestart:
     :param waveend:
-    :param dvgrid:
+    :param dvgrid: float, the s1d bin grid (constant in velocity)
+    :param no_convolve: bool, if True no convolution performed (important for
+                        finite resolution effect)
+
     :return:
     """
     # set the function name
@@ -1379,30 +1361,12 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
     trans_water = sp_water ** expo_water
     # getting the full absorption at full resolution
     trans = trans_others * trans_water
-
-
-    # TODO: REMOVE FROM HERE ----------------------------------->
-    # params = constants.load()
-    # ww = pcheck(params, 'TELLUP_ABSO_EXPO_KWID')
-    # ex_gau = pcheck(params, 'TELLUP_ABSO_EXPO_KEXP')
-    # ker_thres = pcheck(params, 'TELLUP_ABSO_EXPO_KTHRES')
-    # # convolving after product (to avoid the infamous commutativity problem
-    # width = ww / mp.fwhm()
-    # # defining the convolution kernel x grid, defined over 4 fwhm
-    # kernel_width = int(ww * 4)
-    # dd = np.arange(-kernel_width, kernel_width + 1.0, 1.0)
-    # # normalization of the kernel
-    # ker = np.exp(-0.5 * np.abs(dd / width) ** ex_gau)
-    # # shorten then kernel to keep only pixels that are more than 1e-6 of peak
-    # ker = ker[ker > ker_thres * np.max(ker)]
-    # # normalize the kernel
-    # ker /= np.sum(ker)
-    # trans_convolved_old = np.convolve(trans, ker, mode='same')
-    # TODO: REMOVE TO HERE <-------------------------------------------
-
-
-    trans_convolved = variable_res_conv(magic_grid, trans, res_fwhm_magic,
-                                        res_expo_magic)
+    # deal with no convolution option (important for finite resolution effect)
+    if no_convolve:
+        trans_convolved = np.array(trans)
+    else:
+        trans_convolved = variable_res_conv(magic_grid, trans, res_fwhm_magic,
+                                            res_expo_magic)
     # ----------------------------------------------------------------------
     # spline that onto the input grid and allow a velocity shift
     magic_shift = magic_grid * (1 + dv_abso / speed_of_light)
@@ -1432,7 +1396,7 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
 
 def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
                       res_fwhm: np.ndarray, res_expo: np.ndarray,
-                      ker_thres: float = 1e-4) -> np.ndarray:
+                      ker_thres: float = 1e-4, ) -> np.ndarray:
     """
     Convolve with a variable kernel in resolution space
 
@@ -1504,9 +1468,102 @@ def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
     return spectrum2
 
 
+def finite_res_correction(template_props: ParamDict, wave_e2ds: np.ndarray,
+                          res_s1d_fwhm: np.ndarray, res_s1d_expo: np.ndarray,
+                          expo_others: float, expo_water: float,
+                          spl_others: Any, spl_water: Any, dvgrid: float
+                          ) -> np.ndarray:
+    """
+    Produce a e2ds finite resolution correction matrix
+
+    :param template_props: ParamDict, parameter dictionary of template
+                           properties
+    :param wave_e2ds: np.ndarray (2D), the e2ds wavelength solution
+    :param res_s1d_fwhm: np.ndarray (1D), the resolution FWHM for each pixel of
+                         the s1d
+    :param res_s1d_expo: np.ndarray (1D), the resolution expo for each pixel of
+                         the s1d
+    :param expo_others: float, optical depth of all species other than water
+    :param expo_water: float, optical depth of water
+    :param spl_others: spline function from tapas of other species
+    :param spl_water: spline function from tapas of water
+    :param dvgrid: float, the s1d bin grid (constant in velocity)
+
+    :return: np.ndarray (2D), the e2ds finite resolution correction
+    """
+    # -------------------------------------------------------------------------
+    # spline with slopes in domains that are not defined. We cannot have a NaN
+    # in these maps.
+    # -------------------------------------------------------------------------
+    # pixel positions
+    index = np.arange(len(res_s1d_fwhm))
+    # valid map for FWHM
+    fwhm_valid = np.isfinite(res_s1d_fwhm)
+    # spline for FWHM
+    spline_fwhm = mp.iuv_spline(index[fwhm_valid], res_s1d_fwhm[fwhm_valid],
+                                k=1, ext=3)
+    # map back onto original fwhm vector
+    res_s1d_fwhm = spline_fwhm(index)
+    # valid map for expo
+    expo_valid = np.isfinite(res_s1d_expo)
+    # spline for expo
+    spline_expo = mp.iuv_spline(index[expo_valid], res_s1d_expo[expo_valid],
+                                k=1, ext=3)
+    # map back on to original expo vector
+    res_s1d_expo = spline_expo(index)
+
+    # get the deconvolved s1d template
+    s1d_wave = np.array(template_props['TEMP_S1D_TABLE']['wavelength'])
+    # get the deconvovled s1d template
+    s1d_deconv = template_props['TEMP_S1D_TABLE']['deconv']
+    # get start and end of wavelength gvrid. We add 10 wavelength steps in
+    #   either direction to avoid numerical problems
+    s1d_wave_step = np.nanmedian(np.gradient(s1d_wave))
+    s1d_wavestart = np.min(s1d_wave) - 10 * s1d_wave_step
+    s1d_waveend = np.max(s1d_wave) + 10 * s1d_wave_step
+    # get the absorption spectrum prior to convolution
+    #   we need the s1d_abso at full resolution. To do this, we simply
+    #   set the res_s1d_fwhm to a delta function
+    s1d_abso = get_abso_expo(s1d_wave, expo_others, expo_water,
+                             spl_others, spl_water, res_fwhm=res_s1d_fwhm,
+                             res_expo=res_s1d_expo, dv_abso=0.0,
+                             wavestart=s1d_wavestart, waveend=s1d_waveend,
+                             dvgrid=dvgrid, no_convolve=True)
+    # spectrum as we observe it. Absorption happens at infinite resolution
+    finite_error_numer = variable_res_conv(s1d_wave,
+                                           s1d_deconv * s1d_abso,
+                                           res_s1d_fwhm, res_s1d_expo)
+    # telluric spectrum as we observe it, infinite resolutino abso gets
+    #     convolved
+    finite_error_denom = variable_res_conv(s1d_wave, s1d_abso,
+                                           res_s1d_fwhm, res_s1d_expo)
+    # spectrum as we wish we had observed it. Convolved but unaffected by
+    #    tellurics
+    pristine_conv_s1d = variable_res_conv(s1d_wave, s1d_deconv,
+                                          res_s1d_fwhm, res_s1d_expo)
+    # spectrum as we correct it for tellurics. Numerator is the observed
+    #    denominator is the telluric abso convolved and ratio is the
+    #    corrected spectrum with finite-resolution errors in
+    s1d_with_error = finite_error_numer / finite_error_denom
+    # ratio of 'contaminated' to 'pristine' to find the fractional error
+    #    injected in the data
+    finite_err_ratio = s1d_with_error / pristine_conv_s1d
+    # spline that error to we can propagate it onto the e2ds grid
+    spl_finite_res = mp.iuv_spline(s1d_wave, finite_err_ratio)
+    # propagate the finite error onto the e2ds grid
+    finite_res_e2ds = np.zeros_like(wave_e2ds)
+    # loop around each order
+    for order_num in range(wave_e2ds.shape[0]):
+        finite_res_e2ds[order_num] = spl_finite_res(wave_e2ds[order_num])
+    # return the finite res e2ds correction matrix
+    return finite_res_e2ds
+
+
+
 def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
                            qc_params, sky_model, res_e2ds_fwhm, res_e2ds_expo,
-                           database=None, **kwargs):
+                           template_props, wave_e2ds, res_s1d_fwhm,
+                           res_s1d_expo, database=None, **kwargs):
     """
     Provides an exit point for tellu_preclean via a quality control failure
 
@@ -1583,12 +1640,11 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     #     No trimming done on the wave grid
     abso_e2ds = np.zeros_like(wavemap)
     for order_num in range(wavemap.shape[0]):
-
         owavestep = np.nanmedian(np.gradient(wavemap[order_num]))
         # wave start and end need to be extended a little bit to avoid
         #     edge effects
-        owavestart = np.nanmin(wavemap[order_num]) - 10*owavestep
-        owaveend = np.nanmax(wavemap[order_num]) + 10*owavestep
+        owavestart = np.nanmin(wavemap[order_num]) - 10 * owavestep
+        owaveend = np.nanmax(wavemap[order_num]) + 10 * owavestep
 
         abso_tmp = get_abso_expo(wavemap[order_num], expo_others, expo_water,
                                  spl_others, spl_water,
@@ -1605,6 +1661,25 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     corrected_e2ds = image_e2ds / abso_e2ds
     # mask poor tranmission regions
     corrected_e2ds[mask] = np.nan
+    # ----------------------------------------------------------------------
+    # correct for finite resolution effects
+    # ----------------------------------------------------------------------
+    if template_props['HAS_TEMPLATE']:
+        # copy the original corrected e2ds
+        corrected_e2ds0 = np.array(corrected_e2ds)
+        # calculate the finite resolution e2ds matrix
+        finite_res_e2ds = finite_res_correction(template_props, wave_e2ds,
+                                                res_s1d_fwhm, res_s1d_expo,
+                                                expo_others, expo_water,
+                                                spl_others,  spl_water, dvgrid)
+        # correction the spectrum
+        corrected_e2ds = corrected_e2ds / finite_res_e2ds
+        # plot the finite resolution correction plot
+        recipe.plot('TELLU_FINITE_RES_CORR', params=params, wavemap=wave_e2ds,
+                    e2ds0=corrected_e2ds0, e2ds1=corrected_e2ds,
+                    corr=finite_res_e2ds)
+    else:
+        finite_res_e2ds = np.ones_like(corrected_e2ds)
     # ----------------------------------------------------------------------
     # populate parameter dictionary
     props = ParamDict()
@@ -1645,6 +1720,7 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     props['TELLUP_WAVE_START'] = wavestart
     props['TELLUP_WAVE_END'] = waveend
     props['TELLUP_DVGRID'] = dvgrid
+    props['TELLU_FINITE_RES'] = finite_res_e2ds
     # set sources
     keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',
             'TELLUP_CLEAN_OH_LINES', 'TELLUP_REMOVE_ORDS',
@@ -1654,7 +1730,8 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
             'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS',
             'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
             'TELLUP_ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
-            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'TELLUP_DO_PRECLEANING']
+            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'TELLUP_DO_PRECLEANING',
+            'TELLU_FINITE_RES']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return props
@@ -1662,7 +1739,7 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
 
 
 def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
-                         props, wprops,
+                         props, wprops, sky_props: Optional[ParamDict] = None,
                          database: Union[TelluDatabase, None] = None):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
@@ -1693,21 +1770,40 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     # add  calibration files used
     tpclfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
     # ----------------------------------------------------------------------
+    # get sky corr images
+    if sky_props is None:
+        sky_corr_sci = np.ones_like(props['CORRECTED_E2DS'])
+        sky_corr_cal = np.ones_like(props['CORRECTED_E2DS'])
+    else:
+        sky_corr_sci = sky_props['SKY_CORR_SCI']
+        # sky corr for ref can be empty - fill it with ones
+        if sky_props['SKY_CORR_REF'] is None:
+            sky_corr_cal = np.ones_like(props['CORRECTED_E2DS'])
+        else:
+            sky_corr_cal = sky_props['SKY_CORR_REF']
     # set images
     dimages = [props['CORRECTED_E2DS'], props['TRANS_MASK'].astype(float),
-               props['ABSO_E2DS'], props['SKY_MODEL']]
+               props['ABSO_E2DS'], props['SKY_MODEL'],
+               props['TELLU_FINITE_RES'], sky_corr_sci, sky_corr_cal]
     # add extention info
     kws1 = ['EXTDESC1', 'CORRECTED', 'Corrected image']
     kws2 = ['EXTDESC2', 'TRANS_MASK', 'Transmission mask image']
     kws3 = ['EXTDESC3', 'ABSO_E2DS', 'Absorption e2ds image']
-    kws4 = ['EXTDESC4', 'SKY_MODEL', 'Sky model image']
+    kws4 = ['EXTDESC4', 'PCA_SKY', 'PCA Sky model image']
+    kws5 = ['EXTDESC5', 'FINITE_RES', 'Finite resolution correction']
+    kws6 = ['EXTDESC6', 'SKYCORR_SCI', 'Sky file correction (sci)']
+    kws7 = ['EXTDESC7', 'SKYCORR_CAL', 'Sky file correction (cal)']
     # set names of extensions (for headers)
-    names = ['CORRECTED', 'TRANS_MASK', 'ABSO_E2DS', 'SKY_MODEL']
+    names = ['CORRECTED', 'TRANS_MASK', 'ABSO_E2DS', 'PCA_SKY', 'FINITE_RES',
+             'SKYCORR_SCI', 'SKYCORR_CAL']
     # add to hdict
     tpclfile.add_hkey(key=kws1)
     tpclfile.add_hkey(key=kws2)
     tpclfile.add_hkey(key=kws3)
     tpclfile.add_hkey(key=kws4)
+    tpclfile.add_hkey(key=kws5)
+    tpclfile.add_hkey(key=kws6)
+    tpclfile.add_hkey(key=kws7)
     # ----------------------------------------------------------------------
     # need to write these as header keys
     tpclfile.add_hkey('KW_TELLUP_EXPO_WATER', value=props['EXPO_WATER'])
@@ -2343,7 +2439,6 @@ def load_templates(params: ParamDict,
         # return null entries
         return temp_props
     # -------------------------------------------------------------------------
-
     # get res_e2ds file instance
     s1d_template = drs_file.get_file_definition(params, 'TELLU_TEMP_S1DV',
                                                 block_kind='red')

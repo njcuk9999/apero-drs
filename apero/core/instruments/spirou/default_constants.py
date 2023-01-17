@@ -2205,6 +2205,11 @@ TELLUP_OTHER_BOUNDS.value = '0.8, 3.0'
 TELLUP_WATER_BOUNDS = TELLUP_WATER_BOUNDS.copy(__NAME__)
 TELLUP_WATER_BOUNDS.value = '0.1, 15'
 
+# set the plot order for the finite resolution plot (somewhere aroun 1.45 um)
+TELLU_FINITE_RES_ORDER = TELLU_FINITE_RES_ORDER.copy(__NAME__)
+TELLU_FINITE_RES_ORDER.value = 26
+TELLU_FINITE_RES_ORDER.author = base.AUTHORS['EA']
+
 # =============================================================================
 # OBJECT: MAKE TELLURIC SETTINGS
 # =============================================================================
@@ -3033,6 +3038,10 @@ PLOT_FTELLU_RECON_ABSO2.value = True
 # turn on the fit tellu res model debug plot
 PLOT_FTELLU_RES_MODEL = PLOT_FTELLU_RES_MODEL.copy(__NAME__)
 PLOT_FTELLU_RES_MODEL.value = True
+
+# turn on the finite resolution correction debug plot
+PLOT_TELLU_FINITE_RES_CORR = PLOT_TELLU_FINITE_RES_CORR.copy(__NAME__)
+PLOT_TELLU_FINITE_RES_CORR.value = True
 
 # turn on the berv coverage debug plot
 PLOT_MKTEMP_BERV_COV = PLOT_MKTEMP_BERV_COV.copy(__NAME__)

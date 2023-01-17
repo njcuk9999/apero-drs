@@ -261,7 +261,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine,
                                             template_props=template_props,
-                                            clean_ohlines=clean_ohlines)
+                                            clean_ohlines=clean_ohlines,
+                                            sky_props=scprops)
         # get variables out of tpreprops
         image1 = tpreprops['CORRECTED_E2DS']
         # ------------------------------------------------------------------
