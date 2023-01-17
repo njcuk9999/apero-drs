@@ -915,7 +915,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     if not (0.45 < ratio < 0.55):
         ratio = 0.5
         # TODO: Add to language database
-        wmsg = ('Ratio of individual fiber={0} to sum of all fibers is out of'
+        wmsg = ('\tRatio of individual fiber={0} to sum of all fibers is out of'
                 'bounds (0.45 < ratio < 0.55)')
         wargs = [fiber]
         WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
