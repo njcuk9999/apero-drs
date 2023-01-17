@@ -871,7 +871,7 @@ def medbin(image: np.ndarray, by: int, bx: int) -> np.ndarray:
     return med2
 
 
-def square_medbin(image: np.ndarray, binexpo: int = 8):
+def square_medbin(image: np.ndarray, binexpo: int = 8) -> np.ndarray:
     """
     Produce a median binned image of a 2**N x 2**N image - scaled back to
     original 2**N by 2**N size
