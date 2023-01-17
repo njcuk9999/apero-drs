@@ -886,7 +886,8 @@ def uniform_time_list(times: Union[List[float], np.ndarray], number: int
     #    files
     if len(times) <= number:
         return np.ones_like(times).astype(bool)
-
+    # convert times to numpy array
+    times = np.array(times)
     # copy the times to new vector
     times2 = times[np.argsort(times)]
     # loop around until we have N files in times2
