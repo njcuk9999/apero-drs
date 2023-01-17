@@ -1812,11 +1812,16 @@ post_t_file.add_ext('RECON_A', out_tellu_recon, pos=4, fiber='A',
                     link='TELLU_A', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='Recon')
 
-# TODO: If precleaning fails --> no OHLINE file produced
-post_t_file.add_ext('OHLINE', out_tellu_pclean, pos=5, fiber='A',
+post_t_file.add_ext('SKYCORR_SCI', out_tellu_pclean, pos=5, fiber='A',
                     link='TELLU_A', hlink='KW_IDENTIFIER',
-                    block_kind='red', clear_file=True, tag='OHLine',
-                    extname='SKY_MODEL')
+                    block_kind='red', clear_file=True, tag='SKYCORR_SCI',
+                    extname='SKYCORR_SCI')
+
+post_t_file.add_ext('SKYCORR_CAL', out_tellu_pclean, pos=6, fiber='A',
+                    link='TELLU_A', hlink='KW_IDENTIFIER',
+                    block_kind='red', clear_file=True, tag='SKYCORR_CAL',
+                    extname='SKYCORR_CAL')
+
 # move header keys
 post_t_file.add_hkey('KW_VERSION', inheader='TELLU_AB', outheader='PP')
 post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='TELLU_AB', outheader='PP')
