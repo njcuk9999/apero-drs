@@ -891,9 +891,9 @@ def correct_sci_capacitive_coupling(params: ParamDict, image: np.ndarray,
     amp_flux = pcheck(params, 'PP_CORR_XTALK_AMP_FLUX', func=func_name,
                       override=amp_flux)
     amp_dflux = pcheck(params, 'PP_COR_XTALK_AMP_DFLUX', func=func_name,
-                      override=amp_dflux)
+                       override=amp_dflux)
     amp_d2flux = pcheck(params, 'PP_COR_XTALK_AMP_D2FLUX', func=func_name,
-                      override=amp_d2flux)
+                        override=amp_d2flux)
     # get the map
     full_butterfly, _, _, _ = get_butterfly_maps(params, image, amp_flux,
                                                  amp_dflux, amp_d2flux,
@@ -1061,7 +1061,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     # get the exposure time from the header
     exptime = header[params['KW_EXPTIME'][0]]
     # -------------------------------------------------------------------------
-    # correct the capacitive coupling pattern
+    # correct the capacitive coupling pattern of dark frames
     image = correct_capacitive_coupling(params, image, exptime)
     # -------------------------------------------------------------------------
     # before we even get started, we remove top/bottom ref pixels
@@ -1126,23 +1126,98 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     # as it would lead to a set of NaNs in the downsized
     # image and chaos afterward
     WLOG(params, '', textentry('40-010-00020'))
-    # find 25th percentile, more robust against outliers
-    tmp = mp.percentile_bin(image2, binsize, binsize, percentile=50)
-    # set NaN pixels to zero (for the zoom)
-    tmp[~np.isfinite(tmp)] = 0.0
-    # use the zoom to bin the data
-    lowf = ndimage.zoom(tmp, np.array(image2.shape) // binsize)
-    # subtract the low frequency
-    image2 = image2 - lowf
-    # remove correlated profile in Y axis
-    yprofile1d = mp.nanmedian(image2, axis=1)
-    # remove an eventual small zero point or low frequency
-    zerop = mp.lowpassfilter(yprofile1d, 501)
-    yprofile1d = yprofile1d - zerop
-    # pad in two dimensions
-    yprofile = np.repeat(yprofile1d, nbypix).reshape(nbypix, nbxpix)
-    # remove from input image
-    image = image - yprofile
+    # # find 25th percentile, more robust against outliers
+    # tmp = mp.percentile_bin(image2, binsize, binsize, percentile=50)
+    # # set NaN pixels to zero (for the zoom)
+    # tmp[~np.isfinite(tmp)] = 0.0
+    # # use the zoom to bin the data
+    # lowf = ndimage.zoom(tmp, np.array(image2.shape) // binsize)
+    # # subtract the low frequency
+    # image2 = image2 - lowf
+    # # remove correlated profile in Y axis
+    # yprofile1d = mp.nanmedian(image2, axis=1)
+    # # remove an eventual small zero point or low frequency
+    # zerop = mp.lowpassfilter(yprofile1d, 501)
+    # yprofile1d = yprofile1d - zerop
+    # # pad in two dimensions
+    # yprofile = np.repeat(yprofile1d, nbypix).reshape(nbypix, nbxpix)
+    # # remove from input image
+    # image = image - yprofile
+
+    # number of pixels in detector
+    nbypix, nbxpix = image2.shape
+    # high-pass filtering of the image to focus on 1/f noise and column/
+    #    row-level structures
+    image2 = image2 - mp.square_medbin(image2, 6)
+
+    # find indices of pixels to properly flag parts of the amplifiers. Pixels
+    #    at a common xpix value are read at the same moment
+    _, xpix = np.indices(image2.shape)
+    # work out the width of the amplifiers
+    width_amp = nbxpix // namps
+    # get the amplifier position
+    xpix = xpix % (2 * width_amp)
+    # flip the amplifier position for the odd amplifiers
+    odd_amps = xpix > (width_amp - 1)
+    xpix[odd_amps] = (2 * width_amp - 1) - xpix[odd_amps]
+    # get the x pixel positions
+    index = np.arange(nbxpix)
+    # get the amplifier position along x
+    index = index % (2 * width_amp)
+    # flip the amplifier position along x
+    odd_amps = index > (width_amp - 1)
+    index[odd_amps] = (2 * width_amp - 1) - index[odd_amps]
+    # median on first half of the readout within each line
+    med1 = mp.nanmedian(image2[:, index < width_amp // 2], axis=1)
+    # median on 'second' half of the readout within each line
+    med2 = mp.nanmedian(image2[:, index >= width_amp // 2], axis=1)
+    # intercept of common-pattern between amplifiers
+    zp = (med1 + med2) / 2
+    zp = np.repeat(zp, len(zp)).reshape(image2.shape)
+    # slope of common-pattern between amplifiers
+    slope = (med2 - med1) / (width_amp // 2)
+    slope = np.repeat(slope, len(slope)).reshape(image2.shape)
+    # reconstrcut the full pattern
+    corr = (xpix - (width_amp // 2)) * slope + zp
+    # subtract from full image and masked image
+    image = image - corr
+    image2 = image2 - corr
+    # find pixels in first read column and neighbouring valid column
+    amp_pix = np.arange(namps // 2)
+    # calculate start and ending positions
+    start = width_amp * 2
+    end = width_amp * 2 + (width_amp * 2) - 1
+    # get these as an array (for each amplifier)
+    in_col = np.append(amp_pix * start, amp_pix * end)
+    out_col = np.append(amp_pix * start + 1, amp_pix * end - 1)
+    # pixel-wise difference
+    diff1 = image[:, in_col] - image[:, out_col]
+    # find median bad column pattern
+    bad_col_pattern = mp.nanmedian(diff1, axis=1)
+    # subtract the bad column pattern off the pixel-wise difference
+    dd = np.array(diff1)
+    for col in range(len(in_col)):
+        dd[:, col] = dd[:, col] - bad_col_pattern
+    # mask outliers not to be affected by residual flux
+    bad = np.abs(dd) > 3 * mp.estimate_sigma(dd)
+    # remove these bad outliers from pixel-wise difference
+    diff1[bad] = np.nan
+    # median of diff given the bad column values
+    bad_col_pattern = mp.nanmedian(diff1, axis=1)
+    # loop around columns in image and remove bad_col_pattern
+    for col in in_col:
+        image[:, col] = image[:, col] - bad_col_pattern
+        image2[:, col] = image2[:, col] - bad_col_pattern
+    # find residual structures in the cross-order direction
+    tmp = mp.nanmedian(image2, axis=0)
+    # flag eventuial bad columsn and set to NaN. We could not find a consistant
+    #   way of removing those through filters
+    tmp[tmp / mp.estimate_sigma(tmp) > 10] = np.nan
+    # subtract the replicated median pattern
+    corr = np.file(tmp, len(tmp)).reshape(image2.shape)
+    # correct science frame
+    image = image - corr
+    # image2 = image2 - corr
 
     # # first pixel of each amplifier
     # amppix = np.arange(namps // 2) * ampwid * 2
