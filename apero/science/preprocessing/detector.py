@@ -1192,11 +1192,13 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     # find pixels in first read column and neighbouring valid column
     amp_pix = np.arange(namps // 2)
     # calculate start and ending positions
-    start = width_amp * 2
-    end = width_amp * 2 + (width_amp * 2) - 1
+    width_amp2 = width_amp * 2
+    end = (width_amp * 2) - 1
     # get these as an array (for each amplifier)
-    in_col = np.append(amp_pix * start, amp_pix * end)
-    out_col = np.append(amp_pix * start + 1, amp_pix * end - 1)
+    in_col = np.append(amp_pix * width_amp2,
+                       amp_pix * width_amp2 + end)
+    out_col = np.append(amp_pix * width_amp2 + 1,
+                        amp_pix * width_amp2 + end - 1)
     # pixel-wise difference
     diff1 = image[:, in_col] - image[:, out_col]
     # find median bad column pattern
@@ -1221,7 +1223,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     #   way of removing those through filters
     tmp[tmp / mp.estimate_sigma(tmp) > 10] = np.nan
     # subtract the replicated median pattern
-    corr = np.file(tmp, len(tmp)).reshape(image2.shape)
+    corr = np.tile(tmp, len(tmp)).reshape(image2.shape)
     # correct science frame
     image = image - corr
     # image2 = image2 - corr
