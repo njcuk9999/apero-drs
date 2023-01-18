@@ -426,7 +426,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                        func_name)
     waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', kwargs, func_name)
     dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
-    ccf_control_radius = 5 * params['IMAGE_PIXEL_SIZE']
+    ccf_control_radius = params['IMAGE_PIXEL_SIZE']
     # ----------------------------------------------------------------------
     # load database
     if calibdbm is None:
@@ -903,7 +903,15 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                     diff_amp_others = amp_others_arr[1] - amp_others_arr[0]
                     slope_others = diff_expo_others / diff_amp_others
             # move exponent by an increment to get the right exponent
-            expo_water -= amp_water_arr[-1] * slope_water
+            next_expo_water = expo_water - amp_water_arr[-1] * slope_water
+
+            # feedback loop is excessive we cannot have expo_water negative
+            if next_expo_water < 0:
+                expo_water = expo_water / 2
+                slope_water = slope_water / 2
+            else:
+                expo_water = next_expo_water
+
             if not force_airmass:
                 expo_others -= amp_others_arr[-1] * slope_others
 
