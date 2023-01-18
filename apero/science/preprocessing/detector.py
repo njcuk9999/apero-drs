@@ -1217,7 +1217,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
         image2[:, col] = image2[:, col] - bad_col_pattern
     # find residual structures in the cross-order direction
     tmp = mp.nanmedian(image2, axis=0)
-    # flag eventuial bad columsn and set to NaN. We could not find a consistant
+    # flag eventual bad columns and set to NaN. We could not find a consistent
     #   way of removing those through filters
     tmp[tmp / mp.estimate_sigma(tmp) > 10] = np.nan
     # subtract the replicated median pattern
