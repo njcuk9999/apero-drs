@@ -1125,7 +1125,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     # smaller than the order footprint on the array
     # as it would lead to a set of NaNs in the downsized
     # image and chaos afterward
-    WLOG(params, '', textentry('40-010-00020'))
+
     # # find 25th percentile, more robust against outliers
     # tmp = mp.percentile_bin(image2, binsize, binsize, percentile=50)
     # # set NaN pixels to zero (for the zoom)
@@ -1143,7 +1143,14 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     # yprofile = np.repeat(yprofile1d, nbypix).reshape(nbypix, nbxpix)
     # # remove from input image
     # image = image - yprofile
-
+    # -------------------------------------------------------------------------
+    # 1- correction of slopes and zero points within the median amplifier
+    #    structure
+    # 2- correction of 1st read pixel within each row of the median amplifier
+    # 3- correction of column-wise median structure
+    # 4- masking of deviant columns that cannot be properly corrected
+    # -------------------------------------------------------------------------
+    WLOG(params, '', textentry('40-010-00020'))
     # number of pixels in detector
     nbypix, nbxpix = image2.shape
     # high-pass filtering of the image to focus on 1/f noise and column/
