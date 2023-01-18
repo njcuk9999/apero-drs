@@ -937,7 +937,7 @@ def calculate_berv_coverage(params: ParamDict, recipe: DrsRecipe,
 
 
 def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
-                                wavemap: np.ndarray, flux: np.ndarray,
+                                wavemap: np.ndarray, flux0: np.ndarray,
                                 header: drs_fits.Header,
                                 s1d_type: str,
                                 calibdbm: Optional[CalibrationDatabase] = None,
@@ -950,7 +950,7 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
     :param params: ParamDict, parameter dictionary of constants
     :param recipe: DrsRecipe, the recipe that called this function
     :param wavemap: np.ndarray (1D), the s1d wavelength solution vector
-    :param flux: np.ndarray (1D), the s1d flux vector
+    :param flux0: np.ndarray (1D), the s1d flux vector
     :param header: fits.Header, the header assoicated with the s1d
     :param s1d_type: str, the type of s1d (either S1DW or S1DV) this also
                      corresponds to the hdu extname in the res_e2ds file
@@ -985,12 +985,12 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
         calibdbm.load_db()
     # -------------------------------------------------------------------------
     # keep track of valid pixels within template
-    valid = np.isfinite(flux)
-    mask = np.ones_like(flux)
+    valid = np.isfinite(flux0)
+    mask = np.ones_like(flux0)
     mask[~valid] = np.nan
     # spline NaNs with linear slopes in gaps. Avoids having any NaN in the
     # deconvolution
-    spline_flux = mp.iuv_spline(wavemap[valid], flux[valid], k=1, ext=3)
+    spline_flux = mp.iuv_spline(wavemap[valid], flux0[valid], k=1, ext=3)
     flux = spline_flux(wavemap)
     # ----------------------------------------------------------------------
     # get the map of resolution in the s1d
