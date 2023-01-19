@@ -2789,7 +2789,7 @@ def _convolve_tapas(params, tapas_table, refprops, tellu_absorbers,
 
 
 # TODO: should splinek=5 (default before 2023-01-18)
-def wave_to_wave(params, spectrum, wave1, wave2, reshape=False, splinek=2):
+def wave_to_wave(params, spectrum, wave1, wave2, reshape=False, splinek=5):
     """
     Shifts a "spectrum" at a given wavelength solution (map), "wave1", to
     another wavelength solution (map) "wave2"
@@ -2830,7 +2830,7 @@ def wave_to_wave(params, spectrum, wave1, wave2, reshape=False, splinek=2):
         if mp.nansum(g) > 6:
             # spline the spectrum
             spline = mp.iuv_spline(wave1[iord, g], spectrum[iord, g],
-                                   k=splinek, ext=1)
+                                   k=splinek, ext=3)
             # keep track of pixels affected by NaNs
             splinemask = mp.iuv_spline(wave1[iord, :], g, k=1, ext=1)
             # spline the input onto the output
