@@ -805,6 +805,10 @@ apero_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
 apero_mk_tellu.set_kwarg(name='--template', dtype='file', default='None',
                          files=[files.out_tellu_template],
                          helpstr=textentry('TEMPLATE_FILE_HELP'))
+apero_mk_tellu.set_kwarg(name='--finiteres', dtype='bool',
+                          default_ref='TELLUP_DO_FINITE_RES_CORR',
+                          helpstr='Whether to do the finite resolution '
+                                 'correction (Always false if no template)')
 apero_mk_tellu.group_func = grouping.group_individually
 apero_mk_tellu.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -883,6 +887,10 @@ apero_fit_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
 apero_fit_tellu.set_kwarg(name='--template', dtype='file', default='None',
                           files=[files.out_tellu_template],
                           helpstr=textentry('TEMPLATE_FILE_HELP'))
+apero_fit_tellu.set_kwarg(name='--finiteres', dtype='bool',
+                          default_ref='TELLUP_DO_FINITE_RES_CORR',
+                          helpstr='Whether to do the finite resolution '
+                                 'correction (Always false if no template)')
 apero_fit_tellu.set_kwarg(name='--onlypreclean', dtype='switch', default=False,
                           helpstr='Only run the precleaning steps '
                                   '(not recommended - for debugging ONLY)')

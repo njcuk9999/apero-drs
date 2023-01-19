@@ -131,7 +131,8 @@ __all__ = [  # input keys
     'KW_RES_MAP_FWHM', 'KW_RES_MAP_AMP', 'KW_RES_MAP_EXPO', 'KW_RES_MAP_RESEFF',
     # telluric preclean variables
     'KW_TELLUP_EXPO_WATER', 'KW_TELLUP_EXPO_OTHERS',
-    'KW_TELLUP_DV_WATER', 'KW_TELLUP_DV_OTHERS', 'KW_TELLUP_DO_PRECLEAN',
+    'KW_TELLUP_DV_WATER', 'KW_TELLUP_DV_OTHERS',
+    'KW_TELLUP_DO_PRECLEAN', 'KW_TELLUP_DO_FINITE_RES',
     'KW_TELLUP_CCFP_WATER', 'KW_TELLUP_CCFP_OTHERS',
     'KW_TELLUP_DFLT_WATER', 'KW_TELLUP_CCF_SRANGE',
     'KW_TELLUP_CLEAN_OHLINES', 'KW_TELLUP_REMOVE_ORDS',
@@ -1821,6 +1822,13 @@ KW_TELLUP_DO_PRECLEAN = Keyword('KW_TELLUP_DO_PRECLEAN', key='NULL', dtype=bool,
                                 source=__NAME__,
                                 description=('Define whether precleaning was '
                                              'done (tellu pre-cleaning)'))
+
+# Define whether finite correction was done (tellu pre-cleaning)
+KW_TELLUP_DO_FINITE_RES = Keyword('KW_TELLUP_DO_FINITE_RES', key='NULL',
+                                  dtype=bool, source=__NAME__,
+                                  description='Define whether finite '
+                                              'correction was done '
+                                              '(tellu pre-cleaning)')
 
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = Keyword('KW_TELLUP_DFLT_WATER', key='NULL', dtype=float,

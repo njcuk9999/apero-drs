@@ -1108,6 +1108,8 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_TELLUP_DV_OTHERS', value=tpreprops['DV_OTHERS'])
     corrfile.add_hkey('KW_TELLUP_DO_PRECLEAN',
                       value=tpreprops['TELLUP_DO_PRECLEANING'])
+    corrfile.add_hkey('KW_TELLUP_DO_FINITE_RES',
+                      value=tpreprops['FINITE_RES_CORRECTED'])
     corrfile.add_hkey('KW_TELLUP_DFLT_WATER',
                       value=tpreprops['TELLUP_D_WATER_ABSO'])
     corrfile.add_hkey('KW_TELLUP_CCF_SRANGE',
