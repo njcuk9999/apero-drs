@@ -2788,7 +2788,8 @@ def _convolve_tapas(params, tapas_table, refprops, tellu_absorbers,
     return tapas_all_species
 
 
-def wave_to_wave(params, spectrum, wave1, wave2, reshape=False, splinek=5):
+# TODO: should splinek=5 (default before 2023-01-18)
+def wave_to_wave(params, spectrum, wave1, wave2, reshape=False, splinek=2):
     """
     Shifts a "spectrum" at a given wavelength solution (map), "wave1", to
     another wavelength solution (map) "wave2"
