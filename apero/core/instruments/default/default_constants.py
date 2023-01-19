@@ -36,7 +36,7 @@ __all__ = [
     'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
     'PP_BAD_EXPTIME_FRACTION', 'PP_DARK_DPRTYPES', 'PP_DARK_THRES',
     'PP_CORR_XTALK_AMP_FLUX', 'PP_COR_XTALK_AMP_DFLUX',
-    'PP_COR_XTALK_AMP_D2FLUX',
+    'PP_COR_XTALK_AMP_D2FLUX', 'PP_NOSCI_CAPC_DPRTYPES',
     # object database settings
     'GL_GAIA_COL_NAME', 'GL_OBJ_COL_NAME', 'GL_ALIAS_COL_NAME',
     'GL_RV_COL_NAME', 'GL_RVREF_COL_NAME', 'GL_TEFF_COL_NAME',
@@ -1064,6 +1064,15 @@ PP_COR_XTALK_AMP_D2FLUX = Const('PP_COR_XTALK_AMP_D2FLUX', value=None,
                                 description='Define amplitude of the '
                                             'flux-dependent along-readout-axis '
                                             '2nd derivative component')
+
+# Define the partial APERO DPRTYPES which we should not do the science
+#    capacitive coupling
+PP_NOSCI_CAPC_DPRTYPES = Const('PP_NOSCI_CAPC_DPRTYPES', value=None,
+                               dtype=str, source=__NAME__,
+                               group=cgroup,
+                               description='Define the partial APERO DPRTYPES '
+                                           'which we should not do the '
+                                           'science capacitive coupling')
 
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS

@@ -436,6 +436,11 @@ PP_COR_XTALK_AMP_D2FLUX = PP_COR_XTALK_AMP_D2FLUX.copy(__NAME__)
 PP_COR_XTALK_AMP_D2FLUX.value = -2.601081e-04
 PP_COR_XTALK_AMP_D2FLUX.author = base.AUTHORS['EA']
 
+# Define the partial APERO DPRTYPES which we should not do the science
+#    capacitive coupling
+PP_NOSCI_CAPC_DPRTYPES = PP_NOSCI_CAPC_DPRTYPES.copy(__NAME__)
+PP_NOSCI_CAPC_DPRTYPES.value = 'HCONE,HCTWO'
+
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
 # =============================================================================

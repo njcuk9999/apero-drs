@@ -322,8 +322,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         WLOG(params, '', textentry('40-010-00018'))
         image, cprops = prep.correct_cosmics(params, image, intercept,
                                              errslope1, inttime)
+        # get dprtypes we don't do sci capacitive coupling for
+        nosci_capc = params.listp('PP_NOSCI_CAPC_DPRTYPES', dtype=str)
+        sci_capc_corr = True
+        for _string in nosci_capc:
+            if _string in infile.header['DPRTYPE']:
+                sci_capc_corr = False
         # correct between amplifier capacity coupling from science flux
-        image = prep.correct_sci_capacitive_coupling(params, image)
+        if sci_capc_corr:
+            image = prep.correct_sci_capacitive_coupling(params, image)
 
         # ------------------------------------------------------------------
         # calculate mid observation time
