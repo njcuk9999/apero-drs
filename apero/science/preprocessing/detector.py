@@ -623,6 +623,20 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
         path_inst = drs_file.DrsPath(params, abspath=led_file)
         # load the LED data
         led_data, led_hdr = drs_fits.readfits(params, led_file, gethdr=True)
+        intercept = drs_fits.readfits(params, led_file, extname='intercept')
+        # ---------------------------------------------------------------------
+        # flag pixel that have an inconsistent intercept with the rest of the
+        #    array
+        med = np.nanmedian(intercept, axis=0)
+        # get the comman pattern
+        common_pattern = np.tile(med, led_data.shape[0]).reshape(led_data.shape)
+        # get the difference between the image and the common pattern
+        diff = intercept - common_pattern
+        # calculate the number of sigmas
+        nsigma = diff / mp.estimate_sigma(diff)
+        # set the flagged pixels to NaN
+        led_data[np.abs(nsigma) > 5] = np.nan
+        # ---------------------------------------------------------------------
         # remove the dark
         with warnings.catch_warnings(record=True) as _:
             led_data2 = led_data - ref_dark
@@ -742,6 +756,10 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     cube, led_table = construct_led_cube(params, led_files, ref_dark)
     # led output is the median of the cube
     led = mp.nanmedian(cube, axis=0)
+
+    for col in range(led.shape[0]):
+        led[col] = led[col] - np.nanmedian(led[col])
+
     # rms array
     rms = mp.nanstd(cube, axis=0) / np.sqrt(len(led_files) - 1)
     # snr array
