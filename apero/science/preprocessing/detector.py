@@ -1220,15 +1220,18 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     for col in in_col:
         image[:, col] = image[:, col] - bad_col_pattern
         image2[:, col] = image2[:, col] - bad_col_pattern
-    # find residual structures in the cross-order direction
-    tmp = mp.nanmedian(image2, axis=0)
-    # flag eventual bad columns and set to NaN. We could not find a consistent
-    #   way of removing those through filters
-    tmp[tmp / mp.estimate_sigma(tmp) > 10] = np.nan
-    # subtract the replicated median pattern
-    corr = np.tile(tmp, len(tmp)).reshape(image2.shape)
-    # correct science frame
-    image = image - corr
+
+    # only do these steps if we are not creating a mask
+    if not create_mask:
+        # find residual structures in the cross-order direction
+        tmp = mp.nanmedian(image2, axis=0)
+        # flag eventual bad columns and set to NaN. We could not find a consistent
+        #   way of removing those through filters
+        tmp[tmp / mp.estimate_sigma(tmp) > 10] = np.nan
+        # subtract the replicated median pattern
+        corr = np.tile(tmp, len(tmp)).reshape(image2.shape)
+        # correct science frame
+        image = image - corr
     # image2 = image2 - corr
 
     # # first pixel of each amplifier
