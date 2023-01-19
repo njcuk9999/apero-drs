@@ -843,7 +843,7 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
     # get the center percentile of image
     cent = mp.nanpercentile(image[xlower:xupper, ylower:yupper], percentile)
     # work out the residuals in the reference pixels
-    residuals = np.abs(image[:num_ref]) - mp.nanmedian(image[:num_ref])
+    residuals = np.abs(image[:num_ref] - mp.nanmedian(image[:num_ref]))
     # get the quality control on fp
     passed = (cent / mp.nanmedian(residuals)) > fp_qc
     # return passed
