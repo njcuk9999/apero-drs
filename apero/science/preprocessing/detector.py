@@ -941,7 +941,6 @@ def get_butterfly_maps(params: ParamDict, image0: np.ndarray,
     total_amps = params['PP_TOTAL_AMP_NUM']
     # remove nans
     image = np.array(image0)
-    image[~np.isfinite(image)] = 0
     # pixel width of each amplifier
     pix_in_amp = image.shape[1] // total_amps
     # cube of all amplifiers
@@ -961,9 +960,16 @@ def get_butterfly_maps(params: ParamDict, image0: np.ndarray,
         cube[:, :, amp_it] = image[:, start:end][:, ::flip]
     # -------------------------------------------------------------------------
     # work out the sum and gradients
-    avg_amp = -mp.nansum(cube, axis=2)
-    _, grad_y = np.gradient(avg_amp)
-    _, grad_y2 = np.gradient(grad_y)
+    with warnings.catch_warnings(record=True) as _:
+        avg_amp = -mp.nansum(cube, axis=2)
+        _, grad_y = np.gradient(avg_amp)
+        _, grad_y2 = np.gradient(grad_y)
+    # find finite values
+    good = np.isfinite(avg_amp) & np.isfinite(grad_y) & np.isfinite(grad_y2)
+    # set all non finite values to zero
+    avg_amp[~good] = 0.0
+    grad_y[~good] = 0.0
+    grad_y2[~good] = 0.0
     # -------------------------------------------------------------------------
     # storage for the full butterfly
     image_zeros = np.zeros_like(image)

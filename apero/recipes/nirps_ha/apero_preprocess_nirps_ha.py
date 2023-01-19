@@ -179,6 +179,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         with warnings.catch_warnings(record=True) as _:
             errslope = np.sqrt(np.abs(image * inttime) + readout_noise**2)
             errslope = errslope / np.sqrt(inttime)
+        # ------------------------------------------------------------------
+        # any pixel with less than 2 reads has no ramp fitting - set to NaN
+        image[datalist[2] < 2] = np.nan
 
         # ------------------------------------------------------------------
         # Get out file and check skip
@@ -288,8 +291,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # nirps correction for preprocessing (specific to NIRPS)
         image = prep.nirps_correction(params, image, infile.header,
                                       create_mask=False)
+        # get dprtypes we don't do sci capacitive coupling for
+        nosci_capc = params.listp('PP_NOSCI_CAPC_DPRTYPES', dtype=str)
+        sci_capc_corr = True
+        for _string in nosci_capc:
+            if _string in infile.header['DPRTYPE']:
+                sci_capc_corr = False
         # correct between amplifier capacity coupling from science flux
-        image = prep.correct_sci_capacitive_coupling(params, image)
+        if sci_capc_corr:
+            image = prep.correct_sci_capacitive_coupling(params, image)
 
         # ----------------------------------------------------------------------
         # Correct for cosmic rays before the possible pixel shift
