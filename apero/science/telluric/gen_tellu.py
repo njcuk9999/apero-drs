@@ -1091,7 +1091,14 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # correct for finite resolution effects
     # ----------------------------------------------------------------------
-    if template_props['HAS_TEMPLATE']:
+    # check whether user wants to do finite resolution corrections
+    #   from the inputs and then from params
+    if not drs_text.null_text(params['INPUTS']['DO_FINITE_RES_CORR']):
+        do_finite_res_corr = params['INPUTS']['DO_FINITE_RES_CORR']
+    else:
+        do_finite_res_corr = params['TELLUP_DO_FINITE_RES_CORR']
+    # correct if conditions are met
+    if template_props['HAS_TEMPLATE'] and do_finite_res_corr:
         # copy the original corrected e2ds
         corrected_e2ds0 = np.array(corrected_e2ds)
         # calculate the finite resolution e2ds matrix
@@ -1101,12 +1108,16 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                                 spl_others,  spl_water, dvgrid)
         # correction the spectrum
         corrected_e2ds = corrected_e2ds / finite_res_e2ds
+        # add a flag that finite resolution correction was performed
+        finite_res_corr = True
         # plot the finite resolution correction plot
         recipe.plot('TELLU_FINITE_RES_CORR', params=params, wavemap=wave_e2ds,
                     e2ds0=corrected_e2ds0, e2ds1=corrected_e2ds,
                     corr=finite_res_e2ds, abso_e2ds=abso_e2ds)
     else:
         finite_res_e2ds = np.ones_like(corrected_e2ds)
+        # add a flag that finite resolution correction was not performed
+        finite_res_corr = False
     # ----------------------------------------------------------------------
     # calculate CCF power
     keep = np.abs(drange) < (ccf_scan_range / 4)
@@ -1120,6 +1131,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     props['ABSO_E2DS'] = abso_e2ds
     props['SKY_MODEL'] = sky_model
     props['PRE_SKYCORR_IMAGE'] = image_e2ds_ini
+    props['FINITE_RES_CORRECTED'] = finite_res_corr
     props['EXPO_WATER'] = expo_water
     props['EXPO_OTHERS'] = expo_others
     props['DV_WATER'] = dv_water
@@ -1130,7 +1142,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
             'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL', 'PRE_SKYCORR_IMAGE']
+            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL', 'PRE_SKYCORR_IMAGE',
+            'FINITE_RES_CORRECTED']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
@@ -1681,7 +1694,14 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     # ----------------------------------------------------------------------
     # correct for finite resolution effects
     # ----------------------------------------------------------------------
-    if template_props['HAS_TEMPLATE']:
+    # check whether user wants to do finite resolution corrections
+    #   from the inputs and then from params
+    if not drs_text.null_text(params['INPUTS']['DO_FINITE_RES_CORR']):
+        do_finite_res_corr = params['INPUTS']['DO_FINITE_RES_CORR']
+    else:
+        do_finite_res_corr = params['TELLUP_DO_FINITE_RES_CORR']
+    # correct if conditions are met
+    if template_props['HAS_TEMPLATE'] and do_finite_res_corr:
         # copy the original corrected e2ds
         corrected_e2ds0 = np.array(corrected_e2ds)
         # calculate the finite resolution e2ds matrix
@@ -1691,12 +1711,16 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
                                                 spl_others,  spl_water, dvgrid)
         # correction the spectrum
         corrected_e2ds = corrected_e2ds / finite_res_e2ds
+        # add a flag that finite resolution correction was performed
+        finite_res_corr = True
         # plot the finite resolution correction plot
         recipe.plot('TELLU_FINITE_RES_CORR', params=params, wavemap=wave_e2ds,
                     e2ds0=corrected_e2ds0, e2ds1=corrected_e2ds,
                     corr=finite_res_e2ds)
     else:
         finite_res_e2ds = np.ones_like(corrected_e2ds)
+        # add a flag that finite resolution correction was not performed
+        finite_res_corr = False
     # ----------------------------------------------------------------------
     # populate parameter dictionary
     props = ParamDict()
@@ -1705,6 +1729,7 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     props['ABSO_E2DS'] = abso_e2ds
     props['SKY_MODEL'] = sky_model
     props['PRE_SKYCORR_IMAGE'] = image_e2ds_ini
+    props['FINITE_RES_CORRECTED'] = finite_res_corr
     props['EXPO_WATER'] = expo_water
     props['EXPO_OTHERS'] = expo_others
     props['DV_WATER'] = np.nan
@@ -1715,7 +1740,8 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
             'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL', 'PRE_SKYCORR_IMAGE']
+            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL', 'PRE_SKYCORR_IMAGE',
+            'FINITE_RES_CORRECTED']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
