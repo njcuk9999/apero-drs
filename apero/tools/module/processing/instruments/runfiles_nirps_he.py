@@ -105,7 +105,6 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mcalib_run_nirps_he.modify('RUN_PP_LFC', False)
     mcalib_run_nirps_he.modify('RUN_PP_LFCFP', False)
     mcalib_run_nirps_he.modify('RUN_PP_FPLFC', False)
-    mcalib_run_nirps_he.modify('RUN_OBS_DIR', DEFAULT_REF_OBSDIR)
     run_files.append(mcalib_run_nirps_he)
     # other run
     other_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'other_run')
