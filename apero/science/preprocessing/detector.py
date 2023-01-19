@@ -906,7 +906,7 @@ ButterflyReturn = Tuple[np.ndarray, Union[np.ndarray, None],
                         Union[np.ndarray, None], Union[np.ndarray, None]]
 
 
-def get_butterfly_maps(params: ParamDict, image: np.ndarray,
+def get_butterfly_maps(params: ParamDict, image0: np.ndarray,
                        amp_flux: float = 1.0, amp_dflux: float = 1.0,
                        amp_d2flux: float = 1.0,
                        fast: bool = False) -> ButterflyReturn:
@@ -915,7 +915,7 @@ def get_butterfly_maps(params: ParamDict, image: np.ndarray,
     amplifier) based on the amplitudes given
 
     :param params: ParamDict, parameter dictionary of constants
-    :param image: np.ndarray raw image (unprocessed by APERO) for which we want
+    :param image0: np.ndarray raw image (unprocessed by APERO) for which we want
                   to derive the butterfly pattern arising from capacitive
                   coupling. The image should be an output of the fits2ramp and
                   not a preprocessed file (_pp file)
@@ -939,6 +939,9 @@ def get_butterfly_maps(params: ParamDict, image: np.ndarray,
     """
     # number of amplifier
     total_amps = params['PP_TOTAL_AMP_NUM']
+    # remove nans
+    image = np.array(image0)
+    image[~np.isfinite(image)] = 0
     # pixel width of each amplifier
     pix_in_amp = image.shape[1] // total_amps
     # cube of all amplifiers
