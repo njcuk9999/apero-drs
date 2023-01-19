@@ -642,8 +642,7 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
             led_data2 = led_data - ref_dark
         # normalize spectrum
         led_data3 = led_data2 / mp.nanmedian(led_data2)
-        # set everything below 0.5 to nan
-        led_data3[led_data3 < 0.5] = np.nan
+
         # start this value as the median
         led_med = np.array(led_data3)
         # as the filtering is a non-linear process, one wants to do it
@@ -656,6 +655,11 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
             WLOG(params, '', '\t\tIteration {0} of {1}'.format(*pargs))
             # median filter square image
             led_med = led_med / mp.square_medbin(led_med)
+        # ---------------------------------------------------------------------
+        # set everything below 0.5 to nan
+        led_med[led_med < 0.5] = np.nan
+        led_med[led_med > 1.5] = np.nan
+        # ---------------------------------------------------------------------
         # append to cube
         cube[it] = led_med
         # append to lists
@@ -756,10 +760,12 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     cube, led_table = construct_led_cube(params, led_files, ref_dark)
     # led output is the median of the cube
     led = mp.nanmedian(cube, axis=0)
-
-    for col in range(led.shape[0]):
-        led[col] = led[col] - np.nanmedian(led[col])
-
+    frac_valid = mp.nansum(np.isfinite(cube), axis=0)
+    # led pixels need to be valid at least 90% of the time
+    led[frac_valid < 0.9] = np.nan
+    # normalizing the per column response
+    for col in range(led.shape[1]):
+        led[:, col] = led[:, col] / np.nanmedian(led[:, col])
     # rms array
     rms = mp.nanstd(cube, axis=0) / np.sqrt(len(led_files) - 1)
     # snr array
