@@ -1643,6 +1643,11 @@ KW_TELLUP_DO_PRECLEAN = KW_TELLUP_DO_PRECLEAN.copy(__NAME__)
 KW_TELLUP_DO_PRECLEAN.set(key='TLPDOCLN', comment='tellu preclean done',
                           parent='TELLUP_DO_PRECLEANING')
 
+# Define whether precleaning was done (tellu pre-cleaning)
+KW_TELLUP_DO_PRECLEAN = KW_TELLUP_DO_PRECLEAN.copy(__NAME__)
+KW_TELLUP_DO_PRECLEAN.set(key='TLPDOFRC', comment='tellu finite res corr done',
+                          parent='TELLUP_DO_FINITE_RES_CORR')
+
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
 KW_TELLUP_DFLT_WATER.set(key='TLPDFH2O',

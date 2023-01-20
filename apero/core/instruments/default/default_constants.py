@@ -242,7 +242,8 @@ __all__ = [
     'TELLU_LIST_DIRECTORY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
     'TELLU_ONLY_PRECLEAN',
     # telluric pre-cleaning constants
-    'TELLUP_DO_PRECLEANING', 'TELLUP_CCF_SCAN_RANGE', 'TELLUP_CLEAN_OH_LINES',
+    'TELLUP_DO_PRECLEANING', 'TELLUP_DO_FINITE_RES_CORR',
+    'TELLUP_CCF_SCAN_RANGE', 'TELLUP_CLEAN_OH_LINES',
     'TELLUP_OHLINE_PCA_FILE', 'TELLUP_REMOVE_ORDS', 'TELLUP_SNR_MIN_THRES',
     'TELLUP_OTHERS_CCF_FILE', 'TELLUP_H2O_CCF_FILE', 'TELLUP_DEXPO_CONV_THRES',
     'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KTHRES',
@@ -3707,6 +3708,13 @@ cgroup = 'OBJECT: TELLURIC PRE-CLEANING SETTINGS'
 TELLUP_DO_PRECLEANING = Const('TELLUP_DO_PRECLEANING', value=None, dtype=bool,
                               source=__NAME__, group=cgroup,
                               description='define whether we do pre-cleaning')
+
+# define whether we do finite resolution correct (if we have a template)
+TELLUP_DO_FINITE_RES_CORR = Const('TELLUP_DO_FINITE_RES_CORR', value=None,
+                                  dtype=bool, source=__NAME__, group=cgroup,
+                                  description='define whether we do finite '
+                                              'resolution correct (if we have '
+                                              'a template)')
 
 # width in km/s for the ccf scan to determine the abso in pre-cleaning
 TELLUP_CCF_SCAN_RANGE = Const('TELLUP_CCF_SCAN_RANGE', value=None, dtype=float,

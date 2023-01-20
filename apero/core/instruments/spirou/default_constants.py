@@ -2126,6 +2126,10 @@ TELLU_ONLY_PRECLEAN.value = False
 TELLUP_DO_PRECLEANING = TELLUP_DO_PRECLEANING.copy(__NAME__)
 TELLUP_DO_PRECLEANING.value = True
 
+# define whether we do finite resolution correct (if we have a template)
+TELLUP_DO_FINITE_RES_CORR = TELLUP_DO_FINITE_RES_CORR.copy(__NAME__)
+TELLUP_DO_FINITE_RES_CORR.value = True
+
 # width in km/s for the ccf scan to determine the abso in pre-cleaning
 TELLUP_CCF_SCAN_RANGE = TELLUP_CCF_SCAN_RANGE.copy(__NAME__)
 TELLUP_CCF_SCAN_RANGE.value = 50

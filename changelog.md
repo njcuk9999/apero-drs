@@ -2,6 +2,126 @@ Changelog
 =========
 
 
+0.7.272 (2023-01-19)
+--------------------
+- [APERO] allow switching on and off of finite res corr (via params and
+  user input) + add header key that finite res was/wasn't done. [Neil
+  Cook]
+- [APERO] ref_calib_run.ini should not have RUN_OBS_DIR set to
+  DEFAULT_REF_OBSDIR (we need FP_FP from all nights) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.267-live' into
+  v0.7.267-live. [njcuk9999]
+- [APERO] apero.science.telluric.gen_tellu.py - deal with edge effects
+  in wave_to_wave. [Neil Cook]
+- [APERO] apero.science.calib.gen_calib.py - fix typo in check_fp.
+  [njcuk9999]
+- [APERO] apero.science.preprocessing.detector.py - flag pixels that
+  have inconsistent intercept in LED. [Neil Cook]
+- [APERO] apero.science.preprocessing.detector.py - flag pixels that
+  have inconsistent intercept in LED. [Neil Cook]
+- [APERO] do not do science capacitive coupling correction for HC files.
+  [Neil Cook]
+- [NIRPS] apero.science.preprocessing.detector - do not sigma clip
+  columns when we are creating a mask. [Neil Cook]
+- [APERO] apero.science.preprocessing.detector.py - account for NaNs in
+  butterfly maps. [Neil Cook]
+- [APERO] apero.science.telluric.gen_tellu.py - correct (bad) changes
+  for finite res. [Neil Cook]
+- [APERO] apero.science.telluric.gen_tellu.py - correct (bad) changes
+  for finite res. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.267-live' into
+  v0.7.267-live. [Neil Cook]
+- [NIRPS] correct nirps_correction. [Neil Cook]
+- [NIRPS] science.preprocessing.detector.py - correct typos. [Neil Cook]
+- [NIRPS] science.preprocessing.detector.py - correct of the first read
+  of the amplifiers. [Neil Cook]
+- [NIRPS] science.preprocessing.detector.py - correct of the first read
+  of the amplifiers. [Neil Cook]
+- [APERO]
+  apero.science.telluric.template_tellu.create_deconvolved_template do
+  not copy over flux (call flux0 as input) [Neil Cook]
+
+
+0.7.271 (2023-01-17)
+--------------------
+- [APERO] apero.core.math.gen_math.py - add typing in square_medbin.
+  [Neil Cook]
+- [APERO] science.telluric.gen_tellu.py - fix that
+  qc_exit_tellu_preclean fails without image_e2ds_ini
+  (PRE_SKYCORR_IMAGE) [Neil Cook]
+- [NIRPS] science.preprocessing.detector.py - fix nirps pp mask. [Neil
+  Cook]
+- [APERO] correct A and B telluric properly (sky + finite resolution)
+  [Neil Cook]
+- [APERO] correct A and B telluric properly (sky + finite resolution)
+  [Neil Cook]
+- [NIRPS] apero.core.utils.drs_utils.py - fix that times are a numpy
+  array. [njcuk9999]
+- [APERO] correct post_t_file (OHLINE, SKYCORR etc) [Neil Cook]
+- [APERO] finish adjustments to finite resolution model. [Neil Cook]
+- [APERO] add finite resolution effects code. [Neil Cook]
+- [APERO] print progress on capacitive coupling. [Neil Cook]
+- [NIRPS] add in the capacitive coupling from sci flux (for NIRPS) [Neil
+  Cook]
+- [APERO] add in the capacitive coupling from sci flux. [Neil Cook]
+
+
+0.7.270 (2023-01-13)
+--------------------
+- [APERO] correct typo (bug) cavity[0] must have the pedestal added
+  before updating by mean_hc_vel - all wave sols are wrong without this
+  fix. [njcuk9999]
+- [APERO] typo correct_capacitive_coupling_pattern -->
+  correct_capacitive_coupling. [Neil Cook]
+- [NIRPS] minor bug fixes for variable resolution. [njcuk9999]
+- [APERO] correct the capacitive coupling pattern using the amplifier
+  bias model. [Neil Cook]
+- [APERO] correct the capacitive coupling pattern using the amplifier
+  bias model. [Neil Cook]
+- [APERO] correct the capacitive coupling pattern using the amplifier
+  bias model. [Neil Cook]
+- [APERO] correct the capacitive coupling pattern using the amplifier
+  bias model. [Neil Cook]
+- [APERO] correct the capacitive coupling pattern using the amplifier
+  bias model. [Neil Cook]
+- [APERO] correct the capacitive coupling pattern using the amplifier
+  bias model. [Neil Cook]
+- [NIRPS] correct + speed variable resolution convolution, add sky_model
+  for NIRPS HA. [njcuk9999]
+- [APERO] add in variable resolution for the tellu convolution.
+  [njcuk9999]
+- [APERO] correct s1d res maps (needed blaze) [njcuk9999]
+- [APERO] add s1d res amp/fwhm/expo files. [njcuk9999]
+- Merge branch 'v0.7.261-live' into v0.7.267-live. [njcuk9999]
+- [APERO] apero.core.math.gen_math.py - deal with nans for robust
+  chebyshev. [njcuk9999]
+
+
+0.7.269 (2023-01-10)
+--------------------
+- [APERO] create s1d res map [unfinished] [Neil Cook]
+- [NIRPS] sky corr changes. [njcuk9999]
+- [NIRPS] remove ravel from possible Nones. [Neil Cook]
+- [NIRPS] remove ravel from possible Nones. [Neil Cook]
+- [NIRPS] correct typo np.nqnwum --> np.nansum. [Neil Cook]
+- Merge branch 'v0.7.261-live' into v0.7.267-live. [Neil Cook]
+- [NIRPS] deal with not having the KW_CAV_PEDESTAL key. [Neil Cook]
+- [NIRPS] add sky correction. [Neil Cook]
+- [NIRPS] add sky correction. [Neil Cook]
+- Merge branch 'v0.7.261-live' into v0.7.259-nirps-test. [Neil Cook]
+- [NIRPS] add sky correction. [Neil Cook]
+- [NIRPS] plan for res convolve change. [Neil Cook]
+- [NIRPS] add apero_skycorr_nirps_he.py [UNFINISHED] [Neil Cook]
+- [NIRPS] add sky model correction to telluric mk_tellu and fit_tellu
+  codes. [Neil Cook]
+
+
+0.7.268 (2022-12-23)
+--------------------
+- [APERO] update apero_database.py database names. [njcuk9999]
+- [APERO] update date/version/docs/changelog. [njcuk9999]
+
+
 0.7.267 (2022-12-22)
 --------------------
 - [APERO] change continuity for wave to chebyshev. [Neil Cook]
