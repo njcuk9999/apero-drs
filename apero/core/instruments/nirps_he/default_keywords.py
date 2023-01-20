@@ -1648,6 +1648,12 @@ KW_TELLUP_DFLT_WATER.set(key='TLPDFH2O',
                          comment='tellu preclean default h20 abso used',
                          parent='TELLUP_D_WATER_ABSO')
 
+# Define default water absorption used (tellu pre-cleaning)
+KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
+KW_TELLUP_DFLT_WATER.set(key='TLPDFH2O',
+                         comment='tellu preclean default h20 abso used',
+                         parent='TELLUP_D_WATER_ABSO')
+
 # Define ccf scan range that was used (tellu pre-cleaning)
 KW_TELLUP_CCF_SRANGE = KW_TELLUP_CCF_SRANGE.copy(__NAME__)
 KW_TELLUP_CCF_SRANGE.set(key='TLPSCRNG',
