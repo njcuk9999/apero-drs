@@ -1566,7 +1566,9 @@ def finite_res_correction(template_props: ParamDict, wave_e2ds: np.ndarray,
     #    injected in the data
     finite_err_ratio = s1d_with_error / pristine_conv_s1d
     # spline that error to we can propagate it onto the e2ds grid
-    spl_finite_res = mp.iuv_spline(s1d_wave, finite_err_ratio)
+    valid = np.isfinite(finite_err_ratio)
+    spl_finite_res = mp.iuv_spline(s1d_wave[valid], finite_err_ratio[valid],
+                                   k=1, ext=3)
     # propagate the finite error onto the e2ds grid
     finite_res_e2ds = np.zeros_like(wave_e2ds)
     # loop around each order
