@@ -1093,8 +1093,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # check whether user wants to do finite resolution corrections
     #   from the inputs and then from params
-    if not drs_text.null_text(params['INPUTS']['DO_FINITE_RES_CORR']):
-        do_finite_res_corr = params['INPUTS']['DO_FINITE_RES_CORR']
+    if not drs_text.null_text(params['INPUTS']['FINITERES']):
+        do_finite_res_corr = params['INPUTS']['FINITERES']
     else:
         do_finite_res_corr = params['TELLUP_DO_FINITE_RES_CORR']
     # correct if conditions are met
